@@ -1,0 +1,25 @@
+# secretos
+.env
+# artefactos locales
+*.sqlite
+/data/*
+/cache/*
+# notebooks checkpoints
+.ipynb_checkpoints/
+# entornos virtuales
+venv/
+env/
+ENV/
+.venv/
+# archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

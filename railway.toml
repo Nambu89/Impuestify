@@ -1,0 +1,21 @@
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[[services]]
+name = "taxia-api"
+
+[services.variables]
+PORT = "8000"
+PYTHONPATH = "/app"
+PYTHONUNBUFFERED = "1"
+
+[services.healthcheck]
+path = "/health"
+interval = "30s"
+timeout = "10s"
