@@ -1,0 +1,119 @@
+/* Auth Pages Styles (Login & Register) */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-gray-50) 100%);
+    padding: var(--spacing-8);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-card {
+    background: var(--color-white);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-xl);
+    padding: var(--spacing-10);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: var(--spacing-8);
+}
+
+.auth-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin-bottom: var(--spacing-6);
+}
+
+.auth-logo svg {
+    color: var(--color-primary);
+}
+
+.auth-header h1 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--spacing-2);
+}
+
+.auth-header p {
+    color: var(--color-gray-500);
+    margin: 0;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-5);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon svg {
+    position: absolute;
+    left: var(--spacing-4);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-gray-400);
+    pointer-events: none;
+}
+
+.input-with-icon .input {
+    padding-left: calc(var(--spacing-4) + 20px + var(--spacing-3));
+}
+
+.auth-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-error);
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+.auth-submit {
+    width: 100%;
+    margin-top: var(--spacing-2);
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-6);
+    border-top: 1px solid var(--color-gray-200);
+}
+
+.auth-footer p {
+    color: var(--color-gray-600);
+    margin: 0;
+}
+
+.auth-footer a {
+    font-weight: 500;
+}
+
+@media (max-width: 480px) {
+    .auth-page {
+        padding: var(--spacing-4);
+    }
+
+    .auth-card {
+        padding: var(--spacing-6);
+    }
+}
