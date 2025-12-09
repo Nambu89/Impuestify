@@ -6,7 +6,7 @@ Handles:
 - User notification history
 - Analysis retrieval
 """
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Form, Request
 from typing import Optional, List
 import os
 import uuid
@@ -35,6 +35,7 @@ def get_db():
 @router.post("/analyze")
 @rate_limit_notification()  # DDoS Protection:  10/hour, 2/minute (VERY EXPENSIVE)
 async def analyze_notification(
+    request: Request,  # Required by SlowAPI
     file: UploadFile = File(...),
     notification_date: Optional[str] = Form(None),
     current_user = Depends(get_current_user)
