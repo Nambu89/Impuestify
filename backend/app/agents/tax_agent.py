@@ -11,14 +11,14 @@ from dataclasses import dataclass
 
 # Microsoft Agent Framework imports
 try:
-    from agent_framework import Agent, AgentConfig
-    from agent_framework.models import AzureOpenAIModel
+    from agent_framework import ChatAgent
+    from agent_framework.azure import AzureOpenAIChatClient
     AGENT_FRAMEWORK_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Agent Framework import failed: {e}")
     AGENT_FRAMEWORK_AVAILABLE = False
-    Agent = None
-    AgentConfig = None
-    AzureOpenAIModel = None
+    ChatAgent = None
+    AzureOpenAIChatClient = None
 
 # Fallback to direct Azure OpenAI
 from openai import AzureOpenAI
@@ -48,27 +48,44 @@ class TaxAgent:
     - Multi-agent ready architecture
     """
     
-    SYSTEM_PROMPT = """Eres TaxIA, un asistente fiscal especializado en normativa tributaria española.
+    SYSTEM_PROMPT = """Eres TaxIA, un asesor fiscal cercano y experto en impuestos españoles.
 
-Tu rol es ayudar a los usuarios a entender sus obligaciones fiscales basándote ÚNICAMENTE en la documentación oficial de la AEAT (Agencia Estatal de Administración Tributaria).
+Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvieras tomando un café con un amigo que te pregunta sobre sus impuestos. Usa un lenguaje sencillo y coloquial, pero mantén la precisión técnica.
 
-## Reglas estrictas:
-1. SOLO responde preguntas sobre fiscalidad española
-2. Basa tus respuestas ÚNICAMENTE en el contexto proporcionado
-3. Si no tienes información suficiente, indícalo claramente
-4. NO inventes información ni hagas suposiciones
-5. Cita las fuentes (documento y página) cuando sea posible
-6. Usa un lenguaje claro y accesible
-7. NUNCA proporciones asesoramiento para evadir impuestos
+## Tu estilo de comunicación:
+- 🗣️ **Conversacional**: Habla como un asesor fiscal amigable, no como un robot
+- 💡 **Didáctico**: Explica términos técnicos en lenguaje cotidiano (ej: "recargo ejecutivo" → "multa por pagar tarde")
+- 📊 **Práctico**: Da ejemplos concretos con números cuando sea posible
+- 😊 **Empático**: Reconoce que los impuestos son complicados y ayuda sin juzgar
+- ✅ **Directo**: Ve al grano primero, luego da detalles si hace falta
 
-## Formato de respuesta:
-**Veredicto:** [Sí/No/Depende] - [Resumen en una línea]
+## Reglas importantes:
+1. SOLO responde sobre fiscalidad española
+2. Basa tus respuestas ÚNICAMENTE en el contexto proporcionado (documentación AEAT)
+3. Si no tienes información suficiente, dilo claramente: "No tengo esa info en la documentación"
+4. NO inventes datos ni hagas suposiciones
+5. Cita las fuentes cuando sea relevante, pero de forma natural
+6. NUNCA ayudes a evadir impuestos
 
-**Explicación:** [Explicación detallada basada en el contexto]
+## Formato de respuesta (natural, no rígido):
 
-**Fuentes:** [Documentos citados]
+**En resumen:** [Respuesta directa en 1-2 líneas, como si hablaras]
 
-**Aviso:** Esto es información orientativa. Consulta con un asesor fiscal para tu caso particular."""
+**Te lo explico:** 
+[Explicación clara usando lenguaje cotidiano. Traduce términos técnicos. Usa ejemplos con números si ayuda]
+
+**Fuentes:** [Solo si es relevante mencionar de dónde sale la info]
+
+**Aviso:** Esto es orientativo. Para tu caso concreto, mejor consulta con un asesor fiscal o con la AEAT directamente.
+
+## Ejemplos de lenguaje coloquial:
+- "Recargo ejecutivo" → "multa por pagar tarde" o "recargo por demora"
+- "Liquidación provisional" → "lo que te reclama Hacienda de momento"
+- "Deuda tributaria" → "lo que debes de impuestos"
+- "Sede Electrónica" → "la web de la AEAT donde puedes pagar"
+- "Aplazamiento/fraccionamiento" → "pagar a plazos"
+
+Recuerda: Eres un asesor cercano y profesional, no un chatbot formal."""
 
     def __init__(
         self,
@@ -89,42 +106,43 @@ Tu rol es ayudar a los usuarios a entender sus obligaciones fiscales basándote 
             api_version: API version
         """
         self.name = name
-        self.model = model or os.environ.get("AZURE_OPENAI_DEPLOYMENT", "gpt-5-mini")
+        self.model = model or os.environ.get("AZURE_OPENAI_DEPLOYMENT")
         self.api_key = api_key or os.environ.get("AZURE_OPENAI_API_KEY")
         self.endpoint = endpoint or os.environ.get("AZURE_OPENAI_ENDPOINT")
-        self.api_version = api_version or os.environ.get("AZURE_OPENAI_API_VERSION", "2024-10-21")
+        self.api_version = api_version or os.environ.get("AZURE_OPENAI_API_VERSION")
         
         self._agent = None
         self._fallback_client = None
+        # TODO: Integrate IRPFCalculator and RegionDetector in future
+        # self.irpf_calculator = IRPFCalculator()
+        # self.region_detector = RegionDetector()
         
         self._initialize()
     
     def _initialize(self):
         """Initialize the agent with Microsoft Agent Framework or fallback."""
-        if AGENT_FRAMEWORK_AVAILABLE and self.api_key and self.endpoint:
+        # Force fallback for function calling support  
+        if False and AGENT_FRAMEWORK_AVAILABLE and self.api_key and self.endpoint:
             try:
-                # Configure Azure OpenAI model for Agent Framework
-                model_config = AzureOpenAIModel(
-                    deployment=self.model,
+                # Configure Azure OpenAI Chat Client
+                # Note: deployment_name maps to 'model' in standard terms
+                model_client = AzureOpenAIChatClient(
+                    deployment_name=self.model,
                     api_key=self.api_key,
                     endpoint=self.endpoint,
-                    api_version=self.api_version
+                    api_version=self.api_version or "2024-02-15-preview"
                 )
                 
                 # Create agent with configuration
-                self._agent = Agent(
+                # Using ChatAgent as verified in package analysis
+                self._agent = ChatAgent(
                     name=self.name,
-                    model=model_config,
-                    instructions=self.SYSTEM_PROMPT,
-                    config=AgentConfig(
-                        temperature=0.2,
-                        max_tokens=1200,
-                        # Enable tools for future expansion
-                        tools=[]
-                    )
+                    chat_client=model_client,
+                    instructions=self.SYSTEM_PROMPT
+                    # Config/Tools can be added via kwargs if needed
                 )
                 
-                logger.info(f"TaxAgent '{self.name}' initialized with Microsoft Agent Framework")
+                logger.info(f"TaxAgent '{self.name}' initialized with Microsoft Agent Framework (ChatAgent)")
                 return
                 
             except Exception as e:
@@ -145,7 +163,9 @@ Tu rol es ayudar a los usuarios a entender sus obligaciones fiscales basándote 
         self,
         query: str,
         context: Optional[str] = None,
-        sources: Optional[List[Dict[str, Any]]] = None
+        sources: Optional[List[Dict[str, Any]]] = None,
+        use_tools: bool = True,
+        system_prompt: Optional[str] = None
     ) -> AgentResponse:
         """
         Run the agent with a user query.
@@ -154,6 +174,8 @@ Tu rol es ayudar a los usuarios a entender sus obligaciones fiscales basándote 
             query: User's question
             context: Retrieved context from RAG
             sources: Source documents for citations
+            use_tools: Whether to enable function calling tools (default: True)
+            system_prompt: Optional override for system prompt
             
         Returns:
             AgentResponse with answer and metadata
@@ -162,23 +184,87 @@ Tu rol es ayudar a los usuarios a entender sus obligaciones fiscales basándote 
         user_message = self._build_prompt(query, context)
         
         try:
-            if self._agent:
+            # Force use of fallback client with function calling (Agent Framework doesn't support tools yet)
+            if False and self._agent:  # Disabled Agent Framework for function calling
                 # Use Microsoft Agent Framework
                 response = await self._agent.run(user_message)
-                content = response.content
+                content = response.text or "" # AgentRunResponse has .text property
             elif self._fallback_client:
-                # Use fallback Azure OpenAI
+                # Use fallback Azure OpenAI with function calling
+                from app.tools.irpf_calculator_tool import IRPF_CALCULATOR_TOOL, calculate_irpf_tool
+                
+                messages = [
+                    {"role": "system", "content": system_prompt or self.SYSTEM_PROMPT},
+                    {"role": "user", "content": user_message}
+                ]
+                
+                # First call with tools (if enabled)
                 response = self._fallback_client.chat.completions.create(
                     model=self.model,
-                    messages=[
-                        {"role": "system", "content": self.SYSTEM_PROMPT},
-                        {"role": "user", "content": user_message}
-                    ],
-                    temperature=0.2,
-                    max_tokens=1200
+                    messages=messages,
+                    tools=[IRPF_CALCULATOR_TOOL] if use_tools else None,
+                    tool_choice="auto" if use_tools else None,
+                    temperature=1,
+                    max_completion_tokens=4000
                 )
-                content = response.choices[0].message.content or ""
+                
+                # Check if model wants to call a function
+                message = response.choices[0].message
+                
+                logger.info(f"Azure OpenAI response - has tool_calls: {bool(message.tool_calls)}")
+                logger.info(f"Azure OpenAI response - content length: {len(message.content) if message.content else 0}")
+                
+                if message.tool_calls:
+                    # Model wants to use IRPF calculator
+                    tool_call = message.tool_calls[0]
+                    function_name = tool_call.function.name
+                    
+                    logger.info(f"Tool called: {function_name}")
+                    
+                    if function_name == "calculate_irpf":
+                        import json
+                        function_args = json.loads(tool_call.function.arguments)
+                        
+                        logger.info(f"Calculating IRPF with args: {function_args}")
+                        
+                        # Execute the tool
+                        tool_result = await calculate_irpf_tool(**function_args)
+                        
+                        logger.info(f"Tool result success: {tool_result.get('success')}")
+                        
+                        # Add assistant message and tool result to conversation
+                        messages.append({
+                            "role": "assistant",
+                            "content": None,
+                            "tool_calls": [tool_call.model_dump()]
+                        })
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(tool_result)
+                        })
+                        
+                        # Second call to get final response
+                        final_response = self._fallback_client.chat.completions.create(
+                            model=self.model,
+                            messages=messages,
+                            temperature=1,
+                            max_completion_tokens=4000
+                        )
+                        content = final_response.choices[0].message.content or tool_result.get('formatted_response', '')
+                        logger.info(f"Final content length: {len(content)}")
+                    else:
+                        content = message.content or ""
+                else:
+                    # No function call, use direct response
+                    content = message.content or ""
+                    finish_reason = response.choices[0].finish_reason
+                    if not content:
+                        logger.warning(f"No content in response. Finish reason: {finish_reason}")
+                    
+                    logger.info(f"Direct response content length: {len(content)}")
             else:
+                # No fallback client available
                 content = "Error: El agente no está configurado correctamente. Verifica las credenciales de Azure."
             
             return AgentResponse(
@@ -213,9 +299,26 @@ Tu rol es ayudar a los usuarios a entender sus obligaciones fiscales basándote 
 Pregunta del usuario:
 {query}
 
-Responde basándote únicamente en el contexto proporcionado."""
+Instrucciones:
+- Si la pregunta requiere un cálculo IRPF específico (con cantidad y ubicación), usa la herramienta de cálculo disponible.
+- Para otras consultas, responde basándote en el contexto proporcionado.
+- Siempre incluye un aviso de que esto es información orientativa."""
         else:
             return query
+    
+    async def ask(self, question: str, context: Optional[str] = None) -> str:
+        """
+        Convenience method for asking questions.
+        
+        Args:
+            question: User's question  
+            context: Retrieved context from RAG
+            
+        Returns:
+            str: Answer text
+        """
+        response = await self.run(query=question, context=context)
+        return response.content
     
     def run_sync(
         self,

@@ -1,0 +1,516 @@
+"""
+Chat Router for TaxIA
+
+Handles question-answering using:
+- Keyword search in Turso Database (embeddings pre-computed)
+- Azure OpenAI for answer generation
+- TaxAgent for orchestration
+"""
+from fastapi import APIRouter, HTTPException, Depends, Request
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
+import time
+import logging
+
+from app.database.turso_client import TursoClient
+from app.agents.tax_agent import TaxAgent
+from app.config import settings
+from app.utils.irpf_calculator import IRPFCalculator
+from app.utils.region_detector import RegionDetector
+from app.services.conversation_service import ConversationService
+from app.services.conversation_cache import ConversationCache
+from app.auth.jwt_handler import get_current_user, TokenData
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api", tags=["chat"])
+
+
+# === Models ===
+
+class QuestionRequest(BaseModel):
+    """Request model for asking a question"""
+    question: str = Field(..., min_length=3, max_length=1000, description="Tax question")
+    conversation_id: Optional[str] = Field(None, description="Conversation ID for context")
+    k: Optional[int] = Field(default=5, ge=1, le=10, description="Number of documents to retrieve")
+
+
+class Source(BaseModel):
+    """Source document model"""
+    id: str
+    source: str
+    page: int
+    title: str
+    text_preview: str
+    score: Optional[float] = None
+
+
+class TaxIAResponse(BaseModel):
+    """Response model from TaxIA"""
+    answer: str
+    sources: List[Source]
+    processing_time: float
+    metadata: Dict[str, Any]
+    conversation_id: Optional[str] = None  # NEW: Return conversation ID
+
+
+# === Dependencies ===
+
+async def get_db(request: Request) -> TursoClient:
+    """Get database client from app state"""
+    if hasattr(request.app.state, 'db_client') and request.app.state.db_client:
+        return request.app.state.db_client
+    raise HTTPException(
+        status_code=503,
+        detail="Database not connected. Check Turso configuration."
+    )
+
+
+# === Helper Functions ===
+
+async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
+    """
+    Full-text search using SQLite FTS5.
+    
+    Uses BM25 ranking algorithm for relevance scoring.
+    Falls back to LIKE search if FTS5 table doesn't exist.
+    
+    Enhanced with regional detection: 
+    - Detects user's CCAA from query (e.g., "Zaragoza" → "Aragón")
+    - Augments search with CCAA name for better regional tax table retrieval
+    """
+    try:
+        # Clean query for FTS5 (remove special characters)
+        # Format for FTS5: tokens OR tokens
+        clean_query = ''.join(c for c in query if c.isalnum() or c.isspace())
+        keywords = clean_query.split()
+        
+        if not keywords:
+            logger.warning("Query is empty after cleaning")
+            return []
+        
+        # === NEW: Detect user's region from query ===
+        from app.utils.region_detector import RegionDetector
+        detector = RegionDetector()
+        region_info = detector.detect_from_text(query)
+        
+        detected_ccaa = None
+        if region_info['confidence'] in ['high', 'medium']:
+            detected_ccaa = region_info['region']
+            logger.info(f"📍 Detected CCAA: {detected_ccaa} (confidence: {region_info['confidence']})")
+            
+            # Augment query with CCAA name for better retrieval
+            # E.g., "Zaragoza 35000€ IRPF" becomes "Zaragoza 35000 IRPF Aragón"
+            ccaa_keywords = detected_ccaa.split()
+            keywords.extend(ccaa_keywords)
+            logger.info(f"🔍 Enhanced keywords: {keywords}")
+        
+        # Strategy 1: OR query (any keyword matches) - High Recall
+        fts_query = ' OR '.join([f'"{kw}"' for kw in keywords])
+        
+        logger.info(f"🔍 FTS5 Search Query: {fts_query}")
+        
+        # Detect if user mentions a Hacienda Foral region
+        query_lower = query.lower()
+        foral_keywords = {
+            'navarra': 'navarra',
+            'euskadi': 'euskadi',
+            'país vasco': 'euskadi',
+            'pais vasco': 'euskadi',
+            'guipúzcoa': 'guipuzkoa',
+            'gipuzkoa': 'guipuzkoa',
+            'guipuzkoa': 'guipuzkoa',
+            'vizcaya': 'bizkaia',
+            'bizkaia': 'bizkaia',
+            'álava': 'araba',
+            'alava': 'araba',
+            'araba': 'araba'
+        }
+        
+        detected_foral = None
+        for keyword, region in foral_keywords.items():
+            if keyword in query_lower:
+                detected_foral = region
+                break
+        
+        # Build SQL with metadata filter
+        # - If Hacienda Foral mentioned: search only in those documents
+        # - Otherwise: prioritize AEAT documents (source != foral)
+        if detected_foral:
+            logger.info(f"📍 Detected Hacienda Foral: {detected_foral}, filtering for regional docs")
+            metadata_filter = f"AND (LOWER(d.filename) LIKE '%{detected_foral}%' OR LOWER(d.source) LIKE '%{detected_foral}%')"
+        else:
+            # Prioritize AEAT documents: exclude Haciendas Forales
+            logger.info("📍 No foral region detected, prioritizing AEAT general documents")
+            foral_exclusions = ['navarra', 'guipuzkoa', 'gipuzkoa', 'bizkaia', 'araba', 'álava', 'alava']
+            exclusion_conditions = " AND ".join([f"LOWER(d.filename) NOT LIKE '%{region}%'" for region in foral_exclusions])
+            metadata_filter = f"AND ({exclusion_conditions})"
+        
+        # === NEW:  CCAA-Specific Tax Table Search (Phase 1) ===
+        # If we detected a CCAA, do a targeted search for its tax table FIRST
+        ccaa_tax_table_chunks = []
+        if detected_ccaa and "Comunidad" not in detected_ccaa and detected_ccaa != "General (territorio común)":
+            logger.info(f"🎯 Phase 1: Searching for {detected_ccaa} tax table in Chapter 15...")
+            
+            #Build specific query for CCAA tax table
+            ccaa_search_terms = detected_ccaa.split() + ["escala", "Base", "liquidable"]
+            ccaa_fts_query = ' OR '.join([f'"{term}"' for term in ccaa_search_terms])
+            
+            ccaa_sql = f"""
+            SELECT 
+                c.id,
+                c.content,
+                c.page_number,
+                d.filename,
+                d.title,
+                fts.rank
+            FROM document_chunks_fts fts
+            JOIN document_chunks c ON c.id = fts.chunk_id
+            JOIN documents d ON d.id = c.document_id
+            WHERE document_chunks_fts MATCH ? 
+            AND d.filename LIKE '%Renta_2024._Parte_1%'
+            AND c.page_number BETWEEN 1230 AND 1245
+            {metadata_filter}
+            ORDER BY rank 
+            LIMIT 3
+            """
+            
+            try:
+                ccaa_result = await db.execute(ccaa_sql, [ccaa_fts_query])
+                
+                if ccaa_result.rows:
+                    logger.info(f"✅ Found {len(ccaa_result.rows)} CCAA tax table chunks")
+                    for row in ccaa_result.rows:
+                        ccaa_tax_table_chunks.append({
+                            "id": row['id'],
+                            "text": row['content'],
+                            "page": row['page_number'],
+                            "source": row['filename'],
+                            "title": f"Tabla IRPF - {detected_ccaa}",
+                            "similarity": abs(float(row.get('rank', -1.0))) + 100  # Boost score
+                        })
+                else:
+                    logger.warning(f"⚠️  No CCAA tax table found for {detected_ccaa}")
+            except Exception as e:
+                logger.error(f"Error in CCAA tax table search: {e}")
+        
+        # === Phase 2: General FTS5 Search ===
+        # Try FTS5 search first
+        try:
+            sql = f"""
+            SELECT 
+                c.id,
+                c.content,
+                c.page_number,
+                d.filename,
+                d.title,
+                fts.rank
+            FROM document_chunks_fts fts
+            JOIN document_chunks c ON c.id = fts.chunk_id
+            JOIN documents d ON d.id = c.document_id
+            WHERE document_chunks_fts MATCH ? 
+            {metadata_filter}
+            ORDER BY rank 
+            LIMIT ?
+            """
+            
+            result = await db.execute(sql, [fts_query, k])
+            
+            if result.rows:
+                logger.info(f"✅ FTS5 found {len(result.rows)} results")
+                chunks = []
+                for row in result.rows:
+                    chunks.append({
+                        "id": row['id'],
+                        "text": row['content'],
+                        "page": row['page_number'],
+                        "source": row['filename'],
+                        "title": row['title'] or row['filename'],
+                        "similarity": abs(float(row.get('rank', -1.0)))  # FTS5 rank is negative
+                    })
+                return chunks
+            else:
+                logger.warning("⚠️ FTS5 found 0 results")
+                
+        except Exception as fts_error:
+            # FTS5 table doesn't exist or query error, fall back to LIKE search
+            logger.warning(f"FTS5 error, falling back to LIKE search: {fts_error}")
+            
+            # Fallback to simple text search
+            keywords = query.lower().split()[:5]  # Limit to 5 keywords
+            where_conditions = " OR ".join([
+                f"LOWER(c.content) LIKE ?"
+                for _ in keywords
+            ])
+            
+            sql = f"""
+            SELECT 
+                c.id,
+                c.content,
+                c.page_number,
+                d.filename,
+                d.title,
+                1.0 as relevance_score
+            FROM document_chunks c
+            JOIN documents d ON d.id = c.document_id
+            WHERE {where_conditions}
+            LIMIT ?
+            """
+            
+            params = [f"%{kw}%" for kw in keywords] + [k]
+            result = await db.execute(sql, params)
+            
+            chunks = []
+            for row in result.rows:
+                chunks.append({
+                    "id": row['id'],
+                    "text": row['content'],
+                    "page": row['page_number'],
+                    "source": row['filename'],
+                    "title": row['title'] or row['filename'],
+                    "similarity": 0.5  # Default score for LIKE search
+                })
+            
+            return chunks
+        
+    except Exception as e:
+        logger.error(f"Error in FTS search: {e}", exc_info=True)
+        return []
+
+
+
+
+# === Routes ===
+
+@router.post("/ask", response_model=TaxIAResponse)
+async def ask_question(
+    req: Request,
+    request: QuestionRequest,
+    db: TursoClient = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+):
+    """
+    Ask a tax question to TaxIA with optional conversation context.
+    
+    - **question**: Your tax question in Spanish
+    - **conversation_id**: Optional conversation ID for context (creates new if not provided)
+    - **k**: Number of relevant documents to retrieve (default: 5)
+    """
+    start_time = time.time()
+    
+    try:
+        logger.info(f"Nueva consulta: {request.question[:100]}... (conversation_id: {request.conversation_id})")
+        
+        # Initialize conversation service
+        conv_service = ConversationService(db)
+        
+        # 1. Get or create conversation
+        conversation_id = request.conversation_id
+        if not conversation_id:
+            # Create new conversation
+            conversation = await conv_service.create_conversation(
+                user_id=current_user.user_id,
+                title=request.question[:50] + "..." if len(request.question) > 50 else request.question
+            )
+            conversation_id = conversation["id"]
+            logger.info(f"Created new conversation: {conversation_id}")
+        else:
+            # Verify conversation exists and belongs to user
+            conversation = await conv_service.get_conversation(conversation_id, current_user.user_id)
+            if not conversation:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        # 2. Initialize cache service
+        upstash_client = getattr(req.app.state, 'upstash_client', None)
+        cache = ConversationCache(upstash_client)
+        
+        # 3. Load conversation context (cache-first strategy)
+        conversation_history = []
+        notification_context = ""
+        notification_metadata = {}
+        
+        # Try cache first
+        cached_context = await cache.get_context(conversation_id)
+        
+        if cached_context:
+            # Cache HIT - use cached data
+            conversation_history = cached_context.get("recent_messages", [])
+            notification_context = cached_context.get("notification_content", "")
+            notification_metadata = cached_context.get("notification_metadata", {})
+            
+            # Refresh TTL since conversation is active
+            await cache.refresh_ttl(conversation_id)
+            
+            logger.info(f"💾 Using cached context for conversation {conversation_id}")
+        else:
+            # Cache MISS - load from database
+            conversation_history = await conv_service.get_recent_messages(conversation_id, limit=20)
+            logger.info(f"📂 Loaded {len(conversation_history)} messages from database")
+            
+            # Check if there's a notification in the conversation history
+            for msg in conversation_history:
+                if msg.get("role") == "assistant" and msg.get("metadata"):
+                    metadata = msg.get("metadata", {})
+                    if "notification_id" in metadata:
+                        # Extract notification content from message
+                        notification_context = f"""CONTEXTO DE NOTIFICACIÓN DEL USUARIO:
+{msg.get('content', '')}
+
+INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
+- Tipo: {metadata.get('notification_type', 'N/A')}
+- Región: {metadata.get('region', 'N/A')}
+- Plazos: {metadata.get('deadlines', 'N/A')}
+
+---
+"""
+                        notification_metadata = {
+                            "notification_id": metadata.get("notification_id"),
+                            "notification_type": metadata.get("notification_type"),
+                            "region": metadata.get("region"),
+                            "deadlines": metadata.get("deadlines")
+                        }
+                        logger.info(f"📋 Found notification context in conversation history")
+                        break
+        
+        # 4. Search relevant chunks using FTS5
+        search_start = time.time()
+        relevant_chunks = await fts_search(db, request.question, k=request.k or 5)
+        search_time = time.time() - search_start
+        
+        if not relevant_chunks:
+            # Save user message even if no context found
+            await conv_service.add_message(conversation_id, "user", request.question)
+            
+            no_context_answer = "Lo siento, no encontré información relevante en la base de datos para responder tu pregunta. Por favor, intenta reformular tu consulta o usar palabras clave más específicas."
+            
+            # Save assistant response
+            await conv_service.add_message(conversation_id, "assistant", no_context_answer)
+            
+            # Update cache even with no context
+            updated_history = await conv_service.get_recent_messages(conversation_id, limit=20)
+            await cache.set_context(conversation_id, {
+                "notification_content": notification_context,
+                "notification_metadata": notification_metadata,
+                "recent_messages": updated_history
+            })
+            
+            return TaxIAResponse(
+                answer=no_context_answer,
+                sources=[],
+                processing_time=time.time() - start_time,
+                conversation_id=conversation_id,
+                metadata={
+                    "search_time": search_time,
+                    "chunks_found": 0,
+                    "search_method": "fts5"
+                }
+            )
+        
+        # 5. Generate answer using TaxAgent with conversation history
+        agent_start = time.time()
+        tax_agent = TaxAgent()
+        
+        # Prepare RAG context from retrieved chunks
+        rag_context = "\n\n".join([
+            f"Fuente: {chunk['title']} (Página {chunk['page']})\n{chunk['text']}"
+            for chunk in relevant_chunks
+        ])
+        
+        # Combine notification context (priority) with RAG context
+        combined_context = notification_context + rag_context if notification_context else rag_context
+        
+        # Prepare sources for metadata
+        sources_data = [
+            {
+                "id": chunk['id'],
+                "source": chunk['source'],
+                "page": chunk['page'],
+                "title": chunk['title'],
+                "score": chunk['similarity']
+            }
+            for chunk in relevant_chunks
+        ]
+        
+        # Call TaxAgent with combined context
+        logger.info(f"🤖 Calling TaxAgent with {len(conversation_history)} history messages + {'notification + ' if notification_context else ''}RAG context")
+        
+        # Use the existing ask() method with combined context
+        answer = await tax_agent.ask(
+            question=request.question,
+            context=combined_context
+        )
+        
+        logger.info(f"🤖 TaxAgent response length: {len(answer)}")
+        agent_time = time.time() - agent_start
+        
+        # 5. Save user message
+        user_msg = await conv_service.add_message(
+            conversation_id=conversation_id,
+            role="user",
+            content=request.question
+        )
+        
+        # 6. Save assistant message with sources
+        assistant_msg = await conv_service.add_message(
+            conversation_id=conversation_id,
+            role="assistant",
+            content=answer,
+            metadata={"sources": sources_data}
+        )
+        
+        # Link sources to assistant message
+        await conv_service.add_message_sources(assistant_msg["id"], sources_data)
+        
+        # 6.5. Update cache with new messages
+        # Reload conversation history to include new messages
+        updated_history = await conv_service.get_recent_messages(conversation_id, limit=20)
+        
+        # Update cache with fresh context
+        await cache.set_context(conversation_id, {
+            "notification_content": notification_context,
+            "notification_metadata": notification_metadata,
+            "recent_messages": updated_history
+        })
+        logger.info(f"💾 Cache updated for conversation {conversation_id}")
+        
+        # 7. Format sources for response
+        sources = [
+            Source(
+                id=chunk['id'],
+                source=chunk['source'],
+                page=chunk['page'],
+                title=chunk['title'],
+                text_preview=chunk['text'][:200] + "..." if len(chunk['text']) > 200 else chunk['text'],
+                score=round(chunk['similarity'], 4)
+            )
+            for chunk in relevant_chunks
+        ]
+        
+        processing_time = time.time() - start_time
+        
+        logger.info(f"Consulta procesada: {processing_time:.2f}s, {len(sources)} fuentes, conversation: {conversation_id}")
+        
+        return TaxIAResponse(
+            answer=answer,
+            sources=sources,
+            processing_time=processing_time,
+            conversation_id=conversation_id,
+            metadata={
+                "search_time": search_time,
+                "generation_time": agent_time,
+                "chunks_retrieved": len(relevant_chunks),
+                "model": settings.AZURE_OPENAI_DEPLOYMENT,
+                "search_method": "fts5",
+                "conversation_messages": len(conversation_history)
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing question: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing question: {str(e)}"
+        )
+

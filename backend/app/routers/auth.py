@@ -50,6 +50,7 @@ class UserResponse(BaseModel):
     email: str
     name: Optional[str]
     is_active: bool
+    is_admin: bool = False
 
 
 class AuthResponse(BaseModel):
@@ -82,7 +83,8 @@ async def register(request: Request, data: RegisterRequest):
                 id=user.id,
                 email=user.email,
                 name=user.name,
-                is_active=user.is_active
+                is_active=user.is_active,
+                is_admin=user.is_admin
             ),
             tokens=tokens
         )
@@ -123,7 +125,8 @@ async def login(request: Request, data: LoginRequest):
             id=user.id,
             email=user.email,
             name=user.name,
-            is_active=user.is_active
+            is_active=user.is_active,
+            is_admin=user.is_admin
         ),
         tokens=tokens
     )
@@ -175,7 +178,8 @@ async def get_current_user_info(current_user: TokenData = Depends(get_current_us
         id=user.id,
         email=user.email,
         name=user.name,
-        is_active=user.is_active
+        is_active=user.is_active,
+        is_admin=user.is_admin
     )
 
 

@@ -1,0 +1,163 @@
+"""
+Conversation Cache Service for TaxIA
+
+Manages Redis caching of conversation context to improve performance.
+Stores notification content + recent messages with 1-hour TTL.
+"""
+import json
+import logging
+from typing import Optional, Dict, Any
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+
+
+class ConversationCache:
+    """Service for caching conversation context in Redis."""
+    
+    def __init__(self, redis_client):
+        """
+        Initialize cache service.
+        
+        Args:
+            redis_client: Upstash Redis async client (or None if disabled)
+        """
+        self.redis = redis_client
+        self.ttl = 3600  # 1 hour in seconds
+        self.enabled = redis_client is not None
+    
+    def _get_key(self, conversation_id: str) -> str:
+        """Generate Redis key for conversation context."""
+        return f"conversation:{conversation_id}:context"
+    
+    async def get_context(self, conversation_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get conversation context from cache.
+        
+        Args:
+            conversation_id: Conversation ID
+            
+        Returns:
+            Cached context dict or None if not found/disabled
+        """
+        if not self.enabled:
+            return None
+        
+        try:
+            key = self._get_key(conversation_id)
+            cached_data = await self.redis.get(key)
+            
+            if cached_data:
+                print(f"💾 Cache HIT for conversation {conversation_id}")
+                logger.info(f"💾 Cache HIT for conversation {conversation_id}")
+                # Parse JSON string to dict
+                context = json.loads(cached_data)
+                return context
+            else:
+                print(f"🔍 Cache MISS for conversation {conversation_id}")
+                logger.info(f"🔍 Cache MISS for conversation {conversation_id}")
+                return None
+                
+        except Exception as e:
+            logger.warning(f"⚠️  Cache get error for {conversation_id}: {e}")
+            return None
+    
+    async def set_context(
+        self,
+        conversation_id: str,
+        context: Dict[str, Any]
+    ) -> bool:
+        """
+        Save conversation context to cache with TTL.
+        
+        Args:
+            conversation_id: Conversation ID
+            context: Context dict to cache
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.enabled:
+            return False
+        
+        try:
+            key = self._get_key(conversation_id)
+            
+            # Add timestamp
+            context["cached_at"] = datetime.utcnow().isoformat()
+            
+            # Serialize to JSON
+            context_json = json.dumps(context, ensure_ascii=False)
+            
+            # Save with TTL (EX = seconds)
+            await self.redis.set(key, context_json, ex=self.ttl)
+            
+            print(f"💾 Cache SET for conversation {conversation_id} (TTL: {self.ttl}s)")
+            logger.info(f"💾 Cache SET for conversation {conversation_id} (TTL: {self.ttl}s)")
+            return True
+            
+        except Exception as e:
+            logger.warning(f"⚠️  Cache set error for {conversation_id}: {e}")
+            return False
+    
+    async def refresh_ttl(self, conversation_id: str) -> bool:
+        """
+        Refresh TTL for cached conversation context.
+        
+        Args:
+            conversation_id: Conversation ID
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.enabled:
+            return False
+        
+        try:
+            key = self._get_key(conversation_id)
+            
+            # Renew expiration
+            result = await self.redis.expire(key, self.ttl)
+            
+            if result:
+                print(f"♻️  Cache TTL renewed for conversation {conversation_id}")
+                logger.info(f"♻️  Cache TTL renewed for conversation {conversation_id}")
+                return True
+            else:
+                logger.debug(f"Cache key not found for TTL refresh: {conversation_id}")
+                return False
+                
+        except Exception as e:
+            logger.warning(f"⚠️  Cache TTL refresh error for {conversation_id}: {e}")
+            return False
+    
+    async def invalidate(self, conversation_id: str) -> bool:
+        """
+        Invalidate (delete) cached conversation context.
+        
+        Args:
+            conversation_id: Conversation ID
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.enabled:
+            return False
+        
+        try:
+            key = self._get_key(conversation_id)
+            
+            # Delete key
+            result = await self.redis.delete(key)
+            
+            if result:
+                print(f"🗑️  Cache invalidated for conversation {conversation_id}")
+                logger.info(f"🗑️  Cache invalidated for conversation {conversation_id}")
+                return True
+            else:
+                logger.debug(f"Cache key not found for invalidation: {conversation_id}")
+                return False
+                
+        except Exception as e:
+            logger.warning(f"⚠️  Cache invalidation error for {conversation_id}: {e}")
+            return False

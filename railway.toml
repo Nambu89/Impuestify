@@ -1,21 +1,28 @@
+# Railway Configuration for TaxIA
+# Monorepo with Backend (FastAPI) + Frontend (Vite/React)
+
 [build]
-builder = "DOCKERFILE"
+builder = "NIXPACKS"
 
-[deploy]
-healthcheckPath = "/health"
-healthcheckTimeout = 30
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 3
-
+# Backend Service (FastAPI)
 [[services]]
-name = "taxia-api"
+name = "taxia-backend"
+source = "backend"
 
-[services.variables]
-PORT = "8000"
-PYTHONPATH = "/app"
-PYTHONUNBUFFERED = "1"
+[services.build]
+buildCommand = "pip install -r requirements.txt"
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
 
 [services.healthcheck]
 path = "/health"
 interval = "30s"
 timeout = "10s"
+
+# Frontend Service (Vite/React)
+[[services]]
+name = "taxia-frontend"  
+source = "frontend"
+
+[services.build]
+buildCommand = "npm install && npm run build"
+startCommand = "npm run preview -- --host 0.0.0.0 --port $PORT"

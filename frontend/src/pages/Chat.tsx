@@ -1,7 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Loader2, FileText, AlertCircle } from 'lucide-react'
+import { Send, Loader2, FileText, AlertCircle, Upload } from 'lucide-react'
 import Header from '../components/Header'
 import { useApi } from '../hooks/useApi'
+import { NotificationUpload } from '../components/NotificationUpload'
+import { NotificationAnalysisDisplay } from '../components/NotificationAnalysisDisplay'
+import { ConversationSidebar } from '../components/ConversationSidebar'
+import { useConversations } from '../hooks/useConversations'
+import ReactMarkdown from 'react-markdown'
 import './Chat.css'
 
 interface Message {
@@ -18,9 +23,13 @@ interface Message {
 
 export default function Chat() {
     const { askQuestion } = useApi()
+    const { getConversation, fetchConversations } = useConversations()
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [showNotificationModal, setShowNotificationModal] = useState(false)
+    const [notificationAnalysis, setNotificationAnalysis] = useState<any>(null)
+    const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     const scrollToBottom = () => {
@@ -30,6 +39,30 @@ export default function Chat() {
     useEffect(() => {
         scrollToBottom()
     }, [messages])
+
+    const handleSelectConversation = async (conversationId: string) => {
+        try {
+            const data = await getConversation(conversationId)
+            // Convert backend messages to frontend format
+            const formattedMessages: Message[] = data.messages.map(msg => ({
+                id: msg.id,
+                role: msg.role as 'user' | 'assistant',
+                content: msg.content,
+                sources: msg.metadata?.sources
+            }))
+            setMessages(formattedMessages)
+            setActiveConversationId(conversationId)
+            setNotificationAnalysis(null)
+        } catch (error) {
+            console.error('Error loading conversation:', error)
+        }
+    }
+
+    const handleNewConversation = () => {
+        setMessages([])
+        setActiveConversationId(null)
+        setNotificationAnalysis(null)
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -53,7 +86,7 @@ export default function Chat() {
         setIsLoading(true)
 
         try {
-            const response = await askQuestion(userMessage.content)
+            const response = await askQuestion(userMessage.content, activeConversationId || undefined)
 
             setMessages(prev => prev.map(msg =>
                 msg.loading ? {
@@ -63,6 +96,13 @@ export default function Chat() {
                     loading: false
                 } : msg
             ))
+
+            // Update active conversation ID from response
+            if (response.conversation_id) {
+                setActiveConversationId(response.conversation_id)
+                // Refresh sidebar to show new conversation
+                fetchConversations()
+            }
         } catch (error: any) {
             setMessages(prev => prev.map(msg =>
                 msg.loading ? {
@@ -80,6 +120,12 @@ export default function Chat() {
         <div className="chat-page">
             <Header />
 
+            <ConversationSidebar
+                activeConversationId={activeConversationId}
+                onSelectConversation={handleSelectConversation}
+                onNewConversation={handleNewConversation}
+            />
+
             <main className="chat-main">
                 <div className="chat-container">
                     {messages.length === 0 ? (
@@ -91,19 +137,19 @@ export default function Chat() {
                             <div className="example-questions">
                                 <p className="example-title">Prueba a preguntar:</p>
                                 <button
-                                    className="example-btn"
+                                    className="example-question"
                                     onClick={() => setInput('¿Cuándo debo presentar el modelo 303 de IVA?')}
                                 >
                                     ¿Cuándo debo presentar el modelo 303 de IVA?
                                 </button>
                                 <button
-                                    className="example-btn"
+                                    className="example-question"
                                     onClick={() => setInput('¿Qué deducciones puedo aplicar en el IRPF?')}
                                 >
                                     ¿Qué deducciones puedo aplicar en el IRPF?
                                 </button>
                                 <button
-                                    className="example-btn"
+                                    className="example-question"
                                     onClick={() => setInput('¿Cómo funciona el régimen de estimación directa?')}
                                 >
                                     ¿Cómo funciona el régimen de estimación directa?
@@ -125,7 +171,11 @@ export default function Chat() {
                                             </div>
                                         ) : (
                                             <>
-                                                <p>{message.content}</p>
+                                                <div className="message-text" style={{ lineHeight: '1.6' }}>
+                                                    <ReactMarkdown>
+                                                        {message.content}
+                                                    </ReactMarkdown>
+                                                </div>
                                                 {message.sources && message.sources.length > 0 && (
                                                     <div className="message-sources">
                                                         <p className="sources-title">
@@ -163,11 +213,20 @@ export default function Chat() {
                         disabled={isLoading}
                     />
                     <button
+                        type="button"
+                        className="btn btn-success"
+                        onClick={() => setShowNotificationModal(true)}
+                        title="Analizar notificación AEAT"
+                        style={{ marginRight: '8px', background: '#48bb78' }}
+                    >
+                        <Upload size={20} />
+                    </button>
+                    <button
                         type="submit"
                         className="btn btn-primary chat-submit"
                         disabled={isLoading || !input.trim()}
                     >
-                        {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+                        {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
                     </button>
                 </form>
                 <p className="chat-disclaimer">
@@ -175,6 +234,78 @@ export default function Chat() {
                     Información orientativa. Consulta con un asesor fiscal para tu caso particular.
                 </p>
             </footer>
+
+            {/* Notification Modal */}
+            {showNotificationModal && (
+                <div className="modal-overlay" onClick={() => setShowNotificationModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>📎 Analizar Notificación AEAT</h3>
+                            <button
+                                className="modal-close"
+                                onClick={() => setShowNotificationModal(false)}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <NotificationUpload
+                            onAnalysisComplete={(analysis) => {
+                                // Add analysis to chat as assistant message
+                                const analysisMessage: Message = {
+                                    id: Date.now().toString(),
+                                    role: 'assistant',
+                                    content: `📋 **Análisis de Notificación: ${analysis.type}**\n\n${analysis.summary}\n\n---\n\n💡 Puedes hacerme preguntas sobre esta notificación y te ayudaré con toda la información de la AEAT.`
+                                }
+
+                                setMessages(prev => [...prev, analysisMessage])
+                                setNotificationAnalysis(analysis)
+                                setShowNotificationModal(false)
+
+                                // Set active conversation from notification analysis
+                                if (analysis.conversation_id) {
+                                    setActiveConversationId(analysis.conversation_id)
+                                    // Refresh sidebar to show new conversation
+                                    fetchConversations()
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Analysis Display - Only show if not already in chat */}
+            {notificationAnalysis && !messages.some(m => m.content.includes('Análisis de Notificación')) && (
+                <div style={{
+                    position: 'fixed',
+                    top: '80px',
+                    right: '20px',
+                    maxWidth: '500px',
+                    zIndex: 1000,
+                    maxHeight: 'calc(100vh - 100px)',
+                    overflowY: 'auto'
+                }}>
+                    <button
+                        onClick={() => setNotificationAnalysis(null)}
+                        style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '10px',
+                            background: '#fc8181',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '30px',
+                            height: '30px',
+                            cursor: 'pointer',
+                            fontSize: '18px',
+                            zIndex: 10
+                        }}
+                    >
+                        ✕
+                    </button>
+                    <NotificationAnalysisDisplay analysis={notificationAnalysis} />
+                </div>
+            )}
         </div>
     )
 }

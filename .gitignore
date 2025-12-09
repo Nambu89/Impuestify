@@ -1,25 +1,46 @@
 # secretos
 .env
+.secrets.baseline
+mark_admin.sql
+
 # artefactos locales
 *.sqlite
-/data/*
-/cache/*
+/data/
+/cache/
+
 # notebooks checkpoints
 .ipynb_checkpoints/
+
 # entornos virtuales
 venv/
 env/
 ENV/
 .venv/
+
 # archivos de Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# Node.js
+node_modules/
+dist/
+*.log
+
 # IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+
+# Testing
+.pytest_cache/
+coverage/
+.coverage
+
+# Build artifacts
+*.egg-info/
+build/

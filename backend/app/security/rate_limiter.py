@@ -40,26 +40,24 @@ def get_storage_uri() -> str:
     """
     Get storage URI for rate limiting.
     
-    Uses Upstash Redis if configured, otherwise in-memory.
+    NOTE: Upstash uses REST API (HTTP), not Redis TCP protocol.
+    slowapi's Redis storage requires TCP connection, so we use in-memory storage.
+    For production with distributed rate limiting, consider using a local Redis
+    or a Redis-compatible service with TCP support.
     """
-    upstash_url = os.environ.get("UPSTASH_REDIS_REST_URL")
-    upstash_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
-    
-    if upstash_url and upstash_token:
-        # Format for Redis: redis://user:password@host:port
-        # Upstash REST URL needs to be converted
-        logger.info("Using Upstash Redis for rate limiting")
-        return f"redis://{upstash_token}@{upstash_url.replace('https://', '').replace('http://', '')}"
-    
-    logger.info("Using in-memory storage for rate limiting")
+    # Upstash REST API is NOT compatible with slowapi's Redis storage
+    # slowapi expects redis:// protocol which requires TCP connection
+    # Upstash uses HTTP REST API, not TCP
+    logger.info("Using in-memory storage for rate limiting (Upstash REST not compatible with slowapi)")
     return "memory://"
 
 
-# Create limiter instance
+# Create limiter instance with in-memory storage
+# NOTE: For distributed setups, consider local Redis or compatible TCP service
 limiter = Limiter(
     key_func=get_rate_limit_key,
     default_limits=["100/hour", "10/minute"],
-    storage_uri=get_storage_uri() if os.environ.get("UPSTASH_REDIS_REST_URL") else "memory://",
+    storage_uri="memory://",
     strategy="fixed-window"
 )
 

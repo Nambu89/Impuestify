@@ -88,17 +88,30 @@ class TursoClient:
         if not self._conn:
             await self.connect()
         
-        try:
-            if params:
-                result = self._conn.execute(sql, params)
-            else:
-                result = self._conn.execute(sql)
-            
-            # Wrap result to have consistent interface
-            return QueryResult(result)
-        except Exception as e:
-            logger.error(f"Database query failed: {e}")
-            raise
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                if params:
+                    result = self._conn.execute(sql, params)
+                else:
+                    result = self._conn.execute(sql)
+                
+                # Auto-commit for write operations
+                if sql.strip().upper().startswith(('INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER')):
+                    self._conn.commit()
+                
+                # Wrap result to have consistent interface
+                return QueryResult(result)
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'stream not found' in error_msg or 'connection' in error_msg:
+                    if attempt < max_retries:
+                        logger.warning(f"Connection issue, reconnecting... (attempt {attempt + 1})")
+                        await self.disconnect()
+                        await self.connect()
+                        continue
+                logger.error(f"Database query failed: {e}")
+                raise
     
     async def execute_many(self, sql: str, params_list: List[List[Any]]) -> None:
         """
@@ -126,6 +139,10 @@ class TursoClient:
         Creates all required tables if they don't exist.
         """
         schema_statements = [
+            # =============================================
+            # USER & AUTH TABLES
+            # =============================================
+            
             # Users table
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -152,6 +169,110 @@ class TursoClient:
             )
             """,
             
+            # =============================================
+            # DOCUMENT & RAG TABLES
+            # =============================================
+            
+            # Documents table - stores PDF metadata
+            """
+            CREATE TABLE IF NOT EXISTS documents (
+                id TEXT PRIMARY KEY,
+                filename TEXT NOT NULL,
+                filepath TEXT,
+                title TEXT,
+                document_type TEXT,
+                year INTEGER,
+                source TEXT DEFAULT 'AEAT',
+                total_pages INTEGER,
+                file_size INTEGER,
+                hash TEXT UNIQUE,
+                processed BOOLEAN DEFAULT 0,
+                processing_status TEXT DEFAULT 'pending',
+                error_message TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            )
+            """,
+            
+            # Document sections - hierarchical structure
+            """
+            CREATE TABLE IF NOT EXISTS document_sections (
+                id TEXT PRIMARY KEY,
+                document_id TEXT NOT NULL,
+                parent_section_id TEXT,
+                title TEXT,
+                section_number TEXT,
+                level INTEGER DEFAULT 0,
+                start_page INTEGER,
+                end_page INTEGER,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+                FOREIGN KEY (parent_section_id) REFERENCES document_sections(id) ON DELETE SET NULL
+            )
+            """,
+            
+            # Document chunks - text segments for RAG
+            """
+            CREATE TABLE IF NOT EXISTS document_chunks (
+                id TEXT PRIMARY KEY,
+                document_id TEXT NOT NULL,
+                section_id TEXT,
+                chunk_index INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                content_hash TEXT,
+                page_number INTEGER,
+                start_char INTEGER,
+                end_char INTEGER,
+                token_count INTEGER,
+                metadata TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+                FOREIGN KEY (section_id) REFERENCES document_sections(id) ON DELETE SET NULL
+            )
+            """,
+            
+            # Embeddings table - vector storage for semantic search
+            # Note: Turso supports F32_BLOB for vector embeddings
+            """
+            CREATE TABLE IF NOT EXISTS embeddings (
+                id TEXT PRIMARY KEY,
+                chunk_id TEXT NOT NULL UNIQUE,
+                embedding BLOB NOT NULL,
+                model_name TEXT DEFAULT 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2',
+                dimensions INTEGER DEFAULT 384,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (chunk_id) REFERENCES document_chunks(id) ON DELETE CASCADE
+            )
+            """,
+            
+            # Tax categories for document classification
+            """
+            CREATE TABLE IF NOT EXISTS tax_categories (
+                id TEXT PRIMARY KEY,
+                code TEXT UNIQUE NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                parent_id TEXT,
+                FOREIGN KEY (parent_id) REFERENCES tax_categories(id) ON DELETE SET NULL
+            )
+            """,
+            
+            # Document-category mapping
+            """
+            CREATE TABLE IF NOT EXISTS document_categories (
+                document_id TEXT NOT NULL,
+                category_id TEXT NOT NULL,
+                relevance_score REAL DEFAULT 1.0,
+                PRIMARY KEY (document_id, category_id),
+                FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+                FOREIGN KEY (category_id) REFERENCES tax_categories(id) ON DELETE CASCADE
+            )
+            """,
+            
+            # =============================================
+            # CONVERSATION & CHAT TABLES
+            # =============================================
+            
             # Conversations table
             """
             CREATE TABLE IF NOT EXISTS conversations (
@@ -177,6 +298,23 @@ class TursoClient:
             )
             """,
             
+            # Message sources - links messages to source chunks
+            """
+            CREATE TABLE IF NOT EXISTS message_sources (
+                id TEXT PRIMARY KEY,
+                message_id TEXT NOT NULL,
+                chunk_id TEXT NOT NULL,
+                relevance_score REAL,
+                rank INTEGER,
+                FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+                FOREIGN KEY (chunk_id) REFERENCES document_chunks(id) ON DELETE CASCADE
+            )
+            """,
+            
+            # =============================================
+            # ANALYTICS & METRICS TABLES
+            # =============================================
+            
             # Usage metrics table
             """
             CREATE TABLE IF NOT EXISTS usage_metrics (
@@ -191,11 +329,37 @@ class TursoClient:
             )
             """,
             
-            # Create indexes
+            # Search analytics
+            """
+            CREATE TABLE IF NOT EXISTS search_analytics (
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                query TEXT NOT NULL,
+                query_embedding_id TEXT,
+                results_count INTEGER,
+                top_result_score REAL,
+                response_time_ms INTEGER,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+            )
+            """,
+            
+            # =============================================
+            # INDEXES FOR PERFORMANCE
+            # =============================================
+            
             "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)",
             "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(document_type)",
+            "CREATE INDEX IF NOT EXISTS idx_documents_year ON documents(year)",
+            "CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(hash)",
+            "CREATE INDEX IF NOT EXISTS idx_chunks_document ON document_chunks(document_id)",
+            "CREATE INDEX IF NOT EXISTS idx_chunks_section ON document_chunks(section_id)",
+            "CREATE INDEX IF NOT EXISTS idx_embeddings_chunk ON embeddings(chunk_id)",
+            "CREATE INDEX IF NOT EXISTS idx_sections_document ON document_sections(document_id)",
             "CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id)",
+            "CREATE INDEX IF NOT EXISTS idx_sources_message ON message_sources(message_id)",
         ]
         
         try:

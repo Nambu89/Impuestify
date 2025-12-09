@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MessageSquare, Shield, FileText, ArrowRight, CheckCircle } from 'lucide-react'
+import { MessageSquare, Shield, FileText, ArrowRight } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
 import './Home.css'
@@ -86,6 +86,24 @@ export default function Home() {
                             <h3>Seguro y Privado</h3>
                             <p>Tus datos están protegidos. No almacenamos información personal sensible.</p>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* About TaxIA Section */}
+            <section className="about">
+                <div className="container">
+                    <h2 className="section-title">Sobre TaxIA</h2>
+                    <div className="about-content">
+                        <p>
+                            TaxIA utiliza tecnología <strong>RAG (Retrieval-Augmented Generation)</strong> para
+                            proporcionar respuestas precisas basadas en documentación oficial de la AEAT.
+                        </p>
+                        <p>
+                            Nuestro sistema combina inteligencia artificial avanzada con una base de conocimiento
+                            actualizada de normativa tributaria española, garantizando respuestas fiables y
+                            contextualizadas a tus consultas fiscales.
+                        </p>
                     </div>
                 </div>
             </section>

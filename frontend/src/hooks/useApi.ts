@@ -66,6 +66,7 @@ export interface AskResponse {
     metadata: Record<string, any>
     processing_time: number
     cached: boolean
+    conversation_id?: string  // NEW
 }
 
 export interface StatsResponse {
@@ -79,26 +80,25 @@ export interface StatsResponse {
 }
 
 export function useApi() {
-    const askQuestion = async (question: string, k?: number): Promise<AskResponse> => {
+    const askQuestion = async (question: string, conversationId?: string, k?: number): Promise<AskResponse> => {
         try {
-            const response = await api.post('/ask', {
+            const response = await api.post('/api/ask', {
                 question,
+                conversation_id: conversationId,
                 k,
                 enable_cache: true
             })
             return response.data
         } catch (error: any) {
-            const message = error.response?.data?.detail || error.message || 'Error de conexión'
-            throw new Error(message)
-        }
-    }
+            // Auto-logout on 401
+            if (error.response?.status === 401) {
+                localStorage.removeItem('access_token')
+                localStorage.removeItem('refresh_token')
+                window.location.href = '/login?expired=true'
+                throw new Error('Tu sesión ha expirado. Redirigiendo al login...')
+            }
 
-    const getStats = async (): Promise<StatsResponse> => {
-        try {
-            const response = await api.get('/stats')
-            return response.data
-        } catch (error: any) {
-            const message = error.response?.data?.detail || error.message
+            const message = error.response?.data?.detail || error.message || 'Error de conexión'
             throw new Error(message)
         }
     }
@@ -112,9 +112,45 @@ export function useApi() {
         }
     }
 
+    const apiRequest = async <T = any>(url: string, options?: RequestInit): Promise<T> => {
+        try {
+            const token = localStorage.getItem('access_token')
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token && { Authorization: `Bearer ${token}` }),
+                ...options?.headers
+            }
+
+            const response = await fetch(url, {
+                ...options,
+                headers
+            })
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem('access_token')
+                    localStorage.removeItem('refresh_token')
+                    window.location.href = '/login?expired=true'
+                    throw new Error('Tu sesión ha expirado')
+                }
+                const error = await response.json()
+                throw new Error(error.detail || 'Request failed')
+            }
+
+            // Handle 204 No Content
+            if (response.status === 204) {
+                return null as T
+            }
+
+            return await response.json()
+        } catch (error: any) {
+            throw new Error(error.message || 'Error de conexión')
+        }
+    }
+
     return {
         askQuestion,
-        getStats,
-        getHealth
+        getHealth,
+        apiRequest
     }
 }

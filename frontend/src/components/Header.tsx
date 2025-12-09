@@ -19,7 +19,9 @@ export default function Header() {
                         {isAuthenticated ? (
                             <>
                                 <Link to="/chat" className="nav-link">Chat</Link>
-                                <Link to="/dashboard" className="nav-link">Dashboard</Link>
+                                {user?.is_admin && (
+                                    <Link to="/dashboard" className="nav-link">Dashboard</Link>
+                                )}
                                 <div className="user-menu">
                                     <span className="user-name">{user?.name || user?.email}</span>
                                     <button onClick={logout} className="btn btn-ghost">

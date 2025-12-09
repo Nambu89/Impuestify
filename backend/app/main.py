@@ -1,4 +1,11 @@
 import sys, os
+
+# Load .env from project root FIRST (before any other imports)
+from dotenv import load_dotenv
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+env_path = os.path.join(PROJECT_ROOT, ".env")
+load_dotenv(env_path)
+
 sys.path.append(os.path.abspath("src"))
 
 import time
@@ -15,14 +22,15 @@ from slowapi.errors import RateLimitExceeded
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from .config import settings
-from rag_engine import rag_engine, RAGEngine
-from taxia_guardrails import guardrails_system
 
-# New security imports
+# Security imports
 from app.security.rate_limiter import limiter, rate_limit_exceeded_handler
 from app.security.prompt_injection import prompt_injection_filter
 from app.security.pii_detector import pii_detector
 from app.routers.auth import router as auth_router
+from app.routers.chat import router as chat_router
+from app.routers.notifications import router as notifications_router
+from app.routers.conversations import router as conversations_router
 from app.database.turso_client import get_db_client
 
 # Configurar logging estructurado
@@ -92,39 +100,179 @@ class RebuildRequest(BaseModel):
 
 # === Lifecycle de la aplicación ===
 
+# Conexiones globales
+db_client = None
+upstash_client = None
+http_client_manager = None
+rag_engine = None
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 	"""Gestión del ciclo de vida de la aplicación"""
-	# Startup
-	logger.info("Iniciando TaxIA...")
+	global db_client, upstash_client, http_client_manager
 	
+	# Startup
+	print("=" * 80)
+	print("🚀 INICIANDO TaxIA...")
+	print("=" * 80)
+	
+	logger.info("=" * 80)
+	logger.info("🚀 INICIANDO TaxIA...")
+	logger.info("=" * 80)
+	
+	# 0. Inicializar HTTP Client Pool (para todas las conexiones HTTP)
+	print("🌐 Inicializando HTTP Client Pool...")
+	logger.info("🌐 Inicializando HTTP Client Pool...")
 	try:
-		# Inicializar motor RAG
-		rag_engine.initialize()
+		from app.core.http_client import HTTPClientManager
+		http_client_manager = HTTPClientManager()
+		await http_client_manager.initialize()
 		
-		logger.info("TaxIA iniciado correctamente", 
-					chunks=len(rag_engine.df) if rag_engine.df is not None else 0,
-					embedding_model=settings.embedding_model)
+		# Log pool stats
+		stats = http_client_manager.get_pool_stats()
+		print(f"✅ HTTP Pool: max={stats.get('max_connections')}, keepalive={stats.get('max_keepalive_connections')}, timeout={stats.get('timeout')}")
+		logger.info(
+			"✅ HTTP Pool configurado",
+			max_connections=stats.get("max_connections"),
+			max_keepalive=stats.get("max_keepalive_connections"),
+			timeout=stats.get("timeout")
+		)
+	except Exception as e:
+		print(f"❌ Error HTTP Pool: {e}")
+		logger.error("❌ Error inicializando HTTP Pool", error=str(e))
+		raise
+	
+	# 1. Conexión a Turso Database
+	logger.info("📡 Conectando a Turso Database...")
+	try:
+		from app.database.turso_client import TursoClient
+		db_client = TursoClient()
+		await db_client.connect()
+		
+		# Verificar conexión contando documentos
+		result = await db_client.execute("SELECT COUNT(*) as cnt FROM documents")
+		doc_count = result.rows[0]['cnt'] if result.rows else 0
+		
+		result = await db_client.execute("SELECT COUNT(*) as cnt FROM document_chunks")
+		chunk_count = result.rows[0]['cnt'] if result.rows else 0
+		
+		result = await db_client.execute("SELECT COUNT(*) as cnt FROM embeddings")
+		embedding_count = result.rows[0]['cnt'] if result.rows else 0
+		
+		logger.info(
+			"✅ Turso Database conectada", 
+			documents=doc_count, 
+			chunks=chunk_count, 
+			embeddings=embedding_count
+		)
 		
 	except Exception as e:
-		logger.error("Error durante el inicio", error=str(e))
-		raise
+		logger.error("❌ Error conectando a Turso", error=str(e))
+		logger.warning("⚠️  TaxIA funcionará sin base de datos RAG")
+		db_client = None
+	
+	# 2. Conexión a Upstash Redis (caché)
+	print("📦 Conectando a Upstash Redis (caché)...")
+	logger.info("📦 Conectando a Upstash Redis (caché)...")
+	try:
+		upstash_url = os.environ.get("UPSTASH_REDIS_REST_URL")
+		upstash_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+		
+		if upstash_url and upstash_token:
+			# Use async client from upstash_redis.asyncio
+			from upstash_redis.asyncio import Redis as AsyncRedis
+			upstash_client = AsyncRedis(url=upstash_url, token=upstash_token)
+			# Verificar conexión
+			pong = await upstash_client.ping()
+			print(f"✅ Upstash Redis conectado: {pong}")
+			logger.info("✅ Upstash Redis conectado", response=pong)
+		else:
+			print("⚠️  Upstash Redis no configurado - caché deshabilitada")
+			logger.warning("⚠️  Upstash Redis no configurado - caché deshabilitada")
+			upstash_client = None
+			
+	except ImportError as ie:
+		print(f"⚠️  upstash-redis no instalado: {ie}")
+		logger.warning("⚠️  upstash-redis no instalado - pip install upstash-redis")
+		upstash_client = None
+	except Exception as e:
+		print(f"⚠️  Error conectando a Upstash: {e}")
+		logger.warning("⚠️  Error conectando a Upstash", error=str(e))
+		upstash_client = None
+	
+	# 3. Verificar Azure OpenAI
+	print("🤖 Verificando Azure OpenAI (AI Foundry)...")
+	logger.info("🤖 Verificando Azure OpenAI...")
+	azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
+	azure_key = os.environ.get("AZURE_OPENAI_API_KEY")
+	azure_deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT")
+	azure_version = os.environ.get("AZURE_OPENAI_API_VERSION")
+	
+	if azure_endpoint and azure_key and azure_deployment and azure_version:
+		print(f"✅ Azure OpenAI: deployment={azure_deployment}, version={azure_version}")
+		logger.info(
+			"✅ Azure OpenAI configurado", 
+			deployment=azure_deployment,
+			api_version=azure_version,
+			endpoint=azure_endpoint[:50] + "..." if len(azure_endpoint) > 50 else azure_endpoint
+		)
+	else:
+		missing = []
+		if not azure_endpoint: missing.append("AZURE_OPENAI_ENDPOINT")
+		if not azure_key: missing.append("AZURE_OPENAI_API_KEY")
+		if not azure_deployment: missing.append("AZURE_OPENAI_DEPLOYMENT")
+		if not azure_version: missing.append("AZURE_OPENAI_API_VERSION")
+		print(f"❌ Azure OpenAI incompleto: faltan {missing}")
+		logger.error("❌ Azure OpenAI incompleto", missing=missing)
+	
+	logger.info("=" * 80)
+	logger.info("✅ TaxIA INICIADO CORRECTAMENTE")
+	logger.info("=" * 80)
+	
+	# Store in app state for access in routes
+	app.state.db_client = db_client
+	app.state.upstash_client = upstash_client
+	app.state.http_client = http_client_manager
 	
 	yield
 	
 	# Shutdown
-	logger.info("Cerrando TaxIA...")
+	print("=" * 80)
+	print("🛑 CERRANDO TaxIA...")
+	print("=" * 80)
+	
+	logger.info("=" * 80)
+	logger.info("🛑 CERRANDO TaxIA...")
+	logger.info("=" * 80)
 	
 	try:
-		# Guardar cachés
-		if rag_engine.cache_manager:
-			rag_engine.cache_manager.save_all_caches()
-			logger.info("Cachés guardados correctamente")
+		# Close Turso connection
+		if db_client:
+			await db_client.disconnect()
+			print("🔌 Turso Database desconectada")
+			logger.info("🔌 Turso Database desconectada")
 		
+		# Close Upstash connection (if needed)
+		if upstash_client:
+			# Upstash REST client doesn't need explicit close
+			print("🔌 Upstash Redis cerrado")
+			logger.info("🔌 Upstash Redis cerrado")
+		
+		# Close HTTP client pool
+		if http_client_manager:
+			await http_client_manager.close()
+			
 	except Exception as e:
-		logger.error("Error durante el cierre", error=str(e))
+		print(f"❌ Error durante el cierre: {e}")
+		logger.error("❌ Error durante el cierre", error=str(e))
 	
-	logger.info("TaxIA cerrado correctamente")
+	print("=" * 80)
+	print("👋 TaxIA CERRADO CORRECTAMENTE")
+	print("=" * 80)
+	
+	logger.info("=" * 80)
+	logger.info("👋 TaxIA CERRADO CORRECTAMENTE")
+	logger.info("=" * 80)
 
 
 # === Crear aplicación FastAPI ===
@@ -152,8 +300,11 @@ app.add_middleware(
 	allow_headers=["*"],
 )
 
-# Include auth router
+# Include routers
 app.include_router(auth_router)
+app.include_router(chat_router)
+app.include_router(notifications_router, prefix="/api")
+app.include_router(conversations_router)
 
 # Prometheus instrumentation
 instrumentator = Instrumentator()
@@ -164,12 +315,24 @@ instrumentator.instrument(app).expose(app, endpoint="/metrics")
 
 async def get_rag_engine():
 	"""Dependencia para obtener el motor RAG inicializado"""
-	if not rag_engine.is_initialized:
-		raise HTTPException(
-			status_code=503, 
-			detail="Motor RAG no inicializado. Consulta /health para más información."
-		)
-	return rag_engine
+	# Si el legacy rag_engine está disponible e inicializado, usarlo
+	if rag_engine is not None and hasattr(rag_engine, 'is_initialized') and rag_engine.is_initialized:
+		return rag_engine
+	
+	# Si no, indicar que el sistema está usando Turso RAG
+	raise HTTPException(
+		status_code=503, 
+		detail="Motor RAG legacy no disponible. Usa los endpoints /api/ask con sistema Turso."
+	)
+
+async def get_database(request: Request):
+	"""Dependencia para obtener el cliente de base de datos Turso"""
+	if hasattr(request.app.state, 'db_client') and request.app.state.db_client:
+		return request.app.state.db_client
+	raise HTTPException(
+		status_code=503,
+		detail="Base de datos Turso no conectada. Revisa la configuración."
+	)
 
 
 # === Rutas principales ===
@@ -247,91 +410,48 @@ async def root():
 	return HTMLResponse(content=html_content, status_code=200)
 
 
-@app.post("/ask", response_model=TaxIAResponse)
-async def ask_question(
-	request: QuestionRequest,
-	background_tasks: BackgroundTasks,
-	rag: RAGEngine = Depends(get_rag_engine)
-):
-	"""
-	Hace una consulta fiscal a TaxIA
-	
-	- **question**: La pregunta sobre fiscalidad española
-	- **k**: Número de documentos a recuperar (opcional, por defecto desde config)
-	- **enable_cache**: Usar caché de respuestas (opcional, por defecto True)
-	"""
-	start_time = time.time()
-	
-	try:
-		logger.info("Nueva consulta recibida", 
-					question=request.question[:100] + "..." if len(request.question) > 100 else request.question,
-					k=request.k)
-		
-		# Generar respuesta
-		result = rag.generate_response(
-			query=request.question,
-			k=request.k or settings.retrieval_k
-		)
-		
-		processing_time = time.time() - start_time
-		
-		# Formatear fuentes
-		sources = [
-			Source(**source_data) for source_data in result["sources"]
-		]
-		
-		# Preparar metadatos
-		metadata = {
-			"retrieval_time": result.get("retrieval_time", 0),
-			"rerank_time": result.get("rerank_time", 0),
-			"similarity_scores": result.get("similarity_scores", []),
-			"rerank_scores": result.get("rerank_scores", []),
-			"model_used": settings.openai_model,
-			"embedding_model": settings.embedding_model,
-			"k_retrieved": len(sources)
-		}
-		
-		response = TaxIAResponse(
-			answer=result["answer"],
-			sources=sources,
-			metadata=metadata,
-			processing_time=processing_time,
-			cached=result.get("cached", False),
-			guardrails_violations=result.get("guardrails_violations", [])
-		)
-		
-		# Log de respuesta (en background)
-		background_tasks.add_task(
-			log_interaction,
-			question=request.question,
-			response_length=len(result["answer"]),
-			processing_time=processing_time,
-			cached=result.get("cached", False),
-			violations=result.get("guardrails_violations", [])
-		)
-		
-		return response
-		
-	except Exception as e:
-		logger.error("Error procesando consulta", error=str(e), question=request.question)
-		raise HTTPException(status_code=500, detail=f"Error procesando consulta: {str(e)}")
+
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health_check():
+async def health_check(request: Request):
 	"""
 	Verifica el estado de salud del sistema
 	"""
 	try:
 		statistics = None
+		rag_initialized = False
 		
-		if rag_engine.is_initialized:
-			statistics = rag_engine.get_statistics()
+		# Verificar conexión a Turso
+		db = getattr(request.app.state, 'db_client', None)
+		if db:
+			try:
+				result = await db.execute("SELECT COUNT(*) as cnt FROM embeddings")
+				embedding_count = result.rows[0]['cnt'] if result.rows else 0
+				
+				result = await db.execute("SELECT COUNT(*) as cnt FROM documents")  
+				doc_count = result.rows[0]['cnt'] if result.rows else 0
+				
+				statistics = {
+					"database": "turso",
+					"documents": doc_count,
+					"embeddings": embedding_count,
+					"status": "connected"
+				}
+				rag_initialized = embedding_count > 0
+			except Exception as e:
+				statistics = {"database": "turso", "status": "error", "error": str(e)}
+		else:
+			statistics = {"database": "turso", "status": "not_connected"}
+		
+		# Verificar si legacy rag_engine está disponible
+		if rag_engine is not None and hasattr(rag_engine, 'is_initialized') and rag_engine.is_initialized:
+			statistics["legacy_rag"] = "available"
 		
 		return HealthResponse(
-			status="healthy" if rag_engine.is_initialized else "initializing",
+			status="healthy" if rag_initialized else "initializing",
 			timestamp=time.time(),
-			rag_initialized=rag_engine.is_initialized,
+			rag_initialized=rag_initialized,
 			statistics=statistics
 		)
 		
@@ -340,88 +460,13 @@ async def health_check():
 		raise HTTPException(status_code=503, detail=f"Error en health check: {str(e)}")
 
 
-@app.get("/stats")
-async def get_statistics(rag: RAGEngine = Depends(get_rag_engine)):
-	"""
-	Obtiene estadísticas detalladas del motor RAG
-	"""
-	try:
-		return rag.get_statistics()
-		
-	except Exception as e:
-		logger.error("Error obteniendo estadísticas", error=str(e))
-		raise HTTPException(status_code=500, detail=f"Error obteniendo estadísticas: {str(e)}")
 
 
-@app.post("/admin/rebuild")
-async def rebuild_index(
-	request: RebuildRequest,
-	background_tasks: BackgroundTasks,
-	api_key: str = Query(..., description="API key de administración")
-):
-	"""
-	Reconstruye el índice RAG (solo para administradores)
-	
-	Requiere API key de administración en query parameter.
-	"""
-	# Verificación simple de API key (mejorar en producción)
-	if api_key != os.getenv("ADMIN_API_KEY", "admin123"):
-		raise HTTPException(status_code=403, detail="API key de administración inválida")
-	
-	try:
-		logger.info("Iniciando reconstrucción de índice", 
-					pdf_dir=request.pdf_dir, 
-					force=request.force)
-		
-		# Reconstruir en background
-		background_tasks.add_task(
-			rebuild_index_task, 
-			pdf_dir=request.pdf_dir or settings.pdf_dir
-		)
-		
-		return {
-			"message": "Reconstrucción de índice iniciada en background",
-			"pdf_dir": request.pdf_dir or settings.pdf_dir,
-			"status": "iniciado"
-		}
-		
-	except Exception as e:
-		logger.error("Error iniciando reconstrucción", error=str(e))
-		raise HTTPException(status_code=500, detail=f"Error iniciando reconstrucción: {str(e)}")
 
 
-@app.get("/admin/cache/clear")
-async def clear_cache(api_key: str = Query(..., description="API key de administración")):
-	"""
-	Limpia los cachés del sistema (solo para administradores)
-	"""
-	if api_key != os.getenv("ADMIN_API_KEY", "admin123"):
-		raise HTTPException(status_code=403, detail="API key de administración inválida")
-	
-	try:
-		if rag_engine.cache_manager:
-			embeddings_count = len(rag_engine.cache_manager.embeddings_cache)
-			responses_count = len(rag_engine.cache_manager.responses_cache)
-			
-			rag_engine.cache_manager.embeddings_cache.clear()
-			rag_engine.cache_manager.responses_cache.clear()
-			rag_engine.cache_manager.save_all_caches()
-			
-			logger.info("Cachés limpiados", 
-						embeddings_cleared=embeddings_count,
-						responses_cleared=responses_count)
-			
-			return {
-				"message": "Cachés limpiados correctamente",
-				"embeddings_cleared": embeddings_count,
-				"responses_cleared": responses_count
-			}
-		else:
-			return {"message": "Cache manager no inicializado"}
-			
-	except Exception as e:
-		logger.error("Error limpiando cachés", error=str(e))
-		raise HTTPException(status_code=500, detail=f"Error limpiando cachés: {str(e)}")
+
+
+
 
 
 @app.get("/test/guardrails")
@@ -475,15 +520,7 @@ async def log_interaction(
 				violations=violations[:3] if violations else [])  # Solo las primeras 3 violaciones
 
 
-async def rebuild_index_task(pdf_dir: str):
-	"""Tarea de reconstrucción de índice en background"""
-	try:
-		logger.info("Iniciando reconstrucción de índice en background", pdf_dir=pdf_dir)
-		rag_engine.rebuild_index(pdf_dir)
-		logger.info("Reconstrucción de índice completada")
-		
-	except Exception as e:
-		logger.error("Error en reconstrucción de índice", error=str(e))
+
 
 
 # === Manejo de errores globales ===
@@ -494,7 +531,10 @@ async def http_exception_handler(request, exc):
 					path=request.url.path,
 					status_code=exc.status_code,
 					detail=exc.detail)
-	return {"error": exc.detail, "status_code": exc.status_code}
+	return JSONResponse(
+		status_code=exc.status_code,
+		content={"error": exc.detail, "status_code": exc.status_code}
+	)
 
 
 @app.exception_handler(Exception)
@@ -503,7 +543,10 @@ async def general_exception_handler(request, exc):
 					path=request.url.path,
 					error=str(exc),
 					type=type(exc).__name__)
-	return {"error": "Error interno del servidor", "status_code": 500}
+	return JSONResponse(
+		status_code=500,
+		content={"error": "Error interno del servidor", "details": str(exc)}
+	)
 
 
 # === Middleware de logging ===

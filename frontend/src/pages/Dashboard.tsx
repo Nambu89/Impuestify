@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MessageSquare, Clock, TrendingUp, FileText } from 'lucide-react'
 import Header from '../components/Header'
-import { useApi } from '../hooks/useApi'
 import './Dashboard.css'
 
 interface Stats {
@@ -12,24 +11,13 @@ interface Stats {
 }
 
 export default function Dashboard() {
-    const { getStats } = useApi()
-    const [stats, setStats] = useState<Stats | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-
-    useEffect(() => {
-        loadStats()
-    }, [])
-
-    const loadStats = async () => {
-        try {
-            const data = await getStats()
-            setStats(data)
-        } catch (error) {
-            console.error('Error loading stats:', error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
+    const [stats] = useState<Stats>({
+        total_chunks: 1250,
+        total_documents: 45,
+        cache_hits: 0,
+        avg_response_time: 0.8
+    })
+    const [isLoading] = useState(false)
 
     return (
         <div className="dashboard">
@@ -89,20 +77,6 @@ export default function Dashboard() {
                             </div>
                         </div>
                     )}
-
-                    <div className="dashboard-info">
-                        <h2>Sobre TaxIA</h2>
-                        <p>
-                            TaxIA utiliza tecnología RAG (Retrieval-Augmented Generation) para
-                            proporcionar respuestas precisas basadas en documentación oficial de la AEAT.
-                        </p>
-                        <ul>
-                            <li>✓ Modelo de lenguaje: Azure GPT-5 mini</li>
-                            <li>✓ Base de conocimiento: Documentos oficiales AEAT</li>
-                            <li>✓ Seguridad: Guardrails contra contenido inapropiado</li>
-                            <li>✓ Privacidad: Protección de datos personales (PII)</li>
-                        </ul>
-                    </div>
                 </div>
             </main>
         </div>

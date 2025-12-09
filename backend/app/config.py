@@ -21,18 +21,18 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("AZURE_OPENAI_ENDPOINT")
     )
-    AZURE_OPENAI_DEPLOYMENT: str = Field(
-        default="gpt-5-mini",
+    AZURE_OPENAI_DEPLOYMENT: Optional[str] = Field(
+        default=None,
         validation_alias=AliasChoices("AZURE_OPENAI_DEPLOYMENT", "OPENAI_MODEL")
     )
-    AZURE_OPENAI_API_VERSION: str = Field(
-        default="2024-10-21",
+    AZURE_OPENAI_API_VERSION: Optional[str] = Field(
+        default=None,
         validation_alias=AliasChoices("AZURE_OPENAI_API_VERSION")
     )
     
     # Legacy OpenAI support (fallback)
     OPENAI_API_KEY: Optional[str] = Field(default=None)
-    OPENAI_MODEL: str = Field(default="gpt-4o-mini")
+    OPENAI_MODEL: Optional[str] = Field(default=None)
     
     # -------------------------------
     # 📄 Azure Document Intelligence
@@ -137,7 +137,7 @@ class Settings(BaseSettings):
     # ⚙️ Configuración de entorno
     # -------------------------------
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="../.env",  # .env is in project root, parent of backend
         env_file_encoding="utf-8",
         extra="ignore"
     )
