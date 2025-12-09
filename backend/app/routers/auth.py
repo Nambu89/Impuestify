@@ -103,7 +103,8 @@ async def register(request: Request, data: RegisterRequest):
 
 
 @router.post("/login", response_model=AuthResponse)
-@limiter.limit("5/minute")
+# TODO: Re-enable rate limiting once CORS is confirmed working
+# @limiter.limit("5/minute")
 async def login(request: Request, data: LoginRequest):
     """
     Login with email and password.
