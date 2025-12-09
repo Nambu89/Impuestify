@@ -154,8 +154,8 @@ Recuerda: Eres un asesor cercano y profesional, no un chatbot formal."""
                 response = await self._agent.run(user_message)
                 content = response.text or "" # AgentRunResponse has .text property
             elif self._fallback_client:
-                # Use fallback Azure OpenAI with function calling
-                from app.tools.irpf_calculator_tool import IRPF_CALCULATOR_TOOL, calculate_irpf_tool
+                # Use fallback OpenAI with function calling
+                from app.tools import ALL_TOOLS, TOOL_EXECUTORS
                 
                 messages = [
                     {"role": "system", "content": system_prompt or self.SYSTEM_PROMPT},
@@ -166,7 +166,7 @@ Recuerda: Eres un asesor cercano y profesional, no un chatbot formal."""
                 response = self._fallback_client.chat.completions.create(
                     model=self.model,
                     messages=messages,
-                    tools=[IRPF_CALCULATOR_TOOL] if use_tools else None,
+                    tools=ALL_TOOLS if use_tools else None,
                     tool_choice="auto" if use_tools else None,
                     temperature=1,
                     max_completion_tokens=4000
@@ -179,46 +179,44 @@ Recuerda: Eres un asesor cercano y profesional, no un chatbot formal."""
                 logger.info(f"Azure OpenAI response - content length: {len(message.content) if message.content else 0}")
                 
                 if message.tool_calls:
-                    # Model wants to use IRPF calculator
+                    import json
                     tool_call = message.tool_calls[0]
                     function_name = tool_call.function.name
+                    function_args = json.loads(tool_call.function.arguments)
                     
-                    logger.info(f"Tool called: {function_name}")
+                    logger.info(f"Tool called: {function_name} with args: {function_args}")
                     
-                    if function_name == "calculate_irpf":
-                        import json
-                        function_args = json.loads(tool_call.function.arguments)
-                        
-                        logger.info(f"Calculating IRPF with args: {function_args}")
-                        
-                        # Execute the tool
-                        tool_result = await calculate_irpf_tool(**function_args)
-                        
-                        logger.info(f"Tool result success: {tool_result.get('success')}")
-                        
-                        # Add assistant message and tool result to conversation
-                        messages.append({
-                            "role": "assistant",
-                            "content": None,
-                            "tool_calls": [tool_call.model_dump()]
-                        })
-                        messages.append({
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": json.dumps(tool_result)
-                        })
-                        
-                        # Second call to get final response
-                        final_response = self._fallback_client.chat.completions.create(
-                            model=self.model,
-                            messages=messages,
-                            temperature=1,
-                            max_completion_tokens=4000
-                        )
-                        content = final_response.choices[0].message.content or tool_result.get('formatted_response', '')
-                        logger.info(f"Final content length: {len(content)}")
+                    # Execute the appropriate tool dynamically
+                    if function_name in TOOL_EXECUTORS:
+                        tool_executor = TOOL_EXECUTORS[function_name]
+                        tool_result = await tool_executor(**function_args)
                     else:
-                        content = message.content or ""
+                        logger.warning(f"Unknown function: {function_name}")
+                        tool_result = {"success": False, "error": f"Unknown function: {function_name}"}
+                    
+                    logger.info(f"Tool result success: {tool_result.get('success')}")
+                    
+                    # Add assistant message and tool result to conversation
+                    messages.append({
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [tool_call.model_dump()]
+                    })
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": json.dumps(tool_result)
+                    })
+                    
+                    # Second call to get final response
+                    final_response = self._fallback_client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        temperature=1,
+                        max_completion_tokens=4000
+                    )
+                    content = final_response.choices[0].message.content or tool_result.get('formatted_response', '')
+                    logger.info(f"Final content length: {len(content)}")
                 else:
                     # No function call, use direct response
                     content = message.content or ""

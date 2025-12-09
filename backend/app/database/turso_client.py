@@ -62,7 +62,11 @@ class TursoClient:
                 self.url,
                 auth_token=self.auth_token
             )
-            logger.info("Connected to Turso database")
+            
+            # Enable foreign key constraints (disabled by default in SQLite/libSQL)
+            self._conn.execute("PRAGMA foreign_keys = ON")
+            
+            logger.info("Connected to Turso database (foreign keys enabled)")
         except Exception as e:
             logger.error(f"Failed to connect to Turso: {e}")
             raise
