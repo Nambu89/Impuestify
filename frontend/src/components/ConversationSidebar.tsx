@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { MessageSquare, Plus, Trash2, X } from 'lucide-react'
 import { useConversations } from '../hooks/useConversations'
 import './ConversationSidebar.css'
 
@@ -7,12 +7,16 @@ interface ConversationSidebarProps {
     activeConversationId: string | null
     onSelectConversation: (conversationId: string) => void
     onNewConversation: () => void
+    isOpen?: boolean // ✅ NUEVO: Controla si está abierto en móvil
+    onClose?: () => void // ✅ NUEVO: Función para cerrar
 }
 
 export function ConversationSidebar({
     activeConversationId,
     onSelectConversation,
-    onNewConversation
+    onNewConversation,
+    isOpen = false, // ✅ NUEVO: Default false
+    onClose
 }: ConversationSidebarProps) {
     const {
         conversations,
@@ -60,52 +64,78 @@ export function ConversationSidebar({
     }
 
     return (
-        <div className="conversation-sidebar">
-            <div className="sidebar-header">
-                <h2>Conversaciones</h2>
-                <button
-                    className="new-chat-btn"
-                    onClick={onNewConversation}
-                    title="Nueva conversación"
-                >
-                    <Plus size={20} />
-                </button>
-            </div>
-
-            <div className="conversations-list">
-                {loading && conversations.length === 0 ? (
-                    <div className="loading-state">Cargando...</div>
-                ) : conversations.length === 0 ? (
-                    <div className="empty-state">
-                        <MessageSquare size={48} opacity={0.3} />
-                        <p>No hay conversaciones</p>
-                        <p className="hint">Haz una pregunta para empezar</p>
-                    </div>
-                ) : (
-                    conversations.map((conv) => (
-                        <div
-                            key={conv.id}
-                            className={`conversation-item ${activeConversationId === conv.id ? 'active' : ''}`}
-                            onClick={() => onSelectConversation(conv.id)}
+        <>
+            {/* ✅ NUEVO: Clase mobile-open cuando isOpen es true */}
+            <div className={`conversation-sidebar ${isOpen ? 'mobile-open' : ''}`}>
+                <div className="sidebar-header">
+                    <h2>Conversaciones</h2>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                            className="new-chat-btn"
+                            onClick={onNewConversation}
+                            title="Nueva conversación"
                         >
-                            <div className="conversation-content">
-                                <MessageSquare size={16} />
-                                <div className="conversation-info">
-                                    <div className="conversation-title">{conv.title}</div>
-                                    <div className="conversation-date">{formatDate(conv.updated_at)}</div>
-                                </div>
-                            </div>
+                            <Plus size={20} />
+                        </button>
+                        {/* ✅ NUEVO: Botón cerrar solo en móvil */}
+                        {onClose && (
                             <button
-                                className="delete-btn"
-                                onClick={(e) => handleDelete(e, conv.id)}
-                                title="Eliminar conversación"
+                                className="close-sidebar-btn"
+                                onClick={onClose}
+                                title="Cerrar"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: '8px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#666',
+                                    borderRadius: '8px'
+                                }}
                             >
-                                <Trash2 size={14} />
+                                <X size={20} />
                             </button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="conversations-list">
+                    {loading && conversations.length === 0 ? (
+                        <div className="loading-state">Cargando...</div>
+                    ) : conversations.length === 0 ? (
+                        <div className="empty-state">
+                            <MessageSquare size={48} opacity={0.3} />
+                            <p>No hay conversaciones</p>
+                            <p className="hint">Haz una pregunta para empezar</p>
                         </div>
-                    ))
-                )}
+                    ) : (
+                        conversations.map((conv) => (
+                            <div
+                                key={conv.id}
+                                className={`conversation-item ${activeConversationId === conv.id ? 'active' : ''}`}
+                                onClick={() => onSelectConversation(conv.id)}
+                            >
+                                <div className="conversation-content">
+                                    <MessageSquare size={16} />
+                                    <div className="conversation-info">
+                                        <div className="conversation-title">{conv.title}</div>
+                                        <div className="conversation-date">{formatDate(conv.updated_at)}</div>
+                                    </div>
+                                </div>
+                                <button
+                                    className="delete-btn"
+                                    onClick={(e) => handleDelete(e, conv.id)}
+                                    title="Eliminar conversación"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     )
 }

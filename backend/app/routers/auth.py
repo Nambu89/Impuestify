@@ -60,7 +60,6 @@ class AuthResponse(BaseModel):
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
 async def register(request: Request, data: RegisterRequest):
     """
     Register a new user.

@@ -23,13 +23,14 @@ interface Message {
 
 export default function Chat() {
     const { askQuestion } = useApi()
-    const { getConversation, fetchConversations } = useConversations()
+    const { getConversation } = useConversations()
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [showNotificationModal, setShowNotificationModal] = useState(false)
     const [notificationAnalysis, setNotificationAnalysis] = useState<any>(null)
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
+    const [sidebarOpen, setSidebarOpen] = useState(false) // ✅ NUEVO: Estado del sidebar
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     const scrollToBottom = () => {
@@ -43,7 +44,6 @@ export default function Chat() {
     const handleSelectConversation = async (conversationId: string) => {
         try {
             const data = await getConversation(conversationId)
-            // Convert backend messages to frontend format
             const formattedMessages: Message[] = data.messages.map(msg => ({
                 id: msg.id,
                 role: msg.role as 'user' | 'assistant',
@@ -53,6 +53,7 @@ export default function Chat() {
             setMessages(formattedMessages)
             setActiveConversationId(conversationId)
             setNotificationAnalysis(null)
+            setSidebarOpen(false) // ✅ NUEVO: Cerrar sidebar al seleccionar
         } catch (error) {
             console.error('Error loading conversation:', error)
         }
@@ -62,6 +63,7 @@ export default function Chat() {
         setMessages([])
         setActiveConversationId(null)
         setNotificationAnalysis(null)
+        setSidebarOpen(false) // ✅ NUEVO: Cerrar sidebar al crear nuevo
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -86,13 +88,11 @@ export default function Chat() {
         setIsLoading(true)
 
         try {
-            // Pass current conversation_id to backend (undefined if new conversation)
             const response = await askQuestion(
                 userMessage.content,
                 activeConversationId || undefined
             )
 
-            // Update messages with response
             setMessages(prev => prev.map(msg =>
                 msg.loading ? {
                     ...msg,
@@ -102,21 +102,11 @@ export default function Chat() {
                 } : msg
             ))
 
-            // ✅ FIX: Update conversation ID and refresh sidebar
+            // ✅ FIX: Solo actualizar el conversation_id
+            // El useEffect del ConversationSidebar se encargará del refresh
             if (response.conversation_id) {
                 console.log('📝 Conversation ID received:', response.conversation_id)
-
-                // If it's a NEW conversation (not the current one)
-                if (activeConversationId !== response.conversation_id) {
-                    console.log('✅ New conversation created, updating UI...')
-                    setActiveConversationId(response.conversation_id)
-
-                    // ✅ KEY FIX: Force refresh sidebar after state update
-                    setTimeout(() => {
-                        fetchConversations()
-                        console.log('🔄 Sidebar refreshed')
-                    }, 100)
-                }
+                setActiveConversationId(response.conversation_id)
             } else {
                 console.warn('⚠️ No conversation_id in response')
             }
@@ -136,13 +126,25 @@ export default function Chat() {
 
     return (
         <div className="chat-page">
-            <Header />
+            {/* ✅ NUEVO: Pasar función toggle al Header */}
+            <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
+            {/* ✅ NUEVO: Pasar props de sidebar open/close */}
             <ConversationSidebar
                 activeConversationId={activeConversationId}
                 onSelectConversation={handleSelectConversation}
                 onNewConversation={handleNewConversation}
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
             />
+
+            {/* ✅ NUEVO: Overlay para cerrar sidebar en móvil */}
+            {sidebarOpen && (
+                <div
+                    className="sidebar-overlay active"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
 
             <main className="chat-main">
                 <div className="chat-container">
@@ -252,7 +254,6 @@ export default function Chat() {
                 </p>
             </footer>
 
-            {/* Notification Modal */}
             {showNotificationModal && (
                 <div className="modal-overlay" onClick={() => setShowNotificationModal(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -267,7 +268,6 @@ export default function Chat() {
                         </div>
                         <NotificationUpload
                             onAnalysisComplete={(analysis) => {
-                                // Add analysis to chat as assistant message
                                 const analysisMessage: Message = {
                                     id: Date.now().toString(),
                                     role: 'assistant',
@@ -278,16 +278,9 @@ export default function Chat() {
                                 setNotificationAnalysis(analysis)
                                 setShowNotificationModal(false)
 
-                                // ✅ Set active conversation from notification analysis
                                 if (analysis.conversation_id) {
                                     console.log('📋 Notification conversation ID:', analysis.conversation_id)
                                     setActiveConversationId(analysis.conversation_id)
-
-                                    // ✅ Force refresh sidebar
-                                    setTimeout(() => {
-                                        fetchConversations()
-                                        console.log('🔄 Sidebar refreshed after notification')
-                                    }, 100)
                                 }
                             }}
                         />
@@ -295,7 +288,6 @@ export default function Chat() {
                 </div>
             )}
 
-            {/* Analysis Display */}
             {notificationAnalysis && !messages.some(m => m.content.includes('Análisis de Notificación')) && (
                 <div style={{
                     position: 'fixed',
