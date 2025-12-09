@@ -1,6 +1,6 @@
 # 🧾 TaxIA - Asistente Fiscal Inteligente
 
-TaxIA es un asistente fiscal especializado en normativa española que utiliza **RAG (Retrieval-Augmented Generation)** con **Azure AI** para proporcionar respuestas precisas, conversacionales y contextualizadas sobre temas fiscales.
+TaxIA es un asistente fiscal especializado en normativa española que utiliza **RAG (Retrieval-Augmented Generation)** con **OpenAI GPT-5-mini** para proporcionar respuestas precisas, conversacionales y contextualizadas sobre temas fiscales.
 
 ## ✨ Características Principales
 
@@ -53,8 +53,8 @@ TaxIA es un asistente fiscal especializado en normativa española que utiliza **
        │            │            │
        ↓            ↓            ↓
 ┌──────────┐  ┌──────────┐  ┌──────────┐
-│  Turso   │  │ Upstash  │  │  Azure   │
-│  (SQLite)│  │  Redis   │  │   AI     │
+│  Turso   │  │ Upstash  │  │  OpenAI  │
+│  (SQLite)│  │  Redis   │  │   API    │
 └──────────┘  └──────────┘  └──────────┘
 ```
 
@@ -64,7 +64,7 @@ TaxIA es un asistente fiscal especializado en normativa española que utiliza **
 - FastAPI (API REST)
 - Turso (Database - SQLite distribuido)
 - Upstash Redis (Cache)
-- Azure OpenAI (GPT-5 mini)
+- **OpenAI API (GPT-5-mini)**
 - Azure Document Intelligence (OCR)
 - FTS5 (Full-text search)
 
@@ -82,7 +82,8 @@ TaxIA es un asistente fiscal especializado en normativa española que utiliza **
 
 - Python 3.12+
 - Node.js 18+
-- Cuenta Azure (OpenAI + Document Intelligence)
+- **OpenAI API Key** (para LLM)
+- Azure Document Intelligence (para OCR de PDFs)
 - Cuenta Turso (Database)
 - Cuenta Upstash (Redis) - Opcional
 
@@ -105,13 +106,11 @@ pip install -r requirements.txt
 Crea `.env` en `/backend`:
 
 ```bash
-# Azure AI Foundry (LLM)
-AZURE_OPENAI_ENDPOINT=https://your-endpoint.cognitiveservices.azure.com/
-AZURE_OPENAI_API_KEY=your_api_key
-AZURE_OPENAI_DEPLOYMENT=gpt-5-mini
-AZURE_OPENAI_API_VERSION=2025-04-01-preview
+# OpenAI API (LLM)
+OPENAI_API_KEY=sk-proj-your-api-key-here
+OPENAI_MODEL=gpt-5-mini
 
-# Azure Document Intelligence
+# Azure Document Intelligence (PDF OCR)
 AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://your-endpoint.cognitiveservices.azure.com/
 AZURE_DOCUMENT_INTELLIGENCE_KEY=your_key
 
@@ -119,11 +118,11 @@ AZURE_DOCUMENT_INTELLIGENCE_KEY=your_key
 TURSO_DATABASE_URL=libsql://your-db.turso.io
 TURSO_AUTH_TOKEN=your_token
 
-# Upstash Redis (Opcional)
+# Upstash Redis (Opcional - para cache)
 UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your_token
 
-# JWT
+# JWT Authentication
 JWT_SECRET_KEY=your-secret-key-here
 JWT_ALGORITHM=HS256
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30

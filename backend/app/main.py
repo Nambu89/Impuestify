@@ -210,6 +210,7 @@ async def lifespan(app: FastAPI):
 	azure_version = os.environ.get("AZURE_OPENAI_API_VERSION")
 	
 	if azure_endpoint and azure_key and azure_deployment and azure_version:
+		# Verify required Azure AI Foundry credentials
 		print(f"✅ Azure OpenAI: deployment={azure_deployment}, version={azure_version}")
 		logger.info(
 			"✅ Azure OpenAI configurado", 
@@ -225,6 +226,17 @@ async def lifespan(app: FastAPI):
 		if not azure_version: missing.append("AZURE_OPENAI_API_VERSION")
 		print(f"❌ Azure OpenAI incompleto: faltan {missing}")
 		logger.error("❌ Azure OpenAI incompleto", missing=missing)
+
+	openai_key = os.environ.get("OPENAI_API_KEY")
+	openai_model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+	
+	# Check if OpenAI is configured
+	if openai_key:
+		logger.info(f"🤖 Verificando OpenAI...")
+		logger.info(f"✅ OpenAI: model={openai_model}")
+	else:
+		logger.warning("⚠️ OpenAI no configurado - algunos servicios no estarán disponibles")
+		logger.warning("Configura OPENAI_API_KEY en las variables de entorno")
 	
 	logger.info("=" * 80)
 	logger.info("✅ TaxIA INICIADO CORRECTAMENTE")
@@ -377,32 +389,6 @@ app.add_middleware(
 	allow_headers=["*"],
 	expose_headers=["*"]  # Expose headers for rate limit info
 )
-
-# === OPTIONS Bypass Middleware  (Added AFTER CORS = Executes BEFORE CORS) ===
-# FastAPI middleware stack executes in REVERSE order (LIFO)
-# This middleware is added AFTER CORS so it executes BEFORE CORS
-
-from starlette.middleware.base import BaseHTTPMiddleware
-
-class OPTIONSBypassMiddleware(BaseHTTPMiddleware):
-    """
-    Bypass middleware that intercepts OPTIONS requests BEFORE any rate limiting.
-    
-    This ensures CORS preflight is never blocked by SlowAPI or other security middlewares.
-    """
-    async def dispatch(self, request: Request, call_next):
-        if request.method == "OPTIONS":
-            # Let CORS middleware handle it
-            # But ensure we don't hit rate limiting or IP blocking
-            response = await call_next(request)
-            return response
-        
-        # For all other methods, continue normally
-        return await call_next(request)
-
-# Add OPTIONS bypass - this executes BEFORE CORS (added after = runs first)
-# This allows OPTIONS to pass through rate limiting
-app.add_middleware(OPTIONSBypassMiddleware)
 
 # Registrar routers
 app.include_router(auth_router)

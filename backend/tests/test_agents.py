@@ -141,10 +141,10 @@ class TestAgentFrameworkAvailability:
         assert isinstance(AGENT_FRAMEWORK_AVAILABLE, bool)
     
     def test_fallback_client_available(self):
-        """Fallback Azure OpenAI client should be available"""
-        from app.agents.tax_agent import AzureOpenAI
+        """Fallback OpenAI client should be available"""
+        from app.agents.tax_agent import OpenAI
         
-        assert AzureOpenAI is not None
+        assert OpenAI is not None
 
 
 class TestAgentIntegration:

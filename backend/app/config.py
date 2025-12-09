@@ -11,11 +11,23 @@ from pydantic import Field, AliasChoices, field_validator
 
 class Settings(BaseSettings):
     # -------------------------------
-    # 🔐 Azure AI Foundry (LLM)
+    # 🤖 OpenAI API (Primary LLM)
+    # -------------------------------
+    OPENAI_API_KEY: Optional[str] = Field(
+        default=None,
+        description="OpenAI API key"
+    )
+    OPENAI_MODEL: Optional[str] = Field(
+        default="gpt-5-mini",
+        description="OpenAI model to use (gpt-5-mini, gpt-5, gpt-4o, gpt-4o-mini, gpt-4, etc...)"
+    )
+    
+    # -------------------------------
+    # 🔐 Azure AI Foundry (Optional Fallback)
     # -------------------------------
     AZURE_OPENAI_API_KEY: Optional[str] = Field(
         default=None,
-        validation_alias=AliasChoices("AZURE_OPENAI_API_KEY", "OPENAI_API_KEY")
+        validation_alias=AliasChoices("AZURE_OPENAI_API_KEY")
     )
     AZURE_OPENAI_ENDPOINT: Optional[str] = Field(
         default=None,
@@ -23,16 +35,12 @@ class Settings(BaseSettings):
     )
     AZURE_OPENAI_DEPLOYMENT: Optional[str] = Field(
         default=None,
-        validation_alias=AliasChoices("AZURE_OPENAI_DEPLOYMENT", "OPENAI_MODEL")
+        validation_alias=AliasChoices("AZURE_OPENAI_DEPLOYMENT")
     )
     AZURE_OPENAI_API_VERSION: Optional[str] = Field(
         default=None,
         validation_alias=AliasChoices("AZURE_OPENAI_API_VERSION")
     )
-    
-    # Legacy OpenAI support (fallback)
-    OPENAI_API_KEY: Optional[str] = Field(default=None)
-    OPENAI_MODEL: Optional[str] = Field(default=None)
     
     # -------------------------------
     # 📄 Azure Document Intelligence
@@ -87,7 +95,7 @@ class Settings(BaseSettings):
     # -------------------------------
     # ⚙️ Parámetros de inferencia
     # -------------------------------
-    TEMPERATURE: float = Field(default=0.2)
+    TEMPERATURE: float = Field(default=1.0)
     MAX_TOKENS: int = Field(default=1200)
 
     # -------------------------------
@@ -146,7 +154,7 @@ class Settings(BaseSettings):
     # 🧹 Validadores
     # -------------------------------
     @field_validator(
-        "AZURE_OPENAI_API_KEY", "OPENAI_API_KEY", "JWT_SECRET_KEY", 
+        "OPENAI_API_KEY", "AZURE_OPENAI_API_KEY", "JWT_SECRET_KEY", 
         "ADMIN_API_KEY", "TURSO_AUTH_TOKEN", "UPSTASH_REDIS_REST_TOKEN",
         mode="before"
     )
@@ -172,6 +180,11 @@ class Settings(BaseSettings):
     def competitors_list(self) -> List[str]:
         """Get competitors as list"""
         return [c.strip() for c in self.COMPETITORS.split(",")]
+    
+    @property
+    def is_llm_configured(self) -> bool:
+        """Check if LLM (OpenAI or Azure) is configured"""
+        return bool(self.OPENAI_API_KEY or (self.AZURE_OPENAI_API_KEY and self.AZURE_OPENAI_ENDPOINT))
     
     @property
     def is_azure_configured(self) -> bool:

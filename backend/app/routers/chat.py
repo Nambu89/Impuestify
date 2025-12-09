@@ -549,7 +549,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
                 "search_method": "fts5",
                 "cached": context_hit,
                 "notification_analyzed": bool(notification_context),
-                "model": settings.AZURE_OPENAI_DEPLOYMENT,
+                "model": settings.OPENAI_MODEL,
                 "conversation_messages": len(conversation_history),
                 # Security metadata
                 "security": {

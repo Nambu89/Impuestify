@@ -21,7 +21,7 @@ except ImportError as e:
     AzureOpenAIChatClient = None
 
 # Fallback to direct Azure OpenAI
-from openai import AzureOpenAI
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -91,25 +91,19 @@ Recuerda: Eres un asesor cercano y profesional, no un chatbot formal."""
         self,
         name: str = "TaxAgent",
         model: Optional[str] = None,
-        api_key: Optional[str] = None,
-        endpoint: Optional[str] = None,
-        api_version: Optional[str] = None
+        api_key: Optional[str] = None
     ):
         """
         Initialize TaxAgent.
         
         Args:
             name: Agent name
-            model: Azure OpenAI deployment name
-            api_key: Azure OpenAI API key
-            endpoint: Azure OpenAI endpoint
-            api_version: API version
+            model: OpenAI model name (gpt-5-mini, gpt-5, gpt-4o, gpt-4o-mini, etc.)
+            api_key: OpenAI API key
         """
         self.name = name
-        self.model = model or os.environ.get("AZURE_OPENAI_DEPLOYMENT")
-        self.api_key = api_key or os.environ.get("AZURE_OPENAI_API_KEY")
-        self.endpoint = endpoint or os.environ.get("AZURE_OPENAI_ENDPOINT")
-        self.api_version = api_version or os.environ.get("AZURE_OPENAI_API_VERSION")
+        self.model = model or os.environ.get("OPENAI_MODEL", "gpt-5-mini")
+        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         
         self._agent = None
         self._fallback_client = None
@@ -120,44 +114,14 @@ Recuerda: Eres un asesor cercano y profesional, no un chatbot formal."""
         self._initialize()
     
     def _initialize(self):
-        """Initialize the agent with Microsoft Agent Framework or fallback."""
-        # Force fallback for function calling support  
-        if False and AGENT_FRAMEWORK_AVAILABLE and self.api_key and self.endpoint:
-            try:
-                # Configure Azure OpenAI Chat Client
-                # Note: deployment_name maps to 'model' in standard terms
-                model_client = AzureOpenAIChatClient(
-                    deployment_name=self.model,
-                    api_key=self.api_key,
-                    endpoint=self.endpoint,
-                    api_version=self.api_version or "2024-02-15-preview"
-                )
-                
-                # Create agent with configuration
-                # Using ChatAgent as verified in package analysis
-                self._agent = ChatAgent(
-                    name=self.name,
-                    chat_client=model_client,
-                    instructions=self.SYSTEM_PROMPT
-                    # Config/Tools can be added via kwargs if needed
-                )
-                
-                logger.info(f"TaxAgent '{self.name}' initialized with Microsoft Agent Framework (ChatAgent)")
-                return
-                
-            except Exception as e:
-                logger.warning(f"Agent Framework initialization failed: {e}, using fallback")
-        
-        # Fallback to direct Azure OpenAI client
-        if self.api_key and self.endpoint:
-            self._fallback_client = AzureOpenAI(
-                api_key=self.api_key,
-                api_version=self.api_version,
-                azure_endpoint=self.endpoint
+        """Initialize the agent with OpenAI client."""
+        if self.api_key:
+            self._fallback_client = OpenAI(
+                api_key=self.api_key
             )
-            logger.info(f"TaxAgent '{self.name}' initialized with Azure OpenAI fallback")
+            logger.info(f"TaxAgent '{self.name}' initialized with OpenAI (model: {self.model})")
         else:
-            logger.warning("TaxAgent not fully configured - missing Azure credentials")
+            logger.warning("TaxAgent not fully configured - missing OpenAI API key")
     
     async def run(
         self,
