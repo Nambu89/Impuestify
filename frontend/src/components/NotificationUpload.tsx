@@ -91,7 +91,10 @@ export function NotificationUpload({ onAnalysisComplete }: NotificationUploadPro
             const formData = new FormData()
             formData.append('file', file)
 
-            const response = await fetch('http://localhost:8000/api/notifications/analyze', {
+            // ✅ FIX: Use environment variable instead of hardcoded URL
+            const API_URL = import.meta.env.VITE_API_URL || '/api'
+
+            const response = await fetch(`${API_URL}/notifications/analyze`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

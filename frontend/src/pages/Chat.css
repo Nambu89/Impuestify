@@ -260,8 +260,10 @@
     border-color: #2563eb;
 }
 
+/* ========== BOTONES DE ACCIÓN - GRANDES Y VISIBLES ========== */
+
 .btn {
-    padding: 12px;
+    padding: 0;
     border: none;
     border-radius: 12px;
     cursor: pointer;
@@ -270,22 +272,31 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    /* Don't shrink buttons */
 }
 
+/* BOTÓN ADJUNTAR (VERDE) - MISMO TAMAÑO QUE ENVIAR */
 .btn-success {
     background: #48bb78;
     color: white;
-    width: 48px;
-    /* Fixed width */
-    height: 48px;
-    /* Fixed height */
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px;
+    min-height: 56px;
 }
 
-.btn-success:hover {
+.btn-success svg {
+    width: 32px !important;
+    height: 32px !important;
+    stroke-width: 2.5 !important;
+    flex-shrink: 0;
+}
+
+.btn-success:hover:not(:disabled) {
     background: #38a169;
+    transform: scale(1.05);
 }
 
+/* BOTÓN ENVIAR (AZUL) - GRANDE Y VISIBLE */
 .btn-primary {
     background: #2563eb;
     color: white;
@@ -293,36 +304,31 @@
 
 .btn-primary:hover:not(:disabled) {
     background: #1d4ed8;
+    transform: scale(1.05);
 }
 
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* SEND BUTTON - BIG SIZE */
 .chat-submit {
     width: 56px !important;
-    /* INCREASED from 52px */
     height: 56px !important;
-    /* INCREASED from 52px */
-    padding: 0;
+    min-width: 56px;
+    min-height: 56px;
+    padding: 0 !important;
     border-radius: 12px;
     background: #2563eb;
     color: white;
     border: none;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     transition: all 0.2s;
 }
 
 .chat-submit svg {
-    width: 28px !important;
-    /* INCREASED from 24px */
-    height: 28px !important;
-    /* INCREASED from 24px */
+    width: 32px !important;
+    height: 32px !important;
+    stroke-width: 2.5 !important;
+    flex-shrink: 0;
 }
 
 .chat-submit:hover:not(:disabled) {
@@ -330,10 +336,14 @@
     transform: scale(1.05);
 }
 
+.btn:disabled,
 .chat-submit:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none !important;
 }
+
+/* ========== FIN BOTONES ========== */
 
 .chat-disclaimer {
     display: flex;

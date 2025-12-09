@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import axios from 'axios'
 
+const API_URL = import.meta.env.VITE_API_URL || '/api'
+
 interface NotificationAnalysis {
     id: string
     summary: string
@@ -47,7 +49,7 @@ export function useNotifications() {
 
             const token = localStorage.getItem('token')
             const response = await axios.post<NotificationAnalysis>(
-                'http://localhost:8000/api/notifications/analyze',
+                `${API_URL}/notifications/analyze`,
                 formData,
                 {
                     headers: {
@@ -71,7 +73,7 @@ export function useNotifications() {
         try {
             const token = localStorage.getItem('token')
             const response = await axios.get(
-                `http://localhost:8000/api/notifications/history?limit=${limit}`,
+                `${API_URL}/notifications/history?limit=${limit}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
