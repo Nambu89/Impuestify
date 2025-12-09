@@ -25,25 +25,11 @@ from slowapi.errors import RateLimitExceeded
 logger = logging.getLogger(__name__)
 
 
-# === CORS-Aware Rate Limiter ===
+# === Helper Function to Exempt OPTIONS ===
 
-class CORSAwareLimiter(Limiter):
-	"""
-	Custom Limiter that automatically allows OPTIONS requests (CORS preflight)
-	to bypass rate limiting while still protecting all other methods.
-	"""
-	
-	def _check_request_limit(self, *args, **kwargs):
-		"""Override to skip OPTIONS requests"""
-		# Get request from args/kwargs
-		request = kwargs.get('request') or (args[0] if args else None)
-		
-		if request and hasattr(request, 'method') and request.method == "OPTIONS":
-			# Skip rate limiting for CORS preflight
-			return
-		
-		# Apply normal rate limiting for all other methods
-		return super()._check_request_limit(*args, **kwargs)
+def is_options_request(request: Request) -> bool:
+	"""Check if request is OPTIONS (CORS preflight)"""
+	return request.method == "OPTIONS"
 
 
 # === IP Blocking System ===
@@ -171,10 +157,10 @@ def get_rate_limit_key(request: Request) -> str:
 	return get_remote_address(request)
 
 
-# === Initialize CORS-Aware Limiter ===
+# === Initialize Limiter ===
 
-# Single limiter instance with CORS support
-limiter = CORSAwareLimiter(
+# Standard limiter with exempt_when parameter support
+limiter = Limiter(
 	key_func=get_rate_limit_key,
 	default_limits=["100/hour", "10/minute"],
 	storage_uri="memory://",
@@ -249,7 +235,13 @@ def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Res
 async def check_ip_blocked(request: Request, call_next):
 	"""
 	Middleware to check if IP is blocked before processing request.
+	
+	IMPORTANT: Allows OPTIONS requests to pass through for CORS.
 	"""
+	# Always allow OPTIONS (CORS preflight)
+	if request.method == "OPTIONS":
+		return await call_next(request)
+	
 	ip = get_remote_address(request)
 	
 	if ip_blocker.is_blocked(ip):
@@ -278,8 +270,9 @@ def rate_limit_ask() -> Callable:
 	Rate limit for /ask endpoint (EXPENSIVE - Azure OpenAI).
 	
 	Strict limit to prevent cost explosion.
+	Exempts OPTIONS requests for CORS.
 	"""
-	return limiter.limit("20/hour;5/minute")
+	return limiter.limit("20/hour;5/minute", exempt_when=is_options_request)
 
 
 def rate_limit_notification() -> Callable:
@@ -287,26 +280,30 @@ def rate_limit_notification() -> Callable:
 	Rate limit for /notifications/analyze (VERY EXPENSIVE - Document Intelligence).
 	
 	Very strict limit due to high computational cost.
+	Exempts OPTIONS requests for CORS.
 	"""
-	return limiter.limit("10/hour;2/minute")
+	return limiter.limit("10/hour;2/minute", exempt_when=is_options_request)
 
 
 def rate_limit_auth() -> Callable:
 	"""
 	Rate limit for auth endpoints (prevent brute force).
+	Exempts OPTIONS requests for CORS.
 	"""
-	return limiter.limit("5/minute")
+	return limiter.limit("5/minute", exempt_when=is_options_request)
 
 
 def rate_limit_admin() -> Callable:
 	"""
 	Rate limit for admin endpoints.
+	Exempts OPTIONS requests for CORS.
 	"""
-	return limiter.limit("20/minute")
+	return limiter.limit("20/minute", exempt_when=is_options_request)
 
 
 def rate_limit_read() -> Callable:
 	"""
 	Rate limit for read-only endpoints (less strict).
+	Exempts OPTIONS requests for CORS.
 	"""
-	return limiter.limit("60/minute")
+	return limiter.limit("60/minute", exempt_when=is_options_request)
