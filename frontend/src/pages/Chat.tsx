@@ -86,9 +86,13 @@ export default function Chat() {
         setIsLoading(true)
 
         try {
-            // 🔥 KEY CHANGE: Pass conversation ID to backend
-            const response = await askQuestion(userMessage.content, activeConversationId || undefined)
+            // Pass current conversation_id to backend (undefined if new conversation)
+            const response = await askQuestion(
+                userMessage.content,
+                activeConversationId || undefined
+            )
 
+            // Update messages with response
             setMessages(prev => prev.map(msg =>
                 msg.loading ? {
                     ...msg,
@@ -98,16 +102,26 @@ export default function Chat() {
                 } : msg
             ))
 
-            // 🔥 KEY CHANGE: Auto-set conversation ID from response
+            // ✅ FIX: Update conversation ID and refresh sidebar
             if (response.conversation_id) {
-                // Only update if it's a NEW conversation ID
+                console.log('📝 Conversation ID received:', response.conversation_id)
+
+                // If it's a NEW conversation (not the current one)
                 if (activeConversationId !== response.conversation_id) {
+                    console.log('✅ New conversation created, updating UI...')
                     setActiveConversationId(response.conversation_id)
-                    // Refresh sidebar immediately to show new conversation
-                    fetchConversations()
+
+                    // ✅ KEY FIX: Force refresh sidebar after state update
+                    setTimeout(() => {
+                        fetchConversations()
+                        console.log('🔄 Sidebar refreshed')
+                    }, 100)
                 }
+            } else {
+                console.warn('⚠️ No conversation_id in response')
             }
         } catch (error: any) {
+            console.error('❌ Error in handleSubmit:', error)
             setMessages(prev => prev.map(msg =>
                 msg.loading ? {
                     ...msg,
@@ -264,10 +278,16 @@ export default function Chat() {
                                 setNotificationAnalysis(analysis)
                                 setShowNotificationModal(false)
 
-                                // 🔥 Set active conversation from notification analysis
+                                // ✅ Set active conversation from notification analysis
                                 if (analysis.conversation_id) {
+                                    console.log('📋 Notification conversation ID:', analysis.conversation_id)
                                     setActiveConversationId(analysis.conversation_id)
-                                    fetchConversations()
+
+                                    // ✅ Force refresh sidebar
+                                    setTimeout(() => {
+                                        fetchConversations()
+                                        console.log('🔄 Sidebar refreshed after notification')
+                                    }, 100)
                                 }
                             }}
                         />
