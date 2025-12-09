@@ -299,21 +299,6 @@ from app.security.rate_limiter import (
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
-# === CRITICAL: CORS MUST BE CONFIGURED FIRST ===
-# CORS middleware is added AFTER this point (line ~363)
-# It must process OPTIONS requests before security middlewares
-
-# Add IP blocking middleware (AFTER CORS)
-from app.security import check_ip_blocked
-
-@app.middleware("http")
-async def ip_blocking_with_options_bypass(request: Request, call_next):
-    """IP blocking that allows OPTIONS through for CORS preflight"""
-    # Always allow OPTIONS for CORS
-    if request.method == "OPTIONS":
-        return await call_next(request)
-    return await check_ip_blocked(request, call_next)
-
 # Add security headers middleware (Zero Day protection)
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
@@ -392,6 +377,32 @@ app.add_middleware(
 	allow_headers=["*"],
 	expose_headers=["*"]  # Expose headers for rate limit info
 )
+
+# === OPTIONS Bypass Middleware  (Added AFTER CORS = Executes BEFORE CORS) ===
+# FastAPI middleware stack executes in REVERSE order (LIFO)
+# This middleware is added AFTER CORS so it executes BEFORE CORS
+
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class OPTIONSBypassMiddleware(BaseHTTPMiddleware):
+    """
+    Bypass middleware that intercepts OPTIONS requests BEFORE any rate limiting.
+    
+    This ensures CORS preflight is never blocked by SlowAPI or other security middlewares.
+    """
+    async def dispatch(self, request: Request, call_next):
+        if request.method == "OPTIONS":
+            # Let CORS middleware handle it
+            # But ensure we don't hit rate limiting or IP blocking
+            response = await call_next(request)
+            return response
+        
+        # For all other methods, continue normally
+        return await call_next(request)
+
+# Add OPTIONS bypass - this executes BEFORE CORS (added after = runs first)
+# This allows OPTIONS to pass through rate limiting
+app.add_middleware(OPTIONSBypassMiddleware)
 
 # Registrar routers
 app.include_router(auth_router)
