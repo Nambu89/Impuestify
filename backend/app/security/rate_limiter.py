@@ -25,13 +25,6 @@ from slowapi.errors import RateLimitExceeded
 logger = logging.getLogger(__name__)
 
 
-# === Helper Function to Exempt OPTIONS ===
-
-def is_options_request(request: Request) -> bool:
-	"""Check if request is OPTIONS (CORS preflight)"""
-	return request.method == "OPTIONS"
-
-
 # === IP Blocking System ===
 
 class IPBlocker:
@@ -159,7 +152,7 @@ def get_rate_limit_key(request: Request) -> str:
 
 # === Initialize Limiter ===
 
-# Standard limiter with exempt_when parameter support
+# Standard limiter - OPTIONS bypass handled in middleware
 limiter = Limiter(
 	key_func=get_rate_limit_key,
 	default_limits=["100/hour", "10/minute"],
@@ -238,7 +231,7 @@ async def check_ip_blocked(request: Request, call_next):
 	
 	IMPORTANT: Allows OPTIONS requests to pass through for CORS.
 	"""
-	# Always allow OPTIONS (CORS preflight)
+	# Always allow OPTIONS (CORS preflight) - NO RATE LIMITING
 	if request.method == "OPTIONS":
 		return await call_next(request)
 	
@@ -264,15 +257,16 @@ async def check_ip_blocked(request: Request, call_next):
 
 
 # === Per-Endpoint Rate Limit Decorators ===
+# NOTE: OPTIONS bypass is handled in middleware, NOT here via exempt_when
 
 def rate_limit_ask() -> Callable:
 	"""
-	Rate limit for /ask endpoint (EXPENSIVE - Azure OpenAI).
+	Rate limit for /ask endpoint (EXPENSIVE - OpenAI).
 	
 	Strict limit to prevent cost explosion.
-	Exempts OPTIONS requests for CORS.
+	OPTIONS bypass handled in middleware.
 	"""
-	return limiter.limit("20/hour;5/minute", exempt_when=is_options_request)
+	return limiter.limit("20/hour;5/minute")
 
 
 def rate_limit_notification() -> Callable:
@@ -280,30 +274,30 @@ def rate_limit_notification() -> Callable:
 	Rate limit for /notifications/analyze (VERY EXPENSIVE - Document Intelligence).
 	
 	Very strict limit due to high computational cost.
-	Exempts OPTIONS requests for CORS.
+	OPTIONS bypass handled in middleware.
 	"""
-	return limiter.limit("10/hour;2/minute", exempt_when=is_options_request)
+	return limiter.limit("10/hour;2/minute")
 
 
 def rate_limit_auth() -> Callable:
 	"""
 	Rate limit for auth endpoints (prevent brute force).
-	Exempts OPTIONS requests for CORS.
+	OPTIONS bypass handled in middleware.
 	"""
-	return limiter.limit("5/minute", exempt_when=is_options_request)
+	return limiter.limit("5/minute")
 
 
 def rate_limit_admin() -> Callable:
 	"""
 	Rate limit for admin endpoints.
-	Exempts OPTIONS requests for CORS.
+	OPTIONS bypass handled in middleware.
 	"""
-	return limiter.limit("20/minute", exempt_when=is_options_request)
+	return limiter.limit("20/minute")
 
 
 def rate_limit_read() -> Callable:
 	"""
 	Rate limit for read-only endpoints (less strict).
-	Exempts OPTIONS requests for CORS.
+	OPTIONS bypass handled in middleware.
 	"""
-	return limiter.limit("60/minute", exempt_when=is_options_request)
+	return limiter.limit("60/minute")
