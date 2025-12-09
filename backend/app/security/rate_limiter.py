@@ -2,7 +2,7 @@
 Rate Limiter and DDoS Protection for TaxIA
 
 Multi-layer protection against abuse:
-1. Per-endpoint rate limiting (SlowAPI)
+1. Per-endpoint rate limiting (SlowAPI) with CORS support
 2. IP-based automatic blocking
 3. Attack pattern detection
 4. Structured logging for monitoring
@@ -23,6 +23,40 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 logger = logging.getLogger(__name__)
+
+
+# === CORS-Aware Rate Limiter ===
+
+class CORSAwareLimiter(Limiter):
+    """
+    Custom Limiter that automatically allows OPTIONS requests (CORS preflight)
+    to bypass rate limiting while still protecting all other methods.
+    """
+    
+    def _check_request_limit(self, *args, **kwargs):
+        """Override to skip OPTIONS requests"""
+        # Get request from args/kwargs
+        request = kwargs.get('request') or (args[0] if args else None)
+        
+        if request and hasattr(request, 'method') and request.method == "OPTIONS":
+            # Skip rate limiting for CORS preflight
+            return
+        
+        # Apply normal rate limiting for all other methods
+        return super()._check_request_limit(*args, **kwargs)
+
+
+# Custom key function
+def get_remote_address_safe(request: Request) -> str:
+    """Safely get remote address"""
+    try:
+        return get_remote_address(request)
+    except:
+        return "unknown"
+
+
+# Initialize CORS-aware limiter
+limiter = CORSAwareLimiter(key_func=get_remote_address_safe)
 
 
 # === IP Blocking System ===

@@ -289,22 +289,11 @@ app = FastAPI(
 
 # === Rate Limiting Configuration ===
 
-# Custom key function that allows OPTIONS through for CORS
-def rate_limit_key_func(request: Request) -> str:
-    """Get remote address but bypass rate limiting for OPTIONS (CORS preflight)"""
-    if request.method == "OPTIONS":
-        return "_cors_preflight_bypass"  # Special key not rate-limited
-    from slowapi.util import get_remote_address
-    return get_remote_address(request)
-
-# Import and configure rate limiters
+# Import CORS-aware rate limiters
 from app.security.rate_limiter import (
     limiter, ip_blocker, rate_limit_exceeded_handler,
     rate_limit_ask, rate_limit_notification, rate_limit_auth, rate_limit_read
 )
-
-# Override limiter's key function
-limiter._key_func = rate_limit_key_func
 
 # Add rate limiter state and exception handler
 app.state.limiter = limiter
