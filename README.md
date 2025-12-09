@@ -383,6 +383,6 @@ TaxIA es una herramienta de asistencia informativa. **No constituye asesoramient
 
 ---
 
-** Fernando Prada - AI Engineer - Senior Consultant**
+**Fernando Prada - AI Engineer - Senior Consultant**
 
 **¡TaxIA - Haciendo la fiscalidad española más accesible!**
