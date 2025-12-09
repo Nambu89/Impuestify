@@ -201,42 +201,19 @@ async def lifespan(app: FastAPI):
 		logger.warning("⚠️  Error conectando a Upstash", error=str(e))
 		upstash_client = None
 	
-	# 3. Verificar Azure OpenAI
-	print("🤖 Verificando Azure OpenAI (AI Foundry)...")
-	logger.info("🤖 Verificando Azure OpenAI...")
-	azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
-	azure_key = os.environ.get("AZURE_OPENAI_API_KEY")
-	azure_deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT")
-	azure_version = os.environ.get("AZURE_OPENAI_API_VERSION")
-	
-	if azure_endpoint and azure_key and azure_deployment and azure_version:
-		# Verify required Azure AI Foundry credentials
-		print(f"✅ Azure OpenAI: deployment={azure_deployment}, version={azure_version}")
-		logger.info(
-			"✅ Azure OpenAI configurado", 
-			deployment=azure_deployment,
-			api_version=azure_version,
-			endpoint=azure_endpoint[:50] + "..." if len(azure_endpoint) > 50 else azure_endpoint
-		)
-	else:
-		missing = []
-		if not azure_endpoint: missing.append("AZURE_OPENAI_ENDPOINT")
-		if not azure_key: missing.append("AZURE_OPENAI_API_KEY")
-		if not azure_deployment: missing.append("AZURE_OPENAI_DEPLOYMENT")
-		if not azure_version: missing.append("AZURE_OPENAI_API_VERSION")
-		print(f"❌ Azure OpenAI incompleto: faltan {missing}")
-		logger.error("❌ Azure OpenAI incompleto", missing=missing)
-
+	# 3. Verificar OpenAI API
+	print("🤖 Verificando OpenAI API...")
+	logger.info("🤖 Verificando OpenAI API...")
 	openai_key = os.environ.get("OPENAI_API_KEY")
 	openai_model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 	
-	# Check if OpenAI is configured
 	if openai_key:
-		logger.info(f"🤖 Verificando OpenAI...")
-		logger.info(f"✅ OpenAI: model={openai_model}")
+		print(f"✅ OpenAI configurado: model={openai_model}")
+		logger.info("✅ OpenAI configurado", model=openai_model)
 	else:
-		logger.warning("⚠️ OpenAI no configurado - algunos servicios no estarán disponibles")
-		logger.warning("Configura OPENAI_API_KEY en las variables de entorno")
+		print("❌ OpenAI no configurado: falta OPENAI_API_KEY")
+		logger.error("❌ OpenAI no configurado - falta OPENAI_API_KEY")
+		logger.warning("⚠️ Algunos servicios no estarán disponibles sin OpenAI")
 	
 	logger.info("=" * 80)
 	logger.info("✅ TaxIA INICIADO CORRECTAMENTE")
@@ -501,10 +478,6 @@ async def root():
 	"""
 	return HTMLResponse(content=html_content, status_code=200)
 
-
-
-
-
 @app.get("/health", response_model=HealthResponse)
 async def health_check(request: Request):
 	"""
@@ -550,15 +523,6 @@ async def health_check(request: Request):
 	except Exception as e:
 		logger.error("Error en health check", error=str(e))
 		raise HTTPException(status_code=503, detail=f"Error en health check: {str(e)}")
-
-
-
-
-
-
-
-
-
 
 
 @app.get("/test/guardrails")

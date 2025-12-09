@@ -86,6 +86,7 @@ export default function Chat() {
         setIsLoading(true)
 
         try {
+            // 🔥 KEY CHANGE: Pass conversation ID to backend
             const response = await askQuestion(userMessage.content, activeConversationId || undefined)
 
             setMessages(prev => prev.map(msg =>
@@ -97,11 +98,14 @@ export default function Chat() {
                 } : msg
             ))
 
-            // Update active conversation ID from response
+            // 🔥 KEY CHANGE: Auto-set conversation ID from response
             if (response.conversation_id) {
-                setActiveConversationId(response.conversation_id)
-                // Refresh sidebar to show new conversation
-                fetchConversations()
+                // Only update if it's a NEW conversation ID
+                if (activeConversationId !== response.conversation_id) {
+                    setActiveConversationId(response.conversation_id)
+                    // Refresh sidebar immediately to show new conversation
+                    fetchConversations()
+                }
             }
         } catch (error: any) {
             setMessages(prev => prev.map(msg =>
@@ -171,7 +175,7 @@ export default function Chat() {
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="message-text" style={{ lineHeight: '1.6' }}>
+                                                <div className="message-text">
                                                     <ReactMarkdown>
                                                         {message.content}
                                                     </ReactMarkdown>
@@ -217,7 +221,6 @@ export default function Chat() {
                         className="btn btn-success"
                         onClick={() => setShowNotificationModal(true)}
                         title="Analizar notificación AEAT"
-                        style={{ marginRight: '8px', background: '#48bb78' }}
                     >
                         <Upload size={20} />
                     </button>
@@ -261,10 +264,9 @@ export default function Chat() {
                                 setNotificationAnalysis(analysis)
                                 setShowNotificationModal(false)
 
-                                // Set active conversation from notification analysis
+                                // 🔥 Set active conversation from notification analysis
                                 if (analysis.conversation_id) {
                                     setActiveConversationId(analysis.conversation_id)
-                                    // Refresh sidebar to show new conversation
                                     fetchConversations()
                                 }
                             }}
@@ -273,7 +275,7 @@ export default function Chat() {
                 </div>
             )}
 
-            {/* Analysis Display - Only show if not already in chat */}
+            {/* Analysis Display */}
             {notificationAnalysis && !messages.some(m => m.content.includes('Análisis de Notificación')) && (
                 <div style={{
                     position: 'fixed',
