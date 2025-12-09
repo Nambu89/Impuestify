@@ -1,359 +1,372 @@
-# 🧾 TaxIA - Asistente Fiscal Español
+# 🧾 TaxIA - Asistente Fiscal Inteligente
 
-TaxIA es un asistente fiscal especializado en normativa española que utiliza **RAG (Retrieval-Augmented Generation)** con **guardrails** para proporcionar respuestas precisas y seguras sobre temas fiscales.
+TaxIA es un asistente fiscal especializado en normativa española que utiliza **RAG (Retrieval-Augmented Generation)** con **Azure AI** para proporcionar respuestas precisas, conversacionales y contextualizadas sobre temas fiscales.
 
-## ✨ Características
+## ✨ Características Principales
 
-- 🔍 **RAG Avanzado**: Recuperación inteligente con reranking y caché optimizado
-- 🛡️ **Sistema de Guardrails**: Previene alucinaciones y consultas sobre evasión fiscal
-- 📋 **Respuestas Estructuradas**: Formato consistente con veredicto, explicación y citas
-- ⚡ **Alto Rendimiento**: Caché multinivel y optimizaciones de velocidad
-- 🚀 **Deploy Fácil**: Compatible con Railway, Render, Fly.io y Docker
-- 📊 **Monitorización**: Logs estructurados y métricas de rendimiento
+### 🤖 IA Conversacional
+- **Tono humano y cercano**: Respuestas como si hablaras con un asesor fiscal amigable
+- **Traduce términos técnicos**: Explica conceptos fiscales en lenguaje coloquial
+- **Contextual**: Mantiene el contexto de conversaciones y notificaciones
+
+### ⚡ Alto Rendimiento
+- **Redis Cache**: Sistema de caché con Upstash para contexto de conversaciones
+- **Cache-first strategy**: ~100ms de mejora en respuestas
+- **TTL inteligente**: Renovación automática de caché (1 hora)
+
+### 📋 Análisis de Notificaciones
+- **Upload de PDFs**: Analiza notificaciones de la AEAT automáticamente
+- **Extracción inteligente**: Identifica importes, plazos y conceptos clave
+- **Contexto persistente**: Mantiene la notificación en toda la conversación
+
+### 🔐 Sistema de Roles
+- **Admin dashboard**: Estadísticas del sistema solo para administradores
+- **Control de acceso**: JWT con claims de rol
+- **Gestión de usuarios**: Scripts para asignar roles admin
+
+### 🎨 UI/UX Premium
+- **Diseño responsive**: Mobile, tablet y desktop optimizado
+- **Sidebar de conversaciones**: Historial persistente con metadata
+- **Chat interactivo**: Sugerencias contextuales y fuentes citadas
 
 ## 🏗️ Arquitectura
 
 ```
-[Usuario] → [FastAPI] → [Guardrails Input] → [RAG Engine] → [OpenAI] → [Guardrails Output] → [Respuesta]
-                                ↓
-                         [FAISS Index] ← [Embeddings] ← [PDFs AEAT]
+┌─────────────┐
+│   Frontend  │  React + Vite + TypeScript
+│  (Vite/TS)  │  - Responsive design
+└──────┬──────┘  - Conversation sidebar
+       │         - Notification upload
+       ↓
+┌─────────────┐
+│   Backend   │  FastAPI + Python 3.12
+│  (FastAPI)  │  - Auth (JWT)
+└──────┬──────┘  - Rate limiting
+       │         - Structured logging
+       ↓
+┌─────────────────────────────────────┐
+│         Services Layer              │
+├─────────────┬───────────┬───────────┤
+│ Conversation│  Cache    │   User    │
+│  Service    │  Service  │  Service  │
+└─────────────┴───────────┴───────────┘
+       │            │            │
+       ↓            ↓            ↓
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│  Turso   │  │ Upstash  │  │  Azure   │
+│  (SQLite)│  │  Redis   │  │   AI     │
+└──────────┘  └──────────┘  └──────────┘
 ```
 
-### Componentes Principales
+### Stack Tecnológico
 
-- **FastAPI**: API REST con documentación automática
-- **Guardrails AI**: Sistema de seguridad y validación
-- **FAISS**: Búsqueda vectorial de alta velocidad
-- **Sentence Transformers**: Embeddings y reranking
-- **OpenAI GPT**: Generación de respuestas
-- **Caché Inteligente**: Redis opcional + caché local
+**Backend:**
+- FastAPI (API REST)
+- Turso (Database - SQLite distribuido)
+- Upstash Redis (Cache)
+- Azure OpenAI (GPT-5 mini)
+- Azure Document Intelligence (OCR)
+- FTS5 (Full-text search)
+
+**Frontend:**
+- React 18
+- Vite (Build tool)
+- TypeScript
+- React Router
+- Axios
+- Lucide React (Icons)
 
 ## 🚀 Quick Start
 
-### 1. Clonar y Configurar
+### Requisitos Previos
+
+- Python 3.12+
+- Node.js 18+
+- Cuenta Azure (OpenAI + Document Intelligence)
+- Cuenta Turso (Database)
+- Cuenta Upstash (Redis) - Opcional
+
+### 1. Clonar Repositorio
 
 ```bash
-git clone <tu-repo>
-cd taxia
-cp .env.example .env
+git clone https://github.com/Nambu89/TaxIA.git
+cd TaxIA
 ```
 
-Edita `.env` con tus credenciales:
+### 2. Configurar Backend
 
 ```bash
-OPENAI_API_KEY=sk-tu-api-key-aqui
-PDF_DIR=./data
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-### 2. Añadir Documentos
-
-Coloca los PDFs de la AEAT en el directorio `data/`:
+Crea `.env` en `/backend`:
 
 ```bash
-mkdir -p data
-# Copia tus PDFs de manuales AEAT aquí
+# Azure AI Foundry (LLM)
+AZURE_OPENAI_ENDPOINT=https://your-endpoint.cognitiveservices.azure.com/
+AZURE_OPENAI_API_KEY=your_api_key
+AZURE_OPENAI_DEPLOYMENT=gpt-5-mini
+AZURE_OPENAI_API_VERSION=2025-04-01-preview
+
+# Azure Document Intelligence
+AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://your-endpoint.cognitiveservices.azure.com/
+AZURE_DOCUMENT_INTELLIGENCE_KEY=your_key
+
+# Turso Database
+TURSO_DATABASE_URL=libsql://your-db.turso.io
+TURSO_AUTH_TOKEN=your_token
+
+# Upstash Redis (Opcional)
+UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_token
+
+# JWT
+JWT_SECRET_KEY=your-secret-key-here
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
-### 3. Deploy Rápido con Railway
+Iniciar backend:
 
 ```bash
-# Instalar Railway CLI
-npm install -g @railway/cli
-
-# Hacer el script ejecutable y deployar
-chmod +x deploy.sh
-./deploy.sh railway
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 4. Deploy Local para Testing
+### 3. Configurar Frontend
 
 ```bash
-./deploy.sh local
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+cd frontend
+npm install
 ```
 
-La API estará disponible en `http://localhost:8000`
-
-## 📖 Uso de la API
-
-### Endpoint Principal: `/ask`
+Crea `.env` en `/frontend`:
 
 ```bash
-curl -X POST "http://localhost:8000/ask" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "¿Estoy obligado a presentar IRPF si gané 25.000€?",
-    "k": 6
-  }'
+VITE_API_URL=http://localhost:8000
 ```
 
-### Respuesta Típica
-
-```json
-{
-  "answer": "**Veredicto corto:** Sí - estás obligado a presentar la declaración...",
-  "sources": [
-    {
-      "id": "uuid-123",
-      "source": "Manual_IRPF_2024.pdf",
-      "page": 15,
-      "title": "Obligación de declarar",
-      "text_preview": "Los contribuyentes están obligados..."
-    }
-  ],
-  "metadata": {
-    "retrieval_time": 0.12,
-    "rerank_time": 0.03,
-    "similarity_scores": [0.85, 0.82, 0.79],
-    "k_retrieved": 6
-  },
-  "processing_time": 1.45,
-  "cached": false,
-  "guardrails_violations": []
-}
-```
-
-### Otros Endpoints
-
-- `GET /health` - Estado del sistema
-- `GET /stats` - Estadísticas del RAG
-- `GET /docs` - Documentación interactiva (Swagger)
-- `POST /admin/rebuild` - Reconstruir índice (requiere API key admin)
-
-## 🛡️ Sistema de Guardrails
-
-### Guardrails de Entrada
-
-- **Detección de Evasión**: Bloquea consultas sobre ocultar ingresos, no declarar, etc.
-- **Filtro de Toxicidad**: Detecta lenguaje ofensivo
-- **Detector PII**: Identifica información personal sensible
-- **Filtro de Competidores**: Evita menciones de otros asesores fiscales
-
-### Guardrails de Salida
-
-- **Restricción de Temas**: Mantiene respuestas en fiscalidad española
-- **Detector de Alucinaciones**: Verifica referencias específicas contra el contexto
-- **Validación de Citas**: Asegura que las fuentes citadas existan
-
-### Ejemplos de Consultas Bloqueadas
-
-❌ "¿Cómo puedo ocultar ingresos para pagar menos impuestos?"
-❌ "¿Me dices cómo no declarar el IVA?"
-❌ "Formas de evadir Hacienda"
-
-✅ "¿Qué deducciones legales puedo aplicar en IRPF?"
-✅ "¿Cómo presentar una declaración complementaria?"
-
-## 🔧 Configuración Avanzada
-
-### Variables de Entorno Importantes
+Iniciar frontend:
 
 ```bash
-# Modelos IA
-EMBEDDING_MODEL=mixedbread-ai/mxbai-embed-large-v1
-RERANKING_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
-
-# Configuración RAG
-CHUNK_SIZE=1200
-CHUNK_OVERLAP=150
-RETRIEVAL_K=6
-RERANK_K=3
-
-# Guardrails
-ENABLE_GUARDRAILS=true
-TOXICITY_THRESHOLD=0.8
-HALLUCINATION_THRESHOLD=0.85
+npm run dev
 ```
 
-### Personalización de Guardrails
+La aplicación estará en `http://localhost:5173`
 
-Edita `guardrails.py` para añadir reglas específicas:
+## 📖 Uso
 
-```python
-# Añadir nuevos patrones de evasión
-self.forbidden_patterns.append(r"\bnuevo_patron_prohibido\b")
+### Registro y Login
 
-# Modificar temas válidos
-VALID_TOPICS += ["nuevo_tema_fiscal"]
+1. Accede a `http://localhost:5173`
+2. Registra una cuenta nueva
+3. Inicia sesión
+
+### Chat Fiscal
+
+1. Haz preguntas sobre fiscalidad española
+2. El agente responde con tono conversacional
+3. Cita fuentes de documentación AEAT
+
+**Ejemplo:**
+```
+Usuario: "¿Cuál es el plazo para presentar el IVA?"
+
+TaxIA: "En resumen: El IVA trimestral se presenta los primeros 20 días 
+naturales del mes siguiente al trimestre.
+
+Te lo explico:
+Si eres autónomo o empresa con facturación normal, presentas el modelo 303 
+cada tres meses. Por ejemplo, el IVA del primer trimestre (enero-marzo) 
+se presenta entre el 1 y el 20 de abril..."
 ```
 
-## 📊 Monitorización y Logs
+### Análisis de Notificaciones
 
-### Logs Estructurados
+1. Click en el botón de upload (📎)
+2. Selecciona PDF de notificación AEAT
+3. El sistema extrae automáticamente:
+   - Importes y recargos
+   - Plazos de pago
+   - Conceptos tributarios
+4. Haz preguntas sobre la notificación
 
-```python
-import structlog
-logger = structlog.get_logger()
+### Dashboard (Solo Admins)
 
-logger.info("Consulta procesada", 
-           question_length=len(question),
-           processing_time=1.45,
-           cached=True)
-```
+Accede a `/dashboard` para ver:
+- Documentos indexados
+- Fragmentos de texto en base de datos
+- Tiempo promedio de respuesta
+- Respuestas en caché
 
-### Métricas Disponibles
+## 🔐 Gestión de Admins
 
-- Tiempo de procesamiento promedio
-- Ratio de cache hits/misses
-- Tasa de errores
-- Violaciones de guardrails
-- Estadísticas de chunks y fuentes
-
-## 🚢 Opciones de Deployment
-
-### Railway (Recomendado para MVP)
+Para marcar un usuario como administrador:
 
 ```bash
-./deploy.sh railway
+cd backend
+python -m scripts.update_admin
 ```
 
-**Pros**: Setup instantáneo, pricing justo, logs en tiempo real
-**Contras**: Créditos limitados iniciales
+Edita el script para cambiar el email del usuario.
 
-### Render
+## 🚢 Deployment en Railway
+
+### 1. Preparación
+
+El proyecto ya incluye:
+- `railway.toml` - Configuración de servicios
+- `.railwayignore` - Archivos excluidos
+- Scripts de build optimizados
+
+### 2. Conectar GitHub
+
+1. Crea cuenta en [Railway](https://railway.app)
+2. New Project → Deploy from GitHub
+3. Selecciona el repositorio `TaxIA`
+
+### 3. Configurar Servicios
+
+Railway detectará automáticamente 2 servicios:
+
+**Backend:**
+- Root: `/backend`
+- Build: `pip install -r requirements.txt`
+- Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+**Frontend:**
+- Root: `/frontend`
+- Build: `npm install && npm run build`
+- Start: `npm run preview -- --host 0.0.0.0 --port $PORT`
+
+### 4. Variables de Entorno
+
+En Railway Dashboard, añade las variables del `.env` para cada servicio.
+
+**Backend:**
+- Todas las variables de Azure, Turso, Upstash, JWT
+
+**Frontend:**
+- `VITE_API_URL=https://tu-backend.railway.app`
+
+### 5. Deploy
+
+Railway desplegará automáticamente en cada push a `main`.
+
+## 📊 Monitorización
+
+### Logs del Backend
 
 ```bash
-./deploy.sh render
+# Railway
+railway logs
+
+# Local
+tail -f logs/taxia.log
 ```
 
-**Pros**: Plan gratuito, SSL automático, buena estabilidad
-**Contras**: Cold starts en plan gratuito
+### Métricas de Caché
 
-### Fly.io
+Los logs muestran:
+- `💾 Cache HIT` - Contexto encontrado en Redis
+- `🔍 Cache MISS` - Carga desde base de datos
+- `♻️ Cache TTL renewed` - TTL renovado
+- `🗑️ Cache invalidated` - Caché eliminado
+
+### Health Check
 
 ```bash
-./deploy.sh fly
+curl http://localhost:8000/health
 ```
 
-**Pros**: Plan gratuito generoso, latencia global baja
-**Contras**: Configuración más compleja
+## 🧪 Testing
 
-### Docker Local
+### Backend
 
 ```bash
-./deploy.sh docker
-docker-compose up -d
+cd backend
+pytest tests/
 ```
 
-### Coolify (Auto-hospedado)
-
-1. Configura un VPS (€5/mes en Hetzner)
-2. Instala Coolify: `https://coolify.io/docs/installation`
-3. Conecta tu repo GitHub
-4. Deploy automático
-
-## 🧪 Testing y Validación
-
-### Validación Completa del Sistema
+### Frontend
 
 ```bash
-python utils.py
-```
-
-Verifica:
-- API key de OpenAI
-- Modelos de ML disponibles
-- Archivos PDF válidos
-- Configuración correcta
-
-### Test de Guardrails
-
-```bash
-curl http://localhost:8000/test/guardrails
-```
-
-### Test de Funcionalidad
-
-```bash
-./deploy.sh test
+cd frontend
+npm run build  # Verifica que compila sin errores
 ```
 
 ## 📁 Estructura del Proyecto
 
 ```
-taxia/
-├── main.py              # API FastAPI principal
-├── rag_engine.py        # Motor RAG con reranking
-├── guardrails.py        # Sistema de guardrails
-├── config.py            # Configuración centralizada
-├── utils.py             # Utilidades y validación
-├── requirements.txt     # Dependencias Python
-├── Dockerfile          # Contenedor Docker
-├── railway.toml        # Configuración Railway
-├── deploy.sh           # Scripts de deployment
-├── .env.example        # Variables de entorno template
-├── data/               # PDFs de documentos AEAT
-├── cache/              # Caché local de embeddings
-└── README.md           # Esta documentación
+TaxIA/
+├── backend/
+│   ├── app/
+│   │   ├── agents/          # Tax & Notification agents
+│   │   ├── auth/            # JWT authentication
+│   │   ├── database/        # Turso client & models
+│   │   ├── routers/         # API endpoints
+│   │   ├── services/        # Business logic
+│   │   └── utils/           # Helpers
+│   ├── scripts/             # Admin & maintenance
+│   ├── tests/               # Unit tests
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── components/      # React components
+│   │   ├── hooks/           # Custom hooks
+│   │   ├── pages/           # Page components
+│   │   └── styles/          # CSS
+│   └── package.json
+├── .gitignore
+├── .railwayignore
+├── railway.toml
+└── README.md
 ```
-
-## 🔄 Actualización del Índice
-
-### Añadir Nuevos Documentos
-
-1. Coloca nuevos PDFs en `data/`
-2. Reconstruye el índice:
-
-```bash
-curl -X POST "http://localhost:8000/admin/rebuild?api_key=tu-admin-key" \
-  -H "Content-Type: application/json" \
-  -d '{"force": true}'
-```
-
-### Limpiar Caché
-
-```bash
-curl "http://localhost:8000/admin/cache/clear?api_key=tu-admin-key"
-```
-
-## 🐛 Debugging
-
-### Logs Comunes
-
-```bash
-# Ver logs en Railway
-railway logs
-
-# Ver logs locales
-tail -f logs/taxia.log
-
-# Debug modo desarrollador
-uvicorn main:app --reload --log-level debug
-```
-
-### Problemas Frecuentes
-
-**Error: "Motor RAG no inicializado"**
-- Verifica que los PDFs estén en `data/`
-- Revisa que la API key de OpenAI sea válida
-- Comprueba disponibilidad de modelos
-
-**Respuestas de baja calidad**
-- Ajusta `CHUNK_SIZE` y `CHUNK_OVERLAP`
-- Incrementa `RETRIEVAL_K` para más contexto
-- Verifica calidad de documentos fuente
-
-**Lentitud en respuestas**
-- Habilita caché Redis con `ENABLE_CACHE=true`
-- Reduce `RETRIEVAL_K` si es muy alto
-- Considera usar modelo de embeddings más rápido
 
 ## 🤝 Contribución
 
 1. Fork el proyecto
-2. Crea una rama: `git checkout -b feature/nueva-caracteristica`
-3. Commit: `git commit -m 'Añadir nueva característica'`
-4. Push: `git push origin feature/nueva-caracteristica`
+2. Crea una rama: `git checkout -b feature/nueva-feature`
+3. Commit: `git commit -m 'feat: descripción'`
+4. Push: `git push origin feature/nueva-feature`
 5. Abre un Pull Request
 
-### Áreas de Mejora
+### Convenciones de Commits
 
-- [ ] Soporte para más tipos de documento (Word, Excel)
-- [ ] Interface web con Streamlit/Gradio
-- [ ] Métricas avanzadas con Prometheus
-- [ ] Fine-tuning del modelo base
-- [ ] Soporte multiidioma
-- [ ] Integración con bases de datos vectoriales externas
+- `feat:` - Nueva funcionalidad
+- `fix:` - Corrección de bug
+- `docs:` - Documentación
+- `style:` - Formato, no afecta código
+- `refactor:` - Refactorización
+- `test:` - Tests
+- `chore:` - Mantenimiento
+
+## 🐛 Troubleshooting
+
+### Backend no conecta a Turso
+
+- Verifica `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN`
+- Comprueba que la base de datos existe en Turso
+
+### Redis no funciona
+
+- Es opcional, el sistema funciona sin Redis
+- Verifica `UPSTASH_REDIS_REST_URL` y token
+- Logs mostrarán `⚠️ Upstash Redis no configurado`
+
+### Frontend no se conecta al Backend
+
+- Verifica `VITE_API_URL` en `.env`
+- Comprueba CORS en `backend/app/main.py`
+- Revisa que el backend esté corriendo
+
+### Dashboard no aparece
+
+- Verifica que tu usuario sea admin
+- Cierra sesión y vuelve a iniciar sesión
+- Revisa que `is_admin=true` en la base de datos
 
 ## 📄 Licencia
 
@@ -365,10 +378,11 @@ TaxIA es una herramienta de asistencia informativa. **No constituye asesoramient
 
 ## 🆘 Soporte
 
-- 📧 Email: soporte@taxia.com
-- 🐛 Issues: GitHub Issues
-- 💬 Discusiones: GitHub Discussions
+- 🐛 Issues: [GitHub Issues](https://github.com/Nambu89/TaxIA/issues)
+- 💬 Discusiones: [GitHub Discussions](https://github.com/Nambu89/TaxIA/discussions)
 
 ---
 
-**¡TaxIA - Haciendo la fiscalidad española más accesible! 🇪🇸**
+** Fernando Prada - AI Engineer - Senior Consultant**
+
+**¡TaxIA - Haciendo la fiscalidad española más accesible!**
