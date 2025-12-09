@@ -125,7 +125,7 @@ export default function Home() {
             {/* Footer */}
             <footer className="footer">
                 <div className="container">
-                    <p>© 2024 TaxIA. Información orientativa, no sustituye asesoramiento profesional.</p>
+                    <p>© 2025 TaxIA. Información orientativa, no sustituye asesoramiento profesional.</p>
                 </div>
             </footer>
         </div>

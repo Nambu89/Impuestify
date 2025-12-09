@@ -352,13 +352,21 @@ async def add_security_headers(request: Request, call_next):
 
 
 # Configure CORS (restrict in production)
-allowed_origins = os.environ.get("ALLOWED_ORIGINS", "*").split(",")
+allowed_origins_str = os.environ.get("ALLOWED_ORIGINS", "*")
+if allowed_origins_str == "*":
+    # Allow all in development
+    allowed_origins = ["*"]
+else:
+    # Parse comma-separated list
+    allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+
 app.add_middleware(
 	CORSMiddleware,
 	allow_origins=allowed_origins,
 	allow_credentials=True,
 	allow_methods=["*"],
 	allow_headers=["*"],
+	expose_headers=["*"]  # Expose headers for rate limit info
 )
 
 # Registrar routers
