@@ -277,7 +277,6 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 # === Routes ===
 
 @router.post("/ask", response_model=TaxIAResponse)
-@rate_limit_ask()
 async def ask_question(
 	req: Request,
 	request: QuestionRequest,

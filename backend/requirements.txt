@@ -40,6 +40,7 @@ prometheus-fastapi-instrumentator>=6.1.0
 
 # --- PDF Processing (LLM-optimized, FREE) ---
 pymupdf4llm>=0.2.6
+pymupdf[layout]>=1.23.0
 
 # --- Utilidades ---
 tqdm

@@ -15,7 +15,7 @@ from app.auth.jwt_handler import get_current_user, TokenData
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/conversations", tags=["conversations"])
+router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
 
 # === Models ===
