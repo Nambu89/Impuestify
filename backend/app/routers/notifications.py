@@ -12,6 +12,7 @@ import os
 import uuid
 from datetime import datetime
 import json
+import logging
 
 from app.agents.notification_agent import get_notification_agent
 from app.auth.jwt_handler import get_current_user
@@ -19,6 +20,7 @@ from app.database.turso_client import TursoClient
 from app.services.conversation_service import ConversationService
 from app.security import file_validator, rate_limit_notification
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
