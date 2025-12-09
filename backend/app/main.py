@@ -291,9 +291,20 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
-# Add IP blocking middleware (checks before all requests)
+# === CRITICAL: CORS MUST BE CONFIGURED FIRST ===
+# CORS middleware is added AFTER this point (line ~363)
+# It must process OPTIONS requests before security middlewares
+
+# Add IP blocking middleware (AFTER CORS)
 from app.security import check_ip_blocked
-app.middleware("http")(check_ip_blocked)
+
+@app.middleware("http")
+async def ip_blocking_with_options_bypass(request: Request, call_next):
+    """IP blocking that allows OPTIONS through for CORS preflight"""
+    # Always allow OPTIONS for CORS
+    if request.method == "OPTIONS":
+        return await call_next(request)
+    return await check_ip_blocked(request, call_next)
 
 # Add security headers middleware (Zero Day protection)
 @app.middleware("http")
@@ -351,7 +362,9 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 
-# Configure CORS (restrict in production)
+# === CORS CONFIGURATION (MUST BE FIRST MIDDLEWARE) ===
+# This is added as middleware which runs in REVERSE order
+# So we add it here (which is last in code = first in execution)
 allowed_origins_str = os.environ.get("ALLOWED_ORIGINS", "*")
 if allowed_origins_str == "*":
     # Allow all in development
