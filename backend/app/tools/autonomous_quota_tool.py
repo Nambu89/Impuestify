@@ -14,22 +14,22 @@ AUTONOMOUS_QUOTA_TOOL = {
     "type": "function",
     "function": {
         "name": "calculate_autonomous_quota",
-        "description": "Calcula la cuota mensual de autónomos en España según ingresos netos mensuales y región. Devuelve la cuota exacta, el tramo correspondiente y la bonificación aplicable (si hay).",
+        "description": "USAR ESTA FUNCIÓN cuando el usuario pregunte sobre cuotas de autónomos, cotización de autónomos, o cuánto paga un autónomo a la Seguridad Social. Calcula la cuota mensual exacta de autónomos en España para 2025 según los ingresos netos mensuales y la región (general, Ceuta, o Melilla). Devuelve el tramo de cotización, la cuota mínima y máxima, y las bonificaciones aplicables.",
         "parameters": {
             "type": "object",
             "properties": {
                 "ingresos_netos_mensuales": {
                     "type": "number",
-                    "description": "Ingresos netos mensuales del autónomo en euros (después de gastos y deducción del 7%)"
+                    "description": "Ingresos netos mensuales del autónomo en euros (rendimientos netos después de gastos y deducción del 7%)"
                 },
                 "region": {
                     "type": "string",
                     "enum": ["general", "ceuta", "melilla"],
-                    "description": "Región del autónomo. 'general' para toda España excepto Ceuta/Melilla. Ceuta y Melilla tienen bonificación del 50%."
+                    "description": "Región del autónomo. Usar 'general' para toda España excepto Ceuta/Melilla. Ceuta y Melilla tienen bonificación del 50% en contingencias comunes. Por defecto: 'general'"
                 },
                 "year": {
                     "type": "integer",
-                    "description": "Año de cotización (por defecto 2025)"
+                    "description": "Año de cotización. Por defecto: 2025"
                 }
             },
             "required": ["ingresos_netos_mensuales"]
