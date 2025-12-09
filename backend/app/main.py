@@ -362,15 +362,12 @@ app.add_middleware(
 )
 
 # Registrar routers
-app.add_route("/", homepage, methods=["GET"])
-app.add_route("/health", health_check, methods=["GET"])
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(notifications_router)
 app.include_router(conversations_router)
 app.include_router(security_tests_router)  # Security testing endpoints
-app.include_router(notifications_router, prefix="/api")
-app.include_router(conversations_router)
+
 
 # Prometheus instrumentation
 instrumentator = Instrumentator()
