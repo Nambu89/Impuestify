@@ -20,6 +20,7 @@ from app.utils.region_detector import RegionDetector
 from app.services.conversation_service import ConversationService
 from app.services.conversation_cache import ConversationCache
 from app.auth.jwt_handler import get_current_user, TokenData
+from app.security import sql_validator, guardrails_system, rate_limit_ask
 
 logger = logging.getLogger(__name__)
 
@@ -283,6 +284,7 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 # === Routes ===
 
 @router.post("/ask", response_model=TaxIAResponse)
+@rate_limit_ask()  # DDoS Protection: 20/hour, 5/minute
 async def ask_question(
     req: Request,
     request: QuestionRequest,
@@ -299,6 +301,36 @@ async def ask_question(
     start_time = time.time()
     
     try:
+        # === SECURITY LAYER 1: SQL Injection Detection ===
+        sql_check = sql_validator.validate_user_input(request.question)
+        if not sql_check.is_safe:
+            logger.warning(f"🚨 SQL injection blocked: {sql_check.violations}")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Security violation detected",
+                    "type": "sql_injection",
+                    "risk_level": sql_check.risk_level
+                }
+            )
+        
+        # === SECURITY LAYER 2: Guardrails Validation ===
+        guardrails_check = guardrails_system.validate_input(request.question)
+        if not guardrails_check.is_safe:
+            logger.warning(f"⚠️ Guardrails violation: {guardrails_check.violations}")
+            if guardrails_check.risk_level == "critical":
+                # Block critical violations (tax evasion, etc.)
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": "Question violates safety guidelines",
+                        "suggestions": guardrails_check.suggestions,
+                        "risk_level": guardrails_check.risk_level
+                    }
+                )
+            # Log non-critical violations but proceed
+            logger.info(f"Non-critical guardrail: {guardrails_check.risk_level}")
+        
         logger.info(f"Nueva consulta: {request.question[:100]}... (conversation_id: {request.conversation_id})")
         
         # Initialize conversation service
@@ -443,6 +475,21 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
         logger.info(f"🤖 TaxAgent response length: {len(answer)}")
         agent_time = time.time() - agent_start
         
+        # === SECURITY LAYER 3: Output Validation ===
+        output_check = guardrails_system.validate_output(
+            llm_response=answer,
+            user_question=request.question,
+            sources=sources_data
+        )
+        
+        if not output_check.is_safe:
+            logger.warning(f"⚠️ Output guardrail violation: {output_check.violations}")
+            # Apply safety wrapper for medium/high risks
+            answer = guardrails_system.apply_safety_wrapper(
+                answer,
+                risk_level=output_check.risk_level
+            )
+        
         # 5. Save user message
         user_msg = await conv_service.add_message(
             conversation_id=conversation_id,
@@ -489,19 +536,32 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
         processing_time = time.time() - start_time
         
         logger.info(f"Consulta procesada: {processing_time:.2f}s, {len(sources)} fuentes, conversation: {conversation_id}")
-        
+        # 7. Return response with enhanced metadata
         return TaxIAResponse(
             answer=answer,
             sources=sources,
-            processing_time=processing_time,
+            processing_time=time.time() - start_time,
             conversation_id=conversation_id,
             metadata={
                 "search_time": search_time,
-                "generation_time": agent_time,
-                "chunks_retrieved": len(relevant_chunks),
-                "model": settings.AZURE_OPENAI_DEPLOYMENT,
+                "agent_time": agent_time,
+                "chunks_found": len(relevant_chunks),
                 "search_method": "fts5",
-                "conversation_messages": len(conversation_history)
+                "cached": context_hit,
+                "notification_analyzed": bool(notification_context),
+                "model": settings.AZURE_OPENAI_DEPLOYMENT,
+                "conversation_messages": len(conversation_history),
+                # Security metadata
+                "security": {
+                    "sql_validation": sql_check.risk_level,
+                    "input_guardrails": guardrails_check.risk_level,
+                    "output_guardrails": output_check.risk_level,
+                    "violations": (
+                        guardrails_check.violations + output_check.violations 
+                        if not guardrails_check.is_safe or not output_check.is_safe 
+                        else []
+                    )
+                }
             }
         )
         

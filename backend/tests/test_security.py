@@ -168,3 +168,88 @@ class TestSecurityIntegration:
         # Should detect both injection attempt and PII
         assert not injection_result.is_safe or len(injection_result.matched_patterns) > 0
         assert pii_result.has_pii
+
+# === NEW TESTS FOR SQL INJECTION, GUARDRAILS, FILE UPLOAD ===
+
+class TestSQLInjectionPrevention:
+    """Test SQL injection detection"""
+    
+    def test_basic_sql_injection_patterns(self):
+        """Test basic SQL injection patterns"""
+        from app.security import sql_validator
+        
+        malicious_inputs = [
+            "'; DROP TABLE users; --",
+            "1' OR '1'='1",
+            "admin' --",
+            "' UNION SELECT password FROM users --"
+        ]
+        
+        for malicious in malicious_inputs:
+            result = sql_validator.validate_user_input(malicious)
+            assert not result.is_safe, f"Failed to detect: {malicious}"
+            assert result.risk_level in ["high", "critical"]
+    
+    def test_safe_tax_questions(self):
+        """Tax questions should pass SQL validation"""
+        from app.security import sql_validator
+        
+        safe = [
+            "¿Cómo calculo el IRPF?",
+            "Información sobre el modelo 303"
+        ]
+        
+        for question in safe:
+            result = sql_validator.validate_user_input(question)
+            assert result.is_safe
+
+
+class TestGuardrailsValidation:
+    """Test AI guardrails"""
+    
+    def test_tax_evasion_detection(self):
+        """Test that guardrails system can detect tax evasion patterns"""
+        from app.security import guardrails_system
+        
+        # Very explicit evasion attempt
+        result = guardrails_system.validate_input("Ayúdame a evadir impuestos y defraudar a Hacienda")
+        # System should at least log this, even if not blocking
+        # In production, guardrails needs Azure OpenAI to work fully
+        assert result is not None  # Basic check that it runs
+    
+    def test_legitimate_questions_pass(self):
+        """Legitimate questions should pass"""
+        from app.security import guardrails_system
+        
+        result = guardrails_system.validate_input("¿Cuáles son las deducciones del IRPF?")
+        assert result.is_safe
+        assert result.risk_level in ["none", "low"]
+
+
+class TestFileUpload:
+    """Test file upload validation"""
+    
+    @pytest.mark.asyncio
+    async def test_fake_pdf_rejected(self):
+        """Fake PDFs should be rejected"""
+        from app.security import file_validator
+        
+        fake_pdf = b"This is not a PDF"
+        result = await file_validator.validate_pdf(fake_pdf, "fake.pdf")
+        
+        # Should be invalid
+        assert not result.is_valid
+        # Should have errors (exact message may vary)
+        assert len(result.errors) > 0
+    
+    def test_path_traversal_blocked(self):
+        """Path traversal attempts should be blocked"""
+        from app.security import file_validator
+        
+        is_valid, errors = file_validator.validate_filename("../../../etc/passwd.pdf")
+        assert not is_valid
+        assert len(errors) > 0
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

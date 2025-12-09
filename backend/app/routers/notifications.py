@@ -17,6 +17,7 @@ from app.agents.notification_agent import get_notification_agent
 from app.auth.jwt_handler import get_current_user
 from app.database.turso_client import TursoClient
 from app.services.conversation_service import ConversationService
+from app.security import file_validator, rate_limit_notification
 
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -32,6 +33,7 @@ def get_db():
 
 
 @router.post("/analyze")
+@rate_limit_notification()  # DDoS Protection:  10/hour, 2/minute (VERY EXPENSIVE)
 async def analyze_notification(
     file: UploadFile = File(...),
     notification_date: Optional[str] = Form(None),
@@ -68,12 +70,43 @@ async def analyze_notification(
     }
     ```
     """
-    # Validate file type
-    if not file.filename.lower().endswith('.pdf'):
+    # === SECURITY LAYER: File Validation ===
+    # Read file content
+    content = await file.read()
+    
+    # Validate filename for path traversal
+    filename_valid, filename_errors = file_validator.validate_filename(file.filename)
+    if not filename_valid:
         raise HTTPException(
             status_code=400,
-            detail="Only PDF files are supported"
+            detail={
+                "error": "Invalid filename",
+                "details": filename_errors
+            }
         )
+    
+    # Comprehensive PDF validation
+    validation_result = await file_validator.validate_pdf(
+        file_content=content,
+        filename=file.filename,
+        content_type=file.content_type
+    )
+    
+    if not validation_result.is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "File validation failed",
+                "errors": validation_result.errors,
+                "warnings": validation_result.warnings
+            }
+        )
+    
+    # Log warnings if any
+    if validation_result.warnings:
+        logger.warning(f"⚠️ File validation warnings for {file.filename}: {validation_result.warnings}")
+    
+    logger.info(f"✅ File validated: {file.filename} ({validation_result.file_size / 1024:.2f}KB, hash: {validation_result.file_hash[:16]}...)")
     
     # Save uploaded file temporarily
     temp_dir = "/tmp/taxia_notifications"
@@ -83,8 +116,7 @@ async def analyze_notification(
     temp_path = os.path.join(temp_dir, temp_filename)
     
     try:
-        # Write uploaded file
-        content = await file.read()
+        # Write validated content
         with open(temp_path, "wb") as f:
             f.write(content)
         

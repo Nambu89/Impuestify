@@ -281,6 +281,49 @@ Los logs muestran:
 curl http://localhost:8000/health
 ```
 
+## 🔐 Seguridad
+
+TaxIA implementa múltiples capas de seguridad para proteger contra ataques y vulnerabilidades:
+
+### Capas de Protección
+
+1. **Anti-SQL Injection**:
+   - Validación de inputs del usuario
+   - Validación de SQL generado por IA
+   - Detección de patrones OWASP
+
+2. **AI Guardrails**:
+   - Prevención de evasión fiscal
+   - Detección de alucinaciones
+   - Validación de referencias a fuentes
+   - Filtrado de contenido tóxico
+
+3. **File Upload Security**:
+   - Validación de magic numbers (PDF real)
+   - Límites de tamaño (10MB máx)
+   - Detección de scripts embebidos
+   - Sanitización de metadatos
+
+4. **DDoS Protection**:
+   - Rate limiting por endpoint
+   - IP blocking automático (5 violaciones → bloqueo 60min)
+   - Limits específicos para operaciones costosas
+
+5. **Security Headers**:
+   - Content Security Policy (CSP)
+   - XSS Protection
+   - Clickjacking prevention
+   - MIME type sniffing protection
+
+Ver [SECURITY.md](SECURITY.md) para más detalles.
+
+### Testing de Seguridad
+
+```bash
+cd backend
+pytest tests/test_security.py -v
+```
+
 ## 🧪 Testing
 
 ### Backend
