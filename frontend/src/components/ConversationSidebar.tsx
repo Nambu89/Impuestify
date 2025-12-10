@@ -7,15 +7,15 @@ interface ConversationSidebarProps {
     activeConversationId: string | null
     onSelectConversation: (conversationId: string) => void
     onNewConversation: () => void
-    isOpen?: boolean // ✅ NUEVO: Controla si está abierto en móvil
-    onClose?: () => void // ✅ NUEVO: Función para cerrar
+    isOpen?: boolean
+    onClose?: () => void
 }
 
 export function ConversationSidebar({
     activeConversationId,
     onSelectConversation,
     onNewConversation,
-    isOpen = false, // ✅ NUEVO: Default false
+    isOpen = false,
     onClose
 }: ConversationSidebarProps) {
     const {
@@ -25,18 +25,18 @@ export function ConversationSidebar({
         deleteConversation
     } = useConversations()
 
+    // ✅ SOLUCIÓN: Un solo useEffect con múltiples triggers
     useEffect(() => {
-        fetchConversations()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+        console.log('🔄 ConversationSidebar: Triggering fetch', {
+            isOpen,
+            activeConversationId,
+            conversationsCount: conversations.length
+        })
 
-    // Refresh sidebar when active conversation changes (new conversation created)
-    useEffect(() => {
-        if (activeConversationId) {
-            fetchConversations()
-        }
+        fetchConversations()
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeConversationId])
+    }, [activeConversationId, isOpen]) // Se ejecuta cuando cambia el ID o se abre el sidebar
 
     const handleDelete = async (e: React.MouseEvent, conversationId: string) => {
         e.stopPropagation()
@@ -65,7 +65,6 @@ export function ConversationSidebar({
 
     return (
         <>
-            {/* ✅ NUEVO: Clase mobile-open cuando isOpen es true */}
             <div className={`conversation-sidebar ${isOpen ? 'mobile-open' : ''}`}>
                 <div className="sidebar-header">
                     <h2>Conversaciones</h2>
@@ -77,7 +76,6 @@ export function ConversationSidebar({
                         >
                             <Plus size={20} />
                         </button>
-                        {/* ✅ NUEVO: Botón cerrar solo en móvil */}
                         {onClose && (
                             <button
                                 className="close-sidebar-btn"
@@ -115,7 +113,10 @@ export function ConversationSidebar({
                             <div
                                 key={conv.id}
                                 className={`conversation-item ${activeConversationId === conv.id ? 'active' : ''}`}
-                                onClick={() => onSelectConversation(conv.id)}
+                                onClick={() => {
+                                    onSelectConversation(conv.id)
+                                    if (onClose) onClose() // Cerrar sidebar en móvil
+                                }}
                             >
                                 <div className="conversation-content">
                                     <MessageSquare size={16} />

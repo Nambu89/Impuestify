@@ -350,7 +350,7 @@ async def ask_question(
 		conversation_history = []
 		notification_context = ""
 		notification_metadata = {}
-		cached_context = None  # ✅ FIX: Initialize variable
+		cached_context = None
 		
 		# Try cache first
 		cached_context = await cache.get_context(conversation_id)
@@ -452,13 +452,27 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 			for chunk in relevant_chunks
 		]
 		
-		# Call TaxAgent
-		logger.info(f"🤖 Calling TaxAgent with {len(conversation_history)} history messages")
+		# ✅ FIX: Prepare conversation history for TaxAgent
+		# Format: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
+		formatted_history = []
+		for msg in conversation_history[-10:]:  # Last 10 messages (5 exchanges)
+			formatted_history.append({
+				"role": msg.get("role"),
+				"content": msg.get("content")
+			})
 		
-		answer = await tax_agent.ask(
-			question=request.question,
-			context=combined_context
+		logger.info(f"🤖 Calling TaxAgent with {len(formatted_history)} history messages")
+		
+		# ✅ FIX: Pass conversation_history to TaxAgent
+		agent_response = await tax_agent.run(
+			query=request.question,
+			context=combined_context,
+			sources=sources_data,
+			conversation_history=formatted_history,  # ← NEW: Pass history
+			use_tools=True
 		)
+		
+		answer = agent_response.content
 		
 		logger.info(f"🤖 TaxAgent response length: {len(answer)}")
 		agent_time = time.time() - agent_start
@@ -533,7 +547,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 				"agent_time": agent_time,
 				"chunks_found": len(relevant_chunks),
 				"search_method": "fts5",
-				"cached": bool(cached_context),  # ✅ FIX: Use correct variable
+				"cached": bool(cached_context),
 				"notification_analyzed": bool(notification_context),
 				"model": settings.OPENAI_MODEL,
 				"conversation_messages": len(conversation_history),
