@@ -196,19 +196,18 @@ export default function Chat() {
                                                         {message.content}
                                                     </ReactMarkdown>
                                                 </div>
+                                                {/* ✅ FIX: Fuentes sin bullets, formato inline */}
                                                 {message.sources && message.sources.length > 0 && (
                                                     <div className="message-sources">
                                                         <p className="sources-title">
                                                             <FileText size={14} />
-                                                            Fuentes:
-                                                        </p>
-                                                        <ul>
-                                                            {message.sources.map((source, idx) => (
-                                                                <li key={idx}>
+                                                            Fuentes: {message.sources.map((source, idx) => (
+                                                                <span key={idx}>
+                                                                    {idx > 0 && ', '}
                                                                     {source.title} (pág. {source.page})
-                                                                </li>
+                                                                </span>
                                                             ))}
-                                                        </ul>
+                                                        </p>
                                                     </div>
                                                 )}
                                             </>

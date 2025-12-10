@@ -48,7 +48,10 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
                 <nav className="nav">
                     <Link to="/chat" className="nav-link">Chat</Link>
-                    <Link to="/dashboard" className="nav-link">Dashboard</Link>
+                    {/* ✅ FIX: Solo mostrar Dashboard si is_admin === 1 */}
+                    {user?.is_admin === 1 && (
+                        <Link to="/dashboard" className="nav-link">Dashboard</Link>
+                    )}
                 </nav>
 
                 <div className="user-menu">
