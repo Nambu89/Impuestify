@@ -329,3 +329,60 @@ def get_tax_agent() -> TaxAgent:
 		_tax_agent = TaxAgent()
 	
 	return _tax_agent
+
+def format_sources_inline(sources: Optional[List[Dict[str, Any]]]) -> str:
+	"""
+	Format sources as inline compact text (no bullets).
+	
+	Groups by document and aggregates page numbers.
+	Example: "Manual IRPF 2024 (págs. 45, 67), Ley 35/2006 (pág. 12)"
+	
+	Args:
+		sources: List of source dicts with 'document' and 'page' keys
+		
+	Returns:
+		Formatted string or empty string if no sources
+	"""
+	if not sources:
+		return ""
+	
+	# Group sources by document
+	doc_pages = {}
+	for source in sources:
+		doc_name = source.get("document", "Documento desconocido")
+		page = source.get("page", 0)
+		
+		# Clean document name (remove extensions)
+		clean_name = doc_name.replace('.pdf', '').replace('.md', '').strip()
+		
+		if clean_name not in doc_pages:
+			doc_pages[clean_name] = []
+		doc_pages[clean_name].append(page)
+	
+	# Format as inline list
+	formatted_sources = []
+	for doc_name, pages in doc_pages.items():
+		# Sort and deduplicate pages
+		unique_pages = sorted(set(p for p in pages if p > 0))
+		
+		if not unique_pages:
+			continue
+		
+		# Format page numbers
+		if len(unique_pages) == 1:
+			page_str = f"pág. {unique_pages[0]}"
+		elif len(unique_pages) <= 4:
+			page_str = f"págs. {', '.join(map(str, unique_pages))}"
+		else:
+			# Too many pages, show first 3 + "..."
+			page_str = f"págs. {', '.join(map(str, unique_pages[:3]))}..."
+		
+		formatted_sources.append(f"{doc_name} ({page_str})")
+	
+	if not formatted_sources:
+		return ""
+	
+	# Join with commas
+	sources_text = ", ".join(formatted_sources)
+	
+	return f"\n\n📄 **Fuentes**: {sources_text}"
