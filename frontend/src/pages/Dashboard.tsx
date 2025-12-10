@@ -27,7 +27,7 @@ export default function Dashboard() {
                 <div className="container">
                     <div className="dashboard-header">
                         <h1>Dashboard</h1>
-                        <p>Estadísticas del sistema TaxIA</p>
+                        <p>Estadísticas del sistema Impuestify</p>
                     </div>
 
                     {isLoading ? (

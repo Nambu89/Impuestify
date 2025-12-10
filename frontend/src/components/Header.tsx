@@ -43,7 +43,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
                 <Link to="/chat" className="logo">
                     <FileText size={28} />
-                    <span>TaxIA</span>
+                    <span>Impuestify</span>
                 </Link>
 
                 <nav className="nav">

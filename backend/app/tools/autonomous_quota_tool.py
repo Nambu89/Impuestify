@@ -28,13 +28,29 @@ OBLIGATORIO usar esta función si el usuario menciona:
 NO respondas con información aproximada del contexto RAG.
 SIEMPRE calcula la cuota exacta con esta función.
 
+⚠️ INTERPRETACIÓN CRÍTICA DE INGRESOS:
+1. PREGUNTA DE CLARIFICACIÓN OBLIGATORIA si hay ambigüedad:
+   - Si el usuario menciona una cantidad SIN especificar si es bruta o neta, PREGUNTA:
+     "¿Esos [cantidad]€ son ingresos brutos (facturación total) o rendimientos netos (después de restar gastos)?"
+
+2. INTERPRETACIÓN AUTOMÁTICA (solo si es claro):
+   - Usuario dice "ingresos brutos", "facturación", "he facturado" 
+     → Aplica deducción del 7%: cantidad × 0.93 = ingresos_netos_mensuales
+   - Usuario dice "ingresos netos", "rendimientos netos", "después de gastos", "descontando gastos"
+     → USA directamente: ingresos_netos_mensuales = cantidad (NO aplicar × 0.93)
+
+3. EXPLICACIÓN AL USUARIO:
+   Siempre explica qué valor usas:
+   ✅ "Voy a calcular con 4.000€ de rendimientos netos mensuales (ya descontados gastos)"
+   ✅ "Como son ingresos brutos, primero aplico la deducción: 5.000€ × 0.93 = 4.650€"
+
 La función calcula la cuota mensual exacta de autónomos en España para 2025 según los ingresos netos mensuales y la región (general, Ceuta, o Melilla). Devuelve el tramo de cotización, la cuota mínima y máxima, y las bonificaciones aplicables.""",
 		"parameters": {
 			"type": "object",
 			"properties": {
 				"ingresos_netos_mensuales": {
 					"type": "number",
-					"description": "Ingresos netos mensuales del autónomo en euros (rendimientos netos después de gastos y deducción del 7%)"
+					"description": "Rendimientos netos mensuales DESPUÉS de restar gastos y aplicar la deducción del 7% (solo si eran ingresos brutos). Si el usuario ya dijo 'ingresos netos' o 'después de gastos', usar ese valor directamente sin aplicar × 0.93."
 				},
 				"region": {
 					"type": "string",
@@ -61,7 +77,7 @@ async def calculate_autonomous_quota_tool(
 	Calculate the autonomous worker quota based on net monthly income.
 	
 	Args:
-		ingresos_netos_mensuales: Net monthly income in euros
+		ingresos_netos_mensuales: Net monthly income in euros (AFTER expenses and 7% deduction if applicable)
 		region: Region (general, ceuta, melilla)
 		year: Year for calculation (default 2025)
 		
@@ -152,7 +168,7 @@ Tus ingresos declarados son **{ingresos_netos_mensuales}€/mes**, por debajo de
 		
 		formatted_response = f"""✅ **Cuota de Autónomos {year} - {region_name}**
 
-📊 **Tus ingresos**: {ingresos_netos_mensuales}€/mes
+📊 **Tus rendimientos netos**: {ingresos_netos_mensuales}€/mes
 📍 **Tramo**: {tramo} de 15
 
 💰 **Cuota mensual**:
@@ -177,7 +193,7 @@ Tus ingresos declarados son **{ingresos_netos_mensuales}€/mes**, por debajo de
 - Puedes elegir cotizar por una base superior (hasta {base_max:.2f}€) para mejorar tus prestaciones futuras.
 - Puedes cambiar tu base de cotización hasta **6 veces al año**.
 
-⚠️ **Recuerda**: Esta cuota se calcula sobre tus **rendimientos netos** (ingresos - gastos - 7% de deducción).
+⚠️ **Recuerda**: Esta cuota se calcula sobre tus **rendimientos netos** (ingresos brutos - gastos - deducción del 7%).
 """
 		
 		return {

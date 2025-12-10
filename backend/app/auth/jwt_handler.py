@@ -1,5 +1,5 @@
 """
-JWT Token Handler for TaxIA
+JWT Token Handler for Impuestify
 
 Implements JWT-based authentication with access and refresh tokens.
 """

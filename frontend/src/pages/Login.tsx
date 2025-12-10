@@ -35,7 +35,7 @@ export default function Login() {
                     <div className="auth-header">
                         <Link to="/" className="auth-logo">
                             <FileText size={32} />
-                            <span>TaxIA</span>
+                            <span>Impuestify</span>
                         </Link>
                         <h1>Bienvenido de nuevo</h1>
                         <p>Inicia sesión para continuar</p>

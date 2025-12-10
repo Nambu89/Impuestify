@@ -74,8 +74,8 @@ class Source(BaseModel):
 	text_preview: str
 
 
-class TaxIAResponse(BaseModel):
-	"""Modelo de respuesta de TaxIA"""
+class ImpuestifyResponse(BaseModel):
+	"""Modelo de respuesta de Impuestify"""
 	answer: str
 	sources: List[Source]
 	metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -114,11 +114,11 @@ async def lifespan(app: FastAPI):
 	
 	# Startup
 	print("=" * 80)
-	print("🚀 INICIANDO TaxIA...")
+	print("🚀 INICIANDO Impuestify...")
 	print("=" * 80)
 	
 	logger.info("=" * 80)
-	logger.info("🚀 INICIANDO TaxIA...")
+	logger.info("🚀 INICIANDO Impuestify...")
 	logger.info("=" * 80)
 	
 	# 0. Inicializar HTTP Client Pool (para todas las conexiones HTTP)
@@ -169,7 +169,7 @@ async def lifespan(app: FastAPI):
 		
 	except Exception as e:
 		logger.error("❌ Error conectando a Turso", error=str(e))
-		logger.warning("⚠️  TaxIA funcionará sin base de datos RAG")
+		logger.warning("⚠️  Impuestify funcionará sin base de datos RAG")
 		db_client = None
 	
 	# 2. Conexión a Upstash Redis (caché)
@@ -216,7 +216,7 @@ async def lifespan(app: FastAPI):
 		logger.warning("⚠️ Algunos servicios no estarán disponibles sin OpenAI")
 	
 	logger.info("=" * 80)
-	logger.info("✅ TaxIA INICIADO CORRECTAMENTE")
+	logger.info("✅ Impuestify INICIADO CORRECTAMENTE")
 	logger.info("=" * 80)
 	
 	# Store in app state for access in routes
@@ -228,11 +228,11 @@ async def lifespan(app: FastAPI):
 	
 	# Shutdown
 	print("=" * 80)
-	print("🛑 CERRANDO TaxIA...")
+	print("🛑 CERRANDO Impuestify...")
 	print("=" * 80)
 	
 	logger.info("=" * 80)
-	logger.info("🛑 CERRANDO TaxIA...")
+	logger.info("🛑 CERRANDO Impuestify...")
 	logger.info("=" * 80)
 	
 	try:
@@ -257,18 +257,18 @@ async def lifespan(app: FastAPI):
 		logger.error("❌ Error durante el cierre", error=str(e))
 	
 	print("=" * 80)
-	print("👋 TaxIA CERRADO CORRECTAMENTE")
+	print("👋 Impuestify CERRADO CORRECTAMENTE")
 	print("=" * 80)
 	
 	logger.info("=" * 80)
-	logger.info("👋 TaxIA CERRADO CORRECTAMENTE")
+	logger.info("👋 Impuestify CERRADO CORRECTAMENTE")
 	logger.info("=" * 80)
 
 
 # === Crear aplicación FastAPI ===
 
 app = FastAPI(
-	title="TaxIA - Asistente Fiscal Español",
+	title="Impuestify - Asistente Fiscal Español",
 	description="Asistente fiscal especializado en normativa española de la AEAT",
 	version="1.0.0",
 	lifespan=lifespan,
@@ -413,7 +413,7 @@ async def root():
 	<!DOCTYPE html>
 	<html>
 	<head>
-		<title>TaxIA - Asistente Fiscal Español</title>
+		<title>Impuestify - Asistente Fiscal Español</title>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<style>
@@ -434,7 +434,7 @@ async def root():
 	<body>
 		<div class="container">
 			<div class="header">
-				<h1>🧾 TaxIA</h1>
+				<h1>🧾 Impuestify</h1>
 				<p>Asistente Fiscal Especializado en Normativa Española</p>
 			</div>
 			
@@ -470,7 +470,7 @@ async def root():
 			</div>
 			
 			<div class="footer">
-				<p>TaxIA v1.0.0 | Powered by FastAPI + Guardrails AI + OpenAI</p>
+				<p>Impuestify v1.0.0 | Powered by FastAPI + Guardrails AI + OpenAI</p>
 			</div>
 		</div>
 	</body>

@@ -48,10 +48,10 @@ export default function Register() {
                     <div className="auth-header">
                         <Link to="/" className="auth-logo">
                             <FileText size={32} />
-                            <span>TaxIA</span>
+                            <span>Impuestify</span>
                         </Link>
                         <h1>Crear cuenta</h1>
-                        <p>Empieza a usar TaxIA gratis</p>
+                        <p>Empieza a usar Impuestify</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="auth-form">

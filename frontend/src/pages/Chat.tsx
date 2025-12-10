@@ -151,7 +151,7 @@ export default function Chat() {
                     {messages.length === 0 ? (
                         <div className="chat-empty">
                             <FileText size={48} />
-                            <h2>¡Hola! Soy TaxIA</h2>
+                            <h2>¡Hola! Soy Impuestify</h2>
                             <p>Tu asistente fiscal inteligente. Pregúntame sobre impuestos, IRPF, IVA, modelos tributarios y más.</p>
 
                             <div className="example-questions">

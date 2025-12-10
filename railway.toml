@@ -1,4 +1,4 @@
-# Railway Configuration for TaxIA
+# Railway Configuration for Impuestify
 # Monorepo with Backend (FastAPI) + Frontend (Vite/React)
 
 [build]
@@ -6,7 +6,7 @@ builder = "NIXPACKS"
 
 # Backend Service (FastAPI)
 [[services]]
-name = "taxia-backend"
+name = "impuestify-backend"
 source = "backend"
 
 [services.build]
@@ -20,7 +20,7 @@ timeout = "10s"
 
 # Frontend Service (Vite/React)
 [[services]]
-name = "taxia-frontend"  
+name = "impuestify-frontend"  
 source = "frontend"
 
 [services.build]

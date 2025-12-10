@@ -1,6 +1,6 @@
-# 🧾 TaxIA - Asistente Fiscal Inteligente
+# 🧾 Impuestify - Asistente Fiscal Inteligente
 
-TaxIA es un asistente fiscal especializado en normativa española que utiliza **RAG (Retrieval-Augmented Generation)** con **OpenAI GPT-5-mini** para proporcionar respuestas precisas, conversacionales y contextualizadas sobre temas fiscales.
+Impuestify es un asistente fiscal especializado en normativa española que utiliza **RAG (Retrieval-Augmented Generation)** con **OpenAI GPT-5-mini** para proporcionar respuestas precisas, conversacionales y contextualizadas sobre temas fiscales.
 
 ## ✨ Características Principales
 
@@ -90,8 +90,8 @@ TaxIA es un asistente fiscal especializado en normativa española que utiliza **
 ### 1. Clonar Repositorio
 
 ```bash
-git clone https://github.com/Nambu89/TaxIA.git
-cd TaxIA
+git clone https://github.com/Nambu89/Impuestify.git
+cd Impuestify
 ```
 
 ### 2. Configurar Backend
@@ -173,7 +173,7 @@ La aplicación estará en `http://localhost:5173`
 ```
 Usuario: "¿Cuál es el plazo para presentar el IVA?"
 
-TaxIA: "En resumen: El IVA trimestral se presenta los primeros 20 días 
+Impuestify: "En resumen: El IVA trimestral se presenta los primeros 20 días 
 naturales del mes siguiente al trimestre.
 
 Te lo explico:
@@ -224,7 +224,7 @@ El proyecto ya incluye:
 
 1. Crea cuenta en [Railway](https://railway.app)
 2. New Project → Deploy from GitHub
-3. Selecciona el repositorio `TaxIA`
+3. Selecciona el repositorio `Impuestify`
 
 ### 3. Configurar Servicios
 
@@ -282,7 +282,7 @@ curl http://localhost:8000/health
 
 ## 🔐 Seguridad
 
-TaxIA implementa múltiples capas de seguridad para proteger contra ataques y vulnerabilidades:
+Impuestify implementa múltiples capas de seguridad para proteger contra ataques y vulnerabilidades:
 
 ### Capas de Protección
 
@@ -342,7 +342,7 @@ npm run build  # Verifica que compila sin errores
 ## 📁 Estructura del Proyecto
 
 ```
-TaxIA/
+Impuestify/
 ├── backend/
 │   ├── app/
 │   │   ├── agents/          # Tax & Notification agents
@@ -416,15 +416,15 @@ MIT License - ver archivo `LICENSE` para detalles.
 
 ## ⚠️ Disclaimer Legal
 
-TaxIA es una herramienta de asistencia informativa. **No constituye asesoramiento fiscal profesional**. Siempre consulta con un asesor fiscal cualificado para decisiones importantes.
+Impuestify es una herramienta de asistencia informativa. **No constituye asesoramiento fiscal profesional**. Siempre consulta con un asesor fiscal cualificado para decisiones importantes.
 
 ## 🆘 Soporte
 
-- 🐛 Issues: [GitHub Issues](https://github.com/Nambu89/TaxIA/issues)
-- 💬 Discusiones: [GitHub Discussions](https://github.com/Nambu89/TaxIA/discussions)
+- 🐛 Issues: [GitHub Issues](https://github.com/Nambu89/Impuestify/issues)
+- 💬 Discusiones: [GitHub Discussions](https://github.com/Nambu89/Impuestify/discussions)
 
 ---
 
 **Fernando Prada - AI Engineer - Senior Consultant**
 
-**¡TaxIA - Haciendo la fiscalidad española más accesible!**
+**¡Impuestify - Haciendo la fiscalidad española más accesible!**

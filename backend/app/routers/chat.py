@@ -1,5 +1,5 @@
 """
-Chat Router for TaxIA
+Chat Router for Impuestify
 
 Handles question-answering using:
 - Keyword search in Turso Database (embeddings pre-computed)
@@ -46,8 +46,8 @@ class Source(BaseModel):
 	score: Optional[float] = None
 
 
-class TaxIAResponse(BaseModel):
-	"""Response model from TaxIA"""
+class ImpuestifyResponse(BaseModel):
+	"""Response model from Impuestify"""
 	answer: str
 	sources: List[Source]
 	processing_time: float
@@ -276,7 +276,7 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 
 # === Routes ===
 
-@router.post("/ask", response_model=TaxIAResponse)
+@router.post("/ask", response_model=ImpuestifyResponse)
 async def ask_question(
 	req: Request,
 	request: QuestionRequest,
@@ -284,7 +284,7 @@ async def ask_question(
 	current_user: TokenData = Depends(get_current_user)
 ):
 	"""
-	Ask a tax question to TaxIA with optional conversation context.
+	Ask a tax question to Impuestify with optional conversation context.
 	
 	- **question**: Your tax question in Spanish
 	- **conversation_id**: Optional conversation ID for context (creates new if not provided)
@@ -537,7 +537,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 		logger.info(f"✅ Consulta procesada: {processing_time:.2f}s, {len(sources)} fuentes, conversation: {conversation_id}")
 		
 		# 10. Return response
-		return TaxIAResponse(
+		return ImpuestifyResponse(
 			answer=answer,
 			sources=sources,
 			processing_time=processing_time,

@@ -63,7 +63,7 @@ export default function Home() {
             {/* Features Section */}
             <section className="features">
                 <div className="container">
-                    <h2 className="section-title">¿Por qué TaxIA?</h2>
+                    <h2 className="section-title">¿Por qué Impuestify?</h2>
                     <div className="features-grid">
                         <div className="feature-card">
                             <div className="feature-icon">
@@ -93,10 +93,10 @@ export default function Home() {
             {/* About TaxIA Section */}
             <section className="about">
                 <div className="container">
-                    <h2 className="section-title">Sobre TaxIA</h2>
+                    <h2 className="section-title">Sobre Impuestify</h2>
                     <div className="about-content">
                         <p>
-                            TaxIA utiliza tecnología <strong>RAG (Retrieval-Augmented Generation)</strong> para
+                            Impuestify utiliza tecnología <strong>RAG (Retrieval-Augmented Generation)</strong> para
                             proporcionar respuestas precisas basadas en documentación oficial de la AEAT.
                         </p>
                         <p>
@@ -113,7 +113,7 @@ export default function Home() {
                 <div className="container">
                     <div className="cta-card">
                         <h2>¿Listo para simplificar tu fiscalidad?</h2>
-                        <p>Únete a miles de usuarios que ya confían en TaxIA</p>
+                        <p>Únete a miles de usuarios que ya confían en Impuestify</p>
                         <Link to="/register" className="btn btn-primary btn-lg">
                             Crear Cuenta Gratis
                             <ArrowRight size={20} />
@@ -125,7 +125,7 @@ export default function Home() {
             {/* Footer */}
             <footer className="footer">
                 <div className="container">
-                    <p>© 2025 TaxIA. Información orientativa, no sustituye asesoramiento profesional.</p>
+                    <p>© 2025 Impuestify. Información orientativa, no sustituye asesoramiento profesional.</p>
                 </div>
             </footer>
         </div>
