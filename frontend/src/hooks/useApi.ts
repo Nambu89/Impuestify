@@ -144,7 +144,7 @@ export function useApi() {
                 ...options?.headers
             }
 
-            const response = await fetch(url, {
+            const response = await fetch(`${API_URL}${url}`, {  // ✅ Prefijo con API_URL
                 ...options,
                 headers
             })
