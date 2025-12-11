@@ -32,6 +32,7 @@ from app.routers.chat import router as chat_router
 from app.routers.notifications import router as notifications_router
 from app.routers.conversations import router as conversations_router
 from app.routers.security_tests import router as security_tests_router
+from app.routers.payslips import router as payslips_router
 from app.database.turso_client import get_db_client
 
 # Configurar logging estructurado
@@ -372,6 +373,7 @@ app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(notifications_router)
 app.include_router(conversations_router)
+app.include_router(payslips_router)  # Payslips management
 app.include_router(security_tests_router)  # Security testing endpoints
 
 

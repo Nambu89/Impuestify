@@ -110,3 +110,56 @@ class UsageMetric(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class PayslipBase(BaseModel):
+    """Base payslip model"""
+    filename: str
+    file_path: str
+    file_size: int
+    period_month: Optional[int] = None
+    period_year: Optional[int] = None
+    company_name: Optional[str] = None
+    company_cif: Optional[str] = None
+    employee_name: Optional[str] = None
+    employee_nif: Optional[str] = None
+    employee_ss: Optional[str] = None
+    gross_salary: Optional[float] = None
+    net_salary: Optional[float] = None
+    base_salary: Optional[float] = None
+    irpf_withholding: Optional[float] = None
+    irpf_percentage: Optional[float] = None
+    ss_contribution: Optional[float] = None
+    unemployment_contribution: Optional[float] = None
+    extra_payments: Optional[float] = None
+    overtime_pay: Optional[float] = None
+
+
+class PayslipCreate(PayslipBase):
+    """Payslip creation model"""
+    user_id: str
+    extraction_status: str = "pending"
+    extracted_data: Optional[str] = None  # JSON string
+    analysis_summary: Optional[str] = None
+    error_message: Optional[str] = None
+
+
+class Payslip(PayslipBase):
+    """Payslip model with all fields"""
+    id: str = Field(default_factory=generate_uuid)
+    user_id: str
+    upload_date: datetime = Field(default_factory=datetime.utcnow)
+    extraction_status: str = "pending"
+    extracted_data: Optional[str] = None
+    analysis_summary: Optional[str] = None
+    error_message: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    class Config:
+        from_attributes = True
+
+
+class PayslipInDB(Payslip):
+    """Payslip model as stored in database"""
+    pass

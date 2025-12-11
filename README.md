@@ -4,20 +4,33 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 
 ## ✨ Características Principales
 
-### 🤖 IA Conversacional
-- **Tono humano y cercano**: Respuestas como si hablaras con un asesor fiscal amigable
-- **Traduce términos técnicos**: Explica conceptos fiscales en lenguaje coloquial
-- **Contextual**: Mantiene el contexto de conversaciones y notificaciones
+### 🤖 Sistema Multi-Agente (Microsoft Agent Framework)
+- **CoordinatorAgent**: Router inteligente que decide qué agente especializado usar
+- **TaxAgent**: Experto en fiscalidad general (IRPF, cuotas autónomos, deducciones)
+- **PayslipAgent**: Especializado en análisis de nóminas españolas
+- **Routing automático**: Detecta el tipo de consulta y enruta al agente correcto
+
+### 🛠️ Herramientas Fiscales
+- **calculate_irpf**: Cálculo exacto de IRPF por tramos y CCAA
+- **calculate_autonomous_quota**: Cuotas de autónomos según rendimientos 2025
+- **search_tax_regulations**: Búsqueda web en fuentes oficiales (AEAT, BOE, SS)
+- **analyze_payslip**: Análisis completo de nóminas con recomendaciones
+
+### 📊 Análisis de Nóminas
+- **Upload de PDFs**: Extrae datos automáticamente con PyMuPDF4LLM
+- **13 patrones regex**: Identifica período, salarios, IRPF, SS, extras
+- **Proyecciones anuales**: Calcula ingresos y retenciones anuales
+- **Recomendaciones personalizadas**: Según rango salarial y retenciones
+
+### 📋 Análisis de Notificaciones AEAT
+- **Upload de PDFs**: Analiza notificaciones de la AEAT automáticamente
+- **Extracción inteligente**: Identifica importes, plazos y conceptos clave
+- **Contexto persistente**: Mantiene la notificación en toda la conversación
 
 ### ⚡ Alto Rendimiento
 - **Redis Cache**: Sistema de caché con Upstash para contexto de conversaciones
 - **Cache-first strategy**: ~100ms de mejora en respuestas
 - **TTL inteligente**: Renovación automática de caché (1 hora)
-
-### 📋 Análisis de Notificaciones
-- **Upload de PDFs**: Analiza notificaciones de la AEAT automáticamente
-- **Extracción inteligente**: Identifica importes, plazos y conceptos clave
-- **Contexto persistente**: Mantiene la notificación en toda la conversación
 
 ### 🔐 Sistema de Roles
 - **Admin dashboard**: Estadísticas del sistema solo para administradores
@@ -29,27 +42,34 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 - **Sidebar de conversaciones**: Historial persistente con metadata
 - **Chat interactivo**: Sugerencias contextuales y fuentes citadas
 
-## 🏗️ Arquitectura
+## 🏗️ Arquitectura Multi-Agente
 
 ```
 ┌─────────────┐
 │   Frontend  │  React + Vite + TypeScript
-│  (Vite/TS)  │  - Responsive design
-└──────┬──────┘  - Conversation sidebar
-       │         - Notification upload
+└──────┬──────┘
+       │
        ↓
-┌─────────────┐
-│   Backend   │  FastAPI + Python 3.12
-│  (FastAPI)  │  - Auth (JWT)
-└──────┬──────┘  - Rate limiting
-       │         - Structured logging
-       ↓
-┌─────────────────────────────────────┐
-│         Services Layer              │
-├─────────────┬───────────┬───────────┤
-│ Conversation│  Cache    │   User    │
-│  Service    │  Service  │  Service  │
-└─────────────┴───────────┴───────────┘
+┌─────────────────────────────────────────┐
+│          FastAPI Backend                │
+│  ┌───────────────────────────────────┐  │
+│  │     CoordinatorAgent (Router)     │  │
+│  │   (Microsoft Agent Framework)     │  │
+│  └────────┬──────────────┬───────────┘  │
+│           │              │               │
+│     ┌─────▼─────┐  ┌────▼──────┐        │
+│     │ TaxAgent  │  │  Payslip  │        │
+│     │           │  │   Agent   │        │
+│     └─────┬─────┘  └────┬──────┘        │
+│           │              │               │
+│     ┌─────▼──────────────▼─────┐        │
+│     │   4 Tools Fiscales       │        │
+│     │ - calculate_irpf         │        │
+│     │ - autonomous_quota       │        │
+│     │ - search_regulations     │        │
+│     │ - analyze_payslip        │        │
+│     └──────────────────────────┘        │
+└─────────────────────────────────────────┘
        │            │            │
        ↓            ↓            ↓
 ┌──────────┐  ┌──────────┐  ┌──────────┐
@@ -62,10 +82,11 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 
 **Backend:**
 - FastAPI (API REST)
+- **Microsoft Agent Framework 1.0.0b251211** (Multi-agent orchestration)
 - Turso (Database - SQLite distribuido)
 - Upstash Redis (Cache)
-- **OpenAI API (GPT-5-mini)**
-- Azure Document Intelligence (OCR)
+- **OpenAI API (GPT-4o-mini / GPT-5-mini)**
+- PyMuPDF4LLM (PDF extraction)
 - FTS5 (Full-text search)
 
 **Frontend:**
@@ -345,14 +366,30 @@ npm run build  # Verifica que compila sin errores
 Impuestify/
 ├── backend/
 │   ├── app/
-│   │   ├── agents/          # Tax & Notification agents
+│   │   ├── agents/          # Multi-agent system
+│   │   │   ├── coordinator_agent.py  # Router
+│   │   │   ├── tax_agent.py         # Fiscal expert
+│   │   │   ├── payslip_agent.py     # Payslip expert
+│   │   │   └── base_agent.py        # Base wrapper
+│   │   ├── tools/           # Agent tools
+│   │   │   ├── irpf_calculator_tool.py
+│   │   │   ├── autonomous_quota_tool.py
+│   │   │   ├── search_tool.py
+│   │   │   └── payslip_analysis_tool.py
+│   │   ├── services/        # Business logic
+│   │   │   └── payslip_extractor.py  # PDF extraction
 │   │   ├── auth/            # JWT authentication
 │   │   ├── database/        # Turso client & models
 │   │   ├── routers/         # API endpoints
-│   │   ├── services/        # Business logic
+│   │   │   ├── chat.py
+│   │   │   ├── payslips.py  # Payslip management
+│   │   │   └── notifications.py
 │   │   └── utils/           # Helpers
 │   ├── scripts/             # Admin & maintenance
 │   ├── tests/               # Unit tests
+│   │   ├── test_coordinator.py
+│   │   ├── test_new_tools.py
+│   │   └── test_payslip_analysis.py
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
