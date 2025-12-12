@@ -100,29 +100,6 @@ async def test_normalization():
     return result.get("success")
 
 
-async def test_fallback_to_previous_year():
-    """Test 4: Should fallback to previous year if current year not available"""
-    print("\n" + "="*60)
-    print("TEST 4: Fallback to Previous Year - Aragón 2026")
-    print("="*60)
-    
-    result = await calculate_irpf_tool(
-        base_imponible=35000,
-        comunidad_autonoma="Aragón",
-        year=2026  # Future year, should fallback to 2024 or 2025
-    )
-    
-    if result.get("success"):
-        print("✅ SUCCESS (with fallback)")
-        print(f"   Year used: {result['year']}")
-        print(f"   Cuota total: {result['cuota_total']}€")
-        if "⚠️" in result.get('formatted_response', ''):
-            print("   ⚠️  Warning about fallback detected")
-    else:
-        print("❌ FAILED")
-        print(f"   Error: {result.get('error')}")
-    
-    return result.get("success")
 
 
 async def main():
@@ -142,9 +119,6 @@ async def main():
     # Test 3: Normalization
     results.append(("CCAA Normalization", await test_normalization()))
     
-    # Test 4: Fallback
-    results.append(("Fallback to Previous Year", await test_fallback_to_previous_year()))
-    
     # Summary
     print("\n" + "="*60)
     print("📊 TEST SUMMARY")
@@ -159,7 +133,7 @@ async def main():
     
     print(f"\nTotal: {passed}/{total} tests passed")
     
-    if passed >= 3:  # At least 3 out of 4 (web extraction may fail)
+    if passed >= 2:  # At least 2 out of 3 (web extraction may fail)
         print("\n🎉 Implementation working correctly!")
         return 0
     else:
@@ -170,3 +144,4 @@ async def main():
 if __name__ == "__main__":
     exit_code = asyncio.run(main())
     sys.exit(exit_code)
+

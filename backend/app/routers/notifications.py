@@ -15,10 +15,12 @@ import json
 import logging
 
 from app.agents.notification_agent import get_notification_agent
+from app.agents.payslip_agent import get_payslip_agent
 from app.auth.jwt_handler import get_current_user
 from app.database.turso_client import TursoClient
 from app.services.conversation_service import ConversationService
 from app.security import file_validator, rate_limit_notification
+from app.utils.document_detector import DocumentDetector
 
 logger = logging.getLogger(__name__)
 
@@ -123,12 +125,57 @@ async def analyze_notification(
 		with open(temp_path, "wb") as f:
 			f.write(content)
 		
-		# Analyze with agent
-		agent = get_notification_agent()
-		analysis = await agent.analyze_notification(
-			pdf_path=temp_path,
-			notification_date=notification_date
-		)
+		# 🆕 STEP 1: Extract text from PDF for type detection
+		logger.info("📄 Extracting text from PDF for type detection...")
+		try:
+			import pymupdf  # PyMuPDF
+			doc = pymupdf.open(temp_path)
+			# Extract first 2 pages for classification
+			pdf_text = ""
+			for page_num in range(min(2, len(doc))):
+				page = doc[page_num]
+				pdf_text += page.get_text()
+			doc.close()
+			logger.info(f"✅ Extracted {len(pdf_text)} characters from PDF")
+		except Exception as e:
+			logger.warning(f"⚠️ Could not extract text for classification: {e}")
+			pdf_text = ""  # Fallback to empty
+		
+		# 🆕 STEP 2: Detect document type
+		detector = DocumentDetector()
+		detection = await detector.detect_type(pdf_text)
+		
+		logger.info(f"🔍 Document type: {detection['type']} (confidence: {detection['confidence']})")
+		
+		# 🆕 STEP 3: Check if we should ask user
+		if detector.should_ask_user(detection):
+			logger.warning(f"⚠️ Low confidence ({detection['confidence']}), asking user for clarification")
+			# Return special response asking user to clarify
+			return {
+				"needs_clarification": True,
+				"message": "No estoy seguro del tipo de documento. ¿Es una nómina o una notificación de Hacienda?",
+				"detection": detection,
+				"options": [
+					{"value": "payslip", "label": "Nómina"},
+					{"value": "aeat_notification", "label": "Notificación de Hacienda"},
+					{"value": "other", "label": "Otro"}
+				]
+			}
+		
+		# 🆕 STEP 4: Route to appropriate agent based on type
+		if detection['type'] == 'payslip':
+			logger.info("📊 Routing to PayslipAgent...")
+			agent = get_payslip_agent()
+			analysis = await agent.analyze_payslip(pdf_path=temp_path)
+			document_type = "payslip"
+		else:  # aeat_notification or other (treat as notification)
+			logger.info("📬 Routing to NotificationAgent...")
+			agent = get_notification_agent()
+			analysis = await agent.analyze_notification(
+				pdf_path=temp_path,
+				notification_date=notification_date
+			)
+			document_type = "aeat_notification"
 		
 		# Store in database
 		db = TursoClient()
