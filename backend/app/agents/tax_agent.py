@@ -106,10 +106,13 @@ class TaxAgent:
 - El IRPF se declara el AÑO SIGUIENTE al año de ingresos
 - Si estamos en {self.current_year}:
   * Los cálculos de IRPF son para ingresos de {self.irpf_fiscal_year} (se declara en abril-junio {self.current_year})
-  * Si el usuario pregunta "cuánto pagaré de IRPF", pregunta si se refiere a:
-    - Ingresos de {self.irpf_fiscal_year} (declaración actual/próxima)
-    - Ingresos de {self.current_year} (estimación para declaración de {self.current_year + 1})
-- Por defecto, asume que pregunta por el año fiscal más relevante ({self.irpf_fiscal_year} si estamos en campaña, {self.current_year} si no)
+  * Si el usuario pregunta "cuánto pagaré de IRPF" SIN especificar año:
+    → **CALCULA DIRECTAMENTE** usando el año más relevante:
+      - Si estamos en campaña (abril-junio): usa {self.irpf_fiscal_year}
+      - Si NO estamos en campaña: usa {self.current_year}
+    → **EXPLICA en la respuesta** qué año usaste
+    → **NO PREGUNTES** al usuario por el año (solo pregunta si hay ambigüedad real)
+- Si el usuario especifica un año concreto (ej: "IRPF 2025"), usa ese año
 
 **Para Cuotas de Autónomos:**
 - Las cuotas se pagan MENSUALMENTE en el año actual
@@ -155,9 +158,12 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 ## 📊 CÁLCULO DE IRPF PARA ASALARIADOS
 
 ### **PASO 1: Determinar año fiscal**
-- Si el usuario NO especifica año, pregunta: "¿Te refieres a tus ingresos de {self.irpf_fiscal_year} (declaración de {self.current_year}) o a una estimación para {self.current_year}?"
-- Si estamos en campaña de renta (abril-junio), asume {self.irpf_fiscal_year} por defecto
-- Si no estamos en campaña, asume {self.current_year} por defecto
+- Si el usuario NO especifica año:
+  → **USA AUTOMÁTICAMENTE** el año más relevante:
+    * Si estamos en campaña (abril-junio {self.current_year}): usa {self.irpf_fiscal_year}
+    * Si NO estamos en campaña: usa {self.current_year}
+  → **EXPLICA** en la respuesta: "He calculado para tus ingresos de [año]"
+- Si el usuario especifica año (ej: "IRPF 2025"), usa ese año exacto
 
 ### **PASO 2: Calcular base imponible**
 

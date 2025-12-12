@@ -13,23 +13,26 @@ logger = logging.getLogger(__name__)
 async def search_tax_regulations_tool(
 	query: str,
 	year: int = 2025,
-	max_results: int = 3
+	max_results: int = 3,
+	extract_data: bool = True
 ) -> Dict[str, Any]:
 	"""
 	Busca información fiscal actualizada en fuentes oficiales españolas.
+	Opcionalmente extrae datos estructurados usando LLM.
 	
 	Args:
 		query: Consulta de búsqueda (ej: "tramos IRPF madrid 2025")
 		year: Año fiscal para la búsqueda (default: 2025)
 		max_results: Número máximo de resultados (default: 3)
+		extract_data: Si True, intenta extraer datos estructurados (default: True)
 		
 	Returns:
-		Dict con resultados de búsqueda
+		Dict con resultados de búsqueda y datos extraídos (si extract_data=True)
 	"""
 	try:
-		logger.info(f"Searching tax regulations: query='{query}', year={year}")
+		logger.info(f"Searching tax regulations: query='{query}', year={year}, extract_data={extract_data}")
 		
-		# Fuentes oficiales prioritarias
+		# Fuentes oficiales prioritarias (en orden)
 		sources = [
 			f"site:agenciatributaria.es {query} {year}",
 			f"site:boe.es {query} {year}",
@@ -60,6 +63,7 @@ async def search_tax_regulations_tool(
 							title = result.get_text(strip=True)
 							url = result.get('href', '')
 							
+							# Solo incluir fuentes oficiales
 							if url and any(domain in url for domain in ['agenciatributaria.es', 'boe.es', 'seg-social.es']):
 								results.append({
 									"title": title,
@@ -78,7 +82,64 @@ async def search_tax_regulations_tool(
 				"formatted_response": f"No encontré información actualizada de {year} en AEAT, BOE o Seguridad Social. La documentación que tengo puede estar desactualizada. Te recomiendo consultar directamente en www.agenciatributaria.es"
 			}
 		
-		# Formatear resultados
+		# Si extract_data=True y la query es sobre IRPF, intentar extraer datos
+		if extract_data and "irpf" in query.lower():
+			from app.tools.web_scraper_tool import extract_irpf_data_from_url, detect_ccaa_from_query, format_tramos
+			
+			# Detectar CCAA del query
+			ccaa = detect_ccaa_from_query(query)
+			
+			if ccaa:
+				logger.info(f"Detected CCAA: {ccaa}, attempting data extraction")
+				
+				# Intentar extracción en orden de prioridad: AEAT → BOE → Seguridad Social
+				sorted_results = sorted(
+					results,
+					key=lambda r: 0 if r['source'] == 'AEAT' else 1 if r['source'] == 'BOE' else 2
+				)
+				
+				for result in sorted_results:
+					logger.info(f"Attempting extraction from {result['source']}: {result['url']}")
+					
+					extracted = await extract_irpf_data_from_url(
+						url=result['url'],
+						year=year,
+						ccaa=ccaa
+					)
+					
+					if extracted and extracted.get("success"):
+						tramos = extracted.get('tramos', [])
+						logger.info(f"✅ Successfully extracted {len(tramos)} tramos from {result['source']}")
+						
+						return {
+							"success": True,
+							"query": query,
+							"year": year,
+							"source_url": result['url'],
+							"source_title": result['title'],
+							"source_name": result['source'],
+							"extracted_data": extracted['data'],
+							"tramos": tramos,
+							"jurisdiction": ccaa,
+							"formatted_response": f"""✅ He encontrado los tramos de IRPF para {ccaa} {year} en fuentes oficiales:
+
+**Fuente**: {result['title']} ({result['source']})
+**URL**: {result['url']}
+
+**Tramos encontrados**:
+{format_tramos(tramos)}
+
+Estos datos se usarán para calcular tu IRPF."""
+						}
+					else:
+						logger.info(f"No data extracted from {result['url']}")
+				
+				# Si no se pudo extraer de ninguna URL
+				logger.warning(f"Could not extract structured data from any source")
+			else:
+				logger.info("Could not detect CCAA from query, skipping extraction")
+		
+		# Si no se pidió extracción o no se pudo extraer, devolver solo URLs
 		formatted_results = "\n".join([
 			f"• {r['title']} ({r['source']}): {r['url']}"
 			for r in results[:max_results]
@@ -107,7 +168,7 @@ SEARCH_TAX_REGULATIONS_TOOL = {
 	"type": "function",
 	"function": {
 		"name": "search_tax_regulations",
-		"description": "Busca información fiscal actualizada en fuentes oficiales (AEAT, BOE, Seguridad Social). USA ESTA HERRAMIENTA cuando: (1) La documentación RAG no tiene info del año actual, (2) El usuario pregunta por plazos, fechas límite o cambios recientes, (3) Necesitas confirmar información de años anteriores.",
+		"description": "Busca información fiscal actualizada en fuentes oficiales (AEAT, BOE, Seguridad Social) y opcionalmente extrae datos estructurados. USA ESTA HERRAMIENTA cuando: (1) La documentación RAG no tiene info del año actual, (2) El usuario pregunta por plazos, fechas límite o cambios recientes, (3) Necesitas confirmar información de años anteriores, (4) Necesitas datos de IRPF que no están en la base de datos.",
 		"parameters": {
 			"type": "object",
 			"properties": {
@@ -124,6 +185,11 @@ SEARCH_TAX_REGULATIONS_TOOL = {
 					"type": "integer",
 					"description": "Número máximo de resultados a devolver (default: 3)",
 					"default": 3
+				},
+				"extract_data": {
+					"type": "boolean",
+					"description": "Si True, intenta extraer datos estructurados de IRPF usando LLM (default: True). Útil cuando necesitas tramos de IRPF para cálculos.",
+					"default": True
 				}
 			},
 			"required": ["query"]

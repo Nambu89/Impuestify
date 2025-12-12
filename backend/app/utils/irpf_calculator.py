@@ -101,6 +101,60 @@ class IRPFCalculator:
             'breakdown_autonomica': breakdown_autonomica
         }
     
+    def calculate_with_custom_scale(
+        self,
+        base_liquidable: float,
+        tramos_autonomicos: List[Dict],
+        tramos_estatales: List[Dict] = None,
+        year: int = 2024,
+        jurisdiction: str = "Custom"
+    ) -> Dict:
+        """
+        Calculate IRPF using custom scales (e.g., from web extraction).
+        
+        Args:
+            base_liquidable: Taxable income
+            tramos_autonomicos: Autonomous community scale (from web)
+            tramos_estatales: Optional state scale (from web or DB)
+            year: Tax year
+            jurisdiction: CCAA name
+            
+        Returns:
+            Same format as calculate_irpf()
+        """
+        # Calculate state quota
+        cuota_estatal = 0
+        breakdown_estatal = []
+        
+        if tramos_estatales:
+            cuota_estatal, breakdown_estatal = self._apply_scale(
+                base_liquidable,
+                tramos_estatales
+            )
+        
+        # Calculate CCAA quota with custom scale
+        cuota_autonomica, breakdown_autonomica = self._apply_scale(
+            base_liquidable,
+            tramos_autonomicos
+        )
+        
+        # Total
+        cuota_total = cuota_estatal + cuota_autonomica
+        tipo_medio = (cuota_total / base_liquidable * 100) if base_liquidable > 0 else 0
+        
+        return {
+            'base_liquidable': base_liquidable,
+            'jurisdiction': jurisdiction,
+            'year': year,
+            'cuota_estatal': round(cuota_estatal, 2),
+            'cuota_autonomica': round(cuota_autonomica, 2),
+            'cuota_total': round(cuota_total, 2),
+            'tipo_medio': round(tipo_medio, 2),
+            'breakdown_estatal': breakdown_estatal,
+            'breakdown_autonomica': breakdown_autonomica,
+            'source': 'web'  # Indicator that data came from web
+        }
+    
     async def _get_scale(self, jurisdiction: str, year: int) -> List[Dict]:
         """
         Get tax scale from database.
