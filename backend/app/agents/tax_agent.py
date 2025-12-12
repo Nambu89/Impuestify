@@ -347,10 +347,14 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 					"content": None,
 					"tool_calls": [tool_call.model_dump()]
 				})
+				# 🔧 FIX: Use formatted_response instead of raw JSON
+				# This prevents technical JSON from being shown to users
+				tool_response_content = tool_result.get('formatted_response', json.dumps(tool_result))
+				
 				messages.append({
 					"role": "tool",
 					"tool_call_id": tool_call.id,
-					"content": json.dumps(tool_result)
+					"content": tool_response_content  # ← Use formatted response, not raw JSON
 				})
 				
 				# Second call to get final response

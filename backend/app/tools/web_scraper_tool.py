@@ -161,7 +161,20 @@ async def extract_irpf_data_from_url(
         logger.info(f"Extracting IRPF data from {source_name}: {url}")
         
         # 1. Download content
-        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+        # Disable SSL verification for official Spanish government sites
+        # (they use weak signature algorithms that Python rejects)
+        verify_ssl = not any(domain in url.lower() for domain in [
+            'agenciatributaria.es',
+            'aeat.es', 
+            'boe.es',
+            'seg-social.es'
+        ])
+        
+        async with httpx.AsyncClient(
+            timeout=15.0, 
+            follow_redirects=True,
+            verify=verify_ssl  # Disable SSL verification for Spanish gov sites
+        ) as client:
             response = await client.get(url, headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             })
