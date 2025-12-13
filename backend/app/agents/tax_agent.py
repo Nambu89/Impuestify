@@ -314,7 +314,7 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 				tools=ALL_TOOLS if use_tools else None,
 				tool_choice="auto" if use_tools else None,
 				temperature=1,
-				max_completion_tokens=4000
+				max_completion_tokens=10000  # Increased for multi-turn conversations
 			)
 			
 			# Check if model wants to call a function
@@ -363,7 +363,7 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 					model=self.model,
 					messages=messages,
 					temperature=1,
-					max_completion_tokens=4000
+					max_completion_tokens=10000  # Increased for multi-turn conversations
 				)
 				content = final_response.choices[0].message.content or tool_result.get('formatted_response', '')
 				logger.info(f"Final content length: {len(content)}")
