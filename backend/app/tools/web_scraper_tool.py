@@ -270,6 +270,7 @@ REGLAS:
                 }
             ],
             temperature=1,  # gpt-5-mini only supports temperature=1
+            max_completion_tokens=3000,  # Needs tokens for extracting complex IRPF data
             response_format={"type": "json_object"}
         )
         

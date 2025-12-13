@@ -141,6 +141,20 @@ async def analyze_notification(
 			logger.warning(f"⚠️ Could not extract text for classification: {e}")
 			pdf_text = ""  # Fallback to empty
 		
+		# Validate that we have enough text to classify
+		if not pdf_text or len(pdf_text) < 50:
+			logger.error("❌ Could not extract enough text from PDF for classification")
+			return {
+				"needs_clarification": True,
+				"message": "No se pudo leer el contenido del PDF. Por favor, indica el tipo de documento:",
+				"detection": {"type": "other", "confidence": 0.0, "reasoning": "PDF sin texto extraíble"},
+				"options": [
+					{"value": "payslip", "label": "Nómina"},
+					{"value": "aeat_notification", "label": "Notificación de Hacienda"},
+					{"value": "other", "label": "Otro"}
+				]
+			}
+		
 		# 🆕 STEP 2: Detect document type
 		detector = DocumentDetector()
 		detection = await detector.detect_type(pdf_text)

@@ -177,7 +177,7 @@ Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnico
 				messages=messages,
 				tools=ALL_TOOLS,
 				tool_choice="auto",
-				temperature=0.7,
+				temperature=1,  # gpt-5-mini requires temperature=1
 				max_completion_tokens=3000
 			)
 			
@@ -214,7 +214,7 @@ Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnico
 				final_response = self._client.chat.completions.create(
 					model=self.model,
 					messages=messages,
-					temperature=0.7,
+					temperature=1,  # gpt-5-mini requires temperature=1
 					max_completion_tokens=3000
 				)
 				content = final_response.choices[0].message.content
@@ -270,6 +270,21 @@ Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnico
 			
 			logger.info(f"✅ Extracted {len(pdf_text)} characters from PDF")
 			
+			# Validate that PDF has extractable text
+			if not pdf_text or len(pdf_text) < 100:
+				logger.error("❌ PDF appears to be empty or image-only (no extractable text)")
+				return {
+					"type": "Nómina",
+					"summary": "⚠️ **Error al procesar la nómina**\n\nEl PDF no contiene texto extraíble. Esto puede ocurrir si:\n- Es una imagen escaneada sin OCR\n- El PDF está corrupto\n- El PDF está protegido\n\nPor favor, intenta con un PDF que contenga texto seleccionable.",
+					"file_hash": file_hash,
+					"notification_date": datetime.now().strftime("%Y-%m-%d"),
+					"deadlines": [],
+					"region": {"region": "No especificada", "is_foral": False},
+					"severity": "low",
+					"reference_links": [],
+					"payslip_data": {}
+				}
+			
 			# Use gpt-5-mini to extract structured data
 			extraction_prompt = f"""Extrae los datos clave de esta nómina española.
 
@@ -304,6 +319,7 @@ Si no encuentras un dato, usa null. Sé preciso con los números.
 					{"role": "user", "content": extraction_prompt}
 				],
 				temperature=1,
+				max_completion_tokens=2000,  # gpt-5-mini needs tokens for reasoning
 				response_format={"type": "json_object"}
 			)
 			

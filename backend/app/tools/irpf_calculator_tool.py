@@ -125,8 +125,8 @@ async def calculate_irpf_tool(
 				try:
 					state_scale = await calculator._get_scale('Estatal', year)
 					tramos_estatales = state_scale
-				except:
-					logger.warning(f"No state scale for {year}, using only autonomous scale")
+				except Exception as e:
+					logger.warning(f"No state scale for {year}, using only autonomous scale: {e}")
 				
 				result = calculator.calculate_with_custom_scale(
 					base_liquidable=base_imponible,
