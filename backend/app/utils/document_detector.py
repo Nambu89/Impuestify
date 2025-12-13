@@ -90,7 +90,7 @@ class DocumentDetector:
                     }
                 ],
                 temperature=1,  # Required for gpt-5-mini
-                max_tokens=300,
+                max_completion_tokens=300,  # gpt-5-mini uses max_completion_tokens, not max_tokens
                 response_format={"type": "json_object"}
             )
             
