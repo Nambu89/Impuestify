@@ -82,15 +82,15 @@ class DocumentDetector:
                 messages=[
                     {
                         "role": "system",
-                        "content": "Eres un experto en clasificación de documentos fiscales y laborales españoles. Respondes SOLO en formato JSON válido."
+                        "content": "Eres un experto en clasificación de documentos fiscales y laborales españoles. IMPORTANTE: Debes responder ÚNICAMENTE en formato JSON válido, sin texto adicional antes o después del JSON."
                     },
                     {
                         "role": "user",
                         "content": prompt
                     }
                 ],
-                temperature=1,  # Required for gpt-5-mini
-                max_completion_tokens=300,  # gpt-5-mini uses max_completion_tokens, not max_tokens
+                temperature=1,  # gpt-5-mini always uses temperature=1 (cannot be changed)
+                max_completion_tokens=2000,  # Increased - gpt-5-mini needs more tokens for internal reasoning
                 response_format={"type": "json_object"}
             )
             
