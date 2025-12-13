@@ -72,8 +72,24 @@ Tu objetivo es analizar nóminas de forma clara y humana, explicando cada concep
 1. **Resumen ejecutivo** (2-3 líneas con lo más importante)
 2. **Desglose de conceptos** (explica cada parte de la nómina)
 3. **Análisis de retenciones** (¿son normales? ¿altas? ¿bajas?)
-4. **Comparativa anual** (proyección de ingresos y retenciones)
-5. **Recomendaciones personalizadas** (qué puede hacer el usuario)
+4. **Pagas extras** (¿están prorrateadas? Si ves P.P.P.EXTRAS, explícalo)
+5. **Comparativa anual** (proyección de ingresos y retenciones)
+6. **Recomendaciones personalizadas** (qué puede hacer el usuario)
+
+## IMPORTANTE sobre pagas extras:
+
+Si detectas "P.P.P.EXTRAS", "PRORRATEO" o similar en la nómina:
+- ✅ **Confirma** que las pagas extras ESTÁN prorrateadas (12 pagas anuales)
+- 💡 **Explica** que el bruto mensual ya incluye 1/6 de cada paga extra
+- 📊 **Calcula** el bruto anual real: bruto_mensual × 12 (no × 14)
+
+Si NO ves prorrateo:
+- ⚠️ **Advierte** que hay 2 pagas extras adicionales (14 pagas anuales)
+- 📊 **Calcula** el bruto anual real: (bruto_mensual × 12) + (2 × paga_extra)
+- 💡 **Explica** que en junio y diciembre cobrará más
+
+Si NO estás seguro:
+- ❓ **Pregunta** al usuario: "¿Tus pagas extras están prorrateadas o las cobras en junio y diciembre?"
 
 ## Formato de respuesta:
 
@@ -293,6 +309,8 @@ TEXTO DE LA NÓMINA:
 {pdf_text[:4000]}
 ```
 
+IMPORTANTE: Busca TODOS estos conceptos en la nómina. Si no encuentras alguno, usa null.
+
 Extrae y devuelve en formato JSON:
 {{
 	"period_month": "Noviembre",
@@ -306,8 +324,20 @@ Extrae y devuelve en formato JSON:
 	"ss_contribution": 189.81,
 	"salary_base": 1123.47,
 	"complements": 1810.87,
-	"region": "Aragón"
+	"region": "Aragón",
+	"pagas_extras_prorrateadas": true,
+	"ppp_extras_amount": 282.12,
+	"num_pagas_anuales": 14
 }}
+
+INSTRUCCIONES ESPECÍFICAS:
+- "pagas_extras_prorrateadas": true si encuentras "P.P.P.EXTRAS", "PRORRATEO", "PRORRATEADAS" o similar. false si pone "14 PAGAS" sin prorrateo. null si no está claro.
+- "ppp_extras_amount": importe del concepto P.P.P.EXTRAS si existe (busca en DEVENGOS)
+- "num_pagas_anuales": 12 si están prorrateadas, 14 si no lo están, null si no se especifica
+- "gross_salary": TOTAL DEVENGADO (suma de todos los devengos)
+- "net_salary": LÍQUIDO A PERCIBIR o TOTAL A PERCIBIR
+- "irpf_withholding": importe en € de TRIBUTACION I.R.P.F o IRPF
+- "ss_contribution": suma de COTIZACION CONT.COMU, COTIZACION DESEMPLEO, COTIZACION FORMACION, etc.
 
 Si no encuentras un dato, usa null. Sé preciso con los números.
 """
