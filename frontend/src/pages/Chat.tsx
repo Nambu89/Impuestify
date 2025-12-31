@@ -37,8 +37,13 @@ export default function Chat() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
+    // ✅ IMPROVED: Wait for DOM to fully render before scrolling
     useEffect(() => {
-        scrollToBottom()
+        const timer = setTimeout(() => {
+            scrollToBottom()
+        }, 100) // Small delay ensures DOM has completed rendering
+
+        return () => clearTimeout(timer)
     }, [messages])
 
     const handleSelectConversation = async (conversationId: string) => {
@@ -257,7 +262,12 @@ export default function Chat() {
                 <div className="modal-overlay" onClick={() => setShowNotificationModal(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3>📎 Analizar Notificación AEAT</h3>
+                            <h3>📎 Analizar documento</h3>
+                            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px', lineHeight: '1.5', marginBottom: '12px' }}>
+                                Sube un documento nómina o notificación de la AEAT en formato PDF.
+                                Analizaré el contenido, identificaré plazos importantes y te ayudaré
+                                a entender los pasos a seguir.
+                            </p>
                             <button
                                 className="modal-close"
                                 onClick={() => setShowNotificationModal(false)}

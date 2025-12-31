@@ -42,6 +42,15 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 - **Sidebar de conversaciones**: Historial persistente con metadata
 - **Chat interactivo**: Sugerencias contextuales y fuentes citadas
 
+### ✨ Nuevas Funcionalidades (v2.7 - Diciembre 2025)
+
+| Feature | Descripción |
+|---------|-------------|
+| 🛡️ **Llama Guard 4** | Moderación de contenido IA con 14 categorías de riesgo (via Groq API, gratis) |
+| 🧠 **Semantic Cache** | Cache inteligente por similaridad semántica (Upstash Vector) - reduce costes ~30% |
+| ⚡ **Complexity Router** | Clasificación automática de preguntas para ajustar reasoning_effort |
+| 📋 **Audit Logger** | Registro inmutable de acciones críticas de seguridad |
+
 ## 🏗️ Arquitectura Multi-Agente
 
 ```

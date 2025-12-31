@@ -342,6 +342,33 @@ async def ask_question(
 			if not conversation:
 				raise HTTPException(status_code=404, detail="Conversation not found")
 		
+		# === GREETING DETECTION ===
+		# If user sends a simple greeting, respond cordially without RAG search
+		if guardrails_system.is_greeting(request.question.strip()):
+			logger.info("👋 Greeting detected, sending friendly welcome")
+			greeting_response = (
+				"¡Hola! 👋 Soy Impuestify, tu asistente fiscal inteligente.\n\n"
+				"Estoy aquí para ayudarte con preguntas sobre:\n"
+				"- 💰 IRPF y declaración de la renta\n"
+				"- 📊 IVA y modelos tributarios (303, 100, etc.)\n"
+				"- 📉 Deducciones y exenciones fiscales\n"
+				"- 📋 Normativa fiscal española y AEAT\n"
+				"- 🔧 Cuotas de autónomos\n\n"
+				"¿En qué puedo ayudarte hoy?"
+			)
+			
+			# Save messages to conversation
+			await conv_service.add_message(conversation_id, "user", request.question)
+			await conv_service.add_message(conversation_id, "assistant", greeting_response)
+			
+			return ImpuestifyResponse(
+				answer=greeting_response,
+				sources=[],
+				processing_time=time.time() - start_time,
+				conversation_id=conversation_id,
+				metadata={"type": "greeting", "search_method": "none"}
+			)
+		
 		# 2. Initialize cache service
 		upstash_client = getattr(req.app.state, 'upstash_client', None)
 		cache = ConversationCache(upstash_client)

@@ -28,11 +28,18 @@ logger = logging.getLogger(__name__)
 
 # Try to import PDF validation libraries
 try:
-    import PyPDF2
-    PYPDF2_AVAILABLE = True
+    from pypdf import PdfReader
+    from pypdf.errors import PdfReadError
+    PYPDF_AVAILABLE = True
 except ImportError:
-    PYPDF2_AVAILABLE = False
-    logger.warning("PyPDF2 not available. Install with: pip install PyPDF2")
+    try:
+        # Fallback to PyPDF2 if pypdf not available
+        from PyPDF2 import PdfReader
+        from PyPDF2.errors import PdfReadError
+        PYPDF_AVAILABLE = True
+    except ImportError:
+        PYPDF_AVAILABLE = False
+        logger.warning("pypdf not available. Install with: pip install pypdf")
 
 
 class FileValidationResult(BaseModel):
@@ -161,10 +168,10 @@ class FileValidator:
             )
         
         # === LAYER 5: PDF Structure Validation ===
-        if PYPDF2_AVAILABLE:
+        if PYPDF_AVAILABLE:
             try:
                 pdf_file = io.BytesIO(file_content)
-                pdf_reader = PyPDF2.PdfReader(pdf_file)
+                pdf_reader = PdfReader(pdf_file)
                 
                 # Check if encrypted (might be malicious or corporate protective)
                 if pdf_reader.is_encrypted:
@@ -189,7 +196,7 @@ class FileValidator:
                     metadata['author'] = safe_metadata.get('author', 'Unknown')
                     metadata['creator'] = safe_metadata.get('creator', 'Unknown')
                 
-            except PyPDF2.errors.PdfReadError as e:
+            except PdfReadError as e:
                 errors.append(f"Corrupted or invalid PDF structure: {str(e)}")
                 return FileValidationResult(
                     is_valid=False,
@@ -208,7 +215,7 @@ class FileValidator:
                     warnings=warnings
                 )
         else:
-            warnings.append("PyPDF2 not available - skipping advanced PDF validation")
+            warnings.append("pypdf not available - skipping advanced PDF validation")
         
         # === LAYER 6: Dangerous Content Detection ===
         dangerous_features = []

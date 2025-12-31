@@ -251,5 +251,178 @@ class TestFileUpload:
         assert len(errors) > 0
 
 
+# === NEW TESTS FOR v2.7 SECURITY MODULES ===
+
+class TestLlamaGuard:
+    """Tests for Llama Guard content moderation"""
+    
+    def test_llama_guard_initialization(self):
+        """Test LlamaGuard initializes correctly"""
+        from app.security.llama_guard import LlamaGuard
+        
+        # Without API key, should be disabled
+        guard = LlamaGuard(api_key=None, enabled=True)
+        assert not guard.enabled
+    
+    def test_risk_categories_defined(self):
+        """Test all 14 risk categories are defined"""
+        from app.security.llama_guard import LlamaGuard
+        
+        guard = LlamaGuard()
+        assert len(guard.RISK_CATEGORIES) == 14
+        assert "S1" in guard.RISK_CATEGORIES
+        assert "S14" in guard.RISK_CATEGORIES
+    
+    def test_block_messages_spanish(self):
+        """Test block messages are in Spanish"""
+        from app.security.llama_guard import LlamaGuard
+        
+        guard = LlamaGuard()
+        spanish_starters = ["Lo siento", "Si estás pasando", "Recuerda"]
+        for category, message in guard.BLOCK_MESSAGES.items():
+            assert any(starter in message for starter in spanish_starters), f"Message for {category} not in Spanish: {message[:50]}"
+    
+    def test_moderate_empty_text(self):
+        """Test moderation of empty text returns safe"""
+        import asyncio
+        from app.security.llama_guard import LlamaGuard
+        
+        guard = LlamaGuard(enabled=False)
+        result = asyncio.get_event_loop().run_until_complete(guard.moderate(""))
+        assert result.is_safe
+
+
+class TestComplexityRouter:
+    """Tests for LLM Complexity Router"""
+    
+    def test_simple_questions_classification(self):
+        """Simple questions should get LOW reasoning effort"""
+        from app.security.complexity_router import classify_complexity, ComplexityLevel
+        
+        simple_queries = [
+            "¿Qué es el IVA?",
+            "¿Cuál es el plazo del modelo 303?",
+            "Define base imponible",
+        ]
+        
+        for query in simple_queries:
+            result = classify_complexity(query)
+            assert result.level == ComplexityLevel.SIMPLE, f"Failed for: {query}"
+            assert result.reasoning_effort.value == "low"
+    
+    def test_moderate_questions_classification(self):
+        """Moderate questions should get MEDIUM reasoning effort"""
+        from app.security.complexity_router import classify_complexity, ComplexityLevel
+        
+        moderate_queries = [
+            "Explica cómo funciona la deducción por vivienda",
+            "¿Cuáles son las diferencias entre IVA e IRPF?",
+            "Dame un ejemplo de retención",
+        ]
+        
+        for query in moderate_queries:
+            result = classify_complexity(query)
+            assert result.level == ComplexityLevel.MODERATE, f"Failed for: {query}"
+    
+    def test_complex_questions_classification(self):
+        """Complex questions should get HIGH reasoning effort"""
+        from app.security.complexity_router import classify_complexity, ComplexityLevel
+        
+        complex_queries = [
+            "Analiza las implicaciones fiscales de heredar una vivienda",
+            "¿Qué me recomiendas hacer con varios escenarios de inversión?",
+            "Evalúa las consecuencias de cambiar de régimen fiscal",
+        ]
+        
+        for query in complex_queries:
+            result = classify_complexity(query)
+            assert result.level == ComplexityLevel.COMPLEX, f"Failed for: {query}"
+            assert result.reasoning_effort.value == "high"
+    
+    def test_get_reasoning_effort_function(self):
+        """Test convenience function returns correct effort"""
+        from app.security.complexity_router import get_reasoning_effort
+        
+        assert get_reasoning_effort("¿Qué es el IRPF?") == "low"
+        assert get_reasoning_effort("Explica las diferencias") in ["low", "medium"]
+
+
+class TestSemanticCache:
+    """Tests for Semantic Cache"""
+    
+    def test_semantic_cache_disabled_without_config(self):
+        """Cache should be disabled without configuration"""
+        from app.security.semantic_cache import SemanticCache
+        
+        cache = SemanticCache(url=None, token=None, enabled=True)
+        assert not cache.enabled
+    
+    def test_personal_query_detection(self):
+        """Personal queries should be detected and skipped"""
+        from app.security.semantic_cache import SemanticCache
+        
+        cache = SemanticCache(enabled=False)
+        
+        personal_queries = [
+            "¿Cuánto pago de IRPF?",
+            "Mi declaración de la renta",
+            "Tengo un piso en Madrid",
+        ]
+        
+        for query in personal_queries:
+            assert cache._is_personal_query(query), f"Should detect as personal: {query}"
+    
+    def test_general_query_not_personal(self):
+        """General tax questions should not be marked as personal"""
+        from app.security.semantic_cache import SemanticCache
+        
+        cache = SemanticCache(enabled=False)
+        
+        general_queries = [
+            "¿Qué es el IVA?",
+            "Plazos del modelo 303",
+            "Información sobre deducciones",
+        ]
+        
+        for query in general_queries:
+            assert not cache._is_personal_query(query), f"Should not be personal: {query}"
+
+
+class TestAuditLogger:
+    """Tests for Audit Logger"""
+    
+    def test_audit_logger_initialization(self):
+        """Test audit logger initializes correctly"""
+        from app.security.audit_logger import AuditLogger
+        
+        logger = AuditLogger()
+        assert logger is not None
+    
+    def test_audit_event_creation(self):
+        """Test audit event creation"""
+        from app.security.audit_logger import AuditEvent
+        
+        event = AuditEvent(
+            event_type="test.event",
+            timestamp="2025-12-22T18:00:00Z",
+            user_id="test-user",
+            details={"key": "value"}
+        )
+        
+        assert event.event_type == "test.event"
+        json_str = event.to_json()
+        assert "test-user" in json_str
+    
+    def test_audit_event_types_defined(self):
+        """Test all audit event types are defined"""
+        from app.security.audit_logger import AuditEventType
+        
+        # Check key event types exist
+        assert hasattr(AuditEventType, 'AUTH_LOGIN_SUCCESS')
+        assert hasattr(AuditEventType, 'AI_MODERATION_BLOCK')
+        assert hasattr(AuditEventType, 'RATE_LIMIT_EXCEEDED')
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+

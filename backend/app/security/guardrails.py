@@ -74,6 +74,13 @@ class TaxIAGuardrails:
         'en el documento', 'conforme a'
     ]
     
+    # Greeting patterns (common greetings in Spanish and English)
+    GREETING_PATTERNS = [
+        r'\b(hola|hello|hi|hey|buenos días|buenas tardes|buenas noches)\b',
+        r'\b(qué tal|cómo estás|cómo vas|saludos)\b',
+        r'^(hola|hi|hey)\s*[!.?]*$'
+    ]
+    
     def __init__(self, enable_strict_mode: bool = True):
         """
         Initialize guardrails system.
@@ -129,22 +136,27 @@ class TaxIAGuardrails:
                 risk_level = "critical"
                 break
         
-        # Check if question is tax-related
-        tax_keywords = [
-            'irpf', 'renta', 'impuesto', 'declaración', 'hacienda',
-            'tributar', 'fiscal', 'deducción', 'exención', 'retención',
-            'iva', 'sociedades', 'patrimonio', 'plusvalía'
-        ]
-        
-        is_tax_related = any(kw in lower_question for kw in tax_keywords)
-        
-        if not is_tax_related and self.strict_mode:
-            # Might be off-topic
-            suggestions.append(
-                "Tu pregunta no parece relacionada con temas fiscales. "
-                "TaxIA está especializado en IRPF y normativa tributaria española."
-            )
-            risk_level = "low" if risk_level == "none" else risk_level
+        # Check if it's a greeting before checking if tax-related
+        if self.is_greeting(user_question):
+            # Greetings are safe and don't need to be tax-related
+            logger.info("👋 Greeting detected, skipping tax-keyword validation")
+        else:
+            # Check if question is tax-related
+            tax_keywords = [
+                'irpf', 'renta', 'impuesto', 'declaración', 'hacienda',
+                'tributar', 'fiscal', 'deducción', 'exención', 'retención',
+                'iva', 'sociedades', 'patrimonio', 'plusvalía'
+            ]
+            
+            is_tax_related = any(kw in lower_question for kw in tax_keywords)
+            
+            if not is_tax_related and self.strict_mode:
+                # Might be off-topic
+                suggestions.append(
+                    "Tu pregunta no parece relacionada con temas fiscales. "
+                    "TaxIA está especializado en IRPF y normativa tributaria española."
+                )
+                risk_level = "low" if risk_level == "none" else risk_level
         
         # Use guardrails-ai if available
         if self.guardrails_available:
@@ -320,13 +332,59 @@ class TaxIAGuardrails:
         
         return response
     
+    def is_greeting(self, text: str) -> bool:
+        """
+        Detect if the text is a simple greeting.
+        
+        Args:
+            text: User input text
+            
+        Returns:
+            True if text matches greeting patterns
+        """
+        text_clean = text.strip().lower()
+        
+        # Check if it's very short and matches greeting pattern
+        if len(text_clean) < 50:  # Greetings are typically short
+            for pattern in self.GREETING_PATTERNS:
+                if re.search(pattern, text_clean):
+                    return True
+        
+        return False
+    
+    def validate_output_format(self, response: str) -> bool:
+        """
+        Validate that response doesn't contain internal JSON or debug info.
+        
+        Args:
+            response: LLM response to validate
+            
+        Returns:
+            True if response format is clean, False if contains internal data
+        """
+        # Check for JSON-like structures that shouldn't be in user-facing text
+        json_indicators = [
+            r'\{\s*["\']tool["\']\s*:',  # {"tool": ...}
+            r'\{\s*["\']function["\']\s*:',  # {"function": ...}
+            r'\{\s*["\']query["\']\s*:',  # {"query": ...}
+            r'\{\s*["\']search_params["\']\s*:',  # Internal search params
+        ]
+        
+        for pattern in json_indicators:
+            if re.search(pattern, response):
+                logger.warning(f"⚠️ Internal JSON detected in response: {pattern}")
+                return False
+        
+        return True
+    
     def get_stats(self) -> Dict[str, Any]:
         """Get guardrails system statistics."""
         return {
             "strict_mode": self.strict_mode,
             "guardrails_ai_available": self.guardrails_available,
             "prohibited_keywords_count": len(self.PROHIBITED_KEYWORDS),
-            "risk_keywords_count": len(self.RISK_KEYWORDS)
+            "risk_keywords_count": len(self.RISK_KEYWORDS),
+            "greeting_patterns_count": len(self.GREETING_PATTERNS)
         }
 
 

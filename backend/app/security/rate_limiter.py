@@ -150,15 +150,105 @@ def get_rate_limit_key(request: Request) -> str:
 	return get_remote_address(request)
 
 
-# === Initialize Limiter ===
+# === Initialize Limiter with Redis (Distributed) ===
 
-# Standard limiter - OPTIONS bypass handled in middleware
-limiter = Limiter(
-	key_func=get_rate_limit_key,
-	default_limits=["100/hour", "10/minute"],
-	storage_uri="memory://",
-	strategy="fixed-window"
-)
+# Try to import upstash-redis for distributed rate limiting
+try:
+	from upstash_redis import Redis
+	UPSTASH_AVAILABLE = True
+except ImportError:
+	UPSTASH_AVAILABLE = False
+	logger.debug("upstash-redis not available, using in-memory rate limiting")
+
+
+class UpstashStorage:
+	"""
+	Custom storage backend for SlowAPI using Upstash Redis REST API.
+	
+	Provides distributed rate limiting across multiple server instances.
+	"""
+	
+	def __init__(self, redis_client: 'Redis'):
+		self.redis = redis_client
+	
+	def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
+		"""Increment a counter and set expiry."""
+		try:
+			# Use Redis INCR command
+			count = self.redis.incr(key)
+			
+			# Set expiry on first increment
+			if count == 1:
+				self.redis.expire(key, expiry)
+			
+			return count
+		except Exception as e:
+			logger.warning(f"⚠️ Redis incr failed: {e}")
+			return 0
+	
+	def get(self, key: str) -> int:
+		"""Get current counter value."""
+		try:
+			value = self.redis.get(key)
+			return int(value) if value else 0
+		except Exception as e:
+			logger.warning(f"⚠️ Redis get failed: {e}")
+			return 0
+	
+	def get_expiry(self, key: str) -> int:
+		"""Get remaining TTL for a key."""
+		try:
+			ttl = self.redis.ttl(key)
+			return ttl if ttl > 0 else 0
+		except Exception as e:
+			logger.warning(f"⚠️ Redis get_expiry failed: {e}")
+			return 0
+
+
+def _initialize_limiter():
+	"""
+	Initialize rate limiter with Redis or fallback to memory.
+	
+	Returns:
+		Limiter instance configured with appropriate storage
+	"""
+	import os
+	
+	redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
+	redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+	
+	# Try to use Upstash Redis for distributed rate limiting
+	if UPSTASH_AVAILABLE and redis_url and redis_token:
+		try:
+			redis_client = Redis(url=redis_url, token=redis_token)
+			
+			# Test connection
+			redis_client.ping()
+			
+			storage = UpstashStorage(redis_client)
+			logger.info("🚦 Rate Limiter: Using Upstash Redis (distributed)")
+			
+			return Limiter(
+				key_func=get_rate_limit_key,
+				default_limits=["100/hour", "10/minute"],
+				storage_uri=storage,  # Use custom storage
+				strategy="fixed-window"
+			)
+		except Exception as e:
+			logger.warning(f"⚠️ Failed to connect to Upstash Redis: {e}. Falling back to memory.")
+	
+	# Fallback to in-memory storage
+	logger.info("🚦 Rate Limiter: Using in-memory storage (single instance)")
+	return Limiter(
+		key_func=get_rate_limit_key,
+		default_limits=["100/hour", "10/minute"],
+		storage_uri="memory://",
+		strategy="fixed-window"
+	)
+
+
+# Initialize limiter
+limiter = _initialize_limiter()
 
 
 # === Rate Limit Handler ===

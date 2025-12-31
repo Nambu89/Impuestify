@@ -1,13 +1,12 @@
 """
 Servicio para extraer datos de nóminas españolas en PDF
-Usa PyMuPDF4LLM para extraer texto con mejor formato
+Usa el módulo centralizado pdf_extractor para extracción de texto
 """
 import re
 import json
 import hashlib
 from typing import Dict, Optional, List
 from pathlib import Path
-import pymupdf4llm
 import logging
 
 logger = logging.getLogger(__name__)
@@ -66,17 +65,29 @@ class PayslipExtractor:
             # Calcular hash del archivo para deduplicación
             file_hash = self._calculate_file_hash(pdf_path)
             
-            # Extraer texto con PyMuPDF4LLM (mejor formato que PyPDF2)
-            logger.info(f"Extrayendo texto de {pdf_path}")
-            md_text = pymupdf4llm.to_markdown(pdf_path)
+            # Usar el módulo centralizado de extracción de PDFs
+            from app.utils.pdf_extractor import get_pdf_extractor
             
-            # Parsear datos estructurados
-            extracted_data = self._parse_payslip_data(md_text)
+            logger.info(f"Extrayendo texto de {pdf_path}")
+            extractor = get_pdf_extractor()
+            result = await extractor.extract_from_file(pdf_path)
+            
+            if not result.success:
+                return {
+                    'extraction_status': 'failed',
+                    'error': result.error,
+                    'full_text': None,
+                    'file_hash': None
+                }
+            
+            # Parsear datos estructurados del texto markdown
+            extracted_data = self._parse_payslip_data(result.markdown_text)
             
             # Añadir el texto completo para contexto
-            extracted_data['full_text'] = md_text
+            extracted_data['full_text'] = result.markdown_text
             extracted_data['file_hash'] = file_hash
             extracted_data['extraction_status'] = 'completed'
+            extracted_data['total_pages'] = result.total_pages
             
             logger.info(f"Extracción completada: {len(extracted_data)} campos extraídos")
             return extracted_data

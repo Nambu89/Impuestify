@@ -5,6 +5,7 @@ Uses OpenAI API with function calling for tax calculations.
 """
 import os
 import logging
+import asyncio
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
@@ -266,7 +267,8 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		sources: Optional[List[Dict[str, Any]]] = None,
 		conversation_history: Optional[List[Dict[str, str]]] = None,
 		use_tools: bool = True,
-		system_prompt: Optional[str] = None
+		system_prompt: Optional[str] = None,
+		user_id: Optional[str] = None
 	) -> AgentResponse:
 		"""
 		Run the agent with a user query.
@@ -278,10 +280,81 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			conversation_history: Previous messages in conversation
 			use_tools: Whether to enable function calling tools (default: True)
 			system_prompt: Optional override for system prompt
+			user_id: Optional user identifier for audit logging
 			
 		Returns:
 			AgentResponse with answer and metadata
 		"""
+		# === SECURITY: Content Moderation (Llama Guard) ===
+		try:
+			from app.security.llama_guard import get_llama_guard
+			from app.security.audit_logger import audit_logger
+			
+			llama_guard = get_llama_guard()
+			moderation_result = await llama_guard.moderate(query)
+			
+			if not moderation_result.is_safe:
+				# Log the moderation block
+				audit_logger.log_moderation_block(
+					user_id=user_id or "anonymous",
+					categories=moderation_result.blocked_categories
+				)
+				
+				# Return user-friendly block message
+				block_message = llama_guard.get_block_message(moderation_result.blocked_categories)
+				logger.warning(f"🚫 Content blocked by Llama Guard: {moderation_result.blocked_categories}")
+				
+				return AgentResponse(
+					content=block_message,
+					sources=[],
+					metadata={
+						"moderated": True,
+						"blocked_categories": moderation_result.blocked_categories,
+						"risk_level": moderation_result.risk_level
+					},
+					agent_name=self.name
+				)
+		except ImportError:
+			logger.debug("Llama Guard not available, skipping content moderation")
+		except Exception as e:
+			logger.warning(f"⚠️ Content moderation error (failing open): {e}")
+		
+		# === SPEED: Semantic Cache Check ===
+		try:
+			from app.security.semantic_cache import get_semantic_cache
+			
+			semantic_cache = get_semantic_cache()
+			cache_result = await semantic_cache.get_similar(query)
+			
+			if cache_result.hit:
+				logger.info(f"💾 Semantic Cache HIT (similarity={cache_result.similarity:.3f})")
+				return AgentResponse(
+					content=cache_result.response,
+					sources=sources or [],
+					metadata={
+						"cache_hit": True,
+						"similarity": cache_result.similarity,
+						"model": self.model,
+						"agent": self.name
+					},
+					agent_name=self.name
+				)
+		except ImportError:
+			logger.debug("Semantic Cache not available, skipping cache lookup")
+		except Exception as e:
+			logger.warning(f"⚠️ Semantic cache error (proceeding without cache): {e}")
+		
+		# === SPEED: Complexity Router ===
+		reasoning_effort = "medium"  # Default
+		try:
+			from app.security.complexity_router import get_reasoning_effort
+			reasoning_effort = get_reasoning_effort(query)
+			logger.debug(f"🧠 Complexity Router: {reasoning_effort} reasoning for query")
+		except ImportError:
+			logger.debug("Complexity Router not available, using default reasoning")
+		except Exception as e:
+			logger.warning(f"⚠️ Complexity router error: {e}")
+		
 		# Build the prompt with context
 		user_message = self._build_prompt(query, context)
 		
@@ -307,15 +380,30 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			messages.append({"role": "user", "content": user_message})
 			
 			# First call with tools (if enabled)
-			logger.info(f"Calling OpenAI with tools enabled: {use_tools}")
-			response = self._client.chat.completions.create(
-				model=self.model,
-				messages=messages,
-				tools=ALL_TOOLS if use_tools else None,
-				tool_choice="auto" if use_tools else None,
-				temperature=1,
-				max_completion_tokens=10000  # Increased for multi-turn conversations
-			)
+			logger.info(f"Calling OpenAI with tools enabled: {use_tools}, reasoning_effort: {reasoning_effort}")
+			
+			try:
+				# Add timeout to prevent indefinite waiting
+				response = await asyncio.wait_for(
+					asyncio.to_thread(
+						self._client.chat.completions.create,
+						model=self.model,
+						messages=messages,
+						tools=ALL_TOOLS if use_tools else None,
+						tool_choice="auto" if use_tools else None,
+						temperature=1,
+						max_completion_tokens=10000
+					),
+					timeout=60.0  # 60 second timeout
+				)
+			except asyncio.TimeoutError:
+				logger.error("⏱️ OpenAI call timed out after 60 seconds")
+				return AgentResponse(
+					content="⏱️ Lo siento, el análisis está tardando más de lo esperado. Por favor, intenta reformular tu pregunta de forma más específica o simplíficala.",
+					sources=sources or [],
+					metadata={"error": "timeout", "processing_time": 60.0},
+					agent_name=self.name
+				)
 			
 			# Check if model wants to call a function
 			message = response.choices[0].message
@@ -359,13 +447,23 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 				
 				# Second call to get final response
 				logger.info("Calling OpenAI again with tool result")
-				final_response = self._client.chat.completions.create(
-					model=self.model,
-					messages=messages,
-					temperature=1,
-					max_completion_tokens=10000  # Increased for multi-turn conversations
-				)
-				content = final_response.choices[0].message.content or tool_result.get('formatted_response', '')
+				try:
+					final_response = await asyncio.wait_for(
+						asyncio.to_thread(
+							self._client.chat.completions.create,
+							model=self.model,
+							messages=messages,
+							temperature=1,
+							max_completion_tokens=10000
+						),
+						timeout=60.0  # 60 second timeout
+					)
+					content = final_response.choices[0].message.content or tool_result.get('formatted_response', '')
+				except asyncio.TimeoutError:
+					logger.error("⏱️ Second OpenAI call timed out")
+					content = tool_result.get('formatted_response', '')
+					if not content:
+						content = "⏱️ Lo siento, el análisis está tardando más de lo esperado. Intenta reformular tu pregunta."
 				logger.info(f"Final content length: {len(content)}")
 			else:
 				# No function call, use direct response
@@ -375,6 +473,25 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 					logger.warning(f"No content in response. Finish reason: {finish_reason}")
 				
 				logger.info(f"Direct response content length: {len(content)}")
+			
+			# Validate output format to ensure no internal JSON is exposed
+			from app.security.guardrails import guardrails_system
+			if not guardrails_system.validate_output_format(content):
+				logger.warning("⚠️ Internal JSON detected in response, sanitizing...")
+				# Provide a clean error message instead of exposing internal data
+				content = (
+					"Lo siento, hubo un problema al formatear la respuesta. "
+					"Por favor, intenta reformular tu pregunta de otra manera. "
+					"Si el problema persiste, puedes contactar con soporte."
+				)
+			
+			# === SPEED: Store successful response in Semantic Cache ===
+			try:
+				from app.security.semantic_cache import get_semantic_cache
+				semantic_cache = get_semantic_cache()
+				await semantic_cache.store(query, content)
+			except Exception as e:
+				logger.debug(f"Failed to cache response: {e}")
 			
 			return AgentResponse(
 				content=content,
@@ -386,11 +503,21 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 					"tool_used": bool(message.tool_calls),
 					"current_year": self.current_year,
 					"irpf_fiscal_year": self.irpf_fiscal_year,
-					"autonomous_quota_year": self.autonomous_quota_year
+					"autonomous_quota_year": self.autonomous_quota_year,
+					"reasoning_effort": reasoning_effort
 				},
 				agent_name=self.name
 			)
 			
+		except asyncio.TimeoutError:
+			# This catch is for outer-level timeout (shouldn't reach here normally)
+			logger.error("⏱️ TaxAgent execution timeout")
+			return AgentResponse(
+				content="⏱️ Lo siento, el análisis está tardando más de lo esperado. Por favor, intenta reformular tu pregunta o simplificarla.",
+				sources=sources or [],
+				metadata={"error": "timeout"},
+				agent_name=self.name
+			)
 		except Exception as e:
 			logger.error(f"Agent execution error: {e}", exc_info=True)
 			return AgentResponse(

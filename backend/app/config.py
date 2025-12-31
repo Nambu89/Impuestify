@@ -119,6 +119,20 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = Field(default=10)
 
     # -------------------------------
+    # 🛡️ Content Moderation (Llama Guard via Groq)
+    # -------------------------------
+    GROQ_API_KEY: Optional[str] = Field(default=None)
+    ENABLE_CONTENT_MODERATION: bool = Field(default=True)
+
+    # -------------------------------
+    # 🧠 Semantic Cache (Upstash Vector)
+    # -------------------------------
+    UPSTASH_VECTOR_REST_URL: Optional[str] = Field(default=None)
+    UPSTASH_VECTOR_REST_TOKEN: Optional[str] = Field(default=None)
+    ENABLE_SEMANTIC_CACHE: bool = Field(default=True)
+    SEMANTIC_CACHE_THRESHOLD: float = Field(default=0.93)
+
+    # -------------------------------
     # 📋 Topics & Competitors
     # -------------------------------
     VALID_TOPICS: str = Field(
@@ -156,6 +170,7 @@ class Settings(BaseSettings):
     @field_validator(
         "OPENAI_API_KEY", "AZURE_OPENAI_API_KEY", "JWT_SECRET_KEY", 
         "ADMIN_API_KEY", "TURSO_AUTH_TOKEN", "UPSTASH_REDIS_REST_TOKEN",
+        "GROQ_API_KEY", "UPSTASH_VECTOR_REST_TOKEN",
         mode="before"
     )
     @classmethod
@@ -200,6 +215,16 @@ class Settings(BaseSettings):
     def is_upstash_configured(self) -> bool:
         """Check if Upstash Redis is configured"""
         return bool(self.UPSTASH_REDIS_REST_URL and self.UPSTASH_REDIS_REST_TOKEN)
+    
+    @property
+    def is_groq_configured(self) -> bool:
+        """Check if Groq (Llama Guard) is configured"""
+        return bool(self.GROQ_API_KEY)
+    
+    @property
+    def is_upstash_vector_configured(self) -> bool:
+        """Check if Upstash Vector (Semantic Cache) is configured"""
+        return bool(self.UPSTASH_VECTOR_REST_URL and self.UPSTASH_VECTOR_REST_TOKEN)
 
 
 # Initialize global settings

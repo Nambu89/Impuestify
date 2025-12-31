@@ -12,8 +12,16 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     const navigate = useNavigate()
 
     const handleLogout = () => {
-        logout()
-        navigate('/login')
+        // ✅ ADD: Confirmation dialog before logout (beta tester feedback)
+        const confirmed = window.confirm(
+            '¿Estás seguro de que deseas cerrar sesión? '
+            + 'Tu historial de conversaciones se conservará para la próxima vez.'
+        )
+
+        if (confirmed) {
+            logout()
+            navigate('/login')
+        }
     }
 
     // Obtener iniciales del nombre del usuario
