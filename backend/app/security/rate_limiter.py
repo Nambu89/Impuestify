@@ -190,18 +190,27 @@ class UpstashStorage:
 		"""Get current counter value."""
 		try:
 			value = self.redis.get(key)
-			return int(value) if value else 0
+			# SlowAPI expects the value to support .decode() if it's bytes (standard Redis)
+			# But Upstash Redis python client returns int or str directly
+			# We return it as is, but if SlowAPI tries to call .decode() on it later,
+			# it might fail if we don't wrap it or if SlowAPI isn't flexible.
+			# HOWEVER, the error 'UpstashStorage' object has no attribute 'decode' 
+			# suggests SlowAPI might be treating the storage object itself as the connection/value?
+			# No, typically it means SlowAPI tries to decode the result of get().
+			
+			if value is None:
+				return 0
+			return int(value)
 		except Exception as e:
-			logger.warning(f"⚠️ Redis get failed: {e}")
+			logger.error(f"Error getting key {key} from Upstash: {e}")
 			return 0
 	
 	def get_expiry(self, key: str) -> int:
-		"""Get remaining TTL for a key."""
+		"""Get remaining time to live in seconds."""
 		try:
-			ttl = self.redis.ttl(key)
-			return ttl if ttl > 0 else 0
+			return self.redis.ttl(key)
 		except Exception as e:
-			logger.warning(f"⚠️ Redis get_expiry failed: {e}")
+			logger.error(f"Error getting expiry for {key}: {e}")
 			return 0
 
 

@@ -125,9 +125,10 @@ Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnico
 			model: OpenAI model name
 			api_key: OpenAI API key
 		"""
+		from app.config import settings
 		self.name = name
-		self.model = model or os.environ.get("OPENAI_MODEL", "gpt-5-mini")
-		self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+		self.model = model or settings.OPENAI_MODEL
+		self.api_key = api_key or settings.OPENAI_API_KEY
 		
 		# Fecha actual
 		self.current_date = datetime.now()
@@ -343,7 +344,7 @@ Si no encuentras un dato, usa null. Sé preciso con los números.
 """
 			
 			response = self._client.chat.completions.create(
-				model="gpt-5-mini",
+				model=self.model,  # Use instance model (configured from settings)
 				messages=[
 					{"role": "system", "content": "Eres un experto extractor de datos de nóminas españolas. Respondes SOLO en JSON válido."},
 					{"role": "user", "content": extraction_prompt}

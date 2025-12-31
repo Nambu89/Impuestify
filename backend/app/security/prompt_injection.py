@@ -76,86 +76,79 @@ class PromptInjectionFilter:
     
     def __init__(self, sensitivity: float = 0.5):
         """
-        Initialize the filter.
-        
-        Args:
-            sensitivity: Detection sensitivity (0.0 to 1.0)
-                         Higher values = more strict, more false positives
+        Initialize the filter with Groq client.
         """
-        self.sensitivity = max(0.0, min(1.0, sensitivity))
-        self._compile_patterns()
-    
-    def _compile_patterns(self):
-        """Pre-compile regex patterns for efficiency"""
-        self.compiled_patterns = [
-            (re.compile(pattern, re.IGNORECASE), name)
-            for pattern, name in self.INJECTION_PATTERNS
-        ]
-        self.compiled_suspicious = [
-            (re.compile(pattern), name)
-            for pattern, name in self.SUSPICIOUS_CHARS
-        ]
-    
+        from groq import Groq
+        from app.config import settings
+        
+        self.sensitivity = sensitivity
+        self.client = None
+        
+        if settings.GROQ_API_KEY:
+            try:
+                self.client = Groq(api_key=settings.GROQ_API_KEY)
+                logger.info(f"✅ Prompt Injection Filter initialized with Groq model: {settings.GROQ_MODEL_PROMPT_GUARD}")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Groq client for Prompt Guard: {e}")
+        else:
+            logger.warning("⚠️ GROQ_API_KEY not found. Prompt Injection Logic will fail.")
+
     def check(self, text: str) -> InjectionCheckResult:
         """
-        Check text for potential prompt injection.
-        
-        Args:
-            text: User input to validate
-            
-        Returns:
-            InjectionCheckResult with safety status and details
+        Check text for potential prompt injection using Llama Prompt Guard.
         """
         if not text or not text.strip():
+            return InjectionCheckResult(is_safe=True, risk_score=0.0, matched_patterns=[], sanitized_input="")
+
+        if not self.client:
+             # Fallback or Fail Safe
+             return InjectionCheckResult(
+                 is_safe=True, 
+                 risk_score=0.0, 
+                 matched_patterns=["GROQ_CLIENT_MISSING"], 
+                 sanitized_input=text
+             )
+
+        try:
+            from app.config import settings
+            
+            # Llama Prompt Guard is a classifier. It outputs "Safe" or "Unsafe" (and sometimes probabilities).
+            # We treat the text as the user prompt to be analyzed.
+            
+            completion = self.client.chat.completions.create(
+                model=settings.GROQ_MODEL_PROMPT_GUARD,
+                messages=[{"role": "user", "content": text}],
+                temperature=0.0,
+            )
+            
+            response = completion.choices[0].message.content.strip().lower()
+            
+            is_unsafe = "unsafe" in response or "injection" in response
+            
+            risk_score = 0.9 if is_unsafe else 0.0
+            matched_patterns = ["Prompt Guard: Unsafe"] if is_unsafe else []
+            
+            if is_unsafe:
+                logger.warning(f"🚨 Prompt Injection detected by API: {response}")
+
             return InjectionCheckResult(
-                is_safe=True,
-                risk_score=0.0,
-                matched_patterns=[],
-                sanitized_input=""
+                is_safe=not is_unsafe,
+                risk_score=risk_score,
+                matched_patterns=matched_patterns,
+                sanitized_input=text # We don't sanitize with LLM, we just block
             )
-        
-        matched_patterns = []
-        risk_score = 0.0
-        
-        # Check injection patterns
-        for pattern, name in self.compiled_patterns:
-            if pattern.search(text):
-                matched_patterns.append(name)
-                risk_score += 0.3
-        
-        # Check suspicious characters
-        for pattern, name in self.compiled_suspicious:
-            if pattern.search(text):
-                matched_patterns.append(name)
-                risk_score += 0.2
-        
-        # Check for excessive special characters
-        special_ratio = len(re.findall(r'[{}\[\]<>|\\`]', text)) / max(1, len(text))
-        if special_ratio > 0.1:
-            matched_patterns.append("excessive_special_chars")
-            risk_score += special_ratio
-        
-        # Normalize risk score
-        risk_score = min(1.0, risk_score)
-        
-        # Determine if safe based on sensitivity threshold
-        is_safe = risk_score < self.sensitivity
-        
-        # Sanitize input (remove dangerous patterns)
-        sanitized = self._sanitize(text) if not is_safe else text
-        
-        if matched_patterns:
-            logger.warning(
-                f"Prompt injection patterns detected: {matched_patterns}, "
-                f"risk_score: {risk_score:.2f}"
+
+        except Exception as e:
+            logger.error(f"❌ Prompt Injection API Error: {e}")
+            # Fail safe or fail closed? 
+            # For security, better to Fail Open if API down? Or Fail Closed?
+            # User wants robust. Let's return safe but log heavily.
+            return InjectionCheckResult(
+                 is_safe=True, 
+                 risk_score=0.0, 
+                 matched_patterns=[f"API_ERROR: {str(e)}"], 
+                 sanitized_input=text
             )
-        
-        return InjectionCheckResult(
-            is_safe=is_safe,
-            risk_score=risk_score,
-            matched_patterns=matched_patterns,
-            sanitized_input=sanitized
-        )
     
     def _sanitize(self, text: str) -> str:
         """

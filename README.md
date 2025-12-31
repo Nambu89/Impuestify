@@ -42,14 +42,26 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 - **Sidebar de conversaciones**: Historial persistente con metadata
 - **Chat interactivo**: Sugerencias contextuales y fuentes citadas
 
-### ✨ Nuevas Funcionalidades (v2.7 - Diciembre 2025)
+### ✨ Nuevas Funcionalidades (v2.7 - Diciembre 2024)
 
-| Feature | Descripción |
-|---------|-------------|
-| 🛡️ **Llama Guard 4** | Moderación de contenido IA con 14 categorías de riesgo (via Groq API, gratis) |
-| 🧠 **Semantic Cache** | Cache inteligente por similaridad semántica (Upstash Vector) - reduce costes ~30% |
-| ⚡ **Complexity Router** | Clasificación automática de preguntas para ajustar reasoning_effort |
-| 📋 **Audit Logger** | Registro inmutable de acciones críticas de seguridad |
+#### 🛡️ Seguridad Avanzada
+
+| Feature | Descripción | API |
+|---------|-------------|-----|
+| 🛡️ **Llama Guard 4** | Moderación de contenido IA con 14 categorías de riesgo | Groq (GRATIS) |
+| 🧠 **Semantic Cache** | Cache por similaridad semántica - reduce costes OpenAI ~30% | Upstash Vector |
+| ⚡ **Complexity Router** | Clasificación automática de queries (simple/moderate/complex) | Local |
+| 📋 **Audit Logger** | Registro inmutable de eventos de seguridad | Local |
+| 🚦 **Redis Rate Limiting** | Rate limiting distribuido para múltiples instancias | Upstash Redis |
+
+#### 📄 Procesamiento de PDFs
+
+| Feature | Descripción | Beneficio |
+|---------|-------------|----------|
+| 📝 **PyMuPDF4LLM** | Extracción de texto optimizada para LLMs | Output en Markdown |
+| 📊 **Detección de Tablas** | Reconoce y formatea tablas automáticamente | Mejor contexto |
+| 📑 **Multi-columna** | Soporte para layouts complejos | AEAT docs |
+| 🔄 **Page Chunking** | División por páginas para mejor contexto | Menos tokens |
 
 ## 🏗️ Arquitectura Multi-Agente
 
@@ -93,9 +105,12 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 - FastAPI (API REST)
 - **Microsoft Agent Framework 1.0.0b251211** (Multi-agent orchestration)
 - Turso (Database - SQLite distribuido)
-- Upstash Redis (Cache)
+- Upstash Redis (Cache + Rate Limiting)
+- **Upstash Vector** (Semantic Cache)
 - **OpenAI API (GPT-4o-mini / GPT-5-mini)**
-- PyMuPDF4LLM (PDF extraction)
+- **Groq API** (Llama Guard 4 - Content Moderation)
+- PyMuPDF4LLM (PDF extraction optimizada para LLMs)
+- pypdf (PDF validation)
 - FTS5 (Full-text search)
 
 **Frontend:**
@@ -455,6 +470,96 @@ Impuestify/
 - Verifica que tu usuario sea admin
 - Cierra sesión y vuelve a iniciar sesión
 - Revisa que `is_admin=true` en la base de datos
+
+---
+
+## 🆕 v2.7 Security & Optimization Features
+
+### 🛡️ Llama Guard 4 - Content Moderation
+
+**Moderación de contenido IA antes de enviar a OpenAI**
+
+- ✅ **14 categorías de riesgo**: Violencia, contenido sexual, odio, etc.
+- ✅ **API gratuita**: Groq API (14,400 requests/día)
+- ✅ **Mensajes en español**: Respuestas personalizadas por categoría
+- ✅ **Graceful degradation**: Falla abierto si Groq no disponible
+- ✅ **Latencia**: ~200-500ms
+
+**Variables de entorno:**
+```env
+GROQ_API_KEY=gsk_xxx
+ENABLE_CONTENT_MODERATION=true
+```
+
+### 🧠 Semantic Cache - Upstash Vector
+
+**Cache inteligente por similaridad semántica**
+
+- ✅ **Reduce costes OpenAI ~30%**: Respuestas cacheadas para queries similares
+- ✅ **Umbral de similaridad**: 0.93 (configurable)
+- ✅ **Skip queries personales**: No cachea datos personales del usuario
+- ✅ **TTL**: 24 horas
+- ✅ **API gratuita**: Upstash Vector (10,000 vectores)
+
+**Variables de entorno:**
+```env
+UPSTASH_VECTOR_REST_URL=https://xxx.upstash.io
+UPSTASH_VECTOR_REST_TOKEN=xxx
+ENABLE_SEMANTIC_CACHE=true
+SEMANTIC_CACHE_THRESHOLD=0.93
+```
+
+### ⚡ Complexity Router
+
+**Clasificación automática de queries para optimizar reasoning_effort**
+
+- ✅ **3 niveles**: Simple, Moderate, Complex
+- ✅ **Regex patterns**: Clasificación rápida sin LLM
+- ✅ **Reasoning effort**: low/medium/high según complejidad
+- ✅ **Beneficios**: Respuestas más rápidas para queries simples
+
+**Ejemplos:**
+- Simple: "¿Qué es el IVA?" → `reasoning_effort=low`
+- Complex: "Analiza implicaciones fiscales de herencia" → `reasoning_effort=high`
+
+### 📋 Audit Logger
+
+**Registro inmutable de eventos de seguridad**
+
+- ✅ **Eventos**: Auth, AI requests, moderation blocks, rate limits
+- ✅ **Formato JSON**: Estructurado para parsing
+- ✅ **Severidad**: info, warning, error, critical
+- ✅ **Compliance**: Logs inmutables para auditoría
+
+### 🚦 Redis Rate Limiting
+
+**Rate limiting distribuido con Upstash Redis**
+
+- ✅ **Distribuido**: Compartido entre múltiples instancias
+- ✅ **Fallback automático**: In-memory si Redis no disponible
+- ✅ **Custom storage**: Adaptador para Upstash REST API
+- ✅ **Escalabilidad**: Listo para horizontal scaling
+
+### 📄 PyMuPDF4LLM - PDF Extraction
+
+**Extracción de texto optimizada para LLMs**
+
+- ✅ **Output Markdown**: Preserva estructura (headers, tablas, listas)
+- ✅ **Detección de tablas**: Formatea tablas automáticamente
+- ✅ **Multi-columna**: Soporte para layouts complejos
+- ✅ **Page chunking**: División por páginas para mejor contexto
+- ✅ **Perfecto para AEAT**: Notificaciones fiscales estructuradas
+
+**Uso:**
+```python
+from app.utils.pdf_extractor import extract_pdf_text
+
+result = await extract_pdf_text(pdf_bytes, "notificacion.pdf")
+if result.success:
+    markdown = result.markdown_text  # Listo para LLM
+```
+
+---
 
 ## 📄 Licencia
 

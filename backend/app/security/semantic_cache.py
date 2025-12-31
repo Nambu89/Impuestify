@@ -61,7 +61,7 @@ class SemanticCache:
         url: Optional[str] = None,
         token: Optional[str] = None,
         enabled: bool = True,
-        threshold: float = 0.93
+        threshold: float = None
     ):
         """
         Initialize Semantic Cache.
@@ -72,10 +72,20 @@ class SemanticCache:
             enabled: Whether caching is enabled
             threshold: Similarity threshold (0.0-1.0)
         """
-        self.url = url or os.environ.get("UPSTASH_VECTOR_REST_URL")
-        self.token = token or os.environ.get("UPSTASH_VECTOR_REST_TOKEN")
-        self.threshold = threshold
-        self.enabled = enabled and UPSTASH_VECTOR_AVAILABLE and bool(self.url) and bool(self.token)
+        from app.config import settings
+        
+        self.url = url or settings.UPSTASH_VECTOR_REST_URL
+        self.token = token or settings.UPSTASH_VECTOR_REST_TOKEN
+        self.threshold = threshold if threshold is not None else settings.SEMANTIC_CACHE_THRESHOLD
+        
+        # Strict enabled check: config enabled + library available + credentials present
+        self.enabled = (
+            enabled 
+            and settings.ENABLE_SEMANTIC_CACHE 
+            and UPSTASH_VECTOR_AVAILABLE 
+            and bool(self.url) 
+            and bool(self.token)
+        )
         
         self._index: Optional[Index] = None
         
@@ -87,7 +97,12 @@ class SemanticCache:
                 logger.error(f"❌ Failed to initialize Upstash Vector: {e}")
                 self.enabled = False
         else:
-            logger.warning("⚠️ Semantic Cache disabled (Upstash Vector not configured)")
+            if not UPSTASH_VECTOR_AVAILABLE:
+                 logger.warning("⚠️ Semantic Cache disabled (library not installed)")
+            elif not (self.url and self.token):
+                 logger.warning("⚠️ Semantic Cache disabled (UPSTASH_VECTOR_REST_URL/TOKEN missing)")
+            elif not settings.ENABLE_SEMANTIC_CACHE:
+                 logger.info("⚠️ Semantic Cache disabled (ENABLE_SEMANTIC_CACHE=False)")
     
     def _is_personal_query(self, query: str) -> bool:
         """Check if query is personal and should not be cached."""
@@ -120,12 +135,21 @@ class SemanticCache:
         start_time = datetime.now()
         
         try:
-            # Query by text (Upstash Vector will compute embedding)
-            results = self._index.query(
-                data=query,
-                top_k=1,
-                include_metadata=True
-            )
+            # Query by text (Upstash Vector will compute embedding ONLY if index is configured with a model)
+            # If not configured, we must catch the error to prevent 500s
+            try:
+                results = self._index.query(
+                    data=query,
+                    top_k=1,
+                    include_metadata=True
+                )
+            except Exception as query_error:
+                error_msg = str(query_error)
+                if "embedding" in error_msg.lower() and "not allowed" in error_msg.lower():
+                    logger.warning("⚠️ Semantic Cache: Upstash index not configured for automatic embeddings.")
+                    # In future: implement local OpenAI embedding generation here
+                    return CacheResult(hit=False, latency_ms=(datetime.now() - start_time).total_seconds() * 1000)
+                raise query_error
             
             latency_ms = (datetime.now() - start_time).total_seconds() * 1000
             
@@ -149,7 +173,7 @@ class SemanticCache:
             return CacheResult(hit=False, latency_ms=latency_ms)
             
         except Exception as e:
-            logger.warning(f"⚠️ Semantic cache lookup error: {e}")
+            logger.error(f"⚠️ Semantic cache lookup error: {e}")
             return CacheResult(hit=False)
     
     async def store(self, query: str, response: str):

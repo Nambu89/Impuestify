@@ -31,9 +31,9 @@ class CoordinatorAgent:
 		self.payslip_agent = get_payslip_agent()
 		
 		# Create router agent (decides which specialist to use)
-		import os
+		from app.config import settings
 		chat_client = OpenAIChatClient(
-			model_id=os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+			model_id=settings.OPENAI_MODEL
 		)
 		
 		self.router = ChatAgent(

@@ -62,7 +62,7 @@ class SystemValidator:
 			
 			# Hacer una llamada mínima para validar la key
 			response = client.chat.completions.create(
-				model="gpt-3.5-turbo",
+				model=settings.OPENAI_MODEL,
 				messages=[{"role": "user", "content": "test"}],
 				max_tokens=1
 			)

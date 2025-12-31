@@ -18,7 +18,8 @@ class DocumentDetector:
     def __init__(self):
         """Initialize with OpenAI client"""
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-        self.model = "gpt-5-mini"  # Fast and accurate for classification
+        from app.config import settings
+        self.model = settings.OPENAI_MODEL  # Use configured model for classification
     
     async def detect_type(self, pdf_text: str, max_chars: int = 3000) -> Dict:
         """

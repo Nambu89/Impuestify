@@ -52,9 +52,10 @@ class TaxAgent:
 			model: OpenAI model name (gpt-5-mini, gpt-5, gpt-4o, etc.)
 			api_key: OpenAI API key
 		"""
+		from app.config import settings
 		self.name = name
-		self.model = model or os.environ.get("OPENAI_MODEL", "gpt-5-mini")
-		self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+		self.model = model or settings.OPENAI_MODEL
+		self.api_key = api_key or settings.OPENAI_API_KEY
 		
 		# Fecha actual para cálculos fiscales
 		self.current_date = datetime.now()
@@ -240,6 +241,8 @@ Usa esta herramienta cuando:
 3. La documentación RAG es de años anteriores
 4. Preguntas sobre deducciones o beneficios fiscales nuevos
 
+**NOTA IMPORTANTE**: La herramienta es inteligente. Pide siempre `year={self.current_year}`. Si no encuentra datos publicados para este año, **automáticamente buscará la del año anterior** ({self.current_year - 1}).
+
 **Ejemplo de llamada:**
 ```
 search_tax_regulations(query="tramos IRPF {self.current_year} madrid", year={self.current_year})
@@ -263,25 +266,14 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 	async def run(
 		self,
 		query: str,
-		context: Optional[str] = None,
-		sources: Optional[List[Dict[str, Any]]] = None,
-		conversation_history: Optional[List[Dict[str, str]]] = None,
+		context: str = "",
+		sources: List[dict] = None,
+		conversation_history: List[dict] = None,
 		use_tools: bool = True,
 		system_prompt: Optional[str] = None,
-		user_id: Optional[str] = None
+		model: Optional[str] = None  # Dynamic model selection
 	) -> AgentResponse:
 		"""
-		Run the agent with a user query.
-		
-		Args:
-			query: User's question
-			context: Retrieved context from RAG
-			sources: Source documents for citations
-			conversation_history: Previous messages in conversation
-			use_tools: Whether to enable function calling tools (default: True)
-			system_prompt: Optional override for system prompt
-			user_id: Optional user identifier for audit logging
-			
 		Returns:
 			AgentResponse with answer and metadata
 		"""

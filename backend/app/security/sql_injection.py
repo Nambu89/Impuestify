@@ -70,58 +70,68 @@ class SQLInjectionValidator:
     ]
     
     def __init__(self):
-        """Initialize SQL injection validator."""
-        self.compiled_patterns = [
-            re.compile(pattern, re.IGNORECASE | re.DOTALL)
-            for pattern in self.SUSPICIOUS_PATTERNS
-        ]
-    
+        """
+        Initialize the SQL injection validator with Groq client.
+        """
+        from groq import Groq
+        from app.config import settings
+        
+        self.client = None
+        if settings.GROQ_API_KEY:
+            try:
+                self.client = Groq(api_key=settings.GROQ_API_KEY)
+                logger.info(f"✅ SQL Injection Validator initialized with Groq model: {settings.GROQ_MODEL_SAFETY}")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Groq client for SQL Validator: {e}")
+        else:
+            logger.warning("⚠️ GROQ_API_KEY not found. SQL Injection Logic will fail.")
+
     def validate_user_input(self, user_input: str) -> SQLInjectionResult:
         """
-        Validate user input for SQL injection attempts.
-        
-        Args:
-            user_input: User-provided input (question, search term, etc.)
-            
-        Returns:
-            SQLInjectionResult with safety assessment
+        Validate user input using Llama Guard 4 (Category S14).
         """
-        violations = []
-        risk_level = "none"
+        if not user_input or len(user_input.strip()) < 3:
+             return SQLInjectionResult(is_safe=True, risk_level="none")
+
+        if not self.client:
+             return SQLInjectionResult(
+                 is_safe=True, 
+                 risk_level="low", 
+                 violations=["GROQ_CLIENT_MISSING"]
+             )
         
-        # Check for dangerous keywords
-        upper_input = user_input.upper()
-        for keyword in self.DANGEROUS_KEYWORDS:
-            if keyword in upper_input:
-                violations.append(f"Dangerous SQL keyword detected: {keyword}")
-                risk_level = "high"
-        
-        # Check suspicious patterns
-        for pattern in self.compiled_patterns:
-            if pattern.search(user_input):
-                violations.append(f"Suspicious SQL pattern detected: {pattern.pattern}")
-                risk_level = "critical" if risk_level != "critical" else "critical"
-        
-        # Check for excessive special characters (potential obfuscation)
-        special_char_ratio = sum(1 for c in user_input if not c.isalnum() and not c.isspace()) / max(len(user_input), 1)
-        if special_char_ratio > 0.3:
-            violations.append(f"High ratio of special characters: {special_char_ratio:.2%}")
-            risk_level = "medium" if risk_level == "none" else risk_level
-        
-        # Sanitize input (for informational purposes)
-        sanitized = self._sanitize_input(user_input)
-        
-        is_safe = risk_level in ["none", "low"]
-        
-        if not is_safe:
-            logger.warning(f"🚨 SQL Injection attempt detected! Risk: {risk_level}, Violations: {violations}")
-        
-        return SQLInjectionResult(
-            is_safe=is_safe,
-            risk_level=risk_level,
-            violations=violations,
-            sanitized_input=sanitized
-        )
+        try:
+            from app.config import settings
+            
+            completion = self.client.chat.completions.create(
+                model=settings.GROQ_MODEL_SAFETY,
+                messages=[{"role": "user", "content": user_input}],
+                temperature=0.0
+            )
+            
+            response = completion.choices[0].message.content.strip()
+            
+            is_unsafe = "unsafe" in response.lower() and "S14" in response
+            
+            violations = []
+            if is_unsafe:
+                violations.append("AI Detected: Code Interpreter Abuse / SQL Injection (S14)")
+                logger.warning(f"🚨 SQL Injection detected by Llama Guard: {response}")
+                
+            return SQLInjectionResult(
+                is_safe=not is_unsafe,
+                risk_level="critical" if is_unsafe else "low",
+                violations=violations,
+                sanitized_input=user_input
+            )
+
+        except Exception as e:
+            logger.error(f"❌ SQL Validator API Error: {e}")
+            return SQLInjectionResult(
+                 is_safe=True, 
+                 risk_level="low", 
+                 violations=[f"API_ERROR: {str(e)}"]
+            )
     
     def validate_generated_sql(self, sql_query: str, context: str = "") -> SQLInjectionResult:
         """

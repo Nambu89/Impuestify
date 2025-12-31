@@ -9,9 +9,8 @@ Benefits:
 - Faster response times for basic queries
 - Better reasoning for complex questions
 """
-import re
 import logging
-from typing import Tuple
+from typing import Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -38,136 +37,122 @@ class ComplexityResult:
     level: ComplexityLevel
     reasoning_effort: ReasoningEffort
     confidence: float
-    matched_pattern: str = ""
+    model: str = "gpt-5-mini"  # Default to cheaper model
+    reasoning: str = ""       # Explanation for the choice
 
 
 class ComplexityClassifier:
     """
     Classify question complexity for reasoning effort adjustment.
     
-    Uses regex patterns for fast, deterministic classification
-    without requiring an LLM call.
+    Uses Groq (llama-3.1-8b-instant) to analyze intent.
     
     Mapping:
-    - SIMPLE → LOW reasoning (fast, fewer tokens)
-    - MODERATE → MEDIUM reasoning (balanced)
-    - COMPLEX → HIGH reasoning (deep analysis)
+    - SIMPLE -> gpt-5-mini
+    - COMPLEX -> gpt-5
     """
     
-    # Simple question patterns (direct lookups, definitions)
-    SIMPLE_PATTERNS = [
-        r"\b(qué es|que es|cuál es|cual es|define|definición)\b",
-        r"\b(cuándo|cuando|fecha|plazo|límite|limite)\s+(es|del|de la|para)\b",
-        r"\b(quién|quien|qué|que)\s+(debe|tiene que|puede)\b",
-        r"^(hola|hi|hello|buenos días|buenas)\b",
-        r"\b(modelo\s+\d+)\b",  # "modelo 303", "modelo 130"
-        r"\b(cuánto|cuanto)\s+(es|cuesta|vale)\b",
-    ]
-    
-    # Moderate question patterns (explanations, comparisons)
-    MODERATE_PATTERNS = [
-        r"\b(explica|explicar|explicación|cómo funciona|como funciona)\b",
-        r"\b(diferencia|diferencias|comparar|comparación|versus|vs)\b",
-        r"\b(pasos|proceso|procedimiento|cómo se hace|como se hace)\b",
-        r"\b(ventajas|desventajas|beneficios|inconvenientes)\b",
-        r"\b(por qué|porque|razón|motivo)\b",
-        r"\b(ejemplo|ejemplos|caso práctico)\b",
-    ]
-    
-    # Complex question patterns (analysis, evaluation, design)
-    COMPLEX_PATTERNS = [
-        r"\b(analiza|analizar|análisis|evalúa|evaluar|evaluación)\b",
-        r"\b(diseña|diseñar|planifica|planificar|estrategia)\b",
-        r"\b(optimiza|optimizar|maximiza|maximizar|minimiza|minimizar)\b",
-        r"\b(implicaciones|consecuencias|impacto|efectos)\b",
-        r"\b(considerando|teniendo en cuenta|dado que|si.*entonces)\b",
-        r"\b(mejor opción|recomendación|qué me recomiendas|qué debería)\b",
-        r"\b(varios|múltiples|distintos|diferentes).*(escenarios|opciones|casos)\b",
-    ]
-    
     def __init__(self):
-        """Initialize classifier with compiled patterns."""
-        self._simple_patterns = [re.compile(p, re.IGNORECASE) for p in self.SIMPLE_PATTERNS]
-        self._moderate_patterns = [re.compile(p, re.IGNORECASE) for p in self.MODERATE_PATTERNS]
-        self._complex_patterns = [re.compile(p, re.IGNORECASE) for p in self.COMPLEX_PATTERNS]
-    
+        """
+        Initialize the complexity classifier with Groq client.
+        """
+        from groq import Groq
+        from app.config import settings
+        
+        self.client = None
+        if settings.GROQ_API_KEY:
+            try:
+                self.client = Groq(api_key=settings.GROQ_API_KEY)
+                logger.info(f"✅ Complexity Router initialized with Groq model: {settings.GROQ_MODEL_ROUTER}")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Groq client for Router: {e}")
+        else:
+            logger.warning("⚠️ GROQ_API_KEY not found. Complexity Router will fail.")
+
     def classify(self, query: str) -> ComplexityResult:
         """
-        Classify query complexity.
+        Classify query complexity using Groq LLM.
         
         Args:
-            query: User's question
+            query: User query text
             
         Returns:
-            ComplexityResult with level and reasoning_effort
+            ComplexityResult with level, reasoning, and selected model
         """
-        query = query.strip()
-        
-        # Check patterns in order of specificity (complex first)
-        for pattern in self._complex_patterns:
-            match = pattern.search(query)
-            if match:
-                logger.debug(f"🧠 COMPLEX query: {query[:50]}...")
-                return ComplexityResult(
-                    level=ComplexityLevel.COMPLEX,
-                    reasoning_effort=ReasoningEffort.HIGH,
-                    confidence=0.9,
-                    matched_pattern=match.group()
-                )
-        
-        for pattern in self._moderate_patterns:
-            match = pattern.search(query)
-            if match:
-                logger.debug(f"📊 MODERATE query: {query[:50]}...")
-                return ComplexityResult(
-                    level=ComplexityLevel.MODERATE,
-                    reasoning_effort=ReasoningEffort.MEDIUM,
-                    confidence=0.8,
-                    matched_pattern=match.group()
-                )
-        
-        for pattern in self._simple_patterns:
-            match = pattern.search(query)
-            if match:
-                logger.debug(f"⚡ SIMPLE query: {query[:50]}...")
-                return ComplexityResult(
-                    level=ComplexityLevel.SIMPLE,
-                    reasoning_effort=ReasoningEffort.LOW,
-                    confidence=0.85,
-                    matched_pattern=match.group()
-                )
-        
-        # Default to moderate if no pattern matches
-        # Length-based heuristic as fallback
-        if len(query) < 50:
-            return ComplexityResult(
-                level=ComplexityLevel.SIMPLE,
-                reasoning_effort=ReasoningEffort.LOW,
-                confidence=0.5
-            )
-        elif len(query) > 200:
-            return ComplexityResult(
-                level=ComplexityLevel.COMPLEX,
-                reasoning_effort=ReasoningEffort.HIGH,
-                confidence=0.5
-            )
-        else:
+        if not self.client:
             return ComplexityResult(
                 level=ComplexityLevel.MODERATE,
                 reasoning_effort=ReasoningEffort.MEDIUM,
-                confidence=0.5
+                confidence=0.0,
+                model="gpt-5-mini",
+                reasoning="Router disabled (no API key)"
             )
-    
-    def get_reasoning_effort(self, query: str) -> str:
-        """
-        Convenience method to get reasoning effort string.
-        
-        Args:
-            query: User's question
+
+        try:
+            from app.config import settings
             
-        Returns:
-            "low", "medium", or "high"
-        """
+            system_prompt = """You are an intelligent router for a Tax AI assistant.
+Analyze the user query and determine its complexity.
+
+Rules:
+1. **COMPLEX** -> Use 'gpt-5'.
+   - Detailed tax analysis, multi-step reasoning, ambiguous scenarios, legal interpretation.
+   - Keywords: "Liquidación", "Inspección", "Recurso", "Sanción compleja", "Planificación fiscal".
+   
+2. **SIMPLE/MODERATE** -> Use 'gpt-5-mini'.
+   - Definitions, simple calculations, lookup facts, greeting, general info.
+   - Keywords: "Calendario", "Plazo", "Qué es", "Cuota autónomo simple".
+
+Output JSON ONLY:
+{
+  "level": "SIMPLE" | "MODERATE" | "COMPLEX",
+  "reasoning_effort": "low" | "medium" | "high",
+  "model": "gpt-5-mini" | "gpt-5",
+  "explanation": "Brief reason"
+}"""
+
+            completion = self.client.chat.completions.create(
+                model=settings.GROQ_MODEL_ROUTER,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": query}
+                ],
+                temperature=0.1,
+                response_format={"type": "json_object"}
+            )
+            
+            import json
+            response_data = json.loads(completion.choices[0].message.content)
+            
+            # Map string to Enum
+            level_str = response_data.get("level", "MODERATE").lower()
+            effort_str = response_data.get("reasoning_effort", "medium").lower()
+            
+            # Safe Enum conversion
+            level = next((m for m in ComplexityLevel if m.value == level_str), ComplexityLevel.MODERATE)
+            effort = next((m for m in ReasoningEffort if m.value == effort_str), ReasoningEffort.MEDIUM)
+            
+            return ComplexityResult(
+                level=level,
+                reasoning_effort=effort,
+                confidence=0.95,
+                model=response_data.get("model", "gpt-5-mini"),
+                reasoning=response_data.get("explanation", "AI Classification")
+            )
+
+        except Exception as e:
+            logger.error(f"❌ Groq Router Error: {e}")
+            # Fallback to safe default
+            return ComplexityResult(
+                level=ComplexityLevel.COMPLEX,
+                reasoning_effort=ReasoningEffort.HIGH,
+                confidence=0.0,
+                model="gpt-5", # Fail safe to best model
+                reasoning=f"Error: {str(e)}"
+            )
+
+    def get_reasoning_effort(self, query: str) -> str:
+        """Helper to get just the reasoning effort string"""
         result = self.classify(query)
         return result.reasoning_effort.value
 
@@ -177,26 +162,10 @@ complexity_classifier = ComplexityClassifier()
 
 
 def get_reasoning_effort(query: str) -> str:
-    """
-    Get reasoning effort for a query.
-    
-    Args:
-        query: User's question
-        
-    Returns:
-        "low", "medium", or "high"
-    """
+    """Helper to get full result"""
     return complexity_classifier.get_reasoning_effort(query)
 
 
 def classify_complexity(query: str) -> ComplexityResult:
-    """
-    Classify query complexity.
-    
-    Args:
-        query: User's question
-        
-    Returns:
-        ComplexityResult with level and reasoning_effort
-    """
+    """Helper to get full result"""
     return complexity_classifier.classify(query)

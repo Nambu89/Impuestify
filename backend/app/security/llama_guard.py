@@ -83,12 +83,7 @@ class LlamaGuard:
         "Por favor, reformula tu pregunta sobre temas fiscales."
     )
     
-    def __init__(
-        self,
-        api_key: Optional[str] = None,
-        enabled: bool = True,
-        timeout: float = 5.0
-    ):
+    def __init__(self, api_key: str = None, timeout: float = 10.0, enabled: bool = True):
         """
         Initialize Llama Guard.
         
@@ -97,15 +92,24 @@ class LlamaGuard:
             enabled: Whether moderation is enabled
             timeout: Request timeout in seconds
         """
-        self.api_key = api_key or os.environ.get("GROQ_API_KEY")
-        self.enabled = enabled and bool(self.api_key)
+        # Allow override via init args, otherwise use settings
+        self.api_key = api_key or settings.GROQ_API_KEY
+        
+        # Determine strict enabled state: must be enabled in config AND have an API key
+        self.enabled = enabled and settings.ENABLE_CONTENT_MODERATION and bool(self.api_key)
         self.timeout = timeout
         self.base_url = "https://api.groq.com/openai/v1/chat/completions"
         
+        # Use model from settings
+        self.model_name = settings.GROQ_MODEL
+        
         if self.enabled:
-            logger.info("🛡️ Llama Guard 4 content moderation enabled")
+            logger.info(f"🛡️ Llama Guard enabled using model: {self.model_name}")
         else:
-            logger.warning("⚠️ Llama Guard disabled (no GROQ_API_KEY)")
+            if not self.api_key:
+                logger.warning("⚠️ Llama Guard disabled (no GROQ_API_KEY in settings)")
+            elif not settings.ENABLE_CONTENT_MODERATION:
+                 logger.info("⚠️ Llama Guard disabled (ENABLE_CONTENT_MODERATION=False)")
     
     async def moderate(self, text: str) -> ModerationResult:
         """
@@ -134,7 +138,7 @@ class LlamaGuard:
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": "llama-guard-3-8b",  # Llama Guard 3 available on Groq
+                        "model": self.model_name,
                         "messages": [
                             {
                                 "role": "user",

@@ -32,55 +32,87 @@ async def search_tax_regulations_tool(
 	try:
 		logger.info(f"Searching tax regulations: query='{query}', year={year}, extract_data={extract_data}")
 		
-		# Fuentes oficiales prioritarias (en orden)
-		sources = [
-			f"site:agenciatributaria.es {query} {year}",
-			f"site:boe.es {query} {year}",
-			f"site:seg-social.es {query} {year}",
-		]
+		MAX_RETRIES_YEARS = 1
+		from datetime import datetime
 		
-		results = []
+		current_year_real = datetime.now().year
+		years_to_try = [year]
 		
-		# Usar DuckDuckGo HTML API (no requiere API key)
-		for source_query in sources[:max_results]:
-			try:
-				search_url = "https://html.duckduckgo.com/html/"
-				
-				async with httpx.AsyncClient(timeout=10.0) as client:
-					response = await client.post(
-						search_url,
-						data={"q": source_query},
-						headers={
-							"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-						}
-					)
-					
-					if response.status_code == 200:
-						soup = BeautifulSoup(response.text, 'html.parser')
-						search_results = soup.find_all('a', class_='result__a', limit=2)
-						
-						for result in search_results:
-							title = result.get_text(strip=True)
-							url = result.get('href', '')
-							
-							# Solo incluir fuentes oficiales
-							if url and any(domain in url for domain in ['agenciatributaria.es', 'boe.es', 'seg-social.es']):
-								results.append({
-									"title": title,
-									"url": url,
-									"source": "AEAT" if "agenciatributaria" in url else "BOE" if "boe" in url else "Seguridad Social"
-								})
+		# If looking for current year or future, allow fallback to previous year
+		if year >= current_year_real:
+			years_to_try.append(year - 1)
 			
-			except Exception as e:
-				logger.warning(f"Error searching {source_query}: {e}")
-				continue
+		results = []
+		effective_year = year
 		
+		for attempt_year in years_to_try:
+			if attempt_year != year:
+				logger.info(f"🔄 Fallback: Trying search for previous year: {attempt_year}")
+				
+			# Fuentes oficiales prioritarias (en orden)
+			sources = [
+				f"site:agenciatributaria.es {query} {attempt_year}",
+				f"site:boe.es {query} {attempt_year}",
+				f"site:seg-social.es {query} {attempt_year}",
+			]
+			
+			# Usar DuckDuckGo HTML API (no requiere API key)
+			for source_query in sources[:max_results]:
+				try:
+					search_url = "https://html.duckduckgo.com/html/"
+					
+					async with httpx.AsyncClient(timeout=10.0) as client:
+						response = await client.post(
+							search_url,
+							data={"q": source_query},
+							headers={
+								"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+							}
+						)
+						
+						if response.status_code == 200:
+							soup = BeautifulSoup(response.text, 'html.parser')
+							search_results = soup.find_all('a', class_='result__a', limit=2)
+							
+							for result in search_results:
+								title = result.get_text(strip=True)
+								url = result.get('href', '')
+								
+								# Solo incluir fuentes oficiales
+								if url and any(domain in url for domain in ['agenciatributaria.es', 'boe.es', 'seg-social.es']):
+									# Check if it's already added
+									if not any(r['url'] == url for r in results):
+										results.append({
+											"title": title,
+											"url": url,
+											"source": "AEAT" if "agenciatributaria" in url else "BOE" if "boe" in url else "Seguridad Social"
+										})
+
+					# Check if we have results for this year, if so, stop searching this year
+					if len(results) >= max_results:
+						break
+						
+				except Exception as e:
+					logger.warning(f"Error searching {source_query}: {e}")
+					continue
+			
+			# If we found results, we are done. Break year loop.
+			if results:
+				effective_year = attempt_year
+				logger.info(f"✅ Found {len(results)} results for year {effective_year}")
+				break
+				
 		if not results:
+			# Determine message based on attempts
+			years_tried = ", ".join(map(str, years_to_try))
 			return {
 				"success": False,
 				"error": "No se encontraron resultados en fuentes oficiales",
-				"formatted_response": f"No encontré información actualizada de {year} en AEAT, BOE o Seguridad Social. La documentación que tengo puede estar desactualizada. Te recomiendo consultar directamente en www.agenciatributaria.es"
+				"formatted_response": f"No encontré información actualizada de {years_tried} en AEAT, BOE o Seguridad Social. Posiblemente aún no se ha publicado. Te recomiendo consultar directamente en www.agenciatributaria.es"
 			}
+		
+		# Update year to effective_year for next steps (extraction)
+		year = effective_year
 		
 		# Si extract_data=True y la query es sobre IRPF, intentar extraer datos
 		if extract_data and "irpf" in query.lower():

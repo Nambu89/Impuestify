@@ -98,72 +98,71 @@ class PIIDetector:
     
     def __init__(self, mask_pii: bool = True, log_detections: bool = True):
         """
-        Initialize the PII detector.
-        
-        Args:
-            mask_pii: Whether to mask detected PII
-            log_detections: Whether to log PII detections (types only, not values)
+        Initialize the PII detector with Groq client.
         """
+        from groq import Groq
+        from app.config import settings
+        
         self.mask_pii = mask_pii
         self.log_detections = log_detections
-        self._compile_patterns()
-    
-    def _compile_patterns(self):
-        """Pre-compile regex patterns"""
-        self.compiled_patterns = {
-            name: {
-                "pattern": re.compile(config["pattern"], re.IGNORECASE),
-                "mask": config["mask"],
-                "description": config["description"]
-            }
-            for name, config in self.PII_PATTERNS.items()
-        }
-    
+        self.client = None
+        
+        if settings.GROQ_API_KEY:
+            try:
+                self.client = Groq(api_key=settings.GROQ_API_KEY)
+                logger.info(f"✅ PII Detector initialized with Groq model: {settings.GROQ_MODEL_SAFETY}")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Groq client for PII Detector: {e}")
+        else:
+            logger.warning("⚠️ GROQ_API_KEY not found. PII Detection Logic will fail.")
+
     def detect(self, text: str) -> PIIDetectionResult:
         """
-        Detect PII in text.
-        
-        Args:
-            text: Text to scan for PII
-            
-        Returns:
-            PIIDetectionResult with detection details
+        Detect PII in text using Llama Guard 4 (Category S7: Privacy).
         """
         if not text:
-            return PIIDetectionResult(
-                has_pii=False,
-                detected_types=[],
-                masked_text="",
-                original_text="",
-                detections={}
-            )
-        
-        detected_types = []
-        detections = {}
-        masked_text = text
-        
-        for name, config in self.compiled_patterns.items():
-            matches = config["pattern"].findall(text)
+            return PIIDetectionResult(has_pii=False, detected_types=[], masked_text="", original_text="", detections={})
+
+        if not self.client:
+             return PIIDetectionResult(
+                 has_pii=False, 
+                 detected_types=["GROQ_CLIENT_MISSING"], 
+                 masked_text=text, 
+                 original_text=text,
+                 detections={}
+             )
+
+        try:
+            from app.config import settings
             
-            if matches:
-                detected_types.append(name)
-                # Store match count only, not actual values (for privacy)
-                detections[name] = [f"[{len(matches)} coincidencia(s)]"]
-                
-                # Mask PII if enabled
-                if self.mask_pii:
-                    masked_text = config["pattern"].sub(config["mask"], masked_text)
-        
-        if detected_types and self.log_detections:
-            logger.info(f"PII detected: {detected_types}")
-        
-        return PIIDetectionResult(
-            has_pii=bool(detected_types),
-            detected_types=detected_types,
-            masked_text=masked_text,
-            original_text=text,
-            detections=detections
-        )
+            # Use Llama Guard 4 to detect S7 (Privacy)
+            completion = self.client.chat.completions.create(
+                model=settings.GROQ_MODEL_SAFETY, # llama-guard-4-12b
+                messages=[{"role": "user", "content": text}],
+                temperature=0.0
+            )
+            
+            response = completion.choices[0].message.content.strip()
+            
+            # Llama Guard Check
+            is_unsafe = "unsafe" in response.lower() and "S7" in response
+            
+            detected_types = ["PII (Privacy Violation S7)"] if is_unsafe else []
+            
+            if is_unsafe and self.log_detections:
+                 logger.warning(f"🚨 PII detected by Llama Guard: {response}")
+
+            return PIIDetectionResult(
+                has_pii=is_unsafe,
+                detected_types=detected_types,
+                masked_text="[PII REMOVED BY AI]" if (is_unsafe and self.mask_pii) else text,
+                original_text=text,
+                detections={"S7": ["[Content Blocked]"]} if is_unsafe else {}
+            )
+
+        except Exception as e:
+            logger.error(f"❌ PII Detector API Error: {e}")
+            return PIIDetectionResult(has_pii=False, detected_types=[f"API_ERROR: {str(e)}"], masked_text=text, original_text=text, detections={})
     
     def mask(self, text: str) -> str:
         """

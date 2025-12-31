@@ -257,17 +257,16 @@ REGLAS:
 - El último tramo debe tener base_hasta muy alto (ej: 999999999)
 """
         
+        from app.config import settings
+        system_prompt = "Eres un experto en extraer datos fiscales de documentos oficiales españoles. Devuelves SOLO JSON válido, sin explicaciones."
+        user_prompt = extraction_prompt
+        
         response = client.chat.completions.create(
-            model="gpt-5-mini",
+            # Use theconfigured OpenAI model from settings
+            model=settings.OPENAI_MODEL,
             messages=[
-                {
-                    "role": "system",
-                    "content": "Eres un experto en extraer datos fiscales de documentos oficiales españoles. Devuelves SOLO JSON válido, sin explicaciones."
-                },
-                {
-                    "role": "user",
-                    "content": extraction_prompt
-                }
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             temperature=1,  # gpt-5-mini only supports temperature=1
             max_completion_tokens=3000,  # Needs tokens for extracting complex IRPF data
