@@ -200,7 +200,21 @@ SEARCH_TAX_REGULATIONS_TOOL = {
 	"type": "function",
 	"function": {
 		"name": "search_tax_regulations",
-		"description": "Busca información fiscal actualizada en fuentes oficiales (AEAT, BOE, Seguridad Social) y opcionalmente extrae datos estructurados. USA ESTA HERRAMIENTA cuando: (1) La documentación RAG no tiene info del año actual, (2) El usuario pregunta por plazos, fechas límite o cambios recientes, (3) Necesitas confirmar información de años anteriores, (4) Necesitas datos de IRPF que no están en la base de datos.",
+		"description": """⚠️ HERRAMIENTA DE ÚLTIMO RECURSO - NO USES AUTOMÁTICAMENTE ⚠️
+
+USA ESTA HERRAMIENTA **SOLO** EN ESTOS CASOS ESPECÍFICOS:
+
+1. ❌ El usuario dice EXPLÍCITAMENTE: "busca información actualizada", "consulta en web", "busca en AEAT/BOE"
+2. ❌ El contexto RAG está COMPLETAMENTE VACÍO (no hay ningún documento relevante)
+3. ❌ La pregunta es sobre PLAZOS/FECHAS ESPECÍFICAS del año actual que no están en RAG
+
+🚫 NO USES NUNCA para:
+- Cálculos de IRPF (usa calculate_irpf con datos RAG, aunque sean de años anteriores)
+- Cuotas de autónomos (usa calculate_autonomous_quota)
+- Información general fiscal (usa contexto RAG de 2024/2025)
+- Solo porque estamos en 2026 y el RAG es de 2024/2025 (¡ES NORMAL!)
+
+⚠️ REGLA DE ORO: Si tienes contexto RAG, ÚSALO. NO busques en web.""",
 		"parameters": {
 			"type": "object",
 			"properties": {

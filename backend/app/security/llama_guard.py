@@ -216,6 +216,14 @@ class LlamaGuard:
             for cat in self.RISK_CATEGORIES.keys():
                 if cat.lower() in content:
                     categories.append(cat)
+            
+            # FILTER S6 (Professional Advice) - Tax advice is Impuestify's core function
+            categories = [cat for cat in categories if cat != "S6"]
+            
+            # If only S6 was flagged, consider it safe
+            if not categories:
+                return True, []
+            
             return False, categories
         
         # Unknown format, assume safe

@@ -286,7 +286,8 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		conversation_history: List[dict] = None,
 		use_tools: bool = True,
 		system_prompt: Optional[str] = None,
-		model: Optional[str] = None  # Dynamic model selection
+		model: Optional[str] = None,  # Dynamic model selection
+		user_id: Optional[str] = None  # User ID for audit logging
 	) -> AgentResponse:
 		"""
 		Returns:
