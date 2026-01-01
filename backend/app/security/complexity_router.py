@@ -48,8 +48,8 @@ class ComplexityClassifier:
     Uses Groq (llama-3.1-8b-instant) to analyze intent.
     
     Mapping:
-    - SIMPLE -> gpt-5-mini
-    - COMPLEX -> gpt-5
+    - SIMPLE -> gpt-5-mini (fast, cost-effective)
+    - COMPLEX -> gpt-5 or gpt-5.1 (deeper reasoning)
     """
     
     def __init__(self):
@@ -95,7 +95,7 @@ class ComplexityClassifier:
 Analyze the user query and determine its complexity.
 
 Rules:
-1. **COMPLEX** -> Use 'gpt-5'.
+1. **COMPLEX** -> Use 'gpt-5' or 'gpt-5.1'.
    - Detailed tax analysis, multi-step reasoning, ambiguous scenarios, legal interpretation.
    - Keywords: "Liquidación", "Inspección", "Recurso", "Sanción compleja", "Planificación fiscal".
    
@@ -107,7 +107,7 @@ Output JSON ONLY:
 {
   "level": "SIMPLE" | "MODERATE" | "COMPLEX",
   "reasoning_effort": "low" | "medium" | "high",
-  "model": "gpt-5-mini" | "gpt-5",
+  "model": "gpt-5-mini" | "gpt-5" | "gpt-5.1",
   "explanation": "Brief reason"
 }"""
 
@@ -147,7 +147,7 @@ Output JSON ONLY:
                 level=ComplexityLevel.COMPLEX,
                 reasoning_effort=ReasoningEffort.HIGH,
                 confidence=0.0,
-                model="gpt-5", # Fail safe to best model
+                model="gpt-5.1", # Fail safe to best GPT-5 model
                 reasoning=f"Error: {str(e)}"
             )
 

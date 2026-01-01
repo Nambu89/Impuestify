@@ -206,7 +206,7 @@ async def lifespan(app: FastAPI):
 	print("🤖 Verificando OpenAI API...")
 	logger.info("🤖 Verificando OpenAI API...")
 	openai_key = os.environ.get("OPENAI_API_KEY")
-	openai_model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+	openai_model = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
 	
 	if openai_key:
 		print(f"✅ OpenAI configurado: model={openai_model}")
@@ -215,6 +215,31 @@ async def lifespan(app: FastAPI):
 		print("❌ OpenAI no configurado: falta OPENAI_API_KEY")
 		logger.error("❌ OpenAI no configurado - falta OPENAI_API_KEY")
 		logger.warning("⚠️ Algunos servicios no estarán disponibles sin OpenAI")
+	
+	# 4. Verificar GROQ API (Security)
+	print("🛡️ Verificando GROQ API (Seguridad)...")
+	logger.info("🛡️ Verificando GROQ API (Seguridad)...")
+	groq_key = os.environ.get("GROQ_API_KEY")
+	
+	if groq_key:
+		try:
+			from groq import Groq
+			# Quick validation (doesn't count against request quota)
+			groq_client = Groq(api_key=groq_key)
+			print("✅ GROQ configurado correctamente")
+			logger.info("✅ GROQ configurado para seguridad")
+			logger.info("  → Llama Guard 4: Content Moderation")
+			logger.info("  → Llama Prompt Guard: Injection Detection")
+			logger.info("  → Complexity Router: Query Classification")
+		except Exception as e:
+			print(f"⚠️ Error inicializando GROQ: {e}")
+			logger.warning("⚠️ Error inicializando GROQ", error=str(e))
+			logger.warning("⚠️ Funciones de seguridad limitadas")
+	else:
+		print("⚠️ GROQ_API_KEY no configurada")
+		logger.warning("⚠️ GROQ_API_KEY no configurada")
+		logger.warning("⚠️ Seguridad AI deshabilitada (Llama Guard, Prompt Guard, etc.)")
+
 	
 	logger.info("=" * 80)
 	logger.info("✅ Impuestify INICIADO CORRECTAMENTE")

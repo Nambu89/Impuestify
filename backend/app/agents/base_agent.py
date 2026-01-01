@@ -51,7 +51,7 @@ class BaseAgent:
 		"""
 		self.name = name
 		self.instructions = instructions
-		self.model = model or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+		self.model = model or os.environ.get("OPENAI_MODEL", "gpt-5-mini")
 		
 		# Create OpenAI chat client
 		chat_client = OpenAIChatClient(

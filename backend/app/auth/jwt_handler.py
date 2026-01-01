@@ -129,23 +129,20 @@ def verify_token(token: str, token_type: str = "access") -> Optional[TokenData]:
 
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
-) -> Optional[TokenData]:
+    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())
+) -> TokenData:
     """
-    FastAPI dependency to get the current authenticated user.
+    FastAPI dependency to get the current authenticated user (REQUIRED).
     
     Args:
         credentials: HTTP Bearer credentials from the Authorization header
         
     Returns:
-        TokenData if authenticated, None otherwise
+        TokenData if authenticated
         
     Raises:
-        HTTPException: If token is invalid or expired
+        HTTPException 401: If token is missing, invalid or expired
     """
-    if credentials is None:
-        return None
-    
     token = credentials.credentials
     token_data = verify_token(token, token_type="access")
     

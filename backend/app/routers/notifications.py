@@ -16,7 +16,7 @@ import logging
 
 from app.agents.notification_agent import get_notification_agent
 from app.agents.payslip_agent import get_payslip_agent
-from app.auth.jwt_handler import get_current_user
+from app.auth.jwt_handler import get_current_user, TokenData
 from app.database.turso_client import TursoClient
 from app.services.conversation_service import ConversationService
 from app.security import file_validator, rate_limit_notification
@@ -42,7 +42,7 @@ async def analyze_notification(
 	request: Request,  # Required by SlowAPI
 	file: UploadFile = File(...),
 	notification_date: Optional[str] = Form(None),
-	current_user = Depends(get_current_user)
+	current_user: TokenData = Depends(get_current_user)
 ):
 	"""
 	Analyze uploaded AEAT notification PDF.
@@ -274,7 +274,7 @@ async def analyze_notification(
 
 @router.get("/history")
 async def get_notification_history(
-	current_user = Depends(get_current_user),
+	current_user: TokenData = Depends(get_current_user),
 	limit: int = 10
 ):
 	"""
@@ -334,7 +334,7 @@ async def get_notification_history(
 @router.get("/{analysis_id}")
 async def get_notification_analysis(
 	analysis_id: str,
-	current_user = Depends(get_current_user)
+	current_user: TokenData = Depends(get_current_user)
 ):
 	"""
 	Get specific notification analysis.
@@ -385,7 +385,7 @@ async def get_notification_analysis(
 @router.delete("/{analysis_id}")
 async def delete_notification_analysis(
 	analysis_id: str,
-	current_user = Depends(get_current_user)
+	current_user: TokenData = Depends(get_current_user)
 ):
 	"""
 	Delete notification analysis.

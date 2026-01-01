@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     )
     OPENAI_MODEL: Optional[str] = Field(
         default="gpt-5-mini",
-        description="OpenAI model to use (gpt-5-mini, gpt-5, gpt-4o, gpt-4o-mini, gpt-4, etc...)"
+        description="OpenAI model to use (gpt-5-mini, gpt-5, gpt-5.1, gpt-5.2)"
     )
     
     # -------------------------------

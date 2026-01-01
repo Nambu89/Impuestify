@@ -49,7 +49,7 @@ class TaxAgent:
 		
 		Args:
 			name: Agent name
-			model: OpenAI model name (gpt-5-mini, gpt-5, gpt-4o, etc.)
+			model: OpenAI model name (gpt-5-mini, gpt-5, gpt-5.1, etc.)
 			api_key: OpenAI API key
 		"""
 		from app.config import settings
