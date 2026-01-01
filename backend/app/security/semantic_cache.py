@@ -7,8 +7,7 @@ Reduces OpenAI API costs by ~30-50% by returning cached responses.
 Features:
 - Similarity threshold: 0.93
 - Skip personal progress queries
-- TTL: 24 hours
-- Graceful degradation (fails open if Upstash unavailable)
+- Intelligent vector search with Upstash Vector
 """
 import os
 import logging
@@ -16,6 +15,9 @@ import hashlib
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
+import time
+
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 

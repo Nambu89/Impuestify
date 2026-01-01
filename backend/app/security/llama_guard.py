@@ -16,6 +16,8 @@ from typing import Optional, List
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from app.config import settings  # ← FIX: Import settings at module level
+
 logger = logging.getLogger(__name__)
 
 

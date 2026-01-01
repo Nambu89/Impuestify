@@ -16,6 +16,8 @@ import logging
 from typing import Optional, List, Tuple
 from pydantic import BaseModel, Field
 
+from app.config import settings  # ← FIX: Import settings at module level
+
 logger = logging.getLogger(__name__)
 
 

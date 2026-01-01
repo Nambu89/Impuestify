@@ -9,6 +9,8 @@ import logging
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 
+from app.config import settings  # ← FIX: Import settings at module level
+
 logger = logging.getLogger(__name__)
 
 
