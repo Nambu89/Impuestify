@@ -336,16 +336,27 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		except Exception as e:
 			logger.warning(f"⚠️ Semantic cache error (proceeding without cache): {e}")
 		
-		# === SPEED: Complexity Router ===
+		# === SPEED: Complexity Router (Dynamic Model Selection) ===
+		selected_model = model or self.model  # Allow override via parameter
 		reasoning_effort = "medium"  # Default
+		router_confidence = 0.0
+		
 		try:
-			from app.security.complexity_router import get_reasoning_effort
-			reasoning_effort = get_reasoning_effort(query)
-			logger.debug(f"🧠 Complexity Router: {reasoning_effort} reasoning for query")
+			from app.security.complexity_router import classify_complexity
+			
+			# Get full classification with model recommendation
+			complexity_result = classify_complexity(query)
+			
+			# Use router-recommended model (gpt-5-mini for simple, gpt-5/gpt-5.1 for complex)
+			selected_model = complexity_result.model
+			reasoning_effort = complexity_result.reasoning_effort.value
+			router_confidence = complexity_result.confidence
+			
+			logger.info(f"🧠 Complexity Router: {complexity_result.level.value} → model={selected_model}, effort={reasoning_effort}, confidence={router_confidence:.2f}")
 		except ImportError:
-			logger.debug("Complexity Router not available, using default reasoning")
+			logger.debug("Complexity Router not available, using default model")
 		except Exception as e:
-			logger.warning(f"⚠️ Complexity router error: {e}")
+			logger.warning(f"⚠️ Complexity router error: {e}, using default model")
 		
 		# Build the prompt with context
 		user_message = self._build_prompt(query, context)
@@ -372,14 +383,14 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			messages.append({"role": "user", "content": user_message})
 			
 			# First call with tools (if enabled)
-			logger.info(f"Calling OpenAI with tools enabled: {use_tools}, reasoning_effort: {reasoning_effort}")
+			logger.info(f"Calling OpenAI with model={selected_model}, tools={use_tools}, reasoning_effort={reasoning_effort}")
 			
 			try:
 				# Add timeout to prevent indefinite waiting
 				response = await asyncio.wait_for(
 					asyncio.to_thread(
 						self._client.chat.completions.create,
-						model=self.model,
+						model=selected_model,  # ← Use router-selected model
 						messages=messages,
 						tools=ALL_TOOLS if use_tools else None,
 						tool_choice="auto" if use_tools else None,
@@ -443,7 +454,7 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 					final_response = await asyncio.wait_for(
 						asyncio.to_thread(
 							self._client.chat.completions.create,
-							model=self.model,
+							model=selected_model,  # ← Use same router-selected model
 							messages=messages,
 							temperature=1,
 							max_completion_tokens=10000
@@ -489,14 +500,16 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 				content=content,
 				sources=sources or [],
 				metadata={
-					"model": self.model,
+					"model": selected_model,  # ← Model actually used (from router)
+					"base_model": self.model,  # Original model from settings
 					"agent": self.name,
 					"framework": "openai-api",
 					"tool_used": bool(message.tool_calls),
 					"current_year": self.current_year,
 					"irpf_fiscal_year": self.irpf_fiscal_year,
 					"autonomous_quota_year": self.autonomous_quota_year,
-					"reasoning_effort": reasoning_effort
+					"reasoning_effort": reasoning_effort,
+					"router_confidence": router_confidence
 				},
 				agent_name=self.name
 			)
