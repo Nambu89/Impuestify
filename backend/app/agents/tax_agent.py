@@ -141,13 +141,19 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 ## Herramientas disponibles:
 - **calculate_autonomous_quota**: Para calcular cuotas de autónomos (siempre año {self.autonomous_quota_year})
 - **calculate_irpf**: Para calcular IRPF (especifica el año fiscal correcto)
-- **search_tax_regulations**: OBLIGATORIO cuando necesites información actualizada que no está en la documentación
+- **search_tax_regulations**: Solo cuando el usuario PIDA explícitamente información reciente o la documentación RAG sea claramente insuficiente
 
-⚠️ **IMPORTANTE - CUÁNDO USAR search_tax_regulations**:
-- Cuando el contexto RAG no tenga información del año actual ({self.current_year})
-- Cuando el usuario pregunte por cambios recientes o normativa nueva
-- Cuando necesites confirmar datos de plazos, fechas límite, o cambios normativos
-- Cuando la documentación diga "puede haber cambios" o sea de años anteriores
+⚠️ **REGLA DE ORO: PRIORIZA EL CONTEXTO RAG**:
+- **PRIMERO**: Usa SIEMPRE la información del contexto RAG proporcionado (aunque sea de 2024 o 2025)
+- **SOLO búsca en web** si:
+  1. El usuario pregunta **explícitamente** por "información actualizada", "cambios recientes", "nueva normativa" o "datos de {self.current_year}"
+  2. El contexto RAG está completamente vacío o no responde a la pregunta
+  3. La documentación RAG indica explícitamente "consultar web para actualizaciones"
+
+**NO busques** información web automáticamente solo porque:
+- Estamos en {self.current_year} y la documentación es de años anteriores (ES NORMAL)
+- Calculas IRPF para {self.current_year} (usa datos de 2024/2025 de RAG)
+- La campaña de renta {self.current_year} no ha empezado (usarás datos del año anterior)
 
 ---
 
@@ -233,20 +239,21 @@ TÚ:
 
 ---
 
-## 🔍 USO DE search_tax_regulations
+## 🔍 USO DE search_tax_regulations (RAG-FIRST STRATEGY)
 
-Usa esta herramienta cuando:
-1. Usuario pregunta por "cambios recientes" o "nueva normativa"
-2. Preguntas sobre plazos de {self.current_year} (modelo 303, declaración renta, etc.)
-3. La documentación RAG es de años anteriores
-4. Preguntas sobre deducciones o beneficios fiscales nuevos
+**REGLA FUNDAMENTAL**: La información del contexto RAG (aunque sea de 2024 o 2025) es **SUFICIENTE** para el 95% de  las preguntas.
 
-**NOTA IMPORTANTE**: La herramienta es inteligente. Pide siempre `year={self.current_year}`. Si no encuentra datos publicados para este año, **automáticamente buscará la del año anterior** ({self.current_year - 1}).
+**USA esta herramienta SOLO cuando**:
+1. El usuario **pide explícitamente** información actualizada: "dame la normativa más reciente", "busca cambios de {self.current_year}", "consulta la web"
+2. Preguntas sobre **plazos específicos** de {self.current_year} (fechas límite de modelos, calendario fiscal)
+3. El usuario pregunta sobre **leyes aprobadas en los últimos meses**
 
-**Ejemplo de llamada:**
-```
-search_tax_regulations(query="tramos IRPF {self.current_year} madrid", year={self.current_year})
-```
+**NO USES esta herramienta** automáticamente si:
+- Calculas IRPF de {self.current_year} → Usa tramos de 2024/2025 del RAG (cambian raramente)
+- La documentación RAG es de 2024/2025 → Es **suficiente** (normativa fiscal cambia poco año a año)
+- Estamos en enero-marzo de {self.current_year} → La AEAT aún no ha publicado docs definitivos del año
+
+**NOTA**: Si decides buscar, pide `year={self.current_year}`. Si no hay datos, la herramienta automáticamente buscar á del año anterior.
 
 ---
 
@@ -561,9 +568,10 @@ Pregunta del usuario:
 {query}
 
 Instrucciones:
+- **USA SIEMPRE la información del contexto anterior** (aunque sea de 2024 o 2025)
 - Para cuotas de autónomos: usa calculate_autonomous_quota con year={self.autonomous_quota_year}
-- Para IRPF: determina el año fiscal correcto ({self.irpf_fiscal_year} si es declaración actual, {self.current_year} si es estimación)
-- Si el contexto no tiene información actualizada de {self.current_year}, usa search_tax_regulations
+- Para IRPF: determina el año fiscal correcto y usa calculate_irpf con los datos del contexto
+- **SOLO usa search_tax_regulations** si el usuario pide explícitamente "información actualizada" o "busca en web"
 - Siempre aclara qué año fiscal estás usando en la respuesta
 - Incluye un aviso de que esto es información orientativa"""
 		else:
