@@ -105,51 +105,56 @@ async def calculate_irpf_tool(
 		except ValueError as e:
 			logger.info(f"Local DB failed: {e}")
 			
-			# ATTEMPT 2: Search web and extract data
-			logger.info(f"Attempt 2: Searching web for {ccaa_normalized} {year}")
+			# ATTEMPT 2: Web search DISABLED (RAG-first strategy)
+			# Web searches are slow and often fail for future years
+			# Instead, fallback directly to previous year
+			logger.info(f"Skipping web search, going directly to previous year fallback")
 			
-			search_result = await search_tax_regulations_tool(
-				query=f"tramos IRPF {year} {ccaa_normalized} escala autonómica comunidad autónoma",
-				year=year,
-				extract_data=True
-			)
+			# # ATTEMPT 2: Search web and extract data
+			# logger.info(f"Attempt 2: Searching web for {ccaa_normalized} {year}")
+			#
+			# search_result = await search_tax_regulations_tool(
+			# 	query=f"tramos IRPF {year} {ccaa_normalized} escala autonómica comunidad autónoma",
+			# 	year=year,
+			# 	extract_data=True
+			# )
+			#
+			# if search_result.get("success") and search_result.get("tramos"):
+			# 	logger.info(f"✅ Successfully extracted data from web")
+			#
+			# 	# Calculate with web-extracted data
+			# 	tramos_autonomicos = search_result["tramos"]
+			#
+			# 	# Try to get state scale from DB
+			# 	tramos_estatales = None
+			# 	try:
+			# 		state_scale = await calculator._get_scale('Estatal', year)
+			# 		tramos_estatales = state_scale
+			# 	except Exception as e:
+			# 		logger.warning(f"No state scale for {year}, using only autonomous scale: {e}")
+			#
+			# 	result = calculator.calculate_with_custom_scale(
+			# 		base_liquidable=base_imponible,
+			# 		tramos_autonomicos=tramos_autonomicos,
+			# 		tramos_estatales=tramos_estatales,
+			# 		year=year,
+			# 		jurisdiction=ccaa_normalized
+			# 	)
+			#
+			# 	await calculator.disconnect()
+			#
+			# 	return _format_irpf_result(
+			# 		result,
+			# 		base_imponible=base_imponible,
+			# 		comunidad_autonoma=ccaa_normalized,
+			# 		year=year,
+			# 		source=f"Web: {search_result.get('source_name', 'Fuente oficial')}",
+			# 		source_url=search_result.get('source_url'),
+			# 		source_title=search_result.get('source_title')
+			# 	)
 			
-			if search_result.get("success") and search_result.get("tramos"):
-				logger.info(f"✅ Successfully extracted data from web")
-				
-				# Calculate with web-extracted data
-				tramos_autonomicos = search_result["tramos"]
-				
-				# Try to get state scale from DB
-				tramos_estatales = None
-				try:
-					state_scale = await calculator._get_scale('Estatal', year)
-					tramos_estatales = state_scale
-				except Exception as e:
-					logger.warning(f"No state scale for {year}, using only autonomous scale: {e}")
-				
-				result = calculator.calculate_with_custom_scale(
-					base_liquidable=base_imponible,
-					tramos_autonomicos=tramos_autonomicos,
-					tramos_estatales=tramos_estatales,
-					year=year,
-					jurisdiction=ccaa_normalized
-				)
-				
-				await calculator.disconnect()
-				
-				return _format_irpf_result(
-					result,
-					base_imponible=base_imponible,
-					comunidad_autonoma=ccaa_normalized,
-					year=year,
-					source=f"Web: {search_result.get('source_name', 'Fuente oficial')}",
-					source_url=search_result.get('source_url'),
-					source_title=search_result.get('source_title')
-				)
-			
-			# ATTEMPT 3: Fallback to previous year
-			logger.info(f"Attempt 3: Trying previous year ({year - 1})")
+			# ATTEMPT 2 (was 3): Fallback to previous year
+			logger.info(f"Attempt 2: Trying previous year ({year - 1})")
 			
 			try:
 				result = await calculator.calculate_irpf(
@@ -216,58 +221,17 @@ def _format_irpf_result(
 	source_title: str = None,
 	warning: str = None
 ) -> Dict[str, Any]:
-	"""
-	Format IRPF calculation result for user display.
-	
-	Args:
-		result: Calculation result from IRPFCalculator
-		base_imponible: Base imponible used
-		comunidad_autonoma: CCAA name
-		year: Tax year
-		source: Source description
-		source_url: Optional source URL
-		source_title: Optional source title
-		warning: Optional warning message
-		
-	Returns:
-		Formatted response dict
-	"""
+	"""Format IRPF calculation result - CONCISE version"""
 	cuota_estatal = result.get("cuota_estatal", 0)
 	cuota_autonomica = result.get("cuota_autonomica", 0)
 	cuota_total = result.get("cuota_total", 0)
 	tipo_medio = result.get("tipo_medio", 0)
 	
-	# Build source citation
-	source_citation = f"\n\n📄 **Fuente**: {source}"
-	if source_url:
-		source_citation += f"\n🔗 **URL**: {source_url}"
-	if source_title:
-		source_citation += f"\n📰 **Título**: {source_title}"
+	# Concise format
+	formatted_response = f"""Para una base imponible de {base_imponible:,.2f} € en {comunidad_autonoma} (año fiscal {year}) la cuota íntegra resultante es aproximadamente {cuota_total:,.2f} € y la retención efectiva (cuota íntegra sobre la base) es del {tipo_medio:.2f} %. La cuota líquida tras deducciones y mínimos puede variar según deducciones personales y familiares; este resultado es orientativo y se corresponde con la aplicación de los tramos y tarifas del IRPF estatal y autonómico para {year}."""
 	
-	# Build warning if present
-	warning_text = f"\n\n{warning}" if warning else ""
-	
-	formatted_response = f"""✅ **Cálculo de IRPF {year}**
-
-📊 **Base imponible**: {base_imponible:,.2f}€
-📍 **Comunidad Autónoma**: {comunidad_autonoma}
-
-💰 **Resultado**:
-- Cuota estatal: {cuota_estatal:,.2f}€
-- Cuota autonómica: {cuota_autonomica:,.2f}€
-- **TOTAL a pagar**: {cuota_total:,.2f}€
-
-📈 **Tipo medio efectivo**: {tipo_medio:.2f}%
-
-💡 **¿Qué significa esto?**
-- De tus {base_imponible:,.2f}€ de base imponible, pagarás {cuota_total:,.2f}€ de IRPF
-- Tu tipo medio efectivo es {tipo_medio:.2f}% (lo que realmente pagas sobre tus ingresos)
-- Esto es la cuota íntegra antes de deducciones{source_citation}{warning_text}
-
-⚠️ **Recuerda**: 
-- Esta es la cuota íntegra. Puedes aplicar deducciones (vivienda, donativos, etc.) que reducirán el importe final
-- Si eres asalariado, tu empresa ya te retiene mensualmente. Esta cifra es orientativa para tu declaración anual
-- Los parámetros exactos (reducciones, mínimo personal/familiar) varían según tu situación personal"""
+	if warning:
+		formatted_response = f"{warning}\n\n{formatted_response}"
 	
 	return {
 		"success": True,
