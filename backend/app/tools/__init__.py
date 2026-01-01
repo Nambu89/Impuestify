@@ -9,11 +9,13 @@ from app.tools.search_tool import SEARCH_TAX_REGULATIONS_TOOL, search_tax_regula
 from app.tools.payslip_analysis_tool import PAYSLIP_ANALYSIS_TOOL, analyze_payslip_tool
 
 # Registry of all available tools
+# NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
+# It must be explicitly added when needed
 ALL_TOOLS = [
 	IRPF_CALCULATOR_TOOL,
 	AUTONOMOUS_QUOTA_TOOL,
-	SEARCH_TAX_REGULATIONS_TOOL,
-	PAYSLIP_ANALYSIS_TOOL,  # NUEVO
+	# SEARCH_TAX_REGULATIONS_TOOL,  # ← REMOVED - Only add when explicitly needed
+	PAYSLIP_ANALYSIS_TOOL,
 ]
 
 # Registry of tool execution functions
