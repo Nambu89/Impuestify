@@ -35,7 +35,7 @@ export default function Chat() {
     const [notificationAnalysis, setNotificationAnalysis] = useState<any>(null)
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(false) // ✅ NUEVO: Estado del sidebar
-    const [useStreaming, setUseStreaming] = useState(false) // ⚠️ DISABLED temporarily - debugging
+    const [useStreaming, setUseStreaming] = useState(true) // ✅ ENABLED with fixed implementation
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     const scrollToBottom = () => {
@@ -90,22 +90,35 @@ export default function Chat() {
         const questionText = input.trim()
         setInput('')
 
-        //  STREAMING MODE
+        // ✅ STREAMING MODE
         if (useStreaming) {
             try {
-                await sendStreamingMessage(questionText, activeConversationId || undefined)
+                await sendStreamingMessage(questionText, activeConversationId || undefined, {
+                    onComplete: (response, convId) => {
+                        // ✅ Callback when stream finishes successfully
+                        const assistantMessage: Message = {
+                            id: (Date.now() + 1).toString(),
+                            role: 'assistant',
+                            content: response
+                        }
+                        setMessages(prev => [...prev, assistantMessage])
 
-                // After streaming completes, add the final message
-                if (streamState.response && !streamState.error) {
-                    const assistantMessage: Message = {
-                        id: (Date.now() + 1).toString(),
-                        role: 'assistant',
-                        content: streamState.response
+                        // Update conversation ID if needed
+                        if (convId && convId !== activeConversationId) {
+                            setActiveConversationId(convId)
+                        }
+                    },
+                    onError: (error) => {
+                        console.error('❌ Streaming error:', error)
+                        setMessages(prev => [...prev, {
+                            id: (Date.now() + 1).toString(),
+                            role: 'assistant',
+                            content: `Error: ${error}`
+                        }])
                     }
-                    setMessages(prev => [...prev, assistantMessage])
-                }
+                })
             } catch (error: any) {
-                console.error('❌ Streaming error:', error)
+                console.error('❌ Streaming fatal error:', error)
                 setMessages(prev => [...prev, {
                     id: (Date.now() + 1).toString(),
                     role: 'assistant',

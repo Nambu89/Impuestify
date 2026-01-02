@@ -14,11 +14,21 @@ interface StreamState {
     error: string | null;
 }
 
+interface StreamCallbacks {
+    onComplete?: (response: string, conversationId?: string) => void;
+    onError?: (error: string) => void;
+}
+
 interface UseStreamingChatReturn {
     streamState: StreamState;
     isStreaming: boolean;
-    sendStreamingMessage: (message: string, conversationId?: string) => Promise<void>;
+    sendStreamingMessage: (
+        message: string,
+        conversationId?: string,
+        callbacks?: StreamCallbacks
+    ) => Promise<void>;
     cancelStream: () => void;
+    resetStream: () => void;
 }
 
 export const useStreamingChat = (): UseStreamingChatReturn => {
@@ -41,9 +51,21 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
         }
     }, []);
 
+    const resetStream = useCallback(() => {
+        setStreamState({
+            thinking: '',
+            toolStatus: '',
+            response: '',
+            isDone: false,
+            error: null
+        });
+        setIsStreaming(false);
+    }, []);
+
     const sendStreamingMessage = useCallback(async (
         message: string,
-        conversationId?: string
+        conversationId?: string,
+        callbacks?: StreamCallbacks
     ) => {
         // Reset state
         setStreamState({
@@ -179,6 +201,13 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                             case 'done':
                                 setStreamState(prev => ({ ...prev, isDone: true }));
                                 setIsStreaming(false);
+                                // Call onComplete callback with current response
+                                setStreamState(current => {
+                                    if (callbacks?.onComplete && current.response) {
+                                        callbacks.onComplete(current.response, conversationId);
+                                    }
+                                    return current;
+                                });
                                 break;
 
                             case 'error':
@@ -187,6 +216,9 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                                     error: eventData
                                 }));
                                 setIsStreaming(false);
+                                if (callbacks?.onError) {
+                                    callbacks.onError(eventData);
+                                }
                                 break;
                         }
                     }
@@ -195,11 +227,15 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
 
         } catch (error) {
             console.error('Streaming error:', error);
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
             setStreamState(prev => ({
                 ...prev,
-                error: error instanceof Error ? error.message : 'Unknown error'
+                error: errorMsg
             }));
             setIsStreaming(false);
+            if (callbacks?.onError) {
+                callbacks.onError(errorMsg);
+            }
         }
     }, []);
 
@@ -207,6 +243,7 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
         streamState,
         isStreaming,
         sendStreamingMessage,
-        cancelStream
+        cancelStream,
+        resetStream
     };
 };
