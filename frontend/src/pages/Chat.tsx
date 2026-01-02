@@ -35,7 +35,7 @@ export default function Chat() {
     const [notificationAnalysis, setNotificationAnalysis] = useState<any>(null)
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(false) // ✅ NUEVO: Estado del sidebar
-    const [useStreaming, setUseStreaming] = useState(true) // ✅ NEW: Toggle streaming
+    const [useStreaming, setUseStreaming] = useState(false) // ⚠️ DISABLED temporarily - debugging
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     const scrollToBottom = () => {
