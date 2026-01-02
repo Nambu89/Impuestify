@@ -401,6 +401,10 @@ app.include_router(conversations_router)
 app.include_router(payslips_router)  # Payslips management
 app.include_router(security_tests_router)  # Security testing endpoints
 
+# Streaming chat (SSE - Server-Sent Events)
+from app.routers.chat_stream import router as chat_stream_router
+app.include_router(chat_stream_router)
+
 
 # Prometheus instrumentation
 instrumentator = Instrumentator()

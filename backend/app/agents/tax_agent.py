@@ -290,7 +290,8 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		use_tools: bool = True,
 		system_prompt: Optional[str] = None,
 		model: Optional[str] = None,  # Dynamic model selection
-		user_id: Optional[str] = None  # User ID for audit logging
+		user_id: Optional[str] = None,  # User ID for audit logging
+		progress_callback: Optional[Any] = None  # For SSE streaming
 	) -> AgentResponse:
 		"""
 		Returns:
@@ -380,6 +381,10 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		# Build the prompt with context
 		user_message = self._build_prompt(query, context)
 		
+		# Emit initial thinking event (for SSE streaming)
+		if progress_callback:
+			await progress_callback.thinking("Analizando tu consulta...")
+		
 		try:
 			# Import tools
 			from app.tools import ALL_TOOLS, TOOL_EXECUTORS
@@ -441,6 +446,10 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 				
 				logger.info(f"Tool called: {function_name} with args: {function_args}")
 				
+				# Emit tool call event (for SSE streaming)
+				if progress_callback:
+					await progress_callback.tool_call(function_name, function_args)
+				
 				# Execute the appropriate tool dynamically
 				if function_name in TOOL_EXECUTORS:
 					tool_executor = TOOL_EXECUTORS[function_name]
@@ -450,6 +459,10 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 					tool_result = {"success": False, "error": f"Unknown function: {function_name}"}
 				
 				logger.info(f"Tool result success: {tool_result.get('success')}")
+				
+				# Emit tool result event (for SSE streaming)
+				if progress_callback:
+					await progress_callback.tool_result(function_name, tool_result.get('success', False))
 				
 				# Add assistant message and tool result to conversation
 				messages.append({
