@@ -6,6 +6,9 @@ import { NotificationUpload } from '../components/NotificationUpload'
 import { NotificationAnalysisDisplay } from '../components/NotificationAnalysisDisplay'
 import { ConversationSidebar } from '../components/ConversationSidebar'
 import { useConversations } from '../hooks/useConversations'
+import { useStreamingChat } from '../hooks/useStreamingChat'
+import { ThinkingIndicator } from '../components/ThinkingIndicator'
+import { ToolExecutionStatus } from '../components/ToolExecutionStatus'
 import ReactMarkdown from 'react-markdown'
 import './Chat.css'
 
@@ -24,6 +27,7 @@ interface Message {
 export default function Chat() {
     const { askQuestion } = useApi()
     const { getConversation } = useConversations()
+    const { streamState, isStreaming, sendStreamingMessage } = useStreamingChat()
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -31,6 +35,7 @@ export default function Chat() {
     const [notificationAnalysis, setNotificationAnalysis] = useState<any>(null)
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(false) // ✅ NUEVO: Estado del sidebar
+    const [useStreaming, setUseStreaming] = useState(true) // ✅ NEW: Toggle streaming
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     const scrollToBottom = () => {
@@ -73,7 +78,7 @@ export default function Chat() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!input.trim() || isLoading) return
+        if (!input.trim() || isLoading || isStreaming) return
 
         const userMessage: Message = {
             id: Date.now().toString(),
@@ -81,6 +86,36 @@ export default function Chat() {
             content: input.trim()
         }
 
+        setMessages(prev => [...prev, userMessage])
+        const questionText = input.trim()
+        setInput('')
+
+        //  STREAMING MODE
+        if (useStreaming) {
+            try {
+                await sendStreamingMessage(questionText, activeConversationId || undefined)
+
+                // After streaming completes, add the final message
+                if (streamState.response && !streamState.error) {
+                    const assistantMessage: Message = {
+                        id: (Date.now() + 1).toString(),
+                        role: 'assistant',
+                        content: streamState.response
+                    }
+                    setMessages(prev => [...prev, assistantMessage])
+                }
+            } catch (error: any) {
+                console.error('❌ Streaming error:', error)
+                setMessages(prev => [...prev, {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant',
+                    content: `Error: ${error.message || 'No se pudo obtener respuesta'}`
+                }])
+            }
+            return
+        }
+
+        // ⏪ FALLBACK: Non-streaming mode (original code)
         const loadingMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
@@ -88,13 +123,12 @@ export default function Chat() {
             loading: true
         }
 
-        setMessages(prev => [...prev, userMessage, loadingMessage])
-        setInput('')
+        setMessages(prev => [...prev, loadingMessage])
         setIsLoading(true)
 
         try {
             const response = await askQuestion(
-                userMessage.content,
+                questionText,
                 activeConversationId || undefined
             )
 
@@ -220,6 +254,26 @@ export default function Chat() {
                                     </div>
                                 </div>
                             ))}
+
+                            {/* ✅ STREAMING INDICATORS */}
+                            {isStreaming && (
+                                <div className="streaming-indicators" style={{ margin: '16px 0' }}>
+                                    <ThinkingIndicator message={streamState.thinking} />
+                                    <ToolExecutionStatus status={streamState.toolStatus} />
+                                    {streamState.response && (
+                                        <div className="message assistant">
+                                            <div className="message-content">
+                                                <div className="message-text">
+                                                    <ReactMarkdown>
+                                                        {streamState.response}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div ref={messagesEndRef} />
                         </div>
                     )}
