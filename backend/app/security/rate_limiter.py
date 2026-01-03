@@ -244,28 +244,31 @@ def _initialize_limiter():
 	"""
 	import os
 	
-	redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
-	redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+	# Get Upstash credentials
+	# For SlowAPI/limits, we need TCP endpoint, NOT REST API
+	upstash_host = os.environ.get("UPSTASH_REDIS_HOST")  # e.g., "your-db.upstash.io"
+	upstash_port = os.environ.get("UPSTASH_REDIS_PORT", "6379")
+	upstash_password = os.environ.get("UPSTASH_REDIS_PASSWORD")
 	
-	# Try to use Upstash Redis for distributed rate limiting
-	if UPSTASH_AVAILABLE and redis_url and redis_token:
+	# Try to use Upstash Redis TCP endpoint with SSL
+	if upstash_host and upstash_password:
 		try:
-			redis_client = Redis(url=redis_url, token=redis_token)
+			# Construct rediss:// URI (Redis with SSL - required for Upstash)
+			# Format: rediss://:password@host:port/db
+			redis_uri = f"rediss://:{upstash_password}@{upstash_host}:{upstash_port}/0"
 			
-			# Test connection
-			redis_client.ping()
-			
-			storage = UpstashStorage(redis_client)
-			logger.info("🚦 Rate Limiter: Using Upstash Redis (distributed)")
+			logger.info(f"🚦 Rate Limiter: Connecting to Upstash Redis (TCP+SSL): {upstash_host}")
 			
 			return Limiter(
 				key_func=get_rate_limit_key,
 				default_limits=["100/hour", "10/minute"],
-				storage_uri=storage,  # Use custom storage
+				storage_uri=redis_uri,  # SlowAPI will use redis-py internally
 				strategy="fixed-window"
 			)
 		except Exception as e:
 			logger.warning(f"⚠️ Failed to connect to Upstash Redis: {e}. Falling back to memory.")
+	else:
+		logger.info("ℹ️  Upstash Redis credentials not found (need UPSTASH_REDIS_HOST, UPSTASH_REDIS_PASSWORD)")
 	
 	# Fallback to in-memory storage
 	logger.info("🚦 Rate Limiter: Using in-memory storage (single instance)")

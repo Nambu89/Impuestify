@@ -24,11 +24,13 @@ logger = logging.getLogger(__name__)
 # Try to import guardrails-ai (optional dependency)
 try:
     import guardrails as gd
-    from guardrails.validators import ValidLength, ToxicLanguage
+    # Don't import validators - they may not exist in all versions
+    # We use rule-based validation anyway as primary method
     GUARDRAILS_AVAILABLE = True
-except ImportError:
+    logger.info("✅ guardrails-ai loaded successfully")
+except ImportError as e:
     GUARDRAILS_AVAILABLE = False
-    logger.warning("guardrails-ai not installed. Guardrails will use rule-based fallback.")
+    logger.info(f"ℹ️  guardrails-ai not available ({e}). Using rule-based fallback.")
 
 
 class GuardrailsResult(BaseModel):
