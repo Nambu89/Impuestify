@@ -1,0 +1,239 @@
+/**
+ * Legal Pages Styles
+ * Clean, professional styling for legal documentation pages
+ */
+.legal-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+    padding: 40px 20px;
+}
+
+.legal-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.back-link {
+    display: inline-block;
+    color: #667eea;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 20px;
+    transition: transform 0.2s ease;
+}
+
+.back-link:hover {
+    transform: translateX(-5px);
+}
+
+.legal-container h1 {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: #71717a;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.last-updated {
+    font-size: 14px;
+    color: #a1a1aa;
+    margin-bottom: 30px;
+}
+
+.legal-container h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-top: 40px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.legal-container h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.legal-container p {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #4b5563;
+    margin-bottom: 15px;
+}
+
+.legal-container ul,
+.legal-container ol {
+    margin: 15px 0;
+    padding-left: 25px;
+}
+
+.legal-container li {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #4b5563;
+    margin-bottom: 10px;
+}
+
+.legal-container a {
+    color: #667eea;
+    text-decoration: underline;
+}
+
+.legal-container a:hover {
+    color: #764ba2;
+}
+
+section {
+    margin-bottom: 35px;
+}
+
+.legal-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: #f9fafb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.legal-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.legal-table th,
+.legal-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.legal-table th {
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.legal-table td {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.legal-table tbody tr:hover {
+    background: #f3f4f6;
+}
+
+.alert {
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border-left: 4px solid;
+}
+
+.alert-info {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+}
+
+.alert-info strong {
+    color: #667eea;
+}
+
+.alert-warning {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: #fbbf24;
+}
+
+.alert-warning strong {
+    color: #d97706;
+}
+
+.highlight {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.badge-large {
+    display: inline-block;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    margin: 15px 0;
+}
+
+.two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.two-column>div {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.legal-cta {
+    margin-top: 40px;
+    padding: 25px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border-radius: 12px;
+    text-align: center;
+}
+
+.legal-cta p {
+    font-size: 15px;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .legal-container {
+        padding: 25px 20px;
+    }
+
+    .legal-container h1 {
+        font-size: 28px;
+    }
+
+    .legal-container h2 {
+        font-size: 20px;
+    }
+
+    .two-column {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .legal-table {
+        font-size: 13px;
+    }
+
+    .legal-table th,
+    .legal-table td {
+        padding: 10px;
+    }
+}

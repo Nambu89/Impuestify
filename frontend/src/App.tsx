@@ -4,6 +4,9 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Chat from './pages/Chat'
 import Dashboard from './pages/Dashboard'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import AITransparencyPage from './pages/AITransparencyPage'
+import Footer from './components/Footer'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 
 // Protected route wrapper
@@ -29,6 +32,15 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+
+                    {/* Legal Pages - Publicly Accessible */}
+                    <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                    <Route path="/ai-transparency" element={<AITransparencyPage />} />
+                    <Route path="/terms" element={<PrivacyPolicyPage />} /> {/* Placeholder */}
+                    <Route path="/data-retention" element={<PrivacyPolicyPage />} /> {/* Placeholder */}
+                    <Route path="/security" element={<PrivacyPolicyPage />} /> {/* Placeholder */}
+
+                    {/* Protected Routes */}
                     <Route
                         path="/chat"
                         element={
@@ -47,6 +59,9 @@ function App() {
                     />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+
+                {/* Footer on all pages */}
+                <Footer />
             </div>
         </AuthProvider>
     )
