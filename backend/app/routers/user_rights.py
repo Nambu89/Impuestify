@@ -12,7 +12,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 import json
 
-from app.auth.security import get_current_user
+from app.auth.jwt_handler import get_current_user
 from app.database.turso_client import get_db_client, TursoClient
 
 router = APIRouter(prefix="/api/users/me", tags=["user-rights"])
