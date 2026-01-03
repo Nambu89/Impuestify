@@ -161,6 +161,28 @@ except ImportError:
 	logger.debug("upstash-redis not available, using in-memory rate limiting")
 
 
+class BytesWrapper:
+	"""
+	Wrapper to make string/int values behave like bytes for Slow API.
+	
+	SlowAPI calls .decode() on values returned from storage.get(),
+	but Upstash Redis REST API returns str/int directly, not bytes.
+	This wrapper bridges that incompatibility.
+	"""
+	def __init__(self, value):
+		self.value = str(value) if value is not None else "0"
+	
+	def decode(self, encoding='utf-8'):
+		"""Return the string value (already decoded)."""
+		return self.value
+	
+	def __str__(self):
+		return self.value
+	
+	def __int__(self):
+		return int(self.value)
+
+
 class UpstashStorage:
 	"""
 	Custom storage backend for SlowAPI using Upstash Redis REST API.
@@ -186,24 +208,23 @@ class UpstashStorage:
 			logger.warning(f"⚠️ Redis incr failed: {e}")
 			return 0
 	
-	def get(self, key: str) -> int:
-		"""Get current counter value."""
+	def get(self, key: str):
+		"""
+		Get current counter value.
+		
+		Returns a bytes-like object that SlowAPI can call .decode() on.
+		"""
 		try:
 			value = self.redis.get(key)
-			# SlowAPI expects the value to support .decode() if it's bytes (standard Redis)
-			# But Upstash Redis python client returns int or str directly
-			# We return it as is, but if SlowAPI tries to call .decode() on it later,
-			# it might fail if we don't wrap it or if SlowAPI isn't flexible.
-			# HOWEVER, the error 'UpstashStorage' object has no attribute 'decode' 
-			# suggests SlowAPI might be treating the storage object itself as the connection/value?
-			# No, typically it means SlowAPI tries to decode the result of get().
 			
 			if value is None:
-				return 0
-			return int(value)
+				return BytesWrapper("0")
+			
+			# Wrap the value so SlowAPI can call .decode() on it
+			return BytesWrapper(value)
 		except Exception as e:
 			logger.error(f"Error getting key {key} from Upstash: {e}")
-			return 0
+			return BytesWrapper("0")
 	
 	def get_expiry(self, key: str) -> int:
 		"""Get remaining time to live in seconds."""
