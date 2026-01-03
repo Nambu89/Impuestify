@@ -405,6 +405,10 @@ app.include_router(security_tests_router)  # Security testing endpoints
 from app.routers.chat_stream import router as chat_stream_router
 app.include_router(chat_stream_router)
 
+# GDPR User Rights Endpoints
+from app.routers.user_rights import router as user_rights_router
+app.include_router(user_rights_router)
+
 
 # Prometheus instrumentation
 instrumentator = Instrumentator()

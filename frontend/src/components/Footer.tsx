@@ -5,6 +5,7 @@
  * Best practices: Visible on all pages, accessible, clear links
  */
 import { Link } from 'react-router-dom';
+import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle } from 'lucide-react';
 import './Footer.css';
 
 export default function Footer() {
@@ -21,7 +22,8 @@ export default function Footer() {
                             Tu asistente fiscal inteligente
                         </p>
                         <p className="footer-disclaimer">
-                            🤖 Este servicio utiliza inteligencia artificial.
+                            <Bot className="inline-icon" size={14} />
+                            {' '}Este servicio utiliza inteligencia artificial.
                             La información es orientativa, no sustituye asesoramiento profesional.
                         </p>
                     </div>
@@ -30,16 +32,28 @@ export default function Footer() {
                         <h4>Legal</h4>
                         <ul className="footer-links">
                             <li>
-                                <Link to="/privacy-policy">📋 Política de Privacidad</Link>
+                                <Link to="/privacy-policy">
+                                    <FileText size={16} className="link-icon" />
+                                    Política de Privacidad
+                                </Link>
                             </li>
                             <li>
-                                <Link to="/terms">📜 Términos y Condiciones</Link>
+                                <Link to="/terms">
+                                    <Scale size={16} className="link-icon" />
+                                    Términos y Condiciones
+                                </Link>
                             </li>
                             <li>
-                                <Link to="/ai-transparency">🤖 Transparencia IA</Link>
+                                <Link to="/ai-transparency">
+                                    <Bot size={16} className="link-icon" />
+                                    Transparencia IA
+                                </Link>
                             </li>
                             <li>
-                                <Link to="/data-retention">🗄️ Retención de Datos</Link>
+                                <Link to="/data-retention">
+                                    <Database size={16} className="link-icon" />
+                                    Retención de Datos
+                                </Link>
                             </li>
                         </ul>
                     </div>
@@ -48,13 +62,22 @@ export default function Footer() {
                         <h4>Soporte</h4>
                         <ul className="footer-links">
                             <li>
-                                <a href="mailto:support@impuestify.com">✉️ Contacto</a>
+                                <a href="mailto:support@impuestify.com">
+                                    <Mail size={16} className="link-icon" />
+                                    Contacto
+                                </a>
                             </li>
                             <li>
-                                <a href="mailto:privacy@impuestify.com">🔒 Privacidad</a>
+                                <a href="mailto:privacy@impuestify.com">
+                                    <Lock size={16} className="link-icon" />
+                                    Privacidad
+                                </a>
                             </li>
                             <li>
-                                <Link to="/security">🛡️ Seguridad</Link>
+                                <Link to="/security">
+                                    <Shield size={16} className="link-icon" />
+                                    Seguridad
+                                </Link>
                             </li>
                         </ul>
                     </div>
@@ -62,9 +85,18 @@ export default function Footer() {
                     <div className="footer-section">
                         <h4>Cumplimiento</h4>
                         <div className="footer-badges">
-                            <span className="badge">✅ RGPD</span>
-                            <span className="badge">✅ AI Act</span>
-                            <span className="badge">✅ LOPDGDD</span>
+                            <span className="badge">
+                                <CheckCircle size={12} className="badge-icon" />
+                                RGPD
+                            </span>
+                            <span className="badge">
+                                <CheckCircle size={12} className="badge-icon" />
+                                AI Act
+                            </span>
+                            <span className="badge">
+                                <CheckCircle size={12} className="badge-icon" />
+                                LOPDGDD
+                            </span>
                         </div>
                         <p className="footer-small">
                             Autoridad de control:
@@ -73,7 +105,7 @@ export default function Footer() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                AEPD
+                                {' '}AEPD
                             </a>
                         </p>
                     </div>

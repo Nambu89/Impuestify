@@ -15,6 +15,24 @@
     margin: 0 auto;
 }
 
+.inline-icon {
+    display: inline;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.link-icon {
+    display: inline;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+.badge-icon {
+    display: inline;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
 .footer-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));

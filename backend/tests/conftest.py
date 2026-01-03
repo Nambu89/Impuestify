@@ -6,6 +6,12 @@ Pytest fixtures and configuration for testing.
 import pytest
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load .env for tests
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+env_path = os.path.join(PROJECT_ROOT, ".env")
+load_dotenv(env_path)
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
