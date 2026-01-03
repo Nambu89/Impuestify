@@ -6,6 +6,9 @@
  */
 import { useState, useCallback, useRef } from 'react';
 
+// ✅ FIX: Use environment variable for API URL (needed for production)
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 interface StreamState {
     thinking: string;
     toolStatus: string;
@@ -84,17 +87,8 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                 throw new Error('No authentication token found');
             }
 
-            // Build URL with query params
-            // Note: EventSource doesn't support custom headers in standard browsers
-            // We need to pass token via query param or use a proxy
-            // For now, we'll use a POST endpoint that returns SSE
-
-            // Create EventSource URL
-            // Since EventSource doesn't support POST or headers, we need to
-            // use a GET endpoint or implement fetch + ReadableStream
-
             // Using fetch with streaming (better for auth)
-            const response = await fetch('/api/ask/stream', {
+            const response = await fetch(`${API_URL}/ask/stream`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
