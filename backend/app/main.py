@@ -395,20 +395,21 @@ app.add_middleware(
 
 # Registrar routers
 app.include_router(auth_router)
+
+# Streaming chat MUST come BEFORE regular chat
+# More specific routes (/api/ask/stream) need to be registered before less specific (/api/ask)
+from app.routers.chat_stream import router as chat_stream_router
+app.include_router(chat_stream_router)
+
 app.include_router(chat_router)
 app.include_router(notifications_router)
 app.include_router(conversations_router)
 app.include_router(payslips_router)  # Payslips management
 app.include_router(security_tests_router)  # Security testing endpoints
 
-# Streaming chat (SSE - Server-Sent Events)
-from app.routers.chat_stream import router as chat_stream_router
-app.include_router(chat_stream_router)
-
 # GDPR User Rights Endpoints
 from app.routers.user_rights import router as user_rights_router
 app.include_router(user_rights_router)
-
 
 # Prometheus instrumentation
 instrumentator = Instrumentator()
