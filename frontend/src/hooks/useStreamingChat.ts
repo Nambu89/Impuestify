@@ -79,7 +79,7 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
         setIsStreaming(true);
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token'); // ✅ FIXED: match useAuth TOKEN_KEY
             if (!token) {
                 throw new Error('No authentication token found');
             }
