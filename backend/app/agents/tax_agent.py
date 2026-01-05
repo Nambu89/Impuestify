@@ -119,7 +119,7 @@ class TaxAgent:
   * Si el usuario pregunta "cuánto pagaré de IRPF" SIN especificar año:
     → **CALCULA DIRECTAMENTE** usando el año más relevante:
       - Si estamos en campaña (abril-junio): usa {self.irpf_fiscal_year}
-      - Si NO estamos en campaña: usa {self.current_year}
+      - Si NO estamos en campaña: usa {self.irpf_fiscal_year} (el más reciente con datos)
     → **EXPLICA en la respuesta** qué año usaste
     → **NO PREGUNTES** al usuario por el año (solo pregunta si hay ambigüedad real)
 - Si el usuario especifica un año concreto (ej: "IRPF 2025"), usa ese año
@@ -198,7 +198,7 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 - Si el usuario NO especifica año:
   → **USA AUTOMÁTICAMENTE** el año más relevante:
     * Si estamos en campaña (abril-junio {self.current_year}): usa {self.irpf_fiscal_year}
-    * Si NO estamos en campaña: usa {self.current_year}
+    * Si NO estamos en campaña: usa {self.irpf_fiscal_year} (el más reciente con datos disponibles)
   → **EXPLICA** en la respuesta: "He calculado para tus ingresos de [año]"
 - Si el usuario especifica año (ej: "IRPF 2025"), usa ese año exacto
 

@@ -176,6 +176,7 @@ async def ask_question_stream(
             
             # Create async task for agent execution
             async def run_agent():
+                done_emitted = False
                 try:
                     response = await tax_agent.run(
                         query=request.question,
@@ -211,11 +212,21 @@ async def ask_question_stream(
                     })
                     
                     await callback.done()
+                    done_emitted = True
                     
                 except Exception as e:
                     logger.error(f"Agent error: {e}", exc_info=True)
                     await callback.error(f"Error procesando la consulta: {str(e)}")
                     await callback.done()
+                    done_emitted = True
+                finally:
+                    # CRITICAL: Ensure done is ALWAYS emitted, even if something went wrong above
+                    if not done_emitted:
+                        logger.warning("Emitting done event in finally block (safety net)")
+                        try:
+                            await callback.done()
+                        except Exception as e:
+                            logger.error(f"Failed to emit done in finally: {e}")
             
             # Start agent task
             agent_task = asyncio.create_task(run_agent())
