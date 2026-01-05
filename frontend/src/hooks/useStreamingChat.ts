@@ -88,7 +88,7 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
             }
 
             // Using fetch with streaming (better for auth)
-            const response = await fetch(`${API_URL}/ask/stream`, {
+            const response = await fetch(`${API_URL}/api/ask/stream`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
