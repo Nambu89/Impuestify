@@ -45,7 +45,7 @@ class ProgressCallback:
         """Emit an event to the stream"""
         if not self._closed:
             await self.events.put(StreamEvent(event, data))
-            logger.debug(f"Emitted event: {event}")
+            logger.info(f"📤 Emitted event: {event}")
     
     async def thinking(self, message: str):
         """AI is thinking/reasoning"""

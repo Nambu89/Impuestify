@@ -89,15 +89,25 @@ async def ask_question_stream(
     conversation_id = request.conversation_id
     
     if not conversation_id:
+        logger.info("Creating new conversation (no ID provided)")
         conversation = await conv_service.create_conversation(
             user_id=current_user.user_id,
             title=request.question[:50] + "..." if len(request.question) > 50 else request.question
         )
         conversation_id = conversation["id"]
     else:
+        logger.info(f"Checking for existing conversation: {conversation_id}")
         conversation = await conv_service.get_conversation(conversation_id, current_user.user_id)
         if not conversation:
-            raise HTTPException(status_code=404, detail="Conversation not found")
+            logger.warning(f"Conversation {conversation_id} not found, creating new one")
+            # Create a new conversation (can't use specific ID)
+            conversation = await conv_service.create_conversation(
+                user_id=current_user.user_id,
+                title=request.question[:50] + "..." if len(request.question) > 50 else request.question
+            )
+            # Update the conversation_id to the newly created one
+            conversation_id = conversation["id"]
+            logger.info(f"Created new conversation with ID: {conversation_id}")
     
     # === Greeting detection (fast path) ===
     if guardrails_system.is_greeting(request.question.strip()):
