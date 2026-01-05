@@ -1,4 +1,4 @@
-import { FileText, LogOut, Menu } from 'lucide-react'
+import { FileText, LogOut, Menu, Settings } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import './Header.css'
@@ -56,6 +56,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
                 <nav className="nav">
                     <Link to="/chat" className="nav-link">Chat</Link>
+                    <Link to="/settings" className="nav-link">
+                        <Settings size={16} /> Configuración
+                    </Link>
                     {/* ✅ FIX: Solo mostrar Dashboard si is_admin === 1 */}
                     {user?.is_admin === 1 && (
                         <Link to="/dashboard" className="nav-link">Dashboard</Link>

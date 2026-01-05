@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Chat from './pages/Chat'
 import Dashboard from './pages/Dashboard'
+import SettingsPage from './pages/SettingsPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import AITransparencyPage from './pages/AITransparencyPage'
 import Footer from './components/Footer'
@@ -54,6 +55,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Dashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/settings"
+                        element={
+                            <ProtectedRoute>
+                                <SettingsPage />
                             </ProtectedRoute>
                         }
                     />

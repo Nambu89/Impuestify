@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Loader2, FileText, AlertCircle, Upload } from 'lucide-react'
 import Header from '../components/Header'
+import AITransparencyModal from '../components/AITransparencyModal'
 import { useApi } from '../hooks/useApi'
 import { NotificationUpload } from '../components/NotificationUpload'
 import { NotificationAnalysisDisplay } from '../components/NotificationAnalysisDisplay'
@@ -35,7 +36,7 @@ export default function Chat() {
     const [notificationAnalysis, setNotificationAnalysis] = useState<any>(null)
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(false) // ✅ NUEVO: Estado del sidebar
-    const [useStreaming, setUseStreaming] = useState(true) // ✅ ENABLED with fixed implementation
+    const [useStreaming] = useState(true) // ✅ ENABLED with fixed implementation
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     const scrollToBottom = () => {
@@ -113,7 +114,7 @@ export default function Chat() {
                         setMessages(prev => [...prev, {
                             id: (Date.now() + 1).toString(),
                             role: 'assistant',
-                            content: `Error: ${error}`
+                            content: `Error: ${error} `
                         }])
                     }
                 })
@@ -122,7 +123,7 @@ export default function Chat() {
                 setMessages(prev => [...prev, {
                     id: (Date.now() + 1).toString(),
                     role: 'assistant',
-                    content: `Error: ${error.message || 'No se pudo obtener respuesta'}`
+                    content: `Error: ${error.message || 'No se pudo obtener respuesta'} `
                 }])
             }
             return
@@ -167,7 +168,7 @@ export default function Chat() {
             setMessages(prev => prev.map(msg =>
                 msg.loading ? {
                     ...msg,
-                    content: `Error: ${error.message || 'No se pudo obtener respuesta'}`,
+                    content: `Error: ${error.message || 'No se pudo obtener respuesta'} `,
                     loading: false
                 } : msg
             ))
@@ -180,6 +181,11 @@ export default function Chat() {
         <div className="chat-page">
             {/* ✅ NUEVO: Pasar función toggle al Header */}
             <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+            {/* ✅ AI Act Art. 52: AI Transparency Modal on first access */}
+            <AITransparencyModal onAccept={() => {
+                console.log('✅ AI Transparency accepted')
+            }} />
 
             {/* ✅ NUEVO: Pasar props de sidebar open/close */}
             <ConversationSidebar
@@ -233,7 +239,7 @@ export default function Chat() {
                             {messages.map(message => (
                                 <div
                                     key={message.id}
-                                    className={`message ${message.role}`}
+                                    className={`message ${message.role} `}
                                 >
                                     <div className="message-content">
                                         {message.loading ? (
@@ -347,7 +353,7 @@ export default function Chat() {
                                 const analysisMessage: Message = {
                                     id: Date.now().toString(),
                                     role: 'assistant',
-                                    content: `📋 **Análisis de Notificación: ${analysis.type}**\n\n${analysis.summary}\n\n---\n\n💡 Puedes hacerme preguntas sobre esta notificación y te ayudaré con toda la información de la AEAT.`
+                                    content: `📋 ** Análisis de Notificación: ${analysis.type}**\n\n${analysis.summary} \n\n-- -\n\n💡 Puedes hacerme preguntas sobre esta notificación y te ayudaré con toda la información de la AEAT.`
                                 }
 
                                 setMessages(prev => [...prev, analysisMessage])
