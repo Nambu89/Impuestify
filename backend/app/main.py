@@ -145,6 +145,7 @@ async def lifespan(app: FastAPI):
 		raise
 	
 	# 1. Conexión a Turso Database
+	print("📡 Conectando a Turso Database...")
 	logger.info("📡 Conectando a Turso Database...")
 	try:
 		from app.database.turso_client import TursoClient
@@ -161,6 +162,7 @@ async def lifespan(app: FastAPI):
 		result = await db_client.execute("SELECT COUNT(*) as cnt FROM embeddings")
 		embedding_count = result.rows[0]['cnt'] if result.rows else 0
 		
+		print(f"✅ Turso Database conectada: docs={doc_count}, chunks={chunk_count}, embeddings={embedding_count}")
 		logger.info(
 			"✅ Turso Database conectada", 
 			documents=doc_count, 
@@ -169,7 +171,9 @@ async def lifespan(app: FastAPI):
 		)
 		
 	except Exception as e:
+		print(f"❌ Error conectando a Turso: {str(e)}")
 		logger.error("❌ Error conectando a Turso", error=str(e))
+		print("⚠️  Impuestify funcionará sin base de datos RAG")
 		logger.warning("⚠️  Impuestify funcionará sin base de datos RAG")
 		db_client = None
 	
