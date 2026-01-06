@@ -134,9 +134,14 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                         continue;
                     }
 
+                    // 🔍 DEBUG: Log raw SSE message
+                    console.log('📥 RAW SSE message:', message);
+
                     // Parse SSE format: "event: eventName\ndata: eventData"
                     const eventMatch = message.match(/event:\s*(\w+)/);
                     const dataMatch = message.match(/data:\s*(.+)/s);
+
+                    console.log('📊 Parsed event:', eventMatch?.[1], 'data:', dataMatch?.[1]?.substring(0, 50));
 
                     if (eventMatch && dataMatch) {
                         const eventType = eventMatch[1];
@@ -185,22 +190,37 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                                 break;
 
                             case 'content':
-                                setStreamState(prev => ({
-                                    ...prev,
-                                    thinking: '', // Clear thinking when content arrives
-                                    response: prev.response + eventData
-                                }));
+                                // Parse JSON-encoded content (remove surrounding quotes)
+                                let parsedContent = eventData;
+                                try {
+                                    parsedContent = JSON.parse(eventData);
+                                } catch {
+                                    // If not valid JSON, use as-is (remove manual quotes if present)
+                                    parsedContent = eventData.replace(/^"(.+)"$/s, '$1');
+                                }
+                                console.log('📝 Content received:', parsedContent.substring(0, 100) + '...');
+
+                                // Use functional update and store in accumulator
+                                setStreamState(prev => {
+                                    const newResponse = parsedContent; // Replace, don't append (content is full response)
+                                    return {
+                                        ...prev,
+                                        thinking: '', // Clear thinking when content arrives
+                                        response: newResponse
+                                    };
+                                });
                                 break;
 
                             case 'done':
-                                setStreamState(prev => ({ ...prev, isDone: true }));
+                                console.log('✅ Stream DONE event received');
                                 setIsStreaming(false);
-                                // Call onComplete callback with current response
+                                // Get the final response and call callback
                                 setStreamState(current => {
+                                    console.log('📤 Calling onComplete with response:', current.response?.substring(0, 100));
                                     if (callbacks?.onComplete && current.response) {
                                         callbacks.onComplete(current.response, conversationId);
                                     }
-                                    return current;
+                                    return { ...current, isDone: true };
                                 });
                                 break;
 
