@@ -123,6 +123,7 @@ async def ask_question_stream(
     
     # === Main streaming logic ===
     async def event_stream():
+        print("🎬 event_stream() STARTED", flush=True)
         callback = ProgressCallback()
         
         try:

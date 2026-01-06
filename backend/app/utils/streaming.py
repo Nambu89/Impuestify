@@ -39,6 +39,8 @@ class ProgressCallback:
             data_str = json.dumps(data) if not isinstance(data, str) else data
             event_dict = {"event": event, "data": data_str}
             await self.events.put(event_dict)
+            # Use print for Railway visibility (logger may not flush in async context)
+            print(f"📤 SSE Event queued: {event}", flush=True)
             logger.info(f"📤 SSE Event queued: {event}")
     
     async def thinking(self, message: str):
@@ -96,6 +98,7 @@ async def sse_generator(
     start_time = time.time()
     last_heartbeat = time.time()
     
+    print("🚀 SSE generator started", flush=True)
     logger.info("🚀 SSE generator started")
     
     try:
@@ -103,6 +106,7 @@ async def sse_generator(
             # Check timeout
             elapsed = time.time() - start_time
             if elapsed > timeout:
+                print(f"⏱️ Stream timeout after {elapsed:.1f}s", flush=True)
                 logger.warning(f"Stream timeout after {elapsed:.1f}s")
                 yield {"event": "error", "data": "Stream timeout - processing took too long"}
                 yield {"event": "done", "data": ""}
@@ -114,7 +118,7 @@ async def sse_generator(
                 # sse-starlette uses 'comment' key for SSE comments
                 yield {"comment": "heartbeat"}
                 last_heartbeat = current_time
-                logger.debug("💓 Sent heartbeat")
+                print("💓 Sent heartbeat", flush=True)
             
             # Get next event (with timeout)
             try:
@@ -123,6 +127,7 @@ async def sse_generator(
                     timeout=1.0  # Check heartbeat every second
                 )
                 
+                print(f"📤 SSE yielding: {event_dict.get('event', 'unknown')}", flush=True)
                 logger.info(f"📤 SSE yielding: {event_dict.get('event', 'unknown')}")
                 
                 # Yield event dict (sse-starlette handles formatting)
@@ -130,6 +135,7 @@ async def sse_generator(
                 
                 # Check if done
                 if event_dict.get("event") == "done":
+                    print(f"✅ Stream completed in {elapsed:.1f}s", flush=True)
                     logger.info(f"✅ Stream completed in {elapsed:.1f}s")
                     break
                     
