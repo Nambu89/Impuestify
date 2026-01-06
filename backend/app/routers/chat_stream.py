@@ -242,7 +242,7 @@ async def ask_question_stream(
             agent_task = asyncio.create_task(run_agent())
             
             # Stream events from callback with heartbeats (Railway best practice)
-            async for event_str in sse_generator(callback):
+            async for event_dict in sse_generator(callback):
                 # Check if client disconnected (save resources)
                 if await req.is_disconnected():
                     logger.info("Client disconnected mid-stream")
@@ -250,7 +250,7 @@ async def ask_question_stream(
                     callback.close()
                     break
                 
-                yield event_str
+                yield event_dict
             
             # Wait for agent to finish
             await agent_task
@@ -260,8 +260,8 @@ async def ask_question_stream(
             callback.close()
         except Exception as e:
             logger.error(f"Stream error: {e}", exc_info=True)
-            yield f"event: error\\ndata: {str(e)}\\n\\n"
-            yield "event: done\\ndata: \\n\\n"
+            yield {"event": "error", "data": str(e)}
+            yield {"event": "done", "data": ""}
         finally:
             callback.close()
     
