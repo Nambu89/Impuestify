@@ -81,12 +81,16 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
         });
 
         setIsStreaming(true);
+        console.log('🚀 [SSE] sendStreamingMessage called', { message, conversationId });
 
         try {
             const token = localStorage.getItem('access_token'); // ✅ FIXED: match useAuth TOKEN_KEY
+            console.log('🔑 [SSE] Token found:', !!token);
             if (!token) {
                 throw new Error('No authentication token found');
             }
+
+            console.log('📡 [SSE] Fetching:', `${API_URL}/api/ask/stream`);
 
             // Using fetch with streaming (better for auth)
             const response = await fetch(`${API_URL}/api/ask/stream`, {
@@ -101,6 +105,8 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                 })
             });
 
+            console.log('📥 [SSE] Response received:', response.status, response.ok);
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -109,21 +115,30 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                 throw new Error('No response body');
             }
 
+            console.log('📖 [SSE] Getting reader from response body');
+
             // Read stream with TextDecoder
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
+            let chunkCount = 0;
+
+            console.log('🔄 [SSE] Starting read loop');
 
             while (true) {
                 const { value, done } = await reader.read();
 
                 if (done) {
+                    console.log('✅ [SSE] Reader done after', chunkCount, 'chunks');
                     setIsStreaming(false);
                     break;
                 }
 
+                chunkCount++;
                 // Decode chunk
-                buffer += decoder.decode(value, { stream: true });
+                const decoded = decoder.decode(value, { stream: true });
+                buffer += decoded;
+                console.log(`📦 [SSE] Chunk ${chunkCount} received:`, decoded.substring(0, 100));
 
                 // Process complete messages (split by \n\n)
                 const messages = buffer.split('\n\n');
