@@ -214,13 +214,23 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
 
                             case 'content':
                                 // Parse JSON-encoded content (remove surrounding quotes)
+                                // Also remove any "data:" prefixes that might be in multi-line content
                                 let parsedContent = eventData;
+
+                                // First, remove all "data:" prefixes from multi-line content
+                                parsedContent = parsedContent.replace(/^data:\s*/gm, '');
+
+                                // Try to parse as JSON
                                 try {
-                                    parsedContent = JSON.parse(eventData);
+                                    parsedContent = JSON.parse(parsedContent);
                                 } catch {
                                     // If not valid JSON, use as-is (remove manual quotes if present)
-                                    parsedContent = eventData.replace(/^"(.+)"$/s, '$1');
+                                    parsedContent = parsedContent.replace(/^"(.+)"$/s, '$1');
                                 }
+
+                                // Final cleanup: remove any remaining "data:" that might be in the text
+                                parsedContent = parsedContent.replace(/\ndata:\s*/g, '\n');
+
                                 console.log('📝 Content received:', parsedContent.substring(0, 100) + '...');
 
                                 // Use functional update and store in accumulator
