@@ -3,6 +3,7 @@
  * 
  * Handles Server-Sent Events streaming with chain-of-thought display.
  * Compatible with Railway's SSE timeout limits.
+ * @version 2.0.1 - Fixed JSON parsing and onComplete callback (Jan 10, 2026)
  */
 import { useState, useCallback, useRef } from 'react';
 
