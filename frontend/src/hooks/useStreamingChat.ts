@@ -138,15 +138,20 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                 // Decode chunk
                 const decoded = decoder.decode(value, { stream: true });
                 buffer += decoded;
-                console.log(`📦 [SSE] Chunk ${chunkCount} received:`, decoded.substring(0, 100));
+                console.log(`📦 [SSE] Chunk ${chunkCount} received (length: ${decoded.length}):`, decoded.substring(0, 200));
 
                 // Process complete messages (split by \n\n)
                 const messages = buffer.split('\n\n');
                 buffer = messages.pop() || ''; // Keep incomplete message in buffer
 
+                console.log(`🔄 [SSE] Buffer split into ${messages.length} messages, remaining buffer length: ${buffer.length}`);
+
                 for (const message of messages) {
+                    console.log('🔎 [SSE] Processing message:', JSON.stringify(message).substring(0, 100));
+
                     if (!message.trim() || message.startsWith(':')) {
                         // Skip empty messages and heartbeat comments
+                        console.log('⏭️ [SSE] Skipping empty/heartbeat message');
                         continue;
                     }
 
