@@ -140,29 +140,31 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                 buffer += decoded;
                 console.log(`📦 [SSE] Chunk ${chunkCount} received (length: ${decoded.length}):`, decoded.substring(0, 200));
 
-                // Process complete messages (split by \n\n)
-                const messages = buffer.split('\n\n');
+                // Normalize newlines (handle \r\n and \r) and split by double newline
+                const normalizedBuffer = buffer.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                const messages = normalizedBuffer.split('\n\n');
                 buffer = messages.pop() || ''; // Keep incomplete message in buffer
 
                 console.log(`🔄 [SSE] Buffer split into ${messages.length} messages, remaining buffer length: ${buffer.length}`);
 
                 for (const message of messages) {
-                    console.log('🔎 [SSE] Processing message:', JSON.stringify(message).substring(0, 100));
+                    const trimmedMessage = message.trim();
+                    console.log('🔎 [SSE] Processing message:', JSON.stringify(trimmedMessage).substring(0, 150));
 
-                    if (!message.trim() || message.startsWith(':')) {
+                    if (!trimmedMessage || trimmedMessage.startsWith(':')) {
                         // Skip empty messages and heartbeat comments
                         console.log('⏭️ [SSE] Skipping empty/heartbeat message');
                         continue;
                     }
 
                     // 🔍 DEBUG: Log raw SSE message
-                    console.log('📥 RAW SSE message:', message);
+                    console.log('📥 RAW SSE message:', trimmedMessage);
 
-                    // Parse SSE format: "event: eventName\ndata: eventData"
-                    const eventMatch = message.match(/event:\s*(\w+)/);
-                    const dataMatch = message.match(/data:\s*(.+)/s);
+                    // Parse SSE format: "event: eventName\ndata: eventData" (more flexible regex)
+                    const eventMatch = trimmedMessage.match(/^event:\s*(\w+)/m);
+                    const dataMatch = trimmedMessage.match(/^data:\s*(.*)$/ms);
 
-                    console.log('📊 Parsed event:', eventMatch?.[1], 'data:', dataMatch?.[1]?.substring(0, 50));
+                    console.log('📊 Parsed event:', eventMatch?.[1], 'data:', dataMatch?.[1]?.substring(0, 80));
 
                     if (eventMatch && dataMatch) {
                         const eventType = eventMatch[1];
