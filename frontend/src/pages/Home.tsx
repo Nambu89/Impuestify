@@ -17,7 +17,7 @@ export default function Home() {
                     <div className="hero-content">
                         <div className="hero-badge">
                             <Shield size={16} />
-                            <span>Powered by Azure AI</span>
+                            <span>Powered by OpenAI</span>
                         </div>
                         <h1 className="hero-title">
                             Tu Asistente Fiscal

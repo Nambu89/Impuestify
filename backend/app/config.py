@@ -1,7 +1,7 @@
 """
 TaxIA Configuration
 
-Unified settings using Pydantic with Azure AI services support.
+Unified settings using Pydantic with Open AI services support.
 """
 import os
 from typing import Optional, List
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     )
     
     # -------------------------------
-    # 🔐 Azure AI Foundry (Optional Fallback)
+    # 🔐 Open AI Foundry (Optional Fallback)
     # -------------------------------
     AZURE_OPENAI_API_KEY: Optional[str] = Field(
         default=None,

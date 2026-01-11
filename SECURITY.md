@@ -171,7 +171,7 @@ In case of a security incident:
 ### External Services
 
 We use industry-leading secure services:
-- **Azure AI**: SOC 2, ISO 27001 compliant
+- **OpenAI**: SOC 2, ISO 27001 compliant
 - **Turso Database**: Encrypted at rest and in transit
 - **Upstash Redis**: TLS encryption
 - **Railway**: Secure deployment platform
