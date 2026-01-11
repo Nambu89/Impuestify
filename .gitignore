@@ -44,3 +44,9 @@ coverage/
 # Build artifacts
 *.egg-info/
 build/
+
+# Claude Code - Local config (personal, no compartir)
+CLAUDE.local.md
+
+# Windows reserved filename (created accidentally by Claude Code)
+nul

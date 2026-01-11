@@ -1,14 +1,15 @@
 /* Header Styles - MOBILE FIRST */
 
+/* ========== BASE (MOBILE 320px+) ========== */
 .header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    z-index: 100;
+    z-index: var(--z-sticky);
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-gray-200);
     height: 60px;
 }
 
@@ -17,7 +18,7 @@
     align-items: center;
     justify-content: space-between;
     height: 100%;
-    padding: 0 12px;
+    padding: 0 var(--spacing-3);
     max-width: 100%;
 }
 
@@ -25,18 +26,18 @@
 .menu-toggle {
     background: none;
     border: none;
-    padding: 8px;
+    padding: var(--spacing-2);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #1a1a1a;
-    border-radius: 8px;
-    transition: background 0.2s;
+    color: var(--color-gray-900);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
 }
 
 .menu-toggle:hover {
-    background: #f5f5f5;
+    background: var(--color-gray-100);
 }
 
 .menu-toggle svg {
@@ -47,15 +48,15 @@
 .logo {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 18px;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-lg);
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--color-gray-900);
     text-decoration: none;
 }
 
 .logo svg {
-    color: #2563eb;
+    color: var(--color-primary);
     width: 24px;
     height: 24px;
 }
@@ -68,47 +69,47 @@
 .user-menu {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-2);
 }
 
 .user-name {
     display: none;
     /* Hidden on mobile */
-    color: #666;
+    color: var(--color-gray-500);
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .user-avatar {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
-    background: #2563eb;
-    color: white;
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    color: var(--color-white);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .logout-btn {
     background: none;
     border: none;
-    padding: 6px;
+    padding: var(--spacing-2);
     cursor: pointer;
-    color: #666;
-    border-radius: 8px;
-    transition: all 0.2s;
+    color: var(--color-gray-500);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 14px;
+    gap: var(--spacing-1);
+    font-size: var(--font-size-sm);
 }
 
 .logout-btn:hover {
-    background: #fee;
-    color: #d32f2f;
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-error);
 }
 
 /* ========== TABLET (768px+) ========== */
@@ -118,12 +119,12 @@
     }
 
     .header-content {
-        padding: 0 20px;
+        padding: 0 var(--spacing-5);
     }
 
     .logo {
-        font-size: 20px;
-        gap: 10px;
+        font-size: var(--font-size-xl);
+        gap: var(--spacing-2);
     }
 
     .logo svg {
@@ -139,26 +140,26 @@
     .user-avatar {
         width: 36px;
         height: 36px;
-        font-size: 15px;
+        font-size: var(--font-size-base);
     }
 
     .nav {
         display: flex;
         /* Show nav on tablet+ */
         align-items: center;
-        gap: 16px;
+        gap: var(--spacing-4);
     }
 
     .nav-link {
-        color: #666;
+        color: var(--color-gray-500);
         font-weight: 500;
         text-decoration: none;
-        font-size: 14px;
-        transition: color 0.2s;
+        font-size: var(--font-size-sm);
+        transition: color var(--transition-fast);
     }
 
     .nav-link:hover {
-        color: #2563eb;
+        color: var(--color-primary);
     }
 }
 
@@ -171,7 +172,7 @@
     }
 
     .header-content {
-        padding: 0 24px;
+        padding: 0 var(--spacing-6);
     }
 
     .menu-toggle {
@@ -184,10 +185,10 @@
     }
 
     .nav {
-        gap: 24px;
+        gap: var(--spacing-6);
     }
 
     .nav-link {
-        font-size: 15px;
+        font-size: var(--font-size-base);
     }
 }

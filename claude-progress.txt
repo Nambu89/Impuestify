@@ -1,0 +1,80 @@
+# Claude Progress Log - TaxIA/Impuestify
+# ========================================
+# Este archivo mantiene un registro de lo que cada sesión de Claude ha trabajado.
+# Actualízalo al final de cada sesión con un resumen de lo realizado.
+# Formato: [FECHA] [SESIÓN] - Descripción breve
+
+## Sesiones Recientes
+---
+
+[2026-01-11] [Session 2] - Inicialización de entorno de desarrollo
+- Ejecutado init.sh - entorno virtual de Python creado
+- Instaladas 147+ dependencias del backend (pip install requirements.txt)
+- FastAPI 0.128.0, OpenAI 1.109.1, Groq 1.0.0 instalados correctamente
+- Frontend: npm install completado (177 packages, 5 vulnerabilities - no críticas)
+- NOTA: pytest no está en requirements.txt, necesita instalarse manualmente
+
+[2026-01-11] [Session 1] - Configuración inicial del sistema multi-agente Boris Cherny
+- Creado claude-progress.txt (este archivo)
+- Creado init.sh para inicialización del entorno
+- Creado .claude/commands/ con slash commands personalizados
+- Sistema listo para trabajo paralelo con 5 agentes
+
+## Proximas Tareas Pendientes
+---
+[ ] Instalar pytest y pytest-asyncio: `pip install pytest pytest-asyncio`
+[ ] Ejecutar tests y verificar estado: `pytest tests/ -v --tb=short`
+[ ] Verificar que backend arranca correctamente: `uvicorn app.main:app --reload`
+[ ] Verificar que frontend compila sin errores: `npm run build`
+[ ] Corregir 3 tests desactualizados (ver detalles abajo)
+[ ] Documentar cualquier decision arquitectonica nueva
+
+## Estado Actual del Proyecto
+---
+- Backend: FastAPI 0.128.0 + Microsoft Agent Framework 1.0.0b251211
+- Frontend: React 18.2.0 + Vite 5.0.8 + TypeScript 5.2.2
+- Database: Turso (SQLite Edge) via libsql
+- Cache: Upstash Redis + Upstash Vector
+- LLM: OpenAI GPT-5-mini (openai 1.109.1)
+- Security: Llama Guard 4 via Groq (groq 1.0.0)
+- Python: 3.11.9 (venv en backend/venv)
+- Node: 18+ requerido
+
+## Notas Importantes para el Siguiente Agente
+---
+- El CLAUDE.md principal esta muy completo, revisalo primero
+- SSE streaming estaba en debugging reciente (ver commits)
+- **ENTORNO VIRTUAL**:
+  ```bash
+  cd backend
+  source venv/Scripts/activate  # Windows (Git Bash)
+  # o: venv\Scripts\activate     # Windows (CMD)
+  # o: source venv/bin/activate  # Linux/Mac
+  ```
+- **INSTALAR PYTEST** (no viene en requirements.txt):
+  ```bash
+  pip install pytest pytest-asyncio httpx
+  ```
+- El ultimo commit es `7c3ff27 Cambiado proveedor a OpenAI` en rama `main`
+
+## Estado de Tests (2026-01-11)
+---
+- Total: 77 tests (segun session anterior)
+- Pasando: 74
+- Fallando: 3 (tests desactualizados, no afectan funcionalidad)
+  - test_agent_system_prompt_exists: Busca atributo SYSTEM_PROMPT que ya no existe
+  - test_framework_import_handling: Import de AGENT_FRAMEWORK_AVAILABLE eliminado
+  - test_upstash_storage_methods: BytesWrapper vs int en rate limiter
+
+## Dependencias Clave Instaladas
+---
+- fastapi==0.128.0
+- openai==1.109.1
+- groq==1.0.0
+- agent-framework==1.0.0b251211
+- sentence-transformers==5.2.0
+- torch==2.9.1
+- faiss-cpu==1.13.2
+- pymupdf==1.26.7
+- httpx==0.28.1
+- pydantic==2.12.5

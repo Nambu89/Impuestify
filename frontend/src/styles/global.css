@@ -333,14 +333,8 @@ a:hover {
   animation: spin 1s linear infinite;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  :root {
-    --font-size-4xl: 2rem;
-    --font-size-5xl: 2.5rem;
-  }
-
-  .container {
-    padding: 0 var(--spacing-4);
-  }
-}
+/* Responsive - MOBILE FIRST
+   Base styles above are designed for mobile (320px+).
+   Use min-width media queries to enhance for larger screens.
+   No overrides needed here - components handle their own responsive styles.
+*/

@@ -1,48 +1,51 @@
-/* Dashboard Styles */
+/* Dashboard Styles - MOBILE FIRST */
 
+/* ========== BASE (MOBILE 320px+) ========== */
 .dashboard {
     min-height: 100vh;
     background: var(--color-gray-50);
 }
 
 .dashboard-main {
-    padding: var(--spacing-8) 0;
+    padding: var(--spacing-6) 0;
 }
 
 .dashboard-header {
-    margin-bottom: var(--spacing-8);
+    margin-bottom: var(--spacing-6);
 }
 
 .dashboard-header h1 {
     margin-bottom: var(--spacing-2);
+    font-size: var(--font-size-2xl);
 }
 
 .dashboard-header p {
     color: var(--color-gray-600);
     margin: 0;
+    font-size: var(--font-size-sm);
 }
 
 .dashboard-loading {
     text-align: center;
-    padding: var(--spacing-16);
+    padding: var(--spacing-12);
     color: var(--color-gray-500);
 }
 
-/* Stats Grid */
+/* Stats Grid - Mobile First (1 column) */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-6);
-    margin-bottom: var(--spacing-12);
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-8);
 }
 
 .stat-card {
     background: var(--color-white);
     border-radius: var(--radius-xl);
-    padding: var(--spacing-6);
+    padding: var(--spacing-4);
     display: flex;
     align-items: center;
-    gap: var(--spacing-4);
+    gap: var(--spacing-3);
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-base);
 }
@@ -56,46 +59,49 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     color: var(--color-white);
     border-radius: var(--radius-lg);
+    flex-shrink: 0;
 }
 
 .stat-content h3 {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
     margin-bottom: var(--spacing-1);
 }
 
 .stat-content p {
     color: var(--color-gray-500);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
     margin: 0;
 }
 
-/* Dashboard Info */
+/* Dashboard Info - Mobile First */
 .dashboard-info {
     background: var(--color-white);
     border-radius: var(--radius-xl);
-    padding: var(--spacing-8);
+    padding: var(--spacing-6);
     box-shadow: var(--shadow-sm);
 }
 
 .dashboard-info h2 {
     margin-bottom: var(--spacing-4);
+    font-size: var(--font-size-xl);
 }
 
 .dashboard-info p {
     color: var(--color-gray-600);
     max-width: 700px;
+    font-size: var(--font-size-sm);
 }
 
 .dashboard-info ul {
     list-style: none;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: var(--spacing-3);
     margin-top: var(--spacing-6);
 }
@@ -105,19 +111,68 @@
     font-size: var(--font-size-sm);
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
+/* ========== TABLET (768px+) ========== */
+@media (min-width: 768px) {
+    .dashboard-main {
+        padding: var(--spacing-8) 0;
+    }
+
+    .dashboard-header {
+        margin-bottom: var(--spacing-8);
+    }
+
+    .dashboard-header h1 {
+        font-size: var(--font-size-3xl);
+    }
+
+    .dashboard-header p {
+        font-size: var(--font-size-base);
+    }
+
     .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-6);
+        margin-bottom: var(--spacing-12);
+    }
+
+    .stat-card {
+        padding: var(--spacing-6);
+        gap: var(--spacing-4);
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+    }
+
+    .stat-content h3 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .stat-content p {
+        font-size: var(--font-size-sm);
+    }
+
+    .dashboard-info {
+        padding: var(--spacing-8);
+    }
+
+    .dashboard-info h2 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .dashboard-info p {
+        font-size: var(--font-size-base);
+    }
+
+    .dashboard-info ul {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (max-width: 768px) {
+/* ========== DESKTOP (1024px+) ========== */
+@media (min-width: 1024px) {
     .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .dashboard-info ul {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(4, 1fr);
     }
 }
