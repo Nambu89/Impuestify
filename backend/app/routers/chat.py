@@ -146,29 +146,70 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 		# === CCAA-Specific Tax Table Search (Phase 1) ===
 		ccaa_tax_table_chunks = []
 		if detected_ccaa and "Comunidad" not in detected_ccaa and detected_ccaa != "General (territorio común)":
-			logger.info(f"🎯 Phase 1: Searching for {detected_ccaa} tax table in Chapter 15...")
+			logger.info(f"🎯 Phase 1: Searching for {detected_ccaa} tax table...")
 			
 			ccaa_search_terms = detected_ccaa.split() + ["escala", "Base", "liquidable"]
 			ccaa_fts_query = ' OR '.join([f'"{term}"' for term in ccaa_search_terms])
 			
-			ccaa_sql = f"""
-			SELECT 
-				c.id,
-				c.content,
-				c.page_number,
-				d.filename,
-				d.title,
-				fts.rank
-			FROM document_chunks_fts fts
-			JOIN document_chunks c ON c.id = fts.chunk_id
-			JOIN documents d ON d.id = c.document_id
-			WHERE document_chunks_fts MATCH ? 
-			AND d.filename LIKE '%Renta_2024._Parte_1%'
-			AND c.page_number BETWEEN 1230 AND 1245
-			{metadata_filter}
-			ORDER BY rank 
-			LIMIT 3
-			"""
+			# Check if it's a foral region - use their specific manuals
+			foral_doc_mapping = {
+				'País Vasco': ['Bizkaia', 'Guipuzkoa', 'Araba'],
+				'Bizkaia': ['Bizkaia'],
+				'Vizcaya': ['Bizkaia'],
+				'Gipuzkoa': ['Guipuzkoa'],
+				'Guipúzcoa': ['Guipuzkoa'],
+				'Araba': ['Araba'],
+				'Álava': ['Araba'],
+				'Navarra': ['Navarra'],
+			}
+			
+			# Determine which document filter to use
+			foral_match = None
+			for key, docs in foral_doc_mapping.items():
+				if key.lower() in detected_ccaa.lower():
+					foral_match = docs
+					break
+			
+			if foral_match:
+				# Search in foral manual(s)
+				doc_conditions = ' OR '.join([f"d.filename LIKE '%{doc}%'" for doc in foral_match])
+				ccaa_sql = f"""
+				SELECT 
+					c.id,
+					c.content,
+					c.page_number,
+					d.filename,
+					d.title,
+					fts.rank
+				FROM document_chunks_fts fts
+				JOIN document_chunks c ON c.id = fts.chunk_id
+				JOIN documents d ON d.id = c.document_id
+				WHERE document_chunks_fts MATCH ? 
+				AND ({doc_conditions})
+				ORDER BY rank 
+				LIMIT 5
+				"""
+				logger.info(f"🎯 Searching in foral docs: {foral_match}")
+			else:
+				# Search in AEAT manual for non-foral CCAA
+				ccaa_sql = f"""
+				SELECT 
+					c.id,
+					c.content,
+					c.page_number,
+					d.filename,
+					d.title,
+					fts.rank
+				FROM document_chunks_fts fts
+				JOIN document_chunks c ON c.id = fts.chunk_id
+				JOIN documents d ON d.id = c.document_id
+				WHERE document_chunks_fts MATCH ? 
+				AND d.filename LIKE '%Renta_2024._Parte_1%'
+				AND c.page_number BETWEEN 1230 AND 1245
+				{metadata_filter}
+				ORDER BY rank 
+				LIMIT 3
+				"""
 			
 			try:
 				ccaa_result = await db.execute(ccaa_sql, [ccaa_fts_query])
@@ -185,7 +226,12 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 							"similarity": abs(float(row.get('rank', -1.0))) + 100  # Boost score
 						})
 				else:
-					logger.warning(f"⚠️ No CCAA tax table found for {detected_ccaa}")
+					# Check if it's a foral region (expected to not have tables in AEAT docs)
+					foral_regions = ['País Vasco', 'Navarra', 'Euskadi']
+					if any(foral in detected_ccaa for foral in foral_regions):
+						logger.info(f"ℹ️ {detected_ccaa} uses foral tax system (not in AEAT docs)")
+					else:
+						logger.warning(f"⚠️ No CCAA tax table found for {detected_ccaa}")
 			except Exception as e:
 				logger.error(f"Error in CCAA tax table search: {e}")
 		

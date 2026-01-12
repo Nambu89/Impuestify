@@ -62,6 +62,27 @@ class LlamaGuard:
         "S14": "Abuso de código"
     }
     
+    # Fiscal/business terms that may trigger false positives but are legitimate
+    # These are common in Spanish tax queries (IAE, agricultural activities, etc.)
+    FISCAL_WHITELIST = [
+        # Agricultural activities (IAE)
+        'ponedoras', 'gallinas', 'huevos', 'avícola', 'ganadería', 'ganado',
+        'porcino', 'bovino', 'ovino', 'caprino', 'lechería', 'matadero',
+        'sacrificio', 'carne', 'carnicería', 'pescado', 'pesquería',
+        # Tax terms that might seem aggressive
+        'impuesto', 'tributar', 'gravar', 'retención', 'embargo', 'ejecución',
+        'sanción', 'multa', 'recargo', 'apremio', 'providencia',
+        # Business activities
+        'explotación', 'comercio', 'venta', 'compra', 'negocio', 'actividad',
+        # Locations
+        'bizkaia', 'vizcaya', 'gipuzkoa', 'guipúzcoa', 'araba', 'álava',
+        'navarra', 'país vasco', 'euskadi',
+        # Specific tax items
+        'iae', 'epígrafe', 'cnae', 'modelo', 'declaración', 'autónomo',
+        'ticket bai', 'ticketbai', 'verifactu', 'batuz', 'aeat', 'boe',
+        'hacienda', 'agencia tributaria', 'irpf', 'iva', 'sociedades',
+    ]
+    
     # Spanish error messages for blocked content
     BLOCK_MESSAGES = {
         "S1": "Lo siento, no puedo ayudar con contenido relacionado con violencia o crímenes.",
@@ -129,6 +150,14 @@ class LlamaGuard:
         if not text or len(text.strip()) < 3:
             return ModerationResult(is_safe=True, risk_level="none")
         
+        # Check fiscal whitelist - skip moderation for clearly fiscal queries
+        text_lower = text.lower()
+        fiscal_terms_found = [term for term in self.FISCAL_WHITELIST if term in text_lower]
+        if len(fiscal_terms_found) >= 2:
+            # If multiple fiscal terms found, it's clearly a tax question - bypass moderation
+            logger.info(f"✅ Fiscal whitelist bypass: found {fiscal_terms_found[:3]}...")
+            return ModerationResult(is_safe=True, risk_level="none")
+        
         start_time = datetime.now()
         
         try:
@@ -169,7 +198,7 @@ class LlamaGuard:
                 
                 # Parse Llama Guard response
                 # Format: "safe" or "unsafe\nS1,S2,..."
-                is_safe, blocked_categories = self._parse_response(content)
+                is_safe, blocked_categories = self._parse_response(content, text)
                 
                 risk_level = self._calculate_risk_level(blocked_categories)
                 
@@ -203,7 +232,7 @@ class LlamaGuard:
                 error=str(e)
             )
     
-    def _parse_response(self, content: str) -> tuple[bool, List[str]]:
+    def _parse_response(self, content: str, original_text: str = "") -> tuple[bool, List[str]]:
         """Parse Llama Guard response into safety decision."""
         content = content.strip().lower()
         
@@ -220,7 +249,20 @@ class LlamaGuard:
             # FILTER S6 (Professional Advice) - Tax advice is Impuestify's core function
             categories = [cat for cat in categories if cat != "S6"]
             
-            # If only S6 was flagged, consider it safe
+            # FILTER S1/S2/S13 (Crimes/Elections) if fiscal context detected - prevents false positives
+            # like "ponedoras de huevos" being flagged as violence, or regional tax questions as elections
+            if original_text:
+                text_lower = original_text.lower()
+                has_fiscal_context = any(term in text_lower for term in self.FISCAL_WHITELIST)
+                if has_fiscal_context:
+                    # Remove crime and elections categories for fiscal queries
+                    filtered_cats = ["S1", "S2", "S13"]
+                    removed = [cat for cat in categories if cat in filtered_cats]
+                    if removed:
+                        logger.info(f"✅ Filtering {removed} due to fiscal context in: {original_text[:50]}...")
+                    categories = [cat for cat in categories if cat not in filtered_cats]
+            
+            # If all categories were filtered, consider it safe
             if not categories:
                 return True, []
             
