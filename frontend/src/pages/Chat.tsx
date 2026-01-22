@@ -6,10 +6,14 @@ import { useApi } from '../hooks/useApi'
 import { NotificationUpload } from '../components/NotificationUpload'
 import { NotificationAnalysisDisplay } from '../components/NotificationAnalysisDisplay'
 import { ConversationSidebar } from '../components/ConversationSidebar'
+import { WorkspaceSelector } from '../components/WorkspaceSelector'
+import { WorkspaceContextIndicator } from '../components/WorkspaceContextIndicator'
 import { useConversations } from '../hooks/useConversations'
+import { useWorkspaces, Workspace } from '../hooks/useWorkspaces'
 import { useStreamingChat } from '../hooks/useStreamingChat'
 import { ThinkingIndicator } from '../components/ThinkingIndicator'
 import { ToolExecutionStatus } from '../components/ToolExecutionStatus'
+import { logger } from '../utils/logger'
 import ReactMarkdown from 'react-markdown'
 import './Chat.css'
 
@@ -28,6 +32,7 @@ interface Message {
 export default function Chat() {
     const { askQuestion } = useApi()
     const { getConversation } = useConversations()
+    const { workspaces, activeWorkspace, selectWorkspace, fetchWorkspaces } = useWorkspaces()
     const { streamState, isStreaming, sendStreamingMessage } = useStreamingChat()
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
@@ -35,9 +40,20 @@ export default function Chat() {
     const [showNotificationModal, setShowNotificationModal] = useState(false)
     const [notificationAnalysis, setNotificationAnalysis] = useState<any>(null)
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
-    const [sidebarOpen, setSidebarOpen] = useState(false) // ✅ NUEVO: Estado del sidebar
-    const [useStreaming] = useState(true) // ✅ ENABLED with fixed implementation
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [useStreaming] = useState(true)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    // Fetch workspaces on mount (only once)
+    useEffect(() => {
+        fetchWorkspaces()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])  // Empty dependency array = run only once on mount
+
+    // Workspace change handler
+    const handleWorkspaceChange = (workspace: Workspace | null) => {
+        selectWorkspace(workspace)
+    }
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -66,7 +82,7 @@ export default function Chat() {
             setNotificationAnalysis(null)
             setSidebarOpen(false) // ✅ NUEVO: Cerrar sidebar al seleccionar
         } catch (error) {
-            console.error('Error loading conversation:', error)
+            logger.error('Error loading conversation:', error)
         }
     }
 
@@ -110,7 +126,7 @@ export default function Chat() {
                         }
                     },
                     onError: (error) => {
-                        console.error('❌ Streaming error:', error)
+                        logger.error('Streaming error:', error)
                         setMessages(prev => [...prev, {
                             id: (Date.now() + 1).toString(),
                             role: 'assistant',
@@ -119,7 +135,7 @@ export default function Chat() {
                     }
                 })
             } catch (error: any) {
-                console.error('❌ Streaming fatal error:', error)
+                logger.error('Streaming fatal error:', error)
                 setMessages(prev => [...prev, {
                     id: (Date.now() + 1).toString(),
                     role: 'assistant',
@@ -155,16 +171,13 @@ export default function Chat() {
                 } : msg
             ))
 
-            // ✅ FIX: Solo actualizar el conversation_id
-            // El useEffect del ConversationSidebar se encargará del refresh
+            // Update conversation ID if returned
             if (response.conversation_id) {
-                console.log('📝 Conversation ID received:', response.conversation_id)
+                logger.debug('Conversation ID received:', response.conversation_id)
                 setActiveConversationId(response.conversation_id)
-            } else {
-                console.warn('⚠️ No conversation_id in response')
             }
         } catch (error: any) {
-            console.error('❌ Error in handleSubmit:', error)
+            logger.error('Error in handleSubmit:', error)
             setMessages(prev => prev.map(msg =>
                 msg.loading ? {
                     ...msg,
@@ -182,9 +195,9 @@ export default function Chat() {
             {/* ✅ NUEVO: Pasar función toggle al Header */}
             <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-            {/* ✅ AI Act Art. 52: AI Transparency Modal on first access */}
+            {/* AI Act Art. 52: AI Transparency Modal on first access */}
             <AITransparencyModal onAccept={() => {
-                console.log('✅ AI Transparency accepted')
+                logger.debug('AI Transparency accepted')
             }} />
 
             {/* ✅ NUEVO: Pasar props de sidebar open/close */}
@@ -300,11 +313,31 @@ export default function Chat() {
             </main>
 
             <footer className="chat-footer">
+                {/* Workspace Context Indicator */}
+                {activeWorkspace && (
+                    <div className="chat-workspace-context">
+                        <WorkspaceContextIndicator
+                            workspace={activeWorkspace}
+                            onClear={() => selectWorkspace(null)}
+                        />
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="chat-form">
+                    {/* Workspace Selector */}
+                    <WorkspaceSelector
+                        workspaces={workspaces}
+                        activeWorkspace={activeWorkspace}
+                        onWorkspaceChange={handleWorkspaceChange}
+                        onCreateNew={() => window.location.href = '/workspaces'}
+                    />
+
                     <input
                         type="text"
                         className="chat-input"
-                        placeholder="Escribe tu pregunta fiscal..."
+                        placeholder={activeWorkspace
+                            ? `Pregunta sobre ${activeWorkspace.name}...`
+                            : "Escribe tu pregunta fiscal..."}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         disabled={isLoading}
@@ -313,7 +346,7 @@ export default function Chat() {
                         type="button"
                         className="btn btn-success"
                         onClick={() => setShowNotificationModal(true)}
-                        title="Analizar notificación AEAT"
+                        title="Analizar notificacion AEAT"
                     >
                         <Upload size={20} />
                     </button>
@@ -327,7 +360,7 @@ export default function Chat() {
                 </form>
                 <p className="chat-disclaimer">
                     <AlertCircle size={14} />
-                    Información orientativa. Consulta con un asesor fiscal para tu caso particular.
+                    Informacion orientativa. Consulta con un asesor fiscal para tu caso particular.
                 </p>
             </footer>
 
@@ -361,7 +394,7 @@ export default function Chat() {
                                 setShowNotificationModal(false)
 
                                 if (analysis.conversation_id) {
-                                    console.log('📋 Notification conversation ID:', analysis.conversation_id)
+                                    logger.debug('Notification conversation ID:', analysis.conversation_id)
                                     setActiveConversationId(analysis.conversation_id)
                                 }
                             }}

@@ -1,8 +1,10 @@
 # CLAUDE.md - AI Assistant Guide for TaxIA (Impuestify)
 
-> **Last Updated:** 2026-01-10
+> **Last Updated:** 2026-01-19
 > **Project Version:** 2.7+
 > **Purpose:** Guide for AI assistants working on the TaxIA/Impuestify codebase
+>
+> **⚠️ CORE INSTRUCTION:** Before starting ANY complex task, you MUST check if `task.md` and `implementation_plan.md` exist in the current context or artifacts directory. If they exist, READ THEM. They contain the definitive source of truth for the current objective and implementation details.
 
 ---
 
@@ -29,7 +31,8 @@
 **TaxIA (Impuestify)** is an intelligent Spanish tax assistant that uses RAG (Retrieval-Augmented Generation) with a multi-agent architecture to provide accurate, conversational, and contextualized responses about Spanish fiscal regulations.
 
 ### Key Features
-- **Multi-Agent System**: Coordinator routing to specialized agents (Tax, Payslip, Notification)
+- **Multi-Agent System**: Coordinator routing to specialized agents (Tax, Payslip, Notification, Workspace)
+- **User Workspaces**: Personal document storage for invoices, payslips, and declarations with context-aware analysis
 - **RAG Pipeline**: Turso database + FAISS + semantic search for official AEAT documentation
 - **Advanced Security**: Llama Guard 4, prompt injection detection, PII filtering, SQL injection prevention
 - **Semantic Caching**: Upstash Vector for ~30% cost reduction
@@ -351,6 +354,20 @@ TaxIA/
 - **Context**: Maintains notification data throughout conversation
 - **Location**: `backend/app/agents/notification_agent.py:15`
 
+#### WorkspaceAgent (`workspace_agent.py`)
+- **Purpose**: Analyzes user's uploaded workspace documents (payslips, invoices, declarations)
+- **Capabilities**:
+  - Calculate VAT balance from invoices
+  - Project annual IRPF from payslips
+  - Remind quarterly declaration deadlines
+  - Provide personalized fiscal advice based on user's documents
+- **Tools**:
+  - `get_workspace_summary` → Summary of all workspace files
+  - `calculate_vat_balance` → Quarterly VAT balance (input - output)
+  - `project_annual_irpf` → Annual IRPF projection from payslips
+  - `get_quarterly_deadlines` → Upcoming tax deadlines
+- **Location**: `backend/app/agents/workspace_agent.py:35`
+
 ### 2. Security Layers (`backend/app/security/`)
 
 #### Llama Guard 4 (`llama_guard.py`)
@@ -427,6 +444,50 @@ TaxIA/
 - **Normalization**: CCAA name normalization (e.g., "Madrid" → "Comunidad de Madrid")
 - **Rate Limiting**: Respects site policies
 - **Location**: `backend/app/tools/web_scraper_tool.py:20`
+
+### 3.5 Services (`backend/app/services/`)
+
+#### WorkspaceService (`workspace_service.py`)
+- **Purpose**: CRUD operations for user workspaces
+- **Methods**:
+  - `create_workspace(user_id, data)` → Create new workspace
+  - `get_user_workspaces(user_id)` → List user's workspaces with file counts
+  - `get_workspace(workspace_id, user_id)` → Get specific workspace (with ownership check)
+  - `delete_workspace(workspace_id, user_id)` → Delete workspace and all files
+- **Location**: `backend/app/services/workspace_service.py`
+
+#### FileProcessingService (`file_processing_service.py`)
+- **Purpose**: Process uploaded files and extract structured data
+- **Supported Types**: PDF (nominas, facturas, declaraciones), Excel, CSV
+- **Pipeline**:
+  1. Validate file (magic number, size)
+  2. Extract text (PyMuPDF4LLM for PDF)
+  3. Classify file type automatically
+  4. Extract structured data (invoice_extractor, payslip_extractor)
+  5. Generate embeddings (workspace_embedding_service)
+- **Location**: `backend/app/services/file_processing_service.py`
+
+#### InvoiceExtractor (`invoice_extractor.py`)
+- **Purpose**: Extract structured data from Spanish invoices
+- **Fields Extracted**:
+  - Issuer (CIF, name, address)
+  - Recipient (CIF, name)
+  - Invoice details (number, date, due date)
+  - Line items (concept, quantity, unit price)
+  - Tax breakdown (base imponible, IVA 21%/10%/4%, IRPF retention)
+  - Totals (subtotal, total IVA, total)
+- **Patterns**: 30+ regex patterns for Spanish invoice formats
+- **Location**: `backend/app/services/invoice_extractor.py`
+
+#### WorkspaceEmbeddingService (`workspace_embedding_service.py`)
+- **Purpose**: Generate and store vector embeddings for workspace files
+- **Model**: OpenAI text-embedding-3-large (3072 dimensions)
+- **Storage**: Turso table `workspace_file_embeddings`
+- **Features**:
+  - Chunk text into 1000-char segments with 200-char overlap
+  - Batch embedding generation
+  - Similarity search for RAG context
+- **Location**: `backend/app/services/workspace_embedding_service.py`
 
 ### 4. Database Schema (Turso SQLite)
 
@@ -526,6 +587,45 @@ usage_metrics (
   processing_time REAL,
   created_at TIMESTAMP
 )
+
+-- Workspaces (user document spaces)
+workspaces (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  icon TEXT DEFAULT '📁',
+  is_default BOOLEAN DEFAULT 0,
+  max_files INTEGER DEFAULT 50,
+  max_size_mb INTEGER DEFAULT 100,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+)
+
+-- Workspace files (uploaded documents)
+workspace_files (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  filename TEXT NOT NULL,
+  file_type TEXT NOT NULL,  -- 'nomina', 'factura', 'declaracion', 'otro'
+  mime_type TEXT,
+  file_size INTEGER,
+  extracted_text TEXT,
+  extracted_data TEXT,  -- JSON with structured data
+  processing_status TEXT DEFAULT 'pending',  -- pending, processing, completed, error
+  error_message TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+)
+
+-- Workspace file embeddings (for RAG)
+workspace_file_embeddings (
+  id TEXT PRIMARY KEY,
+  file_id TEXT NOT NULL REFERENCES workspace_files(id) ON DELETE CASCADE,
+  chunk_index INTEGER NOT NULL,
+  chunk_text TEXT NOT NULL,
+  embedding_vector TEXT,  -- JSON array of floats
+  created_at TEXT DEFAULT (datetime('now'))
+)
 ```
 
 ### 5. Frontend Architecture
@@ -535,12 +635,19 @@ usage_metrics (
 - **`useApi`** (`hooks/useApi.ts:15`): Axios instance with automatic token refresh
 - **`useConversations`** (`hooks/useConversations.ts:20`): CRUD operations for conversations
 - **`useStreamingChat`** (`hooks/useStreamingChat.ts:25`): SSE event parsing and state management
+- **`useWorkspaces`** (`hooks/useWorkspaces.ts`): Workspace CRUD, file upload, active workspace state
 
 #### Key Components
 - **`Chat.tsx`** (`components/Chat.tsx:50`): Main chat interface with SSE streaming
 - **`ConversationSidebar.tsx`** (`components/ConversationSidebar.tsx:30`): Persistent conversation history
 - **`NotificationUpload.tsx`** (`components/NotificationUpload.tsx:20`): PDF upload with validation
 - **`ProtectedRoute.tsx`** (`components/ProtectedRoute.tsx:10`): Auth-gated routes
+
+#### Workspace Components (NEW)
+- **`WorkspacesPage.tsx`** (`pages/WorkspacesPage.tsx`): Workspace management page with file list
+- **`WorkspaceSelector.tsx`** (`components/WorkspaceSelector.tsx`): Dropdown to select active workspace
+- **`WorkspaceContextIndicator.tsx`** (`components/WorkspaceContextIndicator.tsx`): Shows active workspace context
+- **`FileUploader.tsx`** (`components/FileUploader.tsx`): Drag & drop file upload with type detection
 
 #### SSE Event Format
 ```typescript

@@ -24,10 +24,11 @@ Eres un **Frontend Developer Senior** especializado en:
   - Secondary: `#0f172a` (casi negro)
 
 ## Antes de hacer cambios
-1. Lee el componente completo antes de modificar
-2. Mantén la consistencia con el diseño existente
-3. Usa los hooks existentes en lugar de crear nuevos
-4. Evita console.log en código de producción
+1. **CRÍTICO:** Lee `task.md` e `implementation_plan.md` para entender el contexto de la tarea actual.
+2. Lee el componente completo antes de modificar
+3. Mantén la consistencia con el diseño existente
+4. Usa los hooks existentes en lugar de crear nuevos
+5. Evita console.log en código de producción
 
 ## Patrones preferidos
 - Functional components con hooks

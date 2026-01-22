@@ -7,6 +7,18 @@
 ## Sesiones Recientes
 ---
 
+[2026-01-20] [Session Frontend] - Implementación UI de Workspaces (Fase 5 completada)
+- Creado `WorkspacesPage.tsx` + `WorkspacesPage.css` - Página de gestión de workspaces
+- Creado `useWorkspaces.ts` - Hook para CRUD de workspaces y archivos
+- Creado `WorkspaceSelector.tsx` - Dropdown para seleccionar workspace activo en chat
+- Creado `FileUploader.tsx` - Componente drag & drop con detección automática de tipo
+- Creado `WorkspaceContextIndicator.tsx` - Indicador de contexto activo en chat
+- Modificado `Chat.tsx` - Integrado selector y indicador de workspace
+- Modificado `App.tsx` - Agregada ruta `/workspaces` protegida
+- Build verificado: 1612 modules, 4.99s
+- Actualizado `CLAUDE.md` con nuevos componentes frontend y servicios backend
+- Actualizado `task.md` - Fases 1-7 completadas, pendiente Fase 8 (Testing)
+
 [2026-01-11] [Session 2] - Inicialización de entorno de desarrollo
 - Ejecutado init.sh - entorno virtual de Python creado
 - Instaladas 147+ dependencias del backend (pip install requirements.txt)
@@ -20,14 +32,14 @@
 - Creado .claude/commands/ con slash commands personalizados
 - Sistema listo para trabajo paralelo con 5 agentes
 
-## Proximas Tareas Pendientes
+## Proximas Tareas Pendientes (Fase 8: Testing)
 ---
-[ ] Instalar pytest y pytest-asyncio: `pip install pytest pytest-asyncio`
-[ ] Ejecutar tests y verificar estado: `pytest tests/ -v --tb=short`
-[ ] Verificar que backend arranca correctamente: `uvicorn app.main:app --reload`
-[ ] Verificar que frontend compila sin errores: `npm run build`
-[ ] Corregir 3 tests desactualizados (ver detalles abajo)
-[ ] Documentar cualquier decision arquitectonica nueva
+[ ] Tests unitarios para WorkspaceService
+[ ] Tests de API endpoints de workspaces
+[ ] Tests de integración de WorkspaceAgent
+[ ] Prueba end-to-end manual del flujo completo
+[ ] Verificar extracción de facturas con invoice_extractor.py
+[ ] Verificar embeddings con workspace_embedding_service.py
 
 ## Estado Actual del Proyecto
 ---
@@ -39,6 +51,28 @@
 - Security: Llama Guard 4 via Groq (groq 1.0.0)
 - Python: 3.11.9 (venv en backend/venv)
 - Node: 18+ requerido
+
+## Feature de Workspaces (Fases 1-7 Completadas)
+---
+**Backend:**
+- `workspace_service.py` - CRUD de workspaces
+- `file_processing_service.py` - Procesamiento de archivos
+- `invoice_extractor.py` - Extracción de datos de facturas
+- `workspace_embedding_service.py` - Embeddings con OpenAI
+- `workspace_agent.py` - Agente especializado en contexto del workspace
+- Router `/api/workspaces` con todos los endpoints
+
+**Frontend:**
+- `WorkspacesPage.tsx` - Página de gestión (/workspaces)
+- `WorkspaceSelector.tsx` - Dropdown en chat
+- `FileUploader.tsx` - Drag & drop
+- `WorkspaceContextIndicator.tsx` - Indicador de contexto
+- `useWorkspaces.ts` - Hook de estado
+
+**Base de Datos:**
+- Tabla `workspaces` - Espacios de trabajo del usuario
+- Tabla `workspace_files` - Archivos subidos
+- Tabla `workspace_file_embeddings` - Embeddings para RAG
 
 ## Notas Importantes para el Siguiente Agente
 ---

@@ -364,6 +364,76 @@ class TursoClient:
             "CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id)",
             "CREATE INDEX IF NOT EXISTS idx_sources_message ON message_sources(message_id)",
+            
+            # =============================================
+            # WORKSPACE TABLES
+            # =============================================
+            
+            # Workspaces table
+            """
+            CREATE TABLE IF NOT EXISTS workspaces (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                icon TEXT DEFAULT '📁',
+                is_default BOOLEAN DEFAULT 0,
+                max_files INTEGER DEFAULT 50,
+                max_size_mb INTEGER DEFAULT 100,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+            """,
+            
+            # Workspace files table
+            """
+            CREATE TABLE IF NOT EXISTS workspace_files (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                filename TEXT NOT NULL,
+                file_type TEXT NOT NULL,
+                mime_type TEXT,
+                file_size INTEGER,
+                original_path TEXT,
+                extracted_text TEXT,
+                extracted_data TEXT,
+                processing_status TEXT DEFAULT 'pending',
+                error_message TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
+            )
+            """,
+            
+            # Workspace indexes
+            "CREATE INDEX IF NOT EXISTS idx_workspaces_user ON workspaces(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_workspace_files_workspace ON workspace_files(workspace_id)",
+            "CREATE INDEX IF NOT EXISTS idx_workspace_files_type ON workspace_files(file_type)",
+
+            # =============================================
+            # WORKSPACE EMBEDDINGS TABLE
+            # =============================================
+
+            # Workspace file embeddings - vector storage for semantic search
+            """
+            CREATE TABLE IF NOT EXISTS workspace_file_embeddings (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                file_id TEXT NOT NULL,
+                chunk_index INTEGER NOT NULL,
+                chunk_text TEXT,
+                embedding BLOB NOT NULL,
+                model_name TEXT DEFAULT 'text-embedding-3-large',
+                dimensions INTEGER DEFAULT 3072,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+                FOREIGN KEY (file_id) REFERENCES workspace_files(id) ON DELETE CASCADE
+            )
+            """,
+
+            # Workspace embedding indexes
+            "CREATE INDEX IF NOT EXISTS idx_ws_embeddings_workspace ON workspace_file_embeddings(workspace_id)",
+            "CREATE INDEX IF NOT EXISTS idx_ws_embeddings_file ON workspace_file_embeddings(file_id)",
         ]
         
         try:

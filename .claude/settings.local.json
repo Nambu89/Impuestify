@@ -7,7 +7,14 @@
       "Bash(. ../venv/Scripts/activate)",
       "Bash(venv/Scripts/pip.exe list:*)",
       "Bash(venv/Scripts/pip.exe show:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(python:*)",
+      "Bash(move scriptstest_rag.py tests )",
+      "Bash(move scriptstest_full_rag.py tests )",
+      "Bash(move scriptstest_fts_search.py tests )",
+      "Bash(move scriptstest_user_query.py tests )",
+      "Bash(move scriptstest_aragon_table.py tests )",
+      "Bash(move scriptstest_aragon_search.py tests)"
     ]
   }
 }

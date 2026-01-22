@@ -1,4 +1,6 @@
 import axios, { AxiosError } from 'axios'
+import { useCallback } from 'react'
+import { logger } from '../utils/logger'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 
@@ -19,9 +21,7 @@ api.interceptors.request.use((config) => {
     const token = localStorage.getItem(TOKEN_KEY)
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
-        console.log('🔑 Token attached to request')
-    } else {
-        console.warn('⚠️ No token found in localStorage')
+        logger.debug('Token attached to request')
     }
     return config
 })
@@ -33,7 +33,7 @@ api.interceptors.response.use(
         const originalRequest = error.config as any
 
         if (error.response?.status === 401 && !originalRequest._retry) {
-            console.warn('🔄 401 received, attempting token refresh...')
+            logger.debug('401 received, attempting token refresh')
             originalRequest._retry = true
 
             try {
@@ -47,13 +47,13 @@ api.interceptors.response.use(
                     localStorage.setItem(TOKEN_KEY, access_token)
                     localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token)
 
-                    console.log('✅ Token refreshed successfully')
+                    logger.debug('Token refreshed successfully')
 
                     originalRequest.headers.Authorization = `Bearer ${access_token}`
                     return api(originalRequest)
                 }
             } catch (refreshError) {
-                console.error('❌ Token refresh failed:', refreshError)
+                logger.error('Token refresh failed:', refreshError)
                 // Refresh failed, clear tokens
                 localStorage.removeItem(TOKEN_KEY)
                 localStorage.removeItem(REFRESH_TOKEN_KEY)
@@ -91,8 +91,8 @@ export interface StatsResponse {
 }
 
 export function useApi() {
-    const askQuestion = async (question: string, conversationId?: string, k?: number): Promise<AskResponse> => {
-        console.log('📤 Sending question:', { question: question.substring(0, 50) + '...', conversationId, k })
+    const askQuestion = useCallback(async (question: string, conversationId?: string, k?: number): Promise<AskResponse> => {
+        logger.debug('Sending question:', { question: question.substring(0, 50), conversationId })
         try {
             const response = await api.post('/api/ask', {
                 question,
@@ -100,13 +100,10 @@ export function useApi() {
                 k,
                 enable_cache: true
             })
-            console.log('✅ Question response received:', {
-                conversation_id: response.data.conversation_id,
-                sources: response.data.sources?.length
-            })
+            logger.debug('Question response received:', { conversation_id: response.data.conversation_id })
             return response.data
         } catch (error: any) {
-            console.error('❌ Error in askQuestion:', error)
+            logger.error('Error in askQuestion:', error)
             // Auto-logout on 401
             if (error.response?.status === 401) {
                 localStorage.removeItem(TOKEN_KEY)
@@ -118,25 +115,21 @@ export function useApi() {
             const message = error.response?.data?.detail || error.message || 'Error de conexión'
             throw new Error(message)
         }
-    }
+    }, [])
 
-    const getHealth = async () => {
+    const getHealth = useCallback(async () => {
         try {
             const response = await api.get('/health')
             return response.data
         } catch (error: any) {
             throw new Error('El servidor no está disponible')
         }
-    }
+    }, [])
 
-    const apiRequest = async <T = any>(url: string, options?: RequestInit): Promise<T> => {
-        console.log('🌐 API Request:', url, options?.method || 'GET')
+    const apiRequest = useCallback(async <T = any>(url: string, options?: RequestInit): Promise<T> => {
+        logger.debug('API Request:', url, options?.method || 'GET')
         try {
             const token = localStorage.getItem(TOKEN_KEY)
-
-            if (!token) {
-                console.warn('⚠️ No token found for apiRequest to:', url)
-            }
 
             const headers = {
                 'Content-Type': 'application/json',
@@ -149,11 +142,11 @@ export function useApi() {
                 headers
             })
 
-            console.log('📥 API Response:', url, response.status)
+            logger.debug('API Response:', url, response.status)
 
             if (!response.ok) {
                 if (response.status === 401) {
-                    console.error('❌ 401 Unauthorized for:', url)
+                    logger.warn('401 Unauthorized for:', url)
                     localStorage.removeItem(TOKEN_KEY)
                     localStorage.removeItem(REFRESH_TOKEN_KEY)
                     window.location.href = '/login?expired=true'
@@ -167,7 +160,7 @@ export function useApi() {
                 } else {
                     // HTML error page (probably)
                     const text = await response.text()
-                    console.error('❌ Non-JSON error response:', text.substring(0, 200))
+                    logger.error('Non-JSON error response:', text.substring(0, 200))
                     throw new Error(`HTTP ${response.status}: Request failed`)
                 }
             }
@@ -179,10 +172,10 @@ export function useApi() {
 
             return await response.json()
         } catch (error: any) {
-            console.error('❌ apiRequest error:', error)
+            logger.error('apiRequest error:', error)
             throw new Error(error.message || 'Error de conexión')
         }
-    }
+    }, [])
 
     return {
         askQuestion,

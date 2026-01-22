@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { MessageSquare, Plus, Trash2, X } from 'lucide-react'
 import { useConversations } from '../hooks/useConversations'
+import { logger } from '../utils/logger'
 import './ConversationSidebar.css'
 
 interface ConversationSidebarProps {
@@ -25,18 +26,12 @@ export function ConversationSidebar({
         deleteConversation
     } = useConversations()
 
-    // ✅ SOLUCIÓN: Un solo useEffect con múltiples triggers
+    // Fetch conversations when sidebar opens or active conversation changes
     useEffect(() => {
-        console.log('🔄 ConversationSidebar: Triggering fetch', {
-            isOpen,
-            activeConversationId,
-            conversationsCount: conversations.length
-        })
-
+        logger.debug('ConversationSidebar: Triggering fetch')
         fetchConversations()
-
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeConversationId, isOpen]) // Se ejecuta cuando cambia el ID o se abre el sidebar
+    }, [activeConversationId, isOpen])
 
     const handleDelete = async (e: React.MouseEvent, conversationId: string) => {
         e.stopPropagation()

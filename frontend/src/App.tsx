@@ -5,6 +5,7 @@ import Register from './pages/Register'
 import Chat from './pages/Chat'
 import Dashboard from './pages/Dashboard'
 import SettingsPage from './pages/SettingsPage'
+import WorkspacesPage from './pages/WorkspacesPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import AITransparencyPage from './pages/AITransparencyPage'
 import Footer from './components/Footer'
@@ -63,6 +64,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <SettingsPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/workspaces"
+                        element={
+                            <ProtectedRoute>
+                                <WorkspacesPage />
                             </ProtectedRoute>
                         }
                     />

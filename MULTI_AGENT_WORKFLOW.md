@@ -54,7 +54,9 @@ TaxIA/
         ├── test.md               # /test → Ejecutar tests
         ├── commit.md             # /commit → Commit con convención
         ├── review.md             # /review → Code review
-        └── deploy.md             # /deploy → Preparar deployment
+        ├── deploy.md             # /deploy → Preparar deployment
+        ├── workspace.md          # /workspace → Gestionar workspaces
+        └── files.md              # /files → Gestionar archivos
 ```
 
 ### Descripción de cada archivo
@@ -149,17 +151,51 @@ Pasos que ejecuta:
 
 ---
 
+### `/workspace` - Gestionar Workspaces
+Gestiona los espacios de trabajo del usuario para organizar documentos fiscales.
+
+```
+> /workspace
+```
+
+Acciones disponibles:
+- Listar workspaces existentes
+- Crear nuevo workspace
+- Ver detalles y archivos de un workspace
+- Eliminar workspace
+
+Los workspaces permiten tener contexto personalizado en las consultas del chat.
+
+---
+
+### `/files` - Gestionar Archivos
+Gestiona los archivos dentro de un workspace activo.
+
+```
+> /files
+```
+
+Acciones disponibles:
+- Listar archivos del workspace
+- Subir nuevo archivo (PDF, Excel)
+- Ver contenido extraido
+- Eliminar archivo
+
+Tipos soportados: nominas, facturas, declaraciones, otros documentos fiscales.
+
+---
+
 ## 📅 Flujo de Trabajo Diario
 
 ### Al Comenzar el Día
 
 ```mermaid
-graph LR
     A[Abrir Terminal] --> B[cd proyecto]
     B --> C[claude]
     C --> D[/start]
-    D --> E{¿Qué hacer?}
-    E --> F[Nueva feature]
+    D --> D1[Leer task.md e implementation_plan.md]
+    D1 --> E{¿Qué hacer?}
+    E --> F[Nueva feature (Ver Plan)]
     E --> G[Bug fix]
     E --> H[Tests]
     E --> I[Docs]

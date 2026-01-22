@@ -34,6 +34,7 @@ class StreamQuestionRequest(BaseModel):
     """Request for streaming chat"""
     question: str = Field(..., min_length=3, max_length=1000)
     conversation_id: Optional[str] = None
+    workspace_id: Optional[str] = Field(default=None, description="Active workspace ID for context")
     k: Optional[int] = Field(default=5, ge=1, le=10)
 
 
@@ -147,7 +148,46 @@ async def ask_question_stream(
                 await cache.refresh_ttl(conversation_id)
             else:
                 conversation_history = await conv_service.get_recent_messages(conversation_id, limit=20)
-            
+
+            # === Load workspace context if workspace_id provided ===
+            workspace_context = ""
+            workspace_files_info = []
+            if request.workspace_id:
+                logger.info(f"Loading workspace context for: {request.workspace_id}")
+                try:
+                    # Verify workspace ownership
+                    ws_result = await db.execute(
+                        "SELECT id, name FROM workspaces WHERE id = ? AND user_id = ?",
+                        [request.workspace_id, current_user.user_id]
+                    )
+                    if ws_result.rows:
+                        # Load workspace files with extracted text
+                        files_result = await db.execute(
+                            """
+                            SELECT filename, file_type, extracted_text
+                            FROM workspace_files
+                            WHERE workspace_id = ? AND processing_status = 'completed'
+                            """,
+                            [request.workspace_id]
+                        )
+
+                        if files_result.rows:
+                            docs_context = []
+                            for f in files_result.rows:
+                                if f.get("extracted_text"):
+                                    doc_info = f"--- {f['filename']} ({f['file_type']}) ---\n{f['extracted_text'][:5000]}"
+                                    docs_context.append(doc_info)
+                                    workspace_files_info.append({
+                                        "filename": f["filename"],
+                                        "file_type": f["file_type"]
+                                    })
+
+                            if docs_context:
+                                workspace_context = "\n\n".join(docs_context)
+                                logger.info(f"Loaded {len(docs_context)} documents from workspace")
+                except Exception as e:
+                    logger.error(f"Error loading workspace context: {e}")
+
             # Search relevant documents
             from app.routers.chat import fts_search  # Import helper
             relevant_chunks = await fts_search(db, request.question, k=request.k or 5)
@@ -163,7 +203,7 @@ async def ask_question_stream(
                 for chunk in relevant_chunks
             ])
             combined_context = notification_context + rag_context if notification_context else rag_context
-            
+
             # Prepare sources
             sources_data = [
                 {
@@ -175,29 +215,45 @@ async def ask_question_stream(
                 }
                 for chunk in relevant_chunks
             ]
-            
+
             # Format conversation history
             formatted_history = [
                 {"role": msg.get("role"), "content": msg.get("content")}
                 for msg in conversation_history[-10:]
             ]
-            
-            # Run TaxAgent with streaming callback
-            tax_agent = TaxAgent()
-            
+
+            # === Choose agent based on context ===
+            use_workspace_agent = bool(workspace_context)
+
             # Create async task for agent execution
             async def run_agent():
                 done_emitted = False
                 try:
-                    response = await tax_agent.run(
-                        query=request.question,
-                        context=combined_context,
-                        sources=sources_data,
-                        conversation_history=formatted_history,
-                        use_tools=True,
-                        user_id=current_user.user_id,
-                        progress_callback=callback  # ← Enable streaming
-                    )
+                    if use_workspace_agent:
+                        # Use WorkspaceAgent for workspace queries
+                        from app.agents.workspace_agent import get_workspace_agent
+                        agent = get_workspace_agent()
+                        response = await agent.run(
+                            query=request.question,
+                            context=workspace_context,
+                            sources=sources_data,
+                            conversation_history=formatted_history,
+                            user_id=current_user.user_id,
+                            workspace_id=request.workspace_id,
+                            progress_callback=callback
+                        )
+                    else:
+                        # Use TaxAgent for general tax queries
+                        tax_agent = TaxAgent()
+                        response = await tax_agent.run(
+                            query=request.question,
+                            context=combined_context,
+                            sources=sources_data,
+                            conversation_history=formatted_history,
+                            use_tools=True,
+                            user_id=current_user.user_id,
+                            progress_callback=callback
+                        )
                     
                     # Filter JSON from final content
                     clean_content = filter_json_from_content(response.content)

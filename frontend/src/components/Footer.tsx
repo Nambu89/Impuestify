@@ -116,16 +116,6 @@ export default function Footer() {
                     <p>
                         © {currentYear} Impuestify. Todos los derechos reservados.
                     </p>
-                    <p className="footer-small">
-                        Hecho con ❤️ en España |
-                        <a
-                            href="https://github.com/Nambu89/TaxIA"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            {' '}GitHub
-                        </a>
-                    </p>
                 </div>
             </div>
         </footer>

@@ -8,6 +8,7 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 - **CoordinatorAgent**: Router inteligente que decide qué agente especializado usar
 - **TaxAgent**: Experto en fiscalidad general (IRPF, cuotas autónomos, deducciones)
 - **PayslipAgent**: Especializado en análisis de nóminas españolas
+- **WorkspaceAgent**: Gestión de espacios de trabajo con archivos fiscales del usuario
 - **Routing automático**: Detecta el tipo de consulta y enruta al agente correcto
 
 ### 🛠️ Herramientas Fiscales
@@ -26,6 +27,13 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 - **Upload de PDFs**: Analiza notificaciones de la AEAT automáticamente
 - **Extracción inteligente**: Identifica importes, plazos y conceptos clave
 - **Contexto persistente**: Mantiene la notificación en toda la conversación
+
+### 📁 Workspaces - Espacios de Trabajo Personalizados
+- **Gestión de archivos fiscales**: Sube facturas, nóminas y declaraciones
+- **Extracción automática de facturas**: 15 patrones regex para datos fiscales españoles
+- **Embeddings semánticos**: OpenAI text-embedding-3-large (3072 dimensiones)
+- **Búsqueda inteligente**: Encuentra información relevante en tus documentos
+- **Contexto en chat**: El asistente conoce tus archivos y puede responder sobre ellos
 
 ### ⚡ Alto Rendimiento
 - **Redis Cache**: Sistema de caché con Upstash para contexto de conversaciones
@@ -71,32 +79,33 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 └──────┬──────┘
        │
        ↓
-┌─────────────────────────────────────────┐
-│          FastAPI Backend                │
-│  ┌───────────────────────────────────┐  │
-│  │     CoordinatorAgent (Router)     │  │
-│  │   (Microsoft Agent Framework)     │  │
-│  └────────┬──────────────┬───────────┘  │
-│           │              │               │
-│     ┌─────▼─────┐  ┌────▼──────┐        │
-│     │ TaxAgent  │  │  Payslip  │        │
-│     │           │  │   Agent   │        │
-│     └─────┬─────┘  └────┬──────┘        │
-│           │              │               │
-│     ┌─────▼──────────────▼─────┐        │
-│     │   4 Tools Fiscales       │        │
-│     │ - calculate_irpf         │        │
-│     │ - autonomous_quota       │        │
-│     │ - search_regulations     │        │
-│     │ - analyze_payslip        │        │
-│     └──────────────────────────┘        │
-└─────────────────────────────────────────┘
-       │            │            │
-       ↓            ↓            ↓
-┌──────────┐  ┌──────────┐  ┌──────────┐
-│  Turso   │  │ Upstash  │  │  OpenAI  │
-│  (SQLite)│  │  Redis   │  │   API    │
-└──────────┘  └──────────┘  └──────────┘
+┌───────────────────────────────────────────────────┐
+│              FastAPI Backend                       │
+│  ┌─────────────────────────────────────────────┐  │
+│  │       CoordinatorAgent (Router)             │  │
+│  │     (Microsoft Agent Framework)             │  │
+│  └────────┬──────────────┬──────────┬──────────┘  │
+│           │              │          │              │
+│     ┌─────▼─────┐  ┌────▼─────┐  ┌─▼──────────┐  │
+│     │ TaxAgent  │  │ Payslip  │  │ Workspace  │  │
+│     │           │  │  Agent   │  │   Agent    │  │
+│     └─────┬─────┘  └────┬─────┘  └─────┬──────┘  │
+│           │              │              │         │
+│     ┌─────▼──────────────▼──────────────▼─────┐  │
+│     │           5 Tools Fiscales              │  │
+│     │  - calculate_irpf                       │  │
+│     │  - autonomous_quota                     │  │
+│     │  - search_regulations                   │  │
+│     │  - analyze_payslip                      │  │
+│     │  - workspace_search (embeddings)        │  │
+│     └─────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────┘
+       │            │            │            │
+       ↓            ↓            ↓            ↓
+┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
+│  Turso   │  │ Upstash  │  │  OpenAI  │  │  OpenAI  │
+│  (SQLite)│  │  Redis   │  │   LLM    │  │Embeddings│
+└──────────┘  └──────────┘  └──────────┘  └──────────┘
 ```
 
 ### Stack Tecnológico
@@ -236,6 +245,27 @@ se presenta entre el 1 y el 20 de abril..."
    - Plazos de pago
    - Conceptos tributarios
 4. Haz preguntas sobre la notificación
+
+### Workspaces - Gestión de Archivos Fiscales
+
+1. **Crear un workspace**:
+   - Ve a la sección Workspaces
+   - Click en "Nuevo Workspace"
+   - Nombra tu espacio (ej: "Empresa 2025")
+
+2. **Subir archivos**:
+   - Arrastra PDFs de facturas, nóminas o declaraciones
+   - El sistema extrae automáticamente:
+     - **Facturas**: Base imponible, IVA (21%/10%/4%), retenciones IRPF
+     - **Nóminas**: Salario bruto/neto, IRPF, Seguridad Social
+   - Se generan embeddings para búsqueda semántica
+
+3. **Usar en el chat**:
+   - Selecciona el workspace en el selector
+   - Pregunta sobre tus documentos:
+     - "¿Cuánto IVA he pagado este trimestre?"
+     - "Resume mis facturas de enero"
+     - "¿Cuál es mi retención IRPF media?"
 
 ### Dashboard (Solo Admins)
 
@@ -394,6 +424,7 @@ Impuestify/
 │   │   │   ├── coordinator_agent.py  # Router
 │   │   │   ├── tax_agent.py         # Fiscal expert
 │   │   │   ├── payslip_agent.py     # Payslip expert
+│   │   │   ├── workspace_agent.py   # Workspace expert
 │   │   │   └── base_agent.py        # Base wrapper
 │   │   ├── tools/           # Agent tools
 │   │   │   ├── irpf_calculator_tool.py
@@ -401,19 +432,26 @@ Impuestify/
 │   │   │   ├── search_tool.py
 │   │   │   └── payslip_analysis_tool.py
 │   │   ├── services/        # Business logic
-│   │   │   └── payslip_extractor.py  # PDF extraction
+│   │   │   ├── payslip_extractor.py       # PDF nómina extraction
+│   │   │   ├── invoice_extractor.py       # PDF factura extraction
+│   │   │   ├── file_processing_service.py # File upload & processing
+│   │   │   ├── workspace_service.py       # Workspace CRUD
+│   │   │   └── workspace_embedding_service.py # OpenAI embeddings
 │   │   ├── auth/            # JWT authentication
 │   │   ├── database/        # Turso client & models
 │   │   ├── routers/         # API endpoints
 │   │   │   ├── chat.py
-│   │   │   ├── payslips.py  # Payslip management
+│   │   │   ├── chat_stream.py    # SSE streaming
+│   │   │   ├── payslips.py       # Payslip management
+│   │   │   ├── workspaces.py     # Workspace CRUD & files
 │   │   │   └── notifications.py
 │   │   └── utils/           # Helpers
 │   ├── scripts/             # Admin & maintenance
 │   ├── tests/               # Unit tests
 │   │   ├── test_coordinator.py
 │   │   ├── test_new_tools.py
-│   │   └── test_payslip_analysis.py
+│   │   ├── test_payslip_analysis.py
+│   │   └── test_workspace_components.py  # 34 tests
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
@@ -557,6 +595,85 @@ from app.utils.pdf_extractor import extract_pdf_text
 result = await extract_pdf_text(pdf_bytes, "notificacion.pdf")
 if result.success:
     markdown = result.markdown_text  # Listo para LLM
+```
+
+---
+
+## 🆕 v2.8 Workspaces - Espacios de Trabajo (Enero 2026)
+
+### 📁 Workspaces - Gestión de Archivos Fiscales
+
+**Espacios de trabajo personalizados para organizar documentos fiscales**
+
+| Feature | Descripción | Tecnología |
+|---------|-------------|------------|
+| 📁 **Workspaces** | Espacios de trabajo por usuario/empresa | Turso SQLite |
+| 📤 **File Upload** | Drag & drop de PDFs (facturas, nóminas) | FastAPI + PyMuPDF4LLM |
+| 🧾 **Invoice Extractor** | 15 patrones regex para facturas españolas | Python regex |
+| 🔢 **Embeddings** | Búsqueda semántica en documentos | OpenAI text-embedding-3-large |
+| 🔍 **Semantic Search** | Encuentra info relevante por contexto | Cosine similarity |
+| 💬 **Chat Context** | El asistente conoce tus archivos | WorkspaceAgent |
+
+### 🧾 Invoice Extractor - Campos Extraídos
+
+```
+✅ Número de factura          ✅ Base imponible 21%
+✅ Fecha de factura           ✅ Base imponible 10%
+✅ NIF/CIF emisor             ✅ Base imponible 4%
+✅ NIF/CIF receptor           ✅ Cuota IVA por tipo
+✅ Retención IRPF             ✅ Total factura
+✅ Porcentaje retención       ✅ Confidence score
+```
+
+### 🔢 Workspace Embeddings
+
+**Embeddings semánticos para búsqueda inteligente**
+
+- ✅ **Modelo**: OpenAI text-embedding-3-large (3072 dimensiones)
+- ✅ **Chunking**: 1000 caracteres con 200 de overlap
+- ✅ **Almacenamiento**: BLOB en Turso SQLite
+- ✅ **Búsqueda**: Cosine similarity con threshold 0.7
+- ✅ **Índices**: Por workspace y por archivo
+
+### 📡 API Endpoints - Workspaces
+
+```bash
+# Crear workspace
+POST /api/workspaces
+{"name": "Mi Empresa 2025", "description": "Facturas Q1"}
+
+# Listar workspaces
+GET /api/workspaces
+
+# Subir archivo
+POST /api/workspaces/{id}/files
+Content-Type: multipart/form-data
+file: factura.pdf
+
+# Listar archivos
+GET /api/workspaces/{id}/files
+
+# Eliminar archivo
+DELETE /api/workspaces/{id}/files/{file_id}
+
+# Eliminar workspace
+DELETE /api/workspaces/{id}
+```
+
+### 🧪 Tests - 34 tests automatizados
+
+```bash
+cd backend
+pytest tests/test_workspace_components.py -v
+
+# Cobertura:
+# - InvoiceExtractor: 10 tests
+# - WorkspaceEmbeddingService: 6 tests
+# - FileProcessingService: 6 tests
+# - WorkspaceAgent: 3 tests
+# - WorkspaceAPIEndpoints: 3 tests
+# - WorkspaceDatabaseSchema: 2 tests
+# - WorkspaceIntegration: 4 tests
 ```
 
 ---

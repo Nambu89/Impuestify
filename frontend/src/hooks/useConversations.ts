@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useApi } from './useApi'
+import { logger } from '../utils/logger'
 
 export interface Conversation {
     id: string
@@ -39,18 +40,18 @@ export function useConversations() {
     const [error, setError] = useState<string | null>(null)
 
     const fetchConversations = useCallback(async () => {
-        console.log('🔄 fetchConversations called')
+        logger.debug('fetchConversations called')
         setLoading(true)
         setError(null)
         try {
             const data = await apiRequest<Conversation[]>('/api/conversations', {
                 method: 'GET'
             })
-            console.log('✅ Conversations fetched:', data.length)
+            logger.debug('Conversations fetched:', data.length)
             setConversations(data)
             return data
         } catch (err: any) {
-            console.error('❌ Error fetching conversations:', err)
+            logger.error('Error fetching conversations:', err)
             setError(err.message || 'Failed to fetch conversations')
             throw err
         } finally {
@@ -59,7 +60,7 @@ export function useConversations() {
     }, [apiRequest])
 
     const createConversation = useCallback(async (title?: string) => {
-        console.log('➕ Creating conversation:', title)
+        logger.debug('Creating conversation:', title)
         setLoading(true)
         setError(null)
         try {
@@ -67,11 +68,11 @@ export function useConversations() {
                 method: 'POST',
                 body: JSON.stringify({ title })
             })
-            console.log('✅ Conversation created:', data.id)
+            logger.debug('Conversation created:', data.id)
             setConversations(prev => [data, ...prev])
             return data
         } catch (err: any) {
-            console.error('❌ Error creating conversation:', err)
+            logger.error('Error creating conversation:', err)
             setError(err.message || 'Failed to create conversation')
             throw err
         } finally {
@@ -80,17 +81,17 @@ export function useConversations() {
     }, [apiRequest])
 
     const getConversation = useCallback(async (conversationId: string) => {
-        console.log('📖 Getting conversation:', conversationId)
+        logger.debug('Getting conversation:', conversationId)
         setLoading(true)
         setError(null)
         try {
             const data = await apiRequest<ConversationWithMessages>(`/api/conversations/${conversationId}`, {
                 method: 'GET'
             })
-            console.log('✅ Conversation loaded with', data.messages.length, 'messages')
+            logger.debug('Conversation loaded with', data.messages.length, 'messages')
             return data
         } catch (err: any) {
-            console.error('❌ Error getting conversation:', err)
+            logger.error('Error getting conversation:', err)
             setError(err.message || 'Failed to fetch conversation')
             throw err
         } finally {
@@ -99,7 +100,7 @@ export function useConversations() {
     }, [apiRequest])
 
     const updateConversationTitle = useCallback(async (conversationId: string, title: string) => {
-        console.log('✏️ Updating conversation title:', conversationId, title)
+        logger.debug('Updating conversation title:', conversationId)
         setLoading(true)
         setError(null)
         try {
@@ -107,13 +108,13 @@ export function useConversations() {
                 method: 'PATCH',
                 body: JSON.stringify({ title })
             })
-            console.log('✅ Conversation title updated')
+            logger.debug('Conversation title updated')
             setConversations(prev => prev.map(conv =>
                 conv.id === conversationId ? data : conv
             ))
             return data
         } catch (err: any) {
-            console.error('❌ Error updating conversation:', err)
+            logger.error('Error updating conversation:', err)
             setError(err.message || 'Failed to update conversation')
             throw err
         } finally {
@@ -122,17 +123,17 @@ export function useConversations() {
     }, [apiRequest])
 
     const deleteConversation = useCallback(async (conversationId: string) => {
-        console.log('🗑️ Deleting conversation:', conversationId)
+        logger.debug('Deleting conversation:', conversationId)
         setLoading(true)
         setError(null)
         try {
             await apiRequest(`/api/conversations/${conversationId}`, {
                 method: 'DELETE'
             })
-            console.log('✅ Conversation deleted')
+            logger.debug('Conversation deleted')
             setConversations(prev => prev.filter(conv => conv.id !== conversationId))
         } catch (err: any) {
-            console.error('❌ Error deleting conversation:', err)
+            logger.error('Error deleting conversation:', err)
             setError(err.message || 'Failed to delete conversation')
             throw err
         } finally {

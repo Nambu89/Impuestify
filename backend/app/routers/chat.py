@@ -33,6 +33,7 @@ class QuestionRequest(BaseModel):
 	"""Request model for asking a question"""
 	question: str = Field(..., min_length=3, max_length=1000, description="Tax question")
 	conversation_id: Optional[str] = Field(None, description="Conversation ID for context")
+	workspace_id: Optional[str] = Field(None, description="Active workspace ID for context")
 	k: Optional[int] = Field(default=5, ge=1, le=10, description="Number of documents to retrieve")
 
 
@@ -442,12 +443,51 @@ async def ask_question(
 			conversation_history = await conv_service.get_recent_messages(conversation_id, limit=20)
 			logger.info(f"📂 Loaded {len(conversation_history)} messages from database")
 			
-			# Check if there's a notification in the conversation history
-			for msg in conversation_history:
-				if msg.get("role") == "assistant" and msg.get("metadata"):
-					metadata = msg.get("metadata", {})
-					if "notification_id" in metadata:
-						notification_context = f"""CONTEXTO DE NOTIFICACIÓN DEL USUARIO:
+		# === Load workspace context if workspace_id provided ===
+		workspace_context = ""
+		workspace_files_info = []
+		if request.workspace_id:
+			logger.info(f"📁 Loading workspace context for: {request.workspace_id}")
+			try:
+				# Verify workspace ownership
+				ws_result = await db.execute(
+					"SELECT id, name FROM workspaces WHERE id = ? AND user_id = ?",
+					[request.workspace_id, current_user.user_id]
+				)
+				if ws_result.rows:
+					# Load workspace files with extracted text
+					files_result = await db.execute(
+						"""
+						SELECT filename, file_type, extracted_text
+						FROM workspace_files
+						WHERE workspace_id = ? AND processing_status = 'completed'
+						""",
+						[request.workspace_id]
+					)
+
+					if files_result.rows:
+						docs_context = []
+						for f in files_result.rows:
+							if f.get("extracted_text"):
+								doc_info = f"--- {f['filename']} ({f['file_type']}) ---\n{f['extracted_text'][:5000]}"
+								docs_context.append(doc_info)
+								workspace_files_info.append({
+									"filename": f["filename"],
+									"file_type": f["file_type"]
+								})
+
+						if docs_context:
+							workspace_context = "\n\n".join(docs_context)
+							logger.info(f"📁 Loaded {len(docs_context)} documents from workspace")
+			except Exception as e:
+				logger.error(f"Error loading workspace context: {e}")
+
+		# Check if there's a notification in the conversation history
+		for msg in conversation_history:
+			if msg.get("role") == "assistant" and msg.get("metadata"):
+				metadata = msg.get("metadata", {})
+				if "notification_id" in metadata:
+					notification_context = f"""CONTEXTO DE NOTIFICACIÓN DEL USUARIO:
 {msg.get('content', '')}
 
 INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
@@ -457,14 +497,14 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 
 ---
 """
-						notification_metadata = {
-							"notification_id": metadata.get("notification_id"),
-							"notification_type": metadata.get("notification_type"),
-							"region": metadata.get("region"),
-							"deadlines": metadata.get("deadlines")
-						}
-						logger.info(f"📋 Found notification context in conversation history")
-						break
+					notification_metadata = {
+						"notification_id": metadata.get("notification_id"),
+						"notification_type": metadata.get("notification_type"),
+						"region": metadata.get("region"),
+						"deadlines": metadata.get("deadlines")
+					}
+					logger.info(f"📋 Found notification context in conversation history")
+					break
 		
 		# 4. Search relevant chunks using FTS5
 		search_start = time.time()
@@ -500,19 +540,18 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 				}
 			)
 		
-		# 5. Generate answer using TaxAgent
+		# 5. Generate answer using appropriate agent
 		agent_start = time.time()
-		tax_agent = TaxAgent()
-		
+
 		# Prepare RAG context from retrieved chunks
 		rag_context = "\n\n".join([
 			f"Fuente: {chunk['title']} (Página {chunk['page']})\n{chunk['text']}"
 			for chunk in relevant_chunks
 		])
-		
+
 		# Combine notification context (priority) with RAG context
 		combined_context = notification_context + rag_context if notification_context else rag_context
-		
+
 		# Prepare sources for metadata
 		sources_data = [
 			{
@@ -524,26 +563,40 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 			}
 			for chunk in relevant_chunks
 		]
-		
-		# ✅ FIX: Prepare conversation history for TaxAgent
-		# Format: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
+
+		# Prepare conversation history for agent
 		formatted_history = []
 		for msg in conversation_history[-10:]:  # Last 10 messages (5 exchanges)
 			formatted_history.append({
 				"role": msg.get("role"),
 				"content": msg.get("content")
 			})
-		
-		logger.info(f"🤖 Calling TaxAgent with {len(formatted_history)} history messages")
-		
-		# ✅ FIX: Pass conversation_history to TaxAgent
-		agent_response = await tax_agent.run(
-			query=request.question,
-			context=combined_context,
-			sources=sources_data,
-			conversation_history=formatted_history,  # ← NEW: Pass history
-			use_tools=True
-		)
+
+		# === Choose agent based on context ===
+		if workspace_context:
+			# Use WorkspaceAgent for workspace queries
+			from app.agents.workspace_agent import get_workspace_agent
+			agent = get_workspace_agent()
+			logger.info(f"📁 Calling WorkspaceAgent with {len(workspace_files_info)} documents")
+			agent_response = await agent.run(
+				query=request.question,
+				context=workspace_context,
+				sources=sources_data,
+				conversation_history=formatted_history,
+				user_id=current_user.user_id,
+				workspace_id=request.workspace_id
+			)
+		else:
+			# Use TaxAgent for general tax queries
+			tax_agent = TaxAgent()
+			logger.info(f"🤖 Calling TaxAgent with {len(formatted_history)} history messages")
+			agent_response = await tax_agent.run(
+				query=request.question,
+				context=combined_context,
+				sources=sources_data,
+				conversation_history=formatted_history,
+				use_tools=True
+			)
 		
 		answer = agent_response.content
 		

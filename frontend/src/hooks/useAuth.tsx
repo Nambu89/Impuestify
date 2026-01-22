@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import axios from 'axios'
+import { logger } from '../utils/logger'
 
 interface User {
     id: string
@@ -35,7 +36,7 @@ authApi.interceptors.request.use((config) => {
     const token = localStorage.getItem(TOKEN_KEY)
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
-        console.log('🔑 useAuth: Token attached')
+        logger.debug('Auth token attached')
     }
     return config
 })
@@ -45,13 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true)
 
     const fetchCurrentUser = useCallback(async () => {
-        console.log('👤 useAuth: Fetching current user...')
+        logger.debug('Fetching current user')
         try {
             const response = await authApi.get('/auth/me')
-            console.log('✅ useAuth: User fetched:', response.data.email)
+            logger.debug('User fetched:', response.data.email)
             setUser(response.data)
         } catch (error) {
-            console.error('❌ useAuth: Failed to fetch user:', error)
+            logger.error('Failed to fetch user:', error)
             localStorage.removeItem(TOKEN_KEY)
             localStorage.removeItem(REFRESH_TOKEN_KEY)
         } finally {
@@ -61,16 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const token = localStorage.getItem(TOKEN_KEY)
-        console.log('🔍 useAuth: Checking for token on mount:', !!token)
+        logger.debug('Checking for token on mount:', !!token)
         if (token) {
-            fetchCurrentUser()  // ← Sin parámetro
+            fetchCurrentUser()
         } else {
             setIsLoading(false)
         }
     }, [fetchCurrentUser])
 
     const login = async (email: string, password: string) => {
-        console.log('🔐 useAuth: Logging in:', email)
+        logger.debug('Logging in:', email)
         try {
             const response = await authApi.post('/auth/login', {
                 email,
@@ -79,18 +80,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const { user, tokens } = response.data
 
-            console.log('✅ useAuth: Login successful, storing tokens')
+            logger.debug('Login successful')
             localStorage.setItem(TOKEN_KEY, tokens.access_token)
             localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token)
             setUser(user)
         } catch (error) {
-            console.error('❌ useAuth: Login failed:', error)
+            logger.error('Login failed:', error)
             throw error
         }
     }
 
     const register = async (email: string, password: string, name?: string) => {
-        console.log('📝 useAuth: Registering:', email)
+        logger.debug('Registering:', email)
         try {
             const response = await authApi.post('/auth/register', {
                 email,
@@ -100,18 +101,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const { user, tokens } = response.data
 
-            console.log('✅ useAuth: Registration successful, storing tokens')
+            logger.debug('Registration successful')
             localStorage.setItem(TOKEN_KEY, tokens.access_token)
             localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token)
             setUser(user)
         } catch (error) {
-            console.error('❌ useAuth: Registration failed:', error)
+            logger.error('Registration failed:', error)
             throw error
         }
     }
 
     const logout = () => {
-        console.log('👋 useAuth: Logging out')
+        logger.debug('Logging out')
         localStorage.removeItem(TOKEN_KEY)
         localStorage.removeItem(REFRESH_TOKEN_KEY)
         setUser(null)

@@ -152,6 +152,10 @@ async def lifespan(app: FastAPI):
 		db_client = TursoClient()
 		await db_client.connect()
 		
+		# Initialize schema (creates tables if they don't exist, including new workspaces tables)
+		await db_client.init_schema()
+		print("✅ Schema de base de datos verificado/actualizado")
+		
 		# Verificar conexión contando documentos
 		result = await db_client.execute("SELECT COUNT(*) as cnt FROM documents")
 		doc_count = result.rows[0]['cnt'] if result.rows else 0
@@ -411,14 +415,21 @@ app.include_router(conversations_router)
 app.include_router(payslips_router)  # Payslips management
 app.include_router(security_tests_router)  # Security testing endpoints
 
+# Workspaces management
+from app.routers.workspaces import router as workspaces_router
+app.include_router(workspaces_router)
+
 # GDPR User Rights Endpoints
 from app.routers.user_rights import router as user_rights_router
 app.include_router(user_rights_router)
 
+# Demo Chat Endpoint (public, no auth required)
+from app.routers.demo import router as demo_router
+app.include_router(demo_router)
+
 # Prometheus instrumentation
 instrumentator = Instrumentator()
 instrumentator.instrument(app).expose(app, endpoint="/metrics")
-
 
 # === Dependencias ===
 
