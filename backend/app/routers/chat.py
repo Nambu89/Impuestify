@@ -21,6 +21,7 @@ from app.services.conversation_service import ConversationService
 from app.services.conversation_cache import ConversationCache
 from app.auth.jwt_handler import get_current_user, TokenData
 from app.security import sql_validator, guardrails_system, rate_limit_ask
+from app.metrics import record_tokens, record_request, record_error, record_rag_search, record_llm_latency
 
 logger = logging.getLogger(__name__)
 
@@ -659,6 +660,11 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 		]
 		
 		processing_time = time.time() - start_time
+		
+		# Record metrics
+		record_rag_search(len(relevant_chunks), search_time)
+		record_llm_latency(settings.OPENAI_MODEL, agent_time)
+		record_request("ask", "POST", 200, "authenticated")
 		
 		logger.info(f"✅ Consulta procesada: {processing_time:.2f}s, {len(sources)} fuentes, conversation: {conversation_id}")
 		

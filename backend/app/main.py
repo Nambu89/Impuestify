@@ -385,12 +385,19 @@ async def add_security_headers(request: Request, call_next):
 # This is added as middleware which runs in REVERSE order
 # So we add it here (which is last in code = first in execution)
 allowed_origins_str = os.environ.get("ALLOWED_ORIGINS", "*")
+
+# Debug: Log the origins being loaded
+print(f"🌐 CORS Origins Raw: {repr(allowed_origins_str)}")
+
 if allowed_origins_str == "*":
     # Allow all in development
     allowed_origins = ["*"]
 else:
-    # Parse comma-separated list
+    # Parse comma-separated list and strip quotes if present
+    allowed_origins_str = allowed_origins_str.strip('"').strip("'")
     allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+
+print(f"🌐 CORS Origins Parsed: {allowed_origins}")
 
 app.add_middleware(
 	CORSMiddleware,
@@ -427,9 +434,10 @@ app.include_router(user_rights_router)
 from app.routers.demo import router as demo_router
 app.include_router(demo_router)
 
-# Prometheus instrumentation
-instrumentator = Instrumentator()
-instrumentator.instrument(app).expose(app, endpoint="/metrics")
+# Prometheus instrumentation with custom metrics
+from app.metrics import setup_instrumentator, set_app_info
+setup_instrumentator(app)
+set_app_info(version="1.0.0", environment="production")
 
 # === Dependencias ===
 

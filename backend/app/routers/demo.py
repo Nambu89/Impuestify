@@ -30,6 +30,7 @@ from app.security import (
     AuditEventType
 )
 from app.security.llama_guard import get_llama_guard
+from app.metrics import record_demo_request, record_security_block, record_rag_search, record_llm_latency
 
 logger = logging.getLogger(__name__)
 
