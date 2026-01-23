@@ -201,33 +201,20 @@ def timed(endpoint: str):
 # === Enhanced Instrumentator Setup ===
 def setup_instrumentator(app):
     """Configure and return enhanced Prometheus instrumentator"""
-    instrumentator = Instrumentator(
-        should_group_status_codes=False,
-        should_ignore_untemplated=True,
-        should_respect_env_var=True,
-        should_instrument_requests_inprogress=True,
-        excluded_handlers=["/health", "/metrics"],
-        inprogress_name="impuestify_requests_inprogress",
-        inprogress_labels=True
-    )
-    
-    # Add default metrics
-    instrumentator.add(
-        default_metrics()
-    )
-    
-    # Instrument and expose
-    instrumentator.instrument(app).expose(app, endpoint="/metrics", include_in_schema=True)
-    
-    # Set app info
-    set_app_info(version="1.0.0", environment="production")
-    
-    return instrumentator
-
-
-def default_metrics():
-    """Add default instrumentator metrics"""
-    def instrumentation(info: MetricInfo):
-        # This is called for each request
-        pass
-    return instrumentation
+    try:
+        instrumentator = Instrumentator(
+            should_group_status_codes=False,
+            should_ignore_untemplated=True,
+            excluded_handlers=["/health"],
+        )
+        
+        # Instrument and expose
+        instrumentator.instrument(app)
+        instrumentator.expose(app, endpoint="/metrics", include_in_schema=True)
+        
+        print("✅ Prometheus /metrics endpoint configured")
+        
+        return instrumentator
+    except Exception as e:
+        print(f"❌ Error setting up Prometheus: {e}")
+        raise
