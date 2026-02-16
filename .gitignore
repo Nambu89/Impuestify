@@ -1,5 +1,7 @@
 # secretos
 .env
+.env.*
+!.env.example
 .secrets.baseline
 mark_admin.sql
 

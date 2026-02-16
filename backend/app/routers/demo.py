@@ -241,7 +241,7 @@ Responde de forma concisa y profesional:"""
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "gpt-4o-mini",  # Cheaper model for demo
+                    "model": "gpt-5-mini",  # Using gpt-5-mini as configured
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
