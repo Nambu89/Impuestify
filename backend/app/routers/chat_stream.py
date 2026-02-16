@@ -252,7 +252,8 @@ async def ask_question_stream(
                             conversation_history=formatted_history,
                             use_tools=True,
                             user_id=current_user.user_id,
-                            progress_callback=callback
+                            progress_callback=callback,
+                            db_client=db  # Pass database client for user memory
                         )
                     
                     # Filter JSON from final content

@@ -291,12 +291,39 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		system_prompt: Optional[str] = None,
 		model: Optional[str] = None,  # Dynamic model selection
 		user_id: Optional[str] = None,  # User ID for audit logging
-		progress_callback: Optional[Any] = None  # For SSE streaming
+		progress_callback: Optional[Any] = None,  # For SSE streaming
+		db_client: Optional[Any] = None  # Database client for memory
 	) -> AgentResponse:
 		"""
 		Returns:
 			AgentResponse with answer and metadata
 		"""
+		# === MEMORY: Extract and store user facts ===
+		user_memory_context = ""
+		if user_id:
+			try:
+				from app.services.user_memory_service import get_user_memory_service
+				memory_service = get_user_memory_service(db_client)
+				
+				# Process message to extract facts
+				memory_result = await memory_service.process_message_for_memory(user_id, query)
+				
+				# Get user context (CCAA, employment, etc.)
+				user_context = memory_result.get("context", {})
+				
+				if user_context.get("ccaa"):
+					user_memory_context = f"\n\n📍 **CONTEXTO DEL USUARIO**:\n- Residencia: {user_context['ccaa']}"
+					logger.info(f"🧠 User memory context: CCAA={user_context['ccaa']}")
+				
+				if user_context.get("employment"):
+					user_memory_context += f"\n- Situación laboral: {user_context['employment']}"
+				
+				if user_context.get("facts"):
+					user_memory_context += f"\n- Hechos recordados: {'; '.join(user_context['facts'][:3])}"
+					
+			except Exception as e:
+				logger.warning(f"⚠️ User memory error (continuing without memory): {e}")
+		
 		# === SECURITY: Content Moderation (Llama Guard) ===
 		try:
 			from app.security.llama_guard import get_llama_guard
@@ -378,8 +405,8 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		except Exception as e:
 			logger.warning(f"⚠️ Complexity router error: {e}, using default model")
 		
-		# Build the prompt with context
-		user_message = self._build_prompt(query, context)
+		# Build the prompt with context and user memory
+		user_message = self._build_prompt(query, context, user_memory_context)
 		
 		# Emit initial thinking event (for SSE streaming)
 		if progress_callback:
@@ -564,8 +591,8 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 				agent_name=self.name
 			)
 	
-	def _build_prompt(self, query: str, context: Optional[str] = None) -> str:
-		"""Build the user prompt with optional context."""
+	def _build_prompt(self, query: str, context: Optional[str] = None, user_memory_context: Optional[str] = None) -> str:
+		"""Build the user prompt with optional context and user memory."""
 		
 		# Detect if query requires tool usage
 		query_lower = query.lower()
@@ -581,11 +608,14 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		
 		# NO agregar hint de search para fechas/plazos - deja que el RAG-first funcione
 		
+		# Build memory section if available
+		memory_section = user_memory_context if user_memory_context else ""
+		
 		if context:
 			return f"""{requires_tool_hint}Contexto relevante de los documentos oficiales de la AEAT:
 
 {context}
-
+{memory_section}
 ---
 
 Pregunta del usuario:
@@ -602,6 +632,18 @@ Pregunta del usuario:
 8. Incluye aviso de información orientativa
 - Incluye un aviso de que esto es información orientativa"""
 		else:
+			# No context from RAG - but we might have user memory
+			if memory_section:
+				return f"""{requires_tool_hint}{memory_section}
+
+Pregunta del usuario:
+{query}
+
+🔒 INSTRUCCIONES CRÍTICAS:
+1. **Responde basándote en el contexto del usuario si está disponible**
+2. Si no tienes suficiente información, indica qué datos adicionales necesitas
+3. **Responde con tono CERCANO y COLOQUIAL** - Como un asesor fiscal amigo
+4. Incluye aviso de información orientativa"""
 			return requires_tool_hint + query
 	
 	async def ask(self, question: str, context: Optional[str] = None) -> str:

@@ -174,6 +174,27 @@ class TursoClient:
             """,
             
             # =============================================
+            # USER PROFILES TABLE (Long-term Memory)
+            # =============================================
+            
+            # User profiles table - stores persistent user information
+            """
+            CREATE TABLE IF NOT EXISTS user_profiles (
+                id TEXT PRIMARY KEY,
+                user_id TEXT UNIQUE NOT NULL,
+                ccaa_residencia TEXT,
+                situacion_laboral TEXT,
+                tiene_vivienda BOOLEAN,
+                primera_vivienda BOOLEAN,
+                fecha_nacimiento TEXT,
+                datos_fiscales TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+            """,
+            
+            # =============================================
             # DOCUMENT & RAG TABLES
             # =============================================
             
@@ -354,6 +375,7 @@ class TursoClient:
             
             "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)",
             "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_user_profiles_user ON user_profiles(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(document_type)",
             "CREATE INDEX IF NOT EXISTS idx_documents_year ON documents(year)",
             "CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(hash)",
