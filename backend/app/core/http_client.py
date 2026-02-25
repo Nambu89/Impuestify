@@ -64,13 +64,22 @@ class HTTPClientManager:
         # Create timeout configuration
         timeout_config = httpx.Timeout(self._timeout, connect=10.0)
         
-        # Initialize the async client
-        self._client = httpx.AsyncClient(
-            limits=limits,
-            timeout=timeout_config,
-            follow_redirects=True,
-            http2=True  # Enable HTTP/2 for better performance
-        )
+        # Initialize the async client (try HTTP/2, fall back to HTTP/1.1)
+        try:
+            self._client = httpx.AsyncClient(
+                limits=limits,
+                timeout=timeout_config,
+                follow_redirects=True,
+                http2=True  # Enable HTTP/2 for better performance
+            )
+        except ImportError:
+            logger.warning("h2 package not installed, falling back to HTTP/1.1")
+            self._client = httpx.AsyncClient(
+                limits=limits,
+                timeout=timeout_config,
+                follow_redirects=True,
+                http2=False
+            )
         
         self._is_initialized = True
         

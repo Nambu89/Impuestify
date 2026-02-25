@@ -142,7 +142,6 @@ async def lifespan(app: FastAPI):
 	except Exception as e:
 		print(f"❌ Error HTTP Pool: {e}")
 		logger.error("❌ Error inicializando HTTP Pool", error=str(e))
-		raise
 	
 	# 1. Conexión a Turso Database
 	print("📡 Conectando a Turso Database...")
