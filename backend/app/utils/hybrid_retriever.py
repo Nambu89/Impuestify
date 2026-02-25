@@ -199,13 +199,13 @@ class HybridRetriever:
                     """
                     SELECT
                         dc.id, dc.content, dc.page_number,
-                        d.filename, d.title, d.territory, d.tax_type,
+                        d.filename, d.title, d.source,
                         rank
-                    FROM chunks_fts
-                    JOIN document_chunks dc ON dc.id = chunks_fts.chunk_id
+                    FROM document_chunks_fts fts
+                    JOIN document_chunks dc ON dc.id = fts.chunk_id
                     JOIN documents d ON d.id = dc.document_id
-                    WHERE chunks_fts MATCH ?
-                      AND d.territory = ?
+                    WHERE document_chunks_fts MATCH ?
+                      AND d.source = ?
                     ORDER BY rank
                     LIMIT ?
                     """,
@@ -216,12 +216,12 @@ class HybridRetriever:
                     """
                     SELECT
                         dc.id, dc.content, dc.page_number,
-                        d.filename, d.title, d.territory, d.tax_type,
+                        d.filename, d.title, d.source,
                         rank
-                    FROM chunks_fts
-                    JOIN document_chunks dc ON dc.id = chunks_fts.chunk_id
+                    FROM document_chunks_fts fts
+                    JOIN document_chunks dc ON dc.id = fts.chunk_id
                     JOIN documents d ON d.id = dc.document_id
-                    WHERE chunks_fts MATCH ?
+                    WHERE document_chunks_fts MATCH ?
                     ORDER BY rank
                     LIMIT ?
                     """,
@@ -236,8 +236,8 @@ class HybridRetriever:
                     "page": row["page_number"] or 0,
                     "source": row["filename"] or "",
                     "title": row["title"] or "",
-                    "territory": row["territory"] or "",
-                    "tax_type": row["tax_type"] or "",
+                    "territory": row["source"] or "",
+                    "tax_type": "",
                     "similarity": abs(row["rank"]) if row["rank"] else 0,
                     "_search_type": "fts5",
                 })
@@ -263,17 +263,17 @@ class HybridRetriever:
             if territory:
                 sql = f"""
                     SELECT dc.id, dc.content, dc.page_number,
-                           d.filename, d.title, d.territory, d.tax_type
+                           d.filename, d.title, d.source
                     FROM document_chunks dc
                     JOIN documents d ON d.id = dc.document_id
-                    WHERE {conditions} AND d.territory = ?
+                    WHERE {conditions} AND d.source = ?
                     LIMIT ?
                 """
                 params = words + [territory, k]
             else:
                 sql = f"""
                     SELECT dc.id, dc.content, dc.page_number,
-                           d.filename, d.title, d.territory, d.tax_type
+                           d.filename, d.title, d.source
                     FROM document_chunks dc
                     JOIN documents d ON d.id = dc.document_id
                     WHERE {conditions}
@@ -290,8 +290,8 @@ class HybridRetriever:
                     "page": row["page_number"] or 0,
                     "source": row["filename"] or "",
                     "title": row["title"] or "",
-                    "territory": row["territory"] or "",
-                    "tax_type": row["tax_type"] or "",
+                    "territory": row["source"] or "",
+                    "tax_type": "",
                     "similarity": 0.5,
                     "_search_type": "like",
                 }
