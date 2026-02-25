@@ -10,6 +10,7 @@ mark_admin.sql
 /data/
 /cache/
 /docs/
+/plans/
 
 # notebooks checkpoints
 .ipynb_checkpoints/
@@ -50,6 +51,19 @@ build/
 
 # Claude Code - Local config (personal, no compartir)
 CLAUDE.local.md
+.claude/
 
-# Windows reserved filename (created accidentally by Claude Code)
+# Gemini AI config
+.gemini/
+
+# Scripts temporales (descargas, migraciones one-off)
+download_*.py
+tmp_*.py
+organize_*.py
+
+# Archivos de progreso/notas temporales
+claude-progress.txt
+agent-comms.md
+
+# Windows reserved filename
 nul

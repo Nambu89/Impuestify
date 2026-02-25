@@ -140,6 +140,12 @@ class Settings(BaseSettings):
     SEMANTIC_CACHE_THRESHOLD: float = Field(default=0.93)
 
     # -------------------------------
+    # 🔍 RAG Vector Search (Upstash Vector - separate index)
+    # -------------------------------
+    UPSTASH_VECTOR_RAG_URL: Optional[str] = Field(default=None)
+    UPSTASH_VECTOR_RAG_TOKEN: Optional[str] = Field(default=None)
+
+    # -------------------------------
     # 📋 Topics & Competitors
     # -------------------------------
     VALID_TOPICS: str = Field(
@@ -232,6 +238,11 @@ class Settings(BaseSettings):
     def is_upstash_vector_configured(self) -> bool:
         """Check if Upstash Vector (Semantic Cache) is configured"""
         return bool(self.UPSTASH_VECTOR_REST_URL and self.UPSTASH_VECTOR_REST_TOKEN)
+
+    @property
+    def is_upstash_rag_configured(self) -> bool:
+        """Check if Upstash Vector RAG index is configured"""
+        return bool(self.UPSTASH_VECTOR_RAG_URL and self.UPSTASH_VECTOR_RAG_TOKEN)
 
 
 # Initialize global settings

@@ -507,9 +507,16 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 					logger.info(f"📋 Found notification context in conversation history")
 					break
 		
-		# 4. Search relevant chunks using FTS5
+		# 4. Search relevant chunks using Hybrid Retriever (FTS5 + Vector + RRF)
 		search_start = time.time()
-		relevant_chunks = await fts_search(db, request.question, k=request.k or 5)
+		from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
+		retriever = HybridRetriever(db_client=db)
+		query_embedding = await get_query_embedding(request.question)
+		relevant_chunks = await retriever.search(
+			query=request.question,
+			query_embedding=query_embedding,
+			k=request.k or 5,
+		)
 		search_time = time.time() - search_start
 		
 		if not relevant_chunks:

@@ -188,9 +188,15 @@ async def ask_question_stream(
                 except Exception as e:
                     logger.error(f"Error loading workspace context: {e}")
 
-            # Search relevant documents
-            from app.routers.chat import fts_search  # Import helper
-            relevant_chunks = await fts_search(db, request.question, k=request.k or 5)
+            # Search relevant documents using Hybrid Retriever
+            from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
+            retriever = HybridRetriever(db_client=db)
+            query_embedding = await get_query_embedding(request.question)
+            relevant_chunks = await retriever.search(
+                query=request.question,
+                query_embedding=query_embedding,
+                k=request.k or 5,
+            )
             
             if not relevant_chunks:
                 await callback.error("No encontré información relevante en la documentación")
