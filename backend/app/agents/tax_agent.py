@@ -313,15 +313,38 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 				# Get user context (CCAA, employment, etc.)
 				user_context = memory_result.get("context", {})
 				
+				# Build comprehensive user context string
+				context_parts = []
+				
 				if user_context.get("ccaa"):
-					user_memory_context = f"\n\n📍 **CONTEXTO DEL USUARIO**:\n- Residencia: {user_context['ccaa']}"
+					context_parts.append(f"Residencia: {user_context['ccaa']}")
 					logger.info(f"🧠 User memory context: CCAA={user_context['ccaa']}")
 				
 				if user_context.get("employment"):
-					user_memory_context += f"\n- Situación laboral: {user_context['employment']}"
+					context_parts.append(f"Situación laboral: {user_context['employment']}")
+				
+				# NEW: Add numeric fields
+				if user_context.get("edad"):
+					context_parts.append(f"Edad: {user_context['edad']} años")
+				
+				if user_context.get("ingresos_brutos"):
+					context_parts.append(f"Ingresos brutos anuales: {user_context['ingresos_brutos']}€")
+				
+				if user_context.get("donation_pending"):
+					donation_type = user_context.get("donation_type", "dinero")
+					donation_from = user_context.get("donation_from", "familiar")
+					context_parts.append(
+						f"Donación pendiente: {user_context['donation_pending']}€ "
+						f"(tipo: {donation_type}, de: {donation_from})"
+					)
 				
 				if user_context.get("facts"):
-					user_memory_context += f"\n- Hechos recordados: {'; '.join(user_context['facts'][:3])}"
+					context_parts.append(f"Hechos recordados: {'; '.join(user_context['facts'][:3])}")
+				
+				# Build context string
+				if context_parts:
+					user_memory_context = "\n\n📍 **CONTEXTO DEL USUARIO (IMPORTANTE - USA ESTA INFO)**:\n" + "\n".join([f"- {part}" for part in context_parts])
+					user_memory_context += "\n\n⚠️ IMPORTANTE: Antes de responder, consulta siempre esta información del usuario. No pijas datos que ya conoces."
 					
 			except Exception as e:
 				logger.warning(f"⚠️ User memory error (continuing without memory): {e}")
@@ -419,8 +442,14 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			from app.tools import ALL_TOOLS, TOOL_EXECUTORS
 			
 			# Build messages with conversation history
+			# Add user memory context to system prompt for better attention
+			system_content = system_prompt or self._get_system_prompt()
+			if user_memory_context:
+				# Prepend user context to system prompt (high priority)
+				system_content = user_memory_context + "\n\n" + system_content
+			
 			messages = [
-				{"role": "system", "content": system_prompt or self._get_system_prompt()}
+				{"role": "system", "content": system_content}
 			]
 			
 			# Add conversation history if provided
@@ -610,8 +639,9 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		
 		# NO agregar hint de search para fechas/plazos - deja que el RAG-first funcione
 		
-		# Build memory section if available
-		memory_section = user_memory_context if user_memory_context else ""
+		# Build memory section if available (moved to system prompt)
+		# Note: user_memory_context is now in system prompt, not here
+		memory_section = ""  # user_memory_context is now prepended to system prompt
 		
 		if context:
 			return f"""{requires_tool_hint}Información relevante de tu base de conocimiento fiscal (legislación AEAT, BOE, normativas forales):
@@ -624,7 +654,8 @@ Pregunta del usuario:
 {query}
 
 🔒 INSTRUCCIONES CRÍTICAS:
-1. **USA la información del contexto anterior** — proviene de tu propia base de conocimiento fiscal, NO de documentos del usuario
+1. **MIRA EL HISTORIAL DE CONVERSACIÓN** - La conversación anterior está disponible. USA esa información en lugar de pedir datos que ya te han dado.
+2. **USA la información del contexto anterior** — proviene de tu propia base de conocimiento fiscal, NO de documentos del usuario
 2. NUNCA digas "en los documentos que me has pasado/adjuntado" — TÚ consultas tu base de conocimiento interna
 3. Para IRPF: usa calculate_irpf AHORA con los datos del contexto (NO busques en web)
 4. Para autónomos: usa calculate_autonomous_quota con year={self.autonomous_quota_year}
@@ -642,7 +673,8 @@ Pregunta del usuario:
 {query}
 
 🔒 INSTRUCCIONES CRÍTICAS:
-1. **Responde basándote en el contexto del usuario si está disponible**
+1. **MIRA EL HISTORIAL DE CONVERSACIÓN** - La conversación anterior está disponible. USA esa información.
+2. **Responde basándote en el contexto del usuario si está disponible**
 2. Si no tienes suficiente información, indica qué datos adicionales necesitas
 3. **Responde con tono CERCANO y COLOQUIAL** - Como un asesor fiscal amigo
 4. Incluye aviso de información orientativa"""
