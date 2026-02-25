@@ -7,8 +7,14 @@ import logging
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 
-from agent_framework import ChatAgent
-from agent_framework.openai import OpenAIChatClient
+try:
+    from agent_framework import ChatAgent
+    from agent_framework.openai import OpenAIChatClient
+    AGENT_FRAMEWORK_AVAILABLE = True
+except Exception:
+    AGENT_FRAMEWORK_AVAILABLE = False
+    ChatAgent = None
+    OpenAIChatClient = None
 
 logger = logging.getLogger(__name__)
 

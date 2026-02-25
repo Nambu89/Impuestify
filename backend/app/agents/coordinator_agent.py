@@ -6,8 +6,15 @@ Routes user queries to the appropriate specialist agent.
 import logging
 from typing import Dict, Any, Optional
 
-from agent_framework import ChatAgent, Workflow
-from agent_framework.openai import OpenAIChatClient
+try:
+    from agent_framework import ChatAgent, Workflow
+    from agent_framework.openai import OpenAIChatClient
+    AGENT_FRAMEWORK_AVAILABLE = True
+except Exception:
+    AGENT_FRAMEWORK_AVAILABLE = False
+    ChatAgent = None
+    Workflow = None
+    OpenAIChatClient = None
 from app.agents.tax_agent import get_tax_agent
 from app.agents.payslip_agent import get_payslip_agent
 from app.agents.workspace_agent import get_workspace_agent
