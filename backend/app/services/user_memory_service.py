@@ -523,16 +523,21 @@ class UserMemoryService:
                 context["ccaa"] = profile.get("ccaa_residencia")
                 context["employment"] = profile.get("situacion_laboral")
                 
-                # Extract datos_fiscales JSON fields
+                # Extract datos_fiscales JSON fields (supports both legacy plain values and new {value, _source} format)
                 datos_fiscales_raw = profile.get('datos_fiscales')
                 if datos_fiscales_raw:
                     try:
                         datos_fiscales = json.loads(datos_fiscales_raw) if isinstance(datos_fiscales_raw, str) else datos_fiscales_raw
-                        context["edad"] = datos_fiscales.get('edad')
-                        context["ingresos_brutos"] = datos_fiscales.get('ingresos_brutos')
-                        context["donation_pending"] = datos_fiscales.get('donation_pending')
-                        context["donation_type"] = datos_fiscales.get('donation_type')
-                        context["donation_from"] = datos_fiscales.get('donation_from')
+                        for df_key in ('edad', 'ingresos_brutos', 'donation_pending', 'donation_type', 'donation_from'):
+                            entry = datos_fiscales.get(df_key)
+                            if entry is None:
+                                continue
+                            # New format: {"value": ..., "_source": ...}
+                            if isinstance(entry, dict) and "value" in entry:
+                                context[df_key] = entry["value"]
+                            else:
+                                # Legacy plain value
+                                context[df_key] = entry
                     except (json.JSONDecodeError, TypeError):
                         pass
         
@@ -609,26 +614,30 @@ class UserMemoryService:
         self,
         user_id: str,
         key: str,
-        value: Any
+        value: Any,
+        source: str = "conversation"
     ) -> bool:
         """
-        Update a field in datos_fiscales JSON column.
-        
+        Update a field in datos_fiscales JSON column with source tracking.
+
+        Fields with _source="manual" are NOT overwritten by conversation data.
+
         Args:
             user_id: User ID
             key: Field key to update
             value: Value to store
-            
+            source: Origin of the data ("conversation" or "manual")
+
         Returns:
             True if successful
         """
         if not self.db:
             return False
-        
+
         try:
             # Get current profile
             profile = await self._get_profile_from_db(user_id)
-            
+
             # Get current datos_fiscales or create new
             datos_fiscales = {}
             if profile and profile.get('datos_fiscales'):
@@ -636,13 +645,29 @@ class UserMemoryService:
                     datos_fiscales = json.loads(profile['datos_fiscales'])
                 except (json.JSONDecodeError, TypeError):
                     datos_fiscales = {}
-            
-            # Update the field
-            datos_fiscales[key] = value
-            datos_fiscales_json = json.dumps(datos_fiscales)
-            
+
+            # Check source priority: manual > conversation
+            existing_entry = datos_fiscales.get(key)
+            if (
+                isinstance(existing_entry, dict)
+                and existing_entry.get("_source") == "manual"
+                and source == "conversation"
+            ):
+                logger.debug(
+                    "Skipping update for %s: manual data has priority over conversation",
+                    key,
+                )
+                return False
+
+            # Update the field with source metadata
             now = datetime.utcnow().isoformat()
-            
+            datos_fiscales[key] = {
+                "value": value,
+                "_source": source,
+                "_updated": now,
+            }
+            datos_fiscales_json = json.dumps(datos_fiscales)
+
             if profile:
                 # Update existing
                 await self.db.execute(
@@ -654,17 +679,17 @@ class UserMemoryService:
                 import uuid
                 profile_id = str(uuid.uuid4())
                 await self.db.execute(
-                    """INSERT INTO user_profiles 
+                    """INSERT INTO user_profiles
                        (id, user_id, datos_fiscales, created_at, updated_at)
                        VALUES (?, ?, ?, ?, ?)""",
                     [profile_id, user_id, datos_fiscales_json, now, now]
                 )
-            
-            logger.info(f"✅ Updated datos_fiscales for user {user_id}: {key}={value}")
+
+            logger.info("Updated datos_fiscales for user %s: %s=%s (source=%s)", user_id, key, value, source)
             return True
-            
+
         except Exception as e:
-            logger.error(f"❌ Failed to update datos_fiscales: {e}")
+            logger.error(f"Failed to update datos_fiscales: {e}")
             return False
     
     async def update_profile(

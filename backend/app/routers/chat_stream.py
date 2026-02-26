@@ -114,7 +114,7 @@ async def ask_question_stream(
     if guardrails_system.is_greeting(request.question.strip()):
         async def greeting_stream():
             greeting = (
-                "¡Hola! 👋 Soy Impuestify, tu asistente fiscal.\\n\\n"
+                "¡Hola! 👋 Soy Impuestify, tu asistente fiscal.\n\n"
                 "¿En qué puedo ayudarte hoy?"
             )
             yield {"event": "content", "data": greeting}
@@ -198,29 +198,35 @@ async def ask_question_stream(
                 k=request.k or 5,
             )
             
-            if not relevant_chunks:
-                await callback.error("No encontré información relevante en la documentación")
-                await callback.done()
-                return
+            # Prepare context - ALLOW empty RAG if we have conversation history or user memory
+            if relevant_chunks:
+                # We have relevant documents - use them
+                rag_context = "\n\n".join([
+                    f"Fuente: {chunk['title']} (Página {chunk['page']})\n{chunk['text']}"
+                    for chunk in relevant_chunks
+                ])
+                sources_data = [
+                    {
+                        "id": chunk['id'],
+                        "source": chunk['source'],
+                        "page": chunk['page'],
+                        "title": chunk['title'],
+                        "score": chunk['similarity']
+                    }
+                    for chunk in relevant_chunks
+                ]
+                logger.info(f"Using {len(relevant_chunks)} RAG chunks for context")
+            else:
+                # No relevant documents - check if we have conversation history
+                has_internal_context = bool(conversation_history)
+                if not has_internal_context:
+                    logger.info("No RAG chunks and no conversation history - will attempt general answer")
+                else:
+                    logger.info(f"No RAG chunks but have {len(conversation_history)} conversation messages - will use memory")
+                rag_context = ""
+                sources_data = []
             
-            # Prepare context
-            rag_context = "\\n\\n".join([
-                f"Fuente: {chunk['title']} (Página {chunk['page']})\\n{chunk['text']}"
-                for chunk in relevant_chunks
-            ])
             combined_context = notification_context + rag_context if notification_context else rag_context
-
-            # Prepare sources
-            sources_data = [
-                {
-                    "id": chunk['id'],
-                    "source": chunk['source'],
-                    "page": chunk['page'],
-                    "title": chunk['title'],
-                    "score": chunk['similarity']
-                }
-                for chunk in relevant_chunks
-            ]
 
             # Format conversation history
             formatted_history = [

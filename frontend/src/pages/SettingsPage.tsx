@@ -1,17 +1,57 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, Download, Trash2, Save, AlertCircle, CheckCircle, Loader, Shield } from 'lucide-react'
+import {
+    User, Download, Trash2, Save, AlertCircle, CheckCircle,
+    Loader, Shield, Lock, Calculator, ChevronDown, ChevronRight, RefreshCw
+} from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useApi } from '../hooks/useApi'
+import { useFiscalProfile, FiscalProfile } from '../hooks/useFiscalProfile'
 import Header from '../components/Header'
 import './SettingsPage.css'
 
+type TabKey = 'personal' | 'security' | 'fiscal' | 'privacy'
+
+const CCAA_OPTIONS = [
+    '', 'Andalucía', 'Aragón', 'Asturias', 'Illes Balears', 'Canarias',
+    'Cantabria', 'Castilla y León', 'Castilla-La Mancha', 'Cataluña',
+    'Comunitat Valenciana', 'Extremadura', 'Galicia', 'Comunidad de Madrid',
+    'Murcia', 'Navarra', 'País Vasco', 'La Rioja', 'Ceuta', 'Melilla'
+]
+
+const SITUACION_OPTIONS = [
+    { value: '', label: 'Selecciona...' },
+    { value: 'asalariado', label: 'Asalariado/a' },
+    { value: 'autonomo', label: 'Autónomo/a' },
+    { value: 'pensionista', label: 'Pensionista' },
+    { value: 'desempleado', label: 'Desempleado/a' },
+]
+
 export default function SettingsPage() {
     const { user, logout } = useAuth()
+    const { apiRequest } = useApi()
     const navigate = useNavigate()
 
-    // Form state
+    // Active tab
+    const [activeTab, setActiveTab] = useState<TabKey>('personal')
+
+    // Form state — Personal
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
+
+    // Form state — Security
+    const [currentPassword, setCurrentPassword] = useState('')
+    const [newPassword, setNewPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+
+    // Fiscal profile hook
+    const fiscal = useFiscalProfile()
+    const [fiscalForm, setFiscalForm] = useState<Partial<FiscalProfile>>({})
+    const [childYears, setChildYears] = useState<string[]>([])
+
+    // Collapsible sections
+    const [showAhorro, setShowAhorro] = useState(false)
+    const [showInmuebles, setShowInmuebles] = useState(false)
 
     // UI state
     const [isLoading, setIsLoading] = useState(false)
@@ -26,6 +66,24 @@ export default function SettingsPage() {
         }
     }, [user])
 
+    // Sync fiscal profile into form when loaded
+    useEffect(() => {
+        if (!fiscal.loading && fiscal.profile) {
+            setFiscalForm(fiscal.profile)
+            const desc = fiscal.profile.anios_nacimiento_desc
+            if (desc && desc.length > 0) {
+                setChildYears(desc.map(String))
+            }
+            // Auto-expand sections if they have data
+            if ((fiscal.profile.intereses ?? 0) > 0 || (fiscal.profile.dividendos ?? 0) > 0 || (fiscal.profile.ganancias_fondos ?? 0) > 0) {
+                setShowAhorro(true)
+            }
+            if ((fiscal.profile.ingresos_alquiler ?? 0) > 0) {
+                setShowInmuebles(true)
+            }
+        }
+    }, [fiscal.loading, fiscal.profile])
+
     // Auto-dismiss messages
     useEffect(() => {
         if (message) {
@@ -34,33 +92,27 @@ export default function SettingsPage() {
         }
     }, [message])
 
-    // Update profile
+    // Helper: update fiscal form field
+    const updateFiscal = (key: keyof FiscalProfile, value: any) => {
+        setFiscalForm(prev => ({ ...prev, [key]: value }))
+    }
+
+    // Check if field was auto-detected from conversation
+    const isFromConversation = (key: string) =>
+        fiscal.fieldMeta[key]?.source === 'conversation'
+
+    // ---- HANDLERS ----
+
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
         setMessage(null)
-
         try {
-            const token = localStorage.getItem('token')
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
+            await apiRequest('/api/users/me', {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ name, email })
+                body: JSON.stringify({ name, email }),
             })
-
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.detail || 'Error al actualizar perfil')
-            }
-
-            await response.json() // Parse response but don't store (user context will refresh)
-            setMessage({ type: 'success', text: '✅ Perfil actualizado correctamente' })
-
-            // Update local user state if needed
-            // Note: You may want to implement a refresh user context here
+            setMessage({ type: 'success', text: 'Perfil actualizado correctamente' })
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message })
         } finally {
@@ -68,27 +120,67 @@ export default function SettingsPage() {
         }
     }
 
-    // Export user data
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setMessage(null)
+
+        if (newPassword !== confirmPassword) {
+            setMessage({ type: 'error', text: 'Las contraseñas no coinciden' })
+            return
+        }
+        if (newPassword.length < 8) {
+            setMessage({ type: 'error', text: 'La nueva contraseña debe tener al menos 8 caracteres' })
+            return
+        }
+
+        setIsLoading(true)
+        try {
+            await apiRequest('/api/users/me/password', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: newPassword,
+                }),
+            })
+            setMessage({ type: 'success', text: 'Contraseña actualizada correctamente' })
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmPassword('')
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message })
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleSaveFiscalProfile = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setMessage(null)
+
+        // Parse child years
+        const parsedYears = childYears
+            .map(y => parseInt(y, 10))
+            .filter(y => !isNaN(y) && y > 1900 && y <= new Date().getFullYear())
+
+        const dataToSave: Partial<FiscalProfile> = {
+            ...fiscalForm,
+            anios_nacimiento_desc: parsedYears.length > 0 ? parsedYears : null,
+        }
+
+        const ok = await fiscal.save(dataToSave)
+        if (ok) {
+            setMessage({ type: 'success', text: 'Perfil fiscal guardado correctamente' })
+        } else if (fiscal.error) {
+            setMessage({ type: 'error', text: fiscal.error })
+        }
+    }
+
     const handleExportData = async () => {
         setIsExporting(true)
         setMessage(null)
-
         try {
-            const token = localStorage.getItem('token')
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me/data`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
+            const data = await apiRequest('/api/users/me/data')
 
-            if (!response.ok) {
-                throw new Error('Error al exportar datos')
-            }
-
-            const data = await response.json()
-
-            // Create and download JSON file
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')
@@ -99,7 +191,7 @@ export default function SettingsPage() {
             document.body.removeChild(a)
             URL.revokeObjectURL(url)
 
-            setMessage({ type: 'success', text: '✅ Datos exportados correctamente' })
+            setMessage({ type: 'success', text: 'Datos exportados correctamente' })
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message })
         } finally {
@@ -107,55 +199,57 @@ export default function SettingsPage() {
         }
     }
 
-    // Delete account
     const handleDeleteAccount = async () => {
         const confirmed = window.confirm(
-            '⚠️ ATENCIÓN: Esta acción es IRREVERSIBLE.\\n\\n' +
-            'Se eliminarán permanentemente:\\n' +
-            '• Tu cuenta de usuario\\n' +
-            '• Todas tus conversaciones\\n' +
-            '• Todos los mensajes\\n\\n' +
+            'ATENCIÓN: Esta acción es IRREVERSIBLE.\n\n' +
+            'Se eliminarán permanentemente:\n' +
+            '- Tu cuenta de usuario\n' +
+            '- Todas tus conversaciones\n' +
+            '- Todos tus mensajes\n' +
+            '- Tu perfil fiscal\n\n' +
             '¿Estás seguro de que deseas continuar?'
         )
-
         if (!confirmed) return
 
-        // Second confirmation
         const doubleConfirm = window.confirm(
-            '⚠️ ÚLTIMA CONFIRMACIÓN\\n\\n' +
-            'Escribe "ELIMINAR" mentalmente y confirma.\\n\\n' +
+            'ÚLTIMA CONFIRMACIÓN\n\n' +
             '¿Proceder con la eliminación permanente?'
         )
-
         if (!doubleConfirm) return
 
         setIsLoading(true)
         setMessage(null)
-
         try {
-            const token = localStorage.getItem('token')
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-
-            if (!response.ok) {
-                throw new Error('Error al eliminar cuenta')
-            }
-
-            // Logout and redirect
+            await apiRequest('/api/users/me', { method: 'DELETE' })
             logout()
             navigate('/', { replace: true })
-
-            // Show final message (won't be seen on current page)
-            alert('✅ Tu cuenta ha sido eliminada permanentemente.')
+            alert('Tu cuenta ha sido eliminada permanentemente.')
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message })
             setIsLoading(false)
         }
     }
+
+    // ---- ADD/REMOVE child year helpers ----
+    const addChildYear = () => setChildYears(prev => [...prev, ''])
+    const removeChildYear = (index: number) =>
+        setChildYears(prev => prev.filter((_, i) => i !== index))
+    const updateChildYear = (index: number, value: string) =>
+        setChildYears(prev => prev.map((y, i) => i === index ? value : y))
+
+    // Sync num_descendientes when childYears change
+    useEffect(() => {
+        updateFiscal('num_descendientes', childYears.length || null)
+    }, [childYears.length])
+
+    // ---- RENDER ----
+
+    const ConversationBadge = ({ field }: { field: string }) =>
+        isFromConversation(field) ? (
+            <span className="conversation-badge" title="Detectado automáticamente en una conversación">
+                <RefreshCw size={12} /> Conversación
+            </span>
+        ) : null
 
     return (
         <div className="settings-page">
@@ -165,162 +259,374 @@ export default function SettingsPage() {
                 <div className="settings-header">
                     <h1>
                         <Shield size={32} />
-                        Configuración de Cuenta
+                        Mi Cuenta
                     </h1>
                     <p className="settings-subtitle">
-                        Gestiona tu perfil y tus derechos de protección de datos (RGPD)
+                        Gestiona tu perfil, seguridad, datos fiscales y derechos RGPD
                     </p>
                 </div>
 
                 {/* Message Banner */}
                 {message && (
                     <div className={`message-banner ${message.type}`}>
-                        {message.type === 'success' ? (
-                            <CheckCircle size={20} />
-                        ) : (
-                            <AlertCircle size={20} />
-                        )}
+                        {message.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
                         <span>{message.text}</span>
                     </div>
                 )}
 
-                {/* Profile Section */}
-                <section className="settings-section">
-                    <div className="section-header">
-                        <User size={24} />
-                        <h2>Información del Perfil</h2>
-                    </div>
+                {/* Tabs */}
+                <div className="settings-tabs">
+                    <button className={`tab-btn ${activeTab === 'personal' ? 'active' : ''}`} onClick={() => setActiveTab('personal')}>
+                        <User size={16} /> Personal
+                    </button>
+                    <button className={`tab-btn ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}>
+                        <Lock size={16} /> Seguridad
+                    </button>
+                    <button className={`tab-btn ${activeTab === 'fiscal' ? 'active' : ''}`} onClick={() => setActiveTab('fiscal')}>
+                        <Calculator size={16} /> Perfil Fiscal
+                    </button>
+                    <button className={`tab-btn ${activeTab === 'privacy' ? 'active' : ''}`} onClick={() => setActiveTab('privacy')}>
+                        <Shield size={16} /> Privacidad
+                    </button>
+                </div>
 
-                    <form onSubmit={handleUpdateProfile} className="settings-form">
-                        <div className="form-group">
-                            <label htmlFor="name">Nombre</label>
-                            <input
-                                type="text"
-                                id="name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Tu nombre"
-                                className="form-input"
-                            />
+                {/* ==================== PERSONAL TAB ==================== */}
+                {activeTab === 'personal' && (
+                    <section className="settings-section">
+                        <div className="section-header">
+                            <User size={24} />
+                            <h2>Información Personal</h2>
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="email">Email</label>
-                            <input
-                                type="email"
-                                id="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="tu@email.com"
-                                className="form-input"
-                                required
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="btn btn-primary"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Loader size={18} className="animate-spin" />
-                                    Guardando...
-                                </>
-                            ) : (
-                                <>
-                                    <Save size={18} />
-                                    Guardar Cambios
-                                </>
-                            )}
-                        </button>
-                    </form>
-                </section>
-
-                {/* GDPR Data Rights Section */}
-                <section className="settings-section">
-                    <div className="section-header">
-                        <Shield size={24} />
-                        <h2>Tus Derechos RGPD</h2>
-                    </div>
-
-                    <p className="section-description">
-                        De acuerdo con el Reglamento General de Protección de Datos (RGPD),
-                        tienes derecho a acceder, rectificar y eliminar tus datos personales.
-                    </p>
-
-                    {/* Export Data */}
-                    <div className="gdpr-action">
-                        <div className="gdpr-action-info">
-                            <div className="gdpr-action-header">
-                                <Download size={20} />
-                                <h3>Exportar Mis Datos</h3>
+                        <form onSubmit={handleUpdateProfile} className="settings-form">
+                            <div className="form-group">
+                                <label htmlFor="name">Nombre</label>
+                                <input type="text" id="name" value={name} onChange={e => setName(e.target.value)}
+                                    placeholder="Tu nombre" className="form-input" />
                             </div>
-                            <p>
-                                Descarga una copia de todos tus datos personales en formato JSON
-                                (Art. 15 RGPD - Derecho de Acceso)
-                            </p>
-                        </div>
-                        <button
-                            onClick={handleExportData}
-                            className="btn btn-secondary"
-                            disabled={isExporting}
-                        >
-                            {isExporting ? (
-                                <>
-                                    <Loader size={18} className="animate-spin" />
-                                    Exportando...
-                                </>
-                            ) : (
-                                <>
-                                    <Download size={18} />
-                                    Exportar Datos
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </section>
-
-                {/* Danger Zone */}
-                <section className="settings-section danger-zone">
-                    <div className="section-header">
-                        <AlertCircle size={24} />
-                        <h2>Zona Peligrosa</h2>
-                    </div>
-
-                    <p className="section-description danger-text">
-                        ⚠️ Las acciones en esta sección son <strong>irreversibles</strong>.
-                        Procede con precaución.
-                    </p>
-
-                    {/* Delete Account */}
-                    <div className="gdpr-action">
-                        <div className="gdpr-action-info">
-                            <div className="gdpr-action-header">
-                                <Trash2 size={20} />
-                                <h3>Eliminar Mi Cuenta</h3>
+                            <div className="form-group">
+                                <label htmlFor="email">Email</label>
+                                <input type="email" id="email" value={email} onChange={e => setEmail(e.target.value)}
+                                    placeholder="tu@email.com" className="form-input" disabled />
+                                <span className="form-hint">El email no se puede cambiar por seguridad</span>
                             </div>
-                            <p>
-                                Elimina permanentemente tu cuenta y todos los datos asociados
-                                (Art. 17 RGPD - Derecho de Supresión)
-                            </p>
-                            <ul className="danger-list">
-                                <li>❌ Tu cuenta de usuario</li>
-                                <li>❌ Todas tus conversaciones</li>
-                                <li>❌ Todos tus mensajes</li>
-                                <li>❌ Esta acción NO se puede deshacer</li>
-                            </ul>
+                            <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                                {isLoading ? <><Loader size={18} className="animate-spin" /> Guardando...</>
+                                    : <><Save size={18} /> Guardar Cambios</>}
+                            </button>
+                        </form>
+                    </section>
+                )}
+
+                {/* ==================== SECURITY TAB ==================== */}
+                {activeTab === 'security' && (
+                    <section className="settings-section">
+                        <div className="section-header">
+                            <Lock size={24} />
+                            <h2>Cambiar Contraseña</h2>
                         </div>
-                        <button
-                            onClick={handleDeleteAccount}
-                            className="btn btn-danger"
-                            disabled={isLoading}
-                        >
-                            <Trash2 size={18} />
-                            Eliminar Cuenta
-                        </button>
-                    </div>
-                </section>
+
+                        <form onSubmit={handleChangePassword} className="settings-form">
+                            <div className="form-group">
+                                <label htmlFor="currentPassword">Contraseña actual</label>
+                                <input type="password" id="currentPassword" value={currentPassword}
+                                    onChange={e => setCurrentPassword(e.target.value)}
+                                    className="form-input" required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="newPassword">Nueva contraseña</label>
+                                <input type="password" id="newPassword" value={newPassword}
+                                    onChange={e => setNewPassword(e.target.value)}
+                                    className="form-input" required minLength={8} />
+                                <span className="form-hint">Mínimo 8 caracteres</span>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="confirmPassword">Confirmar nueva contraseña</label>
+                                <input type="password" id="confirmPassword" value={confirmPassword}
+                                    onChange={e => setConfirmPassword(e.target.value)}
+                                    className="form-input" required minLength={8} />
+                            </div>
+                            <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                                {isLoading ? <><Loader size={18} className="animate-spin" /> Cambiando...</>
+                                    : <><Lock size={18} /> Cambiar Contraseña</>}
+                            </button>
+                        </form>
+                    </section>
+                )}
+
+                {/* ==================== FISCAL PROFILE TAB ==================== */}
+                {activeTab === 'fiscal' && (
+                    <section className="settings-section">
+                        <div className="section-header">
+                            <Calculator size={24} />
+                            <h2>Perfil Fiscal</h2>
+                        </div>
+                        <p className="section-description">
+                            Estos datos son <strong>voluntarios</strong> y permiten calcular tu IRPF de forma precisa.
+                            Si mencionas datos fiscales en una conversación, se rellenarán automáticamente aquí.
+                        </p>
+
+                        {fiscal.loading ? (
+                            <div className="fiscal-loading"><Loader size={24} className="animate-spin" /> Cargando perfil fiscal...</div>
+                        ) : (
+                            <form onSubmit={handleSaveFiscalProfile} className="settings-form">
+
+                                {/* --- Datos personales fiscales --- */}
+                                <h3 className="fiscal-section-title">Datos personales</h3>
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>Comunidad Autónoma <ConversationBadge field="ccaa_residencia" /></label>
+                                        <select className="form-input" value={fiscalForm.ccaa_residencia || ''}
+                                            onChange={e => updateFiscal('ccaa_residencia', e.target.value || null)}>
+                                            {CCAA_OPTIONS.map(c => (
+                                                <option key={c} value={c}>{c || 'Selecciona...'}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Fecha de nacimiento</label>
+                                        <input type="date" className="form-input"
+                                            value={fiscalForm.fecha_nacimiento || ''}
+                                            onChange={e => updateFiscal('fecha_nacimiento', e.target.value || null)} />
+                                    </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>Situación laboral</label>
+                                        <select className="form-input" value={fiscalForm.situacion_laboral || ''}
+                                            onChange={e => updateFiscal('situacion_laboral', e.target.value || null)}>
+                                            {SITUACION_OPTIONS.map(o => (
+                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Grado de discapacidad (%)</label>
+                                        <select className="form-input"
+                                            value={fiscalForm.discapacidad_contribuyente ?? ''}
+                                            onChange={e => updateFiscal('discapacidad_contribuyente', e.target.value ? Number(e.target.value) : null)}>
+                                            <option value="">Sin discapacidad</option>
+                                            <option value="33">33% o más</option>
+                                            <option value="65">65% o más</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* --- Ingresos del trabajo --- */}
+                                <h3 className="fiscal-section-title">Ingresos del trabajo</h3>
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>Ingresos brutos anuales <ConversationBadge field="ingresos_trabajo" /></label>
+                                        <div className="input-with-suffix">
+                                            <input type="number" className="form-input" placeholder="0"
+                                                value={fiscalForm.ingresos_trabajo ?? ''}
+                                                onChange={e => updateFiscal('ingresos_trabajo', e.target.value ? Number(e.target.value) : null)} />
+                                            <span className="input-suffix">EUR/año</span>
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>SS empleado anual</label>
+                                        <div className="input-with-suffix">
+                                            <input type="number" className="form-input" placeholder="Se estima al 6,35%"
+                                                value={fiscalForm.ss_empleado ?? ''}
+                                                onChange={e => updateFiscal('ss_empleado', e.target.value ? Number(e.target.value) : null)} />
+                                            <span className="input-suffix">EUR/año</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* --- Situación familiar (MPYF) --- */}
+                                <h3 className="fiscal-section-title">Situación familiar (MPYF)</h3>
+
+                                <div className="form-group">
+                                    <label>Hijos/as a cargo</label>
+                                    {childYears.map((year, i) => (
+                                        <div key={i} className="child-year-row">
+                                            <span className="child-label">Hijo/a {i + 1}</span>
+                                            <input type="number" className="form-input child-year-input"
+                                                placeholder="Año nacimiento" min="1900" max={new Date().getFullYear()}
+                                                value={year} onChange={e => updateChildYear(i, e.target.value)} />
+                                            <button type="button" className="btn-icon-remove" onClick={() => removeChildYear(i)}>
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button type="button" className="btn btn-add-child" onClick={addChildYear}>
+                                        + Añadir hijo/a
+                                    </button>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label className="checkbox-label">
+                                            <input type="checkbox" checked={fiscalForm.custodia_compartida || false}
+                                                onChange={e => updateFiscal('custodia_compartida', e.target.checked)} />
+                                            Custodia compartida
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>Ascendientes mayores de 65 a cargo</label>
+                                        <input type="number" className="form-input" min="0" max="10"
+                                            value={fiscalForm.num_ascendientes_65 ?? ''}
+                                            onChange={e => updateFiscal('num_ascendientes_65', e.target.value ? Number(e.target.value) : null)} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Ascendientes mayores de 75 a cargo</label>
+                                        <input type="number" className="form-input" min="0" max="10"
+                                            value={fiscalForm.num_ascendientes_75 ?? ''}
+                                            onChange={e => updateFiscal('num_ascendientes_75', e.target.value ? Number(e.target.value) : null)} />
+                                    </div>
+                                </div>
+
+                                {/* --- Rentas del ahorro (collapsible) --- */}
+                                <button type="button" className="collapsible-header" onClick={() => setShowAhorro(!showAhorro)}>
+                                    {showAhorro ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                    <span>Rentas del ahorro</span>
+                                </button>
+                                {showAhorro && (
+                                    <div className="collapsible-content">
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label>Intereses de cuentas/depósitos</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0"
+                                                        value={fiscalForm.intereses ?? ''}
+                                                        onChange={e => updateFiscal('intereses', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR/año</span>
+                                                </div>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Dividendos</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0"
+                                                        value={fiscalForm.dividendos ?? ''}
+                                                        onChange={e => updateFiscal('dividendos', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR/año</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Ganancias de fondos de inversión</label>
+                                            <div className="input-with-suffix">
+                                                <input type="number" className="form-input" placeholder="0"
+                                                    value={fiscalForm.ganancias_fondos ?? ''}
+                                                    onChange={e => updateFiscal('ganancias_fondos', e.target.value ? Number(e.target.value) : null)} />
+                                                <span className="input-suffix">EUR/año</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* --- Rentas de inmuebles (collapsible) --- */}
+                                <button type="button" className="collapsible-header" onClick={() => setShowInmuebles(!showInmuebles)}>
+                                    {showInmuebles ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                    <span>Rentas de inmuebles</span>
+                                </button>
+                                {showInmuebles && (
+                                    <div className="collapsible-content">
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label>Ingresos por alquiler</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0"
+                                                        value={fiscalForm.ingresos_alquiler ?? ''}
+                                                        onChange={e => updateFiscal('ingresos_alquiler', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR/año</span>
+                                                </div>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Valor adquisición inmueble</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0"
+                                                        value={fiscalForm.valor_adquisicion_inmueble ?? ''}
+                                                        onChange={e => updateFiscal('valor_adquisicion_inmueble', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Save button */}
+                                <button type="submit" className="btn btn-primary" disabled={fiscal.saving}>
+                                    {fiscal.saving ? <><Loader size={18} className="animate-spin" /> Guardando...</>
+                                        : <><Save size={18} /> Guardar Perfil Fiscal</>}
+                                </button>
+                            </form>
+                        )}
+                    </section>
+                )}
+
+                {/* ==================== PRIVACY TAB ==================== */}
+                {activeTab === 'privacy' && (
+                    <>
+                        <section className="settings-section">
+                            <div className="section-header">
+                                <Shield size={24} />
+                                <h2>Tus Derechos RGPD</h2>
+                            </div>
+                            <p className="section-description">
+                                De acuerdo con el Reglamento General de Protección de Datos (RGPD),
+                                tienes derecho a acceder, rectificar y eliminar tus datos personales.
+                            </p>
+
+                            <div className="gdpr-action">
+                                <div className="gdpr-action-info">
+                                    <div className="gdpr-action-header">
+                                        <Download size={20} />
+                                        <h3>Exportar Mis Datos</h3>
+                                    </div>
+                                    <p>
+                                        Descarga una copia de todos tus datos personales en formato JSON
+                                        (Art. 15 RGPD - Derecho de Acceso)
+                                    </p>
+                                </div>
+                                <button onClick={handleExportData} className="btn btn-secondary" disabled={isExporting}>
+                                    {isExporting ? <><Loader size={18} className="animate-spin" /> Exportando...</>
+                                        : <><Download size={18} /> Exportar Datos</>}
+                                </button>
+                            </div>
+                        </section>
+
+                        <section className="settings-section danger-zone">
+                            <div className="section-header">
+                                <AlertCircle size={24} />
+                                <h2>Zona Peligrosa</h2>
+                            </div>
+                            <p className="section-description danger-text">
+                                Las acciones en esta sección son <strong>irreversibles</strong>. Procede con precaución.
+                            </p>
+
+                            <div className="gdpr-action">
+                                <div className="gdpr-action-info">
+                                    <div className="gdpr-action-header">
+                                        <Trash2 size={20} />
+                                        <h3>Eliminar Mi Cuenta</h3>
+                                    </div>
+                                    <p>
+                                        Elimina permanentemente tu cuenta y todos los datos asociados
+                                        (Art. 17 RGPD - Derecho de Supresión)
+                                    </p>
+                                    <ul className="danger-list">
+                                        <li>Tu cuenta de usuario</li>
+                                        <li>Todas tus conversaciones y mensajes</li>
+                                        <li>Tu perfil fiscal</li>
+                                        <li>Esta acción NO se puede deshacer</li>
+                                    </ul>
+                                </div>
+                                <button onClick={handleDeleteAccount} className="btn btn-danger" disabled={isLoading}>
+                                    <Trash2 size={18} /> Eliminar Cuenta
+                                </button>
+                            </div>
+                        </section>
+                    </>
+                )}
             </div>
         </div>
     )

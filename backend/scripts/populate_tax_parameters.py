@@ -48,21 +48,127 @@ MPYF_ESTATAL = {
 
 # CCAAs con mínimos autonómicos diferentes al estatal (2024).
 # Solo incluir las que difieren; el resto usa Estatal por defecto.
-# Fuente: Estatal-TributacionAutonomica_Medidas2025_CapI.pdf y normativa autonómica.
+# Fuentes: Estatal-TributacionAutonomica_Medidas2025_CapI.pdf,
+#           Cap IV detalle por CCAA, y normativa autonómica consolidada.
+# CCAAs que NO se incluyen (usan fallback a Estatal):
+#   - Cataluña: regula contribuyente = 5550 (mismo que Estatal)
+#   - Castilla y León: regula todos = mismo que Estatal
+#   - La Rioja: solo modifica discapacidad descendientes (necesita estructura diferente)
+#   - Cantabria, Castilla-La Mancha, Extremadura, Aragón, Murcia: no regulan MPYF
+
+# Helper para CCAAs que aplican +10% máximo a TODOS los mínimos
+def _mpyf_max_10pct(legal_ref_base):
+    """Genera dict MPYF con todos los valores al máximo permitido (+10%)."""
+    return {
+        "contribuyente": (6105, f"{legal_ref_base}"),
+        "contribuyente_65": (7370, f"{legal_ref_base}"),
+        "contribuyente_75": (8910, f"{legal_ref_base}"),
+        "descendiente_1": (2640, f"{legal_ref_base}"),
+        "descendiente_2": (2970, f"{legal_ref_base}"),
+        "descendiente_3": (4400, f"{legal_ref_base}"),
+        "descendiente_4_plus": (4950, f"{legal_ref_base}"),
+        "descendiente_menor_3": (3080, f"{legal_ref_base}"),
+        "ascendiente_65": (1265, f"{legal_ref_base}"),
+        "ascendiente_75": (2805, f"{legal_ref_base}"),
+        "discapacidad_33_65": (3300, f"{legal_ref_base}"),
+        "discapacidad_65_plus": (9900, f"{legal_ref_base}"),
+        "gastos_asistencia": (3300, f"{legal_ref_base}"),
+    }
+
+
 MPYF_CCAA_OVERRIDES = {
-    "Comunitat Valenciana": {
-        # Ley 13/1997 de la Generalitat Valenciana, art. 4
-        "contribuyente": (6105, "Ley 13/1997 GV art.4.uno"),
-        "contribuyente_65": (6705, "Ley 13/1997 GV art.4.uno"),
-        "contribuyente_75": (8505, "Ley 13/1997 GV art.4.uno"),
-        "descendiente_1": (2400, "Ley 13/1997 GV art.4.dos"),
-        "descendiente_2": (2700, "Ley 13/1997 GV art.4.dos"),
-        "descendiente_3": (4400, "Ley 13/1997 GV art.4.dos"),
-        "descendiente_4_plus": (4950, "Ley 13/1997 GV art.4.dos"),
-        "descendiente_menor_3": (2800, "Ley 13/1997 GV art.4.dos"),
+    # --- CCAAs al máximo +10% (Asturias, Valencia) ---
+    "Comunitat Valenciana": _mpyf_max_10pct(
+        "Ley 13/1997 GV art.2bis (DL 14/2022)"
+    ),
+    "Asturias": _mpyf_max_10pct(
+        "DLeg 2/2014 Asturias arts.2bis-2quinquies (Ley 3/2025)"
+    ),
+
+    # --- Galicia: ~+4.3% todos los mínimos ---
+    "Galicia": {
+        "contribuyente": (5789, "DLeg 1/2011 Galicia art.4bis"),
+        "contribuyente_65": (6988, "DLeg 1/2011 Galicia art.4bis"),
+        "contribuyente_75": (8448, "DLeg 1/2011 Galicia art.4bis"),
+        "descendiente_1": (2503, "DLeg 1/2011 Galicia art.4bis"),
+        "descendiente_2": (2816, "DLeg 1/2011 Galicia art.4bis"),
+        "descendiente_3": (4172, "DLeg 1/2011 Galicia art.4bis"),
+        "descendiente_4_plus": (4694, "DLeg 1/2011 Galicia art.4bis"),
+        "descendiente_menor_3": (2920, "DLeg 1/2011 Galicia art.4bis"),
+        "ascendiente_65": (1199, "DLeg 1/2011 Galicia art.4bis"),
+        "ascendiente_75": (2659, "DLeg 1/2011 Galicia art.4bis"),
+        "discapacidad_33_65": (3129, "DLeg 1/2011 Galicia art.4bis"),
+        "discapacidad_65_plus": (9387, "DLeg 1/2011 Galicia art.4bis"),
+        "gastos_asistencia": (3129, "DLeg 1/2011 Galicia art.4bis"),
     },
-    # NOTA: Otras CCAAs que pueden tener overrides en años futuros
-    # se añaden aquí. El sistema usa fallback a Estatal automáticamente.
+
+    # --- Andalucía: ~+4.3% todos los mínimos ---
+    "Andalucía": {
+        "contribuyente": (5790, "Ley 5/2021 Andalucía art.23bis"),
+        "contribuyente_65": (6990, "Ley 5/2021 Andalucía art.23bis"),
+        "contribuyente_75": (8450, "Ley 5/2021 Andalucía art.23bis"),
+        "descendiente_1": (2510, "Ley 5/2021 Andalucía art.23bis"),
+        "descendiente_2": (2820, "Ley 5/2021 Andalucía art.23bis"),
+        "descendiente_3": (4170, "Ley 5/2021 Andalucía art.23bis"),
+        "descendiente_4_plus": (4700, "Ley 5/2021 Andalucía art.23bis"),
+        "descendiente_menor_3": (2920, "Ley 5/2021 Andalucía art.23bis"),
+        "ascendiente_65": (1200, "Ley 5/2021 Andalucía art.23bis"),
+        "ascendiente_75": (2660, "Ley 5/2021 Andalucía art.23bis"),
+        "discapacidad_33_65": (3130, "Ley 5/2021 Andalucía art.23bis"),
+        "discapacidad_65_plus": (9390, "Ley 5/2021 Andalucía art.23bis"),
+        "gastos_asistencia": (3130, "Ley 5/2021 Andalucía art.23bis"),
+    },
+
+    # --- Canarias: ~+1% todos los mínimos ---
+    "Canarias": {
+        "contribuyente": (5606, "DLeg 1/2009 Canarias art.18quater"),
+        "contribuyente_65": (6768, "DLeg 1/2009 Canarias art.18quater"),
+        "contribuyente_75": (8182, "DLeg 1/2009 Canarias art.18quater"),
+        "descendiente_1": (2424, "DLeg 1/2009 Canarias art.18quater"),
+        "descendiente_2": (2727, "DLeg 1/2009 Canarias art.18quater"),
+        "descendiente_3": (4040, "DLeg 1/2009 Canarias art.18quater"),
+        "descendiente_4_plus": (4545, "DLeg 1/2009 Canarias art.18quater"),
+        "descendiente_menor_3": (2828, "DLeg 1/2009 Canarias art.18quater"),
+        "ascendiente_65": (1162, "DLeg 1/2009 Canarias art.18quater"),
+        "ascendiente_75": (2576, "DLeg 1/2009 Canarias art.18quater"),
+        "discapacidad_33_65": (3030, "DLeg 1/2009 Canarias art.18quater"),
+        "discapacidad_65_plus": (9090, "DLeg 1/2009 Canarias art.18quater"),
+        "gastos_asistencia": (3030, "DLeg 1/2009 Canarias art.18quater"),
+    },
+
+    # --- Illes Balears: +10% selectivo (no base, no desc_1, no menor_3) ---
+    "Illes Balears": {
+        "contribuyente": (5550, "DLeg 1/2014 Baleares art.2"),
+        "contribuyente_65": (6815, "DLeg 1/2014 Baleares art.2"),
+        "contribuyente_75": (8355, "DLeg 1/2014 Baleares art.2"),
+        "descendiente_1": (2400, "DLeg 1/2014 Baleares art.2"),
+        "descendiente_2": (2970, "DLeg 1/2014 Baleares art.2"),
+        "descendiente_3": (4400, "DLeg 1/2014 Baleares art.2"),
+        "descendiente_4_plus": (4950, "DLeg 1/2014 Baleares art.2"),
+        "descendiente_menor_3": (2800, "DLeg 1/2014 Baleares art.2"),
+        "ascendiente_65": (1265, "DLeg 1/2014 Baleares art.2"),
+        "ascendiente_75": (2805, "DLeg 1/2014 Baleares art.2"),
+        "discapacidad_33_65": (3300, "DLeg 1/2014 Baleares art.2"),
+        "discapacidad_65_plus": (9900, "DLeg 1/2014 Baleares art.2"),
+        "gastos_asistencia": (3300, "DLeg 1/2014 Baleares art.2"),
+    },
+
+    # --- Madrid: ~+7.33% (con desc_3 y desc_4+ al máximo +10%) ---
+    "Comunidad de Madrid": {
+        "contribuyente": (5956.65, "DLeg 1/2010 Madrid art.2"),
+        "contribuyente_65": (7190.91, "DLeg 1/2010 Madrid art.2"),
+        "contribuyente_75": (8693.49, "DLeg 1/2010 Madrid art.2"),
+        "descendiente_1": (2575.85, "DLeg 1/2010 Madrid art.2bis"),
+        "descendiente_2": (2897.83, "DLeg 1/2010 Madrid art.2bis"),
+        "descendiente_3": (4400, "DLeg 1/2010 Madrid art.2bis"),
+        "descendiente_4_plus": (4950, "DLeg 1/2010 Madrid art.2bis"),
+        "descendiente_menor_3": (3005.16, "DLeg 1/2010 Madrid art.2bis"),
+        "ascendiente_65": (1234.26, "DLeg 1/2010 Madrid art.2ter"),
+        "ascendiente_75": (2736.84, "DLeg 1/2010 Madrid art.2ter"),
+        "discapacidad_33_65": (3219.81, "DLeg 1/2010 Madrid art.2quater"),
+        "discapacidad_65_plus": (9659.44, "DLeg 1/2010 Madrid art.2quater"),
+        "gastos_asistencia": (3219.81, "DLeg 1/2010 Madrid art.2quater"),
+    },
 }
 
 
@@ -294,13 +400,22 @@ async def populate():
     if result.rows:
         print(f"  ✓ contribuyente = {result.rows[0]['value']}€")
 
-    print("\n🧪 Test: MPYF contribuyente Comunitat Valenciana...")
+    print("\n🧪 Test: MPYF contribuyente overrides por CCAA...")
+    for ccaa in ["Comunitat Valenciana", "Comunidad de Madrid", "Galicia", "Andalucía", "Canarias"]:
+        result = await db.execute(
+            "SELECT value FROM tax_parameters WHERE category='mpyf' AND param_key='contribuyente' AND year=? AND jurisdiction=?",
+            [year, ccaa]
+        )
+        if result.rows:
+            print(f"  ✓ {ccaa}: contribuyente = {result.rows[0]['value']}€")
+
+    print("\n🧪 Test: Total overrides por CCAA...")
     result = await db.execute(
-        "SELECT value FROM tax_parameters WHERE category='mpyf' AND param_key='contribuyente' AND year=? AND jurisdiction='Comunitat Valenciana'",
+        "SELECT jurisdiction, COUNT(*) as cnt FROM tax_parameters WHERE category='mpyf' AND year=? AND jurisdiction != 'Estatal' GROUP BY jurisdiction",
         [year]
     )
-    if result.rows:
-        print(f"  ✓ contribuyente = {result.rows[0]['value']}€ (override autonómico)")
+    for row in result.rows:
+        print(f"  ✓ {row['jurisdiction']}: {row['cnt']} parámetros")
 
     print("\n🧪 Test: Tarifa ahorro estatal tramo 1...")
     result = await db.execute(

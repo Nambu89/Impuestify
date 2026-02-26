@@ -49,14 +49,20 @@ TaxIA/
 ├── claude-progress.txt           # 📝 Log de progreso entre sesiones
 ├── init.sh                       # 🚀 Script de inicialización
 └── .claude/
-    └── commands/                 # ⚡ Slash commands personalizados
-        ├── start.md              # /start → Iniciar sesión
-        ├── test.md               # /test → Ejecutar tests
-        ├── commit.md             # /commit → Commit con convención
-        ├── review.md             # /review → Code review
-        ├── deploy.md             # /deploy → Preparar deployment
-        ├── workspace.md          # /workspace → Gestionar workspaces
-        └── files.md              # /files → Gestionar archivos
+    ├── commands/                 # ⚡ Slash commands personalizados
+    │   ├── start.md              # /start → Iniciar sesión
+    │   ├── test.md               # /test → Ejecutar tests
+    │   ├── commit.md             # /commit → Commit con convención
+    │   ├── review.md             # /review → Code review
+    │   ├── deploy.md             # /deploy → Preparar deployment
+    │   ├── workspace.md          # /workspace → Gestionar workspaces
+    │   ├── files.md              # /files → Gestionar archivos
+    │   └── crawl.md              # /crawl → Activar Document Crawler
+    └── subagents/                # 🤖 Roles especializados
+        ├── backend.md            # Backend Architect
+        ├── frontend.md           # Frontend Developer
+        ├── python.md             # Python Pro
+        └── docscrawler.md        # Document Crawler
 ```
 
 ### Descripción de cada archivo
@@ -285,6 +291,14 @@ claude
 > Refactoriza el módulo de rate limiting
 ```
 
+**Terminal 6 - Document Crawler** 🕷️
+```powershell
+cd "ruta/al/proyecto"
+claude
+> /crawl
+> Rastrear documentos de Navarra y Gipuzkoa
+```
+
 ### Gestión de Notificaciones
 
 Claude Code puede avisarte cuando termina una tarea larga. Configura esto en tu terminal:
@@ -299,17 +313,19 @@ Claude Code puede avisarte cuando termina una tarea larga. Configura esto en tu 
 
 ```mermaid
 graph TD
-    A[Tú] -->|Asigna tarea| B[Claude 1]
-    A -->|Asigna tarea| C[Claude 2]
-    A -->|Asigna tarea| D[Claude 3]
-    A -->|Asigna tarea| E[Claude 4]
-    A -->|Asigna tarea| F[Claude 5]
+    A[Tú] -->|Asigna tarea| B[Claude 1 - Feature]
+    A -->|Asigna tarea| C[Claude 2 - Bugs]
+    A -->|Asigna tarea| D[Claude 3 - Tests]
+    A -->|Asigna tarea| E[Claude 4 - Docs]
+    A -->|Asigna tarea| F[Claude 5 - Refactor]
+    A -->|Asigna tarea| H[Claude 6 - Crawler 🕷️]
     
     B -->|Notificación| A
     C -->|Notificación| A
     D -->|Notificación| A
     E -->|Notificación| A
     F -->|Notificación| A
+    H -->|Notificación| A
     
     A -->|Revisa y aprueba| G[Git Commit]
 ```

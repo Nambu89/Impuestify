@@ -156,28 +156,63 @@ async def simulate_irpf_tool(
         )
 
         simulator = IRPFSimulator(db)
-        result = await simulator.simulate(
-            jurisdiction=ccaa,
-            year=year,
-            ingresos_trabajo=ingresos_trabajo,
-            ss_empleado=ss_empleado,
-            intereses=intereses,
-            dividendos=dividendos,
-            ganancias_fondos=ganancias_fondos,
-            ingresos_alquiler=ingresos_alquiler,
-            gastos_alquiler_total=gastos_alquiler_total,
-            valor_adquisicion_inmueble=valor_adquisicion_inmueble,
-            edad_contribuyente=edad_contribuyente,
-            num_descendientes=num_descendientes,
-            anios_nacimiento_desc=anios_nacimiento_desc,
-            custodia_compartida=custodia_compartida,
-            num_ascendientes_65=num_ascendientes_65,
-            num_ascendientes_75=num_ascendientes_75,
-            discapacidad_contribuyente=discapacidad_contribuyente,
-        )
+
+        # Try requested year first, fallback to year-1 if no data
+        effective_year = year
+        year_warning = ""
+        try:
+            result = await simulator.simulate(
+                jurisdiction=ccaa,
+                year=year,
+                ingresos_trabajo=ingresos_trabajo,
+                ss_empleado=ss_empleado,
+                intereses=intereses,
+                dividendos=dividendos,
+                ganancias_fondos=ganancias_fondos,
+                ingresos_alquiler=ingresos_alquiler,
+                gastos_alquiler_total=gastos_alquiler_total,
+                valor_adquisicion_inmueble=valor_adquisicion_inmueble,
+                edad_contribuyente=edad_contribuyente,
+                num_descendientes=num_descendientes,
+                anios_nacimiento_desc=anios_nacimiento_desc,
+                custodia_compartida=custodia_compartida,
+                num_ascendientes_65=num_ascendientes_65,
+                num_ascendientes_75=num_ascendientes_75,
+                discapacidad_contribuyente=discapacidad_contribuyente,
+            )
+        except ValueError:
+            # Year not available — fallback to previous year
+            effective_year = year - 1
+            logger.info("Year %s not available, falling back to %s", year, effective_year)
+            year_warning = (
+                f"No hay datos de tramos para {year}. "
+                f"Cálculo basado en tramos de {effective_year} (los tramos apenas cambian año a año)."
+            )
+            result = await simulator.simulate(
+                jurisdiction=ccaa,
+                year=effective_year,
+                ingresos_trabajo=ingresos_trabajo,
+                ss_empleado=ss_empleado,
+                intereses=intereses,
+                dividendos=dividendos,
+                ganancias_fondos=ganancias_fondos,
+                ingresos_alquiler=ingresos_alquiler,
+                gastos_alquiler_total=gastos_alquiler_total,
+                valor_adquisicion_inmueble=valor_adquisicion_inmueble,
+                edad_contribuyente=edad_contribuyente,
+                num_descendientes=num_descendientes,
+                anios_nacimiento_desc=anios_nacimiento_desc,
+                custodia_compartida=custodia_compartida,
+                num_ascendientes_65=num_ascendientes_65,
+                num_ascendientes_75=num_ascendientes_75,
+                discapacidad_contribuyente=discapacidad_contribuyente,
+            )
 
         # Build formatted response
-        result["formatted_response"] = _format_simulation_result(result, ccaa)
+        formatted = _format_simulation_result(result, ccaa)
+        if year_warning:
+            formatted = f"⚠️ {year_warning}\n\n{formatted}"
+        result["formatted_response"] = formatted
         return result
 
     except ValueError as e:

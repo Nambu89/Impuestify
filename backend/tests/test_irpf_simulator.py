@@ -82,13 +82,18 @@ MOCK_MPYF_ESTATAL = {
 
 MOCK_MPYF_VALENCIA = {
     "contribuyente": 6105,
-    "contribuyente_65": 6705,
-    "contribuyente_75": 8505,
-    "descendiente_1": 2400,
-    "descendiente_2": 2700,
+    "contribuyente_65": 7370,
+    "contribuyente_75": 8910,
+    "descendiente_1": 2640,
+    "descendiente_2": 2970,
     "descendiente_3": 4400,
     "descendiente_4_plus": 4950,
-    "descendiente_menor_3": 2800,
+    "descendiente_menor_3": 3080,
+    "ascendiente_65": 1265,
+    "ascendiente_75": 2805,
+    "discapacidad_33_65": 3300,
+    "discapacidad_65_plus": 9900,
+    "gastos_asistencia": 3300,
 }
 
 MOCK_TRABAJO_PARAMS = {

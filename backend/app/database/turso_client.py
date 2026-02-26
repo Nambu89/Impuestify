@@ -306,7 +306,7 @@ class TursoClient:
                 title TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now')),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
             

@@ -112,3 +112,62 @@
 - pymupdf==1.26.7
 - httpx==0.28.1
 - pydantic==2.12.5
+
+[2026-02-25] [Document Crawler] - Sesión 10 completada — TOTAL 394 PDFs
+- +1 PDF: REAF Panorama Fiscalidad Autonómica y Foral 2025 (7.5 MB)
+- Completa la cobertura de deducciones autonómicas para Renta 2025:
+  * Cap I-IV Tributación Autonómica 2025 (Ministerio Hacienda) ← sesiones 5+6
+  * REAF Panorama 2025 ← esta sesión
+  * Leyes 2025 de cada CCAA con sus modificaciones IRPF ← sesiones 7+8
+  * Tributos cedidos consolidados (todos los territorios) ← sesión 2
+- PENDIENTE ~abril 2026: Manual Práctico Renta 2025 Tomo 2 (AEAT, Deducciones Autonómicas)
+
+[2026-02-25] [Document Crawler] - Sesión 9 completada — TOTAL 393 PDFs
+- +8 PDFs campaña Renta 2025 / IVA 2025 / modelos fiscales
+- AEAT: Manual Práctico IVA 2025 (6.1 MB, actualización clave)
+- AEAT Modelos: Instrucciones 303 IVA 2025 + 390 IVA 2025 + 190 Retenciones
+- AEAT IRPF: Cuadros tipos retenciones 2025 y 2026
+- Estatal: RDL 2/2026 (CRÍTICO: novedades IRPF 2025 — imputación inmobiliaria 1,1%, deducción EV/energética prorrogada, desempleo no obliga declarar, DANA exenta)
+- Estatal: Ley 5/2025 (DA61 nueva deducción 340€ para rentas trabajo ≤ SMI, mutualistas)
+- PENDIENTE ~marzo 2026: Manual Práctico Renta 2025 + Orden HAC Modelo 100 ejercicio 2025
+
+[2026-02-25] [Document Crawler] - Sesión 8 completada — TOTAL 385 PDFs
+- +8 nuevos PDFs (CCAA rezagadas + Araba NF 21/2025)
+- Araba: NF 21/2025 (medidas tributarias 2026: deflación IRPF, DAC8, IS, IP, obligado cumplidor) + DFN 2/2025 (adaptación Concierto Económico)
+- Aragón: Ley 3/2025 apoyo fiscal empresa familiar (ISD 95% empresa familiar, pactos sucesorios)
+- Asturias: Ley 3/2025 mod. DLeg 2/2014 tributos cedidos (nov 2025 — NO estaba en consolidado)
+- Cantabria: Ley 3/2024 medidas fiscales para 2025 (pub. ene 2025 en BOE)
+- Castilla y León: BOE-A-2025-27120 medidas tributarias 2026 (31 dic 2025 — NO estaba en consolidado)
+- Extremadura: Ley 1/2025 medidas fiscales urgentes (IRPF vivienda rural/vacant rentals, ISD)
+- Murcia: Ley 3/2025 Presupuestos 2025 (ITP-AJD 8%→7.75%, IRPF EV €7000, discapacidad, deporte)
+- Cobertura CCAA régimen común: COMPLETA (todos los territorios con docs 2024-2025)
+- ⚠️ RE-INGESTA RAG recomendada: Murcia ITP rate change, Asturias+CyL diciembre 2025
+
+[2026-02-25] [Document Crawler] - Sesión 7 completada — TOTAL 375 PDFs
+- +21 nuevos PDFs esta sesión
+- REFORMA FISCAL 2025 FORALES (crítico para RAG):
+  * Gipuzkoa: NF 1/2025 (reforma integral may 2025) + NF 2/2025 + NF 3/2025 (Impuesto Complementario Global Pilar2 OCDE) + NF 4/2025 + DFN 1/2025 (dic 2025)
+  * Araba: NF 3/2025 (revisión fiscal abr 2025) + NF 16/2025 (Impuesto Complementario) + NF 17/2025 (IMIC) + NF 26/2023
+  * Bizkaia: NF 2/2025 (revisión fiscal abr 2025) + NF_dic2025 medidas tributarias
+- CCAA régimen común:
+  * Galicia: Ley 10/2023 + Ley 5/2024 + Ley 5/2025 (publicada BOE feb 2026 — muy reciente)
+  * Canarias: Ley 19/1994 REF consolidado + RD 1758/2007 ZEC reglamento
+  * Madrid: DLeg 1/2010 consolidado 2025 + Ley 5/2024 vivienda/despoblación
+  * Andalucía: Ley 8/2025 Presupuestos 2026 + Ley 5/2021 consolidado 2026
+  * Estatal: RD 1624/1992 Reglamento IVA consolidado (pendiente histórico cerrado)
+- Pendientes tras sesión 7: Araba NF 21/2025 (no localizada), Gipuzkoa NF 2/2014 IS post-reforma
+- ⚠️ RE-INGESTA RAG necesaria: normas reforma fiscal 2025 forales son críticas para consultas actualizadas
+
+[2026-02-23] [Document Crawler] - Sesiones 3+4+5+6 completadas — TOTAL 354 PDFs
+- Sesion 3 (+9): Gipuzkoa Manual+NF3/2014(2021)+NF1/2025+DF33; Araba Manual+Instruccion; Bizkaia Instrucciones 1/2025+2/2024+2/2023
+- Sesion 4 (+8): IS estatal Ley27/2014+RD634/2015; Autonomos Ley20/2007; Bizkaia IS NF11/2013+DF203/2013; Gipuzkoa IS Novedades+Modelo200; RDL13/2022
+- Sesion 5 (+23 únicos): IS forales: Gipuzkoa NF2/2014+DF17/2015+OF252, Araba NF37/2013+DF40, Navarra LF26/2016+LF22/2023+LF20/2024; Bizkaia IS Instrucciones 3+4/2023; Autónomos: OrdenHAC 1347/2024+1425/2025 módulos EO, RETA2025; Libro Normativa I+III+CapII+CapIV+REAF2024
+- Sesion 6 (+9): ITP-AJD+IP: Cap I+III Tributación Autonómica 2025, Orden HAC/242/2025, Tabla ITP, Cataluña DLeg 1/2024 (completo), Andalucía Ley 5/2021 (actual), Baleares+Galicia consolidados 2024, Valencia Cátedra Notarial 2025
+- Cobertura: IRPF✅ IVA✅ IS✅ ISD✅ ITP-AJD✅ IP✅ Autónomos✅ Bizkaia/Batuz✅
+- ⚠️ RE-INGESTA RAG necesaria: muchos PDFs nuevos no están en el RAG aún
+
+[2026-02-23] [Document Crawler] - Sesiones 3+4 completadas (SUPERSEDIDO — ver entrada anterior)
+- Sesion 3 (+9 PDFs): Gipuzkoa Manual Renta 2024 + NF3/2014(2021) + NF1/2025 + DF33/2014 Reglamento IRPF; Araba Manual Renta 2024 + Instruccion 1/2025; Bizkaia Instrucciones DGH 1/2025+2/2024+2/2023
+- Sesion 4 (+5 PDFs): IS estatal Ley27/2014+RD634/2015; Autonomos Ley20/2007; Bizkaia IS NF11/2013+DF203/2013
+- Total acumulado: 318 PDFs en docs/
+- Pendientes prioritarios: IS foral Gipuzkoa (NF2/2014) + Araba (NF37/2013) + Navarra (LF26/2016); RDL13/2022 autonomos; tablas RETA 2025

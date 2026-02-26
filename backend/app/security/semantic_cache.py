@@ -76,9 +76,19 @@ class SemanticCache:
         """
         from app.config import settings
         
-        self.url = url or settings.UPSTASH_VECTOR_REST_URL
-        self.token = token or settings.UPSTASH_VECTOR_REST_TOKEN
+        # Try settings first, then fall back to os.environ directly
+        self.url = url or settings.UPSTASH_VECTOR_REST_URL or os.environ.get('UPSTASH_VECTOR_REST_URL')
+        self.token = token or settings.UPSTASH_VECTOR_REST_TOKEN or os.environ.get('UPSTASH_VECTOR_REST_TOKEN')
         self.threshold = threshold if threshold is not None else settings.SEMANTIC_CACHE_THRESHOLD
+        
+        # Strip quotes if present (Railway sometimes wraps values in quotes)
+        if self.url:
+            self.url = self.url.strip('"').strip("'")
+        if self.token:
+            self.token = self.token.strip('"').strip("'")
+        
+        # Debug logging for troubleshooting
+        logger.info(f"🔍 SemanticCache init: url={'SET' if self.url else 'MISSING'}, token={'SET' if self.token else 'MISSING'}, lib={UPSTASH_VECTOR_AVAILABLE}")
         
         # Strict enabled check: config enabled + library available + credentials present
         self.enabled = (
@@ -239,9 +249,17 @@ def get_semantic_cache() -> SemanticCache:
     global _semantic_cache
     if _semantic_cache is None:
         from app.config import settings
+        
+        # Debug: log what settings has
+        _url = getattr(settings, 'UPSTASH_VECTOR_REST_URL', None)
+        _token = getattr(settings, 'UPSTASH_VECTOR_REST_TOKEN', None)
+        _env_url = os.environ.get('UPSTASH_VECTOR_REST_URL')
+        
+        logger.info(f"🔍 get_semantic_cache: settings.URL={'SET' if _url else 'NONE'}, env.URL={'SET' if _env_url else 'NONE'}")
+        
         _semantic_cache = SemanticCache(
-            url=getattr(settings, 'UPSTASH_VECTOR_REST_URL', None),
-            token=getattr(settings, 'UPSTASH_VECTOR_REST_TOKEN', None),
+            url=_url,
+            token=_token,
             enabled=getattr(settings, 'ENABLE_SEMANTIC_CACHE', True),
             threshold=getattr(settings, 'SEMANTIC_CACHE_THRESHOLD', 0.93)
         )

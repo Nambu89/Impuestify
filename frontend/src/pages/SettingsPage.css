@@ -1,4 +1,4 @@
-/* Settings Page Styles - MOBILE FIRST, GDPR Compliance */
+/* Settings Page Styles - MOBILE FIRST, Tabs + Fiscal Profile */
 /* Uses global CSS variables from global.css - no :root redefinition needed */
 
 /* ========== BASE (MOBILE 320px+) ========== */
@@ -17,7 +17,7 @@
 
 .settings-header {
     text-align: center;
-    margin-bottom: var(--spacing-8);
+    margin-bottom: var(--spacing-6);
 }
 
 .settings-header h1 {
@@ -42,6 +42,44 @@
     margin: 0 auto;
 }
 
+/* ========== TABS ========== */
+
+.settings-tabs {
+    display: flex;
+    gap: var(--spacing-1);
+    margin-bottom: var(--spacing-5);
+    border-bottom: 2px solid var(--color-gray-200);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3) var(--spacing-4);
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-gray-600);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+}
+
+.tab-btn:hover {
+    color: var(--color-primary);
+}
+
+.tab-btn.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: 600;
+}
+
 /* Message Banner */
 .message-banner {
     display: flex;
@@ -56,15 +94,8 @@
 }
 
 @keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .message-banner.success {
@@ -130,6 +161,14 @@
     font-weight: 500;
     color: var(--color-gray-900);
     font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.form-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
 }
 
 .form-input {
@@ -139,12 +178,55 @@
     font-size: var(--font-size-base);
     transition: all var(--transition-fast);
     font-family: inherit;
+    background: var(--color-white);
 }
 
 .form-input:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-input:disabled {
+    background: var(--color-gray-100);
+    color: var(--color-gray-500);
+    cursor: not-allowed;
+}
+
+select.form-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 36px;
+}
+
+/* Form rows (2 columns) */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+}
+
+/* Input with suffix (EUR/año) */
+.input-with-suffix {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-suffix .form-input {
+    flex: 1;
+    padding-right: 80px;
+}
+
+.input-suffix {
+    position: absolute;
+    right: 12px;
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+    pointer-events: none;
 }
 
 /* Buttons */
@@ -161,7 +243,6 @@
     cursor: pointer;
     transition: all var(--transition-fast);
     width: 100%;
-    /* Full width on mobile */
 }
 
 .settings-page .btn:disabled {
@@ -269,36 +350,141 @@
     color: var(--color-gray-600);
 }
 
-/* Account Info */
-.account-info {
+/* ========== FISCAL PROFILE STYLES ========== */
+
+.fiscal-section-title {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-gray-800);
+    margin: var(--spacing-2) 0 0 0;
+    padding-bottom: var(--spacing-2);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.fiscal-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-8);
+    color: var(--color-gray-500);
+    font-size: var(--font-size-sm);
+}
+
+/* Conversation badge */
+.conversation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--color-primary);
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+.conversation-badge svg {
+    color: var(--color-primary);
+}
+
+/* Checkbox label */
+.checkbox-label {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: var(--spacing-2) !important;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+/* Child year rows */
+.child-year-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-2);
+}
+
+.child-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    min-width: 60px;
+}
+
+.child-year-input {
+    flex: 1;
+    max-width: 180px;
+}
+
+.btn-icon-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    color: var(--color-error);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-icon-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--color-error);
+}
+
+.btn-add-child {
+    padding: var(--spacing-2) var(--spacing-4) !important;
+    font-size: var(--font-size-sm) !important;
+    color: var(--color-primary) !important;
+    background: rgba(37, 99, 235, 0.05) !important;
+    border: 1px dashed var(--color-primary) !important;
+    border-radius: var(--radius-lg) !important;
+    cursor: pointer;
+    width: auto !important;
+    transition: all var(--transition-fast);
+}
+
+.btn-add-child:hover {
+    background: rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Collapsible sections */
+.collapsible-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    width: 100%;
+    padding: var(--spacing-3) var(--spacing-4);
     background: var(--color-gray-50);
     border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-gray-700);
+    transition: all var(--transition-fast);
 }
 
-.info-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-4);
+.collapsible-header:hover {
+    background: var(--color-gray-100);
 }
 
-.info-item {
+.collapsible-content {
+    padding: var(--spacing-4) 0 0 0;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-1);
-}
-
-.info-label {
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    color: var(--color-gray-600);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.info-value {
-    font-size: var(--font-size-sm);
-    color: var(--color-gray-900);
-    font-family: monospace;
+    gap: var(--spacing-4);
+    animation: slideDown 0.2s ease;
 }
 
 /* Loading animation */
@@ -307,13 +493,8 @@
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* ========== TABLET (768px+) ========== */
@@ -348,7 +529,6 @@
 
     .settings-page .btn {
         width: auto;
-        /* Auto width on tablet+ */
         min-width: 160px;
     }
 
@@ -359,12 +539,17 @@
         padding: var(--spacing-6);
     }
 
-    .info-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .form-row {
+        grid-template-columns: 1fr 1fr;
     }
 
     .form-input {
         font-size: var(--font-size-base);
+    }
+
+    .tab-btn {
+        font-size: var(--font-size-base);
+        padding: var(--spacing-3) var(--spacing-5);
     }
 }
 
@@ -373,14 +558,13 @@
     .settings-page {
         padding-top: 70px;
         margin-left: 280px;
-        /* Sidebar offset */
     }
 
     .settings-container {
         padding: var(--spacing-10) var(--spacing-8);
     }
 
-    .form-input:hover {
+    .form-input:hover:not(:disabled) {
         border-color: var(--color-gray-600);
     }
 }

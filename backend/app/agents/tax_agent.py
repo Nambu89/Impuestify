@@ -153,6 +153,16 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 - **calculate_autonomous_quota**: Para calcular cuotas de autónomos (siempre año {self.autonomous_quota_year})
 - **search_tax_regulations**: Solo cuando el usuario PIDA explícitamente información reciente o la documentación RAG sea claramente insuficiente
 
+🚨 **REGLA CRÍTICA — COMUNIDAD AUTÓNOMA (CCAA)**:
+- La CCAA es **OBLIGATORIA** para cualquier cálculo de IRPF (simulate_irpf o calculate_irpf).
+- Si la CCAA aparece en el CONTEXTO DEL USUARIO (memoria), úsala directamente.
+- Si el usuario la menciona en la conversación (ej: "vivo en Madrid"), úsala.
+- **Si NO conoces la CCAA** (ni por memoria, ni por la conversación, ni por el historial):
+  → **PREGUNTA al usuario** antes de llamar a la herramienta.
+  → **NUNCA INVENTES ni asumas** una CCAA por defecto.
+  → Ejemplo: "Para poder calcular tu IRPF necesito saber en qué comunidad autónoma resides, ya que los tramos autonómicos varían. ¿En qué CCAA vives?"
+- La CCAA afecta tanto a los tramos de la tarifa autonómica como al MPYF.
+
 ⚠️ **REGLA DE ORO: PRIORIZA EL CONTEXTO RAG**:
 - **PRIMERO**: Usa SIEMPRE la información del contexto RAG proporcionado (aunque sea de 2024 o 2025)
 - **SOLO búsca en web** si:
@@ -642,9 +652,9 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			if any(char.isdigit() for char in query):
 				requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de cuota de autónomos para {self.autonomous_quota_year}. DEBES usar la herramienta calculate_autonomous_quota.\n"
 		
-		if any(kw in query_lower for kw in ["irpf", "renta", "cuánto pago de impuestos", "retención", "cuanto pago de impuestos", "retencion"]):
+		if any(kw in query_lower for kw in ["irpf", "renta", "cuánto pago de impuestos", "retención", "cuanto pago de impuestos", "retencion", "tributar", "tributo"]):
 			if any(char.isdigit() for char in query):
-				requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de IRPF. Usa simulate_irpf con los ingresos brutos y la CCAA del usuario.\n"
+				requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de IRPF. Usa simulate_irpf con los ingresos brutos y la CCAA del usuario. Si NO conoces la CCAA del usuario (ni por memoria ni por la conversación), PREGÚNTALA antes de calcular — NUNCA inventes una CCAA.\n"
 		
 		# NO agregar hint de search para fechas/plazos - deja que el RAG-first funcione
 		
