@@ -148,8 +148,9 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 7. NUNCA ayudes a evadir impuestos
 
 ## Herramientas disponibles:
+- **simulate_irpf**: Simulación COMPLETA de IRPF. Acepta ingresos brutos del trabajo, alquiler, ahorro, y situación familiar. Calcula automáticamente gastos deducibles, reducción trabajo, MPYF por CCAA, tarifa general y del ahorro. USA ESTA como herramienta principal para IRPF.
+- **calculate_irpf**: Cálculo rápido solo de tramos (sin deducciones ni MPYF). Usar solo si el usuario ya te da la base liquidable directamente.
 - **calculate_autonomous_quota**: Para calcular cuotas de autónomos (siempre año {self.autonomous_quota_year})
-- **calculate_irpf**: Para calcular IRPF (especifica el año fiscal correcto)
 - **search_tax_regulations**: Solo cuando el usuario PIDA explícitamente información reciente o la documentación RAG sea claramente insuficiente
 
 ⚠️ **REGLA DE ORO: PRIORIZA EL CONTEXTO RAG**:
@@ -203,30 +204,38 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
   → **EXPLICA** en la respuesta: "He calculado para tus ingresos de [año]"
 - Si el usuario especifica año (ej: "IRPF 2025"), usa ese año exacto
 
-### **PASO 2: Calcular base imponible**
+### **PASO 2: Usar simulate_irpf (herramienta principal)**
+
+**simulate_irpf calcula TODO automáticamente**: gastos deducibles, SS, reducción trabajo, MPYF.
+Tú solo necesitas pasar los ingresos brutos y la CCAA.
 
 **Usuario dice "cobro X€" o "gano X€" o "salario de X€" SIN especificar "bruto" o "neto":**
 - ✅ **ASUME** que son ingresos brutos (lo más común)
-- ✅ **APLICA** reducción por rendimientos del trabajo automáticamente:
-  - Hasta 15.876€: Reducción = 6.498€
-  - De 15.876€ a 19.747€: Reducción gradual
-  - Más de 19.747€: Reducción = 3.500€
-- ✅ **CALCULA** base imponible = ingresos_brutos - reducción - cotizaciones_SS (aprox 6.35%)
-- ✅ **LLAMA** a calculate_irpf con la base imponible calculada y el año fiscal correcto
+- ✅ **LLAMA** a simulate_irpf(comunidad_autonoma="...", ingresos_trabajo=X, year=[año])
+- ✅ El tool calcula automáticamente: SS ~6.35%, otros gastos 2.000€, reducción trabajo, MPYF
 - ✅ **EXPLICA** al final: "He calculado asumiendo que los X€ son tu salario bruto anual de [año]"
+
+**Si el usuario menciona hijos, ascendientes o discapacidad:**
+- ✅ Pasa los datos familiares al tool: num_descendientes, anios_nacimiento_desc, custodia_compartida, etc.
+- ✅ El tool calculará automáticamente el MPYF correcto para su CCAA
+- ✅ Si no tienes datos familiares, el tool aplica el mínimo del contribuyente por defecto
+
+**Si el usuario tiene alquiler o ahorros:**
+- ✅ Pasa también: ingresos_alquiler, intereses, dividendos, ganancias_fondos
+- ✅ El tool aplica la tarifa del ahorro y reducción del 60% para alquileres
 
 **Ejemplo:**
 ```
-Usuario: "Si cobro 60.000€ en Madrid, ¿cuánto pagaré de IRPF?"
+Usuario: "Si cobro 60.000€ en Madrid, tengo un hijo de 2 años, ¿cuánto pagaré de IRPF?"
 
-TÚ:
-1. Determinas año: Como no especificó, preguntas o asumes el más relevante
-2. Ingresos brutos: 60.000€
-3. Reducción por trabajo: 3.500€
-4. Cotizaciones SS: 3.810€
-5. Base imponible: 52.690€
-6. LLAMAS: calculate_irpf(base_imponible=52690, region="madrid", year=[año_fiscal])
-7. EXPLICAS claramente qué año usaste
+TÚ LLAMAS: simulate_irpf(
+  comunidad_autonoma="Madrid",
+  ingresos_trabajo=60000,
+  year=[año_fiscal],
+  num_descendientes=1,
+  anios_nacimiento_desc=[2024]
+)
+→ El tool calcula: gastos, reducción, MPYF con hijo <3 años, cuota final
 ```
 
 ---
@@ -635,7 +644,7 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		
 		if any(kw in query_lower for kw in ["irpf", "renta", "cuánto pago de impuestos", "retención", "cuanto pago de impuestos", "retencion"]):
 			if any(char.isdigit() for char in query):
-				requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de IRPF. Determina el año fiscal correcto antes de llamar calculate_irpf.\n"
+				requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de IRPF. Usa simulate_irpf con los ingresos brutos y la CCAA del usuario.\n"
 		
 		# NO agregar hint de search para fechas/plazos - deja que el RAG-first funcione
 		

@@ -34,7 +34,20 @@ async def analyze_payslip_tool(
 	"""
 	try:
 		logger.info(f"Analyzing payslip: {period_month}/{period_year}, gross={gross_salary}")
-		
+
+		# Fetch expected SS percentage from DB (data-driven, no hardcoded)
+		expected_ss_percentage = 6.35  # fallback default
+		try:
+			from app.utils.tax_parameter_repository import TaxParameterRepository
+			from app.database.turso_client import get_db_client
+			db = await get_db_client()
+			repo = TaxParameterRepository(db)
+			expected_ss_percentage = await repo.get_param(
+				'trabajo', 'ss_empleado_pct', period_year, default=6.35
+			)
+		except Exception as e:
+			logger.warning(f"Could not fetch SS pct from DB, using default: {e}")
+
 		# Calcular porcentajes
 		irpf_percentage = (irpf_withholding / gross_salary * 100) if gross_salary > 0 else 0
 		ss_percentage = (ss_contribution / gross_salary * 100) if gross_salary > 0 else 0
@@ -74,8 +87,7 @@ async def analyze_payslip_tool(
 		else:
 			irpf_analysis = "Retención muy alta, corresponde a salarios altos."
 		
-		# Análisis de cotizaciones SS
-		expected_ss_percentage = 6.35  # Porcentaje estándar para contingencias comunes
+		# Análisis de cotizaciones SS (expected_ss_percentage fetched from DB above)
 		if abs(ss_percentage - expected_ss_percentage) > 1:
 			ss_analysis = f"Cotización atípica ({ss_percentage:.2f}%). Verifica que incluya contingencias comunes (4.7%), desempleo (1.55%) y formación (0.1%)."
 		else:

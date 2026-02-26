@@ -334,12 +334,12 @@ class InvoiceExtractor:
                 data['total_iva'] = sum(cuotas)
 
         # Calcular cuotas IVA si tenemos bases pero no cuotas
-        if data.get('base_imponible_21') and not data.get('cuota_iva_21'):
-            data['cuota_iva_21'] = round(data['base_imponible_21'] * 0.21, 2)
-        if data.get('base_imponible_10') and not data.get('cuota_iva_10'):
-            data['cuota_iva_10'] = round(data['base_imponible_10'] * 0.10, 2)
-        if data.get('base_imponible_4') and not data.get('cuota_iva_4'):
-            data['cuota_iva_4'] = round(data['base_imponible_4'] * 0.04, 2)
+        # Rate derived from field name (base_imponible_XX → XX%), no hardcoded values
+        for iva_rate in [21, 10, 4]:
+            base_key = f'base_imponible_{iva_rate}'
+            cuota_key = f'cuota_iva_{iva_rate}'
+            if data.get(base_key) and not data.get(cuota_key):
+                data[cuota_key] = round(data[base_key] * (iva_rate / 100), 2)
 
     def _calculate_confidence(self, data: Dict) -> float:
         """Calcula un score de confianza basado en campos extraídos."""

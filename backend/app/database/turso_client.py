@@ -263,8 +263,8 @@ class TursoClient:
                 id TEXT PRIMARY KEY,
                 chunk_id TEXT NOT NULL UNIQUE,
                 embedding BLOB NOT NULL,
-                model_name TEXT DEFAULT 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2',
-                dimensions INTEGER DEFAULT 384,
+                model_name TEXT DEFAULT 'text-embedding-3-large',
+                dimensions INTEGER DEFAULT 1536,
                 created_at TEXT DEFAULT (datetime('now')),
                 FOREIGN KEY (chunk_id) REFERENCES document_chunks(id) ON DELETE CASCADE
             )
@@ -456,6 +456,27 @@ class TursoClient:
             # Workspace embedding indexes
             "CREATE INDEX IF NOT EXISTS idx_ws_embeddings_workspace ON workspace_file_embeddings(workspace_id)",
             "CREATE INDEX IF NOT EXISTS idx_ws_embeddings_file ON workspace_file_embeddings(file_id)",
+
+            # =============================================
+            # TAX PARAMETERS TABLE (data-driven tax config)
+            # =============================================
+
+            """
+            CREATE TABLE IF NOT EXISTS tax_parameters (
+                id TEXT PRIMARY KEY,
+                category TEXT NOT NULL,
+                param_key TEXT NOT NULL,
+                year INTEGER NOT NULL,
+                jurisdiction TEXT NOT NULL DEFAULT 'Estatal',
+                value REAL NOT NULL,
+                description TEXT,
+                legal_ref TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                UNIQUE(category, param_key, year, jurisdiction)
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_tax_params_lookup ON tax_parameters(category, year, jurisdiction)",
         ]
         
         try:
