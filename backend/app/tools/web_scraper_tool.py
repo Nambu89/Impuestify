@@ -51,7 +51,13 @@ CCAA_NORMALIZATION = {
     "extremadura": "Extremadura",
     "galicia": "Galicia",
     "la rioja": "La Rioja",
-    "rioja": "La Rioja"
+    "rioja": "La Rioja",
+    "ceuta": "Ceuta",
+    "melilla": "Melilla",
+    "ciudad autónoma de ceuta": "Ceuta",
+    "ciudad autonoma de ceuta": "Ceuta",
+    "ciudad autónoma de melilla": "Melilla",
+    "ciudad autonoma de melilla": "Melilla",
 }
 
 

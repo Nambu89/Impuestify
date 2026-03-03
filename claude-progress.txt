@@ -7,6 +7,25 @@
 ## Sesiones Recientes
 ---
 
+[2026-03-04] [Competitive Intelligence] - Comparativa Impuestify vs TaxDown + Analisis Rita + Roadmap Backend
+- Investigacion web: TaxDown 2M+ usuarios, ~40M EUR funding, 10M+ EUR ingresos, Mexico 600K+
+- AsesorIA (chatbot TaxDown): ChatGPT basico gratuito, inferior a nuestro RAG multi-agente
+- Analisis profundo Rita: rules engine + decision tree + ML (NO es IA generativa)
+  - ~3,000 preguntas → ~338 deducciones (16 estatales + 322 autonomicas)
+  - Depende de Cl@ve (que no tenemos); solo 33% usuarios logra ahorro (dato BBVA)
+  - Rita NO cubre forales (PV/Navarra) — nuestra ventaja competitiva principal
+- Nuestro sistema actual: CERO identificacion de deducciones (solo MPYF/SS/trabajo en simulator)
+- Precio cambiado: 15→5 EUR/mes (60 EUR/ano, competitivo con TaxDown 35-65 EUR)
+- Estrategia definida: NO presentacion telematica, NO APImpuestos, NO Colaborador Social
+  - Impuestify = complemento del asesor, no sustituto
+  - Export informe PDF + compartir con gestoria via email/enlace
+- Roadmap Backend escrito (7 fases): Deduction Registry → Discovery Tool → TaxAgent proactivo → Forales → Export asesor → Autonomicas → Integrar en simulator
+- Reportes: docs/competitive/taxdown_comparison.md, docs/competitive/_estado.md
+- Instrucciones Backend detalladas en agent-comms.md (schema SQL, tool definition, formatos)
+- PENDIENTE: comparativas Declarando/Taxfix/Xolo, benchmark AsesorIA en vivo
+- Estado actualizado: docs/competitive/_estado.md
+- PENDIENTE: comparativas Declarando/Taxfix/Xolo, benchmark AsesorIA, investigar APImpuestos
+
 [2026-01-20] [Session Frontend] - Implementación UI de Workspaces (Fase 5 completada)
 - Creado `WorkspacesPage.tsx` + `WorkspacesPage.css` - Página de gestión de workspaces
 - Creado `useWorkspaces.ts` - Hook para CRUD de workspaces y archivos

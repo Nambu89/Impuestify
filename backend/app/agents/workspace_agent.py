@@ -92,6 +92,7 @@ class WorkspaceAgent:
             "tipo_retencion_facturas": "Tipo retención facturas",
             "tarifa_plana": "Tarifa plana",
             "pluriactividad": "Pluriactividad",
+            "ceuta_melilla": "Residente en Ceuta/Melilla",
         }
         for key, label in label_map.items():
             val = fp.get(key)

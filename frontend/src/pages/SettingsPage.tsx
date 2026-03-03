@@ -624,6 +624,7 @@ export default function SettingsPage() {
                                                             <option value="simplificado">Simplificado</option>
                                                             <option value="recargo_equivalencia">Recargo de equivalencia</option>
                                                             <option value="exento">Exento</option>
+                                                            <option value="ipsi">IPSI (Ceuta/Melilla)</option>
                                                         </select>
                                                     </div>
                                                     <div className="form-group">
@@ -696,6 +697,28 @@ export default function SettingsPage() {
                                                                 onChange={e => updateFiscal('pluriactividad', e.target.checked)} />
                                                             Pluriactividad (también asalariado)
                                                         </label>
+                                                    </div>
+                                                </div>
+
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label className="checkbox-label">
+                                                            <input type="checkbox" checked={fiscalForm.ceuta_melilla || false}
+                                                                onChange={e => {
+                                                                    const checked = e.target.checked
+                                                                    updateFiscal('ceuta_melilla', checked)
+                                                                    if (checked && (!fiscalForm.regimen_iva || fiscalForm.regimen_iva === 'general')) {
+                                                                        updateFiscal('regimen_iva', 'ipsi')
+                                                                    }
+                                                                    if (!checked && fiscalForm.regimen_iva === 'ipsi') {
+                                                                        updateFiscal('regimen_iva', 'general')
+                                                                    }
+                                                                }} />
+                                                            Residente en Ceuta o Melilla
+                                                        </label>
+                                                        <small className="field-hint">
+                                                            Deducción del 60% en IRPF + bonificación 50% cuota SS + IPSI en lugar de IVA
+                                                        </small>
                                                     </div>
                                                 </div>
                                             </div>
@@ -788,7 +811,7 @@ export default function SettingsPage() {
                                     className="btn btn-primary"
                                 >
                                     <CreditCard size={18} />
-                                    Suscribirme - 15 EUR/mes
+                                    Suscribirme - 5 EUR/mes
                                 </button>
                             </div>
                         )}

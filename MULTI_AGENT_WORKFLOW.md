@@ -57,12 +57,14 @@ TaxIA/
     │   ├── deploy.md             # /deploy → Preparar deployment
     │   ├── workspace.md          # /workspace → Gestionar workspaces
     │   ├── files.md              # /files → Gestionar archivos
-    │   └── crawl.md              # /crawl → Activar Document Crawler
+    │   ├── crawl.md              # /crawl → Activar Document Crawler
+    │   └── competitive.md       # /competitive → Activar Competitive Intelligence
     └── subagents/                # 🤖 Roles especializados
         ├── backend.md            # Backend Architect
         ├── frontend.md           # Frontend Developer
         ├── python.md             # Python Pro
-        └── docscrawler.md        # Document Crawler
+        ├── docscrawler.md        # Document Crawler
+        └── competitive.md        # Competitive Intelligence Analyst
 ```
 
 ### Descripción de cada archivo
@@ -248,55 +250,68 @@ Tipos soportados: nominas, facturas, declaraciones, otros documentos fiscales.
 
 ---
 
-## 🔥 Trabajo en Paralelo (5 Agentes)
+## 🔥 Trabajo en Paralelo (7 Agentes)
 
-### El Setup de Boris Cherny
+### El Setup de Boris Cherny (ampliado)
 
-Boris Cherny (responsable de Claude Code en Anthropic) trabaja con **5 terminales de Claude en paralelo**, cada una asignada a una tarea diferente.
+Boris Cherny (responsable de Claude Code en Anthropic) trabaja con **5 terminales de Claude en paralelo**, cada una asignada a una tarea diferente. Nosotros lo ampliamos a **7 agentes especializados**.
 
 ### Cómo Replicarlo
 
-**Terminal 1 - Feature Principal**
+**Terminal 1 - Backend** (`/backend`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
-> Implementa la autenticación con OAuth2
+> /backend
+> Implementa el nuevo endpoint para fiscal profile
 ```
 
-**Terminal 2 - Bug Fixes**
+**Terminal 2 - Frontend** (`/frontend`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
-> Corrige el bug del SSE streaming que no reconecta
+> /frontend
+> Crea la UI del formulario fiscal con pestañas
 ```
 
-**Terminal 3 - Tests**
+**Terminal 3 - Tests** (`/test`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
-> Escribe tests unitarios para el módulo auth
+> /test
+> Ejecuta todos los tests y verifica cobertura
 ```
 
-**Terminal 4 - Documentación**
+**Terminal 4 - Python Pro** (`/python`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
-> Actualiza el README con las nuevas features
+> /python
+> Optimiza el pipeline de RAG para reducir latencia
 ```
 
-**Terminal 5 - Refactoring**
-```powershell
-cd "ruta/al/proyecto"
-claude
-> Refactoriza el módulo de rate limiting
-```
-
-**Terminal 6 - Document Crawler** 🕷️
+**Terminal 5 - Document Crawler** 🕷️ (`/crawl`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
 > /crawl
 > Rastrear documentos de Navarra y Gipuzkoa
+```
+
+**Terminal 6 - Competitive Intelligence** 🔍 (`/competitive`)
+```powershell
+cd "ruta/al/proyecto"
+claude
+> /competitive
+> Compara Impuestify con TaxDown en todas las categorías
+```
+
+**Terminal 7 - Coordinación/Otros**
+```powershell
+cd "ruta/al/proyecto"
+claude
+> /start
+> /review → Code review / /commit → Git commit / /deploy → Railway
 ```
 
 ### Gestión de Notificaciones
@@ -313,20 +328,21 @@ Claude Code puede avisarte cuando termina una tarea larga. Configura esto en tu 
 
 ```mermaid
 graph TD
-    A[Tú] -->|Asigna tarea| B[Claude 1 - Feature]
-    A -->|Asigna tarea| C[Claude 2 - Bugs]
-    A -->|Asigna tarea| D[Claude 3 - Tests]
-    A -->|Asigna tarea| E[Claude 4 - Docs]
-    A -->|Asigna tarea| F[Claude 5 - Refactor]
-    A -->|Asigna tarea| H[Claude 6 - Crawler 🕷️]
-    
+    A[Tú - Director] -->|/backend| B[Claude 1 - Backend Architect]
+    A -->|/frontend| C[Claude 2 - Frontend Developer]
+    A -->|/test| D[Claude 3 - Testing/QA]
+    A -->|/python| E[Claude 4 - Python Pro]
+    A -->|/crawl| F[Claude 5 - Document Crawler 🕷️]
+    A -->|/competitive| H[Claude 6 - Competitive Intelligence 🔍]
+    A -->|/sync| I[Claude 7 - Coordination]
+
     B -->|Notificación| A
     C -->|Notificación| A
     D -->|Notificación| A
     E -->|Notificación| A
     F -->|Notificación| A
     H -->|Notificación| A
-    
+
     A -->|Revisa y aprueba| G[Git Commit]
 ```
 

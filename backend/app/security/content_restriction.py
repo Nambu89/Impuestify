@@ -80,13 +80,17 @@ AUTONOMO_KEYWORDS: List[str] = [
     "pago fraccionado irpf",
     "casillas iva",
     "casillas del 303",
+    # IPSI (Ceuta/Melilla — replaces IVA)
+    "ipsi",
+    "impuesto producción servicios importación",
+    "impuesto produccion servicios importacion",
 ]
 
 # Response shown to salaried-plan users who ask about autonomo topics.
 AUTONOMO_RESPONSE = (
     "Estás solicitando información sobre **autónomos**, pero tu cuenta está "
     "registrada como **trabajador por cuenta ajena**.\n\n"
-    "Tu plan actual (**Particular — 15 €/mes**) incluye:\n"
+    "Tu plan actual (**Particular — 5 €/mes**) incluye:\n"
     "- Análisis de nóminas\n"
     "- Cálculo de IRPF (Modelo 100)\n"
     "- Consultas sobre notificaciones de la AEAT\n\n"

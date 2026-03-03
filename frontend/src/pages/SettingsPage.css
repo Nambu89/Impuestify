@@ -404,6 +404,14 @@ select.form-input {
     accent-color: var(--color-primary);
 }
 
+.field-hint {
+    display: block;
+    color: var(--color-gray-500);
+    font-size: 0.8rem;
+    margin-top: var(--spacing-1);
+    line-height: 1.4;
+}
+
 /* Child year rows */
 .child-year-row {
     display: flex;

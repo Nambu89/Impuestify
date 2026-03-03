@@ -58,7 +58,7 @@ async def create_checkout(
     current_user: TokenData = Depends(get_current_user),
 ):
     """
-    Create a Stripe Checkout Session for the Particular plan (15 EUR/month).
+    Create a Stripe Checkout Session for the Particular plan (5 EUR/month).
 
     Returns the checkout URL to redirect the user to Stripe's hosted payment page.
     """

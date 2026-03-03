@@ -88,7 +88,25 @@
       "WebFetch(domain:empresas.taxdown.es)",
       "WebFetch(domain:taxscouts.es)",
       "WebFetch(domain:taxfix.com)",
-      "WebFetch(domain:www.xolo.io)"
+      "WebFetch(domain:www.xolo.io)",
+      "WebFetch(domain:elreferente.es)",
+      "WebFetch(domain:www.trustpilot.com)",
+      "WebFetch(domain:play.google.com)",
+      "WebFetch(domain:www.comunidad.madrid)",
+      "WebFetch(domain:www.cremadescalvosotelo.com)",
+      "WebFetch(domain:www.infoautonomos.com)",
+      "WebFetch(domain:www.melilla.es)",
+      "WebFetch(domain:www.supercontable.com)",
+      "WebFetch(domain:elfarodeceuta.es)",
+      "WebFetch(domain:techcrunch.com)",
+      "WebFetch(domain:www.eu-startups.com)",
+      "WebFetch(domain:help.taxdown.es)",
+      "WebFetch(domain:www.ocu.org)",
+      "WebFetch(domain:www.eleconomista.es)",
+      "WebFetch(domain:www.newtral.es)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "Bash(git rm:*)",
+      "Bash(git check-ignore:*)"
     ]
   }
 }

@@ -61,6 +61,9 @@ download_*.py
 tmp_*.py
 organize_*.py
 
+# Claude Code temp files
+**/tmpclaude-*
+
 # Archivos de progreso/notas temporales
 claude-progress.txt
 agent-comms.md

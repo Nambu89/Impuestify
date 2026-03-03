@@ -31,6 +31,7 @@ export interface FiscalProfile {
     tipo_retencion_facturas: number | null
     tarifa_plana: boolean
     pluriactividad: boolean
+    ceuta_melilla: boolean
 }
 
 export interface FieldMeta {
@@ -76,6 +77,7 @@ const EMPTY_PROFILE: FiscalProfile = {
     tipo_retencion_facturas: null,
     tarifa_plana: false,
     pluriactividad: false,
+    ceuta_melilla: false,
 }
 
 export function useFiscalProfile() {

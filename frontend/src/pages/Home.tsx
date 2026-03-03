@@ -102,7 +102,7 @@ export default function Home() {
                             </div>
                             <div className="pricing-amount">
                                 <span className="pricing-currency">EUR</span>
-                                <span className="pricing-value">15</span>
+                                <span className="pricing-value">5</span>
                                 <span className="pricing-period">/mes</span>
                             </div>
                         </div>

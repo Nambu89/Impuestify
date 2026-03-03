@@ -390,6 +390,7 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 				"tipo_retencion_facturas": "Retención facturas",
 				"tarifa_plana": "Tarifa plana",
 				"pluriactividad": "Pluriactividad",
+				"ceuta_melilla": "Residente en Ceuta/Melilla",
 			}
 			for key, label in label_map.items():
 				val = fiscal_profile.get(key)

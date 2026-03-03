@@ -82,7 +82,7 @@ export default function SubscribePage() {
                         </div>
                         <div className="subscribe-price-amount">
                             <span className="subscribe-price-currency">EUR</span>
-                            <span className="subscribe-price-value">15</span>
+                            <span className="subscribe-price-value">5</span>
                             <span className="subscribe-price-period">/mes</span>
                         </div>
                     </div>

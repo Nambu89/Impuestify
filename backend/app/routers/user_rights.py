@@ -66,7 +66,7 @@ class FiscalProfileRequest(BaseModel):
     tipo_actividad: Optional[str] = None  # "profesional" | "empresarial" | "artistica"
     fecha_alta_autonomo: Optional[str] = None  # ISO date "2024-03-15"
     metodo_estimacion_irpf: Optional[str] = None  # "directa_normal" | "directa_simplificada" | "objetiva"
-    regimen_iva: Optional[str] = None  # "general" | "simplificado" | "recargo_equivalencia" | "exento"
+    regimen_iva: Optional[str] = None  # "general" | "simplificado" | "recargo_equivalencia" | "exento" | "ipsi"
     rendimientos_netos_mensuales: Optional[float] = None
     base_cotizacion_reta: Optional[float] = None
     territorio_foral: Optional[bool] = None
@@ -74,6 +74,7 @@ class FiscalProfileRequest(BaseModel):
     tipo_retencion_facturas: Optional[float] = None  # 15.0 or 7.0
     tarifa_plana: Optional[bool] = None
     pluriactividad: Optional[bool] = None
+    ceuta_melilla: Optional[bool] = None  # Resident in Ceuta/Melilla (60% IRPF deduction + 50% SS bonus + IPSI)
 
 
 class UserDataExport(BaseModel):
@@ -348,6 +349,7 @@ _DATOS_FISCALES_KEYS = {
     "metodo_estimacion_irpf", "regimen_iva", "rendimientos_netos_mensuales",
     "base_cotizacion_reta", "territorio_foral", "territorio_historico",
     "tipo_retencion_facturas", "tarifa_plana", "pluriactividad",
+    "ceuta_melilla",
 }
 
 

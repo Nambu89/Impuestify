@@ -114,6 +114,10 @@ IMPORTANTE sobre ingresos:
                 "discapacidad_contribuyente": {
                     "type": "integer",
                     "description": "Porcentaje de discapacidad del contribuyente (0, 33, 65...)"
+                },
+                "ceuta_melilla": {
+                    "type": "boolean",
+                    "description": "true si el contribuyente reside y trabaja en Ceuta o Melilla. Aplica deducción del 60% sobre la cuota íntegra (Art. 68.4 LIRPF). Usar true cuando la CCAA sea Ceuta o Melilla."
                 }
             },
             "required": ["comunidad_autonoma", "ingresos_trabajo"]
@@ -140,6 +144,7 @@ async def simulate_irpf_tool(
     num_ascendientes_65: int = 0,
     num_ascendientes_75: int = 0,
     discapacidad_contribuyente: int = 0,
+    ceuta_melilla: bool = False,
 ) -> Dict[str, Any]:
     """Execute IRPF simulation and return formatted result."""
     try:
@@ -150,9 +155,13 @@ async def simulate_irpf_tool(
         db = await get_db_client()
         ccaa = normalize_ccaa_name(comunidad_autonoma)
 
+        # Auto-detect Ceuta/Melilla from CCAA if not explicitly set
+        if not ceuta_melilla and ccaa.lower() in ("ceuta", "melilla"):
+            ceuta_melilla = True
+
         logger.info(
-            "Simulating IRPF: %s€ trabajo, %s, %s",
-            ingresos_trabajo, ccaa, year,
+            "Simulating IRPF: %s€ trabajo, %s, %s, ceuta_melilla=%s",
+            ingresos_trabajo, ccaa, year, ceuta_melilla,
         )
 
         simulator = IRPFSimulator(db)
@@ -179,6 +188,7 @@ async def simulate_irpf_tool(
                 num_ascendientes_65=num_ascendientes_65,
                 num_ascendientes_75=num_ascendientes_75,
                 discapacidad_contribuyente=discapacidad_contribuyente,
+                ceuta_melilla=ceuta_melilla,
             )
         except ValueError:
             # Year not available — fallback to previous year
@@ -206,6 +216,7 @@ async def simulate_irpf_tool(
                 num_ascendientes_65=num_ascendientes_65,
                 num_ascendientes_75=num_ascendientes_75,
                 discapacidad_contribuyente=discapacidad_contribuyente,
+                ceuta_melilla=ceuta_melilla,
             )
 
         # Build formatted response
@@ -284,6 +295,13 @@ def _format_simulation_result(result: Dict, ccaa: str) -> str:
         f"autonómico {mpyf.get('mpyf_autonomico', 0):,.2f}€ "
         f"→ reducción cuota: {result['cuota_mpyf_estatal']:,.2f}€ + {result['cuota_mpyf_autonomica']:,.2f}€"
     )
+
+    # Ceuta/Melilla deduction
+    if result.get("deduccion_ceuta_melilla", 0) > 0:
+        lines.append(
+            f"Deducción Ceuta/Melilla (60% cuota íntegra, Art. 68.4 LIRPF): "
+            f"-{result['deduccion_ceuta_melilla']:,.2f}€"
+        )
 
     # Cuota líquida
     lines.append(

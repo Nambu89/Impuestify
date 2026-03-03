@@ -72,6 +72,8 @@ class IRPFSimulator:
         num_ascendientes_65: int = 0,
         num_ascendientes_75: int = 0,
         discapacidad_contribuyente: int = 0,
+        # Ceuta/Melilla
+        ceuta_melilla: bool = False,
     ) -> Dict[str, Any]:
         """
         Run a complete IRPF simulation.
@@ -174,8 +176,36 @@ class IRPFSimulator:
         cuota_liquida_aut = max(0, general_result["cuota_autonomica"] - cuota_mpyf_aut)
         cuota_liquida_general = cuota_liquida_est + cuota_liquida_aut
 
-        # --- 8. Total ---
+        # --- 8. Ceuta/Melilla deduction (Art. 68.4 LIRPF) ---
+        # 60% deduction on the cuota íntegra (estatal + autonómica + ahorro)
+        # for income earned by residents in Ceuta or Melilla.
+        deduccion_ceuta_melilla = 0.0
         cuota_ahorro = ahorro_result["cuota_ahorro_total"] if ahorro_result else 0.0
+
+        if ceuta_melilla:
+            cuota_integra_total = general_result["cuota_total"] + cuota_ahorro
+            deduccion_ceuta_melilla = round(cuota_integra_total * 0.60, 2)
+            # Apply deduction: first reduce general, then ahorro if needed
+            remaining_deduction = deduccion_ceuta_melilla
+            deduccion_on_general = min(remaining_deduction, cuota_liquida_general)
+            cuota_liquida_general = max(0, cuota_liquida_general - deduccion_on_general)
+            remaining_deduction -= deduccion_on_general
+            if remaining_deduction > 0:
+                cuota_ahorro = max(0, cuota_ahorro - remaining_deduction)
+            # Recalculate estatal/autonomica split proportionally
+            if cuota_liquida_est + cuota_liquida_aut > 0:
+                ratio_est = cuota_liquida_est / (cuota_liquida_est + cuota_liquida_aut)
+                cuota_liquida_est = round(cuota_liquida_general * ratio_est, 2)
+                cuota_liquida_aut = round(cuota_liquida_general - cuota_liquida_est, 2)
+            else:
+                cuota_liquida_est = 0.0
+                cuota_liquida_aut = 0.0
+            logger.info(
+                "Ceuta/Melilla deduction applied: -%.2f€ (60%% of %.2f€ cuota íntegra)",
+                deduccion_ceuta_melilla, cuota_integra_total,
+            )
+
+        # --- 9. Total ---
         cuota_total = cuota_liquida_general + cuota_ahorro
 
         base_total = bi_general + base_ahorro
@@ -185,6 +215,7 @@ class IRPFSimulator:
             "success": True,
             "year": year,
             "jurisdiction": jurisdiction,
+            "ceuta_melilla": ceuta_melilla,
             # Income breakdown
             "trabajo": trabajo_result,
             "inmuebles": inmuebles_result,
@@ -202,6 +233,8 @@ class IRPFSimulator:
             "mpyf": mpyf_result,
             "cuota_mpyf_estatal": round(cuota_mpyf_est, 2),
             "cuota_mpyf_autonomica": round(cuota_mpyf_aut, 2),
+            # Ceuta/Melilla deduction
+            "deduccion_ceuta_melilla": deduccion_ceuta_melilla,
             # Final
             "cuota_liquida_estatal": round(cuota_liquida_est, 2),
             "cuota_liquida_autonomica": round(cuota_liquida_aut, 2),
