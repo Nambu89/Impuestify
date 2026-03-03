@@ -96,6 +96,128 @@ Prioridad de ingesta:
 3. Manual IVA 2025 + Modelos 303/390 — actualización anual IVA
 4. REAF Panorama 2025 — deducciones autonómicas actualizadas
 
+[2026-03-02 23:30] [BACKEND] [🟢 DONE] - Sistema de suscripciones Stripe COMPLETO (backend)
+
+### Resumen de Cambios Backend — Suscripciones Stripe
+
+**Producto Stripe:** `prod_U4lJ9l8NhKvFHZ` | **Precio:** 15 EUR/mes | **Price ID:** `price_1T6bmu2KFBptDi7pUc2k8RWj`
+
+**Archivos creados (6):**
+- `app/services/subscription_service.py` — Stripe integration + access control
+- `app/auth/subscription_guard.py` — FastAPI deps: require_active_subscription (403)
+- `app/security/content_restriction.py` — Detección queries autónomos (~30 keywords)
+- `app/routers/subscription.py` — Endpoints: create-checkout, status, create-portal, webhook
+- `app/routers/contact.py` — POST /api/contact (formulario autónomos interesados)
+- `scripts/migrate_subscriptions.py` — Migración usuarios existentes
+
+**Archivos modificados (14):** requirements.txt, config.py, .env.example, turso_client.py, models.py, main.py, auth.py, chat_stream.py, chat.py, notifications.py, payslips.py, workspaces.py, tax_agent.py, workspace_agent.py, autonomous_quota_tool.py
+
+**Lógica de acceso:**
+- Owner (fernando.prada@proton.me) → acceso total sin restricciones
+- Suscripción activa → acceso (solo contenido asalariados)
+- Grace period (hasta 31/12/2026) → acceso (solo contenido asalariados)
+- Sin suscripción → 403
+
+**Restricción de contenido (3 capas):**
+1. Router: detect_autonomo_query() bloquea antes del agente
+2. Agent: restricted_mode filtra tools (calculate_autonomous_quota, calculate_vat_balance)
+3. Tool: safety net en autonomous_quota_tool
+
+**Migración ejecutada:** 14 usuarios, 14 Stripe customers reales (cus_...), owner=active, 13 users=grace_period
+
+**Tests:** 35 tests en test_subscription.py (todos pasan)
+
+**API Endpoints nuevos:**
+| Endpoint | Auth | Propósito |
+|----------|------|-----------|
+| `POST /subscription/create-checkout` | JWT | Crea Checkout Session → retorna checkout_url |
+| `GET /subscription/status` | JWT | Estado de suscripción del usuario |
+| `POST /subscription/create-portal` | JWT | Stripe Customer Portal → retorna portal_url |
+| `POST /subscription/webhook` | Stripe Sig | Procesa webhooks (público) |
+| `POST /api/contact` | JWT | Formulario de contacto |
+
+**UserResponse ampliado:** ahora incluye `is_owner: bool` y `subscription_status: str` en login/register/me
+
+#### Notas para Frontend
+- Cuando `subscription_status != "active" && subscription_status != "grace_period" && !is_owner` → redirigir a paywall
+- Paywall: llamar `POST /subscription/create-checkout` con `{success_url, cancel_url}` → redirigir a `checkout_url`
+- Gestionar suscripción: `POST /subscription/create-portal` con `{return_url}` → redirigir a `portal_url`
+- Página contacto: `POST /api/contact` con `{name, email, message, request_type: "autonomo_interest"}`
+- Variables Railway nuevas: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID
+
+[2026-03-03 12:00] [FRONTEND] [🟢 DONE] - Cumplimiento Cookies LSSI-CE + RGPD
+
+### Resumen — Cookie Consent (LSSI-CE + RGPD + AEPD)
+
+**Librería:** `vanilla-cookieconsent` v3 (~10KB gzip, MIT)
+
+**Archivos creados (2):**
+- `components/CookieConsent.tsx` — Wrapper React, exporta `showCookiePreferences()`
+- `pages/CookiePolicyPage.tsx` — Página legal `/politica-cookies` (usa LegalPage.css)
+
+**Archivos modificados (4):**
+- `App.tsx` — +CookieConsentBanner component + ruta /politica-cookies
+- `Footer.tsx` — +Link Política de Cookies (Legal) + botón Configurar Cookies (Soporte) + badge LSSI-CE
+- `Footer.css` — +clase `.footer-cookie-btn`
+- `PrivacyPolicyPage.tsx` — +sección 7 referencia a Política de Cookies (renumerada 8→9)
+
+**Configuración del banner:**
+- Layout: `bar` bottom, botones equiparados (AEPD, sin dark patterns)
+- Categorías: `necessary` (readOnly) + `analytics` (OFF por defecto, futuro)
+- Cookie: `cc_cookie`, 6 meses (AEPD max 13 meses)
+- Textos: 100% español
+
+**Para añadir analytics en el futuro:**
+Solo configurar scripts en la categoría `analytics` de `CookieConsent.tsx`. No requiere más cambios.
+
+#### Notas para otros agentes
+- Importar `showCookiePreferences` de `components/CookieConsent` para reabrir el panel
+- Si se añade nueva cookie → actualizar tabla en CookieConsent.tsx Y en CookiePolicyPage.tsx
+- NO cambiar `equalWeightButtons: true` — es requisito AEPD
+- Build verificado: ✅ sin errores
+
+[2026-03-03] [FRONTEND] [🟢 DONE] - Frontend adaptado al sistema de suscripciones Stripe
+
+### Resumen de Cambios Frontend — Suscripciones + Legal
+
+**Archivos creados (6):**
+- `hooks/useSubscription.ts` — Hook para estado de suscripcion (status, createCheckout, openPortal)
+- `pages/SubscribePage.tsx` + `.css` — Paywall con boton de Stripe Checkout
+- `pages/ContactPage.tsx` + `.css` — Formulario contacto (/contact?type=autonomo)
+- `pages/TermsPage.tsx` — Terminos y Condiciones (adaptado de TERMS_OF_SERVICE.md)
+- `pages/DataRetentionPage.tsx` — Politica de Retencion de Datos (adaptado de DATA_RETENTION.md)
+
+**Archivos modificados (7):**
+- `App.tsx` — ProtectedRoute con subscription guard, nuevas rutas (/subscribe, /contact, /terms, /data-retention), eliminados placeholders
+- `hooks/useAuth.tsx` — User interface +is_owner, +subscription_status
+- `pages/Home.tsx` — Eliminado "Gratis", seccion pricing 15EUR/mes, link autonomos a /contact
+- `pages/Home.css` — CSS pricing section responsive
+- `pages/SettingsPage.tsx` — Tab "Suscripcion" con estado, portal Stripe, y checkout
+- `pages/SettingsPage.css` — CSS subscription section
+- `pages/AITransparencyPage.tsx` — Eliminados emojis (reemplazados por Lucide icons), eliminado link GitHub
+- `pages/PrivacyPolicyPage.tsx` — Eliminado link GitHub
+- `pages/LegalPage.css` — Clase inline-icon para legal pages
+- `components/Footer.tsx` — /security ahora es mailto (no teniamos pagina dedicada)
+
+**Logica de acceso (ProtectedRoute):**
+- Auth requerido → si no → /login
+- Suscripcion requerida (configurable) → si no → /subscribe
+- Settings NO requiere suscripcion (para poder gestionar la propia suscripcion)
+
+**Eliminados:**
+- Todas las referencias a "gratis", "free", "gratuito"
+- Todos los links a GitHub (PrivacyPolicy, AITransparency)
+- Emojis en AITransparencyPage (sustituidos por Lucide icons)
+- Placeholders en rutas legales (/terms, /data-retention apuntaban a PrivacyPolicyPage)
+
+**Build:** ✅ Exitoso (npm run build sin errores)
+
+#### Notas para otros agentes
+- `useSubscription()` hook disponible para cualquier componente que necesite verificar acceso
+- ProtectedRoute acepta prop `requireSubscription={false}` para rutas que solo necesitan auth
+- Checkout redirect URLs: success→/chat?subscription=success, cancel→/subscribe?canceled=true
+- Portal return URL: /settings
+
 ## Dependencias Pendientes
 ---
 # Aquí los agentes registran cuando necesitan que otro complete algo primero
@@ -126,3 +248,4 @@ Prioridad de ingesta:
 [2026-02-25 14:00] [CRAWLER] [🟡 IN_PROGRESS] - Sesión 8: Araba NF 21/2025 (encontrada BOTHA 147) + CCAA rezagadas (Aragón/Asturias/Cantabria/CyL/Extremadura/Murcia leyes 2025).
 [2026-02-25 14:30] [CRAWLER] [🟢 DONE] - Sesión 8 completada. +8 PDFs. Araba: NF21/2025(529KB)+DFN2/2025(390KB). CCAA: Aragón Ley3/2025 empresa familiar, Asturias Ley3/2025 mod.DLeg(dic2025), Cantabria Ley3/2024 medidas2025, CyL BOE-A-2025-27120(dic2025), Extremadura Ley1/2025, Murcia Ley3/2025 Presupuestos(ITP→7.75%). Total: 385 PDFs. Cobertura CCAA régimen común: COMPLETA. ⚠️ RE-INGESTA RAG: especialmente Murcia(ITP), CyL+Asturias(dic2025 no en consolidados).
 [2026-02-25 13:00] [CRAWLER] [🟢 DONE] - Sesión 7 completada. +21 PDFs. REFORMA FISCAL 2025 FORALES: Gipuzkoa NF1/2025(integral may2025)+NF2+3(Pilar2)+4/2025+DFN1/2025, Araba NF3/2025(abr2025)+NF16(Pilar2)+17(IMIC)+26/2025, Bizkaia NF2/2025(abr2025)+NF_dic2025. CCAA: Galicia Ley10/2023+5/2024+5/2025(pub feb2026 MUY RECIENTE), Canarias REF Ley19/1994+RD1758/2007 ZEC, Madrid DLeg1/2010_2025+Ley5/2024, Andalucía Ley8/2025(Presupuestos2026)+Ley5/2021consolidado2026, Estatal RD1624/1992 ReglamentoIVA(pendiente histórico cerrado). Total: 375 PDFs. ⚠️ RE-INGESTA RAG CRÍTICA: normas reforma fiscal 2025 forales son fundamentales para consultas IS/IRPF/IVA actualizadas.
+[2026-03-02 10:00] [CRAWLER] [🟢 DONE] - Sesión 11 completada. +17 PDFs — ARABA RASTREO COMPLETO. Textos consolidados del portal (11): NF33/2013 IRPF consolidada(1572KB), DF40/2014 Reglamento IRPF(968KB), NF9/2013 IP Patrimonio(304KB), NF11/2003 ITP-AJD(432KB)+DF66/2003 Reglamento(252KB), NF11/2005 ISD consolidada+DF74/2006 Reglamento(392KB), NF37/2013 IS consolidada(1556KB)+DF41/2014 Reglamento IS(524KB), DFN12/1993 IVA consolidado portal(1572KB)+DF124/1993 Reglamento IVA portal(848KB). BOTHA(6): DF23/2025 retenciones, DF42/2025 IRPF+corrección, DF41/2025 coeficientes, NF9/2024 cultura, DF5/2025 ITP-AJD(8.6MB). Total: 409 PDFs. Cobertura Araba: COMPLETA (IRPF+IS+IVA+ISD+IP+ITP-AJD todos consolidados). ⚠️ RE-INGESTA RAG recomendada: NF33/2013 IRPF consolidada es CRÍTICA + nuevos impuestos IP/ITP-AJD. Erratum: IS/Araba-DF_40_2014_ReglamentoIS.pdf era en realidad Reglamento IRPF.

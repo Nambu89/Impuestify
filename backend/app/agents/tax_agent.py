@@ -313,7 +313,8 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		model: Optional[str] = None,  # Dynamic model selection
 		user_id: Optional[str] = None,  # User ID for audit logging
 		progress_callback: Optional[Any] = None,  # For SSE streaming
-		db_client: Optional[Any] = None  # Database client for memory
+		db_client: Optional[Any] = None,  # Database client for memory
+		restricted_mode: bool = False  # Salaried-only: block autonomo tools
 	) -> AgentResponse:
 		"""
 		Returns:
@@ -459,7 +460,18 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		try:
 			# Import tools
 			from app.tools import ALL_TOOLS, TOOL_EXECUTORS
-			
+
+			# In restricted mode, filter out autonomo-specific tools
+			RESTRICTED_TOOL_NAMES = {"calculate_autonomous_quota"}
+			if restricted_mode:
+				active_tools = [
+					t for t in ALL_TOOLS
+					if t.get("function", {}).get("name") not in RESTRICTED_TOOL_NAMES
+				]
+				logger.info(f"Restricted mode: {len(ALL_TOOLS) - len(active_tools)} tools removed")
+			else:
+				active_tools = ALL_TOOLS
+
 			# Build messages with conversation history
 			# Add user memory context to system prompt for better attention
 			system_content = system_prompt or self._get_system_prompt()
@@ -493,7 +505,7 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 						self._client.chat.completions.create,
 						model=selected_model,  # ← Use router-selected model
 						messages=messages,
-						tools=ALL_TOOLS if use_tools else None,
+						tools=active_tools if use_tools else None,
 						tool_choice="auto" if use_tools else None,
 						temperature=1,
 						max_completion_tokens=10000

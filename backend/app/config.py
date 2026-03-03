@@ -164,6 +164,20 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field(default="INFO")
 
     # -------------------------------
+    # 💳 Stripe (Payments)
+    # -------------------------------
+    STRIPE_SECRET_KEY: Optional[str] = Field(default=None)
+    STRIPE_WEBHOOK_SECRET: Optional[str] = Field(default=None)
+    STRIPE_PRICE_ID: Optional[str] = Field(default=None)
+    STRIPE_PRODUCT_ID: str = Field(default="prod_U4lJ9l8NhKvFHZ")
+
+    # -------------------------------
+    # 👤 Owner & Contact
+    # -------------------------------
+    OWNER_EMAIL: str = Field(default="fernando.prada@proton.me")
+    CONTACT_EMAIL: str = Field(default="fernando.prada@proton.me")
+
+    # -------------------------------
     # 🔑 Admin
     # -------------------------------
     ADMIN_API_KEY: str = Field(default="your-secure-admin-key-here")
@@ -181,9 +195,10 @@ class Settings(BaseSettings):
     # 🧹 Validadores
     # -------------------------------
     @field_validator(
-        "OPENAI_API_KEY", "AZURE_OPENAI_API_KEY", "JWT_SECRET_KEY", 
+        "OPENAI_API_KEY", "AZURE_OPENAI_API_KEY", "JWT_SECRET_KEY",
         "ADMIN_API_KEY", "TURSO_AUTH_TOKEN", "UPSTASH_REDIS_REST_TOKEN",
         "GROQ_API_KEY", "UPSTASH_VECTOR_REST_TOKEN",
+        "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET",
         mode="before"
     )
     @classmethod
@@ -243,6 +258,11 @@ class Settings(BaseSettings):
     def is_upstash_rag_configured(self) -> bool:
         """Check if Upstash Vector RAG index is configured"""
         return bool(self.UPSTASH_VECTOR_RAG_URL and self.UPSTASH_VECTOR_RAG_TOKEN)
+
+    @property
+    def is_stripe_configured(self) -> bool:
+        """Check if Stripe payments are configured"""
+        return bool(self.STRIPE_SECRET_KEY)
 
 
 # Initialize global settings

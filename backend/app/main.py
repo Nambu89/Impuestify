@@ -429,6 +429,14 @@ app.include_router(workspaces_router)
 from app.routers.user_rights import router as user_rights_router
 app.include_router(user_rights_router)
 
+# Subscription & Payment Endpoints
+from app.routers.subscription import router as subscription_router
+app.include_router(subscription_router)
+
+# Contact Form Endpoint
+from app.routers.contact import router as contact_router
+app.include_router(contact_router)
+
 # Demo Chat Endpoint (public, no auth required)
 from app.routers.demo import router as demo_router
 app.include_router(demo_router)

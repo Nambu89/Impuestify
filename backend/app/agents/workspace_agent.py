@@ -119,9 +119,9 @@ Tu trabajo es analizar estos documentos adjuntos por el usuario Y combinarlos co
 
 Responde siempre en español, de forma clara y estructurada."""
 
-    def _get_tools(self) -> List[Dict[str, Any]]:
+    def _get_tools(self, restricted_mode: bool = False) -> List[Dict[str, Any]]:
         """Define available tools for the agent."""
-        return [
+        tools = [
             {
                 "type": "function",
                 "function": {
@@ -190,6 +190,12 @@ Responde siempre en español, de forma clara y estructurada."""
                 }
             }
         ]
+
+        # In restricted mode (salaried-only plan), remove VAT balance tool
+        if restricted_mode:
+            tools = [t for t in tools if t["function"]["name"] != "calculate_vat_balance"]
+
+        return tools
 
     async def _execute_tool(
         self,
@@ -384,7 +390,8 @@ Basado en {meses_encontrados} nómina(s) encontrada(s):
         conversation_history: List[dict] = None,
         user_id: Optional[str] = None,
         workspace_id: Optional[str] = None,
-        progress_callback: Optional[Any] = None
+        progress_callback: Optional[Any] = None,
+        restricted_mode: bool = False
     ) -> AgentResponse:
         """
         Run the workspace agent.
@@ -428,7 +435,7 @@ Basado en {meses_encontrados} nómina(s) encontrada(s):
                     self._client.chat.completions.create,
                     model=self.model,
                     messages=messages,
-                    tools=self._get_tools(),
+                    tools=self._get_tools(restricted_mode=restricted_mode),
                     tool_choice="auto",
                     temperature=0.7,
                     max_completion_tokens=4000

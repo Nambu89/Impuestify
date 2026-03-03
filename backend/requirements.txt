@@ -54,3 +54,6 @@ upstash-vector>=0.3.0
 
 # --- Additional PDF ---
 pypdf>=4.0.0
+
+# --- Payments (Stripe) ---
+stripe>=8.0.0

@@ -71,19 +71,31 @@ La función calcula la cuota mensual exacta de autónomos en España para 2025 s
 async def calculate_autonomous_quota_tool(
 	ingresos_netos_mensuales: float,
 	region: str = "general",
-	year: int = 2025
+	year: int = 2025,
+	restricted_mode: bool = False
 ) -> Dict[str, Any]:
 	"""
 	Calculate the autonomous worker quota based on net monthly income.
-	
+
 	Args:
 		ingresos_netos_mensuales: Net monthly income in euros (AFTER expenses and 7% deduction if applicable)
 		region: Region (general, ceuta, melilla)
 		year: Year for calculation (default 2025)
-		
+		restricted_mode: If True, return restriction message instead of calculating
+
 	Returns:
 		Dict with quota information and formatted response
 	"""
+	# Safety net: block if called in restricted mode (salaried workers only)
+	if restricted_mode:
+		from app.security.content_restriction import get_autonomo_block_response
+		logger.warning("calculate_autonomous_quota called in restricted_mode — blocking")
+		return {
+			"success": False,
+			"error": "restricted",
+			"formatted_response": get_autonomo_block_response()
+		}
+
 	try:
 		from app.database.turso_client import TursoClient
 		import os

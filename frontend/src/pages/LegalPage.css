@@ -200,6 +200,12 @@ section {
     border-radius: var(--radius-lg);
 }
 
+.legal-container .inline-icon {
+    display: inline;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
 .legal-cta {
     margin-top: var(--spacing-10);
     padding: var(--spacing-6);

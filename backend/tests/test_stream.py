@@ -1,11 +1,26 @@
 """
 Test script for SSE streaming endpoint
+
+Requires a running backend server at localhost:8000.
+Skipped automatically when server is unavailable.
 """
 import requests
 import json
+import pytest
 
 API_URL = "http://localhost:8000"
 
+
+def _server_is_running() -> bool:
+    """Check if the backend server is reachable."""
+    try:
+        requests.get(f"{API_URL}/health", timeout=2)
+        return True
+    except Exception:
+        return False
+
+
+@pytest.mark.skipif(not _server_is_running(), reason="Backend server not running at localhost:8000")
 def test_streaming_endpoint():
     """Test the /api/ask/stream endpoint"""
     

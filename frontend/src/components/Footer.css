@@ -95,9 +95,22 @@
     display: inline-block;
 }
 
-.footer-links a:hover {
+.footer-links a:hover,
+.footer-links .footer-cookie-btn:hover {
     color: var(--color-primary-light);
     transform: translateX(5px);
+}
+
+.footer-cookie-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--color-gray-300);
+    font-size: var(--font-size-sm);
+    font-family: inherit;
+    transition: all var(--transition-fast);
+    display: inline-block;
 }
 
 .footer-badges {

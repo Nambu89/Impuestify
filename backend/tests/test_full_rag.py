@@ -1,10 +1,11 @@
 """
-Test full RAG pipeline: FTS5 Search + Azure OpenAI Generation
+Test full RAG pipeline: FTS5 Search + OpenAI Generation
 """
 import asyncio
 import os
 import sys
 import logging
+import pytest
 from pathlib import Path
 
 # Setup logging
@@ -23,7 +24,7 @@ from app.database.turso_client import TursoClient
 from app.agents.tax_agent import TaxAgent
 from app.routers.chat import fts_search
 
-async def test_full_rag(question):
+async def _run_full_rag_test(question):
     print(f"\n🧪 Testing Question: {question}")
     
     # 1. Setup Database
@@ -76,6 +77,17 @@ async def test_full_rag(question):
         
     await db.disconnect()
 
+@pytest.mark.asyncio
+@pytest.mark.skipif(
+    not os.environ.get("TURSO_DATABASE_URL"),
+    reason="Requires TURSO_DATABASE_URL (integration test)"
+)
+async def test_full_rag():
+    """Integration test: FTS5 search + LLM generation (needs Turso + OpenAI)."""
+    question = "¿Cómo funciona el régimen de estimación directa?"
+    await _run_full_rag_test(question)
+
+
 if __name__ == "__main__":
     question = "¿Cómo funciona el régimen de estimación directa?"
-    asyncio.run(test_full_rag(question))
+    asyncio.run(_run_full_rag_test(question))

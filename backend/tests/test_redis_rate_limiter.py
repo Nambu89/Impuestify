@@ -45,9 +45,9 @@ def test_upstash_storage_methods():
     count2 = storage.incr("test_key", 60)
     assert count2 == 2, "Second increment should return 2"
     
-    # Test get
+    # Test get (returns BytesWrapper, compare with int())
     value = storage.get("test_key")
-    assert value == 2, "Get should return current count"
+    assert int(value) == 2, "Get should return current count"
     
     # Test get_expiry
     ttl = storage.get_expiry("test_key")

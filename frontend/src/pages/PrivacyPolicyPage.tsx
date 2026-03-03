@@ -84,13 +84,21 @@ export default function PrivacyPolicyPage() {
                 </section>
 
                 <section>
-                    <h2>7. Seguridad</h2>
+                    <h2>7. Cookies y almacenamiento local</h2>
+                    <p>
+                        Para más información sobre las cookies y tecnologías de almacenamiento local que utilizamos,
+                        consulte nuestra <Link to="/politica-cookies">Política de Cookies</Link>.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>8. Seguridad</h2>
                     <p>Implementamos cifrado TLS, hashing seguro de contraseñas, rate limiting y auditoría.</p>
                     <p>Ver <Link to="/security">SECURITY.md</Link></p>
                 </section>
 
                 <section>
-                    <h2>8. Autoridad de Control</h2>
+                    <h2>9. Autoridad de Control</h2>
                     <p>
                         Agencia Española de Protección de Datos (AEPD)<br />
                         Web: <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer">www.aepd.es</a>
@@ -98,14 +106,9 @@ export default function PrivacyPolicyPage() {
                 </section>
 
                 <div className="legal-cta">
-                    <p>Para información completa, consulte:
-                        <a
-                            href="https://github.com/Nambu89/TaxIA/blob/main/PRIVACY_POLICY.md"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            {' '}Política de Privacidad completa (GitHub)
-                        </a>
+                    <p>
+                        Para cualquier consulta sobre privacidad,
+                        contacte con <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>
                     </p>
                 </div>
             </div>

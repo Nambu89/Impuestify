@@ -30,9 +30,10 @@ class User(UserBase):
     id: str = Field(default_factory=generate_uuid)
     is_active: bool = True
     is_admin: bool = False
+    is_owner: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         from_attributes = True
 
@@ -163,3 +164,40 @@ class Payslip(PayslipBase):
 class PayslipInDB(Payslip):
     """Payslip model as stored in database"""
     pass
+
+
+# =============================================
+# SUBSCRIPTION & PAYMENT MODELS
+# =============================================
+
+class Subscription(BaseModel):
+    """Subscription model for Stripe integration"""
+    id: str = Field(default_factory=generate_uuid)
+    user_id: str
+    stripe_customer_id: str
+    stripe_subscription_id: Optional[str] = None
+    plan_type: str = "particular"
+    status: str = "inactive"  # active, inactive, past_due, canceled, grace_period
+    current_period_start: Optional[str] = None
+    current_period_end: Optional[str] = None
+    cancel_at_period_end: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        from_attributes = True
+
+
+class ContactRequest(BaseModel):
+    """Contact form submission model"""
+    id: str = Field(default_factory=generate_uuid)
+    user_id: Optional[str] = None
+    email: str
+    name: Optional[str] = None
+    message: Optional[str] = None
+    request_type: str = "autonomo_interest"
+    status: str = "pending"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        from_attributes = True

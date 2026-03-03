@@ -18,9 +18,12 @@ import asyncio
 from app.database.turso_client import TursoClient
 from app.agents.tax_agent import TaxAgent
 from app.services.conversation_service import ConversationService
-from app.services.conversation_cache import ConversationCache  
+from app.services.conversation_cache import ConversationCache
 from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.subscription_guard import require_active_subscription
 from app.security import sql_validator, guardrails_system
+from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
+from app.services.subscription_service import SubscriptionAccess
 from app.utils.streaming import ProgressCallback, sse_generator, filter_json_from_content
 
 logger = logging.getLogger(__name__)
@@ -54,7 +57,8 @@ async def ask_question_stream(
     req: Request,
     request: StreamQuestionRequest,
     db: TursoClient = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user),
+    access: SubscriptionAccess = Depends(require_active_subscription)
 ):
     """
     Stream AI responses with chain-of-thought display.
@@ -85,6 +89,13 @@ async def ask_question_stream(
             detail={"error": "Question violates safety guidelines"}
         )
     
+    # === CONTENT RESTRICTION: Autonomo detection ===
+    if not access.is_owner and detect_autonomo_query(request.question):
+        async def autonomo_block_stream():
+            yield {"event": "content", "data": get_autonomo_block_response()}
+            yield {"event": "done", "data": ""}
+        return EventSourceResponse(autonomo_block_stream())
+
     # === Conversation setup ===
     conv_service = ConversationService(db)
     conversation_id = request.conversation_id
@@ -241,6 +252,8 @@ async def ask_question_stream(
             async def run_agent():
                 done_emitted = False
                 try:
+                    restricted_mode = not access.is_owner
+
                     if use_workspace_agent:
                         # Use WorkspaceAgent for workspace queries
                         from app.agents.workspace_agent import get_workspace_agent
@@ -252,7 +265,8 @@ async def ask_question_stream(
                             conversation_history=formatted_history,
                             user_id=current_user.user_id,
                             workspace_id=request.workspace_id,
-                            progress_callback=callback
+                            progress_callback=callback,
+                            restricted_mode=restricted_mode
                         )
                     else:
                         # Use TaxAgent for general tax queries
@@ -265,7 +279,8 @@ async def ask_question_stream(
                             use_tools=True,
                             user_id=current_user.user_id,
                             progress_callback=callback,
-                            db_client=db  # Pass database client for user memory
+                            db_client=db,  # Pass database client for user memory
+                            restricted_mode=restricted_mode
                         )
                     
                     # Filter JSON from final content

@@ -3,20 +3,21 @@
  * AI Act Art. 52 compliance
  */
 import { Link } from 'react-router-dom';
+import { AlertTriangle, CheckCircle, XCircle, Shield } from 'lucide-react';
 import './LegalPage.css';
 
 export default function AITransparencyPage() {
     return (
         <div className="legal-page">
             <div className="legal-container">
-                <Link to="/" className="back-link">← Volver al chat</Link>
+                <Link to="/" className="back-link">&larr; Volver al inicio</Link>
 
-                <h1>🤖 Transparencia sobre el Uso de IA</h1>
-                <p className="subtitle">Reglamento (UE) 2024/1689 - AI Act, Artículo 52</p>
-                <p className="last-updated">Última actualización: 3 de enero de 2026</p>
+                <h1>Transparencia sobre el Uso de IA</h1>
+                <p className="subtitle">Reglamento (UE) 2024/1689 - AI Act, Articulo 52</p>
+                <p className="last-updated">Ultima actualizacion: 3 de enero de 2026</p>
 
                 <div className="alert alert-info">
-                    <strong>⚠️ Declaración Importante</strong>
+                    <strong><AlertTriangle size={16} className="inline-icon" /> Declaracion Importante</strong>
                     <p>
                         Impuestify utiliza un sistema de inteligencia artificial para responder
                         a sus consultas. La IA puede cometer errores. NO sustituye el asesoramiento
@@ -31,7 +32,7 @@ export default function AITransparencyPage() {
                             <tr>
                                 <th>Componente</th>
                                 <th>Proveedor</th>
-                                <th>Versión</th>
+                                <th>Version</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -41,7 +42,7 @@ export default function AITransparencyPage() {
                                 <td>GPT-4o-mini / GPT-5-mini</td>
                             </tr>
                             <tr>
-                                <td>Moderación</td>
+                                <td>Moderacion</td>
                                 <td>Meta (via Groq)</td>
                                 <td>Llama Guard 4</td>
                             </tr>
@@ -50,10 +51,10 @@ export default function AITransparencyPage() {
                 </section>
 
                 <section>
-                    <h2>2. Clasificación según AI Act</h2>
+                    <h2>2. Clasificacion segun AI Act</h2>
                     <div className="badge-large">Sistema de IA de RIESGO LIMITADO (Art. 52)</div>
                     <p>
-                        Impuestify es un asistente que interactúa con usuarios, pero <strong>NO toma decisiones automatizadas</strong> que afecten derechos fundamentales.
+                        Impuestify es un asistente que interactua con usuarios, pero <strong>NO toma decisiones automatizadas</strong> que afecten derechos fundamentales.
                     </p>
                 </section>
 
@@ -61,16 +62,16 @@ export default function AITransparencyPage() {
                     <h2>3. Capacidades y Limitaciones</h2>
                     <div className="two-column">
                         <div>
-                            <h3>✅ Qué puede hacer</h3>
+                            <h3><CheckCircle size={16} className="inline-icon" /> Que puede hacer</h3>
                             <ul>
                                 <li>Responder preguntas sobre fiscalidad</li>
                                 <li>Calcular IRPF y cuotas</li>
-                                <li>Analizar PDFs de nóminas/AEAT</li>
-                                <li>Buscar información oficial</li>
+                                <li>Analizar PDFs de nominas/AEAT</li>
+                                <li>Buscar informacion oficial</li>
                             </ul>
                         </div>
                         <div>
-                            <h3>❌ Qué NO puede hacer</h3>
+                            <h3><XCircle size={16} className="inline-icon" /> Que NO puede hacer</h3>
                             <ul>
                                 <li>NO presenta declaraciones</li>
                                 <li>NO garantiza exactitud 100%</li>
@@ -84,28 +85,28 @@ export default function AITransparencyPage() {
                 <section>
                     <h2>4. Riesgos Conocidos</h2>
                     <div className="alert alert-warning">
-                        <strong>⚠️ Alucinaciones de IA</strong>
-                        <p>La IA puede generar información que parece correcta pero es errónea.</p>
-                        <p><strong>Mitigación</strong>: RAG (fuentes documentadas) + citación de fuentes + disclaimers</p>
+                        <strong><AlertTriangle size={16} className="inline-icon" /> Alucinaciones de IA</strong>
+                        <p>La IA puede generar informacion que parece correcta pero es erronea.</p>
+                        <p><strong>Mitigacion</strong>: RAG (fuentes documentadas) + citacion de fuentes + disclaimers</p>
                     </div>
 
                     <div className="alert alert-warning">
-                        <strong>⚠️ Información Desactualizada</strong>
+                        <strong><AlertTriangle size={16} className="inline-icon" /> Informacion Desactualizada</strong>
                         <p>Normativa fiscal cambia frecuentemente.</p>
-                        <p><strong>Mitigación</strong>: Búsqueda web en tiempo real + fecha en respuestas</p>
+                        <p><strong>Mitigacion</strong>: Busqueda web en tiempo real + fecha en respuestas</p>
                     </div>
                 </section>
 
                 <section>
-                    <h2>5. Supervisión Humana Requerida</h2>
+                    <h2>5. Supervision Humana Requerida</h2>
                     <p className="highlight">
-                        🧑 <strong>Usted SIEMPRE debe</strong>:
+                        <Shield size={16} className="inline-icon" /> <strong>Usted SIEMPRE debe</strong>:
                     </p>
                     <ul>
                         <li>Revisar las respuestas de la IA</li>
                         <li>Verificar fuentes citadas</li>
                         <li>Consultar con asesor fiscal para decisiones importantes</li>
-                        <li>Validar cálculos antes de usarlos</li>
+                        <li>Validar calculos antes de usarlos</li>
                     </ul>
                 </section>
 
@@ -118,14 +119,9 @@ export default function AITransparencyPage() {
                 </section>
 
                 <div className="legal-cta">
-                    <p>Para información completa sobre transparencia IA:
-                        <a
-                            href="https://github.com/Nambu89/TaxIA/blob/main/AI_TRANSPARENCY.md"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            {' '}AI_TRANSPARENCY.md (GitHub)
-                        </a>
+                    <p>
+                        Para cualquier consulta sobre transparencia IA,
+                        contacte con <a href="mailto:report@impuestify.com">report@impuestify.com</a>
                     </p>
                 </div>
             </div>

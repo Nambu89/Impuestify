@@ -10,6 +10,7 @@ import asyncio
 import json
 import os
 import sys
+import pytest
 from typing import List, Dict, Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -104,8 +105,8 @@ class RAGSearch:
         await self.client.disconnect()
 
 
-async def test_rag(query: str):
-    """Test completo del RAG."""
+async def _run_rag_test(query: str):
+    """Test completo del RAG (internal helper)."""
     print("=" * 60)
     print("TaxIA - Test del Sistema RAG")
     print("=" * 60)
@@ -162,8 +163,19 @@ async def test_rag(query: str):
     await search.close()
 
 
+@pytest.mark.asyncio
+@pytest.mark.skipif(
+    not os.environ.get("TURSO_DATABASE_URL"),
+    reason="Requires TURSO_DATABASE_URL (integration test)"
+)
+async def test_rag():
+    """Integration test: full RAG pipeline (needs Turso credentials)."""
+    query = "¿Cuál es el tipo general del IVA en España para 2025?"
+    await _run_rag_test(query)
+
+
 if __name__ == "__main__":
     # Pregunta de prueba
     query = "¿Cuál es el tipo general del IVA en España para 2025?"
-    
-    asyncio.run(test_rag(query))
+
+    asyncio.run(_run_rag_test(query))

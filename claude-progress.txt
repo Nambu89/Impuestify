@@ -113,6 +113,23 @@
 - httpx==0.28.1
 - pydantic==2.12.5
 
+[2026-03-02] [Document Crawler] - Sesión 11 completada — TOTAL 409 PDFs
+- +17 PDFs: ARABA RASTREO COMPLETO
+- Textos consolidados del portal web.araba.eus (11 docs):
+  * NF 33/2013 IRPF consolidada (1.5 MB) — PENDIENTE HISTÓRICO CERRADO (incluye NF 3/2025 + NF 21/2025)
+  * DF 40/2014 Reglamento IRPF consolidado (968 KB)
+  * NF 9/2013 IP Patrimonio consolidada (304 KB) — NUEVO impuesto cubierto
+  * NF 11/2003 ITP-AJD consolidada (432 KB) + DF 66/2003 Reglamento (252 KB) — NUEVO impuesto cubierto
+  * NF 11/2005 ISD consolidada + DF 74/2006 Reglamento ISD (392 KB)
+  * NF 37/2013 IS consolidada (1.5 MB) + DF 41/2014 Reglamento IS (524 KB)
+  * DFN 12/1993 IVA + DF 124/1993 Reglamento IVA (versiones portal actualizadas)
+- Disposiciones BOTHA 2025/2026 (6 docs):
+  * DF 23/2025 retenciones, DF 42/2025 IRPF + corrección, DF 41/2025 coeficientes
+  * NF 9/2024 incentivos cultura, DF 5/2025 ITP-AJD (8.6 MB)
+- Erratum: IS/DF_40_2014_ReglamentoIS.pdf era Reglamento IRPF — corregido con versiones consolidadas
+- Cobertura Araba: COMPLETA (IRPF + IS + IVA + ISD + IP + ITP-AJD)
+- ⚠️ RE-INGESTA RAG recomendada: NF 33/2013 consolidada + IP + ITP-AJD
+
 [2026-02-25] [Document Crawler] - Sesión 10 completada — TOTAL 394 PDFs
 - +1 PDF: REAF Panorama Fiscalidad Autonómica y Foral 2025 (7.5 MB)
 - Completa la cobertura de deducciones autonómicas para Renta 2025:

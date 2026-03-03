@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     User, Download, Trash2, Save, AlertCircle, CheckCircle,
-    Loader, Shield, Lock, Calculator, ChevronDown, ChevronRight, RefreshCw
+    Loader, Shield, Lock, Calculator, ChevronDown, ChevronRight, RefreshCw,
+    CreditCard, ExternalLink
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useApi } from '../hooks/useApi'
+import { useSubscription } from '../hooks/useSubscription'
 import { useFiscalProfile, FiscalProfile } from '../hooks/useFiscalProfile'
 import Header from '../components/Header'
 import './SettingsPage.css'
 
-type TabKey = 'personal' | 'security' | 'fiscal' | 'privacy'
+type TabKey = 'personal' | 'security' | 'fiscal' | 'subscription' | 'privacy'
 
 const CCAA_OPTIONS = [
     '', 'Andalucía', 'Aragón', 'Asturias', 'Illes Balears', 'Canarias',
@@ -30,6 +32,7 @@ const SITUACION_OPTIONS = [
 export default function SettingsPage() {
     const { user, logout } = useAuth()
     const { apiRequest } = useApi()
+    const subscription = useSubscription()
     const navigate = useNavigate()
 
     // Active tab
@@ -284,6 +287,9 @@ export default function SettingsPage() {
                     </button>
                     <button className={`tab-btn ${activeTab === 'fiscal' ? 'active' : ''}`} onClick={() => setActiveTab('fiscal')}>
                         <Calculator size={16} /> Perfil Fiscal
+                    </button>
+                    <button className={`tab-btn ${activeTab === 'subscription' ? 'active' : ''}`} onClick={() => setActiveTab('subscription')}>
+                        <CreditCard size={16} /> Suscripcion
                     </button>
                     <button className={`tab-btn ${activeTab === 'privacy' ? 'active' : ''}`} onClick={() => setActiveTab('privacy')}>
                         <Shield size={16} /> Privacidad
@@ -559,6 +565,95 @@ export default function SettingsPage() {
                                         : <><Save size={18} /> Guardar Perfil Fiscal</>}
                                 </button>
                             </form>
+                        )}
+                    </section>
+                )}
+
+                {/* ==================== SUBSCRIPTION TAB ==================== */}
+                {activeTab === 'subscription' && (
+                    <section className="settings-section">
+                        <div className="section-header">
+                            <CreditCard size={24} />
+                            <h2>Mi Suscripcion</h2>
+                        </div>
+
+                        {subscription.loading ? (
+                            <div className="fiscal-loading"><Loader size={24} className="animate-spin" /> Cargando...</div>
+                        ) : subscription.isOwner ? (
+                            <div className="subscription-status">
+                                <div className="subscription-badge owner">
+                                    <Shield size={18} />
+                                    <span>Owner</span>
+                                </div>
+                                <p className="section-description">
+                                    Tienes acceso completo como propietario de la plataforma.
+                                </p>
+                            </div>
+                        ) : subscription.hasAccess ? (
+                            <div className="subscription-status">
+                                <div className="subscription-badge active">
+                                    <CheckCircle size={18} />
+                                    <span>
+                                        {subscription.status === 'grace_period' ? 'Periodo de gracia' : 'Activa'}
+                                    </span>
+                                </div>
+                                <p className="section-description">
+                                    {subscription.status === 'grace_period'
+                                        ? 'Tienes acceso gratuito durante el periodo de gracia. Tu acceso continuara hasta el final del periodo.'
+                                        : `Plan ${subscription.planType || 'Particular'} activo.`}
+                                </p>
+
+                                {subscription.currentPeriodEnd && subscription.status !== 'grace_period' && (
+                                    <p className="subscription-detail">
+                                        <strong>Proximo cobro:</strong>{' '}
+                                        {new Date(subscription.currentPeriodEnd).toLocaleDateString('es-ES', {
+                                            day: 'numeric', month: 'long', year: 'numeric'
+                                        })}
+                                    </p>
+                                )}
+
+                                {subscription.cancelAtPeriodEnd && (
+                                    <div className="subscription-warning">
+                                        <AlertCircle size={18} />
+                                        <span>Tu suscripcion se cancelara al final del periodo actual.</span>
+                                    </div>
+                                )}
+
+                                {subscription.status !== 'grace_period' && (
+                                    <button
+                                        onClick={subscription.openPortal}
+                                        className="btn btn-secondary"
+                                    >
+                                        <ExternalLink size={18} />
+                                        Gestionar suscripcion
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="subscription-status">
+                                <div className="subscription-badge inactive">
+                                    <AlertCircle size={18} />
+                                    <span>Sin suscripcion</span>
+                                </div>
+                                <p className="section-description">
+                                    No tienes una suscripcion activa. Suscribete para acceder a todas
+                                    las funcionalidades de Impuestify.
+                                </p>
+                                <button
+                                    onClick={subscription.createCheckout}
+                                    className="btn btn-primary"
+                                >
+                                    <CreditCard size={18} />
+                                    Suscribirme - 15 EUR/mes
+                                </button>
+                            </div>
+                        )}
+
+                        {subscription.error && (
+                            <div className="message-banner error" style={{ marginTop: 'var(--spacing-4)' }}>
+                                <AlertCircle size={20} />
+                                <span>{subscription.error}</span>
+                            </div>
                         )}
                     </section>
                 )}

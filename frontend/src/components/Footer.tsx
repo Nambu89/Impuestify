@@ -5,7 +5,8 @@
  * Best practices: Visible on all pages, accessible, clear links
  */
 import { Link } from 'react-router-dom';
-import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle } from 'lucide-react';
+import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle, Cookie, Settings } from 'lucide-react';
+import { showCookiePreferences } from './CookieConsent';
 import './Footer.css';
 
 export default function Footer() {
@@ -55,6 +56,12 @@ export default function Footer() {
                                     Retención de Datos
                                 </Link>
                             </li>
+                            <li>
+                                <Link to="/politica-cookies">
+                                    <Cookie size={16} className="link-icon" />
+                                    Política de Cookies
+                                </Link>
+                            </li>
                         </ul>
                     </div>
 
@@ -74,10 +81,19 @@ export default function Footer() {
                                 </a>
                             </li>
                             <li>
-                                <Link to="/security">
+                                <a href="mailto:security@impuestify.com">
                                     <Shield size={16} className="link-icon" />
                                     Seguridad
-                                </Link>
+                                </a>
+                            </li>
+                            <li>
+                                <button
+                                    onClick={showCookiePreferences}
+                                    className="footer-cookie-btn"
+                                >
+                                    <Settings size={16} className="link-icon" />
+                                    Configurar Cookies
+                                </button>
                             </li>
                         </ul>
                     </div>
@@ -96,6 +112,10 @@ export default function Footer() {
                             <span className="badge">
                                 <CheckCircle size={12} className="badge-icon" />
                                 LOPDGDD
+                            </span>
+                            <span className="badge">
+                                <CheckCircle size={12} className="badge-icon" />
+                                LSSI-CE
                             </span>
                         </div>
                         <p className="footer-small">

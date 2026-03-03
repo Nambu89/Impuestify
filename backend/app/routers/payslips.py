@@ -14,6 +14,8 @@ from app.database.turso_client import get_db_client
 from app.services.payslip_extractor import PayslipExtractor
 from app.agents.payslip_agent import get_payslip_agent
 from app.auth.jwt_handler import get_current_user
+from app.auth.subscription_guard import require_active_subscription
+from app.services.subscription_service import SubscriptionAccess
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,8 @@ router = APIRouter(prefix="/payslips", tags=["payslips"])
 @router.post("/upload", response_model=Payslip)
 async def upload_payslip(
 	file: UploadFile = File(...),
-	current_user: dict = Depends(get_current_user)
+	current_user: dict = Depends(get_current_user),
+	access: SubscriptionAccess = Depends(require_active_subscription)
 ):
 	"""
 	Sube y procesa una nómina en PDF.

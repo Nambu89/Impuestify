@@ -14,6 +14,8 @@ from app.database.turso_client import TursoClient
 from app.services.workspace_service import WorkspaceService, WorkspaceCreate
 from app.services.file_processing_service import FileProcessingService
 from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.subscription_guard import require_active_subscription
+from app.services.subscription_service import SubscriptionAccess
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +105,7 @@ async def get_file_service() -> FileProcessingService:
 async def create_workspace(
     request: CreateWorkspaceRequest,
     current_user: TokenData = Depends(get_current_user),
+    access: SubscriptionAccess = Depends(require_active_subscription),
     service: WorkspaceService = Depends(get_workspace_service)
 ):
     """
@@ -356,6 +359,7 @@ async def upload_file(
     workspace_id: str,
     file: UploadFile = File(...),
     current_user: TokenData = Depends(get_current_user),
+    access: SubscriptionAccess = Depends(require_active_subscription),
     workspace_service: WorkspaceService = Depends(get_workspace_service),
     file_service: FileProcessingService = Depends(get_file_service)
 ):

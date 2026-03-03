@@ -17,8 +17,10 @@ import logging
 from app.agents.notification_agent import get_notification_agent
 from app.agents.payslip_agent import get_payslip_agent
 from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.subscription_guard import require_active_subscription
 from app.database.turso_client import TursoClient
 from app.services.conversation_service import ConversationService
+from app.services.subscription_service import SubscriptionAccess
 from app.security import file_validator, rate_limit_notification
 from app.utils.document_detector import DocumentDetector
 
@@ -42,7 +44,8 @@ async def analyze_notification(
 	request: Request,  # Required by SlowAPI
 	file: UploadFile = File(...),
 	notification_date: Optional[str] = Form(None),
-	current_user: TokenData = Depends(get_current_user)
+	current_user: TokenData = Depends(get_current_user),
+	access: SubscriptionAccess = Depends(require_active_subscription)
 ):
 	"""
 	Analyze uploaded AEAT notification PDF.

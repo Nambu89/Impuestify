@@ -26,13 +26,15 @@ class TestTaxAgent:
         assert response.agent_name == "TaxAgent"
     
     def test_agent_system_prompt_exists(self):
-        """TaxAgent should have a system prompt"""
+        """TaxAgent should have a system prompt via _get_system_prompt()"""
         from app.agents.tax_agent import TaxAgent
-        
-        assert hasattr(TaxAgent, 'SYSTEM_PROMPT')
-        assert "TaxIA" in TaxAgent.SYSTEM_PROMPT
-        assert "AEAT" in TaxAgent.SYSTEM_PROMPT
-        assert "evadir" in TaxAgent.SYSTEM_PROMPT.lower()
+
+        agent = TaxAgent(name="TestAgent")
+        assert hasattr(agent, '_get_system_prompt')
+        prompt = agent._get_system_prompt()
+        assert "Impuestify" in prompt
+        assert "AEAT" in prompt
+        assert "evadir" in prompt.lower()
     
     def test_agent_initialization(self):
         """TaxAgent should initialize without credentials (warning mode)"""
@@ -132,19 +134,19 @@ class TestAgentRuntime:
 
 class TestAgentFrameworkAvailability:
     """Tests for framework availability handling"""
-    
-    def test_framework_import_handling(self):
-        """Should handle missing agent-framework gracefully"""
-        from app.agents.tax_agent import AGENT_FRAMEWORK_AVAILABLE
-        
-        # Should be a boolean
-        assert isinstance(AGENT_FRAMEWORK_AVAILABLE, bool)
-    
-    def test_fallback_client_available(self):
-        """Fallback OpenAI client should be available"""
+
+    def test_openai_client_available(self):
+        """OpenAI client should be importable from tax_agent"""
         from app.agents.tax_agent import OpenAI
-        
+
         assert OpenAI is not None
+
+    def test_agent_uses_openai_directly(self):
+        """TaxAgent should use OpenAI API directly (no agent framework)"""
+        from app.agents.tax_agent import TaxAgent
+
+        agent = TaxAgent(name="TestAgent")
+        assert agent._client is not None
 
 
 class TestAgentIntegration:

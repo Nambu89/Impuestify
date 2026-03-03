@@ -20,7 +20,10 @@ from app.utils.region_detector import RegionDetector
 from app.services.conversation_service import ConversationService
 from app.services.conversation_cache import ConversationCache
 from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.subscription_guard import require_active_subscription
 from app.security import sql_validator, guardrails_system, rate_limit_ask
+from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
+from app.services.subscription_service import SubscriptionAccess
 from app.metrics import record_tokens, record_request, record_error, record_rag_search, record_llm_latency
 
 logger = logging.getLogger(__name__)
@@ -329,7 +332,8 @@ async def ask_question(
 	req: Request,
 	request: QuestionRequest,
 	db: TursoClient = Depends(get_db),
-	current_user: TokenData = Depends(get_current_user)
+	current_user: TokenData = Depends(get_current_user),
+	access: SubscriptionAccess = Depends(require_active_subscription)
 ):
 	"""
 	Ask a tax question to Impuestify with optional conversation context.
@@ -369,6 +373,16 @@ async def ask_question(
 				)
 			logger.info(f"Non-critical guardrail: {guardrails_check.risk_level}")
 		
+		# === CONTENT RESTRICTION: Autonomo detection ===
+		if not access.is_owner and detect_autonomo_query(request.question):
+			return ImpuestifyResponse(
+				answer=get_autonomo_block_response(),
+				sources=[],
+				processing_time=time.time() - start_time,
+				conversation_id=request.conversation_id,
+				metadata={"type": "content_restriction", "restricted_topic": "autonomo"}
+			)
+
 		logger.info(f"Nueva consulta: {request.question[:100]}... (conversation_id: {request.conversation_id})")
 		
 		# Initialize conversation service
@@ -397,11 +411,10 @@ async def ask_question(
 			greeting_response = (
 				"¡Hola! 👋 Soy Impuestify, tu asistente fiscal inteligente.\n\n"
 				"Estoy aquí para ayudarte con preguntas sobre:\n"
-				"- 💰 IRPF y declaración de la renta\n"
-				"- 📊 IVA y modelos tributarios (303, 100, etc.)\n"
+				"- 💰 IRPF y declaración de la renta (Modelo 100)\n"
+				"- 📋 Análisis de nóminas y retenciones\n"
 				"- 📉 Deducciones y exenciones fiscales\n"
-				"- 📋 Normativa fiscal española y AEAT\n"
-				"- 🔧 Cuotas de autónomos\n\n"
+				"- 📬 Notificaciones de la AEAT\n\n"
 				"¿En qué puedo ayudarte hoy?"
 			)
 			
@@ -581,6 +594,8 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 			})
 
 		# === Choose agent based on context ===
+		restricted_mode = not access.is_owner
+
 		if workspace_context:
 			# Use WorkspaceAgent for workspace queries
 			from app.agents.workspace_agent import get_workspace_agent
@@ -592,7 +607,8 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 				sources=sources_data,
 				conversation_history=formatted_history,
 				user_id=current_user.user_id,
-				workspace_id=request.workspace_id
+				workspace_id=request.workspace_id,
+				restricted_mode=restricted_mode
 			)
 		else:
 			# Use TaxAgent for general tax queries
@@ -603,7 +619,8 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 				context=combined_context,
 				sources=sources_data,
 				conversation_history=formatted_history,
-				use_tools=True
+				use_tools=True,
+				restricted_mode=restricted_mode
 			)
 		
 		answer = agent_response.content

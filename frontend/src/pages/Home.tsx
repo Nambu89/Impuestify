@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MessageSquare, Shield, FileText, ArrowRight } from 'lucide-react'
+import { MessageSquare, Shield, FileText, ArrowRight, Calculator, CreditCard, CheckCircle } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
 import './Home.css'
@@ -36,7 +36,7 @@ export default function Home() {
                             ) : (
                                 <>
                                     <Link to="/register" className="btn btn-primary btn-lg">
-                                        Empezar Gratis
+                                        Empezar Ahora
                                         <ArrowRight size={20} />
                                     </Link>
                                     <Link to="/login" className="btn btn-secondary btn-lg">
@@ -84,27 +84,66 @@ export default function Home() {
                                 <Shield size={28} />
                             </div>
                             <h3>Seguro y Privado</h3>
-                            <p>Tus datos están protegidos. No almacenamos información personal sensible.</p>
+                            <p>Tus datos están protegidos. Cumplimiento RGPD, AI Act y LOPDGDD.</p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* About TaxIA Section */}
-            <section className="about">
+            {/* Pricing Section */}
+            <section className="pricing">
                 <div className="container">
-                    <h2 className="section-title">Sobre Impuestify</h2>
-                    <div className="about-content">
-                        <p>
-                            Impuestify utiliza tecnología <strong>RAG (Retrieval-Augmented Generation)</strong> para
-                            proporcionar respuestas precisas basadas en documentación oficial de la AEAT.
-                        </p>
-                        <p>
-                            Nuestro sistema combina inteligencia artificial avanzada con una base de conocimiento
-                            actualizada de normativa tributaria española, garantizando respuestas fiables y
-                            contextualizadas a tus consultas fiscales.
+                    <h2 className="section-title">Plan Particular</h2>
+                    <p className="section-subtitle">Para trabajadores por cuenta ajena</p>
+                    <div className="pricing-card">
+                        <div className="pricing-header">
+                            <div className="pricing-icon">
+                                <Calculator size={32} />
+                            </div>
+                            <div className="pricing-amount">
+                                <span className="pricing-currency">EUR</span>
+                                <span className="pricing-value">15</span>
+                                <span className="pricing-period">/mes</span>
+                            </div>
+                        </div>
+                        <ul className="pricing-features">
+                            <li>
+                                <CheckCircle size={18} />
+                                <span>Consultas fiscales ilimitadas con IA</span>
+                            </li>
+                            <li>
+                                <CheckCircle size={18} />
+                                <span>Análisis de nóminas (PDF)</span>
+                            </li>
+                            <li>
+                                <CheckCircle size={18} />
+                                <span>Cálculo de IRPF por comunidad autónoma</span>
+                            </li>
+                            <li>
+                                <CheckCircle size={18} />
+                                <span>Análisis de notificaciones AEAT</span>
+                            </li>
+                            <li>
+                                <CheckCircle size={18} />
+                                <span>Workspace personal de documentos</span>
+                            </li>
+                            <li>
+                                <CheckCircle size={18} />
+                                <span>Fuentes oficiales citadas</span>
+                            </li>
+                        </ul>
+                        <Link to="/register" className="btn btn-primary btn-lg pricing-cta">
+                            <CreditCard size={20} />
+                            Comenzar
+                        </Link>
+                        <p className="pricing-note">
+                            Pago seguro con Stripe. Cancela cuando quieras.
                         </p>
                     </div>
+                    <p className="pricing-autonomos">
+                        ¿Eres autónomo o profesional por cuenta propia?{' '}
+                        <Link to="/contact?type=autonomo">Solicita información sobre planes especializados</Link>
+                    </p>
                 </div>
             </section>
 
@@ -113,21 +152,14 @@ export default function Home() {
                 <div className="container">
                     <div className="cta-card">
                         <h2>¿Listo para simplificar tu fiscalidad?</h2>
-                        <p>Únete a miles de usuarios que ya confían en Impuestify</p>
+                        <p>Tu asesor fiscal con IA, disponible 24/7</p>
                         <Link to="/register" className="btn btn-primary btn-lg">
-                            Crear Cuenta Gratis
+                            Crear Cuenta
                             <ArrowRight size={20} />
                         </Link>
                     </div>
                 </div>
             </section>
-
-            {/* Footer */}
-            <footer className="footer">
-                <div className="container">
-                    <p>© 2025 Impuestify. Información orientativa, no sustituye asesoramiento profesional.</p>
-                </div>
-            </footer>
         </div>
     )
 }

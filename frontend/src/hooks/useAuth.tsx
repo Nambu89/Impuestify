@@ -7,6 +7,8 @@ interface User {
     email: string
     name?: string
     is_admin?: boolean | number
+    is_owner?: boolean
+    subscription_status?: string | null
 }
 
 interface AuthContextType {

@@ -477,11 +477,62 @@ class TursoClient:
             """,
 
             "CREATE INDEX IF NOT EXISTS idx_tax_params_lookup ON tax_parameters(category, year, jurisdiction)",
+
+            # =============================================
+            # SUBSCRIPTION & PAYMENT TABLES
+            # =============================================
+
+            # Subscriptions table - Stripe subscription state per user
+            """
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL UNIQUE,
+                stripe_customer_id TEXT NOT NULL,
+                stripe_subscription_id TEXT,
+                plan_type TEXT NOT NULL DEFAULT 'particular',
+                status TEXT NOT NULL DEFAULT 'inactive',
+                current_period_start TEXT,
+                current_period_end TEXT,
+                cancel_at_period_end BOOLEAN DEFAULT 0,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+            """,
+
+            # Contact requests table - form submissions (e.g. autonomo interest)
+            """
+            CREATE TABLE IF NOT EXISTS contact_requests (
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                email TEXT NOT NULL,
+                name TEXT,
+                message TEXT,
+                request_type TEXT DEFAULT 'autonomo_interest',
+                status TEXT DEFAULT 'pending',
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+            )
+            """,
+
+            # Subscription indexes
+            "CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer ON subscriptions(stripe_customer_id)",
+            "CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)",
+            "CREATE INDEX IF NOT EXISTS idx_contact_requests_user ON contact_requests(user_id)",
         ]
         
         try:
             for sql in schema_statements:
                 await self.execute(sql)
+
+            # Add is_owner column to users (ALTER TABLE doesn't support IF NOT EXISTS)
+            try:
+                await self.execute("ALTER TABLE users ADD COLUMN is_owner BOOLEAN DEFAULT 0")
+                logger.info("Added is_owner column to users table")
+            except Exception:
+                pass  # Column already exists
+
             logger.info("Database schema initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize schema: {e}")

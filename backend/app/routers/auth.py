@@ -17,6 +17,7 @@ from app.auth.jwt_handler import (
     TokenData
 )
 from app.services.user_service import user_service
+from app.services.subscription_service import get_subscription_service
 from app.database.models import UserCreate, User
 from app.security.rate_limiter import limiter
 
@@ -51,6 +52,8 @@ class UserResponse(BaseModel):
     name: Optional[str]
     is_active: bool
     is_admin: bool = False
+    is_owner: bool = False
+    subscription_status: Optional[str] = None
 
 
 class AuthResponse(BaseModel):
@@ -74,20 +77,34 @@ async def register(request: Request, data: RegisterRequest):
                 name=data.name
             )
         )
-        
+
+        # Create Stripe customer for the new user
+        sub_service = await get_subscription_service()
+        try:
+            await sub_service.create_stripe_customer(
+                user_id=user.id, email=user.email, name=user.name
+            )
+        except Exception as e:
+            logger.warning(f"Stripe customer creation failed (non-blocking): {e}")
+
+        # Check subscription status
+        access = await sub_service.check_access(user_id=user.id, email=user.email)
+
         tokens = create_tokens_for_user(user.id, user.email)
-        
+
         return AuthResponse(
             user=UserResponse(
                 id=user.id,
                 email=user.email,
                 name=user.name,
                 is_active=user.is_active,
-                is_admin=user.is_admin
+                is_admin=user.is_admin,
+                is_owner=access.is_owner,
+                subscription_status=access.status
             ),
             tokens=tokens
         )
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -111,22 +128,28 @@ async def login(request: Request, data: LoginRequest):
     Returns authentication tokens if credentials are valid.
     """
     user = await user_service.authenticate_user(data.email, data.password)
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email o contraseña incorrectos"
         )
-    
+
+    # Check subscription status
+    sub_service = await get_subscription_service()
+    access = await sub_service.check_access(user_id=user.id, email=user.email)
+
     tokens = create_tokens_for_user(user.id, user.email)
-    
+
     return AuthResponse(
         user=UserResponse(
             id=user.id,
             email=user.email,
             name=user.name,
             is_active=user.is_active,
-            is_admin=user.is_admin
+            is_admin=user.is_admin,
+            is_owner=access.is_owner,
+            subscription_status=access.status
         ),
         tokens=tokens
     )
@@ -167,19 +190,25 @@ async def get_current_user_info(current_user: TokenData = Depends(get_current_us
     Requires valid access token.
     """
     user = await user_service.get_user_by_id(current_user.user_id)
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Usuario no encontrado"
         )
-    
+
+    # Check subscription status
+    sub_service = await get_subscription_service()
+    access = await sub_service.check_access(user_id=user.id, email=user.email)
+
     return UserResponse(
         id=user.id,
         email=user.email,
         name=user.name,
         is_active=user.is_active,
-        is_admin=user.is_admin
+        is_admin=user.is_admin,
+        is_owner=access.is_owner,
+        subscription_status=access.status
     )
 
 
