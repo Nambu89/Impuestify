@@ -57,6 +57,25 @@ Eres un **Frontend Developer Senior** especializado en:
 - Los botones del banner son equiparados (equalWeightButtons: true) — NO cambiar, es requisito AEPD
 - Si se anade nueva cookie: actualizar tabla en CookieConsent.tsx Y en CookiePolicyPage.tsx
 
+## Perfil Fiscal de Autónomo (2026-03-03)
+- `hooks/useFiscalProfile.ts` — interface `FiscalProfile` tiene 12 campos de autónomo:
+  epigrafe_iae, tipo_actividad, fecha_alta_autonomo, metodo_estimacion_irpf,
+  regimen_iva, rendimientos_netos_mensuales, base_cotizacion_reta,
+  territorio_foral, territorio_historico, tipo_retencion_facturas,
+  tarifa_plana, pluriactividad
+- `pages/SettingsPage.tsx` — Tab Fiscal tiene sección colapsable "Datos de autónomo"
+  que solo se muestra si `subscription.planType === 'autonomo'` o `subscription.isOwner`
+
+### Panel admin de usuarios (COMPLETADO 2026-03-03)
+
+- `pages/AdminUsersPage.tsx` + `.css` — ruta `/admin/users`
+- Solo accesible si `isOwner` (redirect a /chat si no)
+- Tabla con: email, nombre, plan_type, status, registro, acciones
+- Botón cambiar plan (autonomo ↔ particular) con confirm + banner feedback
+- Responsive: cards en móvil, tabla en desktop (1024px)
+- Header.tsx: link "Admin" con icono Shield (solo owner)
+- Endpoints: `GET /api/admin/users` + `PUT /api/admin/users/{id}/plan`
+
 ## Testing
 Después de cambios, verifica:
 ```bash

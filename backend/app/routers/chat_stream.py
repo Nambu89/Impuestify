@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 import logging
 import asyncio
+import json
 
 from app.database.turso_client import TursoClient
 from app.agents.tax_agent import TaxAgent
@@ -248,6 +249,31 @@ async def ask_question_stream(
             # === Choose agent based on context ===
             use_workspace_agent = bool(workspace_context)
 
+            # === Load fiscal profile for personalized agent responses ===
+            fiscal_profile = {}
+            try:
+                fp_result = await db.execute(
+                    "SELECT datos_fiscales, ccaa_residencia, situacion_laboral "
+                    "FROM user_profiles WHERE user_id = ?",
+                    [current_user.user_id]
+                )
+                if fp_result.rows:
+                    row = fp_result.rows[0]
+                    raw = row.get("datos_fiscales")
+                    if raw:
+                        datos = json.loads(raw) if isinstance(raw, str) else raw
+                        # Extract plain values from {value, _source, _updated} wrappers
+                        for k, v in datos.items():
+                            if k.startswith("_"):
+                                continue
+                            fiscal_profile[k] = v["value"] if isinstance(v, dict) and "value" in v else v
+                    if row.get("ccaa_residencia"):
+                        fiscal_profile["ccaa_residencia"] = row["ccaa_residencia"]
+                    if row.get("situacion_laboral"):
+                        fiscal_profile["situacion_laboral"] = row["situacion_laboral"]
+            except Exception as e:
+                logger.warning(f"Error loading fiscal profile: {e}")
+
             # Create async task for agent execution
             async def run_agent():
                 done_emitted = False
@@ -266,7 +292,8 @@ async def ask_question_stream(
                             user_id=current_user.user_id,
                             workspace_id=request.workspace_id,
                             progress_callback=callback,
-                            restricted_mode=restricted_mode
+                            restricted_mode=restricted_mode,
+                            fiscal_profile=fiscal_profile
                         )
                     else:
                         # Use TaxAgent for general tax queries
@@ -280,7 +307,8 @@ async def ask_question_stream(
                             user_id=current_user.user_id,
                             progress_callback=callback,
                             db_client=db,  # Pass database client for user memory
-                            restricted_mode=restricted_mode
+                            restricted_mode=restricted_mode,
+                            fiscal_profile=fiscal_profile
                         )
                     
                     # Filter JSON from final content

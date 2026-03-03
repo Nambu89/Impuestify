@@ -18,6 +18,7 @@ except Exception:
 from app.agents.tax_agent import get_tax_agent
 from app.agents.payslip_agent import get_payslip_agent
 from app.agents.workspace_agent import get_workspace_agent
+from app.agents.competitor_analysis_agent import get_competitor_analysis_agent
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ class CoordinatorAgent:
 	- TaxAgent: For general tax questions, IRPF, autonomous quotas
 	- PayslipAgent: For payslip analysis and interpretation
 	- WorkspaceAgent: For analyzing user's uploaded documents
+	- CompetitorAnalysisAgent: For competitive intelligence and market analysis
 	"""
 
 	def __init__(self):
@@ -39,6 +41,7 @@ class CoordinatorAgent:
 		self.tax_agent = get_tax_agent()
 		self.payslip_agent = get_payslip_agent()
 		self.workspace_agent = get_workspace_agent()
+		self.competitor_agent = get_competitor_analysis_agent()
 
 		# Create router agent (decides which specialist to use)
 		from app.config import settings
@@ -51,10 +54,11 @@ class CoordinatorAgent:
 			name="Router",
 			instructions="""Eres un router inteligente que decide qué agente especializado debe responder.
 
-Tienes 3 agentes disponibles:
+Tienes 4 agentes disponibles:
 1. **TaxAgent**: Experto en fiscalidad española (IRPF, cuotas autónomos, deducciones, modelos tributarios)
 2. **PayslipAgent**: Experto en análisis de nóminas (interpretación, conceptos salariales, retenciones)
 3. **WorkspaceAgent**: Analiza archivos del espacio de trabajo del usuario (facturas, nóminas, declaraciones)
+4. **CompetitorAnalysisAgent**: Analiza la competencia (TaxDown, Declarando, etc.) y posición de mercado
 
 ## Reglas de enrutamiento:
 
@@ -81,10 +85,19 @@ Tienes 3 agentes disponibles:
 - Quieran un resumen de sus archivos fiscales
 - Pregunten sobre balance de IVA soportado/repercutido
 
-Responde SOLO con: "TaxAgent", "PayslipAgent" o "WorkspaceAgent"."""
+**Usa CompetitorAnalysisAgent cuando:**
+- Mencionen TaxDown, Declarando, Taxfix, Xolo u otros competidores
+- Pregunten por comparativas de funcionalidades o precios
+- Pidan análisis de mercado, DAFO, posicionamiento
+- Pregunten por integración con AEAT (Colaborador Social)
+- Pidan sugerencias de mejora o roadmap de producto
+- Pregunten qué hace la competencia mejor o peor
+- Mencionen "competencia", "mercado", "comparar", "ventajas", "huecos"
+
+Responde SOLO con: "TaxAgent", "PayslipAgent", "WorkspaceAgent" o "CompetitorAnalysisAgent"."""
 		)
 
-		logger.info("CoordinatorAgent initialized with TaxAgent, PayslipAgent, and WorkspaceAgent")
+		logger.info("CoordinatorAgent initialized with TaxAgent, PayslipAgent, WorkspaceAgent, and CompetitorAnalysisAgent")
 	
 	async def route(self, query: str) -> str:
 		"""
@@ -100,7 +113,7 @@ Responde SOLO con: "TaxAgent", "PayslipAgent" o "WorkspaceAgent"."""
 			response = await self.router.run(f"Query: {query}")
 			agent_name = response.text.strip()
 
-			if agent_name not in ["TaxAgent", "PayslipAgent", "WorkspaceAgent"]:
+			if agent_name not in ["TaxAgent", "PayslipAgent", "WorkspaceAgent", "CompetitorAnalysisAgent"]:
 				# Default to TaxAgent if unclear
 				logger.warning(f"Unclear routing: {agent_name}, defaulting to TaxAgent")
 				return "TaxAgent"
@@ -160,6 +173,12 @@ Responde SOLO con: "TaxAgent", "PayslipAgent" o "WorkspaceAgent"."""
 				query=query,
 				context=workspace_context or "",
 				user_id=context.get("user_id") if context else None
+			)
+		elif agent_name == "CompetitorAnalysisAgent":
+			return await self.competitor_agent.run(
+				query=query,
+				context=context.get("rag_context") if context else None,
+				sources=context.get("sources") if context else None,
 			)
 		else:
 			# TaxAgent (with RAG context if available)

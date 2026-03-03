@@ -9,6 +9,127 @@
 
 ## Mensajes Activos
 ---
+
+[2026-03-03] [FRONTEND] [🟢 DONE] - Panel Admin de Usuarios (owner-only)
+
+### Cambios realizados
+
+**Archivos creados (2):**
+- `pages/AdminUsersPage.tsx` — Tabla de usuarios con gestión de planes (owner-only)
+- `pages/AdminUsersPage.css` — Estilos mobile-first (cards en móvil, tabla en desktop)
+
+**Archivos modificados (2):**
+- `App.tsx` — +import AdminUsersPage, +ruta `/admin/users` con ProtectedRoute (requireSubscription=false)
+- `components/Header.tsx` — +import useSubscription/Shield, +link "Admin" visible solo si isOwner
+
+**Funcionalidades:**
+1. Tabla de usuarios: email, nombre, plan_type, status, fecha registro
+2. Botón "Cambiar a Autónomo" / "Cambiar a Particular" por fila
+3. Confirmación con window.confirm antes de ejecutar cambio
+4. Feedback visual (banner success/error con auto-dismiss 5s)
+5. Botón refresh para recargar lista
+6. Redirige a /chat si el usuario no es owner
+7. Layout responsive: cards en móvil (<1024px), tabla en desktop (>=1024px)
+8. Badges de colores para plan (owner/autonomo/particular) y status (active/grace/inactive)
+9. Icono Crown junto al email del owner
+10. Spinner en botones durante cambio de plan
+
+**Endpoints consumidos:**
+- `GET /api/admin/users` → lista de usuarios
+- `PUT /api/admin/users/{id}/plan` → cambio de plan
+
+**Build:** ✅ Exitoso (npm run build sin errores)
+
+---
+
+[2026-03-03] [BACKEND] [🟢 DONE] - Perfil Fiscal de Autónomos + Integración Workspace-Tools + Alta Admin
+
+### Cambios realizados
+
+**1. Backend — 12 campos nuevos para perfil fiscal de autónomo**
+- Archivo: `backend/app/routers/user_rights.py`
+- Nuevos campos en `FiscalProfileRequest` y `_DATOS_FISCALES_KEYS`:
+  - `epigrafe_iae` (str) — Código IAE del Modelo 036
+  - `tipo_actividad` (str) — "profesional" | "empresarial" | "artistica"
+  - `fecha_alta_autonomo` (str) — Fecha ISO de alta
+  - `metodo_estimacion_irpf` (str) — "directa_normal" | "directa_simplificada" | "objetiva"
+  - `regimen_iva` (str) — "general" | "simplificado" | "recargo_equivalencia" | "exento"
+  - `rendimientos_netos_mensuales` (float) — Para cálculo RETA
+  - `base_cotizacion_reta` (float) — Base elegida
+  - `territorio_foral` (bool) — PV/Navarra
+  - `territorio_historico` (str) — "bizkaia" | "gipuzkoa" | "araba" | "navarra"
+  - `tipo_retencion_facturas` (float) — 15.0 o 7.0
+  - `tarifa_plana` (bool)
+  - `pluriactividad` (bool)
+- **No requiere migración BD** — todo va al JSON `datos_fiscales` existente.
+
+**2. Backend — Endpoint admin (owner-only)**
+- Archivo nuevo: `backend/app/routers/admin.py`
+- `GET /api/admin/users` — Lista usuarios con plan_type, status, email, nombre
+- `PUT /api/admin/users/{user_id}/plan` — Cambia plan_type ("particular" | "autonomo")
+  - Si autonomo: también actualiza `user_profiles.situacion_laboral`
+  - Crea subscription si no existe (admin_granted)
+- Solo accesible por owner (verificado via SubscriptionAccess.is_owner)
+- Registrado en `backend/app/main.py`
+
+**3. Backend — Integración fiscal_profile → agentes**
+- `chat_stream.py`: Carga `datos_fiscales` + `ccaa_residencia` + `situacion_laboral` del user_profiles
+  y lo pasa como `fiscal_profile` dict a ambos agentes.
+- `WorkspaceAgent`: Acepta `fiscal_profile`, lo inyecta en system prompt, tiene tools
+  `calculate_modelo_303` y `calculate_modelo_130` delegados al registry central.
+- `TaxAgent`: Acepta `fiscal_profile`, lo inyecta como contexto adicional antes del memory.
+
+**4. Frontend — Formulario de autónomo en Settings**
+- `hooks/useFiscalProfile.ts`: +12 campos en `FiscalProfile` interface + `EMPTY_PROFILE`
+- `pages/SettingsPage.tsx`: Sección colapsable "Datos de autónomo" en tab Fiscal
+  - Solo visible si `subscription.planType === 'autonomo'` o `subscription.isOwner`
+  - 12 campos: epígrafe, tipo actividad, fecha alta, estimación, régimen IVA, retención,
+    rendimientos netos, base RETA, territorio foral/histórico, tarifa plana, pluriactividad
+
+**5. Tests — 23 tests nuevos**
+- `backend/tests/test_admin.py` (9 tests) — Modelos, acceso owner, lógica plan change
+- `backend/tests/test_fiscal_profile_autonomo.py` (14 tests) — Campos, keys, save logic, formato agentes
+
+### Para FRONTEND agent: Pendiente panel admin de usuarios
+
+El frontend necesita una nueva página para que el owner gestione usuarios.
+
+**Endpoints backend (ya implementados, auth via Bearer token):**
+
+```
+GET /api/admin/users → UserListItem[]
+
+interface UserListItem {
+  id: string
+  email: string
+  name: string | null
+  is_owner: boolean
+  plan_type: string | null     // "particular" | "autonomo" | "owner" | null
+  subscription_status: string | null  // "active" | "grace_period" | "inactive" | null
+  created_at: string | null
+}
+```
+
+```
+PUT /api/admin/users/{user_id}/plan
+Body: { "plan_type": "autonomo" }   // o "particular"
+→ { message: string, user_id: string, plan_type: string }
+```
+
+**Ambos devuelven 403 si el caller NO es owner.**
+
+**Requisitos UI:**
+1. Nueva página `AdminUsersPage.tsx` (ruta `/admin/users`) o pestaña en Dashboard
+2. Solo visible/accesible si `subscription.isOwner === true` (usar `useSubscription()`)
+3. Tabla con columnas: email, nombre, plan_type, status, acciones
+4. Botón "Cambiar a Autónomo" por fila (confirm antes de ejecutar)
+5. Feedback visual (toast o banner) tras cambio exitoso o error
+6. Botón refresh para recargar lista
+7. Ruta protegida en `App.tsx` con check `isOwner`
+8. Hook API: usar `useApi()` → `apiRequest('/api/admin/users')` etc.
+
+---
+
 [2026-01-11 16:30] [SYSTEM] [🟢 DONE] - Sistema de comunicación entre agentes inicializado
 
 [2026-01-11] [FRONTEND] [🟢 DONE] - CSS Responsive Mobile-First Refactoring
@@ -61,7 +182,7 @@ Todos los archivos ahora usan las variables de `global.css`:
 
 ## Estado Biblioteca RAG — Para todos los agentes
 ---
-> Última actualización: 2026-02-25 | **394 PDFs** en `docs/`
+> Última actualización: 2026-03-03 | **419 PDFs + 9 Excel = 428 archivos** en `docs/`
 
 ### ✅ Cobertura actual (lo que el RAG tiene disponible para ingestar)
 
@@ -217,6 +338,75 @@ Solo configurar scripts en la categoría `analytics` de `CookieConsent.tsx`. No 
 - ProtectedRoute acepta prop `requireSubscription={false}` para rutas que solo necesitan auth
 - Checkout redirect URLs: success→/chat?subscription=success, cancel→/subscribe?canceled=true
 - Portal return URL: /settings
+
+[2026-03-03 20:05] [CRAWLER] [🟢 DONE] - Sesión 12 completada. +19 archivos (10 PDFs + 9 Excel). La Rioja actualizada (+4 docs: consolidado 2026 + Leyes 6/2024 + 9/2025 + 5/2025). Diseños de Registro AEAT descargados (15 archivos: Modelos 111/115/130/131/190/200/202/303/347/349/390/714/720 + Instrucciones 650/651). Total: 428 archivos. CLM verificado: sin cambios significativos. ⚠️ BACKEND: ver instrucciones detalladas abajo sobre Diseños de Registro para implementación de herramientas.
+
+---
+
+## 📢 INSTRUCCIONES PARA BACKEND — Diseños de Registro / Modelos AEAT (Sesión 12)
+
+> **Contexto**: El usuario pidió investigar los XSD de los modelos AEAT. Resultado: **NO hay XSD** (excepto Modelo 200). AEAT usa ficheros planos de posiciones fijas. Los diseños de registro están en `docs/AEAT/Modelos/DisenosRegistro/`.
+
+### Hallazgo clave: NO son XSD, son Diseños de Registro (flat-file)
+
+La AEAT **NO usa XSD** para la mayoría de modelos. Los modelos se presentan mediante **ficheros planos de texto** con campos en **posiciones fijas** (fixed-width records). Los diseños de registro (Excel/PDF) describen:
+- Posición inicial y longitud de cada campo
+- Tipo de dato (numérico, alfanumérico)
+- Registros de tipo 1 (declarante) y tipo 2 (detalle)
+
+**Excepciones:**
+- **Modelo 200 (IS)**: Sí tiene XSD (`mod2002024.xsd`) para importar datos contables via XML en Sociedades WEB
+- **Modelos 650/651 (ISD)**: NO tienen diseño de registro — solo formulario web
+- **Transición XML/XSD**: Orden HAC/747/2025 → a partir de enero 2027 para ejercicio 2026
+
+### Archivos disponibles en `docs/AEAT/Modelos/DisenosRegistro/`
+
+| Archivo | Modelo | Formato | Prioridad Backend |
+|---------|--------|---------|-------------------|
+| `DR303_e2026.xlsx` | 303 - IVA trimestral | Excel flat-file | **ALTA** (autónomos trimestrales) |
+| `DR130_e2019.xls` | 130 - Pagos fraccionados IRPF ED | Excel flat-file | **ALTA** (autónomos) |
+| `DR131_e2025.xlsx` | 131 - Pagos fraccionados IRPF EO | Excel flat-file | **MEDIA** (módulos) |
+| `DR111_e2019.xls` | 111 - Retenciones trabajo/prof. | Excel flat-file | **MEDIA** (empresas) |
+| `DR115_e2019.xls` | 115 - Retenciones alquileres | Excel flat-file | **BAJA** |
+| `DR190_e2025.pdf` | 190 - Resumen anual retenciones | PDF diseño lógico | **MEDIA** |
+| `DR200_e2024.xls` | 200 - IS (TIENE XSD) | Excel + XSD | **ALTA** (sociedades) |
+| `DR202_e2025.xlsx` | 202 - Pagos fraccionados IS | Excel flat-file | **MEDIA** |
+| `DR390_e2025.xlsx` | 390 - Resumen anual IVA | Excel flat-file | **MEDIA** |
+| `DR347_e2025.pdf` | 347 - Operaciones con terceros | PDF diseño lógico | **BAJA** |
+| `DR349_e2020.pdf` | 349 - Operaciones intracomunitarias | PDF diseño lógico | **BAJA** |
+| `DR714_e2024.xls` | 714 - Patrimonio | Excel flat-file | **BAJA** |
+| `DR720.pdf` | 720 - Bienes extranjero | PDF diseño lógico | **BAJA** |
+| `Instrucciones_Modelo650_ISD.pdf` | 650 - ISD Sucesiones | PDF instrucciones | **MEDIA** (referencia) |
+| `Instrucciones_Modelo651_ISD.pdf` | 651 - ISD Donaciones | PDF instrucciones | **MEDIA** (referencia) |
+
+### Recomendación de implementación para Backend
+
+**Opción A (recomendada): Tools de cálculo/simulación** — como el ya existente `irpf_calculator_tool.py`
+- Crear tools que **calculen** los campos del modelo (no que generen el fichero)
+- Ejemplo: `calculate_modelo_303(base_imponible, iva_deducible, ...)` → devuelve casillas 01-89
+- Los diseños de registro sirven como **especificación de campos** (qué casillas hay, qué significan)
+
+**Opción B: Generación de ficheros** — más complejo, futuro
+- Generar ficheros planos de texto conformes al diseño de registro
+- Útil para autónomos que quieran pre-rellenar sus declaraciones
+- Requiere parsear los Excel para extraer posiciones/longitudes
+
+**Para Modelo 200 (único con XSD):**
+- Se puede implementar importación/exportación XML usando el XSD
+- URL del XSD: buscar en la página de información del modelo 200 en sede AEAT
+
+**Prioridad sugerida:**
+1. **Modelo 303 IVA** → tool de cálculo de casillas IVA trimestral (complementa al TaxAgent)
+2. **Modelo 130** → tool de cálculo pago fraccionado IRPF (autónomos estimación directa)
+3. **Modelo 200 IS** → parser XSD para simulación IS
+
+### URLs de referencia
+- Diseños de registro: https://sede.agenciatributaria.gob.es/Sede/ayuda/disenos-registro.html
+- Modelo 303 ayuda técnica: https://sede.agenciatributaria.gob.es/Sede/ayuda/consultas-informaticas/presentacion-declaraciones-ayuda-tecnica/modelo-303.html
+- Modelo 200 importar datos: https://sede.agenciatributaria.gob.es/Sede/ayuda/consultas-informaticas/impuesto-sobre-sociedades-ayuda-tecnica/sociedades-web/importar-datos-contables-modelo-200.html
+- Portal desarrolladores AEAT: https://www.agenciatributaria.es/AEAT.desarrolladores/
+
+---
 
 ## Dependencias Pendientes
 ---

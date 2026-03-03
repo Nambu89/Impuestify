@@ -47,6 +47,16 @@ async def endpoint(current_user: dict = Depends(get_current_user)):
     ...
 ```
 
+## Perfil Fiscal de Autónomo (2026-03-03)
+- `routers/user_rights.py` — FiscalProfileRequest tiene 12 campos nuevos de autónomo.
+  Todos van al JSON `datos_fiscales` (no requieren migración BD).
+- `routers/admin.py` — Router `/api/admin` (owner-only):
+  - `GET /api/admin/users` — Lista usuarios con plan_type, status
+  - `PUT /api/admin/users/{user_id}/plan` — Cambia plan a "particular" | "autonomo"
+- `routers/chat_stream.py` — Carga fiscal_profile de user_profiles y lo pasa a ambos agentes
+- `agents/workspace_agent.py` — Acepta fiscal_profile, tiene tools Modelo 303/130 del registry
+- `agents/tax_agent.py` — Acepta fiscal_profile, lo inyecta como contexto antes del memory
+
 ## Testing
 Después de cambios:
 ```bash

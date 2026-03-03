@@ -72,8 +72,56 @@ class WorkspaceAgent:
             logger.error("WorkspaceAgent initialization failed - missing OPENAI_API_KEY")
             raise ValueError("OPENAI_API_KEY is required")
 
-    def _get_system_prompt(self) -> str:
+    def _format_fiscal_profile(self, fp: Dict[str, Any]) -> str:
+        """Format fiscal profile dict into a readable string for the system prompt."""
+        if not fp:
+            return ""
+        lines = []
+        label_map = {
+            "ccaa_residencia": "CCAA residencia",
+            "situacion_laboral": "Situación laboral",
+            "epigrafe_iae": "Epígrafe IAE",
+            "tipo_actividad": "Tipo actividad",
+            "fecha_alta_autonomo": "Fecha alta autónomo",
+            "metodo_estimacion_irpf": "Método estimación IRPF",
+            "regimen_iva": "Régimen IVA",
+            "rendimientos_netos_mensuales": "Rendimientos netos mensuales",
+            "base_cotizacion_reta": "Base cotización RETA",
+            "territorio_foral": "Territorio foral",
+            "territorio_historico": "Territorio histórico",
+            "tipo_retencion_facturas": "Tipo retención facturas",
+            "tarifa_plana": "Tarifa plana",
+            "pluriactividad": "Pluriactividad",
+        }
+        for key, label in label_map.items():
+            val = fp.get(key)
+            if val is not None and val != "":
+                if isinstance(val, bool):
+                    lines.append(f"- {label}: {'Sí' if val else 'No'}")
+                elif isinstance(val, float) and key == "tipo_retencion_facturas":
+                    lines.append(f"- {label}: {val}%")
+                elif isinstance(val, (int, float)) and "netos" in key or "cotizacion" in key:
+                    lines.append(f"- {label}: {val:,.2f}€")
+                else:
+                    lines.append(f"- {label}: {val}")
+        return "\n".join(lines)
+
+    def _get_system_prompt(self, fiscal_profile: Optional[Dict[str, Any]] = None) -> str:
         """Generate system prompt with current date and workspace context."""
+        fiscal_section = ""
+        if fiscal_profile:
+            formatted = self._format_fiscal_profile(fiscal_profile)
+            if formatted:
+                fiscal_section = f"""
+
+👤 **PERFIL FISCAL DEL USUARIO** (usa estos datos para pre-rellenar cálculos):
+{formatted}
+
+⚠️ Usa estos datos del perfil para rellenar automáticamente los parámetros de las herramientas de cálculo.
+Por ejemplo, si el régimen IVA es "general", úsalo directamente en calculate_modelo_303.
+Si el método de estimación es "directa_simplificada", úsalo en calculate_modelo_130.
+"""
+
         return f"""Eres Impuestify en modo Workspace, un asesor fiscal que analiza los documentos personales del usuario.
 
 📁 **TU ROL**:
@@ -90,7 +138,9 @@ Tu trabajo es analizar estos documentos adjuntos por el usuario Y combinarlos co
 2. **Balance de IVA**: Calcular IVA soportado vs repercutido de facturas
 3. **Proyección IRPF**: Estimar IRPF anual basado en nóminas
 4. **Plazos fiscales**: Recordar fechas límite de declaraciones trimestrales
-
+5. **Modelo 303**: Calcular la declaración trimestral de IVA a partir de las facturas del workspace
+6. **Modelo 130**: Calcular el pago fraccionado trimestral de IRPF a partir de ingresos/gastos del workspace
+{fiscal_section}
 🗓️ **CALENDARIO FISCAL TRIMESTRAL (España)**:
 - Q1 (Enero-Marzo): Declaración hasta 20 de Abril
 - Q2 (Abril-Junio): Declaración hasta 20 de Julio
@@ -102,6 +152,19 @@ Tu trabajo es analizar estos documentos adjuntos por el usuario Y combinarlos co
 - `calculate_vat_balance`: Calcula balance IVA (soportado - repercutido)
 - `project_annual_irpf`: Proyecta IRPF anual basado en nóminas
 - `get_quarterly_deadlines`: Próximas fechas límite fiscales
+- `calculate_modelo_303`: Calcula la declaración trimestral de IVA (Modelo 303). Usa las facturas del workspace para extraer bases imponibles por tipo de IVA y el IVA deducible, luego llama a esta herramienta.
+- `calculate_modelo_130`: Calcula el pago fraccionado trimestral de IRPF (Modelo 130). Usa los ingresos y gastos ACUMULADOS desde inicio de año del workspace, luego llama a esta herramienta.
+
+📋 **FLUJO PARA MODELO 303** (cuando el usuario pregunte por su IVA trimestral):
+1. LEE las facturas del workspace
+2. Extrae las bases imponibles por tipo de IVA (21%, 10%, 4%)
+3. Extrae el IVA soportado deducible
+4. Llama a `calculate_modelo_303` con esos datos
+
+📋 **FLUJO PARA MODELO 130** (cuando el usuario pregunte por su pago fraccionado):
+1. LEE los datos de ingresos y gastos del workspace
+2. Calcula los ingresos y gastos ACUMULADOS desde el 1 de enero
+3. Llama a `calculate_modelo_130` con esos datos
 
 🎯 **TU ESTILO**:
 - Cercano y profesional, como un asesor fiscal de confianza
@@ -191,9 +254,18 @@ Responde siempre en español, de forma clara y estructurada."""
             }
         ]
 
-        # In restricted mode (salaried-only plan), remove VAT balance tool
+        # Add Modelo 303 and 130 tools from the central tools registry
+        try:
+            from app.tools import MODELO_303_TOOL, MODELO_130_TOOL
+            tools.append(MODELO_303_TOOL)
+            tools.append(MODELO_130_TOOL)
+        except ImportError:
+            logger.warning("Could not import Modelo 303/130 tools")
+
+        # In restricted mode (salaried-only plan), remove autonomo-specific tools
+        RESTRICTED_TOOL_NAMES = {"calculate_vat_balance", "calculate_modelo_303", "calculate_modelo_130"}
         if restricted_mode:
-            tools = [t for t in tools if t["function"]["name"] != "calculate_vat_balance"]
+            tools = [t for t in tools if t["function"]["name"] not in RESTRICTED_TOOL_NAMES]
 
         return tools
 
@@ -220,6 +292,16 @@ Responde siempre en español, de forma clara y estructurada."""
         elif function_name == "get_quarterly_deadlines":
             include_past = function_args.get("include_past", False)
             return await self._tool_get_quarterly_deadlines(include_past)
+
+        elif function_name in ("calculate_modelo_303", "calculate_modelo_130"):
+            # Delegate to centralized tool executors
+            try:
+                from app.tools import TOOL_EXECUTORS
+                executor = TOOL_EXECUTORS[function_name]
+                return await executor(**function_args)
+            except Exception as e:
+                logger.error(f"Error executing {function_name}: {e}")
+                return {"success": False, "error": str(e)}
 
         else:
             return {"error": f"Unknown function: {function_name}"}
@@ -391,7 +473,8 @@ Basado en {meses_encontrados} nómina(s) encontrada(s):
         user_id: Optional[str] = None,
         workspace_id: Optional[str] = None,
         progress_callback: Optional[Any] = None,
-        restricted_mode: bool = False
+        restricted_mode: bool = False,
+        fiscal_profile: Optional[Dict[str, Any]] = None
     ) -> AgentResponse:
         """
         Run the workspace agent.
@@ -413,7 +496,7 @@ Basado en {meses_encontrados} nómina(s) encontrada(s):
 
         # Build messages
         messages = [
-            {"role": "system", "content": self._get_system_prompt()}
+            {"role": "system", "content": self._get_system_prompt(fiscal_profile=fiscal_profile)}
         ]
 
         # Add conversation history

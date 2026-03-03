@@ -1,6 +1,7 @@
-import { FileText, LogOut, Menu, Settings } from 'lucide-react'
+import { FileText, LogOut, Menu, Settings, Shield } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useSubscription } from '../hooks/useSubscription'
 import './Header.css'
 
 interface HeaderProps {
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuToggle }: HeaderProps) {
     const { user, logout } = useAuth()
+    const { isOwner } = useSubscription()
     const navigate = useNavigate()
 
     const handleLogout = () => {
@@ -62,6 +64,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     {/* ✅ FIX: Solo mostrar Dashboard si is_admin === 1 */}
                     {user?.is_admin === 1 && (
                         <Link to="/dashboard" className="nav-link">Dashboard</Link>
+                    )}
+                    {isOwner && (
+                        <Link to="/admin/users" className="nav-link">
+                            <Shield size={16} /> Admin
+                        </Link>
                     )}
                 </nav>
 

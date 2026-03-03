@@ -18,6 +18,19 @@ export interface FiscalProfile {
     ganancias_fondos: number | null
     ingresos_alquiler: number | null
     valor_adquisicion_inmueble: number | null
+    // Autonomo-specific fields
+    epigrafe_iae: string | null
+    tipo_actividad: string | null
+    fecha_alta_autonomo: string | null
+    metodo_estimacion_irpf: string | null
+    regimen_iva: string | null
+    rendimientos_netos_mensuales: number | null
+    base_cotizacion_reta: number | null
+    territorio_foral: boolean
+    territorio_historico: string | null
+    tipo_retencion_facturas: number | null
+    tarifa_plana: boolean
+    pluriactividad: boolean
 }
 
 export interface FieldMeta {
@@ -50,6 +63,19 @@ const EMPTY_PROFILE: FiscalProfile = {
     ganancias_fondos: null,
     ingresos_alquiler: null,
     valor_adquisicion_inmueble: null,
+    // Autonomo-specific
+    epigrafe_iae: null,
+    tipo_actividad: null,
+    fecha_alta_autonomo: null,
+    metodo_estimacion_irpf: null,
+    regimen_iva: null,
+    rendimientos_netos_mensuales: null,
+    base_cotizacion_reta: null,
+    territorio_foral: false,
+    territorio_historico: null,
+    tipo_retencion_facturas: null,
+    tarifa_plana: false,
+    pluriactividad: false,
 }
 
 export function useFiscalProfile() {

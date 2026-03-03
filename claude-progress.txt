@@ -188,3 +188,13 @@
 - Sesion 4 (+5 PDFs): IS estatal Ley27/2014+RD634/2015; Autonomos Ley20/2007; Bizkaia IS NF11/2013+DF203/2013
 - Total acumulado: 318 PDFs en docs/
 - Pendientes prioritarios: IS foral Gipuzkoa (NF2/2014) + Araba (NF37/2013) + Navarra (LF26/2016); RDL13/2022 autonomos; tablas RETA 2025
+
+[2026-03-03] [Document Crawler] - Sesion 12: La Rioja actualizada + Disenos de Registro AEAT
+- La Rioja (+4 PDFs): Ley 10/2017 consolidado 2026 (con 7 leyes integradas 2023-2025), Ley 6/2024 medidas 2025 (IP 100%, ISD 99%, hipoteca), Ley 9/2025 medidas 2026 (deflacion IRPF), Ley 5/2025 apoyo rural (deduccion IRPF 1000EUR agrario)
+- AEAT Disenos de Registro (+15 archivos): Modelos 111, 115, 130, 131, 190, 200, 202, 303, 347, 349, 390, 714, 720, Instrucciones 650+651
+- HALLAZGO: AEAT NO usa XSD (excepto Modelo 200). Todos los demas son ficheros planos de posiciones fijas (Excel/PDF). Transicion a XML/XSD prevista para enero 2027.
+- CLM verificado: sin cambios IRPF/ISD/ITP significativos en 2024-2025, consolidado existente suficiente
+- Total: 419 PDFs + 9 Excel = 428 archivos en docs/
+- Instrucciones para Backend escritas en agent-comms.md (implementacion tools basadas en disenos de registro)
+- Manual Renta 2025 AEAT: sigue 404 (todavia no publicado)
+- Proxima sesion: reintentar Manual Renta 2025 + Orden HAC Modelo 100

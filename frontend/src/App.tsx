@@ -8,6 +8,7 @@ import SettingsPage from './pages/SettingsPage'
 import WorkspacesPage from './pages/WorkspacesPage'
 import SubscribePage from './pages/SubscribePage'
 import ContactPage from './pages/ContactPage'
+import AdminUsersPage from './pages/AdminUsersPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import AITransparencyPage from './pages/AITransparencyPage'
 import CookiePolicyPage from './pages/CookiePolicyPage'
@@ -86,6 +87,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <WorkspacesPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/users"
+                        element={
+                            <ProtectedRoute requireSubscription={false}>
+                                <AdminUsersPage />
                             </ProtectedRoute>
                         }
                     />

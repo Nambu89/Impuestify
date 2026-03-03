@@ -61,6 +61,19 @@ class FiscalProfileRequest(BaseModel):
     ganancias_fondos: Optional[float] = None
     ingresos_alquiler: Optional[float] = None
     valor_adquisicion_inmueble: Optional[float] = None
+    # --- Autonomo-specific fields ---
+    epigrafe_iae: Optional[str] = None
+    tipo_actividad: Optional[str] = None  # "profesional" | "empresarial" | "artistica"
+    fecha_alta_autonomo: Optional[str] = None  # ISO date "2024-03-15"
+    metodo_estimacion_irpf: Optional[str] = None  # "directa_normal" | "directa_simplificada" | "objetiva"
+    regimen_iva: Optional[str] = None  # "general" | "simplificado" | "recargo_equivalencia" | "exento"
+    rendimientos_netos_mensuales: Optional[float] = None
+    base_cotizacion_reta: Optional[float] = None
+    territorio_foral: Optional[bool] = None
+    territorio_historico: Optional[str] = None  # "bizkaia" | "gipuzkoa" | "araba" | "navarra"
+    tipo_retencion_facturas: Optional[float] = None  # 15.0 or 7.0
+    tarifa_plana: Optional[bool] = None
+    pluriactividad: Optional[bool] = None
 
 
 class UserDataExport(BaseModel):
@@ -330,6 +343,11 @@ _DATOS_FISCALES_KEYS = {
     "num_ascendientes_65", "num_ascendientes_75",
     "discapacidad_contribuyente", "intereses", "dividendos",
     "ganancias_fondos", "ingresos_alquiler", "valor_adquisicion_inmueble",
+    # Autonomo-specific
+    "epigrafe_iae", "tipo_actividad", "fecha_alta_autonomo",
+    "metodo_estimacion_irpf", "regimen_iva", "rendimientos_netos_mensuales",
+    "base_cotizacion_reta", "territorio_foral", "territorio_historico",
+    "tipo_retencion_facturas", "tarifa_plana", "pluriactividad",
 }
 
 

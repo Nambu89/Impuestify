@@ -72,6 +72,14 @@ AUTONOMO_KEYWORDS: List[str] = [
     # Gastos deducibles de autonomos
     "gastos deducibles autónomo",
     "gastos deducibles autonomo",
+    # IVA devengado/deducible (autonomo context)
+    "iva devengado",
+    "iva deducible",
+    "iva soportado",
+    "iva repercutido",
+    "pago fraccionado irpf",
+    "casillas iva",
+    "casillas del 303",
 ]
 
 # Response shown to salaried-plan users who ask about autonomo topics.

@@ -75,7 +75,20 @@
       "Bash(\"../venv/Scripts/python\":*)",
       "Bash(\"../venv/Scripts/pip\" list:*)",
       "Bash(../venv/Scripts/pip install:*)",
-      "Bash(../venv/Scripts/python:*)"
+      "Bash(../venv/Scripts/python:*)",
+      "WebFetch(domain:www.cuatrecasas.com)",
+      "WebFetch(domain:www.larioja.org)",
+      "WebFetch(domain:portaltributario.jccm.es)",
+      "Bash(\"claude-progress.txt\":*)",
+      "WebFetch(domain:getquipu.com)",
+      "WebFetch(domain:declarando.es)",
+      "Bash(\"venv/Scripts/python.exe\":*)",
+      "Bash(\"../venv/Scripts/python.exe\":*)",
+      "WebFetch(domain:taxdown.es)",
+      "WebFetch(domain:empresas.taxdown.es)",
+      "WebFetch(domain:taxscouts.es)",
+      "WebFetch(domain:taxfix.com)",
+      "WebFetch(domain:www.xolo.io)"
     ]
   }
 }

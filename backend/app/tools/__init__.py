@@ -8,6 +8,8 @@ from app.tools.irpf_simulator_tool import IRPF_SIMULATOR_TOOL, simulate_irpf_too
 from app.tools.autonomous_quota_tool import AUTONOMOUS_QUOTA_TOOL, calculate_autonomous_quota_tool
 from app.tools.search_tool import SEARCH_TAX_REGULATIONS_TOOL, search_tax_regulations_tool
 from app.tools.payslip_analysis_tool import PAYSLIP_ANALYSIS_TOOL, analyze_payslip_tool
+from app.tools.modelo_303_tool import MODELO_303_TOOL, calculate_modelo_303_tool
+from app.tools.modelo_130_tool import MODELO_130_TOOL, calculate_modelo_130_tool
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
@@ -18,6 +20,8 @@ ALL_TOOLS = [
 	AUTONOMOUS_QUOTA_TOOL,
 	# SEARCH_TAX_REGULATIONS_TOOL,  # ← REMOVED - Only add when explicitly needed
 	PAYSLIP_ANALYSIS_TOOL,
+	MODELO_303_TOOL,
+	MODELO_130_TOOL,
 ]
 
 # Registry of tool execution functions
@@ -27,6 +31,8 @@ TOOL_EXECUTORS = {
 	"calculate_autonomous_quota": calculate_autonomous_quota_tool,
 	"search_tax_regulations": search_tax_regulations_tool,
 	"analyze_payslip": analyze_payslip_tool,
+	"calculate_modelo_303": calculate_modelo_303_tool,
+	"calculate_modelo_130": calculate_modelo_130_tool,
 }
 
 __all__ = [
@@ -37,9 +43,13 @@ __all__ = [
 	"AUTONOMOUS_QUOTA_TOOL",
 	"SEARCH_TAX_REGULATIONS_TOOL",
 	"PAYSLIP_ANALYSIS_TOOL",
+	"MODELO_303_TOOL",
+	"MODELO_130_TOOL",
 	"simulate_irpf_tool",
 	"calculate_irpf_tool",
 	"calculate_autonomous_quota_tool",
 	"search_tax_regulations_tool",
 	"analyze_payslip_tool",
+	"calculate_modelo_303_tool",
+	"calculate_modelo_130_tool",
 ]

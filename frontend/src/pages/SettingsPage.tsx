@@ -55,6 +55,7 @@ export default function SettingsPage() {
     // Collapsible sections
     const [showAhorro, setShowAhorro] = useState(false)
     const [showInmuebles, setShowInmuebles] = useState(false)
+    const [showAutonomo, setShowAutonomo] = useState(false)
 
     // UI state
     const [isLoading, setIsLoading] = useState(false)
@@ -83,6 +84,9 @@ export default function SettingsPage() {
             }
             if ((fiscal.profile.ingresos_alquiler ?? 0) > 0) {
                 setShowInmuebles(true)
+            }
+            if (fiscal.profile.epigrafe_iae || fiscal.profile.regimen_iva || fiscal.profile.metodo_estimacion_irpf) {
+                setShowAutonomo(true)
             }
         }
     }, [fiscal.loading, fiscal.profile])
@@ -557,6 +561,146 @@ export default function SettingsPage() {
                                             </div>
                                         </div>
                                     </div>
+                                )}
+
+                                {/* --- Datos de autónomo (collapsible, only for autonomo/owner plans) --- */}
+                                {(subscription.planType === 'autonomo' || subscription.isOwner) && (
+                                    <>
+                                        <button type="button" className="collapsible-header" onClick={() => setShowAutonomo(!showAutonomo)}>
+                                            {showAutonomo ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                            <span>Datos de autónomo</span>
+                                        </button>
+                                        {showAutonomo && (
+                                            <div className="collapsible-content">
+                                                <p className="section-description" style={{ marginBottom: 'var(--spacing-4)', fontSize: '0.85rem' }}>
+                                                    Estos datos permiten personalizar el cálculo del Modelo 303, 130 y cuota de autónomos.
+                                                </p>
+
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label>Epígrafe IAE</label>
+                                                        <input type="text" className="form-input" placeholder="Ej: 861, 749.1"
+                                                            value={fiscalForm.epigrafe_iae || ''}
+                                                            onChange={e => updateFiscal('epigrafe_iae', e.target.value || null)} />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Tipo de actividad</label>
+                                                        <select className="form-input" value={fiscalForm.tipo_actividad || ''}
+                                                            onChange={e => updateFiscal('tipo_actividad', e.target.value || null)}>
+                                                            <option value="">Selecciona...</option>
+                                                            <option value="profesional">Profesional</option>
+                                                            <option value="empresarial">Empresarial</option>
+                                                            <option value="artistica">Artística</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label>Fecha alta autónomo</label>
+                                                        <input type="date" className="form-input"
+                                                            value={fiscalForm.fecha_alta_autonomo || ''}
+                                                            onChange={e => updateFiscal('fecha_alta_autonomo', e.target.value || null)} />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Método estimación IRPF</label>
+                                                        <select className="form-input" value={fiscalForm.metodo_estimacion_irpf || ''}
+                                                            onChange={e => updateFiscal('metodo_estimacion_irpf', e.target.value || null)}>
+                                                            <option value="">Selecciona...</option>
+                                                            <option value="directa_normal">Directa normal</option>
+                                                            <option value="directa_simplificada">Directa simplificada</option>
+                                                            <option value="objetiva">Objetiva (módulos)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label>Régimen IVA</label>
+                                                        <select className="form-input" value={fiscalForm.regimen_iva || ''}
+                                                            onChange={e => updateFiscal('regimen_iva', e.target.value || null)}>
+                                                            <option value="">Selecciona...</option>
+                                                            <option value="general">General</option>
+                                                            <option value="simplificado">Simplificado</option>
+                                                            <option value="recargo_equivalencia">Recargo de equivalencia</option>
+                                                            <option value="exento">Exento</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Tipo retención facturas</label>
+                                                        <select className="form-input"
+                                                            value={fiscalForm.tipo_retencion_facturas ?? ''}
+                                                            onChange={e => updateFiscal('tipo_retencion_facturas', e.target.value ? Number(e.target.value) : null)}>
+                                                            <option value="">Selecciona...</option>
+                                                            <option value="15">15% (general)</option>
+                                                            <option value="7">7% (primeros 3 años)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label>Rendimientos netos mensuales</label>
+                                                        <div className="input-with-suffix">
+                                                            <input type="number" className="form-input" placeholder="0"
+                                                                value={fiscalForm.rendimientos_netos_mensuales ?? ''}
+                                                                onChange={e => updateFiscal('rendimientos_netos_mensuales', e.target.value ? Number(e.target.value) : null)} />
+                                                            <span className="input-suffix">EUR/mes</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Base cotización RETA</label>
+                                                        <div className="input-with-suffix">
+                                                            <input type="number" className="form-input" placeholder="0"
+                                                                value={fiscalForm.base_cotizacion_reta ?? ''}
+                                                                onChange={e => updateFiscal('base_cotizacion_reta', e.target.value ? Number(e.target.value) : null)} />
+                                                            <span className="input-suffix">EUR/mes</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label className="checkbox-label">
+                                                            <input type="checkbox" checked={fiscalForm.territorio_foral || false}
+                                                                onChange={e => updateFiscal('territorio_foral', e.target.checked)} />
+                                                            Territorio foral (País Vasco / Navarra)
+                                                        </label>
+                                                    </div>
+                                                    {fiscalForm.territorio_foral && (
+                                                        <div className="form-group">
+                                                            <label>Territorio histórico</label>
+                                                            <select className="form-input" value={fiscalForm.territorio_historico || ''}
+                                                                onChange={e => updateFiscal('territorio_historico', e.target.value || null)}>
+                                                                <option value="">Selecciona...</option>
+                                                                <option value="bizkaia">Bizkaia</option>
+                                                                <option value="gipuzkoa">Gipuzkoa</option>
+                                                                <option value="araba">Araba/Álava</option>
+                                                                <option value="navarra">Navarra</option>
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label className="checkbox-label">
+                                                            <input type="checkbox" checked={fiscalForm.tarifa_plana || false}
+                                                                onChange={e => updateFiscal('tarifa_plana', e.target.checked)} />
+                                                            Tarifa plana (80 EUR/mes)
+                                                        </label>
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label className="checkbox-label">
+                                                            <input type="checkbox" checked={fiscalForm.pluriactividad || false}
+                                                                onChange={e => updateFiscal('pluriactividad', e.target.checked)} />
+                                                            Pluriactividad (también asalariado)
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
 
                                 {/* Save button */}

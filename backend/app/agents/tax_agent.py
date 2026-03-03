@@ -151,6 +151,8 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 - **simulate_irpf**: Simulación COMPLETA de IRPF. Acepta ingresos brutos del trabajo, alquiler, ahorro, y situación familiar. Calcula automáticamente gastos deducibles, reducción trabajo, MPYF por CCAA, tarifa general y del ahorro. USA ESTA como herramienta principal para IRPF.
 - **calculate_irpf**: Cálculo rápido solo de tramos (sin deducciones ni MPYF). Usar solo si el usuario ya te da la base liquidable directamente.
 - **calculate_autonomous_quota**: Para calcular cuotas de autónomos (siempre año {self.autonomous_quota_year})
+- **calculate_modelo_303**: Calcula la declaración trimestral de IVA (Modelo 303) para autónomos/empresas en régimen general. Pide bases imponibles por tipo de IVA (21%, 10%, 4%) e IVA deducible. Devuelve todas las casillas principales y resultado.
+- **calculate_modelo_130**: Calcula el pago fraccionado trimestral de IRPF (Modelo 130) para autónomos en estimación directa. Pide ingresos y gastos ACUMULADOS desde inicio de año, retenciones, y pagos anteriores. IMPORTANTE: datos son ACUMULADOS, no del trimestre individual.
 - **search_tax_regulations**: Solo cuando el usuario PIDA explícitamente información reciente o la documentación RAG sea claramente insuficiente
 
 🚨 **REGLA CRÍTICA — COMUNIDAD AUTÓNOMA (CCAA)**:
@@ -314,7 +316,8 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		user_id: Optional[str] = None,  # User ID for audit logging
 		progress_callback: Optional[Any] = None,  # For SSE streaming
 		db_client: Optional[Any] = None,  # Database client for memory
-		restricted_mode: bool = False  # Salaried-only: block autonomo tools
+		restricted_mode: bool = False,  # Salaried-only: block autonomo tools
+		fiscal_profile: Optional[Dict[str, Any]] = None  # Autonomo fiscal profile
 	) -> AgentResponse:
 		"""
 		Returns:
@@ -369,6 +372,39 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			except Exception as e:
 				logger.warning(f"⚠️ User memory error (continuing without memory): {e}")
 		
+		# === FISCAL PROFILE: Inject autonomo data into context ===
+		if fiscal_profile:
+			fp_lines = []
+			label_map = {
+				"ccaa_residencia": "CCAA residencia",
+				"situacion_laboral": "Situación laboral",
+				"epigrafe_iae": "Epígrafe IAE",
+				"tipo_actividad": "Tipo actividad",
+				"fecha_alta_autonomo": "Fecha alta autónomo",
+				"metodo_estimacion_irpf": "Método estimación IRPF",
+				"regimen_iva": "Régimen IVA",
+				"rendimientos_netos_mensuales": "Rendimientos netos mensuales",
+				"base_cotizacion_reta": "Base cotización RETA",
+				"territorio_foral": "Territorio foral",
+				"territorio_historico": "Territorio histórico",
+				"tipo_retencion_facturas": "Retención facturas",
+				"tarifa_plana": "Tarifa plana",
+				"pluriactividad": "Pluriactividad",
+			}
+			for key, label in label_map.items():
+				val = fiscal_profile.get(key)
+				if val is not None and val != "":
+					if isinstance(val, bool):
+						fp_lines.append(f"- {label}: {'Sí' if val else 'No'}")
+					elif isinstance(val, float) and key == "tipo_retencion_facturas":
+						fp_lines.append(f"- {label}: {val}%")
+					else:
+						fp_lines.append(f"- {label}: {val}")
+			if fp_lines:
+				fiscal_context = "\n\n📋 **PERFIL FISCAL DE AUTÓNOMO** (usa estos datos para pre-rellenar herramientas):\n" + "\n".join(fp_lines)
+				fiscal_context += "\n\n⚠️ Usa el perfil fiscal para pre-rellenar parámetros de calculate_modelo_303, calculate_modelo_130 y calculate_autonomous_quota."
+				user_memory_context = fiscal_context + user_memory_context
+
 		# === SECURITY: Content Moderation (Llama Guard) ===
 		try:
 			from app.security.llama_guard import get_llama_guard
@@ -462,7 +498,11 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			from app.tools import ALL_TOOLS, TOOL_EXECUTORS
 
 			# In restricted mode, filter out autonomo-specific tools
-			RESTRICTED_TOOL_NAMES = {"calculate_autonomous_quota"}
+			RESTRICTED_TOOL_NAMES = {
+				"calculate_autonomous_quota",
+				"calculate_modelo_303",
+				"calculate_modelo_130",
+			}
 			if restricted_mode:
 				active_tools = [
 					t for t in ALL_TOOLS
@@ -667,6 +707,12 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		if any(kw in query_lower for kw in ["irpf", "renta", "cuánto pago de impuestos", "retención", "cuanto pago de impuestos", "retencion", "tributar", "tributo"]):
 			if any(char.isdigit() for char in query):
 				requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de IRPF. Usa simulate_irpf con los ingresos brutos y la CCAA del usuario. Si NO conoces la CCAA del usuario (ni por memoria ni por la conversación), PREGÚNTALA antes de calcular — NUNCA inventes una CCAA.\n"
+
+		if any(kw in query_lower for kw in ["modelo 303", "iva trimestral", "declaración de iva", "declaracion de iva", "liquidación de iva", "liquidacion de iva"]):
+			requires_tool_hint = "\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo del Modelo 303. DEBES usar la herramienta calculate_modelo_303.\n"
+
+		if any(kw in query_lower for kw in ["modelo 130", "pago fraccionado"]):
+			requires_tool_hint = "\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo del Modelo 130. DEBES usar la herramienta calculate_modelo_130.\n"
 		
 		# NO agregar hint de search para fechas/plazos - deja que el RAG-first funcione
 		

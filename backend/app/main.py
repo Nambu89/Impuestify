@@ -437,6 +437,10 @@ app.include_router(subscription_router)
 from app.routers.contact import router as contact_router
 app.include_router(contact_router)
 
+# Admin Endpoints (owner-only)
+from app.routers.admin import router as admin_router
+app.include_router(admin_router)
+
 # Demo Chat Endpoint (public, no auth required)
 from app.routers.demo import router as demo_router
 app.include_router(demo_router)
