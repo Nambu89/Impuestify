@@ -1,0 +1,135 @@
+/* StreamingTimeline — Chain-of-thought progress */
+
+.stl-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: var(--spacing-3) var(--spacing-4);
+    margin: var(--spacing-2) 0;
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    max-width: 400px;
+    animation: stlFadeIn var(--transition-slow) ease-out;
+}
+
+@keyframes stlFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Each step */
+.stl-step {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    position: relative;
+    padding: var(--spacing-2) 0;
+    animation: stlStepIn 0.25s ease-out;
+}
+
+@keyframes stlStepIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Connector line between steps */
+.stl-connector {
+    position: absolute;
+    left: 11px; /* center of 22px dot */
+    top: -4px;
+    width: 2px;
+    height: 12px;
+    background: var(--color-gray-200);
+}
+
+.stl-step--done .stl-connector {
+    background: var(--color-success);
+}
+
+/* Dot / icon container */
+.stl-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--color-gray-100);
+    color: var(--color-gray-500);
+    transition: all var(--transition-fast);
+}
+
+/* Active step: pulsing blue */
+.stl-step--active .stl-dot {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+    color: var(--color-white);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+}
+
+/* Done step: green check */
+.stl-step--done .stl-dot {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--color-success);
+}
+
+/* Error step: red */
+.stl-step--error .stl-dot {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--color-error);
+}
+
+/* Label text */
+.stl-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: 1.3;
+}
+
+.stl-step--active .stl-label {
+    color: var(--color-gray-800);
+    font-weight: 500;
+}
+
+.stl-step--done .stl-label {
+    color: var(--color-gray-400);
+}
+
+.stl-step--error .stl-label {
+    color: var(--color-error);
+}
+
+/* Spinner animation for active step */
+.stl-spinner {
+    animation: stlSpin 1s linear infinite;
+}
+
+@keyframes stlSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Tool call step — slightly different styling */
+.stl-step--tool_call.stl-step--active .stl-dot {
+    background: linear-gradient(135deg, var(--color-accent), #0891b2);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+/* Writing step — pen icon */
+.stl-step--writing.stl-step--active .stl-dot {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .stl-timeline {
+        max-width: 100%;
+        padding: var(--spacing-2) var(--spacing-3);
+    }
+
+    .stl-label {
+        font-size: var(--font-size-xs);
+    }
+}

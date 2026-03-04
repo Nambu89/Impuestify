@@ -449,6 +449,31 @@
     color: var(--color-gray-800);
 }
 
+/* ========== STREAMING LIVE ========== */
+
+.streaming-live {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    margin: var(--spacing-3) 0;
+}
+
+/* Blinking cursor while streaming */
+.streaming-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--color-primary);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: cursorBlink 0.8s steps(2) infinite;
+}
+
+@keyframes cursorBlink {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+}
+
 /* ========== TABLET (768px+) ========== */
 @media (min-width: 768px) {
     .chat-container {

@@ -13,10 +13,10 @@ import { DeductionCards, hasDeductions } from '../components/DeductionCards'
 import { useConversations } from '../hooks/useConversations'
 import { useWorkspaces, Workspace } from '../hooks/useWorkspaces'
 import { useStreamingChat } from '../hooks/useStreamingChat'
-import { ThinkingIndicator } from '../components/ThinkingIndicator'
-import { ToolExecutionStatus } from '../components/ToolExecutionStatus'
+import { StreamingTimeline } from '../components/StreamingTimeline'
 import { logger } from '../utils/logger'
 import ReactMarkdown from 'react-markdown'
+import { FormattedMessage } from '../components/FormattedMessage'
 import './Chat.css'
 
 interface Message {
@@ -265,9 +265,13 @@ export default function Chat() {
                                         ) : (
                                             <>
                                                 <div className="message-text">
-                                                    <ReactMarkdown>
-                                                        {message.content}
-                                                    </ReactMarkdown>
+                                                    {message.role === 'assistant' ? (
+                                                        <FormattedMessage content={message.content} />
+                                                    ) : (
+                                                        <ReactMarkdown>
+                                                            {message.content}
+                                                        </ReactMarkdown>
+                                                    )}
                                                 </div>
                                                 {/* Fuentes sin bullets, formato inline */}
                                                 {message.sources && message.sources.length > 0 && (
@@ -304,21 +308,30 @@ export default function Chat() {
                                 </div>
                             ))}
 
-                            {/* ✅ STREAMING INDICATORS */}
+                            {/* STREAMING: Timeline + live content */}
                             {isStreaming && (
-                                <div className="streaming-indicators" style={{ margin: '16px 0' }}>
-                                    <ThinkingIndicator message={streamState.thinking} />
-                                    <ToolExecutionStatus status={streamState.toolStatus} />
+                                <div className="streaming-live">
+                                    {/* Chain-of-thought timeline (visible while no content yet) */}
+                                    {streamState.steps.length > 0 && !streamState.response && (
+                                        <StreamingTimeline steps={streamState.steps} />
+                                    )}
+
+                                    {/* Live response being typed */}
                                     {streamState.response && (
-                                        <div className="message assistant">
-                                            <div className="message-content">
-                                                <div className="message-text">
-                                                    <ReactMarkdown>
-                                                        {streamState.response}
-                                                    </ReactMarkdown>
+                                        <>
+                                            {/* Collapsed mini-timeline while writing */}
+                                            {streamState.steps.length > 0 && (
+                                                <StreamingTimeline steps={streamState.steps} />
+                                            )}
+                                            <div className="message assistant">
+                                                <div className="message-content">
+                                                    <div className="message-text">
+                                                        <FormattedMessage content={streamState.response} />
+                                                        <span className="streaming-cursor" />
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </>
                                     )}
                                 </div>
                             )}

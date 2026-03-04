@@ -509,6 +509,8 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		# Emit initial thinking event (for SSE streaming)
 		if progress_callback:
 			await progress_callback.thinking("Analizando tu consulta...")
+			# Emit second thinking event after a brief delay for memory/security checks
+			await progress_callback.thinking("Consultando tu historial y contexto...")
 		
 		try:
 			# Import tools
@@ -554,7 +556,10 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			
 			# First call with tools (if enabled)
 			logger.info(f"Calling OpenAI with model={selected_model}, tools={use_tools}, reasoning_effort={reasoning_effort}")
-			
+
+			if progress_callback:
+				await progress_callback.thinking("Procesando tu pregunta...")
+
 			try:
 				# Add timeout to prevent indefinite waiting
 				response = await asyncio.wait_for(
@@ -626,20 +631,19 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 					"content": tool_response_content  # ← Use formatted response, not raw JSON
 				})
 				
-				# Second call to get final response
-				logger.info("Calling OpenAI again with tool result")
+				# Second call to get final response — STREAM token by token
+				logger.info("Calling OpenAI again with tool result (streaming)")
+				if progress_callback:
+					await progress_callback.thinking("Redactando la respuesta...")
+
 				try:
-					final_response = await asyncio.wait_for(
-						asyncio.to_thread(
-							self._client.chat.completions.create,
-							model=selected_model,  # ← Use same router-selected model
-							messages=messages,
-							temperature=1,
-							max_completion_tokens=10000
-						),
-						timeout=60.0  # 60 second timeout
+					content = await self._stream_openai_response(
+						messages=messages,
+						model=selected_model,
+						progress_callback=progress_callback
 					)
-					content = final_response.choices[0].message.content or tool_result.get('formatted_response', '')
+					if not content:
+						content = tool_result.get('formatted_response', '')
 				except asyncio.TimeoutError:
 					logger.error("⏱️ Second OpenAI call timed out")
 					content = tool_result.get('formatted_response', '')
@@ -647,12 +651,19 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 						content = "⏱️ Lo siento, el análisis está tardando más de lo esperado. Intenta reformular tu pregunta."
 				logger.info(f"Final content length: {len(content)}")
 			else:
-				# No function call, use direct response
+				# No function call — STREAM direct response token by token
 				content = message.content or ""
 				finish_reason = response.choices[0].finish_reason
+
+				if content and progress_callback:
+					# Stream the already-received content chunk by chunk
+					if progress_callback:
+						await progress_callback.thinking("Redactando la respuesta...")
+					await self._emit_content_chunks(content, progress_callback)
+
 				if not content:
 					logger.warning(f"No content in response. Finish reason: {finish_reason}")
-				
+
 				logger.info(f"Direct response content length: {len(content)}")
 			
 			# Validate output format to ensure no internal JSON is exposed
@@ -710,6 +721,78 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 				agent_name=self.name
 			)
 	
+	async def _stream_openai_response(
+		self,
+		messages: List[dict],
+		model: str,
+		progress_callback: Optional[Any] = None,
+		timeout: float = 60.0
+	) -> str:
+		"""
+		Call OpenAI with stream=True and emit content_chunk events in real-time.
+
+		Returns the full accumulated content string.
+		"""
+		accumulated = []
+
+		try:
+			stream = await asyncio.wait_for(
+				asyncio.to_thread(
+					self._client.chat.completions.create,
+					model=model,
+					messages=messages,
+					temperature=1,
+					max_completion_tokens=10000,
+					stream=True
+				),
+				timeout=timeout
+			)
+
+			# Iterate through streaming chunks
+			# We batch small chunks to avoid flooding SSE with single-char events
+			buffer = ""
+			CHUNK_SIZE = 12  # Send every ~12 chars (roughly 2-3 words)
+
+			for chunk in stream:
+				delta = chunk.choices[0].delta if chunk.choices else None
+				if delta and delta.content:
+					buffer += delta.content
+					accumulated.append(delta.content)
+
+					if len(buffer) >= CHUNK_SIZE:
+						if progress_callback:
+							await progress_callback.content_chunk(buffer)
+						buffer = ""
+
+			# Flush remaining buffer
+			if buffer and progress_callback:
+				await progress_callback.content_chunk(buffer)
+
+		except asyncio.TimeoutError:
+			logger.error("⏱️ Streaming OpenAI call timed out")
+			raise
+		except Exception as e:
+			logger.error(f"Streaming error: {e}", exc_info=True)
+			# If we have partial content, return it
+			if accumulated:
+				logger.info(f"Returning partial content ({len(accumulated)} chunks)")
+			else:
+				raise
+
+		return "".join(accumulated)
+
+	async def _emit_content_chunks(self, content: str, progress_callback: Any) -> None:
+		"""
+		Emit already-generated content as chunks for real-time display.
+		Used when the first OpenAI call returns content directly (no tool call).
+		"""
+		CHUNK_SIZE = 12
+		for i in range(0, len(content), CHUNK_SIZE):
+			chunk = content[i:i + CHUNK_SIZE]
+			await progress_callback.content_chunk(chunk)
+			# Tiny yield to allow SSE event queue to flush
+			await asyncio.sleep(0.01)
+
 	def _build_prompt(self, query: str, context: Optional[str] = None, user_memory_context: Optional[str] = None) -> str:
 		"""Build the user prompt with optional context and user memory."""
 		

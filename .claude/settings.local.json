@@ -106,7 +106,17 @@
       "WebFetch(domain:www.newtral.es)",
       "Bash(venv/Scripts/python.exe:*)",
       "Bash(git rm:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "WebFetch(domain:resend.com)",
+      "WebFetch(domain:docs.turso.tech)",
+      "Bash(../venv/Scripts/python.exe:*)",
+      "Bash(venv/Scripts/pip install:*)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:dmarcdkim.com)",
+      "Bash(git -C \"c:/Users/Fernando Prada/OneDrive - SVAN TRADING SL/Escritorio/Personal/Proyectos/TaxIA\" log --oneline -20)",
+      "Bash(\"C:/Users/Fernando Prada/OneDrive - SVAN TRADING SL/Escritorio/Personal/Proyectos/TaxIA/venv/Scripts/python.exe\":*)",
+      "Bash(PYTHONIOENCODING=utf-8 \"C:/Users/Fernando Prada/OneDrive - SVAN TRADING SL/Escritorio/Personal/Proyectos/TaxIA/venv/Scripts/python.exe\":*)",
+      "WebFetch(domain:reactbits.dev)"
     ]
   }
 }
