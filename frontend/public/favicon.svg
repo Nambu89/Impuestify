@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a56db"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#1a56db"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="96" ry="96" fill="url(#bg)"/>
+  <!-- Shield shape (fiscal protection) -->
+  <path d="M256 80 L400 140 L400 280 C400 360 340 420 256 440 C172 420 112 360 112 280 L112 140 Z"
+        fill="rgba(255,255,255,0.15)" stroke="none"/>
+  <!-- Letter I - stylized -->
+  <rect x="224" y="140" width="64" height="240" rx="12" fill="white"/>
+  <!-- Top bar of I -->
+  <rect x="192" y="140" width="128" height="48" rx="10" fill="white"/>
+  <!-- Bottom bar of I -->
+  <rect x="192" y="332" width="128" height="48" rx="10" fill="white"/>
+  <!-- Small accent dot -->
+  <circle cx="360" cy="160" r="20" fill="url(#accent)" opacity="0.8"/>
+</svg>

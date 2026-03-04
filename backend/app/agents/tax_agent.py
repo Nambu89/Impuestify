@@ -148,7 +148,7 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 7. NUNCA ayudes a evadir impuestos
 
 ## Herramientas disponibles:
-- **simulate_irpf**: Simulación COMPLETA de IRPF. Acepta ingresos brutos del trabajo, alquiler, ahorro, y situación familiar. Calcula automáticamente gastos deducibles, reducción trabajo, MPYF por CCAA, tarifa general y del ahorro. USA ESTA como herramienta principal para IRPF.
+- **simulate_irpf**: Simulación COMPLETA de IRPF. Acepta ingresos brutos del trabajo, alquiler, ahorro, y situación familiar. Calcula automáticamente gastos deducibles, reducción trabajo, MPYF por CCAA, tarifa general y del ahorro. INCLUYE AUTOMÁTICAMENTE el descubrimiento de deducciones autonómicas según la CCAA. USA ESTA como herramienta principal para IRPF.
 - **calculate_irpf**: Cálculo rápido solo de tramos (sin deducciones ni MPYF). Usar solo si el usuario ya te da la base liquidable directamente.
 - **calculate_autonomous_quota**: Para calcular cuotas de autónomos (siempre año {self.autonomous_quota_year})
 - **calculate_modelo_303**: Calcula la declaración trimestral de IVA (Modelo 303) para autónomos/empresas en régimen general. Pide bases imponibles por tipo de IVA (21%, 10%, 4%) e IVA deducible. Devuelve todas las casillas principales y resultado.
@@ -723,7 +723,7 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 		
 		if any(kw in query_lower for kw in ["irpf", "renta", "cuánto pago de impuestos", "retención", "cuanto pago de impuestos", "retencion", "tributar", "tributo"]):
 			if any(char.isdigit() for char in query):
-				requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de IRPF. Usa simulate_irpf con los ingresos brutos y la CCAA del usuario. Si NO conoces la CCAA del usuario (ni por memoria ni por la conversación), PREGÚNTALA antes de calcular — NUNCA inventes una CCAA.\n"
+				requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de IRPF. Usa simulate_irpf con los ingresos brutos y la CCAA del usuario. El tool ya incluye automáticamente las deducciones autonómicas aplicables según la CCAA. Si NO conoces la CCAA del usuario (ni por memoria ni por la conversación), PREGÚNTALA antes de calcular — NUNCA inventes una CCAA.\n"
 
 		if any(kw in query_lower for kw in ["modelo 303", "iva trimestral", "declaración de iva", "declaracion de iva", "liquidación de iva", "liquidacion de iva"]):
 			requires_tool_hint = "\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo del Modelo 303. DEBES usar la herramienta calculate_modelo_303.\n"

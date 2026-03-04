@@ -10,6 +10,390 @@
 ## Mensajes Activos
 ---
 
+[2026-03-05] [BACKEND→FRONTEND] [🟢 DONE] - PAQUETE DE TAREAS FRONTEND: PWA + Landing + Tarjetas Deducciones + Favicon
+
+### Completado por Frontend Agent (2026-03-05)
+
+#### Archivos creados
+- `frontend/public/favicon.svg` — SVG profesional (gradiente #1a56db→#06b6d4, escudo con "I")
+- `frontend/public/icon-192.png`, `icon-512.png`, `favicon-32.png` — PNG generados con sharp-cli
+- `frontend/public/manifest.json` — PWA manifest (standalone, icons, lang es)
+- `frontend/public/sw.js` — Service Worker (network-first API, cache-first assets, offline fallback)
+- `frontend/public/offline.html` — Pagina offline con retry
+- `frontend/src/components/reactbits/CountUp.tsx` — Contador animado (motion/react)
+- `frontend/src/components/reactbits/GradientText.tsx` + `.css` — Texto gradiente animado (motion/react)
+- `frontend/src/components/reactbits/SpotlightCard.tsx` + `.css` — Tarjeta con spotlight cursor
+- `frontend/src/components/reactbits/StarBorder.tsx` + `.css` — Borde animado estrella
+- `frontend/src/components/reactbits/FadeContent.tsx` — Fade con IntersectionObserver (custom, sin GSAP)
+- `frontend/src/components/DeductionCards.tsx` + `.css` — Tarjetas visuales de deducciones
+
+#### Archivos modificados
+- `frontend/index.html` — Favicon + meta tags PWA
+- `frontend/src/main.tsx` — Registro Service Worker (solo produccion)
+- `frontend/src/pages/Home.tsx` + `Home.css` — Reescritura completa landing page
+- `frontend/src/pages/Chat.tsx` — Integrado DeductionCards + ReportActions
+
+#### Dependencias npm agregadas
+- `motion` (MIT) — para CountUp y GradientText
+
+#### Decisiones tecnicas
+- React Bits: componentes copiados localmente en `reactbits/`, NO npm (asi funciona la libreria)
+- FadeContent: implementacion custom con IntersectionObserver en vez de GSAP (evita dependencia/licencia)
+- GradientText: cambiado de `motion.div` a `motion.span` para uso inline en headings
+- CountUp: locale cambiado de 'en-US' a 'es-ES'
+- PWA: service worker manual (no vite-plugin-pwa) — mas simple, sin dependencia extra
+- Hero: no se uso fondo animado (Aurora/Waves/Silk) — evaluado y descartado por rendimiento movil
+
+### Contexto general
+El backend tiene el motor de deducciones completo (16 estatales + 48 territoriales, 8 CCAA incluidas las forales).
+El simulador IRPF ya devuelve deducciones automáticamente. Ahora necesitamos que el frontend refleje todo esto
+de forma visual e impactante. El usuario quiere que se use la librería **React Bits** (reactbits.dev) donde sea apropiado.
+
+---
+
+## TAREA 1: PWA (Progressive Web App)
+
+### Objetivo
+Convertir la app en una PWA instalable. Investigar en profundidad si no tienes el conocimiento necesario.
+
+### Requisitos
+1. **Crear `manifest.json`** en `frontend/public/`:
+   - `name`: "Impuestify - Asistente Fiscal Inteligente"
+   - `short_name`: "Impuestify"
+   - `description`: "Tu asistente fiscal con IA para España"
+   - `start_url`: "/"
+   - `display`: "standalone"
+   - `theme_color`: "#1a56db" (primary)
+   - `background_color`: "#ffffff"
+   - `icons`: array con el favicon (ver Tarea 4) en tamaños 192x192 y 512x512
+   - `categories`: ["finance", "productivity"]
+   - `lang`: "es"
+
+2. **Crear Service Worker** (`frontend/public/sw.js`):
+   - Cache strategy: Network-first para API calls, Cache-first para assets estáticos
+   - Precache: index.html, CSS bundles, JS bundles, fuentes, favicon
+   - Runtime caching: rutas de la app (/, /chat, /settings, etc.)
+   - Offline fallback: mostrar página offline con mensaje "Sin conexión. Reconectando..."
+   - No cachear: /api/* (todas las llamadas al backend), /auth/*
+   - Actualización: skip waiting + clients claim para activar inmediatamente
+
+3. **Registrar el Service Worker** en `frontend/src/main.tsx`:
+   - Solo en producción (`import.meta.env.PROD`)
+   - Con manejo de errores graceful
+   - Log en consola cuando se registra/actualiza
+
+4. **Meta tags en `frontend/index.html`**:
+   - `<link rel="manifest" href="/manifest.json">`
+   - `<meta name="theme-color" content="#1a56db">`
+   - `<meta name="apple-mobile-web-app-capable" content="yes">`
+   - `<meta name="apple-mobile-web-app-status-bar-style" content="default">`
+   - `<link rel="apple-touch-icon" href="/icon-192.png">`
+
+5. **INVESTIGAR** antes de implementar:
+   - Cómo funciona Vite con Service Workers (¿usar `vite-plugin-pwa` o manual?)
+   - Si `vite-plugin-pwa` simplifica mucho, usarlo (genera SW automáticamente)
+   - Cómo manejar cache busting con hashes de Vite
+   - Probar que `npm run build` funciona correctamente después
+
+---
+
+## TAREA 2: TARJETAS VISUALES DE DEDUCCIONES EN CHAT
+
+### Objetivo
+Cuando el asistente devuelve deducciones (tras una simulación IRPF o una consulta de deducciones),
+mostrar tarjetas visuales atractivas en lugar de solo texto markdown.
+
+### Contexto técnico
+- Las deducciones vienen en el contenido markdown del mensaje assistant
+- El formato actual tiene secciones con headers como:
+  - `### ✅ Deducciones a las que tienes derecho (N)`
+  - `### 🔍 Deducciones posibles — necesito más datos (N)`
+  - Cada deducción: `- **Nombre** — Hasta X€` con descripción en cursiva y ref legal
+  - `**💰 Ahorro estimado: X€**`
+
+### Implementación
+1. **Crear `components/DeductionCards.tsx`** + `.css`:
+   - Componente que parsea el markdown de deducciones y las renderiza como tarjetas
+   - Props: `content: string` (el markdown del mensaje)
+   - Detectar secciones de deducciones en el markdown
+   - Para cada deducción, renderizar una tarjeta con:
+     - Icono por categoría (vivienda=Home, familia=Users, donativo=Heart, inversión=TrendingUp, etc.)
+     - Nombre de la deducción en bold
+     - Importe/porcentaje destacado (grande, color accent)
+     - Descripción breve
+     - Referencia legal en gris pequeño
+     - Badge de estado: "Elegible" (verde), "Posible" (amarillo/naranja)
+   - Sección de ahorro total estimado con CountUp animado (React Bits `CountUp`)
+   - Layout: grid 1 col mobile, 2 cols tablet, 3 cols desktop
+
+2. **Integrar en `pages/Chat.tsx`**:
+   - Después de renderizar el markdown del assistant, detectar si contiene deducciones
+   - Función de detección: buscar "Deducciones IRPF" o "Deducciones a las que tienes derecho" en content
+   - Si detecta deducciones, renderizar `<DeductionCards content={msg.content} />` además del markdown
+   - Las tarjetas se muestran DEBAJO del texto de simulación, ENCIMA de ReportActions
+
+3. **Usar React Bits**:
+   - `CountUp` de react-bits para animar el ahorro estimado total (de 0 a X€)
+   - `AnimatedContent` o `FadeContent` para animar la aparición de las tarjetas
+   - `SpotlightCard` o `GlareHover` para efecto hover en las tarjetas (evaluar cuál queda mejor)
+   - Consultar https://reactbits.dev para la documentación de instalación y uso
+
+### Diseño visual
+- Tarjetas con borde izquierdo de color (verde=elegible, naranja=posible)
+- Fondo blanco con sombra suave
+- Icono circular con fondo gradient (primary → accent)
+- Animación de entrada escalonada (cada tarjeta aparece con 100ms delay)
+- Responsive: apiladas en móvil, grid en desktop
+
+---
+
+## TAREA 3: REDISEÑO LANDING PAGE (Home.tsx)
+
+### Objetivo
+Reorganizar y mejorar la landing page para que sea visual, impactante y comunique nuestras
+ventajas competitivas: cobertura foral + sistema RAG multi-agente superior.
+
+### Archivo actual: `frontend/src/pages/Home.tsx` + `Home.css`
+
+### Estructura propuesta (de arriba a abajo):
+
+#### 3.1 Hero Section (MEJORAR)
+- Mantener estructura actual pero hacerla más impactante
+- **React Bits**: Usar `GradientText` para "Inteligente" en el título (animación de gradiente)
+- **React Bits**: Considerar un fondo animado sutil con `Aurora` o `Waves` o `Silk` (el que quede más profesional y no distraiga — evaluar)
+- Subtitle más potente: "El único asistente fiscal con IA que cubre TODAS las comunidades autónomas de España, incluyendo País Vasco y Navarra"
+- Badge: cambiar "Powered by OpenAI" por algo como "IA Fiscal Avanzada" o "Sistema Multi-Agente" (no mencionar proveedor)
+
+#### 3.2 Sección "Cobertura Territorial" (NUEVA — después del hero)
+- Mapa visual de España o grid con las 17 CCAA + 4 territorios forales + Ceuta/Melilla
+- Título: "Cobertura fiscal completa de toda España"
+- Subtítulo: "Incluidas las comunidades con sistema fiscal propio"
+- Destacar con color especial/badge: Araba, Bizkaia, Gipuzkoa, Navarra (forales)
+- Texto: "Somos el único asistente fiscal con IA que integra las normativas forales del País Vasco y Navarra, con sus deducciones propias que no existen en el régimen común"
+- **React Bits**: `AnimatedContent` o `ScrollReveal` para que aparezca al hacer scroll
+- Mostrar número impactante: "64 deducciones fiscales analizadas" con `CountUp` animado
+- Layout: grid/mosaico visual de territorios, los forales destacados con borde especial
+
+#### 3.3 Sección "Comparativa de Sistemas" (NUEVA — anonimizada)
+- Título: "¿Por qué nuestra IA es diferente?"
+- Comparación visual en dos columnas:
+
+**Columna izquierda: "Asistentes fiscales genéricos"** (color gris/apagado)
+- Icono: chatbot básico
+- "Chatbot genérico sin fuentes verificadas"
+- "Sin análisis de documentos"
+- "Sin cobertura de territorios forales"
+- "Respuestas genéricas sin personalización"
+- "Sin protección de datos con IA"
+
+**Columna derecha: "Impuestify"** (color primary, destacado, con glow/border)
+- Icono: multi-agent visual
+- "Sistema multi-agente especializado (fiscal, nóminas, notificaciones, workspace)"
+- "RAG sobre 428+ documentos oficiales con citas legales"
+- "Cobertura completa: 17 CCAA + territorios forales + Ceuta/Melilla"
+- "Motor de deducciones con 64 deducciones personalizadas"
+- "Guardrails de seguridad IA (moderación, anti-inyección, filtrado PII)"
+
+- **React Bits**: `SpotlightCard` para la columna de Impuestify (efecto spotlight al hover)
+- **React Bits**: `TiltedCard` o `GlareHover` para dar profundidad visual
+- **IMPORTANTE**: NO mencionar "TaxDown" ni ningún competidor por nombre. Todo genérico: "asistentes fiscales tradicionales", "chatbots genéricos", "otros sistemas"
+
+#### 3.4 Sección Stats/Números (NUEVA)
+- Números impactantes con `CountUp` animado (React Bits):
+  - "428+" documentos oficiales en nuestra base de conocimiento
+  - "64" deducciones fiscales identificables
+  - "23" territorios cubiertos (17 CCAA + 4 forales + Ceuta + Melilla)
+  - "24/7" disponibilidad
+- **React Bits**: `ScrollReveal` para que los números aparezcan al scroll
+- Layout: 4 columnas en desktop, 2x2 en tablet, stack en móvil
+
+#### 3.5 Features Section (MEJORAR el existente)
+- Mantener las 3 cards actuales pero mejorar el contenido:
+  - "Respuestas Instantáneas" → "IA Multi-Agente Especializada" (agentes expertos en fiscal, nóminas, notificaciones)
+  - "Fuentes Oficiales" → "428+ Documentos Oficiales" (RAG sobre normativa real de AEAT, BOE, Diputaciones Forales)
+  - "Seguro y Privado" → mantener pero añadir: "Guardrails IA: moderación de contenido, detección de inyección, filtrado de datos personales"
+- **React Bits**: `SpotlightCard` para las feature cards
+
+#### 3.6 Pricing Section (MANTENER)
+- Mantener como está, funciona bien
+- Opcional: añadir al listado de features del plan:
+  - "Motor de deducciones con 64 deducciones"
+  - "Cobertura de territorios forales (PV/Navarra)"
+
+#### 3.7 CTA Section (MANTENER/MEJORAR)
+- Mantener estructura actual
+- **React Bits**: `StarBorder` o `ElectricBorder` alrededor del CTA card para hacerlo más llamativo
+
+### Notas de diseño
+- Mantener paleta de colores actual (Professional Blue: #1a56db primary, #06b6d4 accent)
+- Todas las secciones nuevas deben seguir el pattern CSS mobile-first existente
+- Los fondos animados de React Bits deben ser SUTILES (opacity baja, no distraer del contenido)
+- Rendimiento: verificar que las animaciones no hacen laggy la página en móvil
+- `npm run build` debe pasar sin errores al terminar
+
+---
+
+## TAREA 4: FAVICON
+
+### Objetivo
+Crear un favicon profesional para Impuestify. Actualmente usa el default `vite.svg`.
+
+### Requisitos
+1. **Crear un favicon SVG** en `frontend/public/favicon.svg`:
+   - Diseño: letra "I" estilizada o icono de calculadora/documento fiscal
+   - Colores: primary (#1a56db) y accent (#06b6d4)
+   - Debe verse bien en 16x16, 32x32 y 192x192
+   - Estilo: moderno, limpio, profesional
+   - Propuesta: círculo con gradiente (primary→accent) con "I" en blanco, o forma de escudo fiscal
+
+2. **Actualizar `frontend/index.html`**:
+   - Cambiar `<link rel="icon" type="image/svg+xml" href="/vite.svg" />` por `/favicon.svg`
+   - Añadir fallback: `<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">`
+
+3. **Generar versiones PNG** para PWA:
+   - `icon-192.png` (192x192) — para manifest.json y apple-touch-icon
+   - `icon-512.png` (512x512) — para manifest.json
+   - Puedes generar los PNG desde el SVG usando una herramienta online o crearlos manualmente
+
+4. **Eliminar** `vite.svg` si existe en public/
+
+### Nota sobre generación de PNG
+- Si no puedes generar PNG directamente, crea el SVG y documenta las instrucciones para generar los PNG
+- El SVG es suficiente para navegadores modernos como favicon
+
+---
+
+## TAREA 5: ACTUALIZAR MEMORIAS Y PLAN COMPETITIVO
+
+### Después de completar las Tareas 1-4, OBLIGATORIO:
+
+1. **Actualizar `agent-comms.md`**:
+   - Marcar esta entrada como 🟢 DONE
+   - Registrar todos los archivos creados/modificados
+   - Documentar decisiones tomadas (qué componentes de React Bits se usaron y por qué)
+
+2. **Actualizar `.claude/subagents/frontend.md`**:
+   - Añadir sección sobre React Bits (qué componentes se usan, dónde)
+   - Añadir sección sobre PWA (service worker, manifest)
+   - Añadir sección sobre DeductionCards
+   - Documentar nuevas secciones de la landing
+
+3. **Actualizar `docs/competitive/_estado.md`**:
+   - Marcar como DONE: "GTM nicho foral PV/Navarra" (implementado en landing)
+   - Marcar como DONE: "PWA movil"
+   - Actualizar la tabla de gaps (gap #4 App móvil → cerrado con PWA)
+   - Actualizar ventajas únicas: añadir "Landing diferenciadora con cobertura foral destacada"
+   - En "Recomendaciones activas", tachar lo completado y seguir con las siguientes pendientes
+
+4. **Actualizar `memory/MEMORY.md`**:
+   - Añadir sección sobre PWA
+   - Añadir sección sobre landing page rediseño
+   - Actualizar la sección de React Bits como nueva dependencia
+
+5. **Leer y seguir el plan del agente competitive** (`docs/competitive/_estado.md` > Recomendaciones activas):
+   - Todo lo marcado como DONE por el backend agent (deducciones, export, foral) ya está hecho
+   - Lo que acabas de implementar (PWA, landing foral, comparativa) marcarlo como DONE
+   - Identificar qué tareas quedan pendientes para el FRONTEND y documentarlas
+
+### Referencia: Estado actual del plan competitive
+Las siguientes tareas del plan competitive ya están COMPLETADAS por el backend:
+- Motor de deducciones (16 estatal + 48 territorial) ✅
+- Deduction Discovery Tool (8 CCAA + forales) ✅
+- TaxAgent proactivo con deducciones ✅
+- IRPF Simulator + deducciones end-to-end ✅
+- Export PDF informe IRPF ✅
+- Enviar informe a asesor por email ✅
+- Cobertura foral (Araba, Bizkaia, Gipuzkoa, Navarra) ✅
+- Citas legales en cada deducción ✅
+- Pricing ajustado a 5 EUR/mes ✅
+
+---
+
+## INSTALACIÓN DE REACT BITS
+
+### Cómo instalar
+Consultar https://reactbits.dev/get-started/installation para instrucciones actualizadas.
+
+### Catálogo de componentes disponibles (referencia rápida)
+
+**Text Animations (23)**: ASCIIText, BlurText, CircularText, CountUp, CurvedLoop, DecryptedText, FallingText, FuzzyText, GlitchText, GradientText, RotatingText, ScrambledText, ScrollFloat, ScrollReveal, ScrollVelocity, ShinyText, Shuffle, SplitText, TextCursor, TextPressure, TextType, TrueFocus, VariableProximity
+
+**Backgrounds (36)**: Aurora, Balatro, Ballpit, Beams, ColorBends, DarkVeil, Dither, DotGrid, FaultyTerminal, FloatingLines, Galaxy, GradientBlinds, Grainient, GridDistortion, GridMotion, GridScan, Hyperspeed, Iridescence, LetterGlitch, LightPillar, LightRays, Lightning, LiquidChrome, LiquidEther, Orb, Particles, PixelBlast, PixelSnow, Plasma, Prism, PrismaticBurst, RippleGrid, Silk, Squares, Threads, Waves
+
+**Components (35)**: AnimatedList, BounceCards, BubbleMenu, CardNav, CardSwap, Carousel, ChromaGrid, CircularGallery, Counter, DecayCard, Dock, DomeGallery, ElasticSlider, FlowingMenu, FluidGlass, FlyingPosters, Folder, GlassIcons, GlassSurface, GooeyNav, InfiniteMenu, Lanyard, MagicBento, Masonry, ModelViewer, PillNav, PixelCard, ProfileCard, ReflectiveCard, ScrollStack, SpotlightCard, Stack, StaggeredMenu, Stepper, TiltedCard
+
+**Animations (28)**: AnimatedContent, Antigravity, BlobCursor, ClickSpark, Crosshair, Cubes, ElectricBorder, FadeContent, GhostCursor, GlareHover, GradualBlur, ImageTrail, LaserFlow, LogoLoop, Magnet, MagnetLines, MetaBalls, MetallicPaint, Noise, OrbitImages, PixelTrail, PixelTransition, Ribbons, ShapeBlur, SplashCursor, StarBorder, StickerPeel, TargetCursor
+
+### Componentes sugeridos para las tareas (el frontend puede cambiar si encuentra mejores opciones):
+- **Hero título**: `GradientText` (texto "Inteligente" con gradiente animado)
+- **Hero fondo**: `Aurora` o `Waves` o `Silk` (evaluar rendimiento y profesionalismo)
+- **Stats CountUp**: `CountUp` (animar números de 0 a valor)
+- **Feature cards**: `SpotlightCard` (efecto spotlight al hover)
+- **Comparativa Impuestify**: `SpotlightCard` + `GlareHover`
+- **Secciones al scroll**: `AnimatedContent` o `FadeContent` o `ScrollReveal`
+- **CTA**: `StarBorder` o `ElectricBorder` (borde animado llamativo)
+- **Tarjetas deducciones**: `FadeContent` + `CountUp` para ahorro
+
+---
+
+[2026-03-05] [BACKEND] [🟢 DONE] - Fase 4: Integración end-to-end deducciones en simulador IRPF
+
+### Cambios
+- `backend/app/tools/irpf_simulator_tool.py`: `simulate_irpf_tool` ahora ejecuta automáticamente `discover_deductions_tool` después de la simulación. Pre-rellena answers con datos de la simulación (hijos, ascendientes, discapacidad, Ceuta/Melilla). El formatted_response incluye simulación + deducciones en un solo bloque.
+- `backend/app/agents/tax_agent.py`: Prompt actualizado indicando que simulate_irpf YA incluye deducciones autonómicas. Hint de IRPF en `_build_prompt` también actualizado.
+
+### Resultado
+Cuando un usuario pregunta "¿Cuánto pago de IRPF si gano 40.000€ en Madrid?", el TaxAgent:
+1. Llama a simulate_irpf (una sola tool call)
+2. El tool simula IRPF completo
+3. Automáticamente descubre deducciones de Madrid + Estatales
+4. Devuelve resultado combinado: "Tu cuota IRPF es X€. Además, podrías aplicar estas deducciones: ..."
+
+---
+
+[2026-03-05] [BACKEND] [🟢 DONE] - Deducciones territoriales IRPF (8 CCAA, 48 deducciones)
+
+### Resumen
+Motor de deducciones ampliado con deducciones autonómicas para 8 territorios.
+Ventaja competitiva clave: cobertura de territorios forales (Euskadi + Navarra) que TaxDown NO cubre.
+
+### Archivos creados
+- `backend/scripts/seed_deductions_territorial.py` — Seed con 48 deducciones para 8 CCAA
+  - Forales: Araba (8), Bizkaia (6), Gipuzkoa (6), Navarra (7)
+  - Régimen común: Madrid (6), Cataluña (5), Andalucía (5), Valencia (6)
+- `backend/tests/test_deductions_territorial.py` — 40 tests (seed integrity, foral, régimen común, service, tool, cross-territory)
+
+### Archivos modificados
+- `backend/app/services/deduction_service.py`:
+  - Nuevo método `get_all_deductions(ccaa)`: combina Estatal + CCAA para régimen común; solo foral para territorios forales
+  - `evaluate_eligibility()` y `get_missing_questions()` aceptan parámetro `ccaa=` para consultas combinadas
+  - Refactor: `_parse_rows()` extraído para DRY
+- `backend/app/tools/deduction_discovery_tool.py`:
+  - Reconoce 8 CCAA soportadas y usa consulta combinada automáticamente
+  - CCAA desconocida → fallback a solo Estatal
+  - Schema actualizado con lista de territorios válidos
+  - Header de respuesta formateada muestra territorio
+
+### Datos clave de deducciones por territorio
+- **Araba**: Compra vivienda 18%/1.530€ (VIGENTE), descendientes 734,80€/hijo, alquiler 20-35%, vehículo eléctrico 15%/5.000€, despoblación +200€
+- **Bizkaia**: Compra vivienda 18%/1.530€, descendientes 668€/hijo, alquiler 20-30%, edad 65+ 385€/700€
+- **Gipuzkoa**: Compra vivienda 18%/1.530€, descendientes 668€/hijo, alquiler 20-30%, cuidado menores 250€ (NUEVO 2025)
+- **Navarra**: NO tiene compra vivienda (eliminada 2018), descendientes 483€/hijo (+644€ si <3 años), alquiler 15-20%, donativos 80%/150€, renovables 15%
+- **Madrid**: Nacimiento 721,70€, alquiler jóvenes 30%/1.237€ (<40 años), gastos educativos 15%, donativos 15%
+- **Cataluña**: Nacimiento 150€, alquiler 10%/300€ (≤32 años), donativos catalán 15%, I+D+i 30%, rehabilitación 1,5%
+- **Andalucía**: Vivienda jóvenes 5%/9.040€, alquiler 15%/600€, nacimiento 200€, discapacidad 150€, ayuda doméstica 15%/500€
+- **Valencia**: Nacimiento 300€/3 años, familia numerosa 330/660€, alquiler 20-25%/950€, guardería 298€, material escolar 110€, renovables 40%
+
+### Post-deploy
+```bash
+cd backend
+python scripts/seed_deductions_territorial.py
+```
+
+### Tests: 80/80 passing (40 nuevos + 40 existentes, 0 regresiones)
+
+---
+
 [2026-03-05] [FRONTEND] [🟢 DONE] - UI Export PDF + Enviar a Asesor (ReportActions + ShareReportModal)
 
 ### Cambios realizados

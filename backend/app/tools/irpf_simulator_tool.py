@@ -10,6 +10,7 @@ This is the enhanced version of calculate_irpf that handles:
 - Rental income with amortization and housing reduction
 - Personal and family minimum (MPYF) by CCAA
 """
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 import logging
 
@@ -223,6 +224,37 @@ async def simulate_irpf_tool(
         formatted = _format_simulation_result(result, ccaa)
         if year_warning:
             formatted = f"⚠️ {year_warning}\n\n{formatted}"
+
+        # --- Fase 4: Auto-discover deductions end-to-end ---
+        try:
+            from app.tools.deduction_discovery_tool import discover_deductions_tool
+
+            # Pre-fill answers from simulation parameters
+            ded_answers = {}
+            if num_descendientes > 0:
+                ded_answers["tiene_hijos"] = True
+            if anios_nacimiento_desc:
+                current_yr = datetime.now().year
+                if any((current_yr - y) < 3 for y in anios_nacimiento_desc):
+                    ded_answers["hijo_menor_3"] = True
+            if num_ascendientes_65 > 0 or num_ascendientes_75 > 0:
+                ded_answers["ascendiente_a_cargo"] = True
+            if discapacidad_contribuyente >= 33:
+                ded_answers["discapacidad_reconocida"] = True
+            if ceuta_melilla:
+                ded_answers["residente_ceuta_melilla"] = True
+
+            ded_result = await discover_deductions_tool(
+                ccaa=ccaa,
+                tax_year=effective_year,
+                answers=ded_answers,
+            )
+            if ded_result.get("success") and (ded_result.get("deductions_found", 0) > 0 or ded_result.get("maybe_eligible", 0) > 0):
+                formatted += "\n\n---\n" + ded_result["formatted_response"]
+                result["deductions"] = ded_result
+        except Exception as e:
+            logger.warning("Deduction discovery in simulation failed (non-fatal): %s", e)
+
         result["formatted_response"] = formatted
         return result
 

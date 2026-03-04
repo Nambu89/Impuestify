@@ -57,10 +57,45 @@ class DeductionService:
                 [territory, tax_year],
             )
 
+        return self._parse_rows(result.rows)
+
+    async def get_all_deductions(
+        self,
+        ccaa: str,
+        tax_year: int = 2025,
+        category: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get combined Estatal + CCAA deductions.
+
+        For régimen común CCAA, returns both state-level and autonomous deductions.
+        For foral territories (Araba, Bizkaia, Gipuzkoa, Navarra), returns ONLY
+        the foral deductions since they have their own complete IRPF system.
+
+        Args:
+            ccaa: CCAA name (e.g. 'Madrid', 'Araba', 'Navarra')
+            tax_year: Fiscal year
+            category: Optional filter by category
+
+        Returns:
+            List of deduction dicts (combined)
+        """
+        foral_territories = {"Araba", "Bizkaia", "Gipuzkoa", "Navarra"}
+
+        if ccaa in foral_territories:
+            # Foral territories have their own complete system
+            return await self.get_deductions(ccaa, tax_year, category)
+
+        # Régimen común: combine Estatal + CCAA
+        estatal = await self.get_deductions("Estatal", tax_year, category)
+        ccaa_deductions = await self.get_deductions(ccaa, tax_year, category)
+        return estatal + ccaa_deductions
+
+    def _parse_rows(self, rows) -> List[Dict[str, Any]]:
+        """Parse DB rows into deduction dicts with JSON fields."""
         deductions = []
-        for row in result.rows:
+        for row in rows:
             d = dict(row)
-            # Parse JSON fields
             if d.get("requirements_json"):
                 d["requirements"] = json.loads(d["requirements_json"])
             else:
@@ -70,7 +105,6 @@ class DeductionService:
             else:
                 d["questions"] = []
             deductions.append(d)
-
         return deductions
 
     async def evaluate_eligibility(
@@ -78,21 +112,26 @@ class DeductionService:
         territory: str = "Estatal",
         tax_year: int = 2025,
         answers: Optional[Dict[str, Any]] = None,
+        ccaa: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Evaluate which deductions a user is eligible for based on their answers.
 
         Args:
-            territory: 'Estatal' or CCAA name
+            territory: 'Estatal' or CCAA name (legacy, used if ccaa is None)
             tax_year: Fiscal year
             answers: Dict of user answers (key -> value)
+            ccaa: If provided, uses get_all_deductions for combined results
 
         Returns:
             Dict with eligible, maybe_eligible, not_eligible deductions
             and estimated total savings
         """
         answers = answers or {}
-        deductions = await self.get_deductions(territory, tax_year)
+        if ccaa:
+            deductions = await self.get_all_deductions(ccaa, tax_year)
+        else:
+            deductions = await self.get_deductions(territory, tax_year)
 
         eligible = []
         maybe_eligible = []
@@ -148,6 +187,7 @@ class DeductionService:
         territory: str = "Estatal",
         tax_year: int = 2025,
         answers: Optional[Dict[str, Any]] = None,
+        ccaa: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get questions that still need to be answered to evaluate eligibility.
@@ -155,7 +195,10 @@ class DeductionService:
         Returns only questions for deductions that haven't been ruled out.
         """
         answers = answers or {}
-        deductions = await self.get_deductions(territory, tax_year)
+        if ccaa:
+            deductions = await self.get_all_deductions(ccaa, tax_year)
+        else:
+            deductions = await self.get_deductions(territory, tax_year)
 
         seen_keys = set()
         missing_questions = []

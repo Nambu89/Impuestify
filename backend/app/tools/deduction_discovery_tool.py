@@ -34,7 +34,12 @@ IMPORTANTE: Pasa en 'answers' toda la información que ya conozcas del usuario
             "properties": {
                 "ccaa": {
                     "type": "string",
-                    "description": "Comunidad autónoma del contribuyente (para deducciones autonómicas futuras). Default: 'Estatal' para deducciones estatales."
+                    "description": """Comunidad autónoma del contribuyente. Valores válidos:
+- 'Estatal': solo deducciones estatales (default si no se conoce la CCAA)
+- Territorios forales (sistema propio): 'Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra'
+- Régimen común: 'Madrid', 'Cataluña', 'Andalucía', 'Valencia'
+Si se indica una CCAA de régimen común, devuelve deducciones Estatal + autonómicas combinadas.
+Si es territorio foral, devuelve SOLO las deducciones forales (tienen sistema IRPF propio)."""
                 },
                 "tax_year": {
                     "type": "integer",
@@ -91,18 +96,29 @@ async def discover_deductions_tool(
 
         service = get_deduction_service()
 
-        # Use 'Estatal' for territory (CCAA-specific deductions can be added later)
-        territory = "Estatal"
+        # Determine if we should use combined Estatal+CCAA queries
+        supported_ccaa = {
+            "Araba", "Bizkaia", "Gipuzkoa", "Navarra",
+            "Madrid", "Cataluña", "Andalucía", "Valencia",
+        }
 
-        # Evaluate eligibility
-        result = await service.evaluate_eligibility(territory, tax_year, answers)
-
-        # Get missing questions
-        missing = await service.get_missing_questions(territory, tax_year, answers)
+        if ccaa in supported_ccaa:
+            # Combined query: Estatal + CCAA (or foral-only for foral territories)
+            result = await service.evaluate_eligibility(
+                tax_year=tax_year, answers=answers, ccaa=ccaa,
+            )
+            missing = await service.get_missing_questions(
+                tax_year=tax_year, answers=answers, ccaa=ccaa,
+            )
+        else:
+            # Fallback: only state-level deductions
+            result = await service.evaluate_eligibility("Estatal", tax_year, answers)
+            missing = await service.get_missing_questions("Estatal", tax_year, answers)
 
         # Build formatted response
         lines = []
-        lines.append(f"## Deducciones IRPF {tax_year} — Análisis personalizado\n")
+        territory_label = ccaa if ccaa in supported_ccaa else "Estatal"
+        lines.append(f"## Deducciones IRPF {tax_year} ({territory_label}) — Análisis personalizado\n")
 
         if result["eligible"]:
             lines.append(f"### ✅ Deducciones a las que tienes derecho ({len(result['eligible'])})\n")

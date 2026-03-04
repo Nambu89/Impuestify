@@ -9,6 +9,7 @@ import { ConversationSidebar } from '../components/ConversationSidebar'
 import { WorkspaceSelector } from '../components/WorkspaceSelector'
 import { WorkspaceContextIndicator } from '../components/WorkspaceContextIndicator'
 import { ReportActions, isIRPFSimulation } from '../components/ReportActions'
+import { DeductionCards, hasDeductions } from '../components/DeductionCards'
 import { useConversations } from '../hooks/useConversations'
 import { useWorkspaces, Workspace } from '../hooks/useWorkspaces'
 import { useStreamingChat } from '../hooks/useStreamingChat'
@@ -281,6 +282,10 @@ export default function Chat() {
                                                             ))}
                                                         </p>
                                                     </div>
+                                                )}
+                                                {/* Deduction cards for deduction results */}
+                                                {message.role === 'assistant' && hasDeductions(message.content) && (
+                                                    <DeductionCards content={message.content} />
                                                 )}
                                                 {/* Report actions for IRPF simulation results */}
                                                 {message.role === 'assistant' && isIRPFSimulation(message.content) && (

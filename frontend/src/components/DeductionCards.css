@@ -1,0 +1,182 @@
+/* DeductionCards - MOBILE FIRST */
+
+.deduction-cards {
+    margin-top: var(--spacing-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+/* Savings banner */
+.deduction-savings-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-4) var(--spacing-5);
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%);
+    border: 1px solid rgba(26, 86, 219, 0.15);
+    border-radius: var(--radius-xl);
+}
+
+.deduction-savings-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.deduction-savings-amount {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+/* Section */
+.deduction-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+}
+
+.deduction-section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    margin: 0;
+}
+
+.deduction-section-eligible {
+    color: var(--color-success);
+}
+
+.deduction-section-possible {
+    color: var(--color-warning);
+}
+
+/* Grid */
+.deduction-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-3);
+}
+
+/* Card */
+.deduction-card {
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    border-left: 3px solid;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.deduction-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.deduction-card-eligible {
+    border-left-color: var(--color-success);
+}
+
+.deduction-card-possible {
+    border-left-color: var(--color-warning);
+}
+
+/* Card header */
+.deduction-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.deduction-card-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.deduction-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.deduction-card-name {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-gray-900);
+    line-height: 1.3;
+}
+
+.deduction-card-amount {
+    display: block;
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-top: 2px;
+}
+
+/* Badge */
+.deduction-badge {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    padding: 2px var(--spacing-2);
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.deduction-badge-eligible {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+}
+
+.deduction-badge-possible {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+}
+
+/* Description */
+.deduction-card-desc {
+    margin: var(--spacing-2) 0 0 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+    line-height: 1.4;
+}
+
+/* Legal reference */
+.deduction-card-legal {
+    display: block;
+    margin-top: var(--spacing-1);
+    font-size: 11px;
+    color: var(--color-gray-400);
+    font-style: italic;
+}
+
+/* ========== TABLET (768px+) ========== */
+@media (min-width: 768px) {
+    .deduction-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .deduction-savings-amount {
+        font-size: var(--font-size-3xl);
+    }
+}
+
+/* ========== DESKTOP (1024px+) ========== */
+@media (min-width: 1024px) {
+    .deduction-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
