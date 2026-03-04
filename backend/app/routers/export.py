@@ -62,8 +62,8 @@ async def generate_irpf_report(
     if not db:
         raise HTTPException(status_code=503, detail="Base de datos no disponible")
 
-    user_id = current_user.get("user_id") or current_user.get("id")
-    user_name = current_user.get("name") or current_user.get("email", "Usuario")
+    user_id = current_user.user_id
+    user_name = current_user.email or "Usuario"
 
     # Get fiscal profile
     fiscal_profile = {}
@@ -187,8 +187,8 @@ async def share_with_advisor(
     if not db:
         raise HTTPException(status_code=503, detail="Base de datos no disponible")
 
-    user_id = current_user.get("user_id") or current_user.get("id")
-    user_name = current_user.get("name") or current_user.get("email", "Usuario")
+    user_id = current_user.user_id
+    user_name = current_user.email or "Usuario"
 
     # Verify report ownership
     result = await db.execute(
