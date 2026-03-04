@@ -57,3 +57,9 @@ pypdf>=4.0.0
 
 # --- Payments (Stripe) ---
 stripe>=8.0.0
+
+# --- PDF Report Generation ---
+reportlab>=4.0.0
+
+# --- Email (Resend) ---
+resend>=0.7.0

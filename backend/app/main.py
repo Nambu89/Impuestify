@@ -441,6 +441,10 @@ app.include_router(contact_router)
 from app.routers.admin import router as admin_router
 app.include_router(admin_router)
 
+# Export & Report Endpoints
+from app.routers.export import router as export_router
+app.include_router(export_router)
+
 # Demo Chat Endpoint (public, no auth required)
 from app.routers.demo import router as demo_router
 app.include_router(demo_router)

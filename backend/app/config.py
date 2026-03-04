@@ -172,6 +172,12 @@ class Settings(BaseSettings):
     STRIPE_PRODUCT_ID: str = Field(default="prod_U4lJ9l8NhKvFHZ")
 
     # -------------------------------
+    # 📧 Email (Resend)
+    # -------------------------------
+    RESEND_API_KEY: Optional[str] = Field(default=None)
+    RESEND_FROM_EMAIL: str = Field(default="noreply@impuestify.es")
+
+    # -------------------------------
     # 👤 Owner & Contact
     # -------------------------------
     OWNER_EMAIL: str = Field(default="fernando.prada@proton.me")
@@ -199,6 +205,7 @@ class Settings(BaseSettings):
         "ADMIN_API_KEY", "TURSO_AUTH_TOKEN", "UPSTASH_REDIS_REST_TOKEN",
         "GROQ_API_KEY", "UPSTASH_VECTOR_REST_TOKEN",
         "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET",
+        "RESEND_API_KEY",
         mode="before"
     )
     @classmethod
@@ -263,6 +270,11 @@ class Settings(BaseSettings):
     def is_stripe_configured(self) -> bool:
         """Check if Stripe payments are configured"""
         return bool(self.STRIPE_SECRET_KEY)
+
+    @property
+    def is_resend_configured(self) -> bool:
+        """Check if Resend email service is configured"""
+        return bool(self.RESEND_API_KEY)
 
 
 # Initialize global settings

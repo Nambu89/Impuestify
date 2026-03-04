@@ -8,6 +8,7 @@ import { NotificationAnalysisDisplay } from '../components/NotificationAnalysisD
 import { ConversationSidebar } from '../components/ConversationSidebar'
 import { WorkspaceSelector } from '../components/WorkspaceSelector'
 import { WorkspaceContextIndicator } from '../components/WorkspaceContextIndicator'
+import { ReportActions, isIRPFSimulation } from '../components/ReportActions'
 import { useConversations } from '../hooks/useConversations'
 import { useWorkspaces, Workspace } from '../hooks/useWorkspaces'
 import { useStreamingChat } from '../hooks/useStreamingChat'
@@ -249,7 +250,7 @@ export default function Chat() {
                         </div>
                     ) : (
                         <div className="chat-messages">
-                            {messages.map(message => (
+                            {messages.map((message, index) => (
                                 <div
                                     key={message.id}
                                     className={`message ${message.role} `}
@@ -267,7 +268,7 @@ export default function Chat() {
                                                         {message.content}
                                                     </ReactMarkdown>
                                                 </div>
-                                                {/* ✅ FIX: Fuentes sin bullets, formato inline */}
+                                                {/* Fuentes sin bullets, formato inline */}
                                                 {message.sources && message.sources.length > 0 && (
                                                     <div className="message-sources">
                                                         <p className="sources-title">
@@ -280,6 +281,17 @@ export default function Chat() {
                                                             ))}
                                                         </p>
                                                     </div>
+                                                )}
+                                                {/* Report actions for IRPF simulation results */}
+                                                {message.role === 'assistant' && isIRPFSimulation(message.content) && (
+                                                    <ReportActions
+                                                        messageContent={message.content}
+                                                        previousUserMessage={
+                                                            index > 0 && messages[index - 1]?.role === 'user'
+                                                                ? messages[index - 1].content
+                                                                : undefined
+                                                        }
+                                                    />
                                                 )}
                                             </>
                                         )}

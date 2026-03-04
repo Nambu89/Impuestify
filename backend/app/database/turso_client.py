@@ -520,18 +520,71 @@ class TursoClient:
             "CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer ON subscriptions(stripe_customer_id)",
             "CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)",
             "CREATE INDEX IF NOT EXISTS idx_contact_requests_user ON contact_requests(user_id)",
+
+            # =============================================
+            # DEDUCTIONS REGISTRY
+            # =============================================
+
+            """
+            CREATE TABLE IF NOT EXISTS deductions (
+                id TEXT PRIMARY KEY,
+                code TEXT NOT NULL,
+                tax_year INTEGER NOT NULL,
+                territory TEXT NOT NULL DEFAULT 'Estatal',
+                name TEXT NOT NULL,
+                type TEXT NOT NULL DEFAULT 'deduccion',
+                category TEXT NOT NULL DEFAULT 'general',
+                percentage REAL,
+                max_amount REAL,
+                fixed_amount REAL,
+                legal_reference TEXT,
+                description TEXT,
+                requirements_json TEXT,
+                questions_json TEXT,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TEXT DEFAULT (datetime('now')),
+                UNIQUE(code, tax_year, territory)
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_deductions_territory_year ON deductions(territory, tax_year)",
+            "CREATE INDEX IF NOT EXISTS idx_deductions_type ON deductions(type)",
+            "CREATE INDEX IF NOT EXISTS idx_deductions_category ON deductions(category)",
+
+            # =============================================
+            # EXPORT REPORTS
+            # =============================================
+
+            """
+            CREATE TABLE IF NOT EXISTS reports (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                report_type TEXT NOT NULL DEFAULT 'irpf',
+                title TEXT,
+                report_data TEXT,
+                pdf_bytes BLOB,
+                share_token TEXT UNIQUE,
+                shared_with_email TEXT,
+                shared_at TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_reports_user ON reports(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_reports_share_token ON reports(share_token)",
         ]
         
         try:
             for sql in schema_statements:
                 await self.execute(sql)
 
-            # Add is_owner column to users (ALTER TABLE doesn't support IF NOT EXISTS)
-            try:
+            # Add is_owner column to users if it doesn't exist
+            result = await self.execute("PRAGMA table_info(users)")
+            existing_columns = {row["name"] for row in result.rows}
+            if "is_owner" not in existing_columns:
                 await self.execute("ALTER TABLE users ADD COLUMN is_owner BOOLEAN DEFAULT 0")
                 logger.info("Added is_owner column to users table")
-            except Exception:
-                pass  # Column already exists
 
             logger.info("Database schema initialized successfully")
         except Exception as e:

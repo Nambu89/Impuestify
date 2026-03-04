@@ -153,7 +153,23 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 - **calculate_autonomous_quota**: Para calcular cuotas de autónomos (siempre año {self.autonomous_quota_year})
 - **calculate_modelo_303**: Calcula la declaración trimestral de IVA (Modelo 303) para autónomos/empresas en régimen general. Pide bases imponibles por tipo de IVA (21%, 10%, 4%) e IVA deducible. Devuelve todas las casillas principales y resultado.
 - **calculate_modelo_130**: Calcula el pago fraccionado trimestral de IRPF (Modelo 130) para autónomos en estimación directa. Pide ingresos y gastos ACUMULADOS desde inicio de año, retenciones, y pagos anteriores. IMPORTANTE: datos son ACUMULADOS, no del trimestre individual.
+- **discover_deductions**: Descubre deducciones IRPF a las que el usuario puede tener derecho. Evalúa elegibilidad según las respuestas conocidas y devuelve ahorro estimado + preguntas pendientes. USA ESTA herramienta cuando el usuario pregunte sobre deducciones, desgravaciones, cómo ahorrar en la renta, o si puede deducirse algo.
 - **search_tax_regulations**: Solo cuando el usuario PIDA explícitamente información reciente o la documentación RAG sea claramente insuficiente
+
+## 🔎 DESCUBRIMIENTO PROACTIVO DE DEDUCCIONES
+
+Cuando el usuario pregunte sobre deducciones o ahorro fiscal:
+1. **Pre-rellena answers** con datos del perfil fiscal y la conversación:
+   - Si sabes que tiene hijos → hijo_menor_3, familia_numerosa
+   - Si sabes que vive en Ceuta/Melilla → residente_ceuta_melilla
+   - Si sabes que dona → donativo_a_entidad_acogida
+   - Si sabes que es autónomo → autonomo_estimacion_directa
+   - Si sabes de su vivienda → adquisicion_antes_2013, contrato_antes_2015
+2. **Llama a discover_deductions** con esos answers
+3. **Presenta los resultados** de forma conversacional:
+   - Deducciones confirmadas con ahorro estimado
+   - Preguntas clave para descubrir más (máximo 3-4 a la vez, no abrumes)
+4. **Cuando el usuario responda**, vuelve a llamar con los answers actualizados
 
 🚨 **REGLA CRÍTICA — COMUNIDAD AUTÓNOMA (CCAA)**:
 - La CCAA es **OBLIGATORIA** para cualquier cálculo de IRPF (simulate_irpf o calculate_irpf).
@@ -714,7 +730,10 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 
 		if any(kw in query_lower for kw in ["modelo 130", "pago fraccionado"]):
 			requires_tool_hint = "\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo del Modelo 130. DEBES usar la herramienta calculate_modelo_130.\n"
-		
+
+		if any(kw in query_lower for kw in ["deduccion", "deducción", "desgravacion", "desgravación", "deducir", "desgravar", "ahorrar en la renta", "ahorro fiscal", "beneficio fiscal", "deducciones"]):
+			requires_tool_hint = "\n⚠️ ATENCIÓN: Esta pregunta requiere descubrimiento de deducciones. DEBES usar la herramienta discover_deductions con los datos que conozcas del usuario en 'answers'.\n"
+
 		# NO agregar hint de search para fechas/plazos - deja que el RAG-first funcione
 		
 		# Build memory section if available (moved to system prompt)

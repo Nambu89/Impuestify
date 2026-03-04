@@ -10,6 +10,207 @@
 ## Mensajes Activos
 ---
 
+[2026-03-05] [FRONTEND] [🟢 DONE] - UI Export PDF + Enviar a Asesor (ReportActions + ShareReportModal)
+
+### Cambios realizados
+
+**Nuevos componentes:**
+- `components/ReportActions.tsx` + `.css` — Botones "Descargar Informe PDF" + "Enviar a mi asesor"
+  - Deteccion automatica de simulaciones IRPF por keywords en contenido del mensaje (>=2 de: cuota integra, cuota liquida, tipo efectivo, base liquidable, simulacion irpf)
+  - Extrae CCAA e ingresos del texto del mensaje + pregunta del usuario
+  - Descarga PDF via `POST /api/export/irpf-report` con responseType blob
+  - Guarda `X-Report-Id` para compartir
+  - Responsive: solo iconos en mobile (<768px), icono + texto en tablet+
+  - Estados: idle -> descargando -> descargado (habilita boton compartir)
+- `components/ShareReportModal.tsx` + `.css` — Modal para enviar informe al asesor
+  - Input email (validacion basica) + textarea mensaje opcional (500 chars)
+  - `POST /api/export/share-with-advisor` con report_id + advisor_email
+  - Maneja 503 gracefully: "El envio por email no esta disponible..."
+  - Estado success con auto-close tras 2s
+  - Mobile: bottom-sheet (<480px), centered popup en desktop (max-width 480px)
+
+**Archivos modificados:**
+- `pages/Chat.tsx` — Import ReportActions + isIRPFSimulation, integrado debajo de sources en mensajes assistant que contienen simulacion IRPF. Pasa previousUserMessage como contexto para extraccion de parametros.
+
+**Build:** OK (npm run build sin errores)
+
+---
+
+[2026-03-05] [BACKEND] [🟢 DONE] - Motor de Deducciones IRPF + Export PDF + Email a Asesor
+
+### Resumen de cambios backend
+
+Se ha implementado un sistema completo de deducciones IRPF + exportación de informes PDF + envío por email a asesores fiscales.
+
+**Nuevos endpoints disponibles:**
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| `POST` | `/api/export/irpf-report` | JWT | Genera informe PDF con simulación IRPF + deducciones. Devuelve el PDF como descarga. Headers de respuesta: `X-Report-Id`, `X-Share-Token` |
+| `POST` | `/api/export/share-with-advisor` | JWT | Envía un informe ya generado por email a un asesor fiscal (via Resend) |
+
+**Request body — `/api/export/irpf-report`:**
+```typescript
+interface IRPFReportRequest {
+  ccaa: string;              // Comunidad autónoma (obligatorio)
+  ingresos_trabajo: number;  // Ingresos brutos anuales (default 0)
+  year: number;              // Año fiscal (default 2025)
+  answers?: Record<string, any>;  // Respuestas para deducciones (opcional)
+}
+```
+
+**Response:** Devuelve `application/pdf` como descarga directa. Headers custom:
+- `X-Report-Id`: UUID del informe guardado en BD
+- `X-Share-Token`: Token único para compartir
+- `Content-Disposition`: `attachment; filename="informe_irpf_2025.pdf"`
+
+**Request body — `/api/export/share-with-advisor`:**
+```typescript
+interface ShareWithAdvisorRequest {
+  report_id: string;        // ID del informe (de X-Report-Id)
+  advisor_email: string;    // Email del asesor (validado como EmailStr)
+  message?: string;         // Mensaje opcional (no implementado aún en el email)
+}
+```
+
+**Response:**
+```json
+{ "success": true, "message": "Informe enviado a asesor@test.com", "email_id": "..." }
+```
+
+**Error si Resend no configurado:** `503 - El servicio de email no está configurado`
+
+**Nuevo tool del TaxAgent — `discover_deductions`:**
+- El TaxAgent ahora tiene una herramienta `discover_deductions` que se activa automáticamente cuando el usuario pregunta por deducciones, desgravaciones o ahorro fiscal
+- Devuelve deducciones elegibles + ahorro estimado + preguntas pendientes
+- Las respuestas aparecen de forma conversacional en el chat (no requiere UI especial del frontend)
+
+---
+
+### 📋 INSTRUCCIONES PARA EL FRONTEND AGENT
+
+#### 1. Deducciones en el chat → Automático (no requiere cambios)
+
+El TaxAgent muestra las deducciones via chat normal cuando el usuario pregunta. No se necesitan componentes nuevos para esto.
+
+#### 2. Botón "Descargar Informe PDF" en resultados de simulación IRPF
+
+**Dónde:** En el componente `Chat.tsx`, cuando el mensaje del assistant contiene resultados de una simulación IRPF (detectar por texto como "Cuota líquida", "Tipo efectivo", "simulate_irpf" en metadata, o similar).
+
+**Comportamiento:**
+1. Mostrar un botón debajo del resultado de simulación: `📄 Descargar Informe PDF`
+2. Al hacer click:
+   - Hacer `POST /api/export/irpf-report` con los datos de la simulación (ccaa, ingresos, year)
+   - La respuesta es un blob PDF → descargar automáticamente con `window.URL.createObjectURL`
+   - Guardar `X-Report-Id` y `X-Share-Token` del response header para el paso 3
+3. Mientras se genera: mostrar estado de carga en el botón ("Generando...")
+
+**Ejemplo de llamada:**
+```typescript
+const response = await api.post('/api/export/irpf-report', {
+  ccaa: 'Madrid',
+  ingresos_trabajo: 35000,
+  year: 2025,
+  answers: {} // Opcional: respuestas de deducciones si las hay
+}, {
+  responseType: 'blob'
+});
+
+// Descargar el PDF
+const url = window.URL.createObjectURL(new Blob([response.data]));
+const link = document.createElement('a');
+link.href = url;
+link.setAttribute('download', 'informe_irpf_2025.pdf');
+document.body.appendChild(link);
+link.click();
+link.remove();
+
+// Guardar IDs para compartir
+const reportId = response.headers['x-report-id'];
+const shareToken = response.headers['x-share-token'];
+```
+
+#### 3. Botón "Enviar a mi asesor" → Modal con email
+
+**Dónde:** Mostrar junto al botón de descarga (o después de descargar). Solo visible si hay un `reportId` guardado.
+
+**UI del modal:**
+- Título: "Enviar informe a tu asesor fiscal"
+- Campo: Email del asesor (input type=email, validación básica)
+- Campo opcional: Mensaje personalizado (textarea, max 500 chars)
+- Botón: "Enviar" / "Enviando..."
+- Feedback: Toast/alert con "Informe enviado correctamente a [email]" o error
+
+**Llamada:**
+```typescript
+const response = await api.post('/api/export/share-with-advisor', {
+  report_id: reportId,  // Del paso anterior
+  advisor_email: advisorEmail,
+  message: optionalMessage
+});
+// response.data = { success: true, message: "Informe enviado a ...", email_id: "..." }
+```
+
+**Nota sobre email no configurado:** Si el backend devuelve 503 ("servicio de email no configurado"), mostrar un mensaje amigable: "El envío por email no está disponible en este momento. Puedes descargar el PDF y enviarlo manualmente."
+
+#### 4. Diseño responsive / mobile-first
+
+- Botones: icono + texto en desktop, solo icono en mobile (<768px)
+- Modal: full-screen en mobile, centered popup en desktop (max-width: 480px)
+- Estilo consistente con el diseño actual (colores primarios, bordes redondeados)
+
+#### 5. Ubicación sugerida de los componentes
+
+- `components/ReportActions.tsx` — Botones "Descargar PDF" + "Enviar a asesor"
+- `components/ShareReportModal.tsx` — Modal para enviar al asesor
+- Integrar en `Chat.tsx` o `ChatMessage.tsx` donde se renderizan los mensajes del assistant
+
+---
+
+### 🔧 SETUP RESEND — Guía para el owner
+
+**Qué es:** Resend es un servicio de email API para enviar emails transaccionales (como informes fiscales a asesores). Free tier: 3.000 emails/mes, 100/día.
+
+**Pasos de configuración:**
+
+#### Paso 1: Crear cuenta y API key
+1. Ir a [resend.com](https://resend.com) y crear cuenta (email o GitHub)
+2. Dashboard → **API Keys** → **Create API Key**
+3. Nombre: `impuestify-backend`, permiso: `Sending access`
+4. Copiar la key (formato `re_xxxxxxxxx`) — solo se muestra una vez
+
+#### Paso 2: Verificar dominio impuestify.es
+1. Dashboard → **Domains** → **Add Domain**
+2. Introducir: `impuestify.es` (o subdominio `mail.impuestify.es` recomendado para aislar reputación)
+3. Seleccionar región: **EU** (mejor para GDPR)
+4. Resend genera 4 registros DNS que debes añadir en tu proveedor de dominio:
+
+| Tipo | Propósito | Ejemplo |
+|------|-----------|---------|
+| TXT (SPF) | Autoriza servidores Resend | `v=spf1 include:resend.com ~all` |
+| CNAME (DKIM) | Firma criptográfica de emails | `resend._domainkey.impuestify.es` |
+| TXT (DMARC) | Política anti-spoofing | `_dmarc.impuestify.es` → `v=DMARC1; p=none` |
+| MX | Gestión de bounces | Prioridad 10, valor dado por Resend |
+
+5. Propagar DNS: tarda de minutos a 24h. Resend verifica automáticamente hasta 72h
+6. Herramienta de diagnóstico: [dns.email](https://dns.email) para comprobar registros
+
+#### Paso 3: Variables de entorno en Railway
+Añadir en el servicio backend de Railway:
+```
+RESEND_API_KEY=re_xxxxxxxxx
+RESEND_FROM_EMAIL=noreply@impuestify.es
+```
+
+**Sin estas variables el endpoint `/api/export/share-with-advisor` devolverá 503 (graceful degradation). La descarga de PDF funciona sin Resend.**
+
+#### Free tier suficiente
+- 100 emails/día, 3.000/mes → para ~13 usuarios actuales es más que suficiente
+- Attachments soportados hasta 40MB (nuestros PDFs pesan ~10-50KB)
+- No necesita plan de pago a corto plazo
+
+---
+
 [2026-03-04] [FRONTEND] [🟢 DONE] - Ceuta/Melilla UI + precio suscripción 15→5 EUR
 
 ### Cambios realizados

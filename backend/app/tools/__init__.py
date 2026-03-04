@@ -10,6 +10,7 @@ from app.tools.search_tool import SEARCH_TAX_REGULATIONS_TOOL, search_tax_regula
 from app.tools.payslip_analysis_tool import PAYSLIP_ANALYSIS_TOOL, analyze_payslip_tool
 from app.tools.modelo_303_tool import MODELO_303_TOOL, calculate_modelo_303_tool
 from app.tools.modelo_130_tool import MODELO_130_TOOL, calculate_modelo_130_tool
+from app.tools.deduction_discovery_tool import DISCOVER_DEDUCTIONS_TOOL, discover_deductions_tool
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
@@ -22,6 +23,7 @@ ALL_TOOLS = [
 	PAYSLIP_ANALYSIS_TOOL,
 	MODELO_303_TOOL,
 	MODELO_130_TOOL,
+	DISCOVER_DEDUCTIONS_TOOL,
 ]
 
 # Registry of tool execution functions
@@ -33,6 +35,7 @@ TOOL_EXECUTORS = {
 	"analyze_payslip": analyze_payslip_tool,
 	"calculate_modelo_303": calculate_modelo_303_tool,
 	"calculate_modelo_130": calculate_modelo_130_tool,
+	"discover_deductions": discover_deductions_tool,
 }
 
 __all__ = [
@@ -45,6 +48,7 @@ __all__ = [
 	"PAYSLIP_ANALYSIS_TOOL",
 	"MODELO_303_TOOL",
 	"MODELO_130_TOOL",
+	"DISCOVER_DEDUCTIONS_TOOL",
 	"simulate_irpf_tool",
 	"calculate_irpf_tool",
 	"calculate_autonomous_quota_tool",
@@ -52,4 +56,5 @@ __all__ = [
 	"analyze_payslip_tool",
 	"calculate_modelo_303_tool",
 	"calculate_modelo_130_tool",
+	"discover_deductions_tool",
 ]

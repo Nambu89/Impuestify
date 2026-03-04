@@ -1,0 +1,87 @@
+/* ReportActions - MOBILE FIRST */
+
+.report-actions {
+    margin-top: var(--spacing-3);
+    padding-top: var(--spacing-3);
+    border-top: 1px solid var(--color-gray-200);
+}
+
+.report-actions-buttons {
+    display: flex;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+}
+
+/* Base button style */
+.report-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 1px solid transparent;
+    line-height: 1;
+}
+
+.report-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Download button */
+.report-btn-download {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: var(--color-white);
+}
+
+.report-btn-download:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+}
+
+/* Share button */
+.report-btn-share {
+    background: var(--color-white);
+    color: var(--color-gray-700);
+    border-color: var(--color-gray-300);
+}
+
+.report-btn-share:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: rgba(26, 86, 219, 0.05);
+}
+
+/* Error message */
+.report-error {
+    margin-top: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    color: var(--color-error);
+}
+
+/* Mobile: hide button text, show only icon */
+@media (max-width: 767px) {
+    .report-btn-text {
+        display: none;
+    }
+
+    .report-btn {
+        padding: var(--spacing-2);
+    }
+}
+
+/* ========== TABLET (768px+) ========== */
+@media (min-width: 768px) {
+    .report-btn {
+        font-size: var(--font-size-sm);
+        padding: var(--spacing-2) var(--spacing-4);
+    }
+
+    .report-btn-text {
+        display: inline;
+    }
+}
