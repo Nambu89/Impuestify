@@ -12,7 +12,7 @@ Features:
 import os
 import logging
 import hashlib
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 from datetime import datetime
 import time
@@ -100,11 +100,15 @@ class SemanticCache:
         )
         
         self._index: Optional[Index] = None
+        self._openai_client = None
         
         if self.enabled:
             try:
                 self._index = Index(url=self.url, token=self.token)
-                logger.info("🧠 Semantic Cache enabled (Upstash Vector)")
+                # Initialize OpenAI client for embedding generation
+                from openai import OpenAI
+                self._openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+                logger.info("🧠 Semantic Cache enabled (Upstash Vector + OpenAI embeddings)")
             except Exception as e:
                 logger.error(f"❌ Failed to initialize Upstash Vector: {e}")
                 self.enabled = False
@@ -115,6 +119,21 @@ class SemanticCache:
                  logger.warning("⚠️ Semantic Cache disabled (UPSTASH_VECTOR_REST_URL/TOKEN missing)")
             elif not settings.ENABLE_SEMANTIC_CACHE:
                  logger.info("⚠️ Semantic Cache disabled (ENABLE_SEMANTIC_CACHE=False)")
+    
+    def _get_embedding(self, text: str) -> Optional[List[float]]:
+        """Generate embedding using OpenAI text-embedding-3-large (1536 dims)."""
+        if not self._openai_client:
+            return None
+        try:
+            response = self._openai_client.embeddings.create(
+                model="text-embedding-3-large",
+                input=text,
+                dimensions=1536,
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to generate embedding: {e}")
+            return None
     
     def _is_personal_query(self, query: str) -> bool:
         """Check if query is personal and should not be cached."""
@@ -147,21 +166,17 @@ class SemanticCache:
         start_time = datetime.now()
         
         try:
-            # Query by text (Upstash Vector will compute embedding ONLY if index is configured with a model)
-            # If not configured, we must catch the error to prevent 500s
-            try:
-                results = self._index.query(
-                    data=query,
-                    top_k=1,
-                    include_metadata=True
-                )
-            except Exception as query_error:
-                error_msg = str(query_error)
-                if "embedding" in error_msg.lower() and "not allowed" in error_msg.lower():
-                    logger.warning("⚠️ Semantic Cache: Upstash index not configured for automatic embeddings.")
-                    # In future: implement local OpenAI embedding generation here
-                    return CacheResult(hit=False, latency_ms=(datetime.now() - start_time).total_seconds() * 1000)
-                raise query_error
+            # Generate embedding locally with OpenAI
+            query_embedding = embedding or self._get_embedding(query)
+            if not query_embedding:
+                logger.warning("⚠️ Semantic Cache: Could not generate embedding for query")
+                return CacheResult(hit=False)
+            
+            results = self._index.query(
+                vector=query_embedding,
+                top_k=1,
+                include_metadata=True
+            )
             
             latency_ms = (datetime.now() - start_time).total_seconds() * 1000
             
@@ -204,12 +219,18 @@ class SemanticCache:
             return
         
         try:
+            # Generate embedding locally with OpenAI
+            query_embedding = self._get_embedding(query)
+            if not query_embedding:
+                logger.warning("⚠️ Could not generate embedding for cache store")
+                return
+            
             query_id = self._generate_query_id(query)
             
             self._index.upsert(
                 vectors=[{
                     "id": query_id,
-                    "data": query,
+                    "vector": query_embedding,
                     "metadata": {
                         "query": query,
                         "response": response,

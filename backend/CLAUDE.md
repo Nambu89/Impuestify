@@ -1,0 +1,305 @@
+# backend/CLAUDE.md — Backend Guide
+
+## Stack & Setup
+
+Python 3.12+ | FastAPI 0.104+ | Microsoft Agent Framework 1.0.0b | OpenAI API | Groq API (LlamaGuard4)
+
+```bash
+cd backend && pip install -r requirements.txt
+cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+cd backend && pytest tests/ -v --tb=short
+```
+
+### Environment Variables (required)
+
+| Variable | Purpose |
+|----------|---------|
+| `OPENAI_API_KEY` | GPT-5-mini / GPT-5 |
+| `GROQ_API_KEY` | Llama Guard 4 + Prompt Guard (free: 14,400 req/day) |
+| `TURSO_DATABASE_URL` | libsql://... |
+| `TURSO_AUTH_TOKEN` | Turso auth |
+| `JWT_SECRET_KEY` | `openssl rand -hex 32` |
+| `UPSTASH_REDIS_REST_URL` + `TOKEN` | Rate limiting + session cache |
+| `UPSTASH_VECTOR_REST_URL` + `TOKEN` | Semantic cache |
+| `STRIPE_SECRET_KEY` + `WEBHOOK_SECRET` + `PRICE_ID` | Payments |
+| `RESEND_API_KEY` + `RESEND_FROM_EMAIL` | Email to advisors |
+| `ALLOWED_ORIGINS` | CORS (frontend URL) |
+
+## Multi-Agent System (`app/agents/`)
+
+### CoordinatorAgent (`coordinator_agent.py`)
+Routes queries to specialized agents based on intent analysis. Microsoft Agent Framework.
+
+### TaxAgent (`tax_agent.py`)
+Expert on IRPF, IVA, autonomous quotas. Tools: `calculate_irpf`, `calculate_autonomous_quota`, `search_tax_regulations`, `discover_deductions`. Tone: conversational, educational.
+
+### PayslipAgent (`payslip_agent.py`)
+Extracts 13 fields from payslips (gross/net salary, IRPF, SS, extras). Calculates annual projections.
+
+### NotificationAgent (`notification_agent.py`)
+Analyzes AEAT notification PDFs. Extracts amounts, deadlines, concepts.
+
+### WorkspaceAgent (`workspace_agent.py`)
+Analyzes uploaded documents. Tools: `get_workspace_summary`, `calculate_vat_balance`, `project_annual_irpf`, `get_quarterly_deadlines`.
+
+## Security Layers (`app/security/`)
+
+Pipeline (in order):
+1. **Rate limiting** (`rate_limiter.py`) — SlowAPI + Upstash Redis. /api/ask 10/min, /auth/login 5/min. 5 violations → 60-min IP block.
+2. **Security headers** (`main.py:322`) — CSP, X-Frame-Options, XSS, Referrer-Policy
+3. **JWT validation** (`auth/jwt_handler.py`) — `get_current_user()` returns `TokenData` Pydantic model
+4. **Prompt injection** (`prompt_injection.py`) — Llama Prompt Guard 2 via Groq
+5. **PII detection** (`pii_detector.py`) — Spanish DNI/NIE, phones, emails, bank accounts
+6. **SQL injection** (`sql_injection.py`) — Pattern detection
+7. **Content moderation** (`llama_guard.py`) — Llama Guard 4, 14 categories, Spanish, fails open
+8. **Complexity routing** (`complexity_router.py`) — simple/moderate/complex
+9. **Content restriction** — Autonomo content blocked for plan Particular
+10. **Semantic cache** (`semantic_cache.py`) — Upstash Vector, 0.93 threshold, 24h TTL
+11. **Guardrails** (`guardrails.py`) — Input/output validation
+12. **Audit logging** (`audit_logger.py`) — Immutable security event log
+
+**CRITICAL**: `get_current_user()` returns `TokenData` model. Use `current_user.user_id`, `current_user.email` — NOT `.get("user_id")`.
+
+## Tools (Function Calling) (`app/tools/`)
+
+| Tool | File | Purpose |
+|------|------|---------|
+| `calculate_irpf` | `irpf_calculator_tool.py` | IRPF by income + CCAA. Fallback: DB → prev year |
+| `calculate_autonomous_quota` | `autonomous_quota_tool.py` | Self-employed SS quotas 2025 |
+| `search_tax_regulations` | `search_tool.py` | FTS5 + BM25 + web scraping fallback |
+| `analyze_payslip` | `payslip_analysis_tool.py` | 13 regex patterns for Spanish payslips |
+| `discover_deductions` | `deduction_discovery_tool.py` | 64 deductions (16 estatal + 48 territorial) |
+| `simulate_irpf` | `irpf_simulator_tool.py` | Full simulation + auto-discover deductions |
+| `web_scraper` | `web_scraper_tool.py` | AEAT/BOE/SS scraping + CCAA normalization |
+
+Tool registration: `app/tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS)
+
+## Services (`app/services/`)
+
+| Service | File | Purpose |
+|---------|------|---------|
+| WorkspaceService | `workspace_service.py` | Workspace CRUD with ownership checks |
+| FileProcessingService | `file_processing_service.py` | PDF/Excel → structured data pipeline |
+| InvoiceExtractor | `invoice_extractor.py` | 30+ regex patterns for Spanish invoices |
+| WorkspaceEmbeddingService | `workspace_embedding_service.py` | OpenAI embeddings (3072 dim), Turso storage |
+| DeductionService | `deduction_service.py` | get_all_deductions(ccaa), evaluate_eligibility |
+| ReportGenerator | `report_generator.py` | PDF ReportLab (IRPF report) |
+| EmailService | `email_service.py` | Resend wrapper for advisor emails |
+| RAGService | `rag_service.py` | Search + rerank orchestration |
+| PayslipExtractor | `payslip_extractor.py` | PDF text extraction for payslips |
+
+## Database Schema (Turso SQLite)
+
+```sql
+-- Authentication
+CREATE TABLE users (
+  id TEXT PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  name TEXT,
+  is_admin BOOLEAN DEFAULT FALSE,
+  is_owner BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  subscription_status TEXT DEFAULT 'none',
+  subscription_plan TEXT DEFAULT 'particular',
+  stripe_customer_id TEXT,
+  grace_period_until TEXT,
+  created_at TIMESTAMP, updated_at TIMESTAMP
+);
+
+CREATE TABLE sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT REFERENCES users(id),
+  refresh_token_hash TEXT NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP
+);
+
+CREATE TABLE user_profiles (
+  id TEXT PRIMARY KEY,
+  user_id TEXT UNIQUE REFERENCES users(id),
+  ccaa_residencia TEXT,
+  situacion_laboral TEXT,
+  datos_fiscales TEXT,  -- JSON: 13 autonomo fields
+  created_at TIMESTAMP, updated_at TIMESTAMP
+);
+
+-- Conversations
+CREATE TABLE conversations (
+  id TEXT PRIMARY KEY,
+  user_id TEXT REFERENCES users(id),
+  title TEXT,
+  created_at TIMESTAMP, updated_at TIMESTAMP
+);
+
+CREATE TABLE messages (
+  id TEXT PRIMARY KEY,
+  conversation_id TEXT REFERENCES conversations(id),
+  role TEXT CHECK(role IN ('user','assistant','system')),
+  content TEXT NOT NULL,
+  metadata TEXT,  -- JSON: sources, tool calls
+  created_at TIMESTAMP
+);
+
+-- RAG
+CREATE TABLE documents (
+  id TEXT PRIMARY KEY, filename TEXT NOT NULL,
+  doc_type TEXT, source TEXT, processed_at TIMESTAMP
+);
+
+CREATE TABLE document_chunks (
+  id TEXT PRIMARY KEY,
+  document_id TEXT REFERENCES documents(id),
+  text TEXT NOT NULL, chunk_index INTEGER,
+  section_id TEXT, metadata TEXT
+);
+
+CREATE TABLE embeddings (
+  id TEXT PRIMARY KEY,
+  chunk_id TEXT REFERENCES document_chunks(id),
+  vector_hash TEXT, metadata TEXT
+);
+
+-- Payslips
+CREATE TABLE payslips (
+  id TEXT PRIMARY KEY,
+  user_id TEXT REFERENCES users(id),
+  filename TEXT NOT NULL,
+  period_month INTEGER, period_year INTEGER,
+  company_name TEXT,
+  gross_salary REAL, net_salary REAL,
+  irpf_withholding REAL, ss_contribution REAL,
+  extraction_status TEXT, extracted_data TEXT,
+  analysis_summary TEXT, created_at TIMESTAMP
+);
+
+-- IRPF scales
+CREATE TABLE irpf_scales (
+  id TEXT PRIMARY KEY,
+  jurisdiction TEXT NOT NULL,  -- 'Estatal' or CCAA name
+  year INTEGER NOT NULL,
+  scale_type TEXT NOT NULL,    -- 'general'
+  tramo_num INTEGER NOT NULL,
+  base_hasta REAL, cuota_integra REAL,
+  resto_base REAL, tipo_aplicable REAL
+);
+
+-- Deductions
+CREATE TABLE deductions (
+  id TEXT PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  scope TEXT DEFAULT 'estatal',  -- 'estatal' or 'territorial'
+  ccaa TEXT,                     -- NULL for estatal
+  max_amount REAL, percentage REAL,
+  requirements TEXT,  -- JSON conditions
+  tax_year INTEGER DEFAULT 2025,
+  is_active BOOLEAN DEFAULT 1,
+  questions TEXT,     -- JSON eligibility questions
+  legal_reference TEXT
+);
+
+-- Reports
+CREATE TABLE reports (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL, report_type TEXT NOT NULL,
+  title TEXT, report_data TEXT, pdf_bytes BLOB,
+  share_token TEXT, shared_with_email TEXT, shared_at TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Workspaces
+CREATE TABLE workspaces (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL, description TEXT,
+  icon TEXT DEFAULT '📁',
+  is_default BOOLEAN DEFAULT 0,
+  max_files INTEGER DEFAULT 50, max_size_mb INTEGER DEFAULT 100,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE workspace_files (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  filename TEXT NOT NULL, file_type TEXT NOT NULL,
+  mime_type TEXT, file_size INTEGER,
+  extracted_text TEXT, extracted_data TEXT,
+  processing_status TEXT DEFAULT 'pending',
+  error_message TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE workspace_file_embeddings (
+  id TEXT PRIMARY KEY,
+  file_id TEXT NOT NULL REFERENCES workspace_files(id) ON DELETE CASCADE,
+  chunk_index INTEGER NOT NULL, chunk_text TEXT NOT NULL,
+  embedding_vector TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Metrics
+CREATE TABLE usage_metrics (
+  id TEXT PRIMARY KEY,
+  user_id TEXT REFERENCES users(id),
+  endpoint TEXT, tokens_used INTEGER,
+  processing_time REAL, created_at TIMESTAMP
+);
+```
+
+## Python Patterns
+
+```python
+# Async all I/O operations
+async def my_function():
+    result = await db.execute("SELECT ...", [param])
+
+# Parameterized queries ALWAYS
+await db.execute("SELECT * FROM users WHERE email = ?", [email])
+
+# Error handling in routers
+from fastapi import HTTPException
+raise HTTPException(status_code=404, detail="Not found")
+
+# Logging
+import logging
+logger = logging.getLogger(__name__)
+```
+
+## Common Backend Tasks
+
+**New endpoint**: Create `app/routers/my_feature.py` → `router = APIRouter(prefix="/api/my-feature")` → register in `main.py` with `app.include_router()`.
+
+**New tool**: Create `app/tools/my_tool.py` with tool definition dict + async executor → register in `tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS) → add to agent tools list.
+
+**New table**: Add `CREATE TABLE IF NOT EXISTS` in `database/turso_client.py:init_schema()`.
+
+**New env var**: Add to `config.py` Settings class + `.env.example`.
+
+**Seed data**: Create `scripts/seed_*.py` (use TursoClient, idempotent: DELETE existing + INSERT).
+
+## Testing
+
+```bash
+pytest tests/ -v                    # All tests
+pytest tests/test_auth.py -v        # Specific module
+pytest tests/ --cov=app             # With coverage
+```
+
+Key test files: `test_agents.py`, `test_api.py`, `test_auth.py`, `test_ai_security.py`, `test_deductions.py`, `test_export.py`, `test_ceuta_melilla.py`, `test_subscription.py`
+
+Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `test_user`
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `TokenData has no attribute 'get'` | Use `current_user.user_id` not `.get("user_id")` |
+| Escala estatal no encontrada | Run `python scripts/seed_estatal_scale.py` |
+| Semantic cache disabled | Check `UPSTASH_VECTOR_REST_URL` + `TOKEN` env vars |
+| SSE buffering on Railway | Use `print(flush=True)` in streaming code |
+| `import fitz` fails | `pip install PyMuPDF pymupdf4llm` |
+| Tests import errors | Mock jose/bcrypt/slowapi (chain __init__.py imports) |
+| Rate limit 429 | Increase `RATE_LIMIT_PER_MINUTE` or clear Redis |
+| CORS errors | Check `ALLOWED_ORIGINS` includes frontend URL |

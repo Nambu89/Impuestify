@@ -31,4 +31,10 @@ cd backend && pytest tests/ -v --tb=short
    - Estado de tests
    - Cualquier problema detectado
 
-7. **Pregunta** qué tarea quiere abordar en esta sesión.
+7. **Compacting strategy**: If context was compressed, re-read:
+   - `CLAUDE.md` + relevant descendant (`backend/CLAUDE.md` or `frontend/CLAUDE.md`)
+   - `memory/MEMORY.md` for project state
+   - `agent-comms.md` for pending inter-agent tasks
+   - `claude-progress.txt` for session history
+
+8. **Pregunta** qué tarea quiere abordar en esta sesión.

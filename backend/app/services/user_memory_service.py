@@ -165,16 +165,35 @@ class UserMemoryService:
         self.vector_url = vector_url or settings.UPSTASH_VECTOR_REST_URL
         self.vector_token = vector_token or settings.UPSTASH_VECTOR_REST_TOKEN
         self._vector_index = None
+        self._openai_client = None
         
         # Initialize vector index if available
         if UPSTASH_VECTOR_AVAILABLE and self.vector_url and self.vector_token:
             try:
                 self._vector_index = Index(url=self.vector_url, token=self.vector_token)
-                logger.info("🧠 User Memory Service initialized with Upstash Vector")
+                # Initialize OpenAI client for embedding generation
+                from openai import OpenAI
+                self._openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+                logger.info("🧠 User Memory Service initialized with Upstash Vector + OpenAI embeddings")
             except Exception as e:
                 logger.error(f"❌ Failed to initialize Upstash Vector for user memory: {e}")
         else:
             logger.info("📝 User Memory Service initialized (DB only mode)")
+    
+    def _get_embedding(self, text: str) -> Optional[List[float]]:
+        """Generate embedding using OpenAI text-embedding-3-large (1536 dims)."""
+        if not self._openai_client:
+            return None
+        try:
+            response = self._openai_client.embeddings.create(
+                model="text-embedding-3-large",
+                input=text,
+                dimensions=1536,
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to generate embedding: {e}")
+            return None
     
     # ========================================
     # NUMERIC VALUE EXTRACTION
@@ -419,15 +438,22 @@ class UserMemoryService:
             return False
         
         try:
+            # Generate embedding locally with OpenAI
+            embedding = self._get_embedding(fact.content)
+            if not embedding:
+                logger.warning(f"⚠️ Could not generate embedding for fact: {fact.fact_type}")
+                return False
+            
             vector_id = f"{user_id}_{fact.fact_id}"
             
             self._vector_index.upsert(
                 vectors=[{
                     "id": vector_id,
-                    "data": fact.content,
+                    "vector": embedding,
                     "metadata": {
                         "user_id": user_id,
                         "fact_type": fact.fact_type,
+                        "content": fact.content,
                         "confidence": fact.confidence,
                         "source": fact.source,
                         "created_at": fact.created_at,
@@ -464,9 +490,15 @@ class UserMemoryService:
             return []
         
         try:
+            # Generate embedding locally with OpenAI
+            query_embedding = self._get_embedding(query)
+            if not query_embedding:
+                logger.warning("⚠️ Could not generate embedding for recall query")
+                return []
+            
             # Query vector store for user's facts
             results = self._vector_index.query(
-                data=query,
+                vector=query_embedding,
                 top_k=limit,
                 include_metadata=True,
                 filter=f"user_id = '{user_id}'"  # Filter by user
