@@ -80,6 +80,16 @@
 
 ---
 
+## Tareas activas
+
+[2026-03-05] [BACKEND] 🟢 DONE — Fix: TaxAgent ahora verifica situacion_laboral antes de usar herramientas de autonomos. System prompt actualizado con reglas de clarificacion obligatoria. `tax_agent.py` modificado.
+
+[2026-03-05] [BACKEND] 🟢 DONE — Fix: FOREIGN KEY constraint en message_sources. `conversation_service.py` ahora valida chunk_ids antes de insertar. Degrada gracefully si chunks no existen en BD.
+
+[2026-03-05] [FRONTEND] 🟢 DONE — Fix: Renderizado markdown en chat. Instalado `remark-gfm` para soporte GFM (tablas, tachado, task lists). Eliminado `white-space: pre-wrap` que causaba doble salto de línea. Añadidos estilos para tablas, bloques de código, blockquotes, hr, listas anidadas.
+
+---
+
 ## Dependencias Pendientes
 ---
 # [AGENT_ESPERANDO] espera a [AGENT_TRABAJANDO] para [TAREA]

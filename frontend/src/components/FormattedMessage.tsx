@@ -9,6 +9,7 @@
  */
 import React, { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Calculator, Lightbulb, CheckCircle2, AlertTriangle, MessageCircle, Info, TrendingUp } from 'lucide-react'
 import './FormattedMessage.css'
 
@@ -255,7 +256,7 @@ function CalloutBox({ block }: { block: CalloutBlock }) {
             </div>
             {block.content && (
                 <div className="fmt-callout-body">
-                    <ReactMarkdown>{block.content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.content}</ReactMarkdown>
                 </div>
             )}
         </div>
@@ -272,7 +273,7 @@ export const FormattedMessage: React.FC<FormattedMessageProps> = ({ content }) =
     if (blocks.length === 1 && blocks[0].type === 'text') {
         return (
             <div className="fmt-message">
-                <ReactMarkdown>{blocks[0].content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{blocks[0].content}</ReactMarkdown>
             </div>
         )
     }
@@ -288,7 +289,7 @@ export const FormattedMessage: React.FC<FormattedMessageProps> = ({ content }) =
                     case 'text':
                         return (
                             <div key={i} className="fmt-text">
-                                <ReactMarkdown>{block.content}</ReactMarkdown>
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.content}</ReactMarkdown>
                             </div>
                         )
                 }

@@ -26,6 +26,8 @@ from app.security import sql_validator, guardrails_system
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
 from app.services.subscription_service import SubscriptionAccess
 from app.utils.streaming import ProgressCallback, sse_generator, filter_json_from_content
+from app.utils.followup_detector import classify_followup
+from app.utils.query_contextualizer import contextualize_query
 
 logger = logging.getLogger(__name__)
 
@@ -200,19 +202,40 @@ async def ask_question_stream(
                 except Exception as e:
                     logger.error(f"Error loading workspace context: {e}")
 
-            # Search relevant documents using Hybrid Retriever
-            from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
-            retriever = HybridRetriever(db_client=db)
-            query_embedding = await get_query_embedding(request.question)
-            relevant_chunks = await retriever.search(
-                query=request.question,
-                query_embedding=query_embedding,
-                k=request.k or 5,
-            )
-            
+            # === Follow-up detection & RAG optimization ===
+            followup_type = classify_followup(request.question, conversation_history)
+            cached_rag_chunks = cached_context.get("last_rag_chunks", []) if cached_context else []
+            cached_rag_query = cached_context.get("last_rag_query", "") if cached_context else ""
+
+            relevant_chunks = []
+            rag_query_used = request.question  # Track which query was sent to RAG
+
+            if followup_type == "clarification" and cached_rag_chunks:
+                # SKIP RAG — reuse cached chunks from previous turn
+                relevant_chunks = cached_rag_chunks
+                rag_query_used = cached_rag_query
+                print(f"⚡ RAG SKIP (clarification) — reusing {len(relevant_chunks)} cached chunks", flush=True)
+                logger.info(f"⚡ RAG SKIP (clarification) — reusing {len(relevant_chunks)} cached chunks")
+            else:
+                # Run RAG (normal or with expanded query)
+                if followup_type == "modification":
+                    rag_query_used = contextualize_query(
+                        request.question, conversation_history, cached_rag_query
+                    )
+                    print(f"🔀 RAG CONTEXTUALIZED: '{request.question}' → '{rag_query_used}'", flush=True)
+                    logger.info(f"🔀 RAG CONTEXTUALIZED: '{request.question}' → '{rag_query_used}'")
+
+                from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
+                retriever = HybridRetriever(db_client=db)
+                query_embedding = await get_query_embedding(rag_query_used)
+                relevant_chunks = await retriever.search(
+                    query=rag_query_used,
+                    query_embedding=query_embedding,
+                    k=request.k or 5,
+                )
+
             # Prepare context - ALLOW empty RAG if we have conversation history or user memory
             if relevant_chunks:
-                # We have relevant documents - use them
                 rag_context = "\n\n".join([
                     f"Fuente: {chunk['title']} (Página {chunk['page']})\n{chunk['text']}"
                     for chunk in relevant_chunks
@@ -229,7 +252,6 @@ async def ask_question_stream(
                 ]
                 logger.info(f"Using {len(relevant_chunks)} RAG chunks for context")
             else:
-                # No relevant documents - check if we have conversation history
                 has_internal_context = bool(conversation_history)
                 if not has_internal_context:
                     logger.info("No RAG chunks and no conversation history - will attempt general answer")
@@ -237,7 +259,7 @@ async def ask_question_stream(
                     logger.info(f"No RAG chunks but have {len(conversation_history)} conversation messages - will use memory")
                 rag_context = ""
                 sources_data = []
-            
+
             combined_context = notification_context + rag_context if notification_context else rag_context
 
             # Format conversation history
@@ -327,11 +349,13 @@ async def ask_question_stream(
                     )
                     await conv_service.add_message_sources(assistant_msg["id"], sources_data)
                     
-                    # Update cache
+                    # Update cache (include RAG chunks for follow-up optimization)
                     updated_history = await conv_service.get_recent_messages(conversation_id, limit=20)
                     await cache.set_context(conversation_id, {
                         "notification_content": notification_context,
-                        "recent_messages": updated_history
+                        "recent_messages": updated_history,
+                        "last_rag_chunks": relevant_chunks[:5],
+                        "last_rag_query": rag_query_used,
                     })
                     
                     await callback.done()

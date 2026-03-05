@@ -230,25 +230,55 @@ class ConversationService:
         """
         if not sources:
             return
-        
+
+        # Filter out sources with missing or invalid chunk_id
+        valid_sources = [s for s in sources if s.get('id')]
+        if not valid_sources:
+            logger.info(f"No valid sources to link to message {message_id} (all missing chunk_id)")
+            return
+
+        # Verify chunk_ids exist in document_chunks to avoid FK constraint errors
+        chunk_ids = [s['id'] for s in valid_sources]
+        placeholders = ",".join("?" for _ in chunk_ids)
+        try:
+            result = await self.db.execute(
+                f"SELECT id FROM document_chunks WHERE id IN ({placeholders})",
+                chunk_ids
+            )
+            existing_ids = {row['id'] for row in (result.rows or [])}
+        except Exception as e:
+            logger.warning(f"Could not verify chunk_ids, skipping source linking: {e}")
+            return
+
         sql = """
         INSERT INTO message_sources (id, message_id, chunk_id, relevance_score, rank)
         VALUES (?, ?, ?, ?, ?)
         """
-        
+
         params_list = []
-        for idx, source in enumerate(sources):
+        skipped = 0
+        for idx, source in enumerate(valid_sources):
+            chunk_id = source['id']
+            if chunk_id not in existing_ids:
+                skipped += 1
+                continue
             source_id = str(uuid.uuid4())
             params_list.append([
                 source_id,
                 message_id,
-                source.get('id'),  # chunk_id
+                chunk_id,
                 source.get('score'),
                 idx
             ])
-        
-        await self.db.execute_many(sql, params_list)
-        logger.info(f"Added {len(sources)} sources to message {message_id}")
+
+        if skipped:
+            logger.warning(f"Skipped {skipped} sources with non-existent chunk_ids for message {message_id}")
+
+        if params_list:
+            await self.db.execute_many(sql, params_list)
+            logger.info(f"Added {len(params_list)} sources to message {message_id}")
+        else:
+            logger.info(f"No valid sources to insert for message {message_id} (all chunk_ids missing from DB)")
     
     async def update_conversation_title(
         self,

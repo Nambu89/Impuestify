@@ -136,7 +136,7 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 - 📊 **Práctico**: Da ejemplos concretos con números cuando sea posible
 - 😊 **Empático**: Reconoce que los impuestos son complicados y ayuda sin juzgar
 - ✅ **Directo**: Ve al grano primero, luego da detalles si hace falta
-- ⚡ **Proactivo**: Calcula directamente cuando tengas suficiente información, no preguntes en exceso
+- ⚡ **Proactivo**: Calcula directamente cuando tengas suficiente información, pero PREGUNTA cuando falten datos clave (ver reglas de clarificación)
 
 ## Reglas importantes:
 1. SOLO responde sobre fiscalidad española
@@ -200,7 +200,26 @@ Cuando el usuario pregunte sobre deducciones o ahorro fiscal:
 1. **SÉ CONCISO**: Responde directamente, sin explicaciones excesivas
 2. **DIRECTO AL GRANO**: No repitas información, no des contexto innecesario
 3. **CALCULA Y RESPONDE**: Si tienes datos, calcula inmediatamente y da el resultado
-4. **NO preguntes en exceso. CALCULA directamente cuando tengas información suficiente.**
+4. **CALCULA directamente cuando tengas información suficiente**, pero PREGUNTA datos clave antes de asumir (ver reglas de clarificación abajo).
+
+## 🔍 REGLA CRÍTICA: CLARIFICACIÓN OBLIGATORIA ANTES DE ASUMIR
+
+**ANTES de usar herramientas de autónomos** (calculate_autonomous_quota, calculate_modelo_303, calculate_modelo_130), VERIFICA:
+
+1. **Consulta el PERFIL FISCAL del usuario** (inyectado en el contexto como "PERFIL FISCAL" o "CONTEXTO DEL USUARIO").
+   - Si `Situación laboral` = "particular" o "asalariado" → el usuario NO es autónomo.
+   - Si `Situación laboral` = "autónomo" → puedes usar las herramientas directamente.
+
+2. **Si el perfil NO indica que es autónomo** y el usuario menciona ingresos por actividad económica (venta de SaaS, freelance, facturas, etc.):
+   → **PREGUNTA SIEMPRE**: "¿Estás dado de alta como autónomo o es un ingreso puntual?"
+   → Explica brevemente: los ingresos por actividad económica pueden declararse como rendimientos de actividades económicas (requiere alta autónomo) o como ganancia patrimonial / rendimiento irregular (sin ser autónomo), dependiendo de la habitualidad.
+   → NO calcules cuotas de autónomos ni Modelos 303/130 hasta confirmar.
+
+3. **Si la situación laboral es desconocida** (no hay perfil fiscal ni lo ha mencionado en la conversación):
+   → **PREGUNTA**: "¿Trabajas por cuenta ajena, eres autónomo, o ambos (pluriactividad)?"
+   → Esta pregunta es IMPRESCINDIBLE antes de calcular, igual que la CCAA.
+
+4. **Ingresos mixtos (pluriactividad)**: Si el usuario es asalariado Y tiene actividad por cuenta propia, explica que los ingresos se suman en la base imponible del IRPF pero las obligaciones formales (modelo 303, 130, cuota autónomos) solo aplican si está dado de alta como autónomo.
 
 ## 🚫 REGLA CRÍTICA: NO MUESTRES DETALLES TÉCNICOS AL USUARIO
 
@@ -318,7 +337,7 @@ Puedes organizar la respuesta como quieras, pero sigue estas pautas:
 
 ---
 
-Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calcular con la información dada. **Siempre aclara qué año fiscal estás usando** para evitar confusiones."""
+Recuerda: Sé **proactivo y directo**. Calcula cuando tengas datos suficientes, pero **SIEMPRE verifica la situación laboral y la CCAA** antes de usar herramientas específicas de autónomos. **Siempre aclara qué año fiscal estás usando** para evitar confusiones."""
 	
 	async def run(
 		self,
@@ -388,9 +407,14 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			except Exception as e:
 				logger.warning(f"⚠️ User memory error (continuing without memory): {e}")
 		
-		# === FISCAL PROFILE: Inject autonomo data into context ===
+		# === FISCAL PROFILE: Inject user fiscal data into context ===
+		# Always inject situacion_laboral prominently (even for "particular")
 		if fiscal_profile:
 			fp_lines = []
+			# Highlight employment status at the top
+			sit_laboral = fiscal_profile.get("situacion_laboral", "")
+			if sit_laboral and sit_laboral.lower() in ("particular", "asalariado"):
+				fp_lines.append(f"- ⚠️ Situación laboral: {sit_laboral} (NO es autónomo — NO usar herramientas de autónomos sin preguntar)")
 			label_map = {
 				"ccaa_residencia": "CCAA residencia",
 				"situacion_laboral": "Situación laboral",
@@ -418,8 +442,13 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 					else:
 						fp_lines.append(f"- {label}: {val}")
 			if fp_lines:
-				fiscal_context = "\n\n📋 **PERFIL FISCAL DE AUTÓNOMO** (usa estos datos para pre-rellenar herramientas):\n" + "\n".join(fp_lines)
-				fiscal_context += "\n\n⚠️ Usa el perfil fiscal para pre-rellenar parámetros de calculate_modelo_303, calculate_modelo_130 y calculate_autonomous_quota."
+				is_autonomo_profile = sit_laboral.lower() in ("autónomo", "autonomo", "pluriactividad") if sit_laboral else False
+				if is_autonomo_profile:
+					fiscal_context = "\n\n📋 **PERFIL FISCAL DE AUTÓNOMO** (usa estos datos para pre-rellenar herramientas):\n" + "\n".join(fp_lines)
+					fiscal_context += "\n\n⚠️ Usa el perfil fiscal para pre-rellenar parámetros de calculate_modelo_303, calculate_modelo_130 y calculate_autonomous_quota."
+				else:
+					fiscal_context = "\n\n📋 **PERFIL FISCAL DEL USUARIO**:\n" + "\n".join(fp_lines)
+					fiscal_context += "\n\n⚠️ Este usuario NO es autónomo. Si menciona ingresos por actividad económica, PREGUNTA si está dado de alta como autónomo antes de usar herramientas de autónomos."
 				user_memory_context = fiscal_context + user_memory_context
 
 		# === SECURITY: Content Moderation (Llama Guard) ===
@@ -504,7 +533,7 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			logger.warning(f"⚠️ Complexity router error: {e}, using default model")
 		
 		# Build the prompt with context and user memory
-		user_message = self._build_prompt(query, context, user_memory_context)
+		user_message = self._build_prompt(query, context, user_memory_context, fiscal_profile=fiscal_profile)
 		
 		# Emit initial thinking event (for SSE streaming)
 		if progress_callback:
@@ -793,16 +822,23 @@ Recuerda: Sé **proactivo y directo**. No preguntes en exceso cuando puedas calc
 			# Tiny yield to allow SSE event queue to flush
 			await asyncio.sleep(0.01)
 
-	def _build_prompt(self, query: str, context: Optional[str] = None, user_memory_context: Optional[str] = None) -> str:
+	def _build_prompt(self, query: str, context: Optional[str] = None, user_memory_context: Optional[str] = None, fiscal_profile: Optional[Dict[str, Any]] = None) -> str:
 		"""Build the user prompt with optional context and user memory."""
-		
+
 		# Detect if query requires tool usage
 		query_lower = query.lower()
 		requires_tool_hint = ""
-		
+
+		# Determine user employment status from fiscal profile
+		situacion = (fiscal_profile or {}).get("situacion_laboral", "").lower() if fiscal_profile else ""
+		is_autonomo = situacion in ("autónomo", "autonomo", "pluriactividad")
+
 		if any(kw in query_lower for kw in ["cuota", "cotiza", "autónomo", "autonomo", "pago como", "cuánto pago", "cuanto pago"]):
 			if any(char.isdigit() for char in query):
-				requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de cuota de autónomos para {self.autonomous_quota_year}. DEBES usar la herramienta calculate_autonomous_quota.\n"
+				if is_autonomo:
+					requires_tool_hint = f"\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo de cuota de autónomos para {self.autonomous_quota_year}. DEBES usar la herramienta calculate_autonomous_quota.\n"
+				else:
+					requires_tool_hint = f"\n⚠️ ATENCIÓN: El usuario pregunta sobre cuotas de autónomos pero su situación laboral registrada es '{situacion or 'desconocida'}'. ANTES de calcular, PREGUNTA si está dado de alta como autónomo. NO uses calculate_autonomous_quota hasta confirmarlo.\n"
 		
 		if any(kw in query_lower for kw in ["irpf", "renta", "cuánto pago de impuestos", "retención", "cuanto pago de impuestos", "retencion", "tributar", "tributo"]):
 			if any(char.isdigit() for char in query):
@@ -838,7 +874,7 @@ Pregunta del usuario:
 2. **USA la información del contexto anterior** — proviene de tu propia base de conocimiento fiscal, NO de documentos del usuario
 2. NUNCA digas "en los documentos que me has pasado/adjuntado" — TÚ consultas tu base de conocimiento interna
 3. Para IRPF: usa calculate_irpf AHORA con los datos del contexto (NO busques en web)
-4. Para autónomos: usa calculate_autonomous_quota con year={self.autonomous_quota_year}
+4. Para autónomos: usa calculate_autonomous_quota con year={self.autonomous_quota_year} SOLO si has confirmado que el usuario es autónomo
 5. **NUNCA uses search_tax_regulations** a menos que el usuario diga explícitamente: "busca información actualizada" o "consulta la web"
 6. **Responde con tono CERCANO y COLOQUIAL** - Como un asesor fiscal amigo, con tuteo y lenguaje natural (NO formal ni técnico)
 7. Responde EN LENGUAJE NATURAL (NO JSON ni código técnico)

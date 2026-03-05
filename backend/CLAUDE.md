@@ -33,6 +33,12 @@ Routes queries to specialized agents based on intent analysis. Microsoft Agent F
 ### TaxAgent (`tax_agent.py`)
 Expert on IRPF, IVA, autonomous quotas. Tools: `calculate_irpf`, `calculate_autonomous_quota`, `search_tax_regulations`, `discover_deductions`. Tone: conversational, educational.
 
+**REGLA: Clarificación obligatoria antes de asumir situación laboral**
+- El system prompt DEBE instruir al agente a verificar `situacion_laboral` del perfil fiscal ANTES de usar tools de autónomos (`calculate_autonomous_quota`, `calculate_modelo_303`, `calculate_modelo_130`).
+- Si el usuario es "particular" y menciona ingresos por actividad económica → PREGUNTAR si es autónomo, nunca asumir.
+- `_build_prompt()` recibe `fiscal_profile` y genera tool hints condicionales según `situacion_laboral`.
+- NUNCA poner "no preguntes en exceso" sin matizar que datos clave (CCAA, situación laboral) SÍ se deben preguntar.
+
 ### PayslipAgent (`payslip_agent.py`)
 Extracts 13 fields from payslips (gross/net salary, IRPF, SS, extras). Calculates annual projections.
 
@@ -265,6 +271,13 @@ raise HTTPException(status_code=404, detail="Not found")
 # Logging
 import logging
 logger = logging.getLogger(__name__)
+
+# FK-safe inserts: ALWAYS validate foreign keys before INSERT
+# Never let a FK constraint crash the user-facing response
+chunk_ids = [s['id'] for s in sources]
+result = await db.execute(f"SELECT id FROM parent_table WHERE id IN ({placeholders})", chunk_ids)
+existing = {r['id'] for r in result.rows or []}
+valid = [s for s in sources if s['id'] in existing]
 ```
 
 ## Common Backend Tasks
@@ -296,6 +309,8 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | Issue | Solution |
 |-------|----------|
 | `TokenData has no attribute 'get'` | Use `current_user.user_id` not `.get("user_id")` |
+| `FOREIGN KEY constraint failed` en message_sources | `add_message_sources()` debe validar que chunk_ids existen en `document_chunks` antes de INSERT. Filtrar sources con id NULL y verificar existencia con SELECT previo. NUNCA romper la respuesta del agente por sources inválidas — degradar gracefully. |
+| Agente asume que usuario es autónomo | Verificar que `_build_prompt()` recibe `fiscal_profile` y que el system prompt tiene reglas de clarificación obligatoria. `situacion_laboral` debe inyectarse de forma prominente en el contexto. |
 | Escala estatal no encontrada | Run `python scripts/seed_estatal_scale.py` |
 | Semantic cache disabled | Check `UPSTASH_VECTOR_REST_URL` + `TOKEN` env vars |
 | SSE buffering on Railway | Use `print(flush=True)` in streaming code |

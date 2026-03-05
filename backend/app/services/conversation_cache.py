@@ -3,6 +3,13 @@ Conversation Cache Service for TaxIA
 
 Manages Redis caching of conversation context to improve performance.
 Stores notification content + recent messages with 1-hour TTL.
+
+Cached context fields:
+- recent_messages: Last 20 conversation messages
+- notification_content: AEAT notification text (if any)
+- last_rag_chunks: RAG chunks from previous turn (for follow-up optimization)
+- last_rag_query: Query string used for last RAG search
+- cached_at: ISO timestamp of cache write
 """
 import json
 import logging

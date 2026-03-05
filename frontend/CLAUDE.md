@@ -87,6 +87,12 @@ try {
 }
 ```
 
+## Markdown Rendering Rules
+
+- **ALWAYS** use `remarkPlugins={[remarkGfm]}` on every `<ReactMarkdown>` component (tables, strikethrough, task lists need it)
+- **NEVER** use `white-space: pre-wrap` on containers that hold ReactMarkdown output (causes double line breaks)
+- Table, code block, blockquote styles are in `Chat.css` under `.message-text` selectors
+
 ## Common Frontend Tasks
 
 **Add a new page:** Create `pages/MyPage.tsx`, add route in `App.tsx` inside `ProtectedRoute` (with `requireSubscription` if needed), add nav link in `Header.tsx`.

@@ -73,6 +73,18 @@ TaxIA/
 - [ ] New env vars added to `.env.example`
 - [ ] Security considerations addressed
 
+## Post-Bugfix Protocol (OBLIGATORIO)
+
+Después de arreglar cualquier bug, SIEMPRE documentar en estos 3 sitios:
+
+1. **`backend/CLAUDE.md` o `frontend/CLAUDE.md`** (según corresponda):
+   - Añadir regla/patrón en la sección relevante para prevenir recurrencia
+   - Añadir entrada en Troubleshooting con el error y la solución
+2. **`memory/bugfixes-YYYY-MM.md`**: Detalle técnico del bug, causa raíz, archivos modificados y cambios realizados
+3. **`agent-comms.md`**: Registrar la tarea como DONE y si genera trabajo pendiente para otro agente
+
+El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela un anti-patrón (ej: "no preguntes en exceso" causó que el agente no clarificara datos clave), documentar el anti-patrón y su corrección como regla permanente.
+
 ## Compacting Strategy
 
 When context reaches ~50%, Claude Code compresses history. To preserve critical info:

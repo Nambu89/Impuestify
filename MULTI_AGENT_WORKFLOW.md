@@ -44,38 +44,67 @@ Piensa en ti mismo como un **director de orquesta** que:
 
 ```
 TaxIA/
-├── CLAUDE.md                     # 📚 Manual del proyecto (compartido)
-├── CLAUDE.local.md               # 🔒 Config personal (no se sube a Git)
-├── claude-progress.txt           # 📝 Log de progreso entre sesiones
-├── init.sh                       # 🚀 Script de inicialización
+├── CLAUDE.md                     # Manual del proyecto (compartido)
+├── CLAUDE.local.md               # Config personal (no se sube a Git)
+├── claude-progress.txt           # Log de progreso entre sesiones
+├── plans/                        # Roadmap y decisiones arquitectonicas
+│   ├── ROADMAP.md                # Roadmap de desarrollo
+│   └── DECISIONS.md              # Architecture Decision Records (ADR)
 └── .claude/
-    ├── commands/                 # ⚡ Slash commands personalizados
-    │   ├── start.md              # /start → Iniciar sesión
+    ├── commands/                 # Slash commands (entry points)
+    │   ├── start.md              # /start → Iniciar sesion
+    │   ├── pm.md                 # /pm → PM Coordinator (NUEVO)
+    │   ├── backend.md            # /backend → Backend Architect
+    │   ├── frontend.md           # /frontend → Frontend Developer
+    │   ├── python.md             # /python → Python Pro
+    │   ├── crawl.md              # /crawl → Document Crawler
+    │   ├── competitive.md        # /competitive → Competitive Intelligence
+    │   ├── docs.md               # /docs → Documentation Auditor
+    │   ├── qa.md                 # /qa → QA Tester E2E (Playwright)
     │   ├── test.md               # /test → Ejecutar tests
-    │   ├── commit.md             # /commit → Commit con convención
+    │   ├── commit.md             # /commit → Commit con convencion
     │   ├── review.md             # /review → Code review
     │   ├── deploy.md             # /deploy → Preparar deployment
+    │   ├── sync.md               # /sync → Sincronizar agentes
     │   ├── workspace.md          # /workspace → Gestionar workspaces
-    │   ├── files.md              # /files → Gestionar archivos
-    │   ├── crawl.md              # /crawl → Activar Document Crawler
-    │   └── competitive.md       # /competitive → Activar Competitive Intelligence
-    └── subagents/                # 🤖 Roles especializados
-        ├── backend.md            # Backend Architect
-        ├── frontend.md           # Frontend Developer
-        ├── python.md             # Python Pro
-        ├── docscrawler.md        # Document Crawler
-        └── competitive.md        # Competitive Intelligence Analyst
+    │   └── files.md              # /files → Gestionar archivos
+    ├── agents/                   # Agentes especializados (YAML frontmatter)
+    │   ├── pm-coordinator.md     # PM / Tech Lead (skills: research, roadmap)
+    │   ├── backend-architect.md  # Backend Architect (FastAPI, DB, security)
+    │   ├── frontend-dev.md       # Frontend Developer (React, TS, CSS)
+    │   ├── python-pro.md         # Python Pro (optimization, debugging)
+    │   ├── doc-crawler.md        # Document Crawler (fiscal docs)
+    │   ├── competitive-intel.md  # Competitive Intelligence (market analysis)
+    │   ├── doc-auditor.md        # Documentation Auditor (CLAUDE.md, README)
+    │   └── qa-tester.md          # QA Tester E2E (Playwright MCP + scripts)
+    ├── skills/                   # Skills reutilizables
+    │   ├── irpf-calculation.md
+    │   ├── sse-streaming.md
+    │   ├── turso-patterns.md
+    │   ├── security-layers.md
+    │   ├── stripe-integration.md
+    │   ├── deployment-railway.md
+    │   ├── project-research/SKILL.md   # Research web (PM skill)
+    │   ├── roadmap-manager/SKILL.md    # Roadmap CRUD (PM skill)
+    │   └── playwright-testing/SKILL.md # E2E testing (QA skill)
+    └── subagents/                # [LEGACY] Backward compatibility
+        └── ...
 ```
 
-### Descripción de cada archivo
+> **Patron: Command → Agent → Skill** — Los commands son entry points que cargan agentes. Los agentes usan skills como conocimiento especializado. Basado en [claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice).
 
-| Archivo | Propósito | ¿Se sube a Git? |
-|---------|-----------|-----------------|
-| `CLAUDE.md` | Contexto completo del proyecto, arquitectura, convenciones | ✅ Sí |
-| `CLAUDE.local.md` | Preferencias personales, API keys de prueba | ❌ No |
-| `claude-progress.txt` | Historial de lo que cada sesión ha trabajado | ✅ Sí |
-| `init.sh` | Verifica entorno y muestra estado actual | ✅ Sí |
-| `.claude/commands/*.md` | Instrucciones para slash commands | ✅ Sí |
+### Descripcion de cada componente
+
+| Componente | Proposito | Se sube a Git |
+|-----------|-----------|---------------|
+| `CLAUDE.md` | Contexto completo del proyecto, arquitectura, convenciones | Si |
+| `.claude/commands/*.md` | Entry points para activar agentes y workflows | Si |
+| `.claude/agents/*.md` | Definiciones de agentes con YAML frontmatter | Si |
+| `.claude/skills/*.md` | Conocimiento especializado reutilizable | Si |
+| `plans/ROADMAP.md` | Roadmap de desarrollo con prioridades | Si |
+| `plans/DECISIONS.md` | Log de decisiones arquitectonicas (ADR) | Si |
+| `agent-comms.md` | Canal de comunicacion inter-agente | Si |
+| `memory/` | Memoria persistente por tema | Si |
 
 ---
 
@@ -250,15 +279,23 @@ Tipos soportados: nominas, facturas, declaraciones, otros documentos fiscales.
 
 ---
 
-## 🔥 Trabajo en Paralelo (7 Agentes)
+## Trabajo en Paralelo (9 Agentes)
 
-### El Setup de Boris Cherny (ampliado)
+### El Setup de Boris Cherny (ampliado con PM Coordinator + QA Tester)
 
-Boris Cherny (responsable de Claude Code en Anthropic) trabaja con **5 terminales de Claude en paralelo**, cada una asignada a una tarea diferente. Nosotros lo ampliamos a **7 agentes especializados**.
+Boris Cherny (responsable de Claude Code en Anthropic) trabaja con **5 terminales de Claude en paralelo**, cada una asignada a una tarea diferente. Nosotros lo ampliamos a **9 agentes especializados** siguiendo el patron Command → Agent → Skill.
 
-### Cómo Replicarlo
+### Como Replicarlo
 
-**Terminal 1 - Backend** (`/backend`)
+**Terminal 1 - PM Coordinator** (`/pm`) — NUEVO
+```powershell
+cd "ruta/al/proyecto"
+claude
+> /pm
+> Dashboard / Research {tema} / Roadmap / Delegate {tarea}
+```
+
+**Terminal 2 - Backend** (`/backend`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
@@ -266,20 +303,12 @@ claude
 > Implementa el nuevo endpoint para fiscal profile
 ```
 
-**Terminal 2 - Frontend** (`/frontend`)
+**Terminal 3 - Frontend** (`/frontend`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
 > /frontend
-> Crea la UI del formulario fiscal con pestañas
-```
-
-**Terminal 3 - Tests** (`/test`)
-```powershell
-cd "ruta/al/proyecto"
-claude
-> /test
-> Ejecuta todos los tests y verifica cobertura
+> Crea la UI del formulario fiscal con pestanas
 ```
 
 **Terminal 4 - Python Pro** (`/python`)
@@ -290,7 +319,7 @@ claude
 > Optimiza el pipeline de RAG para reducir latencia
 ```
 
-**Terminal 5 - Document Crawler** 🕷️ (`/crawl`)
+**Terminal 5 - Document Crawler** (`/crawl`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
@@ -298,50 +327,67 @@ claude
 > Rastrear documentos de Navarra y Gipuzkoa
 ```
 
-**Terminal 6 - Competitive Intelligence** 🔍 (`/competitive`)
+**Terminal 6 - Competitive Intelligence** (`/competitive`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
 > /competitive
-> Compara Impuestify con TaxDown en todas las categorías
+> Compara Impuestify con TaxDown en todas las categorias
 ```
 
-**Terminal 7 - Coordinación/Otros**
+**Terminal 7 - Documentation Auditor** (`/docs`)
 ```powershell
 cd "ruta/al/proyecto"
 claude
-> /start
-> /review → Code review / /commit → Git commit / /deploy → Railway
+> /docs
+> Auditoria / Actualizar CLAUDE.md / Full sync
 ```
 
-### Gestión de Notificaciones
+**Terminal 8 - QA Tester E2E** (`/qa`)
+```powershell
+cd "ruta/al/proyecto"
+claude
+> /qa
+> Full / Quick / Particular / Autonomo / Explore {url}
+```
 
-Claude Code puede avisarte cuando termina una tarea larga. Configura esto en tu terminal:
-
-**iTerm2 (macOS):**
-- Preferencias → Profiles → Terminal → Enable "Send notification on idle"
-
-**Windows Terminal:**
-- No tiene notificaciones nativas, pero puedes ver el indicador visual
+**Terminal 9 - Tests/Deploy/Review**
+```powershell
+cd "ruta/al/proyecto"
+claude
+> /test → Ejecutar tests unitarios
+> /review → Code review
+> /commit → Git commit
+> /deploy → Railway deployment
+```
 
 ### El Flujo
 
 ```mermaid
 graph TD
-    A[Tú - Director] -->|/backend| B[Claude 1 - Backend Architect]
-    A -->|/frontend| C[Claude 2 - Frontend Developer]
-    A -->|/test| D[Claude 3 - Testing/QA]
+    A[Tu - Director] -->|/pm| PM[Claude 1 - PM Coordinator]
+    A -->|/backend| B[Claude 2 - Backend Architect]
+    A -->|/frontend| C[Claude 3 - Frontend Developer]
     A -->|/python| E[Claude 4 - Python Pro]
-    A -->|/crawl| F[Claude 5 - Document Crawler 🕷️]
-    A -->|/competitive| H[Claude 6 - Competitive Intelligence 🔍]
-    A -->|/sync| I[Claude 7 - Coordination]
+    A -->|/crawl| F[Claude 5 - Document Crawler]
+    A -->|/competitive| H[Claude 6 - Competitive Intel]
+    A -->|/docs| I[Claude 7 - Doc Auditor]
+    A -->|/qa| QA[Claude 8 - QA Tester]
+    A -->|/test /review /commit /deploy| J[Claude 9 - Ops]
 
-    B -->|Notificación| A
-    C -->|Notificación| A
-    D -->|Notificación| A
-    E -->|Notificación| A
-    F -->|Notificación| A
-    H -->|Notificación| A
+    PM -->|Delega via agent-comms.md| B
+    PM -->|Delega via agent-comms.md| C
+    PM -->|Delega via agent-comms.md| E
+    PM -->|Investiga| PM
+    QA -->|Reporta bugs via plans/qa-report| PM
+
+    B -->|Notificacion| A
+    C -->|Notificacion| A
+    E -->|Notificacion| A
+    F -->|Notificacion| A
+    H -->|Notificacion| A
+    I -->|Notificacion| A
+    QA -->|Reporte QA| A
 
     A -->|Revisa y aprueba| G[Git Commit]
 ```
@@ -495,5 +541,5 @@ git reset --hard HEAD  # Revertir TODO (¡cuidado!)
 
 ---
 
-**Última actualización:** 2026-01-11  
+**Ultima actualizacion:** 2026-03-05
 **Autor:** Fernando Prada - AI Tech Lead / AI Engineer.

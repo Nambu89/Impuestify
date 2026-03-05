@@ -116,7 +116,10 @@
       "Bash(git -C \"c:/Users/Fernando Prada/OneDrive - SVAN TRADING SL/Escritorio/Personal/Proyectos/TaxIA\" log --oneline -20)",
       "Bash(\"C:/Users/Fernando Prada/OneDrive - SVAN TRADING SL/Escritorio/Personal/Proyectos/TaxIA/venv/Scripts/python.exe\":*)",
       "Bash(PYTHONIOENCODING=utf-8 \"C:/Users/Fernando Prada/OneDrive - SVAN TRADING SL/Escritorio/Personal/Proyectos/TaxIA/venv/Scripts/python.exe\":*)",
-      "WebFetch(domain:reactbits.dev)"
+      "WebFetch(domain:reactbits.dev)",
+      "WebFetch(domain:til.simonwillison.net)",
+      "WebFetch(domain:alexop.dev)",
+      "WebFetch(domain:openobserve.ai)"
     ]
   }
 }

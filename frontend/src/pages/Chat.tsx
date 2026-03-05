@@ -16,6 +16,7 @@ import { useStreamingChat } from '../hooks/useStreamingChat'
 import { StreamingTimeline } from '../components/StreamingTimeline'
 import { logger } from '../utils/logger'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { FormattedMessage } from '../components/FormattedMessage'
 import './Chat.css'
 
@@ -45,6 +46,8 @@ export default function Chat() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [useStreaming] = useState(true)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const chatMessagesRef = useRef<HTMLDivElement>(null)
+    const userJustSentRef = useRef(false)
 
     // Fetch workspaces on mount (only once)
     useEffect(() => {
@@ -61,11 +64,21 @@ export default function Chat() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
-    // ✅ IMPROVED: Wait for DOM to fully render before scrolling
+    const isNearBottom = (): boolean => {
+        const container = chatMessagesRef.current
+        if (!container) return true
+        const threshold = 150
+        return container.scrollHeight - container.scrollTop - container.clientHeight < threshold
+    }
+
+    // Only auto-scroll if user just sent a message or is already near the bottom
     useEffect(() => {
         const timer = setTimeout(() => {
-            scrollToBottom()
-        }, 100) // Small delay ensures DOM has completed rendering
+            if (userJustSentRef.current || isNearBottom()) {
+                scrollToBottom()
+                userJustSentRef.current = false
+            }
+        }, 100)
 
         return () => clearTimeout(timer)
     }, [messages])
@@ -105,6 +118,7 @@ export default function Chat() {
             content: input.trim()
         }
 
+        userJustSentRef.current = true
         setMessages(prev => [...prev, userMessage])
         const questionText = input.trim()
         setInput('')
@@ -250,7 +264,7 @@ export default function Chat() {
                             </div>
                         </div>
                     ) : (
-                        <div className="chat-messages">
+                        <div className="chat-messages" ref={chatMessagesRef}>
                             {messages.map((message, index) => (
                                 <div
                                     key={message.id}
@@ -268,7 +282,7 @@ export default function Chat() {
                                                     {message.role === 'assistant' ? (
                                                         <FormattedMessage content={message.content} />
                                                     ) : (
-                                                        <ReactMarkdown>
+                                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                             {message.content}
                                                         </ReactMarkdown>
                                                     )}
