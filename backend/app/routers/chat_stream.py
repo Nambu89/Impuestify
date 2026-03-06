@@ -300,7 +300,7 @@ async def ask_question_stream(
             async def run_agent():
                 done_emitted = False
                 try:
-                    restricted_mode = not access.is_owner
+                    restricted_mode = not access.is_owner and access.plan_type != "autonomo"
 
                     if use_workspace_agent:
                         # Use WorkspaceAgent for workspace queries

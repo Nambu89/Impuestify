@@ -22,7 +22,14 @@ export default function Login() {
             await login(email, password)
             navigate('/chat')
         } catch (err: any) {
-            setError(err.message || 'Error al iniciar sesión')
+            const status = err?.response?.status
+            if (status === 401) {
+                setError('Email o contraseña incorrectos. Inténtalo de nuevo.')
+            } else if (status === 429) {
+                setError('Demasiados intentos. Espera un momento antes de volver a intentarlo.')
+            } else {
+                setError('Error al iniciar sesión. Inténtalo de nuevo más tarde.')
+            }
         } finally {
             setIsLoading(false)
         }
