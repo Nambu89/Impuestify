@@ -121,7 +121,7 @@ export default function Home() {
                             </div>
                             <div className="stat-item">
                                 <span className="stat-number">
-                                    <CountUp to={64} duration={2} />
+                                    <CountUp to={131} duration={2} />
                                 </span>
                                 <span className="stat-label">Deducciones fiscales</span>
                             </div>
@@ -201,7 +201,7 @@ export default function Home() {
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> Sistema multi-agente especializado</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> RAG sobre 428+ documentos oficiales con citas legales</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> 17 CCAA + territorios forales + Ceuta/Melilla</li>
-                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Motor de 64 deducciones personalizadas</li>
+                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Motor de 131 deducciones personalizadas</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> Guardrails IA: moderación, anti-inyección, filtrado PII</li>
                                 </ul>
                             </SpotlightCard>
@@ -269,7 +269,7 @@ export default function Home() {
                             </div>
                             <ul className="pricing-features">
                                 <li><CheckCircle size={18} /><span>Consultas fiscales ilimitadas con IA</span></li>
-                                <li><CheckCircle size={18} /><span>Motor de deducciones con 64 deducciones</span></li>
+                                <li><CheckCircle size={18} /><span>Motor de deducciones con 131 deducciones</span></li>
                                 <li><CheckCircle size={18} /><span>Cobertura completa: 17 CCAA + forales</span></li>
                                 <li><CheckCircle size={18} /><span>Análisis de nóminas y notificaciones AEAT</span></li>
                                 <li><CheckCircle size={18} /><span>Workspace personal de documentos</span></li>
