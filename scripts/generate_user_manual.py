@@ -125,23 +125,24 @@ def build_manual():
         '  5. Perfil fiscal',
         '  6. Deducciones personalizadas',
         '  7. Informe IRPF en PDF',
+        '  8. Guía Fiscal interactiva',
         '',
         'PARTE II — Plan Particular',
-        '  8. Consultas IRPF por comunidad autónoma',
-        '  9. Análisis de nóminas',
-        '  10. Notificaciones de Hacienda',
+        '  9. Consultas IRPF por comunidad autónoma',
+        '  10. Análisis de nóminas',
+        '  11. Notificaciones de Hacienda',
         '',
         'PARTE III — Plan Autónomo',
-        '  11. Cuota de autónomos (RETA)',
-        '  12. IVA trimestral (Modelo 303)',
-        '  13. Pago fraccionado IRPF (Modelo 130)',
-        '  14. Retenciones IRPF en facturas',
-        '  15. Workspaces de documentos',
+        '  12. Cuota de autónomos (RETA)',
+        '  13. IVA trimestral (Modelo 303)',
+        '  14. Pago fraccionado IRPF (Modelo 130)',
+        '  15. Retenciones IRPF en facturas',
+        '  16. Workspaces de documentos',
         '',
         'PARTE IV — Referencia',
-        '  16. Territorios forales',
-        '  17. Preguntas frecuentes',
-        '  18. Soporte y contacto',
+        '  17. Territorios forales',
+        '  18. Preguntas frecuentes',
+        '  19. Soporte y contacto',
     ]
     for item in toc:
         if item == '':
@@ -184,7 +185,7 @@ def build_manual():
     doc.add_heading('Qué puede hacer por ti', level=2)
     capabilities = [
         'Calcular tu IRPF en cualquier comunidad autónoma (incluyendo País Vasco y Navarra)',
-        'Descubrir deducciones fiscales que te corresponden entre 131 opciones',
+        'Descubrir deducciones fiscales que te corresponden entre 64 opciones',
         'Analizar tus nóminas en PDF y detectar errores de retención',
         'Interpretar notificaciones de Hacienda y decirte qué hacer',
         'Generar un informe IRPF exportable en PDF',
@@ -221,7 +222,7 @@ def build_manual():
         [
             ['Chat IA fiscal ilimitado', 'SI', 'SI'],
             ['Cálculo IRPF por CCAA', 'SI', 'SI'],
-            ['131 deducciones personalizadas', 'SI', 'SI'],
+            ['64 deducciones personalizadas', 'SI', 'SI'],
             ['Análisis de nóminas (PDF)', 'SI', 'SI'],
             ['Notificaciones AEAT', 'SI', 'SI'],
             ['Workspace documentos', 'SI', 'SI'],
@@ -286,13 +287,17 @@ def build_manual():
     doc.add_heading('5. Perfil fiscal', level=1)
     doc.add_paragraph(
         'Tu perfil fiscal permite a la IA personalizar las respuestas. '
-        'Ve a Ajustes > Perfil Fiscal para configurarlo.'
+        'Ve a Ajustes > Perfil Fiscal para configurarlo. '
+        'El perfil se puede rellenar manualmente en Ajustes o automáticamente desde la Guía Fiscal.'
     )
 
     doc.add_heading('Datos del perfil', level=2)
     profile_fields = [
         ('Comunidad autónoma', 'Donde resides. Determina los tramos IRPF y deducciones territoriales.'),
         ('Situación laboral', 'Particular (cuenta ajena) o Autónomo (cuenta propia).'),
+        ('Deducciones y situación familiar',
+         'Planes de pensiones, hipoteca pre-2013, maternidad, familia numerosa, donativos a ONGs, '
+         'tributación conjunta, alquiler pre-2015, rentas imputadas por segundas viviendas.'),
         ('Para autónomos', 'Epígrafe IAE, base de cotización, tipo de IVA, retención IRPF, '
          'régimen SS, gastos deducibles, amortizaciones...'),
     ]
@@ -312,8 +317,8 @@ def build_manual():
     # --- 6. Deducciones ---
     doc.add_heading('6. Deducciones personalizadas', level=1)
     doc.add_paragraph(
-        'Impuestify tiene un motor de 131 deducciones fiscales: 16 estatales y 115 territoriales '
-        'en 20 territorios. Cuando preguntas por deducciones, la IA:'
+        'Impuestify tiene un motor de 64 deducciones fiscales: 16 estatales y 48 territoriales '
+        'en 8 CCAA. Cuando preguntas por deducciones, la IA:'
     )
 
     deduction_steps = [
@@ -356,6 +361,47 @@ def build_manual():
         'desde el botón "Enviar a asesor" que aparece junto al informe.'
     )
 
+    # --- 8. Guía Fiscal interactiva ---
+    doc.add_heading('8. Guía Fiscal interactiva', level=1)
+    doc.add_paragraph(
+        'La Guía Fiscal es un asistente paso a paso que te ayuda a estimar tu declaración de la renta '
+        'de forma visual e interactiva. Accede desde el menú principal > "Guía Fiscal".'
+    )
+
+    doc.add_heading('Los 7 pasos', level=2)
+    add_step(doc, 1, 'Datos personales',
+             'Indica tu comunidad autónoma, edad, y si tributas en régimen conjunto. '
+             'Si vives en Ceuta o Melilla, se aplicará automáticamente la bonificación del 60%.')
+    add_step(doc, 2, 'Trabajo',
+             'Introduce tus ingresos brutos del trabajo, cotizaciones a la Seguridad Social '
+             'y retenciones IRPF practicadas por tu empresa.')
+    add_step(doc, 3, 'Ahorro e inversiones',
+             'Indica intereses bancarios, dividendos, ganancias de fondos de inversión y sus retenciones.')
+    add_step(doc, 4, 'Inmuebles',
+             'Si tienes inmuebles en alquiler, indica ingresos y gastos. Si pagaste alquiler de vivienda '
+             'habitual antes de 2015, puedes aplicar la deducción transitoria. También se calculan las '
+             'rentas imputadas de segundas viviendas.')
+    add_step(doc, 5, 'Familia',
+             'Información sobre descendientes (hijos), ascendientes mayores de 65/75 años, '
+             'discapacidad, maternidad y familia numerosa.')
+    add_step(doc, 6, 'Deducciones',
+             'Planes de pensiones, hipoteca anterior a 2013, donativos a ONGs... '
+             'El sistema aplica automáticamente los límites legales.')
+    add_step(doc, 7, 'Resultado',
+             'Visualiza el resultado completo: cuota líquida, retenciones pagadas, resultado '
+             '(a pagar o a devolver), tipo medio efectivo y desglose de todas las deducciones aplicadas.')
+
+    doc.add_paragraph(
+        'Mientras completas los pasos, una barra de estimación en tiempo real te muestra el resultado '
+        'parcial. Verde si te sale a devolver, rojo si te sale a pagar, con el importe actualizado '
+        'automáticamente.'
+    )
+
+    doc.add_paragraph(
+        'Al terminar, puedes guardar todos los datos en tu perfil fiscal pulsando "Guardar en mi perfil". '
+        'Los datos se conservan entre sesiones gracias al almacenamiento local del navegador.'
+    )
+
     doc.add_page_break()
 
     # =========================================================================
@@ -376,8 +422,8 @@ def build_manual():
 
     doc.add_page_break()
 
-    # --- 8. IRPF por CCAA ---
-    doc.add_heading('8. Consultas IRPF por comunidad autónoma', level=1)
+    # --- 9. IRPF por CCAA ---
+    doc.add_heading('9. Consultas IRPF por comunidad autónoma', level=1)
     doc.add_paragraph(
         'Pregunta por tu IRPF indicando tus ingresos y comunidad autónoma. '
         'La IA aplicará los tramos correctos (estatal + autonómico) y te mostrará:'
@@ -397,8 +443,8 @@ def build_manual():
     run.bold = True
     p.add_run('"Si gano 35.000 euros brutos al año en Valencia, cuánto IRPF pago?"')
 
-    # --- 9. Nóminas ---
-    doc.add_heading('9. Análisis de nóminas', level=1)
+    # --- 10. Nóminas ---
+    doc.add_heading('10. Análisis de nóminas', level=1)
     doc.add_paragraph(
         'Sube tu nómina en PDF al workspace y pregunta a la IA que la analice. '
         'El PayslipAgent extraerá automáticamente:'
@@ -420,8 +466,8 @@ def build_manual():
     p.add_run('Si detectamos que tu retención IRPF es incorrecta respecto a tus ingresos anuales, '
               'te avisaremos automáticamente.')
 
-    # --- 10. Notificaciones ---
-    doc.add_heading('10. Notificaciones de Hacienda', level=1)
+    # --- 11. Notificaciones ---
+    doc.add_heading('11. Notificaciones de Hacienda', level=1)
     doc.add_paragraph(
         'Si recibes una notificación de la AEAT (Agencia Tributaria), sube el PDF al workspace '
         'o describe su contenido en el chat. El NotificationAgent extraerá:'
@@ -463,8 +509,8 @@ def build_manual():
 
     doc.add_page_break()
 
-    # --- 11. RETA ---
-    doc.add_heading('11. Cuota de autónomos (RETA)', level=1)
+    # --- 12. RETA ---
+    doc.add_heading('12. Cuota de autónomos (RETA)', level=1)
     doc.add_paragraph(
         'Desde 2023, la cuota de autónomos se calcula en función de los rendimientos netos reales '
         '(sistema de tramos). Impuestify calcula tu cuota exacta preguntándote:'
@@ -498,8 +544,8 @@ def build_manual():
 
     doc.add_page_break()
 
-    # --- 12. IVA ---
-    doc.add_heading('12. IVA trimestral (Modelo 303)', level=1)
+    # --- 13. IVA ---
+    doc.add_heading('13. IVA trimestral (Modelo 303)', level=1)
     doc.add_paragraph(
         'El Modelo 303 es la declaración trimestral de IVA. Impuestify te ayuda a calcularlo:'
     )
@@ -522,8 +568,8 @@ def build_manual():
         ]
     )
 
-    # --- 13. Modelo 130 ---
-    doc.add_heading('13. Pago fraccionado IRPF (Modelo 130)', level=1)
+    # --- 14. Modelo 130 ---
+    doc.add_heading('14. Pago fraccionado IRPF (Modelo 130)', level=1)
     doc.add_paragraph(
         'Si estás en estimación directa, debes presentar pagos fraccionados trimestrales '
         'del IRPF (Modelo 130). Es un anticipo del 20% sobre el beneficio acumulado.'
@@ -540,8 +586,8 @@ def build_manual():
     p.add_run('"He facturado 30.000 EUR en el primer semestre con gastos de 8.000 EUR. '
               'Cuánto debo pagar en el Modelo 130 del 2T?"')
 
-    # --- 14. Retenciones ---
-    doc.add_heading('14. Retenciones IRPF en facturas', level=1)
+    # --- 15. Retenciones ---
+    doc.add_heading('15. Retenciones IRPF en facturas', level=1)
     doc.add_paragraph(
         'Si facturas a empresas o profesionales, debes aplicar retención de IRPF en tus facturas. '
         'Impuestify te ayuda a calcular el importe correcto.'
@@ -565,8 +611,8 @@ def build_manual():
 
     doc.add_page_break()
 
-    # --- 15. Workspaces ---
-    doc.add_heading('15. Workspaces de documentos', level=1)
+    # --- 16. Workspaces ---
+    doc.add_heading('16. Workspaces de documentos', level=1)
     doc.add_paragraph(
         'Los workspaces son carpetas inteligentes donde puedes subir tus documentos fiscales. '
         'La IA analiza cada workspace de forma aislada, manteniendo el contexto separado.'
@@ -616,8 +662,8 @@ def build_manual():
 
     doc.add_page_break()
 
-    # --- 16. Forales ---
-    doc.add_heading('16. Territorios forales', level=1)
+    # --- 17. Forales ---
+    doc.add_heading('17. Territorios forales', level=1)
     doc.add_paragraph(
         'Impuestify es el ÚNICO asistente fiscal digital que cubre los territorios forales. '
         'Estos territorios tienen un sistema IRPF completamente independiente del régimen común, '
@@ -646,8 +692,8 @@ def build_manual():
               'Impuestify lo gestiona automáticamente: cuando indicas que vives en Araba, Bizkaia, '
               'Gipuzkoa o Navarra, solo te muestra las deducciones forales correspondientes.')
 
-    # --- 17. FAQ ---
-    doc.add_heading('17. Preguntas frecuentes', level=1)
+    # --- 18. FAQ ---
+    doc.add_heading('18. Preguntas frecuentes', level=1)
 
     faqs = [
         ('Es seguro compartir mis datos fiscales?',
@@ -679,8 +725,8 @@ def build_manual():
         run.font.color.rgb = RGBColor(26, 86, 219)
         doc.add_paragraph(a)
 
-    # --- 18. Soporte ---
-    doc.add_heading('18. Soporte y contacto', level=1)
+    # --- 19. Soporte ---
+    doc.add_heading('19. Soporte y contacto', level=1)
     doc.add_paragraph('Si necesitas ayuda, tienes varias opciones:')
     support = [
         'Chat de la app — pregunta directamente a la IA, que también puede ayudarte con dudas sobre el funcionamiento',

@@ -119,6 +119,88 @@ IMPORTANTE sobre ingresos:
                 "ceuta_melilla": {
                     "type": "boolean",
                     "description": "true si el contribuyente reside y trabaja en Ceuta o Melilla. Aplica deducción del 60% sobre la cuota íntegra (Art. 68.4 LIRPF). Usar true cuando la CCAA sea Ceuta o Melilla."
+                },
+                "aportaciones_plan_pensiones": {
+                    "type": "number",
+                    "description": "Aportaciones propias del contribuyente a planes de pensiones en el año (máx 1.500€ deducibles). Reduce la base imponible general."
+                },
+                "aportaciones_plan_pensiones_empresa": {
+                    "type": "number",
+                    "description": "Aportaciones de la empresa al plan de pensiones del empleado. Conjuntamente con las propias, máx 8.500€ (y máx 30% renta neta)."
+                },
+                "hipoteca_pre2013": {
+                    "type": "boolean",
+                    "description": "true si el contribuyente tiene hipoteca sobre su vivienda habitual contratada ANTES del 1 de enero de 2013 (deducción suprimida para hipotecas posteriores). Si true, pasará `capital_amortizado_hipoteca` e `intereses_hipoteca`."
+                },
+                "capital_amortizado_hipoteca": {
+                    "type": "number",
+                    "description": "Capital amortizado de la hipoteca pre-2013 en el año (cuotas de principal pagadas). Solo relevante si hipoteca_pre2013=true."
+                },
+                "intereses_hipoteca": {
+                    "type": "number",
+                    "description": "Intereses pagados de la hipoteca pre-2013 en el año. Solo relevante si hipoteca_pre2013=true. Base deducción = capital_amortizado + intereses, máx 9.040€. Deducción = 15%."
+                },
+                "madre_trabajadora_ss": {
+                    "type": "boolean",
+                    "description": "true si la madre (o contribuyente principal) trabaja y cotiza a la Seguridad Social, y tiene hijos menores de 3 años. Habilita la deducción por maternidad (1.200€/hijo <3 años)."
+                },
+                "gastos_guarderia_anual": {
+                    "type": "number",
+                    "description": "Gastos anuales en guardería o centros de educación infantil autorizados para hijos menores de 3 años. Permite deducción adicional a la de maternidad (hasta 1.000€ extra por hijo)."
+                },
+                "familia_numerosa": {
+                    "type": "boolean",
+                    "description": "true si el contribuyente tiene título de familia numerosa reconocido. Deducción: 1.200€/año (general) o 2.400€ (especial)."
+                },
+                "tipo_familia_numerosa": {
+                    "type": "string",
+                    "enum": ["general", "especial"],
+                    "description": "'general' = 3 hijos (1.200€). 'especial' = 5+ hijos o 4 con discapacidad (2.400€). Solo relevante si familia_numerosa=true."
+                },
+                "donativos_ley_49_2002": {
+                    "type": "number",
+                    "description": "Total de donativos realizados en el año a entidades acogidas a la Ley 49/2002 (ONGs, fundaciones, iglesias con convenio). Deducción: 80% primeros 250€ + 40% exceso (o 45% si donativo_recurrente=true)."
+                },
+                "donativo_recurrente": {
+                    "type": "boolean",
+                    "description": "true si el contribuyente lleva 2 o más años consecutivos donando a la misma entidad con importe igual o superior. Aumenta el tipo del exceso al 45%."
+                },
+                "retenciones_trabajo": {
+                    "type": "number",
+                    "description": "Total de retenciones IRPF soportadas en nómina durante el año. Necesario para calcular si la declaración sale a pagar o a devolver."
+                },
+                "retenciones_alquiler": {
+                    "type": "number",
+                    "description": "Retenciones por rendimientos de alquiler (19%). Necesario para el resultado final de la declaración."
+                },
+                "retenciones_ahorro": {
+                    "type": "number",
+                    "description": "Retenciones por rendimientos del capital mobiliario (intereses, dividendos). Necesario para el resultado final."
+                },
+                "tributacion_conjunta": {
+                    "type": "boolean",
+                    "description": "true si la declaración se presenta de forma conjunta (matrimonio o monoparental). Aplica reducción sobre la base imponible general: 3.400€ para matrimonios y 2.150€ para unidades monoparentales (Art. 84 LIRPF)."
+                },
+                "tipo_unidad_familiar": {
+                    "type": "string",
+                    "enum": ["matrimonio", "monoparental"],
+                    "description": "'matrimonio' = cónyuge e hijos (reducción 3.400€). 'monoparental' = padre/madre con hijos sin cónyuge (reducción 2.150€). Solo relevante si tributacion_conjunta=true."
+                },
+                "alquiler_habitual_pre2015": {
+                    "type": "boolean",
+                    "description": "true si el contribuyente pagaba alquiler por su vivienda habitual con contrato anterior a 1 de enero de 2015 y sigue aplicando la deducción transitoria (DT 15ª LIRPF). La deducción es el 10,05% del alquiler pagado (máx. base 9.040€), con reducción lineal si BI entre 17.707,20€ y 24.107,20€. Desaparece con BI >= 24.107,20€."
+                },
+                "alquiler_pagado_anual": {
+                    "type": "number",
+                    "description": "Total de alquiler pagado por el contribuyente como inquilino en el año (no confundir con ingresos_alquiler que son rentas percibidas como propietario). Solo relevante si alquiler_habitual_pre2015=true."
+                },
+                "valor_catastral_segundas_viviendas": {
+                    "type": "number",
+                    "description": "Valor catastral de inmuebles urbanos en propiedad distintos de la vivienda habitual que no generan rendimientos de alquiler (ej: segunda residencia vacía, plaza de garaje no alquilada). El fisco imputa un 1,1% (o 2% si el catastro no ha sido revisado desde 1994) como renta en la base general (Art. 85 LIRPF)."
+                },
+                "valor_catastral_revisado_post1994": {
+                    "type": "boolean",
+                    "description": "true (default) si el valor catastral del inmueble fue revisado a partir de 1994 → imputación del 1,1%. false si el catastro es anterior a 1994 → imputación del 2%. Solo relevante si valor_catastral_segundas_viviendas > 0."
                 }
             },
             "required": ["comunidad_autonoma", "ingresos_trabajo"]
@@ -146,6 +228,30 @@ async def simulate_irpf_tool(
     num_ascendientes_75: int = 0,
     discapacidad_contribuyente: int = 0,
     ceuta_melilla: bool = False,
+    # Phase 1: Reductions & deductions
+    aportaciones_plan_pensiones: float = 0,
+    aportaciones_plan_pensiones_empresa: float = 0,
+    hipoteca_pre2013: bool = False,
+    capital_amortizado_hipoteca: float = 0,
+    intereses_hipoteca: float = 0,
+    madre_trabajadora_ss: bool = False,
+    gastos_guarderia_anual: float = 0,
+    familia_numerosa: bool = False,
+    tipo_familia_numerosa: str = "general",
+    donativos_ley_49_2002: float = 0,
+    donativo_recurrente: bool = False,
+    retenciones_trabajo: float = 0,
+    retenciones_alquiler: float = 0,
+    retenciones_ahorro: float = 0,
+    # Phase 2: Tributación conjunta (Art. 84 LIRPF)
+    tributacion_conjunta: bool = False,
+    tipo_unidad_familiar: str = "matrimonio",
+    # Phase 2: Alquiler vivienda habitual pre-2015 (DT 15ª LIRPF)
+    alquiler_habitual_pre2015: bool = False,
+    alquiler_pagado_anual: float = 0,
+    # Phase 2: Rentas imputadas inmuebles (Art. 85 LIRPF)
+    valor_catastral_segundas_viviendas: float = 0,
+    valor_catastral_revisado_post1994: bool = True,
 ) -> Dict[str, Any]:
     """Execute IRPF simulation and return formatted result."""
     try:
@@ -190,6 +296,25 @@ async def simulate_irpf_tool(
                 num_ascendientes_75=num_ascendientes_75,
                 discapacidad_contribuyente=discapacidad_contribuyente,
                 ceuta_melilla=ceuta_melilla,
+                aportaciones_plan_pensiones=aportaciones_plan_pensiones,
+                aportaciones_plan_pensiones_empresa=aportaciones_plan_pensiones_empresa,
+                hipoteca_pre2013=hipoteca_pre2013,
+                capital_amortizado_hipoteca=capital_amortizado_hipoteca,
+                intereses_hipoteca=intereses_hipoteca,
+                madre_trabajadora_ss=madre_trabajadora_ss,
+                gastos_guarderia_anual=gastos_guarderia_anual,
+                familia_numerosa=familia_numerosa,
+                tipo_familia_numerosa=tipo_familia_numerosa,
+                donativos_ley_49_2002=donativos_ley_49_2002,
+                donativo_recurrente=donativo_recurrente,
+                retenciones_alquiler=retenciones_alquiler,
+                retenciones_ahorro=retenciones_ahorro,
+                tributacion_conjunta=tributacion_conjunta,
+                tipo_unidad_familiar=tipo_unidad_familiar,
+                alquiler_habitual_pre2015=alquiler_habitual_pre2015,
+                alquiler_pagado_anual=alquiler_pagado_anual,
+                valor_catastral_segundas_viviendas=valor_catastral_segundas_viviendas,
+                valor_catastral_revisado_post1994=valor_catastral_revisado_post1994,
             )
         except ValueError:
             # Year not available — fallback to previous year
@@ -218,6 +343,25 @@ async def simulate_irpf_tool(
                 num_ascendientes_75=num_ascendientes_75,
                 discapacidad_contribuyente=discapacidad_contribuyente,
                 ceuta_melilla=ceuta_melilla,
+                aportaciones_plan_pensiones=aportaciones_plan_pensiones,
+                aportaciones_plan_pensiones_empresa=aportaciones_plan_pensiones_empresa,
+                hipoteca_pre2013=hipoteca_pre2013,
+                capital_amortizado_hipoteca=capital_amortizado_hipoteca,
+                intereses_hipoteca=intereses_hipoteca,
+                madre_trabajadora_ss=madre_trabajadora_ss,
+                gastos_guarderia_anual=gastos_guarderia_anual,
+                familia_numerosa=familia_numerosa,
+                tipo_familia_numerosa=tipo_familia_numerosa,
+                donativos_ley_49_2002=donativos_ley_49_2002,
+                donativo_recurrente=donativo_recurrente,
+                retenciones_alquiler=retenciones_alquiler,
+                retenciones_ahorro=retenciones_ahorro,
+                tributacion_conjunta=tributacion_conjunta,
+                tipo_unidad_familiar=tipo_unidad_familiar,
+                alquiler_habitual_pre2015=alquiler_habitual_pre2015,
+                alquiler_pagado_anual=alquiler_pagado_anual,
+                valor_catastral_segundas_viviendas=valor_catastral_segundas_viviendas,
+                valor_catastral_revisado_post1994=valor_catastral_revisado_post1994,
             )
 
         # Build formatted response

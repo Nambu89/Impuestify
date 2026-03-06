@@ -22,6 +22,7 @@ const TermsPage = lazy(() => import('./pages/TermsPage'))
 const DataRetentionPage = lazy(() => import('./pages/DataRetentionPage'))
 const ForalPage = lazy(() => import('./pages/ForalPage'))
 const CeutaMelillaPage = lazy(() => import('./pages/CeutaMelillaPage'))
+const TaxGuidePage = lazy(() => import('./pages/TaxGuidePage'))
 
 // Protected route wrapper — requires auth + active subscription
 function ProtectedRoute({ children, requireSubscription = true }: { children: React.ReactNode; requireSubscription?: boolean }) {
@@ -67,6 +68,14 @@ function App() {
                     <Route path="/ceuta-melilla" element={<CeutaMelillaPage />} />
 
                     {/* Protected Routes (require auth + subscription) */}
+                    <Route
+                        path="/guia-fiscal"
+                        element={
+                            <ProtectedRoute>
+                                <TaxGuidePage />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route
                         path="/chat"
                         element={

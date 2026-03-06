@@ -1,4 +1,4 @@
-import { FileText, LogOut, Menu, Settings, Shield } from 'lucide-react'
+import { FileText, LogOut, Menu, Settings, Shield, Calculator } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
@@ -58,6 +58,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
                 <nav className="nav">
                     <Link to="/chat" className="nav-link">Chat</Link>
+                    <Link to="/guia-fiscal" className="nav-link">
+                        <Calculator size={16} /> Guia Fiscal
+                    </Link>
                     <Link to="/settings" className="nav-link">
                         <Settings size={16} /> Configuración
                     </Link>

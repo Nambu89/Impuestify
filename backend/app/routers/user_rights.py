@@ -75,6 +75,21 @@ class FiscalProfileRequest(BaseModel):
     tarifa_plana: Optional[bool] = None
     pluriactividad: Optional[bool] = None
     ceuta_melilla: Optional[bool] = None  # Resident in Ceuta/Melilla (60% IRPF deduction + 50% SS bonus + IPSI)
+    # --- Phase 1: IRPF deductions / reductions ---
+    aportaciones_plan_pensiones: Optional[float] = None
+    aportaciones_plan_pensiones_empresa: Optional[float] = None
+    hipoteca_pre2013: Optional[bool] = None
+    capital_amortizado_hipoteca: Optional[float] = None
+    intereses_hipoteca: Optional[float] = None
+    madre_trabajadora_ss: Optional[bool] = None
+    gastos_guarderia_anual: Optional[float] = None
+    familia_numerosa: Optional[bool] = None
+    tipo_familia_numerosa: Optional[str] = None  # "general" | "especial"
+    donativos_ley_49_2002: Optional[float] = None
+    donativo_recurrente: Optional[bool] = None
+    retenciones_trabajo: Optional[float] = None
+    retenciones_alquiler: Optional[float] = None
+    retenciones_ahorro: Optional[float] = None
 
 
 class UserDataExport(BaseModel):
@@ -350,6 +365,13 @@ _DATOS_FISCALES_KEYS = {
     "base_cotizacion_reta", "territorio_foral", "territorio_historico",
     "tipo_retencion_facturas", "tarifa_plana", "pluriactividad",
     "ceuta_melilla",
+    # Phase 1: IRPF deductions / reductions
+    "aportaciones_plan_pensiones", "aportaciones_plan_pensiones_empresa",
+    "hipoteca_pre2013", "capital_amortizado_hipoteca", "intereses_hipoteca",
+    "madre_trabajadora_ss", "gastos_guarderia_anual",
+    "familia_numerosa", "tipo_familia_numerosa",
+    "donativos_ley_49_2002", "donativo_recurrente",
+    "retenciones_trabajo", "retenciones_alquiler", "retenciones_ahorro",
 }
 
 

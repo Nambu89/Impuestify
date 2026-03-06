@@ -66,6 +66,20 @@ Pipeline (in order):
 
 **CRITICAL**: `get_current_user()` returns `TokenData` model. Use `current_user.user_id`, `current_user.email` — NOT `.get("user_id")`.
 
+## Routers (`app/routers/`)
+
+| Router | Prefix | Purpose |
+|--------|--------|---------|
+| `auth.py` | `/api/auth` | Login, register, refresh token |
+| `ask.py` | `/api/ask` | Main SSE chat endpoint |
+| `fiscal_profile.py` | `/api/fiscal-profile` | User fiscal profile CRUD |
+| `workspaces.py` | `/api/workspaces` | Workspace + file management |
+| `reports.py` | `/api/reports` | PDF report generation + sharing |
+| `export.py` | `/api/export` | PDF export + email to advisor |
+| `subscriptions.py` | `/api/subscriptions` | Stripe checkout + portal |
+| `admin.py` | `/api/admin` | Owner-only user admin |
+| `irpf_estimate.py` | `/api/irpf` | **NEW**: Lightweight POST /api/irpf/estimate (no LLM, ~50-100ms) |
+
 ## Tools (Function Calling) (`app/tools/`)
 
 | Tool | File | Purpose |
@@ -75,7 +89,7 @@ Pipeline (in order):
 | `search_tax_regulations` | `search_tool.py` | FTS5 + BM25 + web scraping fallback |
 | `analyze_payslip` | `payslip_analysis_tool.py` | 13 regex patterns for Spanish payslips |
 | `discover_deductions` | `deduction_discovery_tool.py` | 64 deductions (16 estatal + 48 territorial) |
-| `simulate_irpf` | `irpf_simulator_tool.py` | Full simulation + auto-discover deductions |
+| `simulate_irpf` | `irpf_simulator_tool.py` | Full simulation + auto-discover deductions. Phase 1+2 params: planes_pensiones, hipoteca_pre2013, maternidad, familia_numerosa, donativos, tributacion_conjunta, alquiler_pre2015, rentas_imputadas |
 | `web_scraper` | `web_scraper_tool.py` | AEAT/BOE/SS scraping + CCAA normalization |
 
 Tool registration: `app/tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS)
@@ -126,7 +140,7 @@ CREATE TABLE user_profiles (
   user_id TEXT UNIQUE REFERENCES users(id),
   ccaa_residencia TEXT,
   situacion_laboral TEXT,
-  datos_fiscales TEXT,  -- JSON: 13 autonomo fields
+  datos_fiscales TEXT,  -- JSON: autonomo fields + Phase 1 (planes_pensiones, hipoteca_pre2013_base, maternidad_hijos, familia_numerosa, donativos, retenciones_alquiler) + Phase 2 (tributacion_conjunta, alquiler_pre2015_base, rentas_imputadas_catastral, rentas_imputadas_tipo)
   created_at TIMESTAMP, updated_at TIMESTAMP
 );
 

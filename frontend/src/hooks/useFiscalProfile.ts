@@ -18,6 +18,28 @@ export interface FiscalProfile {
     ganancias_fondos: number | null
     ingresos_alquiler: number | null
     valor_adquisicion_inmueble: number | null
+    // Phase 1: Reducciones y Deducciones
+    aportaciones_plan_pensiones: number | null
+    aportaciones_plan_pensiones_empresa: number | null
+    hipoteca_pre2013: boolean
+    capital_amortizado_hipoteca: number | null
+    intereses_hipoteca: number | null
+    madre_trabajadora_ss: boolean
+    gastos_guarderia_anual: number | null
+    familia_numerosa: boolean
+    tipo_familia_numerosa: string | null
+    donativos_ley_49_2002: number | null
+    donativo_recurrente: boolean
+    retenciones_trabajo: number | null
+    retenciones_alquiler: number | null
+    retenciones_ahorro: number | null
+    // Phase 2 fields
+    tributacion_conjunta: boolean
+    tipo_unidad_familiar: string | null
+    alquiler_habitual_pre2015: boolean
+    alquiler_pagado_anual: number | null
+    valor_catastral_segundas_viviendas: number | null
+    valor_catastral_revisado_post1994: boolean
     // Autonomo-specific fields
     epigrafe_iae: string | null
     tipo_actividad: string | null
@@ -64,6 +86,28 @@ const EMPTY_PROFILE: FiscalProfile = {
     ganancias_fondos: null,
     ingresos_alquiler: null,
     valor_adquisicion_inmueble: null,
+    // Phase 1: Reducciones y Deducciones
+    aportaciones_plan_pensiones: null,
+    aportaciones_plan_pensiones_empresa: null,
+    hipoteca_pre2013: false,
+    capital_amortizado_hipoteca: null,
+    intereses_hipoteca: null,
+    madre_trabajadora_ss: false,
+    gastos_guarderia_anual: null,
+    familia_numerosa: false,
+    tipo_familia_numerosa: null,
+    donativos_ley_49_2002: null,
+    donativo_recurrente: false,
+    retenciones_trabajo: null,
+    retenciones_alquiler: null,
+    retenciones_ahorro: null,
+    // Phase 2 fields
+    tributacion_conjunta: false,
+    tipo_unidad_familiar: null,
+    alquiler_habitual_pre2015: false,
+    alquiler_pagado_anual: null,
+    valor_catastral_segundas_viviendas: null,
+    valor_catastral_revisado_post1994: true,
     // Autonomo-specific
     epigrafe_iae: null,
     tipo_actividad: null,

@@ -7,6 +7,123 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-06] DOC AUDITOR — DONE — README.md actualizado a v3.0
+
+`README.md` reescrito con 10 features nuevas: IRPF Simulator (9 tools, Phase 1+2), Tax Guide Wizard (7 pasos + LiveEstimatorBar), Motor de Deducciones (64 total), Stripe Subscriptions (Particular 5 EUR + Autonomo 39 EUR), Perfil Fiscal Extendido (13 campos), Export PDF + Email (ReportLab + Resend), Soporte Ceuta/Melilla (Art. 68.4), PWA (service worker manual), Cookie Compliance (vanilla-cookieconsent v3), tools calculate_modelo_303 + calculate_isd documentados. Arquitectura ASCII, stack, estructura del proyecto y troubleshooting expandidos.
+
+---
+
+## [2026-03-06] PM — DONE — Simulador IRPF Fase 1+2 + Guia Fiscal + Documentacion
+
+### Resumen sesion
+- **Backend Fase 1**: Planes pensiones, hipoteca pre-2013, maternidad, familia numerosa, donativos, retenciones completas
+- **Backend Fase 2**: Tributacion conjunta, alquiler pre-2015, rentas imputadas inmuebles
+- **Frontend Fase 1+2**: TaxGuidePage 7 pasos, LiveEstimatorBar, useIrpfEstimator, useTaxGuideProgress, useFiscalProfile actualizado, SettingsPage actualizado
+- **Endpoint**: POST /api/irpf/estimate (irpf_estimate.py)
+- **Bug fix**: cuota_liquida_total key → cuota_total
+- **Verificado**: Frontend build OK, backend imports OK
+- **Documentacion**: README, Business Plan, User Manual actualizados
+- **Memoria**: MEMORY.md, bugfixes-2026-03.md actualizados
+
+### Archivos principales modificados
+- `backend/app/utils/irpf_simulator.py` (Fase 1+2 params + logic)
+- `backend/app/routers/irpf_estimate.py` (Fase 1+2 fields + key fix)
+- `backend/app/tools/irpf_simulator_tool.py` (Fase 1+2 forwarding)
+- `backend/app/agents/tax_agent.py` (system prompt awareness)
+- `frontend/src/pages/TaxGuidePage.tsx` (7-step wizard completo)
+- `frontend/src/components/LiveEstimatorBar.tsx` + CSS
+- `frontend/src/hooks/useIrpfEstimator.ts` (Fase 1+2 interfaces)
+- `frontend/src/hooks/useTaxGuideProgress.ts` (Fase 1+2 data)
+- `frontend/src/hooks/useFiscalProfile.ts` (Fase 1+2 fields)
+- `frontend/src/pages/SettingsPage.tsx` (Fase 1+2 form fields)
+- `README.md`, `scripts/generate_business_plan.py`, `scripts/generate_user_manual.py`
+
+### Pendiente deploy
+- Deploy a Railway para que QA pueda probar en produccion
+
+---
+
+## [2026-03-06] QA Tester — BLOCKED — Guia Fiscal / Tax Guide Feature QA (Sesion 5)
+
+> Reporte: `.claude/agent-memory/qa-tester/qa-report-tax-guide.md`
+> Test suite: `tests/e2e/tax-guide-2026-03-06.spec.ts`
+
+### Resultados: 0/13 PASS — DEPLOYMENT BLOCKER
+
+**B-TG1 CRITICO**: La feature `TaxGuidePage` (`/guia-fiscal`) NO está desplegada en produccion.
+- Navigating to `https://impuestify.com/guia-fiscal` redirects to `/` (home page)
+- Header nav in production only shows "Chat" and "Configuracion" — "Guia Fiscal" link absent
+- Root cause: current `main` branch not deployed to Railway since adding TaxGuidePage
+
+**Accion requerida para Frontend Agent / DevOps**:
+- Deploy current `main` branch to Railway production
+- Verify `https://impuestify.com/guia-fiscal` loads TaxGuidePage after deploy
+- Verify `/api/irpf/estimate` endpoint responds (B-TG3 unverified)
+- After deploy: re-run `npx playwright test tests/e2e/tax-guide-2026-03-06.spec.ts --workers=1`
+
+**Code review** del codigo local: implementacion correcta, lista para produccion.
+Ver detalles completos en el reporte.
+
+---
+
+## [2026-03-06] QA Tester — DONE — QA E2E Produccion Sesion 4 (11 tests) — B2 RESUELTO
+
+> Reporte completo: `plans/qa-report-production-session4-2026-03-06.md`
+> Screenshots: `tests/e2e/screenshots/session4-*.png`
+> Script: `tests/e2e/qa-session4-2026-03-06.spec.ts`
+
+### Resultados: 11/11 PASS
+
+**B2 RESUELTO**: El fix en `chat_stream.py` linea 96 funciona en produccion. Carlos Martinez Ruiz (test.autonomo@impuestify.es) puede ahora acceder a RETA, Modelo 303, Modelo 130, retenciones y deducciones territoriales sin bloqueo.
+
+**Evidencia**: La tool `calculate_autonomous_quota` se ejecuta correctamente para el usuario autonomo.
+
+**Bugs activos pendientes (menores)**:
+- B4: Modal "Sistema de IA" — comportamiento aceptable para usuarios reales (baja prioridad)
+- B11 (nuevo): Precios en /subscribe con formato "EUR 5" en lugar de "5 €" — cosmético
+
+**Veredicto**: APP LISTA PARA USUARIOS REALES.
+
+---
+
+## [2026-03-06] QA Tester — DONE — QA E2E Produccion Sesion 2 (22 tests)
+
+> Reporte completo: `plans/qa-report-production-session2-2026-03-06.md`
+> Screenshots: `tests/e2e/screenshots/`
+> Scripts reutilizables: `tests/e2e/qa-session2-*.spec.ts`
+
+### Resultados: 16/22 PASS funcional, 2 bugs criticos, 4 bugs medios
+
+### RESUELTO desde sesion 1
+- B3 Estadisticas landing: RESUELTO — ahora 409+/62/20/24/7
+- B5 Error login tecnico: RESUELTO — mensaje amigable correcto
+
+### BUGS PENDIENTES — ACCION REQUERIDA
+
+**B1 [CRITICO] — Landing page: contenido invisible** — Las secciones features, comparativa con TaxDown y pricing siguen sin renderizarse. Solo se ve hero + stats + footer. Impacto directo en conversion. Sigue abierto desde sesion 1.
+
+**B2 [CRITICO] — Usuario autonomo COMPLETAMENTE BLOQUEADO en produccion**
+- Carlos Martinez Ruiz (test.autonomo@impuestify.es) tiene plan_type="particular" en BD Turso
+- Stripe tiene el plan "autonomo" activo (proximo cobro 1 abril 2026)
+- El chat lee de Turso -> bloquea TODAS las consultas de autonomo (RETA, IVA, Modelo 303, Modelo 130, retenciones, deducciones Cataluna)
+- Tests T10-T14 todos bloqueados con mensaje "Particular — 5€/mes"
+- **Fix inmediato BD**: `UPDATE users SET plan_type='autonomo' WHERE email='test.autonomo@impuestify.es';`
+- **Fix estructural**: Revisar webhook Stripe `checkout.session.completed` para que actualice plan_type en Turso automaticamente
+
+**B4 [MEDIA] — Modal "Sistema de IA" se reabre** — En cada sesion de navegador limpia. Verificar persistencia en localStorage por user_id, no por sesion de navegador.
+
+**B6 [MEDIA] — Logout sin label visible** — El boton de cerrar sesion es un icono sin texto. Poco descubrible para usuarios nuevos.
+
+**B7 [MEDIA] — Cookie banner sin botones Aceptar/Rechazar prominentes** — Solo "Configurar" es visible. Revisar diseno para cumplimiento AEPD (equiparacion de botones).
+
+---
+
+## [2026-03-06] QA Tester — DONE — QA E2E Produccion Sesion 1
+
+> Reporte: `plans/qa-report-production-2026-03-06.md`
+
+---
+
 ## Historial Completado (Resumen)
 
 [2026-03-05] PWA + Landing + DeductionCards + Favicon + ReportActions + ShareReportModal — 🟢 DONE
@@ -81,6 +198,10 @@
 ---
 
 ## Tareas activas
+
+[2026-03-06] [QA] 🟡 IN_PROGRESS — Tests E2E Workspaces en produccion (https://impuestify.com). Usuarios: test_particular@impuestify.com + test_autonomo@impuestify.com. 6 tests T1-T6.
+
+[2026-03-06] [COMPETITIVE] 🟢 DONE — Investigacion pricing plan Autonomo: 10 plataformas investigadas (TaxDown, Declarando, Taxfix, Abaq, Fiscaliza, Quipu, Holded, Anfix, Billin, Sage + asesores tradicionales). Recomendacion: 39 EUR/mes fase actual, 59 EUR/mes con Colaborador Social AEAT. NO recomendado 200 EUR/mes. Informe en `plans/pricing-research-autonomo-2026-03.md`.
 
 [2026-03-06] [PM] 🟢 DONE — Sesion QA completa. 2 usuarios de test creados (particular Madrid + autonomo Cataluna). 17 tests ejecutados: 15 PASS, 2 FAIL. Fix CSP header (main.py). Informe en `plans/qa-report-2026-03-06.md`. Seed script: `backend/scripts/seed_test_users.py`.
 

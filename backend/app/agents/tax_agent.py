@@ -338,6 +338,68 @@ Puedes organizar la respuesta como quieras, pero sigue estas pautas:
 
 ---
 
+---
+
+## 🏠 DEDUCCIONES IRPF FASE 1: CUÁNDO PREGUNTAR
+
+Cuando vayas a usar **simulate_irpf** para una simulación completa, pregunta (o usa del perfil si ya los tienes) estos datos adicionales que reducen significativamente la cuota:
+
+### Planes de pensiones (reducción en base imponible)
+- **Cuándo preguntar**: SIEMPRE en una simulación completa de IRPF.
+- Pregunta: "¿Tienes plan de pensiones? ¿Cuánto aportaste este año (propio y de empresa)?"
+- Parámetros: `aportaciones_plan_pensiones`, `aportaciones_plan_pensiones_empresa`
+- Límites: propio max 1.500€, empresa hasta 8.500€ conjuntamente (máx 30% renta neta)
+
+### Hipoteca pre-2013 (deducción sobre cuota)
+- **Cuándo preguntar**: Si el usuario menciona "hipoteca", "casa", "vivienda habitual".
+- Pregunta: "¿Tu hipoteca es anterior a 2013?"
+- Si SÍ: pregunta capital amortizado + intereses pagados en el año.
+- Parámetros: `hipoteca_pre2013`, `capital_amortizado_hipoteca`, `intereses_hipoteca`
+- Deducción: 15% sobre base (capital + intereses), máx 9.040€/año de base
+
+### Maternidad (deducción sobre cuota)
+- **Cuándo preguntar**: Si el perfil tiene hijos < 3 años o el usuario menciona bebé/recién nacido.
+- Pregunta: "¿Trabajas y cotizas a la SS? ¿Tienes hijos menores de 3 años?"
+- Parámetros: `madre_trabajadora_ss` (true si cotiza SS), `gastos_guarderia_anual`
+- Deducción: 1.200€/año por hijo <3 + hasta 1.000€ adicionales por guardería autorizada
+
+### Familia numerosa (deducción sobre cuota)
+- **Cuándo preguntar**: Si el usuario tiene 3 o más hijos, o menciona "familia numerosa".
+- Parámetros: `familia_numerosa` (bool), `tipo_familia_numerosa` ("general"=3 hijos / "especial"=5+ hijos)
+- Deducción: 1.200€ (general) o 2.400€ (especial) por año
+
+### Donativos (deducción sobre cuota)
+- **Cuándo preguntar**: Si el usuario menciona "donaciones", "ONG", "Cáritas", "Cruz Roja", "iglesia".
+- Pregunta: "¿Haces donativos a entidades acogidas a la Ley 49/2002? ¿Son recurrentes (llevas 2+ años)?"
+- Parámetros: `donativos_ley_49_2002` (importe total), `donativo_recurrente` (bool)
+- Deducción: 80% primeros 250€ + 40% exceso (45% si recurrente)
+
+### Retenciones (necesarias para calcular resultado)
+- **Cuándo preguntar**: Siempre que el usuario quiera saber si sale "a pagar o a devolver".
+- Pregunta: "¿Sabes qué retención te aplican en nómina? ¿Y en el alquiler o en productos financieros?"
+- Parámetros: `retenciones_trabajo`, `retenciones_alquiler`, `retenciones_ahorro`
+
+### Regla de uso con simulate_irpf
+Cuando tengas estos datos (del perfil o de la conversación), pásalos directamente a **simulate_irpf**:
+```
+simulate_irpf(
+  ...,
+  aportaciones_plan_pensiones=1500,
+  hipoteca_pre2013=True,
+  capital_amortizado_hipoteca=8000,
+  intereses_hipoteca=2400,
+  madre_trabajadora_ss=True,
+  gastos_guarderia_anual=1800,
+  familia_numerosa=False,
+  donativos_ley_49_2002=500,
+  donativo_recurrente=True,
+)
+```
+
+Cuando el usuario te proporcione estos datos, guárdalos en su perfil fiscal usando la herramienta correspondiente.
+
+---
+
 Recuerda: Sé **proactivo y directo**. Calcula cuando tengas datos suficientes, pero **SIEMPRE verifica la situación laboral y la CCAA** antes de usar herramientas específicas de autónomos. **Siempre aclara qué año fiscal estás usando** para evitar confusiones."""
 	
 	async def run(
@@ -432,6 +494,21 @@ Recuerda: Sé **proactivo y directo**. Calcula cuando tengas datos suficientes, 
 				"tarifa_plana": "Tarifa plana",
 				"pluriactividad": "Pluriactividad",
 				"ceuta_melilla": "Residente en Ceuta/Melilla",
+				# Phase 1: IRPF deductions / reductions
+				"aportaciones_plan_pensiones": "Aportaciones plan pensiones",
+				"aportaciones_plan_pensiones_empresa": "Aportaciones plan pensiones (empresa)",
+				"hipoteca_pre2013": "Hipoteca pre-2013",
+				"capital_amortizado_hipoteca": "Capital amortizado hipoteca",
+				"intereses_hipoteca": "Intereses hipoteca",
+				"madre_trabajadora_ss": "Madre trabajadora con SS",
+				"gastos_guarderia_anual": "Gastos guardería anuales",
+				"familia_numerosa": "Familia numerosa",
+				"tipo_familia_numerosa": "Tipo familia numerosa",
+				"donativos_ley_49_2002": "Donativos Ley 49/2002",
+				"donativo_recurrente": "Donativo recurrente (>=2 años)",
+				"retenciones_trabajo": "Retenciones trabajo",
+				"retenciones_alquiler": "Retenciones alquiler",
+				"retenciones_ahorro": "Retenciones ahorro",
 			}
 			for key, label in label_map.items():
 				val = fiscal_profile.get(key)

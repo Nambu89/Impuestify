@@ -55,6 +55,7 @@ export default function SettingsPage() {
     // Collapsible sections
     const [showAhorro, setShowAhorro] = useState(false)
     const [showInmuebles, setShowInmuebles] = useState(false)
+    const [showDeducciones, setShowDeducciones] = useState(false)
     const [showAutonomo, setShowAutonomo] = useState(false)
 
     // UI state
@@ -84,6 +85,16 @@ export default function SettingsPage() {
             }
             if ((fiscal.profile.ingresos_alquiler ?? 0) > 0) {
                 setShowInmuebles(true)
+            }
+            if ((fiscal.profile.aportaciones_plan_pensiones ?? 0) > 0
+                || fiscal.profile.hipoteca_pre2013
+                || fiscal.profile.madre_trabajadora_ss
+                || fiscal.profile.familia_numerosa
+                || (fiscal.profile.donativos_ley_49_2002 ?? 0) > 0
+                || (fiscal.profile.retenciones_trabajo ?? 0) > 0
+                || (fiscal.profile.retenciones_alquiler ?? 0) > 0
+                || (fiscal.profile.retenciones_ahorro ?? 0) > 0) {
+                setShowDeducciones(true)
             }
             if (fiscal.profile.epigrafe_iae || fiscal.profile.regimen_iva || fiscal.profile.metodo_estimacion_irpf) {
                 setShowAutonomo(true)
@@ -560,6 +571,185 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
+                                )}
+
+                                {/* --- Reducciones y Deducciones (collapsible) --- */}
+                                <button type="button" className="collapsible-header" onClick={() => setShowDeducciones(!showDeducciones)}>
+                                    {showDeducciones ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                    <span>Reducciones y deducciones</span>
+                                </button>
+                                {showDeducciones && (
+                                    <div className="collapsible-content">
+
+                                        <h4 className="fiscal-subsection-title">Planes de pensiones</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label>Aportaciones propias</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0" min="0"
+                                                        value={fiscalForm.aportaciones_plan_pensiones ?? ''}
+                                                        onChange={e => updateFiscal('aportaciones_plan_pensiones', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR/año</span>
+                                                </div>
+                                                <span className="form-hint">Max. 1.500 EUR/año (reduce base imponible general)</span>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Aportaciones de la empresa</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0" min="0"
+                                                        value={fiscalForm.aportaciones_plan_pensiones_empresa ?? ''}
+                                                        onChange={e => updateFiscal('aportaciones_plan_pensiones_empresa', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR/año</span>
+                                                </div>
+                                                <span className="form-hint">Límite conjunto con propias: 8.500 EUR</span>
+                                            </div>
+                                        </div>
+
+                                        <h4 className="fiscal-subsection-title">Vivienda habitual (hipoteca anterior a 2013)</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label className="checkbox-label">
+                                                    <input type="checkbox"
+                                                        checked={fiscalForm.hipoteca_pre2013 || false}
+                                                        onChange={e => updateFiscal('hipoteca_pre2013', e.target.checked)} />
+                                                    Hipoteca firmada antes del 1/1/2013
+                                                </label>
+                                                <span className="form-hint">Deducción 15% sobre máx. 9.040 EUR/año</span>
+                                            </div>
+                                        </div>
+                                        {fiscalForm.hipoteca_pre2013 && (
+                                            <div className="form-row">
+                                                <div className="form-group">
+                                                    <label>Capital amortizado en el año</label>
+                                                    <div className="input-with-suffix">
+                                                        <input type="number" className="form-input" placeholder="0" min="0"
+                                                            value={fiscalForm.capital_amortizado_hipoteca ?? ''}
+                                                            onChange={e => updateFiscal('capital_amortizado_hipoteca', e.target.value ? Number(e.target.value) : null)} />
+                                                        <span className="input-suffix">EUR</span>
+                                                    </div>
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Intereses de hipoteca pagados</label>
+                                                    <div className="input-with-suffix">
+                                                        <input type="number" className="form-input" placeholder="0" min="0"
+                                                            value={fiscalForm.intereses_hipoteca ?? ''}
+                                                            onChange={e => updateFiscal('intereses_hipoteca', e.target.value ? Number(e.target.value) : null)} />
+                                                        <span className="input-suffix">EUR</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <h4 className="fiscal-subsection-title">Maternidad</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label className="checkbox-label">
+                                                    <input type="checkbox"
+                                                        checked={fiscalForm.madre_trabajadora_ss || false}
+                                                        onChange={e => updateFiscal('madre_trabajadora_ss', e.target.checked)} />
+                                                    Madre trabajadora dada de alta en la SS
+                                                </label>
+                                                <span className="form-hint">Deducción por maternidad: 1.200 EUR/hijo menor de 3 años</span>
+                                            </div>
+                                            {fiscalForm.madre_trabajadora_ss && (
+                                                <div className="form-group">
+                                                    <label>Gastos de guardería (anual)</label>
+                                                    <div className="input-with-suffix">
+                                                        <input type="number" className="form-input" placeholder="0" min="0"
+                                                            value={fiscalForm.gastos_guarderia_anual ?? ''}
+                                                            onChange={e => updateFiscal('gastos_guarderia_anual', e.target.value ? Number(e.target.value) : null)} />
+                                                        <span className="input-suffix">EUR/año</span>
+                                                    </div>
+                                                    <span className="form-hint">Hasta 1.000 EUR adicionales por hijo en guardería autorizada</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <h4 className="fiscal-subsection-title">Familia numerosa</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label className="checkbox-label">
+                                                    <input type="checkbox"
+                                                        checked={fiscalForm.familia_numerosa || false}
+                                                        onChange={e => updateFiscal('familia_numerosa', e.target.checked)} />
+                                                    Familia numerosa reconocida
+                                                </label>
+                                            </div>
+                                            {fiscalForm.familia_numerosa && (
+                                                <div className="form-group">
+                                                    <label>Tipo de familia numerosa</label>
+                                                    <select className="form-input"
+                                                        value={fiscalForm.tipo_familia_numerosa || 'general'}
+                                                        onChange={e => updateFiscal('tipo_familia_numerosa', e.target.value)}>
+                                                        <option value="general">General (3-4 hijos) — 1.200 EUR</option>
+                                                        <option value="especial">Especial (5+ hijos) — 2.400 EUR</option>
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <h4 className="fiscal-subsection-title">Donativos (Ley 49/2002)</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label>Importe donado</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0" min="0"
+                                                        value={fiscalForm.donativos_ley_49_2002 ?? ''}
+                                                        onChange={e => updateFiscal('donativos_ley_49_2002', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR</span>
+                                                </div>
+                                                <span className="form-hint">ONGs, fundaciones... 80% primeros 250 EUR, 40% resto</span>
+                                            </div>
+                                            {(fiscalForm.donativos_ley_49_2002 ?? 0) > 0 && (
+                                                <div className="form-group">
+                                                    <label className="checkbox-label">
+                                                        <input type="checkbox"
+                                                            checked={fiscalForm.donativo_recurrente || false}
+                                                            onChange={e => updateFiscal('donativo_recurrente', e.target.checked)} />
+                                                        Donante recurrente (3+ años a la misma entidad)
+                                                    </label>
+                                                    <span className="form-hint">Sube al 45% el exceso sobre 250 EUR</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <h4 className="fiscal-subsection-title">Retenciones pagadas</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label>Retenciones del trabajo</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0" min="0"
+                                                        value={fiscalForm.retenciones_trabajo ?? ''}
+                                                        onChange={e => updateFiscal('retenciones_trabajo', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR/año</span>
+                                                </div>
+                                                <span className="form-hint">Total retenido en nómina por tu empresa</span>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Retenciones sobre alquileres</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0" min="0"
+                                                        value={fiscalForm.retenciones_alquiler ?? ''}
+                                                        onChange={e => updateFiscal('retenciones_alquiler', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR/año</span>
+                                                </div>
+                                                <span className="form-hint">19% retenido por inquilinos empresas/profesionales</span>
+                                            </div>
+                                        </div>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label>Retenciones sobre capital mobiliario</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0" min="0"
+                                                        value={fiscalForm.retenciones_ahorro ?? ''}
+                                                        onChange={e => updateFiscal('retenciones_ahorro', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR/año</span>
+                                                </div>
+                                                <span className="form-hint">19% retenido por bancos sobre intereses y dividendos</span>
+                                            </div>
+                                        </div>
+
                                     </div>
                                 )}
 

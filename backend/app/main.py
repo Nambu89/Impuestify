@@ -449,6 +449,10 @@ app.include_router(export_router)
 from app.routers.demo import router as demo_router
 app.include_router(demo_router)
 
+# IRPF Live Estimator (lightweight, no LLM)
+from app.routers.irpf_estimate import router as irpf_estimate_router
+app.include_router(irpf_estimate_router)
+
 # Prometheus instrumentation with custom metrics
 from app.metrics import setup_instrumentator, set_app_info
 setup_instrumentator(app)

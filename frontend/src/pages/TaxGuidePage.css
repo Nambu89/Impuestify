@@ -1,0 +1,392 @@
+/* TaxGuidePage — Mobile-first wizard */
+
+.tax-guide {
+    min-height: 100vh;
+    background: var(--color-gray-50);
+}
+
+/* Layout: single column mobile, sidebar + main desktop */
+.tax-guide__layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--spacing-4);
+    padding-bottom: 100px; /* space for mobile sticky bar */
+}
+
+@media (min-width: 768px) {
+    .tax-guide__layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: var(--spacing-6);
+        padding-bottom: var(--spacing-8);
+    }
+}
+
+/* Sidebar: hidden on mobile, sticky on desktop */
+.tax-guide__sidebar {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .tax-guide__sidebar {
+        display: block;
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+}
+
+/* Mobile sticky bar: visible on mobile, hidden on desktop */
+.tax-guide__mobile-bar {
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .tax-guide__mobile-bar {
+        display: none;
+    }
+}
+
+/* Main content */
+.tax-guide__main {
+    min-width: 0;
+}
+
+/* ====== Progress bar ====== */
+
+.tg-progress {
+    display: flex;
+    gap: var(--spacing-1);
+    margin-bottom: var(--spacing-6);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: var(--spacing-1);
+}
+
+.tg-progress::-webkit-scrollbar {
+    display: none;
+}
+
+.tg-progress__step {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-full);
+    background: var(--color-white);
+    color: var(--color-gray-500);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.tg-progress__step:hover {
+    border-color: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+.tg-progress__step--active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-white);
+}
+
+.tg-progress__step--done {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary-light);
+    color: var(--color-white);
+    opacity: 0.7;
+}
+
+.tg-progress__label {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .tg-progress__label {
+        display: inline;
+    }
+}
+
+/* ====== Step container ====== */
+
+.tg-step-container {
+    background: var(--color-white);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-6);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-gray-200);
+    margin-bottom: var(--spacing-4);
+}
+
+@media (min-width: 768px) {
+    .tg-step-container {
+        padding: var(--spacing-8);
+    }
+}
+
+/* ====== Step content ====== */
+
+.tg-step__title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin: 0 0 var(--spacing-2) 0;
+}
+
+.tg-step__desc {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+    margin: 0 0 var(--spacing-6) 0;
+    line-height: 1.5;
+}
+
+.tg-step__subtitle {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-gray-800);
+    margin: var(--spacing-6) 0 var(--spacing-3) 0;
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--color-gray-100);
+}
+
+.tg-step__subtitle:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+/* ====== Form fields ====== */
+
+.tg-field {
+    margin-bottom: var(--spacing-4);
+}
+
+.tg-field__label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-gray-700);
+    margin-bottom: var(--spacing-1);
+}
+
+.tg-field__input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.tg-field__input,
+.tg-field__select {
+    width: 100%;
+    padding: var(--spacing-3);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-family: var(--font-family);
+    color: var(--color-gray-900);
+    background: var(--color-white);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    -webkit-appearance: none;
+}
+
+.tg-field__input:focus,
+.tg-field__select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+}
+
+.tg-field__suffix {
+    position: absolute;
+    right: var(--spacing-3);
+    color: var(--color-gray-400);
+    font-size: var(--font-size-sm);
+    pointer-events: none;
+}
+
+.tg-field__input {
+    padding-right: 3.5rem;
+}
+
+.tg-field__help {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-400);
+    margin-top: var(--spacing-1);
+}
+
+.tg-field__checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    cursor: pointer;
+}
+
+.tg-field__checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+}
+
+/* ====== Result card ====== */
+
+.tg-result-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-8) var(--spacing-4);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--spacing-6);
+    text-align: center;
+}
+
+.tg-result-card--refund {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 2px solid #6ee7b7;
+}
+
+.tg-result-card--payment {
+    background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+    border: 2px solid #fca5a5;
+}
+
+.tg-result-card__label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--spacing-2);
+}
+
+.tg-result-card--refund .tg-result-card__label { color: #065f46; }
+.tg-result-card--payment .tg-result-card__label { color: #991b1b; }
+
+.tg-result-card__amount {
+    font-size: var(--font-size-4xl);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.tg-result-card--refund .tg-result-card__amount { color: #047857; }
+.tg-result-card--payment .tg-result-card__amount { color: #dc2626; }
+
+@media (max-width: 767px) {
+    .tg-result-card__amount {
+        font-size: var(--font-size-3xl);
+    }
+}
+
+/* ====== Breakdown ====== */
+
+.tg-breakdown {
+    margin-bottom: var(--spacing-4);
+}
+
+.tg-breakdown__title {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color-gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: var(--spacing-4) 0 var(--spacing-2) 0;
+    padding-bottom: var(--spacing-2);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.tg-breakdown__grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.tg-breakdown__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-2) 0;
+    font-size: var(--font-size-sm);
+}
+
+.tg-breakdown__label {
+    color: var(--color-gray-600);
+}
+
+.tg-breakdown__value {
+    font-weight: 600;
+    color: var(--color-gray-900);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ====== Disclaimer ====== */
+
+.tg-disclaimer {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-400);
+    line-height: 1.5;
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--color-gray-100);
+}
+
+/* ====== Navigation ====== */
+
+.tg-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+}
+
+.tg-nav__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding: var(--spacing-3) var(--spacing-5);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+}
+
+.tg-nav__btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tg-nav__btn--primary {
+    background: var(--color-primary);
+    color: var(--color-white);
+}
+
+.tg-nav__btn--primary:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+}
+
+.tg-nav__btn--secondary {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.tg-nav__btn--secondary:hover:not(:disabled) {
+    background: var(--color-gray-200);
+}
+
+.tg-nav__btn--ghost {
+    background: transparent;
+    color: var(--color-gray-400);
+    padding: var(--spacing-2);
+}
+
+.tg-nav__btn--ghost:hover {
+    color: var(--color-error);
+    background: rgba(239, 68, 68, 0.05);
+}

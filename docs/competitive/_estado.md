@@ -115,6 +115,16 @@
 - ~~Colaborador Social AEAT~~ — no es prioritario
 - Posicionamiento: complemento del asesor, no sustituto
 
+## Analisis de Pricing (2026-03-06)
+
+- [2026-03-06] **Investigacion precios plan Autonomo** — completado. Informe en `plans/pricing-research-autonomo-2026-03.md`
+  - Precios actualizados: TaxDown (29.90/59.90 EUR/mes), Declarando (29.90-49.90 EUR/mes oferta), Taxfix (39.90 EUR/mes), Abaq (39 EUR/mes), Fiscaliza (25.90-60.90 EUR/mes)
+  - Asesores tradicionales: 40-80 EUR/mes basico, 80-150 EUR/mes estandar
+  - Software de facturacion (competencia indirecta): 10-50 EUR/mes
+  - **Recomendacion**: 39 EUR/mes (fase actual, sin presentacion AEAT) — 59 EUR/mes con Colaborador Social
+  - **NO recomendado 200 EUR/mes** en fase actual sin presentacion telematica
+  - Nicho foral (1.6M declarantes PV+Navarra) sigue siendo diferenciador principal
+
 ## Pendiente para proxima sesion
 
 - [ ] Comparativa detallada vs Declarando (siguiente competidor)
@@ -124,4 +134,4 @@
 - [ ] Probar AsesorIA de TaxDown en vivo (benchmark preguntas fiscales)
 - [ ] Analizar trafico web competidores (SimilarWeb)
 - [ ] Analizar estrategia SEO de competidores
-- [ ] Investigar precios actualizados Declarando y Taxfix
+- [ ] Investigar posibles competidores IA nuevos (GestorIA, CAIFIS, otros)

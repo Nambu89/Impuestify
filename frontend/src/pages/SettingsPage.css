@@ -361,6 +361,15 @@ select.form-input {
     border-bottom: 1px solid var(--color-gray-200);
 }
 
+.fiscal-subsection-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-gray-700);
+    margin: var(--spacing-4) 0 var(--spacing-2) 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 .fiscal-loading {
     display: flex;
     align-items: center;

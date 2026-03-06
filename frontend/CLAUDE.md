@@ -23,7 +23,9 @@ cd frontend && npm run build # Must pass before any commit
 | `useStreamingChat` | hooks/useStreamingChat.ts | SSE v3.0: `content_chunk` append + `content` replace. `responseAccRef` (useRef) avoids stale closures. `TimelineStep[]` for StreamingTimeline |
 | `useWorkspaces` | hooks/useWorkspaces.ts | Workspace CRUD, file upload, active workspace state |
 | `useSubscription` | hooks/useSubscription.ts | Stripe: status, createCheckout, openPortal |
-| `useFiscalProfile` | hooks/useFiscalProfile.ts | Fiscal profile CRUD (12 autonomo fields) |
+| `useFiscalProfile` | hooks/useFiscalProfile.ts | Fiscal profile CRUD. Includes Phase 1+2 fields (planes_pensiones, hipoteca_pre2013, maternidad, familia_numerosa, donativos, tributacion_conjunta, alquiler_pre2015, rentas_imputadas) |
+| `useIrpfEstimator` | hooks/useIrpfEstimator.ts | **NEW**: Debounced calls (600ms) to POST /api/irpf/estimate. Returns cuota, type ("a_pagar"/"a_devolver"), loading state |
+| `useTaxGuideProgress` | hooks/useTaxGuideProgress.ts | **NEW**: 7-step wizard state with localStorage persistence for /guia-fiscal |
 
 ## Key Components
 
@@ -40,6 +42,8 @@ cd frontend && npm run build # Must pass before any commit
 | `ProtectedRoute.tsx` | Auth + subscription guard. `requireSubscription={false}` for auth-only routes |
 | `WorkspacesPage.tsx` | Workspace management + file list |
 | `AdminUsersPage.tsx` | Owner-only user admin (/admin/users). Cards mobile, table desktop (1024px breakpoint) |
+| `TaxGuidePage.tsx` | **NEW**: 7-step IRPF wizard (/guia-fiscal). Steps: personal, trabajo, ahorro, inmuebles, familia, deducciones, resultado. Protected route, lazy loaded |
+| `LiveEstimatorBar.tsx` | **NEW**: Sticky bottom bar (mobile) / sidebar (desktop). Green = a devolver, red = a pagar. Powered by useIrpfEstimator |
 
 ## SSE Event Format
 
@@ -96,6 +100,8 @@ try {
 ## Common Frontend Tasks
 
 **Add a new page:** Create `pages/MyPage.tsx`, add route in `App.tsx` inside `ProtectedRoute` (with `requireSubscription` if needed), add nav link in `Header.tsx`.
+
+**Routes (App.tsx):** `/` (landing), `/login`, `/register`, `/chat`, `/workspaces`, `/settings`, `/subscribe`, `/guia-fiscal` (lazy, protected), `/admin/users` (owner-only).
 
 **Add a new hook:** Create `hooks/useMyHook.ts`, use `useApi()` for API calls with token refresh.
 

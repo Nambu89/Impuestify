@@ -162,12 +162,14 @@ def build_document():
     add_styled_table(doc,
         ['Métrica', 'Valor'],
         [
-            ['Deducciones fiscales cubiertas', '131 (16 estatales + 115 territoriales)'],
+            ['Deducciones fiscales cubiertas', '64 (16 estatales + 48 territoriales en 8 CCAA)'],
             ['Territorios cubiertos', '20 (17 CCAA + 3 forales + Ceuta/Melilla)'],
             ['Documentos oficiales en RAG', '428+ (AEAT, BOE, Diputaciones Forales)'],
-            ['Agentes IA especializados', '4 (Fiscal, Nóminas, Notificaciones, Workspace)'],
+            ['Agentes IA especializados', '4 + 1 Coordinator'],
             ['Tests automatizados', '352 (100% passing)'],
             ['Stack tecnológico', 'FastAPI + React + OpenAI GPT + RAG avanzado'],
+            ['Simulador IRPF completo', 'Fase 1+2: trabajo, ahorro, inmuebles, familia, deducciones, retenciones'],
+            ['Guía Fiscal interactiva', 'Wizard 7 pasos con estimación IRPF en tiempo real'],
             ['Plan Particular', '5 EUR/mes'],
             ['Plan Autónomo', '39 EUR/mes (IVA incluido)'],
         ],
@@ -255,6 +257,7 @@ def build_document():
     add_styled_table(doc,
         ['Agente', 'Función', 'Herramientas'],
         [
+            ['CoordinatorAgent', 'Router inteligente, clasifica consultas', 'Routing automático a agente especializado'],
             ['TaxAgent', 'Consultas fiscales generales, IRPF, IVA, deducciones',
              'calculate_irpf, discover_deductions, simulate_irpf, calculate_modelo_303'],
             ['PayslipAgent', 'Análisis de nóminas en PDF',
@@ -270,7 +273,7 @@ def build_document():
     doc.add_paragraph(
         'Cada respuesta se genera a partir de 428+ documentos oficiales indexados: '
         'normativa AEAT, BOE, leyes de CCAA, Normas Forales de cada Diputacion, y '
-        'manuales prácticos. El sistema realiza búsqueda hibrida (semántica + BM25) '
+        'manuales prácticos. El sistema realiza búsqueda híbrida (semántica + BM25 + FTS5) '
         'para recuperar los fragmentos más relevantes y cita la fuente en cada respuesta.'
     )
 
@@ -297,11 +300,33 @@ def build_document():
             ['IA', 'OpenAI GPT-5-mini / GPT-5, embeddings text-embedding-3-large'],
             ['Base de datos', 'Turso (SQLite distribuido, edge-first)'],
             ['Cache', 'Upstash Redis + Upstash Vector (cache semántico)'],
-            ['Pagos', 'Stripe (suscripciones, portal de gestión)'],
+            ['Pagos', 'Stripe (suscripciones + portal gestión)'],
+            ['PDF Export', 'ReportLab (informes IRPF)'],
+            ['Email', 'Resend (envío informes a asesor)'],
             ['Despliegue', 'Railway (backend) + Vercel/Railway (frontend)'],
             ['Seguridad IA', 'Groq (Llama Guard 4 + Prompt Guard 2, gratuito)'],
         ]
     )
+
+    doc.add_heading('4.5 Simulador IRPF Completo', level=2)
+    doc.add_paragraph(
+        'Impuestify incluye un motor de cálculo IRPF que cubre todos los tramos '
+        'estatales y autonómicos de los 20 territorios soportados. El simulador se '
+        'organiza en dos fases:'
+    )
+    phase_items = [
+        'Fase 1: Rendimientos del trabajo, del ahorro y de inmuebles. '
+        'Reducciones por planes de pensiones. Deducciones: hipoteca pre-2013, '
+        'maternidad, familia numerosa, donativos.',
+        'Fase 2: Tributación conjunta, alquiler habitual pre-2015, rentas imputadas '
+        'por inmuebles a disposición.',
+        'REST endpoint /api/irpf/estimate con debounce y AbortController para '
+        'estimación en tiempo real sin saturar el servidor.',
+        'Guía Fiscal: wizard interactivo de 7 pasos con LiveEstimatorBar que muestra '
+        'la estimación IRPF actualizada en cada paso del proceso.',
+    ]
+    for item in phase_items:
+        doc.add_paragraph(item, style='List Bullet')
 
     doc.add_page_break()
 
@@ -461,9 +486,11 @@ def build_document():
         ('Usuarios registrados', '13 (fase alpha privada)'),
         ('Tests automatizados', '352 tests, 100% passing'),
         ('Documentos RAG indexados', '428+ (PDFs oficiales de toda España)'),
-        ('Deducciones fiscales', '131 activas en 20 territorios'),
-        ('Agentes IA operativos', '4 (TaxAgent, PayslipAgent, NotificationAgent, WorkspaceAgent)'),
-        ('Herramientas IA', '7 (IRPF, deducciones, RETA, IVA, Mod.130, búsqueda, simulación)'),
+        ('Deducciones fiscales', '64 activas en 20 territorios'),
+        ('Agentes IA operativos', '4 + 1 Coordinator (TaxAgent, PayslipAgent, NotificationAgent, WorkspaceAgent, CoordinatorAgent)'),
+        ('Herramientas IA', '10+ (IRPF, deducciones, RETA, IVA, Mod.130, búsqueda, simulación IRPF, export PDF, email asesor, guía fiscal)'),
+        ('Simulador IRPF', 'Completo: Fase 1+2 implementadas, 64 deducciones, 20 territorios'),
+        ('Guía Fiscal', 'Wizard 7 pasos con estimación en tiempo real'),
         ('Seguridad', '12 capas de seguridad activas (rate limit, JWT, guardrails IA, PII, etc.)'),
         ('PWA', 'Instalable en móvil, offline-first para assets'),
         ('Pagos', 'Stripe integrado con 2 planes operativos'),
@@ -491,7 +518,8 @@ def build_document():
         [
             ['Fase 1: Captación forales',
              '0-3 meses',
-             'SEO foral, landing territoriales, showcase nóminas, motor 150+ deducciones, app móvil PWA+',
+             'SEO foral, landing territoriales, showcase nóminas, motor 64 deducciones activas expandiendo a 150+, '
+             'Simulador IRPF completo (IMPLEMENTADO), Guía Fiscal interactiva (IMPLEMENTADO), app móvil PWA+',
              'Sin cambio (5/39 EUR)'],
             ['Fase 2: Colaborador Social AEAT',
              '3-6 meses',
