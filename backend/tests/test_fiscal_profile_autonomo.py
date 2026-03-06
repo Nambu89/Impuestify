@@ -8,60 +8,41 @@ Tests cover:
 - Fiscal profile formatting for agent prompts
 """
 import sys
-import os
 import pytest
-from unittest.mock import AsyncMock
-import types
-import importlib.util
+from unittest.mock import MagicMock
 import json
 
 
 # ---------------------------------------------------------------------------
-# Module loading helpers
+# Patch heavy dependencies that may not be installed in the test environment
+# before importing any app modules.
 # ---------------------------------------------------------------------------
 
-def _load_module_direct(name: str, file_path: str):
-    spec = importlib.util.spec_from_file_location(name, file_path)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
+def _ensure_mock(module_name, **attrs):
+    """Insert a MagicMock into sys.modules if the real module is absent."""
+    if module_name not in sys.modules:
+        mock = MagicMock()
+        for k, v in attrs.items():
+            setattr(mock, k, v)
+        sys.modules[module_name] = mock
 
+# jose / bcrypt / slowapi are optional in unit-test environments
+_ensure_mock("jose")
+_ensure_mock("jose.exceptions")
+_ensure_mock("bcrypt")
+_ensure_mock("slowapi")
+_ensure_mock("slowapi.util")
+_ensure_mock("slowapi.errors")
 
-for pkg in (
-    "app", "app.routers", "app.auth", "app.database",
-    "app.services", "app.config", "app.security",
-):
-    if pkg not in sys.modules:
-        sys.modules[pkg] = types.ModuleType(pkg)
+# ---------------------------------------------------------------------------
+# Direct imports from the real modules
+# ---------------------------------------------------------------------------
 
-_backend = os.path.join(os.path.dirname(__file__), "..")
-
-# Stub jwt_handler and password modules
-jwt_stub = types.ModuleType("app.auth.jwt_handler")
-jwt_stub.get_current_user = lambda: None
-jwt_stub.TokenData = type("TokenData", (), {})
-sys.modules["app.auth.jwt_handler"] = jwt_stub
-
-pwd_stub = types.ModuleType("app.auth.password")
-pwd_stub.hash_password = lambda x: x
-pwd_stub.verify_password = lambda x, y: x == y
-sys.modules["app.auth.password"] = pwd_stub
-
-db_stub = types.ModuleType("app.database.turso_client")
-db_stub.get_db_client = lambda: None
-db_stub.TursoClient = type("TursoClient", (), {})
-sys.modules["app.database.turso_client"] = db_stub
-
-# Load the module under test
-_user_rights_mod = _load_module_direct(
-    "app.routers.user_rights",
-    os.path.join(_backend, "app", "routers", "user_rights.py"),
+from app.routers.user_rights import (  # noqa: E402
+    FiscalProfileRequest,
+    _DATOS_FISCALES_KEYS,
+    _PROFILE_COLUMNS,
 )
-
-FiscalProfileRequest = _user_rights_mod.FiscalProfileRequest
-_DATOS_FISCALES_KEYS = _user_rights_mod._DATOS_FISCALES_KEYS
-_PROFILE_COLUMNS = _user_rights_mod._PROFILE_COLUMNS
 
 
 # ---------------------------------------------------------------------------

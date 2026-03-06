@@ -5,7 +5,7 @@
  * Best practices: Visible on all pages, accessible, clear links
  */
 import { Link } from 'react-router-dom';
-import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle, Cookie, Settings } from 'lucide-react';
+import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle, Cookie, Settings, Map } from 'lucide-react';
 import { showCookiePreferences } from './CookieConsent';
 import './Footer.css';
 
@@ -60,6 +60,24 @@ export default function Footer() {
                                 <Link to="/politica-cookies">
                                     <Cookie size={16} className="link-icon" />
                                     Política de Cookies
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div className="footer-section">
+                        <h4>Territorios</h4>
+                        <ul className="footer-links">
+                            <li>
+                                <Link to="/territorios-forales">
+                                    <Map size={16} className="link-icon" />
+                                    País Vasco y Navarra
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/ceuta-melilla">
+                                    <Map size={16} className="link-icon" />
+                                    Ceuta y Melilla
                                 </Link>
                             </li>
                         </ul>

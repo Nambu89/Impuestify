@@ -10,40 +10,9 @@ import sys
 import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-import types
-import importlib.util
 
-
-# ---------------------------------------------------------------------------
-# Module loading (bypass __init__.py dependency tree)
-# ---------------------------------------------------------------------------
-
-def _load_module_direct(name: str, file_path: str):
-    """Load a single Python module from file, bypassing package __init__.py."""
-    spec = importlib.util.spec_from_file_location(name, file_path)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
-
-
-for pkg in (
-    "app", "app.routers", "app.auth", "app.database",
-    "app.services", "app.config",
-):
-    if pkg not in sys.modules:
-        sys.modules[pkg] = types.ModuleType(pkg)
-
-_backend = os.path.join(os.path.dirname(__file__), "..")
-
-# Stub out modules that admin.py imports
-_config_mod = _load_module_direct(
-    "app.config",
-    os.path.join(_backend, "app", "config.py"),
-)
-
-# We test at the function level, so import the models directly
-_admin_path = os.path.join(_backend, "app", "routers", "admin.py")
+# Import admin router directly (no sys.modules hacking)
+from app.routers.admin import ChangePlanRequest, VALID_PLAN_TYPES
 
 
 # ---------------------------------------------------------------------------

@@ -12,48 +12,39 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
 from dataclasses import asdict
 
-# The package __init__.py files (app.services, app.security) import the entire
-# dependency tree (jose, bcrypt, slowapi, …) which may not be installed in the
-# test venv. We bypass __init__.py by loading specific modules directly.
-import importlib.util
-import types
 
-def _load_module_direct(name: str, file_path: str):
-    """Load a single Python module from file, bypassing package __init__.py."""
-    spec = importlib.util.spec_from_file_location(name, file_path)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
+# ---------------------------------------------------------------------------
+# Patch heavy dependencies before importing app modules.
+# subscription_service only needs app.config (pydantic Settings).
+# content_restriction has no heavy deps.
+# ---------------------------------------------------------------------------
 
-# Ensure the top-level packages exist as empty namespace entries so that
-# `from app.X.Y import Z` inside the target modules resolves correctly.
-for pkg in ("app", "app.services", "app.security", "app.config"):
-    if pkg not in sys.modules:
-        sys.modules[pkg] = types.ModuleType(pkg)
+def _ensure_mock(module_name, **attrs):
+    """Insert a MagicMock into sys.modules if the real module is absent."""
+    if module_name not in sys.modules:
+        mock = MagicMock()
+        for k, v in attrs.items():
+            setattr(mock, k, v)
+        sys.modules[module_name] = mock
 
-# Load app.config (subscription_service depends on it)
-import os
-_backend = os.path.join(os.path.dirname(__file__), "..")
-_config_mod = _load_module_direct(
-    "app.config",
-    os.path.join(_backend, "app", "config.py"),
+# These may not be installed in the test venv
+_ensure_mock("jose")
+_ensure_mock("jose.exceptions")
+_ensure_mock("bcrypt")
+_ensure_mock("slowapi")
+_ensure_mock("slowapi.util")
+_ensure_mock("slowapi.errors")
+_ensure_mock("stripe")
+
+# ---------------------------------------------------------------------------
+# Direct imports from the real modules
+# ---------------------------------------------------------------------------
+
+from app.services.subscription_service import SubscriptionService, SubscriptionAccess  # noqa: E402
+from app.security.content_restriction import (  # noqa: E402
+    detect_autonomo_query,
+    get_autonomo_block_response,
 )
-
-# Load the two modules we actually test
-_sub_mod = _load_module_direct(
-    "app.services.subscription_service",
-    os.path.join(_backend, "app", "services", "subscription_service.py"),
-)
-_cr_mod = _load_module_direct(
-    "app.security.content_restriction",
-    os.path.join(_backend, "app", "security", "content_restriction.py"),
-)
-
-SubscriptionService = _sub_mod.SubscriptionService
-SubscriptionAccess = _sub_mod.SubscriptionAccess
-detect_autonomo_query = _cr_mod.detect_autonomo_query
-get_autonomo_block_response = _cr_mod.get_autonomo_block_response
 
 
 # ---------------------------------------------------------------------------

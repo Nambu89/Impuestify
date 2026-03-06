@@ -82,6 +82,12 @@
 
 ## Tareas activas
 
+[2026-03-06] [PM] 🟢 DONE — Sesion QA completa. 2 usuarios de test creados (particular Madrid + autonomo Cataluna). 17 tests ejecutados: 15 PASS, 2 FAIL. Fix CSP header (main.py). Informe en `plans/qa-report-2026-03-06.md`. Seed script: `backend/scripts/seed_test_users.py`.
+
+[2026-03-06] [PM] 🟢 DONE — Analisis competitivo TaxDown. GAP CRITICO confirmado: NO cubren forales (Pais Vasco + Navarra + Ceuta/Melilla = ~1.6M declarantes). Impuestify SI. Informe en `plans/competitive-taxdown-2026-03.md`.
+
+[2026-03-06] [PM] 🟢 DONE — Tests unitarios arreglados: 350/352 PASS (antes: 0/0, 15 collection errors). Root cause: `test_admin.py` inyectaba `types.ModuleType` falsos en `sys.modules`. Fix: imports directos + `import_mode=importlib` en pytest.ini. Tambien faltaba `app/utils/__init__.py`.
+
 [2026-03-05] [BACKEND] 🟢 DONE — Fix: TaxAgent ahora verifica situacion_laboral antes de usar herramientas de autonomos. System prompt actualizado con reglas de clarificacion obligatoria. `tax_agent.py` modificado.
 
 [2026-03-05] [BACKEND] 🟢 DONE — Fix: FOREIGN KEY constraint en message_sources. `conversation_service.py` ahora valida chunk_ids antes de insertar. Degrada gracefully si chunks no existen en BD.

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import {
     MessageSquare, Shield, FileText, ArrowRight, Calculator, CreditCard,
-    CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap
+    CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
@@ -13,27 +13,27 @@ import StarBorder from '../components/reactbits/StarBorder'
 import './Home.css'
 
 const TERRITORIES = [
-    { name: 'Andalucia', foral: false },
-    { name: 'Aragon', foral: false },
-    { name: 'Asturias', foral: false },
-    { name: 'Baleares', foral: false },
-    { name: 'Canarias', foral: false },
-    { name: 'Cantabria', foral: false },
-    { name: 'Castilla-La Mancha', foral: false },
-    { name: 'Castilla y Leon', foral: false },
-    { name: 'Cataluna', foral: false },
-    { name: 'C. Valenciana', foral: false },
-    { name: 'Extremadura', foral: false },
-    { name: 'Galicia', foral: false },
-    { name: 'Madrid', foral: false },
-    { name: 'Murcia', foral: false },
-    { name: 'La Rioja', foral: false },
-    { name: 'Ceuta', foral: false },
-    { name: 'Melilla', foral: false },
-    { name: 'Araba', foral: true },
-    { name: 'Bizkaia', foral: true },
-    { name: 'Gipuzkoa', foral: true },
-    { name: 'Navarra', foral: true },
+    { name: 'Andalucia', foral: false, link: null },
+    { name: 'Aragon', foral: false, link: null },
+    { name: 'Asturias', foral: false, link: null },
+    { name: 'Baleares', foral: false, link: null },
+    { name: 'Canarias', foral: false, link: null },
+    { name: 'Cantabria', foral: false, link: null },
+    { name: 'Castilla-La Mancha', foral: false, link: null },
+    { name: 'Castilla y Leon', foral: false, link: null },
+    { name: 'Cataluna', foral: false, link: null },
+    { name: 'C. Valenciana', foral: false, link: null },
+    { name: 'Extremadura', foral: false, link: null },
+    { name: 'Galicia', foral: false, link: null },
+    { name: 'Madrid', foral: false, link: null },
+    { name: 'Murcia', foral: false, link: null },
+    { name: 'La Rioja', foral: false, link: null },
+    { name: 'Ceuta', foral: false, link: '/ceuta-melilla' },
+    { name: 'Melilla', foral: false, link: '/ceuta-melilla' },
+    { name: 'Araba', foral: true, link: '/territorios-forales' },
+    { name: 'Bizkaia', foral: true, link: '/territorios-forales' },
+    { name: 'Gipuzkoa', foral: true, link: '/territorios-forales' },
+    { name: 'Navarra', foral: true, link: '/territorios-forales' },
 ]
 
 export default function Home() {

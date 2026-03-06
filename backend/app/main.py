@@ -339,12 +339,12 @@ async def add_security_headers(request: Request, call_next):
     # Prevents XSS by restricting resource loading
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "  # Allow inline scripts for Swagger UI
-        "style-src 'self' 'unsafe-inline'; "  # Allow inline styles
-        "img-src 'self' data: https:; "  # Allow external images
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
         "font-src 'self' data:; "
         "connect-src 'self'; "
-        "frame-ancestors 'none'; "  # Prevent framing
+        "frame-ancestors 'none'"
     )
     
     # Prevent MIME type sniffing

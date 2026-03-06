@@ -10,85 +10,43 @@ Tests cover:
 - Agent label_map includes ceuta_melilla
 """
 import sys
-import os
-import types
-import importlib.util
 import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-
+from unittest.mock import MagicMock
 
 # ---------------------------------------------------------------------------
-# Module loading helpers (same pattern as test_fiscal_profile_autonomo.py)
+# Patch heavy dependencies that may not be installed in the test environment
+# before importing any app modules.
 # ---------------------------------------------------------------------------
 
-def _load_module_direct(name: str, file_path: str):
-    spec = importlib.util.spec_from_file_location(name, file_path)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
+def _ensure_mock(module_name, **attrs):
+    """Insert a MagicMock into sys.modules if the real module is absent."""
+    if module_name not in sys.modules:
+        mock = MagicMock()
+        for k, v in attrs.items():
+            setattr(mock, k, v)
+        sys.modules[module_name] = mock
 
+# jose / bcrypt / slowapi are optional in unit-test environments
+_ensure_mock("jose")
+_ensure_mock("jose.exceptions")
+_ensure_mock("bcrypt")
+_ensure_mock("slowapi")
+_ensure_mock("slowapi.util")
+_ensure_mock("slowapi.errors")
 
-for pkg in (
-    "app", "app.routers", "app.auth", "app.database",
-    "app.services", "app.config", "app.security",
-    "app.tools", "app.utils",
-):
-    if pkg not in sys.modules:
-        sys.modules[pkg] = types.ModuleType(pkg)
+# httpx / bs4 / openai are required by web_scraper_tool
+_ensure_mock("httpx", AsyncClient=MagicMock)
+_ensure_mock("bs4", BeautifulSoup=MagicMock)
+_ensure_mock("openai", OpenAI=MagicMock)
 
-_backend = os.path.join(os.path.dirname(__file__), "..")
+# ---------------------------------------------------------------------------
+# Direct imports from the real modules
+# ---------------------------------------------------------------------------
 
-# Stub jwt_handler and password modules
-jwt_stub = types.ModuleType("app.auth.jwt_handler")
-jwt_stub.get_current_user = lambda: None
-jwt_stub.TokenData = type("TokenData", (), {})
-sys.modules["app.auth.jwt_handler"] = jwt_stub
-
-pwd_stub = types.ModuleType("app.auth.password")
-pwd_stub.hash_password = lambda x: x
-pwd_stub.verify_password = lambda x, y: x == y
-sys.modules["app.auth.password"] = pwd_stub
-
-db_stub = types.ModuleType("app.database.turso_client")
-db_stub.get_db_client = lambda: None
-db_stub.TursoClient = type("TursoClient", (), {})
-sys.modules["app.database.turso_client"] = db_stub
-
-# Load user_rights module
-_user_rights_mod = _load_module_direct(
-    "app.routers.user_rights",
-    os.path.join(_backend, "app", "routers", "user_rights.py"),
-)
-FiscalProfileRequest = _user_rights_mod.FiscalProfileRequest
-_DATOS_FISCALES_KEYS = _user_rights_mod._DATOS_FISCALES_KEYS
-
-# Load content_restriction module
-_content_restriction_mod = _load_module_direct(
-    "app.security.content_restriction",
-    os.path.join(_backend, "app", "security", "content_restriction.py"),
-)
-detect_autonomo_query = _content_restriction_mod.detect_autonomo_query
-
-# Load web_scraper_tool for CCAA normalization
-# Stub dependencies first
-httpx_stub = types.ModuleType("httpx")
-httpx_stub.AsyncClient = MagicMock
-sys.modules.setdefault("httpx", httpx_stub)
-bs4_stub = types.ModuleType("bs4")
-bs4_stub.BeautifulSoup = MagicMock
-sys.modules.setdefault("bs4", bs4_stub)
-openai_stub = types.ModuleType("openai")
-openai_stub.OpenAI = MagicMock
-sys.modules.setdefault("openai", openai_stub)
-
-_web_scraper_mod = _load_module_direct(
-    "app.tools.web_scraper_tool",
-    os.path.join(_backend, "app", "tools", "web_scraper_tool.py"),
-)
-normalize_ccaa_name = _web_scraper_mod.normalize_ccaa_name
-CCAA_NORMALIZATION = _web_scraper_mod.CCAA_NORMALIZATION
+from app.routers.user_rights import FiscalProfileRequest, _DATOS_FISCALES_KEYS  # noqa: E402
+from app.security.content_restriction import detect_autonomo_query  # noqa: E402
+from app.tools.web_scraper_tool import normalize_ccaa_name, CCAA_NORMALIZATION  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

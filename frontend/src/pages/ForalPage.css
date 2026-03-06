@@ -1,0 +1,505 @@
+/* ForalPage Styles - MOBILE FIRST */
+
+.foral-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+}
+
+/* Back link */
+.foral-back {
+    padding: var(--spacing-4) 0 0;
+    background: var(--color-white);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.foral-back__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    padding-bottom: var(--spacing-3);
+}
+
+.foral-back__link:hover {
+    color: var(--color-primary);
+    transform: translateX(-3px);
+}
+
+/* ========== HERO ========== */
+.foral-hero {
+    padding: var(--spacing-12) 0;
+    background: var(--color-white);
+    text-align: center;
+    overflow: hidden;
+}
+
+.foral-hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-4);
+    background: linear-gradient(
+        135deg,
+        rgba(26, 86, 219, 0.1) 0%,
+        rgba(6, 182, 212, 0.1) 100%
+    );
+    border-radius: var(--radius-full);
+    color: var(--color-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    margin-bottom: var(--spacing-4);
+}
+
+.foral-hero__title {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: var(--spacing-4);
+    color: var(--color-gray-900);
+}
+
+.foral-hero__gradient {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
+.foral-hero__subtitle {
+    font-size: var(--font-size-base);
+    color: var(--color-gray-600);
+    max-width: 640px;
+    margin: 0 auto var(--spacing-8);
+    line-height: 1.7;
+}
+
+.foral-hero__subtitle strong {
+    color: var(--color-primary);
+}
+
+.foral-hero__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.foral-hero__actions .btn {
+    width: 100%;
+    max-width: 280px;
+}
+
+/* ========== WHY FORAL ========== */
+.foral-why {
+    padding: var(--spacing-12) 0;
+    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+}
+
+.foral-why__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-8);
+}
+
+.foral-why__card {
+    padding: var(--spacing-6);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-gray-200);
+    position: relative;
+    z-index: 0;
+}
+
+.foral-why__card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(
+        135deg,
+        var(--color-primary) 0%,
+        var(--color-accent) 100%
+    );
+    color: var(--color-white);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--spacing-4);
+    position: relative;
+    z-index: 2;
+}
+
+.foral-why__card h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--spacing-3);
+    color: var(--color-gray-900);
+    position: relative;
+    z-index: 2;
+}
+
+.foral-why__card p {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: 1.6;
+    margin: 0;
+    position: relative;
+    z-index: 2;
+}
+
+/* ========== TERRITORY CARDS ========== */
+.foral-territories {
+    padding: var(--spacing-12) 0;
+    background: var(--color-white);
+}
+
+.foral-territories__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-8);
+}
+
+/* ========== TRAMOS ========== */
+.foral-tramos {
+    padding: var(--spacing-12) 0;
+    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+}
+
+.foral-tramos__tables {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-8);
+}
+
+.foral-tramos__table-wrap {
+    background: var(--color-white);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-6);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-gray-200);
+    overflow-x: auto;
+}
+
+.foral-tramos__table-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin-bottom: var(--spacing-4);
+    padding-bottom: var(--spacing-3);
+    border-bottom: 2px solid var(--color-gray-200);
+}
+
+.foral-table {
+    width: 100%;
+    min-width: 300px;
+    border-collapse: collapse;
+    background: var(--color-gray-50);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font-size: 13px;
+}
+
+.foral-table thead {
+    background: linear-gradient(
+        135deg,
+        var(--color-primary) 0%,
+        var(--color-primary-dark) 100%
+    );
+    color: var(--color-white);
+}
+
+.foral-table th,
+.foral-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.foral-table th {
+    font-weight: 600;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.foral-table td {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}
+
+.foral-table tbody tr:hover {
+    background: var(--color-gray-100);
+}
+
+.foral-tramos__note {
+    margin-top: var(--spacing-4);
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-400);
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* ========== COMPARISON TABLE ========== */
+.foral-comparison {
+    padding: var(--spacing-12) 0;
+    background: var(--color-white);
+}
+
+.foral-comparison__table-wrap {
+    margin-top: var(--spacing-8);
+    overflow-x: auto;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-gray-200);
+}
+
+.foral-comparison__table {
+    width: 100%;
+    min-width: 540px;
+    border-collapse: collapse;
+    background: var(--color-white);
+    font-size: var(--font-size-sm);
+}
+
+.foral-comparison__table thead {
+    background: linear-gradient(
+        135deg,
+        var(--color-gray-800) 0%,
+        var(--color-gray-900) 100%
+    );
+    color: var(--color-white);
+}
+
+.foral-comparison__table th {
+    padding: var(--spacing-3) var(--spacing-4);
+    text-align: center;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.foral-comparison__table th:first-child {
+    text-align: left;
+}
+
+.foral-comparison__table td {
+    padding: var(--spacing-3) var(--spacing-4);
+    text-align: center;
+    border-bottom: 1px solid var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.foral-comparison__table td:first-child {
+    text-align: left;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.foral-comparison__table tbody tr:hover {
+    background: var(--color-gray-50);
+}
+
+.foral-comparison__row--highlight {
+    background: linear-gradient(
+        90deg,
+        rgba(26, 86, 219, 0.05) 0%,
+        rgba(6, 182, 212, 0.05) 100%
+    ) !important;
+}
+
+.foral-comparison__row--highlight td {
+    border-bottom: 1px solid rgba(26, 86, 219, 0.15);
+}
+
+.foral-comparison__icon-yes {
+    color: var(--color-success);
+    display: inline-block;
+}
+
+.foral-comparison__icon-no {
+    color: var(--color-gray-300);
+    display: inline-block;
+}
+
+.foral-comparison__icon-brand {
+    color: var(--color-primary);
+}
+
+.foral-comparison__partial {
+    font-size: var(--font-size-xs);
+    color: var(--color-warning);
+    font-weight: 600;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 2px var(--spacing-2);
+    border-radius: var(--radius-sm);
+}
+
+/* ========== FAQ ========== */
+.foral-faq {
+    padding: var(--spacing-12) 0;
+    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+}
+
+.foral-faq__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-8);
+}
+
+.foral-faq__item {
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-6);
+    transition: all var(--transition-base);
+}
+
+.foral-faq__item:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-md);
+}
+
+.foral-faq__item h3 {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin-bottom: var(--spacing-3);
+    line-height: 1.4;
+}
+
+.foral-faq__item p {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* ========== CTA ========== */
+.foral-cta {
+    padding: var(--spacing-12) 0;
+    background: var(--color-white);
+}
+
+.foral-cta__card {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    padding: var(--spacing-10) var(--spacing-6);
+    background: linear-gradient(
+        135deg,
+        var(--color-secondary) 0%,
+        var(--color-gray-800) 100%
+    );
+    border-radius: var(--radius-2xl);
+    color: var(--color-white);
+}
+
+.foral-cta__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(
+        135deg,
+        var(--color-primary) 0%,
+        var(--color-accent) 100%
+    );
+    border-radius: var(--radius-2xl);
+    margin-bottom: var(--spacing-6);
+}
+
+.foral-cta__card h2 {
+    color: var(--color-white);
+    margin-bottom: var(--spacing-4);
+    font-size: var(--font-size-2xl);
+}
+
+.foral-cta__card p {
+    color: var(--color-gray-300);
+    margin-bottom: var(--spacing-6);
+    font-size: var(--font-size-base);
+}
+
+.foral-cta__note {
+    margin-top: var(--spacing-3);
+    font-size: var(--font-size-xs) !important;
+    color: var(--color-gray-500) !important;
+    margin-bottom: 0 !important;
+}
+
+/* ========== TABLET (768px+) ========== */
+@media (min-width: 768px) {
+    .foral-hero {
+        padding: var(--spacing-16) 0;
+    }
+
+    .foral-hero__title {
+        font-size: var(--font-size-4xl);
+    }
+
+    .foral-hero__subtitle {
+        font-size: var(--font-size-lg);
+    }
+
+    .foral-hero__actions {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .foral-hero__actions .btn {
+        width: auto;
+        max-width: none;
+    }
+
+    .foral-why__grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .foral-territories__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .foral-tramos__tables {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .foral-faq__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .foral-cta__card {
+        padding: var(--spacing-12) var(--spacing-10);
+    }
+}
+
+/* ========== DESKTOP (1024px+) ========== */
+@media (min-width: 1024px) {
+    .foral-hero {
+        padding: var(--spacing-20) 0;
+    }
+
+    .foral-hero__title {
+        font-size: var(--font-size-5xl);
+    }
+
+    .foral-territories__grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .foral-tramos__table-wrap {
+        padding: var(--spacing-8);
+    }
+
+    .foral-comparison__table th,
+    .foral-comparison__table td {
+        padding: var(--spacing-4) var(--spacing-6);
+    }
+}

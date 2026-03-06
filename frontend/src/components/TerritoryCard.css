@@ -1,0 +1,169 @@
+/* TerritoryCard Component - MOBILE FIRST */
+
+.territory-card {
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.territory-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--color-gray-200);
+    transition: background var(--transition-base);
+}
+
+.territory-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px);
+    border-color: var(--color-primary-light);
+}
+
+.territory-card:hover::before {
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+}
+
+/* Foral variant */
+.territory-card--foral {
+    border-color: var(--color-primary-light);
+    background: linear-gradient(135deg, var(--color-white) 0%, rgba(26, 86, 219, 0.02) 100%);
+}
+
+.territory-card--foral::before {
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+}
+
+/* Header */
+.territory-card__header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-3);
+}
+
+.territory-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    color: var(--color-white);
+    border-radius: var(--radius-lg);
+    flex-shrink: 0;
+}
+
+.territory-card__titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.territory-card__name {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin: 0 0 var(--spacing-1) 0;
+    line-height: 1.2;
+}
+
+.territory-card__full-name {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+}
+
+.territory-card__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-1) var(--spacing-3);
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+    color: var(--color-primary);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    border: 1px solid rgba(26, 86, 219, 0.2);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Description */
+.territory-card__description {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Meta */
+.territory-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-lg);
+}
+
+.territory-card__hacienda {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-600);
+}
+
+.territory-card__hacienda svg {
+    color: var(--color-success);
+    flex-shrink: 0;
+}
+
+.territory-card__deductions {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-2);
+}
+
+.territory-card__deduction-count {
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+    color: var(--color-primary);
+    line-height: 1;
+}
+
+.territory-card__deduction-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+    font-weight: 500;
+}
+
+/* CTA Link */
+.territory-card__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3) var(--spacing-4);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: var(--color-white);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-base);
+    margin-top: auto;
+}
+
+.territory-card__cta:hover {
+    color: var(--color-white);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}

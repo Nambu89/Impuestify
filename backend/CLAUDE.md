@@ -318,3 +318,6 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | Tests import errors | Mock jose/bcrypt/slowapi (chain __init__.py imports) |
 | Rate limit 429 | Increase `RATE_LIMIT_PER_MINUTE` or clear Redis |
 | CORS errors | Check `ALLOWED_ORIGINS` includes frontend URL |
+| `h11 LocalProtocolError: Illegal header value` | CSP header en `main.py` NO debe tener trailing space/semicolon en el ultimo directive. Cambiar `"frame-ancestors 'none'; "` a `"frame-ancestors 'none'"` |
+| `UnicodeEncodeError: charmap codec` en Windows | Ejecutar con `PYTHONUTF8=1` env var. Los print() con emojis crashean en cp1252. |
+| Usuarios de test QA | Run `python scripts/seed_test_users.py`. Crea particular (Madrid) + autonomo (Cataluna) con suscripcion active. |

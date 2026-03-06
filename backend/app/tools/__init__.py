@@ -11,6 +11,7 @@ from app.tools.payslip_analysis_tool import PAYSLIP_ANALYSIS_TOOL, analyze_paysl
 from app.tools.modelo_303_tool import MODELO_303_TOOL, calculate_modelo_303_tool
 from app.tools.modelo_130_tool import MODELO_130_TOOL, calculate_modelo_130_tool
 from app.tools.deduction_discovery_tool import DISCOVER_DEDUCTIONS_TOOL, discover_deductions_tool
+from app.tools.isd_calculator_tool import ISD_CALCULATOR_TOOL, calculate_isd
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
@@ -24,6 +25,7 @@ ALL_TOOLS = [
 	MODELO_303_TOOL,
 	MODELO_130_TOOL,
 	DISCOVER_DEDUCTIONS_TOOL,
+	ISD_CALCULATOR_TOOL,
 ]
 
 # Registry of tool execution functions
@@ -36,6 +38,7 @@ TOOL_EXECUTORS = {
 	"calculate_modelo_303": calculate_modelo_303_tool,
 	"calculate_modelo_130": calculate_modelo_130_tool,
 	"discover_deductions": discover_deductions_tool,
+	"calculate_isd": calculate_isd,
 }
 
 __all__ = [
@@ -49,6 +52,7 @@ __all__ = [
 	"MODELO_303_TOOL",
 	"MODELO_130_TOOL",
 	"DISCOVER_DEDUCTIONS_TOOL",
+	"ISD_CALCULATOR_TOOL",
 	"simulate_irpf_tool",
 	"calculate_irpf_tool",
 	"calculate_autonomous_quota_tool",
@@ -57,4 +61,5 @@ __all__ = [
 	"calculate_modelo_303_tool",
 	"calculate_modelo_130_tool",
 	"discover_deductions_tool",
+	"calculate_isd",
 ]

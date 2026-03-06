@@ -14,6 +14,8 @@ import AITransparencyPage from './pages/AITransparencyPage'
 import CookiePolicyPage from './pages/CookiePolicyPage'
 import TermsPage from './pages/TermsPage'
 import DataRetentionPage from './pages/DataRetentionPage'
+import ForalPage from './pages/ForalPage'
+import CeutaMelillaPage from './pages/CeutaMelillaPage'
 import Footer from './components/Footer'
 import CookieConsentBanner from './components/CookieConsent'
 import { AuthProvider, useAuth } from './hooks/useAuth'
@@ -56,6 +58,10 @@ function App() {
                     <Route path="/politica-cookies" element={<CookiePolicyPage />} />
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/data-retention" element={<DataRetentionPage />} />
+
+                    {/* SEO Landing Pages - Publicly Accessible */}
+                    <Route path="/territorios-forales" element={<ForalPage />} />
+                    <Route path="/ceuta-melilla" element={<CeutaMelillaPage />} />
 
                     {/* Protected Routes (require auth + subscription) */}
                     <Route
