@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, LogOut, Menu, MessageSquare, Settings, Shield, Calculator } from 'lucide-react'
+import { FileText, LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
@@ -16,7 +16,6 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     const handleLogout = () => {
-        // ✅ ADD: Confirmation dialog before logout (beta tester feedback)
         const confirmed = window.confirm(
             '¿Estás seguro de que deseas cerrar sesión? '
             + 'Tu historial de conversaciones se conservará para la próxima vez.'
@@ -28,7 +27,6 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         }
     }
 
-    // Obtener iniciales del nombre del usuario
     const getInitials = (name?: string) => {
         if (!name) return user?.email?.charAt(0).toUpperCase() || 'U'
         return name
@@ -45,7 +43,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
             <div className="header-content">
                 <button
                     className="menu-toggle"
-                    onClick={onMenuToggle || (() => setMobileMenuOpen(!mobileMenuOpen))}
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     aria-label="Toggle menu"
                 >
                     <Menu size={24} />
@@ -62,9 +60,8 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                         <Calculator size={16} /> Guia Fiscal
                     </Link>
                     <Link to="/settings" className="nav-link">
-                        <Settings size={16} /> Configuración
+                        <Settings size={16} /> Configuracion
                     </Link>
-                    {/* ✅ FIX: Solo mostrar Dashboard si is_admin === 1 */}
                     {user?.is_admin === 1 && (
                         <Link to="/dashboard" className="nav-link">Dashboard</Link>
                     )}
@@ -83,7 +80,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     <button
                         className="logout-btn"
                         onClick={handleLogout}
-                        title="Cerrar sesión"
+                        title="Cerrar sesion"
                     >
                         <LogOut size={18} />
                     </button>
@@ -91,7 +88,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
             </div>
         </header>
 
-        {mobileMenuOpen && !onMenuToggle && (
+        {mobileMenuOpen && (
             <div className="mobile-nav-overlay" onClick={() => setMobileMenuOpen(false)}>
                 <nav className="mobile-nav" onClick={e => e.stopPropagation()}>
                     <Link to="/chat" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
@@ -107,6 +104,14 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                         <Link to="/admin/users" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                             <Shield size={20} /> Admin
                         </Link>
+                    )}
+                    {onMenuToggle && (
+                        <button
+                            className="mobile-nav__link mobile-nav__link--btn"
+                            onClick={() => { setMobileMenuOpen(false); onMenuToggle() }}
+                        >
+                            <History size={20} /> Historial de conversaciones
+                        </button>
                     )}
                 </nav>
             </div>

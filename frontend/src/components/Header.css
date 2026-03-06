@@ -200,6 +200,15 @@
     color: var(--color-primary);
 }
 
+.mobile-nav__link--btn {
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: var(--font-family);
+    border-top: 1px solid var(--color-gray-100);
+}
+
 /* ========== TABLET/DESKTOP (768px+): hide mobile nav, hide hamburger ========== */
 @media (min-width: 768px) {
     .mobile-nav-overlay {
