@@ -10,6 +10,12 @@ from app.database.turso_client import TursoClient
 
 logger = logging.getLogger(__name__)
 
+# Ceuta and Melilla are NOT autonomous communities — they use the Estatal
+# scale for both the state and "autonomous" portions of IRPF.  The real
+# tax benefit is the 60 % deduction on cuota íntegra (Art. 68.4 LIRPF),
+# which is applied downstream by IRPFSimulator.
+ESTATAL_SCALE_JURISDICTIONS = {"ceuta", "melilla"}
+
 
 class IRPFCalculator:
     """
@@ -81,12 +87,14 @@ class IRPFCalculator:
                 # Estatal scale not found, skip it for now
                 print("⚠️  Advertencia: Escala estatal no encontrada, solo calculando cuota autonómica")
         
-        # Calculate CCAA quota (Ceuta/Melilla use Estatal scale — deduction applied later)
-        try:
-            ccaa_scale = await self._get_scale(jurisdiction, year)
-        except ValueError:
-            logger.warning("No scale for %s %d, falling back to Estatal", jurisdiction, year)
-            ccaa_scale = await self._get_scale('Estatal', year)
+        # Calculate CCAA quota
+        # Ceuta/Melilla use the Estatal scale (they have no autonomous scale).
+        ccaa_key = (
+            "Estatal"
+            if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS
+            else jurisdiction
+        )
+        ccaa_scale = await self._get_scale(ccaa_key, year)
         cuota_autonomica, breakdown_autonomica = self._apply_scale(
             base_liquidable,
             ccaa_scale

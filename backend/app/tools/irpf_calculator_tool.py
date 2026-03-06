@@ -227,9 +227,23 @@ def _format_irpf_result(
 	cuota_total = result.get("cuota_total", 0)
 	tipo_medio = result.get("tipo_medio", 0)
 	
+	# Ceuta/Melilla note
+	ceuta_melilla_note = ""
+	if comunidad_autonoma.lower() in ("ceuta", "melilla"):
+		deduccion_60 = round(cuota_total * 0.60, 2)
+		cuota_tras_deduccion = round(cuota_total - deduccion_60, 2)
+		tipo_efectivo_real = round((cuota_tras_deduccion / base_imponible * 100), 2) if base_imponible > 0 else 0
+		ceuta_melilla_note = (
+			f" IMPORTANTE: Los residentes en {comunidad_autonoma} tienen derecho a una "
+			f"deducción del 60% sobre la cuota íntegra (Art. 68.4 LIRPF), lo que reduciría "
+			f"la cuota a aproximadamente {cuota_tras_deduccion:,.2f} € "
+			f"(tipo efectivo real: {tipo_efectivo_real:.2f}%). "
+			f"Para un cálculo completo con esta deducción, usa simulate_irpf."
+		)
+
 	# Concise format
-	formatted_response = f"""Para una base imponible de {base_imponible:,.2f} € en {comunidad_autonoma} (año fiscal {year}) la cuota íntegra resultante es aproximadamente {cuota_total:,.2f} € y la retención efectiva (cuota íntegra sobre la base) es del {tipo_medio:.2f} %. La cuota líquida tras deducciones y mínimos puede variar según deducciones personales y familiares; este resultado es orientativo y se corresponde con la aplicación de los tramos y tarifas del IRPF estatal y autonómico para {year}."""
-	
+	formatted_response = f"""Para una base imponible de {base_imponible:,.2f} € en {comunidad_autonoma} (año fiscal {year}) la cuota íntegra resultante es aproximadamente {cuota_total:,.2f} € y la retención efectiva (cuota íntegra sobre la base) es del {tipo_medio:.2f} %. La cuota líquida tras deducciones y mínimos puede variar según deducciones personales y familiares; este resultado es orientativo y se corresponde con la aplicación de los tramos y tarifas del IRPF estatal y autonómico para {year}.{ceuta_melilla_note}"""
+
 	if warning:
 		formatted_response = f"{warning}\n\n{formatted_response}"
 	

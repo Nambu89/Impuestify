@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 import logging
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
-from app.utils.irpf_calculator import IRPFCalculator
+from app.utils.irpf_calculator import IRPFCalculator, ESTATAL_SCALE_JURISDICTIONS
 from app.utils.calculators.work_income import WorkIncomeCalculator
 from app.utils.calculators.savings_income import SavingsIncomeCalculator
 from app.utils.calculators.rental_income import RentalIncomeCalculator
@@ -128,6 +128,11 @@ class IRPFSimulator:
         Returns:
             Complete simulation result with all intermediate values.
         """
+        # Auto-detect Ceuta/Melilla from jurisdiction name
+        if not ceuta_melilla and jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS:
+            ceuta_melilla = True
+            logger.info("Auto-detected Ceuta/Melilla from jurisdiction=%s", jurisdiction)
+
         # --- 1. Work income ---
         trabajo_result = await self.work.calculate(
             ingresos_brutos=ingresos_trabajo,
@@ -226,11 +231,12 @@ class IRPFSimulator:
 
         # --- 7. Apply MPYF: subtract MPYF quota from cuota íntegra ---
         state_scale = await self._irpf_calc._get_scale("Estatal", year)
-        try:
-            ccaa_scale = await self._irpf_calc._get_scale(jurisdiction, year)
-        except ValueError:
-            logger.warning("No CCAA scale for %s, using Estatal as fallback", jurisdiction)
-            ccaa_scale = state_scale
+        ccaa_key = (
+            "Estatal"
+            if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS
+            else jurisdiction
+        )
+        ccaa_scale = await self._irpf_calc._get_scale(ccaa_key, year)
 
         cuota_mpyf_est, _ = self._irpf_calc._apply_scale(
             mpyf_result["mpyf_estatal"], state_scale

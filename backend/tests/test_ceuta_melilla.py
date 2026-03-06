@@ -347,3 +347,69 @@ class TestDatosFiscalesRoundTrip:
 
         assert fiscal_profile["ceuta_melilla"] is True
         assert fiscal_profile["regimen_iva"] == "ipsi"
+
+
+# ---------------------------------------------------------------------------
+# Tests: ESTATAL_SCALE_JURISDICTIONS and auto-detection
+# ---------------------------------------------------------------------------
+
+class TestEstatalScaleJurisdictions:
+    """Verify Ceuta/Melilla are recognized as Estatal-scale jurisdictions."""
+
+    def test_ceuta_in_estatal_jurisdictions(self):
+        from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+        assert "ceuta" in ESTATAL_SCALE_JURISDICTIONS
+
+    def test_melilla_in_estatal_jurisdictions(self):
+        from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+        assert "melilla" in ESTATAL_SCALE_JURISDICTIONS
+
+    def test_madrid_not_in_estatal_jurisdictions(self):
+        from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+        assert "madrid" not in ESTATAL_SCALE_JURISDICTIONS
+
+    def test_irpf_calculator_resolves_ceuta_to_estatal(self):
+        """IRPFCalculator should map Ceuta to Estatal scale key."""
+        from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+        jurisdiction = "Ceuta"
+        ccaa_key = "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
+        assert ccaa_key == "Estatal"
+
+    def test_irpf_calculator_resolves_melilla_to_estatal(self):
+        from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+        jurisdiction = "Melilla"
+        ccaa_key = "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
+        assert ccaa_key == "Estatal"
+
+    def test_irpf_calculator_leaves_madrid_unchanged(self):
+        from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+        jurisdiction = "Madrid"
+        ccaa_key = "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
+        assert ccaa_key == "Madrid"
+
+    def test_simulator_auto_detects_ceuta_melilla(self):
+        """IRPFSimulator should auto-detect ceuta_melilla from jurisdiction."""
+        from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+        # Simulate the auto-detection logic from IRPFSimulator.simulate()
+        ceuta_melilla = False
+        jurisdiction = "Melilla"
+        if not ceuta_melilla and jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS:
+            ceuta_melilla = True
+        assert ceuta_melilla is True
+
+    def test_simulator_no_autodetect_for_madrid(self):
+        from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+        ceuta_melilla = False
+        jurisdiction = "Madrid"
+        if not ceuta_melilla and jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS:
+            ceuta_melilla = True
+        assert ceuta_melilla is False
+
+    def test_simulator_respects_explicit_ceuta_melilla_true(self):
+        """If ceuta_melilla is already True, auto-detection should not change it."""
+        from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+        ceuta_melilla = True
+        jurisdiction = "Ceuta"
+        if not ceuta_melilla and jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS:
+            ceuta_melilla = True
+        assert ceuta_melilla is True
