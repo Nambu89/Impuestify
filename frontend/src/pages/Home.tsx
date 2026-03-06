@@ -286,7 +286,7 @@ export default function Home() {
                         </div>
                         <p className="pricing-autonomos">
                             ¿Eres autónomo o profesional por cuenta propia?{' '}
-                            <Link to="/contact?type=autonomo">Solicita información sobre planes especializados</Link>
+                            <Link to="/subscribe?plan=autonomo">Ver plan Autónomo — 39 €/mes</Link>
                         </p>
                     </FadeContent>
                 </div>

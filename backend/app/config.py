@@ -169,6 +169,7 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: Optional[str] = Field(default=None)
     STRIPE_WEBHOOK_SECRET: Optional[str] = Field(default=None)
     STRIPE_PRICE_ID: Optional[str] = Field(default=None)
+    STRIPE_PRICE_ID_AUTONOMO: Optional[str] = Field(default=None)
     STRIPE_PRODUCT_ID: str = Field(default="prod_U4lJ9l8NhKvFHZ")
 
     # -------------------------------

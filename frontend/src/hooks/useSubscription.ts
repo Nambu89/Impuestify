@@ -20,7 +20,7 @@ interface UseSubscriptionReturn {
     cancelAtPeriodEnd: boolean
     loading: boolean
     error: string | null
-    createCheckout: () => Promise<void>
+    createCheckout: (planType?: string) => Promise<void>
     openPortal: () => Promise<void>
     refresh: () => Promise<void>
 }
@@ -54,13 +54,14 @@ export function useSubscription(): UseSubscriptionReturn {
         fetchStatus()
     }, [fetchStatus])
 
-    const createCheckout = useCallback(async () => {
+    const createCheckout = useCallback(async (planType: string = 'particular') => {
         try {
             const result = await apiRequest('/subscription/create-checkout', {
                 method: 'POST',
                 body: JSON.stringify({
                     success_url: `${window.location.origin}/chat?subscription=success`,
                     cancel_url: `${window.location.origin}/subscribe?canceled=true`,
+                    plan_type: planType,
                 }),
             })
 

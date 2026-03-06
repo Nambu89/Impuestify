@@ -128,10 +128,16 @@ class SubscriptionService:
 
         customer_id = result.rows[0]["stripe_customer_id"]
 
+        # Select the correct Stripe price based on plan_type
+        if plan_type == "autonomo" and settings.STRIPE_PRICE_ID_AUTONOMO:
+            price_id = settings.STRIPE_PRICE_ID_AUTONOMO
+        else:
+            price_id = settings.STRIPE_PRICE_ID
+
         session = s.checkout.Session.create(
             customer=customer_id,
             payment_method_types=["card"],
-            line_items=[{"price": settings.STRIPE_PRICE_ID, "quantity": 1}],
+            line_items=[{"price": price_id, "quantity": 1}],
             mode="subscription",
             success_url=success_url,
             cancel_url=cancel_url,

@@ -1,17 +1,66 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Shield, CheckCircle, CreditCard, Calculator, ArrowLeft, Loader, AlertCircle } from 'lucide-react'
+import {
+    Shield, CheckCircle, CreditCard, Calculator, ArrowLeft,
+    Loader, AlertCircle, Briefcase, X, Zap
+} from 'lucide-react'
 import { useSubscription } from '../hooks/useSubscription'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
 import './SubscribePage.css'
 
+const PLAN_PARTICULAR = {
+    id: 'particular',
+    name: 'Particular',
+    price: 5,
+    icon: Calculator,
+    description: 'Para trabajadores por cuenta ajena',
+    features: [
+        'Consultas fiscales ilimitadas con IA',
+        'Análisis de nóminas (PDF)',
+        'Cálculo de IRPF por comunidad autónoma',
+        'Análisis de notificaciones AEAT',
+        'Workspace personal de documentos',
+        'Fuentes oficiales citadas',
+        'Informe IRPF exportable en PDF',
+    ],
+    notIncluded: [
+        'Cálculo cuota autónomos (RETA)',
+        'IVA trimestral (Modelo 303)',
+        'Pago fraccionado IRPF (Modelo 130)',
+        'Retenciones en facturas',
+    ],
+}
+
+const PLAN_AUTONOMO = {
+    id: 'autonomo',
+    name: 'Autónomo',
+    price: 39,
+    icon: Briefcase,
+    description: 'Para autónomos y profesionales',
+    popular: true,
+    features: [
+        'Todo lo del plan Particular',
+        'Cálculo cuota autónomos (RETA)',
+        'IVA trimestral — Modelo 303',
+        'Pago fraccionado IRPF — Modelo 130',
+        'Retenciones IRPF en facturas',
+        'Deducciones específicas de autónomos',
+        'Workspaces con contexto IA aislado',
+        'Cobertura foral completa (País Vasco + Navarra)',
+        'Simulación IRPF con gastos deducibles',
+    ],
+    notIncluded: [],
+}
+
 export default function SubscribePage() {
     const { isAuthenticated } = useAuth()
     const { hasAccess, loading, createCheckout, error } = useSubscription()
     const [isRedirecting, setIsRedirecting] = useState(false)
+    const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
     const [searchParams] = useSearchParams()
     const canceled = searchParams.get('canceled') === 'true'
+    const planParam = searchParams.get('plan')
 
     useEffect(() => {
         if (hasAccess && !loading) {
@@ -19,12 +68,14 @@ export default function SubscribePage() {
         }
     }, [hasAccess, loading])
 
-    const handleCheckout = async () => {
+    const handleCheckout = async (planType: string) => {
         setIsRedirecting(true)
+        setSelectedPlan(planType)
         try {
-            await createCheckout()
+            await createCheckout(planType)
         } catch {
             setIsRedirecting(false)
+            setSelectedPlan(null)
         }
     }
 
@@ -65,87 +116,127 @@ export default function SubscribePage() {
                 )}
 
                 <div className="subscribe-header">
-                    <div className="subscribe-badge">
-                        <Shield size={16} />
-                        <span>Plan Particular</span>
-                    </div>
-                    <h1>Tu asesor fiscal inteligente</h1>
+                    <h1>Elige tu plan</h1>
                     <p className="subscribe-subtitle">
-                        Accede a todas las funcionalidades de Impuestify con un plan adaptado a trabajadores por cuenta ajena.
+                        El único asistente fiscal con IA que cubre todos los territorios de España,
+                        incluidos los forales.
                     </p>
                 </div>
 
-                <div className="subscribe-card">
-                    <div className="subscribe-price">
-                        <div className="subscribe-price-icon">
-                            <Calculator size={32} />
+                <div className="subscribe-plans">
+                    {/* Plan Particular */}
+                    <div className={`subscribe-plan ${planParam === 'autonomo' ? '' : ''}`}>
+                        <div className="subscribe-plan__header">
+                            <div className="subscribe-plan__icon">
+                                <Calculator size={28} />
+                            </div>
+                            <h2>{PLAN_PARTICULAR.name}</h2>
+                            <p className="subscribe-plan__desc">{PLAN_PARTICULAR.description}</p>
                         </div>
-                        <div className="subscribe-price-amount">
-                            <span className="subscribe-price-currency">EUR</span>
-                            <span className="subscribe-price-value">5</span>
-                            <span className="subscribe-price-period">/mes</span>
+
+                        <div className="subscribe-plan__price">
+                            <span className="subscribe-plan__currency">EUR</span>
+                            <span className="subscribe-plan__value">{PLAN_PARTICULAR.price}</span>
+                            <span className="subscribe-plan__period">/mes</span>
                         </div>
+
+                        <ul className="subscribe-plan__features">
+                            {PLAN_PARTICULAR.features.map((f) => (
+                                <li key={f}>
+                                    <CheckCircle size={16} className="subscribe-plan__icon-yes" />
+                                    <span>{f}</span>
+                                </li>
+                            ))}
+                            {PLAN_PARTICULAR.notIncluded.map((f) => (
+                                <li key={f} className="subscribe-plan__not-included">
+                                    <X size={16} className="subscribe-plan__icon-no" />
+                                    <span>{f}</span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        {isAuthenticated ? (
+                            <button
+                                onClick={() => handleCheckout('particular')}
+                                className="btn btn-secondary btn-lg subscribe-plan__cta"
+                                disabled={isRedirecting}
+                            >
+                                {isRedirecting && selectedPlan === 'particular' ? (
+                                    <>
+                                        <Loader size={18} className="animate-spin" />
+                                        Redirigiendo...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CreditCard size={18} />
+                                        Suscribirme
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <Link to="/register" className="btn btn-secondary btn-lg subscribe-plan__cta">
+                                Crear cuenta
+                            </Link>
+                        )}
                     </div>
 
-                    <ul className="subscribe-features">
-                        <li>
-                            <CheckCircle size={18} />
-                            <span>Consultas fiscales ilimitadas con IA</span>
-                        </li>
-                        <li>
-                            <CheckCircle size={18} />
-                            <span>Analisis de nominas (PDF)</span>
-                        </li>
-                        <li>
-                            <CheckCircle size={18} />
-                            <span>Calculo de IRPF por comunidad autonoma</span>
-                        </li>
-                        <li>
-                            <CheckCircle size={18} />
-                            <span>Analisis de notificaciones AEAT</span>
-                        </li>
-                        <li>
-                            <CheckCircle size={18} />
-                            <span>Workspace personal de documentos</span>
-                        </li>
-                        <li>
-                            <CheckCircle size={18} />
-                            <span>Fuentes oficiales citadas</span>
-                        </li>
-                    </ul>
+                    {/* Plan Autónomo */}
+                    <div className="subscribe-plan subscribe-plan--popular">
+                        <div className="subscribe-plan__badge">
+                            <Zap size={14} />
+                            Más completo
+                        </div>
+                        <div className="subscribe-plan__header">
+                            <div className="subscribe-plan__icon">
+                                <Briefcase size={28} />
+                            </div>
+                            <h2>{PLAN_AUTONOMO.name}</h2>
+                            <p className="subscribe-plan__desc">{PLAN_AUTONOMO.description}</p>
+                        </div>
 
-                    {isAuthenticated ? (
-                        <button
-                            onClick={handleCheckout}
-                            className="btn btn-primary btn-lg subscribe-cta"
-                            disabled={isRedirecting}
-                        >
-                            {isRedirecting ? (
-                                <>
-                                    <Loader size={20} className="animate-spin" />
-                                    Redirigiendo a Stripe...
-                                </>
-                            ) : (
-                                <>
-                                    <CreditCard size={20} />
-                                    Suscribirme ahora
-                                </>
-                            )}
-                        </button>
-                    ) : (
-                        <Link to="/register" className="btn btn-primary btn-lg subscribe-cta">
-                            Crear cuenta para suscribirme
-                        </Link>
-                    )}
+                        <div className="subscribe-plan__price">
+                            <span className="subscribe-plan__currency">EUR</span>
+                            <span className="subscribe-plan__value">{PLAN_AUTONOMO.price}</span>
+                            <span className="subscribe-plan__period">/mes (IVA incl.)</span>
+                        </div>
 
-                    <p className="subscribe-note">
-                        Pago seguro con Stripe. Cancela cuando quieras.
-                    </p>
+                        <ul className="subscribe-plan__features">
+                            {PLAN_AUTONOMO.features.map((f) => (
+                                <li key={f}>
+                                    <CheckCircle size={16} className="subscribe-plan__icon-yes" />
+                                    <span>{f}</span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        {isAuthenticated ? (
+                            <button
+                                onClick={() => handleCheckout('autonomo')}
+                                className="btn btn-primary btn-lg subscribe-plan__cta"
+                                disabled={isRedirecting}
+                            >
+                                {isRedirecting && selectedPlan === 'autonomo' ? (
+                                    <>
+                                        <Loader size={18} className="animate-spin" />
+                                        Redirigiendo a Stripe...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CreditCard size={18} />
+                                        Suscribirme al plan Autónomo
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <Link to="/register?plan=autonomo" className="btn btn-primary btn-lg subscribe-plan__cta">
+                                Crear cuenta
+                            </Link>
+                        )}
+                    </div>
                 </div>
 
-                <p className="subscribe-autonomos">
-                    ¿Eres autonomo o profesional por cuenta propia?{' '}
-                    <Link to="/contact?type=autonomo">Solicita informacion sobre planes especializados</Link>
+                <p className="subscribe-note-bottom">
+                    Pago seguro con Stripe. Sin permanencia, cancela cuando quieras.
                 </p>
             </div>
         </div>
