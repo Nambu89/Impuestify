@@ -10,9 +10,14 @@ export interface TaxGuideData {
     tributacion_conjunta: boolean
     tipo_unidad_familiar: string  // "matrimonio" | "monoparental"
     // Step 2: Trabajo
+    salary_input_mode: 'annual' | 'monthly'  // UI-only
     ingresos_trabajo: number
     ss_empleado: number
     retenciones_trabajo: number
+    num_pagas_anuales: 12 | 14
+    salario_base_mensual: number
+    complementos_salariales: number
+    irpf_retenido_porcentaje: number
     // Step 3: Ahorro e inversiones
     intereses: number
     dividendos: number
@@ -46,6 +51,8 @@ export interface TaxGuideData {
     intereses_hipoteca: number
     donativos_ley_49_2002: number
     donativo_recurrente: boolean
+    // Wizard mode
+    wizard_mode: 'quick' | 'full'
 }
 
 export const EMPTY_TAX_DATA: TaxGuideData = {
@@ -54,9 +61,14 @@ export const EMPTY_TAX_DATA: TaxGuideData = {
     ceuta_melilla: false,
     tributacion_conjunta: false,
     tipo_unidad_familiar: 'matrimonio',
+    salary_input_mode: 'annual',
     ingresos_trabajo: 0,
     ss_empleado: 0,
     retenciones_trabajo: 0,
+    num_pagas_anuales: 14,
+    salario_base_mensual: 0,
+    complementos_salariales: 0,
+    irpf_retenido_porcentaje: 0,
     intereses: 0,
     dividendos: 0,
     ganancias_fondos: 0,
@@ -86,6 +98,7 @@ export const EMPTY_TAX_DATA: TaxGuideData = {
     intereses_hipoteca: 0,
     donativos_ley_49_2002: 0,
     donativo_recurrente: false,
+    wizard_mode: 'full',
 }
 
 export const STEP_LABELS = [
@@ -98,9 +111,16 @@ export const STEP_LABELS = [
     'Resultado',
 ]
 
+export const QUICK_STEP_LABELS = [
+    'Datos basicos',
+    'Resultado',
+]
+
 export function useTaxGuideProgress() {
     const [step, setStep] = useState(0)
     const [data, setData] = useState<TaxGuideData>(EMPTY_TAX_DATA)
+
+    const stepLabels = data.wizard_mode === 'quick' ? QUICK_STEP_LABELS : STEP_LABELS
 
     // Load saved progress on mount
     useEffect(() => {
@@ -126,16 +146,16 @@ export function useTaxGuideProgress() {
     }, [])
 
     const nextStep = useCallback(() => {
-        setStep(prev => Math.min(prev + 1, STEP_LABELS.length - 1))
-    }, [])
+        setStep(prev => Math.min(prev + 1, stepLabels.length - 1))
+    }, [stepLabels.length])
 
     const prevStep = useCallback(() => {
         setStep(prev => Math.max(prev - 1, 0))
     }, [])
 
     const goToStep = useCallback((s: number) => {
-        setStep(Math.max(0, Math.min(s, STEP_LABELS.length - 1)))
-    }, [])
+        setStep(Math.max(0, Math.min(s, stepLabels.length - 1)))
+    }, [stepLabels.length])
 
     const resetAll = useCallback(() => {
         setStep(0)
@@ -143,5 +163,5 @@ export function useTaxGuideProgress() {
         localStorage.removeItem(STORAGE_KEY)
     }, [])
 
-    return { step, data, updateData, nextStep, prevStep, goToStep, resetAll }
+    return { step, data, updateData, nextStep, prevStep, goToStep, resetAll, stepLabels }
 }

@@ -54,6 +54,11 @@ export interface FiscalProfile {
     tarifa_plana: boolean
     pluriactividad: boolean
     ceuta_melilla: boolean
+    // Phase 3: Payslip/salary
+    num_pagas_anuales: number | null
+    salario_base_mensual: number | null
+    complementos_salariales: number | null
+    irpf_retenido_porcentaje: number | null
 }
 
 export interface FieldMeta {
@@ -122,6 +127,11 @@ const EMPTY_PROFILE: FiscalProfile = {
     tarifa_plana: false,
     pluriactividad: false,
     ceuta_melilla: false,
+    // Phase 3: Payslip/salary
+    num_pagas_anuales: null,
+    salario_base_mensual: null,
+    complementos_salariales: null,
+    irpf_retenido_porcentaje: null,
 }
 
 export function useFiscalProfile() {

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, RotateCcw, MapPin, Briefcase, PiggyBank, Home as HomeIcon, Users, Gift, BarChart3, CheckCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RotateCcw, MapPin, Briefcase, PiggyBank, Home as HomeIcon, Users, Gift, BarChart3, CheckCircle, Info, AlertTriangle, Zap, Shield } from 'lucide-react'
 import Header from '../components/Header'
 import LiveEstimatorBar from '../components/LiveEstimatorBar'
-import { useTaxGuideProgress, STEP_LABELS, type TaxGuideData } from '../hooks/useTaxGuideProgress'
+import { useTaxGuideProgress, STEP_LABELS, QUICK_STEP_LABELS, type TaxGuideData } from '../hooks/useTaxGuideProgress'
 import { useIrpfEstimator } from '../hooks/useIrpfEstimator'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
+import { useDeductionDiscovery, type MissingQuestion } from '../hooks/useDeductionDiscovery'
 import './TaxGuidePage.css'
 
 const CCAA_OPTIONS = [
@@ -16,6 +17,9 @@ const CCAA_OPTIONS = [
 ]
 
 const STEP_ICONS = [MapPin, Briefcase, PiggyBank, HomeIcon, Users, Gift, BarChart3]
+const QUICK_STEP_ICONS = [MapPin, BarChart3]
+
+// === Reusable inputs ===
 
 function NumberInput({ label, value, onChange, suffix, min = 0, step = 100, help }: {
     label: string; value: number; onChange: (v: number) => void;
@@ -56,12 +60,95 @@ function CheckboxInput({ label, checked, onChange, help }: {
     )
 }
 
-// Step 1: Datos personales
+// === Phase C: CCAA contextual tips ===
+
+function CcaaTip({ ccaa }: { ccaa: string }) {
+    if (!ccaa) return null
+
+    const isCeutaMelilla = ccaa === 'Ceuta' || ccaa === 'Melilla'
+    const isCanarias = ccaa === 'Canarias'
+    const isForal = ccaa.startsWith('Pais Vasco') || ccaa === 'Navarra'
+
+    if (isCeutaMelilla) {
+        return (
+            <div className="tg-tip tg-tip--success">
+                <Shield size={18} />
+                <div>
+                    <strong>Ventaja fiscal Ceuta/Melilla</strong>
+                    <p>Deduccion del 60% sobre la cuota integra del IRPF (Art. 68.4 LIRPF). Ademas, aplica IPSI en lugar de IVA con tipos inferiores. Bonificacion del 50% en cuotas de autonomos.</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (isForal) {
+        return (
+            <div className="tg-tip tg-tip--warning">
+                <AlertTriangle size={18} />
+                <div>
+                    <strong>Territorio foral</strong>
+                    <p>Los territorios forales tienen su propio sistema IRPF con escalas y deducciones especificas. No se aplican las deducciones estatales del regimen comun.</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (isCanarias) {
+        return (
+            <div className="tg-tip tg-tip--info">
+                <Info size={18} />
+                <div>
+                    <strong>Canarias</strong>
+                    <p>En Canarias se aplica el IGIC en lugar del IVA. El IRPF sigue el regimen comun estatal con deducciones autonomicas propias.</p>
+                </div>
+            </div>
+        )
+    }
+
+    return null
+}
+
+// === Phase D: Wizard mode selector ===
+
+function WizardModeSelector({ mode, onChange }: { mode: 'quick' | 'full'; onChange: (m: 'quick' | 'full') => void }) {
+    return (
+        <div className="tg-mode-selector">
+            <button
+                className={`tg-mode-selector__btn ${mode === 'quick' ? 'tg-mode-selector__btn--active' : ''}`}
+                onClick={() => onChange('quick')}
+            >
+                <Zap size={16} />
+                <div>
+                    <strong>Rapido</strong>
+                    <span>Solo salario y CCAA</span>
+                </div>
+            </button>
+            <button
+                className={`tg-mode-selector__btn ${mode === 'full' ? 'tg-mode-selector__btn--active' : ''}`}
+                onClick={() => onChange('full')}
+            >
+                <BarChart3 size={16} />
+                <div>
+                    <strong>Completo</strong>
+                    <span>Todas las deducciones</span>
+                </div>
+            </button>
+        </div>
+    )
+}
+
+// === Step 1: Datos personales ===
+
 function StepPersonal({ data, update }: StepProps) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Datos personales</h2>
             <p className="tg-step__desc">Necesitamos saber donde resides para aplicar las escalas correctas.</p>
+
+            <WizardModeSelector
+                mode={data.wizard_mode}
+                onChange={m => update({ wizard_mode: m })}
+            />
 
             <div className="tg-field">
                 <label className="tg-field__label">Comunidad Autonoma</label>
@@ -81,6 +168,8 @@ function StepPersonal({ data, update }: StepProps) {
                 </select>
             </div>
 
+            <CcaaTip ccaa={data.comunidad_autonoma} />
+
             <NumberInput
                 label="Edad"
                 value={data.edad_contribuyente}
@@ -88,170 +177,197 @@ function StepPersonal({ data, update }: StepProps) {
                 min={16} step={1}
             />
 
-            <CheckboxInput
-                label="Tributacion conjunta"
-                checked={data.tributacion_conjunta}
-                onChange={v => update({ tributacion_conjunta: v })}
-                help="Permite declarar con tu unidad familiar. Aplica una reduccion fija sobre la base imponible."
-            />
+            {data.wizard_mode === 'full' && (
+                <>
+                    <CheckboxInput
+                        label="Tributacion conjunta"
+                        checked={data.tributacion_conjunta}
+                        onChange={v => update({ tributacion_conjunta: v })}
+                        help="Permite declarar con tu unidad familiar. Aplica una reduccion fija sobre la base imponible."
+                    />
 
-            {data.tributacion_conjunta && (
-                <div className="tg-field">
-                    <label className="tg-field__label">Tipo de unidad familiar</label>
-                    <select
-                        className="tg-field__select"
-                        value={data.tipo_unidad_familiar}
-                        onChange={e => update({ tipo_unidad_familiar: e.target.value })}
-                    >
-                        <option value="matrimonio">Matrimonio (reduccion 3.400 EUR)</option>
-                        <option value="monoparental">Monoparental (reduccion 2.150 EUR)</option>
-                    </select>
-                </div>
+                    {data.tributacion_conjunta && (
+                        <div className="tg-field">
+                            <label className="tg-field__label">Tipo de unidad familiar</label>
+                            <select
+                                className="tg-field__select"
+                                value={data.tipo_unidad_familiar}
+                                onChange={e => update({ tipo_unidad_familiar: e.target.value })}
+                            >
+                                <option value="matrimonio">Matrimonio (reduccion 3.400 EUR)</option>
+                                <option value="monoparental">Monoparental (reduccion 2.150 EUR)</option>
+                            </select>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     )
 }
 
-// Step 2: Trabajo
+// === Step 2: Trabajo (Phase A: salary input mode) ===
+
 function StepTrabajo({ data, update }: StepProps) {
+    const isMonthly = data.salary_input_mode === 'monthly'
+    const computedAnnual = isMonthly
+        ? (data.salario_base_mensual + data.complementos_salariales) * data.num_pagas_anuales
+        : data.ingresos_trabajo
+
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Rendimientos del trabajo</h2>
-            <p className="tg-step__desc">Incluye tu salario bruto anual, cotizaciones y retenciones.</p>
+            <p className="tg-step__desc">Incluye tu salario, cotizaciones y retenciones.</p>
 
-            <NumberInput
-                label="Salario bruto anual"
-                value={data.ingresos_trabajo}
-                onChange={v => update({ ingresos_trabajo: v })}
-                suffix="EUR"
-                help="Suma de todas tus nominas brutas del ano"
-            />
+            {/* Salary input mode toggle */}
+            <div className="tg-toggle-group">
+                <button
+                    className={`tg-toggle-group__btn ${!isMonthly ? 'tg-toggle-group__btn--active' : ''}`}
+                    onClick={() => update({ salary_input_mode: 'annual' })}
+                >
+                    Salario anual
+                </button>
+                <button
+                    className={`tg-toggle-group__btn ${isMonthly ? 'tg-toggle-group__btn--active' : ''}`}
+                    onClick={() => update({ salary_input_mode: 'monthly' })}
+                >
+                    Salario mensual
+                </button>
+            </div>
+
+            {isMonthly ? (
+                <>
+                    <NumberInput
+                        label="Salario base mensual"
+                        value={data.salario_base_mensual}
+                        onChange={v => update({ salario_base_mensual: v })}
+                        suffix="EUR"
+                        help="Aparece en tu nomina como 'Salario base'"
+                    />
+                    <NumberInput
+                        label="Complementos salariales"
+                        value={data.complementos_salariales}
+                        onChange={v => update({ complementos_salariales: v })}
+                        suffix="EUR"
+                        help="Plus transporte, antiguedad, productividad..."
+                    />
+                    <div className="tg-field">
+                        <label className="tg-field__label">Numero de pagas</label>
+                        <div className="tg-toggle-group">
+                            <button
+                                className={`tg-toggle-group__btn ${data.num_pagas_anuales === 12 ? 'tg-toggle-group__btn--active' : ''}`}
+                                onClick={() => update({ num_pagas_anuales: 12 })}
+                            >
+                                12 pagas
+                            </button>
+                            <button
+                                className={`tg-toggle-group__btn ${data.num_pagas_anuales === 14 ? 'tg-toggle-group__btn--active' : ''}`}
+                                onClick={() => update({ num_pagas_anuales: 14 })}
+                            >
+                                14 pagas
+                            </button>
+                        </div>
+                        <span className="tg-field__help">
+                            {data.num_pagas_anuales === 14
+                                ? '12 mensualidades + 2 pagas extras (junio y diciembre)'
+                                : '12 mensualidades con pagas extras prorrateadas'}
+                        </span>
+                    </div>
+                    {computedAnnual > 0 && (
+                        <div className="tg-computed-value">
+                            Bruto anual estimado: <strong>{computedAnnual.toLocaleString('es-ES')} EUR</strong>
+                        </div>
+                    )}
+                </>
+            ) : (
+                <NumberInput
+                    label="Salario bruto anual"
+                    value={data.ingresos_trabajo}
+                    onChange={v => update({ ingresos_trabajo: v })}
+                    suffix="EUR"
+                    help="Suma de todas tus nominas brutas del ano"
+                />
+            )}
+
             <NumberInput
                 label="Cotizaciones a la Seguridad Social"
                 value={data.ss_empleado}
                 onChange={v => update({ ss_empleado: v })}
                 suffix="EUR"
-                help="Aparece en tu nomina como 'SS empleado'"
+                help="Total anual. Si no lo sabes, dejalo en 0 y se estimara (~6,35%)"
             />
+
+            <h3 className="tg-step__subtitle">Retenciones IRPF</h3>
+
             <NumberInput
-                label="Retenciones de IRPF practicadas"
+                label="Porcentaje IRPF en nomina"
+                value={data.irpf_retenido_porcentaje}
+                onChange={v => update({ irpf_retenido_porcentaje: v })}
+                suffix="%"
+                step={0.1}
+                help="Aparece en tu nomina como '% IRPF' o 'retencion IRPF'"
+            />
+
+            {data.irpf_retenido_porcentaje > 0 && computedAnnual > 0 && (
+                <div className="tg-computed-value">
+                    Retenciones anuales estimadas: <strong>{(computedAnnual * data.irpf_retenido_porcentaje / 100).toLocaleString('es-ES', { maximumFractionDigits: 0 })} EUR</strong>
+                </div>
+            )}
+
+            <NumberInput
+                label="Retenciones IRPF totales (anual)"
                 value={data.retenciones_trabajo}
                 onChange={v => update({ retenciones_trabajo: v })}
                 suffix="EUR"
-                help="Total retenido por tu empresa durante el ano"
+                help="Si pusiste el %, se calcula automaticamente. Si lo sabes exacto, ponlo aqui."
             />
         </div>
     )
 }
 
-// Step 3: Ahorro
+// === Step 3: Ahorro ===
+
 function StepAhorro({ data, update }: StepProps) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Ahorro e inversiones</h2>
             <p className="tg-step__desc">Intereses, dividendos y ganancias patrimoniales tributan en la base del ahorro.</p>
 
-            <NumberInput
-                label="Intereses de cuentas/depositos"
-                value={data.intereses}
-                onChange={v => update({ intereses: v })}
-                suffix="EUR"
-            />
-            <NumberInput
-                label="Dividendos"
-                value={data.dividendos}
-                onChange={v => update({ dividendos: v })}
-                suffix="EUR"
-            />
-            <NumberInput
-                label="Ganancias de fondos/acciones"
-                value={data.ganancias_fondos}
-                onChange={v => update({ ganancias_fondos: v })}
-                suffix="EUR"
-                help="Ganancias netas realizadas (ventas - compras)"
-            />
-            <NumberInput
-                label="Retenciones sobre capital mobiliario"
-                value={data.retenciones_ahorro}
-                onChange={v => update({ retenciones_ahorro: v })}
-                suffix="EUR"
-                help="19% retenido por bancos sobre intereses y dividendos"
-            />
+            <NumberInput label="Intereses de cuentas/depositos" value={data.intereses} onChange={v => update({ intereses: v })} suffix="EUR" />
+            <NumberInput label="Dividendos" value={data.dividendos} onChange={v => update({ dividendos: v })} suffix="EUR" />
+            <NumberInput label="Ganancias de fondos/acciones" value={data.ganancias_fondos} onChange={v => update({ ganancias_fondos: v })} suffix="EUR" help="Ganancias netas realizadas (ventas - compras)" />
+            <NumberInput label="Retenciones sobre capital mobiliario" value={data.retenciones_ahorro} onChange={v => update({ retenciones_ahorro: v })} suffix="EUR" help="19% retenido por bancos sobre intereses y dividendos" />
         </div>
     )
 }
 
-// Step 4: Inmuebles
+// === Step 4: Inmuebles ===
+
 function StepInmuebles({ data, update }: StepProps) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Inmuebles y alquileres</h2>
             <p className="tg-step__desc">Si alquilas un inmueble, indica los ingresos y gastos asociados.</p>
 
-            <NumberInput
-                label="Ingresos por alquiler (anual)"
-                value={data.ingresos_alquiler}
-                onChange={v => update({ ingresos_alquiler: v })}
-                suffix="EUR"
-            />
-            <NumberInput
-                label="Gastos deducibles del alquiler"
-                value={data.gastos_alquiler_total}
-                onChange={v => update({ gastos_alquiler_total: v })}
-                suffix="EUR"
-                help="IBI, comunidad, seguros, reparaciones, intereses hipoteca..."
-            />
-            <NumberInput
-                label="Valor de adquisicion del inmueble"
-                value={data.valor_adquisicion_inmueble}
-                onChange={v => update({ valor_adquisicion_inmueble: v })}
-                suffix="EUR"
-                help="Para calcular la amortizacion (3% anual)"
-            />
-            <NumberInput
-                label="Retenciones sobre alquileres"
-                value={data.retenciones_alquiler}
-                onChange={v => update({ retenciones_alquiler: v })}
-                suffix="EUR"
-                help="19% retenido por inquilinos empresas/profesionales"
-            />
+            <NumberInput label="Ingresos por alquiler (anual)" value={data.ingresos_alquiler} onChange={v => update({ ingresos_alquiler: v })} suffix="EUR" />
+            <NumberInput label="Gastos deducibles del alquiler" value={data.gastos_alquiler_total} onChange={v => update({ gastos_alquiler_total: v })} suffix="EUR" help="IBI, comunidad, seguros, reparaciones, intereses hipoteca..." />
+            <NumberInput label="Valor de adquisicion del inmueble" value={data.valor_adquisicion_inmueble} onChange={v => update({ valor_adquisicion_inmueble: v })} suffix="EUR" help="Para calcular la amortizacion (3% anual)" />
+            <NumberInput label="Retenciones sobre alquileres" value={data.retenciones_alquiler} onChange={v => update({ retenciones_alquiler: v })} suffix="EUR" help="19% retenido por inquilinos empresas/profesionales" />
 
             <h3 className="tg-step__subtitle">Alquiler como inquilino</h3>
-            <CheckboxInput
-                label="Tengo contrato de alquiler anterior al 1/1/2015"
-                checked={data.alquiler_habitual_pre2015}
-                onChange={v => update({ alquiler_habitual_pre2015: v })}
-                help="Regimen transitorio: deduccion del 10,05% sobre el alquiler pagado (max. 9.040 EUR/ano)"
-            />
+            <CheckboxInput label="Tengo contrato de alquiler anterior al 1/1/2015" checked={data.alquiler_habitual_pre2015} onChange={v => update({ alquiler_habitual_pre2015: v })} help="Regimen transitorio: deduccion del 10,05% sobre el alquiler pagado (max. 9.040 EUR/ano)" />
             {data.alquiler_habitual_pre2015 && (
-                <NumberInput
-                    label="Alquiler anual pagado"
-                    value={data.alquiler_pagado_anual}
-                    onChange={v => update({ alquiler_pagado_anual: v })}
-                    suffix="EUR"
-                    help="Deduccion del 10,05% sobre max 9.040 EUR"
-                />
+                <NumberInput label="Alquiler anual pagado" value={data.alquiler_pagado_anual} onChange={v => update({ alquiler_pagado_anual: v })} suffix="EUR" />
             )}
 
             <h3 className="tg-step__subtitle">Segundas viviendas</h3>
-            <NumberInput
-                label="Valor catastral de segundas viviendas"
-                value={data.valor_catastral_segundas_viviendas}
-                onChange={v => update({ valor_catastral_segundas_viviendas: v })}
-                suffix="EUR"
-                help="Viviendas no alquiladas ni vivienda habitual. Imputa 1,1%-2% como renta"
-            />
-            <CheckboxInput
-                label="Valor catastral revisado despues de 1994"
-                checked={data.valor_catastral_revisado_post1994}
-                onChange={v => update({ valor_catastral_revisado_post1994: v })}
-                help="Si fue revisado antes de 1994 se aplica el 2% en lugar del 1,1%"
-            />
+            <NumberInput label="Valor catastral de segundas viviendas" value={data.valor_catastral_segundas_viviendas} onChange={v => update({ valor_catastral_segundas_viviendas: v })} suffix="EUR" help="Viviendas no alquiladas ni vivienda habitual. Imputa 1,1%-2% como renta" />
+            <CheckboxInput label="Valor catastral revisado despues de 1994" checked={data.valor_catastral_revisado_post1994} onChange={v => update({ valor_catastral_revisado_post1994: v })} help="Si fue revisado antes de 1994 se aplica el 2% en lugar del 1,1%" />
         </div>
     )
 }
 
-// Step 5: Familia
+// === Step 5: Familia ===
+
 function StepFamilia({ data, update }: StepProps) {
     const handleDescendientes = (n: number) => {
         const current = data.anios_nacimiento_desc || []
@@ -280,88 +396,40 @@ function StepFamilia({ data, update }: StepProps) {
             <h2 className="tg-step__title">Situacion familiar</h2>
             <p className="tg-step__desc">Los minimos personales y familiares reducen la base imponible.</p>
 
-            <NumberInput
-                label="Numero de hijos"
-                value={data.num_descendientes}
-                onChange={handleDescendientes}
-                min={0} step={1}
-            />
+            <NumberInput label="Numero de hijos" value={data.num_descendientes} onChange={handleDescendientes} min={0} step={1} />
 
             {(data.anios_nacimiento_desc || []).map((y, i) => (
-                <NumberInput
-                    key={i}
-                    label={`Ano de nacimiento - Hijo ${i + 1}`}
-                    value={y}
-                    onChange={v => updateBirthYear(i, v)}
-                    min={1950} step={1}
-                />
+                <NumberInput key={i} label={`Ano de nacimiento - Hijo ${i + 1}`} value={y} onChange={v => updateBirthYear(i, v)} min={1950} step={1} />
             ))}
 
             {data.num_descendientes > 0 && (
-                <CheckboxInput
-                    label="Custodia compartida"
-                    checked={data.custodia_compartida}
-                    onChange={v => update({ custodia_compartida: v })}
-                />
+                <CheckboxInput label="Custodia compartida" checked={data.custodia_compartida} onChange={v => update({ custodia_compartida: v })} />
             )}
 
-            <NumberInput
-                label="Ascendientes mayores de 65 anos"
-                value={data.num_ascendientes_65}
-                onChange={v => update({ num_ascendientes_65: v })}
-                min={0} step={1}
-            />
-            <NumberInput
-                label="Ascendientes mayores de 75 anos"
-                value={data.num_ascendientes_75}
-                onChange={v => update({ num_ascendientes_75: v })}
-                min={0} step={1}
-            />
+            <NumberInput label="Ascendientes mayores de 65 anos" value={data.num_ascendientes_65} onChange={v => update({ num_ascendientes_65: v })} min={0} step={1} />
+            <NumberInput label="Ascendientes mayores de 75 anos" value={data.num_ascendientes_75} onChange={v => update({ num_ascendientes_75: v })} min={0} step={1} />
 
             <div className="tg-field">
                 <label className="tg-field__label">Grado de discapacidad</label>
-                <select
-                    className="tg-field__select"
-                    value={data.discapacidad_contribuyente}
-                    onChange={e => update({ discapacidad_contribuyente: parseInt(e.target.value) })}
-                >
+                <select className="tg-field__select" value={data.discapacidad_contribuyente} onChange={e => update({ discapacidad_contribuyente: parseInt(e.target.value) })}>
                     <option value={0}>Sin discapacidad</option>
                     <option value={33}>33% - 64%</option>
                     <option value={65}>65% o mas</option>
                 </select>
             </div>
 
-            <CheckboxInput
-                label="Madre trabajadora dada de alta en la SS"
-                checked={data.madre_trabajadora_ss}
-                onChange={v => update({ madre_trabajadora_ss: v })}
-                help="Deduccion por maternidad: 1.200 EUR/hijo menor de 3 anos"
-            />
+            <CheckboxInput label="Madre trabajadora dada de alta en la SS" checked={data.madre_trabajadora_ss} onChange={v => update({ madre_trabajadora_ss: v })} help="Deduccion por maternidad: 1.200 EUR/hijo menor de 3 anos" />
 
             {data.madre_trabajadora_ss && (
-                <NumberInput
-                    label="Gastos de guarderia (anual)"
-                    value={data.gastos_guarderia_anual}
-                    onChange={v => update({ gastos_guarderia_anual: v })}
-                    suffix="EUR"
-                    help="Hasta 1.000 EUR adicionales por hijo en guarderia autorizada"
-                />
+                <NumberInput label="Gastos de guarderia (anual)" value={data.gastos_guarderia_anual} onChange={v => update({ gastos_guarderia_anual: v })} suffix="EUR" help="Hasta 1.000 EUR adicionales por hijo en guarderia autorizada" />
             )}
 
-            <CheckboxInput
-                label="Familia numerosa"
-                checked={data.familia_numerosa}
-                onChange={v => update({ familia_numerosa: v })}
-            />
+            <CheckboxInput label="Familia numerosa" checked={data.familia_numerosa} onChange={v => update({ familia_numerosa: v })} />
 
             {data.familia_numerosa && (
                 <div className="tg-field">
                     <label className="tg-field__label">Tipo de familia numerosa</label>
-                    <select
-                        className="tg-field__select"
-                        value={data.tipo_familia_numerosa}
-                        onChange={e => update({ tipo_familia_numerosa: e.target.value })}
-                    >
+                    <select className="tg-field__select" value={data.tipo_familia_numerosa} onChange={e => update({ tipo_familia_numerosa: e.target.value })}>
                         <option value="general">General (3-4 hijos) - 1.200 EUR</option>
                         <option value="especial">Especial (5+ hijos) - 2.400 EUR</option>
                     </select>
@@ -371,90 +439,111 @@ function StepFamilia({ data, update }: StepProps) {
     )
 }
 
-// Step 6: Deducciones y reducciones
-function StepDeducciones({ data, update }: StepProps) {
+// === Step 6: Deducciones (Phase B: proactive discovery) ===
+
+function StepDeducciones({ data, update, discoveryResult, discoveryLoading, discoveryAnswers, onAnswerQuestion }: StepProps & {
+    discoveryResult: any
+    discoveryLoading: boolean
+    discoveryAnswers: Record<string, boolean>
+    onAnswerQuestion: (key: string, value: boolean) => void
+}) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Deducciones y reducciones</h2>
             <p className="tg-step__desc">Estas deducciones reducen directamente tu cuota o tu base imponible.</p>
 
             <h3 className="tg-step__subtitle">Planes de pensiones</h3>
-            <NumberInput
-                label="Aportaciones propias a planes de pensiones"
-                value={data.aportaciones_plan_pensiones}
-                onChange={v => update({ aportaciones_plan_pensiones: v })}
-                suffix="EUR"
-                help="Maximo 1.500 EUR/ano (reducen la base imponible general)"
-            />
-            <NumberInput
-                label="Aportaciones de la empresa"
-                value={data.aportaciones_plan_pensiones_empresa}
-                onChange={v => update({ aportaciones_plan_pensiones_empresa: v })}
-                suffix="EUR"
-                help="Limite conjunto con propias: 8.500 EUR"
-            />
+            <NumberInput label="Aportaciones propias a planes de pensiones" value={data.aportaciones_plan_pensiones} onChange={v => update({ aportaciones_plan_pensiones: v })} suffix="EUR" help="Maximo 1.500 EUR/ano (reducen la base imponible general)" />
+            <NumberInput label="Aportaciones de la empresa" value={data.aportaciones_plan_pensiones_empresa} onChange={v => update({ aportaciones_plan_pensiones_empresa: v })} suffix="EUR" help="Limite conjunto con propias: 8.500 EUR" />
 
             <h3 className="tg-step__subtitle">Vivienda habitual (hipoteca anterior al 1/1/2013)</h3>
-            <CheckboxInput
-                label="Tengo hipoteca firmada antes del 1 de enero de 2013"
-                checked={data.hipoteca_pre2013}
-                onChange={v => update({ hipoteca_pre2013: v })}
-                help="Regimen transitorio: deduccion del 15% sobre max 9.040 EUR/ano"
-            />
+            <CheckboxInput label="Tengo hipoteca firmada antes del 1 de enero de 2013" checked={data.hipoteca_pre2013} onChange={v => update({ hipoteca_pre2013: v })} help="Regimen transitorio: deduccion del 15% sobre max 9.040 EUR/ano" />
 
             {data.hipoteca_pre2013 && (
                 <>
-                    <NumberInput
-                        label="Capital amortizado en el ano"
-                        value={data.capital_amortizado_hipoteca}
-                        onChange={v => update({ capital_amortizado_hipoteca: v })}
-                        suffix="EUR"
-                        help="Principal pagado durante el ejercicio"
-                    />
-                    <NumberInput
-                        label="Intereses de hipoteca pagados"
-                        value={data.intereses_hipoteca}
-                        onChange={v => update({ intereses_hipoteca: v })}
-                        suffix="EUR"
-                    />
+                    <NumberInput label="Capital amortizado en el ano" value={data.capital_amortizado_hipoteca} onChange={v => update({ capital_amortizado_hipoteca: v })} suffix="EUR" help="Principal pagado durante el ejercicio" />
+                    <NumberInput label="Intereses de hipoteca pagados" value={data.intereses_hipoteca} onChange={v => update({ intereses_hipoteca: v })} suffix="EUR" />
                 </>
             )}
 
             <h3 className="tg-step__subtitle">Donativos</h3>
-            <NumberInput
-                label="Donativos a entidades Ley 49/2002"
-                value={data.donativos_ley_49_2002}
-                onChange={v => update({ donativos_ley_49_2002: v })}
-                suffix="EUR"
-                help="ONGs, fundaciones... 80% primeros 250 EUR, 40% resto"
-            />
+            <NumberInput label="Donativos a entidades Ley 49/2002" value={data.donativos_ley_49_2002} onChange={v => update({ donativos_ley_49_2002: v })} suffix="EUR" help="ONGs, fundaciones... 80% primeros 250 EUR, 40% resto" />
             {data.donativos_ley_49_2002 > 0 && (
-                <CheckboxInput
-                    label="Donante recurrente (3+ anos misma entidad)"
-                    checked={data.donativo_recurrente}
-                    onChange={v => update({ donativo_recurrente: v })}
-                    help="Sube al 45% el exceso sobre 250 EUR"
-                />
+                <CheckboxInput label="Donante recurrente (3+ anos misma entidad)" checked={data.donativo_recurrente} onChange={v => update({ donativo_recurrente: v })} help="Sube al 45% el exceso sobre 250 EUR" />
+            )}
+
+            {/* Phase B: Proactive deduction discovery */}
+            {data.comunidad_autonoma && (
+                <div className="tg-discovery">
+                    <h3 className="tg-step__subtitle">Deducciones descubiertas para {data.comunidad_autonoma}</h3>
+
+                    {discoveryLoading && <p className="tg-discovery__loading">Buscando deducciones...</p>}
+
+                    {discoveryResult && discoveryResult.eligible.length > 0 && (
+                        <div className="tg-discovery__section">
+                            <p className="tg-discovery__section-label tg-discovery__section-label--eligible">Deducciones a las que tienes derecho</p>
+                            {discoveryResult.eligible.map((d: any) => (
+                                <div key={d.code} className="tg-deduction-card tg-deduction-card--eligible">
+                                    <div className="tg-deduction-card__header">
+                                        <CheckCircle size={16} />
+                                        <strong>{d.name}</strong>
+                                    </div>
+                                    {d.description && <p className="tg-deduction-card__desc">{d.description}</p>}
+                                    {d.max_amount && <span className="tg-deduction-card__badge">Hasta {d.max_amount.toLocaleString('es-ES')} EUR</span>}
+                                    {d.fixed_amount && <span className="tg-deduction-card__badge">{d.fixed_amount.toLocaleString('es-ES')} EUR</span>}
+                                    {d.legal_reference && <span className="tg-deduction-card__ref">{d.legal_reference}</span>}
+                                </div>
+                            ))}
+                            {discoveryResult.estimated_savings > 0 && (
+                                <div className="tg-discovery__savings">
+                                    Ahorro estimado: <strong>{discoveryResult.estimated_savings.toLocaleString('es-ES')} EUR</strong>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {discoveryResult && discoveryResult.missing_questions.length > 0 && (
+                        <div className="tg-discovery__section">
+                            <p className="tg-discovery__section-label tg-discovery__section-label--maybe">Responde para descubrir mas deducciones</p>
+                            {discoveryResult.missing_questions.slice(0, 5).map((q: MissingQuestion) => (
+                                <div key={q.key} className="tg-deduction-question">
+                                    <span className="tg-deduction-question__text">{q.text}</span>
+                                    <div className="tg-deduction-question__actions">
+                                        <button
+                                            className={`tg-deduction-question__btn ${discoveryAnswers[q.key] === true ? 'tg-deduction-question__btn--active-yes' : ''}`}
+                                            onClick={() => onAnswerQuestion(q.key, true)}
+                                        >Si</button>
+                                        <button
+                                            className={`tg-deduction-question__btn ${discoveryAnswers[q.key] === false ? 'tg-deduction-question__btn--active-no' : ''}`}
+                                            onClick={() => onAnswerQuestion(q.key, false)}
+                                        >No</button>
+                                    </div>
+                                    <span className="tg-deduction-question__for">{q.deduction_name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {discoveryResult && discoveryResult.eligible.length === 0 && discoveryResult.missing_questions.length === 0 && !discoveryLoading && (
+                        <p className="tg-discovery__empty">No se encontraron deducciones adicionales para tu situacion.</p>
+                    )}
+                </div>
             )}
         </div>
     )
 }
 
-// Step 7: Resultado
-function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProfileDone }: {
-    result: any
-    loading: boolean
-    onSaveProfile: () => void
-    savingProfile: boolean
-    saveProfileDone: boolean
+// === Step 7: Resultado ===
+
+function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProfileDone, discoveryResult }: {
+    result: any; loading: boolean; onSaveProfile: () => void; savingProfile: boolean; saveProfileDone: boolean
+    discoveryResult: any
 }) {
     if (!result || !result.success) {
         return (
             <div className="tg-step">
                 <h2 className="tg-step__title">Resultado de la estimacion</h2>
-                <p className="tg-step__desc">
-                    {loading ? 'Calculando tu estimacion...' : 'Completa los pasos anteriores para ver tu resultado.'}
-                </p>
+                <p className="tg-step__desc">{loading ? 'Calculando tu estimacion...' : 'Completa los pasos anteriores para ver tu resultado.'}</p>
             </div>
         )
     }
@@ -476,16 +565,12 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                 <div className="tg-breakdown__grid">
                     <BreakdownRow label="Base imponible general" value={result.base_imponible_general} />
                     <BreakdownRow label="Base imponible ahorro" value={result.base_imponible_ahorro} />
-                    {result.renta_imputada_inmuebles > 0 && (
-                        <BreakdownRow label="Renta imputada inmuebles" value={result.renta_imputada_inmuebles} />
-                    )}
+                    {result.renta_imputada_inmuebles > 0 && <BreakdownRow label="Renta imputada inmuebles" value={result.renta_imputada_inmuebles} />}
                     <BreakdownRow label="Cuota integra general" value={result.cuota_integra_general} />
                     <BreakdownRow label="Cuota integra ahorro" value={result.cuota_integra_ahorro} />
                     <BreakdownRow label="Cuota liquida total" value={result.cuota_liquida_total} />
                     <BreakdownRow label="Retenciones pagadas" value={result.retenciones_pagadas} prefix="-" />
-                    {result.deduccion_ceuta_melilla > 0 && (
-                        <BreakdownRow label="Deduccion Ceuta/Melilla" value={result.deduccion_ceuta_melilla} prefix="-" />
-                    )}
+                    {result.deduccion_ceuta_melilla > 0 && <BreakdownRow label="Deduccion Ceuta/Melilla (60%)" value={result.deduccion_ceuta_melilla} prefix="-" />}
                     <BreakdownRow label="Tipo medio efectivo" value={result.tipo_medio_efectivo} suffix="%" />
                 </div>
 
@@ -493,12 +578,8 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                     <>
                         <h3 className="tg-breakdown__title">Reducciones aplicadas</h3>
                         <div className="tg-breakdown__grid">
-                            {result.reduccion_planes_pensiones > 0 && (
-                                <BreakdownRow label="Planes de pensiones" value={result.reduccion_planes_pensiones} prefix="-" />
-                            )}
-                            {result.reduccion_tributacion_conjunta > 0 && (
-                                <BreakdownRow label="Tributacion conjunta" value={result.reduccion_tributacion_conjunta} prefix="-" />
-                            )}
+                            {result.reduccion_planes_pensiones > 0 && <BreakdownRow label="Planes de pensiones" value={result.reduccion_planes_pensiones} prefix="-" />}
+                            {result.reduccion_tributacion_conjunta > 0 && <BreakdownRow label="Tributacion conjunta" value={result.reduccion_tributacion_conjunta} prefix="-" />}
                         </div>
                     </>
                 )}
@@ -507,21 +588,11 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                     <>
                         <h3 className="tg-breakdown__title">Deducciones en cuota</h3>
                         <div className="tg-breakdown__grid">
-                            {result.deduccion_vivienda_pre2013 > 0 && (
-                                <BreakdownRow label="Vivienda habitual (pre-2013)" value={result.deduccion_vivienda_pre2013} prefix="-" />
-                            )}
-                            {result.deduccion_alquiler_pre2015 > 0 && (
-                                <BreakdownRow label="Alquiler vivienda habitual (pre-2015)" value={result.deduccion_alquiler_pre2015} prefix="-" />
-                            )}
-                            {result.deduccion_maternidad > 0 && (
-                                <BreakdownRow label="Maternidad" value={result.deduccion_maternidad} prefix="-" />
-                            )}
-                            {result.deduccion_familia_numerosa > 0 && (
-                                <BreakdownRow label="Familia numerosa" value={result.deduccion_familia_numerosa} prefix="-" />
-                            )}
-                            {result.deduccion_donativos > 0 && (
-                                <BreakdownRow label="Donativos" value={result.deduccion_donativos} prefix="-" />
-                            )}
+                            {result.deduccion_vivienda_pre2013 > 0 && <BreakdownRow label="Vivienda habitual (pre-2013)" value={result.deduccion_vivienda_pre2013} prefix="-" />}
+                            {result.deduccion_alquiler_pre2015 > 0 && <BreakdownRow label="Alquiler vivienda (pre-2015)" value={result.deduccion_alquiler_pre2015} prefix="-" />}
+                            {result.deduccion_maternidad > 0 && <BreakdownRow label="Maternidad" value={result.deduccion_maternidad} prefix="-" />}
+                            {result.deduccion_familia_numerosa > 0 && <BreakdownRow label="Familia numerosa" value={result.deduccion_familia_numerosa} prefix="-" />}
+                            {result.deduccion_donativos > 0 && <BreakdownRow label="Donativos" value={result.deduccion_donativos} prefix="-" />}
                         </div>
                     </>
                 )}
@@ -538,6 +609,24 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                     </>
                 )}
             </div>
+
+            {/* Phase B: Show discovered deductions in result */}
+            {discoveryResult && discoveryResult.maybe_eligible && discoveryResult.maybe_eligible.length > 0 && (
+                <div className="tg-result-deductions">
+                    <h3 className="tg-breakdown__title">Deducciones que podrias reclamar</h3>
+                    <div className="tg-result-deductions__list">
+                        {discoveryResult.maybe_eligible.slice(0, 4).map((d: any) => (
+                            <div key={d.code} className="tg-deduction-card tg-deduction-card--maybe">
+                                <div className="tg-deduction-card__header">
+                                    <Info size={14} />
+                                    <strong>{d.name}</strong>
+                                </div>
+                                {d.max_amount && <span className="tg-deduction-card__badge">Hasta {d.max_amount.toLocaleString('es-ES')} EUR</span>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <p className="tg-disclaimer">
                 Esta estimacion es orientativa y no constituye asesoramiento fiscal.
@@ -582,14 +671,47 @@ interface StepProps {
     update: (partial: Partial<TaxGuideData>) => void
 }
 
+// === Helper: build deduction discovery answers from wizard data ===
+
+function buildAnswersFromData(data: TaxGuideData, extra: Record<string, boolean>): Record<string, any> {
+    const answers: Record<string, any> = { ...extra }
+    const currentYear = new Date().getFullYear()
+
+    if (data.hipoteca_pre2013) {
+        answers.adquisicion_antes_2013 = true
+        answers.deducia_antes_2013 = true
+    }
+    if (data.madre_trabajadora_ss) answers.madre_trabajadora = true
+    if (data.num_descendientes > 0) answers.tiene_hijos = true
+    if (data.anios_nacimiento_desc?.some(y => (currentYear - y) < 3)) answers.hijo_menor_3 = true
+    if (data.familia_numerosa) answers.familia_numerosa = true
+    if (data.ceuta_melilla) answers.residente_ceuta_melilla = true
+    if (data.donativos_ley_49_2002 > 0) answers.donativo_a_entidad_acogida = true
+    if (data.discapacidad_contribuyente >= 33) answers.discapacidad_reconocida = true
+    if (data.num_ascendientes_65 > 0 || data.num_ascendientes_75 > 0) answers.ascendiente_a_cargo = true
+    if (data.alquiler_habitual_pre2015) answers.contrato_antes_2015 = true
+
+    return answers
+}
+
+// === Main component ===
+
 export default function TaxGuidePage() {
-    const { step, data, updateData, nextStep, prevStep, goToStep, resetAll } = useTaxGuideProgress()
+    const { step, data, updateData, nextStep, prevStep, goToStep, resetAll, stepLabels } = useTaxGuideProgress()
     const { result, loading, estimate } = useIrpfEstimator()
     const { profile, save } = useFiscalProfile()
+    const { result: discoveryResult, loading: discoveryLoading, discover } = useDeductionDiscovery()
     const [savingProfile, setSavingProfile] = useState(false)
     const [saveProfileDone, setSaveProfileDone] = useState(false)
+    const [discoveryAnswers, setDiscoveryAnswers] = useState<Record<string, boolean>>({})
 
-    // Pre-fill from fiscal profile on first load (only if wizard is empty)
+    // Phase D: step animation
+    const [slideDir, setSlideDir] = useState<'left' | 'right' | ''>('')
+
+    const isQuick = data.wizard_mode === 'quick'
+    const icons = isQuick ? QUICK_STEP_ICONS : STEP_ICONS
+
+    // Pre-fill from fiscal profile on first load
     useEffect(() => {
         if (!data.comunidad_autonoma && profile.ccaa_residencia) {
             updateData({
@@ -608,7 +730,6 @@ export default function TaxGuidePage() {
                 num_ascendientes_65: profile.num_ascendientes_65 || 0,
                 num_ascendientes_75: profile.num_ascendientes_75 || 0,
                 discapacidad_contribuyente: profile.discapacidad_contribuyente || 0,
-                // Phase 1 fields
                 aportaciones_plan_pensiones: profile.aportaciones_plan_pensiones || 0,
                 aportaciones_plan_pensiones_empresa: profile.aportaciones_plan_pensiones_empresa || 0,
                 hipoteca_pre2013: profile.hipoteca_pre2013 || false,
@@ -623,6 +744,11 @@ export default function TaxGuidePage() {
                 retenciones_trabajo: profile.retenciones_trabajo || 0,
                 retenciones_alquiler: profile.retenciones_alquiler || 0,
                 retenciones_ahorro: profile.retenciones_ahorro || 0,
+                // Phase 3 fields
+                num_pagas_anuales: (profile.num_pagas_anuales as 12 | 14) || 14,
+                salario_base_mensual: profile.salario_base_mensual || 0,
+                complementos_salariales: profile.complementos_salariales || 0,
+                irpf_retenido_porcentaje: profile.irpf_retenido_porcentaje || 0,
             })
         }
     }, [profile.ccaa_residencia]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -645,7 +771,6 @@ export default function TaxGuidePage() {
             num_ascendientes_65: data.num_ascendientes_65 || null,
             num_ascendientes_75: data.num_ascendientes_75 || null,
             discapacidad_contribuyente: data.discapacidad_contribuyente || null,
-            // Phase 1 fields
             aportaciones_plan_pensiones: data.aportaciones_plan_pensiones || null,
             aportaciones_plan_pensiones_empresa: data.aportaciones_plan_pensiones_empresa || null,
             hipoteca_pre2013: data.hipoteca_pre2013,
@@ -660,12 +785,17 @@ export default function TaxGuidePage() {
             retenciones_trabajo: data.retenciones_trabajo || null,
             retenciones_alquiler: data.retenciones_alquiler || null,
             retenciones_ahorro: data.retenciones_ahorro || null,
+            // Phase 3
+            num_pagas_anuales: data.num_pagas_anuales,
+            salario_base_mensual: data.salario_base_mensual || null,
+            complementos_salariales: data.complementos_salariales || null,
+            irpf_retenido_porcentaje: data.irpf_retenido_porcentaje || null,
         })
         setSavingProfile(false)
         if (ok) setSaveProfileDone(true)
     }, [data, save])
 
-    // Trigger estimate whenever data changes (sends ALL fields including Phase 1)
+    // Trigger estimate whenever data changes
     useEffect(() => {
         estimate({
             comunidad_autonoma: data.comunidad_autonoma,
@@ -687,7 +817,6 @@ export default function TaxGuidePage() {
             num_ascendientes_75: data.num_ascendientes_75,
             discapacidad_contribuyente: data.discapacidad_contribuyente,
             ceuta_melilla: data.ceuta_melilla,
-            // Phase 1 fields
             aportaciones_plan_pensiones: data.aportaciones_plan_pensiones,
             aportaciones_plan_pensiones_empresa: data.aportaciones_plan_pensiones_empresa,
             hipoteca_pre2013: data.hipoteca_pre2013,
@@ -701,31 +830,89 @@ export default function TaxGuidePage() {
             donativo_recurrente: data.donativo_recurrente,
             retenciones_alquiler: data.retenciones_alquiler,
             retenciones_ahorro: data.retenciones_ahorro,
-            // Phase 2 fields
             tributacion_conjunta: data.tributacion_conjunta,
             tipo_unidad_familiar: data.tipo_unidad_familiar,
             alquiler_habitual_pre2015: data.alquiler_habitual_pre2015,
             alquiler_pagado_anual: data.alquiler_pagado_anual,
             valor_catastral_segundas_viviendas: data.valor_catastral_segundas_viviendas,
             valor_catastral_revisado_post1994: data.valor_catastral_revisado_post1994,
+            // Phase 3
+            num_pagas_anuales: data.num_pagas_anuales,
+            salario_base_mensual: data.salario_base_mensual,
+            complementos_salariales: data.complementos_salariales,
+            irpf_retenido_porcentaje: data.irpf_retenido_porcentaje,
         })
     }, [data, estimate])
 
-    const stepContent = useMemo(() => {
+    // Phase B: Trigger deduction discovery when on step 5 (Deducciones) or result step
+    const isDeductionStep = isQuick ? step === 1 : step >= 5
+    useEffect(() => {
+        if (isDeductionStep && data.comunidad_autonoma) {
+            const answers = buildAnswersFromData(data, discoveryAnswers)
+            discover(data.comunidad_autonoma, answers)
+        }
+    }, [isDeductionStep, data.comunidad_autonoma, data.num_descendientes, data.madre_trabajadora_ss, data.familia_numerosa, data.ceuta_melilla, data.hipoteca_pre2013, data.discapacidad_contribuyente, discoveryAnswers, discover]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleAnswerQuestion = useCallback((key: string, value: boolean) => {
+        setDiscoveryAnswers(prev => ({ ...prev, [key]: value }))
+    }, [])
+
+    // Phase D: animated step navigation
+    const animatedGoTo = useCallback((target: number) => {
+        setSlideDir(target > step ? 'right' : 'left')
+        setTimeout(() => {
+            goToStep(target)
+            setSlideDir('')
+        }, 150)
+    }, [step, goToStep])
+
+    const animatedNext = useCallback(() => {
+        setSlideDir('right')
+        setTimeout(() => { nextStep(); setSlideDir('') }, 150)
+    }, [nextStep])
+
+    const animatedPrev = useCallback(() => {
+        setSlideDir('left')
+        setTimeout(() => { prevStep(); setSlideDir('') }, 150)
+    }, [prevStep])
+
+    // Render step content
+    const renderFullStep = () => {
         switch (step) {
             case 0: return <StepPersonal data={data} update={updateData} />
             case 1: return <StepTrabajo data={data} update={updateData} />
             case 2: return <StepAhorro data={data} update={updateData} />
             case 3: return <StepInmuebles data={data} update={updateData} />
             case 4: return <StepFamilia data={data} update={updateData} />
-            case 5: return <StepDeducciones data={data} update={updateData} />
-            case 6: return <StepResultado result={result} loading={loading} onSaveProfile={handleSaveProfile} savingProfile={savingProfile} saveProfileDone={saveProfileDone} />
+            case 5: return <StepDeducciones data={data} update={updateData} discoveryResult={discoveryResult} discoveryLoading={discoveryLoading} discoveryAnswers={discoveryAnswers} onAnswerQuestion={handleAnswerQuestion} />
+            case 6: return <StepResultado result={result} loading={loading} onSaveProfile={handleSaveProfile} savingProfile={savingProfile} saveProfileDone={saveProfileDone} discoveryResult={discoveryResult} />
             default: return null
         }
-    }, [step, data, updateData, result, loading, handleSaveProfile, savingProfile, saveProfileDone])
+    }
+
+    const renderQuickStep = () => {
+        switch (step) {
+            case 0:
+                return (
+                    <div className="tg-step">
+                        <StepPersonal data={data} update={updateData} />
+                        <div style={{ marginTop: 'var(--spacing-6)' }}>
+                            <StepTrabajo data={data} update={updateData} />
+                        </div>
+                    </div>
+                )
+            case 1:
+                return <StepResultado result={result} loading={loading} onSaveProfile={handleSaveProfile} savingProfile={savingProfile} saveProfileDone={saveProfileDone} discoveryResult={discoveryResult} />
+            default: return null
+        }
+    }
+
+    const stepContent = useMemo(() => {
+        return isQuick ? renderQuickStep() : renderFullStep()
+    }, [step, data, updateData, result, loading, handleSaveProfile, savingProfile, saveProfileDone, discoveryResult, discoveryLoading, discoveryAnswers, handleAnswerQuestion, isQuick]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const isFirstStep = step === 0
-    const isLastStep = step === STEP_LABELS.length - 1
+    const isLastStep = step === stepLabels.length - 1
     const canProceed = step === 0 ? !!data.comunidad_autonoma : true
 
     return (
@@ -733,7 +920,6 @@ export default function TaxGuidePage() {
             <Header />
 
             <div className="tax-guide__layout">
-                {/* Desktop sidebar estimator */}
                 <aside className="tax-guide__sidebar">
                     <LiveEstimatorBar result={result} loading={loading} />
                 </aside>
@@ -741,13 +927,13 @@ export default function TaxGuidePage() {
                 <main className="tax-guide__main">
                     {/* Progress bar */}
                     <div className="tg-progress">
-                        {STEP_LABELS.map((label, i) => {
-                            const Icon = STEP_ICONS[i]
+                        {stepLabels.map((label, i) => {
+                            const Icon = icons[i] || BarChart3
                             return (
                                 <button
                                     key={i}
                                     className={`tg-progress__step ${i === step ? 'tg-progress__step--active' : ''} ${i < step ? 'tg-progress__step--done' : ''}`}
-                                    onClick={() => goToStep(i)}
+                                    onClick={() => animatedGoTo(i)}
                                     title={label}
                                 >
                                     <Icon size={16} />
@@ -757,35 +943,23 @@ export default function TaxGuidePage() {
                         })}
                     </div>
 
-                    {/* Step content */}
-                    <div className="tg-step-container">
+                    {/* Step content with animation */}
+                    <div className={`tg-step-container ${slideDir ? `tg-step-container--slide-${slideDir}` : ''}`}>
                         {stepContent}
                     </div>
 
                     {/* Navigation */}
                     <div className="tg-nav">
-                        <button
-                            className="tg-nav__btn tg-nav__btn--secondary"
-                            onClick={prevStep}
-                            disabled={isFirstStep}
-                        >
+                        <button className="tg-nav__btn tg-nav__btn--secondary" onClick={animatedPrev} disabled={isFirstStep}>
                             <ChevronLeft size={18} /> Anterior
                         </button>
 
-                        <button
-                            className="tg-nav__btn tg-nav__btn--ghost"
-                            onClick={resetAll}
-                            title="Empezar de nuevo"
-                        >
+                        <button className="tg-nav__btn tg-nav__btn--ghost" onClick={resetAll} title="Empezar de nuevo">
                             <RotateCcw size={16} />
                         </button>
 
                         {!isLastStep && (
-                            <button
-                                className="tg-nav__btn tg-nav__btn--primary"
-                                onClick={nextStep}
-                                disabled={!canProceed}
-                            >
+                            <button className="tg-nav__btn tg-nav__btn--primary" onClick={animatedNext} disabled={!canProceed}>
                                 Siguiente <ChevronRight size={18} />
                             </button>
                         )}
@@ -793,7 +967,6 @@ export default function TaxGuidePage() {
                 </main>
             </div>
 
-            {/* Mobile sticky estimator bar */}
             <div className="tax-guide__mobile-bar">
                 <LiveEstimatorBar result={result} loading={loading} />
             </div>

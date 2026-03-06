@@ -35,6 +35,11 @@ export interface IrpfEstimateInput {
     donativo_recurrente?: boolean
     retenciones_alquiler?: number
     retenciones_ahorro?: number
+    // Phase 3: Payslip fields
+    num_pagas_anuales?: number
+    salario_base_mensual?: number
+    complementos_salariales?: number
+    irpf_retenido_porcentaje?: number
     // Phase 2 fields
     tributacion_conjunta?: boolean
     tipo_unidad_familiar?: string

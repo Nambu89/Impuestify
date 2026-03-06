@@ -90,6 +90,11 @@ class FiscalProfileRequest(BaseModel):
     retenciones_trabajo: Optional[float] = None
     retenciones_alquiler: Optional[float] = None
     retenciones_ahorro: Optional[float] = None
+    # --- Phase 3: Payslip/salary fields ---
+    num_pagas_anuales: Optional[int] = None  # 12 | 14
+    salario_base_mensual: Optional[float] = None
+    complementos_salariales: Optional[float] = None
+    irpf_retenido_porcentaje: Optional[float] = None
 
 
 class UserDataExport(BaseModel):
@@ -372,6 +377,9 @@ _DATOS_FISCALES_KEYS = {
     "familia_numerosa", "tipo_familia_numerosa",
     "donativos_ley_49_2002", "donativo_recurrente",
     "retenciones_trabajo", "retenciones_alquiler", "retenciones_ahorro",
+    # Phase 3: Payslip/salary fields
+    "num_pagas_anuales", "salario_base_mensual",
+    "complementos_salariales", "irpf_retenido_porcentaje",
 }
 
 

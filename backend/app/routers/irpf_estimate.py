@@ -4,7 +4,7 @@ Lightweight IRPF estimation endpoint for the Tax Guide live estimator.
 Does NOT go through the LLM agent — directly calls IRPFSimulator for
 fast (~50-100ms) real-time estimates as users fill in the wizard.
 """
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -58,6 +58,11 @@ class IRPFEstimateRequest(BaseModel):
     # Phase 2: Rentas imputadas inmuebles (Art. 85 LIRPF)
     valor_catastral_segundas_viviendas: float = 0
     valor_catastral_revisado_post1994: bool = True
+    # Phase 3: Payslip/salary fields
+    num_pagas_anuales: int = 14
+    salario_base_mensual: float = 0
+    complementos_salariales: float = 0
+    irpf_retenido_porcentaje: float = 0
 
 
 class IRPFBreakdown(BaseModel):
@@ -114,6 +119,17 @@ async def estimate_irpf(
         if not ceuta_melilla and ccaa.lower() in ("ceuta", "melilla"):
             ceuta_melilla = True
 
+        # Auto-calculate annual gross from monthly salary if provided
+        ingresos_trabajo = request.ingresos_trabajo
+        if request.salario_base_mensual > 0 and ingresos_trabajo == 0:
+            mensual_total = request.salario_base_mensual + request.complementos_salariales
+            ingresos_trabajo = mensual_total * request.num_pagas_anuales
+
+        # Auto-calculate retenciones from percentage if provided
+        retenciones_trabajo = request.retenciones_trabajo
+        if request.irpf_retenido_porcentaje > 0 and retenciones_trabajo == 0 and ingresos_trabajo > 0:
+            retenciones_trabajo = ingresos_trabajo * request.irpf_retenido_porcentaje / 100
+
         simulator = IRPFSimulator(db)
 
         # Try requested year, fallback to year-1
@@ -121,7 +137,7 @@ async def estimate_irpf(
             result = await simulator.simulate(
                 jurisdiction=ccaa,
                 year=request.year,
-                ingresos_trabajo=request.ingresos_trabajo,
+                ingresos_trabajo=ingresos_trabajo,
                 ss_empleado=request.ss_empleado,
                 intereses=request.intereses,
                 dividendos=request.dividendos,
@@ -161,7 +177,7 @@ async def estimate_irpf(
             result = await simulator.simulate(
                 jurisdiction=ccaa,
                 year=request.year - 1,
-                ingresos_trabajo=request.ingresos_trabajo,
+                ingresos_trabajo=ingresos_trabajo,
                 ss_empleado=request.ss_empleado,
                 intereses=request.intereses,
                 dividendos=request.dividendos,
@@ -200,7 +216,7 @@ async def estimate_irpf(
 
         cuota_total = result.get("cuota_total", 0)
         retenciones = (
-            request.retenciones_trabajo
+            retenciones_trabajo
             + request.retenciones_alquiler
             + request.retenciones_ahorro
         )
@@ -250,3 +266,82 @@ async def estimate_irpf(
             resultado_estimado=0,
             error=str(e),
         )
+
+
+# === Phase B: Deduction discovery (lightweight, no LLM) ===
+
+class DeductionDiscoverRequest(BaseModel):
+    ccaa: str
+    tax_year: int = 2025
+    answers: dict = Field(default_factory=dict)
+
+
+class DeductionItem(BaseModel):
+    code: str
+    name: str
+    category: str
+    description: str = ""
+    percentage: Optional[float] = None
+    max_amount: Optional[float] = None
+    fixed_amount: Optional[float] = None
+    legal_reference: str = ""
+
+
+class DeductionDiscoverResponse(BaseModel):
+    success: bool = True
+    eligible: List[DeductionItem] = []
+    maybe_eligible: List[DeductionItem] = []
+    estimated_savings: float = 0
+    total_deductions: int = 0
+    missing_questions: List[dict] = []
+
+
+@router.post("/deductions/discover", response_model=DeductionDiscoverResponse)
+@limiter.limit("30/minute")
+async def discover_deductions_endpoint(
+    request: DeductionDiscoverRequest,
+    req: object = None,
+    current_user: TokenData = Depends(get_current_user),
+):
+    """Discover eligible deductions for a CCAA. No LLM — direct DB query."""
+    try:
+        from app.services.deduction_service import get_deduction_service
+        from app.tools.web_scraper_tool import normalize_ccaa_name
+
+        ccaa = normalize_ccaa_name(request.ccaa)
+        service = get_deduction_service()
+
+        result = await service.evaluate_eligibility(
+            ccaa=ccaa,
+            tax_year=request.tax_year,
+            answers=request.answers,
+        )
+
+        questions = await service.get_missing_questions(
+            ccaa=ccaa,
+            tax_year=request.tax_year,
+            answers=request.answers,
+        )
+
+        def to_item(d: dict) -> DeductionItem:
+            return DeductionItem(
+                code=d.get("code", ""),
+                name=d.get("name", ""),
+                category=d.get("category", ""),
+                description=d.get("description", ""),
+                percentage=d.get("percentage"),
+                max_amount=d.get("max_amount"),
+                fixed_amount=d.get("fixed_amount"),
+                legal_reference=d.get("legal_reference", ""),
+            )
+
+        return DeductionDiscoverResponse(
+            eligible=[to_item(d) for d in result.get("eligible", [])],
+            maybe_eligible=[to_item(d) for d in result.get("maybe_eligible", [])],
+            estimated_savings=result.get("estimated_savings", 0),
+            total_deductions=result.get("total_deductions", 0),
+            missing_questions=questions[:8],
+        )
+
+    except Exception as e:
+        return DeductionDiscoverResponse(success=False)
