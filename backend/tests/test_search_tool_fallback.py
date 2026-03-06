@@ -23,7 +23,7 @@ async def test_search_tool_fallback_logic():
         # Phase 1: 3 calls for target_year (AEAT, BOE, SegSocial) -> All return NO results
         # Phase 2: 3 calls for fallback_year -> One returns results
         
-        def side_effect(*args, **kwargs):
+        async def side_effect(*args, **kwargs):
             # Inspect 'data' payload to see which query is being run
             data = kwargs.get('data', {})
             query = data.get('q', '')

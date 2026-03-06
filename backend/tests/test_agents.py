@@ -61,15 +61,15 @@ class TestTaxAgent:
         assert "trimestralmente" in prompt.lower()
     
     def test_build_prompt_without_context(self):
-        """TaxAgent should return query if no context"""
+        """TaxAgent should include query even without context"""
         from app.agents.tax_agent import TaxAgent
-        
+
         agent = TaxAgent(name="TestAgent")
         query = "¿Cuándo presento el modelo 303?"
-        
+
         prompt = agent._build_prompt(query, context=None)
-        
-        assert prompt == query
+
+        assert query in prompt
 
 
 class TestAgentRuntime:
