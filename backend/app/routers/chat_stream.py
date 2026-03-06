@@ -92,8 +92,8 @@ async def ask_question_stream(
             detail={"error": "Question violates safety guidelines"}
         )
     
-    # === CONTENT RESTRICTION: Autonomo detection ===
-    if not access.is_owner and detect_autonomo_query(request.question):
+    # === CONTENT RESTRICTION: Autonomo detection (only block "particular" plan) ===
+    if not access.is_owner and access.plan_type != "autonomo" and detect_autonomo_query(request.question):
         async def autonomo_block_stream():
             yield {"event": "content", "data": get_autonomo_block_response()}
             yield {"event": "done", "data": ""}
