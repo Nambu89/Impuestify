@@ -119,7 +119,23 @@
       "WebFetch(domain:reactbits.dev)",
       "WebFetch(domain:til.simonwillison.net)",
       "WebFetch(domain:alexop.dev)",
-      "WebFetch(domain:openobserve.ai)"
+      "WebFetch(domain:openobserve.ai)",
+      "Bash(npm run:*)",
+      "Bash(PYTHONUTF8=1 \"../venv/Scripts/python.exe\":*)",
+      "Bash(tasklist:*)",
+      "Bash(PYTHONUTF8=1 venv/Scripts/python.exe:*)",
+      "Bash(printf {\"\"email\"\":\"\"test.particular@impuestify.es\"\",\"\"password\"\":\"\"Test2026!\"\"}:*)",
+      "Bash(for f in tests/test_ai_security.py tests/test_aragon_search.py tests/test_aragon_table.py tests/test_auth.py tests/test_direct_quota_question.py tests/test_followup_optimization.py tests/test_fts_tarifa_plana.py tests/test_full_rag.py tests/test_irpf_calculator.py tests/test_knowledge_system.py tests/test_payslip_analysis.py tests/test_rag.py tests/test_search_tool_fallback.py tests/test_system_complete.py tests/test_user_query.py)",
+      "Bash(do echo \"=== $f ===\")",
+      "Read(//c/Users/Fernando Prada/OneDrive - SVAN TRADING SL/Escritorio/Personal/Proyectos/TaxIA/backend/**)",
+      "Bash(done)",
+      "Bash(find .:*)",
+      "Bash(rm:*)",
+      "Bash(do PYTHONUTF8=1:*)",
+      "Bash(touch:*)",
+      "Bash(PYTHONUTF8=1 ../venv/Scripts/python.exe:*)",
+      "Bash(cp:*)",
+      "Bash(do git:*)"
     ]
   }
 }
