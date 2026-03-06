@@ -13,15 +13,15 @@ import StarBorder from '../components/reactbits/StarBorder'
 import './Home.css'
 
 const TERRITORIES = [
-    { name: 'Andalucia', foral: false, link: null },
-    { name: 'Aragon', foral: false, link: null },
+    { name: 'Andalucía', foral: false, link: null },
+    { name: 'Aragón', foral: false, link: null },
     { name: 'Asturias', foral: false, link: null },
     { name: 'Baleares', foral: false, link: null },
     { name: 'Canarias', foral: false, link: null },
     { name: 'Cantabria', foral: false, link: null },
     { name: 'Castilla-La Mancha', foral: false, link: null },
-    { name: 'Castilla y Leon', foral: false, link: null },
-    { name: 'Cataluna', foral: false, link: null },
+    { name: 'Castilla y León', foral: false, link: null },
+    { name: 'Cataluña', foral: false, link: null },
     { name: 'C. Valenciana', foral: false, link: null },
     { name: 'Extremadura', foral: false, link: null },
     { name: 'Galicia', foral: false, link: null },
@@ -67,8 +67,8 @@ export default function Home() {
                         </FadeContent>
                         <FadeContent delay={200} duration={600}>
                             <p className="hero-subtitle">
-                                El unico asistente fiscal con IA que cubre todas las comunidades autonomas,
-                                incluyendo los territorios forales del Pais Vasco y Navarra.
+                                El único asistente fiscal con IA que cubre todas las comunidades autónomas,
+                                incluyendo los territorios forales del País Vasco y Navarra.
                             </p>
                         </FadeContent>
                         <FadeContent delay={300} duration={600}>
@@ -85,7 +85,7 @@ export default function Home() {
                                             <ArrowRight size={20} />
                                         </Link>
                                         <Link to="/login" className="btn btn-secondary btn-lg">
-                                            Iniciar Sesion
+                                            Iniciar Sesión
                                         </Link>
                                     </>
                                 )}
@@ -96,10 +96,10 @@ export default function Home() {
                         <FadeContent delay={400} duration={800} direction="left">
                             <div className="chat-preview">
                                 <div className="chat-message user">
-                                    <p>¿Cuanto pago de IRPF si gano 40.000€ en Madrid?</p>
+                                    <p>¿Cuánto pago de IRPF si gano 40.000€ en Madrid?</p>
                                 </div>
                                 <div className="chat-message assistant">
-                                    <p>Tu cuota IRPF estimada es de 7.234€ (tipo efectivo 18,1%). Ademas, podrias aplicar 3 deducciones...</p>
+                                    <p>Tu cuota IRPF estimada es de 7.234€ (tipo efectivo 18,1%). Además, podrías aplicar 3 deducciones...</p>
                                 </div>
                             </div>
                         </FadeContent>
@@ -162,8 +162,8 @@ export default function Home() {
                     </FadeContent>
                     <FadeContent delay={200} duration={500}>
                         <p className="coverage-note">
-                            Somos el unico asistente fiscal con IA que integra las normativas forales
-                            del Pais Vasco y Navarra, con sus deducciones propias que no existen en el regimen comun.
+                            Somos el único asistente fiscal con IA que integra las normativas forales
+                            del País Vasco y Navarra, con sus deducciones propias que no existen en el régimen común.
                         </p>
                     </FadeContent>
                 </div>
@@ -173,21 +173,21 @@ export default function Home() {
             <section className="comparison">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">¿Por que nuestra IA es diferente?</h2>
+                        <h2 className="section-title">¿Por qué nuestra IA es diferente?</h2>
                     </FadeContent>
                     <div className="comparison-grid">
                         <FadeContent delay={100} duration={500}>
                             <div className="comparison-col comparison-generic">
                                 <h3 className="comparison-title">
                                     <MessageSquare size={20} />
-                                    Asistentes genericos
+                                    Asistentes genéricos
                                 </h3>
                                 <ul className="comparison-list">
-                                    <li><X size={16} className="comparison-icon-no" /> Chatbot generico sin fuentes verificadas</li>
-                                    <li><X size={16} className="comparison-icon-no" /> Sin analisis de documentos</li>
+                                    <li><X size={16} className="comparison-icon-no" /> Chatbot genérico sin fuentes verificadas</li>
+                                    <li><X size={16} className="comparison-icon-no" /> Sin análisis de documentos</li>
                                     <li><X size={16} className="comparison-icon-no" /> Sin cobertura de territorios forales</li>
-                                    <li><X size={16} className="comparison-icon-no" /> Respuestas genericas sin personalizacion</li>
-                                    <li><X size={16} className="comparison-icon-no" /> Sin proteccion de datos con IA</li>
+                                    <li><X size={16} className="comparison-icon-no" /> Respuestas genéricas sin personalización</li>
+                                    <li><X size={16} className="comparison-icon-no" /> Sin protección de datos con IA</li>
                                 </ul>
                             </div>
                         </FadeContent>
@@ -202,7 +202,7 @@ export default function Home() {
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> RAG sobre 428+ documentos oficiales con citas legales</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> 17 CCAA + territorios forales + Ceuta/Melilla</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> Motor de 64 deducciones personalizadas</li>
-                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Guardrails IA: moderacion, anti-inyeccion, filtrado PII</li>
+                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Guardrails IA: moderación, anti-inyección, filtrado PII</li>
                                 </ul>
                             </SpotlightCard>
                         </FadeContent>
@@ -214,7 +214,7 @@ export default function Home() {
             <section className="features">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">Tecnologia de vanguardia</h2>
+                        <h2 className="section-title">Tecnología de vanguardia</h2>
                     </FadeContent>
                     <div className="features-grid">
                         <FadeContent delay={100} duration={400}>
@@ -223,7 +223,7 @@ export default function Home() {
                                     <Users size={28} />
                                 </div>
                                 <h3>IA Multi-Agente</h3>
-                                <p>Agentes especializados en fiscal, nominas, notificaciones AEAT y gestion documental.</p>
+                                <p>Agentes especializados en fiscal, nóminas, notificaciones AEAT y gestión documental.</p>
                             </SpotlightCard>
                         </FadeContent>
                         <FadeContent delay={200} duration={400}>
@@ -241,7 +241,7 @@ export default function Home() {
                                     <Lock size={28} />
                                 </div>
                                 <h3>Seguro y Privado</h3>
-                                <p>Guardrails IA: moderacion de contenido, deteccion de inyeccion y filtrado de datos personales. RGPD compliant.</p>
+                                <p>Guardrails IA: moderación de contenido, detección de inyección y filtrado de datos personales. RGPD compliant.</p>
                             </SpotlightCard>
                         </FadeContent>
                     </div>
@@ -271,7 +271,7 @@ export default function Home() {
                                 <li><CheckCircle size={18} /><span>Consultas fiscales ilimitadas con IA</span></li>
                                 <li><CheckCircle size={18} /><span>Motor de deducciones con 64 deducciones</span></li>
                                 <li><CheckCircle size={18} /><span>Cobertura completa: 17 CCAA + forales</span></li>
-                                <li><CheckCircle size={18} /><span>Analisis de nominas y notificaciones AEAT</span></li>
+                                <li><CheckCircle size={18} /><span>Análisis de nóminas y notificaciones AEAT</span></li>
                                 <li><CheckCircle size={18} /><span>Workspace personal de documentos</span></li>
                                 <li><CheckCircle size={18} /><span>Informe IRPF exportable en PDF</span></li>
                                 <li><CheckCircle size={18} /><span>Fuentes oficiales citadas</span></li>
@@ -285,8 +285,8 @@ export default function Home() {
                             </p>
                         </div>
                         <p className="pricing-autonomos">
-                            ¿Eres autonomo o profesional por cuenta propia?{' '}
-                            <Link to="/contact?type=autonomo">Solicita informacion sobre planes especializados</Link>
+                            ¿Eres autónomo o profesional por cuenta propia?{' '}
+                            <Link to="/contact?type=autonomo">Solicita información sobre planes especializados</Link>
                         </p>
                     </FadeContent>
                 </div>
