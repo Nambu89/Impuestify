@@ -42,7 +42,8 @@ interface UseStreamingChatReturn {
     sendStreamingMessage: (
         message: string,
         conversationId?: string,
-        callbacks?: StreamCallbacks
+        callbacks?: StreamCallbacks,
+        workspaceId?: string
     ) => Promise<void>;
     cancelStream: () => void;
     resetStream: () => void;
@@ -102,7 +103,8 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
     const sendStreamingMessage = useCallback(async (
         message: string,
         conversationId?: string,
-        callbacks?: StreamCallbacks
+        callbacks?: StreamCallbacks,
+        workspaceId?: string
     ) => {
         // Reset state
         responseAccRef.current = '';
@@ -135,7 +137,8 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                 },
                 body: JSON.stringify({
                     question: message,
-                    conversation_id: conversationId
+                    conversation_id: conversationId,
+                    workspace_id: workspaceId || null
                 })
             });
 

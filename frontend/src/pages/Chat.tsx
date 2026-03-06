@@ -149,7 +149,7 @@ export default function Chat() {
                             content: `Error: ${error} `
                         }])
                     }
-                })
+                }, activeWorkspace?.id)
             } catch (error: any) {
                 logger.error('Streaming fatal error:', error)
                 setMessages(prev => [...prev, {

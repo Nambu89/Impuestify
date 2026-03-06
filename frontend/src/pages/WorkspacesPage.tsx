@@ -79,6 +79,7 @@ export default function WorkspacesPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formError, setFormError] = useState<string | null>(null)
     const [uploading, setUploading] = useState(false)
+    const [deletingFileId, setDeletingFileId] = useState<string | null>(null)
 
     // Refs
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -189,6 +190,22 @@ export default function WorkspacesPage() {
 
     const selectWorkspace = (workspace: Workspace) => {
         setSelectedWorkspace(workspace)
+    }
+
+    const handleDeleteFile = async (fileId: string) => {
+        if (!selectedWorkspace) return
+        try {
+            setDeletingFileId(fileId)
+            await apiRequest(`/api/workspaces/${selectedWorkspace.id}/files/${fileId}`, {
+                method: 'DELETE'
+            })
+            setWorkspaceFiles(prev => prev.filter(f => f.id !== fileId))
+            fetchWorkspaces()
+        } catch (err: any) {
+            setError(err.message || 'Error al eliminar el archivo')
+        } finally {
+            setDeletingFileId(null)
+        }
     }
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -421,7 +438,11 @@ export default function WorkspacesPage() {
                                                         <div className="file-status">
                                                             {getStatusBadge(file.processing_status)}
                                                         </div>
-                                                        <button className="btn btn-ghost file-delete-btn">
+                                                        <button
+                                                            className="btn btn-ghost file-delete-btn"
+                                                            onClick={() => handleDeleteFile(file.id)}
+                                                            disabled={deletingFileId === file.id}
+                                                        >
                                                             <Trash2 size={16} />
                                                         </button>
                                                     </div>
