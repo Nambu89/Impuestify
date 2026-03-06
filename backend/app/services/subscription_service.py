@@ -103,12 +103,14 @@ class SubscriptionService:
     # ------------------------------------------------------------------
 
     async def create_checkout_session(
-        self, user_id: str, success_url: str, cancel_url: str
+        self, user_id: str, success_url: str, cancel_url: str,
+        plan_type: str = "particular"
     ) -> Optional[str]:
         """
-        Create a Stripe Checkout Session for the Particular plan.
+        Create a Stripe Checkout Session.
 
         Returns the checkout session URL.
+        plan_type is stored as metadata so the webhook can update it in Turso.
         """
         if not settings.is_stripe_configured or not settings.STRIPE_PRICE_ID:
             return None
@@ -133,7 +135,7 @@ class SubscriptionService:
             mode="subscription",
             success_url=success_url,
             cancel_url=cancel_url,
-            metadata={"user_id": user_id},
+            metadata={"user_id": user_id, "plan_type": plan_type},
         )
 
         logger.info("Checkout session created", extra={"user_id": user_id})
@@ -207,10 +209,12 @@ class SubscriptionService:
         return {"status": "ok", "event_type": event_type}
 
     async def _handle_checkout_completed(self, session: dict):
-        """Handle successful checkout: activate subscription."""
+        """Handle successful checkout: activate subscription and update plan_type."""
         db = await self._get_db()
         customer_id = session.get("customer")
         subscription_id = session.get("subscription")
+        metadata = session.get("metadata", {})
+        plan_type = metadata.get("plan_type", "particular")
 
         if not customer_id:
             return
@@ -219,14 +223,18 @@ class SubscriptionService:
             """
             UPDATE subscriptions
             SET stripe_subscription_id = ?,
+                plan_type = ?,
                 status = 'active',
                 current_period_start = datetime('now'),
                 updated_at = datetime('now')
             WHERE stripe_customer_id = ?
             """,
-            [subscription_id, customer_id],
+            [subscription_id, plan_type, customer_id],
         )
-        logger.info("Subscription activated", extra={"customer_id": customer_id})
+        logger.info(
+            f"Subscription activated (plan={plan_type})",
+            extra={"customer_id": customer_id, "plan_type": plan_type},
+        )
 
     async def _handle_subscription_updated(self, subscription: dict):
         """Handle subscription update (plan change, renewal, etc.)."""

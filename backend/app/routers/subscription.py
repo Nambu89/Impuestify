@@ -25,6 +25,7 @@ router = APIRouter(prefix="/subscription", tags=["subscription"])
 class CheckoutRequest(BaseModel):
     success_url: str
     cancel_url: str
+    plan_type: str = "particular"  # "particular" or "autonomo"
 
 
 class CheckoutResponse(BaseModel):
@@ -75,6 +76,7 @@ async def create_checkout(
             user_id=current_user.user_id,
             success_url=request.success_url,
             cancel_url=request.cancel_url,
+            plan_type=request.plan_type,
         )
         return CheckoutResponse(checkout_url=url)
     except ValueError as e:
