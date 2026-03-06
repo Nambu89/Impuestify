@@ -325,6 +325,14 @@ export default function Chat() {
                             {/* STREAMING: Timeline + live content */}
                             {isStreaming && (
                                 <div className="streaming-live">
+                                    {/* Workspace context badge while streaming */}
+                                    {activeWorkspace && (
+                                        <div className="streaming-workspace-badge">
+                                            <span className="streaming-workspace-icon">{activeWorkspace.icon}</span>
+                                            <span>Consultando {activeWorkspace.file_count} {activeWorkspace.file_count === 1 ? 'documento' : 'documentos'} de <strong>{activeWorkspace.name}</strong></span>
+                                        </div>
+                                    )}
+
                                     {/* Chain-of-thought timeline (visible while no content yet) */}
                                     {streamState.steps.length > 0 && !streamState.response && (
                                         <StreamingTimeline steps={streamState.steps} />

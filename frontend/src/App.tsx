@@ -1,25 +1,27 @@
+import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Chat from './pages/Chat'
 import Dashboard from './pages/Dashboard'
-import SettingsPage from './pages/SettingsPage'
-import WorkspacesPage from './pages/WorkspacesPage'
-import SubscribePage from './pages/SubscribePage'
-import ContactPage from './pages/ContactPage'
-import AdminUsersPage from './pages/AdminUsersPage'
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
-import AITransparencyPage from './pages/AITransparencyPage'
-import CookiePolicyPage from './pages/CookiePolicyPage'
-import TermsPage from './pages/TermsPage'
-import DataRetentionPage from './pages/DataRetentionPage'
-import ForalPage from './pages/ForalPage'
-import CeutaMelillaPage from './pages/CeutaMelillaPage'
 import Footer from './components/Footer'
 import CookieConsentBanner from './components/CookieConsent'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { useSubscription } from './hooks/useSubscription'
+
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const WorkspacesPage = lazy(() => import('./pages/WorkspacesPage'))
+const SubscribePage = lazy(() => import('./pages/SubscribePage'))
+const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'))
+const ContactPage = lazy(() => import('./pages/ContactPage'))
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
+const AITransparencyPage = lazy(() => import('./pages/AITransparencyPage'))
+const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'))
+const TermsPage = lazy(() => import('./pages/TermsPage'))
+const DataRetentionPage = lazy(() => import('./pages/DataRetentionPage'))
+const ForalPage = lazy(() => import('./pages/ForalPage'))
+const CeutaMelillaPage = lazy(() => import('./pages/CeutaMelillaPage'))
 
 // Protected route wrapper — requires auth + active subscription
 function ProtectedRoute({ children, requireSubscription = true }: { children: React.ReactNode; requireSubscription?: boolean }) {
@@ -45,6 +47,7 @@ function App() {
     return (
         <AuthProvider>
             <div className="app">
+                <Suspense fallback={<div className="loading-screen">Cargando...</div>}>
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
@@ -106,6 +109,7 @@ function App() {
                     />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                </Suspense>
 
                 {/* Cookie consent banner (LSSI-CE + RGPD) */}
                 <CookieConsentBanner />

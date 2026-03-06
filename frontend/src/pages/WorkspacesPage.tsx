@@ -80,9 +80,11 @@ export default function WorkspacesPage() {
     const [formError, setFormError] = useState<string | null>(null)
     const [uploading, setUploading] = useState(false)
     const [deletingFileId, setDeletingFileId] = useState<string | null>(null)
+    const [isDragOver, setIsDragOver] = useState(false)
 
     // Refs
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const dragCounterRef = useRef(0)
     const hasFetched = useRef(false)
 
     const fetchWorkspaces = useCallback(async () => {
@@ -248,6 +250,77 @@ export default function WorkspacesPage() {
         }
     }
 
+    const handleDragEnter = (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        dragCounterRef.current++
+        if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+            setIsDragOver(true)
+        }
+    }
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        dragCounterRef.current--
+        if (dragCounterRef.current === 0) {
+            setIsDragOver(false)
+        }
+    }
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragOver(false)
+        dragCounterRef.current = 0
+
+        if (!selectedWorkspace) return
+
+        const file = e.dataTransfer.files?.[0]
+        if (!file) return
+
+        const accepted = ['.pdf', '.png', '.jpg', '.jpeg', '.doc', '.docx', '.xls', '.xlsx']
+        const ext = '.' + file.name.split('.').pop()?.toLowerCase()
+        if (!accepted.includes(ext)) {
+            setError(`Tipo de archivo no admitido. Formatos permitidos: ${accepted.join(', ')}`)
+            return
+        }
+
+        setUploading(true)
+        try {
+            const formDataObj = new FormData()
+            formDataObj.append('file', file)
+
+            const token = localStorage.getItem('access_token')
+            const API_URL = import.meta.env.VITE_API_URL || '/api'
+
+            const response = await fetch(`${API_URL}/api/workspaces/${selectedWorkspace.id}/files`, {
+                method: 'POST',
+                headers: {
+                    ...(token && { Authorization: `Bearer ${token}` })
+                },
+                body: formDataObj
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.detail || 'Error al subir archivo')
+            }
+
+            fetchWorkspaceFiles(selectedWorkspace.id)
+            fetchWorkspaces()
+        } catch (err: any) {
+            setError(err.message || 'Error al subir archivo')
+        } finally {
+            setUploading(false)
+        }
+    }
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('es-ES', {
             day: 'numeric',
@@ -384,7 +457,13 @@ export default function WorkspacesPage() {
                             </div>
 
                             {/* Files Panel */}
-                            <div className="files-panel">
+                            <div
+                                className={`files-panel${isDragOver && selectedWorkspace ? ' files-panel--drag-over' : ''}`}
+                                onDragEnter={handleDragEnter}
+                                onDragLeave={handleDragLeave}
+                                onDragOver={handleDragOver}
+                                onDrop={handleDrop}
+                            >
                                 {/* Hidden file input */}
                                 <input
                                     type="file"
@@ -393,6 +472,14 @@ export default function WorkspacesPage() {
                                     accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
                                     style={{ display: 'none' }}
                                 />
+
+                                {/* Drag overlay */}
+                                {isDragOver && selectedWorkspace && (
+                                    <div className="files-drag-overlay">
+                                        <Upload size={40} />
+                                        <p>Suelta el archivo en {selectedWorkspace.name}</p>
+                                    </div>
+                                )}
 
                                 {selectedWorkspace ? (
                                     <>

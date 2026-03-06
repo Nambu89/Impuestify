@@ -252,6 +252,37 @@
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-sm);
     min-height: 300px;
+    position: relative;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    border: 2px solid transparent;
+}
+
+.files-panel--drag-over {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.1);
+}
+
+.files-drag-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-3);
+    background: rgba(26, 86, 219, 0.06);
+    border-radius: var(--radius-xl);
+    border: 2px dashed var(--color-primary);
+    color: var(--color-primary);
+    z-index: 10;
+    pointer-events: none;
+    animation: fadeIn 0.15s ease;
+}
+
+.files-drag-overlay p {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    margin: 0;
 }
 
 .files-header {
