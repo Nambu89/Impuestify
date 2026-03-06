@@ -4,8 +4,11 @@ IRPF Calculator using structured tax tables.
 Calculates exact IRPF (Income Tax) using scales from SQL database.
 """
 import asyncio
+import logging
 from typing import Dict, List, Optional
 from app.database.turso_client import TursoClient
+
+logger = logging.getLogger(__name__)
 
 
 class IRPFCalculator:
@@ -78,8 +81,12 @@ class IRPFCalculator:
                 # Estatal scale not found, skip it for now
                 print("⚠️  Advertencia: Escala estatal no encontrada, solo calculando cuota autonómica")
         
-        # Calculate CCAA quota
-        ccaa_scale = await self._get_scale(jurisdiction, year)
+        # Calculate CCAA quota (Ceuta/Melilla use Estatal scale — deduction applied later)
+        try:
+            ccaa_scale = await self._get_scale(jurisdiction, year)
+        except ValueError:
+            logger.warning("No scale for %s %d, falling back to Estatal", jurisdiction, year)
+            ccaa_scale = await self._get_scale('Estatal', year)
         cuota_autonomica, breakdown_autonomica = self._apply_scale(
             base_liquidable,
             ccaa_scale

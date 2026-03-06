@@ -226,7 +226,11 @@ class IRPFSimulator:
 
         # --- 7. Apply MPYF: subtract MPYF quota from cuota íntegra ---
         state_scale = await self._irpf_calc._get_scale("Estatal", year)
-        ccaa_scale = await self._irpf_calc._get_scale(jurisdiction, year)
+        try:
+            ccaa_scale = await self._irpf_calc._get_scale(jurisdiction, year)
+        except ValueError:
+            logger.warning("No CCAA scale for %s, using Estatal as fallback", jurisdiction)
+            ccaa_scale = state_scale
 
         cuota_mpyf_est, _ = self._irpf_calc._apply_scale(
             mpyf_result["mpyf_estatal"], state_scale

@@ -38,7 +38,7 @@ router = APIRouter(prefix="/api", tags=["chat-streaming"])
 
 class StreamQuestionRequest(BaseModel):
     """Request for streaming chat"""
-    question: str = Field(..., min_length=3, max_length=1000)
+    question: str = Field(..., min_length=1, max_length=1000)
     conversation_id: Optional[str] = None
     workspace_id: Optional[str] = Field(default=None, description="Active workspace ID for context")
     k: Optional[int] = Field(default=5, ge=1, le=10)

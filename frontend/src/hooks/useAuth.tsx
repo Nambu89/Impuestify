@@ -53,10 +53,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const response = await authApi.get('/auth/me')
             logger.debug('User fetched:', response.data.email)
             setUser(response.data)
-        } catch (error) {
-            logger.error('Failed to fetch user:', error)
-            localStorage.removeItem(TOKEN_KEY)
-            localStorage.removeItem(REFRESH_TOKEN_KEY)
+        } catch (error: any) {
+            // If 401, try refreshing the token before giving up
+            const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+            if (error?.response?.status === 401 && refreshToken) {
+                logger.debug('Access token expired, attempting refresh')
+                try {
+                    const refreshRes = await authApi.post('/auth/refresh', {
+                        refresh_token: refreshToken
+                    })
+                    const { access_token, refresh_token } = refreshRes.data.tokens || refreshRes.data
+                    localStorage.setItem(TOKEN_KEY, access_token)
+                    if (refresh_token) localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token)
+
+                    // Retry /auth/me with new token
+                    const retryRes = await authApi.get('/auth/me', {
+                        headers: { Authorization: `Bearer ${access_token}` }
+                    })
+                    logger.debug('User fetched after refresh:', retryRes.data.email)
+                    setUser(retryRes.data)
+                } catch (refreshError) {
+                    logger.error('Token refresh failed:', refreshError)
+                    localStorage.removeItem(TOKEN_KEY)
+                    localStorage.removeItem(REFRESH_TOKEN_KEY)
+                }
+            } else {
+                logger.error('Failed to fetch user:', error)
+                localStorage.removeItem(TOKEN_KEY)
+                localStorage.removeItem(REFRESH_TOKEN_KEY)
+            }
         } finally {
             setIsLoading(false)
         }
