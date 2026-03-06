@@ -1,17 +1,19 @@
-import { FileText, LogOut, Menu, Settings, Shield, Calculator } from 'lucide-react'
+import { useState } from 'react'
+import { FileText, LogOut, Menu, MessageSquare, Settings, Shield, Calculator } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
 import './Header.css'
 
 interface HeaderProps {
-    onMenuToggle?: () => void // ✅ NUEVO: Prop opcional para toggle
+    onMenuToggle?: () => void
 }
 
 export default function Header({ onMenuToggle }: HeaderProps) {
     const { user, logout } = useAuth()
     const { isOwner } = useSubscription()
     const navigate = useNavigate()
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     const handleLogout = () => {
         // ✅ ADD: Confirmation dialog before logout (beta tester feedback)
@@ -38,18 +40,16 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     }
 
     return (
+        <>
         <header className="header">
             <div className="header-content">
-                {/* ✅ NUEVO: Botón hamburguesa para móvil */}
-                {onMenuToggle && (
-                    <button
-                        className="menu-toggle"
-                        onClick={onMenuToggle}
-                        aria-label="Toggle menu"
-                    >
-                        <Menu size={24} />
-                    </button>
-                )}
+                <button
+                    className="menu-toggle"
+                    onClick={onMenuToggle || (() => setMobileMenuOpen(!mobileMenuOpen))}
+                    aria-label="Toggle menu"
+                >
+                    <Menu size={24} />
+                </button>
 
                 <Link to="/chat" className="logo">
                     <FileText size={28} />
@@ -90,5 +90,27 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                 </div>
             </div>
         </header>
+
+        {mobileMenuOpen && !onMenuToggle && (
+            <div className="mobile-nav-overlay" onClick={() => setMobileMenuOpen(false)}>
+                <nav className="mobile-nav" onClick={e => e.stopPropagation()}>
+                    <Link to="/chat" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                        <MessageSquare size={20} /> Chat
+                    </Link>
+                    <Link to="/guia-fiscal" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                        <Calculator size={20} /> Guia Fiscal
+                    </Link>
+                    <Link to="/settings" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                        <Settings size={20} /> Configuracion
+                    </Link>
+                    {isOwner && (
+                        <Link to="/admin/users" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                            <Shield size={20} /> Admin
+                        </Link>
+                    )}
+                </nav>
+            </div>
+        )}
+        </>
     )
 }

@@ -19,6 +19,12 @@ export default function Register() {
         e.preventDefault()
         setError('')
 
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(email)) {
+            setError('Por favor, introduce un email válido')
+            return
+        }
+
         if (password !== confirmPassword) {
             setError('Las contraseñas no coinciden')
             return

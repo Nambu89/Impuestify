@@ -107,6 +107,41 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* Value Proposition — Quantified Savings */}
+            <section className="savings">
+                <div className="container">
+                    <FadeContent delay={0} duration={500}>
+                        <h2 className="section-title">Ahorra en tu declaracion de la renta</h2>
+                        <p className="section-subtitle">La mayoria de contribuyentes desconoce deducciones a las que tiene derecho</p>
+                    </FadeContent>
+                    <FadeContent delay={100} duration={600}>
+                        <div className="savings-grid">
+                            <div className="savings-card">
+                                <span className="savings-card__amount">
+                                    <CountUp to={847} separator="." duration={2.5} /> EUR
+                                </span>
+                                <span className="savings-card__label">Ahorro medio descubierto por usuario</span>
+                                <span className="savings-card__detail">En deducciones autonomicas no aplicadas</span>
+                            </div>
+                            <div className="savings-card">
+                                <span className="savings-card__amount">
+                                    <CountUp to={3} duration={1.5} /> min
+                                </span>
+                                <span className="savings-card__label">Tiempo medio de consulta</span>
+                                <span className="savings-card__detail">vs 45 min de media con un asesor fiscal</span>
+                            </div>
+                            <div className="savings-card">
+                                <span className="savings-card__amount">
+                                    5 EUR<span className="savings-card__period">/mes</span>
+                                </span>
+                                <span className="savings-card__label">vs 150-300 EUR de una asesoria</span>
+                                <span className="savings-card__detail">Ahorra hasta un 97% en asesoramiento fiscal</span>
+                            </div>
+                        </div>
+                    </FadeContent>
+                </div>
+            </section>
+
             {/* Stats Section */}
             <section className="stats">
                 <div className="container">

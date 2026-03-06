@@ -198,6 +198,25 @@ class UserService:
         
         return await self.get_user_by_id(user_id)
 
+    async def update_password(self, user_id: str, new_password_hash: str) -> bool:
+        """
+        Update a user's password hash directly.
+
+        Args:
+            user_id: User ID
+            new_password_hash: Already-hashed password string
+
+        Returns:
+            True on success
+        """
+        db = await get_db_client()
+        now = datetime.utcnow().isoformat()
+        await db.execute(
+            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+            [new_password_hash, now, user_id],
+        )
+        return True
+
 
 # Global instance
 user_service = UserService()

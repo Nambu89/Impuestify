@@ -179,6 +179,11 @@ class Settings(BaseSettings):
     RESEND_FROM_EMAIL: str = Field(default="noreply@impuestify.es")
 
     # -------------------------------
+    # 🌐 Frontend
+    # -------------------------------
+    FRONTEND_URL: str = Field(default="https://impuestify.es")
+
+    # -------------------------------
     # 👤 Owner & Contact
     # -------------------------------
     OWNER_EMAIL: str = Field(default="fernando.prada@proton.me")

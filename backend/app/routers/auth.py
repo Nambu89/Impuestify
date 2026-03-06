@@ -11,11 +11,15 @@ from pydantic import BaseModel, EmailStr, Field
 
 from app.auth.jwt_handler import (
     create_tokens_for_user,
+    create_reset_token,
     verify_token,
     TokenResponse,
     get_current_user_required,
     TokenData
 )
+from app.auth.password import hash_password
+from app.services.email_service import get_email_service
+from app.config import settings
 from app.services.user_service import user_service
 from app.services.subscription_service import get_subscription_service
 from app.database.models import UserCreate, User
@@ -45,6 +49,17 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class ForgotPasswordRequest(BaseModel):
+    """Forgot password request"""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password request"""
+    token: str
+    new_password: str = Field(..., min_length=8, description="Minimo 8 caracteres")
+
+
 class UserResponse(BaseModel):
     """User info response"""
     id: str
@@ -63,6 +78,7 @@ class AuthResponse(BaseModel):
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 async def register(request: Request, data: RegisterRequest):
     """
     Register a new user.
@@ -119,8 +135,7 @@ async def register(request: Request, data: RegisterRequest):
 
 
 @router.post("/login", response_model=AuthResponse)
-# TODO: Re-enable rate limiting once CORS is confirmed working
-# @limiter.limit("5/minute")
+@limiter.limit("5/minute")
 async def login(request: Request, data: LoginRequest):
     """
     Login with email and password.
@@ -216,12 +231,99 @@ async def get_current_user_info(current_user: TokenData = Depends(get_current_us
 async def logout(current_user: TokenData = Depends(get_current_user_required)):
     """
     Logout current user.
-    
+
     Note: With JWT, actual token invalidation requires a blacklist.
     For now, client should discard tokens.
     """
     # In a production system, you would add the token to a blacklist
     # stored in Redis/Upstash
     logger.info(f"User logged out: {current_user.user_id}")
-    
+
     return {"message": "Sesión cerrada correctamente"}
+
+
+@router.post("/forgot-password")
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, data: ForgotPasswordRequest):
+    """
+    Request a password reset link.
+
+    Generates a short-lived JWT reset token and sends it to the user's email.
+    Always returns 200 with a generic message to avoid user enumeration.
+    """
+    GENERIC_RESPONSE = {"message": "Si el email existe, recibirás un enlace para restablecer tu contraseña"}
+
+    try:
+        user = await user_service.get_user_by_email(data.email)
+        if not user or not user.is_active:
+            # Return generic response — do not reveal whether the email exists
+            return GENERIC_RESPONSE
+
+        reset_token = create_reset_token(user.id, user.email)
+        reset_link = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"
+
+        html = f"""
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #1a56db; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 20px;">Impuestify</h1>
+        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Recuperacion de contrasena</p>
+    </div>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p>Hola,</p>
+        <p>Has solicitado restablecer tu contrasena en Impuestify.</p>
+        <div style="text-align: center; margin: 25px 0;">
+            <a href="{reset_link}" style="background: #1a56db; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600;">Restablecer contrasena</a>
+        </div>
+        <p style="color: #666; font-size: 13px;">Este enlace expira en 1 hora. Si no solicitaste este cambio, ignora este email.</p>
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        <p style="color: #999; font-size: 11px;">Impuestify - Asistente fiscal inteligente</p>
+    </div>
+</div>
+"""
+
+        email_service = get_email_service()
+        result = await email_service.send_email(
+            to=user.email,
+            subject="Restablece tu contrasena en Impuestify",
+            html=html,
+        )
+        if not result.get("success"):
+            logger.error(f"Failed to send reset email for user {user.id}: {result.get('error')}")
+
+    except Exception as e:
+        # Log but never expose details externally
+        logger.error(f"forgot_password error: {e}")
+
+    return GENERIC_RESPONSE
+
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+async def reset_password(request: Request, data: ResetPasswordRequest):
+    """
+    Reset password using a valid reset token.
+
+    Verifies the JWT reset token, then updates the user's password.
+    """
+    token_data = verify_token(data.token, token_type="reset")
+
+    if not token_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El enlace de recuperacion no es valido o ha expirado"
+        )
+
+    user = await user_service.get_user_by_id(token_data.user_id)
+
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El enlace de recuperacion no es valido o ha expirado"
+        )
+
+    new_hash = hash_password(data.new_password)
+    await user_service.update_password(user.id, new_hash)
+
+    logger.info(f"Password reset completed for user: {user.id}")
+
+    return {"message": "Contrasena actualizada correctamente. Ya puedes iniciar sesion."}

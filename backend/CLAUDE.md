@@ -24,6 +24,7 @@ cd backend && pytest tests/ -v --tb=short
 | `STRIPE_SECRET_KEY` + `WEBHOOK_SECRET` + `PRICE_ID` | Payments |
 | `RESEND_API_KEY` + `RESEND_FROM_EMAIL` | Email to advisors |
 | `ALLOWED_ORIGINS` | CORS (frontend URL) |
+| `FRONTEND_URL` | Base URL for reset-password link (default: https://impuestify.es) |
 
 ## Multi-Agent System (`app/agents/`)
 
@@ -70,7 +71,7 @@ Pipeline (in order):
 
 | Router | Prefix | Purpose |
 |--------|--------|---------|
-| `auth.py` | `/api/auth` | Login, register, refresh token |
+| `auth.py` | `/api/auth` | Login, register, refresh token, forgot-password, reset-password |
 | `ask.py` | `/api/ask` | Main SSE chat endpoint |
 | `fiscal_profile.py` | `/api/fiscal-profile` | User fiscal profile CRUD |
 | `workspaces.py` | `/api/workspaces` | Workspace + file management |
@@ -330,7 +331,7 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | SSE buffering on Railway | Use `print(flush=True)` in streaming code |
 | `import fitz` fails | `pip install PyMuPDF pymupdf4llm` |
 | Tests import errors | Mock jose/bcrypt/slowapi (chain __init__.py imports) |
-| Rate limit 429 | Increase `RATE_LIMIT_PER_MINUTE` or clear Redis |
+| Rate limit 429 on login/register during dev | Increase `RATE_LIMIT_PER_MINUTE` or clear Redis. Login/register are now hard-limited at 5/min, forgot-password at 3/min. |
 | CORS errors | Check `ALLOWED_ORIGINS` includes frontend URL |
 | `h11 LocalProtocolError: Illegal header value` | CSP header en `main.py` NO debe tener trailing space/semicolon en el ultimo directive. Cambiar `"frame-ancestors 'none'; "` a `"frame-ancestors 'none'"` |
 | `UnicodeEncodeError: charmap codec` en Windows | Ejecutar con `PYTHONUTF8=1` env var. Los print() con emojis crashean en cp1252. |

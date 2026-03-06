@@ -107,6 +107,54 @@
     font-size: var(--font-size-sm);
 }
 
+/* ========== SAVINGS / VALUE PROPOSITION ========== */
+.savings {
+    padding: var(--spacing-12) 0;
+    background: linear-gradient(135deg, #eff6ff 0%, #ecfdf5 100%);
+}
+
+.savings-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+    margin-top: var(--spacing-8);
+}
+
+.savings-card {
+    background: var(--color-white);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-6);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(26, 86, 219, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.savings-card__amount {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    color: var(--color-primary);
+    line-height: 1;
+}
+
+.savings-card__period {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+.savings-card__label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-gray-800);
+}
+
+.savings-card__detail {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+}
+
 /* ========== STATS SECTION ========== */
 .stats {
     padding: var(--spacing-8) 0;
@@ -538,6 +586,15 @@
     .hero-visual {
         display: flex;
         justify-content: center;
+    }
+
+    /* Savings */
+    .savings-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .savings-card__amount {
+        font-size: var(--font-size-4xl);
     }
 
     /* Stats */

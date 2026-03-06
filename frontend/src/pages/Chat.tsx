@@ -18,6 +18,8 @@ import { logger } from '../utils/logger'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { FormattedMessage } from '../components/FormattedMessage'
+import OnboardingModal from '../components/OnboardingModal'
+import { useAuth } from '../hooks/useAuth'
 import './Chat.css'
 
 interface Message {
@@ -33,6 +35,7 @@ interface Message {
 }
 
 export default function Chat() {
+    const { user } = useAuth()
     const { askQuestion } = useApi()
     const { getConversation } = useConversations()
     const { workspaces, activeWorkspace, selectWorkspace, fetchWorkspaces } = useWorkspaces()
@@ -210,6 +213,9 @@ export default function Chat() {
         <div className="chat-page">
             {/* ✅ NUEVO: Pasar función toggle al Header */}
             <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+            {/* Onboarding for new users */}
+            <OnboardingModal userName={user?.name} />
 
             {/* AI Act Art. 52: AI Transparency Modal on first access */}
             <AITransparencyModal onAccept={() => {

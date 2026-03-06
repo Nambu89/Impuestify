@@ -10,6 +10,8 @@ import CookieConsentBanner from './components/CookieConsent'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { useSubscription } from './hooks/useSubscription'
 
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const WorkspacesPage = lazy(() => import('./pages/WorkspacesPage'))
 const SubscribePage = lazy(() => import('./pages/SubscribePage'))
@@ -53,6 +55,8 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/subscribe" element={<SubscribePage />} />
                     <Route path="/contact" element={<ContactPage />} />
 

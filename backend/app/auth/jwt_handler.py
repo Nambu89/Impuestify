@@ -177,6 +177,33 @@ async def get_current_user_required(
     return token_data
 
 
+def create_reset_token(user_id: str, email: str) -> str:
+    """
+    Create a password reset token.
+
+    The token is a short-lived JWT (1 hour) with type="reset".
+    It is used exclusively by the forgot-password / reset-password flow.
+
+    Args:
+        user_id: User's unique identifier
+        email: User's email address
+
+    Returns:
+        Encoded JWT reset token string
+    """
+    return jwt.encode(
+        {
+            "sub": user_id,
+            "email": email,
+            "type": "reset",
+            "exp": datetime.utcnow() + timedelta(hours=1),
+            "iat": datetime.utcnow(),
+        },
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
 def create_tokens_for_user(user_id: str, email: str) -> TokenResponse:
     """
     Create both access and refresh tokens for a user.

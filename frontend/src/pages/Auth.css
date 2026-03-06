@@ -89,6 +89,30 @@
     text-align: center;
 }
 
+.auth-forgot {
+    text-align: right;
+    margin-top: calc(-1 * var(--spacing-2));
+}
+
+.auth-forgot a {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+    text-decoration: none;
+}
+
+.auth-forgot a:hover {
+    color: var(--color-primary);
+}
+
+.auth-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #065f46;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
 .auth-submit {
     width: 100%;
     margin-top: var(--spacing-2);

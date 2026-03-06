@@ -87,6 +87,10 @@ export default function Login() {
                             </div>
                         </div>
 
+                        <div className="auth-forgot">
+                            <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
+                        </div>
+
                         <button
                             type="submit"
                             className="btn btn-primary btn-lg auth-submit"
