@@ -25,6 +25,7 @@ const DataRetentionPage = lazy(() => import('./pages/DataRetentionPage'))
 const ForalPage = lazy(() => import('./pages/ForalPage'))
 const CeutaMelillaPage = lazy(() => import('./pages/CeutaMelillaPage'))
 const TaxGuidePage = lazy(() => import('./pages/TaxGuidePage'))
+const DeclarationsPage = lazy(() => import('./pages/DeclarationsPage'))
 
 // Protected route wrapper — requires auth + active subscription
 function ProtectedRoute({ children, requireSubscription = true }: { children: React.ReactNode; requireSubscription?: boolean }) {
@@ -77,6 +78,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <TaxGuidePage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/modelos-trimestrales"
+                        element={
+                            <ProtectedRoute>
+                                <DeclarationsPage />
                             </ProtectedRoute>
                         }
                     />

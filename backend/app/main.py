@@ -453,6 +453,10 @@ app.include_router(demo_router)
 from app.routers.irpf_estimate import router as irpf_estimate_router
 app.include_router(irpf_estimate_router)
 
+# Quarterly Declarations (Modelos 303, 130, 420 — no LLM)
+from app.routers.declarations import router as declarations_router
+app.include_router(declarations_router)
+
 # Prometheus instrumentation with custom metrics
 from app.metrics import setup_instrumentator, set_app_info
 setup_instrumentator(app)

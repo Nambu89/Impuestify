@@ -573,6 +573,87 @@ class TursoClient:
 
             "CREATE INDEX IF NOT EXISTS idx_reports_user ON reports(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_reports_share_token ON reports(share_token)",
+
+            # =============================================
+            # QUARTERLY DECLARATIONS (Modelos 303, 130, 420)
+            # =============================================
+
+            # Quarterly declarations (Modelos 303, 130, 420)
+            """
+            CREATE TABLE IF NOT EXISTS quarterly_declarations (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                declaration_type TEXT NOT NULL,
+                territory TEXT NOT NULL,
+                year INTEGER NOT NULL,
+                quarter INTEGER NOT NULL CHECK(quarter BETWEEN 1 AND 4),
+                form_data TEXT NOT NULL,
+                calculated_result TEXT NOT NULL,
+                total_income REAL,
+                total_expenses REAL,
+                net_income REAL,
+                tax_base REAL,
+                tax_due REAL,
+                status TEXT DEFAULT 'draft',
+                source TEXT DEFAULT 'manual',
+                workspace_file_id TEXT,
+                presentation_date TEXT,
+                confidence_score REAL DEFAULT 1.0,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now')),
+                UNIQUE(user_id, declaration_type, year, quarter)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_declarations_user_year ON quarterly_declarations(user_id, year, quarter)",
+            "CREATE INDEX IF NOT EXISTS idx_declarations_type ON quarterly_declarations(declaration_type, territory)",
+
+            # Annual IRPF projections (cache)
+            """
+            CREATE TABLE IF NOT EXISTS annual_projections (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                year INTEGER NOT NULL,
+                quarters_available INTEGER NOT NULL,
+                input_summary TEXT NOT NULL,
+                projected_income REAL,
+                projected_expenses REAL,
+                projected_net_income REAL,
+                projected_irpf REAL,
+                projected_payments REAL,
+                projected_differential REAL,
+                effective_rate REAL,
+                projection_detail TEXT NOT NULL,
+                confidence REAL,
+                calculated_at TEXT DEFAULT (datetime('now')),
+                UNIQUE(user_id, year, quarters_available)
+            )
+            """,
+
+            # ML fiscal features (future ML training data)
+            """
+            CREATE TABLE IF NOT EXISTS ml_fiscal_features (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                year INTEGER NOT NULL,
+                quarter INTEGER NOT NULL,
+                revenue REAL,
+                expenses REAL,
+                net_margin REAL,
+                vat_balance REAL,
+                irpf_payment REAL,
+                ss_contribution REAL,
+                retention_rate REAL,
+                territory TEXT,
+                activity_sector TEXT,
+                estimation_method TEXT,
+                revenue_yoy_change REAL,
+                revenue_qoq_change REAL,
+                expense_ratio REAL,
+                actual_annual_irpf REAL,
+                created_at TEXT DEFAULT (datetime('now')),
+                UNIQUE(user_id, year, quarter)
+            )
+            """,
         ]
         
         try:

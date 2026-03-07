@@ -18,6 +18,18 @@ export interface TaxGuideData {
     salario_base_mensual: number
     complementos_salariales: number
     irpf_retenido_porcentaje: number
+    // Step 2b: Actividad economica (autonomos)
+    ingresos_actividad: number
+    gastos_actividad: number
+    cuota_autonomo_anual: number
+    amortizaciones_actividad: number
+    provisiones_actividad: number
+    otros_gastos_actividad: number
+    estimacion_actividad: string  // "directa_simplificada" | "directa_normal" | "objetiva"
+    inicio_actividad: boolean
+    un_solo_cliente: boolean
+    retenciones_actividad: number
+    pagos_fraccionados_130: number
     // Step 3: Ahorro e inversiones
     intereses: number
     dividendos: number
@@ -69,6 +81,18 @@ export const EMPTY_TAX_DATA: TaxGuideData = {
     salario_base_mensual: 0,
     complementos_salariales: 0,
     irpf_retenido_porcentaje: 0,
+    // Activity income
+    ingresos_actividad: 0,
+    gastos_actividad: 0,
+    cuota_autonomo_anual: 0,
+    amortizaciones_actividad: 0,
+    provisiones_actividad: 0,
+    otros_gastos_actividad: 0,
+    estimacion_actividad: 'directa_simplificada',
+    inicio_actividad: false,
+    un_solo_cliente: false,
+    retenciones_actividad: 0,
+    pagos_fraccionados_130: 0,
     intereses: 0,
     dividendos: 0,
     ganancias_fondos: 0,

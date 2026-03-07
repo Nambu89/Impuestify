@@ -43,6 +43,43 @@
 
 ---
 
+## [2026-03-07] QA Tester — DONE — QA Sesion 5: Mobile Navigation Bugs + Desktop Suite
+
+> Reporte completo: `plans/qa-report-2026-03-07.md`
+> Tests: 12 ejecutados | 10 PASS | 1 FAIL (error script) | 1 SKIP
+
+### Bugs criticos detectados (ACCION REQUERIDA)
+
+**B13 — Alta — Menu hamburguesa mobile NO muestra navegacion**
+- El boton hamburguesa (≡) en mobile abre el historial de conversaciones (ConversationSidebar)
+- Los links Chat / Guia Fiscal / Configuracion NO son accesibles desde el menu en mobile
+- Causa raiz: `Chat.tsx` linea 215 pasa `onMenuToggle` al Header, que secuestra el comportamiento de nav
+- Archivos: `frontend/src/pages/Chat.tsx` + `frontend/src/components/Header.tsx`
+- Fix propuesto: Separar el boton de historial del boton de navegacion en mobile
+- Screenshot: `tests/e2e/screenshots/s5-M03-hamburger-clicked.png`
+
+**B14 — Media — Stats landing incorrectas**
+- Muestra 138+ documentos / 47 deducciones / 7 territorios
+- Deberia mostrar 428+ / 64 / 21
+- Archivo: `frontend/src/pages/Home.tsx` (o componente de stats)
+- Screenshot: `tests/e2e/screenshots/s5-D01-stats.png`
+
+**B15 — Media — Verificar acceso Guia Fiscal para plan particular**
+- `/guia-fiscal` redirige a `/subscribe` para usuario plan `particular`
+- Puede ser intencional (feature de pago) o bug de ProtectedRoute
+- Si es intencional: anadir badge "Pro" en el link del nav para no confundir
+
+### Confirmado: Guia Fiscal parcialmente desplegada
+- El link "Guia Fiscal" SI aparece en el nav del header (desplegado desde sesion previa)
+- Pero `/guia-fiscal` redirige a `/subscribe` para plan particular
+- Endpoint `/api/irpf/estimate` no verificado aun
+
+### Estado bugs reportados por usuario
+- "No se ve menu de configuracion en mobile": CONFIRMADO — es el bug B13
+- "No se ve acceso al chat en mobile": NO REPRODUCIDO — chat visible y funcional en 375px
+
+---
+
 ## [2026-03-06] QA Tester — BLOCKED — Guia Fiscal / Tax Guide Feature QA (Sesion 5)
 
 > Reporte: `.claude/agent-memory/qa-tester/qa-report-tax-guide.md`

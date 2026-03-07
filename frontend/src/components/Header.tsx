@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History } from 'lucide-react'
+import { FileText, LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
@@ -59,6 +59,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     <Link to="/guia-fiscal" className="nav-link">
                         <Calculator size={16} /> Guia Fiscal
                     </Link>
+                    <Link to="/modelos-trimestrales" className="nav-link">
+                        <ClipboardList size={16} /> Modelos
+                    </Link>
                     <Link to="/settings" className="nav-link">
                         <Settings size={16} /> Configuracion
                     </Link>
@@ -96,6 +99,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     </Link>
                     <Link to="/guia-fiscal" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <Calculator size={20} /> Guia Fiscal
+                    </Link>
+                    <Link to="/modelos-trimestrales" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                        <ClipboardList size={20} /> Modelos Trimestrales
                     </Link>
                     <Link to="/settings" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <Settings size={20} /> Configuracion

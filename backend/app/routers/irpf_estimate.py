@@ -34,6 +34,18 @@ class IRPFEstimateRequest(BaseModel):
     num_ascendientes_75: int = 0
     discapacidad_contribuyente: int = 0
     ceuta_melilla: bool = False
+    # Activity income (autonomos)
+    ingresos_actividad: float = 0
+    gastos_actividad: float = 0
+    cuota_autonomo_anual: float = 0
+    amortizaciones_actividad: float = 0
+    provisiones_actividad: float = 0
+    otros_gastos_actividad: float = 0
+    estimacion_actividad: str = "directa_simplificada"
+    inicio_actividad: bool = False
+    un_solo_cliente: bool = False
+    retenciones_actividad: float = 0
+    pagos_fraccionados_130: float = 0
     # Phase 1: Reductions & deductions
     aportaciones_plan_pensiones: float = 0
     aportaciones_plan_pensiones_empresa: float = 0
@@ -72,6 +84,17 @@ class IRPFBreakdown(BaseModel):
     rendimiento_neto: float = 0
 
 
+class ActivityBreakdown(BaseModel):
+    ingresos_actividad: float = 0
+    total_gastos_deducibles: float = 0
+    gastos_dificil_justificacion: float = 0
+    rendimiento_neto: float = 0
+    reduccion_aplicada: float = 0
+    tipo_reduccion: str = "ninguna"
+    rendimiento_neto_reducido: float = 0
+    estimacion: str = "directa_simplificada"
+
+
 class IRPFEstimateResponse(BaseModel):
     success: bool
     resultado_estimado: float  # <0 = refund (green), >0 = payment (red)
@@ -96,6 +119,7 @@ class IRPFEstimateResponse(BaseModel):
     deduccion_alquiler_pre2015: float = 0
     renta_imputada_inmuebles: float = 0
     trabajo: Optional[IRPFBreakdown] = None
+    actividad: Optional[ActivityBreakdown] = None
     error: Optional[str] = None
 
 
@@ -132,97 +156,73 @@ async def estimate_irpf(
 
         simulator = IRPFSimulator(db)
 
+        # Build common simulation kwargs
+        sim_kwargs = dict(
+            jurisdiction=ccaa,
+            ingresos_trabajo=ingresos_trabajo,
+            ss_empleado=request.ss_empleado,
+            intereses=request.intereses,
+            dividendos=request.dividendos,
+            ganancias_fondos=request.ganancias_fondos,
+            ingresos_alquiler=request.ingresos_alquiler,
+            gastos_alquiler_total=request.gastos_alquiler_total,
+            valor_adquisicion_inmueble=request.valor_adquisicion_inmueble,
+            edad_contribuyente=request.edad_contribuyente,
+            num_descendientes=request.num_descendientes,
+            anios_nacimiento_desc=request.anios_nacimiento_desc or None,
+            custodia_compartida=request.custodia_compartida,
+            num_ascendientes_65=request.num_ascendientes_65,
+            num_ascendientes_75=request.num_ascendientes_75,
+            discapacidad_contribuyente=request.discapacidad_contribuyente,
+            ceuta_melilla=ceuta_melilla,
+            # Activity income (autonomos)
+            ingresos_actividad=request.ingresos_actividad,
+            gastos_actividad=request.gastos_actividad,
+            cuota_autonomo_anual=request.cuota_autonomo_anual,
+            amortizaciones_actividad=request.amortizaciones_actividad,
+            provisiones_actividad=request.provisiones_actividad,
+            otros_gastos_actividad=request.otros_gastos_actividad,
+            estimacion_actividad=request.estimacion_actividad,
+            inicio_actividad=request.inicio_actividad,
+            un_solo_cliente=request.un_solo_cliente,
+            retenciones_actividad=request.retenciones_actividad,
+            pagos_fraccionados_130=request.pagos_fraccionados_130,
+            # Phase 1
+            aportaciones_plan_pensiones=request.aportaciones_plan_pensiones,
+            aportaciones_plan_pensiones_empresa=request.aportaciones_plan_pensiones_empresa,
+            hipoteca_pre2013=request.hipoteca_pre2013,
+            capital_amortizado_hipoteca=request.capital_amortizado_hipoteca,
+            intereses_hipoteca=request.intereses_hipoteca,
+            madre_trabajadora_ss=request.madre_trabajadora_ss,
+            gastos_guarderia_anual=request.gastos_guarderia_anual,
+            familia_numerosa=request.familia_numerosa,
+            tipo_familia_numerosa=request.tipo_familia_numerosa,
+            donativos_ley_49_2002=request.donativos_ley_49_2002,
+            donativo_recurrente=request.donativo_recurrente,
+            retenciones_alquiler=request.retenciones_alquiler,
+            retenciones_ahorro=request.retenciones_ahorro,
+            # Phase 2
+            tributacion_conjunta=request.tributacion_conjunta,
+            tipo_unidad_familiar=request.tipo_unidad_familiar,
+            alquiler_habitual_pre2015=request.alquiler_habitual_pre2015,
+            alquiler_pagado_anual=request.alquiler_pagado_anual,
+            valor_catastral_segundas_viviendas=request.valor_catastral_segundas_viviendas,
+            valor_catastral_revisado_post1994=request.valor_catastral_revisado_post1994,
+        )
+
         # Try requested year, fallback to year-1
         try:
-            result = await simulator.simulate(
-                jurisdiction=ccaa,
-                year=request.year,
-                ingresos_trabajo=ingresos_trabajo,
-                ss_empleado=request.ss_empleado,
-                intereses=request.intereses,
-                dividendos=request.dividendos,
-                ganancias_fondos=request.ganancias_fondos,
-                ingresos_alquiler=request.ingresos_alquiler,
-                gastos_alquiler_total=request.gastos_alquiler_total,
-                valor_adquisicion_inmueble=request.valor_adquisicion_inmueble,
-                edad_contribuyente=request.edad_contribuyente,
-                num_descendientes=request.num_descendientes,
-                anios_nacimiento_desc=request.anios_nacimiento_desc or None,
-                custodia_compartida=request.custodia_compartida,
-                num_ascendientes_65=request.num_ascendientes_65,
-                num_ascendientes_75=request.num_ascendientes_75,
-                discapacidad_contribuyente=request.discapacidad_contribuyente,
-                ceuta_melilla=ceuta_melilla,
-                aportaciones_plan_pensiones=request.aportaciones_plan_pensiones,
-                aportaciones_plan_pensiones_empresa=request.aportaciones_plan_pensiones_empresa,
-                hipoteca_pre2013=request.hipoteca_pre2013,
-                capital_amortizado_hipoteca=request.capital_amortizado_hipoteca,
-                intereses_hipoteca=request.intereses_hipoteca,
-                madre_trabajadora_ss=request.madre_trabajadora_ss,
-                gastos_guarderia_anual=request.gastos_guarderia_anual,
-                familia_numerosa=request.familia_numerosa,
-                tipo_familia_numerosa=request.tipo_familia_numerosa,
-                donativos_ley_49_2002=request.donativos_ley_49_2002,
-                donativo_recurrente=request.donativo_recurrente,
-                retenciones_alquiler=request.retenciones_alquiler,
-                retenciones_ahorro=request.retenciones_ahorro,
-                tributacion_conjunta=request.tributacion_conjunta,
-                tipo_unidad_familiar=request.tipo_unidad_familiar,
-                alquiler_habitual_pre2015=request.alquiler_habitual_pre2015,
-                alquiler_pagado_anual=request.alquiler_pagado_anual,
-                valor_catastral_segundas_viviendas=request.valor_catastral_segundas_viviendas,
-                valor_catastral_revisado_post1994=request.valor_catastral_revisado_post1994,
-            )
+            result = await simulator.simulate(year=request.year, **sim_kwargs)
         except ValueError:
-            result = await simulator.simulate(
-                jurisdiction=ccaa,
-                year=request.year - 1,
-                ingresos_trabajo=ingresos_trabajo,
-                ss_empleado=request.ss_empleado,
-                intereses=request.intereses,
-                dividendos=request.dividendos,
-                ganancias_fondos=request.ganancias_fondos,
-                ingresos_alquiler=request.ingresos_alquiler,
-                gastos_alquiler_total=request.gastos_alquiler_total,
-                valor_adquisicion_inmueble=request.valor_adquisicion_inmueble,
-                edad_contribuyente=request.edad_contribuyente,
-                num_descendientes=request.num_descendientes,
-                anios_nacimiento_desc=request.anios_nacimiento_desc or None,
-                custodia_compartida=request.custodia_compartida,
-                num_ascendientes_65=request.num_ascendientes_65,
-                num_ascendientes_75=request.num_ascendientes_75,
-                discapacidad_contribuyente=request.discapacidad_contribuyente,
-                ceuta_melilla=ceuta_melilla,
-                aportaciones_plan_pensiones=request.aportaciones_plan_pensiones,
-                aportaciones_plan_pensiones_empresa=request.aportaciones_plan_pensiones_empresa,
-                hipoteca_pre2013=request.hipoteca_pre2013,
-                capital_amortizado_hipoteca=request.capital_amortizado_hipoteca,
-                intereses_hipoteca=request.intereses_hipoteca,
-                madre_trabajadora_ss=request.madre_trabajadora_ss,
-                gastos_guarderia_anual=request.gastos_guarderia_anual,
-                familia_numerosa=request.familia_numerosa,
-                tipo_familia_numerosa=request.tipo_familia_numerosa,
-                donativos_ley_49_2002=request.donativos_ley_49_2002,
-                donativo_recurrente=request.donativo_recurrente,
-                retenciones_alquiler=request.retenciones_alquiler,
-                retenciones_ahorro=request.retenciones_ahorro,
-                tributacion_conjunta=request.tributacion_conjunta,
-                tipo_unidad_familiar=request.tipo_unidad_familiar,
-                alquiler_habitual_pre2015=request.alquiler_habitual_pre2015,
-                alquiler_pagado_anual=request.alquiler_pagado_anual,
-                valor_catastral_segundas_viviendas=request.valor_catastral_segundas_viviendas,
-                valor_catastral_revisado_post1994=request.valor_catastral_revisado_post1994,
-            )
+            result = await simulator.simulate(year=request.year - 1, **sim_kwargs)
 
+        # Use cuota_diferencial from simulator if available (includes all retenciones)
         cuota_total = result.get("cuota_total", 0)
-        retenciones = (
-            retenciones_trabajo
-            + request.retenciones_alquiler
-            + request.retenciones_ahorro
-        )
-        resultado = cuota_total - retenciones  # >0 = pagar, <0 = devolver
+        resultado = result.get("cuota_diferencial", cuota_total - retenciones_trabajo)
+        retenciones = result.get("total_retenciones", retenciones_trabajo)
 
         trabajo = result.get("trabajo", {})
+        actividad = result.get("actividad", {})
         mpyf = result.get("mpyf", {})
 
         tipo_medio = 0
@@ -258,6 +258,16 @@ async def estimate_irpf(
                 reduccion_trabajo=trabajo.get("reduccion_trabajo", 0),
                 rendimiento_neto=trabajo.get("rendimiento_neto_reducido", 0),
             ) if trabajo else None,
+            actividad=ActivityBreakdown(
+                ingresos_actividad=actividad.get("ingresos_actividad", 0),
+                total_gastos_deducibles=actividad.get("total_gastos_deducibles", 0),
+                gastos_dificil_justificacion=actividad.get("gastos_dificil_justificacion", 0),
+                rendimiento_neto=actividad.get("rendimiento_neto", 0),
+                reduccion_aplicada=actividad.get("reduccion_aplicada", 0),
+                tipo_reduccion=actividad.get("tipo_reduccion", "ninguna"),
+                rendimiento_neto_reducido=actividad.get("rendimiento_neto_reducido", 0),
+                estimacion=actividad.get("estimacion", "directa_simplificada"),
+            ) if actividad else None,
         )
 
     except Exception as e:

@@ -15,3 +15,8 @@ class IncomeCalculator(Protocol):
     async def calculate(self, **kwargs) -> Dict[str, Any]:
         """Calculate the net income for this income type."""
         ...
+
+
+from app.utils.calculators.modelo_130 import Modelo130Calculator  # noqa: E402
+
+__all__ = ["IncomeCalculator", "Modelo130Calculator"]

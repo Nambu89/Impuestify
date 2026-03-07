@@ -17,6 +17,7 @@ from app.utils.calculators.work_income import WorkIncomeCalculator
 from app.utils.calculators.savings_income import SavingsIncomeCalculator
 from app.utils.calculators.rental_income import RentalIncomeCalculator
 from app.utils.calculators.mpyf import MPYFCalculator
+from app.utils.calculators.activity_income import ActivityIncomeCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class IRPFSimulator:
         self._irpf_calc.db = db
 
         self.work = WorkIncomeCalculator(self._repo)
+        self.activity = ActivityIncomeCalculator(self._repo)
         self.savings = SavingsIncomeCalculator(self._repo, db)
         self.rental = RentalIncomeCalculator(self._repo)
         self.mpyf = MPYFCalculator(self._repo)
@@ -74,6 +76,18 @@ class IRPFSimulator:
         discapacidad_contribuyente: int = 0,
         # Ceuta/Melilla
         ceuta_melilla: bool = False,
+        # --- Activity income (autonomos) ---
+        ingresos_actividad: float = 0,
+        gastos_actividad: float = 0,
+        cuota_autonomo_anual: float = 0,
+        amortizaciones_actividad: float = 0,
+        provisiones_actividad: float = 0,
+        otros_gastos_actividad: float = 0,
+        estimacion_actividad: str = "directa_simplificada",
+        inicio_actividad: bool = False,
+        un_solo_cliente: bool = False,
+        retenciones_actividad: float = 0,
+        pagos_fraccionados_130: float = 0,
         # --- Phase 1: Reductions to base imponible general ---
         aportaciones_plan_pensiones: float = 0,
         aportaciones_plan_pensiones_empresa: float = 0,
@@ -142,6 +156,24 @@ class IRPFSimulator:
             year=year,
         )
 
+        # --- 1b. Activity income (autonomos) ---
+        actividad_result = None
+        rend_actividad = 0.0
+        if ingresos_actividad > 0:
+            actividad_result = await self.activity.calculate(
+                ingresos_actividad=ingresos_actividad,
+                gastos_actividad=gastos_actividad,
+                cuota_autonomo_anual=cuota_autonomo_anual,
+                amortizaciones=amortizaciones_actividad,
+                provisiones=provisiones_actividad,
+                otros_gastos_deducibles=otros_gastos_actividad,
+                estimacion=estimacion_actividad,
+                inicio_actividad=inicio_actividad,
+                un_solo_cliente=un_solo_cliente,
+                year=year,
+            )
+            rend_actividad = actividad_result["rendimiento_neto_reducido"]
+
         # --- 2. Rental income (if any) ---
         inmuebles_result = None
         rend_inmuebles = 0.0
@@ -156,7 +188,7 @@ class IRPFSimulator:
             rend_inmuebles = inmuebles_result["rendimiento_neto_reducido"]
 
         # --- 3. Base imponible general ---
-        bi_general = trabajo_result["rendimiento_neto_reducido"] + rend_inmuebles
+        bi_general = trabajo_result["rendimiento_neto_reducido"] + rend_actividad + rend_inmuebles
 
         # --- 3b. Reduction: pension plan contributions (Art. 51-52 LIRPF) ---
         reduccion_planes_pensiones = 0.0
@@ -344,6 +376,16 @@ class IRPFSimulator:
         base_total = bi_general + base_ahorro
         tipo_medio = (cuota_total / base_total * 100) if base_total > 0 else 0.0
 
+        # --- 11. Retenciones y pagos a cuenta (para resultado final) ---
+        total_retenciones = (
+            retenciones_alquiler
+            + retenciones_ahorro
+            + retenciones_actividad
+            + pagos_fraccionados_130
+        )
+        cuota_diferencial = round(cuota_total - total_retenciones, 2)
+        tipo_resultado = "a_pagar" if cuota_diferencial > 0 else "a_devolver"
+
         return {
             "success": True,
             "year": year,
@@ -351,6 +393,7 @@ class IRPFSimulator:
             "ceuta_melilla": ceuta_melilla,
             # Income breakdown
             "trabajo": trabajo_result,
+            "actividad": actividad_result,
             "inmuebles": inmuebles_result,
             "ahorro": ahorro_result,
             # Tax bases
@@ -390,4 +433,10 @@ class IRPFSimulator:
             "reduccion_tributacion_conjunta": round(reduccion_tributacion_conjunta, 2),
             "deduccion_alquiler_pre2015": round(deduccion_alquiler_pre2015, 2),
             "renta_imputada_inmuebles": round(renta_imputada_inmuebles, 2),
+            # Retenciones y resultado final
+            "retenciones_actividad": round(retenciones_actividad, 2),
+            "pagos_fraccionados_130": round(pagos_fraccionados_130, 2),
+            "total_retenciones": round(total_retenciones, 2),
+            "cuota_diferencial": cuota_diferencial,
+            "tipo_resultado": tipo_resultado,
         }

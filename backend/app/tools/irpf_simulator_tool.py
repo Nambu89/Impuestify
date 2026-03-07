@@ -118,7 +118,44 @@ IMPORTANTE sobre ingresos:
                 },
                 "ceuta_melilla": {
                     "type": "boolean",
-                    "description": "true si el contribuyente reside y trabaja en Ceuta o Melilla. Aplica deducción del 60% sobre la cuota íntegra (Art. 68.4 LIRPF). Usar true cuando la CCAA sea Ceuta o Melilla."
+                    "description": "true si el contribuyente reside y trabaja en Ceuta o Melilla. Aplica deduccion del 60% sobre la cuota integra (Art. 68.4 LIRPF). Usar true cuando la CCAA sea Ceuta o Melilla."
+                },
+                "ingresos_actividad": {
+                    "type": "number",
+                    "description": "Ingresos brutos anuales de actividad economica (autonomo/empresario). Es la facturacion total (base imponible, SIN IVA/IGIC). Si el usuario es autonomo, usar este campo EN VEZ DE ingresos_trabajo. Si es asalariado y autonomo a la vez, usar ambos campos."
+                },
+                "gastos_actividad": {
+                    "type": "number",
+                    "description": "Gastos deducibles anuales de la actividad economica (suministros, alquiler local, seguros, material, servicios profesionales, viajes, formacion, marketing, etc.). NO incluir cuota de autonomo (campo separado) ni amortizaciones (campo separado)."
+                },
+                "cuota_autonomo_anual": {
+                    "type": "number",
+                    "description": "Cuota de Seguridad Social como autonomo pagada en el ano (ej: 300 EUR/mes x 12 = 3.600 EUR). Es gasto deducible al 100%. Si no se indica, preguntar al usuario."
+                },
+                "amortizaciones_actividad": {
+                    "type": "number",
+                    "description": "Amortizaciones de bienes de inversion afectos a la actividad (vehiculo, ordenador, mobiliario, maquinaria). Segun tablas oficiales de amortizacion."
+                },
+                "estimacion_actividad": {
+                    "type": "string",
+                    "enum": ["directa_normal", "directa_simplificada", "objetiva"],
+                    "description": "'directa_simplificada' (default, mayoria de autonomos): anade 5% gastos dificil justificacion (max 2.000 EUR). 'directa_normal': mas detallada, permite provisiones. 'objetiva': modulos (no soportado aun)."
+                },
+                "inicio_actividad": {
+                    "type": "boolean",
+                    "description": "true si el autonomo ha iniciado su actividad en el ano actual o anterior Y no ha tenido rendimiento neto positivo antes. Aplica reduccion del 20% (Art. 32.3 LIRPF)."
+                },
+                "un_solo_cliente": {
+                    "type": "boolean",
+                    "description": "true si mas del 75% de los ingresos del autonomo provienen de un solo cliente (autonomo economicamente dependiente/TRADE). Aplica reduccion similar a rendimientos del trabajo (Art. 32.2 LIRPF)."
+                },
+                "retenciones_actividad": {
+                    "type": "number",
+                    "description": "Retenciones IRPF practicadas por clientes en facturas del autonomo (15% general, 7% nuevos autonomos primeros 3 anos). Total anual acumulado."
+                },
+                "pagos_fraccionados_130": {
+                    "type": "number",
+                    "description": "Total de pagos fraccionados del Modelo 130 realizados durante el ano (suma de los 4 trimestres). Se descuentan de la cuota total para calcular el resultado final (a pagar o a devolver)."
                 },
                 "aportaciones_plan_pensiones": {
                     "type": "number",
@@ -228,6 +265,16 @@ async def simulate_irpf_tool(
     num_ascendientes_75: int = 0,
     discapacidad_contribuyente: int = 0,
     ceuta_melilla: bool = False,
+    # Activity income (autonomos)
+    ingresos_actividad: float = 0,
+    gastos_actividad: float = 0,
+    cuota_autonomo_anual: float = 0,
+    amortizaciones_actividad: float = 0,
+    estimacion_actividad: str = "directa_simplificada",
+    inicio_actividad: bool = False,
+    un_solo_cliente: bool = False,
+    retenciones_actividad: float = 0,
+    pagos_fraccionados_130: float = 0,
     # Phase 1: Reductions & deductions
     aportaciones_plan_pensiones: float = 0,
     aportaciones_plan_pensiones_empresa: float = 0,
@@ -296,6 +343,15 @@ async def simulate_irpf_tool(
                 num_ascendientes_75=num_ascendientes_75,
                 discapacidad_contribuyente=discapacidad_contribuyente,
                 ceuta_melilla=ceuta_melilla,
+                ingresos_actividad=ingresos_actividad,
+                gastos_actividad=gastos_actividad,
+                cuota_autonomo_anual=cuota_autonomo_anual,
+                amortizaciones_actividad=amortizaciones_actividad,
+                estimacion_actividad=estimacion_actividad,
+                inicio_actividad=inicio_actividad,
+                un_solo_cliente=un_solo_cliente,
+                retenciones_actividad=retenciones_actividad,
+                pagos_fraccionados_130=pagos_fraccionados_130,
                 aportaciones_plan_pensiones=aportaciones_plan_pensiones,
                 aportaciones_plan_pensiones_empresa=aportaciones_plan_pensiones_empresa,
                 hipoteca_pre2013=hipoteca_pre2013,
@@ -322,7 +378,7 @@ async def simulate_irpf_tool(
             logger.info("Year %s not available, falling back to %s", year, effective_year)
             year_warning = (
                 f"No hay datos de tramos para {year}. "
-                f"Cálculo basado en tramos de {effective_year} (los tramos apenas cambian año a año)."
+                f"Calculo basado en tramos de {effective_year} (los tramos apenas cambian ano a ano)."
             )
             result = await simulator.simulate(
                 jurisdiction=ccaa,
@@ -343,6 +399,15 @@ async def simulate_irpf_tool(
                 num_ascendientes_75=num_ascendientes_75,
                 discapacidad_contribuyente=discapacidad_contribuyente,
                 ceuta_melilla=ceuta_melilla,
+                ingresos_actividad=ingresos_actividad,
+                gastos_actividad=gastos_actividad,
+                cuota_autonomo_anual=cuota_autonomo_anual,
+                amortizaciones_actividad=amortizaciones_actividad,
+                estimacion_actividad=estimacion_actividad,
+                inicio_actividad=inicio_actividad,
+                un_solo_cliente=un_solo_cliente,
+                retenciones_actividad=retenciones_actividad,
+                pagos_fraccionados_130=pagos_fraccionados_130,
                 aportaciones_plan_pensiones=aportaciones_plan_pensiones,
                 aportaciones_plan_pensiones_empresa=aportaciones_plan_pensiones_empresa,
                 hipoteca_pre2013=hipoteca_pre2013,
@@ -434,10 +499,47 @@ def _format_simulation_result(result: Dict, ccaa: str) -> str:
     # Work income
     if trabajo.get("ingresos_brutos", 0) > 0:
         lines.append(
-            f"Rendimiento del trabajo: {trabajo['ingresos_brutos']:,.2f}€ brutos "
-            f"→ {trabajo['rendimiento_neto_reducido']:,.2f}€ neto reducido "
-            f"(gastos deducibles: {trabajo['gastos_deducibles']:,.2f}€, "
-            f"reducción trabajo: {trabajo['reduccion_trabajo']:,.2f}€)"
+            f"Rendimiento del trabajo: {trabajo['ingresos_brutos']:,.2f} EUR brutos "
+            f"-> {trabajo['rendimiento_neto_reducido']:,.2f} EUR neto reducido "
+            f"(gastos deducibles: {trabajo['gastos_deducibles']:,.2f} EUR, "
+            f"reduccion trabajo: {trabajo['reduccion_trabajo']:,.2f} EUR)"
+        )
+
+    # Activity income (autonomos)
+    actividad = result.get("actividad")
+    if actividad:
+        est_label = {
+            "directa_simplificada": "ED Simplificada",
+            "directa_normal": "ED Normal",
+            "objetiva": "Modulos",
+        }.get(actividad.get("estimacion", ""), "")
+        lines.append(
+            f"Rendimiento actividad economica ({est_label}): "
+            f"{actividad['ingresos_actividad']:,.2f} EUR ingresos "
+            f"- {actividad['total_gastos_deducibles']:,.2f} EUR gastos"
+        )
+        if actividad.get("gastos_dificil_justificacion", 0) > 0:
+            lines.append(
+                f"  Gastos dificil justificacion (5%): "
+                f"-{actividad['gastos_dificil_justificacion']:,.2f} EUR"
+            )
+        lines.append(
+            f"  Rendimiento neto: {actividad['rendimiento_neto']:,.2f} EUR"
+        )
+        if actividad.get("reduccion_aplicada", 0) > 0:
+            tipo_red = actividad.get("tipo_reduccion", "")
+            red_label = ""
+            if tipo_red == "inicio_actividad_art32_3":
+                red_label = "inicio actividad Art. 32.3, 20%"
+            elif tipo_red == "dependiente_art32_2":
+                red_label = "autonomo dependiente Art. 32.2"
+            lines.append(
+                f"  Reduccion ({red_label}): "
+                f"-{actividad['reduccion_aplicada']:,.2f} EUR"
+            )
+        lines.append(
+            f"  Rendimiento neto reducido: "
+            f"{actividad['rendimiento_neto_reducido']:,.2f} EUR"
         )
 
     # Rental income
@@ -487,8 +589,32 @@ def _format_simulation_result(result: Dict, ccaa: str) -> str:
         lines.append(f"Cuota del ahorro: {result['cuota_ahorro']:,.2f}€")
 
     lines.append(
-        f"CUOTA TOTAL: {result['cuota_total']:,.2f}€ "
+        f"CUOTA TOTAL: {result['cuota_total']:,.2f} EUR "
         f"(tipo medio efectivo: {result['tipo_medio']:.2f}%)"
     )
+
+    # Retenciones y resultado final (si hay datos)
+    total_ret = result.get("total_retenciones", 0)
+    if total_ret > 0:
+        lines.append("")
+        lines.append("**Retenciones y pagos a cuenta**")
+        if result.get("retenciones_actividad", 0) > 0:
+            lines.append(f"- Retenciones actividad: {result['retenciones_actividad']:,.2f} EUR")
+        if result.get("pagos_fraccionados_130", 0) > 0:
+            lines.append(f"- Pagos fraccionados (Mod. 130): {result['pagos_fraccionados_130']:,.2f} EUR")
+        if result.get("retenciones_alquiler", 0) > 0:
+            lines.append(f"- Retenciones alquiler: {result.get('retenciones_alquiler', 0):,.2f} EUR")
+        if result.get("retenciones_ahorro", 0) > 0:
+            lines.append(f"- Retenciones ahorro: {result.get('retenciones_ahorro', 0):,.2f} EUR")
+        lines.append(f"- Total retenciones: {total_ret:,.2f} EUR")
+
+        cuota_dif = result.get("cuota_diferencial", 0)
+        tipo_res = result.get("tipo_resultado", "")
+        if cuota_dif > 0:
+            lines.append(f"- **RESULTADO: A PAGAR {cuota_dif:,.2f} EUR**")
+        elif cuota_dif < 0:
+            lines.append(f"- **RESULTADO: A DEVOLVER {abs(cuota_dif):,.2f} EUR**")
+        else:
+            lines.append("- **RESULTADO: 0 EUR (sin ingreso ni devolucion)**")
 
     return "\n".join(lines)

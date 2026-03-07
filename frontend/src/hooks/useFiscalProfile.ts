@@ -40,6 +40,18 @@ export interface FiscalProfile {
     alquiler_pagado_anual: number | null
     valor_catastral_segundas_viviendas: number | null
     valor_catastral_revisado_post1994: boolean
+    // Autonomo calculation fields
+    ingresos_actividad: number | null
+    gastos_actividad: number | null
+    cuota_autonomo_anual: number | null
+    amortizaciones_actividad: number | null
+    provisiones_actividad: number | null
+    otros_gastos_actividad: number | null
+    estimacion_actividad: string | null
+    inicio_actividad: boolean
+    un_solo_cliente: boolean
+    retenciones_actividad: number | null
+    pagos_fraccionados_130: number | null
     // Autonomo-specific fields
     epigrafe_iae: string | null
     tipo_actividad: string | null
@@ -113,6 +125,18 @@ const EMPTY_PROFILE: FiscalProfile = {
     alquiler_pagado_anual: null,
     valor_catastral_segundas_viviendas: null,
     valor_catastral_revisado_post1994: true,
+    // Autonomo calculation
+    ingresos_actividad: null,
+    gastos_actividad: null,
+    cuota_autonomo_anual: null,
+    amortizaciones_actividad: null,
+    provisiones_actividad: null,
+    otros_gastos_actividad: null,
+    estimacion_actividad: null,
+    inicio_actividad: false,
+    un_solo_cliente: false,
+    retenciones_actividad: null,
+    pagos_fraccionados_130: null,
     // Autonomo-specific
     epigrafe_iae: null,
     tipo_actividad: null,

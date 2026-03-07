@@ -730,8 +730,137 @@ def test_format_simulation_result():
 
     text = _format_simulation_result(mock_result, "Comunidad de Madrid")
     assert "Simulación IRPF 2024" in text
-    assert "30,000.00€" in text or "30000" in text
-    assert "4,400.00€" in text or "4400" in text
+    assert "30,000.00" in text
+    assert "4,400.00" in text
+
+
+# ─────────────────────────────────────────────────────────────
+# Tests: Activity Income Calculator (Autonomos)
+# ─────────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_activity_income_basic():
+    """Basic activity income: ingresos - gastos - SS = rendimiento neto."""
+    from app.utils.calculators.activity_income import ActivityIncomeCalculator
+
+    calc = ActivityIncomeCalculator(None)
+
+    result = await calc.calculate(
+        ingresos_actividad=60000,
+        gastos_actividad=15000,
+        cuota_autonomo_anual=4200,  # 350/mes
+        amortizaciones=2000,
+    )
+
+    assert result["ingresos_actividad"] == 60000
+    total_gastos = 15000 + 4200 + 2000
+    assert result["total_gastos_deducibles"] == total_gastos
+    assert result["rendimiento_neto_previo"] == 60000 - total_gastos
+    # ED simplificada: 5% de rendimiento neto previo (max 2000)
+    rn_previo = 60000 - total_gastos  # 38800
+    gdj = min(rn_previo * 0.05, 2000)
+    assert result["gastos_dificil_justificacion"] == round(gdj, 2)
+    assert result["rendimiento_neto"] == round(rn_previo - gdj, 2)
+
+
+@pytest.mark.asyncio
+async def test_activity_income_simplificada_cap():
+    """ED simplificada: gastos dificil justificacion capped at 2000 EUR."""
+    from app.utils.calculators.activity_income import ActivityIncomeCalculator
+
+    calc = ActivityIncomeCalculator(None)
+
+    result = await calc.calculate(
+        ingresos_actividad=100000,
+        gastos_actividad=10000,
+        cuota_autonomo_anual=5000,
+        estimacion="directa_simplificada",
+    )
+
+    # 5% of 85000 = 4250, but capped at 2000
+    assert result["gastos_dificil_justificacion"] == 2000
+
+
+@pytest.mark.asyncio
+async def test_activity_income_normal_no_gdj():
+    """ED normal: no gastos dificil justificacion, but allows provisiones."""
+    from app.utils.calculators.activity_income import ActivityIncomeCalculator
+
+    calc = ActivityIncomeCalculator(None)
+
+    result = await calc.calculate(
+        ingresos_actividad=60000,
+        gastos_actividad=20000,
+        cuota_autonomo_anual=4200,
+        provisiones=3000,
+        estimacion="directa_normal",
+    )
+
+    assert result["gastos_dificil_justificacion"] == 0
+    assert result["desglose_gastos"]["provisiones"] == 3000
+    assert result["total_gastos_deducibles"] == 20000 + 4200 + 3000
+
+
+@pytest.mark.asyncio
+async def test_activity_income_inicio_actividad():
+    """New autonomo: 20% reduction on positive net income (Art. 32.3)."""
+    from app.utils.calculators.activity_income import ActivityIncomeCalculator
+
+    calc = ActivityIncomeCalculator(None)
+
+    result = await calc.calculate(
+        ingresos_actividad=30000,
+        gastos_actividad=10000,
+        cuota_autonomo_anual=3600,
+        inicio_actividad=True,
+        estimacion="directa_normal",
+    )
+
+    rn = 30000 - 10000 - 3600  # 16400
+    reduccion = round(rn * 0.20, 2)
+    assert result["reduccion_aplicada"] == reduccion
+    assert result["tipo_reduccion"] == "inicio_actividad_art32_3"
+    assert result["rendimiento_neto_reducido"] == round(rn - reduccion, 2)
+
+
+@pytest.mark.asyncio
+async def test_activity_income_dependiente():
+    """TRADE autonomo (>75% from 1 client): Art. 32.2 reduction."""
+    from app.utils.calculators.activity_income import ActivityIncomeCalculator
+
+    calc = ActivityIncomeCalculator(None)
+
+    # Low income case: should get full 6498 reduction
+    result = await calc.calculate(
+        ingresos_actividad=20000,
+        gastos_actividad=5000,
+        cuota_autonomo_anual=3600,
+        un_solo_cliente=True,
+        estimacion="directa_normal",
+    )
+
+    rn = 20000 - 5000 - 3600  # 11400 < 14852
+    assert result["reduccion_aplicada"] == 6498
+    assert result["tipo_reduccion"] == "dependiente_art32_2"
+
+
+@pytest.mark.asyncio
+async def test_activity_income_negative():
+    """Negative net income: no reductions, no GDJ, rendimiento = 0."""
+    from app.utils.calculators.activity_income import ActivityIncomeCalculator
+
+    calc = ActivityIncomeCalculator(None)
+
+    result = await calc.calculate(
+        ingresos_actividad=10000,
+        gastos_actividad=15000,
+        cuota_autonomo_anual=4200,
+    )
+
+    assert result["rendimiento_neto_previo"] < 0
+    assert result["gastos_dificil_justificacion"] == 0
+    assert result["rendimiento_neto_reducido"] == 0
 
 
 # ─────────────────────────────────────────────────────────────

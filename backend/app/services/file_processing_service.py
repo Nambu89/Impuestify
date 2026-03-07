@@ -81,6 +81,8 @@ class FileProcessingService:
                         extracted_data = await self._extract_invoice_data(extracted_text)
                     elif file_category == "nomina":
                         extracted_data = await self._extract_payslip_data(extracted_text)
+                    elif file_category == "declaracion":
+                        extracted_data = self._extract_declaration_data(extracted_text)
                     else:
                         # Basic extraction for other document types
                         extracted_data = {"pages": result.total_pages}
@@ -157,7 +159,11 @@ class FileProcessingService:
             return "factura"
 
         # Tax declaration patterns
-        if any(p in lower_name for p in ["declaracion", "declaración", "modelo", "303", "390", "100", "200"]):
+        if any(p in lower_name for p in [
+            "declaracion", "declaración", "modelo",
+            "303", "130", "420", "300",
+            "390", "100", "200",
+        ]):
             return "declaracion"
 
         return "otro"
@@ -197,6 +203,31 @@ class FileProcessingService:
         except Exception as e:
             logger.error(f"Payslip extraction failed: {e}")
             return {"error": str(e)}
+
+    def _extract_declaration_data(self, text: str) -> Dict[str, Any]:
+        """Extract structured data from tax declaration text (303/130/420)."""
+        try:
+            from app.services.declaration_extractor import DeclarationExtractor
+
+            extractor = DeclarationExtractor()
+            result = extractor.extract(text)
+
+            if not result.success:
+                return {"error": result.error, "type": "declaracion"}
+
+            return {
+                "type": "declaracion",
+                "modelo": result.modelo,
+                "metadata": result.metadata,
+                "fields": result.fields,
+                "territory": result.territory,
+                "confidence": result.confidence,
+                "casillas_count": len(result.casillas_raw),
+            }
+
+        except Exception as e:
+            logger.error(f"Declaration extraction failed: {e}")
+            return {"error": str(e), "type": "declaracion"}
 
     async def _generate_file_embeddings(
         self,
@@ -259,6 +290,8 @@ class FileProcessingService:
                 extracted_data = await self._extract_invoice_data(extracted_text)
             elif file_category == "nomina":
                 extracted_data = await self._extract_payslip_data(extracted_text)
+            elif file_category == "declaracion":
+                extracted_data = self._extract_declaration_data(extracted_text)
 
         # Update database
         await db.execute(

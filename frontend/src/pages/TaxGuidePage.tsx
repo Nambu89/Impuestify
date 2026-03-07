@@ -205,13 +205,15 @@ function StepPersonal({ data, update }: StepProps) {
     )
 }
 
-// === Step 2: Trabajo (Phase A: salary input mode) ===
+// === Step 2: Trabajo (Phase A: salary input mode + activity income) ===
 
 function StepTrabajo({ data, update }: StepProps) {
     const isMonthly = data.salary_input_mode === 'monthly'
     const computedAnnual = isMonthly
         ? (data.salario_base_mensual + data.complementos_salariales) * data.num_pagas_anuales
         : data.ingresos_trabajo
+
+    const [showActivity, setShowActivity] = useState(data.ingresos_actividad > 0)
 
     return (
         <div className="tg-step">
@@ -320,6 +322,132 @@ function StepTrabajo({ data, update }: StepProps) {
                 suffix="EUR"
                 help="Si pusiste el %, se calcula automaticamente. Si lo sabes exacto, ponlo aqui."
             />
+
+            {/* Activity income section for autonomos */}
+            <div style={{ marginTop: 'var(--spacing-6)' }}>
+                <CheckboxInput
+                    label="Tengo ingresos por actividad economica (autonomo)"
+                    checked={showActivity}
+                    onChange={v => {
+                        setShowActivity(v)
+                        if (!v) update({
+                            ingresos_actividad: 0, gastos_actividad: 0, cuota_autonomo_anual: 0,
+                            amortizaciones_actividad: 0, provisiones_actividad: 0, otros_gastos_actividad: 0,
+                            retenciones_actividad: 0, pagos_fraccionados_130: 0,
+                            inicio_actividad: false, un_solo_cliente: false,
+                        })
+                    }}
+                />
+            </div>
+
+            {showActivity && (
+                <>
+                    <h3 className="tg-step__subtitle">Actividad economica</h3>
+
+                    <div className="tg-field">
+                        <label className="tg-field__label">Metodo de estimacion</label>
+                        <select
+                            className="tg-field__select"
+                            value={data.estimacion_actividad}
+                            onChange={e => update({ estimacion_actividad: e.target.value })}
+                        >
+                            <option value="directa_simplificada">Estimacion directa simplificada</option>
+                            <option value="directa_normal">Estimacion directa normal</option>
+                            <option value="objetiva">Estimacion objetiva (modulos)</option>
+                        </select>
+                        <span className="tg-field__help">
+                            {data.estimacion_actividad === 'directa_simplificada'
+                                ? 'La mas comun. Incluye 5% de gastos de dificil justificacion (max 2.000 EUR)'
+                                : data.estimacion_actividad === 'directa_normal'
+                                ? 'Requiere contabilidad ajustada al Codigo de Comercio. Permite provisiones'
+                                : 'Solo si tu actividad esta incluida en la Orden de Modulos'}
+                        </span>
+                    </div>
+
+                    <NumberInput
+                        label="Ingresos de actividad (anual)"
+                        value={data.ingresos_actividad}
+                        onChange={v => update({ ingresos_actividad: v })}
+                        suffix="EUR"
+                        help="Total facturado (base imponible, sin IVA/IGIC)"
+                    />
+
+                    <NumberInput
+                        label="Gastos deducibles de actividad"
+                        value={data.gastos_actividad}
+                        onChange={v => update({ gastos_actividad: v })}
+                        suffix="EUR"
+                        help="Suministros, alquiler local, seguros, material, marketing..."
+                    />
+
+                    <NumberInput
+                        label="Cuota de autonomo anual"
+                        value={data.cuota_autonomo_anual}
+                        onChange={v => update({ cuota_autonomo_anual: v })}
+                        suffix="EUR"
+                        help="Cuota mensual x 12. Ej: 293 EUR/mes = 3.516 EUR/ano"
+                    />
+
+                    <NumberInput
+                        label="Amortizaciones"
+                        value={data.amortizaciones_actividad}
+                        onChange={v => update({ amortizaciones_actividad: v })}
+                        suffix="EUR"
+                        help="Amortizacion de activos fijos (ordenador, vehiculo, mobiliario...)"
+                    />
+
+                    {data.estimacion_actividad === 'directa_normal' && (
+                        <NumberInput
+                            label="Provisiones"
+                            value={data.provisiones_actividad}
+                            onChange={v => update({ provisiones_actividad: v })}
+                            suffix="EUR"
+                            help="Solo en estimacion directa normal"
+                        />
+                    )}
+
+                    <NumberInput
+                        label="Otros gastos deducibles"
+                        value={data.otros_gastos_actividad}
+                        onChange={v => update({ otros_gastos_actividad: v })}
+                        suffix="EUR"
+                    />
+
+                    <h3 className="tg-step__subtitle">Retenciones y pagos a cuenta</h3>
+
+                    <NumberInput
+                        label="Retenciones en facturas (anual)"
+                        value={data.retenciones_actividad}
+                        onChange={v => update({ retenciones_actividad: v })}
+                        suffix="EUR"
+                        help="15% (o 7% nuevos autonomos) retenido por tus clientes profesionales"
+                    />
+
+                    <NumberInput
+                        label="Pagos fraccionados Modelo 130"
+                        value={data.pagos_fraccionados_130}
+                        onChange={v => update({ pagos_fraccionados_130: v })}
+                        suffix="EUR"
+                        help="Suma de los 4 trimestres del Modelo 130 pagados"
+                    />
+
+                    <h3 className="tg-step__subtitle">Reducciones</h3>
+
+                    <CheckboxInput
+                        label="Inicio de actividad (primeros 2 anos con beneficio)"
+                        checked={data.inicio_actividad}
+                        onChange={v => update({ inicio_actividad: v })}
+                        help="Reduccion del 20% sobre el rendimiento neto positivo (Art. 32.3 LIRPF)"
+                    />
+
+                    <CheckboxInput
+                        label="Mas del 75% de ingresos de un solo cliente"
+                        checked={data.un_solo_cliente}
+                        onChange={v => update({ un_solo_cliente: v })}
+                        help="Autonomo economicamente dependiente (TRADE). Aplica reduccion similar a trabajo (Art. 32.2 LIRPF)"
+                    />
+                </>
+            )}
         </div>
     )
 }
@@ -608,6 +736,20 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                         </div>
                     </>
                 )}
+
+                {result.actividad && result.actividad.ingresos_actividad > 0 && (
+                    <>
+                        <h3 className="tg-breakdown__title">Rendimientos de actividad economica</h3>
+                        <div className="tg-breakdown__grid">
+                            <BreakdownRow label="Ingresos de actividad" value={result.actividad.ingresos_actividad} />
+                            <BreakdownRow label="Gastos deducibles" value={result.actividad.total_gastos_deducibles} prefix="-" />
+                            {result.actividad.gastos_dificil_justificacion > 0 && <BreakdownRow label="Gastos dificil justificacion (5%)" value={result.actividad.gastos_dificil_justificacion} prefix="-" />}
+                            <BreakdownRow label="Rendimiento neto" value={result.actividad.rendimiento_neto} />
+                            {result.actividad.reduccion_aplicada > 0 && <BreakdownRow label={`Reduccion (${result.actividad.tipo_reduccion === 'inicio_actividad_art32_3' ? 'inicio actividad 20%' : 'TRADE Art. 32.2'})`} value={result.actividad.reduccion_aplicada} prefix="-" />}
+                            <BreakdownRow label="Rendimiento neto reducido" value={result.actividad.rendimiento_neto_reducido} />
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Phase B: Show discovered deductions in result */}
@@ -744,6 +886,18 @@ export default function TaxGuidePage() {
                 retenciones_trabajo: profile.retenciones_trabajo || 0,
                 retenciones_alquiler: profile.retenciones_alquiler || 0,
                 retenciones_ahorro: profile.retenciones_ahorro || 0,
+                // Activity income
+                ingresos_actividad: profile.ingresos_actividad || 0,
+                gastos_actividad: profile.gastos_actividad || 0,
+                cuota_autonomo_anual: profile.cuota_autonomo_anual || 0,
+                amortizaciones_actividad: profile.amortizaciones_actividad || 0,
+                provisiones_actividad: profile.provisiones_actividad || 0,
+                otros_gastos_actividad: profile.otros_gastos_actividad || 0,
+                estimacion_actividad: profile.estimacion_actividad || 'directa_simplificada',
+                inicio_actividad: profile.inicio_actividad || false,
+                un_solo_cliente: profile.un_solo_cliente || false,
+                retenciones_actividad: profile.retenciones_actividad || 0,
+                pagos_fraccionados_130: profile.pagos_fraccionados_130 || 0,
                 // Phase 3 fields
                 num_pagas_anuales: (profile.num_pagas_anuales as 12 | 14) || 14,
                 salario_base_mensual: profile.salario_base_mensual || 0,
@@ -785,6 +939,18 @@ export default function TaxGuidePage() {
             retenciones_trabajo: data.retenciones_trabajo || null,
             retenciones_alquiler: data.retenciones_alquiler || null,
             retenciones_ahorro: data.retenciones_ahorro || null,
+            // Activity income
+            ingresos_actividad: data.ingresos_actividad || null,
+            gastos_actividad: data.gastos_actividad || null,
+            cuota_autonomo_anual: data.cuota_autonomo_anual || null,
+            amortizaciones_actividad: data.amortizaciones_actividad || null,
+            provisiones_actividad: data.provisiones_actividad || null,
+            otros_gastos_actividad: data.otros_gastos_actividad || null,
+            estimacion_actividad: data.estimacion_actividad || null,
+            inicio_actividad: data.inicio_actividad,
+            un_solo_cliente: data.un_solo_cliente,
+            retenciones_actividad: data.retenciones_actividad || null,
+            pagos_fraccionados_130: data.pagos_fraccionados_130 || null,
             // Phase 3
             num_pagas_anuales: data.num_pagas_anuales,
             salario_base_mensual: data.salario_base_mensual || null,
@@ -836,6 +1002,18 @@ export default function TaxGuidePage() {
             alquiler_pagado_anual: data.alquiler_pagado_anual,
             valor_catastral_segundas_viviendas: data.valor_catastral_segundas_viviendas,
             valor_catastral_revisado_post1994: data.valor_catastral_revisado_post1994,
+            // Activity income
+            ingresos_actividad: data.ingresos_actividad,
+            gastos_actividad: data.gastos_actividad,
+            cuota_autonomo_anual: data.cuota_autonomo_anual,
+            amortizaciones_actividad: data.amortizaciones_actividad,
+            provisiones_actividad: data.provisiones_actividad,
+            otros_gastos_actividad: data.otros_gastos_actividad,
+            estimacion_actividad: data.estimacion_actividad,
+            inicio_actividad: data.inicio_actividad,
+            un_solo_cliente: data.un_solo_cliente,
+            retenciones_actividad: data.retenciones_actividad,
+            pagos_fraccionados_130: data.pagos_fraccionados_130,
             // Phase 3
             num_pagas_anuales: data.num_pagas_anuales,
             salario_base_mensual: data.salario_base_mensual,

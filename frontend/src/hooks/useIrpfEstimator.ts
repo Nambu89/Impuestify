@@ -35,6 +35,18 @@ export interface IrpfEstimateInput {
     donativo_recurrente?: boolean
     retenciones_alquiler?: number
     retenciones_ahorro?: number
+    // Activity income (autonomos)
+    ingresos_actividad?: number
+    gastos_actividad?: number
+    cuota_autonomo_anual?: number
+    amortizaciones_actividad?: number
+    provisiones_actividad?: number
+    otros_gastos_actividad?: number
+    estimacion_actividad?: string
+    inicio_actividad?: boolean
+    un_solo_cliente?: boolean
+    retenciones_actividad?: number
+    pagos_fraccionados_130?: number
     // Phase 3: Payslip fields
     num_pagas_anuales?: number
     salario_base_mensual?: number
@@ -78,6 +90,16 @@ export interface IrpfEstimateResult {
         reduccion_trabajo: number
         rendimiento_neto: number
     }
+    actividad?: {
+        ingresos_actividad: number
+        total_gastos_deducibles: number
+        gastos_dificil_justificacion: number
+        rendimiento_neto: number
+        reduccion_aplicada: number
+        tipo_reduccion: string
+        rendimiento_neto_reducido: number
+        estimacion: string
+    }
     error?: string
 }
 
@@ -100,6 +122,7 @@ export function useIrpfEstimator() {
 
         // Must have some income to calculate
         const hasIncome = (input.ingresos_trabajo || 0) > 0 ||
+            (input.ingresos_actividad || 0) > 0 ||
             (input.intereses || 0) > 0 ||
             (input.dividendos || 0) > 0 ||
             (input.ganancias_fondos || 0) > 0 ||
