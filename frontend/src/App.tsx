@@ -24,6 +24,7 @@ const TermsPage = lazy(() => import('./pages/TermsPage'))
 const DataRetentionPage = lazy(() => import('./pages/DataRetentionPage'))
 const ForalPage = lazy(() => import('./pages/ForalPage'))
 const CeutaMelillaPage = lazy(() => import('./pages/CeutaMelillaPage'))
+const CanariasPage = lazy(() => import('./pages/CanariasPage'))
 const TaxGuidePage = lazy(() => import('./pages/TaxGuidePage'))
 const DeclarationsPage = lazy(() => import('./pages/DeclarationsPage'))
 
@@ -71,6 +72,7 @@ function App() {
                     {/* SEO Landing Pages - Publicly Accessible */}
                     <Route path="/territorios-forales" element={<ForalPage />} />
                     <Route path="/ceuta-melilla" element={<CeutaMelillaPage />} />
+                    <Route path="/canarias" element={<CanariasPage />} />
 
                     {/* Protected Routes (require auth + subscription) */}
                     <Route

@@ -1,11 +1,35 @@
-/* Subscribe Page Styles - MOBILE FIRST - Two Plans Layout */
+/* Subscribe Page Styles — Premium Design — MOBILE FIRST */
 
-/* ========== BASE (MOBILE 320px+) ========== */
+/* ========== BASE PAGE ========== */
 .subscribe-page {
     min-height: 100vh;
-    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+    /* Dark top section fading to light — creates the hero illusion without changing HTML */
+    background:
+        linear-gradient(
+            180deg,
+            var(--color-secondary) 0px,
+            var(--color-secondary) 340px,
+            var(--color-gray-50) 480px,
+            var(--color-gray-50) 100%
+        );
+    position: relative;
 }
 
+/* Radial glow overlay on the dark section */
+.subscribe-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 360px;
+    background: radial-gradient(ellipse at 50% 30%, rgba(26, 86, 219, 0.22) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ========== LOADING STATE ========== */
 .subscribe-loading {
     display: flex;
     flex-direction: column;
@@ -13,73 +37,87 @@
     justify-content: center;
     min-height: 60vh;
     gap: var(--spacing-4);
-    color: var(--color-gray-500);
+    color: var(--color-gray-400);
 }
 
+/* ========== MAIN CONTAINER ========== */
 .subscribe-container {
     max-width: 900px;
     margin: 0 auto;
-    padding: var(--spacing-8) var(--spacing-4);
+    padding: var(--spacing-8) var(--spacing-4) var(--spacing-12);
+    position: relative;
+    z-index: 1;
 }
 
+/* ========== BACK LINK (on dark bg) ========== */
 .subscribe-container .back-link {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-2);
-    color: var(--color-primary);
+    color: var(--color-gray-400);
     text-decoration: none;
     font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-6);
-    transition: transform var(--transition-fast);
+    margin-bottom: var(--spacing-8);
+    transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
 .subscribe-container .back-link:hover {
+    color: var(--color-gray-200);
     transform: translateX(-4px);
 }
 
+/* ========== ALERTS ========== */
 .subscribe-alert {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--spacing-3);
     padding: var(--spacing-4);
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.25);
     border-radius: var(--radius-lg);
     margin-bottom: var(--spacing-6);
     font-size: var(--font-size-sm);
-    color: var(--color-gray-700);
+    color: var(--color-gray-300);
 }
 
 .subscribe-alert svg {
     color: var(--color-warning);
     flex-shrink: 0;
+    margin-top: 1px;
 }
 
 .subscribe-alert-error {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.25);
 }
 
 .subscribe-alert-error svg {
-    color: var(--color-error, #ef4444);
+    color: var(--color-error);
 }
 
+/* ========== HEADER — DARK HERO SECTION ========== */
 .subscribe-header {
     text-align: center;
-    margin-bottom: var(--spacing-8);
+    margin-bottom: var(--spacing-10);
 }
 
+/* Gradient text for "Elige tu plan" */
 .subscribe-header h1 {
     font-size: var(--font-size-2xl);
-    font-weight: 700;
-    margin-bottom: var(--spacing-3);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--spacing-3);
+    background: linear-gradient(135deg, var(--color-white) 0%, rgba(255, 255, 255, 0.72) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .subscribe-subtitle {
     font-size: var(--font-size-base);
-    color: var(--color-gray-500);
-    line-height: 1.6;
-    max-width: 600px;
+    color: var(--color-gray-400);
+    line-height: 1.65;
+    max-width: 520px;
     margin: 0 auto;
 }
 
@@ -91,61 +129,88 @@
     margin-bottom: var(--spacing-6);
 }
 
+/* ========== PLAN CARD — BASE ========== */
 .subscribe-plan {
-    background: var(--color-white);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-radius: var(--radius-2xl);
     padding: var(--spacing-6);
-    border: 2px solid var(--color-gray-200);
+    border: 1.5px solid var(--color-gray-200);
     position: relative;
     display: flex;
     flex-direction: column;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: var(--shadow-md);
+    transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
 }
 
 .subscribe-plan:hover {
     border-color: var(--color-gray-300);
-    box-shadow: var(--shadow-lg);
-}
-
-.subscribe-plan--popular {
-    border-color: var(--color-primary);
     box-shadow: var(--shadow-xl);
+    transform: translateY(-3px);
 }
 
+/* ========== POPULAR PLAN — GLOWING BORDER ========== */
+.subscribe-plan--popular {
+    border-color: rgba(26, 86, 219, 0.55);
+    box-shadow:
+        var(--shadow-xl),
+        0 0 0 1px rgba(26, 86, 219, 0.12),
+        0 0 36px rgba(26, 86, 219, 0.14);
+}
+
+/* Gradient accent bar at the top */
 .subscribe-plan--popular::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: 3px;
     background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
     border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
 }
 
 .subscribe-plan--popular:hover {
-    border-color: var(--color-primary);
+    border-color: rgba(26, 86, 219, 0.75);
+    box-shadow:
+        var(--shadow-xl),
+        0 0 0 1px rgba(26, 86, 219, 0.2),
+        0 0 52px rgba(26, 86, 219, 0.2);
+    transform: translateY(-5px);
 }
 
-/* Badge "Más completo" */
+/* ========== BADGE "MAS COMPLETO" ========== */
 .subscribe-plan__badge {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 14px;
+    right: 14px;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 12px;
+    gap: 5px;
+    padding: 5px 13px;
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     color: white;
     font-size: var(--font-size-xs);
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.03em;
     border-radius: var(--radius-full);
+    box-shadow: 0 2px 12px rgba(26, 86, 219, 0.4);
+    animation: badge-pulse 3s ease-in-out infinite;
 }
 
-/* Plan header */
+@keyframes badge-pulse {
+    0%, 100% {
+        box-shadow: 0 2px 12px rgba(26, 86, 219, 0.4);
+    }
+    50% {
+        box-shadow: 0 2px 22px rgba(6, 182, 212, 0.6);
+    }
+}
+
+/* ========== PLAN HEADER ========== */
 .subscribe-plan__header {
-    margin-bottom: var(--spacing-4);
+    margin-bottom: var(--spacing-5);
 }
 
 .subscribe-plan__icon {
@@ -158,33 +223,40 @@
     margin-bottom: var(--spacing-3);
 }
 
+/* Basic plan icon */
 .subscribe-plan .subscribe-plan__icon {
     background: var(--color-gray-100);
     color: var(--color-gray-600);
+    border: 1px solid var(--color-gray-200);
 }
 
+/* Popular plan icon — gradient */
 .subscribe-plan--popular .subscribe-plan__icon {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     color: white;
+    border: none;
+    box-shadow: 0 4px 16px rgba(26, 86, 219, 0.35);
 }
 
 .subscribe-plan__header h2 {
     font-size: var(--font-size-xl);
     font-weight: 700;
-    margin-bottom: var(--spacing-1);
+    color: var(--color-gray-900);
+    margin: 0 0 var(--spacing-1);
 }
 
 .subscribe-plan__desc {
     font-size: var(--font-size-sm);
     color: var(--color-gray-500);
     margin: 0;
+    line-height: 1.5;
 }
 
-/* Plan price */
+/* ========== PLAN PRICE ========== */
 .subscribe-plan__price {
     display: flex;
     align-items: baseline;
-    gap: 2px;
+    gap: 3px;
     margin-bottom: var(--spacing-5);
     padding-bottom: var(--spacing-5);
     border-bottom: 1px solid var(--color-gray-100);
@@ -196,66 +268,132 @@
     color: var(--color-gray-400);
     text-transform: uppercase;
     align-self: flex-start;
-    margin-top: 8px;
+    margin-top: 10px;
+    letter-spacing: 0.05em;
 }
 
+/* Gradient price number */
 .subscribe-plan__value {
-    font-size: 44px;
+    font-size: 46px;
     font-weight: 800;
-    color: var(--color-gray-900);
     line-height: 1;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .subscribe-plan__period {
     font-size: var(--font-size-sm);
     color: var(--color-gray-500);
+    align-self: flex-end;
+    padding-bottom: 4px;
 }
 
-/* Plan features */
+/* ========== FEATURE LIST ========== */
 .subscribe-plan__features {
     list-style: none;
     padding: 0;
-    margin: 0 0 var(--spacing-6) 0;
+    margin: 0 0 var(--spacing-6);
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .subscribe-plan__features li {
     display: flex;
     align-items: flex-start;
     gap: var(--spacing-2);
-    padding: 6px 0;
+    padding: 5px var(--spacing-2);
     font-size: var(--font-size-sm);
     color: var(--color-gray-700);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
 }
 
+.subscribe-plan__features li:hover {
+    background: var(--color-gray-50);
+}
+
+/* Green checkmark with pill background */
 .subscribe-plan__icon-yes {
-    color: var(--color-success, #10b981);
     flex-shrink: 0;
     margin-top: 2px;
+    color: var(--color-success);
+    background: rgba(16, 185, 129, 0.12);
+    border-radius: var(--radius-full);
+    padding: 2px;
+    width: 18px;
+    height: 18px;
+    box-sizing: content-box;
 }
 
 .subscribe-plan__icon-no {
-    color: var(--color-gray-300);
     flex-shrink: 0;
     margin-top: 2px;
+    color: var(--color-gray-300);
+    width: 18px;
+    height: 18px;
 }
 
 .subscribe-plan__not-included {
-    opacity: 0.5;
+    opacity: 0.45;
 }
 
 .subscribe-plan__not-included span {
     text-decoration: line-through;
 }
 
-/* Plan CTA */
+/* ========== CTA BUTTONS ========== */
 .subscribe-plan__cta {
     width: 100%;
     justify-content: center;
     margin-top: auto;
 }
 
-/* Bottom note */
+/* Basic plan button — refined outline */
+.subscribe-plan:not(.subscribe-plan--popular) .subscribe-plan__cta.btn-secondary,
+.subscribe-plan:not(.subscribe-plan--popular) a.btn-secondary.subscribe-plan__cta {
+    background: transparent;
+    border: 1.5px solid var(--color-gray-300);
+    color: var(--color-gray-700);
+    font-weight: 600;
+    transition: border-color var(--transition-base), color var(--transition-base),
+                background var(--transition-base), box-shadow var(--transition-base);
+}
+
+.subscribe-plan:not(.subscribe-plan--popular) .subscribe-plan__cta.btn-secondary:hover:not(:disabled),
+.subscribe-plan:not(.subscribe-plan--popular) a.btn-secondary.subscribe-plan__cta:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: rgba(26, 86, 219, 0.04);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.08);
+}
+
+/* Popular plan button — gradient with glow */
+.subscribe-plan--popular .subscribe-plan__cta.btn-primary,
+.subscribe-plan--popular a.btn-primary.subscribe-plan__cta {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    border: none;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(26, 86, 219, 0.38);
+    transition: box-shadow var(--transition-base), transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.subscribe-plan--popular .subscribe-plan__cta.btn-primary:hover:not(:disabled),
+.subscribe-plan--popular a.btn-primary.subscribe-plan__cta:hover {
+    box-shadow: 0 6px 30px rgba(26, 86, 219, 0.55);
+    transform: translateY(-1px);
+    opacity: 0.95;
+}
+
+.subscribe-plan--popular .subscribe-plan__cta.btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* ========== BOTTOM NOTE ========== */
 .subscribe-note-bottom {
     text-align: center;
     font-size: var(--font-size-xs);
@@ -265,17 +403,37 @@
 
 /* ========== TABLET (768px+) ========== */
 @media (min-width: 768px) {
+    .subscribe-page {
+        background:
+            linear-gradient(
+                180deg,
+                var(--color-secondary) 0px,
+                var(--color-secondary) 380px,
+                var(--color-gray-50) 540px,
+                var(--color-gray-50) 100%
+            );
+    }
+
     .subscribe-container {
-        padding: var(--spacing-12) var(--spacing-4);
+        padding: var(--spacing-12) var(--spacing-8) var(--spacing-16);
+    }
+
+    .subscribe-header {
+        margin-bottom: var(--spacing-12);
     }
 
     .subscribe-header h1 {
         font-size: var(--font-size-3xl);
     }
 
+    .subscribe-subtitle {
+        font-size: var(--font-size-lg);
+    }
+
     .subscribe-plans {
         grid-template-columns: 1fr 1fr;
         align-items: start;
+        gap: var(--spacing-8);
     }
 
     .subscribe-plan {
@@ -283,6 +441,33 @@
     }
 
     .subscribe-plan__value {
-        font-size: 52px;
+        font-size: 54px;
+    }
+}
+
+/* ========== DESKTOP (1024px+) ========== */
+@media (min-width: 1024px) {
+    .subscribe-page {
+        background:
+            linear-gradient(
+                180deg,
+                var(--color-secondary) 0px,
+                var(--color-secondary) 420px,
+                var(--color-gray-50) 580px,
+                var(--color-gray-50) 100%
+            );
+    }
+
+    .subscribe-page::before {
+        width: 700px;
+        height: 420px;
+    }
+
+    .subscribe-container {
+        padding: var(--spacing-16) var(--spacing-8) var(--spacing-20);
+    }
+
+    .subscribe-header h1 {
+        font-size: var(--font-size-4xl);
     }
 }

@@ -176,6 +176,16 @@ export default function ForalPage() {
                             </a>
                         </div>
                     </FadeContent>
+                    <FadeContent delay={300} duration={800}>
+                        <img
+                            src="/images/hero-foral.webp"
+                            alt="Mapa isometrico de los territorios forales: Araba, Bizkaia, Gipuzkoa y Navarra"
+                            className="foral-hero__image"
+                            loading="lazy"
+                            width={1376}
+                            height={768}
+                        />
+                    </FadeContent>
                 </div>
             </section>
 

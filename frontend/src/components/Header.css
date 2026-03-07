@@ -7,10 +7,12 @@
     left: 0;
     right: 0;
     z-index: var(--z-sticky);
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
     height: 60px;
+    transition: background var(--transition-base);
 }
 
 .header-content {
@@ -224,8 +226,7 @@
 @media (min-width: 1024px) {
     .header {
         height: 70px;
-        left: 280px;
-        /* Offset by sidebar width */
+        left: 280px; /* Offset by sidebar width — sidebar is fixed on desktop */
     }
 
     .header-content {
@@ -241,6 +242,13 @@
     }
 
     .nav-link {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-1);
         font-size: var(--font-size-base);
+    }
+
+    .nav-link svg {
+        opacity: 0.7;
     }
 }

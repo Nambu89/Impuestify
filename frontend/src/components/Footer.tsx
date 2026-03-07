@@ -80,6 +80,12 @@ export default function Footer() {
                                     Ceuta y Melilla
                                 </Link>
                             </li>
+                            <li>
+                                <Link to="/canarias">
+                                    <Map size={16} className="link-icon" />
+                                    Canarias
+                                </Link>
+                            </li>
                         </ul>
                     </div>
 

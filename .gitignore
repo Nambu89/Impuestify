@@ -4,6 +4,7 @@
 !.env.example
 .secrets.baseline
 mark_admin.sql
+.mcp.json
 
 # artefactos locales
 *.sqlite
@@ -44,6 +45,23 @@ dist/
 .pytest_cache/
 coverage/
 .coverage
+test-results/
+screenshots/
+*.playwright-mcp/
+
+# QA screenshots (local only)
+tests/e2e/screenshots/
+
+# Large original PNGs (WebP versions are committed)
+frontend/public/images/*.png
+frontend/public/images/*_thumb.jpeg
+
+# Errores reportados (local)
+Errores reportados/
+
+# Root-level screenshots from Playwright sessions
+*.png
+!frontend/**/*.png
 
 # Build artifacts
 *.egg-info/

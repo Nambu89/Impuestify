@@ -1,18 +1,18 @@
-/* CeutaMelillaPage Styles - MOBILE FIRST */
+/* CanariasPage Styles - MOBILE FIRST */
 
-.ceuta-page {
+.canarias-page {
     min-height: 100vh;
     background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
 }
 
 /* Back link */
-.ceuta-back {
+.canarias-back {
     padding: var(--spacing-4) 0 0;
     background: var(--color-white);
     border-bottom: 1px solid var(--color-gray-200);
 }
 
-.ceuta-back__link {
+.canarias-back__link {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-1);
@@ -23,37 +23,38 @@
     padding-bottom: var(--spacing-3);
 }
 
-.ceuta-back__link:hover {
+.canarias-back__link:hover {
     color: var(--color-primary);
     transform: translateX(-3px);
 }
 
 /* ========== HERO ========== */
-.ceuta-hero {
+.canarias-hero {
     padding: var(--spacing-12) 0;
     background: #0f172a;
     text-align: center;
     overflow: hidden;
 }
 
-.ceuta-hero__badge {
+.canarias-hero__badge {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-2);
     padding: var(--spacing-2) var(--spacing-4);
     background: linear-gradient(
         135deg,
-        rgba(26, 86, 219, 0.1) 0%,
-        rgba(6, 182, 212, 0.1) 100%
+        rgba(26, 86, 219, 0.25) 0%,
+        rgba(6, 182, 212, 0.25) 100%
     );
     border-radius: var(--radius-full);
-    color: var(--color-primary);
+    color: var(--color-accent);
     font-size: var(--font-size-sm);
     font-weight: 500;
     margin-bottom: var(--spacing-4);
+    border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
-.ceuta-hero__title {
+.canarias-hero__title {
     font-size: var(--font-size-3xl);
     font-weight: 700;
     line-height: 1.15;
@@ -61,26 +62,26 @@
     color: var(--color-white);
 }
 
-.ceuta-hero__gradient {
+.canarias-hero__gradient {
     font-size: inherit;
     font-weight: inherit;
     line-height: inherit;
 }
 
-.ceuta-hero__subtitle {
+.canarias-hero__subtitle {
     font-size: var(--font-size-base);
     color: var(--color-gray-300);
-    max-width: 600px;
+    max-width: 620px;
     margin: 0 auto var(--spacing-8);
     line-height: 1.7;
 }
 
-.ceuta-hero__subtitle strong {
-    color: var(--color-accent);
+.canarias-hero__subtitle strong {
+    color: var(--color-white);
 }
 
 /* Stats row */
-.ceuta-hero__stats {
+.canarias-hero__stats {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -88,7 +89,7 @@
     margin-bottom: var(--spacing-8);
 }
 
-.ceuta-hero__stat {
+.canarias-hero__stat {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -96,17 +97,17 @@
     min-width: 90px;
 }
 
-.ceuta-hero__stat-value {
+.canarias-hero__stat-value {
     font-size: var(--font-size-4xl);
     font-weight: 800;
-    color: var(--color-primary);
+    color: var(--color-accent);
     line-height: 1;
     display: flex;
     align-items: baseline;
     gap: 2px;
 }
 
-.ceuta-hero__stat-label {
+.canarias-hero__stat-label {
     font-size: var(--font-size-xs);
     color: var(--color-gray-400);
     font-weight: 500;
@@ -116,42 +117,44 @@
     max-width: 110px;
 }
 
-.ceuta-hero__actions {
+/* Hero image */
+.canarias-hero__image {
+    max-width: 100%;
+    width: 100%;
+    max-width: 560px;
+    border-radius: var(--radius-xl);
+    margin: 0 auto var(--spacing-8);
+    display: block;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(6, 182, 212, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.canarias-hero__actions {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-3);
 }
 
-.ceuta-hero__actions .btn {
+.canarias-hero__actions .btn {
     width: 100%;
     max-width: 300px;
 }
 
-.ceuta-hero__image {
-    display: block;
-    width: 100%;
-    max-width: 800px;
-    height: auto;
-    margin: var(--spacing-8) auto 0;
-    border-radius: var(--radius-xl);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
 /* ========== VENTAJAS ========== */
-.ceuta-ventajas {
+.canarias-ventajas {
     padding: var(--spacing-12) 0;
     background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
 }
 
-.ceuta-ventajas__grid {
+.canarias-ventajas__grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--spacing-6);
     margin-top: var(--spacing-8);
 }
 
-.ceuta-ventaja__card {
+.canarias-ventaja__card {
     padding: var(--spacing-6);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-gray-200);
@@ -162,14 +165,14 @@
     z-index: 0;
 }
 
-.ceuta-ventaja__header {
+.canarias-ventaja__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-3);
 }
 
-.ceuta-ventaja__icon {
+.canarias-ventaja__icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -187,7 +190,7 @@
     z-index: 2;
 }
 
-.ceuta-ventaja__article {
+.canarias-ventaja__article {
     font-size: var(--font-size-xs);
     color: var(--color-primary);
     font-weight: 600;
@@ -199,7 +202,7 @@
     z-index: 2;
 }
 
-.ceuta-ventaja__title {
+.canarias-ventaja__title {
     font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--color-gray-900);
@@ -209,7 +212,7 @@
     z-index: 2;
 }
 
-.ceuta-ventaja__desc {
+.canarias-ventaja__desc {
     font-size: var(--font-size-sm);
     color: var(--color-gray-600);
     line-height: 1.6;
@@ -218,7 +221,7 @@
     z-index: 2;
 }
 
-.ceuta-ventaja__example {
+.canarias-ventaja__example {
     display: flex;
     align-items: flex-start;
     gap: var(--spacing-2);
@@ -230,25 +233,92 @@
     z-index: 2;
 }
 
-.ceuta-ventaja__example svg {
+.canarias-ventaja__example svg {
     color: var(--color-primary);
     flex-shrink: 0;
     margin-top: 1px;
 }
 
-.ceuta-ventaja__example span {
+.canarias-ventaja__example span {
     font-size: var(--font-size-xs);
     color: var(--color-gray-700);
     line-height: 1.5;
 }
 
-/* ========== IRPF DETAIL ========== */
-.ceuta-irpf {
+/* ========== IGIC vs IVA COMPARACION ========== */
+.canarias-comparacion {
     padding: var(--spacing-12) 0;
     background: var(--color-white);
 }
 
-.ceuta-irpf__grid {
+.canarias-comparacion__table-wrap {
+    margin-top: var(--spacing-8);
+    overflow-x: auto;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-gray-200);
+}
+
+.canarias-comparacion__table {
+    width: 100%;
+    min-width: 420px;
+    border-collapse: collapse;
+    background: var(--color-white);
+    font-size: var(--font-size-sm);
+}
+
+.canarias-comparacion__table thead {
+    background: linear-gradient(
+        135deg,
+        var(--color-primary) 0%,
+        var(--color-primary-dark) 100%
+    );
+    color: var(--color-white);
+}
+
+.canarias-comparacion__table th {
+    padding: var(--spacing-3) var(--spacing-4);
+    text-align: left;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.canarias-comparacion__table td {
+    padding: var(--spacing-3) var(--spacing-4);
+    border-bottom: 1px solid var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.canarias-comparacion__table tbody tr:hover {
+    background: var(--color-gray-50);
+}
+
+.canarias-comparacion__savings {
+    color: var(--color-success);
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 2px var(--spacing-2);
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}
+
+.canarias-comparacion__note {
+    margin-top: var(--spacing-4);
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-400);
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* ========== ZEC SECTION ========== */
+.canarias-zec {
+    padding: var(--spacing-12) 0;
+    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+}
+
+.canarias-zec__steps {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-6);
@@ -256,13 +326,13 @@
     margin-bottom: var(--spacing-8);
 }
 
-.ceuta-irpf__step {
+.canarias-zec__step {
     display: flex;
     gap: var(--spacing-4);
     align-items: flex-start;
 }
 
-.ceuta-irpf__step-num {
+.canarias-zec__step-num {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -280,29 +350,29 @@
     flex-shrink: 0;
 }
 
-.ceuta-irpf__step-content h3 {
+.canarias-zec__step-content h3 {
     font-size: var(--font-size-base);
     font-weight: 600;
     color: var(--color-gray-900);
     margin-bottom: var(--spacing-2);
 }
 
-.ceuta-irpf__step-content p {
+.canarias-zec__step-content p {
     font-size: var(--font-size-sm);
     color: var(--color-gray-600);
     line-height: 1.6;
     margin: 0;
 }
 
-/* Example box */
-.ceuta-irpf__example-box {
+/* ZEC Example box */
+.canarias-zec__example-box {
     background: var(--color-gray-50);
     border: 1px solid var(--color-gray-200);
     border-radius: var(--radius-xl);
     padding: var(--spacing-6);
 }
 
-.ceuta-irpf__example-box h3 {
+.canarias-zec__example-box h3 {
     display: flex;
     align-items: center;
     gap: var(--spacing-2);
@@ -312,18 +382,18 @@
     margin-bottom: var(--spacing-4);
 }
 
-.ceuta-irpf__example-box h3 svg {
+.canarias-zec__example-box h3 svg {
     color: var(--color-primary);
 }
 
-.ceuta-irpf__example-table {
+.canarias-zec__example-table {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-2);
     margin-bottom: var(--spacing-4);
 }
 
-.ceuta-irpf__example-row {
+.canarias-zec__example-row {
     display: flex;
     justify-content: space-between;
     padding: var(--spacing-3);
@@ -334,13 +404,19 @@
     border: 1px solid var(--color-gray-200);
 }
 
-.ceuta-irpf__example-row--deduction {
+.canarias-zec__example-row--zec {
     background: rgba(16, 185, 129, 0.05);
     border-color: rgba(16, 185, 129, 0.3);
     color: var(--color-success);
 }
 
-.ceuta-irpf__example-row--total {
+.canarias-zec__example-row--general {
+    background: rgba(239, 68, 68, 0.04);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: var(--color-gray-600);
+}
+
+.canarias-zec__example-row--total {
     background: linear-gradient(
         90deg,
         rgba(26, 86, 219, 0.05) 0%,
@@ -351,103 +427,138 @@
     font-size: var(--font-size-base);
 }
 
-.ceuta-irpf__example-note {
+.canarias-zec__example-note {
     font-size: var(--font-size-xs);
     color: var(--color-gray-400);
     line-height: 1.5;
     margin: 0;
 }
 
-/* ========== REQUISITOS ========== */
-.ceuta-requisitos {
+/* ========== COMPARISON TABLE ========== */
+.canarias-comparison {
+    padding: var(--spacing-12) 0;
+    background: var(--color-white);
+}
+
+.canarias-comparison__table-wrap {
+    margin-top: var(--spacing-8);
+    overflow-x: auto;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-gray-200);
+}
+
+.canarias-comparison__table {
+    width: 100%;
+    min-width: 540px;
+    border-collapse: collapse;
+    background: var(--color-white);
+    font-size: var(--font-size-sm);
+}
+
+.canarias-comparison__table thead {
+    background: linear-gradient(
+        135deg,
+        var(--color-gray-800) 0%,
+        var(--color-gray-900) 100%
+    );
+    color: var(--color-white);
+}
+
+.canarias-comparison__table th {
+    padding: var(--spacing-3) var(--spacing-4);
+    text-align: center;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.canarias-comparison__table th:first-child {
+    text-align: left;
+}
+
+.canarias-comparison__table td {
+    padding: var(--spacing-3) var(--spacing-4);
+    text-align: center;
+    border-bottom: 1px solid var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.canarias-comparison__table td:first-child {
+    text-align: left;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.canarias-comparison__table tbody tr:hover {
+    background: var(--color-gray-50);
+}
+
+.canarias-comparison__row--highlight {
+    background: linear-gradient(
+        90deg,
+        rgba(26, 86, 219, 0.05) 0%,
+        rgba(6, 182, 212, 0.05) 100%
+    ) !important;
+}
+
+.canarias-comparison__row--highlight td {
+    border-bottom: 1px solid rgba(26, 86, 219, 0.15);
+}
+
+.canarias-comparison__icon-yes {
+    color: var(--color-success);
+    display: inline-block;
+}
+
+.canarias-comparison__icon-no {
+    color: var(--color-gray-300);
+    display: inline-block;
+}
+
+.canarias-comparison__icon-brand {
+    color: var(--color-primary);
+}
+
+.canarias-comparison__partial {
+    font-size: var(--font-size-xs);
+    color: var(--color-warning);
+    font-weight: 600;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 2px var(--spacing-2);
+    border-radius: var(--radius-sm);
+}
+
+/* ========== FAQ ========== */
+.canarias-faq {
     padding: var(--spacing-12) 0;
     background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
 }
 
-.ceuta-requisitos__grid {
+.canarias-faq__grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--spacing-6);
     margin-top: var(--spacing-8);
 }
 
-.ceuta-requisitos__card {
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-6);
-    border: 1px solid var(--color-gray-200);
-}
-
-.ceuta-requisitos__card--ok {
+.canarias-faq__item {
     background: var(--color-white);
-    border-color: rgba(16, 185, 129, 0.3);
-}
-
-.ceuta-requisitos__card h3 {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    color: var(--color-gray-900);
-    margin-bottom: var(--spacing-4);
-}
-
-.ceuta-requisitos__card h3 svg {
-    color: var(--color-success);
-}
-
-.ceuta-requisitos__card ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-3);
-}
-
-.ceuta-requisitos__card li {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-2);
-    font-size: var(--font-size-sm);
-    color: var(--color-gray-600);
-    line-height: 1.5;
-}
-
-.ceuta-requisitos__card li svg {
-    color: var(--color-success);
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-
-/* ========== FAQ ========== */
-.ceuta-faq {
-    padding: var(--spacing-12) 0;
-    background: var(--color-white);
-}
-
-.ceuta-faq__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-6);
-    margin-top: var(--spacing-8);
-}
-
-.ceuta-faq__item {
-    background: var(--color-gray-50);
     border: 1px solid var(--color-gray-200);
     border-radius: var(--radius-xl);
     padding: var(--spacing-6);
     transition: all var(--transition-base);
 }
 
-.ceuta-faq__item:hover {
+.canarias-faq__item:hover {
     border-color: var(--color-primary-light);
     box-shadow: var(--shadow-md);
-    background: var(--color-white);
 }
 
-.ceuta-faq__item h3 {
+.canarias-faq__item h3 {
     font-size: var(--font-size-base);
     font-weight: 600;
     color: var(--color-gray-900);
@@ -455,7 +566,7 @@
     line-height: 1.4;
 }
 
-.ceuta-faq__item p {
+.canarias-faq__item p {
     font-size: var(--font-size-sm);
     color: var(--color-gray-600);
     line-height: 1.7;
@@ -463,12 +574,12 @@
 }
 
 /* ========== CTA ========== */
-.ceuta-cta {
+.canarias-cta {
     padding: var(--spacing-12) 0;
-    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+    background: var(--color-white);
 }
 
-.ceuta-cta__card {
+.canarias-cta__card {
     max-width: 600px;
     margin: 0 auto;
     text-align: center;
@@ -482,7 +593,7 @@
     color: var(--color-white);
 }
 
-.ceuta-cta__icon {
+.canarias-cta__icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -497,19 +608,19 @@
     margin-bottom: var(--spacing-6);
 }
 
-.ceuta-cta__card h2 {
+.canarias-cta__card h2 {
     color: var(--color-white);
     margin-bottom: var(--spacing-4);
     font-size: var(--font-size-2xl);
 }
 
-.ceuta-cta__card p {
+.canarias-cta__card p {
     color: var(--color-gray-300);
     margin-bottom: var(--spacing-6);
     font-size: var(--font-size-base);
 }
 
-.ceuta-cta__note {
+.canarias-cta__note {
     margin-top: var(--spacing-3);
     font-size: var(--font-size-xs) !important;
     color: var(--color-gray-500) !important;
@@ -518,68 +629,73 @@
 
 /* ========== TABLET (768px+) ========== */
 @media (min-width: 768px) {
-    .ceuta-hero {
+    .canarias-hero {
         padding: var(--spacing-16) 0;
     }
 
-    .ceuta-hero__title {
+    .canarias-hero__title {
         font-size: var(--font-size-4xl);
     }
 
-    .ceuta-hero__subtitle {
+    .canarias-hero__subtitle {
         font-size: var(--font-size-lg);
     }
 
-    .ceuta-hero__actions {
+    .canarias-hero__actions {
         flex-direction: row;
         justify-content: center;
     }
 
-    .ceuta-hero__actions .btn {
+    .canarias-hero__actions .btn {
         width: auto;
         max-width: none;
     }
 
-    .ceuta-ventajas__grid {
+    .canarias-ventajas__grid {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .ceuta-irpf__grid {
+    .canarias-zec__steps {
         gap: var(--spacing-8);
     }
 
-    .ceuta-requisitos__grid {
+    .canarias-faq__grid {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .ceuta-faq__grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .ceuta-cta__card {
+    .canarias-cta__card {
         padding: var(--spacing-12) var(--spacing-10);
     }
 }
 
 /* ========== DESKTOP (1024px+) ========== */
 @media (min-width: 1024px) {
-    .ceuta-hero {
+    .canarias-hero {
         padding: var(--spacing-20) 0;
     }
 
-    .ceuta-hero__title {
+    .canarias-hero__title {
         font-size: var(--font-size-5xl);
     }
 
-    .ceuta-hero__stat-value {
+    .canarias-hero__stat-value {
         font-size: var(--font-size-5xl);
     }
 
-    .ceuta-ventajas__grid {
+    .canarias-hero__image {
+        max-width: 680px;
+    }
+
+    .canarias-ventajas__grid {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .ceuta-irpf__example-box {
+    .canarias-zec__example-box {
         padding: var(--spacing-8);
+    }
+
+    .canarias-comparison__table th,
+    .canarias-comparison__table td {
+        padding: var(--spacing-4) var(--spacing-6);
     }
 }

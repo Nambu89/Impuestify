@@ -31,7 +31,7 @@
 /* ========== HERO ========== */
 .foral-hero {
     padding: var(--spacing-12) 0;
-    background: var(--color-white);
+    background: #0f172a;
     text-align: center;
     overflow: hidden;
 }
@@ -58,7 +58,7 @@
     font-weight: 700;
     line-height: 1.15;
     margin-bottom: var(--spacing-4);
-    color: var(--color-gray-900);
+    color: var(--color-white);
 }
 
 .foral-hero__gradient {
@@ -69,14 +69,14 @@
 
 .foral-hero__subtitle {
     font-size: var(--font-size-base);
-    color: var(--color-gray-600);
+    color: var(--color-gray-300);
     max-width: 640px;
     margin: 0 auto var(--spacing-8);
     line-height: 1.7;
 }
 
 .foral-hero__subtitle strong {
-    color: var(--color-primary);
+    color: var(--color-accent);
 }
 
 .foral-hero__actions {
@@ -89,6 +89,16 @@
 .foral-hero__actions .btn {
     width: 100%;
     max-width: 280px;
+}
+
+.foral-hero__image {
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    margin: var(--spacing-8) auto 0;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 /* ========== WHY FORAL ========== */

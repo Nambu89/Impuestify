@@ -17,7 +17,7 @@ const TERRITORIES = [
     { name: 'Aragón', foral: false, link: null },
     { name: 'Asturias', foral: false, link: null },
     { name: 'Baleares', foral: false, link: null },
-    { name: 'Canarias', foral: false, link: null },
+    { name: 'Canarias', foral: false, link: '/canarias' },
     { name: 'Cantabria', foral: false, link: null },
     { name: 'Castilla-La Mancha', foral: false, link: null },
     { name: 'Castilla y León', foral: false, link: null },
@@ -156,7 +156,7 @@ export default function Home() {
                             </div>
                             <div className="stat-item">
                                 <span className="stat-number">
-                                    <CountUp to={131} duration={2} />
+                                    <CountUp to={128} duration={2} />
                                 </span>
                                 <span className="stat-label">Deducciones fiscales</span>
                             </div>
@@ -184,15 +184,31 @@ export default function Home() {
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
                         <div className="territory-grid">
-                            {TERRITORIES.map((t) => (
-                                <div
-                                    key={t.name}
-                                    className={`territory-chip ${t.foral ? 'territory-foral' : ''}`}
-                                >
-                                    {t.foral && <Map size={14} />}
-                                    {t.name}
-                                </div>
-                            ))}
+                            {TERRITORIES.map((t) => {
+                                const chipContent = (
+                                    <>
+                                        {t.foral && <Map size={14} />}
+                                        {t.link && !t.foral && <ExternalLink size={12} />}
+                                        {t.name}
+                                    </>
+                                )
+                                return t.link ? (
+                                    <Link
+                                        key={t.name}
+                                        to={t.link}
+                                        className={`territory-chip ${t.foral ? 'territory-foral' : ''} territory-chip--linked`}
+                                    >
+                                        {chipContent}
+                                    </Link>
+                                ) : (
+                                    <div
+                                        key={t.name}
+                                        className={`territory-chip ${t.foral ? 'territory-foral' : ''}`}
+                                    >
+                                        {chipContent}
+                                    </div>
+                                )
+                            })}
                         </div>
                     </FadeContent>
                     <FadeContent delay={200} duration={500}>
@@ -236,7 +252,7 @@ export default function Home() {
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> Sistema multi-agente especializado</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> RAG sobre 428+ documentos oficiales con citas legales</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> 17 CCAA + territorios forales + Ceuta/Melilla</li>
-                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Motor de 131 deducciones personalizadas</li>
+                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Motor de 128 deducciones personalizadas</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> Guardrails IA: moderación, anti-inyección, filtrado PII</li>
                                 </ul>
                             </SpotlightCard>
@@ -304,7 +320,7 @@ export default function Home() {
                             </div>
                             <ul className="pricing-features">
                                 <li><CheckCircle size={18} /><span>Consultas fiscales ilimitadas con IA</span></li>
-                                <li><CheckCircle size={18} /><span>Motor de deducciones con 131 deducciones</span></li>
+                                <li><CheckCircle size={18} /><span>Motor de deducciones con 128 deducciones</span></li>
                                 <li><CheckCircle size={18} /><span>Cobertura completa: 17 CCAA + forales</span></li>
                                 <li><CheckCircle size={18} /><span>Análisis de nóminas y notificaciones AEAT</span></li>
                                 <li><CheckCircle size={18} /><span>Workspace personal de documentos</span></li>

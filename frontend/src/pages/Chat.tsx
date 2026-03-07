@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Loader2, FileText, AlertCircle, Upload } from 'lucide-react'
+import { Send, Loader2, FileText, Upload, Zap, Calculator, Search, Shield } from 'lucide-react'
 import Header from '../components/Header'
 import AITransparencyModal from '../components/AITransparencyModal'
 import { useApi } from '../hooks/useApi'
@@ -109,6 +109,10 @@ export default function Chat() {
         setActiveConversationId(null)
         setNotificationAnalysis(null)
         setSidebarOpen(false) // ✅ NUEVO: Cerrar sidebar al crear nuevo
+    }
+
+    const handleSuggestionClick = (text: string) => {
+        setInput(text)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -242,30 +246,54 @@ export default function Chat() {
             <main className="chat-main">
                 <div className="chat-container">
                     {messages.length === 0 ? (
-                        <div className="chat-empty">
-                            <FileText size={48} />
-                            <h2>¡Hola! Soy Impuestify</h2>
-                            <p>Tu asistente fiscal inteligente. Pregúntame sobre impuestos, IRPF, IVA, modelos tributarios y más.</p>
-
-                            <div className="example-questions">
-                                <p className="example-title">Prueba a preguntar:</p>
+                        <div className="chat-empty-state">
+                            <img
+                                src="/images/chat-empty-state.webp"
+                                alt=""
+                                className="chat-empty-state__image"
+                                loading="lazy"
+                                width={120}
+                                height={120}
+                            />
+                            <h2 className="chat-empty-state__title">
+                                En que puedo ayudarte?
+                            </h2>
+                            <div className="chat-empty-state__suggestions">
                                 <button
-                                    className="example-question"
-                                    onClick={() => setInput('¿Cuándo debo presentar el modelo 303 de IVA?')}
+                                    className="chat-suggestion-card"
+                                    onClick={() => handleSuggestionClick('Calcula mi IRPF en mi comunidad autonoma')}
                                 >
-                                    ¿Cuándo debo presentar el modelo 303 de IVA?
+                                    <div className="chat-suggestion-card__icon">
+                                        <Calculator size={20} />
+                                    </div>
+                                    <span className="chat-suggestion-card__text">Calcula mi IRPF</span>
                                 </button>
                                 <button
-                                    className="example-question"
-                                    onClick={() => setInput('¿Qué deducciones puedo aplicar en el IRPF?')}
+                                    className="chat-suggestion-card"
+                                    onClick={() => handleSuggestionClick('Analiza mi ultima nomina y dime si las retenciones son correctas')}
                                 >
-                                    ¿Qué deducciones puedo aplicar en el IRPF?
+                                    <div className="chat-suggestion-card__icon">
+                                        <FileText size={20} />
+                                    </div>
+                                    <span className="chat-suggestion-card__text">Analiza mi nomina</span>
                                 </button>
                                 <button
-                                    className="example-question"
-                                    onClick={() => setInput('¿Cómo funciona el régimen de estimación directa?')}
+                                    className="chat-suggestion-card"
+                                    onClick={() => handleSuggestionClick('Que deducciones fiscales puedo aplicar en mi declaracion?')}
                                 >
-                                    ¿Cómo funciona el régimen de estimación directa?
+                                    <div className="chat-suggestion-card__icon">
+                                        <Search size={20} />
+                                    </div>
+                                    <span className="chat-suggestion-card__text">Deducciones disponibles</span>
+                                </button>
+                                <button
+                                    className="chat-suggestion-card"
+                                    onClick={() => handleSuggestionClick('He recibido una notificacion de la AEAT, que debo hacer?')}
+                                >
+                                    <div className="chat-suggestion-card__icon">
+                                        <Shield size={20} />
+                                    </div>
+                                    <span className="chat-suggestion-card__text">Notificacion AEAT</span>
                                 </button>
                             </div>
                         </div>
@@ -276,6 +304,15 @@ export default function Chat() {
                                     key={message.id}
                                     className={`message ${message.role} `}
                                 >
+                                    {message.role === 'assistant' ? (
+                                        <div className="message-avatar">
+                                            <Zap size={16} />
+                                        </div>
+                                    ) : (
+                                        <div className="message-avatar message-avatar--user">
+                                            {user?.name?.[0]?.toUpperCase() || 'U'}
+                                        </div>
+                                    )}
                                     <div className="message-content">
                                         {message.loading ? (
                                             <div className="message-loading">
@@ -352,6 +389,9 @@ export default function Chat() {
                                                 <StreamingTimeline steps={streamState.steps} />
                                             )}
                                             <div className="message assistant">
+                                                <div className="message-avatar">
+                                                    <Zap size={16} />
+                                                </div>
                                                 <div className="message-content">
                                                     <div className="message-text">
                                                         <FormattedMessage content={streamState.response} />
@@ -417,8 +457,7 @@ export default function Chat() {
                     </button>
                 </form>
                 <p className="chat-disclaimer">
-                    <AlertCircle size={14} />
-                    Informacion orientativa. Consulta con un asesor fiscal para tu caso particular.
+                    Impuestify usa IA. Verifica siempre la informacion importante con un profesional.
                 </p>
             </footer>
 

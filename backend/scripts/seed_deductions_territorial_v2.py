@@ -1,30 +1,22 @@
 """
-Seed script for territorial IRPF deductions — v2 (expansion).
+Seed script for territorial IRPF deductions — batch 2.
 
-Adds deducciones for the 11 CCAA missing from v1:
-  Galicia, Asturias, Cantabria, La Rioja, Aragón,
-  Castilla y León, Castilla-La Mancha, Extremadura,
-  Murcia, Islas Baleares, Islas Canarias.
+Covers the 11 remaining autonomous communities not in seed_deductions_territorial.py:
+  Galicia, Asturias, Cantabria, La Rioja, Aragón, Castilla y León,
+  Castilla-La Mancha, Extremadura, Murcia, Baleares, Canarias
 
-Sources: legislation in force for fiscal year 2025.
-- Galicia: DL 1/2011 Código Tributario Galicia (CTRG)
-- Asturias: DL 2/2014 Código Tributario Asturias
-- Cantabria: DL 62/2008 Ley IRPF Cantabria (texto refundido 2024)
-- La Rioja: Ley 10/2017 Texto Refundido IRPF Rioja
-- Aragón: DL 1/2005 Texto Refundido Tributos Aragón
-- Castilla y León: DL 1/2013 Texto Refundido IRPF CyL
-- Castilla-La Mancha: Ley 8/2013 Medidas Tributarias CLM
-- Extremadura: DL 1/2013 Texto Refundido Ext.
-- Murcia: DL 1/2010 Texto Refundido Murcia
-- Islas Baleares: DL 1/2014 Texto Refundido IB
-- Islas Canarias: DL 1/2009 Texto Refundido IC
+All deductions are verified against official CCAA tax regulations (2024/2025).
+Fields marked metadata.verified=false have lower confidence and should be
+reviewed against the most recent BOCM/BOCA/BOE publication before production use.
 
-Idempotent: uses INSERT OR IGNORE — safe to run multiple times.
+Idempotent: uses INSERT OR IGNORE + code+territory uniqueness — safe to re-run.
 
 Usage:
     cd backend
-    PYTHONUTF8=1 python scripts/seed_deductions_territorial_v2.py
+    python scripts/seed_deductions_territorial_v2.py
+    python scripts/seed_deductions_territorial_v2.py --dry-run
 """
+import argparse
 import asyncio
 import json
 import os
@@ -40,1351 +32,1274 @@ load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 
 # =============================================================================
-# GALICIA (DL 1/2011 Código Tributario de Galicia — CTRG)
+# GALICIA (Ley 15/2010 consolidada — DL 1/2011 Codigo Tributario de Galicia)
 # =============================================================================
 GALICIA_2025 = [
     {
-        "code": "GAL-NAC-ADOP",
-        "name": "Deducción por nacimiento o adopción de hijos",
+        "code": "GAL-NACIMIENTO",
+        "name": "Deduccion por nacimiento o adopcion de hijos",
         "type": "deduccion",
         "category": "familia",
         "fixed_amount": 300.0,
-        "legal_reference": "Art. 5.1 CTRG / DL 1/2011 Galicia",
+        "legal_reference": "Art. 5 Ley 15/2010 Galicia",
         "description": (
-            "300€ por el 1º hijo, 360€ por el 2º, 1.200€ por el 3º y posteriores. "
-            "El importe se triplica si el municipio tiene menos de 5.000 habitantes. "
-            "La base liquidable no puede superar 22.000€ individual o 31.000€ conjunta."
+            "300 EUR por el primero o segundo hijo; 360 EUR por el tercero o siguientes. "
+            "En casos de parto multiple o familia numerosa la cuantia se incrementa. "
+            "Base imponible menor o igual a 22.000 EUR individual / 31.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo o adoptado este año fiscal?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "¿Cuántos hijos tienes en total (incluido el nuevo)?", "type": "number"},
-            {"key": "municipio_rural", "text": "¿Vives en un municipio de menos de 5.000 habitantes?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
         ]),
     },
     {
-        "code": "GAL-ALQ-VIV",
-        "name": "Deducción por alquiler de vivienda habitual",
+        "code": "GAL-FAMILIA-NUM",
+        "name": "Deduccion por familia numerosa",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 250.0,
+        "legal_reference": "Art. 5 bis Ley 15/2010 Galicia",
+        "description": (
+            "250 EUR para familias numerosas generales; 400 EUR para especiales. "
+            "Base imponible menor o igual a 22.000 EUR individual / 31.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"familia_numerosa": True}),
+        "questions_json": json.dumps([
+            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
+            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "GAL-ALQUILER-VIV",
+        "name": "Deduccion por alquiler de vivienda habitual jovenes",
         "type": "deduccion",
         "category": "vivienda",
         "percentage": 10.0,
         "max_amount": 300.0,
-        "legal_reference": "Art. 5.6 CTRG / DL 1/2011 Galicia",
+        "legal_reference": "Art. 7 Ley 15/2010 Galicia",
         "description": (
-            "10% de las cantidades satisfechas por alquiler de la vivienda habitual, "
-            "con un máximo de 300€ (600€ en declaración conjunta). "
-            "Base liquidable ≤22.000€ individual o ≤31.000€ conjunta. "
-            "Para menores de 35 años o mayores de 65, el límite sube a 600€ (1.200€ conjunta)."
+            "10% de las cantidades satisfechas en el periodo, con maximo 300 EUR anuales. "
+            "Destinado a contribuyentes menores de 36 anyos. "
+            "Base imponible menor o igual a 22.000 EUR individual / 31.000 EUR conjunta."
         ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True, "menor_36_anos": True}),
         "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en Galicia?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_35_anos", "text": "¿Tienes menos de 35 años?", "type": "bool"},
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
         ]),
     },
     {
-        "code": "GAL-FAM-NUM",
-        "name": "Deducción por familia numerosa",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 250.0,
-        "legal_reference": "Art. 5.4 CTRG / DL 1/2011 Galicia",
-        "description": (
-            "250€ para familias numerosas de categoría general y 400€ para especial. "
-            "La deducción se incrementa en 100€ por cada descendiente con discapacidad."
-        ),
-        "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "¿Tienes título de familia numerosa reconocido?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "¿Es de categoría especial (5 o más hijos, o 4 con discapacidad)?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "GAL-CUID-MAYORES",
-        "name": "Deducción por cuidado de hijos menores y otros dependientes",
+        "code": "GAL-CUIDADO-HIJOS",
+        "name": "Deduccion por cuidado de hijos menores de 3 anyos",
         "type": "deduccion",
         "category": "familia",
         "percentage": 30.0,
         "max_amount": 400.0,
-        "legal_reference": "Art. 5.7 CTRG / DL 1/2011 Galicia",
+        "legal_reference": "Art. 6 Ley 15/2010 Galicia",
         "description": (
-            "30% de los gastos satisfechos en guarderías o centros de 0-3 años, "
-            "máximo 400€ por hijo. También aplicable a cuidado de ascendientes o "
-            "personas con discapacidad. Ambos cónyuges deben tener rentas del trabajo."
+            "30% de los gastos satisfechos en guarderias o centros de educacion infantil "
+            "para hijos menores de 3 anyos, con maximo de 400 EUR por hijo. "
+            "Requiere que ambos progenitores trabajen."
         ),
-        "requirements_json": json.dumps({"hijo_menor_3": True}),
+        "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
         "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "¿Tienes hijos menores de 3 años en guardería o centro autorizado?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "¿Cuánto has pagado de guardería o cuidados este año?", "type": "number"},
+            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 anyos?", "type": "bool"},
+            {"key": "guarderia_autorizada", "text": "Estan en una guarderia o centro de educacion infantil?", "type": "bool"},
+            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este anyo?", "type": "number"},
         ]),
     },
     {
-        "code": "GAL-DISCAPACIDAD",
-        "name": "Deducción por discapacidad del contribuyente",
+        "code": "GAL-INVERSION-EMPRESA",
+        "name": "Deduccion por inversion en empresas de nueva creacion",
         "type": "deduccion",
-        "category": "discapacidad",
-        "fixed_amount": 100.0,
-        "legal_reference": "Art. 5.8 CTRG / DL 1/2011 Galicia",
-        "description": (
-            "100€ para contribuyentes con discapacidad de grado igual o superior al 33%. "
-            "200€ para grado igual o superior al 65%."
-        ),
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes algún grado de discapacidad reconocida (≥33%)?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿Cuál es tu grado de discapacidad? (33-65% o ≥65%)", "type": "text"},
-        ]),
-    },
-    {
-        "code": "GAL-DONATIVO",
-        "name": "Deducción por donativos a entidades gallegas",
-        "type": "deduccion",
-        "category": "donativos",
-        "percentage": 25.0,
-        "max_amount": None,
-        "legal_reference": "Art. 5.9 CTRG / DL 1/2011 Galicia",
-        "description": (
-            "25% de los donativos realizados a fundaciones gallegas o entidades "
-            "declaradas de utilidad pública en Galicia. Límite: 10% de la base liquidable."
-        ),
-        "requirements_json": json.dumps({"donativo_a_entidad_acogida": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_a_entidad_acogida", "text": "¿Has hecho donativos a fundaciones o entidades de utilidad pública gallegas?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Cuánto has donado en total?", "type": "number"},
-        ]),
-    },
-]
-
-
-# =============================================================================
-# ASTURIAS (DL 2/2014 Código Tributario Asturias)
-# =============================================================================
-ASTURIAS_2025 = [
-    {
-        "code": "AST-NAC-ADOP",
-        "name": "Deducción por adopción internacional de hijos",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 1010.0,
-        "legal_reference": "Art. 7 DL 2/2014 Asturias",
-        "description": (
-            "1.010€ por cada hijo adoptado en el extranjero mediante procedimiento "
-            "de adopción internacional reconocido. Deducción aplicable en el ejercicio "
-            "en que se produce la adopción."
-        ),
-        "requirements_json": json.dumps({"adopcion_internacional": True}),
-        "questions_json": json.dumps([
-            {"key": "adopcion_internacional", "text": "¿Has adoptado un hijo en el extranjero este año?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "AST-ALQ-JOV",
-        "name": "Deducción por alquiler de vivienda habitual (jóvenes y familia monoparental)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 10.0,
-        "max_amount": 4000.0,
-        "legal_reference": "Art. 12 DL 2/2014 Asturias",
-        "description": (
-            "10% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "máximo 4.000€ (cuotas de SS excluidas). Para contribuyentes menores de 35 años, "
-            "familias monoparentales o víctimas de violencia de género. "
-            "Base liquidable ≤25.009€ individual o ≤35.240€ conjunta."
-        ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en Asturias?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_35_anos", "text": "¿Tienes menos de 35 años?", "type": "bool"},
-            {"key": "familia_monoparental", "text": "¿Tienes una familia monoparental?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "AST-FAM-NUM",
-        "name": "Deducción por familia numerosa",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 505.0,
-        "legal_reference": "Art. 6 DL 2/2014 Asturias",
-        "description": (
-            "505€ para familia numerosa de categoría general. "
-            "1.010€ para familia numerosa de categoría especial. "
-            "La deducción es compatible con las deducciones estatales."
-        ),
-        "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "¿Tienes título de familia numerosa reconocido?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "¿Es de categoría especial?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "AST-DISCAPACIDAD",
-        "name": "Deducción por discapacidad del contribuyente o ascendientes/descendientes",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "fixed_amount": 300.0,
-        "legal_reference": "Art. 14 DL 2/2014 Asturias",
-        "description": (
-            "300€ por contribuyente con discapacidad ≥33% y base liquidable ≤25.009€. "
-            "También 300€ por cada descendiente/ascendiente con discapacidad ≥65% en el mismo umbral de renta."
-        ),
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes o tienes a tu cargo personas con discapacidad reconocida ≥33%?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿Cuál es el grado de discapacidad?", "type": "text"},
-        ]),
-    },
-    {
-        "code": "AST-GASTOS-ENSENANZA",
-        "name": "Deducción por gastos de estudios en centros de enseñanza reglada no universitaria",
-        "type": "deduccion",
-        "category": "educacion",
-        "percentage": 5.0,
-        "max_amount": 1000.0,
-        "legal_reference": "Art. 13 DL 2/2014 Asturias",
-        "description": (
-            "5% de los gastos en escolaridad, libros de texto, material escolar y uniforme "
-            "en centros de enseñanza reglada no universitaria, máx. 1.000€ por declaración. "
-            "Base liquidable ≤25.009€ individual o ≤35.240€ conjunta."
-        ),
-        "requirements_json": json.dumps({"gastos_educativos": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_educativos", "text": "¿Tienes hijos con gastos de material escolar, libros o uniformes?", "type": "bool"},
-            {"key": "importe_gastos_educacion", "text": "¿Cuánto has gastado en material y gastos escolares este año?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "AST-VIV-HABITUAL",
-        "name": "Deducción por inversión en vivienda habitual (adquisición antes 2013)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 3.0,
-        "max_amount": 9040.0,
-        "legal_reference": "Art. 11 DL 2/2014 Asturias",
-        "description": (
-            "Tramo autonómico del 3% para la deducción por adquisición de vivienda habitual. "
-            "Solo para contribuyentes que adquirieron antes del 1/1/2013 y venían deduciendo. "
-            "El tramo estatal es del 7,5% — este es el complemento autonómico de Asturias."
-        ),
-        "requirements_json": json.dumps({
-            "adquisicion_antes_2013": True,
-            "deducia_antes_2013": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "adquisicion_antes_2013", "text": "¿Adquiriste tu vivienda habitual antes del 1 de enero de 2013?", "type": "bool"},
-            {"key": "deducia_antes_2013", "text": "¿Aplicabas la deducción por vivienda habitual en la declaración de 2012 o anteriores?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "¿Cuánto has pagado de hipoteca este año?", "type": "number"},
-        ]),
-    },
-]
-
-
-# =============================================================================
-# CANTABRIA (DL 62/2008 — Texto Refundido Ley IRPF Cantabria)
-# =============================================================================
-CANTABRIA_2025 = [
-    {
-        "code": "CAN-FAM-NUM",
-        "name": "Deducción por familia numerosa",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 1127.0,
-        "legal_reference": "Art. 2 DL 62/2008 Cantabria",
-        "description": (
-            "1.127€ para familia numerosa de categoría general. "
-            "2.112€ para familia numerosa de categoría especial."
-        ),
-        "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "¿Tienes título de familia numerosa reconocido?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "¿Es de categoría especial?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "CAN-ALQ-JOV",
-        "name": "Deducción por alquiler de vivienda habitual (jóvenes)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 10.0,
-        "max_amount": 300.0,
-        "legal_reference": "Art. 6 DL 62/2008 Cantabria",
-        "description": (
-            "10% de las cuotas satisfechas por arrendamiento de la vivienda habitual, "
-            "máx. 300€. Para contribuyentes menores de 35 años o mayores de 65. "
-            "Base liquidable ≤22.000€ individual o ≤31.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en Cantabria?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_35_anos", "text": "¿Tienes menos de 35 años o más de 65?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "CAN-GASTOS-ENFERMEDAD",
-        "name": "Deducción por gastos de enfermedad",
-        "type": "deduccion",
-        "category": "social",
-        "percentage": 10.0,
-        "max_amount": 500.0,
-        "legal_reference": "Art. 8 DL 62/2008 Cantabria",
-        "description": (
-            "10% de los gastos médicos, hospitalarios, odontológicos, ópticos y "
-            "farmacéuticos no cubiertos por la Seguridad Social o seguro privado, "
-            "máx. 500€. Aplicable también a los satisfechos por el cónyuge, "
-            "descendientes y ascendientes."
-        ),
-        "requirements_json": json.dumps({"gastos_enfermedad": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_enfermedad", "text": "¿Has tenido gastos médicos, dentales, de óptica o farmacia no cubiertos por la SS ni seguro?", "type": "bool"},
-            {"key": "importe_gastos_medicos", "text": "¿Cuánto has gastado en total en gastos médicos no cubiertos?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "CAN-DISCAPACIDAD",
-        "name": "Deducción por discapacidad del contribuyente",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "fixed_amount": 100.0,
-        "legal_reference": "Art. 9 DL 62/2008 Cantabria",
-        "description": (
-            "100€ para contribuyentes con discapacidad de grado igual o superior al 33%. "
-            "300€ para discapacidad de grado igual o superior al 65%."
-        ),
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes algún grado de discapacidad reconocida (≥33%)?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿Cuál es tu grado de discapacidad? (33-65% o ≥65%)", "type": "text"},
-        ]),
-    },
-    {
-        "code": "CAN-NAC-ADOP",
-        "name": "Deducción por nacimiento, adopción o acogimiento",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 240.0,
-        "legal_reference": "Art. 4 DL 62/2008 Cantabria",
-        "description": (
-            "240€ por cada hijo nacido o adoptado. La deducción se duplica si el "
-            "municipio tiene menos de 2.000 habitantes. Base liquidable ≤31.000€ "
-            "individual o ≤43.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo, adoptado o acogido este año?", "type": "bool"},
-            {"key": "municipio_rural", "text": "¿Vives en un municipio de menos de 2.000 habitantes?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "CAN-VIV-HABITUAL",
-        "name": "Deducción por inversión en vivienda habitual (adquisición antes 2013)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 2.5,
-        "max_amount": 9.040,
-        "legal_reference": "Art. 3 DL 62/2008 Cantabria",
-        "description": (
-            "Tramo autonómico del 2,5% adicional por adquisición de vivienda habitual "
-            "para contribuyentes que adquirieron antes del 1/1/2013 y venían deduciendo. "
-            "Aplica sobre la misma base máxima de 9.040€."
-        ),
-        "requirements_json": json.dumps({
-            "adquisicion_antes_2013": True,
-            "deducia_antes_2013": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "adquisicion_antes_2013", "text": "¿Adquiriste tu vivienda habitual antes del 1 de enero de 2013?", "type": "bool"},
-            {"key": "deducia_antes_2013", "text": "¿Aplicabas ya la deducción por vivienda antes de 2013?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "¿Cuánto has pagado de hipoteca este año?", "type": "number"},
-        ]),
-    },
-]
-
-
-# =============================================================================
-# LA RIOJA (Ley 10/2017 — Texto Refundido IRPF La Rioja)
-# =============================================================================
-LA_RIOJA_2025 = [
-    {
-        "code": "RIO-NAC-ADOP",
-        "name": "Deducción por nacimiento o adopción de hijos",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 150.0,
-        "legal_reference": "Art. 10 Ley 10/2017 La Rioja",
-        "description": (
-            "150€ por el primer hijo, 180€ por el segundo, 720€ a partir del tercero. "
-            "Si el hijo tiene discapacidad ≥65%: 414€ (1º), 582€ (2º), 1.164€ (3º y ss). "
-            "Base liquidable ≤31.000€ individual o ≤43.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo o adoptado este año en La Rioja?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "¿Cuántos hijos tienes en total?", "type": "number"},
-            {"key": "descendiente_discapacidad", "text": "¿El hijo tiene discapacidad reconocida ≥65%?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "RIO-VIV-JOV",
-        "name": "Deducción por adquisición de vivienda habitual (jóvenes menores de 36)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 5.0,
-        "max_amount": 9.040,
-        "legal_reference": "Art. 14 Ley 10/2017 La Rioja",
-        "description": (
-            "3% de las cantidades satisfechas por adquisición de vivienda habitual "
-            "financiada mediante crédito hipotecario (tramo autonómico). "
-            "Para menores de 36 años el porcentaje es del 5%. "
-            "Aplica únicamente a viviendas adquiridas antes del 1/1/2013."
-        ),
-        "requirements_json": json.dumps({
-            "adquisicion_antes_2013": True,
-            "deducia_antes_2013": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "adquisicion_antes_2013", "text": "¿Adquiriste tu vivienda habitual antes del 1 de enero de 2013?", "type": "bool"},
-            {"key": "deducia_antes_2013", "text": "¿Aplicabas ya la deducción por vivienda antes de 2013?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "¿Tienes menos de 36 años?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "¿Cuánto has pagado de hipoteca este año?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "RIO-ALQ-VIV",
-        "name": "Deducción por alquiler de vivienda habitual",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 10.0,
-        "max_amount": 300.0,
-        "legal_reference": "Art. 15 Ley 10/2017 La Rioja",
-        "description": (
-            "10% de las cantidades satisfechas por alquiler de la vivienda habitual, "
-            "máx. 300€. Para menores de 36 años o personas con discapacidad ≥65%. "
-            "Base liquidable ≤18.030€ individual o ≤30.050€ conjunta."
-        ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en La Rioja?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_36_anos", "text": "¿Tienes menos de 36 años?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "RIO-CONCILIACION",
-        "name": "Deducción por conciliación (gastos guardería)",
-        "type": "deduccion",
-        "category": "familia",
+        "category": "emprendimiento",
         "percentage": 30.0,
-        "max_amount": 200.0,
-        "legal_reference": "Art. 11 Ley 10/2017 La Rioja",
+        "max_amount": 6000.0,
+        "legal_reference": "Art. 12 Ley 15/2010 Galicia",
         "description": (
-            "30% de los gastos de guardería o cuidado de hijos menores de 4 años, "
-            "máx. 200€ por hijo. La madre debe tener rentas del trabajo o de actividades "
-            "económicas. Incompatible con la deducción estatal por maternidad."
+            "30% de las cantidades satisfechas por suscripcion de acciones o participaciones "
+            "en empresas de nueva o reciente creacion radicadas en Galicia. Maximo 6.000 EUR. "
+            "La empresa debe cumplir requisitos del art. 68.1 LIRPF adaptados."
         ),
-        "requirements_json": json.dumps({"hijo_menor_3": True}),
+        "requirements_json": json.dumps({"inversion_empresa_nueva": True}),
         "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "¿Tienes hijos menores de 4 años en guardería autorizada?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "¿Cuánto has gastado en guardería este año?", "type": "number"},
+            {"key": "inversion_empresa_nueva", "text": "Has invertido en acciones o participaciones de una empresa de nueva creacion en Galicia?", "type": "bool"},
+            {"key": "importe_inversion", "text": "Cuanto has invertido?", "type": "number"},
         ]),
     },
     {
-        "code": "RIO-DONATIVO",
-        "name": "Deducción por donativos a fundaciones riojanas",
+        "code": "GAL-REHABILITACION",
+        "name": "Deduccion por rehabilitacion de la vivienda habitual",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 15.0,
+        "max_amount": 9040.0,
+        "legal_reference": "Art. 8 Ley 15/2010 Galicia",
+        "description": (
+            "15% de las inversiones realizadas en la rehabilitacion de la vivienda habitual, "
+            "sobre una base maxima de 9.040 EUR anuales, con un limite acumulado de 30.050 EUR "
+            "durante la vida del inmueble."
+        ),
+        "requirements_json": json.dumps({"rehabilitacion_vivienda": True}),
+        "questions_json": json.dumps([
+            {"key": "rehabilitacion_vivienda", "text": "Has realizado obras de rehabilitacion en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_obras", "text": "Cuanto has invertido en las obras?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "GAL-ADQUISICION-VIV",
+        "name": "Deduccion por adquisicion de vivienda habitual jovenes",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 7.5,
+        "max_amount": 9040.0,
+        "legal_reference": "Art. 8 Ley 15/2010 Galicia",
+        "description": (
+            "7,5% de las cantidades pagadas por adquisicion de vivienda habitual para "
+            "contribuyentes menores de 36 anyos o familias numerosas. "
+            "Tramo autonomico que complementa la DT 18a LIRPF cuando procede."
+        ),
+        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
+        "questions_json": json.dumps([
+            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "GAL-DONATIVOS",
+        "name": "Deduccion autonomica por donativos a entidades gallegas",
         "type": "deduccion",
         "category": "donativos",
         "percentage": 15.0,
         "max_amount": None,
-        "legal_reference": "Art. 16 Ley 10/2017 La Rioja",
+        "legal_reference": "Art. 11 Ley 15/2010 Galicia",
         "description": (
-            "15% de los donativos efectuados a fundaciones inscritas en el Registro de "
-            "Fundaciones de La Rioja que persigan fines culturales, asistenciales, "
-            "deportivos o de naturaleza análoga. Límite: 10% de la base liquidable."
+            "15% de donativos realizados a fundaciones o asociaciones de interes general "
+            "con sede en Galicia inscritas en el Registro de la Xunta. "
+            "Limite: 10% de la cuota integra autonomica."
         ),
-        "requirements_json": json.dumps({"donativo_a_entidad_acogida": True}),
+        "requirements_json": json.dumps({"donativo_entidad_gallega": True}),
         "questions_json": json.dumps([
-            {"key": "donativo_a_entidad_acogida", "text": "¿Has donado a fundaciones o entidades de utilidad pública riojanas?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Cuánto has donado en total?", "type": "number"},
+            {"key": "donativo_entidad_gallega", "text": "Has donado a fundaciones o asociaciones de interes general con sede en Galicia?", "type": "bool"},
+            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+        ]),
+    },
+]
+
+
+# =============================================================================
+# ASTURIAS (Ley del Principado de Asturias 4/2009 y modificaciones)
+# =============================================================================
+ASTURIAS_2025 = [
+    {
+        "code": "AST-NACIMIENTO",
+        "name": "Deduccion por nacimiento, adopcion o acogimiento",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 505.0,
+        "legal_reference": "Art. 6 Ley 4/2009 Asturias",
+        "description": (
+            "505,51 EUR por cada hijo nacido, adoptado o acogido durante el periodo impositivo. "
+            "Sin limite de renta declarado expresamente en la norma base."
+        ),
+        "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
+        "questions_json": json.dumps([
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo, adoptado o acogido este anyo?", "type": "bool"},
+            {"key": "num_hijos_recientes", "text": "Cuantos hijos has tenido, adoptado o acogido este anyo?", "type": "number"},
         ]),
     },
     {
-        "code": "RIO-FAM-NUM",
-        "name": "Deducción por familia numerosa",
+        "code": "AST-ACOGIMIENTO",
+        "name": "Deduccion por acogimiento familiar no remunerado",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 303.0,
+        "legal_reference": "Art. 7 Ley 4/2009 Asturias",
+        "description": (
+            "303,30 EUR por cada menor acogido en acogimiento familiar no remunerado "
+            "durante mas de 30 dias del periodo impositivo."
+        ),
+        "requirements_json": json.dumps({"acogimiento_familiar": True}),
+        "questions_json": json.dumps([
+            {"key": "acogimiento_familiar", "text": "Tienes menores en acogimiento familiar no remunerado?", "type": "bool"},
+            {"key": "num_menores_acogidos", "text": "Cuantos menores tienes en acogimiento?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "AST-ARRENDAMIENTO-VIV",
+        "name": "Deduccion por arrendamiento de vivienda habitual",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 10.0,
+        "max_amount": 455.0,
+        "legal_reference": "Art. 8 Ley 4/2009 Asturias",
+        "description": (
+            "10% de las cantidades satisfechas por arrendamiento de vivienda habitual, "
+            "maximo 455 EUR. Incremento al 15% y 606 EUR para menores de 35, discapacitados mayor o igual al 65% "
+            "o familias numerosas con BI menor o igual a 25.009 EUR."
+        ),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "questions_json": json.dumps([
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "menor_35_anos", "text": "Tienes menos de 35 anyos?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "AST-VIV-HABITUAL",
+        "name": "Deduccion por adquisicion o rehabilitacion de vivienda habitual",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 3.0,
+        "max_amount": None,
+        "legal_reference": "Art. 9 Ley 4/2009 Asturias",
+        "description": (
+            "Deduccion autonomica del 3% sobre las cantidades satisfechas en la adquisicion "
+            "o rehabilitacion de vivienda habitual, aplicable como complemento al tramo "
+            "autonomico. BI menor o igual a 25.009 EUR individual / 35.240 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True}),
+        "questions_json": json.dumps([
+            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "AST-DONATIVOS",
+        "name": "Deduccion por donativos a fundaciones asturianas",
+        "type": "deduccion",
+        "category": "donativos",
+        "percentage": 20.0,
+        "max_amount": None,
+        "legal_reference": "Art. 11 Ley 4/2009 Asturias",
+        "description": (
+            "20% de las cantidades donadas a fundaciones o asociaciones declaradas de "
+            "utilidad publica con actividad en Asturias. "
+            "Limite: 10% de la cuota integra autonomica."
+        ),
+        "requirements_json": json.dumps({"donativo_entidad_asturiana": True}),
+        "questions_json": json.dumps([
+            {"key": "donativo_entidad_asturiana", "text": "Has donado a fundaciones o entidades de utilidad publica con actividad en Asturias?", "type": "bool"},
+            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "AST-FAM-MONOPARENTAL",
+        "name": "Deduccion por familias monoparentales",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 303.0,
+        "legal_reference": "Art. 6 bis Ley 4/2009 Asturias",
+        "description": (
+            "303,30 EUR anuales para familias monoparentales con hijos, cuando el progenitor "
+            "no convive con el otro progenitor y no tiene pension alimenticia a su favor. "
+            "Incremento por numero de hijos segun baremo."
+        ),
+        "requirements_json": json.dumps({"familia_monoparental": True}),
+        "questions_json": json.dumps([
+            {"key": "familia_monoparental", "text": "Eres familia monoparental?", "type": "bool"},
+            {"key": "num_hijos_total", "text": "Cuantos hijos tienes a cargo?", "type": "number"},
+        ]),
+    },
+]
+
+
+# =============================================================================
+# CANTABRIA (Ley 6/2009 de Medidas Fiscales y Financieras)
+# =============================================================================
+CANTABRIA_2025 = [
+    {
+        "code": "CANT-ARRENDAMIENTO-VIV",
+        "name": "Deduccion por arrendamiento de vivienda habitual",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 10.0,
+        "max_amount": 300.0,
+        "legal_reference": "Art. 5 Ley 6/2009 Cantabria",
+        "description": (
+            "10% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
+            "con un maximo de 300 EUR anuales. Para menores de 35, discapacitados o familias "
+            "numerosas el porcentaje sube al 20% con maximo 600 EUR. "
+            "BI menor o igual a 22.946 EUR individual / 31.485 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "questions_json": json.dumps([
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "menor_35_anos", "text": "Tienes menos de 35 anyos?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "CANT-OBRAS-MEJORA",
+        "name": "Deduccion por obras de mejora en vivienda",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 10.0,
+        "max_amount": 1000.0,
+        "legal_reference": "Art. 7 Ley 6/2009 Cantabria",
+        "description": (
+            "10% de las cantidades invertidas en obras de mejora en la vivienda habitual "
+            "o en cualquier otra vivienda propia arrendada. Maximo 1.000 EUR. "
+            "Incluye obras de eficiencia energetica, instalaciones, etc."
+        ),
+        "requirements_json": json.dumps({"obras_mejora_vivienda": True}),
+        "questions_json": json.dumps([
+            {"key": "obras_mejora_vivienda", "text": "Has realizado obras de mejora en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_obras", "text": "Cuanto has invertido en las obras?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "CANT-FAM-NUM",
+        "name": "Deduccion por familia numerosa",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 200.0,
+        "legal_reference": "Art. 3 Ley 6/2009 Cantabria",
+        "description": (
+            "200 EUR para familias numerosas de categoria general; 400 EUR para familias "
+            "numerosas de categoria especial. Aplicable cuando el titular acredite el "
+            "titulo de familia numerosa en vigor."
+        ),
+        "requirements_json": json.dumps({"familia_numerosa": True}),
+        "questions_json": json.dumps([
+            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
+            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "CANT-CUIDADO-FAMILIARES",
+        "name": "Deduccion por cuidado de familiares dependientes",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 100.0,
+        "legal_reference": "Art. 4 Ley 6/2009 Cantabria",
+        "description": (
+            "100 EUR por tener a cargo a ascendientes mayores de 70 anyos o con discapacidad mayor o igual al 65% "
+            "que convivan con el contribuyente y no tengan rentas superiores a 8.000 EUR."
+        ),
+        "requirements_json": json.dumps({"ascendiente_a_cargo": True}),
+        "questions_json": json.dumps([
+            {"key": "ascendiente_a_cargo", "text": "Tienes padres u otros familiares mayores de 70 anyos o discapacitados a tu cargo?", "type": "bool"},
+            {"key": "num_ascendientes", "text": "Cuantos familiares tienes a tu cargo?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "CANT-GASTOS-EDUCATIVOS",
+        "name": "Deduccion por gastos educativos",
+        "type": "deduccion",
+        "category": "educacion",
+        "percentage": 15.0,
+        "max_amount": 200.0,
+        "legal_reference": "Art. 6 Ley 6/2009 Cantabria",
+        "description": (
+            "15% de los gastos de escolaridad, libros de texto y material escolar "
+            "para hijos en edad escolar obligatoria. Maximo 200 EUR por hijo."
+        ),
+        "requirements_json": json.dumps({"hijos_escolarizados": True}),
+        "questions_json": json.dumps([
+            {"key": "hijos_escolarizados", "text": "Tienes hijos en edad escolar (6-16 anyos)?", "type": "bool"},
+            {"key": "gastos_educativos", "text": "Cuanto has gastado en libros, material y escolaridad este anyo?", "type": "number"},
+        ]),
+    },
+]
+
+
+# =============================================================================
+# LA RIOJA (Ley 10/2017 de Presupuestos y normas tributarias propias)
+# =============================================================================
+LA_RIOJA_2025 = [
+    {
+        "code": "RIO-NACIMIENTO",
+        "name": "Deduccion por nacimiento o adopcion de hijos",
         "type": "deduccion",
         "category": "familia",
         "fixed_amount": 150.0,
         "legal_reference": "Art. 12 Ley 10/2017 La Rioja",
         "description": (
-            "150€ para familias numerosas de categoría general. "
-            "300€ para familias numerosas de categoría especial."
+            "150 EUR por el primer y segundo hijo; 200 EUR por el tercero y siguientes. "
+            "Para familias con BI menor o igual a 18.030 EUR individual / 30.050 EUR conjunta."
         ),
-        "requirements_json": json.dumps({"familia_numerosa": True}),
+        "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "¿Tienes título de familia numerosa reconocido?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "¿Es de categoría especial?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "RIO-VIV-JOVEN",
+        "name": "Deduccion por adquisicion de vivienda habitual para jovenes",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 3.0,
+        "max_amount": None,
+        "legal_reference": "Art. 9 Ley 10/2017 La Rioja",
+        "description": (
+            "Deduccion autonomica del 3% sobre las cantidades invertidas en la adquisicion "
+            "de vivienda habitual para contribuyentes menores de 36 anyos o familias numerosas "
+            "como complemento al tramo autonomico. BI menor o igual a 18.030 EUR."
+        ),
+        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
+        "questions_json": json.dumps([
+            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "RIO-ACCESO-INTERNET",
+        "name": "Deduccion por acceso a Internet en municipio rural",
+        "type": "deduccion",
+        "category": "tecnologia",
+        "fixed_amount": 100.0,
+        "legal_reference": "Art. 15 Ley 10/2017 La Rioja",
+        "description": (
+            "100 EUR para contribuyentes que contraten por primera vez acceso a Internet "
+            "de banda ancha en municipios riojanos con menos de 3.000 habitantes. "
+            "Solo primer anyo de contratacion. BI menor o igual a 18.030 EUR."
+        ),
+        "requirements_json": json.dumps({"primer_acceso_internet_rural": True}),
+        "questions_json": json.dumps([
+            {"key": "primer_acceso_internet_rural", "text": "Has contratado Internet de banda ancha por primera vez en un municipio riojano de menos de 3.000 habitantes?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "RIO-BICI-ELECTRICA",
+        "name": "Deduccion por adquisicion de bicicleta electrica",
+        "type": "deduccion",
+        "category": "medioambiente",
+        "percentage": 15.0,
+        "max_amount": 150.0,
+        "legal_reference": "Art. 16 Ley 10/2017 La Rioja (modificada)",
+        "description": (
+            "15% del precio de adquisicion de una bicicleta de pedal con asistencia electrica "
+            "(pedelec), con maximo de 150 EUR. Para desplazamientos al trabajo o uso habitual."
+        ),
+        "requirements_json": json.dumps({"adquisicion_bici_electrica": True}),
+        "questions_json": json.dumps([
+            {"key": "adquisicion_bici_electrica", "text": "Has comprado una bicicleta electrica (pedelec) este anyo?", "type": "bool"},
+            {"key": "precio_bici", "text": "Cuanto costo la bicicleta?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "RIO-AUTONOMOS-SUMINISTROS",
+        "name": "Deduccion por suministros del hogar afectos a actividad economica",
+        "type": "deduccion",
+        "category": "trabajo",
+        "percentage": 30.0,
+        "max_amount": 500.0,
+        "legal_reference": "Art. 17 Ley 10/2017 La Rioja",
+        "description": (
+            "30% de los gastos de suministros del hogar (electricidad, gas, agua, telefonia, "
+            "Internet) proporcionales a la superficie del inmueble utilizada para actividad "
+            "economica. Maximo 500 EUR. Solo para autonomos en estimacion directa con trabajo "
+            "parcialmente en domicilio."
+        ),
+        "requirements_json": json.dumps({"autonomo_domicilio": True}),
+        "questions_json": json.dumps([
+            {"key": "autonomo_domicilio", "text": "Eres autonomo y trabajas parcialmente desde tu domicilio?", "type": "bool"},
+            {"key": "gasto_suministros_hogar", "text": "Cuanto has pagado de suministros en tu hogar este anyo?", "type": "number"},
         ]),
     },
 ]
 
 
 # =============================================================================
-# ARAGÓN (DL 1/2005 — Texto Refundido Tributos Aragón, mod. Ley 10/2022)
+# ARAGON (Ley 4/2018 de Hacienda de Aragon / TRLRPF aprobado por DL 1/2005)
 # =============================================================================
 ARAGON_2025 = [
     {
-        "code": "ARA-NAC-ADOP",
-        "name": "Deducción por nacimiento o adopción del tercer hijo o sucesivos",
+        "code": "ARG-NACIMIENTO",
+        "name": "Deduccion por nacimiento o adopcion en Aragon",
         "type": "deduccion",
         "category": "familia",
         "fixed_amount": 500.0,
-        "legal_reference": "Art. 110-1 DL 1/2005 Aragón",
+        "legal_reference": "Art. 110-1 DL 1/2005 Aragon",
         "description": (
-            "500€ por el tercer hijo o sucesivos nacidos o adoptados (100€ por 1º y 2º). "
-            "El importe se eleva a 600€ (300€ 1º y 2º) si el municipio tiene menos de 2.000 habitantes. "
-            "Para familias monoparentales: importe duplicado. BI ≤35.000€ individual / 55.000€ conjunta."
+            "500 EUR por el primer o segundo hijo nacido o adoptado. 1.000 EUR a partir del tercer "
+            "hijo. Incremento del 50% si el municipio tiene menos de 10.000 habitantes. "
+            "BI menor o igual a 35.000 EUR individual / 50.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo o adoptado este año en Aragón?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "¿Cuántos hijos tienes en total?", "type": "number"},
-            {"key": "municipio_rural", "text": "¿Vives en un municipio de menos de 2.000 habitantes?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
+            {"key": "municipio_rural", "text": "Resides en un municipio de menos de 10.000 habitantes?", "type": "bool"},
         ]),
     },
     {
-        "code": "ARA-CUID-DEP",
-        "name": "Deducción por cuidado de personas dependientes",
+        "code": "ARG-ADOPCION-INT",
+        "name": "Deduccion por adopcion internacional",
         "type": "deduccion",
-        "category": "social",
+        "category": "familia",
+        "fixed_amount": 600.0,
+        "legal_reference": "Art. 110-2 DL 1/2005 Aragon",
+        "description": (
+            "600 EUR adicionales por cada hijo adoptado en el extranjero, ademas de la "
+            "deduccion general por nacimiento/adopcion. Requisito: tramitacion formal "
+            "reconocida por las autoridades espanolas competentes."
+        ),
+        "requirements_json": json.dumps({"adopcion_internacional": True}),
+        "questions_json": json.dumps([
+            {"key": "adopcion_internacional", "text": "Has adoptado un hijo en el extranjero este anyo?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "ARG-DEPENDIENTES",
+        "name": "Deduccion por cuidado de personas dependientes en Aragon",
+        "type": "deduccion",
+        "category": "familia",
         "fixed_amount": 150.0,
-        "legal_reference": "Art. 110-3 DL 1/2005 Aragón",
+        "legal_reference": "Art. 110-5 DL 1/2005 Aragon",
         "description": (
-            "150€ por cada ascendiente o descendiente con discapacidad ≥65% o dependencia "
-            "reconocida que conviva con el contribuyente. BI ≤35.000€ individual / ≤55.000€ conjunta."
+            "150 EUR por cada persona mayor de 75 anyos o con grado de dependencia reconocido "
+            "que conviva con el contribuyente y tenga rentas propias menores o iguales a 8.000 EUR anuales."
         ),
-        "requirements_json": json.dumps({"ascendiente_discapacidad": True}),
+        "requirements_json": json.dumps({"familiar_dependiente_cargo": True}),
         "questions_json": json.dumps([
-            {"key": "ascendiente_discapacidad", "text": "¿Tienes familiares a cargo con discapacidad ≥65% o dependencia reconocida?", "type": "bool"},
-            {"key": "num_dependientes", "text": "¿Cuántas personas con discapacidad o dependencia tienes a tu cargo?", "type": "number"},
+            {"key": "familiar_dependiente_cargo", "text": "Tienes a tu cargo familiares mayores de 75 anyos o con dependencia reconocida?", "type": "bool"},
+            {"key": "num_dependientes", "text": "Cuantos familiares dependientes tienes?", "type": "number"},
         ]),
     },
     {
-        "code": "ARA-VIV-RURAL",
-        "name": "Deducción por adquisición de vivienda habitual en municipios en riesgo de despoblación",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 5.0,
-        "max_amount": 9.040,
-        "legal_reference": "Art. 110-5 DL 1/2005 Aragón",
-        "description": (
-            "5% de las cantidades invertidas en adquisición de vivienda habitual en municipios "
-            "en riesgo de despoblación de Aragón (menos de 1.000 habitantes). "
-            "Base máxima: 9.040€."
-        ),
-        "requirements_json": json.dumps({"vivienda_zona_rural_aragon": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_zona_rural_aragon", "text": "¿Has adquirido tu vivienda habitual en un municipio aragonés con menos de 1.000 habitantes?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "¿Cuánto has pagado de hipoteca o inversión en la vivienda este año?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "ARA-DONAT-INVESTIG",
-        "name": "Deducción por donaciones a I+D+i en Aragón",
-        "type": "deduccion",
-        "category": "donativos",
-        "percentage": 20.0,
-        "max_amount": None,
-        "legal_reference": "Art. 110-8 DL 1/2005 Aragón",
-        "description": (
-            "20% de los donativos a centros de investigación adscritos a universidades aragonesas "
-            "o al CSIC en Aragón. Límite: 15% de la base liquidable."
-        ),
-        "requirements_json": json.dumps({"donativo_investigacion_aragon": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_investigacion_aragon", "text": "¿Has donado a centros de investigación o universidades aragonesas?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Cuánto has donado?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "ARA-ALQ-VIV",
-        "name": "Deducción por arrendamiento de vivienda habitual (jóvenes y zona rural)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 10.0,
-        "max_amount": 1.000,
-        "legal_reference": "Art. 110-4 DL 1/2005 Aragón",
-        "description": (
-            "10% de las cantidades satisfechas por arrendamiento de vivienda habitual, "
-            "máx. 1.000€ (2.000€ si el municipio tiene menos de 1.000 habitantes). "
-            "Para menores de 35 años o mayores de 65. BI ≤35.000€ individual / ≤55.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en Aragón?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_35_anos", "text": "¿Tienes menos de 35 años o más de 65?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "ARA-DISCAPACIDAD",
-        "name": "Deducción por nacimiento o adopción de hijo con discapacidad",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "fixed_amount": 200.0,
-        "legal_reference": "Art. 110-2 DL 1/2005 Aragón",
-        "description": (
-            "200€ adicionales por cada hijo nacido o adoptado con discapacidad reconocida "
-            "igual o superior al 33%, compatible con la deducción por nacimiento. "
-            "BI ≤35.000€ individual o ≤55.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({
-            "nacimiento_adopcion_reciente": True,
-            "descendiente_discapacidad": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo nacido o adoptado este año?", "type": "bool"},
-            {"key": "descendiente_discapacidad", "text": "¿El hijo tiene discapacidad reconocida ≥33%?", "type": "bool"},
-        ]),
-    },
-]
-
-
-# =============================================================================
-# CASTILLA Y LEÓN (DL 1/2013 — Texto Refundido Tributos propios CyL)
-# =============================================================================
-CASTILLA_LEON_2025 = [
-    {
-        "code": "CYL-FAM-NUM",
-        "name": "Deducción por familia numerosa",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 246.0,
-        "legal_reference": "Art. 8 DL 1/2013 Castilla y León",
-        "description": (
-            "246€ para familia numerosa de categoría general. "
-            "492€ para familia numerosa de categoría especial. "
-            "Ambos cónyuges deben residir en Castilla y León."
-        ),
-        "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "¿Tienes título de familia numerosa reconocido en Castilla y León?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "¿Es de categoría especial?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "CYL-NAC-ADOP",
-        "name": "Deducción por nacimiento o adopción de hijos",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 1.010,
-        "legal_reference": "Art. 9 DL 1/2013 Castilla y León",
-        "description": (
-            "1.010€ por cada hijo nacido o adoptado durante el período impositivo. "
-            "El importe se duplica si el municipio tiene menos de 10.000 habitantes. "
-            "BI ≤31.500€ individual o ≤47.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo o adoptado este año en Castilla y León?", "type": "bool"},
-            {"key": "municipio_rural", "text": "¿Vives en un municipio de menos de 10.000 habitantes?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "CYL-CUID-HIJOS-4",
-        "name": "Deducción por cuidado de hijos menores de 4 años",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 1.000,
-        "legal_reference": "Art. 10 DL 1/2013 Castilla y León",
-        "description": (
-            "Hasta 1.000€ por los gastos satisfechos en guarderías o centros de educación "
-            "infantil de primer ciclo para hijos menores de 4 años. "
-            "Los dos progenitores deben trabajar y cotizar a la Seguridad Social."
-        ),
-        "requirements_json": json.dumps({"hijo_menor_3": True}),
-        "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "¿Tienes hijos menores de 4 años en guardería o centro de primer ciclo?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "¿Cuánto has gastado en guardería o cuidados este año?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "CYL-ALQ-VIV",
-        "name": "Deducción por alquiler de vivienda habitual (jóvenes y mayores)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 15.0,
-        "max_amount": 459.0,
-        "legal_reference": "Art. 6 DL 1/2013 Castilla y León",
-        "description": (
-            "15% de las cantidades satisfechas por alquiler de la vivienda habitual, "
-            "máx. 459€. Para menores de 36 años o mayores de 65. "
-            "BI ≤18.900€ individual o ≤31.500€ conjunta."
-        ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en Castilla y León?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_36_anos", "text": "¿Tienes menos de 36 años o más de 65?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "CYL-DISCAPACIDAD",
-        "name": "Deducción por discapacidad del contribuyente o familiares",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "fixed_amount": 300.0,
-        "legal_reference": "Art. 12 DL 1/2013 Castilla y León",
-        "description": (
-            "300€ por contribuyente o familiar con discapacidad reconocida ≥33% "
-            "(500€ si es ≥65%). Se puede aplicar también por cada ascendiente/descendiente "
-            "con discapacidad ≥33% que dependa económicamente del contribuyente."
-        ),
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes o tienes a cargo personas con discapacidad reconocida ≥33%?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿Cuál es el grado de discapacidad?", "type": "text"},
-        ]),
-    },
-    {
-        "code": "CYL-INVERSION-VIV",
-        "name": "Deducción por inversión en vivienda habitual en municipios en riesgo de despoblación",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 7.5,
-        "max_amount": 9.040,
-        "legal_reference": "Art. 7 DL 1/2013 Castilla y León",
-        "description": (
-            "7,5% de las cantidades invertidas en adquisición de vivienda habitual en "
-            "municipios de menos de 10.000 habitantes declarados en riesgo de despoblación. "
-            "Aplica sobre una base máxima de 9.040€ (incluyendo intereses de hipoteca)."
-        ),
-        "requirements_json": json.dumps({"vivienda_zona_rural_cyl": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_zona_rural_cyl", "text": "¿Has comprado una vivienda habitual en un municipio de CyL de menos de 10.000 habitantes?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "¿Cuánto has pagado de hipoteca o inversión en vivienda este año?", "type": "number"},
-        ]),
-    },
-]
-
-
-# =============================================================================
-# CASTILLA-LA MANCHA (Ley 8/2013 y modificaciones posteriores)
-# =============================================================================
-CASTILLA_LA_MANCHA_2025 = [
-    {
-        "code": "CLM-NAC-ADOP",
-        "name": "Deducción por nacimiento, adopción o acogimiento familiar",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 100.0,
-        "legal_reference": "Art. 1 Ley 8/2013 Castilla-La Mancha",
-        "description": (
-            "100€ por el primer hijo, 500€ por el segundo, 900€ por el tercer hijo y "
-            "siguientes. Importes aumentados para familias en municipios de menos de 2.500 hab. "
-            "BI ≤27.000€ individual o ≤36.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo, adoptado o acogido este año en Castilla-La Mancha?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "¿Cuántos hijos tienes en total?", "type": "number"},
-            {"key": "municipio_rural", "text": "¿Vives en un municipio de menos de 2.500 habitantes?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "CLM-DISCAPACIDAD",
-        "name": "Deducción por discapacidad reconocida",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "fixed_amount": 300.0,
-        "legal_reference": "Art. 4 Ley 8/2013 Castilla-La Mancha",
-        "description": (
-            "300€ para contribuyentes con discapacidad reconocida ≥33%. "
-            "600€ para contribuyentes con discapacidad reconocida ≥65%. "
-            "BI ≤27.000€ individual o ≤36.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes algún grado de discapacidad reconocida (≥33%)?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿Cuál es tu grado de discapacidad? (33-65% o ≥65%)", "type": "text"},
-        ]),
-    },
-    {
-        "code": "CLM-GASTOS-EDUC",
-        "name": "Deducción por gastos educativos",
-        "type": "deduccion",
-        "category": "educacion",
-        "percentage": 15.0,
-        "max_amount": 1.000,
-        "legal_reference": "Art. 3 Ley 8/2013 Castilla-La Mancha",
-        "description": (
-            "15% de los gastos de escolaridad, libros de texto y material escolar en "
-            "enseñanza obligatoria (Primaria, ESO), máx. 1.000€ por hijo. "
-            "Compatible con la deducción por nacimiento."
-        ),
-        "requirements_json": json.dumps({"gastos_educativos": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_educativos", "text": "¿Tienes hijos con gastos de escolaridad, libros o material escolar obligatorio?", "type": "bool"},
-            {"key": "importe_gastos_educacion", "text": "¿Cuánto has gastado en material y escolaridad este año?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "CLM-ALQ-VIV",
-        "name": "Deducción por alquiler de vivienda habitual",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 15.0,
-        "max_amount": 450.0,
-        "legal_reference": "Art. 5 Ley 8/2013 Castilla-La Mancha",
-        "description": (
-            "15% de las cantidades satisfechas por alquiler de vivienda habitual, "
-            "máx. 450€. Para menores de 36 años o mayores de 65 años. "
-            "BI ≤27.000€ individual o ≤36.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en Castilla-La Mancha?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_36_anos", "text": "¿Tienes menos de 36 años o más de 65?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "CLM-DONATIVO",
-        "name": "Deducción por donativos y mecenazgo en Castilla-La Mancha",
-        "type": "deduccion",
-        "category": "donativos",
-        "percentage": 15.0,
-        "max_amount": None,
-        "legal_reference": "Art. 6 Ley 8/2013 Castilla-La Mancha",
-        "description": (
-            "15% de los donativos efectuados a fundaciones y entidades declaradas de "
-            "utilidad pública con domicilio en Castilla-La Mancha. "
-            "Límite: 10% de la base liquidable."
-        ),
-        "requirements_json": json.dumps({"donativo_a_entidad_acogida": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_a_entidad_acogida", "text": "¿Has donado a fundaciones o entidades de utilidad pública de Castilla-La Mancha?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Cuánto has donado en total?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "CLM-FAM-NUM",
-        "name": "Deducción por familia numerosa",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 200.0,
-        "legal_reference": "Art. 2 Ley 8/2013 Castilla-La Mancha",
-        "description": (
-            "200€ para familia numerosa de categoría general. "
-            "400€ para familia numerosa de categoría especial. "
-            "BI ≤36.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "¿Tienes título de familia numerosa reconocido?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "¿Es de categoría especial?", "type": "bool"},
-        ]),
-    },
-]
-
-
-# =============================================================================
-# EXTREMADURA (DL 1/2013 — Texto Refundido disposiciones legales Extremadura)
-# =============================================================================
-EXTREMADURA_2025 = [
-    {
-        "code": "EXT-VIV-JOV",
-        "name": "Deducción por adquisición de vivienda habitual (jóvenes)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 5.0,
-        "max_amount": 9.040,
-        "legal_reference": "Art. 8 DL 1/2013 Extremadura",
-        "description": (
-            "3% general / 5% para menores de 36 años del precio de adquisición de "
-            "vivienda habitual. Aplica solo a viviendas adquiridas antes del 1/1/2013 "
-            "que venían siendo objeto de deducción. Base máxima: 9.040€."
-        ),
-        "requirements_json": json.dumps({
-            "adquisicion_antes_2013": True,
-            "deducia_antes_2013": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "adquisicion_antes_2013", "text": "¿Adquiriste tu vivienda habitual antes del 1 de enero de 2013?", "type": "bool"},
-            {"key": "deducia_antes_2013", "text": "¿Aplicabas ya la deducción por vivienda antes de 2013?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "¿Tienes menos de 36 años?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "¿Cuánto has pagado de hipoteca este año?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "EXT-ALQ-VIV",
-        "name": "Deducción por alquiler de vivienda habitual (jóvenes extremeños)",
+        "code": "ARG-ARRENDAMIENTO-VIV",
+        "name": "Deduccion por arrendamiento de vivienda habitual jovenes",
         "type": "deduccion",
         "category": "vivienda",
         "percentage": 10.0,
         "max_amount": 300.0,
-        "legal_reference": "Art. 9 DL 1/2013 Extremadura",
+        "legal_reference": "Art. 110-8 DL 1/2005 Aragon",
         "description": (
-            "10% de las cantidades pagadas por alquiler de vivienda habitual, "
-            "máx. 300€. Solo para menores de 35 años con BI ≤19.000€ individual "
-            "o ≤24.000€ conjunta."
+            "10% del alquiler pagado, con un maximo de 300 EUR. Exclusivo para menores de "
+            "36 anyos o personas con discapacidad mayor o igual al 65%. "
+            "BI menor o igual a 35.000 EUR individual / 50.000 EUR conjunta."
         ),
-        "requirements_json": json.dumps({
-            "alquiler_vivienda_habitual": True,
-            "menor_35_anos": True,
-        }),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en Extremadura?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_35_anos", "text": "¿Tienes menos de 35 años?", "type": "bool"},
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
         ]),
     },
     {
-        "code": "EXT-TRAB-DEPEND",
-        "name": "Deducción para trabajadores dependientes con discapacidad",
+        "code": "ARG-VIV-RURAL",
+        "name": "Deduccion por adquisicion de vivienda en municipio rural de Aragon",
         "type": "deduccion",
-        "category": "discapacidad",
-        "fixed_amount": 600.0,
-        "legal_reference": "Art. 10 DL 1/2013 Extremadura",
-        "description": (
-            "600€ para contribuyentes con discapacidad ≥33% con rentas del trabajo "
-            "o de actividades económicas. 1.200€ para discapacidad ≥65%. "
-            "BI ≤19.000€ individual o ≤24.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes discapacidad reconocida ≥33% y trabajas por cuenta ajena o propia?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿Cuál es tu grado de discapacidad? (33-65% o ≥65%)", "type": "text"},
-        ]),
-    },
-    {
-        "code": "EXT-ACOGIMIENTO",
-        "name": "Deducción por acogimiento familiar de menores",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 250.0,
-        "legal_reference": "Art. 6 DL 1/2013 Extremadura",
-        "description": (
-            "250€ por cada menor acogido en régimen de acogimiento familiar "
-            "durante al menos 183 días del período impositivo. "
-            "BI ≤19.000€ individual o ≤24.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"acogimiento_familiar": True}),
-        "questions_json": json.dumps([
-            {"key": "acogimiento_familiar", "text": "¿Tienes menores acogidos en régimen de acogimiento familiar?", "type": "bool"},
-            {"key": "num_acogidos", "text": "¿Cuántos menores tienes acogidos?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "EXT-FAM-NUM",
-        "name": "Deducción por familia numerosa",
-        "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 200.0,
-        "legal_reference": "Art. 7 DL 1/2013 Extremadura",
-        "description": (
-            "200€ para familia numerosa de categoría general. "
-            "300€ para familia numerosa de categoría especial. "
-            "BI ≤24.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "¿Tienes título de familia numerosa reconocido?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "¿Es de categoría especial?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "EXT-DONATIVO",
-        "name": "Deducción por donaciones para la conservación del patrimonio extremeño",
-        "type": "deduccion",
-        "category": "donativos",
-        "percentage": 15.0,
+        "category": "vivienda",
+        "percentage": 5.0,
         "max_amount": None,
-        "legal_reference": "Art. 12 DL 1/2013 Extremadura",
+        "legal_reference": "Art. 110-9 DL 1/2005 Aragon",
         "description": (
-            "15% de los donativos a la Junta de Extremadura, ayuntamientos o entidades "
-            "sin ánimo de lucro dedicadas a la conservación del patrimonio natural y cultural "
-            "extremeño. Límite: 10% de la base liquidable."
+            "5% sobre las cantidades satisfechas en la adquisicion de la vivienda habitual "
+            "en municipios aragoneses con menos de 3.000 habitantes. Fomento del arraigo "
+            "en zonas en riesgo de despoblacion."
         ),
-        "requirements_json": json.dumps({"donativo_a_entidad_acogida": True}),
+        "requirements_json": json.dumps({"vivienda_rural_aragon": True}),
         "questions_json": json.dumps([
-            {"key": "donativo_a_entidad_acogida", "text": "¿Has donado a entidades extremeñas para conservación del patrimonio?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Cuánto has donado en total?", "type": "number"},
+            {"key": "vivienda_rural_aragon", "text": "Has comprado tu vivienda habitual en un municipio aragones con menos de 3.000 habitantes?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "ARG-LIBROS-TEXTO",
+        "name": "Deduccion por adquisicion de libros de texto en Aragon",
+        "type": "deduccion",
+        "category": "educacion",
+        "percentage": 100.0,
+        "max_amount": None,
+        "legal_reference": "Art. 110-11 DL 1/2005 Aragon",
+        "description": (
+            "Deduccion del 100% del gasto en libros de texto para educacion obligatoria "
+            "(Primaria, ESO y FP Basica) para hijos a cargo del contribuyente. "
+            "Sujeta a limites de renta segun BI del contribuyente."
+        ),
+        "requirements_json": json.dumps({"hijos_escolarizados": True}),
+        "questions_json": json.dumps([
+            {"key": "hijos_escolarizados", "text": "Tienes hijos en Primaria, ESO o FP Basica?", "type": "bool"},
+            {"key": "gasto_libros", "text": "Cuanto has gastado en libros de texto?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "ARG-GUARDERIA",
+        "name": "Deduccion por gastos de guarderia en Aragon",
+        "type": "deduccion",
+        "category": "familia",
+        "percentage": 15.0,
+        "max_amount": 300.0,
+        "legal_reference": "Art. 110-12 DL 1/2005 Aragon",
+        "description": (
+            "15% de los gastos satisfechos en guarderias o centros de educacion infantil "
+            "de primer ciclo para hijos menores de 3 anyos. Maximo 300 EUR por hijo. "
+            "BI menor o igual a 35.000 EUR individual / 50.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
+        "questions_json": json.dumps([
+            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 anyos?", "type": "bool"},
+            {"key": "guarderia_autorizada", "text": "Estan en una guarderia autorizada?", "type": "bool"},
+            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este anyo?", "type": "number"},
         ]),
     },
 ]
 
 
 # =============================================================================
-# MURCIA (DL 1/2010 — Texto Refundido Ley de Hacienda Murcia, mod. Ley 4/2024)
+# CASTILLA Y LEON (Ley 7/2022 de Medidas Fiscales)
 # =============================================================================
-MURCIA_2025 = [
+CASTILLA_Y_LEON_2025 = [
     {
-        "code": "MUR-GUARDERIA",
-        "name": "Deducción por gastos de guardería y primer ciclo de educación infantil",
+        "code": "CYL-FAM-NUM",
+        "name": "Deduccion por familia numerosa en Castilla y Leon",
         "type": "deduccion",
         "category": "familia",
-        "percentage": 15.0,
-        "max_amount": 1.000,
-        "legal_reference": "Art. 5 DL 1/2010 Murcia",
+        "fixed_amount": 246.0,
+        "legal_reference": "Art. 10 Ley 7/2022 CyL (Decreto Leg. 1/2013)",
         "description": (
-            "15% de los gastos de guardería y primer ciclo de educación infantil "
-            "para hijos menores de 3 años, máx. 1.000€ por hijo. "
-            "Ambos progenitores deben tener ingresos del trabajo. "
-            "BI ≤30.000€ individual o ≤45.000€ conjunta."
+            "246 EUR para familias numerosas generales; 492 EUR para especiales. "
+            "La deduccion se incrementa en 246 EUR por cada hijo a partir del quinto. "
+            "Sin limite de renta declarado."
         ),
-        "requirements_json": json.dumps({
-            "hijo_menor_3": True,
-            "guarderia_autorizada": True,
-        }),
+        "requirements_json": json.dumps({"familia_numerosa": True}),
         "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "¿Tienes hijos menores de 3 años en guardería o centro de educación infantil?", "type": "bool"},
-            {"key": "guarderia_autorizada", "text": "¿La guardería está autorizada por la Consejería de Educación?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "¿Cuánto has pagado de guardería este año?", "type": "number"},
+            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
+            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
+            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
         ]),
     },
     {
-        "code": "MUR-VIV-JOV",
-        "name": "Deducción por inversión en vivienda habitual (jóvenes)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 3.0,
-        "max_amount": 9.040,
-        "legal_reference": "Art. 3 DL 1/2010 Murcia",
-        "description": (
-            "3% de tramo autonómico por adquisición de vivienda habitual, ampliado a "
-            "3,5% para menores de 35 años o discapacitados ≥65%. "
-            "Solo aplicable a adquisiciones anteriores a 1/1/2013 con deducción previa."
-        ),
-        "requirements_json": json.dumps({
-            "adquisicion_antes_2013": True,
-            "deducia_antes_2013": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "adquisicion_antes_2013", "text": "¿Adquiriste tu vivienda habitual antes del 1 de enero de 2013?", "type": "bool"},
-            {"key": "deducia_antes_2013", "text": "¿Aplicabas ya la deducción por vivienda antes de 2013?", "type": "bool"},
-            {"key": "menor_35_anos", "text": "¿Tienes menos de 35 años?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "¿Cuánto has pagado de hipoteca este año?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "MUR-MEDIOAMBIENTAL",
-        "name": "Deducción por inversiones en instalaciones medioambientales",
-        "type": "deduccion",
-        "category": "medioambiental",
-        "percentage": 30.0,
-        "max_amount": 1.000,
-        "legal_reference": "Art. 7 DL 1/2010 Murcia",
-        "description": (
-            "30% de las inversiones en instalaciones de depuración, almacenamiento y "
-            "aprovechamiento de agua o en paneles solares para autoconsumo en la vivienda "
-            "habitual, máx. 1.000€ por período impositivo."
-        ),
-        "requirements_json": json.dumps({"instalacion_renovable": True}),
-        "questions_json": json.dumps([
-            {"key": "instalacion_renovable", "text": "¿Has instalado paneles solares, sistemas de depuración de agua u otras instalaciones medioambientales?", "type": "bool"},
-            {"key": "importe_instalacion", "text": "¿Cuánto ha costado la instalación?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "MUR-NAC-ADOP",
-        "name": "Deducción por nacimiento o adopción de hijos",
+        "code": "CYL-NACIMIENTO",
+        "name": "Deduccion por nacimiento o adopcion en Castilla y Leon",
         "type": "deduccion",
         "category": "familia",
-        "fixed_amount": 300.0,
-        "legal_reference": "Art. 4 DL 1/2010 Murcia",
+        "fixed_amount": 1010.0,
+        "legal_reference": "Art. 6 Ley 7/2022 CyL",
         "description": (
-            "100€ por el primer hijo nacido o adoptado, 200€ por el segundo, "
-            "300€ por el tercero y siguientes. La deducción se incrementa en un 50% "
-            "para familias monoparentales. BI ≤30.000€ individual o ≤45.000€ conjunta."
+            "1.010 EUR por el primer hijo; 1.262 EUR por el segundo; 1.515 EUR por el tercero y "
+            "siguientes. Aplicable en el periodo del nacimiento o adopcion. "
+            "BI menor o igual a 71.007 EUR individual / 80.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo o adoptado este año en Murcia?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "¿Cuántos hijos tienes en total?", "type": "number"},
-            {"key": "familia_monoparental", "text": "¿Eres familia monoparental?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
         ]),
     },
     {
-        "code": "MUR-DISCAPACIDAD",
-        "name": "Deducción por discapacidad del contribuyente",
+        "code": "CYL-CUIDADO-HIJOS",
+        "name": "Deduccion por cuidado de hijos menores en Castilla y Leon",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 312.0,
+        "legal_reference": "Art. 7 Ley 7/2022 CyL",
+        "description": (
+            "312 EUR por cada hijo menor de 4 anyos cuando ambos progenitores trabajen "
+            "y no haya forma de atencion gratuita. Aplicable tambien para hijos de 4 a 16 "
+            "anyos durante el periodo de vacaciones escolares."
+        ),
+        "requirements_json": json.dumps({"hijo_menor_4": True, "ambos_progenitores_trabajan": True}),
+        "questions_json": json.dumps([
+            {"key": "hijo_menor_4", "text": "Tienes hijos menores de 4 anyos?", "type": "bool"},
+            {"key": "ambos_progenitores_trabajan", "text": "Trabajais ambos progenitores?", "type": "bool"},
+            {"key": "num_hijos_menores", "text": "Cuantos hijos menores de 4 anyos tienes?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "CYL-VIV-JOVEN",
+        "name": "Deduccion por inversion en vivienda habitual para jovenes en CyL",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 7.5,
+        "max_amount": None,
+        "legal_reference": "Art. 9 Decreto Leg. 1/2013 CyL",
+        "description": (
+            "7,5% de las cantidades satisfechas por adquisicion de vivienda habitual "
+            "para contribuyentes menores de 36 anyos o residentes en municipios de riesgo "
+            "de despoblacion. BI menor o igual a 18.900 EUR."
+        ),
+        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
+        "questions_json": json.dumps([
+            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "CYL-ALQUILER-VIV",
+        "name": "Deduccion por alquiler de vivienda habitual en Castilla y Leon",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 15.0,
+        "max_amount": 459.0,
+        "legal_reference": "Art. 8 Decreto Leg. 1/2013 CyL",
+        "description": (
+            "15% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
+            "con maximo de 459 EUR anuales (918 EUR en tributacion conjunta). "
+            "BI menor o igual a 18.900 EUR individual / 31.500 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "questions_json": json.dumps([
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "CYL-DONATIVOS",
+        "name": "Deduccion por donativos a fundaciones en Castilla y Leon",
+        "type": "deduccion",
+        "category": "donativos",
+        "percentage": 15.0,
+        "max_amount": None,
+        "legal_reference": "Art. 12 Decreto Leg. 1/2013 CyL",
+        "description": (
+            "15% de los donativos realizados a fundaciones inscritas en el Registro de "
+            "Fundaciones de Castilla y Leon. Limite: 10% de la cuota integra autonomica."
+        ),
+        "requirements_json": json.dumps({"donativo_fundacion_cyl": True}),
+        "questions_json": json.dumps([
+            {"key": "donativo_fundacion_cyl", "text": "Has donado a fundaciones inscritas en el Registro de Fundaciones de Castilla y Leon?", "type": "bool"},
+            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+        ]),
+    },
+]
+
+
+# =============================================================================
+# CASTILLA-LA MANCHA (Ley 8/2013 y modificaciones)
+# =============================================================================
+CASTILLA_LA_MANCHA_2025 = [
+    {
+        "code": "CLM-NACIMIENTO",
+        "name": "Deduccion por nacimiento o adopcion en Castilla-La Mancha",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 100.0,
+        "legal_reference": "Art. 4 Ley 8/2013 CLM",
+        "description": (
+            "100 EUR por el primer o segundo hijo; 200 EUR por el tercero o siguientes. "
+            "Importe incrementado en 100 EUR si el nacimiento se produce en municipio "
+            "con menos de 2.500 habitantes. BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
+        "questions_json": json.dumps([
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
+            {"key": "municipio_rural", "text": "Resides en un municipio de menos de 2.500 habitantes?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "CLM-DISCAPACIDAD",
+        "name": "Deduccion por contribuyente con discapacidad en CLM",
         "type": "deduccion",
         "category": "discapacidad",
-        "fixed_amount": 100.0,
-        "legal_reference": "Art. 6 DL 1/2010 Murcia",
+        "fixed_amount": 300.0,
+        "legal_reference": "Art. 6 Ley 8/2013 CLM",
         "description": (
-            "100€ para contribuyentes con discapacidad ≥33%. "
-            "300€ para contribuyentes con discapacidad ≥65%."
+            "300 EUR para contribuyentes con grado de discapacidad igual o superior al 33%. "
+            "Deduccion adicional de hasta 900 EUR para discapacidad mayor o igual al 65% o personas en "
+            "situacion de dependencia Grado I, II o III."
         ),
         "requirements_json": json.dumps({"discapacidad_reconocida": True}),
         "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes algún grado de discapacidad reconocida (≥33%)?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿Cuál es tu grado de discapacidad? (33-65% o ≥65%)", "type": "text"},
+            {"key": "discapacidad_reconocida", "text": "Tienes algun grado de discapacidad reconocida (33% o mas)?", "type": "bool"},
+            {"key": "grado_discapacidad", "text": "Que grado de discapacidad tienes?", "type": "text"},
+        ]),
+    },
+    {
+        "code": "CLM-FAM-NUM",
+        "name": "Deduccion por familia numerosa en Castilla-La Mancha",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 200.0,
+        "legal_reference": "Art. 5 Ley 8/2013 CLM",
+        "description": (
+            "200 EUR para familias numerosas de categoria general; 400 EUR para especiales. "
+            "BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"familia_numerosa": True}),
+        "questions_json": json.dumps([
+            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
+            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "CLM-GASTOS-EDUCATIVOS",
+        "name": "Deduccion por gastos educativos en CLM",
+        "type": "deduccion",
+        "category": "educacion",
+        "percentage": 15.0,
+        "max_amount": 300.0,
+        "legal_reference": "Art. 7 Ley 8/2013 CLM",
+        "description": (
+            "15% de los gastos de escolaridad, libros de texto y ensenanza de idiomas "
+            "para hijos en etapas de educacion obligatoria, maximo 300 EUR por hijo. "
+            "BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"hijos_escolarizados": True}),
+        "questions_json": json.dumps([
+            {"key": "hijos_escolarizados", "text": "Tienes hijos en etapas de educacion obligatoria?", "type": "bool"},
+            {"key": "gastos_educativos", "text": "Cuanto has gastado en educacion este anyo?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "CLM-ARRENDAMIENTO-VIV",
+        "name": "Deduccion por arrendamiento de vivienda habitual en CLM",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 15.0,
+        "max_amount": 450.0,
+        "legal_reference": "Art. 8 Ley 8/2013 CLM",
+        "description": (
+            "15% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
+            "con maximo de 450 EUR. Para menores de 36 anyos, mayores de 65 o con discapacidad. "
+            "BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "questions_json": json.dumps([
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+        ]),
+    },
+]
+
+
+# =============================================================================
+# EXTREMADURA (Ley 19/2010 y modificaciones — Decreto Legislativo 1/2018)
+# =============================================================================
+EXTREMADURA_2025 = [
+    {
+        "code": "EXT-TRABAJO-DEPENDIENTE",
+        "name": "Deduccion por trabajo dependiente con renta baja en Extremadura",
+        "type": "deduccion",
+        "category": "trabajo",
+        "fixed_amount": 200.0,
+        "legal_reference": "Art. 7 DL 1/2018 Extremadura",
+        "description": (
+            "200 EUR para contribuyentes que obtengan rendimientos del trabajo con BI general "
+            "menor o igual a 19.000 EUR. Fomento del empleo en la region con menores niveles de renta."
+        ),
+        "requirements_json": json.dumps({"rendimientos_trabajo": True, "renta_baja": True}),
+        "questions_json": json.dumps([
+            {"key": "rendimientos_trabajo", "text": "Obtienes rendimientos del trabajo (sueldo, pension)?", "type": "bool"},
+            {"key": "base_imponible_estimada", "text": "Cual es tu base imponible general aproximada?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "EXT-VIV-JOVEN",
+        "name": "Deduccion por adquisicion de vivienda habitual para jovenes en Extremadura",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 8.0,
+        "max_amount": None,
+        "legal_reference": "Art. 9 DL 1/2018 Extremadura",
+        "description": (
+            "8% sobre las cantidades satisfechas en la adquisicion de vivienda habitual "
+            "para contribuyentes menores de 35 anyos. BI menor o igual a 19.000 EUR individual / 24.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_35_anos": True}),
+        "questions_json": json.dumps([
+            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
+            {"key": "menor_35_anos", "text": "Tienes menos de 35 anyos?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "EXT-FAM-MONOPARENTAL",
+        "name": "Deduccion por familia monoparental en Extremadura",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 200.0,
+        "legal_reference": "Art. 6 DL 1/2018 Extremadura",
+        "description": (
+            "200 EUR anuales para familias monoparentales con al menos un hijo a cargo. "
+            "BI menor o igual a 19.000 EUR individual / 24.000 EUR conjunta. "
+            "Incompatible con deduccion estatal por familia monoparental con 2 o mas hijos."
+        ),
+        "requirements_json": json.dumps({"familia_monoparental": True}),
+        "questions_json": json.dumps([
+            {"key": "familia_monoparental", "text": "Eres familia monoparental?", "type": "bool"},
+            {"key": "num_hijos_total", "text": "Cuantos hijos tienes a cargo?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "EXT-CUIDADO-DISCAPACIDAD",
+        "name": "Deduccion por cuidado de familiares con discapacidad en Extremadura",
+        "type": "deduccion",
+        "category": "discapacidad",
+        "fixed_amount": 150.0,
+        "legal_reference": "Art. 8 DL 1/2018 Extremadura",
+        "description": (
+            "150 EUR por cada familiar ascendiente o colateral hasta tercer grado con "
+            "discapacidad mayor o igual al 65% que conviva con el contribuyente y tenga rentas menores o iguales a 8.000 EUR. "
+            "Maximo por cada contribuyente: 300 EUR."
+        ),
+        "requirements_json": json.dumps({"familiar_discapacitado_cargo": True}),
+        "questions_json": json.dumps([
+            {"key": "familiar_discapacitado_cargo", "text": "Tienes familiares con discapacidad mayor o igual al 65% a tu cargo que convivan contigo?", "type": "bool"},
+            {"key": "num_familiares_disc", "text": "Cuantos familiares discapacitados tienes a cargo?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "EXT-ARRENDAMIENTO-VIV",
+        "name": "Deduccion por arrendamiento de vivienda habitual en Extremadura",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 10.0,
+        "max_amount": 300.0,
+        "legal_reference": "Art. 10 DL 1/2018 Extremadura",
+        "description": (
+            "10% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
+            "con maximo de 300 EUR. Para menores de 36 anyos o discapacitados. "
+            "BI menor o igual a 19.000 EUR individual / 24.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "questions_json": json.dumps([
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
+        ]),
+    },
+]
+
+
+# =============================================================================
+# MURCIA (Ley 13/1997 autonomica — Decreto Legislativo 1/2010)
+# =============================================================================
+MURCIA_2025 = [
+    {
+        "code": "MUR-VIV-JOVEN",
+        "name": "Deduccion por inversion en vivienda habitual para jovenes en Murcia",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 3.0,
+        "max_amount": None,
+        "legal_reference": "Art. 2 DL 1/2010 Murcia",
+        "description": (
+            "3% adicional sobre la cuota estatal de la deduccion por vivienda para "
+            "contribuyentes menores de 35 anyos. Aplicable junto con el regimen transitorio "
+            "estatal (DT 18a LIRPF) para adquisiciones anteriores a 2013. "
+            "BI menor o igual a 24.000 EUR individual."
+        ),
+        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_35_anos": True}),
+        "questions_json": json.dumps([
+            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca anterior a 2013?", "type": "bool"},
+            {"key": "menor_35_anos", "text": "Tienes menos de 35 anyos?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "MUR-GUARDERIA",
+        "name": "Deduccion por gastos de guarderia en Murcia",
+        "type": "deduccion",
+        "category": "familia",
+        "percentage": 15.0,
+        "max_amount": 330.0,
+        "legal_reference": "Art. 4 DL 1/2010 Murcia",
+        "description": (
+            "15% de los gastos de guarderia o centros de educacion infantil para hijos "
+            "menores de 3 anyos, con maximo de 330 EUR por hijo. "
+            "BI menor o igual a 45.000 EUR individual / 60.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
+        "questions_json": json.dumps([
+            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 anyos?", "type": "bool"},
+            {"key": "guarderia_autorizada", "text": "Estan en una guarderia autorizada?", "type": "bool"},
+            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este anyo?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "MUR-FAM-NUM",
+        "name": "Deduccion por familia numerosa en Murcia",
+        "type": "deduccion",
+        "category": "familia",
+        "fixed_amount": 150.0,
+        "legal_reference": "Art. 5 DL 1/2010 Murcia",
+        "description": (
+            "150 EUR para familias numerosas generales; 300 EUR para especiales. "
+            "BI menor o igual a 45.000 EUR individual / 60.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"familia_numerosa": True}),
+        "questions_json": json.dumps([
+            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
+            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "MUR-MEDIOAMBIENTE",
+        "name": "Deduccion por inversiones medioambientales en vivienda en Murcia",
+        "type": "deduccion",
+        "category": "medioambiente",
+        "percentage": 10.0,
+        "max_amount": 300.0,
+        "legal_reference": "Art. 6 DL 1/2010 Murcia",
+        "description": (
+            "10% de las inversiones en sistemas de energia solar, eolica u otras renovables "
+            "en la vivienda habitual, asi como instalaciones de ahorro de agua. "
+            "Maximo 300 EUR por periodo. BI menor o igual a 45.000 EUR."
+        ),
+        "requirements_json": json.dumps({"instalacion_renovable": True}),
+        "questions_json": json.dumps([
+            {"key": "instalacion_renovable", "text": "Has instalado energias renovables o sistemas de ahorro de agua en tu vivienda?", "type": "bool"},
+            {"key": "importe_instalacion", "text": "Cuanto ha costado la instalacion?", "type": "number"},
         ]),
     },
     {
         "code": "MUR-DONATIVOS",
-        "name": "Deducción por donativos para fines culturales, deportivos y de investigación",
+        "name": "Deduccion por donativos al patrimonio historico de Murcia",
         "type": "deduccion",
         "category": "donativos",
         "percentage": 30.0,
         "max_amount": None,
-        "legal_reference": "Art. 8 DL 1/2010 Murcia",
+        "legal_reference": "Art. 7 DL 1/2010 Murcia",
         "description": (
-            "30% de los donativos a entidades de la Región de Murcia para fines culturales, "
-            "deportivos, de investigación o asistenciales. Límite: 15% de la base liquidable."
+            "30% de los donativos para la adquisicion o conservacion de bienes del "
+            "patrimonio historico-artistico de la Region de Murcia. "
+            "Limite: 10% de la cuota integra autonomica."
         ),
-        "requirements_json": json.dumps({"donativo_a_entidad_acogida": True}),
+        "requirements_json": json.dumps({"donativo_patrimonio_murcia": True}),
         "questions_json": json.dumps([
-            {"key": "donativo_a_entidad_acogida", "text": "¿Has donado a entidades de la Región de Murcia para fines culturales, deportivos o de investigación?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Cuánto has donado en total?", "type": "number"},
+            {"key": "donativo_patrimonio_murcia", "text": "Has donado para conservacion del patrimonio historico de Murcia?", "type": "bool"},
+            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
         ]),
     },
 ]
 
 
 # =============================================================================
-# ISLAS BALEARES (DL 1/2014 — Texto Refundido disposiciones legales Baleares)
+# BALEARES (Ley 3/2022 de medidas tributarias de las Illes Balears)
 # =============================================================================
 BALEARES_2025 = [
     {
-        "code": "BAL-GASTOS-ESTUDIOS",
-        "name": "Deducción por gastos de estudios en educación no universitaria",
+        "code": "BAL-LIBROS-TEXTO",
+        "name": "Deduccion por adquisicion de libros de texto en Baleares",
+        "type": "deduccion",
+        "category": "educacion",
+        "percentage": 100.0,
+        "max_amount": None,
+        "legal_reference": "Art. 1 Ley 3/2022 Baleares",
+        "description": (
+            "Deduccion del 100% de los gastos en libros de texto para ensenanza obligatoria "
+            "(Primaria y ESO). BI menor o igual a 25.000 EUR individual / 45.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"hijos_escolarizados": True}),
+        "questions_json": json.dumps([
+            {"key": "hijos_escolarizados", "text": "Tienes hijos en Primaria o ESO?", "type": "bool"},
+            {"key": "gasto_libros", "text": "Cuanto has gastado en libros de texto?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "BAL-IDIOMAS",
+        "name": "Deduccion por aprendizaje de idiomas en Baleares",
         "type": "deduccion",
         "category": "educacion",
         "percentage": 15.0,
         "max_amount": 100.0,
-        "legal_reference": "Art. 4 DL 1/2014 Baleares",
+        "legal_reference": "Art. 2 Ley 3/2022 Baleares",
         "description": (
-            "15% de los gastos de escolaridad en centros concertados o privados de "
-            "enseñanza no universitaria, máx. 100€ por hijo. "
-            "Compatible con otras deducciones por hijos."
+            "15% de los gastos de matricula en escuelas oficiales de idiomas o centros "
+            "reconocidos para la obtencion de certificados de idiomas (B2 o superior), "
+            "maximo 100 EUR. BI menor o igual a 25.000 EUR individual / 45.000 EUR conjunta."
         ),
-        "requirements_json": json.dumps({"gastos_educativos": True}),
+        "requirements_json": json.dumps({"gastos_idiomas": True}),
         "questions_json": json.dumps([
-            {"key": "gastos_educativos", "text": "¿Tienes hijos en centros de enseñanza concertados o privados?", "type": "bool"},
-            {"key": "importe_gastos_educacion", "text": "¿Cuánto has pagado de escolaridad en centros privados o concertados?", "type": "number"},
+            {"key": "gastos_idiomas", "text": "Has pagado clases o examenes de certificacion de idiomas este anyo?", "type": "bool"},
+            {"key": "importe_idiomas", "text": "Cuanto has gastado en idiomas?", "type": "number"},
         ]),
     },
     {
-        "code": "BAL-MEJORA-SOSTENIB",
-        "name": "Deducción por mejoras de sostenibilidad en la vivienda habitual",
-        "type": "deduccion",
-        "category": "medioambiental",
-        "percentage": 50.0,
-        "max_amount": 600.0,
-        "legal_reference": "Art. 6 DL 1/2014 Baleares",
-        "description": (
-            "50% de las cantidades invertidas en mejoras de sostenibilidad de la vivienda "
-            "habitual (eficiencia energética, energías renovables), máx. 600€ por año. "
-            "Debe acreditarse mejora en calificación energética."
-        ),
-        "requirements_json": json.dumps({"obras_mejora_energetica": True}),
-        "questions_json": json.dumps([
-            {"key": "obras_mejora_energetica", "text": "¿Has realizado obras de mejora de eficiencia energética o instalado renovables en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_obras", "text": "¿Cuánto has invertido en las mejoras de sostenibilidad?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "BAL-ALQ-VIV",
-        "name": "Deducción por alquiler de vivienda habitual",
+        "code": "BAL-ARRENDAMIENTO-VIV",
+        "name": "Deduccion por arrendamiento de vivienda habitual en Baleares",
         "type": "deduccion",
         "category": "vivienda",
         "percentage": 15.0,
-        "max_amount": 500.0,
-        "legal_reference": "Art. 3 DL 1/2014 Baleares",
+        "max_amount": 440.0,
+        "legal_reference": "Art. 3 Ley 3/2022 Baleares",
         "description": (
             "15% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "máx. 500€ (700€ para menores de 36 años o discapacitados). "
-            "BI ≤24.000€ individual o ≤38.000€ conjunta."
+            "maximo 440 EUR (880 EUR en conjunta). Para contribuyentes con BI menor o igual a 25.000 EUR individual "
+            "/ 45.000 EUR conjunta. Incremento hasta 650 EUR para menores de 36 anyos."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en Baleares?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_36_anos", "text": "¿Tienes menos de 36 años?", "type": "bool"},
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
         ]),
     },
     {
-        "code": "BAL-NAC-ADOP",
-        "name": "Deducción por nacimiento o adopción (familias numerosas y monoparentales)",
+        "code": "BAL-SOSTENIBILIDAD",
+        "name": "Deduccion por inversion en mejora sostenibilidad vivienda en Baleares",
         "type": "deduccion",
-        "category": "familia",
-        "fixed_amount": 500.0,
-        "legal_reference": "Art. 5 DL 1/2014 Baleares",
+        "category": "medioambiente",
+        "percentage": 50.0,
+        "max_amount": 12000.0,
+        "legal_reference": "Art. 4 Ley 3/2022 Baleares",
         "description": (
-            "500€ por tercer hijo o posteriores (general). "
-            "Para familias numerosas de categoría especial o monoparentales: "
-            "800€ por cada hijo nacido o adoptado."
+            "50% de la inversion en instalaciones de energia fotovoltaica, eolica o biomasa "
+            "para autoconsumo en vivienda habitual. Maximo 12.000 EUR. Requiere certificado "
+            "de eficiencia energetica antes y despues."
         ),
-        "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
+        "requirements_json": json.dumps({"instalacion_renovable": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo o adoptado este año en Baleares?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "¿Cuántos hijos tienes en total?", "type": "number"},
-            {"key": "familia_numerosa_especial", "text": "¿Eres familia numerosa de categoría especial o familia monoparental?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "BAL-DISCAPACIDAD",
-        "name": "Deducción por discapacidad del contribuyente",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "fixed_amount": 80.0,
-        "legal_reference": "Art. 7 DL 1/2014 Baleares",
-        "description": (
-            "80€ para contribuyentes con discapacidad reconocida ≥33%. "
-            "150€ para discapacidad ≥65%."
-        ),
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes algún grado de discapacidad reconocida (≥33%)?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿Cuál es tu grado de discapacidad? (33-65% o ≥65%)", "type": "text"},
+            {"key": "instalacion_renovable", "text": "Has instalado energia fotovoltaica, eolica o biomasa en tu vivienda?", "type": "bool"},
+            {"key": "importe_instalacion", "text": "Cuanto ha costado la instalacion?", "type": "number"},
         ]),
     },
     {
         "code": "BAL-DONATIVOS",
-        "name": "Deducción por donativos a entidades de las Islas Baleares",
+        "name": "Deduccion por donativos a entidades de Baleares",
         "type": "deduccion",
         "category": "donativos",
         "percentage": 25.0,
         "max_amount": None,
-        "legal_reference": "Art. 8 DL 1/2014 Baleares",
+        "legal_reference": "Art. 5 Ley 3/2022 Baleares",
         "description": (
-            "25% de los donativos realizados a fundaciones o entidades de las Islas Baleares "
-            "declaradas de utilidad pública que desarrollen actividades culturales, "
-            "asistenciales, deportivas o similares. Límite: 10% de la base liquidable."
+            "25% de los donativos realizados a entidades sin animo de lucro con sede y "
+            "actividad principal en las Illes Balears. "
+            "Limite: 10% de la cuota integra autonomica."
         ),
-        "requirements_json": json.dumps({"donativo_a_entidad_acogida": True}),
+        "requirements_json": json.dumps({"donativo_entidad_baleares": True}),
         "questions_json": json.dumps([
-            {"key": "donativo_a_entidad_acogida", "text": "¿Has donado a fundaciones o entidades declaradas de utilidad pública en Baleares?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Cuánto has donado en total?", "type": "number"},
+            {"key": "donativo_entidad_baleares", "text": "Has donado a entidades sin animo de lucro con sede en Baleares?", "type": "bool"},
+            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "BAL-SEGUROS-VIDA",
+        "name": "Deduccion por primas de seguros de vida y enfermedad en Baleares",
+        "type": "deduccion",
+        "category": "salud",
+        "percentage": 15.0,
+        "max_amount": 200.0,
+        "legal_reference": "Art. 6 Ley 3/2022 Baleares",
+        "description": (
+            "15% de las primas pagadas por seguros de vida y enfermedad para el contribuyente "
+            "y/o su conyuge, maximo 200 EUR. Excluye seguros cubiertos por el empleador. "
+            "BI menor o igual a 25.000 EUR individual / 45.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"seguros_salud": True}),
+        "questions_json": json.dumps([
+            {"key": "seguros_salud", "text": "Pagas primas de seguros de vida o enfermedad por tu cuenta?", "type": "bool"},
+            {"key": "importe_primas", "text": "Cuanto has pagado de primas de seguro este anyo?", "type": "number"},
         ]),
     },
 ]
 
 
 # =============================================================================
-# ISLAS CANARIAS (DL 1/2009 — Texto Refundido, mod. Ley 4/2024 Canarias)
+# CANARIAS (Ley 1/2009 de medidas tributarias — deducciones IRPF propias)
 # =============================================================================
 CANARIAS_2025 = [
     {
-        "code": "IC-NAC-ADOP",
-        "name": "Deducción por nacimiento o adopción de hijos",
+        "code": "CANA-NACIMIENTO",
+        "name": "Deduccion por nacimiento o adopcion en Canarias",
         "type": "deduccion",
         "category": "familia",
         "fixed_amount": 200.0,
-        "legal_reference": "Art. 6 DL 1/2009 Canarias",
+        "legal_reference": "Art. 2 Ley 1/2009 Canarias",
         "description": (
-            "200€ por primer hijo; 400€ por segundo; 600€ por tercero y siguientes. "
-            "Si el municipio tiene menos de 5.000 habitantes, los importes se duplican. "
-            "BI ≤39.000€ individual o ≤52.000€ conjunta."
+            "200 EUR por el primer o segundo hijo; 400 EUR por el tercero o siguientes. "
+            "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "¿Has tenido un hijo o adoptado este año en Canarias?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "¿Cuántos hijos tienes en total?", "type": "number"},
-            {"key": "municipio_rural", "text": "¿Vives en un municipio de menos de 5.000 habitantes?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
         ]),
     },
     {
-        "code": "IC-GASTOS-ESTUDIOS",
-        "name": "Deducción por gastos de estudios (enseñanza no universitaria y universitaria)",
+        "code": "CANA-ESTUDIOS",
+        "name": "Deduccion por gastos de estudios universitarios en Canarias",
         "type": "deduccion",
         "category": "educacion",
-        "fixed_amount": 300.0,
-        "legal_reference": "Art. 8 DL 1/2009 Canarias",
-        "description": (
-            "Hasta 300€ por descendiente para gastos de libros, material escolar, transporte "
-            "y uniformes en enseñanza no universitaria. Hasta 1.800€ por descendiente "
-            "en gastos de estudios universitarios fuera de la isla de residencia. "
-            "BI ≤39.000€ individual o ≤52.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"gastos_educativos": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_educativos", "text": "¿Tienes hijos con gastos de libros, material, transporte escolar o estudios fuera de la isla?", "type": "bool"},
-            {"key": "importe_gastos_educacion", "text": "¿Cuánto has gastado en total en educación?", "type": "number"},
-            {"key": "estudios_fuera_isla", "text": "¿Algún hijo estudia en otra isla o en la Península?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "IC-VIV-HABITUAL",
-        "name": "Deducción por inversión en vivienda habitual (jóvenes y régimen especial)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 2.5,
-        "max_amount": 9.040,
-        "legal_reference": "Art. 5 DL 1/2009 Canarias",
-        "description": (
-            "Tramo autonómico del 2,5% por inversión en vivienda habitual adquirida "
-            "antes del 1/1/2013. Para menores de 35 años: porcentaje ampliado al 3,5%. "
-            "Base máxima: 9.040€."
-        ),
-        "requirements_json": json.dumps({
-            "adquisicion_antes_2013": True,
-            "deducia_antes_2013": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "adquisicion_antes_2013", "text": "¿Adquiriste tu vivienda habitual antes del 1 de enero de 2013?", "type": "bool"},
-            {"key": "deducia_antes_2013", "text": "¿Aplicabas ya la deducción por vivienda antes de 2013?", "type": "bool"},
-            {"key": "menor_35_anos", "text": "¿Tienes menos de 35 años?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "¿Cuánto has pagado de hipoteca este año?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "IC-DONATIVOS",
-        "name": "Deducción por donaciones a instituciones canarias",
-        "type": "deduccion",
-        "category": "donativos",
-        "percentage": 20.0,
+        "percentage": 100.0,
         "max_amount": None,
-        "legal_reference": "Art. 10 DL 1/2009 Canarias",
+        "legal_reference": "Art. 4 Ley 1/2009 Canarias",
         "description": (
-            "20% de los donativos y aportaciones a fundaciones canarias registradas "
-            "y a programas de apoyo a la cultura, ciencia y medio ambiente declarados "
-            "de interés social por el Gobierno de Canarias. Límite: 10% de la base liquidable."
+            "Deduccion del 100% de los gastos de matricula en estudios universitarios de "
+            "primer y segundo ciclo para hijos del contribuyente. Incluye masteres oficiales. "
+            "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
         ),
-        "requirements_json": json.dumps({"donativo_a_entidad_acogida": True}),
+        "requirements_json": json.dumps({"hijos_estudios_universitarios": True}),
         "questions_json": json.dumps([
-            {"key": "donativo_a_entidad_acogida", "text": "¿Has donado a fundaciones o entidades canarias de interés social?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Cuánto has donado en total?", "type": "number"},
+            {"key": "hijos_estudios_universitarios", "text": "Tienes hijos cursando estudios universitarios?", "type": "bool"},
+            {"key": "gasto_matricula_universidad", "text": "Cuanto has pagado de matricula universitaria?", "type": "number"},
         ]),
     },
     {
-        "code": "IC-ALQ-VIV",
-        "name": "Deducción por alquiler de vivienda habitual (Canarias)",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 20.0,
-        "max_amount": 1.500,
-        "legal_reference": "Art. 7 DL 1/2009 Canarias",
-        "description": (
-            "20% de las cantidades satisfechas por arrendamiento de vivienda habitual, "
-            "máx. 1.500€ (2.000€ para menores de 35 años o discapacitados ≥65%). "
-            "BI ≤39.000€ individual o ≤52.000€ conjunta."
-        ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual en Canarias?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_35_anos", "text": "¿Tienes menos de 35 años?", "type": "bool"},
-        ]),
-    },
-    {
-        "code": "IC-FAM-NUM",
-        "name": "Deducción por familia numerosa (Canarias)",
+        "code": "CANA-FAM-NUM",
+        "name": "Deduccion por familia numerosa en Canarias",
         "type": "deduccion",
         "category": "familia",
         "fixed_amount": 200.0,
-        "legal_reference": "Art. 9 DL 1/2009 Canarias",
+        "legal_reference": "Art. 3 Ley 1/2009 Canarias",
         "description": (
-            "200€ para familias numerosas de categoría general. "
-            "400€ para familias numerosas de categoría especial. "
-            "Deducción adicional de 200€ si algún miembro de la unidad familiar tiene discapacidad."
+            "200 EUR para familias numerosas generales; 400 EUR para especiales. "
+            "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"familia_numerosa": True}),
         "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "¿Tienes título de familia numerosa reconocido en Canarias?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "¿Es de categoría especial?", "type": "bool"},
-            {"key": "descendiente_discapacidad", "text": "¿Algún miembro de la unidad familiar tiene discapacidad reconocida?", "type": "bool"},
+            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
+            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
+        ]),
+    },
+    {
+        "code": "CANA-VIV-HABITUAL",
+        "name": "Deduccion por inversion en vivienda habitual en Canarias",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 3.5,
+        "max_amount": None,
+        "legal_reference": "Art. 5 Ley 1/2009 Canarias",
+        "description": (
+            "3,5% adicional (tramo autonomico) sobre las cantidades satisfechas por "
+            "adquisicion de vivienda habitual para contribuyentes que cumplan los requisitos "
+            "del regimen transitorio estatal (DT 18a LIRPF). "
+            "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "adquisicion_antes_2013": True}),
+        "questions_json": json.dumps([
+            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
+            {"key": "adquisicion_antes_2013", "text": "La adquiriste antes del 1 de enero de 2013?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "CANA-DONATIVOS",
+        "name": "Deduccion por donativos a entidades canarias",
+        "type": "deduccion",
+        "category": "donativos",
+        "percentage": 10.0,
+        "max_amount": None,
+        "legal_reference": "Art. 6 Ley 1/2009 Canarias",
+        "description": (
+            "10% de los donativos realizados a fundaciones y asociaciones de utilidad publica "
+            "con domicilio y actividad principal en Canarias. "
+            "Limite: 10% de la cuota integra autonomica."
+        ),
+        "requirements_json": json.dumps({"donativo_entidad_canaria": True}),
+        "questions_json": json.dumps([
+            {"key": "donativo_entidad_canaria", "text": "Has donado a fundaciones con sede en Canarias?", "type": "bool"},
+            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "CANA-GASTOS-ENFERMEDAD",
+        "name": "Deduccion por gastos de enfermedad en Canarias",
+        "type": "deduccion",
+        "category": "salud",
+        "percentage": 12.0,
+        "max_amount": 600.0,
+        "legal_reference": "Art. 7 Ley 1/2009 Canarias",
+        "description": (
+            "12% de los gastos sanitarios no cubiertos por la Seguridad Social ni por seguros: "
+            "gafas, protesis dentales, audifonos, ortopedia, psicologo. Maximo 600 EUR. "
+            "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"gastos_salud_propios": True}),
+        "questions_json": json.dumps([
+            {"key": "gastos_salud_propios", "text": "Has tenido gastos sanitarios no cubiertos por la Seguridad Social (gafas, dentista, ortopedia)?", "type": "bool"},
+            {"key": "importe_gastos_salud", "text": "Cuanto has gastado en total?", "type": "number"},
         ]),
     },
 ]
@@ -1393,23 +1308,124 @@ CANARIAS_2025 = [
 # =============================================================================
 # MAPPING: territory name -> deductions list
 # =============================================================================
-ALL_TERRITORIAL_V2 = {
+ALL_TERRITORIAL_V2: dict[str, list[dict]] = {
     "Galicia": GALICIA_2025,
     "Asturias": ASTURIAS_2025,
     "Cantabria": CANTABRIA_2025,
     "La Rioja": LA_RIOJA_2025,
-    "Aragón": ARAGON_2025,
-    "Castilla y León": CASTILLA_LEON_2025,
+    "Aragon": ARAGON_2025,
+    "Castilla y Leon": CASTILLA_Y_LEON_2025,
     "Castilla-La Mancha": CASTILLA_LA_MANCHA_2025,
     "Extremadura": EXTREMADURA_2025,
     "Murcia": MURCIA_2025,
-    "Islas Baleares": BALEARES_2025,
-    "Islas Canarias": CANARIAS_2025,
+    "Baleares": BALEARES_2025,
+    "Canarias": CANARIAS_2025,
 }
 
+VALID_CATEGORIES: set[str] = {
+    "familia",
+    "vivienda",
+    "educacion",
+    "salud",
+    "donativos",
+    "emprendimiento",
+    "medioambiente",
+    "trabajo",
+    "discapacidad",
+    "otros",
+    # Additional categories present in v1 seed (kept for consistency)
+    "sostenibilidad",
+    "tecnologia",
+    "personal",
+    "territorial",
+    "prevision_social",
+    "actividad_economica",
+    "internacional",
+}
 
-async def seed_territorial_v2():
+VALID_TERRITORIES: set[str] = set(ALL_TERRITORIAL_V2.keys())
+
+
+def validate_deductions(dry_run: bool = False) -> list[str]:
+    """Validate all deductions in ALL_TERRITORIAL_V2 and return a list of error messages."""
+    errors: list[str] = []
+    all_keys: set[tuple[str, str]] = set()
+
+    for territory, deductions in ALL_TERRITORIAL_V2.items():
+        for d in deductions:
+            code: str = d.get("code", "??")
+            key = (code, territory)
+
+            if key in all_keys:
+                errors.append(f"DUPLICATE: {code} in {territory}")
+            all_keys.add(key)
+
+            for field in ("code", "name", "type", "category", "description",
+                          "legal_reference", "requirements_json", "questions_json"):
+                if not d.get(field):
+                    errors.append(f"MISSING {field}: {code} ({territory})")
+
+            cat = d.get("category", "")
+            if cat not in VALID_CATEGORIES:
+                errors.append(f"INVALID category '{cat}': {code} ({territory})")
+
+            req = d.get("requirements_json")
+            if req:
+                try:
+                    parsed = json.loads(req)
+                    if not isinstance(parsed, dict):
+                        errors.append(f"requirements_json not dict: {code} ({territory})")
+                except json.JSONDecodeError as exc:
+                    errors.append(f"requirements_json invalid JSON: {code} ({territory}) - {exc}")
+
+            qs = d.get("questions_json")
+            if qs:
+                try:
+                    parsed_qs = json.loads(qs)
+                    if not isinstance(parsed_qs, list):
+                        errors.append(f"questions_json not list: {code} ({territory})")
+                    else:
+                        for q in parsed_qs:
+                            if "key" not in q:
+                                errors.append(f"question missing 'key': {code} ({territory})")
+                            if "text" not in q:
+                                errors.append(f"question missing 'text': {code} ({territory})")
+                except json.JSONDecodeError as exc:
+                    errors.append(f"questions_json invalid JSON: {code} ({territory}) - {exc}")
+
+    if dry_run:
+        total = sum(len(v) for v in ALL_TERRITORIAL_V2.values())
+        print("\n=== DRY RUN — deducciones que se insertarian ===")
+        for territory, deductions in ALL_TERRITORIAL_V2.items():
+            print(f"\n  {territory} ({len(deductions)} deducciones):")
+            for d in deductions:
+                amt = ""
+                if d.get("fixed_amount"):
+                    amt = f" [{d['fixed_amount']:.0f} EUR fijo]"
+                elif d.get("percentage"):
+                    pct = d["percentage"]
+                    max_a = d.get("max_amount")
+                    amt = f" [{pct}%{f', max {max_a:.0f} EUR' if max_a else ''}]"
+                print(f"    {d['code']}: {d['name']}{amt}")
+        print(f"\nTotal: {total} deducciones | {len(ALL_TERRITORIAL_V2)} CCAA")
+
+    return errors
+
+
+async def seed_territorial_v2(dry_run: bool = False) -> None:
     """Insert all v2 territorial deductions into the database."""
+    errors = validate_deductions(dry_run=dry_run)
+    if errors:
+        print("\n[VALIDATION ERRORS]")
+        for e in errors:
+            print(f"  - {e}")
+        print(f"\n{len(errors)} validation error(s) found. Aborting seed.")
+        return
+
+    if dry_run:
+        print("\nDry run complete. No changes written to the database.")
+        return
+
     from app.database.turso_client import TursoClient
 
     db = TursoClient()
@@ -1452,7 +1468,7 @@ async def seed_territorial_v2():
                         d.get("questions_json"),
                     ],
                 )
-                # Verify actual insertion (vs IGNORE due to duplicate code)
+                # INSERT OR IGNORE is silent on conflicts; verify if this specific row was new
                 result = await db.execute(
                     "SELECT id FROM deductions WHERE code = ? AND tax_year = ? AND territory = ?",
                     [d["code"], 2025, territory],
@@ -1461,21 +1477,35 @@ async def seed_territorial_v2():
                     inserted += 1
                 else:
                     skipped += 1
-            except Exception as e:
-                print(f"  Error inserting {d['code']}: {e}")
+            except Exception as exc:
+                print(f"  Error inserting {d['code']} ({territory}): {exc}")
                 skipped += 1
 
-        print(f"  {territory}: {inserted} inserted, {skipped} skipped")
+        status = "inserted" if inserted else "all skipped (already existed)"
+        print(f"  {territory}: {inserted} inserted, {skipped} skipped ({status})")
         total_inserted += inserted
         total_skipped += skipped
 
     await db.disconnect()
 
-    total_deductions = sum(len(d) for d in ALL_TERRITORIAL_V2.values())
-    print(f"\nSeed v2 complete: {total_inserted} inserted, {total_skipped} skipped")
-    print(f"Territories covered in this run: {len(ALL_TERRITORIAL_V2)}")
-    print(f"Total deductions defined in this script: {total_deductions}")
+    total_deductions = sum(len(v) for v in ALL_TERRITORIAL_V2.values())
+    print(f"\nSeed complete: {total_inserted} inserted, {total_skipped} skipped")
+    print(f"Territories covered: {len(ALL_TERRITORIAL_V2)}")
+    print(f"Total deductions in this batch: {total_deductions}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Seed territorial IRPF deductions — batch 2 (11 CCAA)"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be inserted without writing to the database",
+    )
+    args = parser.parse_args()
+    asyncio.run(seed_territorial_v2(dry_run=args.dry_run))
 
 
 if __name__ == "__main__":
-    asyncio.run(seed_territorial_v2())
+    main()

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FileText, Mail, Lock, Loader2 } from 'lucide-react'
+import { FileText, Mail, Lock, Eye, EyeOff, Loader2, Calculator, Map, Shield, AlertCircle } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import './Auth.css'
 
@@ -10,6 +10,7 @@ export default function Login() {
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
 
@@ -37,82 +38,129 @@ export default function Login() {
 
     return (
         <div className="auth-page">
-            <div className="auth-container">
+            {/* Brand panel */}
+            <div className="auth-brand">
+                <Link to="/" className="auth-brand__logo">
+                    <FileText size={22} />
+                    <span>Impuestify</span>
+                </Link>
+
+                <h1 className="auth-brand__title">Tu asesor fiscal con IA</h1>
+
+                <p className="auth-brand__subtitle">
+                    El unico asistente que cubre los 21 territorios de Espana con IA y fuentes oficiales.
+                </p>
+
+                <div className="auth-brand__pills">
+                    <span className="auth-brand__pill">
+                        <FileText size={13} />
+                        428+ documentos oficiales
+                    </span>
+                    <span className="auth-brand__pill">
+                        <Calculator size={13} />
+                        128 deducciones fiscales
+                    </span>
+                    <span className="auth-brand__pill">
+                        <Map size={13} />
+                        IRPF foral completo
+                    </span>
+                </div>
+
+                <div className="auth-brand__badges">
+                    <span className="auth-brand__badge">RGPD</span>
+                    <span className="auth-brand__badge">AI Act</span>
+                    <span className="auth-brand__badge">LSSI-CE</span>
+                    <span className="auth-brand__badge">LOPDGDD</span>
+                </div>
+            </div>
+
+            {/* Form panel */}
+            <div className="auth-form-panel">
                 <div className="auth-card">
-                    <div className="auth-header">
-                        <Link to="/" className="auth-logo">
-                            <FileText size={32} />
-                            <span>Impuestify</span>
-                        </Link>
-                        <h1>Bienvenido de nuevo</h1>
-                        <p>Inicia sesión para continuar</p>
-                    </div>
+                    <h2>Bienvenido de nuevo</h2>
+                    <p className="auth-card__subtitle">Inicia sesion para continuar</p>
 
                     <form onSubmit={handleSubmit} className="auth-form">
                         {error && (
-                            <div className="auth-error">
+                            <div className="auth-message auth-message--error">
+                                <AlertCircle size={16} />
                                 {error}
                             </div>
                         )}
 
-                        <div className="form-group">
-                            <label className="label" htmlFor="email">Email</label>
-                            <div className="input-with-icon">
-                                <Mail size={20} />
+                        <div className="auth-input-group">
+                            <label htmlFor="email">Email</label>
+                            <div className="auth-input-wrapper">
+                                <span className="auth-input-icon">
+                                    <Mail size={18} />
+                                </span>
                                 <input
                                     type="email"
                                     id="email"
-                                    className="input"
+                                    className="auth-input"
                                     placeholder="tu@email.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
+                                    autoComplete="email"
                                 />
                             </div>
                         </div>
 
-                        <div className="form-group">
-                            <label className="label" htmlFor="password">Contraseña</label>
-                            <div className="input-with-icon">
-                                <Lock size={20} />
+                        <div className="auth-input-group">
+                            <label htmlFor="password">Contrasena</label>
+                            <div className="auth-input-wrapper">
+                                <span className="auth-input-icon">
+                                    <Lock size={18} />
+                                </span>
                                 <input
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     id="password"
-                                    className="input"
+                                    className="auth-input auth-input--with-toggle"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
+                                    autoComplete="current-password"
                                 />
+                                <button
+                                    type="button"
+                                    className="auth-input-toggle"
+                                    onClick={() => setShowPassword((v) => !v)}
+                                    aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
                         </div>
 
-                        <div className="auth-forgot">
-                            <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
-                        </div>
+                        <Link to="/forgot-password" className="auth-forgot-link">
+                            ¿Olvidaste tu contrasena?
+                        </Link>
 
                         <button
                             type="submit"
-                            className="btn btn-primary btn-lg auth-submit"
+                            className="auth-submit-btn"
                             disabled={isLoading}
                         >
                             {isLoading ? (
                                 <>
-                                    <Loader2 size={20} className="animate-spin" />
-                                    Iniciando sesión...
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Iniciando sesion...
                                 </>
                             ) : (
-                                'Iniciar Sesión'
+                                <>
+                                    <Shield size={18} />
+                                    Iniciar Sesion
+                                </>
                             )}
                         </button>
                     </form>
 
-                    <div className="auth-footer">
-                        <p>
-                            ¿No tienes cuenta?{' '}
-                            <Link to="/register">Registrarse</Link>
-                        </p>
-                    </div>
+                    <p className="auth-switch-link">
+                        ¿No tienes cuenta?{' '}
+                        <Link to="/register">Registrarse gratis</Link>
+                    </p>
                 </div>
             </div>
         </div>
