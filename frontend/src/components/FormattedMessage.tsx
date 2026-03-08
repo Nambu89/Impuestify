@@ -134,6 +134,10 @@ function parseContent(rawContent: string): ContentBlock[] {
     // Step 1: Strip JSON blocks
     let content = stripJsonBlocks(rawContent)
 
+    // Step 1b: Strip leaked technical lines (invoke_*, tool_name, function_call, Calling ...)
+    content = content.replace(/^(?:invoke_\w+|tool_name|function_call|calling)\s*[:=]\s*\S+.*$/gim, '')
+    content = content.replace(/^Calling\s+\w+\s+with.*$/gim, '')
+
     // Step 2: Clean up multiple blank lines
     content = content.replace(/\n{3,}/g, '\n\n')
 

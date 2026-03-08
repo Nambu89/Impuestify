@@ -197,11 +197,18 @@ def filter_json_from_content(content: str) -> str:
     # Remove standalone JSON objects (common in tool responses)
     # Matches: {"key": "value", ...}
     content = re.sub(r'\{["\'](?:base_imponible|formatted_response|query|tool)["\']:[^}]+\}', '', content)
-    
+
     # Remove JSON in code blocks
     content = re.sub(r'```json\s*\{[^`]+\}\s*```', '', content)
-    
+
+    # Remove technical key-value lines leaked from tool calls
+    # e.g. "invoke_calculate_irpf_used: true", "tool_name: calculate_irpf"
+    content = re.sub(r'^(?:invoke_\w+|tool_name|function_call|calling)\s*[:=]\s*\S+.*$', '', content, flags=re.MULTILINE | re.IGNORECASE)
+
+    # Remove lines starting with "Calling " followed by a function name
+    content = re.sub(r'^Calling\s+\w+\s+with.*$', '', content, flags=re.MULTILINE)
+
     # Clean up multiple newlines
     content = re.sub(r'\n{3,}', '\n\n', content)
-    
+
     return content.strip()

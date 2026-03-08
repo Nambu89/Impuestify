@@ -570,6 +570,17 @@ class UserMemoryService:
                             else:
                                 # Legacy plain value
                                 context[df_key] = entry
+
+                        # Priority: ingresos_trabajo (manual profile) overrides ingresos_brutos (conversation)
+                        ingresos_trabajo_entry = datos_fiscales.get('ingresos_trabajo')
+                        if ingresos_trabajo_entry:
+                            manual_value = None
+                            if isinstance(ingresos_trabajo_entry, dict) and "value" in ingresos_trabajo_entry:
+                                manual_value = ingresos_trabajo_entry["value"]
+                            elif isinstance(ingresos_trabajo_entry, (int, float)):
+                                manual_value = ingresos_trabajo_entry
+                            if manual_value and manual_value > 0:
+                                context["ingresos_brutos"] = manual_value
                     except (json.JSONDecodeError, TypeError):
                         pass
         

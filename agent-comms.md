@@ -7,6 +7,33 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-08] PM — IN_PROGRESS — Bug: chat format ugly after tool call, wrong salary from profile
+
+- Tras llamar a `invoke_calculate_irpf`, la respuesta del agente se renderiza mal (formato feo)
+- El agente se queda bloqueado en algunos flujos post-tool-call
+- El agente usa salario 35000 EUR en lugar del valor real del perfil (37500 EUR)
+- Causa raiz por investigar: inyeccion del fiscal_profile al agente y renderizado markdown post-tool
+
+---
+
+## [2026-03-08] PM — DONE — Dark theme territorial pages + ForgotPassword + BD cleanup
+
+### Completado
+- **Phase 5 redesign**: CeutaMelillaPage, CanariasPage, ForalPage y TerritoryCard migrados a dark theme (#0f172a), coherentes con design system global
+- **ForgotPassword**: Migrado a split-screen layout (dark brand panel + white form panel), igual que Login/Register. Clases CSS actualizadas a sistema `auth-*`
+- **BD deducciones limpiada**: 190 filas → 134 unicas. Eliminados duplicados de encoding. Territorios normalizados: "Islas Baleares"→"Baleares", "Islas Canarias"→"Canarias"
+- **InteractiveSpainMap revertido**: SVG interactivo descartado, reemplazado por imagen estatica `hero-spain-3d.webp`
+
+### Archivos modificados
+- `frontend/src/pages/CeutaMelillaPage.tsx` + `.css`
+- `frontend/src/pages/CanariasPage.tsx` + `.css`
+- `frontend/src/pages/ForalPage.tsx` + `.css`
+- `frontend/src/components/TerritoryCard.tsx` + `.css`
+- `frontend/src/pages/ForgotPassword.tsx` + `Auth.css`
+- BD Turso: tabla `deductions` limpiada
+
+---
+
 ## [2026-03-07] QA — DONE — Auditoria desktop 1440x900 (analisis estatico codigo)
 
 ### Resultado: 1 bug critico arreglado, 4 bugs menores documentados
