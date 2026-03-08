@@ -7,6 +7,33 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-08] QA — DONE — Sesion 7: Chat deducciones fiscales (test.particular@impuestify.es)
+
+### Bug critico B-S7-01: Respuesta del chat se congela tras texto introductorio
+- **Consulta:** "Que deducciones fiscales puedo aplicar en mi declaracion?"
+- **Sintoma:** La IA responde con 384 chars de intro ("Voy a calcular... Ahora calculo el IRPF base.") y el stream SSE se congela permanentemente
+- **La tool discover_deductions SI se ejecuto** (timeline confirma "Deducciones encontradas")
+- **El problema ocurre en la fase de redaccion** — el agente no puede convertir el resultado de la tool en respuesta final
+- **Tiempo de congelacion:** Desde ~20s hasta timeout 153s — sin cambios
+- **Sin error visible al usuario** — el input queda habilitado como si hubiera terminado
+- **Reporte completo:** `plans/qa-report-2026-03-08.md`
+- **Screenshots:** `tests/e2e/screenshots/session7-07-*.png`
+
+### Confirmacion de otros hallazgos
+- **Salario:** La IA usa 35.000€ (del perfil) — NO 37.500€. Perfil leido correctamente
+- **CCAA:** Usa "Comunidad de Madrid" — correcto
+- **Texto tecnico:** NO se filtra ningun texto interno — OK
+- **Fuentes:** Sin "(pag. 0)" — OK
+- **Timeline thinking:** Funciona perfectamente — UX buena en la fase de procesamiento
+- **Login owner fernando.prada@proton.me:** FALLA con REDACTED_PASSWORD — password incorrecto o problema de cuenta
+
+### Accion requerida (backend)
+1. URGENTE: Investigar por que el stream SSE se congela cuando el agente intenta redactar tras tool call
+2. Posible causa: timeout Railway + el agente envia texto en chunks pero el segundo LLM call (post-tool) falla silenciosamente
+3. Verificar logs Railway para la sesion de ~15:00 UTC 2026-03-08
+
+---
+
 ## [2026-03-08] PM — IN_PROGRESS — Bug: chat format ugly after tool call, wrong salary from profile
 
 - Tras llamar a `invoke_calculate_irpf`, la respuesta del agente se renderiza mal (formato feo)
