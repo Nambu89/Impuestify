@@ -137,6 +137,12 @@ function parseContent(rawContent: string): ContentBlock[] {
     // Step 1b: Strip leaked technical lines (invoke_*, tool_name, function_call, Calling ...)
     content = content.replace(/^(?:invoke_\w+|tool_name|function_call|calling)\s*[:=]\s*\S+.*$/gim, '')
     content = content.replace(/^Calling\s+\w+\s+with.*$/gim, '')
+    // Strip Spanish tool call phrases
+    content = content.replace(/\(?\s*(?:LLAMADA|llamada)\s+A\s+(?:HERRAMIENTA|herramienta)\s+\w+\s*\)?/gi, '')
+    content = content.replace(/Ahora\s+(?:hago|realizo|ejecuto)\s+el\s+c[aá]lculo\s+r[aá]pido\.?/gi, '')
+    // Strip broken source lines: "(pág. 0)" with no title
+    content = content.replace(/^,?\s*\(p[aá]g\.\s*\d+\)\s*$/gm, '')
+    content = content.replace(/^Fuentes:\s*\n(?:\s*,?\s*\(p[aá]g\.\s*\d+\)\s*\n?)+/gm, '')
 
     // Step 2: Clean up multiple blank lines
     content = content.replace(/\n{3,}/g, '\n\n')

@@ -73,6 +73,9 @@ class ProgressCallback:
 
     async def content_chunk(self, text: str):
         """Stream a single chunk/token of the response (for real-time typing effect)"""
+        # Skip chunks that are purely technical artifacts
+        if text and _is_technical_chunk(text):
+            return
         await self.emit("content_chunk", text)
 
     async def content(self, text: str):
@@ -177,6 +180,23 @@ async def sse_generator(
         logger.info("🏁 SSE generator finished")
 
 
+import re
+
+# Patterns that indicate a chunk is technical/internal and should not be shown
+_TECHNICAL_PATTERNS = re.compile(
+    r'(?:invoke_\w+\s*[:=]|tool_name\s*[:=]|function_call\s*[:=]|'
+    r'Calling\s+\w+\s+with|'
+    r'LLAMADA\s+A\s+HERRAMIENTA|'
+    r'\{["\'](?:base_imponible|formatted_response|query|tool)["\'])',
+    re.IGNORECASE
+)
+
+
+def _is_technical_chunk(text: str) -> bool:
+    """Check if a streaming chunk contains technical text that should be hidden."""
+    return bool(_TECHNICAL_PATTERNS.search(text))
+
+
 def filter_json_from_content(content: str) -> str:
     """
     Remove technical JSON artifacts from LLM responses.
@@ -207,6 +227,16 @@ def filter_json_from_content(content: str) -> str:
 
     # Remove lines starting with "Calling " followed by a function name
     content = re.sub(r'^Calling\s+\w+\s+with.*$', '', content, flags=re.MULTILINE)
+
+    # Remove Spanish technical phrases about tool calls
+    # e.g. "(LLAMADA A HERRAMIENTA calculate_irpf)", "Ahora hago el cálculo rápido."
+    content = re.sub(r'\(?\s*(?:LLAMADA|llamada)\s+A\s+(?:HERRAMIENTA|herramienta)\s+\w+\s*\)?', '', content, flags=re.IGNORECASE)
+    content = re.sub(r'Ahora\s+(?:hago|realizo|ejecuto)\s+el\s+c[aá]lculo\s+r[aá]pido\.?', '', content, flags=re.IGNORECASE)
+
+    # Remove broken source lines: empty titles with just "(pág. N)"
+    content = re.sub(r'^,?\s*\(p[aá]g\.\s*\d+\)\s*$', '', content, flags=re.MULTILINE)
+    # Remove "Fuentes:" section if all sources are empty
+    content = re.sub(r'^Fuentes:\s*\n(?:\s*,?\s*\(p[aá]g\.\s*\d+\)\s*\n?)+', '', content, flags=re.MULTILINE)
 
     # Clean up multiple newlines
     content = re.sub(r'\n{3,}', '\n\n', content)
