@@ -668,7 +668,7 @@ async def log_interaction(
 # === Manejo de errores globales ===
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
+async def http_exception_handler(request: Request, exc):
 	logger.warning("HTTP Exception", 
 					path=request.url.path,
 					status_code=exc.status_code,
@@ -680,7 +680,7 @@ async def http_exception_handler(request, exc):
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
+async def general_exception_handler(request: Request, exc):
 	logger.error("Excepción no controlada",
 					path=request.url.path,
 					error=str(exc),
@@ -694,7 +694,7 @@ async def general_exception_handler(request, exc):
 # === Middleware de logging ===
 
 @app.middleware("http")
-async def log_requests(request, call_next):
+async def log_requests(request: Request, call_next):
 	start_time = time.time()
 	
 	response = await call_next(request)

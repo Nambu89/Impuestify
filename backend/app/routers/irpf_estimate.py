@@ -6,7 +6,7 @@ fast (~50-100ms) real-time estimates as users fill in the wizard.
 """
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.auth.jwt_handler import get_current_user, TokenData
 from app.security.rate_limiter import limiter
@@ -126,8 +126,8 @@ class IRPFEstimateResponse(BaseModel):
 @router.post("/estimate", response_model=IRPFEstimateResponse)
 @limiter.limit("60/minute")
 async def estimate_irpf(
+    req: Request,
     request: IRPFEstimateRequest,
-    req: object = None,  # Request object for rate limiter
     current_user: TokenData = Depends(get_current_user),
 ):
     """Fast IRPF estimate for the interactive tax guide. No LLM involved."""
@@ -309,8 +309,8 @@ class DeductionDiscoverResponse(BaseModel):
 @router.post("/deductions/discover", response_model=DeductionDiscoverResponse)
 @limiter.limit("30/minute")
 async def discover_deductions_endpoint(
+    req: Request,
     request: DeductionDiscoverRequest,
-    req: object = None,
     current_user: TokenData = Depends(get_current_user),
 ):
     """Discover eligible deductions for a CCAA. No LLM — direct DB query."""
