@@ -7,6 +7,16 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-08] PM — DONE — UI adaptativa por territorio (labels forales)
+
+- Gipuzkoa: "Modelo 300" en vez de "303"
+- Navarra: "Modelo F-69" en vez de "303"
+- Territorios forales: subtitulo "Hacienda Foral de X"
+- Modelo 130: indica territorio foral en titulo
+- Commit: f3d6ca7
+
+---
+
 ## [2026-03-08] PM — DONE — Calculadora IPSI (Ceuta/Melilla)
 
 ### Implementacion completa: calculadora + tool + REST + frontend

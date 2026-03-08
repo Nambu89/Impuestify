@@ -75,6 +75,33 @@ TaxIA/
 - [ ] New env vars added to `.env.example`
 - [ ] Security considerations addressed
 
+## Quality Gates (OBLIGATORIO)
+
+Todo plan de implementacion debe pasar por quality gates automaticos:
+
+### Pre-ejecucion: Plan Checker
+**ANTES** de presentar cualquier plan al usuario para aprobacion, ejecutar el agente `plan-checker`:
+1. Escribir el plan en `plans/` o `implementation_plan.md`
+2. Invocar `/check-plan` (o spawn subagente plan-checker)
+3. Si resultado es `ISSUES_FOUND`: corregir el plan y re-verificar
+4. Solo presentar al usuario planes que hayan pasado con `PASS`
+
+Aplica a: planes de implementacion, planes RPI, planes de refactoring, cualquier plan con >3 tareas.
+
+### Post-ejecucion: Verifier
+**DESPUES** de implementar TODAS las tareas de un plan, ejecutar el agente `verifier`:
+1. Completar todas las tareas del plan
+2. Invocar `/verify` (o spawn subagente verifier)
+3. Si resultado es `ISSUES_FOUND`: corregir los issues y re-verificar
+4. Solo reportar "plan completado" al usuario cuando verifier pase con `VERIFIED`
+
+Aplica a: cualquier implementacion que involucre >2 archivos o >2 tareas.
+
+### Flujo completo
+```
+Plan → /check-plan (PASS?) → Presentar al usuario → Aprobacion → Implementar → /verify (VERIFIED?) → Reportar completado
+```
+
 ## Post-Bugfix Protocol (OBLIGATORIO)
 
 Después de arreglar cualquier bug, SIEMPRE documentar en estos 3 sitios:

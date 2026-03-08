@@ -629,6 +629,25 @@ class TursoClient:
             )
             """,
 
+            # =============================================
+            # IRPF CASILLAS (Model 100 field dictionary)
+            # =============================================
+
+            """
+            CREATE TABLE IF NOT EXISTS irpf_casillas (
+                id TEXT PRIMARY KEY,
+                casilla_num TEXT NOT NULL,
+                description TEXT NOT NULL,
+                xsd_path TEXT,
+                section TEXT,
+                source TEXT DEFAULT 'xsd',
+                year INTEGER DEFAULT 2024
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_casillas_num ON irpf_casillas(casilla_num)",
+            "CREATE INDEX IF NOT EXISTS idx_casillas_desc ON irpf_casillas(description)",
+
             # ML fiscal features (future ML training data)
             """
             CREATE TABLE IF NOT EXISTS ml_fiscal_features (

@@ -1,6 +1,6 @@
 # TaxIA — Memoria del Agente
 
-> Ultima actualizacion: 2026-03-06
+> Ultima actualizacion: 2026-03-08
 > Ver detalles en archivos separados por tema
 > Bugs fixeados: `memory/bugfixes-2026-03.md`
 
