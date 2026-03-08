@@ -37,9 +37,10 @@ IMPORTANTE: Pasa en 'answers' toda la información que ya conozcas del usuario
                     "description": """Comunidad autónoma del contribuyente. Valores válidos:
 - 'Estatal': solo deducciones estatales (default si no se conoce la CCAA)
 - Territorios forales (sistema propio): 'Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra'
-- Régimen común: 'Madrid', 'Cataluña', 'Andalucía', 'Valencia'
+- Régimen común: 'Madrid', 'Cataluña', 'Andalucía', 'Valencia', 'Galicia', 'Asturias', 'Cantabria', 'La Rioja', 'Aragon', 'Castilla y Leon', 'Castilla-La Mancha', 'Extremadura', 'Murcia', 'Baleares', 'Canarias'
 Si se indica una CCAA de régimen común, devuelve deducciones Estatal + autonómicas combinadas.
-Si es territorio foral, devuelve SOLO las deducciones forales (tienen sistema IRPF propio)."""
+Si es territorio foral, devuelve SOLO las deducciones forales (tienen sistema IRPF propio).
+IMPORTANTE: Usar nombres SIN acento para: Aragon, Castilla y Leon."""
                 },
                 "tax_year": {
                     "type": "integer",
@@ -97,9 +98,17 @@ async def discover_deductions_tool(
         service = get_deduction_service()
 
         # Determine if we should use combined Estatal+CCAA queries
+        # v1: 8 CCAA (forales + régimen común iniciales)
+        # v2: 11 CCAA adicionales (seed_deductions_territorial_v2.py)
         supported_ccaa = {
+            # Forales (sistema IRPF propio)
             "Araba", "Bizkaia", "Gipuzkoa", "Navarra",
+            # Régimen común v1
             "Madrid", "Cataluña", "Andalucía", "Valencia",
+            # Régimen común v2 (nombres sin acento, tal como están en BD)
+            "Galicia", "Asturias", "Cantabria", "La Rioja",
+            "Aragon", "Castilla y Leon", "Castilla-La Mancha",
+            "Extremadura", "Murcia", "Baleares", "Canarias",
         }
 
         if ccaa in supported_ccaa:

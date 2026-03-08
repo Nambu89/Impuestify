@@ -236,9 +236,15 @@ async def ask_question_stream(
 
             # Prepare context - ALLOW empty RAG if we have conversation history or user memory
             if relevant_chunks:
+                # Filter out chunks with missing metadata (page=0, empty title)
+                # These produce broken "(pág. 0)" sources in the response
+                valid_chunks = [
+                    c for c in relevant_chunks
+                    if c.get('title') and c.get('page', 0) > 0
+                ]
                 rag_context = "\n\n".join([
                     f"Fuente: {chunk['title']} (Página {chunk['page']})\n{chunk['text']}"
-                    for chunk in relevant_chunks
+                    for chunk in valid_chunks
                 ])
                 sources_data = [
                     {
@@ -248,7 +254,7 @@ async def ask_question_stream(
                         "title": chunk['title'],
                         "score": chunk['similarity']
                     }
-                    for chunk in relevant_chunks
+                    for chunk in valid_chunks
                 ]
                 logger.info(f"Using {len(relevant_chunks)} RAG chunks for context")
             else:
