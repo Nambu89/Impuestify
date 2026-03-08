@@ -490,13 +490,24 @@ Añade explicación y contexto ALREDEDOR de los datos, nunca EN VEZ DE ellos.
 						model=selected_model,
 						progress_callback=progress_callback
 					)
+					# If stream produced very little content but we have a rich
+					# formatted_response from the tool, prefer the tool result.
+					# This handles the case where the stream stalls mid-response
+					# (e.g., model writes "Ahora calculo..." then hangs).
+					formatted = tool_result.get('formatted_response', '')
+					if formatted and len(content) < len(formatted) * 0.5:
+						logger.warning(
+							f"⚠️ Stream content ({len(content)} chars) much shorter "
+							f"than tool result ({len(formatted)} chars) — using tool result"
+						)
+						content = formatted
 					if not content:
-						content = tool_result.get('formatted_response', '')
+						content = formatted
 				except asyncio.TimeoutError:
 					logger.error("⏱️ Second OpenAI call timed out")
 					content = tool_result.get('formatted_response', '')
 					if not content:
-						content = "⏱️ Lo siento, el análisis está tardando más de lo esperado. Intenta reformular tu pregunta."
+						content = "Lo siento, el análisis está tardando más de lo esperado. Intenta reformular tu pregunta."
 				logger.info(f"Final content length: {len(content)}")
 			else:
 				# No function call — STREAM direct response token by token
@@ -574,13 +585,17 @@ Añade explicación y contexto ALREDEDOR de los datos, nunca EN VEZ DE ellos.
 		messages: List[dict],
 		model: str,
 		progress_callback: Optional[Any] = None,
-		timeout: float = 60.0
+		timeout: float = 60.0,
+		chunk_timeout: float = 30.0
 	) -> str:
 		"""
 		Call OpenAI with stream=True and emit content_chunk events in real-time.
 
 		Uses AsyncOpenAI + async for to avoid blocking the event loop,
 		which would prevent sse_generator from yielding events to the client.
+
+		Implements per-chunk timeout to prevent hanging when OpenAI stream
+		stalls mid-response (known issue: openai-python #2725, #1134, #769).
 
 		Returns the full accumulated content string.
 		"""
@@ -598,13 +613,31 @@ Añade explicación y contexto ALREDEDOR de los datos, nunca EN VEZ DE ellos.
 				timeout=timeout
 			)
 
-			# Iterate through streaming chunks using async for
-			# This yields control back to the event loop between chunks,
-			# allowing sse_generator to send queued events to the client
+			# Iterate through streaming chunks with per-chunk timeout.
+			# The SDK's async iterator has NO built-in timeout between chunks.
+			# If OpenAI stalls mid-stream (after sending some tokens), the
+			# async for loop hangs forever. We wrap each anext() in wait_for.
+			# See: https://community.openai.com/t/468299
 			buffer = ""
 			CHUNK_SIZE = 12  # Send every ~12 chars (roughly 2-3 words)
+			stream_iter = stream.__aiter__()
 
-			async for chunk in stream:
+			while True:
+				try:
+					chunk = await asyncio.wait_for(
+						stream_iter.__anext__(),
+						timeout=chunk_timeout
+					)
+				except StopAsyncIteration:
+					break
+				except asyncio.TimeoutError:
+					logger.warning(
+						f"⏱️ No chunk received in {chunk_timeout}s — "
+						f"stream stalled after {len(accumulated)} chunks "
+						f"({sum(len(c) for c in accumulated)} chars)"
+					)
+					break
+
 				delta = chunk.choices[0].delta if chunk.choices else None
 				if delta and delta.content:
 					buffer += delta.content
@@ -620,7 +653,7 @@ Añade explicación y contexto ALREDEDOR de los datos, nunca EN VEZ DE ellos.
 				await progress_callback.content_chunk(buffer)
 
 		except asyncio.TimeoutError:
-			logger.error("⏱️ Streaming OpenAI call timed out")
+			logger.error("⏱️ Streaming OpenAI call creation timed out")
 			raise
 		except Exception as e:
 			logger.error(f"Streaming error: {e}", exc_info=True)
