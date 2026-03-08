@@ -95,6 +95,46 @@ class FiscalProfileRequest(BaseModel):
     salario_base_mensual: Optional[float] = None
     complementos_salariales: Optional[float] = None
     irpf_retenido_porcentaje: Optional[float] = None
+    # --- Sprint 1: Vivienda ---
+    alquiler_vivienda_habitual: Optional[bool] = None
+    importe_alquiler_anual: Optional[float] = None
+    vivienda_habitual_propiedad: Optional[bool] = None
+    rehabilitacion_vivienda: Optional[bool] = None
+    vivienda_rural: Optional[bool] = None
+    dacion_pago_alquiler: Optional[bool] = None
+    arrendador_vivienda_social: Optional[bool] = None
+    # --- Sprint 1: Familia ---
+    nacimiento_adopcion_reciente: Optional[bool] = None
+    adopcion_internacional: Optional[bool] = None
+    acogimiento_familiar: Optional[bool] = None
+    familia_monoparental: Optional[bool] = None
+    hijos_escolarizados: Optional[bool] = None
+    gastos_guarderia: Optional[bool] = None
+    ambos_progenitores_trabajan: Optional[bool] = None
+    hijos_estudios_universitarios: Optional[bool] = None
+    # --- Sprint 1: Discapacidad ---
+    descendiente_discapacidad: Optional[bool] = None
+    ascendiente_discapacidad: Optional[bool] = None
+    ascendiente_a_cargo: Optional[bool] = None
+    familiar_discapacitado_cargo: Optional[bool] = None
+    empleada_hogar_cuidado: Optional[bool] = None
+    # --- Sprint 1: Donaciones ---
+    donativo_entidad_autonomica: Optional[bool] = None
+    donativo_investigacion: Optional[bool] = None
+    donativo_patrimonio: Optional[bool] = None
+    donativo_fundacion_local: Optional[bool] = None
+    # --- Sprint 1: Sostenibilidad ---
+    vehiculo_electrico_nuevo: Optional[bool] = None
+    obras_mejora_energetica: Optional[bool] = None
+    instalacion_renovable: Optional[bool] = None
+    # --- Sprint 1: Territorio ---
+    municipio_despoblado: Optional[bool] = None
+    inversion_empresa_nueva: Optional[bool] = None
+    # --- Sprint 1: Foral (solo si CCAA foral) ---
+    epsv_aportaciones: Optional[float] = None
+    pension_viudedad: Optional[bool] = None
+    reduccion_jornada_cuidado: Optional[bool] = None
+    cuenta_vivienda_aportaciones: Optional[float] = None
 
 
 class UserDataExport(BaseModel):
@@ -380,6 +420,28 @@ _DATOS_FISCALES_KEYS = {
     # Phase 3: Payslip/salary fields
     "num_pagas_anuales", "salario_base_mensual",
     "complementos_salariales", "irpf_retenido_porcentaje",
+    # Sprint 1: Vivienda
+    "alquiler_vivienda_habitual", "importe_alquiler_anual",
+    "vivienda_habitual_propiedad", "rehabilitacion_vivienda",
+    "vivienda_rural", "dacion_pago_alquiler", "arrendador_vivienda_social",
+    # Sprint 1: Familia
+    "nacimiento_adopcion_reciente", "adopcion_internacional",
+    "acogimiento_familiar", "familia_monoparental",
+    "hijos_escolarizados", "gastos_guarderia",
+    "ambos_progenitores_trabajan", "hijos_estudios_universitarios",
+    # Sprint 1: Discapacidad
+    "descendiente_discapacidad", "ascendiente_discapacidad",
+    "ascendiente_a_cargo", "familiar_discapacitado_cargo", "empleada_hogar_cuidado",
+    # Sprint 1: Donaciones
+    "donativo_entidad_autonomica", "donativo_investigacion",
+    "donativo_patrimonio", "donativo_fundacion_local",
+    # Sprint 1: Sostenibilidad
+    "vehiculo_electrico_nuevo", "obras_mejora_energetica", "instalacion_renovable",
+    # Sprint 1: Territorio
+    "municipio_despoblado", "inversion_empresa_nueva",
+    # Sprint 1: Foral
+    "epsv_aportaciones", "pension_viudedad",
+    "reduccion_jornada_cuidado", "cuenta_vivienda_aportaciones",
 }
 
 

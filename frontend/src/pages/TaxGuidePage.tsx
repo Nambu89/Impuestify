@@ -9,11 +9,11 @@ import { useDeductionDiscovery, type MissingQuestion } from '../hooks/useDeducti
 import './TaxGuidePage.css'
 
 const CCAA_OPTIONS = [
-    'Andalucía', 'Aragón', 'Asturias', 'Baleares', 'Canarias',
-    'Cantabria', 'Castilla-La Mancha', 'Castilla y León', 'Cataluña',
-    'Ceuta', 'Comunidad Valenciana', 'Extremadura', 'Galicia',
+    'Andalucia', 'Aragon', 'Asturias', 'Baleares', 'Canarias',
+    'Cantabria', 'Castilla-La Mancha', 'Castilla y Leon', 'Cataluna',
+    'Ceuta', 'Valencia', 'Extremadura', 'Galicia',
     'La Rioja', 'Madrid', 'Melilla', 'Murcia', 'Navarra',
-    'País Vasco - Araba', 'País Vasco - Bizkaia', 'País Vasco - Gipuzkoa',
+    'Araba', 'Bizkaia', 'Gipuzkoa',
 ]
 
 const STEP_ICONS = [MapPin, Briefcase, PiggyBank, HomeIcon, Users, Gift, BarChart3]

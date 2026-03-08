@@ -394,3 +394,46 @@
         font-size: var(--font-size-5xl);
     }
 }
+
+/* ========== CCAA FIELD (Register) ========== */
+.auth-select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-right: var(--spacing-8);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.auth-required {
+    color: var(--color-error, #ef4444);
+    font-size: 0.75rem;
+    margin-left: 2px;
+}
+
+.auth-ccaa-hint {
+    margin-top: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--radius-lg);
+    line-height: 1.4;
+}
+
+.auth-ccaa-hint--foral {
+    background: rgba(26, 86, 219, 0.07);
+    color: var(--color-primary);
+    border: 1px solid rgba(26, 86, 219, 0.15);
+}
+
+.auth-ccaa-hint--ceuta {
+    background: rgba(6, 182, 212, 0.07);
+    color: #0891b2;
+    border: 1px solid rgba(6, 182, 212, 0.15);
+}
+
+.auth-ccaa-hint--canarias {
+    background: rgba(245, 158, 11, 0.07);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.15);
+}

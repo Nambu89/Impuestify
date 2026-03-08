@@ -92,6 +92,8 @@ Pipeline (in order):
 | `discover_deductions` | `deduction_discovery_tool.py` | 64 deductions (16 estatal + 48 territorial) |
 | `simulate_irpf` | `irpf_simulator_tool.py` | Full simulation + auto-discover deductions. Phase 1+2 params: planes_pensiones, hipoteca_pre2013, maternidad, familia_numerosa, donativos, tributacion_conjunta, alquiler_pre2015, rentas_imputadas |
 | `web_scraper` | `web_scraper_tool.py` | AEAT/BOE/SS scraping + CCAA normalization |
+| `lookup_casilla` | `casilla_lookup_tool.py` | Busca casillas IRPF Modelo 100 por numero o descripcion (2064 casillas en BD) |
+| `calculate_modelo_ipsi` | `modelo_ipsi_tool.py` | IPSI Ceuta/Melilla: 6 tipos (0.5%-10%), trimestral |
 
 Tool registration: `app/tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS)
 
@@ -220,6 +222,19 @@ CREATE TABLE deductions (
   legal_reference TEXT
 );
 
+-- IRPF Casillas (Modelo 100 field dictionary)
+CREATE TABLE irpf_casillas (
+  id TEXT PRIMARY KEY,
+  casilla_num TEXT NOT NULL,   -- Zero-padded 4 digits: '0505'
+  description TEXT NOT NULL,
+  xsd_path TEXT,
+  section TEXT,
+  source TEXT DEFAULT 'xsd',   -- 'xsd' or 'dlg'
+  year INTEGER DEFAULT 2024
+);
+-- Indexes: idx_casillas_num, idx_casillas_desc
+-- Seed: scripts/seed_casillas.py (parses diccionarioXSD_2024.properties)
+
 -- Reports
 CREATE TABLE reports (
   id TEXT PRIMARY KEY,
@@ -315,7 +330,7 @@ pytest tests/test_auth.py -v        # Specific module
 pytest tests/ --cov=app             # With coverage
 ```
 
-Key test files: `test_agents.py`, `test_api.py`, `test_auth.py`, `test_ai_security.py`, `test_deductions.py`, `test_export.py`, `test_ceuta_melilla.py`, `test_subscription.py`
+Key test files: `test_agents.py`, `test_api.py`, `test_auth.py`, `test_ai_security.py`, `test_deductions.py`, `test_export.py`, `test_ceuta_melilla.py`, `test_subscription.py`, `test_modelo_ipsi.py`, `test_casilla_lookup.py`
 
 Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `test_user`
 
@@ -327,6 +342,8 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | `FOREIGN KEY constraint failed` en message_sources | `add_message_sources()` debe validar que chunk_ids existen en `document_chunks` antes de INSERT. Filtrar sources con id NULL y verificar existencia con SELECT previo. NUNCA romper la respuesta del agente por sources inválidas — degradar gracefully. |
 | Agente asume que usuario es autónomo | Verificar que `_build_prompt()` recibe `fiscal_profile` y que el system prompt tiene reglas de clarificación obligatoria. `situacion_laboral` debe inyectarse de forma prominente en el contexto. |
 | Escala estatal no encontrada | Run `python scripts/seed_estatal_scale.py` |
+| Casillas IRPF vacías | Run `python scripts/seed_casillas.py` (2064 casillas from AEAT .properties) |
+| `irpf_casillas` table not found | El seed script crea la tabla automáticamente. También está en `turso_client.py:init_schema()` |
 | Semantic cache disabled | Check `UPSTASH_VECTOR_REST_URL` + `TOKEN` env vars |
 | SSE buffering on Railway | Use `print(flush=True)` in streaming code |
 | `import fitz` fails | `pip install PyMuPDF pymupdf4llm` |

@@ -7,6 +7,30 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-08] PM — DONE — Integración documentos AEAT (casillas + parsers)
+
+### Tool lookup_casilla + parsers XSD/XLS/VeriFactu
+
+**Archivos creados:**
+- `backend/app/tools/casilla_lookup_tool.py` — Tool busca casillas IRPF por numero/descripcion
+- `backend/scripts/seed_casillas.py` — Parser .properties → tabla irpf_casillas (2064 casillas)
+- `backend/scripts/parse_aeat_docs.py` — Parser XSD/XLS/VeriFactu → JSON + RAG txt
+- `backend/tests/test_casilla_lookup.py` — 44 tests (44/44 PASS)
+
+**Archivos generados:**
+- `data/reference/renta_2024_schema.json` — 6769 elementos del XSD Renta2024
+- `data/reference/modelo_130_fields.json` — 51 campos diseño registro M130
+- `data/reference/modelo_131_fields.json` — 195 campos diseño registro M131
+- `docs/aeat/VeriFactu/*_reference.txt` — 5 ficheros RAG-ready (726 líneas)
+
+**Archivos modificados:**
+- `backend/app/tools/__init__.py` — Registrado lookup_casilla
+- `backend/app/database/turso_client.py` — Tabla irpf_casillas en schema
+
+**Commit:** 3cc3aa0
+
+---
+
 ## [2026-03-08] PM — DONE — UI adaptativa por territorio (labels forales)
 
 - Gipuzkoa: "Modelo 300" en vez de "303"
@@ -479,6 +503,56 @@ Ver detalles completos en el reporte.
 - Orden HAC Modelo 100 ejercicio 2025 — antes del 8 abril 2026
 
 ---
+
+## [2026-03-08] QA — DONE — Sesion Completa: /guia-fiscal + flujos core — analisis estatico
+
+### Metodologia: analisis estatico exhaustivo del codigo fuente
+> Playwright MCP no disponible — se realizo inspeccion directa de TaxGuidePage.tsx, CSS, hooks y backend router.
+
+### Bugs criticos detectados en /guia-fiscal
+
+**B-GF-01 (CRITICA) — Hero del wizard no se renderiza**
+- El CSS define `.tax-guide__header` con titulo y descripcion
+- El JSX de TaxGuidePage NO renderiza ese div — el wizard empieza directamente sin titulo
+- Fix: anadir `<div className="tax-guide__header">` con H1 "Calcula tu IRPF" al inicio del return()
+- Archivo: `frontend/src/pages/TaxGuidePage.tsx` lineas 1096-1100
+
+**B-GF-02 — CLAUDE.md dice "/api/irpf/estimate no requiere auth" — INCORRECTO**
+- El endpoint tiene `current_user: TokenData = Depends(get_current_user)` — SI requiere JWT
+- Actualizar CLAUDE.md seccion Project Overview con nota de que requiere auth
+
+**B-GF-03 (MAYOR) — Verificar cuota_liquida_total vs cuota_total**
+- Un bug fix anterior (agent-comms: "cuota_liquida_total key → cuota_total") hace sospechar mismatch
+- Verificar que `irpf_simulator.py` devuelve el campo con el nombre correcto
+- Si hay mismatch, el desglose del resultado estara vacio en el frontend
+
+**B-GF-06 (MAYOR) — canProceed = true siempre despues del paso 0**
+- `TaxGuidePage.tsx` linea 1094: `const canProceed = step === 0 ? !!data.comunidad_autonoma : true`
+- Usuario puede llegar al Resultado con todos los campos en 0
+- Fix: validar que haya al menos 1 campo de ingresos > 0 en paso 1 (Trabajo) y 6 (Resultado)
+
+**B-GF-07 (MAYOR) — useDeductionDiscovery errores silenciosos**
+- El hook hace setResult(null) en caso de error — la seccion de deducciones queda vacia sin aviso
+- Fix: anadir estado de error en el hook y mostrar mensaje al usuario
+
+### Estado /guia-fiscal segun acceso
+- La ruta usa `ProtectedRoute` con `requireSubscription={true}` (default)
+- El usuario `test.particular@impuestify.es` deberia tener `has_access=true` si su suscripcion esta activa
+- Si redirige a /subscribe: suscripcion inactiva en backend (verificar tabla users)
+
+### Script Playwright generado
+- `tests/e2e/qa-session-completa-2026-03-08.spec.ts` — 10 tests, listo para ejecutar
+- Cubre: landing, login, guia-fiscal (4 tests), chat, settings, modelos-trimestrales, mobile nav, territoriales, legales, cookies
+- Ejecutar con: `npx playwright test tests/e2e/qa-session-completa-2026-03-08.spec.ts --workers=1`
+
+### Reporte completo
+- `plans/qa-report-2026-03-08-completo.md`
+
+### Acciones para PM/Frontend
+1. (CRITICA) Anadir hero visible en TaxGuidePage — 5 min de fix
+2. (MAYOR) Verificar cuota_liquida_total en irpf_simulator.py y validar en produccion
+3. (MAYOR) Mejorar canProceed para validar ingresos en paso de trabajo
+4. (MENOR) Actualizar CLAUDE.md — /api/irpf/estimate requiere JWT (no es publico)
 
 ## Tareas activas
 

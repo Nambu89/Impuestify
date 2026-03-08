@@ -10,15 +10,16 @@ import { useApi } from '../hooks/useApi'
 import { useSubscription } from '../hooks/useSubscription'
 import { useFiscalProfile, FiscalProfile } from '../hooks/useFiscalProfile'
 import Header from '../components/Header'
+import DynamicFiscalForm from '../components/DynamicFiscalForm'
 import './SettingsPage.css'
 
 type TabKey = 'personal' | 'security' | 'fiscal' | 'subscription' | 'privacy'
 
 const CCAA_OPTIONS = [
-    '', 'Andalucía', 'Aragón', 'Asturias', 'Illes Balears', 'Canarias',
-    'Cantabria', 'Castilla y León', 'Castilla-La Mancha', 'Cataluña',
-    'Comunitat Valenciana', 'Extremadura', 'Galicia', 'Comunidad de Madrid',
-    'Murcia', 'Navarra', 'País Vasco', 'La Rioja', 'Ceuta', 'Melilla'
+    '', 'Andalucia', 'Aragon', 'Asturias', 'Baleares', 'Canarias',
+    'Cantabria', 'Castilla y Leon', 'Castilla-La Mancha', 'Cataluna',
+    'Valencia', 'Extremadura', 'Galicia', 'Madrid',
+    'Murcia', 'Navarra', 'Araba', 'Bizkaia', 'Gipuzkoa', 'La Rioja', 'Ceuta', 'Melilla'
 ]
 
 const SITUACION_OPTIONS = [
@@ -914,6 +915,16 @@ export default function SettingsPage() {
                                             </div>
                                         )}
                                     </>
+                                )}
+
+                                {/* --- Deducciones autonómicas (DynamicFiscalForm) --- */}
+                                {fiscalForm.ccaa_residencia && (
+                                    <DynamicFiscalForm
+                                        ccaa={fiscalForm.ccaa_residencia}
+                                        values={fiscalForm}
+                                        onChange={(key, value) => updateFiscal(key, value)}
+                                        compact
+                                    />
                                 )}
 
                                 {/* Save button */}

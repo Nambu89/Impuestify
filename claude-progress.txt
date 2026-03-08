@@ -217,3 +217,12 @@
 - Instrucciones para Backend escritas en agent-comms.md (implementacion tools basadas en disenos de registro)
 - Manual Renta 2025 AEAT: sigue 404 (todavia no publicado)
 - Proxima sesion: reintentar Manual Renta 2025 + Orden HAC Modelo 100
+
+[2026-03-08 16:20] QA Sesion 8b — Perfil Melilla + Validacion fix SSE
+- 5/5 tests PASS
+- B-S7-01 CONFIRMADO RESUELTO (stream SSE fix commits e61633d + ee2364f)
+- Tiempos SSE post-fix: 15-25s (antes: 120-130s o CONGELADO)
+- Perfil Melilla: IRPF, deducciones, IPSI, ISD — todos correctos
+- Reporte: plans/qa-report-2026-03-08-melilla.md
+- Screenshots: tests/e2e/screenshots/s8b-*.png (30 capturas)
+- Script reutilizable: tests/e2e/qa-session8b-melilla.spec.ts

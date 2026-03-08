@@ -76,19 +76,72 @@ async def discover_deductions_tool(
     ccaa: str = "Estatal",
     tax_year: int = 2025,
     answers: Optional[Dict[str, Any]] = None,
+    user_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Execute deduction discovery.
 
+    If user_id is provided, the user's stored fiscal profile is loaded and its
+    fields are automatically mapped to deduction requirement keys. These
+    auto-generated answers are then merged with any explicit `answers` supplied
+    by the caller (caller values take precedence).
+
     Args:
-        ccaa: Community (currently only 'Estatal' supported)
+        ccaa: Comunidad Autonoma (or 'Estatal' for state-level only)
         tax_year: Fiscal year
-        answers: User answers for eligibility evaluation
+        answers: Explicit user answers for eligibility evaluation
+        user_id: Optional user ID — if given, profile is auto-loaded from DB
 
     Returns:
         Dict with success, deductions found, savings, and formatted response
     """
     answers = answers or {}
+
+    # --- Auto-populate answers from stored fiscal profile ---
+    if user_id:
+        try:
+            from app.database.turso_client import get_db_client
+            from app.services.deduction_service import get_deduction_service as _get_svc
+            import json as _json
+
+            _db = await get_db_client()
+            _prof_result = await _db.execute(
+                "SELECT ccaa_residencia, situacion_laboral, datos_fiscales "
+                "FROM user_profiles WHERE user_id = ?",
+                [user_id],
+            )
+            if _prof_result.rows:
+                _row = _prof_result.rows[0]
+                _datos_raw = _row.get("datos_fiscales")
+                _datos: Dict[str, Any] = {}
+                if _datos_raw:
+                    try:
+                        _parsed = _json.loads(_datos_raw) if isinstance(_datos_raw, str) else _datos_raw
+                        # datos_fiscales stores entries as {value: X, _source: ...} or plain values
+                        for _k, _v in _parsed.items():
+                            if isinstance(_v, dict) and "value" in _v:
+                                _datos[_k] = _v["value"]
+                            else:
+                                _datos[_k] = _v
+                    except (TypeError, ValueError):
+                        pass
+
+                # Merge top-level profile columns into _datos for the mapper
+                _datos["ccaa_residencia"] = _row.get("ccaa_residencia")
+                _datos["situacion_laboral"] = _row.get("situacion_laboral")
+
+                # If ccaa not passed explicitly, infer from profile
+                _profile_ccaa = _row.get("ccaa_residencia") or ""
+                if ccaa == "Estatal" and _profile_ccaa:
+                    ccaa = _profile_ccaa
+
+                from app.services.deduction_service import DeductionService
+                _auto_answers = DeductionService.build_answers_from_profile(_datos, ccaa)
+                # Merge: explicit answers passed by caller override auto-generated ones
+                merged = {**_auto_answers, **answers}
+                answers = merged
+        except Exception as _e:
+            logger.warning("Could not auto-load profile for user %s: %s", user_id, _e)
 
     try:
         from app.services.deduction_service import get_deduction_service

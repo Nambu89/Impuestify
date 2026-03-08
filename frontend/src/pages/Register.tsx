@@ -1,14 +1,48 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FileText, Mail, Lock, User, Eye, EyeOff, Loader2, Calculator, Map, AlertCircle, CheckCircle } from 'lucide-react'
+import { FileText, Mail, Lock, User, Eye, EyeOff, Loader2, Calculator, Map, AlertCircle, CheckCircle, MapPin } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import './Auth.css'
+
+const CCAA_OPTIONS = [
+    { value: '', label: 'Selecciona tu comunidad' },
+    { value: 'Andalucia', label: 'Andalucía' },
+    { value: 'Aragon', label: 'Aragón' },
+    { value: 'Asturias', label: 'Asturias' },
+    { value: 'Baleares', label: 'Illes Balears' },
+    { value: 'Canarias', label: 'Canarias' },
+    { value: 'Cantabria', label: 'Cantabria' },
+    { value: 'Castilla y Leon', label: 'Castilla y León' },
+    { value: 'Castilla-La Mancha', label: 'Castilla-La Mancha' },
+    { value: 'Cataluna', label: 'Cataluña' },
+    { value: 'Ceuta', label: 'Ceuta' },
+    { value: 'Valencia', label: 'Comunitat Valenciana' },
+    { value: 'Extremadura', label: 'Extremadura' },
+    { value: 'Galicia', label: 'Galicia' },
+    { value: 'Gipuzkoa', label: 'Gipuzkoa' },
+    { value: 'La Rioja', label: 'La Rioja' },
+    { value: 'Madrid', label: 'Comunidad de Madrid' },
+    { value: 'Melilla', label: 'Melilla' },
+    { value: 'Murcia', label: 'Murcia' },
+    { value: 'Navarra', label: 'Navarra' },
+    { value: 'Araba', label: 'Araba/Álava' },
+    { value: 'Bizkaia', label: 'Bizkaia' },
+]
+
+const FORAL_CCAA = ['Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra']
+const FORAL_NAMES: Record<string, string> = {
+    'Araba': 'Araba/Álava',
+    'Bizkaia': 'Bizkaia',
+    'Gipuzkoa': 'Gipuzkoa',
+    'Navarra': 'Navarra',
+}
 
 export default function Register() {
     const navigate = useNavigate()
     const { register } = useAuth()
 
     const [name, setName] = useState('')
+    const [ccaa, setCcaa] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -17,9 +51,18 @@ export default function Register() {
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
 
+    const isForal = FORAL_CCAA.includes(ccaa)
+    const isCeutaMelilla = ccaa === 'Ceuta' || ccaa === 'Melilla'
+    const isCanarias = ccaa === 'Canarias'
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
+
+        if (!ccaa) {
+            setError('Por favor, selecciona tu Comunidad Autónoma')
+            return
+        }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!emailRegex.test(email)) {
@@ -40,7 +83,7 @@ export default function Register() {
         setIsLoading(true)
 
         try {
-            await register(email, password, name)
+            await register(email, password, name, ccaa)
             navigate('/chat')
         } catch (err: any) {
             setError(err.message || 'Error al crear la cuenta')
@@ -117,6 +160,41 @@ export default function Register() {
                                     autoComplete="name"
                                 />
                             </div>
+                        </div>
+
+                        <div className="auth-input-group">
+                            <label htmlFor="ccaa">Comunidad Autónoma de residencia <span className="auth-required">*</span></label>
+                            <div className="auth-input-wrapper">
+                                <span className="auth-input-icon">
+                                    <MapPin size={18} />
+                                </span>
+                                <select
+                                    id="ccaa"
+                                    className="auth-input auth-select"
+                                    value={ccaa}
+                                    onChange={(e) => setCcaa(e.target.value)}
+                                    required
+                                >
+                                    {CCAA_OPTIONS.map(opt => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            {isForal && (
+                                <p className="auth-ccaa-hint auth-ccaa-hint--foral">
+                                    Tu IRPF se calcula con la normativa foral de {FORAL_NAMES[ccaa]}
+                                </p>
+                            )}
+                            {isCeutaMelilla && (
+                                <p className="auth-ccaa-hint auth-ccaa-hint--ceuta">
+                                    Aplica deducción del 60% en IRPF + IPSI en lugar de IVA
+                                </p>
+                            )}
+                            {isCanarias && (
+                                <p className="auth-ccaa-hint auth-ccaa-hint--canarias">
+                                    Aplica IGIC en lugar de IVA
+                                </p>
+                            )}
                         </div>
 
                         <div className="auth-input-group">

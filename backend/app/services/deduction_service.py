@@ -231,6 +231,117 @@ class DeductionService:
 
         return missing_questions
 
+    @staticmethod
+    def build_answers_from_profile(profile: dict, ccaa: str = "") -> dict:
+        """
+        Map fiscal profile fields to deduction requirement keys.
+
+        This allows the deduction engine to pre-populate answers automatically
+        from the user's stored profile, so the agent does not need to ask for
+        information that is already known.
+
+        Args:
+            profile: Flat dict of profile values (from datos_fiscales + top-level columns).
+            ccaa: CCAA name (used for territory-specific answers).
+
+        Returns:
+            Dict of answer keys understood by evaluate_eligibility().
+        """
+        answers: Dict[str, Any] = {}
+
+        # --- Derived boolean answers ---
+        if (profile.get("num_descendientes", 0) or 0) > 0:
+            answers["tiene_hijos"] = True
+
+        # Ascendientes
+        asc_65 = profile.get("num_ascendientes_65", 0) or 0
+        asc_75 = profile.get("num_ascendientes_75", 0) or 0
+        if asc_65 > 0 or asc_75 > 0:
+            answers["ascendiente_a_cargo"] = True
+
+        # Discapacidad contribuyente
+        disc_pct = profile.get("discapacidad_contribuyente", 0) or 0
+        if disc_pct >= 33:
+            answers["discapacidad_reconocida"] = True
+
+        # Familia numerosa
+        if profile.get("familia_numerosa"):
+            answers["familia_numerosa"] = True
+
+        # Madre trabajadora (deduccion maternidad)
+        if profile.get("madre_trabajadora_ss"):
+            answers["madre_trabajadora"] = True
+
+        # Ceuta / Melilla residency
+        if profile.get("ceuta_melilla") or ccaa in ("Ceuta", "Melilla"):
+            answers["residente_ceuta_melilla"] = True
+
+        # Hipoteca pre-2013
+        if profile.get("hipoteca_pre2013"):
+            answers["adquisicion_antes_2013"] = True
+            answers["deducia_antes_2013"] = True  # conservative assumption
+
+        # Planes de pensiones
+        if (profile.get("aportaciones_plan_pensiones", 0) or 0) > 0 or \
+           (profile.get("aportaciones_plan_pensiones_empresa", 0) or 0) > 0:
+            answers["aportaciones_planes_pensiones"] = True
+
+        # Donativo
+        if (profile.get("donativos_ley_49_2002", 0) or 0) > 0:
+            answers["donativo_a_entidad_acogida"] = True
+
+        # Autonomo
+        if profile.get("situacion_laboral") == "autonomo":
+            estimacion = profile.get("metodo_estimacion_irpf", "") or ""
+            if "directa" in estimacion:
+                answers["autonomo_estimacion_directa"] = True
+
+        # --- Direct 1:1 boolean mappings ---
+        DIRECT_MAPPINGS = [
+            "alquiler_vivienda_habitual",
+            "vivienda_habitual_propiedad",
+            "nacimiento_adopcion_reciente",
+            "adopcion_internacional",
+            "acogimiento_familiar",
+            "familia_monoparental",
+            "descendiente_discapacidad",
+            "ascendiente_discapacidad",
+            "hijos_escolarizados",
+            "vehiculo_electrico_nuevo",
+            "obras_mejora_energetica",
+            "municipio_despoblado",
+            "rehabilitacion_vivienda",
+            "inversion_empresa_nueva",
+            "instalacion_renovable",
+            "gastos_guarderia",
+            "ambos_progenitores_trabajan",
+            "hijos_estudios_universitarios",
+            "donativo_entidad_autonomica",
+            "donativo_investigacion",
+            "donativo_patrimonio",
+            "donativo_fundacion_local",
+            "familiar_discapacitado_cargo",
+            "empleada_hogar_cuidado",
+            "dacion_pago_alquiler",
+            "arrendador_vivienda_social",
+            "vivienda_rural",
+            # Foral
+            "pension_viudedad",
+            "reduccion_jornada_cuidado",
+            # Legacy keys (kept for compatibility with existing deduction requirements)
+            "tarifa_plana",
+            "pluriactividad",
+            "territorio_foral",
+        ]
+        for key in DIRECT_MAPPINGS:
+            val = profile.get(key)
+            if val is True:
+                answers[key] = True
+            elif val is False:
+                answers[key] = False
+
+        return answers
+
     def _summarize(self, d: Dict[str, Any]) -> Dict[str, Any]:
         """Create a summary dict for a deduction (without internal fields)."""
         summary = {

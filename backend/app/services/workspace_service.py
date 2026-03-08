@@ -199,5 +199,87 @@ class WorkspaceService:
         logger.info(f"Deleted workspace {workspace_id} for user {user_id}")
         return True
 
+    async def get_fiscal_summary_from_workspace(self, user_id: str) -> Dict[str, Any]:
+        """
+        Extract fiscal totals from processed workspace files for this user.
+
+        Reads extracted_data JSON from workspace_files (processing_status='completed')
+        and aggregates: ingresos_actividad, gastos_actividad, iva_repercutido, iva_soportado.
+
+        NOTE: This method does NOT overwrite the user's fiscal profile.
+        It returns a dict with suggested values + metadata so the frontend
+        can show a "use data from documents" prompt. The user decides.
+
+        Returns:
+            {
+                "has_data": bool,
+                "ingresos_actividad": float,
+                "gastos_actividad": float,
+                "iva_repercutido": float,
+                "iva_soportado": float,
+                "file_count": int,
+                "files": [{"filename": str, "period": str, "tipo": str}]
+            }
+        """
+        import json as _json
+
+        db = await get_db_client()
+
+        result = await db.execute(
+            """
+            SELECT wf.filename, wf.extracted_data, wf.file_type
+            FROM workspace_files wf
+            JOIN workspaces w ON wf.workspace_id = w.id
+            WHERE w.user_id = ? AND wf.processing_status = 'completed'
+              AND wf.extracted_data IS NOT NULL
+            ORDER BY wf.created_at DESC
+            """,
+            [user_id],
+        )
+
+        summary = {
+            "has_data": False,
+            "ingresos_actividad": 0.0,
+            "gastos_actividad": 0.0,
+            "iva_repercutido": 0.0,
+            "iva_soportado": 0.0,
+            "file_count": 0,
+            "files": [],
+        }
+
+        for row in result.rows:
+            raw = row.get("extracted_data")
+            if not raw:
+                continue
+            try:
+                data = _json.loads(raw) if isinstance(raw, str) else raw
+            except (TypeError, ValueError):
+                continue
+
+            if not isinstance(data, dict):
+                continue
+
+            # Aggregate numeric fields
+            summary["ingresos_actividad"] += float(data.get("ingresos_actividad") or data.get("total_ingresos") or 0)
+            summary["gastos_actividad"] += float(data.get("gastos_actividad") or data.get("total_gastos") or 0)
+            summary["iva_repercutido"] += float(data.get("iva_repercutido") or data.get("iva_cobrado") or 0)
+            summary["iva_soportado"] += float(data.get("iva_soportado") or data.get("iva_pagado") or 0)
+
+            summary["files"].append({
+                "filename": row.get("filename", ""),
+                "tipo": row.get("file_type", ""),
+                "period": data.get("periodo") or data.get("period") or "",
+            })
+            summary["file_count"] += 1
+
+        if summary["file_count"] > 0:
+            summary["has_data"] = True
+            # Round to 2 decimals
+            for k in ("ingresos_actividad", "gastos_actividad", "iva_repercutido", "iva_soportado"):
+                summary[k] = round(summary[k], 2)
+
+        return summary
+
+
 # Global instance
 workspace_service = WorkspaceService()

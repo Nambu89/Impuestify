@@ -8,6 +8,7 @@ Tests for:
 - WorkspaceAgent
 - Workspace API endpoints
 """
+import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import json
@@ -408,7 +409,7 @@ class TestWorkspaceDatabaseSchema:
 
     def test_workspace_embeddings_table_in_schema(self):
         """Test that workspace_file_embeddings table is in schema."""
-        with open('app/database/turso_client.py', encoding='utf-8') as f:
+        with open(os.path.join(os.path.dirname(__file__), '..', 'app', 'database', 'turso_client.py'), encoding='utf-8') as f:
             schema_code = f.read()
 
         assert 'workspace_file_embeddings' in schema_code
@@ -418,7 +419,7 @@ class TestWorkspaceDatabaseSchema:
 
     def test_workspace_embeddings_indexes(self):
         """Test that indexes are defined for embeddings table."""
-        with open('app/database/turso_client.py', encoding='utf-8') as f:
+        with open(os.path.join(os.path.dirname(__file__), '..', 'app', 'database', 'turso_client.py'), encoding='utf-8') as f:
             schema_code = f.read()
 
         assert 'idx_ws_embeddings_workspace' in schema_code
@@ -434,7 +435,7 @@ class TestWorkspaceIntegration:
 
     def test_chat_stream_workspace_integration(self):
         """Test that chat_stream.py has workspace integration."""
-        with open('app/routers/chat_stream.py', encoding='utf-8') as f:
+        with open(os.path.join(os.path.dirname(__file__), '..', 'app', 'routers', 'chat_stream.py'), encoding='utf-8') as f:
             code = f.read()
 
         assert 'workspace_id' in code

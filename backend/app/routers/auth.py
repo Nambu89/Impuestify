@@ -23,6 +23,7 @@ from app.config import settings
 from app.services.user_service import user_service
 from app.services.subscription_service import get_subscription_service
 from app.database.models import UserCreate, User
+from app.database.turso_client import get_db_client
 from app.security.rate_limiter import limiter
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, description="Mínimo 8 caracteres")
     name: Optional[str] = None
+    ccaa_residencia: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -93,6 +95,20 @@ async def register(request: Request, data: RegisterRequest):
                 name=data.name
             )
         )
+
+        # Save CCAA to user_profiles if provided
+        if data.ccaa_residencia:
+            try:
+                db = await get_db_client()
+                import uuid as _uuid
+                await db.execute(
+                    """INSERT INTO user_profiles (id, user_id, ccaa_residencia, created_at, updated_at)
+                       VALUES (?, ?, ?, datetime('now'), datetime('now'))
+                       ON CONFLICT(user_id) DO UPDATE SET ccaa_residencia = ?, updated_at = datetime('now')""",
+                    [str(_uuid.uuid4()), user.id, data.ccaa_residencia, data.ccaa_residencia],
+                )
+            except Exception as e:
+                logger.warning(f"Failed to save ccaa_residencia (non-blocking): {e}")
 
         # Create Stripe customer for the new user
         sub_service = await get_subscription_service()

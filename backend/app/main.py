@@ -457,6 +457,10 @@ app.include_router(irpf_estimate_router)
 from app.routers.declarations import router as declarations_router
 app.include_router(declarations_router)
 
+# Fiscal Profile Fields (adaptive by CCAA)
+from app.routers.fiscal_fields import router as fiscal_fields_router
+app.include_router(fiscal_fields_router)
+
 # Prometheus instrumentation with custom metrics
 from app.metrics import setup_instrumentator, set_app_info
 setup_instrumentator(app)
