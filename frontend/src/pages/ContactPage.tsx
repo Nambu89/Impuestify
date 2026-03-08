@@ -16,10 +16,10 @@ export default function ContactPage() {
         name: user?.name || '',
         email: user?.email || '',
         subject: contactType === 'autonomo'
-            ? 'Informacion sobre plan para autonomos'
+            ? 'Información sobre plan para autónomos'
             : '',
         message: contactType === 'autonomo'
-            ? 'Me gustaria recibir informacion sobre el plan especializado para autonomos y profesionales por cuenta propia.'
+            ? 'Me gustaría recibir información sobre el plan especializado para autónomos y profesionales por cuenta propia.'
             : '',
     })
 

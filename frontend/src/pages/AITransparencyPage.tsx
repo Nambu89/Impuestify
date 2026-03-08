@@ -62,16 +62,16 @@ export default function AITransparencyPage() {
                     <h2>3. Capacidades y Limitaciones</h2>
                     <div className="two-column">
                         <div>
-                            <h3><CheckCircle size={16} className="inline-icon" /> Que puede hacer</h3>
+                            <h3><CheckCircle size={16} className="inline-icon" /> Qué puede hacer</h3>
                             <ul>
                                 <li>Responder preguntas sobre fiscalidad</li>
                                 <li>Calcular IRPF y cuotas</li>
-                                <li>Analizar PDFs de nominas/AEAT</li>
-                                <li>Buscar informacion oficial</li>
+                                <li>Analizar PDFs de nóminas/AEAT</li>
+                                <li>Buscar información oficial</li>
                             </ul>
                         </div>
                         <div>
-                            <h3><XCircle size={16} className="inline-icon" /> Que NO puede hacer</h3>
+                            <h3><XCircle size={16} className="inline-icon" /> Qué NO puede hacer</h3>
                             <ul>
                                 <li>NO presenta declaraciones</li>
                                 <li>NO garantiza exactitud 100%</li>
@@ -86,19 +86,19 @@ export default function AITransparencyPage() {
                     <h2>4. Riesgos Conocidos</h2>
                     <div className="alert alert-warning">
                         <strong><AlertTriangle size={16} className="inline-icon" /> Alucinaciones de IA</strong>
-                        <p>La IA puede generar informacion que parece correcta pero es erronea.</p>
-                        <p><strong>Mitigacion</strong>: RAG (fuentes documentadas) + citacion de fuentes + disclaimers</p>
+                        <p>La IA puede generar información que parece correcta pero es errónea.</p>
+                        <p><strong>Mitigación</strong>: RAG (fuentes documentadas) + citación de fuentes + disclaimers</p>
                     </div>
 
                     <div className="alert alert-warning">
-                        <strong><AlertTriangle size={16} className="inline-icon" /> Informacion Desactualizada</strong>
+                        <strong><AlertTriangle size={16} className="inline-icon" /> Información Desactualizada</strong>
                         <p>Normativa fiscal cambia frecuentemente.</p>
-                        <p><strong>Mitigacion</strong>: Busqueda web en tiempo real + fecha en respuestas</p>
+                        <p><strong>Mitigación</strong>: Búsqueda web en tiempo real + fecha en respuestas</p>
                     </div>
                 </section>
 
                 <section>
-                    <h2>5. Supervision Humana Requerida</h2>
+                    <h2>5. Supervisión Humana Requerida</h2>
                     <p className="highlight">
                         <Shield size={16} className="inline-icon" /> <strong>Usted SIEMPRE debe</strong>:
                     </p>

@@ -9,11 +9,11 @@ import { useDeductionDiscovery, type MissingQuestion } from '../hooks/useDeducti
 import './TaxGuidePage.css'
 
 const CCAA_OPTIONS = [
-    'Andalucia', 'Aragon', 'Asturias', 'Baleares', 'Canarias',
-    'Cantabria', 'Castilla-La Mancha', 'Castilla y Leon', 'Cataluna',
+    'Andalucía', 'Aragón', 'Asturias', 'Baleares', 'Canarias',
+    'Cantabria', 'Castilla-La Mancha', 'Castilla y León', 'Cataluña',
     'Ceuta', 'Comunidad Valenciana', 'Extremadura', 'Galicia',
     'La Rioja', 'Madrid', 'Melilla', 'Murcia', 'Navarra',
-    'Pais Vasco - Araba', 'Pais Vasco - Bizkaia', 'Pais Vasco - Gipuzkoa',
+    'País Vasco - Araba', 'País Vasco - Bizkaia', 'País Vasco - Gipuzkoa',
 ]
 
 const STEP_ICONS = [MapPin, Briefcase, PiggyBank, HomeIcon, Users, Gift, BarChart3]
@@ -67,7 +67,7 @@ function CcaaTip({ ccaa }: { ccaa: string }) {
 
     const isCeutaMelilla = ccaa === 'Ceuta' || ccaa === 'Melilla'
     const isCanarias = ccaa === 'Canarias'
-    const isForal = ccaa.startsWith('Pais Vasco') || ccaa === 'Navarra'
+    const isForal = ccaa.startsWith('País Vasco') || ccaa === 'Navarra'
 
     if (isCeutaMelilla) {
         return (
@@ -87,7 +87,7 @@ function CcaaTip({ ccaa }: { ccaa: string }) {
                 <AlertTriangle size={18} />
                 <div>
                     <strong>Territorio foral</strong>
-                    <p>Los territorios forales tienen su propio sistema IRPF con escalas y deducciones especificas. No se aplican las deducciones estatales del regimen comun.</p>
+                    <p>Los territorios forales tienen su propio sistema IRPF con escalas y deducciones específicas. No se aplican las deducciones estatales del régimen común.</p>
                 </div>
             </div>
         )
@@ -99,7 +99,7 @@ function CcaaTip({ ccaa }: { ccaa: string }) {
                 <Info size={18} />
                 <div>
                     <strong>Canarias</strong>
-                    <p>En Canarias se aplica el IGIC en lugar del IVA. El IRPF sigue el regimen comun estatal con deducciones autonomicas propias.</p>
+                    <p>En Canarias se aplica el IGIC en lugar del IVA. El IRPF sigue el régimen común estatal con deducciones autonómicas propias.</p>
                 </div>
             </div>
         )
@@ -183,7 +183,7 @@ function StepPersonal({ data, update }: StepProps) {
                         label="Tributacion conjunta"
                         checked={data.tributacion_conjunta}
                         onChange={v => update({ tributacion_conjunta: v })}
-                        help="Permite declarar con tu unidad familiar. Aplica una reduccion fija sobre la base imponible."
+                        help="Permite declarar con tu unidad familiar. Aplica una reducción fija sobre la base imponible."
                     />
 
                     {data.tributacion_conjunta && (
@@ -194,8 +194,8 @@ function StepPersonal({ data, update }: StepProps) {
                                 value={data.tipo_unidad_familiar}
                                 onChange={e => update({ tipo_unidad_familiar: e.target.value })}
                             >
-                                <option value="matrimonio">Matrimonio (reduccion 3.400 EUR)</option>
-                                <option value="monoparental">Monoparental (reduccion 2.150 EUR)</option>
+                                <option value="matrimonio">Matrimonio (reducción 3.400 EUR)</option>
+                                <option value="monoparental">Monoparental (reducción 2.150 EUR)</option>
                             </select>
                         </div>
                     )}
@@ -243,7 +243,7 @@ function StepTrabajo({ data, update }: StepProps) {
                         value={data.salario_base_mensual}
                         onChange={v => update({ salario_base_mensual: v })}
                         suffix="EUR"
-                        help="Aparece en tu nomina como 'Salario base'"
+                        help="Aparece en tu nómina como 'Salario base'"
                     />
                     <NumberInput
                         label="Complementos salariales"
@@ -286,7 +286,7 @@ function StepTrabajo({ data, update }: StepProps) {
                     value={data.ingresos_trabajo}
                     onChange={v => update({ ingresos_trabajo: v })}
                     suffix="EUR"
-                    help="Suma de todas tus nominas brutas del ano"
+                    help="Suma de todas tus nóminas brutas del año"
                 />
             )}
 
@@ -301,12 +301,12 @@ function StepTrabajo({ data, update }: StepProps) {
             <h3 className="tg-step__subtitle">Retenciones IRPF</h3>
 
             <NumberInput
-                label="Porcentaje IRPF en nomina"
+                label="Porcentaje IRPF en nómina"
                 value={data.irpf_retenido_porcentaje}
                 onChange={v => update({ irpf_retenido_porcentaje: v })}
                 suffix="%"
                 step={0.1}
-                help="Aparece en tu nomina como '% IRPF' o 'retencion IRPF'"
+                help="Aparece en tu nómina como '% IRPF' o 'retención IRPF'"
             />
 
             {data.irpf_retenido_porcentaje > 0 && computedAnnual > 0 && (
@@ -320,7 +320,7 @@ function StepTrabajo({ data, update }: StepProps) {
                 value={data.retenciones_trabajo}
                 onChange={v => update({ retenciones_trabajo: v })}
                 suffix="EUR"
-                help="Si pusiste el %, se calcula automaticamente. Si lo sabes exacto, ponlo aqui."
+                help="Si pusiste el %, se calcula automáticamente. Si lo sabes exacto, ponlo aquí."
             />
 
             {/* Activity income section for autonomos */}
@@ -444,7 +444,7 @@ function StepTrabajo({ data, update }: StepProps) {
                         label="Mas del 75% de ingresos de un solo cliente"
                         checked={data.un_solo_cliente}
                         onChange={v => update({ un_solo_cliente: v })}
-                        help="Autonomo economicamente dependiente (TRADE). Aplica reduccion similar a trabajo (Art. 32.2 LIRPF)"
+                        help="Autónomo económicamente dependiente (TRADE). Aplica reducción similar a trabajo (Art. 32.2 LIRPF)"
                     />
                 </>
             )}
@@ -482,7 +482,7 @@ function StepInmuebles({ data, update }: StepProps) {
             <NumberInput label="Retenciones sobre alquileres" value={data.retenciones_alquiler} onChange={v => update({ retenciones_alquiler: v })} suffix="EUR" help="19% retenido por inquilinos empresas/profesionales" />
 
             <h3 className="tg-step__subtitle">Alquiler como inquilino</h3>
-            <CheckboxInput label="Tengo contrato de alquiler anterior al 1/1/2015" checked={data.alquiler_habitual_pre2015} onChange={v => update({ alquiler_habitual_pre2015: v })} help="Regimen transitorio: deduccion del 10,05% sobre el alquiler pagado (max. 9.040 EUR/ano)" />
+            <CheckboxInput label="Tengo contrato de alquiler anterior al 1/1/2015" checked={data.alquiler_habitual_pre2015} onChange={v => update({ alquiler_habitual_pre2015: v })} help="Régimen transitorio: deducción del 10,05% sobre el alquiler pagado (máx. 9.040 EUR/año)" />
             {data.alquiler_habitual_pre2015 && (
                 <NumberInput label="Alquiler anual pagado" value={data.alquiler_pagado_anual} onChange={v => update({ alquiler_pagado_anual: v })} suffix="EUR" />
             )}
@@ -581,11 +581,11 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
             <p className="tg-step__desc">Estas deducciones reducen directamente tu cuota o tu base imponible.</p>
 
             <h3 className="tg-step__subtitle">Planes de pensiones</h3>
-            <NumberInput label="Aportaciones propias a planes de pensiones" value={data.aportaciones_plan_pensiones} onChange={v => update({ aportaciones_plan_pensiones: v })} suffix="EUR" help="Maximo 1.500 EUR/ano (reducen la base imponible general)" />
+            <NumberInput label="Aportaciones propias a planes de pensiones" value={data.aportaciones_plan_pensiones} onChange={v => update({ aportaciones_plan_pensiones: v })} suffix="EUR" help="Máximo 1.500 EUR/año (reducen la base imponible general)" />
             <NumberInput label="Aportaciones de la empresa" value={data.aportaciones_plan_pensiones_empresa} onChange={v => update({ aportaciones_plan_pensiones_empresa: v })} suffix="EUR" help="Limite conjunto con propias: 8.500 EUR" />
 
             <h3 className="tg-step__subtitle">Vivienda habitual (hipoteca anterior al 1/1/2013)</h3>
-            <CheckboxInput label="Tengo hipoteca firmada antes del 1 de enero de 2013" checked={data.hipoteca_pre2013} onChange={v => update({ hipoteca_pre2013: v })} help="Regimen transitorio: deduccion del 15% sobre max 9.040 EUR/ano" />
+            <CheckboxInput label="Tengo hipoteca firmada antes del 1 de enero de 2013" checked={data.hipoteca_pre2013} onChange={v => update({ hipoteca_pre2013: v })} help="Régimen transitorio: deducción del 15% sobre máx. 9.040 EUR/año" />
 
             {data.hipoteca_pre2013 && (
                 <>
@@ -745,7 +745,7 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                             <BreakdownRow label="Gastos deducibles" value={result.actividad.total_gastos_deducibles} prefix="-" />
                             {result.actividad.gastos_dificil_justificacion > 0 && <BreakdownRow label="Gastos dificil justificacion (5%)" value={result.actividad.gastos_dificil_justificacion} prefix="-" />}
                             <BreakdownRow label="Rendimiento neto" value={result.actividad.rendimiento_neto} />
-                            {result.actividad.reduccion_aplicada > 0 && <BreakdownRow label={`Reduccion (${result.actividad.tipo_reduccion === 'inicio_actividad_art32_3' ? 'inicio actividad 20%' : 'TRADE Art. 32.2'})`} value={result.actividad.reduccion_aplicada} prefix="-" />}
+                            {result.actividad.reduccion_aplicada > 0 && <BreakdownRow label={`Reducción (${result.actividad.tipo_reduccion === 'inicio_actividad_art32_3' ? 'inicio actividad 20%' : 'TRADE Art. 32.2'})`} value={result.actividad.reduccion_aplicada} prefix="-" />}
                             <BreakdownRow label="Rendimiento neto reducido" value={result.actividad.rendimiento_neto_reducido} />
                         </div>
                     </>

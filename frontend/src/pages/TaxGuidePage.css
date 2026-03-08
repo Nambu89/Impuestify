@@ -1,15 +1,63 @@
-/* TaxGuidePage — Mobile-first wizard */
+/* TaxGuidePage — Mobile-first wizard — Premium redesign */
+
+/* ====== Base page ====== */
 
 .tax-guide {
     min-height: 100vh;
-    background: var(--color-gray-50);
+    background: var(--color-secondary);
 }
 
-/* Layout: single column mobile, sidebar + main desktop */
+/* ====== Hero header ====== */
+
+.tax-guide__header {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #162032 100%);
+    padding: 100px var(--spacing-4) var(--spacing-10);
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tax-guide__header-title {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    color: var(--color-white);
+    margin: 0 0 var(--spacing-2) 0;
+    letter-spacing: -0.02em;
+}
+
+.tax-guide__header-title span {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.tax-guide__header-desc {
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+    line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+    .tax-guide__header {
+        padding: 110px var(--spacing-6) var(--spacing-12);
+    }
+
+    .tax-guide__header-title {
+        font-size: var(--font-size-3xl);
+    }
+
+    .tax-guide__header-desc {
+        font-size: var(--font-size-base);
+    }
+}
+
+/* ====== Layout: single column mobile, sidebar + main desktop ====== */
+
 .tax-guide__layout {
     max-width: 1100px;
     margin: 0 auto;
-    padding: var(--spacing-4);
+    padding: var(--spacing-6) var(--spacing-4);
     padding-bottom: 100px; /* space for mobile sticky bar */
 }
 
@@ -18,7 +66,7 @@
         display: grid;
         grid-template-columns: 280px 1fr;
         gap: var(--spacing-6);
-        padding-bottom: var(--spacing-8);
+        padding-bottom: var(--spacing-10);
     }
 }
 
@@ -52,7 +100,7 @@
     min-width: 0;
 }
 
-/* ====== Mode Selector (Phase D) ====== */
+/* ====== Mode Selector ====== */
 
 .tg-mode-selector {
     display: grid;
@@ -66,11 +114,12 @@
     align-items: center;
     gap: var(--spacing-3);
     padding: var(--spacing-4);
-    border: 2px solid var(--color-gray-200);
-    border-radius: var(--radius-lg);
-    background: var(--color-white);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-base);
     text-align: left;
     font-family: var(--font-family);
 }
@@ -78,44 +127,46 @@
 .tg-mode-selector__btn strong {
     display: block;
     font-size: var(--font-size-sm);
-    color: var(--color-gray-800);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .tg-mode-selector__btn span {
     display: block;
     font-size: var(--font-size-xs);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.45);
 }
 
 .tg-mode-selector__btn:hover {
-    border-color: var(--color-primary-light);
+    border-color: rgba(59, 130, 246, 0.4);
+    background: rgba(255, 255, 255, 0.07);
 }
 
 .tg-mode-selector__btn--active {
-    border-color: var(--color-primary);
-    background: rgba(26, 86, 219, 0.04);
-    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+    border-color: var(--color-primary-light);
+    background: rgba(26, 86, 219, 0.18);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
 }
 
 .tg-mode-selector__btn--active strong {
-    color: var(--color-primary);
+    color: var(--color-accent);
 }
 
-/* ====== Toggle Group (Phase A) ====== */
+/* ====== Toggle Group ====== */
 
 .tg-toggle-group {
     display: inline-flex;
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-lg);
     overflow: hidden;
     margin-bottom: var(--spacing-4);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .tg-toggle-group__btn {
     padding: var(--spacing-2) var(--spacing-4);
     border: none;
-    background: var(--color-white);
-    color: var(--color-gray-600);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
     font-size: var(--font-size-sm);
     font-family: var(--font-family);
     font-weight: 500;
@@ -124,43 +175,44 @@
 }
 
 .tg-toggle-group__btn:not(:last-child) {
-    border-right: 1px solid var(--color-gray-300);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tg-toggle-group__btn:hover {
-    background: var(--color-gray-50);
+    color: var(--color-white);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .tg-toggle-group__btn--active {
-    background: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
     color: var(--color-white);
 }
 
 .tg-toggle-group__btn--active:hover {
-    background: var(--color-primary-dark);
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
 }
 
-/* ====== Computed Value (Phase A) ====== */
+/* ====== Computed Value ====== */
 
 .tg-computed-value {
-    background: var(--color-gray-50);
-    border: 1px solid var(--color-gray-200);
-    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
     padding: var(--spacing-3) var(--spacing-4);
     font-size: var(--font-size-sm);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.55);
     margin-bottom: var(--spacing-4);
 }
 
 .tg-computed-value strong {
-    color: var(--color-gray-900);
+    color: var(--color-white);
 }
 
-/* ====== Progress bar ====== */
+/* ====== Progress pills ====== */
 
 .tg-progress {
     display: flex;
-    gap: var(--spacing-1);
+    gap: var(--spacing-2);
     margin-bottom: var(--spacing-6);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -177,10 +229,10 @@
     align-items: center;
     gap: var(--spacing-1);
     padding: var(--spacing-2) var(--spacing-3);
-    border: 1px solid var(--color-gray-200);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--radius-full);
-    background: var(--color-white);
-    color: var(--color-gray-500);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.4);
     font-size: var(--font-size-xs);
     font-family: var(--font-family);
     cursor: pointer;
@@ -190,21 +242,22 @@
 }
 
 .tg-progress__step:hover {
-    border-color: var(--color-primary-light);
-    color: var(--color-primary);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: rgba(255, 255, 255, 0.75);
 }
 
 .tg-progress__step--active {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    border-color: transparent;
     color: var(--color-white);
+    box-shadow: 0 0 16px rgba(26, 86, 219, 0.45);
+    font-weight: 600;
 }
 
 .tg-progress__step--done {
-    background: var(--color-primary-light);
-    border-color: var(--color-primary-light);
-    color: var(--color-white);
-    opacity: 0.7;
+    background: rgba(6, 182, 212, 0.15);
+    border-color: rgba(6, 182, 212, 0.3);
+    color: var(--color-accent);
 }
 
 .tg-progress__label {
@@ -220,11 +273,12 @@
 /* ====== Step container ====== */
 
 .tg-step-container {
-    background: var(--color-white);
-    border-radius: var(--radius-xl);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-2xl);
     padding: var(--spacing-6);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-gray-200);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     margin-bottom: var(--spacing-4);
     animation: tg-fadeIn 0.25s ease;
 }
@@ -235,7 +289,7 @@
     }
 }
 
-/* Phase D: Slide animations */
+/* Slide animations */
 .tg-step-container--slide-left {
     animation: tg-slideLeft 0.3s ease;
 }
@@ -264,13 +318,13 @@
 .tg-step__title {
     font-size: var(--font-size-xl);
     font-weight: 700;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin: 0 0 var(--spacing-2) 0;
 }
 
 .tg-step__desc {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.5);
     margin: 0 0 var(--spacing-6) 0;
     line-height: 1.5;
 }
@@ -278,10 +332,10 @@
 .tg-step__subtitle {
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: var(--color-gray-800);
+    color: rgba(255, 255, 255, 0.75);
     margin: var(--spacing-6) 0 var(--spacing-3) 0;
     padding-top: var(--spacing-4);
-    border-top: 1px solid var(--color-gray-100);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tg-step__subtitle:first-of-type {
@@ -290,7 +344,7 @@
     border-top: none;
 }
 
-/* ====== Form fields ====== */
+/* ====== Form fields — premium inputs ====== */
 
 .tg-field {
     margin-bottom: var(--spacing-4);
@@ -300,8 +354,8 @@
     display: block;
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--color-gray-700);
-    margin-bottom: var(--spacing-1);
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: var(--spacing-2);
 }
 
 .tg-field__input-wrap {
@@ -313,28 +367,40 @@
 .tg-field__input,
 .tg-field__select {
     width: 100%;
-    padding: var(--spacing-3);
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--radius-md);
+    height: 48px;
+    padding: 0 var(--spacing-4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-xl);
     font-size: var(--font-size-base);
     font-family: var(--font-family);
-    color: var(--color-gray-900);
-    background: var(--color-white);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    color: var(--color-white);
+    background: rgba(255, 255, 255, 0.07);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
     -webkit-appearance: none;
+}
+
+.tg-field__input::placeholder,
+.tg-field__select option {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.tg-field__select option {
+    background: var(--color-secondary);
+    color: var(--color-white);
 }
 
 .tg-field__input:focus,
 .tg-field__select:focus {
     outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+    border-color: var(--color-primary-light);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.2);
 }
 
 .tg-field__suffix {
     position: absolute;
-    right: var(--spacing-3);
-    color: var(--color-gray-400);
+    right: var(--spacing-4);
+    color: rgba(255, 255, 255, 0.35);
     font-size: var(--font-size-sm);
     pointer-events: none;
 }
@@ -346,7 +412,7 @@
 .tg-field__help {
     display: block;
     font-size: var(--font-size-xs);
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.35);
     margin-top: var(--spacing-1);
 }
 
@@ -355,25 +421,28 @@
     align-items: center;
     gap: var(--spacing-2);
     cursor: pointer;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: var(--font-size-sm);
 }
 
 .tg-field__checkbox-label input[type="checkbox"] {
     width: 18px;
     height: 18px;
-    accent-color: var(--color-primary);
+    accent-color: var(--color-primary-light);
 }
 
-/* ====== CCAA Tips (Phase C) ====== */
+/* ====== CCAA Tips ====== */
 
 .tg-tip {
     display: flex;
     align-items: flex-start;
     gap: var(--spacing-3);
     padding: var(--spacing-4);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     margin-bottom: var(--spacing-4);
     font-size: var(--font-size-sm);
     line-height: 1.5;
+    backdrop-filter: blur(8px);
 }
 
 .tg-tip strong {
@@ -387,24 +456,24 @@
 }
 
 .tg-tip--success {
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    color: #065f46;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
 }
 
 .tg-tip--warning {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    color: #92400e;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: #fcd34d;
 }
 
 .tg-tip--info {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    color: #1e40af;
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: #93c5fd;
 }
 
-/* ====== Deduction Discovery (Phase B) ====== */
+/* ====== Deduction Discovery ====== */
 
 .tg-discovery {
     margin-top: var(--spacing-4);
@@ -412,7 +481,7 @@
 
 .tg-discovery__loading {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.35);
     font-style: italic;
     padding: var(--spacing-4) 0;
 }
@@ -426,59 +495,61 @@
     font-weight: 700;
     margin: 0 0 var(--spacing-3) 0;
     padding-bottom: var(--spacing-2);
-    border-bottom: 1px solid var(--color-gray-100);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tg-discovery__section-label--eligible {
-    color: #047857;
+    color: #6ee7b7;
 }
 
 .tg-discovery__section-label--maybe {
-    color: #b45309;
+    color: #fcd34d;
 }
 
 .tg-discovery__savings {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-2);
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    border-radius: var(--radius-md);
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-lg);
     padding: var(--spacing-2) var(--spacing-4);
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: #047857;
+    color: #6ee7b7;
     margin-top: var(--spacing-3);
 }
 
 .tg-discovery__empty {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.35);
     padding: var(--spacing-4) 0;
 }
 
-/* ====== Deduction Card (Phase B) ====== */
+/* ====== Deduction Card ====== */
 
 .tg-deduction-card {
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     padding: var(--spacing-4);
     margin-bottom: var(--spacing-3);
-    border: 1px solid var(--color-gray-200);
-    transition: box-shadow var(--transition-fast);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+    backdrop-filter: blur(8px);
 }
 
 .tg-deduction-card:hover {
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    transform: translateY(-2px);
 }
 
 .tg-deduction-card--eligible {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.2);
 }
 
 .tg-deduction-card--maybe {
-    background: #fffbeb;
-    border-color: #fde68a;
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
 }
 
 .tg-deduction-card__header {
@@ -487,37 +558,37 @@
     gap: var(--spacing-2);
     font-weight: 600;
     font-size: var(--font-size-sm);
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin-bottom: var(--spacing-2);
 }
 
 .tg-deduction-card__desc {
     font-size: var(--font-size-xs);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.55);
     line-height: 1.5;
     margin: 0 0 var(--spacing-2) 0;
 }
 
 .tg-deduction-card__badge {
     display: inline-block;
-    background: var(--color-white);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-full);
     padding: 2px var(--spacing-3);
     font-size: var(--font-size-xs);
     font-weight: 600;
-    color: var(--color-primary);
+    color: var(--color-accent);
     margin-right: var(--spacing-2);
 }
 
 .tg-deduction-card__ref {
     display: block;
     font-size: 11px;
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.25);
     margin-top: var(--spacing-2);
 }
 
-/* ====== Deduction Question (Phase B) ====== */
+/* ====== Deduction Question ====== */
 
 .tg-deduction-question {
     display: flex;
@@ -525,16 +596,16 @@
     align-items: center;
     gap: var(--spacing-2);
     padding: var(--spacing-3) var(--spacing-4);
-    background: var(--color-white);
-    border: 1px solid var(--color-gray-200);
-    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
     margin-bottom: var(--spacing-2);
 }
 
 .tg-deduction-question__text {
     flex: 1 1 200px;
     font-size: var(--font-size-sm);
-    color: var(--color-gray-800);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .tg-deduction-question__actions {
@@ -544,37 +615,38 @@
 
 .tg-deduction-question__btn {
     padding: var(--spacing-1) var(--spacing-3);
-    border: 1px solid var(--color-gray-300);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-md);
-    background: var(--color-white);
+    background: rgba(255, 255, 255, 0.05);
     font-size: var(--font-size-xs);
     font-family: var(--font-family);
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-fast);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.55);
 }
 
 .tg-deduction-question__btn:hover {
-    border-color: var(--color-primary-light);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: var(--color-white);
 }
 
 .tg-deduction-question__btn--active-yes {
-    background: #047857;
-    border-color: #047857;
-    color: var(--color-white);
+    background: rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #6ee7b7;
 }
 
 .tg-deduction-question__btn--active-no {
-    background: var(--color-gray-500);
-    border-color: var(--color-gray-500);
-    color: var(--color-white);
+    background: rgba(100, 116, 139, 0.25);
+    border-color: rgba(100, 116, 139, 0.5);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .tg-deduction-question__for {
     flex-basis: 100%;
     font-size: 11px;
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.3);
 }
 
 /* ====== Result card ====== */
@@ -584,31 +656,33 @@
     flex-direction: column;
     align-items: center;
     padding: var(--spacing-8) var(--spacing-4);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-2xl);
     margin-bottom: var(--spacing-6);
     text-align: center;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
 .tg-result-card--refund {
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-    border: 2px solid #6ee7b7;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(16, 185, 129, 0.08) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.35);
 }
 
 .tg-result-card--payment {
-    background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
-    border: 2px solid #fca5a5;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(239, 68, 68, 0.08) 100%);
+    border: 2px solid rgba(239, 68, 68, 0.35);
 }
 
 .tg-result-card__label {
     font-size: var(--font-size-sm);
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     margin-bottom: var(--spacing-2);
 }
 
-.tg-result-card--refund .tg-result-card__label { color: #065f46; }
-.tg-result-card--payment .tg-result-card__label { color: #991b1b; }
+.tg-result-card--refund .tg-result-card__label { color: #6ee7b7; }
+.tg-result-card--payment .tg-result-card__label { color: #fca5a5; }
 
 .tg-result-card__amount {
     font-size: var(--font-size-4xl);
@@ -616,8 +690,8 @@
     line-height: 1;
 }
 
-.tg-result-card--refund .tg-result-card__amount { color: #047857; }
-.tg-result-card--payment .tg-result-card__amount { color: #dc2626; }
+.tg-result-card--refund .tg-result-card__amount { color: #34d399; }
+.tg-result-card--payment .tg-result-card__amount { color: #f87171; }
 
 @media (max-width: 767px) {
     .tg-result-card__amount {
@@ -625,12 +699,12 @@
     }
 }
 
-/* ====== Result deductions (Phase B) ====== */
+/* ====== Result deductions ====== */
 
 .tg-result-deductions {
     margin-top: var(--spacing-6);
     padding-top: var(--spacing-4);
-    border-top: 1px solid var(--color-gray-200);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tg-result-deductions__list {
@@ -639,14 +713,14 @@
     gap: var(--spacing-2);
 }
 
-/* ====== Save profile done (Phase B) ====== */
+/* ====== Save profile done ====== */
 
 .tg-save-done {
     display: flex;
     align-items: center;
     gap: var(--spacing-2);
     font-size: var(--font-size-sm);
-    color: #047857;
+    color: #6ee7b7;
     font-weight: 500;
     margin-top: var(--spacing-3);
 }
@@ -660,12 +734,12 @@
 .tg-breakdown__title {
     font-size: var(--font-size-sm);
     font-weight: 700;
-    color: var(--color-gray-700);
+    color: rgba(255, 255, 255, 0.55);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     margin: var(--spacing-4) 0 var(--spacing-2) 0;
     padding-bottom: var(--spacing-2);
-    border-bottom: 1px solid var(--color-gray-200);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tg-breakdown__grid {
@@ -683,12 +757,12 @@
 }
 
 .tg-breakdown__label {
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .tg-breakdown__value {
     font-weight: 600;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     font-variant-numeric: tabular-nums;
 }
 
@@ -696,11 +770,11 @@
 
 .tg-disclaimer {
     font-size: var(--font-size-xs);
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.3);
     line-height: 1.5;
     margin-top: var(--spacing-6);
     padding-top: var(--spacing-4);
-    border-top: 1px solid var(--color-gray-100);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* ====== Navigation ====== */
@@ -715,47 +789,51 @@
 .tg-nav__btn {
     display: inline-flex;
     align-items: center;
-    gap: var(--spacing-1);
-    padding: var(--spacing-3) var(--spacing-5);
-    border-radius: var(--radius-md);
+    gap: var(--spacing-2);
+    padding: var(--spacing-3) var(--spacing-6);
+    border-radius: var(--radius-xl);
     font-size: var(--font-size-sm);
     font-weight: 600;
     font-family: var(--font-family);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-base);
     border: none;
 }
 
 .tg-nav__btn:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
 }
 
 .tg-nav__btn--primary {
-    background: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
     color: var(--color-white);
+    box-shadow: 0 4px 14px rgba(26, 86, 219, 0.4);
 }
 
 .tg-nav__btn--primary:hover:not(:disabled) {
-    background: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26, 86, 219, 0.55);
 }
 
 .tg-nav__btn--secondary {
-    background: var(--color-gray-100);
-    color: var(--color-gray-700);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tg-nav__btn--secondary:hover:not(:disabled) {
-    background: var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.13);
+    color: var(--color-white);
 }
 
 .tg-nav__btn--ghost {
     background: transparent;
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.3);
     padding: var(--spacing-2);
 }
 
 .tg-nav__btn--ghost:hover {
-    color: var(--color-error);
-    background: rgba(239, 68, 68, 0.05);
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.08);
 }

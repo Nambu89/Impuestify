@@ -304,7 +304,7 @@ export default function SettingsPage() {
                         <Calculator size={16} /> Perfil Fiscal
                     </button>
                     <button className={`tab-btn ${activeTab === 'subscription' ? 'active' : ''}`} onClick={() => setActiveTab('subscription')}>
-                        <CreditCard size={16} /> Suscripcion
+                        <CreditCard size={16} /> Suscripción
                     </button>
                     <button className={`tab-btn ${activeTab === 'privacy' ? 'active' : ''}`} onClick={() => setActiveTab('privacy')}>
                         <Shield size={16} /> Privacidad
@@ -931,7 +931,7 @@ export default function SettingsPage() {
                     <section className="settings-section">
                         <div className="section-header">
                             <CreditCard size={24} />
-                            <h2>Mi Suscripcion</h2>
+                            <h2>Mi Suscripción</h2>
                         </div>
 
                         {subscription.loading ? (
@@ -972,7 +972,7 @@ export default function SettingsPage() {
                                 {subscription.cancelAtPeriodEnd && (
                                     <div className="subscription-warning">
                                         <AlertCircle size={18} />
-                                        <span>Tu suscripcion se cancelara al final del periodo actual.</span>
+                                        <span>Tu suscripción se cancelará al final del periodo actual.</span>
                                     </div>
                                 )}
 
@@ -982,7 +982,7 @@ export default function SettingsPage() {
                                         className="btn btn-secondary"
                                     >
                                         <ExternalLink size={18} />
-                                        Gestionar suscripcion
+                                        Gestionar suscripción
                                     </button>
                                 )}
                             </div>
@@ -990,10 +990,10 @@ export default function SettingsPage() {
                             <div className="subscription-status">
                                 <div className="subscription-badge inactive">
                                     <AlertCircle size={18} />
-                                    <span>Sin suscripcion</span>
+                                    <span>Sin suscripción</span>
                                 </div>
                                 <p className="section-description">
-                                    No tienes una suscripcion activa. Suscribete para acceder a todas
+                                    No tienes una suscripción activa. Suscríbete para acceder a todas
                                     las funcionalidades de Impuestify.
                                 </p>
                                 <button

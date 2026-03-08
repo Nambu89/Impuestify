@@ -463,7 +463,7 @@ export default function CeutaMelillaPage() {
                                 con citas al artículo de ley correspondiente.
                             </p>
                             <Link to="/register" className="btn btn-primary btn-lg">
-                                Empezar ahora — es gratis
+                                Empezar ahora — desde 5 €/mes
                                 <ArrowRight size={20} />
                             </Link>
                             <p className="ceuta-cta__note">

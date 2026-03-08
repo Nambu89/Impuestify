@@ -61,7 +61,7 @@ export default function Register() {
                 <h1 className="auth-brand__title">Tu asesor fiscal con IA</h1>
 
                 <p className="auth-brand__subtitle">
-                    El unico asistente que cubre los 21 territorios de Espana con IA y fuentes oficiales.
+                    El único asistente que cubre los 21 territorios de España con IA y fuentes oficiales.
                 </p>
 
                 <div className="auth-brand__pills">
@@ -91,7 +91,7 @@ export default function Register() {
             <div className="auth-form-panel">
                 <div className="auth-card">
                     <h2>Crear cuenta</h2>
-                    <p className="auth-card__subtitle">Empieza a usar Impuestify gratis</p>
+                    <p className="auth-card__subtitle">Crea tu cuenta en Impuestify</p>
 
                     <form onSubmit={handleSubmit} className="auth-form">
                         {error && (
@@ -206,7 +206,7 @@ export default function Register() {
                             ) : (
                                 <>
                                     <CheckCircle size={18} />
-                                    Crear Cuenta Gratis
+                                    Crear cuenta
                                 </>
                             )}
                         </button>
@@ -214,14 +214,14 @@ export default function Register() {
 
                     <p className="auth-switch-link">
                         ¿Ya tienes cuenta?{' '}
-                        <Link to="/login">Iniciar Sesion</Link>
+                        <Link to="/login">Iniciar Sesión</Link>
                     </p>
 
                     <p className="auth-legal">
                         Al registrarte aceptas los{' '}
-                        <Link to="/terminos">Terminos de Servicio</Link>
+                        <Link to="/terminos">Términos de Servicio</Link>
                         {' '}y la{' '}
-                        <Link to="/privacidad">Politica de Privacidad</Link>
+                        <Link to="/privacidad">Política de Privacidad</Link>
                     </p>
                 </div>
             </div>

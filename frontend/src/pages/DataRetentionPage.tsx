@@ -11,23 +11,23 @@ export default function DataRetentionPage() {
             <div className="legal-container">
                 <Link to="/" className="back-link">&larr; Volver al inicio</Link>
 
-                <h1>Politica de Retencion de Datos</h1>
+                <h1>Política de Retención de Datos</h1>
                 <p className="subtitle">Responsable: Impuestify</p>
                 <p className="last-updated">
-                    Ultima actualizacion: 3 de enero de 2026 | Base legal: RGPD Art. 5.1.e
+                    Última actualización: 3 de enero de 2026 | Base legal: RGPD Art. 5.1.e
                 </p>
 
                 <section>
-                    <h2>1. Principio de Limitacion</h2>
+                    <h2>1. Principio de Limitación</h2>
                     <p>
-                        Los datos personales se conservan <strong>unicamente durante el tiempo necesario</strong> para
+                        Los datos personales se conservan <strong>únicamente durante el tiempo necesario</strong> para
                         los fines para los que fueron recogidos, en cumplimiento del RGPD Art. 5.1.e
-                        (Limitacion de conservacion).
+                        (Limitación de conservación).
                     </p>
                 </section>
 
                 <section>
-                    <h2>2. Plazos de Retencion</h2>
+                    <h2>2. Plazos de Retención</h2>
 
                     <h3>2.1 Datos de Cuenta de Usuario</h3>
                     <table className="legal-table">
@@ -35,7 +35,7 @@ export default function DataRetentionPage() {
                             <tr>
                                 <th>Tipo de Dato</th>
                                 <th>Plazo</th>
-                                <th>Eliminacion</th>
+                                <th>Eliminación</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -57,7 +57,7 @@ export default function DataRetentionPage() {
                         </tbody>
                     </table>
                     <p>
-                        <strong>Eliminacion automatica</strong>: Al eliminar cuenta, todos los datos
+                        <strong>Eliminación automática</strong>: Al eliminar cuenta, todos los datos
                         asociados se eliminan en maximo 24 horas.
                     </p>
 
@@ -73,12 +73,12 @@ export default function DataRetentionPage() {
                         <tbody>
                             <tr>
                                 <td>Historial de chat</td>
-                                <td>Hasta eliminacion por usuario</td>
+                                <td>Hasta eliminación por usuario</td>
                                 <td>El usuario puede borrar</td>
                             </tr>
                             <tr>
                                 <td>Metadata conversacion</td>
-                                <td>Hasta eliminacion</td>
+                                <td>Hasta eliminación</td>
                                 <td>Se borra con conversacion</td>
                             </tr>
                         </tbody>
@@ -97,12 +97,12 @@ export default function DataRetentionPage() {
                             <tr>
                                 <td>Nominas</td>
                                 <td><strong>24 horas</strong></td>
-                                <td>Eliminacion automatica</td>
+                                <td>Eliminación automática</td>
                             </tr>
                             <tr>
                                 <td>Notificaciones AEAT</td>
                                 <td><strong>24 horas</strong></td>
-                                <td>Eliminacion automatica</td>
+                                <td>Eliminación automática</td>
                             </tr>
                         </tbody>
                     </table>
@@ -118,24 +118,24 @@ export default function DataRetentionPage() {
                             <tr>
                                 <th>Tipo</th>
                                 <th>Plazo</th>
-                                <th>Eliminacion</th>
+                                <th>Eliminación</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td>Access logs</td>
                                 <td>90 dias</td>
-                                <td>Automatica</td>
+                                <td>Automática</td>
                             </tr>
                             <tr>
                                 <td>Error logs</td>
                                 <td>90 dias</td>
-                                <td>Automatica</td>
+                                <td>Automática</td>
                             </tr>
                             <tr>
                                 <td>Security events</td>
                                 <td>90 dias</td>
-                                <td>Automatica</td>
+                                <td>Automática</td>
                             </tr>
                         </tbody>
                     </table>
@@ -153,7 +153,7 @@ export default function DataRetentionPage() {
                             <tr>
                                 <td>Redis conversation cache</td>
                                 <td>1 hora</td>
-                                <td>Automatica si usuario activo</td>
+                                <td>Automática si usuario activo</td>
                             </tr>
                             <tr>
                                 <td>Semantic cache</td>
@@ -163,7 +163,7 @@ export default function DataRetentionPage() {
                             <tr>
                                 <td>Session tokens</td>
                                 <td>30 min (access) / 7 dias (refresh)</td>
-                                <td>Automatica</td>
+                                <td>Automática</td>
                             </tr>
                         </tbody>
                     </table>
@@ -189,10 +189,10 @@ export default function DataRetentionPage() {
                 </section>
 
                 <section>
-                    <h2>4. Proceso de Eliminacion</h2>
-                    <h3>4.1 Eliminacion por Usuario (Derecho de Supresion)</h3>
+                    <h2>4. Proceso de Eliminación</h2>
+                    <h3>4.1 Eliminación por Usuario (Derecho de Supresión)</h3>
                     <p>
-                        <strong>Como ejercerlo</strong>: Desde Configuracion &gt; Eliminar cuenta,
+                        <strong>Cómo ejercerlo</strong>: Desde Configuración &gt; Eliminar cuenta,
                         o enviando email a <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>.
                     </p>
                     <p><strong>Plazo</strong>: Maximo 1 mes desde solicitud (RGPD Art. 12.3)</p>
@@ -205,13 +205,13 @@ export default function DataRetentionPage() {
                         <li>Logs asociados (se anonimizan)</li>
                     </ul>
 
-                    <h3>4.2 Eliminacion Automatica</h3>
+                    <h3>4.2 Eliminación Automática</h3>
                     <table className="legal-table">
                         <thead>
                             <tr>
                                 <th>Tipo</th>
                                 <th>Cuando</th>
-                                <th>Metodo</th>
+                                <th>Método</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -233,14 +233,14 @@ export default function DataRetentionPage() {
                             <tr>
                                 <td>Tokens expirados</td>
                                 <td>7 dias</td>
-                                <td>Limpieza automatica</td>
+                                <td>Limpieza automática</td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <h3>4.3 Eliminacion Segura</h3>
+                    <h3>4.3 Eliminación Segura</h3>
                     <p>
-                        <strong>Metodo</strong>: Eliminacion irreversible (DELETE sin backup).
+                        <strong>Método</strong>: Eliminación irreversible (DELETE sin backup).
                         No aplicamos soft delete ni archivado a largo plazo.
                     </p>
                 </section>
@@ -249,7 +249,7 @@ export default function DataRetentionPage() {
                     <h2>5. Backups y Restauracion</h2>
                     <p>
                         <strong>Frecuencia</strong>: Diaria (Turso automatico).
-                        <strong> Retencion</strong>: 30 dias. Despues: eliminacion permanente.
+                        <strong> Retención</strong>: 30 días. Después: eliminación permanente.
                     </p>
                     <p>
                         Si un usuario solicita borrado, tambien se elimina de backups en el siguiente
@@ -258,7 +258,7 @@ export default function DataRetentionPage() {
                 </section>
 
                 <section>
-                    <h2>6. Notificaciones de Eliminacion</h2>
+                    <h2>6. Notificaciones de Eliminación</h2>
                     <p>
                         Enviamos email de confirmacion cuando el usuario elimina su cuenta o conversaciones.
                         Si compartimos datos con terceros y el usuario solicita borrado, notificamos
@@ -267,7 +267,7 @@ export default function DataRetentionPage() {
                 </section>
 
                 <section>
-                    <h2>7. Revision y Actualizacion</h2>
+                    <h2>7. Revisión y Actualización</h2>
                     <p>
                         Esta politica se revisa trimestralmente para asegurar plazos adecuados,
                         cumplir nueva normativa y ajustar segun feedback de usuarios.
@@ -278,7 +278,7 @@ export default function DataRetentionPage() {
                 <section>
                     <h2>8. Derecho a Solicitar Informacion</h2>
                     <p>
-                        Puede solicitar informacion sobre que datos conservamos, cuando seran eliminados
+                        Puede solicitar información sobre qué datos conservamos, cuándo serán eliminados
                         y el motivo de conservacion.
                     </p>
                     <p><strong>Contacto</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a></p>
@@ -287,8 +287,8 @@ export default function DataRetentionPage() {
                 <section>
                     <h2>9. Contacto</h2>
                     <p>
-                        <strong>Dudas sobre retencion</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a><br />
-                        <strong>Solicitar eliminacion</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a><br />
+                        <strong>Dudas sobre retención</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a><br />
+                        <strong>Solicitar eliminación</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a><br />
                         <strong>Reportar problema</strong>: <a href="mailto:support@impuestify.com">support@impuestify.com</a>
                     </p>
                 </section>

@@ -288,12 +288,12 @@ export default function Chat() {
                                 </button>
                                 <button
                                     className="chat-suggestion-card"
-                                    onClick={() => handleSuggestionClick('He recibido una notificacion de la AEAT, que debo hacer?')}
+                                    onClick={() => handleSuggestionClick('He recibido una notificación de la AEAT, ¿qué debo hacer?')}
                                 >
                                     <div className="chat-suggestion-card__icon">
                                         <Shield size={20} />
                                     </div>
-                                    <span className="chat-suggestion-card__text">Notificacion AEAT</span>
+                                    <span className="chat-suggestion-card__text">Notificación AEAT</span>
                                 </button>
                             </div>
                         </div>
@@ -444,7 +444,7 @@ export default function Chat() {
                         type="button"
                         className="btn btn-success"
                         onClick={() => setShowNotificationModal(true)}
-                        title="Analizar notificacion AEAT"
+                        title="Analizar notificación AEAT"
                     >
                         <Upload size={20} />
                     </button>
@@ -457,7 +457,7 @@ export default function Chat() {
                     </button>
                 </form>
                 <p className="chat-disclaimer">
-                    Impuestify usa IA. Verifica siempre la informacion importante con un profesional.
+                    Impuestify usa IA. Verifica siempre la información importante con un profesional.
                 </p>
             </footer>
 

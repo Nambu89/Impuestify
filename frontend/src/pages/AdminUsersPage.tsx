@@ -116,7 +116,7 @@ export default function AdminUsersPage() {
             case 'active': return 'Activo'
             case 'grace_period': return 'Grace Period'
             case 'inactive': return 'Inactivo'
-            default: return 'Sin suscripcion'
+            default: return 'Sin suscripción'
         }
     }
 
@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
                             </button>
                         </div>
                         <p className="admin-subtitle">
-                            Gestion de planes y suscripciones ({users.length} usuarios)
+                            Gestión de planes y suscripciones ({users.length} usuarios)
                         </p>
                     </div>
 

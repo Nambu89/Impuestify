@@ -422,11 +422,11 @@
     margin: 0 auto;
     display: flex;
     align-items: center;
-    gap: var(--spacing-2);
+    gap: 6px;
     background: var(--color-white);
     border: 1.5px solid var(--color-gray-200);
     border-radius: var(--radius-2xl);
-    padding: var(--spacing-2) var(--spacing-3);
+    padding: 6px 6px 6px 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
@@ -440,13 +440,14 @@
     flex: 1;
     border: none;
     outline: none;
-    font-size: var(--font-size-base);
-    padding: var(--spacing-2) var(--spacing-1);
+    font-size: var(--font-size-sm);
+    padding: 8px 4px;
     background: transparent;
-    min-height: 40px;
+    min-height: 36px;
     resize: none;
     font-family: inherit;
     color: var(--color-gray-800);
+    line-height: 1.4;
 }
 
 .chat-input::placeholder {
@@ -469,25 +470,26 @@
 
 /* ATTACH / UPLOAD BUTTON */
 .btn-success {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--color-success);
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px;
-    min-height: 40px;
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    background: transparent;
+    color: var(--color-gray-400);
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px;
+    min-height: 36px;
+    border: none;
 }
 
 .btn-success svg {
     width: 20px !important;
     height: 20px !important;
-    stroke-width: 2 !important;
+    stroke-width: 1.8 !important;
     flex-shrink: 0;
 }
 
 .btn-success:hover:not(:disabled) {
-    background: rgba(16, 185, 129, 0.2);
-    transform: scale(1.05);
+    background: var(--color-gray-100);
+    color: var(--color-gray-600);
+    transform: none;
 }
 
 /* SEND BUTTON */
@@ -502,13 +504,13 @@
 }
 
 .chat-submit {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px;
-    min-height: 40px;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px;
+    min-height: 36px;
     padding: 0 !important;
     border-radius: var(--radius-full) !important;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     color: var(--color-white);
     border: none;
     cursor: pointer;

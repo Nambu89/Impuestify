@@ -384,7 +384,7 @@ export default function CanariasPage() {
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">
-                            Que herramientas cubren el regimen canario?
+                            ¿Qué herramientas cubren el régimen canario?
                         </h2>
                         <p className="section-subtitle">
                             TaxDown, Taxfix y otros asistentes no cubren el IGIC ni la ZEC ni
@@ -510,7 +510,7 @@ export default function CanariasPage() {
                             </div>
                             <div className="canarias-faq__item">
                                 <h3>
-                                    Que es la Zona Especial Canaria?
+                                    ¿Qué es la Zona Especial Canaria?
                                 </h3>
                                 <p>
                                     La ZEC es un regimen especial aprobado por la Union Europea
@@ -565,7 +565,7 @@ export default function CanariasPage() {
                                 con citas a la norma oficial.
                             </p>
                             <Link to="/register" className="btn btn-primary btn-lg">
-                                Empezar ahora — es gratis
+                                Empezar ahora — desde 5 €/mes
                                 <ArrowRight size={20} />
                             </Link>
                             <p className="canarias-cta__note">

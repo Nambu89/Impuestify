@@ -507,7 +507,7 @@ export default function WorkspacesPage() {
                                             <div className="files-empty">
                                                 <Upload size={48} />
                                                 <p>No hay archivos en este workspace</p>
-                                                <span>Sube nominas, facturas o declaraciones</span>
+                                                <span>Sube nóminas, facturas o declaraciones</span>
                                             </div>
                                         ) : (
                                             <div className="files-list">
@@ -607,7 +607,7 @@ export default function WorkspacesPage() {
                                     <textarea
                                         id="description"
                                         className="input textarea"
-                                        placeholder="Descripcion opcional del workspace"
+                                        placeholder="Descripción opcional del workspace"
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                         rows={3}

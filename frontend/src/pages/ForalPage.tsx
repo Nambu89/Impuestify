@@ -168,7 +168,7 @@ export default function ForalPage() {
                     <FadeContent delay={200} duration={600}>
                         <div className="foral-hero__actions">
                             <Link to="/register" className="btn btn-primary btn-lg">
-                                Empieza gratis
+                                Empieza ahora
                                 <ArrowRight size={20} />
                             </Link>
                             <a href="#territorios" className="btn btn-secondary btn-lg">
@@ -504,11 +504,11 @@ export default function ForalPage() {
                                 Resultados personalizados con citas a la norma oficial.
                             </p>
                             <Link to="/register" className="btn btn-primary btn-lg">
-                                Empieza gratis
+                                Empieza ahora
                                 <ArrowRight size={20} />
                             </Link>
                             <p className="foral-cta__note">
-                                Sin tarjeta de crédito en el periodo de prueba.
+                                Plan desde 5 €/mes. Sin permanencia.
                             </p>
                         </div>
                     </FadeContent>

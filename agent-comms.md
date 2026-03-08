@@ -7,6 +7,122 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-07] QA — DONE — Auditoria desktop 1440x900 (analisis estatico codigo)
+
+### Resultado: 1 bug critico arreglado, 4 bugs menores documentados
+- Reporte completo: `plans/qa-desktop-report-2026-03-07.md`
+
+### Bug critico arreglado (ESTE AGENTE):
+- **B1 (CRITICO — ARREGLADO)**: `Register.tsx` boton decia "Crear Cuenta Gratis" — cambiado a "Crear cuenta". Archivo: `frontend/src/pages/Register.tsx` linea 209.
+
+### Bugs pendientes para frontend agent:
+- **B4 (BAJA)**: Acentos ausentes en FAQ de Canarias, Foral y Ceuta/Melilla — strings con encoding incompleto
+- **B3 (MEDIA)**: Landing page solo muestra plan Particular — los autonomos no ven su plan de 39 EUR
+- **B2 (MEDIA)**: Hero chat-preview es texto plano sin animacion — no refleja el producto real
+
+### Verificaciones OK (no requieren accion):
+- CTA de `/canarias` dice "Empezar ahora — desde 5 €/mes" — correcto (no dice gratis)
+- `/subscribe` grid de 2 columnas a 768px+ — correcto
+- Imagenes hero .webp existen en `/public/images/` — confirmado
+- `/guia-fiscal` y `/chat` redirigen a login — comportamiento correcto (rutas protegidas)
+
+### Nota metodologica:
+Playwright MCP no disponible en esta sesion (sin browser headless activo). Auditoria basada en inspeccion de codigo JSX/CSS + screenshots pendientes con Playwright real.
+
+---
+
+## [2026-03-07] QA — DONE — Auditoria mobile 375x812 (analisis estatico CSS)
+
+### Resultado: 4 paginas PASS, 4 con issues
+- Reporte completo: `plans/qa-mobile-report-2026-03-07.md`
+- Script playwright: `tests/e2e/mobile-audit.spec.ts`
+
+### Bugs prioritarios para frontend agent:
+- **B-MOB-10 (CRITICAL)**: Verificar que commit `0ab0a9e` resuelve hamburger en /chat. Si no esta activo, el hamburger sigue abriendo la sidebar en lugar de la nav mobile.
+- **B-MOB-08 (MAJOR)**: Usuarios en `/subscribe` sin suscripcion pueden quedar en loop de navegacion en mobile — necesita link "Volver al inicio" sticky o en header.
+- **B-MOB-06 (MAJOR)**: Tabla IGIC en `/canarias` tiene `min-width: 540px` — requiere scroll horizontal en 375px. Redisenar como cards apiladas para mobile.
+- **B-MOB-01 (MAJOR)**: Stats landing — span del `+` puede quedar en linea separada del numero en 2rem. Fix: `align-items: baseline` en `.stat-number`.
+- **B-MOB-05 (MINOR)**: Gradient text en auth-brand__title puede fallar en iOS Safari (overflow:hidden en padre). Necesita verificacion en dispositivo real.
+
+### Nota metodologica:
+Playwright MCP no disponible en esta sesion. Auditoria basada en inspeccion de codigo CSS/JSX. Para screenshots reales ejecutar el script con servidor local.
+
+---
+
+## [2026-03-07] PM — DONE — Redesign visual completo (Phases 1-4)
+
+### Phase 1+2 — Chat + Login/Register + Header + Sidebar
+- **Login.tsx / Register.tsx**: Split-screen layout (dark brand panel + white form panel), glassmorphism pills, gradient CTAs, password show/hide toggle
+- **Auth.css**: Complete overhaul — gradient orbs, premium 48px inputs, gradient submit button
+- **Chat.tsx**: Message avatars (Zap for assistant, initials for user), empty state with illustration + 4 suggestion cards, handleSuggestionClick
+- **Chat.css**: Gradient user messages, white card assistant messages, floating pill input, asymmetric border-radius
+- **ConversationSidebar.css**: Dark navy #0f172a sidebar, blue active state, dark scrollbar
+- **Header.css**: Glassmorphism (backdrop-filter: blur(14px), rgba white bg)
+
+### Phase 3 — Subscribe + Settings CSS
+- **SubscribePage.css**: Dark hero header section, premium plan cards, gradient border on popular plan, hover lift effects
+- **SettingsPage.css**: Premium form inputs, modern tab navigation, gradient save buttons, dark subscription card
+
+### Phase 4 — Home + Declarations CSS
+- **Home.css**: Dark hero section, dark stats section, glassmorphism chat preview, blue glow comparison column, feature card blue glow hover
+- **DeclarationsPage.css**: Dark header strip, premium form inputs, gradient tabs, hover lift cards
+
+### Image compression DONE
+- hero-foral: 6.8MB PNG -> 64KB WebP (99% reduction)
+- hero-ceuta-melilla: 7.8MB -> 110KB WebP (98.6%)
+- hero-canarias: 7.1MB -> 72KB WebP (99%)
+- chat-empty-state: 1.8MB -> 34KB WebP (98%)
+- All TSX refs updated to .webp
+
+### Build: OK (6.43s, 0 errors)
+
+### Pending
+- Git commit
+- Deploy to Railway
+- TaxGuidePage, WorkspacesPage CSS refresh (lower priority)
+- Modals redesign (lower priority)
+
+---
+
+## [2026-03-07] PM — DONE — Landing Territoriales SEO (ADR-007) con Stitch + Nano Banana
+
+### Completado
+- **3 hero images 4K** generadas con Nano Banana (Gemini 3 Pro Image): `hero-foral.png`, `hero-ceuta-melilla.png`, `hero-canarias.png` en `frontend/public/images/`
+- **Proyecto Stitch** creado: 4 screens (2 mobile + 2 desktop) para CanariasPage — proyecto ID `7755516611334879290`
+- **CanariasPage nueva** (`/canarias`): 8 secciones — hero dark con imagen, ventajas (IGIC/ZEC/RIC/deducciones), tabla IGIC vs IVA, seccion ZEC 3 pasos, comparativa herramientas, FAQ, CTA
+- **ForalPage actualizada**: Hero con fondo oscuro #0f172a + imagen isometrica territorios forales
+- **CeutaMelillaPage actualizada**: Hero con fondo oscuro + imagen 60% glassmorphism
+- **Home.tsx fixes**: Territory chips clickables (Canarias, Ceuta, Melilla, forales), stats corregidas a 128 deducciones
+- **Footer**: Link a `/canarias` anadido
+- **Build**: OK (6.5s, 0 errores)
+
+### Assets generados
+- `frontend/public/images/hero-foral.png` (7.1 MB, 5504x3072, 4K)
+- `frontend/public/images/hero-ceuta-melilla.png` (8.1 MB, 5504x3072, 4K)
+- `frontend/public/images/hero-canarias.png` (7.4 MB, 5504x3072, 4K)
+
+### Pendiente
+- Optimizar imagenes hero (7-8MB cada una, comprimir a WebP <500KB para produccion)
+- Deploy a Railway
+- Verificar FadeContent animations en navegador real (fullPage screenshots no activan IntersectionObserver)
+
+---
+
+## [2026-03-07] PM — DONE — Sesion PM: ADR-005 + ADR-006 + Stitch OAuth
+
+### Completado
+- **ADR-005 Calculadora ISD**: Tool ya existia completa. Creados 61 tests (unit + integration) — todos PASS. Cobertura: tarifa estatal, 4 grupos parentesco, bonificaciones 8+ CCAA + forales.
+- **ADR-006 Deducciones 17 CCAA**: Creado `seed_deductions_territorial_v2.py` con 64 nuevas deducciones en 11 CCAA (Galicia, Asturias, Cantabria, La Rioja, Aragon, CyL, CLM, Extremadura, Murcia, Baleares, Canarias). Total proyecto: 128 deducciones. 48 tests creados — todos PASS.
+- **Stitch OAuth**: Configurado OAuth2 via gcloud ADC. Bug detectado y resuelto: path gcloud con espacios en Windows (junction C:\gcloud-sdk). `.mcp.json` actualizado sin API key.
+- **Nano Banana**: Verificado operativo (show_output_stats OK).
+
+### Pendiente proxima sesion
+- **Landing territorial** (forales + Ceuta/Melilla + Canarias): Disenar con Stitch + generar assets con Nano Banana. Paginas SEO publicas `/territorios-forales` y `/ceuta-melilla` (ADR-007).
+- Ejecutar `seed_deductions_territorial_v2.py` contra BD Turso para poblar las 64 nuevas deducciones.
+- Correr tests completos para verificar que los 61+48 nuevos tests no rompen nada.
+
+---
+
 ## [2026-03-06] DOC AUDITOR — DONE — README.md actualizado a v3.0
 
 `README.md` reescrito con 10 features nuevas: IRPF Simulator (9 tools, Phase 1+2), Tax Guide Wizard (7 pasos + LiveEstimatorBar), Motor de Deducciones (64 total), Stripe Subscriptions (Particular 5 EUR + Autonomo 39 EUR), Perfil Fiscal Extendido (13 campos), Export PDF + Email (ReportLab + Resend), Soporte Ceuta/Melilla (Art. 68.4), PWA (service worker manual), Cookie Compliance (vanilla-cookieconsent v3), tools calculate_modelo_303 + calculate_isd documentados. Arquitectura ASCII, stack, estructura del proyecto y troubleshooting expandidos.

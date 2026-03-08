@@ -48,7 +48,7 @@ export default function Login() {
                 <h1 className="auth-brand__title">Tu asesor fiscal con IA</h1>
 
                 <p className="auth-brand__subtitle">
-                    El unico asistente que cubre los 21 territorios de Espana con IA y fuentes oficiales.
+                    El único asistente que cubre los 21 territorios de España con IA y fuentes oficiales.
                 </p>
 
                 <div className="auth-brand__pills">
@@ -78,7 +78,7 @@ export default function Login() {
             <div className="auth-form-panel">
                 <div className="auth-card">
                     <h2>Bienvenido de nuevo</h2>
-                    <p className="auth-card__subtitle">Inicia sesion para continuar</p>
+                    <p className="auth-card__subtitle">Inicia sesión para continuar</p>
 
                     <form onSubmit={handleSubmit} className="auth-form">
                         {error && (
@@ -159,7 +159,7 @@ export default function Login() {
 
                     <p className="auth-switch-link">
                         ¿No tienes cuenta?{' '}
-                        <Link to="/register">Registrarse gratis</Link>
+                        <Link to="/register">Crear cuenta</Link>
                     </p>
                 </div>
             </div>

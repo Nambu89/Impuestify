@@ -63,7 +63,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                         <ClipboardList size={16} /> Modelos
                     </Link>
                     <Link to="/settings" className="nav-link">
-                        <Settings size={16} /> Configuracion
+                        <Settings size={16} /> Configuración
                     </Link>
                     {user?.is_admin === 1 && (
                         <Link to="/dashboard" className="nav-link">Dashboard</Link>
@@ -104,7 +104,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                         <ClipboardList size={20} /> Modelos Trimestrales
                     </Link>
                     <Link to="/settings" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
-                        <Settings size={20} /> Configuracion
+                        <Settings size={20} /> Configuración
                     </Link>
                     {isOwner && (
                         <Link to="/admin/users" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
