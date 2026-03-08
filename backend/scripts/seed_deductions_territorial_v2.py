@@ -641,6 +641,46 @@ ARAGON_2025 = [
             {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este anyo?", "type": "number"},
         ]),
     },
+    {
+        "code": "ARG-DACION-PAGO",
+        "name": "Deduccion por alquiler de vivienda tras dacion en pago en Aragon",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 10.0,
+        "max_amount": 4800.0,
+        "legal_reference": "Art. 110-10 DL 1/2005 Aragon",
+        "description": (
+            "10% del alquiler pagado (maximo 4.800 EUR anuales, es decir hasta 480 EUR de deduccion) "
+            "cuando el contribuyente entrego su vivienda al banco mediante dacion en pago y luego "
+            "firmo un contrato de arrendamiento con opcion de compra sobre la misma vivienda. "
+            "BI menor o igual a 15.000 EUR individual / 25.000 EUR conjunta. "
+            "Fianza depositada ante la DGA."
+        ),
+        "requirements_json": json.dumps({"dacion_pago_alquiler": True}),
+        "questions_json": json.dumps([
+            {"key": "dacion_pago_alquiler", "text": "Entregaste tu vivienda al banco (dacion en pago) y ahora la alquilas con opcion de compra?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "ARG-ARRENDADOR-SOCIAL",
+        "name": "Deduccion para arrendadores de vivienda social en Aragon",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 30.0,
+        "max_amount": None,
+        "legal_reference": "Art. 110-13 DL 1/2005 Aragon",
+        "description": (
+            "30% de la cuota autonomica correspondiente a los rendimientos derivados del "
+            "arrendamiento de viviendas cedidas al Gobierno de Aragon o entidades colaboradoras "
+            "del Plan de Vivienda Social. Para propietarios que ponen viviendas a disposicion "
+            "de programas sociales de vivienda."
+        ),
+        "requirements_json": json.dumps({"arrendador_vivienda_social": True}),
+        "questions_json": json.dumps([
+            {"key": "arrendador_vivienda_social", "text": "Has cedido alguna vivienda al Gobierno de Aragon o entidades del Plan de Vivienda Social?", "type": "bool"},
+        ]),
+    },
 ]
 
 

@@ -161,20 +161,21 @@ Tu objetivo es explicar temas fiscales de forma clara y humana, como si estuvier
 ## 🔎 DESCUBRIMIENTO PROACTIVO DE DEDUCCIONES
 
 Cuando el usuario pregunte sobre deducciones o ahorro fiscal:
-1. **Pre-rellena answers** con datos del perfil fiscal y la conversación:
+1. **SIEMPRE pasa el parámetro `ccaa`** con la comunidad autónoma del usuario (del PERFIL FISCAL o de la conversación). Sin CCAA, solo se devuelven deducciones estatales y se PIERDEN todas las autonómicas. Ejemplo: si el perfil dice "CCAA residencia: Aragon", pasa `ccaa="Aragon"`.
+2. **Pre-rellena answers** con datos del perfil fiscal y la conversación:
    - Si sabes que tiene hijos → hijo_menor_3, familia_numerosa
    - Si sabes que vive en Ceuta/Melilla → residente_ceuta_melilla
    - Si sabes que dona → donativo_a_entidad_acogida
    - Si sabes que es autónomo → autonomo_estimacion_directa
    - Si sabes de su vivienda → adquisicion_antes_2013, contrato_antes_2015
-2. **Llama a discover_deductions** con esos answers
-3. **Presenta los resultados** de forma conversacional:
+3. **Llama a discover_deductions** con `ccaa` + `answers`
+4. **Presenta los resultados** de forma conversacional:
    - Deducciones confirmadas con ahorro estimado
    - Preguntas clave para descubrir más (máximo 3-4 a la vez, no abrumes)
-4. **Cuando el usuario responda**, vuelve a llamar con los answers actualizados
+5. **Cuando el usuario responda**, vuelve a llamar con los answers actualizados
 
 🚨 **REGLA CRÍTICA — COMUNIDAD AUTÓNOMA (CCAA)**:
-- La CCAA es **OBLIGATORIA** para cualquier cálculo de IRPF (simulate_irpf o calculate_irpf).
+- La CCAA es **OBLIGATORIA** para cualquier cálculo de IRPF (simulate_irpf, calculate_irpf) Y para discover_deductions.
 - Si la CCAA aparece en el CONTEXTO DEL USUARIO (memoria), úsala directamente.
 - Si el usuario la menciona en la conversación (ej: "vivo en Madrid"), úsala.
 - **Si NO conoces la CCAA** (ni por memoria, ni por la conversación, ni por el historial):
@@ -941,8 +942,12 @@ Recuerda: Sé **proactivo y directo**. Calcula cuando tengas datos suficientes, 
 		if any(kw in query_lower for kw in ["modelo 130", "pago fraccionado"]):
 			requires_tool_hint = "\n⚠️ ATENCIÓN: Esta pregunta requiere cálculo del Modelo 130. DEBES usar la herramienta calculate_modelo_130.\n"
 
-		if any(kw in query_lower for kw in ["deduccion", "deducción", "desgravacion", "desgravación", "deducir", "desgravar", "ahorrar en la renta", "ahorro fiscal", "beneficio fiscal", "deducciones"]):
-			requires_tool_hint = "\n⚠️ ATENCIÓN: Esta pregunta requiere descubrimiento de deducciones. DEBES usar la herramienta discover_deductions con los datos que conozcas del usuario en 'answers'.\n"
+		if any(kw in query_lower for kw in ["deduccion", "deducción", "desgravacion", "desgravación", "deducir", "desgravar", "ahorrar en la renta", "ahorro fiscal", "beneficio fiscal", "deducciones", "alquiler"]):
+			ccaa_hint = (fiscal_profile or {}).get("ccaa_residencia", "")
+			if ccaa_hint:
+				requires_tool_hint = f'\n⚠️ ATENCIÓN: Esta pregunta requiere descubrimiento de deducciones. DEBES usar la herramienta discover_deductions con ccaa="{ccaa_hint}" y los datos que conozcas del usuario en \'answers\'. La CCAA es OBLIGATORIA para incluir deducciones autonómicas.\n'
+			else:
+				requires_tool_hint = "\n⚠️ ATENCIÓN: Esta pregunta requiere descubrimiento de deducciones. DEBES usar la herramienta discover_deductions. Si conoces la CCAA del usuario, pásala como parámetro. Si no, PREGUNTA antes de llamar.\n"
 
 		# NO agregar hint de search para fechas/plazos - deja que el RAG-first funcione
 		
