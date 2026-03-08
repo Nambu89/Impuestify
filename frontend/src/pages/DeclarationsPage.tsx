@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { FileText, Calculator, TrendingUp, TrendingDown, Save, Loader2, ChevronDown, Trash2, BarChart3 } from 'lucide-react'
 import Header from '../components/Header'
-import { useDeclarations, type ModeloType, type Calculate303Input, type Calculate130Input, type Calculate420Input } from '../hooks/useDeclarations'
+import { useDeclarations, type ModeloType, type Calculate303Input, type Calculate130Input, type Calculate420Input, type CalculateIpsiInput } from '../hooks/useDeclarations'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
 import CountUp from '../components/reactbits/CountUp'
 import './DeclarationsPage.css'
@@ -219,6 +219,67 @@ function Form130({ data, onChange, territory }: {
 }
 
 // ---------------------------------------------------------------------------
+// IPSI Form (Ceuta/Melilla)
+// ---------------------------------------------------------------------------
+
+function FormIpsi({ data, onChange, quarter, territorio }: {
+    data: CalculateIpsiInput; onChange: (d: CalculateIpsiInput) => void; quarter: number; territorio: string
+}) {
+    const u = (field: string, val: number) => onChange({ ...data, [field]: val, quarter, territorio })
+    return (
+        <div className="decl-form">
+            <h3 className="decl-form__section">IPSI Devengado (ventas)</h3>
+            <div className="decl-form__grid">
+                <NumberInput label="Base tipo general (4%)" value={data.base_4 || 0} onChange={v => u('base_4', v)} suffix="EUR" />
+                <NumberInput label="Base tipo bonificado (2%)" value={data.base_2 || 0} onChange={v => u('base_2', v)} suffix="EUR" />
+                <NumberInput label="Base tipo incrementado (8%)" value={data.base_8 || 0} onChange={v => u('base_8', v)} suffix="EUR" />
+            </div>
+
+            <details className="decl-form__details">
+                <summary><ChevronDown size={16} /> Otros tipos</summary>
+                <div className="decl-form__grid">
+                    <NumberInput label="Base tipo minimo (0.5%)" value={data.base_0_5 || 0} onChange={v => u('base_0_5', v)} suffix="EUR" />
+                    <NumberInput label="Base tipo reducido (1%)" value={data.base_1 || 0} onChange={v => u('base_1', v)} suffix="EUR" />
+                    <NumberInput label="Base tipo especial (10%)" value={data.base_10 || 0} onChange={v => u('base_10', v)} suffix="EUR" />
+                </div>
+            </details>
+
+            <details className="decl-form__details">
+                <summary><ChevronDown size={16} /> Importaciones e ISP</summary>
+                <div className="decl-form__grid">
+                    <NumberInput label="Base importaciones" value={data.base_importaciones || 0} onChange={v => u('base_importaciones', v)} suffix="EUR" />
+                    <NumberInput label="Base inversion sujeto pasivo" value={data.base_inversion_sp || 0} onChange={v => u('base_inversion_sp', v)} suffix="EUR" />
+                    <NumberInput label="Modificacion cuotas" value={data.mod_cuotas || 0} onChange={v => u('mod_cuotas', v)} suffix="EUR" help="Rectificaciones +/-" />
+                </div>
+            </details>
+
+            <h3 className="decl-form__section">IPSI Deducible (compras)</h3>
+            <div className="decl-form__grid">
+                <NumberInput label="Cuota bienes/servicios corrientes" value={data.cuota_corrientes_interiores || 0} onChange={v => u('cuota_corrientes_interiores', v)} suffix="EUR" />
+                <NumberInput label="Cuota bienes de inversion" value={data.cuota_inversion_interiores || 0} onChange={v => u('cuota_inversion_interiores', v)} suffix="EUR" />
+            </div>
+
+            <details className="decl-form__details">
+                <summary><ChevronDown size={16} /> Mas deducciones</summary>
+                <div className="decl-form__grid">
+                    <NumberInput label="Cuota importaciones corrientes" value={data.cuota_importaciones_corrientes || 0} onChange={v => u('cuota_importaciones_corrientes', v)} suffix="EUR" />
+                    <NumberInput label="Cuota importaciones inversion" value={data.cuota_importaciones_inversion || 0} onChange={v => u('cuota_importaciones_inversion', v)} suffix="EUR" />
+                    <NumberInput label="Rectificacion deducciones" value={data.rectificacion_deducciones || 0} onChange={v => u('rectificacion_deducciones', v)} suffix="EUR" />
+                </div>
+            </details>
+
+            <h3 className="decl-form__section">Ajustes</h3>
+            <div className="decl-form__grid">
+                <NumberInput label="Cuotas a compensar anteriores" value={data.cuotas_compensar_anteriores || 0} onChange={v => u('cuotas_compensar_anteriores', v)} suffix="EUR" />
+                {quarter === 4 && (
+                    <NumberInput label="Regularizacion anual" value={data.regularizacion_anual || 0} onChange={v => u('regularizacion_anual', v)} suffix="EUR" />
+                )}
+            </div>
+        </div>
+    )
+}
+
+// ---------------------------------------------------------------------------
 // Result card
 // ---------------------------------------------------------------------------
 
@@ -297,6 +358,25 @@ function ResultCard({ result, modelo }: { result: Record<string, any>; modelo: M
                     </div>
                 </div>
             )}
+
+            {modelo === 'ipsi' && (
+                <div className="decl-result__breakdown">
+                    <div className="decl-result__row">
+                        <span>IPSI devengado</span>
+                        <span>{(result.total_devengado || 0).toFixed(2)} EUR</span>
+                    </div>
+                    <div className="decl-result__row">
+                        <span>IPSI deducible</span>
+                        <span>-{(result.total_deducible || 0).toFixed(2)} EUR</span>
+                    </div>
+                    {result.cuotas_compensar_anteriores > 0 && (
+                        <div className="decl-result__row">
+                            <span>Compensacion anterior</span>
+                            <span>-{result.cuotas_compensar_anteriores.toFixed(2)} EUR</span>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }
@@ -322,6 +402,13 @@ export default function DeclarationsPage() {
     const [form303, setForm303] = useState<Calculate303Input>({})
     const [form130, setForm130] = useState<Calculate130Input>({})
     const [form420, setForm420] = useState<Calculate420Input>({})
+    const [formIpsi, setFormIpsi] = useState<CalculateIpsiInput>({})
+
+    // Territory detection for conditional tabs
+    const userCcaa = profile?.ccaa_residencia || ''
+    const isCeutaMelilla = ['Ceuta', 'Melilla'].some(t => userCcaa.includes(t))
+    const isCanarias = userCcaa.includes('Canarias')
+    const ipsiTerritorio = userCcaa.includes('Melilla') ? 'Melilla' : 'Ceuta'
 
     // Auto-detect territory from profile
     useEffect(() => {
@@ -332,6 +419,10 @@ export default function DeclarationsPage() {
             else if (ccaa.includes('Bizkaia') || ccaa.includes('Vizcaya')) setTerritory130('Bizkaia')
             else if (ccaa.includes('Navarra')) setTerritory130('Navarra')
             else setTerritory130('Comun')
+
+            // Default to IPSI for Ceuta/Melilla, IGIC for Canarias
+            if (['Ceuta', 'Melilla'].some(t => ccaa.includes(t))) setModelo('ipsi')
+            else if (ccaa.includes('Canarias')) setModelo('420')
         }
     }, [profile])
 
@@ -349,8 +440,12 @@ export default function DeclarationsPage() {
         } else if (modelo === '420') {
             const hasInput = (form420.base_7 || 0) + (form420.base_3 || 0) + (form420.base_0 || 0) > 0
             if (hasInput) calculate('420', { ...form420, quarter })
+        } else if (modelo === 'ipsi') {
+            const hasInput = (formIpsi.base_4 || 0) + (formIpsi.base_2 || 0) + (formIpsi.base_8 || 0) +
+                (formIpsi.cuota_corrientes_interiores || 0) > 0
+            if (hasInput) calculate('ipsi', { ...formIpsi, quarter, year, territorio: ipsiTerritorio })
         }
-    }, [form303, form130, form420, modelo, quarter, year, territory130, calculate])
+    }, [form303, form130, form420, formIpsi, modelo, quarter, year, territory130, ipsiTerritorio, calculate])
 
     // Load saved declarations
     useEffect(() => {
@@ -359,8 +454,8 @@ export default function DeclarationsPage() {
 
     const handleSave = async () => {
         if (!calcResult?.success || !calcResult.result) return
-        const formData = modelo === '303' ? form303 : modelo === '130' ? form130 : form420
-        const territory = modelo === '130' ? territory130 : modelo === '420' ? 'Canarias' : 'comun'
+        const formData = modelo === '303' ? form303 : modelo === '130' ? form130 : modelo === '420' ? form420 : formIpsi
+        const territory = modelo === '130' ? territory130 : modelo === '420' ? 'Canarias' : modelo === 'ipsi' ? ipsiTerritorio : 'comun'
         const result = await save(modelo, territory, year, quarter, formData, calcResult.result)
         if (result?.success) {
             setSaved(true)
@@ -371,7 +466,8 @@ export default function DeclarationsPage() {
     const handleReset = () => {
         if (modelo === '303') setForm303({})
         else if (modelo === '130') setForm130({})
-        else setForm420({})
+        else if (modelo === '420') setForm420({})
+        else setFormIpsi({})
         reset()
         setSaved(false)
     }
@@ -379,8 +475,9 @@ export default function DeclarationsPage() {
     const modeloLabel = useMemo(() => {
         if (modelo === '303') return 'Modelo 303 - IVA'
         if (modelo === '130') return 'Modelo 130 - Pago Fraccionado IRPF'
+        if (modelo === 'ipsi') return `IPSI - ${ipsiTerritorio}`
         return 'Modelo 420 - IGIC Canarias'
-    }, [modelo])
+    }, [modelo, ipsiTerritorio])
 
     return (
         <div className="declarations-page">
@@ -391,21 +488,30 @@ export default function DeclarationsPage() {
                     <FileText size={28} />
                     <div>
                         <h1>Modelos Trimestrales</h1>
-                        <p>Calcula y guarda tus declaraciones trimestrales de IVA e IRPF</p>
+                        <p>Calcula y guarda tus declaraciones trimestrales{isCeutaMelilla ? ' de IPSI e IRPF' : isCanarias ? ' de IGIC e IRPF' : ' de IVA e IRPF'}</p>
                     </div>
                 </div>
 
-                {/* Selector tabs */}
+                {/* Selector tabs — show relevant models based on user territory */}
                 <div className="decl-tabs">
-                    <button className={`decl-tab ${modelo === '303' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('303'); reset() }}>
-                        <Calculator size={16} /> 303 IVA
-                    </button>
+                    {!isCeutaMelilla && !isCanarias && (
+                        <button className={`decl-tab ${modelo === '303' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('303'); reset() }}>
+                            <Calculator size={16} /> 303 IVA
+                        </button>
+                    )}
                     <button className={`decl-tab ${modelo === '130' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('130'); reset() }}>
                         <Calculator size={16} /> 130 IRPF
                     </button>
-                    <button className={`decl-tab ${modelo === '420' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('420'); reset() }}>
-                        <Calculator size={16} /> 420 IGIC
-                    </button>
+                    {isCanarias && (
+                        <button className={`decl-tab ${modelo === '420' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('420'); reset() }}>
+                            <Calculator size={16} /> 420 IGIC
+                        </button>
+                    )}
+                    {isCeutaMelilla && (
+                        <button className={`decl-tab ${modelo === 'ipsi' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('ipsi'); reset() }}>
+                            <Calculator size={16} /> IPSI
+                        </button>
+                    )}
                 </div>
 
                 <div className="declarations-page__content">
@@ -456,6 +562,10 @@ export default function DeclarationsPage() {
                                     <NumberInput label="Cuotas compensar anteriores" value={form420.cuotas_compensar_anteriores || 0} onChange={v => setForm420(p => ({ ...p, cuotas_compensar_anteriores: v }))} suffix="EUR" />
                                 </div>
                             </div>
+                        )}
+
+                        {modelo === 'ipsi' && (
+                            <FormIpsi data={formIpsi} onChange={setFormIpsi} quarter={quarter} territorio={ipsiTerritorio} />
                         )}
 
                         <div className="decl-form-actions">

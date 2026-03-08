@@ -118,6 +118,34 @@ class Calculate420Request(BaseModel):
     quarter: int = 1
 
 
+class CalculateIpsiRequest(BaseModel):
+    territorio: str = "Ceuta"
+    base_0_5: float = 0
+    base_1: float = 0
+    base_2: float = 0
+    base_4: float = 0
+    base_8: float = 0
+    base_10: float = 0
+    base_importaciones: float = 0
+    tipo_importaciones: float = 0.04
+    base_inversion_sp: float = 0
+    tipo_inversion_sp: float = 0.04
+    mod_bases: float = 0
+    mod_cuotas: float = 0
+    cuota_corrientes_interiores: float = 0
+    cuota_inversion_interiores: float = 0
+    cuota_importaciones_corrientes: float = 0
+    cuota_importaciones_inversion: float = 0
+    rectificacion_deducciones: float = 0
+    regularizacion_inversion: float = 0
+    regularizacion_prorrata: float = 0
+    cuotas_compensar_anteriores: float = 0
+    regularizacion_anual: float = 0
+    resultado_anterior_complementaria: float = 0
+    quarter: int = 1
+    year: int = 2025
+
+
 class SaveDeclarationRequest(BaseModel):
     declaration_type: str  # "303", "130", "420"
     territory: str
@@ -231,6 +259,23 @@ async def calculate_420(
     try:
         from app.utils.calculators.modelo_420 import Modelo420Calculator
         calc = Modelo420Calculator(None)
+        result = await calc.calculate(**body.model_dump())
+        return CalculationResponse(result=result)
+    except Exception as e:
+        return CalculationResponse(success=False, error=str(e))
+
+
+@router.post("/ipsi/calculate", response_model=CalculationResponse)
+@limiter.limit("30/minute")
+async def calculate_ipsi(
+    body: CalculateIpsiRequest,
+    request: Request,
+    current_user: TokenData = Depends(get_current_user),
+):
+    """Calculate IPSI (Ceuta/Melilla) — no LLM, direct calculator."""
+    try:
+        from app.utils.calculators.modelo_ipsi import ModeloIpsiCalculator
+        calc = ModeloIpsiCalculator(None)
         result = await calc.calculate(**body.model_dump())
         return CalculationResponse(result=result)
     except Exception as e:

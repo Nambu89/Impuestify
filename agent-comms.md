@@ -7,6 +7,72 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-08] PM — DONE — Calculadora IPSI (Ceuta/Melilla)
+
+### Implementacion completa: calculadora + tool + REST + frontend
+
+**Archivos creados:**
+- `backend/app/utils/calculators/modelo_ipsi.py` — Calculadora IPSI 6 tipos (0.5%-10%)
+- `backend/app/tools/modelo_ipsi_tool.py` — Tool para chat (function calling)
+- `backend/tests/test_modelo_ipsi.py` — 34 tests (34/34 PASS)
+
+**Archivos modificados:**
+- `backend/app/routers/declarations.py` — POST /api/declarations/ipsi/calculate
+- `backend/app/tools/__init__.py` — MODELO_IPSI_TOOL registrada
+- `frontend/src/hooks/useDeclarations.ts` — CalculateIpsiInput + ModeloType 'ipsi'
+- `frontend/src/pages/DeclarationsPage.tsx` — Tab IPSI condicional + FormIpsi + ResultCard
+
+**Frontend inteligente por territorio:**
+- Ceuta/Melilla → IPSI + 130 (oculta 303/420)
+- Canarias → 420 + 130 (oculta 303)
+- Resto → 303 + 130
+
+**Tests:** 600 passed (34 nuevos IPSI), 6 failed pre-existentes (no relacionados)
+
+---
+
+## [2026-03-08] QA — DONE — Sesion 8b: Validacion fix SSE + perfil Melilla — 5/5 PASS
+
+### Resultado: TODOS LOS TESTS PASS — B-S7-01 RESUELTO
+
+| Paso | Descripcion | Estado | Tiempo SSE |
+|------|-------------|--------|------------|
+| PASO 0 | Cambiar CCAA a Melilla en Settings | PASS | 18s |
+| PASO 1 | IRPF 35.000€ con perfil Melilla | PASS | 20s (vs 120s antes) |
+| PASO 2 | Deducciones Melilla (discover_deductions) | PASS | 25s (vs CONGELADO antes) |
+| PASO 3 | IPSI vs IVA en Melilla | PASS | 20s |
+| PASO 4 | ISD donacion 50.000€ en Melilla | PASS | 15s |
+| PASO 5 | Restaurar CCAA a Madrid | PASS | 12s |
+
+### Hallazgos principales
+- **B-S7-01 CONFIRMADO RESUELTO** — fix commits e61633d + ee2364f funcionan en produccion
+- Tiempos de respuesta SSE: 15-25s (antes: 120-130s o TIMEOUT). Mejora del 80-100%
+- Perfil Melilla funciona: deduccion 60% Art. 68.4 LIRPF, IPSI, normativa ISD estatal
+- Calidad de respuesta excelente: cifras concretas, formato tabla, sin preguntas innecesarias
+- Issue menor QC-1: perfil fiscal del usuario test tiene "donacion pendiente 35.000€" incorrecto
+
+### Reporte completo: `plans/qa-report-2026-03-08-melilla.md`
+### Screenshots: `tests/e2e/screenshots/s8b-*.png` (30 capturas)
+
+---
+
+## [2026-03-08] PM — DONE — Mejora calidad respuesta + Fix SSE stream freeze
+
+### Calidad de respuesta (commit ee2364f)
+- System prompt reescrito: 414 → 42 lineas (-89%)
+- Patron "Responde primero, pregunta despues": usa perfil fiscal directamente
+- Tool results protegidos: instruccion append fuerza cifras en tabla markdown
+- RAG territorial: territory_filter con CCAA del usuario
+- Tono experto directo (no chatty)
+
+### Fix SSE stream freeze B-S7-01 (commit e61633d)
+- **Causa raiz**: `_stream_openai_response` no tenia timeout en consumo del stream. `async for chunk in stream` colgaba para siempre si OpenAI dejaba de enviar tokens (openai-python #2725, #1134, #769)
+- **Fix 1**: Per-chunk timeout 30s con `asyncio.wait_for(anext(stream), timeout=30)`
+- **Fix 2**: Smart fallback — si stream content < 50% de formatted_response, usa tool result
+- **Tests**: 48/48 PASS
+
+---
+
 ## [2026-03-08] QA — DONE — Sesion 7: Chat deducciones fiscales (test.particular@impuestify.es)
 
 ### Bug critico B-S7-01: Respuesta del chat se congela tras texto introductorio

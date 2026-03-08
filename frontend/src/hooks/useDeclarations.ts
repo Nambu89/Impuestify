@@ -5,7 +5,7 @@ import { useApi } from './useApi'
 // Types
 // ---------------------------------------------------------------------------
 
-export type ModeloType = '303' | '130' | '420'
+export type ModeloType = '303' | '130' | '420' | 'ipsi'
 
 export interface Calculate303Input {
     base_4?: number
@@ -88,6 +88,34 @@ export interface Calculate420Input {
     quarter?: number
 }
 
+export interface CalculateIpsiInput {
+    territorio?: string
+    base_0_5?: number
+    base_1?: number
+    base_2?: number
+    base_4?: number
+    base_8?: number
+    base_10?: number
+    base_importaciones?: number
+    tipo_importaciones?: number
+    base_inversion_sp?: number
+    tipo_inversion_sp?: number
+    mod_bases?: number
+    mod_cuotas?: number
+    cuota_corrientes_interiores?: number
+    cuota_inversion_interiores?: number
+    cuota_importaciones_corrientes?: number
+    cuota_importaciones_inversion?: number
+    rectificacion_deducciones?: number
+    regularizacion_inversion?: number
+    regularizacion_prorrata?: number
+    cuotas_compensar_anteriores?: number
+    regularizacion_anual?: number
+    resultado_anterior_complementaria?: number
+    quarter?: number
+    year?: number
+}
+
 export interface CalculationResult {
     success: boolean
     result: Record<string, any>
@@ -150,7 +178,7 @@ export function useDeclarations() {
 
     const calculate = useCallback((
         modelo: ModeloType,
-        input: Calculate303Input | Calculate130Input | Calculate420Input,
+        input: Calculate303Input | Calculate130Input | Calculate420Input | CalculateIpsiInput,
     ) => {
         if (timerRef.current) clearTimeout(timerRef.current)
         if (abortRef.current) abortRef.current.abort()
