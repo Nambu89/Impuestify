@@ -525,16 +525,11 @@ Añade explicación y contexto ALREDEDOR de los datos, nunca EN VEZ DE ellos.
 
 				logger.info(f"Direct response content length: {len(content)}")
 			
-			# Validate output format to ensure no internal JSON is exposed
+			# Validate output format — log warning but do NOT nuke the response
+			# (B-CHAT-01 fix: replacing the entire response caused valid answers to be lost)
 			from app.security.guardrails import guardrails_system
 			if not guardrails_system.validate_output_format(content):
-				logger.warning("⚠️ Internal JSON detected in response, sanitizing...")
-				# Provide a clean error message instead of exposing internal data
-				content = (
-					"Lo siento, hubo un problema al formatear la respuesta. "
-					"Por favor, intenta reformular tu pregunta de otra manera. "
-					"Si el problema persiste, puedes contactar con soporte."
-				)
+				logger.warning("⚠️ Internal JSON-like pattern detected in response (not replacing — may be legitimate content)")
 			
 			# === SPEED: Store successful response in Semantic Cache ===
 			try:

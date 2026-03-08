@@ -7,9 +7,10 @@ const STORAGE_KEY = 'onboarding_seen'
 
 interface OnboardingModalProps {
     userName?: string
+    onDismiss?: () => void
 }
 
-export default function OnboardingModal({ userName }: OnboardingModalProps) {
+export default function OnboardingModal({ userName, onDismiss }: OnboardingModalProps) {
     const [visible, setVisible] = useState(() => {
         return !localStorage.getItem(STORAGE_KEY)
     })
@@ -20,6 +21,7 @@ export default function OnboardingModal({ userName }: OnboardingModalProps) {
     const dismiss = () => {
         localStorage.setItem(STORAGE_KEY, 'true')
         setVisible(false)
+        onDismiss?.()
     }
 
     const steps = [

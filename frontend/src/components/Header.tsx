@@ -16,15 +16,8 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     const handleLogout = () => {
-        const confirmed = window.confirm(
-            '¿Estás seguro de que deseas cerrar sesión? '
-            + 'Tu historial de conversaciones se conservará para la próxima vez.'
-        )
-
-        if (confirmed) {
-            logout()
-            navigate('/login')
-        }
+        logout()
+        navigate('/login')
     }
 
     const getInitials = (name?: string) => {

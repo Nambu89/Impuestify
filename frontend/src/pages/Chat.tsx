@@ -48,6 +48,7 @@ export default function Chat() {
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [useStreaming] = useState(true)
+    const [onboardingDone, setOnboardingDone] = useState(() => !!localStorage.getItem('onboarding_seen'))
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const chatMessagesRef = useRef<HTMLDivElement>(null)
     const userJustSentRef = useRef(false)
@@ -218,13 +219,17 @@ export default function Chat() {
             {/* ✅ NUEVO: Pasar función toggle al Header */}
             <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-            {/* Onboarding for new users */}
-            <OnboardingModal userName={user?.name} />
+            {/* Onboarding for new users — show first, AITransparency only after */}
+            {!onboardingDone && (
+                <OnboardingModal userName={user?.name} onDismiss={() => setOnboardingDone(true)} />
+            )}
 
-            {/* AI Act Art. 52: AI Transparency Modal on first access */}
-            <AITransparencyModal onAccept={() => {
-                logger.debug('AI Transparency accepted')
-            }} />
+            {/* AI Act Art. 52: AI Transparency Modal — only after onboarding is done */}
+            {onboardingDone && (
+                <AITransparencyModal onAccept={() => {
+                    logger.debug('AI Transparency accepted')
+                }} />
+            )}
 
             {/* ✅ NUEVO: Pasar props de sidebar open/close */}
             <ConversationSidebar

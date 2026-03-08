@@ -68,7 +68,7 @@ function CcaaTip({ ccaa }: { ccaa: string }) {
 
     const isCeutaMelilla = ccaa === 'Ceuta' || ccaa === 'Melilla'
     const isCanarias = ccaa === 'Canarias'
-    const isForal = ccaa.startsWith('País Vasco') || ccaa === 'Navarra'
+    const isForal = ['Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra'].includes(ccaa)
 
     if (isCeutaMelilla) {
         return (
@@ -1189,6 +1189,18 @@ export default function TaxGuidePage() {
         return true
     })()
 
+    // Block clicking directly on the result step in progress bar without required data
+    const canGoToStep = (targetStep: number) => {
+        if (isQuick) return !!data.comunidad_autonoma || targetStep === 0
+        // For result step (6), require CCAA + income
+        if (targetStep >= totalSteps - 1) {
+            return !!data.comunidad_autonoma && step1HasIncome
+        }
+        // For step 1+, require CCAA
+        if (targetStep >= 1) return !!data.comunidad_autonoma
+        return true
+    }
+
     return (
         <div className="tax-guide">
             <Header />
@@ -1216,7 +1228,8 @@ export default function TaxGuidePage() {
                                 <button
                                     key={i}
                                     className={`tg-progress__step ${i === step ? 'tg-progress__step--active' : ''} ${i < step ? 'tg-progress__step--done' : ''}`}
-                                    onClick={() => animatedGoTo(i)}
+                                    onClick={() => canGoToStep(i) && animatedGoTo(i)}
+                                    disabled={!canGoToStep(i)}
                                     title={label}
                                 >
                                     <Icon size={16} />
