@@ -158,6 +158,14 @@ async def sse_generator(
                 
                 # Check if done
                 if event_dict.get("event") == "done":
+                    # Drain any remaining events that were queued before done
+                    while not callback.events.empty():
+                        try:
+                            remaining = callback.events.get_nowait()
+                            if remaining.get("event") != "done":
+                                yield remaining
+                        except asyncio.QueueEmpty:
+                            break
                     print(f"✅ Stream completed in {elapsed:.1f}s", flush=True)
                     logger.info(f"✅ Stream completed in {elapsed:.1f}s")
                     break

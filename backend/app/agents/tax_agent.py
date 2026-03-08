@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
 
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +80,7 @@ class TaxAgent:
 		"""Initialize the OpenAI client."""
 		if self.api_key:
 			self._client = OpenAI(api_key=self.api_key)
+			self._async_client = AsyncOpenAI(api_key=self.api_key)
 			logger.info(f"TaxAgent '{self.name}' initialized (year: {self.current_year}, IRPF fiscal: {self.irpf_fiscal_year}, quota: {self.autonomous_quota_year})")
 		else:
 			logger.error("TaxAgent initialization failed - missing OPENAI_API_KEY")
@@ -847,14 +848,16 @@ Recuerda: Sé **proactivo y directo**. Calcula cuando tengas datos suficientes, 
 		"""
 		Call OpenAI with stream=True and emit content_chunk events in real-time.
 
+		Uses AsyncOpenAI + async for to avoid blocking the event loop,
+		which would prevent sse_generator from yielding events to the client.
+
 		Returns the full accumulated content string.
 		"""
 		accumulated = []
 
 		try:
 			stream = await asyncio.wait_for(
-				asyncio.to_thread(
-					self._client.chat.completions.create,
+				self._async_client.chat.completions.create(
 					model=model,
 					messages=messages,
 					temperature=1,
@@ -864,12 +867,13 @@ Recuerda: Sé **proactivo y directo**. Calcula cuando tengas datos suficientes, 
 				timeout=timeout
 			)
 
-			# Iterate through streaming chunks
-			# We batch small chunks to avoid flooding SSE with single-char events
+			# Iterate through streaming chunks using async for
+			# This yields control back to the event loop between chunks,
+			# allowing sse_generator to send queued events to the client
 			buffer = ""
 			CHUNK_SIZE = 12  # Send every ~12 chars (roughly 2-3 words)
 
-			for chunk in stream:
+			async for chunk in stream:
 				delta = chunk.choices[0].delta if chunk.choices else None
 				if delta and delta.content:
 					buffer += delta.content

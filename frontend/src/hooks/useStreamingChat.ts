@@ -4,9 +4,14 @@
  * Handles Server-Sent Events streaming with chain-of-thought display
  * and real-time token-by-token content streaming.
  * Compatible with Railway's SSE timeout limits.
- * @version 3.0.0 - Real-time token streaming + timeline steps (Mar 2026)
+ *
+ * Uses eventsource-parser for spec-compliant SSE parsing (handles
+ * multi-line data fields, partial chunks, heartbeats, etc.)
+ *
+ * @version 3.1.0 - eventsource-parser + AsyncOpenAI streaming fix (Mar 2026)
  */
 import { useState, useCallback, useRef } from 'react';
+import { createParser, type EventSourceMessage } from 'eventsource-parser';
 import { logger } from '../utils/logger';
 
 // Use environment variable for API URL (needed for production)
@@ -158,222 +163,205 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                 throw new Error('No response body');
             }
 
-            // Read stream with TextDecoder
+            // Read stream with eventsource-parser for spec-compliant SSE parsing
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            let buffer = '';
-            let chunkCount = 0;
             let stepCounter = 0;
 
+            // Process a parsed SSE event
+            const handleEvent = (event: EventSourceMessage) => {
+                const eventType = event.event || 'message';
+                const eventData = event.data.trim();
+
+                switch (eventType) {
+                    case 'thinking': {
+                        const thinkingText = eventData.replace(/^"(.+)"$/, '$1');
+                        const stepId = `thinking-${++stepCounter}`;
+                        setStreamState(prev => ({
+                            ...prev,
+                            thinking: thinkingText,
+                            steps: upsertStep(prev.steps, {
+                                id: stepId,
+                                type: 'thinking',
+                                label: thinkingText,
+                                status: 'active',
+                                timestamp: Date.now()
+                            })
+                        }));
+                        break;
+                    }
+
+                    case 'tool_call': {
+                        try {
+                            const toolData = JSON.parse(eventData);
+                            const displayName = toolData.display_name || toolData.tool;
+                            const stepId = `tool-${toolData.tool}`;
+                            setStreamState(prev => ({
+                                ...prev,
+                                thinking: '',
+                                toolStatus: displayName,
+                                steps: upsertStep(
+                                    prev.steps.map(s =>
+                                        s.type === 'thinking' && s.status === 'active'
+                                            ? { ...s, status: 'done' as const }
+                                            : s
+                                    ),
+                                    {
+                                        id: stepId,
+                                        type: 'tool_call',
+                                        label: displayName,
+                                        status: 'active',
+                                        timestamp: Date.now()
+                                    }
+                                )
+                            }));
+                        } catch (e) {
+                            logger.error('Error parsing tool_call data:', e);
+                        }
+                        break;
+                    }
+
+                    case 'tool_result': {
+                        try {
+                            const resultData = JSON.parse(eventData);
+                            const doneName = resultData.done_name || resultData.display_name || resultData.tool;
+                            const displayName = resultData.display_name || resultData.tool;
+                            const stepId = `tool-${resultData.tool}`;
+                            setStreamState(prev => ({
+                                ...prev,
+                                toolStatus: resultData.success
+                                    ? doneName
+                                    : `Error en ${displayName}`,
+                                steps: upsertStep(prev.steps, {
+                                    id: stepId,
+                                    type: 'tool_result',
+                                    label: resultData.success
+                                        ? doneName
+                                        : `Error en ${displayName}`,
+                                    status: resultData.success ? 'done' : 'error',
+                                    timestamp: Date.now()
+                                })
+                            }));
+                        } catch (e) {
+                            logger.error('Error parsing tool_result data:', e);
+                        }
+                        break;
+                    }
+
+                    case 'content_chunk': {
+                        // Token-by-token streaming: APPEND to accumulator
+                        let chunkText = eventData;
+                        try {
+                            chunkText = JSON.parse(chunkText);
+                        } catch {
+                            chunkText = chunkText.replace(/^"(.+)"$/s, '$1');
+                        }
+
+                        responseAccRef.current += chunkText;
+                        const currentAcc = responseAccRef.current;
+
+                        setStreamState(prev => {
+                            // On first chunk, add a "writing" step and clear thinking
+                            let newSteps = prev.steps;
+                            if (!prev.response) {
+                                newSteps = upsertStep(
+                                    prev.steps.map(s =>
+                                        s.status === 'active' ? { ...s, status: 'done' as const } : s
+                                    ),
+                                    {
+                                        id: 'writing',
+                                        type: 'writing',
+                                        label: 'Escribiendo respuesta',
+                                        status: 'active',
+                                        timestamp: Date.now()
+                                    }
+                                );
+                            }
+                            return {
+                                ...prev,
+                                thinking: '',
+                                toolStatus: '',
+                                response: currentAcc,
+                                steps: newSteps
+                            };
+                        });
+                        break;
+                    }
+
+                    case 'content': {
+                        // Full content replacement (final authoritative version)
+                        let parsedContent = eventData;
+
+                        try {
+                            parsedContent = JSON.parse(parsedContent);
+                        } catch {
+                            parsedContent = parsedContent.replace(/^"(.+)"$/s, '$1');
+                        }
+
+                        // Replace accumulated response with authoritative final content
+                        responseAccRef.current = parsedContent;
+
+                        setStreamState(prev => ({
+                            ...prev,
+                            thinking: '',
+                            toolStatus: '',
+                            response: parsedContent,
+                            steps: prev.steps.map(s =>
+                                s.status === 'active' ? { ...s, status: 'done' as const } : s
+                            )
+                        }));
+                        break;
+                    }
+
+                    case 'done':
+                        logger.debug('Stream DONE event received');
+                        setIsStreaming(false);
+                        // Get the final response and call callback
+                        setStreamState(current => {
+                            if (callbacks?.onComplete && current.response) {
+                                callbacks.onComplete(current.response, conversationId);
+                            }
+                            return {
+                                ...current,
+                                isDone: true,
+                                steps: current.steps.map(s =>
+                                    s.status === 'active' ? { ...s, status: 'done' as const } : s
+                                )
+                            };
+                        });
+                        break;
+
+                    case 'error':
+                        setStreamState(prev => ({
+                            ...prev,
+                            error: eventData
+                        }));
+                        setIsStreaming(false);
+                        if (callbacks?.onError) {
+                            callbacks.onError(eventData);
+                        }
+                        break;
+                }
+            };
+
+            // Create spec-compliant SSE parser (handles multi-line data,
+            // partial chunks, comments/heartbeats, retry fields, etc.)
+            const parser = createParser({
+                onEvent: handleEvent
+            });
+
+            // Feed raw bytes into the parser
             while (true) {
                 const { value, done } = await reader.read();
 
                 if (done) {
-                    logger.debug('SSE Reader done after', chunkCount, 'chunks');
+                    logger.debug('SSE Reader done');
                     setIsStreaming(false);
                     break;
                 }
 
-                chunkCount++;
-                // Decode chunk
-                const decoded = decoder.decode(value, { stream: true });
-                buffer += decoded;
-
-                // Normalize newlines (handle \r\n and \r) and split by double newline
-                const normalizedBuffer = buffer.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-                const messages = normalizedBuffer.split('\n\n');
-                buffer = messages.pop() || ''; // Keep incomplete message in buffer
-
-                for (const message of messages) {
-                    const trimmedMessage = message.trim();
-
-                    if (!trimmedMessage || trimmedMessage.startsWith(':')) {
-                        // Skip empty messages and heartbeat comments
-                        continue;
-                    }
-
-                    // Parse SSE format: "event: eventName\ndata: eventData"
-                    const eventMatch = trimmedMessage.match(/^event:\s*(\w+)/m);
-                    const dataMatch = trimmedMessage.match(/^data:\s*(.*)$/ms);
-
-                    if (eventMatch && dataMatch) {
-                        const eventType = eventMatch[1];
-                        const eventData = dataMatch[1].trim();
-
-                        switch (eventType) {
-                            case 'thinking': {
-                                const thinkingText = eventData.replace(/^"(.+)"$/, '$1');
-                                const stepId = `thinking-${++stepCounter}`;
-                                setStreamState(prev => ({
-                                    ...prev,
-                                    thinking: thinkingText,
-                                    steps: upsertStep(prev.steps, {
-                                        id: stepId,
-                                        type: 'thinking',
-                                        label: thinkingText,
-                                        status: 'active',
-                                        timestamp: Date.now()
-                                    })
-                                }));
-                                break;
-                            }
-
-                            case 'tool_call': {
-                                try {
-                                    const toolData = JSON.parse(eventData);
-                                    const displayName = toolData.display_name || toolData.tool;
-                                    const stepId = `tool-${toolData.tool}`;
-                                    setStreamState(prev => ({
-                                        ...prev,
-                                        thinking: '', // Clear thinking text
-                                        toolStatus: displayName,
-                                        steps: upsertStep(
-                                            // Mark all previous thinking steps as done
-                                            prev.steps.map(s =>
-                                                s.type === 'thinking' && s.status === 'active'
-                                                    ? { ...s, status: 'done' as const }
-                                                    : s
-                                            ),
-                                            {
-                                                id: stepId,
-                                                type: 'tool_call',
-                                                label: displayName,
-                                                status: 'active',
-                                                timestamp: Date.now()
-                                            }
-                                        )
-                                    }));
-                                } catch (e) {
-                                    logger.error('Error parsing tool_call data:', e);
-                                }
-                                break;
-                            }
-
-                            case 'tool_result': {
-                                try {
-                                    const resultData = JSON.parse(eventData);
-                                    const doneName = resultData.done_name || resultData.display_name || resultData.tool;
-                                    const displayName = resultData.display_name || resultData.tool;
-                                    const stepId = `tool-${resultData.tool}`;
-                                    setStreamState(prev => ({
-                                        ...prev,
-                                        toolStatus: resultData.success
-                                            ? doneName
-                                            : `Error en ${displayName}`,
-                                        steps: upsertStep(prev.steps, {
-                                            id: stepId,
-                                            type: 'tool_result',
-                                            label: resultData.success
-                                                ? doneName
-                                                : `Error en ${displayName}`,
-                                            status: resultData.success ? 'done' : 'error',
-                                            timestamp: Date.now()
-                                        })
-                                    }));
-                                } catch (e) {
-                                    logger.error('Error parsing tool_result data:', e);
-                                }
-                                break;
-                            }
-
-                            case 'content_chunk': {
-                                // Token-by-token streaming: APPEND to accumulator
-                                let chunkText = eventData;
-                                try {
-                                    chunkText = JSON.parse(chunkText);
-                                } catch {
-                                    chunkText = chunkText.replace(/^"(.+)"$/s, '$1');
-                                }
-
-                                responseAccRef.current += chunkText;
-                                const currentAcc = responseAccRef.current;
-
-                                setStreamState(prev => {
-                                    // On first chunk, add a "writing" step and clear thinking
-                                    let newSteps = prev.steps;
-                                    if (!prev.response) {
-                                        newSteps = upsertStep(
-                                            prev.steps.map(s =>
-                                                s.status === 'active' ? { ...s, status: 'done' as const } : s
-                                            ),
-                                            {
-                                                id: 'writing',
-                                                type: 'writing',
-                                                label: 'Escribiendo respuesta',
-                                                status: 'active',
-                                                timestamp: Date.now()
-                                            }
-                                        );
-                                    }
-                                    return {
-                                        ...prev,
-                                        thinking: '',
-                                        toolStatus: '',
-                                        response: currentAcc,
-                                        steps: newSteps
-                                    };
-                                });
-                                break;
-                            }
-
-                            case 'content': {
-                                // Full content replacement (final authoritative version)
-                                let parsedContent = eventData;
-                                parsedContent = parsedContent.replace(/^data:\s*/gm, '');
-
-                                try {
-                                    parsedContent = JSON.parse(parsedContent);
-                                } catch {
-                                    parsedContent = parsedContent.replace(/^"(.+)"$/s, '$1');
-                                }
-                                parsedContent = parsedContent.replace(/\ndata:\s*/g, '\n');
-
-                                // Replace accumulated response with authoritative final content
-                                responseAccRef.current = parsedContent;
-
-                                setStreamState(prev => ({
-                                    ...prev,
-                                    thinking: '',
-                                    toolStatus: '',
-                                    response: parsedContent,
-                                    steps: prev.steps.map(s =>
-                                        s.status === 'active' ? { ...s, status: 'done' as const } : s
-                                    )
-                                }));
-                                break;
-                            }
-
-                            case 'done':
-                                logger.debug('Stream DONE event received');
-                                setIsStreaming(false);
-                                // Get the final response and call callback
-                                setStreamState(current => {
-                                    if (callbacks?.onComplete && current.response) {
-                                        callbacks.onComplete(current.response, conversationId);
-                                    }
-                                    return {
-                                        ...current,
-                                        isDone: true,
-                                        steps: current.steps.map(s =>
-                                            s.status === 'active' ? { ...s, status: 'done' as const } : s
-                                        )
-                                    };
-                                });
-                                break;
-
-                            case 'error':
-                                setStreamState(prev => ({
-                                    ...prev,
-                                    error: eventData
-                                }));
-                                setIsStreaming(false);
-                                if (callbacks?.onError) {
-                                    callbacks.onError(eventData);
-                                }
-                                break;
-                        }
-                    }
-                }
+                // Feed decoded text to eventsource-parser
+                parser.feed(decoder.decode(value, { stream: true }));
             }
 
         } catch (error) {
