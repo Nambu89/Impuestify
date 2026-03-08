@@ -49,7 +49,7 @@ export default function PrivacyPolicyPage() {
                         <tbody>
                             <tr>
                                 <td>OpenAI</td>
-                                <td>Modelo IA (GPT-4o-mini)</td>
+                                <td>Modelo de lenguaje (IA)</td>
                                 <td>🇺🇸 USA (SCC)</td>
                             </tr>
                             <tr>

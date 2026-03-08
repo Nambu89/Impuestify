@@ -4,7 +4,7 @@
 
 .declarations-page {
     min-height: 100vh;
-    background: var(--color-gray-50);
+    background: var(--color-secondary);
     padding-top: 60px;
 }
 
@@ -52,11 +52,11 @@
     display: flex;
     gap: var(--spacing-1);
     margin-bottom: var(--spacing-6);
-    background: var(--color-white);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xl);
     padding: var(--spacing-1);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -75,7 +75,7 @@
     background: transparent;
     font-size: var(--font-size-sm);
     font-weight: 500;
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.5);
     cursor: pointer;
     border-radius: var(--radius-lg);
     white-space: nowrap;
@@ -84,8 +84,8 @@
 }
 
 .decl-tab:hover {
-    color: var(--color-primary);
-    background: rgba(26, 86, 219, 0.06);
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .decl-tab--active {
@@ -110,16 +110,17 @@
 /* ========== FORM PANEL — PREMIUM CARD ========== */
 
 .decl-form-panel {
-    background: var(--color-white);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-2xl);
     padding: var(--spacing-6);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     transition: box-shadow var(--transition-slow);
+    backdrop-filter: blur(12px);
 }
 
 .decl-form-panel:focus-within {
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
 .decl-form-panel__header {
@@ -128,13 +129,13 @@
     gap: var(--spacing-4);
     margin-bottom: var(--spacing-6);
     padding-bottom: var(--spacing-4);
-    border-bottom: 1px solid var(--color-gray-100);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .decl-form-panel__header h2 {
     font-size: var(--font-size-lg);
     font-weight: 700;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin: 0;
     letter-spacing: -0.01em;
 }
@@ -150,12 +151,12 @@
 .decl-select {
     height: 40px;
     padding: 0 var(--spacing-3);
-    border: 1.5px solid var(--color-gray-200);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-lg);
     font-size: var(--font-size-sm);
     font-weight: 500;
-    color: var(--color-gray-700);
-    background: var(--color-gray-50);
+    color: var(--color-white);
+    background: rgba(255, 255, 255, 0.07);
     cursor: pointer;
     transition: border-color var(--transition-base), box-shadow var(--transition-base), background var(--transition-base);
     appearance: none;
@@ -165,16 +166,21 @@
     padding-right: var(--spacing-8);
 }
 
+.decl-select option {
+    background: var(--color-secondary);
+    color: var(--color-white);
+}
+
 .decl-select:focus {
     outline: none;
-    border-color: var(--color-primary);
-    background-color: var(--color-white);
-    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
+    border-color: var(--color-primary-light);
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.2);
 }
 
 .decl-select:hover:not(:focus) {
-    border-color: var(--color-gray-300);
-    background-color: var(--color-white);
+    border-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.09);
 }
 
 /* ========== FORM SECTION HEADINGS ========== */
@@ -219,7 +225,7 @@
 
 .decl-form__details {
     margin: var(--spacing-3) 0;
-    border: 1px solid var(--color-gray-100);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
     overflow: hidden;
 }
@@ -230,10 +236,10 @@
     gap: var(--spacing-2);
     font-size: var(--font-size-sm);
     font-weight: 500;
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.5);
     cursor: pointer;
     padding: var(--spacing-3) var(--spacing-4);
-    background: var(--color-gray-50);
+    background: rgba(255, 255, 255, 0.04);
     user-select: none;
     list-style: none;
     transition: color var(--transition-base), background var(--transition-base);
@@ -244,13 +250,13 @@
 }
 
 .decl-form__details summary:hover {
-    color: var(--color-primary);
-    background: rgba(26, 86, 219, 0.04);
+    color: var(--color-accent);
+    background: rgba(255, 255, 255, 0.07);
 }
 
 .decl-form__details[open] summary {
-    color: var(--color-primary);
-    border-bottom: 1px solid var(--color-gray-100);
+    color: var(--color-accent);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .decl-form__details[open] summary svg {
@@ -277,7 +283,7 @@
 .decl-field__label {
     font-size: var(--font-size-xs);
     font-weight: 600;
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.6);
     letter-spacing: 0.02em;
 }
 
@@ -291,25 +297,25 @@
     width: 100%;
     height: 44px;
     padding: 0 var(--spacing-4);
-    border: 1.5px solid var(--color-gray-200);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-lg);
     font-size: var(--font-size-sm);
     font-weight: 500;
-    color: var(--color-gray-900);
-    background: var(--color-gray-50);
+    color: var(--color-white);
+    background: rgba(255, 255, 255, 0.07);
     transition: border-color var(--transition-base), box-shadow var(--transition-base), background var(--transition-base);
 }
 
 .decl-field__input:focus {
     outline: none;
-    border-color: var(--color-primary);
-    background: var(--color-white);
-    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
+    border-color: var(--color-primary-light);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.2);
 }
 
 .decl-field__input:hover:not(:focus) {
-    border-color: var(--color-gray-300);
-    background: var(--color-white);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.09);
 }
 
 .decl-field__input[type="number"] {
@@ -340,14 +346,14 @@ select.decl-field__input {
     right: var(--spacing-3);
     font-size: var(--font-size-xs);
     font-weight: 600;
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.35);
     pointer-events: none;
     letter-spacing: 0.04em;
 }
 
 .decl-field__help {
     font-size: 11px;
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.35);
     line-height: 1.4;
 }
 
@@ -359,7 +365,7 @@ select.decl-field__input {
     gap: var(--spacing-3);
     font-size: var(--font-size-sm);
     font-weight: 500;
-    color: var(--color-gray-700);
+    color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
     padding: var(--spacing-2) 0;
     user-select: none;
@@ -381,7 +387,7 @@ select.decl-field__input {
     gap: var(--spacing-3);
     margin-top: var(--spacing-6);
     padding-top: var(--spacing-5);
-    border-top: 1px solid var(--color-gray-100);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .decl-btn {
@@ -429,15 +435,15 @@ select.decl-field__input {
 
 /* Secondary — subtle ghost */
 .decl-btn--secondary {
-    background: var(--color-gray-100);
-    color: var(--color-gray-600);
-    border: 1.5px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
 }
 
 .decl-btn--secondary:hover:not(:disabled) {
-    background: var(--color-gray-200);
-    color: var(--color-gray-800);
-    border-color: var(--color-gray-300);
+    background: rgba(255, 255, 255, 0.13);
+    color: var(--color-white);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* ========== ERROR MESSAGE ========== */
@@ -477,8 +483,8 @@ select.decl-field__input {
 }
 
 .decl-result--positive {
-    background: linear-gradient(135deg, #fff1f2 0%, #fff5f5 100%);
-    border-color: rgba(239, 68, 68, 0.2);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%);
+    border-color: rgba(239, 68, 68, 0.25);
 }
 
 .decl-result--positive::before {
@@ -486,8 +492,8 @@ select.decl-field__input {
 }
 
 .decl-result--negative {
-    background: linear-gradient(135deg, #f0fdf4 0%, #f7fff9 100%);
-    border-color: rgba(16, 185, 129, 0.2);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+    border-color: rgba(16, 185, 129, 0.25);
 }
 
 .decl-result--negative::before {
@@ -528,7 +534,7 @@ select.decl-field__input {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.5);
     margin-bottom: var(--spacing-1);
 }
 
@@ -541,11 +547,11 @@ select.decl-field__input {
 }
 
 .decl-result--positive .decl-result__amount {
-    color: #dc2626;
+    color: #f87171;
 }
 
 .decl-result--negative .decl-result__amount {
-    color: #059669;
+    color: #34d399;
 }
 
 .decl-result__currency {
@@ -555,7 +561,7 @@ select.decl-field__input {
 }
 
 .decl-result__breakdown {
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: var(--spacing-3);
     display: flex;
     flex-direction: column;
@@ -567,12 +573,12 @@ select.decl-field__input {
     justify-content: space-between;
     align-items: center;
     font-size: var(--font-size-sm);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .decl-result__row span:last-child {
     font-weight: 600;
-    color: var(--color-gray-700);
+    color: var(--color-white);
 }
 
 /* ========== LOADING STATE ========== */
@@ -583,13 +589,13 @@ select.decl-field__input {
     justify-content: center;
     gap: var(--spacing-2);
     padding: var(--spacing-6);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.5);
     font-size: var(--font-size-sm);
     font-weight: 500;
-    background: var(--color-white);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-2xl);
-    border: 1px solid var(--color-gray-200);
-    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: none;
 }
 
 @keyframes spin {
@@ -603,11 +609,12 @@ select.decl-field__input {
 /* ========== HISTORY / SAVED DECLARATIONS ========== */
 
 .decl-history {
-    background: var(--color-white);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-2xl);
     padding: var(--spacing-5);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
+    backdrop-filter: blur(12px);
 }
 
 .decl-history h3 {
@@ -616,10 +623,10 @@ select.decl-field__input {
     gap: var(--spacing-2);
     font-size: var(--font-size-sm);
     font-weight: 700;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin: 0 0 var(--spacing-4);
     padding-bottom: var(--spacing-3);
-    border-bottom: 1px solid var(--color-gray-100);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
@@ -639,19 +646,19 @@ select.decl-field__input {
     align-items: center;
     justify-content: space-between;
     padding: var(--spacing-3) var(--spacing-4);
-    background: var(--color-gray-50);
+    background: rgba(255, 255, 255, 0.04);
     border-radius: var(--radius-xl);
-    border: 1px solid var(--color-gray-100);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     transition: background var(--transition-base), border-color var(--transition-base),
                 transform var(--transition-base), box-shadow var(--transition-base);
     cursor: default;
 }
 
 .decl-history__item:hover {
-    background: var(--color-white);
-    border-color: rgba(26, 86, 219, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(26, 86, 219, 0.3);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .decl-history__info {
@@ -673,13 +680,13 @@ select.decl-field__input {
 .decl-history__quarter {
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--color-gray-700);
+    color: var(--color-white);
 }
 
 .decl-history__territory {
     font-size: var(--font-size-xs);
-    color: var(--color-gray-400);
-    background: var(--color-gray-100);
+    color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.08);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
 }
@@ -687,7 +694,7 @@ select.decl-field__input {
 .decl-history__amount {
     font-size: var(--font-size-sm);
     font-weight: 700;
-    color: var(--color-gray-800);
+    color: var(--color-white);
 }
 
 /* ========== SIDEBAR LAYOUT ========== */

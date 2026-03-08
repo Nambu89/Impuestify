@@ -1,8 +1,8 @@
-/* TerritoryCard Component - MOBILE FIRST */
+/* TerritoryCard Component - MOBILE FIRST — Dark Theme */
 
 .territory-card {
-    background: var(--color-white);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-xl);
     padding: var(--spacing-6);
     display: flex;
@@ -11,6 +11,7 @@
     transition: all var(--transition-base);
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(12px);
 }
 
 .territory-card::before {
@@ -20,14 +21,15 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.08);
     transition: background var(--transition-base);
 }
 
 .territory-card:hover {
-    box-shadow: var(--shadow-lg);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
     transform: translateY(-3px);
-    border-color: var(--color-primary-light);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 .territory-card:hover::before {
@@ -36,8 +38,8 @@
 
 /* Foral variant */
 .territory-card--foral {
-    border-color: var(--color-primary-light);
-    background: linear-gradient(135deg, var(--color-white) 0%, rgba(26, 86, 219, 0.02) 100%);
+    border-color: rgba(26, 86, 219, 0.3);
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.08) 0%, rgba(6, 182, 212, 0.04) 100%);
 }
 
 .territory-card--foral::before {
@@ -71,26 +73,26 @@
 .territory-card__name {
     font-size: var(--font-size-xl);
     font-weight: 700;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin: 0 0 var(--spacing-1) 0;
     line-height: 1.2;
 }
 
 .territory-card__full-name {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .territory-card__badge {
     display: inline-flex;
     align-items: center;
     padding: var(--spacing-1) var(--spacing-3);
-    background: linear-gradient(135deg, rgba(26, 86, 219, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
-    color: var(--color-primary);
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%);
+    color: var(--color-primary-light);
     border-radius: var(--radius-full);
     font-size: var(--font-size-xs);
     font-weight: 600;
-    border: 1px solid rgba(26, 86, 219, 0.2);
+    border: 1px solid rgba(26, 86, 219, 0.3);
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -98,7 +100,7 @@
 /* Description */
 .territory-card__description {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.7);
     line-height: 1.6;
     margin: 0;
 }
@@ -109,8 +111,9 @@
     flex-direction: column;
     gap: var(--spacing-2);
     padding: var(--spacing-3);
-    background: var(--color-gray-50);
+    background: rgba(255, 255, 255, 0.04);
     border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .territory-card__hacienda {
@@ -118,7 +121,7 @@
     align-items: center;
     gap: var(--spacing-2);
     font-size: var(--font-size-xs);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .territory-card__hacienda svg {
@@ -135,13 +138,13 @@
 .territory-card__deduction-count {
     font-size: var(--font-size-xl);
     font-weight: 800;
-    color: var(--color-primary);
+    color: var(--color-primary-light);
     line-height: 1;
 }
 
 .territory-card__deduction-label {
     font-size: var(--font-size-xs);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.5);
     font-weight: 500;
 }
 
@@ -165,5 +168,5 @@
 .territory-card__cta:hover {
     color: var(--color-white);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 8px 24px rgba(26, 86, 219, 0.4);
 }

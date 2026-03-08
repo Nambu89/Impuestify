@@ -10,6 +10,7 @@ import SpotlightCard from '../components/reactbits/SpotlightCard'
 import CountUp from '../components/reactbits/CountUp'
 import FadeContent from '../components/reactbits/FadeContent'
 import StarBorder from '../components/reactbits/StarBorder'
+import InteractiveSpainMap from '../components/InteractiveSpainMap'
 import './Home.css'
 
 const TERRITORIES = [
@@ -43,67 +44,62 @@ export default function Home() {
         <div className="home">
             <Header />
 
-            {/* Hero Section */}
+            {/* Hero Section — centered text */}
             <section className="hero">
                 <div className="container">
-                    <div className="hero-content">
-                        <FadeContent delay={0} duration={600}>
-                            <div className="hero-badge">
-                                <Cpu size={16} />
-                                <span>IA Fiscal Multi-Agente</span>
-                            </div>
-                        </FadeContent>
-                        <FadeContent delay={100} duration={600}>
-                            <h1 className="hero-title">
-                                Tu Asistente Fiscal{' '}
-                                <GradientText
-                                    colors={['#1a56db', '#06b6d4', '#3b82f6', '#1a56db']}
-                                    animationSpeed={6}
-                                    className="hero-gradient"
-                                >
-                                    Inteligente
-                                </GradientText>
-                            </h1>
-                        </FadeContent>
-                        <FadeContent delay={200} duration={600}>
-                            <p className="hero-subtitle">
-                                El único asistente fiscal con IA que cubre todas las comunidades autónomas,
-                                incluyendo los territorios forales del País Vasco y Navarra.
-                            </p>
-                        </FadeContent>
-                        <FadeContent delay={300} duration={600}>
-                            <div className="hero-actions">
-                                {isAuthenticated ? (
-                                    <Link to="/chat" className="btn btn-primary btn-lg">
-                                        Ir al Chat
+                    <FadeContent delay={0} duration={600}>
+                        <div className="hero-badge">
+                            <Cpu size={16} />
+                            <span>IA Fiscal Multi-Agente</span>
+                        </div>
+                    </FadeContent>
+                    <FadeContent delay={100} duration={600}>
+                        <h1 className="hero-title">
+                            Tu Asistente Fiscal{' '}
+                            <GradientText
+                                colors={['#1a56db', '#06b6d4', '#3b82f6', '#1a56db']}
+                                animationSpeed={6}
+                                className="hero-gradient"
+                            >
+                                Inteligente
+                            </GradientText>
+                        </h1>
+                    </FadeContent>
+                    <FadeContent delay={200} duration={600}>
+                        <p className="hero-subtitle">
+                            El único asistente fiscal con IA que cubre todas las comunidades autónomas,
+                            incluyendo los territorios forales del País Vasco y Navarra.
+                        </p>
+                    </FadeContent>
+                    <FadeContent delay={300} duration={600}>
+                        <div className="hero-actions">
+                            {isAuthenticated ? (
+                                <Link to="/chat" className="btn btn-primary btn-lg">
+                                    Ir al Chat
+                                    <ArrowRight size={20} />
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link to="/register" className="btn btn-primary btn-lg">
+                                        Empezar Ahora
                                         <ArrowRight size={20} />
                                     </Link>
-                                ) : (
-                                    <>
-                                        <Link to="/register" className="btn btn-primary btn-lg">
-                                            Empezar Ahora
-                                            <ArrowRight size={20} />
-                                        </Link>
-                                        <Link to="/login" className="btn btn-secondary btn-lg">
-                                            Iniciar Sesión
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
-                        </FadeContent>
-                    </div>
-                    <div className="hero-visual">
-                        <FadeContent delay={400} duration={800} direction="left">
-                            <div className="chat-preview">
-                                <div className="chat-message user">
-                                    <p>¿Cuánto pago de IRPF si gano 40.000€ en Madrid?</p>
-                                </div>
-                                <div className="chat-message assistant">
-                                    <p>Tu cuota IRPF estimada es de 7.234€ (tipo efectivo 18,1%). Además, podrías aplicar 3 deducciones...</p>
-                                </div>
-                            </div>
-                        </FadeContent>
-                    </div>
+                                    <Link to="/login" className="btn btn-secondary btn-lg">
+                                        Iniciar Sesión
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </FadeContent>
+                </div>
+            </section>
+
+            {/* Interactive Map Section — full width */}
+            <section className="map-section">
+                <div className="container">
+                    <FadeContent delay={0} duration={800}>
+                        <InteractiveSpainMap />
+                    </FadeContent>
                 </div>
             </section>
 

@@ -59,7 +59,7 @@ export default function AITransparencyModal({ onAccept }: AITransparencyModalPro
                     <div className="ai-notice">
                         <Shield size={20} />
                         <p>
-                            <strong>Impuestify utiliza inteligencia artificial</strong> (OpenAI GPT-4o-mini / GPT-5-mini)
+                            <strong>Impuestify utiliza inteligencia artificial</strong> (los últimos modelos de lenguaje del mercado)
                             para responder a tus consultas fiscales.
                         </p>
                     </div>

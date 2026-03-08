@@ -61,3 +61,51 @@
 - Deduciones reembolsables (maternidad, familia numerosa) pueden hacer cuota_total negativa → devolucion
 - Deducciones no reembolsables (donativos) no pueden reducir cuota por debajo de 0
 - El endpoint devuelve `cuota_total` (no `cuota_liquida_total`)
+
+---
+
+## [2026-03-07] Race condition useSubscription → redirect loop infinito
+
+**Problema:** Navegar a `/guia-fiscal` causaba redirect loop infinito: guia-fiscal → subscribe → guia-fiscal... con errores ERR_ABORTED en network. El usuario no podia acceder a la Guia Fiscal ni a ninguna ruta protegida con `requireSubscription`.
+
+**Causa raiz:** En `useSubscription.ts`, la funcion `fetchStatus` hacia early return cuando `isAuthenticated=false` pero ya habia ejecutado `setLoading(false)` en el bloque `finally`. Cuando auth completaba (isAuthenticated=true→false→true), ProtectedRoute veia `subLoading=false` + `hasAccess=false` (data aun null) y redirigía a /subscribe.
+
+**Solucion:**
+- Eliminar `setLoading(false)` del early return (no en finally, sino evitar que finally ejecute)
+- Mover `setLoading(true)` al inicio del try block real
+- Anadir handling de abort errors para evitar errores fantasma en navegacion
+
+**Archivos modificados:**
+- `frontend/src/hooks/useSubscription.ts`
+
+**Regla para prevenir recurrencia:** En hooks que dependen de otro estado async (ej: isAuthenticated), NUNCA setear loading=false hasta que la llamada real se haya intentado. El early return debe dejar loading=true para que ProtectedRoute siga mostrando "Cargando..." hasta tener datos reales.
+
+---
+
+## [2026-03-07] CORS bloqueaba API calls desde localhost:3000
+
+**Problema:** Login y todas las API calls fallaban con CORS error cuando frontend corria en puerto 3000 (configurado en vite.config.ts).
+
+**Causa raiz:** `frontend/.env.local` define `VITE_API_URL=http://localhost:8000`, haciendo llamadas directas al backend (sin pasar por proxy Vite). El puerto 3000 del frontend no estaba en ALLOWED_ORIGINS del `.env` raiz.
+
+**Solucion:** Anadir `http://localhost:3000` a ALLOWED_ORIGINS en `.env`.
+
+**Archivos modificados:**
+- `.env` (raiz)
+
+**Regla para prevenir recurrencia:** Al cambiar el puerto del frontend en vite.config.ts, SIEMPRE anadir el nuevo origen a ALLOWED_ORIGINS. Si se usa `.env.local` con VITE_API_URL directo, el frontend hace CORS requests y necesita estar en la lista.
+
+---
+
+## [2026-03-07] Deteccion foral rota en TaxGuidePage (tildes)
+
+**Problema:** CcaaTip no detectaba territorios forales correctamente. Los tips especificos para Pais Vasco no aparecian.
+
+**Causa raiz:** `ccaa.startsWith('Pais Vasco')` no matcheaba porque en sesion anterior se cambiaron los CCAA_OPTIONS a usar tildes (`'País Vasco - Araba'`) pero no se actualizo esta comparacion.
+
+**Solucion:** Cambiar a `ccaa.startsWith('País Vasco')` con tilde.
+
+**Archivos modificados:**
+- `frontend/src/pages/TaxGuidePage.tsx` (linea 70)
+
+**Regla para prevenir recurrencia:** Al cambiar valores en arrays de opciones (CCAA_OPTIONS, etc.), buscar TODAS las referencias a esos valores en el mismo archivo y archivos relacionados. Usar grep para encontrar todas las ocurrencias.

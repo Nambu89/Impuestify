@@ -106,7 +106,7 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
         callbacks?: StreamCallbacks,
         workspaceId?: string
     ) => {
-        // Reset state
+        // Reset state with immediate "processing" feedback
         responseAccRef.current = '';
         setStreamState({
             thinking: '',
@@ -114,7 +114,13 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
             response: '',
             isDone: false,
             error: null,
-            steps: []
+            steps: [{
+                id: 'connecting',
+                type: 'thinking',
+                label: 'Procesando tu consulta...',
+                status: 'active',
+                timestamp: Date.now()
+            }]
         });
 
         setIsStreaming(true);

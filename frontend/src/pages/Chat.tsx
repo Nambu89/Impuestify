@@ -247,16 +247,8 @@ export default function Chat() {
                 <div className="chat-container">
                     {messages.length === 0 ? (
                         <div className="chat-empty-state">
-                            <img
-                                src="/images/chat-empty-state.webp"
-                                alt=""
-                                className="chat-empty-state__image"
-                                loading="lazy"
-                                width={120}
-                                height={120}
-                            />
                             <h2 className="chat-empty-state__title">
-                                En que puedo ayudarte?
+                                ¿En qué puedo ayudarte?
                             </h2>
                             <div className="chat-empty-state__suggestions">
                                 <button

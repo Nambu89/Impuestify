@@ -1,15 +1,15 @@
-/* CeutaMelillaPage Styles - MOBILE FIRST */
+/* CeutaMelillaPage Styles - MOBILE FIRST - DARK THEME */
 
 .ceuta-page {
     min-height: 100vh;
-    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+    background: var(--color-secondary);
 }
 
 /* Back link */
 .ceuta-back {
     padding: var(--spacing-4) 0 0;
-    background: var(--color-white);
-    border-bottom: 1px solid var(--color-gray-200);
+    background: var(--color-secondary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .ceuta-back__link {
@@ -17,14 +17,14 @@
     align-items: center;
     gap: var(--spacing-1);
     font-size: var(--font-size-sm);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.5);
     text-decoration: none;
     transition: all var(--transition-fast);
     padding-bottom: var(--spacing-3);
 }
 
 .ceuta-back__link:hover {
-    color: var(--color-primary);
+    color: var(--color-primary-light);
     transform: translateX(-3px);
 }
 
@@ -43,14 +43,15 @@
     padding: var(--spacing-2) var(--spacing-4);
     background: linear-gradient(
         135deg,
-        rgba(26, 86, 219, 0.1) 0%,
-        rgba(6, 182, 212, 0.1) 100%
+        rgba(26, 86, 219, 0.25) 0%,
+        rgba(6, 182, 212, 0.25) 100%
     );
     border-radius: var(--radius-full);
-    color: var(--color-primary);
+    color: var(--color-accent);
     font-size: var(--font-size-sm);
     font-weight: 500;
     margin-bottom: var(--spacing-4);
+    border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
 .ceuta-hero__title {
@@ -76,7 +77,7 @@
 }
 
 .ceuta-hero__subtitle strong {
-    color: var(--color-accent);
+    color: var(--color-white);
 }
 
 /* Stats row */
@@ -99,7 +100,7 @@
 .ceuta-hero__stat-value {
     font-size: var(--font-size-4xl);
     font-weight: 800;
-    color: var(--color-primary);
+    color: var(--color-accent);
     line-height: 1;
     display: flex;
     align-items: baseline;
@@ -135,13 +136,14 @@
     height: auto;
     margin: var(--spacing-8) auto 0;
     border-radius: var(--radius-xl);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(6, 182, 212, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ========== VENTAJAS ========== */
 .ceuta-ventajas {
     padding: var(--spacing-12) 0;
-    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, var(--color-secondary) 100%);
 }
 
 .ceuta-ventajas__grid {
@@ -154,12 +156,20 @@
 .ceuta-ventaja__card {
     padding: var(--spacing-6);
     border-radius: var(--radius-xl);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
     display: flex;
     flex-direction: column;
     gap: var(--spacing-3);
     position: relative;
     z-index: 0;
+    transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.ceuta-ventaja__card:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .ceuta-ventaja__header {
@@ -189,9 +199,9 @@
 
 .ceuta-ventaja__article {
     font-size: var(--font-size-xs);
-    color: var(--color-primary);
+    color: var(--color-primary-light);
     font-weight: 600;
-    background: rgba(26, 86, 219, 0.1);
+    background: rgba(26, 86, 219, 0.15);
     padding: var(--spacing-1) var(--spacing-2);
     border-radius: var(--radius-sm);
     white-space: nowrap;
@@ -202,7 +212,7 @@
 .ceuta-ventaja__title {
     font-size: var(--font-size-lg);
     font-weight: 700;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin: 0;
     line-height: 1.3;
     position: relative;
@@ -211,7 +221,7 @@
 
 .ceuta-ventaja__desc {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.7);
     line-height: 1.6;
     margin: 0;
     position: relative;
@@ -223,7 +233,7 @@
     align-items: flex-start;
     gap: var(--spacing-2);
     padding: var(--spacing-3);
-    background: rgba(26, 86, 219, 0.05);
+    background: rgba(26, 86, 219, 0.12);
     border-radius: var(--radius-lg);
     border-left: 3px solid var(--color-primary);
     position: relative;
@@ -231,21 +241,21 @@
 }
 
 .ceuta-ventaja__example svg {
-    color: var(--color-primary);
+    color: var(--color-primary-light);
     flex-shrink: 0;
     margin-top: 1px;
 }
 
 .ceuta-ventaja__example span {
     font-size: var(--font-size-xs);
-    color: var(--color-gray-700);
+    color: rgba(255, 255, 255, 0.65);
     line-height: 1.5;
 }
 
 /* ========== IRPF DETAIL ========== */
 .ceuta-irpf {
     padding: var(--spacing-12) 0;
-    background: var(--color-white);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .ceuta-irpf__grid {
@@ -283,21 +293,21 @@
 .ceuta-irpf__step-content h3 {
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin-bottom: var(--spacing-2);
 }
 
 .ceuta-irpf__step-content p {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.7);
     line-height: 1.6;
     margin: 0;
 }
 
 /* Example box */
 .ceuta-irpf__example-box {
-    background: var(--color-gray-50);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-xl);
     padding: var(--spacing-6);
 }
@@ -308,12 +318,12 @@
     gap: var(--spacing-2);
     font-size: var(--font-size-lg);
     font-weight: 600;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin-bottom: var(--spacing-4);
 }
 
 .ceuta-irpf__example-box h3 svg {
-    color: var(--color-primary);
+    color: var(--color-primary-light);
 }
 
 .ceuta-irpf__example-table {
@@ -329,31 +339,31 @@
     padding: var(--spacing-3);
     border-radius: var(--radius-md);
     font-size: var(--font-size-sm);
-    color: var(--color-gray-700);
-    background: var(--color-white);
-    border: 1px solid var(--color-gray-200);
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .ceuta-irpf__example-row--deduction {
-    background: rgba(16, 185, 129, 0.05);
-    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.25);
     color: var(--color-success);
 }
 
 .ceuta-irpf__example-row--total {
     background: linear-gradient(
         90deg,
-        rgba(26, 86, 219, 0.05) 0%,
-        rgba(6, 182, 212, 0.05) 100%
+        rgba(26, 86, 219, 0.12) 0%,
+        rgba(6, 182, 212, 0.12) 100%
     );
-    border-color: var(--color-primary-light);
-    color: var(--color-primary);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--color-primary-light);
     font-size: var(--font-size-base);
 }
 
 .ceuta-irpf__example-note {
     font-size: var(--font-size-xs);
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.4);
     line-height: 1.5;
     margin: 0;
 }
@@ -361,7 +371,7 @@
 /* ========== REQUISITOS ========== */
 .ceuta-requisitos {
     padding: var(--spacing-12) 0;
-    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+    background: linear-gradient(180deg, var(--color-secondary) 0%, rgba(255, 255, 255, 0.02) 100%);
 }
 
 .ceuta-requisitos__grid {
@@ -374,12 +384,15 @@
 .ceuta-requisitos__card {
     border-radius: var(--radius-xl);
     padding: var(--spacing-6);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    transition: border-color var(--transition-base), background var(--transition-base);
 }
 
 .ceuta-requisitos__card--ok {
-    background: var(--color-white);
-    border-color: rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.25);
+    background: rgba(16, 185, 129, 0.04);
 }
 
 .ceuta-requisitos__card h3 {
@@ -388,7 +401,7 @@
     gap: var(--spacing-2);
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin-bottom: var(--spacing-4);
 }
 
@@ -410,7 +423,7 @@
     align-items: flex-start;
     gap: var(--spacing-2);
     font-size: var(--font-size-sm);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.7);
     line-height: 1.5;
 }
 
@@ -423,7 +436,7 @@
 /* ========== FAQ ========== */
 .ceuta-faq {
     padding: var(--spacing-12) 0;
-    background: var(--color-white);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .ceuta-faq__grid {
@@ -434,30 +447,30 @@
 }
 
 .ceuta-faq__item {
-    background: var(--color-gray-50);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-xl);
     padding: var(--spacing-6);
-    transition: all var(--transition-base);
+    backdrop-filter: blur(12px);
+    transition: border-color var(--transition-base), background var(--transition-base);
 }
 
 .ceuta-faq__item:hover {
-    border-color: var(--color-primary-light);
-    box-shadow: var(--shadow-md);
-    background: var(--color-white);
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(255, 255, 255, 0.07);
 }
 
 .ceuta-faq__item h3 {
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin-bottom: var(--spacing-3);
     line-height: 1.4;
 }
 
 .ceuta-faq__item p {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.7);
     line-height: 1.7;
     margin: 0;
 }
@@ -465,7 +478,7 @@
 /* ========== CTA ========== */
 .ceuta-cta {
     padding: var(--spacing-12) 0;
-    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+    background: var(--color-secondary);
 }
 
 .ceuta-cta__card {
@@ -479,6 +492,7 @@
         var(--color-gray-800) 100%
     );
     border-radius: var(--radius-2xl);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: var(--color-white);
 }
 
@@ -504,7 +518,7 @@
 }
 
 .ceuta-cta__card p {
-    color: var(--color-gray-300);
+    color: rgba(255, 255, 255, 0.65);
     margin-bottom: var(--spacing-6);
     font-size: var(--font-size-base);
 }
@@ -512,7 +526,7 @@
 .ceuta-cta__note {
     margin-top: var(--spacing-3);
     font-size: var(--font-size-xs) !important;
-    color: var(--color-gray-500) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
     margin-bottom: 0 !important;
 }
 

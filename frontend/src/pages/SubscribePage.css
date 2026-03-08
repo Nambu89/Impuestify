@@ -3,15 +3,7 @@
 /* ========== BASE PAGE ========== */
 .subscribe-page {
     min-height: 100vh;
-    /* Dark top section fading to light — creates the hero illusion without changing HTML */
-    background:
-        linear-gradient(
-            180deg,
-            var(--color-secondary) 0px,
-            var(--color-secondary) 340px,
-            var(--color-gray-50) 480px,
-            var(--color-gray-50) 100%
-        );
+    background: var(--color-secondary);
     position: relative;
 }
 
@@ -131,22 +123,22 @@
 
 /* ========== PLAN CARD — BASE ========== */
 .subscribe-plan {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: var(--radius-2xl);
     padding: var(--spacing-6);
-    border: 1.5px solid var(--color-gray-200);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
     position: relative;
     display: flex;
     flex-direction: column;
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
 }
 
 .subscribe-plan:hover {
-    border-color: var(--color-gray-300);
-    box-shadow: var(--shadow-xl);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     transform: translateY(-3px);
 }
 
@@ -225,9 +217,9 @@
 
 /* Basic plan icon */
 .subscribe-plan .subscribe-plan__icon {
-    background: var(--color-gray-100);
-    color: var(--color-gray-600);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 /* Popular plan icon — gradient */
@@ -241,13 +233,13 @@
 .subscribe-plan__header h2 {
     font-size: var(--font-size-xl);
     font-weight: 700;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin: 0 0 var(--spacing-1);
 }
 
 .subscribe-plan__desc {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.5);
     margin: 0;
     line-height: 1.5;
 }
@@ -259,7 +251,7 @@
     gap: 3px;
     margin-bottom: var(--spacing-5);
     padding-bottom: var(--spacing-5);
-    border-bottom: 1px solid var(--color-gray-100);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .subscribe-plan__currency {
@@ -285,7 +277,7 @@
 
 .subscribe-plan__period {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.4);
     align-self: flex-end;
     padding-bottom: 4px;
 }
@@ -307,13 +299,13 @@
     gap: var(--spacing-2);
     padding: 5px var(--spacing-2);
     font-size: var(--font-size-sm);
-    color: var(--color-gray-700);
+    color: rgba(255, 255, 255, 0.7);
     border-radius: var(--radius-md);
     transition: background var(--transition-fast);
 }
 
 .subscribe-plan__features li:hover {
-    background: var(--color-gray-50);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* Green checkmark with pill background */
@@ -332,7 +324,7 @@
 .subscribe-plan__icon-no {
     flex-shrink: 0;
     margin-top: 2px;
-    color: var(--color-gray-300);
+    color: rgba(255, 255, 255, 0.2);
     width: 18px;
     height: 18px;
 }
@@ -356,8 +348,8 @@
 .subscribe-plan:not(.subscribe-plan--popular) .subscribe-plan__cta.btn-secondary,
 .subscribe-plan:not(.subscribe-plan--popular) a.btn-secondary.subscribe-plan__cta {
     background: transparent;
-    border: 1.5px solid var(--color-gray-300);
-    color: var(--color-gray-700);
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 600;
     transition: border-color var(--transition-base), color var(--transition-base),
                 background var(--transition-base), box-shadow var(--transition-base);
@@ -365,10 +357,10 @@
 
 .subscribe-plan:not(.subscribe-plan--popular) .subscribe-plan__cta.btn-secondary:hover:not(:disabled),
 .subscribe-plan:not(.subscribe-plan--popular) a.btn-secondary.subscribe-plan__cta:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background: rgba(26, 86, 219, 0.04);
-    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.08);
+    border-color: var(--color-primary-light);
+    color: var(--color-white);
+    background: rgba(26, 86, 219, 0.1);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
 }
 
 /* Popular plan button — gradient with glow */
@@ -404,14 +396,7 @@
 /* ========== TABLET (768px+) ========== */
 @media (min-width: 768px) {
     .subscribe-page {
-        background:
-            linear-gradient(
-                180deg,
-                var(--color-secondary) 0px,
-                var(--color-secondary) 380px,
-                var(--color-gray-50) 540px,
-                var(--color-gray-50) 100%
-            );
+        background: var(--color-secondary);
     }
 
     .subscribe-container {
@@ -448,14 +433,7 @@
 /* ========== DESKTOP (1024px+) ========== */
 @media (min-width: 1024px) {
     .subscribe-page {
-        background:
-            linear-gradient(
-                180deg,
-                var(--color-secondary) 0px,
-                var(--color-secondary) 420px,
-                var(--color-gray-50) 580px,
-                var(--color-gray-50) 100%
-            );
+        background: var(--color-secondary);
     }
 
     .subscribe-page::before {

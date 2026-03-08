@@ -1,5 +1,5 @@
-import { Suspense, lazy } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Suspense, lazy, useEffect } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -28,6 +28,21 @@ const CanariasPage = lazy(() => import('./pages/CanariasPage'))
 const TaxGuidePage = lazy(() => import('./pages/TaxGuidePage'))
 const DeclarationsPage = lazy(() => import('./pages/DeclarationsPage'))
 
+function ScrollToTop() {
+    const { pathname } = useLocation()
+    useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [pathname])
+    return null
+}
+
+function AppFooter() {
+    const { pathname } = useLocation()
+    const hideFooter = ['/chat', '/workspaces'].includes(pathname)
+    if (hideFooter) return null
+    return <Footer />
+}
+
 // Protected route wrapper — requires auth + active subscription
 function ProtectedRoute({ children, requireSubscription = true }: { children: React.ReactNode; requireSubscription?: boolean }) {
     const { isAuthenticated, isLoading } = useAuth()
@@ -51,6 +66,7 @@ function ProtectedRoute({ children, requireSubscription = true }: { children: Re
 function App() {
     return (
         <AuthProvider>
+            <ScrollToTop />
             <div className="app">
                 <Suspense fallback={<div className="loading-screen">Cargando...</div>}>
                 <Routes>
@@ -138,8 +154,8 @@ function App() {
                 {/* Cookie consent banner (LSSI-CE + RGPD) */}
                 <CookieConsentBanner />
 
-                {/* Footer on all pages */}
-                <Footer />
+                {/* Footer — hidden on full-screen app pages */}
+                <AppFooter />
             </div>
         </AuthProvider>
     )

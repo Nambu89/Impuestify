@@ -1,9 +1,9 @@
-/* Dashboard Styles - MOBILE FIRST */
+/* Dashboard Styles - MOBILE FIRST — Dark Theme */
 
 /* ========== BASE (MOBILE 320px+) ========== */
 .dashboard {
     min-height: 100vh;
-    background: var(--color-gray-50);
+    background: var(--color-secondary);
 }
 
 .dashboard-main {
@@ -17,10 +17,11 @@
 .dashboard-header h1 {
     margin-bottom: var(--spacing-2);
     font-size: var(--font-size-2xl);
+    color: var(--color-white);
 }
 
 .dashboard-header p {
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.5);
     margin: 0;
     font-size: var(--font-size-sm);
 }
@@ -28,7 +29,7 @@
 .dashboard-loading {
     text-align: center;
     padding: var(--spacing-12);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.4);
 }
 
 /* Stats Grid - Mobile First (1 column) */
@@ -40,19 +41,22 @@
 }
 
 .stat-card {
-    background: var(--color-white);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-xl);
     padding: var(--spacing-4);
     display: flex;
     align-items: center;
     gap: var(--spacing-3);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     transition: all var(--transition-base);
+    backdrop-filter: blur(12px);
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.13);
 }
 
 .stat-icon {
@@ -70,29 +74,33 @@
 .stat-content h3 {
     font-size: var(--font-size-xl);
     margin-bottom: var(--spacing-1);
+    color: var(--color-white);
 }
 
 .stat-content p {
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.45);
     font-size: var(--font-size-xs);
     margin: 0;
 }
 
 /* Dashboard Info - Mobile First */
 .dashboard-info {
-    background: var(--color-white);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-xl);
     padding: var(--spacing-6);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(12px);
 }
 
 .dashboard-info h2 {
     margin-bottom: var(--spacing-4);
     font-size: var(--font-size-xl);
+    color: var(--color-white);
 }
 
 .dashboard-info p {
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.5);
     max-width: 700px;
     font-size: var(--font-size-sm);
 }
@@ -107,7 +115,7 @@
 }
 
 .dashboard-info li {
-    color: var(--color-gray-700);
+    color: rgba(255, 255, 255, 0.6);
     font-size: var(--font-size-sm);
 }
 

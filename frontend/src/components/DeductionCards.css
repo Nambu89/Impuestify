@@ -21,7 +21,7 @@
 .deduction-savings-label {
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.5);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -67,15 +67,18 @@
 .deduction-card {
     padding: var(--spacing-3) var(--spacing-4);
     border-radius: var(--radius-lg);
-    background: var(--color-white);
+    background: rgba(255, 255, 255, 0.06);
     border-left: 3px solid;
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
     transition: all var(--transition-fast);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid;
 }
 
 .deduction-card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .deduction-card-eligible {
@@ -114,7 +117,7 @@
     display: block;
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     line-height: 1.3;
 }
 

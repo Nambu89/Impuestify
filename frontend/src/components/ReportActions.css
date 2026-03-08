@@ -3,7 +3,7 @@
 .report-actions {
     margin-top: var(--spacing-3);
     padding-top: var(--spacing-3);
-    border-top: 1px solid var(--color-gray-200);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .report-actions-buttons {
@@ -45,15 +45,15 @@
 
 /* Share button */
 .report-btn-share {
-    background: var(--color-white);
-    color: var(--color-gray-700);
-    border-color: var(--color-gray-300);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .report-btn-share:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background: rgba(26, 86, 219, 0.05);
+    border-color: var(--color-primary-light);
+    color: var(--color-white);
+    background: rgba(26, 86, 219, 0.1);
 }
 
 /* Error message */

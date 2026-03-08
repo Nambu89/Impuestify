@@ -39,7 +39,7 @@ export default function AITransparencyPage() {
                             <tr>
                                 <td>Modelo de lenguaje</td>
                                 <td>OpenAI</td>
-                                <td>GPT-4o-mini / GPT-5-mini</td>
+                                <td>Últimos modelos disponibles</td>
                             </tr>
                             <tr>
                                 <td>Moderacion</td>

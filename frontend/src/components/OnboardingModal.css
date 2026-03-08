@@ -13,14 +13,16 @@
 }
 
 .onboarding-modal {
-    background: var(--color-white);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-2xl);
     padding: var(--spacing-8) var(--spacing-6);
     max-width: 440px;
     width: 100%;
     text-align: center;
     position: relative;
-    box-shadow: var(--shadow-xl);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
     animation: onboarding-slideUp 0.3s ease;
 }
 
@@ -38,8 +40,8 @@
 }
 
 .onboarding-close:hover {
-    background: var(--color-gray-100);
-    color: var(--color-gray-700);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-white);
 }
 
 .onboarding-icon {
@@ -57,24 +59,24 @@
 .onboarding-title {
     font-size: var(--font-size-xl);
     font-weight: 700;
-    color: var(--color-gray-900);
+    color: var(--color-white);
     margin: 0 0 var(--spacing-3) 0;
 }
 
 .onboarding-desc {
     font-size: var(--font-size-sm);
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.6);
     line-height: 1.6;
     margin: 0 0 var(--spacing-4) 0;
 }
 
 .onboarding-tip {
-    background: var(--color-gray-50);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md);
     padding: var(--spacing-3) var(--spacing-4);
     font-size: var(--font-size-xs);
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.45);
     font-style: italic;
     margin-bottom: var(--spacing-5);
 }
@@ -90,7 +92,7 @@
     width: 8px;
     height: 8px;
     border-radius: var(--radius-full);
-    background: var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.15);
     transition: all var(--transition-fast);
 }
 
@@ -122,7 +124,7 @@
 }
 
 .onboarding-skip:hover {
-    color: var(--color-gray-600);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 @keyframes onboarding-fadeIn {
