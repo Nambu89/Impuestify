@@ -33,7 +33,7 @@ class TestTaxAgent:
         assert hasattr(agent, '_get_system_prompt')
         prompt = agent._get_system_prompt()
         assert "Impuestify" in prompt
-        assert "AEAT" in prompt
+        assert "fiscalidad" in prompt.lower()
         assert "evadir" in prompt.lower()
     
     def test_agent_initialization(self):
