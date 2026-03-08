@@ -689,7 +689,7 @@ def test_tool_definition_valid():
     assert "parameters" in func
     assert "comunidad_autonoma" in func["parameters"]["properties"]
     assert "ingresos_trabajo" in func["parameters"]["properties"]
-    assert func["parameters"]["required"] == ["comunidad_autonoma", "ingresos_trabajo"]
+    assert func["parameters"]["required"] == ["comunidad_autonoma"]
 
 
 def test_tool_registered():

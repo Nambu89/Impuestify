@@ -240,7 +240,7 @@ IMPORTANTE sobre ingresos:
                     "description": "true (default) si el valor catastral del inmueble fue revisado a partir de 1994 → imputación del 1,1%. false si el catastro es anterior a 1994 → imputación del 2%. Solo relevante si valor_catastral_segundas_viviendas > 0."
                 }
             },
-            "required": ["comunidad_autonoma", "ingresos_trabajo"]
+            "required": ["comunidad_autonoma"]
         }
     }
 }
@@ -248,7 +248,7 @@ IMPORTANTE sobre ingresos:
 
 async def simulate_irpf_tool(
     comunidad_autonoma: str,
-    ingresos_trabajo: float,
+    ingresos_trabajo: float = 0,
     year: int = 2024,
     ss_empleado: float = 0,
     intereses: float = 0,

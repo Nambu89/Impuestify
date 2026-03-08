@@ -278,11 +278,15 @@ class TestDetectAutonomoQuery:
     def test_cuota_autonomos(self):
         assert detect_autonomo_query("¿Cuál es la cuota de autónomos en 2025?") is True
 
-    def test_modelo_130(self):
-        assert detect_autonomo_query("¿Cuándo presento el modelo 130?") is True
+    def test_modelo_130_action(self):
+        # General question about modelo 130 is now allowed; only action-specific blocked
+        assert detect_autonomo_query("¿Qué es el modelo 130?") is False
+        assert detect_autonomo_query("presentar modelo 130") is True
 
-    def test_modelo_303(self):
-        assert detect_autonomo_query("¿Cómo relleno el modelo 303?") is True
+    def test_modelo_303_action(self):
+        # General question about modelo 303 is now allowed; only action-specific blocked
+        assert detect_autonomo_query("¿Qué es el modelo 303?") is False
+        assert detect_autonomo_query("rellenar modelo 303") is True
 
     def test_iva_trimestral(self):
         assert detect_autonomo_query("¿Cuándo hay que pagar el IVA trimestral?") is True

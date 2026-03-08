@@ -109,3 +109,68 @@
 - `frontend/src/pages/TaxGuidePage.tsx` (linea 70)
 
 **Regla para prevenir recurrencia:** Al cambiar valores en arrays de opciones (CCAA_OPTIONS, etc.), buscar TODAS las referencias a esos valores en el mismo archivo y archivos relacionados. Usar grep para encontrar todas las ocurrencias.
+
+---
+
+## [2026-03-08] B-LAND-01: Landing sections invisible (negro sobre negro)
+
+**Problema:** Secciones de la landing (features, pricing, comparison, CTA) eran invisibles. Solo se veian hero + stats + footer. Reportado como negro sobre negro.
+
+**Causa raiz:** `FadeContent.tsx` (componente IntersectionObserver) inicializa todos los elementos con `opacity: 0`. Los elementos below-the-fold solo se hacen visibles cuando el usuario scrollea y el IntersectionObserver los detecta. Playwright y algunos navegadores/crawlers no scrollean automaticamente, asi que las secciones permanecian invisibles.
+
+**Solucion:** Anadir check en `useEffect` de FadeContent: si el elemento ya esta en el viewport al montar (`getBoundingClientRect`), setear `isVisible=true` inmediatamente sin esperar al IntersectionObserver.
+
+**Archivos modificados:**
+- `frontend/src/components/reactbits/FadeContent.tsx`
+
+**Regla:** Componentes con animaciones scroll-triggered DEBEN tener fallback para elementos ya visibles en el viewport al montar. Nunca asumir que el usuario siempre scrollea.
+
+---
+
+## [2026-03-08] B-GUARD-01: Guardrail bloquea info educativa sobre modelos fiscales
+
+**Problema:** Preguntar "¿Que es el modelo 303?" como particular era bloqueado con "Estas solicitando informacion sobre autonomos". El guardrail trataba CUALQUIER mencion de "modelo 303", "modelo 130" etc. como contenido de autonomos.
+
+**Causa raiz:** `content_restriction.py` tenia keywords demasiado amplias ("modelo 303", "modelo 130", "modelo 131", "modelo 390") que bloqueaban incluso preguntas educativas generales. Tambien bloqueaba "ipsi" que aplica a TODOS los residentes de Ceuta/Melilla, no solo autonomos.
+
+**Solucion:** Cambiar keywords de modelos fiscales a ser action-specific: "presentar modelo 303", "rellenar modelo 303", "calcular modelo 303", "mi modelo 303" (indican uso activo como autonomo). Preguntas generales ("que es el modelo 303") ya no se bloquean. Eliminados keywords IPSI completamente.
+
+**Archivos modificados:**
+- `backend/app/security/content_restriction.py`
+- `backend/tests/test_ceuta_melilla.py` (tests IPSI actualizados)
+- `backend/tests/test_subscription.py` (tests modelo 303/130 actualizados)
+
+**Regla:** Content restriction keywords deben ser ACCION-ESPECIFICAS, no genricas. "modelo 303" es educativo; "rellenar modelo 303" indica actividad de autonomo. Misma logica para IPSI: es un impuesto territorial, no exclusivo de autonomos.
+
+---
+
+## [2026-03-08] B-TOOL-01: simulate_irpf_tool crash — missing argument
+
+**Problema:** Error `simulate_irpf_tool() missing 1 required positional argument: 'ingresos_trabajo'` expuesto al usuario cuando el LLM llamaba al tool sin pasar ingresos_trabajo.
+
+**Causa raiz:** `ingresos_trabajo` era parametro required tanto en el schema JSON como en la firma Python. Cuando el LLM intentaba simular sin datos de ingresos (ej: solo queria lookup de casillas), el tool crasheaba.
+
+**Solucion:** Hacer `ingresos_trabajo` opcional: default=0 en firma Python y eliminado de `required` en schema JSON. El simulador funciona correctamente con ingresos_trabajo=0.
+
+**Archivos modificados:**
+- `backend/app/tools/irpf_simulator_tool.py` (required + default)
+- `backend/tests/test_irpf_simulator.py` (assertion required list)
+
+**Regla:** Tools de function calling deben tener la minima cantidad de parametros required. Si un parametro puede defaultear a 0 sin romper la logica, hacerlo opcional. El LLM no siempre envia todos los parametros.
+
+---
+
+## [2026-03-08] B-TOOL-02: RETA calculator sin datos 2026
+
+**Problema:** Tool calculate_autonomous_quota no encontraba datos para ano 2026 (default del tool era 2025, y no habia datos 2026 en BD).
+
+**Causa raiz:** Solo se habian seeded tramos RETA para 2025. El default year del tool era 2025 pero estamos en 2026.
+
+**Solucion:**
+1. Crear `scripts/seed_autonomous_quotas_2026.py` con 15 tramos x 3 regiones (general, ceuta, melilla) = 45 registros
+2. Ejecutar seed contra Turso produccion
+3. Actualizar default year del tool de 2025 a 2026
+
+**Archivos modificados:**
+- `backend/scripts/seed_autonomous_quotas_2026.py` (nuevo)
+- `backend/app/tools/autonomous_quota_tool.py` (default year 2026)

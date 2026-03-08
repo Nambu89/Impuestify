@@ -131,16 +131,20 @@ class TestCCAANormalization:
 # ---------------------------------------------------------------------------
 
 class TestIPSIContentRestriction:
-    """Verify IPSI keyword triggers autonomo content restriction."""
+    """Verify IPSI is NOT blocked as autonomo (it applies to all Ceuta/Melilla residents)."""
 
-    def test_ipsi_detected_as_autonomo(self):
-        assert detect_autonomo_query("¿Cómo funciona el IPSI en Ceuta?") is True
+    def test_ipsi_not_detected_as_autonomo(self):
+        # IPSI applies to ALL residents, not just autonomos
+        assert detect_autonomo_query("¿Cómo funciona el IPSI en Ceuta?") is False
 
-    def test_ipsi_case_insensitive(self):
-        assert detect_autonomo_query("tipos del ipsi") is True
+    def test_ipsi_general_query_allowed(self):
+        assert detect_autonomo_query("tipos del ipsi") is False
 
     def test_unrelated_query_not_detected(self):
         assert detect_autonomo_query("¿Cuánto pago de IRPF?") is False
+
+    def test_autonomo_specific_still_detected(self):
+        assert detect_autonomo_query("soy autónomo en Ceuta") is True
 
 
 # ---------------------------------------------------------------------------

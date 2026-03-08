@@ -31,6 +31,13 @@ const FadeContent: React.FC<FadeContentProps> = ({
     const el = ref.current
     if (!el) return
 
+    // If element is already in viewport on mount (above the fold), show immediately
+    const rect = el.getBoundingClientRect()
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setIsVisible(true)
+      return
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {

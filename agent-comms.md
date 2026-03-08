@@ -7,6 +7,42 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-08] PM — DONE — Fix 4 bugs QA criticos (B-LAND-01, B-GUARD-01, B-TOOL-01, B-TOOL-02)
+
+1. **B-LAND-01 FIXED**: FadeContent.tsx — check viewport on mount, not just on scroll
+2. **B-GUARD-01 FIXED**: content_restriction.py — keywords action-specific (no educational blocks)
+3. **B-TOOL-01 FIXED**: irpf_simulator_tool.py — ingresos_trabajo optional (default 0)
+4. **B-TOOL-02 FIXED**: RETA 2026 seeded (45 records) + default year updated to 2026
+
+Tests: 763 PASS | Frontend build OK | Turso seeded
+
+---
+
+## [2026-03-08] QA — NEEDS_REVIEW — Sesion 10: QA E2E Exhaustivo — 3 bugs criticos detectados
+
+### Resumen: 31 PASS / 4 FAIL / 5 WARN — 10 bugs totales
+
+**BUGS CRITICOS (requieren atencion inmediata):**
+
+1. **B-LAND-01**: Landing con secciones invisibles (negro sobre negro). Solo visible: hero + 3 stats + footer. Features, pricing, comparativa desaparecidos visualmente. Impacta conversion. Screenshot: `tests/e2e/screenshots/S10-T06-landing-desktop.png`
+
+2. **B-GUARD-01**: Guardrail bloquea "¿Que es el modelo 303?" para plan particular. Clasifica info general como "consulta de autonomo". Usuario ve mensaje de bloqueo inapropiado. Archivo a revisar: `backend/app/agents/coordinator_agent.py` o guardrails.
+
+3. **B-TOOL-02**: Tool RETA sin datos para 2026. `calculate_autonomous_quota` devuelve "No encontre informacion de cotizacion para ingresos de 2500€/mes en 2026". Los autonomos no pueden calcular su cuota. Urgente — estamos en 2026.
+
+**BUGS MAYORES:**
+
+4. **B-TOOL-01**: `simulate_irpf_tool() missing 1 required positional argument: 'ingresos_trabajo'` — Error Python visible al usuario. Intermitente. Ocurre cuando la IA llama simulate_irpf sin datos de ingresos como paso previo al lookup_casilla.
+
+5. **B-CHAT-01**: Modelo 303 para autonomo devuelve "hubo un problema al formatear la respuesta" — error de sistema.
+
+6. **B-GF-06**: Confirmado. Wizard Guia Fiscal permite llegar al resultado con campos vacios. Muestra "Completa los pasos anteriores" en lugar de resultado.
+
+**Reporte completo:** `plans/qa-report-e2e-2026-03-08.md`
+**Spec del test:** `tests/e2e/qa-session10-exhaustivo-2026-03-08.spec.ts`
+
+---
+
 ## [2026-03-08] PM — DONE — Integración documentos AEAT (casillas + parsers)
 
 ### Tool lookup_casilla + parsers XSD/XLS/VeriFactu

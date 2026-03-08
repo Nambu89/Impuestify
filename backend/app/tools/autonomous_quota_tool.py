@@ -59,7 +59,7 @@ La función calcula la cuota mensual exacta de autónomos en España para 2025 s
 				},
 				"year": {
 					"type": "integer",
-					"description": "Año de cotización. Por defecto: 2025"
+					"description": "Año de cotización. Por defecto: 2026"
 				}
 			},
 			"required": ["ingresos_netos_mensuales"]
@@ -71,7 +71,7 @@ La función calcula la cuota mensual exacta de autónomos en España para 2025 s
 async def calculate_autonomous_quota_tool(
 	ingresos_netos_mensuales: float,
 	region: str = "general",
-	year: int = 2025,
+	year: int = 2026,
 	restricted_mode: bool = False
 ) -> Dict[str, Any]:
 	"""

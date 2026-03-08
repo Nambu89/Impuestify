@@ -33,13 +33,19 @@ AUTONOMO_KEYWORDS: List[str] = [
     "alta autonomo",
     "baja autónomo",
     "baja autonomo",
-    # Modelos fiscales de autonomos
-    "modelo 130",
-    "modelo 131",
-    "modelo 303",
+    # Modelos fiscales de autonomos (solo cuando piden calcular/presentar, no info general)
+    "presentar modelo 130",
+    "presentar modelo 131",
+    "presentar modelo 303",
+    "rellenar modelo 130",
+    "rellenar modelo 131",
+    "rellenar modelo 303",
+    "calcular modelo 130",
+    "calcular modelo 303",
+    "mi modelo 303",
+    "mi modelo 130",
     "modelo 036",
     "modelo 037",
-    "modelo 390",
     "pago fraccionado",
     # IVA como autonomo
     "iva trimestral",
@@ -80,10 +86,7 @@ AUTONOMO_KEYWORDS: List[str] = [
     "pago fraccionado irpf",
     "casillas iva",
     "casillas del 303",
-    # IPSI (Ceuta/Melilla — replaces IVA)
-    "ipsi",
-    "impuesto producción servicios importación",
-    "impuesto produccion servicios importacion",
+    # IPSI removed — applies to ALL residents of Ceuta/Melilla, not autonomo-specific
 ]
 
 # Response shown to salaried-plan users who ask about autonomo topics.
