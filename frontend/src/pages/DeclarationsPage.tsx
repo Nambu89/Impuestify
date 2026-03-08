@@ -404,11 +404,18 @@ export default function DeclarationsPage() {
     const [form420, setForm420] = useState<Calculate420Input>({})
     const [formIpsi, setFormIpsi] = useState<CalculateIpsiInput>({})
 
-    // Territory detection for conditional tabs
+    // Territory detection for conditional tabs and labels
     const userCcaa = profile?.ccaa_residencia || ''
     const isCeutaMelilla = ['Ceuta', 'Melilla'].some(t => userCcaa.includes(t))
     const isCanarias = userCcaa.includes('Canarias')
+    const isGipuzkoa = userCcaa.includes('Gipuzkoa') || userCcaa.includes('Guipuzcoa')
+    const isNavarra = userCcaa.includes('Navarra')
+    const isForal = isGipuzkoa || isNavarra || ['Araba', 'Alava', 'Bizkaia', 'Vizcaya'].some(t => userCcaa.includes(t))
     const ipsiTerritorio = userCcaa.includes('Melilla') ? 'Melilla' : 'Ceuta'
+
+    // IVA model name varies by territory
+    const ivaModeloNum = isGipuzkoa ? '300' : isNavarra ? 'F-69' : '303'
+    const ivaModeloLabel = isGipuzkoa ? '300 IVA' : isNavarra ? 'F-69 IVA' : '303 IVA'
 
     // Auto-detect territory from profile
     useEffect(() => {
@@ -473,11 +480,11 @@ export default function DeclarationsPage() {
     }
 
     const modeloLabel = useMemo(() => {
-        if (modelo === '303') return 'Modelo 303 - IVA'
-        if (modelo === '130') return 'Modelo 130 - Pago Fraccionado IRPF'
+        if (modelo === '303') return `Modelo ${ivaModeloNum} - IVA${isForal ? ` (${territory130})` : ''}`
+        if (modelo === '130') return `Modelo 130 - Pago Fraccionado IRPF${isForal ? ` (${territory130})` : ''}`
         if (modelo === 'ipsi') return `IPSI - ${ipsiTerritorio}`
         return 'Modelo 420 - IGIC Canarias'
-    }, [modelo, ipsiTerritorio])
+    }, [modelo, ipsiTerritorio, ivaModeloNum, isForal, territory130])
 
     return (
         <div className="declarations-page">
@@ -488,7 +495,7 @@ export default function DeclarationsPage() {
                     <FileText size={28} />
                     <div>
                         <h1>Modelos Trimestrales</h1>
-                        <p>Calcula y guarda tus declaraciones trimestrales{isCeutaMelilla ? ' de IPSI e IRPF' : isCanarias ? ' de IGIC e IRPF' : ' de IVA e IRPF'}</p>
+                        <p>Calcula y guarda tus declaraciones trimestrales{isCeutaMelilla ? ' de IPSI e IRPF' : isCanarias ? ' de IGIC e IRPF' : ' de IVA e IRPF'}{isForal ? ` — Hacienda Foral de ${territory130}` : ''}</p>
                     </div>
                 </div>
 
@@ -496,7 +503,7 @@ export default function DeclarationsPage() {
                 <div className="decl-tabs">
                     {!isCeutaMelilla && !isCanarias && (
                         <button className={`decl-tab ${modelo === '303' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('303'); reset() }}>
-                            <Calculator size={16} /> 303 IVA
+                            <Calculator size={16} /> {ivaModeloLabel}
                         </button>
                     )}
                     <button className={`decl-tab ${modelo === '130' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('130'); reset() }}>
