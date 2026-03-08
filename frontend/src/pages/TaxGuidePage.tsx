@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, RotateCcw, MapPin, Briefcase, PiggyBank, Home as HomeIcon, Users, Gift, BarChart3, CheckCircle, Info, AlertTriangle, Zap, Shield } from 'lucide-react'
 import Header from '../components/Header'
 import LiveEstimatorBar from '../components/LiveEstimatorBar'
+import DynamicFiscalForm from '../components/DynamicFiscalForm'
 import { useTaxGuideProgress, STEP_LABELS, QUICK_STEP_LABELS, type TaxGuideData } from '../hooks/useTaxGuideProgress'
 import { useIrpfEstimator } from '../hooks/useIrpfEstimator'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
@@ -207,7 +208,10 @@ function StepPersonal({ data, update }: StepProps) {
 
 // === Step 2: Trabajo (Phase A: salary input mode + activity income) ===
 
-function StepTrabajo({ data, update }: StepProps) {
+function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIncome }: StepProps & {
+    zeroIncomeAcknowledged: boolean
+    onAcknowledgeZeroIncome: (v: boolean) => void
+}) {
     const isMonthly = data.salary_input_mode === 'monthly'
     const computedAnnual = isMonthly
         ? (data.salario_base_mensual + data.complementos_salariales) * data.num_pagas_anuales
@@ -444,9 +448,28 @@ function StepTrabajo({ data, update }: StepProps) {
                         label="Mas del 75% de ingresos de un solo cliente"
                         checked={data.un_solo_cliente}
                         onChange={v => update({ un_solo_cliente: v })}
-                        help="Autónomo económicamente dependiente (TRADE). Aplica reducción similar a trabajo (Art. 32.2 LIRPF)"
+                        help="Autonomo economicamente dependiente (TRADE). Aplica reduccion similar a trabajo (Art. 32.2 LIRPF)"
                     />
                 </>
+            )}
+
+            {/* B-GF-06: Zero-income acknowledgment */}
+            {!zeroIncomeAcknowledged && data.ingresos_trabajo === 0 && data.ingresos_actividad === 0 && data.salary_input_mode === 'annual' && (
+                <div className="tg-tip tg-tip--warning" style={{ marginTop: 'var(--spacing-4)' }}>
+                    <AlertTriangle size={18} />
+                    <div>
+                        <strong>Sin ingresos introducidos</strong>
+                        <p>Has dejado los ingresos en 0. Si no has tenido rentas del trabajo este ano, confirma para continuar.</p>
+                        <button
+                            type="button"
+                            className="tg-nav__btn tg-nav__btn--secondary"
+                            style={{ marginTop: 'var(--spacing-3)', fontSize: 'var(--font-size-xs)' }}
+                            onClick={() => onAcknowledgeZeroIncome(true)}
+                        >
+                            Confirmar: no tuve ingresos del trabajo
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     )
@@ -567,13 +590,16 @@ function StepFamilia({ data, update }: StepProps) {
     )
 }
 
-// === Step 6: Deducciones (Phase B: proactive discovery) ===
+// === Step 6: Deducciones (Phase B: proactive discovery + DynamicFiscalForm) ===
 
-function StepDeducciones({ data, update, discoveryResult, discoveryLoading, discoveryAnswers, onAnswerQuestion }: StepProps & {
+function StepDeducciones({ data, update, discoveryResult, discoveryLoading, discoveryError, discoveryAnswers, onAnswerQuestion, dynamicFormValues, onDynamicFormChange }: StepProps & {
     discoveryResult: any
     discoveryLoading: boolean
+    discoveryError: string | null
     discoveryAnswers: Record<string, boolean>
     onAnswerQuestion: (key: string, value: boolean) => void
+    dynamicFormValues: Record<string, any>
+    onDynamicFormChange: (key: string, value: any) => void
 }) {
     return (
         <div className="tg-step">
@@ -581,11 +607,11 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
             <p className="tg-step__desc">Estas deducciones reducen directamente tu cuota o tu base imponible.</p>
 
             <h3 className="tg-step__subtitle">Planes de pensiones</h3>
-            <NumberInput label="Aportaciones propias a planes de pensiones" value={data.aportaciones_plan_pensiones} onChange={v => update({ aportaciones_plan_pensiones: v })} suffix="EUR" help="Máximo 1.500 EUR/año (reducen la base imponible general)" />
+            <NumberInput label="Aportaciones propias a planes de pensiones" value={data.aportaciones_plan_pensiones} onChange={v => update({ aportaciones_plan_pensiones: v })} suffix="EUR" help="Maximo 1.500 EUR/año (reducen la base imponible general)" />
             <NumberInput label="Aportaciones de la empresa" value={data.aportaciones_plan_pensiones_empresa} onChange={v => update({ aportaciones_plan_pensiones_empresa: v })} suffix="EUR" help="Limite conjunto con propias: 8.500 EUR" />
 
             <h3 className="tg-step__subtitle">Vivienda habitual (hipoteca anterior al 1/1/2013)</h3>
-            <CheckboxInput label="Tengo hipoteca firmada antes del 1 de enero de 2013" checked={data.hipoteca_pre2013} onChange={v => update({ hipoteca_pre2013: v })} help="Régimen transitorio: deducción del 15% sobre máx. 9.040 EUR/año" />
+            <CheckboxInput label="Tengo hipoteca firmada antes del 1 de enero de 2013" checked={data.hipoteca_pre2013} onChange={v => update({ hipoteca_pre2013: v })} help="Regimen transitorio: deduccion del 15% sobre max. 9.040 EUR/ano" />
 
             {data.hipoteca_pre2013 && (
                 <>
@@ -600,6 +626,19 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
                 <CheckboxInput label="Donante recurrente (3+ anos misma entidad)" checked={data.donativo_recurrente} onChange={v => update({ donativo_recurrente: v })} help="Sube al 45% el exceso sobre 250 EUR" />
             )}
 
+            {/* Task 1: DynamicFiscalForm — CCAA-specific deduction fields */}
+            {data.comunidad_autonoma && (
+                <>
+                    <h3 className="tg-step__subtitle">Deducciones especificas de {data.comunidad_autonoma}</h3>
+                    <DynamicFiscalForm
+                        ccaa={data.comunidad_autonoma}
+                        values={dynamicFormValues}
+                        onChange={onDynamicFormChange}
+                        compact
+                    />
+                </>
+            )}
+
             {/* Phase B: Proactive deduction discovery */}
             {data.comunidad_autonoma && (
                 <div className="tg-discovery">
@@ -607,7 +646,18 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
 
                     {discoveryLoading && <p className="tg-discovery__loading">Buscando deducciones...</p>}
 
-                    {discoveryResult && discoveryResult.eligible.length > 0 && (
+                    {/* B-GF-07: Show error state if discovery API fails */}
+                    {discoveryError && !discoveryLoading && (
+                        <div className="tg-tip tg-tip--warning">
+                            <AlertTriangle size={18} />
+                            <div>
+                                <strong>No se pudieron cargar las deducciones</strong>
+                                <p>{discoveryError}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {!discoveryError && discoveryResult && discoveryResult.eligible.length > 0 && (
                         <div className="tg-discovery__section">
                             <p className="tg-discovery__section-label tg-discovery__section-label--eligible">Deducciones a las que tienes derecho</p>
                             {discoveryResult.eligible.map((d: any) => (
@@ -630,7 +680,7 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
                         </div>
                     )}
 
-                    {discoveryResult && discoveryResult.missing_questions.length > 0 && (
+                    {!discoveryError && discoveryResult && discoveryResult.missing_questions.length > 0 && (
                         <div className="tg-discovery__section">
                             <p className="tg-discovery__section-label tg-discovery__section-label--maybe">Responde para descubrir mas deducciones</p>
                             {discoveryResult.missing_questions.slice(0, 5).map((q: MissingQuestion) => (
@@ -652,7 +702,7 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
                         </div>
                     )}
 
-                    {discoveryResult && discoveryResult.eligible.length === 0 && discoveryResult.missing_questions.length === 0 && !discoveryLoading && (
+                    {!discoveryError && discoveryResult && discoveryResult.eligible.length === 0 && discoveryResult.missing_questions.length === 0 && !discoveryLoading && (
                         <p className="tg-discovery__empty">No se encontraron deducciones adicionales para tu situacion.</p>
                     )}
                 </div>
@@ -842,10 +892,12 @@ export default function TaxGuidePage() {
     const { step, data, updateData, nextStep, prevStep, goToStep, resetAll, stepLabels } = useTaxGuideProgress()
     const { result, loading, estimate } = useIrpfEstimator()
     const { profile, save } = useFiscalProfile()
-    const { result: discoveryResult, loading: discoveryLoading, discover } = useDeductionDiscovery()
+    const { result: discoveryResult, loading: discoveryLoading, error: discoveryError, discover } = useDeductionDiscovery()
     const [savingProfile, setSavingProfile] = useState(false)
     const [saveProfileDone, setSaveProfileDone] = useState(false)
     const [discoveryAnswers, setDiscoveryAnswers] = useState<Record<string, boolean>>({})
+    const [zeroIncomeAcknowledged, setZeroIncomeAcknowledged] = useState(false)
+    const [dynamicFormValues, setDynamicFormValues] = useState<Record<string, any>>({})
 
     // Phase D: step animation
     const [slideDir, setSlideDir] = useState<'left' | 'right' | ''>('')
@@ -1054,15 +1106,38 @@ export default function TaxGuidePage() {
         setTimeout(() => { prevStep(); setSlideDir('') }, 150)
     }, [prevStep])
 
+    const handleDynamicFormChange = useCallback((key: string, value: any) => {
+        setDynamicFormValues(prev => ({ ...prev, [key]: value }))
+    }, [])
+
     // Render step content
     const renderFullStep = () => {
         switch (step) {
             case 0: return <StepPersonal data={data} update={updateData} />
-            case 1: return <StepTrabajo data={data} update={updateData} />
+            case 1: return (
+                <StepTrabajo
+                    data={data}
+                    update={updateData}
+                    zeroIncomeAcknowledged={zeroIncomeAcknowledged}
+                    onAcknowledgeZeroIncome={setZeroIncomeAcknowledged}
+                />
+            )
             case 2: return <StepAhorro data={data} update={updateData} />
             case 3: return <StepInmuebles data={data} update={updateData} />
             case 4: return <StepFamilia data={data} update={updateData} />
-            case 5: return <StepDeducciones data={data} update={updateData} discoveryResult={discoveryResult} discoveryLoading={discoveryLoading} discoveryAnswers={discoveryAnswers} onAnswerQuestion={handleAnswerQuestion} />
+            case 5: return (
+                <StepDeducciones
+                    data={data}
+                    update={updateData}
+                    discoveryResult={discoveryResult}
+                    discoveryLoading={discoveryLoading}
+                    discoveryError={discoveryError}
+                    discoveryAnswers={discoveryAnswers}
+                    onAnswerQuestion={handleAnswerQuestion}
+                    dynamicFormValues={dynamicFormValues}
+                    onDynamicFormChange={handleDynamicFormChange}
+                />
+            )
             case 6: return <StepResultado result={result} loading={loading} onSaveProfile={handleSaveProfile} savingProfile={savingProfile} saveProfileDone={saveProfileDone} discoveryResult={discoveryResult} />
             default: return null
         }
@@ -1075,7 +1150,12 @@ export default function TaxGuidePage() {
                     <div className="tg-step">
                         <StepPersonal data={data} update={updateData} />
                         <div style={{ marginTop: 'var(--spacing-6)' }}>
-                            <StepTrabajo data={data} update={updateData} />
+                            <StepTrabajo
+                                data={data}
+                                update={updateData}
+                                zeroIncomeAcknowledged={zeroIncomeAcknowledged}
+                                onAcknowledgeZeroIncome={setZeroIncomeAcknowledged}
+                            />
                         </div>
                     </div>
                 )
@@ -1091,11 +1171,36 @@ export default function TaxGuidePage() {
 
     const isFirstStep = step === 0
     const isLastStep = step === stepLabels.length - 1
-    const canProceed = step === 0 ? !!data.comunidad_autonoma : true
+
+    // B-GF-06: step-specific validation
+    const getEffectiveIngresos = () => {
+        if (data.salary_input_mode === 'monthly') {
+            return (data.salario_base_mensual + data.complementos_salariales) * data.num_pagas_anuales
+        }
+        return data.ingresos_trabajo
+    }
+    const step1HasIncome = !isQuick
+        ? (getEffectiveIngresos() > 0 || data.ingresos_actividad > 0 || zeroIncomeAcknowledged)
+        : true // quick mode combines steps 0+1, validation handled by CCAA check
+    const canProceed = (() => {
+        if (isQuick) return !!data.comunidad_autonoma
+        if (step === 0) return !!data.comunidad_autonoma
+        if (step === 1) return step1HasIncome
+        return true
+    })()
 
     return (
         <div className="tax-guide">
             <Header />
+
+            <div className="tax-guide__header">
+                <h1 className="tax-guide__header-title">
+                    Simulador <span>IRPF</span>
+                </h1>
+                <p className="tax-guide__header-desc">
+                    Calcula tu declaracion de la renta con todas las deducciones de tu comunidad autonoma
+                </p>
+            </div>
 
             <div className="tax-guide__layout">
                 <aside className="tax-guide__sidebar">

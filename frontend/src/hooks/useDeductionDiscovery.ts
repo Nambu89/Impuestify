@@ -34,12 +34,14 @@ export function useDeductionDiscovery() {
     const { apiRequest } = useApi()
     const [result, setResult] = useState<DeductionDiscoveryResult | null>(null)
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const abortRef = useRef<AbortController | null>(null)
 
     const discover = useCallback((ccaa: string, answers: Record<string, any>, taxYear = 2025) => {
         if (!ccaa) {
             setResult(null)
+            setError(null)
             return
         }
 
@@ -48,6 +50,7 @@ export function useDeductionDiscovery() {
 
         timerRef.current = setTimeout(async () => {
             setLoading(true)
+            setError(null)
             const controller = new AbortController()
             abortRef.current = controller
 
@@ -66,6 +69,7 @@ export function useDeductionDiscovery() {
             } catch (err: any) {
                 if (err.name !== 'AbortError' && !controller.signal.aborted) {
                     setResult(null)
+                    setError('No se pudieron cargar las deducciones. Comprueba tu conexion e intentalo de nuevo.')
                 }
             } finally {
                 if (!controller.signal.aborted) setLoading(false)
@@ -73,5 +77,5 @@ export function useDeductionDiscovery() {
         }, DEBOUNCE_MS)
     }, [apiRequest])
 
-    return { result, loading, discover }
+    return { result, loading, error, discover }
 }

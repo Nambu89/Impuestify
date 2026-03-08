@@ -3,10 +3,19 @@ IRPF Simulator — Orchestrates all calculators for a full IRPF simulation.
 
 Composes WorkIncomeCalculator, SavingsIncomeCalculator, RentalIncomeCalculator,
 and MPYFCalculator to produce a complete tax estimate from gross income to
-final tax liability (cuota líquida).
+final tax liability (cuota liquida).
 
 Follows Open/Closed: new income types can be added by creating a new calculator
 and plugging it in here, without modifying existing calculators.
+
+Foral dispatch:
+  - classify_regime() determines whether jurisdiction is 'foral_vasco',
+    'foral_navarra', or 'comun'.
+  - Foral regimes use a single unified scale (scale_type='foral') rather than
+    the estatal + autonomica split of the common regime.
+  - Personal and family minimums (minimos) are applied as direct deductions on
+    the cuota (not reductions from the base) in the foral regime.
+  - EPSV contributions replace pension plan reductions in foral territories.
 """
 from typing import Any, Dict, List, Optional
 import logging
@@ -18,8 +27,41 @@ from app.utils.calculators.savings_income import SavingsIncomeCalculator
 from app.utils.calculators.rental_income import RentalIncomeCalculator
 from app.utils.calculators.mpyf import MPYFCalculator
 from app.utils.calculators.activity_income import ActivityIncomeCalculator
+from app.utils.regime_classifier import classify_regime
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Foral personal/family minimums (deducted directly from cuota, not from base)
+# ---------------------------------------------------------------------------
+# Source: Normas Forales de cada territorio + DFL Navarra 2025
+# Key differences from comun:
+#   - Contribuyente minimum is expressed as a QUOTA deduction (EUR off the bill)
+#     rather than as a base reduction that is then taxed at the marginal rate.
+#   - Descendientes and ascendientes follow the same direct-deduction pattern.
+
+FORAL_MINIMOS: Dict[str, Dict[str, float]] = {
+    # Pais Vasco (identical for Araba, Bizkaia, Gipuzkoa per JA Normativa)
+    "foral_vasco": {
+        "contribuyente":        5472.00,
+        "descendiente_1":       2808.00,
+        "descendiente_2":       3432.00,
+        "descendiente_3":       5040.00,
+        "descendiente_4_plus":  5040.00,
+        "ascendiente_65":       2040.00,
+        "ascendiente_75":       4080.00,  # includes the 65 amount (cumulative)
+    },
+    # Navarra (LF 22/1998, cuantia unica directa sobre cuota)
+    "foral_navarra": {
+        "contribuyente":        1084.00,
+        "descendiente_1":        600.00,
+        "descendiente_2":        750.00,
+        "descendiente_3":       1200.00,
+        "descendiente_4_plus":  1350.00,
+        "ascendiente_65":        450.00,
+        "ascendiente_75":        900.00,
+    },
+}
 
 
 class IRPFSimulator:
@@ -46,6 +88,288 @@ class IRPFSimulator:
         self.savings = SavingsIncomeCalculator(self._repo, db)
         self.rental = RentalIncomeCalculator(self._repo)
         self.mpyf = MPYFCalculator(self._repo)
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    async def _get_foral_scale(self, jurisdiction: str, year: int):
+        """Load the foral unified scale from irpf_scales (scale_type='foral')."""
+        result = await self._db.execute(
+            """SELECT tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable
+               FROM irpf_scales
+               WHERE jurisdiction = ? AND year = ? AND scale_type = 'foral'
+               ORDER BY tramo_num""",
+            [jurisdiction, year],
+        )
+        if not result.rows:
+            raise ValueError(
+                f"Escala foral no encontrada para {jurisdiction} {year}. "
+                "Ejecuta: python scripts/seed_foral_scales.py"
+            )
+        return [dict(row) for row in result.rows]
+
+    def _compute_foral_minimos(
+        self,
+        regime: str,
+        num_descendientes: int,
+        num_ascendientes_65: int,
+        num_ascendientes_75: int,
+        custodia_compartida: bool,
+    ) -> float:
+        """
+        Compute the total foral minimum (minimo personal y familiar) as a
+        direct quota deduction (EUR amount, not a base reduction).
+
+        Args:
+            regime: 'foral_vasco' or 'foral_navarra'.
+            num_descendientes: Number of dependent children.
+            num_ascendientes_65: Dependants > 65 years old.
+            num_ascendientes_75: Dependants > 75 years old.
+            custodia_compartida: Shared custody halves descendant minimums.
+
+        Returns:
+            Total minimo as a quota deduction in EUR.
+        """
+        params = FORAL_MINIMOS.get(regime, {})
+        total = params.get("contribuyente", 0.0)
+
+        divisor = 2.0 if custodia_compartida else 1.0
+        desc_keys = [
+            "descendiente_1",
+            "descendiente_2",
+            "descendiente_3",
+            "descendiente_4_plus",
+        ]
+        for i in range(num_descendientes):
+            key = desc_keys[min(i, 3)]
+            total += params.get(key, 0.0) / divisor
+
+        # Ascendientes: the >75 amount already includes the >65 amount
+        total += num_ascendientes_75 * params.get("ascendiente_75", 0.0)
+        total += num_ascendientes_65 * params.get("ascendiente_65", 0.0)
+
+        return total
+
+    async def _simulate_foral(
+        self,
+        regime: str,
+        jurisdiction: str,
+        year: int,
+        ingresos_trabajo: float,
+        ss_empleado: float,
+        cuotas_sindicales: float,
+        colegio_profesional: float,
+        intereses: float,
+        dividendos: float,
+        ganancias_fondos: float,
+        ingresos_alquiler: float,
+        gastos_alquiler_total: float,
+        valor_adquisicion_inmueble: float,
+        es_vivienda_habitual: bool,
+        num_descendientes: int,
+        anios_nacimiento_desc: Optional[List[int]],
+        custodia_compartida: bool,
+        num_ascendientes_65: int,
+        num_ascendientes_75: int,
+        ingresos_actividad: float,
+        gastos_actividad: float,
+        cuota_autonomo_anual: float,
+        amortizaciones_actividad: float,
+        provisiones_actividad: float,
+        otros_gastos_actividad: float,
+        estimacion_actividad: str,
+        inicio_actividad: bool,
+        un_solo_cliente: bool,
+        retenciones_actividad: float,
+        pagos_fraccionados_130: float,
+        aportaciones_epsv: float,
+        donativos_forales: float,
+        retenciones_alquiler: float,
+        retenciones_ahorro: float,
+        **_ignored,
+    ) -> Dict[str, Any]:
+        """
+        Run a foral IRPF simulation (common logic for vasco + navarra).
+
+        Key differences from the common regime:
+        1. Single unified scale (scale_type='foral') — no estatal/autonomica split.
+        2. Personal/family minimums are a DIRECT deduction on the cuota
+           (not applied via scale to a base amount).
+        3. EPSV contributions reduce the base imponible (like pension plans in comun).
+        4. Foral donativos deduction rate (30% vasco / 25% navarra).
+        """
+        # --- 1. Work income ---
+        trabajo_result = await self.work.calculate(
+            ingresos_brutos=ingresos_trabajo,
+            ss_empleado=ss_empleado,
+            cuotas_sindicales=cuotas_sindicales,
+            colegio_profesional=colegio_profesional,
+            year=year,
+        )
+
+        # --- 1b. Activity income ---
+        actividad_result = None
+        rend_actividad = 0.0
+        if ingresos_actividad > 0:
+            actividad_result = await self.activity.calculate(
+                ingresos_actividad=ingresos_actividad,
+                gastos_actividad=gastos_actividad,
+                cuota_autonomo_anual=cuota_autonomo_anual,
+                amortizaciones=amortizaciones_actividad,
+                provisiones=provisiones_actividad,
+                otros_gastos_deducibles=otros_gastos_actividad,
+                estimacion=estimacion_actividad,
+                inicio_actividad=inicio_actividad,
+                un_solo_cliente=un_solo_cliente,
+                year=year,
+            )
+            rend_actividad = actividad_result["rendimiento_neto_reducido"]
+
+        # --- 2. Rental income ---
+        inmuebles_result = None
+        rend_inmuebles = 0.0
+        if ingresos_alquiler > 0:
+            inmuebles_result = await self.rental.calculate(
+                ingresos_alquiler=ingresos_alquiler,
+                gastos_comunidad=gastos_alquiler_total,
+                valor_adquisicion=valor_adquisicion_inmueble,
+                es_vivienda_habitual=es_vivienda_habitual,
+                year=year,
+            )
+            rend_inmuebles = inmuebles_result["rendimiento_neto_reducido"]
+
+        # --- 3. Base imponible general ---
+        bi_general = (
+            trabajo_result["rendimiento_neto_reducido"]
+            + rend_actividad
+            + rend_inmuebles
+        )
+
+        # --- 3b. EPSV / prevision social reduction (replaces pension plans) ---
+        reduccion_epsv = 0.0
+        if aportaciones_epsv > 0:
+            net_work = trabajo_result.get("rendimiento_neto_reducido", 0)
+            pct_limit = net_work * 0.30 if net_work > 0 else 0
+            reduccion_epsv = min(aportaciones_epsv, 5000.0, pct_limit)
+            reduccion_epsv = max(0.0, reduccion_epsv)
+            bi_general = max(0.0, bi_general - reduccion_epsv)
+
+        # --- 4. Savings income ---
+        ahorro_result = None
+        if intereses > 0 or dividendos > 0 or ganancias_fondos > 0:
+            ahorro_result = await self.savings.calculate(
+                intereses=intereses,
+                dividendos=dividendos,
+                ganancias_fondos=ganancias_fondos,
+                jurisdiction=jurisdiction,
+                year=year,
+            )
+
+        base_ahorro = ahorro_result["base_ahorro"] if ahorro_result else 0.0
+
+        # --- 5. Apply foral unified scale to base imponible general ---
+        foral_scale = await self._get_foral_scale(jurisdiction, year)
+        cuota_general, breakdown_foral = self._irpf_calc._apply_scale(
+            bi_general, foral_scale
+        )
+
+        # Savings: use the common savings scale (foral territories also apply
+        # escalas del ahorro similar to comun; use SavingsIncomeCalculator result)
+        cuota_ahorro = ahorro_result["cuota_ahorro_total"] if ahorro_result else 0.0
+
+        # --- 6. Apply personal/family minimums as DIRECT quota deductions ---
+        minimos_total = self._compute_foral_minimos(
+            regime=regime,
+            num_descendientes=num_descendientes,
+            num_ascendientes_65=num_ascendientes_65,
+            num_ascendientes_75=num_ascendientes_75,
+            custodia_compartida=custodia_compartida,
+        )
+        cuota_liquida = max(0.0, cuota_general - minimos_total)
+
+        # --- 7. Donativos foral deduction ---
+        deduccion_donativos = 0.0
+        if donativos_forales > 0:
+            pct = 0.30 if regime == "foral_vasco" else 0.25
+            deduccion_donativos = round(donativos_forales * pct, 2)
+            cuota_liquida = max(0.0, cuota_liquida - deduccion_donativos)
+
+        # --- 8. Total and final result ---
+        cuota_total = cuota_liquida + cuota_ahorro
+        base_total = bi_general + base_ahorro
+        tipo_medio = (cuota_total / base_total * 100) if base_total > 0 else 0.0
+
+        total_retenciones = (
+            retenciones_alquiler
+            + retenciones_ahorro
+            + retenciones_actividad
+            + pagos_fraccionados_130
+        )
+        cuota_diferencial = round(cuota_total - total_retenciones, 2)
+        tipo_resultado = "a_pagar" if cuota_diferencial > 0 else "a_devolver"
+
+        return {
+            "success": True,
+            "year": year,
+            "jurisdiction": jurisdiction,
+            "regime": regime,
+            "ceuta_melilla": False,
+            # Income
+            "trabajo": trabajo_result,
+            "actividad": actividad_result,
+            "inmuebles": inmuebles_result,
+            "ahorro": ahorro_result,
+            # Bases
+            "base_imponible_general": round(bi_general, 2),
+            "base_imponible_ahorro": round(base_ahorro, 2),
+            # Foral unified cuota (no estatal/autonomica split)
+            "cuota_integra_foral": round(cuota_general, 2),
+            "breakdown_foral": breakdown_foral,
+            # Minimos as quota deductions
+            "minimos_personales_familiares": round(minimos_total, 2),
+            # Deductions
+            "reduccion_epsv": round(reduccion_epsv, 2),
+            "deduccion_donativos": round(deduccion_donativos, 2),
+            # Final
+            "cuota_liquida": round(cuota_liquida, 2),
+            "cuota_ahorro": round(cuota_ahorro, 2),
+            "cuota_total": round(cuota_total, 2),
+            "tipo_medio": round(tipo_medio, 2),
+            # Retenciones
+            "retenciones_actividad": round(retenciones_actividad, 2),
+            "pagos_fraccionados_130": round(pagos_fraccionados_130, 2),
+            "total_retenciones": round(total_retenciones, 2),
+            "cuota_diferencial": cuota_diferencial,
+            "tipo_resultado": tipo_resultado,
+            # Compatibility keys (set to 0 for foral; estatal/autonomica split N/A)
+            "cuota_integra_estatal": 0.0,
+            "cuota_integra_autonomica": 0.0,
+            "cuota_integra_general": round(cuota_general, 2),
+            "cuota_liquida_estatal": 0.0,
+            "cuota_liquida_autonomica": 0.0,
+            "cuota_liquida_general": round(cuota_liquida, 2),
+            "mpyf": {
+                "mpyf_estatal": round(minimos_total, 2),
+                "mpyf_autonomico": round(minimos_total, 2),
+            },
+            "cuota_mpyf_estatal": round(minimos_total, 2),
+            "cuota_mpyf_autonomica": 0.0,
+            "deduccion_ceuta_melilla": 0.0,
+            # Phase 1/2 fields (not applicable in foral — set to 0)
+            "reduccion_planes_pensiones": 0.0,
+            "deduccion_vivienda_pre2013": 0.0,
+            "deduccion_maternidad": 0.0,
+            "deduccion_familia_numerosa": 0.0,
+            "total_deducciones_cuota": round(deduccion_donativos, 2),
+            "reduccion_tributacion_conjunta": 0.0,
+            "deduccion_alquiler_pre2015": 0.0,
+            "renta_imputada_inmuebles": 0.0,
+            "retenciones_alquiler": round(retenciones_alquiler, 2),
+            "retenciones_ahorro": round(retenciones_ahorro, 2),
+            "breakdown_estatal": [],
+            "breakdown_autonomica": [],
+        }
 
     async def simulate(
         self,
@@ -113,9 +437,15 @@ class IRPFSimulator:
         # --- Phase 2: Rentas imputadas inmuebles (Art. 85 LIRPF) ---
         valor_catastral_segundas_viviendas: float = 0,
         valor_catastral_revisado_post1994: bool = True,
+        # --- Foral-specific: EPSV and foral donativos ---
+        aportaciones_epsv: float = 0,
+        donativos_forales: float = 0,
     ) -> Dict[str, Any]:
         """
         Run a complete IRPF simulation.
+
+        Dispatches to foral path (_simulate_foral) for Araba, Bizkaia,
+        Gipuzkoa, and Navarra; uses the common-regime path for all other CCAA.
 
         Args:
             jurisdiction: CCAA name (affects autonomous scale and MPYF).
@@ -138,10 +468,54 @@ class IRPFSimulator:
             num_ascendientes_65: Dependent ascendants >65.
             num_ascendientes_75: Dependent ascendants >75.
             discapacidad_contribuyente: Disability percentage.
+            aportaciones_epsv: Foral EPSV contributions (reduces base, max 5000 EUR).
+            donativos_forales: Foral donativos (30% vasco / 25% navarra).
 
         Returns:
             Complete simulation result with all intermediate values.
         """
+        # --- Foral regime dispatch ---
+        regime = classify_regime(jurisdiction)
+        if regime in ("foral_vasco", "foral_navarra"):
+            logger.info("Dispatching to foral simulator: %s (%s)", jurisdiction, regime)
+            return await self._simulate_foral(
+                regime=regime,
+                jurisdiction=jurisdiction,
+                year=year,
+                ingresos_trabajo=ingresos_trabajo,
+                ss_empleado=ss_empleado,
+                cuotas_sindicales=cuotas_sindicales,
+                colegio_profesional=colegio_profesional,
+                intereses=intereses,
+                dividendos=dividendos,
+                ganancias_fondos=ganancias_fondos,
+                ingresos_alquiler=ingresos_alquiler,
+                gastos_alquiler_total=gastos_alquiler_total,
+                valor_adquisicion_inmueble=valor_adquisicion_inmueble,
+                es_vivienda_habitual=es_vivienda_habitual,
+                num_descendientes=num_descendientes,
+                anios_nacimiento_desc=anios_nacimiento_desc,
+                custodia_compartida=custodia_compartida,
+                num_ascendientes_65=num_ascendientes_65,
+                num_ascendientes_75=num_ascendientes_75,
+                ingresos_actividad=ingresos_actividad,
+                gastos_actividad=gastos_actividad,
+                cuota_autonomo_anual=cuota_autonomo_anual,
+                amortizaciones_actividad=amortizaciones_actividad,
+                provisiones_actividad=provisiones_actividad,
+                otros_gastos_actividad=otros_gastos_actividad,
+                estimacion_actividad=estimacion_actividad,
+                inicio_actividad=inicio_actividad,
+                un_solo_cliente=un_solo_cliente,
+                retenciones_actividad=retenciones_actividad,
+                pagos_fraccionados_130=pagos_fraccionados_130,
+                aportaciones_epsv=aportaciones_epsv,
+                donativos_forales=donativos_forales,
+                retenciones_alquiler=retenciones_alquiler,
+                retenciones_ahorro=retenciones_ahorro,
+            )
+
+        # --- Common regime (comun / ceuta_melilla / canarias) ---
         # Auto-detect Ceuta/Melilla from jurisdiction name
         if not ceuta_melilla and jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS:
             ceuta_melilla = True
