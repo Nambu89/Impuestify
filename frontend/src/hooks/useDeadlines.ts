@@ -90,14 +90,14 @@ export function useDeadlines(options: UseDeadlinesOptions = {}): UseDeadlinesRet
             if (isPublic) {
                 // Public endpoint — no auth required
                 const apiUrl = import.meta.env.VITE_API_URL || '/api'
-                const res = await fetch(`${apiUrl}/deadlines/public?days=${days}`)
+                const res = await fetch(`${apiUrl}/api/deadlines/public?days=${days}`)
                 if (!res.ok) throw new Error(`HTTP ${res.status}`)
                 const data: FiscalDeadlineRaw[] = await res.json()
                 setDeadlines(enrichDeadlines(data))
             } else {
                 // Authenticated endpoint
                 const data = await apiRequest<FiscalDeadlineRaw[]>(
-                    `/deadlines/upcoming?days=${days}`
+                    `/api/deadlines/upcoming?days=${days}`
                 )
                 setDeadlines(enrichDeadlines(data || []))
             }
