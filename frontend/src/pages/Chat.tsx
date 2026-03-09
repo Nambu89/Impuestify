@@ -120,6 +120,12 @@ export default function Chat() {
         e.preventDefault()
         if (!input.trim() || isLoading || isStreaming) return
 
+        // Auto-close onboarding modal on first message
+        if (!onboardingDone) {
+            setOnboardingDone(true)
+            localStorage.setItem('onboarding_seen', '1')
+        }
+
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',

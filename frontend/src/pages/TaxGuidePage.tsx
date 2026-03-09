@@ -1193,7 +1193,7 @@ export default function TaxGuidePage() {
     const canGoToStep = (targetStep: number) => {
         if (isQuick) return !!data.comunidad_autonoma || targetStep === 0
         // For result step (6), require CCAA + income
-        if (targetStep >= totalSteps - 1) {
+        if (targetStep >= stepLabels.length - 1) {
             return !!data.comunidad_autonoma && step1HasIncome
         }
         // For step 1+, require CCAA
