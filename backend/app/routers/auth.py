@@ -2,10 +2,12 @@
 Auth Router for TaxIA
 
 Provides authentication endpoints: register, login, refresh, logout.
+Cloudflare Turnstile verification on login/register.
 """
 import logging
 from typing import Optional
 
+import httpx
 from fastapi import APIRouter, HTTPException, status, Depends, Request
 from pydantic import BaseModel, EmailStr, Field
 
@@ -28,6 +30,33 @@ from app.security.rate_limiter import limiter
 
 logger = logging.getLogger(__name__)
 
+TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+
+async def verify_turnstile(token: str, remote_ip: Optional[str] = None) -> bool:
+    """Verify a Cloudflare Turnstile token. Returns True if valid."""
+    secret = settings.TURNSTILE_SECRET_KEY
+    if not secret:
+        logger.warning("TURNSTILE_SECRET_KEY not configured — skipping verification")
+        return True
+
+    payload = {"secret": secret, "response": token}
+    if remote_ip:
+        payload["remoteip"] = remote_ip
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(TURNSTILE_VERIFY_URL, data=payload)
+            result = resp.json()
+            if result.get("success"):
+                return True
+            logger.warning(f"Turnstile verification failed: {result.get('error-codes', [])}")
+            return False
+    except Exception as e:
+        logger.error(f"Turnstile verification error: {e}")
+        # Fail open — don't block legitimate users if Cloudflare is down
+        return True
+
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
@@ -38,12 +67,14 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, description="Mínimo 8 caracteres")
     name: Optional[str] = None
     ccaa_residencia: Optional[str] = None
+    turnstile_token: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
     """User login request"""
     email: EmailStr
     password: str
+    turnstile_token: Optional[str] = None
 
 
 class RefreshRequest(BaseModel):
@@ -84,9 +115,23 @@ class AuthResponse(BaseModel):
 async def register(request: Request, data: RegisterRequest):
     """
     Register a new user.
-    
+
     Creates a new account and returns authentication tokens.
     """
+    # Turnstile verification
+    if data.turnstile_token:
+        remote_ip = request.client.host if request.client else None
+        if not await verify_turnstile(data.turnstile_token, remote_ip):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verificación de seguridad fallida. Inténtalo de nuevo."
+            )
+    elif settings.TURNSTILE_SECRET_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verificación de seguridad requerida."
+        )
+
     try:
         user = await user_service.create_user(
             UserCreate(
@@ -155,9 +200,23 @@ async def register(request: Request, data: RegisterRequest):
 async def login(request: Request, data: LoginRequest):
     """
     Login with email and password.
-    
+
     Returns authentication tokens if credentials are valid.
     """
+    # Turnstile verification
+    if data.turnstile_token:
+        remote_ip = request.client.host if request.client else None
+        if not await verify_turnstile(data.turnstile_token, remote_ip):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verificación de seguridad fallida. Inténtalo de nuevo."
+            )
+    elif settings.TURNSTILE_SECRET_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verificación de seguridad requerida."
+        )
+
     user = await user_service.authenticate_user(data.email, data.password)
 
     if not user:

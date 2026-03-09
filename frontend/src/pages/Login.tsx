@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Mail, Lock, Eye, EyeOff, Loader2, Calculator, Map, Shield, AlertCircle } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import TurnstileWidget from '../components/TurnstileWidget'
 import './Auth.css'
 
 export default function Login() {
@@ -13,14 +14,21 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [turnstileToken, setTurnstileToken] = useState('')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
+
+        if (!turnstileToken) {
+            setError('Por favor, completa la verificación de seguridad.')
+            return
+        }
+
         setIsLoading(true)
 
         try {
-            await login(email, password)
+            await login(email, password, turnstileToken)
             navigate('/chat')
         } catch (err: any) {
             const status = err?.response?.status
@@ -137,6 +145,12 @@ export default function Login() {
                         <Link to="/forgot-password" className="auth-forgot-link">
                             ¿Olvidaste tu contrasena?
                         </Link>
+
+                        <TurnstileWidget
+                            onVerify={(token) => setTurnstileToken(token)}
+                            onExpire={() => setTurnstileToken('')}
+                            onError={() => setTurnstileToken('')}
+                        />
 
                         <button
                             type="submit"

@@ -186,10 +186,15 @@ async def ask_question_stream(
                         )
 
                         if files_result.rows:
+                            from app.services.payslip_extractor import PayslipExtractor
                             docs_context = []
                             for f in files_result.rows:
                                 if f.get("extracted_text"):
-                                    doc_info = f"--- {f['filename']} ({f['file_type']}) ---\n{f['extracted_text'][:5000]}"
+                                    raw_text = f['extracted_text'][:5000]
+                                    # SECURITY: Anonymize PII before passing to LLM
+                                    if f.get('file_type') in ('nomina', 'payslip', 'factura', 'declaracion'):
+                                        raw_text = PayslipExtractor.anonymize_text(raw_text)
+                                    doc_info = f"--- {f['filename']} ({f['file_type']}) ---\n{raw_text}"
                                     docs_context.append(doc_info)
                                     workspace_files_info.append({
                                         "filename": f["filename"],
@@ -198,7 +203,7 @@ async def ask_question_stream(
 
                             if docs_context:
                                 workspace_context = "\n\n".join(docs_context)
-                                logger.info(f"Loaded {len(docs_context)} documents from workspace")
+                                logger.info(f"Loaded {len(docs_context)} documents from workspace (PII anonymized)")
                 except Exception as e:
                     logger.error(f"Error loading workspace context: {e}")
 

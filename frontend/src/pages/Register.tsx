@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Mail, Lock, User, Eye, EyeOff, Loader2, Calculator, Map, AlertCircle, CheckCircle, MapPin } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import TurnstileWidget from '../components/TurnstileWidget'
 import './Auth.css'
 
 const CCAA_OPTIONS = [
@@ -50,6 +51,7 @@ export default function Register() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [turnstileToken, setTurnstileToken] = useState('')
 
     const isForal = FORAL_CCAA.includes(ccaa)
     const isCeutaMelilla = ccaa === 'Ceuta' || ccaa === 'Melilla'
@@ -80,10 +82,15 @@ export default function Register() {
             return
         }
 
+        if (!turnstileToken) {
+            setError('Por favor, completa la verificación de seguridad.')
+            return
+        }
+
         setIsLoading(true)
 
         try {
-            await register(email, password, name, ccaa)
+            await register(email, password, name, ccaa, turnstileToken)
             navigate('/chat')
         } catch (err: any) {
             setError(err.message || 'Error al crear la cuenta')
@@ -270,6 +277,12 @@ export default function Register() {
                                 </button>
                             </div>
                         </div>
+
+                        <TurnstileWidget
+                            onVerify={(token) => setTurnstileToken(token)}
+                            onExpire={() => setTurnstileToken('')}
+                            onError={() => setTurnstileToken('')}
+                        />
 
                         <button
                             type="submit"

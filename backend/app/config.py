@@ -186,6 +186,11 @@ class Settings(BaseSettings):
     VAPID_CLAIMS_EMAIL: str = Field(default="mailto:soporte@impuestify.es")
 
     # -------------------------------
+    # 🛡️ Cloudflare Turnstile
+    # -------------------------------
+    TURNSTILE_SECRET_KEY: Optional[str] = Field(default=None)
+
+    # -------------------------------
     # 🌐 Frontend
     # -------------------------------
     FRONTEND_URL: str = Field(default="https://impuestify.es")

@@ -302,45 +302,60 @@ Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnico
 					"payslip_data": {}
 				}
 			
+			# SECURITY: Anonymize PII before sending to LLM
+			from app.services.payslip_extractor import PayslipExtractor
+			anonymized_text = PayslipExtractor.anonymize_text(pdf_text[:4000])
+			logger.info("🔒 PII anonymized before LLM extraction")
+
 			# Use gpt-5-mini to extract structured data
 			extraction_prompt = f"""Extrae los datos clave de esta nómina española.
 
 TEXTO DE LA NÓMINA:
 ```
-{pdf_text[:4000]}
+{anonymized_text}
 ```
 
-IMPORTANTE: Busca TODOS estos conceptos en la nómina. Si no encuentras alguno, usa null.
+IMPORTANTE: Los datos personales han sido anonimizados por seguridad ([DNI_REDACTED], [NIF_REDACTED], etc.). NO intentes recuperarlos. Extrae SOLO datos financieros y laborales.
 
 Extrae y devuelve en formato JSON:
 {{
 	"period_month": "Noviembre",
 	"period_year": 2025,
-	"company_name": "Nombre de la empresa",
-	"employee_name": "Nombre del empleado",
 	"gross_salary": 2934.34,
 	"net_salary": 2211.63,
 	"irpf_withholding": 532.88,
 	"irpf_percentage": 18.15,
-	"ss_contribution": 189.81,
+	"ss_contingencias_comunes": 147.71,
+	"ss_mei": 4.71,
+	"ss_formacion": 3.14,
+	"ss_desempleo": 48.71,
+	"ss_contribution": 204.27,
 	"salary_base": 1123.47,
-	"complements": 1810.87,
-	"region": "Aragón",
+	"plus_convenio": 174.35,
+	"cuenta_convenio": 1033.96,
+	"bonus": null,
+	"teletrabajo": 18.21,
 	"pagas_extras_prorrateadas": true,
 	"ppp_extras_amount": 282.12,
-	"num_pagas_anuales": 14
+	"num_pagas_anuales": 14,
+	"descuento_especie": 56.40
 }}
 
 INSTRUCCIONES ESPECÍFICAS:
 - "pagas_extras_prorrateadas": true si encuentras "P.P.P.EXTRAS", "PRORRATEO", "PRORRATEADAS" o similar. false si pone "14 PAGAS" sin prorrateo. null si no está claro.
 - "ppp_extras_amount": importe del concepto P.P.P.EXTRAS si existe (busca en DEVENGOS)
 - "num_pagas_anuales": 12 si están prorrateadas, 14 si no lo están, null si no se especifica
-- "gross_salary": TOTAL DEVENGADO (suma de todos los devengos)
+- "gross_salary": TOTAL DEVENGADO (suma de todos los devengos). Si hay multi-página, suma TODOS.
 - "net_salary": LÍQUIDO A PERCIBIR o TOTAL A PERCIBIR
-- "irpf_withholding": importe en € de TRIBUTACION I.R.P.F o IRPF
-- "ss_contribution": suma de COTIZACION CONT.COMU, COTIZACION DESEMPLEO, COTIZACION FORMACION, etc.
+- "irpf_withholding": importe TOTAL en EUR de TRIBUTACION I.R.P.F o IRPF. Si aparece en varias páginas, SUMA todos.
+- "ss_contingencias_comunes": COTIZACION CONT.COMU (suma todas las páginas)
+- "ss_mei": COTIZACION MEI (suma todas las páginas)
+- "ss_formacion": COTIZACION FORMACION (suma todas las páginas)
+- "ss_desempleo": COTIZACION DESEMPLEO (suma todas las páginas)
+- "ss_contribution": suma total de todas las cotizaciones SS del trabajador
+- NO extraigas DNI, NIF, IBAN, nombres, direcciones ni números de Seguridad Social.
 
-Si no encuentras un dato, usa null. Sé preciso con los números.
+Si no encuentras un dato, usa null. Sé preciso con los números. Si hay multi-página, suma los importes.
 """
 			
 			response = self._client.chat.completions.create(
@@ -355,13 +370,35 @@ Si no encuentras un dato, usa null. Sé preciso con los números.
 			)
 			
 			import json
-			payslip_data = json.loads(response.choices[0].message.content)
-			
+
+			# Guard against empty/None response from GPT
+			raw_content = response.choices[0].message.content
+			if not raw_content or not raw_content.strip():
+				logger.warning("⚠️ GPT returned empty content, falling back to regex extraction")
+				payslip_data = None
+			else:
+				try:
+					payslip_data = json.loads(raw_content)
+				except (json.JSONDecodeError, ValueError) as je:
+					logger.warning(f"⚠️ GPT returned invalid JSON: {je}, falling back to regex extraction")
+					payslip_data = None
+
+			# Fallback: use regex-based PayslipExtractor if GPT extraction failed
+			if not payslip_data:
+				extractor = PayslipExtractor()
+				payslip_data = extractor._parse_payslip_data(pdf_text)
+				payslip_data['extraction_method'] = 'regex_fallback'
+				logger.info(f"✅ Regex fallback extracted {len(payslip_data)} fields")
+
 			logger.info(f"✅ Extracted: {payslip_data.get('period_month')}/{payslip_data.get('period_year')}")
-			
-			# Generate analysis using agent's analyze method
+
+			# SECURITY: Strip PII from data before LLM analysis
+			safe_data = PayslipExtractor.anonymize_data(payslip_data)
+			logger.info("🔒 PII stripped from payslip data before analysis")
+
+			# Generate analysis using agent's analyze method (with anonymized data)
 			analysis_response = await self.analyze(
-				payslip_data=payslip_data,
+				payslip_data=safe_data,
 				user_question=None
 			)
 			
@@ -398,7 +435,13 @@ Si no encuentras un dato, usa null. Sé preciso con los números.
 	def _build_context(self, payslip_data: Dict[str, Any]) -> str:
 		"""Construye el contexto desde los datos de la nómina"""
 		period = f"{payslip_data.get('period_month', '?')}/{payslip_data.get('period_year', '?')}"
-		
+
+		gross = float(payslip_data.get('gross_salary') or 0)
+		net = float(payslip_data.get('net_salary') or 0)
+		irpf = float(payslip_data.get('irpf_withholding') or 0)
+		irpf_pct = float(payslip_data.get('irpf_percentage') or 0)
+		ss = float(payslip_data.get('ss_contribution') or 0)
+
 		return f"""Datos de la nómina:
 
 Periodo: {period}
@@ -406,10 +449,10 @@ Empresa: {payslip_data.get('company_name', 'No especificada')}
 Empleado: {payslip_data.get('employee_name', 'No especificado')}
 
 Conceptos económicos:
-- Salario bruto: {payslip_data.get('gross_salary', 0):.2f}€
-- Salario neto: {payslip_data.get('net_salary', 0):.2f}€
-- Retención IRPF: {payslip_data.get('irpf_withholding', 0):.2f}€ ({payslip_data.get('irpf_percentage', 0):.2f}%)
-- Cotización Seguridad Social: {payslip_data.get('ss_contribution', 0):.2f}€"""
+- Salario bruto: {gross:.2f}€
+- Salario neto: {net:.2f}€
+- Retención IRPF: {irpf:.2f}€ ({irpf_pct:.2f}%)
+- Cotización Seguridad Social: {ss:.2f}€"""
 
 
 # Global agent instance

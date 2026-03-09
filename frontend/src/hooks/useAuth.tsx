@@ -15,8 +15,8 @@ interface AuthContextType {
     user: User | null
     isAuthenticated: boolean
     isLoading: boolean
-    login: (email: string, password: string) => Promise<void>
-    register: (email: string, password: string, name?: string, ccaa_residencia?: string) => Promise<void>
+    login: (email: string, password: string, turnstile_token?: string) => Promise<void>
+    register: (email: string, password: string, name?: string, ccaa_residencia?: string, turnstile_token?: string) => Promise<void>
     logout: () => void
 }
 
@@ -97,12 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [fetchCurrentUser])
 
-    const login = async (email: string, password: string) => {
+    const login = async (email: string, password: string, turnstile_token?: string) => {
         logger.debug('Logging in:', email)
         try {
             const response = await authApi.post('/auth/login', {
                 email,
-                password
+                password,
+                ...(turnstile_token && { turnstile_token }),
             })
 
             const { user, tokens } = response.data
@@ -117,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    const register = async (email: string, password: string, name?: string, ccaa_residencia?: string) => {
+    const register = async (email: string, password: string, name?: string, ccaa_residencia?: string, turnstile_token?: string) => {
         logger.debug('Registering:', email)
         try {
             const response = await authApi.post('/auth/register', {
@@ -125,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 password,
                 name,
                 ...(ccaa_residencia && { ccaa_residencia }),
+                ...(turnstile_token && { turnstile_token }),
             })
 
             const { user, tokens } = response.data

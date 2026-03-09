@@ -118,7 +118,7 @@ class FileProcessingService:
                 file.content_type,
                 file_size,
                 extracted_text,
-                json.dumps(extracted_data) if extracted_data else None,
+                json.dumps(extracted_data) if isinstance(extracted_data, dict) and extracted_data else None,
                 processing_status,
                 now
             ]
@@ -300,7 +300,7 @@ class FileProcessingService:
             SET extracted_data = ?, processing_status = 'completed'
             WHERE id = ?
             """,
-            [json.dumps(extracted_data) if extracted_data else None, file_id]
+            [json.dumps(extracted_data) if isinstance(extracted_data, dict) and extracted_data else None, file_id]
         )
 
         # Regenerate embeddings

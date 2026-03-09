@@ -249,11 +249,12 @@ class WorkspaceService:
 
         for row in result.rows:
             raw = row.get("extracted_data")
-            if not raw:
+            if not raw or (isinstance(raw, str) and not raw.strip()):
                 continue
             try:
                 data = _json.loads(raw) if isinstance(raw, str) else raw
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, _json.JSONDecodeError):
+                logger.warning(f"Invalid JSON in extracted_data for file: {row.get('filename', '?')}")
                 continue
 
             if not isinstance(data, dict):
