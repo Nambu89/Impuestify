@@ -1,14 +1,12 @@
 """
-Script para descargar PDFs de las Haciendas Forales.
+DEPRECATED — Use doc_crawler instead:
+    python -m backend.scripts.doc_crawler [options]
 
-Descarga documentación fiscal de:
-- Navarra
-- Bizkaia
-- Gipuzkoa
-- Araba
+This script has hardcoded paths and limited URL coverage.
+See backend/scripts/doc_crawler/ for the automated replacement.
 
-Ejecutar desde cualquier directorio:
-    python scripts/download_foral_pdfs.py
+---
+Original: Script para descargar PDFs de las Haciendas Forales.
 """
 import os
 import sys
