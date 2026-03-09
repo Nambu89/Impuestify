@@ -8,6 +8,7 @@ mark_admin.sql
 
 # artefactos locales
 *.sqlite
+local.db*
 /data/
 /cache/
 /docs/
@@ -70,6 +71,9 @@ build/
 # Claude Code - Local config (personal, no compartir)
 CLAUDE.local.md
 .claude/
+
+# Git worktrees (parallel agent isolation)
+.worktrees/
 
 # Gemini AI config
 .gemini/

@@ -174,3 +174,71 @@
 **Archivos modificados:**
 - `backend/scripts/seed_autonomous_quotas_2026.py` (nuevo)
 - `backend/app/tools/autonomous_quota_tool.py` (default year 2026)
+
+---
+
+## [2026-03-09] B-CHAT-01: Respuesta modelo 303 reemplazada por error generico
+
+**Problema:** Al preguntar sobre modelo 303, el agente devolvia "hubo un problema al formatear la respuesta" en lugar de la respuesta real.
+
+**Causa raiz:** `validate_output_format()` en guardrails.py detecta patrones JSON-like (`{"tool":`, `{"query":`, etc.) y reemplazaba TODA la respuesta con un mensaje de error. Las respuestas sobre modelos fiscales a menudo incluyen JSON-like content legitimate (parametros de tools, casillas, etc.).
+
+**Solucion:** Cambiar el comportamiento: solo logear warning, NO reemplazar la respuesta. El guardrail de output format es informativo, no destructivo.
+
+**Archivos modificados:**
+- `backend/app/agents/tax_agent.py` (linea ~530)
+
+**Regla:** Los guardrails de formato de output NUNCA deben destruir la respuesta entera. Logear warnings para monitorizacion, pero dejar que la respuesta llegue al usuario. Si hay JSON real expuesto, es mejor un falso positivo que perder la respuesta.
+
+---
+
+## [2026-03-09] B-GF-06: Wizard permite saltar al resultado sin datos
+
+**Problema:** El usuario podia clickear directamente en el paso "Resultado" del progress bar sin haber rellenado CCAA ni ingresos. Mostraba "Completa los pasos anteriores".
+
+**Causa raiz:** `canProceed` solo validaba steps 0 y 1. El progress bar permitia navegar libremente a cualquier step sin validacion.
+
+**Solucion:** Anadir `canGoToStep(i)` que bloquea el paso Resultado si no hay CCAA + ingresos. Progresar bar buttons deshabilitados si no se puede ir a ese step.
+
+**Archivos modificados:**
+- `frontend/src/pages/TaxGuidePage.tsx`
+
+---
+
+## [2026-03-09] B-MOB-01: Modales apilados en mobile bloquean interfaz
+
+**Problema:** En mobile, OnboardingModal y AITransparencyModal se mostraban simultaneamente, bloqueando toda la interfaz.
+
+**Causa raiz:** Ambos modales se renderizan al mismo tiempo en Chat.tsx. En desktop no es tan grave (se pueden cerrar), pero en mobile ocupan toda la pantalla y se apilan.
+
+**Solucion:** Modales secuenciales: AITransparencyModal solo se muestra despues de que OnboardingModal haya sido cerrado. State `onboardingDone` controla la secuencia. OnboardingModal acepta callback `onDismiss`.
+
+**Archivos modificados:**
+- `frontend/src/pages/Chat.tsx`
+- `frontend/src/components/OnboardingModal.tsx`
+
+---
+
+## [2026-03-09] B-LOGOUT-01: Logout intermitente por window.confirm
+
+**Problema:** El boton de logout no funcionaba de forma consistente. `window.confirm()` no se disparaba siempre.
+
+**Causa raiz:** `window.confirm` en event handlers tiene timing issues, especialmente en tests automatizados y en ciertos navegadores mobile.
+
+**Solucion:** Eliminar `window.confirm` — hacer logout directo. No necesita confirmacion ya que el historial se conserva.
+
+**Archivos modificados:**
+- `frontend/src/components/Header.tsx`
+
+---
+
+## [2026-03-09] CcaaTip foral detection rota (CCAA unaccented)
+
+**Problema:** CcaaTip no detectaba territorios forales. El tip de "Territorio foral" no aparecia al seleccionar Araba/Bizkaia/Gipuzkoa.
+
+**Causa raiz:** `ccaa.startsWith('País Vasco')` no matchea porque los CCAA_OPTIONS usan nombres sin acentos (Araba, Bizkaia, Gipuzkoa, no "País Vasco - Araba").
+
+**Solucion:** Cambiar a `['Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra'].includes(ccaa)`.
+
+**Archivos modificados:**
+- `frontend/src/pages/TaxGuidePage.tsx`

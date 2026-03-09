@@ -1,6 +1,6 @@
 # TaxIA — Memoria del Agente
 
-> Ultima actualizacion: 2026-03-08
+> Ultima actualizacion: 2026-03-09 (sesion 3)
 > Ver detalles en archivos separados por tema
 > Bugs fixeados: `memory/bugfixes-2026-03.md`
 
@@ -10,18 +10,25 @@
 |---------|-----------|
 | `memory/MEMORY.md` | Este indice + resumen de cada area |
 | `memory/backend-subscription.md` | Detalles backend Stripe |
-| `memory/crawler-state.md` | Estado del crawler de documentos |
+| `memory/crawler-state.md` | Estado del crawler de documentos + automatizacion semanal |
 | `memory/frontend-features.md` | UX/Streaming, PWA, Landing, DeductionCards, Cookies, Admin |
-| `memory/bugfixes-2026-03.md` | Bugs fixeados marzo 2026 + tareas pendientes frontend |
+| `memory/bugfixes-2026-03.md` | Bugs fixeados marzo 2026 (13 bugs documentados) |
+| `memory/mcp-design-tools.md` | Google Stitch + Nano Banana MCP config y modelos Gemini 3 |
+| `memory/response-quality-gap.md` | Analisis calidad respuesta vs Google/Claude — plan de mejora |
+| `memory/agent-system-improvements.md` | Mejoras GSD al sistema multi-agente (2026-03-08) |
+| `memory/awesome-claude-code.md` | Integracion herramientas awesome-claude-code (2026-03-08) |
+| `memory/aeat-docs-integration.md` | Integracion docs AEAT: casillas, XSD, XLS, VeriFactu (2026-03-08) |
 
 ## Arquitectura del proyecto
 
-- Backend: `backend/app/` — FastAPI + Microsoft Agent Framework
+- Backend: `backend/app/` — FastAPI + OpenAI function calling
 - Frontend: `frontend/src/` — React 18 + Vite 5 + TypeScript
-- Docs RAG: `docs/` — 428 archivos organizados por territorio
+- Docs RAG: `docs/` — 439 archivos organizados por territorio
 - Agent comms: `agent-comms.md` (raiz) — canal inter-agentes
-- Skills: `.claude/skills/` — 6 modulos de conocimiento
-- Subagentes: `.claude/subagents/` (backend, frontend, python, docscrawler)
+- Skills: `.claude/skills/` — 10 modulos (6 dominio + 4 desarrollo)
+- Subagentes: `.claude/subagents/` — 6 agentes (backend, frontend, python, docscrawler, plan-checker, verifier)
+- Hooks: `.claude/hooks/` — bash-gate.js + quality-check.js
+- Commands: `.claude/commands/` — 20 slash commands
 
 ## Guia Fiscal Interactiva (COMPLETO) — 2026-03-06
 
@@ -46,29 +53,30 @@
 - Alquiler vivienda habitual pre-2015 (DT 15a): 10,05%, max base 9.040 EUR
 - Rentas imputadas inmuebles (Art. 85): 1,1%/2% valor catastral
 
-## Motor de Deducciones IRPF (COMPLETO)
+## Motor de Deducciones IRPF (~554 deducciones en BD)
 
-- 16 estatales + 48 territoriales = 64 deducciones totales
-- 8 CCAA: Araba(8), Bizkaia(6), Gipuzkoa(6), Navarra(7), Madrid(6), Cataluna(5), Andalucia(5), Valencia(6)
+- 16 estatales + 192 territoriales v1/v2 + 339 XSD oficiales + 50 forales = **~554 deducciones**
+- **XSD Modelo 100**: 339 deducciones oficiales AEAT (seed_deductions_xsd.py, tax_year=2024)
+- **Forales v2**: 50 activas (Araba 15, Bizkaia 11, Gipuzkoa 11, Navarra 13)
 - Forales: sistema IRPF propio, NO incluyen estatales
-- simulate_irpf auto-encadena discover_deductions
-- Export PDF (ReportLab) + Email (Resend)
-- Post-deploy: `seed_deductions.py` + `seed_deductions_territorial.py` + `seed_estatal_scale.py`
+- `build_answers_from_profile()`: bridge automatico perfil → deduction answers
+- Seeds: `seed_deductions.py` + `_territorial.py` + `_v2.py` + `_xsd.py` + `_forales_v2.py` + `seed_estatal_scale.py` + `seed_foral_scales.py`
 
-## Suscripciones Stripe (COMPLETO)
+## Suscripciones Stripe (COMPLETO — DUAL PLAN)
 
-> Detalles: `memory/backend-subscription.md` + `.claude/skills/stripe-integration.md`
+> Detalles: `memory/backend-subscription.md`
 
-- Producto: `prod_U4lJ9l8NhKvFHZ`, 5 EUR/mes
+- Plan Particular: 5 EUR/mes | Plan Autonomo: 39 EUR/mes IVA incl.
 - Owner: `fernando.prada@proton.me` (sin restricciones)
 - 13 usuarios existentes: grace_period hasta 31/12/2026
-- Frontend: useSubscription, SubscribePage, ProtectedRoute con subscription guard
 
-## Perfil Fiscal + Admin (COMPLETO)
+## Perfil Fiscal Adaptativo por CCAA (COMPLETO)
 
-- datos_fiscales JSON: autonomo fields + Phase 1+2 fields (guia fiscal)
-- Admin router: GET/PUT /api/admin/users (owner-only)
-- Frontend: AdminUsersPage (cards mobile, tabla desktop)
+- CCAA obligatorio en registro, hints por regimen (foral/Ceuta-Melilla/Canarias)
+- `regime_classifier.py`: 5 regimenes
+- `GET /api/fiscal-profile/fields?ccaa=`: campos dinamicos
+- `DynamicFiscalForm.tsx` + `useFiscalFields.ts`
+- ~90 campos en FiscalProfileRequest
 
 ## Ceuta/Melilla (COMPLETO)
 
@@ -91,23 +99,35 @@
 - SSE v3.0: content_chunk (append) + content (replace)
 - PWA manual, Landing con React Bits, DeductionCards en Chat
 
+## Crawler Automatizado (COMPLETO — 2026-03-09)
+
+- Modulo `backend/scripts/doc_crawler/` — 9 ficheros Python + .bat, 32 tests PASS
+- 48 URLs: 25 alta, 19 media, 4 baja — 21 territorios
+- Rate limit: 4s/request, 50/dominio/sesion, backoff 10/30/60/STOP, robots.txt
+- Windows Task Scheduler: `TaxIA-DocCrawler-Weekly`, lunes 09:00
+- CLI: `python -m backend.scripts.doc_crawler [--territory X] [--dry-run] [--stats]`
+- Genera `_pending_ingest.json` para pipeline RAG
+- Commit: `250e8a2`
+
 ## Biblioteca RAG
 
-- 419 PDFs + 9 Excel = 428 archivos en `docs/`
-- Araba COMPLETO (37 docs)
-- Disenos de Registro AEAT: 15 archivos (flat-file, NO XSD)
+- 419 PDFs + 9 Excel + 11 AEAT specs = **439 archivos** en `docs/`
 - Ver `memory/crawler-state.md` para estado detallado
 
 ### Pendiente ~abril 2026
-1. Manual Practico Renta 2025 (AEAT) — 404 a 3/3/2026
+1. Manual Practico Renta 2025 (AEAT) — en watchlist como "future"
 2. Orden HAC Modelo 100 ejercicio 2025
 
 ## Reglas de proceso
 
-- **Post-Bugfix Protocol**: Tras arreglar cualquier bug, SIEMPRE documentar en 3 sitios: CLAUDE.md del area (regla + troubleshooting), `memory/bugfixes-YYYY-MM.md` (detalle tecnico), `agent-comms.md` (estado tarea). Definido en `CLAUDE.md` raiz.
+- **Post-Bugfix Protocol**: Documentar en 3 sitios (CLAUDE.md, bugfixes, agent-comms)
+- **Quality Gates**: `/check-plan` (pre) + `/verify` (post) obligatorios
+- **Revision exhaustiva**: Al aplicar cambios, revisar TODAS las paginas afectadas
 
 ## Notas tecnicas
 
 - venv/ en raiz (TaxIA/venv/), en Windows usar `venv/Scripts/python.exe`
-- Tests: `python -m pytest tests/ -v` (mock jose/bcrypt/slowapi por chain imports)
-- Config: `.env` en raiz, cargada via pydantic Settings
+- PYTHONUTF8=1 necesario para backend en Windows (emojis en prints)
+- Tests: `python -m pytest tests/ -v` — 762+ tests
+- `.mcp.json` en `.gitignore` (contiene API keys)
+- `data/reference/` — JSON de referencia generados (no en BD)
