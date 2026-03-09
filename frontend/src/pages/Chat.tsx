@@ -120,10 +120,14 @@ export default function Chat() {
         e.preventDefault()
         if (!input.trim() || isLoading || isStreaming) return
 
-        // Auto-close onboarding modal on first message
+        // Auto-close onboarding + AI transparency modals on first message
         if (!onboardingDone) {
             setOnboardingDone(true)
             localStorage.setItem('onboarding_seen', '1')
+        }
+        if (!localStorage.getItem('ai_transparency_accepted')) {
+            localStorage.setItem('ai_transparency_accepted', 'true')
+            localStorage.setItem('ai_transparency_accepted_date', new Date().toISOString())
         }
 
         const userMessage: Message = {
