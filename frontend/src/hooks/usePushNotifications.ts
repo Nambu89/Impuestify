@@ -69,7 +69,8 @@ export function usePushNotifications(): UsePushNotificationsReturn {
                 }
 
                 // 2. Get VAPID public key from backend (no auth required)
-                const vapidResponse = await fetch('/api/push/vapid-key')
+                const apiUrl = import.meta.env.VITE_API_URL || '/api'
+                const vapidResponse = await fetch(`${apiUrl}/api/push/vapid-key`)
                 if (!vapidResponse.ok) {
                     throw new Error('No se pudo obtener la clave VAPID del servidor')
                 }
