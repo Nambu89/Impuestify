@@ -461,6 +461,10 @@ app.include_router(declarations_router)
 from app.routers.fiscal_fields import router as fiscal_fields_router
 app.include_router(fiscal_fields_router)
 
+# Fiscal Deadlines + Push Notifications
+from app.routers.deadlines import router as deadlines_router
+app.include_router(deadlines_router)
+
 # Prometheus instrumentation with custom metrics
 from app.metrics import setup_instrumentator, set_app_info
 setup_instrumentator(app)

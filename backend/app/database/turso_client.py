@@ -673,6 +673,66 @@ class TursoClient:
                 UNIQUE(user_id, year, quarter)
             )
             """,
+
+            # =============================================
+            # FISCAL CALENDAR TABLES
+            # =============================================
+
+            # Fiscal deadlines - tax presentation deadlines by territory
+            """
+            CREATE TABLE IF NOT EXISTS fiscal_deadlines (
+                id TEXT PRIMARY KEY,
+                model TEXT NOT NULL,
+                model_name TEXT NOT NULL,
+                territory TEXT NOT NULL,
+                period TEXT NOT NULL,
+                tax_year INTEGER NOT NULL,
+                start_date TEXT NOT NULL,
+                end_date TEXT NOT NULL,
+                domiciliation_date TEXT,
+                applies_to TEXT NOT NULL DEFAULT 'todos',
+                description TEXT,
+                source_url TEXT,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_deadlines_territory ON fiscal_deadlines(territory)",
+            "CREATE INDEX IF NOT EXISTS idx_deadlines_end_date ON fiscal_deadlines(end_date)",
+            "CREATE INDEX IF NOT EXISTS idx_deadlines_model ON fiscal_deadlines(model)",
+
+            # Push subscriptions - Web Push API subscriptions per user device
+            """
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                endpoint TEXT NOT NULL,
+                p256dh TEXT NOT NULL,
+                auth TEXT NOT NULL,
+                alert_days TEXT DEFAULT '15,5,1',
+                user_agent TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                UNIQUE(user_id, endpoint)
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id)",
+
+            # Notification log - tracks sent push notifications (idempotency)
+            """
+            CREATE TABLE IF NOT EXISTS notification_log (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                deadline_id TEXT NOT NULL REFERENCES fiscal_deadlines(id),
+                alert_type TEXT NOT NULL,
+                sent_at TEXT DEFAULT (datetime('now')),
+                UNIQUE(user_id, deadline_id, alert_type)
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_notif_log_user ON notification_log(user_id)",
         ]
         
         try:

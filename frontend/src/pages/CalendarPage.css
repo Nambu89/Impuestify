@@ -1,0 +1,85 @@
+/* CalendarPage.css — Dark theme, mobile-first */
+
+/* ========== PAGE SHELL ========== */
+
+.calendar-page {
+    min-height: 100vh;
+    background: var(--color-secondary);
+    padding-top: 60px;
+}
+
+/* ========== DARK HEADER STRIP ========== */
+
+.calendar-page__header {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #1e293b 100%);
+    padding: var(--spacing-8) var(--spacing-4) var(--spacing-6);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-4);
+}
+
+.calendar-page__header > svg {
+    color: var(--color-accent);
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+    margin-top: 2px;
+}
+
+.calendar-page__header h1 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-white);
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.calendar-page__header p {
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.55);
+    margin: var(--spacing-1) 0 0;
+}
+
+.calendar-page__refresh {
+    margin-left: auto;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    padding: var(--spacing-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+    align-self: center;
+}
+
+.calendar-page__refresh:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-white);
+}
+
+/* ========== MAIN CONTENT ========== */
+
+.calendar-page__main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--spacing-6) var(--spacing-4);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (min-width: 768px) {
+    .calendar-page__header {
+        padding: var(--spacing-10) var(--spacing-8) var(--spacing-8);
+    }
+
+    .calendar-page__header h1 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .calendar-page__main {
+        padding: var(--spacing-8) var(--spacing-8);
+    }
+}

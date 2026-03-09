@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import {
     MessageSquare, Shield, FileText, ArrowRight, Calculator, CreditCard,
-    CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink
+    CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink, CalendarDays
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
@@ -11,6 +11,7 @@ import CountUp from '../components/reactbits/CountUp'
 import FadeContent from '../components/reactbits/FadeContent'
 import StarBorder from '../components/reactbits/StarBorder'
 import InteractiveSpainMap from '../components/InteractiveSpainMap'
+import UpcomingDeadlines from '../components/UpcomingDeadlines'
 import './Home.css'
 
 const TERRITORIES = [
@@ -335,6 +336,30 @@ export default function Home() {
                             ¿Eres autónomo o profesional por cuenta propia?{' '}
                             <Link to="/subscribe?plan=autonomo">Ver plan Autónomo — 39 €/mes</Link>
                         </p>
+                    </FadeContent>
+                </div>
+            </section>
+
+            {/* Upcoming Deadlines Section */}
+            <section className="home-deadlines">
+                <div className="container">
+                    <FadeContent delay={0} duration={500}>
+                        <div className="home-deadlines__header">
+                            <CalendarDays size={24} />
+                            <h2 className="section-title">Próximos plazos fiscales</h2>
+                        </div>
+                        <p className="section-subtitle">
+                            No te pierdas ninguna fecha clave de la AEAT
+                        </p>
+                    </FadeContent>
+                    <FadeContent delay={150} duration={500}>
+                        <UpcomingDeadlines isPublic={true} maxItems={4} />
+                        <div className="home-deadlines__cta">
+                            <Link to="/login" className="btn btn-ghost btn-sm">
+                                Ver calendario completo con tu perfil
+                                <ArrowRight size={16} />
+                            </Link>
+                        </div>
                     </FadeContent>
                 </div>
             </section>

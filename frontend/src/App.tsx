@@ -27,6 +27,7 @@ const CeutaMelillaPage = lazy(() => import('./pages/CeutaMelillaPage'))
 const CanariasPage = lazy(() => import('./pages/CanariasPage'))
 const TaxGuidePage = lazy(() => import('./pages/TaxGuidePage'))
 const DeclarationsPage = lazy(() => import('./pages/DeclarationsPage'))
+const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -104,6 +105,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <DeclarationsPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/calendario"
+                        element={
+                            <ProtectedRoute>
+                                <CalendarPage />
                             </ProtectedRoute>
                         }
                     />

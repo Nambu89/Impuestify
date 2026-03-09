@@ -1,0 +1,130 @@
+/* PushPermissionBanner.css — Dark glassmorphism banner */
+
+.push-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    margin: var(--spacing-4) 0;
+    font-size: var(--font-size-sm);
+    position: relative;
+}
+
+/* Default / prompt state */
+.push-banner--default {
+    background: rgba(26, 86, 219, 0.12);
+    border-color: rgba(26, 86, 219, 0.25);
+}
+
+.push-banner--default .push-banner__icon {
+    color: var(--color-primary-light);
+    flex-shrink: 0;
+}
+
+/* Denied state */
+.push-banner--denied {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.push-banner--denied .push-banner__icon {
+    color: rgba(239, 68, 68, 0.8);
+    flex-shrink: 0;
+}
+
+/* Content */
+.push-banner__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.push-banner__text {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.4;
+}
+
+.push-banner__error {
+    margin: var(--spacing-1) 0 0;
+    color: rgba(239, 68, 68, 0.9);
+    font-size: 0.8rem;
+}
+
+/* When there's no .push-banner__content wrapper (denied state) */
+.push-banner--denied .push-banner__text {
+    flex: 1;
+}
+
+/* Activate button */
+.push-banner__action {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-2) var(--spacing-4);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    white-space: nowrap;
+}
+
+.push-banner__action:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.push-banner__action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Dismiss button */
+.push-banner__dismiss {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: var(--spacing-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    transition: color 0.2s, background 0.2s;
+}
+
+.push-banner__dismiss:hover {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+/* Mobile: stack content + action vertically when narrow */
+@media (max-width: 480px) {
+    .push-banner {
+        flex-wrap: wrap;
+        gap: var(--spacing-2);
+    }
+
+    .push-banner__content,
+    .push-banner--denied .push-banner__text {
+        order: 1;
+        width: calc(100% - 40px); /* leave room for dismiss icon */
+    }
+
+    .push-banner__action {
+        order: 2;
+        width: 100%;
+        text-align: center;
+    }
+
+    .push-banner__dismiss {
+        position: absolute;
+        top: var(--spacing-3);
+        right: var(--spacing-3);
+    }
+}

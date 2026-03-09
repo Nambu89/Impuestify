@@ -179,6 +179,13 @@ class Settings(BaseSettings):
     RESEND_FROM_EMAIL: str = Field(default="noreply@impuestify.es")
 
     # -------------------------------
+    # 🔔 Web Push (VAPID)
+    # -------------------------------
+    VAPID_PUBLIC_KEY: Optional[str] = Field(default=None)
+    VAPID_PRIVATE_KEY: Optional[str] = Field(default=None)
+    VAPID_CLAIMS_EMAIL: str = Field(default="mailto:soporte@impuestify.es")
+
+    # -------------------------------
     # 🌐 Frontend
     # -------------------------------
     FRONTEND_URL: str = Field(default="https://impuestify.es")

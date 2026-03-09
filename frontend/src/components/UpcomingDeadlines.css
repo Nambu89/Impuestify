@@ -1,0 +1,136 @@
+/* UpcomingDeadlines.css — Compact pill widget */
+
+.ud-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.ud-container--loading {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-2);
+    color: rgba(255, 255, 255, 0.4);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-2) 0;
+}
+
+.ud-container--loading svg {
+    animation: ud-spin 1.2s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes ud-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Header row */
+.ud-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.ud-header svg {
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+/* Pills row */
+.ud-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+}
+
+/* Base pill */
+.ud-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: var(--spacing-1) var(--spacing-3);
+    border-radius: var(--radius-2xl);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid;
+    background: transparent;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.ud-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Urgency variants */
+.ud-pill--urgent {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.08);
+    animation: ud-urgent-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes ud-urgent-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12); }
+}
+
+.ud-pill--soon {
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.ud-pill--normal {
+    color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ud-pill--past {
+    color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.07);
+    background: transparent;
+    text-decoration: line-through;
+}
+
+.ud-pill__alert {
+    flex-shrink: 0;
+    animation: ud-alert-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes ud-alert-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.ud-pill__name {
+    font-weight: 600;
+}
+
+.ud-pill__sep {
+    opacity: 0.4;
+}
+
+.ud-pill__count {
+    font-weight: 500;
+}
+
+/* ========== LANDING SECTION VARIANT ========== */
+/* When used inside .home-deadlines section (full-width, centered) */
+
+.home-deadlines .ud-container {
+    align-items: center;
+}
+
+.home-deadlines .ud-pills {
+    justify-content: center;
+}

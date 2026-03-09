@@ -63,3 +63,7 @@ reportlab>=4.0.0
 
 # --- Email (Resend) ---
 resend>=0.7.0
+
+# --- Fiscal Calendar ---
+icalendar>=6.0.0
+pywebpush>=2.0.0

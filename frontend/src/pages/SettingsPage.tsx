@@ -3,17 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import {
     User, Download, Trash2, Save, AlertCircle, CheckCircle,
     Loader, Shield, Lock, Calculator, ChevronDown, ChevronRight, RefreshCw,
-    CreditCard, ExternalLink
+    CreditCard, ExternalLink, Bell, BellOff
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useApi } from '../hooks/useApi'
 import { useSubscription } from '../hooks/useSubscription'
 import { useFiscalProfile, FiscalProfile } from '../hooks/useFiscalProfile'
+import { usePushNotifications } from '../hooks/usePushNotifications'
 import Header from '../components/Header'
 import DynamicFiscalForm from '../components/DynamicFiscalForm'
 import './SettingsPage.css'
 
-type TabKey = 'personal' | 'security' | 'fiscal' | 'subscription' | 'privacy'
+type TabKey = 'personal' | 'security' | 'fiscal' | 'subscription' | 'privacy' | 'notifications'
 
 const CCAA_OPTIONS = [
     '', 'Andalucia', 'Aragon', 'Asturias', 'Baleares', 'Canarias',
@@ -35,6 +36,10 @@ export default function SettingsPage() {
     const { apiRequest } = useApi()
     const subscription = useSubscription()
     const navigate = useNavigate()
+    const push = usePushNotifications()
+
+    // Alert days preference state (notifications tab)
+    const [alertDays, setAlertDays] = useState<number[]>([15, 5, 1])
 
     // Active tab
     const [activeTab, setActiveTab] = useState<TabKey>('personal')
@@ -309,6 +314,9 @@ export default function SettingsPage() {
                     </button>
                     <button className={`tab-btn ${activeTab === 'privacy' ? 'active' : ''}`} onClick={() => setActiveTab('privacy')}>
                         <Shield size={16} /> Privacidad
+                    </button>
+                    <button className={`tab-btn ${activeTab === 'notifications' ? 'active' : ''}`} onClick={() => setActiveTab('notifications')}>
+                        <Bell size={16} /> Notificaciones
                     </button>
                 </div>
 
@@ -1089,6 +1097,136 @@ export default function SettingsPage() {
                             </div>
                         </section>
                     </>
+                )}
+                {/* ==================== NOTIFICATIONS TAB ==================== */}
+                {activeTab === 'notifications' && (
+                    <section className="settings-section">
+                        <div className="section-header">
+                            <Bell size={24} />
+                            <h2>Notificaciones Push</h2>
+                        </div>
+                        <p className="section-description">
+                            Recibe alertas en tu dispositivo cuando se acerquen plazos fiscales importantes.
+                            Compatible con Chrome, Firefox, Edge y Safari 16.4+.
+                        </p>
+
+                        {!push.isSupported ? (
+                            <div className="notification-unsupported">
+                                <BellOff size={20} />
+                                <span>Tu navegador no soporta notificaciones push.</span>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Status indicator */}
+                                <div className="notification-status-row">
+                                    <span className="notification-status-label">Estado:</span>
+                                    {push.permission === 'denied' ? (
+                                        <span className="notification-status notification-status--blocked">
+                                            <BellOff size={14} /> Bloqueadas por el navegador
+                                        </span>
+                                    ) : push.isSubscribed ? (
+                                        <span className="notification-status notification-status--active">
+                                            <CheckCircle size={14} /> Activas
+                                        </span>
+                                    ) : (
+                                        <span className="notification-status notification-status--off">
+                                            <Bell size={14} /> Desactivadas
+                                        </span>
+                                    )}
+                                </div>
+
+                                {push.permission === 'denied' && (
+                                    <div className="notification-hint">
+                                        <AlertCircle size={16} />
+                                        <span>
+                                            Las notificaciones estan bloqueadas en este navegador.
+                                            Ve a los ajustes del navegador y permite las notificaciones para este sitio.
+                                        </span>
+                                    </div>
+                                )}
+
+                                {push.error && (
+                                    <div className="message-banner error" style={{ marginBottom: 'var(--spacing-4)' }}>
+                                        <AlertCircle size={20} />
+                                        <span>{push.error}</span>
+                                    </div>
+                                )}
+
+                                {/* Main toggle */}
+                                <div className="gdpr-action">
+                                    <div className="gdpr-action-info">
+                                        <div className="gdpr-action-header">
+                                            <Bell size={20} />
+                                            <h3>Alertas de plazos fiscales</h3>
+                                        </div>
+                                        <p>
+                                            Recibe una notificacion antes de que venza cada plazo fiscal
+                                            relevante para tu perfil.
+                                        </p>
+                                    </div>
+                                    {push.isSubscribed ? (
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => push.unsubscribe()}
+                                            disabled={push.loading}
+                                        >
+                                            {push.loading
+                                                ? <><Loader size={18} className="animate-spin" /> Desactivando...</>
+                                                : <><BellOff size={18} /> Desactivar</>}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() => push.subscribe(alertDays)}
+                                            disabled={push.loading || push.permission === 'denied'}
+                                        >
+                                            {push.loading
+                                                ? <><Loader size={18} className="animate-spin" /> Activando...</>
+                                                : <><Bell size={18} /> Activar</>}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Alert days preferences (only visible when subscribed) */}
+                                {push.isSubscribed && (
+                                    <div className="notification-prefs">
+                                        <h3 className="fiscal-section-title">Cuando avisar</h3>
+                                        <p className="section-description" style={{ marginBottom: 'var(--spacing-3)' }}>
+                                            Elige con cuanta antelacion quieres recibir la alerta.
+                                        </p>
+                                        <div className="notification-days-grid">
+                                            {([15, 5, 1] as const).map((day) => {
+                                                const label =
+                                                    day === 1 ? '1 dia antes (urgente)' :
+                                                    day === 5 ? '5 dias antes' :
+                                                    '15 dias antes'
+                                                const checked = alertDays.includes(day)
+                                                const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    const next = e.target.checked
+                                                        ? [...alertDays, day]
+                                                        : alertDays.filter((d) => d !== day)
+                                                    setAlertDays(next)
+                                                    // Re-subscribe with updated days to persist preference
+                                                    push.subscribe(next)
+                                                }
+                                                return (
+                                                    <label key={day} className="checkbox-label notification-day-label">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={checked}
+                                                            onChange={handleChange}
+                                                            disabled={push.loading}
+                                                        />
+                                                        {label}
+                                                    </label>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </section>
                 )}
             </div>
         </div>

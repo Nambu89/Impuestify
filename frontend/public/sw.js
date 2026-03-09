@@ -109,3 +109,40 @@ async function networkFirst(request) {
     return new Response('Offline', { status: 503 })
   }
 }
+
+// === Push Notifications ===
+
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() || {}
+  const options = {
+    body: data.body || 'Tienes un plazo fiscal proximo',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: data.tag || 'fiscal-deadline',
+    data: { url: data.url || '/calendario' },
+    actions: [
+      { action: 'view', title: 'Ver calendario' },
+      { action: 'dismiss', title: 'Cerrar' }
+    ],
+    vibrate: [200, 100, 200]
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Impuestify', options)
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/calendario'
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(url)
+          return client.focus()
+        }
+      }
+      return clients.openWindow(url)
+    })
+  )
+})

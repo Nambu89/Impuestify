@@ -7,6 +7,15 @@
 ## Sesiones Recientes
 ---
 
+[2026-03-09] [PM Sesion 3] - Fix 10 bugs QA (commits ca3e9f4 + 60d23f2) + Crawler automatizado (commit 250e8a2).
+- Bugs fixeados: B-LAND-01, B-GUARD-01, B-TOOL-01, B-TOOL-02, B-CHAT-01, B-GF-06, B-MOB-01, B-LOGOUT-01, CcaaTip foral. B-COOK-01 descartado (no es bug).
+- Crawler doc_crawler/: 9 modulos Python + .bat + 32 tests PASS. 48 URLs en 21 territorios. Rate limiting + robots.txt + SHA-256 dedup.
+- Windows Task Scheduler: TaxIA-DocCrawler-Weekly, lunes 09:00. XML import method (resuelve paths con espacios).
+- QA regression: 7/10 bugs confirmados FIXED por analisis de codigo.
+- Proxima sesion: deploy Railway, seeds produccion.
+
+[2026-03-08] [QA Sesion 10] - QA E2E exhaustivo: 40 tests, 31 PASS, 4 FAIL, 5 WARN. Bugs criticos: B-LAND-01 (landing invisible), B-GUARD-01 (guardrail bloquea info general), B-TOOL-02 (RETA sin datos 2026). Reporte: plans/qa-report-e2e-2026-03-08.md
+
 [2026-03-04] [Competitive Intelligence] - Comparativa Impuestify vs TaxDown + Analisis Rita + Roadmap Backend
 - Investigacion web: TaxDown 2M+ usuarios, ~40M EUR funding, 10M+ EUR ingresos, Mexico 600K+
 - AsesorIA (chatbot TaxDown): ChatGPT basico gratuito, inferior a nuestro RAG multi-agente

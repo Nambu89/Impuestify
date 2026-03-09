@@ -4,42 +4,50 @@
 
 ---
 
-## EN PROGRESO — Perfil Fiscal Adaptativo por CCAA
+## COMPLETADO — Perfil Fiscal Adaptativo por CCAA (2026-03-08)
 
 > Plan: `plans/plan_perfil_fiscal_adaptativo.md`
-> Inicio: 2026-03-08
 
-### Sprint 1 — Backend infrastructure + Frontend base (DONE)
+### Sprint 1 — Backend + Frontend base (DONE)
 - [x] `regime_classifier.py` — 5 regímenes fiscales
 - [x] `GET /api/fiscal-profile/fields?ccaa=` — campos dinámicos por CCAA
 - [x] `build_answers_from_profile()` — bridge perfil → deduction answers
 - [x] FiscalProfileRequest ampliado (~35 campos nuevos)
 - [x] CCAA obligatorio en registro + hints por régimen
 - [x] `DynamicFiscalForm.tsx` + `useFiscalFields.ts`
-- [x] Integrado en SettingsPage
-- [x] CCAA naming normalizado (sin acentos)
-- [x] 706/706 tests PASS + build OK
 - Commit: `9930d06`
 
-### Sprint 2 — TaxGuidePage integration (EN PROGRESO)
-- [ ] Integrar DynamicFiscalForm en paso 5 (Deducciones)
-- [ ] Fix B-GF-01: Hero section
-- [ ] Fix B-GF-06: Validación pasos
-- [ ] Fix B-GF-07: Error state deducciones
+### Sprint 2+3 — Motor foral + TaxGuidePage (DONE)
+- [x] Seed tramos IRPF forales (58 tramos, 4 territorios)
+- [x] Seed deducciones forales v2 (50 activas)
+- [x] Motor IRPF foral en irpf_simulator.py (vasco + navarra)
+- [x] 56 tests foral simulator PASS
+- [x] Fix B-GF-01, B-GF-06: hero + validación pasos
+- Commit: `86ecd16`
 
-### Sprint 3 — Motor foral + seed completo (EN PROGRESO)
-- [ ] Seed tramos IRPF forales (4 territorios)
-- [ ] Seed deducciones forales (~27 deducciones)
-- [ ] Motor IRPF foral en irpf_simulator.py
-- [ ] Tests foral simulator
-
-### Sprint 4 — QA + deploy
-- [ ] Fix bugs guía fiscal restantes
-- [ ] QA E2E con perfiles de cada régimen
-- [ ] Ejecutar seed_deductions_xsd.py (339 deducciones XSD)
-- [ ] Deploy a Railway
+### Sprint 4 — QA + bugfix (DONE)
+- [x] Fix 10 bugs QA (ca3e9f4 + 60d23f2)
+- [x] QA regression: 7/10 confirmados FIXED
+- [ ] Deploy a Railway (pendiente)
+- [ ] Ejecutar seed_deductions_xsd.py en Turso producción
 
 ---
+
+## COMPLETADO — Crawler Automatizado (2026-03-09)
+
+- Módulo `backend/scripts/doc_crawler/` — 9 ficheros + .bat + 32 tests
+- 48 URLs monitorizadas en 21 territorios
+- Rate limiting, robots.txt, validación PDF/Excel, dedup SHA-256
+- Windows Task Scheduler: lunes 09:00 (`TaxIA-DocCrawler-Weekly`)
+- CLI: `python -m backend.scripts.doc_crawler [--territory X] [--dry-run] [--stats]`
+- Commit: `250e8a2`
+
+## COMPLETADO — Fix 10 Bugs QA (2026-03-09)
+
+- 4 críticos: landing invisible, guardrail educativo, IRPF tool crash, RETA 2026
+- 5 mayores: chat format, wizard validation, modales mobile, logout, foral tip
+- B-COOK-01: no es bug (vanilla-cookieconsent genera sus propios botones)
+- Commits: `ca3e9f4` + `60d23f2`
 
 ## COMPLETADO
 
@@ -94,12 +102,14 @@
 ## BACKLOG
 
 ### Alta prioridad
+- [ ] Deploy a Railway (incluir seeds pendientes)
 - [ ] Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)
 - [ ] MFA / 2FA (recomendación auditoría)
 - [ ] CAPTCHA en login (recomendación auditoría)
 
 ### Media prioridad
-- [ ] Agente actualización documental (crawler automático AEAT/BOE)
+- [x] ~~Agente actualización documental (crawler automático AEAT/BOE)~~ → DONE (250e8a2)
+- [ ] Pipeline auto-ingesta RAG (leer `_pending_ingest.json` → embeddings)
 - [ ] ML fiscal features (ml_fiscal_features table)
 - [ ] Alertas de plazos fiscales
 
@@ -115,7 +125,9 @@
 | Métrica | Valor |
 |---------|-------|
 | Documentos RAG | 439 (419 PDF + 9 Excel + 11 AEAT specs) |
-| Deducciones en BD | 192 activas (+ 339 XSD pendientes seed) |
+| Deducciones en BD | ~554 (192 v1/v2 + 339 XSD + 50 forales) |
 | CCAA cubiertas | 21 (15 común + 4 forales + Ceuta + Melilla) |
-| Tests backend | 706 |
+| Tests backend | 762+ |
 | Tests frontend | build PASS |
+| Bugs fixeados (mar 2026) | 13 documentados |
+| URLs monitorizadas (crawler) | 48 en 21 territorios |

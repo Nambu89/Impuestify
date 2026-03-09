@@ -7,6 +7,73 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-09] PM — DONE — Crawler automatizado (doc_crawler module) — Commit 250e8a2
+
+**Archivos creados (13 files, 1971 lines):**
+- `backend/scripts/doc_crawler/` — 9 modulos Python + run_check.bat + setup_scheduler.py
+- `backend/tests/test_doc_crawler.py` — 32 tests, todos PASS
+- `plans/crawler-automation-plan.md` — Plan verificado por plan-checker
+
+**Capacidades:**
+- 48 URLs monitorizadas (25 alta prioridad, 19 media, 4 baja) en 21 territorios
+- Descarga con rate limiting (4s inter-request, 50/dominio/sesion, backoff exponencial)
+- robots.txt check, validacion PDF/Excel, deduplicacion SHA-256
+- CLI: `python -m backend.scripts.doc_crawler [--territory X] [--dry-run] [--check-new] [--pending] [--stats]`
+- Genera `_pending_ingest.json` para futuro pipeline RAG
+- Manual Renta 2025 AEAT en watchlist como "future" (monitorizara cuando se publique)
+
+**Windows Task Scheduler:**
+- Tarea: `TaxIA-DocCrawler-Weekly` — lunes 09:00
+- Metodo: XML import (resuelve paths con espacios en OneDrive)
+- Setup: `python -m backend.scripts.doc_crawler.setup_scheduler [--remove] [--check] [--day MON] [--time 09:00]`
+- Wrapper: `run_check.bat` (PYTHONUTF8=1, cd relativo con %~dp0)
+
+**Para CRAWLER:** La watchlist tiene ~48 URLs iniciales. Expandir gradualmente en sesiones futuras de /crawl.
+**Para BACKEND:** Cuando `_pending_ingest.json` exista, considerar script de re-ingesta RAG automatico.
+
+---
+
+## [2026-03-09] QA — DONE — Sesion 11: Regresion post-fix (commits ca3e9f4 + 60d23f2)
+
+**Metodologia:** Analisis estatico de codigo + script E2E generado
+**Reporte:** `plans/qa-report-regression-2026-03-09.md`
+**Script:** `tests/e2e/regression-2026-03-09.spec.ts`
+
+**Resultados por analisis de codigo:**
+- B-TOOL-01 FIXED: `ingresos_trabajo: float = 0` confirmado en `irpf_simulator_tool.py:251`
+- B-GF-06 FIXED: `canProceed()` y `canGoToStep()` confirmados en `TaxGuidePage.tsx:1185-1202`
+- B-GF-01 FIXED: div `.tax-guide__header` con h1 confirmado en `TaxGuidePage.tsx:1208`
+- B-LOGOUT-01 FIXED: `handleLogout` sin window.confirm confirmado en `Header.tsx:18-21`
+
+**Requieren ejecucion de tests para confirmar:**
+- B-LAND-01, B-GUARD-01, B-CHAT-01, B-MOB-01, B-COOK-01
+- B-TOOL-02: fix de codigo confirmado (year=2026), verificar seed de BD en produccion
+
+**Para PM:** Ejecutar `npx playwright test tests/e2e/regression-2026-03-09.spec.ts --workers=1`
+
+---
+
+## [2026-03-09] PM — DONE — Fix 10 bugs QA (2 commits: ca3e9f4 + 60d23f2)
+
+**Commit 1 (ca3e9f4) — 4 bugs criticos:**
+1. B-LAND-01 FIXED: FadeContent check viewport on mount
+2. B-GUARD-01 FIXED: content_restriction keywords action-specific
+3. B-TOOL-01 FIXED: simulate_irpf_tool ingresos_trabajo optional
+4. B-TOOL-02 FIXED: RETA 2026 seeded + default year 2026
+
+**Commit 2 (60d23f2) — 5 bugs mayores/menores:**
+5. B-CHAT-01 FIXED: validate_output_format no reemplaza respuesta
+6. B-GF-06 FIXED: canGoToStep bloquea resultado sin CCAA+ingresos
+7. B-MOB-01 FIXED: modales secuenciales (no apilados)
+8. B-LOGOUT-01 FIXED: logout directo sin window.confirm
+9. CcaaTip foral: array includes() en vez de startsWith()
+
+B-COOK-01 (cookie buttons): NO es un bug real — vanilla-cookieconsent genera sus propios botones, el test usaba selectores incorrectos.
+
+QA regresion en curso...
+
+---
+
 ## [2026-03-08] PM — DONE — Fix 4 bugs QA criticos (B-LAND-01, B-GUARD-01, B-TOOL-01, B-TOOL-02)
 
 1. **B-LAND-01 FIXED**: FadeContent.tsx — check viewport on mount, not just on scroll
