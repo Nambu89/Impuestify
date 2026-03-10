@@ -453,7 +453,11 @@ Añade explicación y contexto ALREDEDOR de los datos, nunca EN VEZ DE ellos.
 				# Execute the appropriate tool dynamically
 				if function_name in TOOL_EXECUTORS:
 					tool_executor = TOOL_EXECUTORS[function_name]
-					tool_result = await tool_executor(**function_args)
+					# Inject user_id and db_client for tools that need them
+					if function_name == "update_fiscal_profile":
+						tool_result = await tool_executor(user_id=user_id, db_client=db_client, **function_args)
+					else:
+						tool_result = await tool_executor(**function_args)
 				else:
 					logger.warning(f"Unknown function: {function_name}")
 					tool_result = {"success": False, "error": f"Unknown function: {function_name}"}

@@ -255,13 +255,14 @@ Responde siempre en español, de forma clara y estructurada."""
             }
         ]
 
-        # Add Modelo 303 and 130 tools from the central tools registry
+        # Add Modelo 303, 130, and fiscal profile tools from the central tools registry
         try:
-            from app.tools import MODELO_303_TOOL, MODELO_130_TOOL
+            from app.tools import MODELO_303_TOOL, MODELO_130_TOOL, UPDATE_FISCAL_PROFILE_TOOL
             tools.append(MODELO_303_TOOL)
             tools.append(MODELO_130_TOOL)
+            tools.append(UPDATE_FISCAL_PROFILE_TOOL)
         except ImportError:
-            logger.warning("Could not import Modelo 303/130 tools")
+            logger.warning("Could not import central tools")
 
         # In restricted mode (salaried-only plan), remove autonomo-specific tools
         RESTRICTED_TOOL_NAMES = {"calculate_vat_balance", "calculate_modelo_303", "calculate_modelo_130"}
@@ -274,7 +275,8 @@ Responde siempre en español, de forma clara y estructurada."""
         self,
         function_name: str,
         function_args: Dict[str, Any],
-        workspace_context: str
+        workspace_context: str,
+        user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Execute a tool and return results."""
 
@@ -294,6 +296,17 @@ Responde siempre en español, de forma clara y estructurada."""
             include_past = function_args.get("include_past", False)
             return await self._tool_get_quarterly_deadlines(include_past)
 
+        elif function_name == "update_fiscal_profile":
+            try:
+                from app.tools import TOOL_EXECUTORS
+                executor = TOOL_EXECUTORS[function_name]
+                from app.database.turso_client import get_db_client
+                db = await get_db_client()
+                return await executor(user_id=user_id, db_client=db, **function_args)
+            except Exception as e:
+                logger.error(f"Error executing update_fiscal_profile: {e}")
+                return {"success": False, "error": str(e)}
+
         elif function_name in ("calculate_modelo_303", "calculate_modelo_130"):
             # Delegate to centralized tool executors
             try:
@@ -305,6 +318,14 @@ Responde siempre en español, de forma clara y estructurada."""
                 return {"success": False, "error": str(e)}
 
         else:
+            # Try centralized tool executors as fallback
+            try:
+                from app.tools import TOOL_EXECUTORS
+                if function_name in TOOL_EXECUTORS:
+                    executor = TOOL_EXECUTORS[function_name]
+                    return await executor(**function_args)
+            except Exception as e:
+                logger.error(f"Error executing {function_name}: {e}")
             return {"error": f"Unknown function: {function_name}"}
 
     async def _tool_get_workspace_summary(self, context: str) -> Dict[str, Any]:
@@ -541,7 +562,7 @@ Basado en {meses_encontrados} nómina(s) encontrada(s):
                     await progress_callback.tool_call(function_name, function_args)
 
                 # Execute tool
-                tool_result = await self._execute_tool(function_name, function_args, context)
+                tool_result = await self._execute_tool(function_name, function_args, context, user_id=user_id)
 
                 if progress_callback:
                     await progress_callback.tool_result(function_name, tool_result.get("success", False))

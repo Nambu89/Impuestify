@@ -316,13 +316,25 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                         break;
                     }
 
-                    case 'done':
+                    case 'done': {
                         logger.debug('Stream DONE event received');
                         setIsStreaming(false);
+                        // Parse conversation_id from done event data
+                        let doneConvId = conversationId;
+                        if (eventData) {
+                            try {
+                                const doneData = JSON.parse(eventData);
+                                if (doneData?.conversation_id) {
+                                    doneConvId = doneData.conversation_id;
+                                }
+                            } catch {
+                                // done event may be empty string, that's fine
+                            }
+                        }
                         // Get the final response and call callback
                         setStreamState(current => {
                             if (callbacks?.onComplete && current.response) {
-                                callbacks.onComplete(current.response, conversationId);
+                                callbacks.onComplete(current.response, doneConvId);
                             }
                             return {
                                 ...current,
@@ -333,6 +345,7 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                             };
                         });
                         break;
+                    }
 
                     case 'error':
                         setStreamState(prev => ({

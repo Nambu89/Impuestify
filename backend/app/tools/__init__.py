@@ -14,6 +14,7 @@ from app.tools.deduction_discovery_tool import DISCOVER_DEDUCTIONS_TOOL, discove
 from app.tools.isd_calculator_tool import ISD_CALCULATOR_TOOL, calculate_isd
 from app.tools.modelo_ipsi_tool import MODELO_IPSI_TOOL, calculate_modelo_ipsi_tool
 from app.tools.casilla_lookup_tool import CASILLA_LOOKUP_TOOL, lookup_casilla_tool
+from app.tools.fiscal_profile_tool import UPDATE_FISCAL_PROFILE_TOOL, update_fiscal_profile_tool
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
@@ -30,6 +31,7 @@ ALL_TOOLS = [
 	ISD_CALCULATOR_TOOL,
 	MODELO_IPSI_TOOL,
 	CASILLA_LOOKUP_TOOL,
+	UPDATE_FISCAL_PROFILE_TOOL,
 ]
 
 # Registry of tool execution functions
@@ -45,6 +47,7 @@ TOOL_EXECUTORS = {
 	"calculate_isd": calculate_isd,
 	"calculate_modelo_ipsi": calculate_modelo_ipsi_tool,
 	"lookup_casilla": lookup_casilla_tool,
+	"update_fiscal_profile": update_fiscal_profile_tool,
 }
 
 __all__ = [
@@ -72,4 +75,6 @@ __all__ = [
 	"calculate_modelo_ipsi_tool",
 	"CASILLA_LOOKUP_TOOL",
 	"lookup_casilla_tool",
+	"UPDATE_FISCAL_PROFILE_TOOL",
+	"update_fiscal_profile_tool",
 ]

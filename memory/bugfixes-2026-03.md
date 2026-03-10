@@ -242,3 +242,28 @@
 
 **Archivos modificados:**
 - `frontend/src/pages/TaxGuidePage.tsx`
+
+## [2026-03-10] 4 bugs: tildes, dropdown dark, conversacion, perfil fiscal
+
+### Bug 11: Faltas de ortografia (tildes) en perfil fiscal
+**Problema:** Todas las ~50+ etiquetas de campos fiscales carecian de acentos.
+**Causa raiz:** Labels escritos sin tildes en fiscal_fields.py desde la creacion.
+**Solucion:** Corregir todos los labels con acentos correctos.
+**Archivos:** `backend/app/routers/fiscal_fields.py`
+
+### Bug 12: Dropdown blanco sobre blanco en dark theme
+**Problema:** `<select>` del perfil fiscal con texto blanco sobre fondo blanco.
+**Causa raiz:** `.dff-select` sin `color`/`background-color` explicitos.
+**Solucion:** Anadir color/bg explicitos + `.dff-select option { background: #1e293b }`.
+**Archivos:** `frontend/src/components/DynamicFiscalForm.css`
+
+### Bug 13: Conversacion nueva en cada mensaje
+**Problema:** Cada mensaje creaba conversacion nueva.
+**Causa raiz:** Backend no enviaba conversation_id en evento done. Frontend usaba undefined.
+**Solucion:** Backend envia `{"conversation_id":"xxx"}` en done. Frontend parsea y usa.
+**Archivos:** `backend/app/utils/streaming.py`, `backend/app/routers/chat_stream.py`, `frontend/src/hooks/useStreamingChat.ts`
+
+### Bug 14: AI dice que actualizo perfil pero no lo hizo
+**Problema:** No existia tool para actualizar perfil fiscal desde el chat.
+**Solucion:** Crear `update_fiscal_profile` tool. Integrado en TaxAgent + WorkspaceAgent.
+**Archivos:** `backend/app/tools/fiscal_profile_tool.py` (nuevo), `backend/app/tools/__init__.py`, `backend/app/agents/tax_agent.py`, `backend/app/agents/workspace_agent.py`, `backend/app/utils/streaming.py`

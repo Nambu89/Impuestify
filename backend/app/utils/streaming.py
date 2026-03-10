@@ -31,6 +31,7 @@ TOOL_DISPLAY_NAMES: Dict[str, tuple] = {
     "search_tax_regulations": ("Consultando normativa fiscal", "Normativa consultada"),
     "analyze_payslip": ("Analizando tu nómina", "Nómina analizada"),
     "web_scraper": ("Consultando fuentes oficiales", "Fuentes consultadas"),
+    "update_fiscal_profile": ("Actualizando tu perfil fiscal", "Perfil fiscal actualizado"),
 }
 
 
@@ -86,9 +87,10 @@ class ProgressCallback:
         """An error occurred"""
         await self.emit("error", message)
 
-    async def done(self):
+    async def done(self, conversation_id: Optional[str] = None):
         """Processing complete"""
-        await self.emit("done", "")
+        data = {"conversation_id": conversation_id} if conversation_id else ""
+        await self.emit("done", data)
         self._closed = True
 
     def close(self):

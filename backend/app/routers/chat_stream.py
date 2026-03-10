@@ -133,8 +133,8 @@ async def ask_question_stream(
                 "¿En qué puedo ayudarte hoy?"
             )
             yield {"event": "content", "data": greeting}
-            yield {"event": "done", "data": ""}
-        
+            yield {"event": "done", "data": json.dumps({"conversation_id": conversation_id})}
+
         return EventSourceResponse(greeting_stream())
     
     # === Main streaming logic ===
@@ -424,20 +424,20 @@ async def ask_question_stream(
                         "last_rag_query": rag_query_used,
                     })
                     
-                    await callback.done()
+                    await callback.done(conversation_id=conversation_id)
                     done_emitted = True
                     
                 except Exception as e:
                     logger.error(f"Agent error: {e}", exc_info=True)
                     await callback.error(f"Error procesando la consulta: {str(e)}")
-                    await callback.done()
+                    await callback.done(conversation_id=conversation_id)
                     done_emitted = True
                 finally:
                     # CRITICAL: Ensure done is ALWAYS emitted, even if something went wrong above
                     if not done_emitted:
                         logger.warning("Emitting done event in finally block (safety net)")
                         try:
-                            await callback.done()
+                            await callback.done(conversation_id=conversation_id)
                         except Exception as e:
                             logger.error(f"Failed to emit done in finally: {e}")
             
