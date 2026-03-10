@@ -40,6 +40,12 @@ async def verify_turnstile(token: str, remote_ip: Optional[str] = None) -> bool:
         logger.warning("TURNSTILE_SECRET_KEY not configured — skipping verification")
         return True
 
+    # Allow test bypass with a dedicated secret (for Playwright E2E tests)
+    test_secret = getattr(settings, 'TURNSTILE_TEST_SECRET', None)
+    if test_secret and token == test_secret:
+        logger.info("Turnstile bypassed with test secret (E2E testing)")
+        return True
+
     payload = {"secret": secret, "response": token}
     if remote_ip:
         payload["remoteip"] = remote_ip
