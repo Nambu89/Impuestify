@@ -217,10 +217,26 @@ async def ask_question_stream(
                         raw = await upstash_client.get(cache_key) if upstash_client else None
                         if raw:
                             doc_data = json.loads(raw)
-                            text = doc_data.get("extracted_text", "")[:5000]
                             fname = doc_data.get("filename", "documento")
                             ftype = doc_data.get("file_type", "otro")
-                            session_docs_context += f"\n--- {fname} ({ftype}) ---\n{text}\n"
+                            structured = doc_data.get("extracted_data", {})
+
+                            session_docs_context += f"\n--- {fname} ({ftype}) ---\n"
+
+                            # Prefer structured data (PayslipExtractor/InvoiceExtractor output)
+                            if structured:
+                                session_docs_context += "DATOS EXTRAIDOS:\n"
+                                for key, val in structured.items():
+                                    if key in ("full_text", "file_hash", "extraction_status"):
+                                        continue
+                                    label = key.replace("_", " ").capitalize()
+                                    session_docs_context += f"  {label}: {val}\n"
+
+                            # Also include raw text (truncated) for context the extractor may have missed
+                            text = doc_data.get("extracted_text", "")[:3000]
+                            if text:
+                                session_docs_context += f"\nTEXTO DEL DOCUMENTO:\n{text}\n"
+
                     if session_docs_context:
                         logger.info(f"Loaded {len(request.session_doc_ids)} session docs for context")
                 except Exception as e:

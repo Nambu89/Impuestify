@@ -39,8 +39,8 @@ class SessionDocResponse(BaseModel):
     page_count: int
 
 
-def _classify_file_type(filename: str) -> str:
-    """Classify file type from filename (reuses FileProcessingService logic)."""
+def _classify_file_type(filename: str, text: str = "") -> str:
+    """Classify file type from filename first, then by content analysis."""
     lower = filename.lower()
     if any(p in lower for p in ["nomina", "nómina", "payslip", "salario"]):
         return "nomina"
@@ -50,6 +50,23 @@ def _classify_file_type(filename: str) -> str:
         return "declaracion"
     if any(p in lower for p in ["notificacion", "notificación", "aeat", "requerimiento", "providencia"]):
         return "notificacion"
+
+    # Fallback: classify by content (when filename is generic like "002638_NAME.PDF")
+    if text:
+        text_upper = text.upper()
+        # Payslip markers: SS contribution lines + IRPF withholding + net salary
+        payslip_markers = ["LIQUIDO A PERCIBIR", "COTIZACION CONT", "TRIBUTACION I.R.P.F",
+                           "T. DEVENGADO", "BASE S.S.", "DEVENGOS", "DEDUCCIONES"]
+        if sum(1 for m in payslip_markers if m in text_upper) >= 3:
+            return "nomina"
+
+        invoice_markers = ["BASE IMPONIBLE", "CUOTA IVA", "TOTAL FACTURA", "N. FACTURA", "NIF"]
+        if sum(1 for m in invoice_markers if m in text_upper) >= 3:
+            return "factura"
+
+        if any(m in text_upper for m in ["AGENCIA TRIBUTARIA", "NOTIFICACION", "REQUERIMIENTO", "PROVIDENCIA"]):
+            return "notificacion"
+
     return "otro"
 
 
@@ -113,10 +130,7 @@ async def upload_session_doc(
     if existing_keys and len(existing_keys) >= MAX_DOCS_PER_SESSION:
         raise HTTPException(400, f"Maximo {MAX_DOCS_PER_SESSION} documentos por sesion")
 
-    # Classify file type
-    file_type = _classify_file_type(file.filename or "document.pdf")
-
-    # Extract text
+    # Extract text first (needed for content-based classification)
     extracted_text = ""
     page_count = 0
     extracted_data = {}
@@ -124,32 +138,32 @@ async def upload_session_doc(
     if file.content_type == "application/pdf":
         from app.utils.pdf_extractor import extract_pdf_text, extract_pdf_text_plain
 
-        # Use plain text for tabular docs, markdown for others
-        if file_type in ("nomina", "factura"):
-            result = await extract_pdf_text_plain(content, file.filename)
-        else:
-            result = await extract_pdf_text(content, file.filename)
+        # First pass: extract plain text (works for all PDFs, preserves tabular layout)
+        result = await extract_pdf_text_plain(content, file.filename)
 
         if result.success:
             extracted_text = result.markdown_text
             page_count = result.total_pages
-
-            # Run specialized extractors
-            if file_type == "nomina":
-                extractor = PayslipExtractor()
-                extracted_data = extractor._parse_payslip_data(extracted_text)
-            elif file_type == "factura":
-                try:
-                    from app.services.invoice_extractor import get_invoice_extractor
-                    inv_extractor = get_invoice_extractor()
-                    extracted_data = await inv_extractor.extract_from_text(extracted_text)
-                except Exception as e:
-                    logger.warning(f"Invoice extraction failed: {e}")
         else:
             raise HTTPException(422, f"No se pudo extraer texto del PDF: {result.error}")
     else:
         # Image — no text extraction yet, just store reference
         page_count = 1
+
+    # Classify file type (by filename first, then by content)
+    file_type = _classify_file_type(file.filename or "document.pdf", extracted_text)
+
+    # Run specialized extractors based on classification
+    if file_type == "nomina":
+        extractor = PayslipExtractor()
+        extracted_data = extractor._parse_payslip_data(extracted_text)
+    elif file_type == "factura":
+        try:
+            from app.services.invoice_extractor import get_invoice_extractor
+            inv_extractor = get_invoice_extractor()
+            extracted_data = await inv_extractor.extract_from_text(extracted_text)
+        except Exception as e:
+            logger.warning(f"Invoice extraction failed: {e}")
 
     # PII anonymization
     anonymized_text = PayslipExtractor.anonymize_text(extracted_text[:MAX_STORED_TEXT])
