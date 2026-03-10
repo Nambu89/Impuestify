@@ -53,6 +53,7 @@ export default function Chat() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [useStreaming] = useState(true)
     const [onboardingDone, setOnboardingDone] = useState(() => !!localStorage.getItem('onboarding_seen'))
+    const [aiTransparencyDone, setAiTransparencyDone] = useState(() => !!localStorage.getItem('ai_transparency_accepted'))
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const chatMessagesRef = useRef<HTMLDivElement>(null)
     const userJustSentRef = useRef(false)
@@ -129,7 +130,8 @@ export default function Chat() {
             setOnboardingDone(true)
             localStorage.setItem('onboarding_seen', '1')
         }
-        if (!localStorage.getItem('ai_transparency_accepted')) {
+        if (!aiTransparencyDone) {
+            setAiTransparencyDone(true)
             localStorage.setItem('ai_transparency_accepted', 'true')
             localStorage.setItem('ai_transparency_accepted_date', new Date().toISOString())
         }
@@ -236,9 +238,10 @@ export default function Chat() {
                 <OnboardingModal userName={user?.name} onDismiss={() => setOnboardingDone(true)} />
             )}
 
-            {/* AI Act Art. 52: AI Transparency Modal — only after onboarding is done */}
-            {onboardingDone && (
+            {/* AI Act Art. 52: AI Transparency Modal — only after onboarding is done and not already accepted */}
+            {onboardingDone && !aiTransparencyDone && (
                 <AITransparencyModal onAccept={() => {
+                    setAiTransparencyDone(true)
                     logger.debug('AI Transparency accepted')
                 }} />
             )}
