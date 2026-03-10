@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from app.database.turso_client import TursoClient
-from app.services.push_service import send_deadline_alerts
+from app.services.push_service import send_deadline_alerts, send_deadline_email_alerts
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -39,13 +39,28 @@ async def main(dry_run: bool) -> None:
     if dry_run:
         logger.info("[DRY-RUN] Would run send_deadline_alerts() — skipping actual sends")
         logger.info("[DRY-RUN] Configure VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY in .env to enable push")
+        logger.info("[DRY-RUN] Would run send_deadline_email_alerts() — skipping email sends")
+        logger.info("[DRY-RUN] Configure RESEND_API_KEY in .env to enable email alerts")
         return
 
     db = TursoClient()
     try:
         await db.connect()
-        stats = await send_deadline_alerts(db=db)
-        logger.info(f"Alert job completed: {stats}")
+
+        # --- Web Push alerts (15d / 5d / 1d) ---
+        push_stats = await send_deadline_alerts(db=db)
+        logger.info(f"Push alert job completed: {push_stats}")
+
+        # --- Email alerts (30d, autonomo opt-in only) ---
+        email_stats = await send_deadline_email_alerts(db=db)
+        logger.info(f"Email alert job completed: {email_stats}")
+
+        logger.info(
+            f"Combined stats — "
+            f"push_sent={push_stats.get('notifications_sent', 0)}, "
+            f"emails_sent={email_stats.get('emails_sent', 0)}, "
+            f"errors={push_stats.get('errors', 0) + email_stats.get('errors', 0)}"
+        )
     finally:
         await db.disconnect()
 

@@ -746,6 +746,15 @@ class TursoClient:
                 await self.execute("ALTER TABLE users ADD COLUMN is_owner BOOLEAN DEFAULT 0")
                 logger.info("Added is_owner column to users table")
 
+            # Add deadline_email_alerts column to user_profiles if it doesn't exist
+            result = await self.execute("PRAGMA table_info(user_profiles)")
+            profile_columns = {row["name"] for row in result.rows}
+            if "deadline_email_alerts" not in profile_columns:
+                await self.execute(
+                    "ALTER TABLE user_profiles ADD COLUMN deadline_email_alerts BOOLEAN DEFAULT 0"
+                )
+                logger.info("Added deadline_email_alerts column to user_profiles table")
+
             logger.info("Database schema initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize schema: {e}")

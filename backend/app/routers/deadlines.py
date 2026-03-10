@@ -306,6 +306,76 @@ async def unsubscribe_push(
     return {"status": "unsubscribed"}
 
 
+@router.post("/api/deadlines/email-alerts/toggle")
+async def toggle_email_alerts(
+    current_user: TokenData = Depends(get_current_user),
+    db: TursoClient = Depends(get_db_client),
+) -> dict:
+    """
+    Toggle deadline email alerts for the current user.
+
+    Flips deadline_email_alerts between 0 and 1 in user_profiles.
+    Creates a profile row with the column enabled if none exists yet.
+
+    Returns:
+        {"enabled": bool} with the new state after toggling
+    """
+    user_id = current_user.user_id
+
+    # Read current value (create profile row if absent)
+    result = await db.execute(
+        "SELECT deadline_email_alerts FROM user_profiles WHERE user_id = ?",
+        [user_id],
+    )
+    rows = result.rows or []
+
+    if not rows:
+        # No profile yet — create a minimal one with email alerts enabled
+        import uuid as _uuid
+        await db.execute(
+            """
+            INSERT INTO user_profiles (id, user_id, deadline_email_alerts)
+            VALUES (?, ?, 1)
+            """,
+            [str(_uuid.uuid4()), user_id],
+        )
+        new_value = True
+    else:
+        current_value = bool(rows[0].get("deadline_email_alerts", 0))
+        new_value = not current_value
+        await db.execute(
+            "UPDATE user_profiles SET deadline_email_alerts = ? WHERE user_id = ?",
+            [1 if new_value else 0, user_id],
+        )
+
+    logger.info(f"User {user_id} toggled deadline email alerts to {new_value}")
+    return {"enabled": new_value}
+
+
+@router.get("/api/deadlines/email-alerts/status")
+async def get_email_alerts_status(
+    current_user: TokenData = Depends(get_current_user),
+    db: TursoClient = Depends(get_db_client),
+) -> dict:
+    """
+    Return the current deadline email alert preference for the logged-in user.
+
+    Returns:
+        {"enabled": bool}
+    """
+    result = await db.execute(
+        "SELECT deadline_email_alerts FROM user_profiles WHERE user_id = ?",
+        [current_user.user_id],
+    )
+    rows = result.rows or []
+
+    if not rows:
+        return {"enabled": False}
+
+    enabled = bool(rows[0].get("deadline_email_alerts", 0))
+    return {"enabled": enabled}
+
+
 @router.get("/api/push/vapid-key")
 async def get_vapid_key() -> dict:
     """

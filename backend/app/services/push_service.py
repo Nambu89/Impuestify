@@ -288,3 +288,274 @@ async def send_deadline_alerts(db: Optional[TursoClient] = None) -> dict:
 
     logger.info(f"send_deadline_alerts completed: {stats}")
     return stats
+
+
+def _build_deadline_email_html(deadlines: list[dict], frontend_url: str) -> str:
+    """
+    Build a branded HTML email body listing upcoming fiscal deadlines.
+
+    Args:
+        deadlines: List of deadline dicts from fiscal_deadlines table
+        frontend_url: Base URL for the unsubscribe/profile link
+
+    Returns:
+        HTML string
+    """
+    rows_html = ""
+    for dl in deadlines:
+        rows_html += f"""
+        <tr>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e8ecf0;">
+                <strong>{dl['model_name']}</strong>
+            </td>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e8ecf0; color: #555;">
+                {dl.get('period', '')}
+            </td>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e8ecf0; color: #c0392b; font-weight: 600;">
+                {dl['end_date']}
+            </td>
+        </tr>"""
+
+    profile_url = f"{frontend_url}/perfil"
+
+    return f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+                max-width: 600px; margin: 0 auto; background: #ffffff;">
+
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #1a56db 0%, #1e3a8a 100%);
+                    color: white; padding: 28px 32px; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.3px;">
+                Impuestify
+            </h1>
+            <p style="margin: 6px 0 0 0; opacity: 0.85; font-size: 14px;">
+                Recordatorio de plazos fiscales — 30 dias
+            </p>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 28px 32px; background: #f8fafc;">
+            <p style="margin: 0 0 20px 0; color: #1a202c; font-size: 15px; line-height: 1.6;">
+                Tienes los siguientes plazos fiscales que vencen en los proximos <strong>30 dias</strong>.
+                Recuerda presentarlos a tiempo para evitar recargos.
+            </p>
+
+            <!-- Deadlines table -->
+            <div style="background: white; border-radius: 8px; overflow: hidden;
+                        border: 1px solid #e2e8f0; margin-bottom: 24px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="background: #f1f5f9;">
+                            <th style="padding: 10px 12px; text-align: left; color: #374151;
+                                       font-weight: 600; border-bottom: 2px solid #e2e8f0;">
+                                Modelo
+                            </th>
+                            <th style="padding: 10px 12px; text-align: left; color: #374151;
+                                       font-weight: 600; border-bottom: 2px solid #e2e8f0;">
+                                Periodo
+                            </th>
+                            <th style="padding: 10px 12px; text-align: left; color: #374151;
+                                       font-weight: 600; border-bottom: 2px solid #e2e8f0;">
+                                Fecha limite
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows_html}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CTA -->
+            <div style="text-align: center; margin-bottom: 24px;">
+                <a href="{frontend_url}/calendario"
+                   style="display: inline-block; background: #1a56db; color: white;
+                          text-decoration: none; padding: 12px 28px; border-radius: 6px;
+                          font-size: 15px; font-weight: 600;">
+                    Ver calendario fiscal
+                </a>
+            </div>
+
+            <!-- Divider -->
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+
+            <!-- Footer disclaimer -->
+            <p style="color: #6b7280; font-size: 12px; margin: 0; line-height: 1.5;">
+                Este recordatorio es meramente informativo y no constituye asesoramiento fiscal
+                profesional. Consulta con un gestor o asesor fiscal antes de presentar tus
+                declaraciones.<br><br>
+                Puedes desactivar estos recordatorios en cualquier momento desde tu
+                <a href="{profile_url}" style="color: #1a56db; text-decoration: underline;">
+                    perfil en Impuestify</a>.
+            </p>
+        </div>
+
+    </div>
+    """
+
+
+async def send_deadline_email_alerts(db: Optional[TursoClient] = None) -> dict:
+    """
+    Cron job: send email reminders 30 days before fiscal deadlines.
+
+    Logic:
+    1. Find all autonomo users with deadline_email_alerts = 1.
+    2. For each user, look up deadlines with end_date exactly 30 days from today.
+    3. Skip if a notification_log entry with alert_type='email_30d' already exists
+       (idempotency — one email per user per deadline).
+    4. Send a single batched HTML email listing all qualifying deadlines.
+    5. Log each deadline individually to notification_log.
+
+    Returns:
+        dict with summary stats
+    """
+    from app.services.email_service import get_email_service
+    from app.config import settings as _settings
+
+    own_db = db is None
+    if own_db:
+        db = await get_db_client()
+
+    today = date.today()
+    target_date = today + timedelta(days=30)
+    target_str = target_date.isoformat()
+
+    stats = {
+        "users_checked": 0,
+        "emails_sent": 0,
+        "emails_skipped_duplicate": 0,
+        "emails_skipped_no_deadlines": 0,
+        "errors": 0,
+    }
+
+    try:
+        # Fetch autonomo users who opted in to email alerts
+        opted_in_result = await db.execute(
+            """
+            SELECT up.user_id, u.email
+            FROM user_profiles up
+            JOIN users u ON u.id = up.user_id
+            WHERE up.situacion_laboral = 'autonomo'
+              AND up.deadline_email_alerts = 1
+              AND u.is_active = 1
+            """,
+            [],
+        )
+        opted_in_users = opted_in_result.rows or []
+        stats["users_checked"] = len(opted_in_users)
+
+        if not opted_in_users:
+            logger.info("send_deadline_email_alerts: no opted-in autonomo users found")
+            return stats
+
+        # Fetch all active deadlines ending exactly 30 days from today
+        deadlines_result = await db.execute(
+            """
+            SELECT id, model, model_name, territory, period, tax_year, end_date, applies_to
+            FROM fiscal_deadlines
+            WHERE is_active = 1
+              AND end_date = ?
+              AND applies_to IN ('todos', 'autonomos')
+            ORDER BY end_date ASC
+            """,
+            [target_str],
+        )
+        all_deadlines = deadlines_result.rows or []
+
+        if not all_deadlines:
+            logger.info(
+                f"send_deadline_email_alerts: no deadlines on {target_str} — nothing to send"
+            )
+            stats["emails_skipped_no_deadlines"] = len(opted_in_users)
+            return stats
+
+        email_service = get_email_service()
+        frontend_url = _settings.FRONTEND_URL.rstrip("/")
+
+        for user in opted_in_users:
+            user_id = user["user_id"]
+            user_email = user["email"]
+
+            # Filter out deadlines already logged for this user
+            new_deadlines = []
+            for dl in all_deadlines:
+                dup_result = await db.execute(
+                    """
+                    SELECT id FROM notification_log
+                    WHERE user_id = ? AND deadline_id = ? AND alert_type = 'email_30d'
+                    """,
+                    [user_id, dl["id"]],
+                )
+                if dup_result.rows:
+                    stats["emails_skipped_duplicate"] += 1
+                else:
+                    new_deadlines.append(dl)
+
+            if not new_deadlines:
+                logger.debug(f"All deadlines already emailed to user {user_id}")
+                continue
+
+            # Build and send a single email listing all new deadlines
+            # Use the first model name for a concise subject; list all in body
+            if len(new_deadlines) == 1:
+                subject = (
+                    f"Recordatorio: {new_deadlines[0]['model_name']} "
+                    f"vence el {new_deadlines[0]['end_date']}"
+                )
+            else:
+                subject = (
+                    f"Recordatorio: {len(new_deadlines)} plazos fiscales "
+                    f"vencen el {target_str}"
+                )
+
+            html = _build_deadline_email_html(new_deadlines, frontend_url)
+
+            try:
+                send_result = await email_service.send_email(
+                    to=user_email,
+                    subject=subject,
+                    html=html,
+                )
+            except Exception as send_exc:
+                logger.error(
+                    f"send_deadline_email_alerts: failed to send email to {user_email}: {send_exc}"
+                )
+                stats["errors"] += 1
+                continue
+
+            if not send_result.get("success"):
+                logger.error(
+                    f"send_deadline_email_alerts: Resend error for {user_email}: "
+                    f"{send_result.get('error')}"
+                )
+                stats["errors"] += 1
+                continue
+
+            # Log each deadline individually for idempotency
+            for dl in new_deadlines:
+                try:
+                    await db.execute(
+                        """
+                        INSERT OR IGNORE INTO notification_log (id, user_id, deadline_id, alert_type)
+                        VALUES (?, ?, ?, 'email_30d')
+                        """,
+                        [str(uuid.uuid4()), user_id, dl["id"]],
+                    )
+                except Exception as log_exc:
+                    logger.error(
+                        f"send_deadline_email_alerts: failed to log notification "
+                        f"for user {user_id} / deadline {dl['id']}: {log_exc}"
+                    )
+                    stats["errors"] += 1
+
+            stats["emails_sent"] += 1
+            logger.info(
+                f"Email reminder sent to {user_email} for {len(new_deadlines)} deadline(s)"
+            )
+
+    except Exception as exc:
+        logger.error(f"send_deadline_email_alerts failed: {exc}")
+        stats["errors"] += 1
+
+    logger.info(f"send_deadline_email_alerts completed: {stats}")
+    return stats
