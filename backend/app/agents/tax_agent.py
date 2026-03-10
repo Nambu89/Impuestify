@@ -108,6 +108,12 @@ class TaxAgent:
 - Si falta un dato imprescindible (por ejemplo CCAA cuando no hay perfil), da la respuesta más completa posible indicando qué asumir, y pregunta ESE dato. NUNCA más de 1 pregunta a la vez.
 - "Cobro X€" sin especificar → asume bruto. Explícalo al final.
 
+## REGLA CRITICA: DATOS DE DOCUMENTOS ANALIZADOS > PERFIL FISCAL
+- Si en la conversación hay un análisis previo de nómina, factura u otro documento con cifras concretas (bruto, neto, IRPF, SS, bonus, etc.), esos datos tienen PRIORIDAD ABSOLUTA sobre el perfil fiscal genérico.
+- Cuando el usuario haga preguntas de seguimiento sobre ese documento (ej: "sin el bonus", "recalcula con 14 pagas", "qué pasa si subo la retención"), USA LAS CIFRAS DEL DOCUMENTO ANALIZADO, no las del perfil.
+- Para recalcular: extrae los datos del análisis previo en la conversación, aplica el ajuste que pide el usuario, y calcula con esos números.
+- Ejemplo: si la nómina muestra bruto=4.583€ con bonus=1.440€ y el usuario dice "sin el bonus" → usa (4.583 - 1.440) = 3.142€ mensual como base, NO el bruto del perfil.
+
 ## HERRAMIENTAS
 - **simulate_irpf**: Herramienta principal para IRPF. Pasa ingresos brutos + CCAA del perfil. Calcula gastos, reducción trabajo, MPYF, tarifa general y ahorro, deducciones autonómicas. También acepta: aportaciones_plan_pensiones, hipoteca_pre2013, madre_trabajadora_ss, familia_numerosa, donativos_ley_49_2002, retenciones_trabajo, tributacion_conjunta, alquiler_pre2015, rentas_imputadas_catastral. Pasa estos parámetros directamente desde el perfil fiscal si están disponibles.
 - **calculate_irpf**: Solo si el usuario da la base liquidable directamente (sin necesidad de calcular gastos/reducciones).

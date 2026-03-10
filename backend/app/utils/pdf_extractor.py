@@ -269,13 +269,72 @@ def get_pdf_extractor() -> PDFTextExtractor:
 async def extract_pdf_text(pdf_bytes: bytes, filename: str = "document.pdf") -> PDFExtractionResult:
     """
     Convenience function to extract text from PDF bytes.
-    
+
     Args:
         pdf_bytes: PDF file content
         filename: Original filename
-        
+
     Returns:
         PDFExtractionResult with extracted text
     """
     extractor = get_pdf_extractor()
     return await extractor.extract_from_bytes(pdf_bytes, filename)
+
+
+async def extract_pdf_text_plain(pdf_bytes: bytes, filename: str = "document.pdf") -> PDFExtractionResult:
+    """
+    Extract PDF text using PyMuPDF plain text mode (page.get_text('text')).
+
+    This is much better for tabular documents like payslips and invoices
+    where pymupdf4llm's markdown conversion destroys the column layout.
+    The plain text preserves the spatial reading order which makes
+    regex extraction reliable.
+
+    Args:
+        pdf_bytes: PDF file content
+        filename: Original filename
+
+    Returns:
+        PDFExtractionResult with extracted text
+    """
+    try:
+        import fitz
+
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        pages = []
+        full_text_parts = []
+
+        for i, page in enumerate(doc):
+            text = page.get_text("text")
+            pages.append(PDFPage(
+                page_number=i + 1,
+                text=text,
+                metadata={}
+            ))
+            full_text_parts.append(f"=== PAGINA {i + 1} ===\n{text}")
+
+        doc.close()
+
+        full_text = "\n\n".join(full_text_parts)
+        total_chars = sum(len(p.text) for p in pages)
+
+        logger.info(f"Extracted {total_chars} chars (plain text) from {len(pages)} pages: {filename}")
+
+        return PDFExtractionResult(
+            success=True,
+            pages=pages,
+            total_pages=len(pages),
+            total_chars=total_chars,
+            markdown_text=full_text
+        )
+
+    except Exception as e:
+        logger.error(f"Plain text PDF extraction failed for {filename}: {e}")
+        return PDFExtractionResult(
+            success=False,
+            pages=[],
+            total_pages=0,
+            total_chars=0,
+            markdown_text="",
+            error=str(e)
+        )

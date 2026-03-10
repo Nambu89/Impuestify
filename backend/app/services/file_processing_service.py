@@ -14,7 +14,7 @@ import uuid
 from fastapi import UploadFile
 
 from app.database.turso_client import get_db_client
-from app.utils.pdf_extractor import extract_pdf_text, PDFExtractionResult
+from app.utils.pdf_extractor import extract_pdf_text, extract_pdf_text_plain, PDFExtractionResult
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +69,13 @@ class FileProcessingService:
 
         try:
             if file.content_type == "application/pdf":
-                # Use PyMuPDF4LLM for text extraction
-                result: PDFExtractionResult = await extract_pdf_text(content, file.filename)
+                # Use plain text for payslips/invoices (tabular PDFs) —
+                # pymupdf4llm markdown mangles column layout making regex impossible.
+                # Use markdown for other docs (better structure for RAG).
+                if file_category in ("nomina", "factura"):
+                    result: PDFExtractionResult = await extract_pdf_text_plain(content, file.filename)
+                else:
+                    result: PDFExtractionResult = await extract_pdf_text(content, file.filename)
 
                 if result.success:
                     extracted_text = result.markdown_text

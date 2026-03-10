@@ -40,7 +40,9 @@ class PayslipExtractor:
 
     async def extract_from_pdf(self, pdf_path: str) -> Dict:
         """
-        Extrae texto y datos estructurados de un PDF de nómina
+        Extrae texto y datos estructurados de un PDF de nómina.
+        Uses plain text extraction (not markdown) because payslip PDFs
+        have tabular layouts that pymupdf4llm mangles into unusable markdown.
 
         Args:
             pdf_path: Ruta al archivo PDF
@@ -51,11 +53,12 @@ class PayslipExtractor:
         try:
             file_hash = self._calculate_file_hash(pdf_path)
 
-            from app.utils.pdf_extractor import get_pdf_extractor
+            from app.utils.pdf_extractor import extract_pdf_text_plain
 
-            logger.info(f"Extrayendo texto de {pdf_path}")
-            extractor = get_pdf_extractor()
-            result = await extractor.extract_from_file(pdf_path)
+            logger.info(f"Extrayendo texto (plain) de {pdf_path}")
+            with open(pdf_path, 'rb') as f:
+                pdf_bytes = f.read()
+            result = await extract_pdf_text_plain(pdf_bytes, pdf_path)
 
             if not result.success:
                 return {

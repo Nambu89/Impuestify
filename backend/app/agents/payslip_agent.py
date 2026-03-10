@@ -433,26 +433,54 @@ Si no encuentras un dato, usa null. Sé preciso con los números. Si hay multi-p
 			}
 
 	def _build_context(self, payslip_data: Dict[str, Any]) -> str:
-		"""Construye el contexto desde los datos de la nómina"""
+		"""Construye el contexto desde los datos de la nómina.
+		Incluye TODOS los campos extraidos para que el agente pueda
+		hacer follow-ups precisos (ej: 'sin el bonus', 'con 14 pagas')."""
 		period = f"{payslip_data.get('period_month', '?')}/{payslip_data.get('period_year', '?')}"
 
-		gross = float(payslip_data.get('gross_salary') or 0)
-		net = float(payslip_data.get('net_salary') or 0)
-		irpf = float(payslip_data.get('irpf_withholding') or 0)
-		irpf_pct = float(payslip_data.get('irpf_percentage') or 0)
-		ss = float(payslip_data.get('ss_contribution') or 0)
+		def _f(key: str) -> str:
+			"""Format a numeric field or return '-'"""
+			val = payslip_data.get(key)
+			if val is None:
+				return '-'
+			try:
+				return f"{float(val):,.2f}€"
+			except (ValueError, TypeError):
+				return str(val)
 
-		return f"""Datos de la nómina:
+		lines = [
+			f"Periodo: {period}",
+			f"Empresa: {payslip_data.get('company_name', '-')}",
+			"",
+			"DEVENGOS:",
+			f"- Salario base: {_f('base_salary')} | salary_base={payslip_data.get('base_salary', '-')}",
+			f"- Plus Convenio: {_f('plus_convenio')}",
+			f"- Cuenta Convenio: {_f('cuenta_convenio')}",
+			f"- P.P.P. Extras (pagas prorrateadas): {_f('ppp_extras')}",
+			f"- Bonus: {_f('bonus')}",
+			f"- Teletrabajo: {_f('teletrabajo')}",
+			f"- Seguro medico: {_f('seguro_medico')}",
+			f"- Total devengado (bruto): {_f('gross_salary')}",
+			"",
+			"DEDUCCIONES:",
+			f"- IRPF: {_f('irpf_amount')} (tipo: {payslip_data.get('irpf_percentage', '-')}%)",
+			f"- SS Contingencias comunes: {_f('ss_contingencias_comunes')}",
+			f"- SS MEI: {_f('ss_mei')}",
+			f"- SS Formacion: {_f('ss_formacion')}",
+			f"- SS Desempleo: {_f('ss_desempleo')}",
+			f"- Total SS trabajador: {_f('ss_contribution')}",
+			f"- Descuento en especie: {_f('descuento_especie')}",
+			f"- Total a deducir: {_f('total_deducir')}",
+			"",
+			f"LIQUIDO (neto): {_f('net_salary')}",
+			"",
+			"BASES:",
+			f"- Base SS: {_f('base_ss')} | Base IRPF: {_f('base_irpf')}",
+			f"- Pagas extras prorrateadas: {'Si (12 pagas)' if payslip_data.get('pagas_extras_prorrateadas') else 'No (14 pagas)' if payslip_data.get('pagas_extras_prorrateadas') is False else 'No especificado'}",
+			f"- Region: {payslip_data.get('region', '-')}",
+		]
 
-Periodo: {period}
-Empresa: {payslip_data.get('company_name', 'No especificada')}
-Empleado: {payslip_data.get('employee_name', 'No especificado')}
-
-Conceptos económicos:
-- Salario bruto: {gross:.2f}€
-- Salario neto: {net:.2f}€
-- Retención IRPF: {irpf:.2f}€ ({irpf_pct:.2f}%)
-- Cotización Seguridad Social: {ss:.2f}€"""
+		return "Datos de la nomina:\n\n" + "\n".join(lines)
 
 
 # Global agent instance
