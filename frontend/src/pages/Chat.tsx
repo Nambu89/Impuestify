@@ -465,14 +465,6 @@ export default function Chat() {
                         disabled={isLoading}
                     />
                     <button
-                        type="button"
-                        className="btn btn-success"
-                        onClick={() => setShowNotificationModal(true)}
-                        title="Analizar notificación AEAT"
-                    >
-                        <Upload size={20} />
-                    </button>
-                    <button
                         type="submit"
                         className="btn btn-primary chat-submit"
                         disabled={isLoading || !input.trim()}

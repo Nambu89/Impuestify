@@ -246,8 +246,8 @@ Responde de forma concisa y profesional:"""
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    "max_tokens": 400,  # Limit output tokens
-                    "temperature": 0.3
+                    "max_completion_tokens": 400,
+                    "temperature": 1
                 }
             )
             

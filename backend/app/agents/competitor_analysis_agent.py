@@ -167,7 +167,7 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
                     messages=messages,
                     tools=COMPETITOR_TOOLS,
                     tool_choice="auto",
-                    temperature=0.3,
+                    temperature=1,
                 ),
                 timeout=60.0
             )
@@ -226,7 +226,7 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
                         messages=messages,
                         tools=COMPETITOR_TOOLS,
                         tool_choice="auto",
-                        temperature=0.3,
+                        temperature=1,
                     ),
                     timeout=60.0
                 )

@@ -521,7 +521,7 @@ Basado en {meses_encontrados} nómina(s) encontrada(s):
                     messages=messages,
                     tools=self._get_tools(restricted_mode=restricted_mode),
                     tool_choice="auto",
-                    temperature=0.7,
+                    temperature=1,
                     max_completion_tokens=4000
                 ),
                 timeout=60.0
@@ -563,7 +563,7 @@ Basado en {meses_encontrados} nómina(s) encontrada(s):
                         self._client.chat.completions.create,
                         model=self.model,
                         messages=messages,
-                        temperature=0.7,
+                        temperature=1,
                         max_completion_tokens=4000
                     ),
                     timeout=60.0
