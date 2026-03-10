@@ -126,6 +126,7 @@ def build_manual():
         '  6. Deducciones personalizadas',
         '  7. Informe IRPF en PDF',
         '  8. Guía Fiscal interactiva',
+        '  8b. Calendario fiscal',
         '',
         'PARTE II — Plan Particular',
         '  9. Consultas IRPF por comunidad autónoma',
@@ -136,6 +137,8 @@ def build_manual():
         '  12. Cuota de autónomos (RETA)',
         '  13. IVA trimestral (Modelo 303)',
         '  14. Pago fraccionado IRPF (Modelo 130)',
+        '  14b. IPSI (Ceuta y Melilla)',
+        '  14c. ISD (Sucesiones y Donaciones)',
         '  15. Retenciones IRPF en facturas',
         '  16. Workspaces de documentos',
         '',
@@ -185,7 +188,11 @@ def build_manual():
     doc.add_heading('Qué puede hacer por ti', level=2)
     capabilities = [
         'Calcular tu IRPF en cualquier comunidad autónoma (incluyendo País Vasco y Navarra)',
-        'Descubrir deducciones fiscales que te corresponden entre 64 opciones',
+        'Descubrir deducciones fiscales que te corresponden entre más de 550 opciones en 21 territorios',
+        'Adjuntar documentos directamente en el chat para análisis instantáneo',
+        'Calcular el Impuesto de Sucesiones y Donaciones (ISD)',
+        'Consultar tu calendario fiscal personalizado con fechas límite',
+        'Actualizar tu perfil fiscal automáticamente desde la conversación',
         'Analizar tus nóminas en PDF y detectar errores de retención',
         'Interpretar notificaciones de Hacienda y decirte qué hacer',
         'Generar un informe IRPF exportable en PDF',
@@ -210,7 +217,14 @@ def build_manual():
     add_step(doc, 3, 'Rellena tus datos',
              'Introduce tu nombre, email y una contraseña segura. '
              'Tu email será tu identificador único.')
-    add_step(doc, 4, 'Confirma tu cuenta',
+    add_step(doc, 4, 'Selecciona tu comunidad autónoma',
+             'Durante el registro deberás indicar tu comunidad autónoma. Este dato es obligatorio '
+             'y determina los tramos IRPF, las deducciones territoriales y el calendario fiscal '
+             'que verás en la aplicación.')
+    add_step(doc, 5, 'Completa el control de seguridad',
+             'Verás un control de seguridad Cloudflare Turnstile (un clic o resolución automática). '
+             'Este paso protege la plataforma contra registros automáticos.')
+    add_step(doc, 6, 'Confirma tu cuenta',
              'Recibirás un email de confirmación. Haz clic en el enlace para activar tu cuenta.')
 
     # --- 3. Elegir plan ---
@@ -222,14 +236,19 @@ def build_manual():
         [
             ['Chat IA fiscal ilimitado', 'SI', 'SI'],
             ['Cálculo IRPF por CCAA', 'SI', 'SI'],
-            ['64 deducciones personalizadas', 'SI', 'SI'],
+            ['554+ deducciones personalizadas', 'SI', 'SI'],
             ['Análisis de nóminas (PDF)', 'SI', 'SI'],
+            ['Adjuntar documentos en chat', 'SI', 'SI'],
+            ['Calendario fiscal personalizado', 'SI', 'SI'],
+            ['Cálculo ISD (Sucesiones)', 'SI', 'SI'],
             ['Notificaciones AEAT', 'SI', 'SI'],
             ['Workspace documentos', 'SI', 'SI'],
             ['Informe IRPF en PDF', 'SI', 'SI'],
+            ['Perfil fiscal adaptativo por CCAA', 'SI', 'SI'],
             ['Cuota autónomos (RETA)', 'NO', 'SI'],
             ['IVA trimestral (Mod. 303)', 'NO', 'SI'],
             ['Pago fraccionado (Mod. 130)', 'NO', 'SI'],
+            ['IPSI Ceuta/Melilla', 'NO', 'SI'],
             ['Retenciones IRPF facturas', 'NO', 'SI'],
             ['Deducciones autónomos', 'NO', 'SI'],
             ['Cobertura foral completa', 'SI', 'SI'],
@@ -272,7 +291,7 @@ def build_manual():
     )
     steps = [
         ('Pensando...', 'La IA analiza tu pregunta y decide qué herramientas necesita.'),
-        ('Buscando normativa...', 'Consulta entre 428+ documentos oficiales.'),
+        ('Buscando normativa...', 'Consulta entre 439+ documentos oficiales.'),
         ('Calculando...', 'Ejecuta las calculadoras necesarias (IRPF, deducciones, etc.).'),
         ('Respuesta', 'Te muestra el resultado con explicación y fuentes citadas.'),
     ]
@@ -283,12 +302,35 @@ def build_manual():
         run.font.color.rgb = RGBColor(26, 86, 219)
         p.add_run(desc)
 
+    doc.add_heading('Adjuntar documentos', level=2)
+    doc.add_paragraph(
+        'Junto al campo de texto verás un icono de clip. Pulsa para adjuntar un documento '
+        '(PDF, JPG, PNG). El sistema lo analiza automáticamente, extrae los datos relevantes '
+        'y los usa como contexto para la conversación. Los documentos adjuntos son temporales: '
+        'se eliminan al cerrar el navegador.'
+    )
+    p = doc.add_paragraph()
+    run = p.add_run('Ejemplo: ')
+    run.bold = True
+    p.add_run('Adjunta tu nómina y pregunta: "¿Es correcta mi retención IRPF?"')
+
     # --- 5. Perfil fiscal ---
     doc.add_heading('5. Perfil fiscal', level=1)
     doc.add_paragraph(
         'Tu perfil fiscal permite a la IA personalizar las respuestas. '
         'Ve a Ajustes > Perfil Fiscal para configurarlo. '
         'El perfil se puede rellenar manualmente en Ajustes o automáticamente desde la Guía Fiscal.'
+    )
+
+    doc.add_paragraph(
+        'Tu perfil fiscal se adapta dinámicamente según tu comunidad autónoma. '
+        'Si vives en un territorio foral (Araba, Bizkaia, Gipuzkoa, Navarra) verás campos '
+        'específicos como EPSV, cuenta vivienda foral, etc.'
+    )
+
+    doc.add_paragraph(
+        'La IA puede actualizar tu perfil automáticamente. Sube una nómina y pide: '
+        '"Guarda estos datos en mi perfil fiscal". La IA extraerá los datos y los guardará.'
     )
 
     doc.add_heading('Datos del perfil', level=2)
@@ -298,6 +340,10 @@ def build_manual():
         ('Deducciones y situación familiar',
          'Planes de pensiones, hipoteca pre-2013, maternidad, familia numerosa, donativos a ONGs, '
          'tributación conjunta, alquiler pre-2015, rentas imputadas por segundas viviendas.'),
+        ('Discapacidad', 'Grado de discapacidad del contribuyente y de familiares a cargo.'),
+        ('Vivienda', 'Tipo de situación: alquiler, propiedad, rehabilitación, zona rural.'),
+        ('Sostenibilidad', 'Vehículo eléctrico, instalación de paneles solares, obras de eficiencia energética.'),
+        ('Donaciones', 'Aportaciones a entidades autonómicas, investigación, patrimonio histórico.'),
         ('Para autónomos', 'Epígrafe IAE, base de cotización, tipo de IVA, retención IRPF, '
          'régimen SS, gastos deducibles, amortizaciones...'),
     ]
@@ -317,8 +363,8 @@ def build_manual():
     # --- 6. Deducciones ---
     doc.add_heading('6. Deducciones personalizadas', level=1)
     doc.add_paragraph(
-        'Impuestify tiene un motor de 64 deducciones fiscales: 16 estatales y 48 territoriales '
-        'en 8 CCAA. Cuando preguntas por deducciones, la IA:'
+        'Impuestify tiene un motor de 554+ deducciones fiscales en 21 territorios: '
+        'estatales, autonómicas y forales. Cuando preguntas por deducciones, la IA:'
     )
 
     deduction_steps = [
@@ -339,6 +385,12 @@ def build_manual():
         'como la deducción por descendientes de 734,80 EUR por hijo, la deducción por alquiler '
         'del 20% (max 1.600 EUR), o la deducción por compra de vivienda del 18%. '
         'Estas deducciones NO existen en el régimen común y ningún otro asistente digital las cubre.'
+    )
+
+    doc.add_paragraph(
+        'Para residentes forales (Araba, Bizkaia, Gipuzkoa, Navarra) el sistema aplica '
+        'automáticamente solo las deducciones forales, ya que tienen un IRPF completamente '
+        'independiente del régimen estatal.'
     )
 
     # --- 7. Informe PDF ---
@@ -398,8 +450,29 @@ def build_manual():
     )
 
     doc.add_paragraph(
-        'Al terminar, puedes guardar todos los datos en tu perfil fiscal pulsando "Guardar en mi perfil". '
-        'Los datos se conservan entre sesiones gracias al almacenamiento local del navegador.'
+        'Al terminar, puedes pedir a la IA que guarde los datos en tu perfil fiscal. '
+        'Los campos se rellenan automáticamente con los datos que has introducido durante la guía.'
+    )
+
+    # --- 8b. Calendario fiscal ---
+    doc.add_heading('8b. Calendario fiscal', level=1)
+    doc.add_paragraph(
+        'Impuestify incluye un calendario fiscal personalizado que te muestra tus próximas '
+        'obligaciones tributarias. Accede desde el menú principal > "Calendario".'
+    )
+
+    doc.add_paragraph('El calendario se adapta a tu perfil:')
+    calendar_items = [
+        'Particular: plazos de declaración IRPF anual',
+        'Autónomo: plazos trimestrales (Modelo 303 IVA, Modelo 130 IRPF, cuota RETA)',
+        'Canarias: IGIC en lugar de IVA',
+        'Ceuta/Melilla: IPSI en lugar de IVA',
+    ]
+    for item in calendar_items:
+        doc.add_paragraph(item, style='List Bullet')
+
+    doc.add_paragraph(
+        'Cada fecha límite incluye una descripción del trámite y los días restantes para presentarlo.'
     )
 
     doc.add_page_break()
@@ -446,15 +519,19 @@ def build_manual():
     # --- 10. Nóminas ---
     doc.add_heading('10. Análisis de nóminas', level=1)
     doc.add_paragraph(
-        'Sube tu nómina en PDF al workspace y pregunta a la IA que la analice. '
-        'El PayslipAgent extraerá automáticamente:'
+        'Adjunta tu nómina directamente en el chat con el botón de clip, o súbela a un workspace. '
+        'La IA extraerá automáticamente:'
     )
     payslip_fields = [
         'Salario bruto y neto',
         'Retención IRPF (porcentaje y importe)',
         'Cotizaciones a la Seguridad Social',
+        'Base de cotización SS',
+        'Base IRPF',
+        'Aportaciones de la empresa',
+        'Grupo de cotización y categoría profesional',
         'Pagas extraordinarias',
-        'Complementos y plus',
+        'Detalle de devengos (salario base, complementos, pluses)',
         'Proyección IRPF anual basada en la nómina',
     ]
     for f in payslip_fields:
@@ -466,11 +543,16 @@ def build_manual():
     p.add_run('Si detectamos que tu retención IRPF es incorrecta respecto a tus ingresos anuales, '
               'te avisaremos automáticamente.')
 
+    doc.add_paragraph(
+        'La IA puede guardar los datos extraídos en tu perfil fiscal para futuras consultas. '
+        'Pide: "Guarda estos datos en mi perfil fiscal."'
+    )
+
     # --- 11. Notificaciones ---
     doc.add_heading('11. Notificaciones de Hacienda', level=1)
     doc.add_paragraph(
-        'Si recibes una notificación de la AEAT (Agencia Tributaria), sube el PDF al workspace '
-        'o describe su contenido en el chat. El NotificationAgent extraerá:'
+        'Si recibes una notificación de la AEAT (Agencia Tributaria), adjunta el PDF directamente '
+        'en el chat o súbelo a un workspace. La IA extraerá:'
     )
     notif_fields = [
         'Tipo de notificación (requerimiento, liquidación, sanción, etc.)',
@@ -586,6 +668,23 @@ def build_manual():
     p.add_run('"He facturado 30.000 EUR en el primer semestre con gastos de 8.000 EUR. '
               'Cuánto debo pagar en el Modelo 130 del 2T?"')
 
+    # --- 14b. IPSI Ceuta y Melilla ---
+    doc.add_heading('14b. IPSI (Ceuta y Melilla)', level=1)
+    doc.add_paragraph(
+        'Si resides en Ceuta o Melilla, el IVA no aplica. En su lugar pagas el IPSI '
+        '(Impuesto sobre la Producción, los Servicios y la Importación). '
+        'Impuestify calcula el IPSI trimestral con los 6 tipos impositivos aplicables: '
+        '0,5%, 1%, 2%, 4%, 8% y 10%.'
+    )
+
+    # --- 14c. ISD ---
+    doc.add_heading('14c. ISD (Sucesiones y Donaciones)', level=1)
+    doc.add_paragraph(
+        'Si recibes una herencia o donación, Impuestify calcula el Impuesto de Sucesiones '
+        'y Donaciones aplicando la tarifa estatal y las bonificaciones de tu comunidad autónoma. '
+        'Más de 8 CCAA tienen bonificaciones del 95-99% para familiares directos.'
+    )
+
     # --- 15. Retenciones ---
     doc.add_heading('15. Retenciones IRPF en facturas', level=1)
     doc.add_paragraph(
@@ -673,13 +772,13 @@ def build_manual():
     add_table(doc,
         ['Territorio', 'Hacienda', 'Deducciones propias', 'Particularidad'],
         [
-            ['Araba/Álava', 'Hacienda Foral de Álava', '8 deducciones',
+            ['Araba/Álava', 'Hacienda Foral de Álava', '15 deducciones',
              'Deducción vivienda vigente (eliminada en régimen común en 2013)'],
-            ['Bizkaia', 'Hacienda Foral de Bizkaia', '6 deducciones',
+            ['Bizkaia', 'Hacienda Foral de Bizkaia', '11 deducciones',
              'Tipos IRPF propios, diferente al estatal'],
-            ['Gipuzkoa', 'Hacienda Foral de Gipuzkoa', '6 deducciones',
+            ['Gipuzkoa', 'Hacienda Foral de Gipuzkoa', '11 deducciones',
              'Sistema TicketBAI obligatorio'],
-            ['Navarra', 'Hacienda Foral de Navarra', '7 deducciones',
+            ['Navarra', 'Hacienda Foral de Navarra', '13 deducciones',
              'IRPF navarro completamente independiente'],
         ]
     )
@@ -708,8 +807,17 @@ def build_manual():
          'Si, en cualquier momento. Ve a Ajustes > Suscripción > "Gestionar suscripción". '
          'Se abre el portal de Stripe donde puedes cancelar sin penalización.'),
         ('Funciona en el móvil?',
-         'Si. Impuestify es una PWA (Progressive Web App). Puedes instalarlo en tu móvil '
-         'desde el navegador: pulsa "Añadir a pantalla de inicio" y se comportará como una app.'),
+         'Si. Impuestify funciona en cualquier dispositivo con navegador moderno: ordenador, '
+         'tablet o móvil. Además, es una PWA (Progressive Web App): puedes instalarlo en tu '
+         'móvil desde el navegador pulsando "Añadir a pantalla de inicio" y se comportará como '
+         'una app nativa.'),
+        ('Puedo adjuntar documentos en el chat?',
+         'Si. Pulsa el icono de clip junto al campo de texto para adjuntar PDFs, imágenes o '
+         'documentos. El sistema los analiza automáticamente, extrae los datos y anonimiza la '
+         'información personal antes de procesarla.'),
+        ('Cómo actualizo mi perfil fiscal desde el chat?',
+         'Sube un documento (nómina, factura) y pide: "Guarda estos datos en mi perfil fiscal". '
+         'La IA extraerá los datos relevantes y los guardará automáticamente.'),
         ('Qué pasa con mis datos si cancelo?',
          'Tus datos se conservan 30 días tras la cancelación. Puedes solicitar la eliminación '
          'completa en cualquier momento desde Ajustes > Privacidad.'),
