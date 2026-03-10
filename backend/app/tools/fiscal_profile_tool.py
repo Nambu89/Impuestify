@@ -16,10 +16,11 @@ UPDATE_FISCAL_PROFILE_TOOL = {
     "function": {
         "name": "update_fiscal_profile",
         "description": (
-            "Actualiza el perfil fiscal del usuario con datos extraidos de documentos "
-            "(nominas, facturas) o de la conversacion. Solo actualiza los campos proporcionados, "
-            "sin borrar los existentes. Usa este tool cuando el usuario pida guardar datos en su perfil "
-            "o cuando extraigas datos relevantes de un documento adjunto."
+            "Actualiza el perfil fiscal del usuario en la base de datos. "
+            "SOLO usar cuando el usuario EXPLICITAMENTE pida guardar, actualizar o rellenar su perfil fiscal. "
+            "Ejemplos: 'rellena mi perfil', 'guarda estos datos en mi perfil', 'actualiza mi perfil fiscal'. "
+            "NO usar para responder preguntas sobre deducciones, IRPF, impuestos o analisis de documentos. "
+            "Para preguntas fiscales usa las otras herramientas (discover_deductions, simulate_irpf, etc.)."
         ),
         "parameters": {
             "type": "object",
