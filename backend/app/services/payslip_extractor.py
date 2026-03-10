@@ -398,6 +398,7 @@ class PayslipExtractor:
                     data['net_salary'] = self._parse_spanish_number(m.group(1))
 
         # --- 8. BASES DE COTIZACIÓN ---
+        # Try direct (label + number on same line)
         m = re.search(r'BASE\s+S\.?S\.?\s+' + _NUM, text, re.IGNORECASE)
         if m:
             data['base_ss'] = self._parse_spanish_number(m.group(1))
@@ -409,6 +410,36 @@ class PayslipExtractor:
         m = re.search(r'BASE\s+A\.?T\.?\s+' + _NUM, text, re.IGNORECASE)
         if m:
             data['base_at'] = self._parse_spanish_number(m.group(1))
+
+        # Tabular layout fallback: headers on separate lines, values on one row
+        # In many Spanish payslips, the summary section has headers like
+        # "BASE S.S." / "T. A DEDUCIR" / "BASE I.R.P.F." on separate lines,
+        # followed by a single data line with all values.
+        # Typical order (6 values): BASE_SS, REM_TOTAL, PP_EXTRAS(or BASE_SS again),
+        #   BASE_IRPF, T_DEVENGADO, T_A_DEDUCIR
+        if 'base_ss' not in data or 'total_deducir' not in data:
+            # Check that BASE S.S. header exists somewhere above
+            has_base_header = bool(re.search(r'BASE\s+S\.?S\.?', text, re.IGNORECASE))
+            if has_base_header:
+                for line in text.split('\n'):
+                    amounts = re.findall(_NUM, line)
+                    if len(amounts) >= 5:
+                        parsed = [self._parse_spanish_number(a) for a in amounts]
+                        # All values should be > 100 (bases/totals are always > 100 EUR)
+                        if all(p and p > 50 for p in parsed):
+                            if 'base_ss' not in data:
+                                data['base_ss'] = parsed[0]
+                            # BASE I.R.P.F. is typically 4th value (index 3)
+                            if 'base_irpf' not in data and len(parsed) >= 4:
+                                # Find the value that differs (base_irpf may differ from base_ss)
+                                data['base_irpf'] = parsed[3]
+                            if 'gross_salary' not in data and len(parsed) >= 5:
+                                data['gross_salary'] = parsed[4]
+                            if 'total_deducir' not in data:
+                                data['total_deducir'] = parsed[-1]
+                            if 'base_at' not in data:
+                                data['base_at'] = parsed[0]
+                            break
 
         # --- 9. DATOS BANCARIOS ---
         m = re.search(r'IBAN[\s:]*([A-Z]{2}\d{2}\s*\d{4}\s*\d{4}\s*\d{4}\s*\d{4}\s*\d{4})', text, re.IGNORECASE)
