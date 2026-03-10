@@ -41,6 +41,7 @@ class StreamQuestionRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=1000)
     conversation_id: Optional[str] = None
     workspace_id: Optional[str] = Field(default=None, description="Active workspace ID for context")
+    session_doc_ids: Optional[list] = Field(default=None, description="Session document IDs for ephemeral context")
     k: Optional[int] = Field(default=5, ge=1, le=10)
 
 
@@ -207,6 +208,24 @@ async def ask_question_stream(
                 except Exception as e:
                     logger.error(f"Error loading workspace context: {e}")
 
+            # === Load session documents context (ephemeral, Redis-cached) ===
+            session_docs_context = ""
+            if request.session_doc_ids:
+                try:
+                    for doc_id in request.session_doc_ids[:5]:
+                        cache_key = f"session_doc:{current_user.user_id}:{doc_id}"
+                        raw = await upstash_client.get(cache_key) if upstash_client else None
+                        if raw:
+                            doc_data = json.loads(raw)
+                            text = doc_data.get("extracted_text", "")[:5000]
+                            fname = doc_data.get("filename", "documento")
+                            ftype = doc_data.get("file_type", "otro")
+                            session_docs_context += f"\n--- {fname} ({ftype}) ---\n{text}\n"
+                    if session_docs_context:
+                        logger.info(f"Loaded {len(request.session_doc_ids)} session docs for context")
+                except Exception as e:
+                    logger.warning(f"Error loading session docs: {e}")
+
             # === Follow-up detection & RAG optimization ===
             followup_type = classify_followup(request.question, conversation_history)
             cached_rag_chunks = cached_context.get("last_rag_chunks", []) if cached_context else []
@@ -286,6 +305,8 @@ async def ask_question_stream(
                 sources_data = []
 
             combined_context = notification_context + rag_context if notification_context else rag_context
+            if session_docs_context:
+                combined_context = session_docs_context + "\n\n" + combined_context
 
             # Format conversation history
             formatted_history = [
@@ -294,7 +315,7 @@ async def ask_question_stream(
             ]
 
             # === Choose agent based on context ===
-            use_workspace_agent = bool(workspace_context)
+            use_workspace_agent = bool(workspace_context or session_docs_context)
 
             # === Load fiscal profile for personalized agent responses ===
             fiscal_profile = {}
@@ -328,12 +349,16 @@ async def ask_question_stream(
                     restricted_mode = not access.is_owner and access.plan_type != "autonomo"
 
                     if use_workspace_agent:
-                        # Use WorkspaceAgent for workspace queries
+                        # Use WorkspaceAgent for workspace/session-doc queries
                         from app.agents.workspace_agent import get_workspace_agent
                         agent = get_workspace_agent()
+                        # Combine workspace + session docs context
+                        agent_doc_context = workspace_context or ""
+                        if session_docs_context:
+                            agent_doc_context = (agent_doc_context + "\n\n" + session_docs_context).strip()
                         response = await agent.run(
                             query=request.question,
-                            context=workspace_context,
+                            context=agent_doc_context,
                             sources=sources_data,
                             conversation_history=formatted_history,
                             user_id=current_user.user_id,

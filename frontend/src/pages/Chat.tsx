@@ -10,9 +10,12 @@ import { WorkspaceSelector } from '../components/WorkspaceSelector'
 import { WorkspaceContextIndicator } from '../components/WorkspaceContextIndicator'
 import { ReportActions, isIRPFSimulation } from '../components/ReportActions'
 import { DeductionCards, hasDeductions } from '../components/DeductionCards'
+import { SessionDocChips } from '../components/SessionDocChips'
+import { SessionDocUploadButton } from '../components/SessionDocUploadButton'
 import { useConversations } from '../hooks/useConversations'
 import { useWorkspaces, Workspace } from '../hooks/useWorkspaces'
 import { useStreamingChat } from '../hooks/useStreamingChat'
+import { useSessionDocs } from '../hooks/useSessionDocs'
 import { StreamingTimeline } from '../components/StreamingTimeline'
 import { logger } from '../utils/logger'
 import ReactMarkdown from 'react-markdown'
@@ -40,6 +43,7 @@ export default function Chat() {
     const { getConversation } = useConversations()
     const { workspaces, activeWorkspace, selectWorkspace, fetchWorkspaces } = useWorkspaces()
     const { streamState, isStreaming, sendStreamingMessage } = useStreamingChat()
+    const { docs: sessionDocs, docIds: sessionDocIds, isUploading: isDocUploading, uploadError: docUploadError, uploadDoc, removeDoc } = useSessionDocs()
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -146,7 +150,6 @@ export default function Chat() {
             try {
                 await sendStreamingMessage(questionText, activeConversationId || undefined, {
                     onComplete: (response, convId) => {
-                        // ✅ Callback when stream finishes successfully
                         const assistantMessage: Message = {
                             id: (Date.now() + 1).toString(),
                             role: 'assistant',
@@ -154,7 +157,6 @@ export default function Chat() {
                         }
                         setMessages(prev => [...prev, assistantMessage])
 
-                        // Update conversation ID if needed
                         if (convId && convId !== activeConversationId) {
                             setActiveConversationId(convId)
                         }
@@ -167,7 +169,7 @@ export default function Chat() {
                             content: `Error: ${error} `
                         }])
                     }
-                }, activeWorkspace?.id)
+                }, activeWorkspace?.id, sessionDocIds.length > 0 ? sessionDocIds : undefined)
             } catch (error: any) {
                 logger.error('Streaming fatal error:', error)
                 setMessages(prev => [...prev, {
@@ -428,6 +430,12 @@ export default function Chat() {
                     </div>
                 )}
 
+                {/* Session document chips */}
+                <SessionDocChips docs={sessionDocs} onRemove={removeDoc} />
+                {docUploadError && (
+                    <p className="session-doc-error">{docUploadError}</p>
+                )}
+
                 <form onSubmit={handleSubmit} className="chat-form">
                     {/* Workspace Selector */}
                     <WorkspaceSelector
@@ -437,12 +445,21 @@ export default function Chat() {
                         onCreateNew={() => window.location.href = '/workspaces'}
                     />
 
+                    {/* Session Doc Upload (paperclip) */}
+                    <SessionDocUploadButton
+                        isUploading={isDocUploading}
+                        disabled={isLoading || isStreaming}
+                        onFileSelected={(file) => uploadDoc(file)}
+                    />
+
                     <input
                         type="text"
                         className="chat-input"
-                        placeholder={activeWorkspace
-                            ? `Pregunta sobre ${activeWorkspace.name}...`
-                            : "Escribe tu pregunta fiscal..."}
+                        placeholder={sessionDocs.length > 0
+                            ? `Pregunta sobre tus ${sessionDocs.length} documento(s)...`
+                            : activeWorkspace
+                                ? `Pregunta sobre ${activeWorkspace.name}...`
+                                : "Escribe tu pregunta fiscal..."}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         disabled={isLoading}

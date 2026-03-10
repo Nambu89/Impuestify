@@ -465,6 +465,10 @@ app.include_router(fiscal_fields_router)
 from app.routers.deadlines import router as deadlines_router
 app.include_router(deadlines_router)
 
+# Session Documents (ephemeral, Redis-only)
+from app.routers.session_docs import router as session_docs_router
+app.include_router(session_docs_router)
+
 # Prometheus instrumentation with custom metrics
 from app.metrics import setup_instrumentator, set_app_info
 setup_instrumentator(app)

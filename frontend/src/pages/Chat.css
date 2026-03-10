@@ -707,6 +707,88 @@
     color: var(--color-gray-800);
 }
 
+/* ========== SESSION DOCUMENT CHIPS ========== */
+
+.session-doc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 768px;
+    margin: 0 auto var(--spacing-2);
+    padding: 0 var(--spacing-1);
+}
+
+.session-doc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    color: var(--color-gray-300);
+    animation: fadeIn 0.2s ease-out;
+    max-width: 220px;
+}
+
+.session-doc-chip__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.session-doc-chip__remove {
+    background: none;
+    border: none;
+    color: var(--color-gray-500);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.session-doc-chip__remove:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--color-gray-200);
+}
+
+.session-doc-error {
+    max-width: 768px;
+    margin: 0 auto var(--spacing-1);
+    font-size: 12px;
+    color: #f87171;
+    padding: 0 var(--spacing-1);
+}
+
+/* SESSION DOC UPLOAD BUTTON (paperclip) */
+.btn-session-doc-upload {
+    background: transparent;
+    color: var(--color-gray-400);
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px;
+    min-height: 36px;
+    border: none;
+}
+
+.btn-session-doc-upload svg {
+    width: 20px !important;
+    height: 20px !important;
+    stroke-width: 1.8 !important;
+    flex-shrink: 0;
+}
+
+.btn-session-doc-upload:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-gray-200);
+    transform: none;
+}
+
 /* ========== STREAMING ========== */
 
 .streaming-live {

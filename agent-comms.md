@@ -7,6 +7,57 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-09] QA — NEEDS_REVIEW — Sesion 15: QA Exhaustivo post-commit c608ac6
+
+### Resultado: 13 PASS / 0 FAIL / 1 FLAKY — 4 bugs nuevos, 3 bugs corregidos confirmados
+
+**Reporte completo**: `plans/qa-report-s15-2026-03-09.md`
+**Script**: `tests/e2e/qa-s15-exhaustivo-2026-03-09.spec.ts`
+
+**BUGS CORREGIDOS CONFIRMADOS EN PRODUCCION:**
+1. B-GF-BLANK: /guia-fiscal ya NO es pantalla negra — wizard renderiza titulo, tabs, select CCAA, inputs — PASS
+2. B-MOD-PERSIST (parcial): Modal onboarding cierra al enviar 1er mensaje — OK. Pero modal IA aparece en su lugar (ver B-MOD-IA-PERSIST)
+3. B-LAND-FADE: Landing secciones negras — RESUELTO, FadeContent funciona con scroll
+4. B13 (hamburger mobile): Menu mobile ahora muestra Chat, Guia Fiscal, Modelos, Calendario, Configuracion, Historial — RESUELTO
+
+**BUGS NUEVOS (accion requerida):**
+
+1. **B-MOD-IA-PERSIST (ALTO)**: Al enviar el 1er mensaje el modal onboarding cierra (correcto) pero el modal "Sistema de Inteligencia Artificial" aparece inmediatamente despues, bloqueando la vista de la respuesta del chat. El usuario nuevo no puede ver la respuesta a su primer mensaje. Fix: cerrar tambien el modal IA al enviar primer mensaje, o mostrar ambos modales en secuencia ANTES de permitir envio de mensajes.
+
+2. **B-MODELOS-RUTA (ALTO)**: Nav link "Modelos" en header (desktop y mobile) navega a la landing page de marketing, no a la pagina de formularios trimestrales. El usuario autonomo no puede acceder a 303/130 desde el nav. Verificar ruta correcta (/declarations o similar) y corregir el Link en el header.
+
+3. **B-GF-ESTIMATOR (MEDIO)**: LiveEstimatorBar no actualiza en tiempo real cuando el usuario introduce ingresos en el wizard. Solo muestra "Introduce tus datos para ver la estimacion". Deberia actualizar al cambiar valores para mostrar estimacion progresiva.
+
+4. **B-LAND-PLAZOS (BAJO)**: Widget "Proximos plazos fiscales" en landing (sin login) muestra pills con dias restantes pero sin nombre del modelo fiscal. Falta descripcion junto al countdown.
+
+**DECISION DE PRODUCTO PENDIENTE:** /guia-fiscal ahora carga para plan `particular` (antes redirigía a /subscribe). Confirmar si es intencional.
+
+**Para PM:** Prioridad: B-MODELOS-RUTA (bloquea funcion core autonomo) > B-MOD-IA-PERSIST (UX critica primer uso) > B-GF-ESTIMATOR (UX wizard) > B-LAND-PLAZOS (cosmético).
+
+---
+
+## [2026-03-09] QA — NEEDS_REVIEW — Sesion 14: QA Exhaustivo post-commit 55bfbc2
+
+### Resultado: 9 PASS / 1 FAIL / 2 PARTIAL — 2 bugs criticos nuevos
+
+**Reporte completo**: `plans/qa-report-s14-2026-03-09.md`
+**Script**: `tests/e2e/qa-s14-exhaustivo-2026-03-09.spec.ts`
+
+**BUGS CRITICOS (accion inmediata):**
+
+1. **B-GF-BLANK (CRITICA)**: `/guia-fiscal` renderiza pantalla completamente negra. URL carga OK, no redirige, pero el wizard no muestra ningun contenido. Screenshot: `s14-F5-01-guia-entrada.png`. Afecta todos los usuarios con acceso a Guia Fiscal.
+
+2. **B-MOD-PERSIST (ALTO)**: Modal onboarding "Bienvenido, [nombre]" persiste mientras el usuario escribe/envia mensajes. El usuario no puede VER las respuestas del asistente. El chat funciona en background pero la UX es inutilizable. Fix: cerrar modal al enviar primer mensaje.
+
+**FIXES CONFIRMADOS EN PRODUCCION (sesion 14):**
+- B-LOGOUT-01: Logout directo sin window.confirm — OK
+- B-GUARD-01: Guardrail no bloquea IRPF basico para particulares — OK
+- B-MOB-01: Modales NO apilados en mobile — OK
+
+**Para PM:** B-GF-BLANK es urgente — investigar TaxGuidePage en produccion (pantalla negra).
+
+---
+
 ## [2026-03-09] PM — DONE — Crawler automatizado (doc_crawler module) — Commit 250e8a2
 
 **Archivos creados (13 files, 1971 lines):**

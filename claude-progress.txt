@@ -7,6 +7,13 @@
 ## Sesiones Recientes
 ---
 
+[2026-03-09] [QA Sesion 15] - QA exhaustivo post-commit c608ac6. 13 PASS / 0 FAIL / 1 FLAKY de 15 tests.
+- RESUELTOS CONFIRMADOS: B-GF-BLANK (guia fiscal pantalla negra), B-LAND-FADE (landing invisible), B13 (hamburger mobile), B-GUARD-01
+- PARCIAL: B-MOD-PERSIST — onboarding cierra OK al enviar 1er msg, pero modal IA aparece en su lugar (nuevo bug B-MOD-IA-PERSIST)
+- NUEVOS BUGS: B-MOD-IA-PERSIST (Alto), B-MODELOS-RUTA (Alto — nav link Modelos va a landing), B-GF-ESTIMATOR (Medio), B-LAND-PLAZOS (Bajo)
+- DESCUBRIMIENTO: /guia-fiscal ahora accesible para plan particular (antes redirigía a /subscribe) — confirmar si es intencional
+- Reporte: plans/qa-report-s15-2026-03-09.md | Script: tests/e2e/qa-s15-exhaustivo-2026-03-09.spec.ts
+
 [2026-03-09] [PM Sesion 3] - Fix 10 bugs QA (commits ca3e9f4 + 60d23f2) + Crawler automatizado (commit 250e8a2).
 - Bugs fixeados: B-LAND-01, B-GUARD-01, B-TOOL-01, B-TOOL-02, B-CHAT-01, B-GF-06, B-MOB-01, B-LOGOUT-01, CcaaTip foral. B-COOK-01 descartado (no es bug).
 - Crawler doc_crawler/: 9 modulos Python + .bat + 32 tests PASS. 48 URLs en 21 territorios. Rate limiting + robots.txt + SHA-256 dedup.
