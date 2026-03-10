@@ -189,7 +189,6 @@ class Settings(BaseSettings):
     # 🛡️ Cloudflare Turnstile
     # -------------------------------
     TURNSTILE_SECRET_KEY: Optional[str] = Field(default=None)
-    TURNSTILE_TEST_SECRET: Optional[str] = Field(default=None, description="Bypass token for E2E tests")
 
     # -------------------------------
     # 🌐 Frontend
