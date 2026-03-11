@@ -23,8 +23,8 @@ function getCountdownLabel(deadline: FiscalDeadline): string {
 }
 
 function getShortName(deadline: FiscalDeadline): string {
-    // Build short label: "303 IVA" or "130 IRPF"
-    return `${deadline.model} ${deadline.model_name.split(' ')[0]}`
+    // Show model number + full name: "303 — IVA trimestral"
+    return `${deadline.model} ${deadline.model_name}`
 }
 
 // ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
     User, Download, Trash2, Save, AlertCircle, CheckCircle,
     Loader, Shield, Lock, Calculator, ChevronDown, ChevronRight, RefreshCw,
-    CreditCard, ExternalLink, Bell, BellOff
+    CreditCard, ExternalLink, Bell, BellOff, Mail
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useApi } from '../hooks/useApi'
@@ -40,6 +40,10 @@ export default function SettingsPage() {
 
     // Alert days preference state (notifications tab)
     const [alertDays, setAlertDays] = useState<number[]>([15, 5, 1])
+
+    // Email alerts state
+    const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false)
+    const [emailAlertsLoading, setEmailAlertsLoading] = useState(false)
 
     // Active tab
     const [activeTab, setActiveTab] = useState<TabKey>('personal')
@@ -107,6 +111,28 @@ export default function SettingsPage() {
             }
         }
     }, [fiscal.loading, fiscal.profile])
+
+    // Fetch email alerts status
+    useEffect(() => {
+        if (activeTab === 'notifications') {
+            apiRequest<{ enabled: boolean }>('/api/deadlines/email-alerts/status')
+                .then(data => setEmailAlertsEnabled(data.enabled))
+                .catch(() => {})
+        }
+    }, [activeTab, apiRequest])
+
+    const handleToggleEmailAlerts = async () => {
+        setEmailAlertsLoading(true)
+        try {
+            const data = await apiRequest<{ enabled: boolean }>('/api/deadlines/email-alerts/toggle', { method: 'POST' })
+            setEmailAlertsEnabled(data.enabled)
+            setMessage({ type: 'success', text: data.enabled ? 'Alertas por email activadas' : 'Alertas por email desactivadas' })
+        } catch {
+            setMessage({ type: 'error', text: 'Error al cambiar las alertas por email' })
+        } finally {
+            setEmailAlertsLoading(false)
+        }
+    }
 
     // Auto-dismiss messages
     useEffect(() => {
@@ -1100,6 +1126,7 @@ export default function SettingsPage() {
                 )}
                 {/* ==================== NOTIFICATIONS TAB ==================== */}
                 {activeTab === 'notifications' && (
+                    <>
                     <section className="settings-section">
                         <div className="section-header">
                             <Bell size={24} />
@@ -1227,6 +1254,50 @@ export default function SettingsPage() {
                             </>
                         )}
                     </section>
+                    {/* Email alerts section */}
+                    <section className="settings-section" style={{ marginTop: 'var(--spacing-6)' }}>
+                        <div className="section-header">
+                            <Mail size={24} />
+                            <h2>Alertas por email</h2>
+                        </div>
+                        <p className="section-description">
+                            Recibe un email recordatorio 30 dias antes de cada plazo fiscal importante.
+                        </p>
+
+                        <div className="gdpr-action">
+                            <div className="gdpr-action-info">
+                                <div className="gdpr-action-header">
+                                    <Mail size={20} />
+                                    <h3>Recordatorios por correo</h3>
+                                </div>
+                                <p>
+                                    Te enviaremos un email a <strong>{user?.email}</strong> cuando
+                                    se acerque un plazo fiscal relevante para tu perfil.
+                                </p>
+                            </div>
+                            <button
+                                className={`btn ${emailAlertsEnabled ? 'btn-secondary' : 'btn-primary'}`}
+                                onClick={handleToggleEmailAlerts}
+                                disabled={emailAlertsLoading}
+                            >
+                                {emailAlertsLoading ? (
+                                    <><Loader size={18} className="animate-spin" /> Procesando...</>
+                                ) : emailAlertsEnabled ? (
+                                    <><BellOff size={18} /> Desactivar</>
+                                ) : (
+                                    <><Mail size={18} /> Activar</>
+                                )}
+                            </button>
+                        </div>
+
+                        {emailAlertsEnabled && (
+                            <div className="notification-hint" style={{ marginTop: 'var(--spacing-3)', background: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.3)', color: '#22c55e' }}>
+                                <CheckCircle size={16} />
+                                <span>Las alertas por email estan activas. Recibiras un recordatorio 30 dias antes de cada plazo.</span>
+                            </div>
+                        )}
+                    </section>
+                    </>
                 )}
             </div>
         </div>

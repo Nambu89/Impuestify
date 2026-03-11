@@ -138,7 +138,13 @@ export function useIrpfEstimator() {
             (input.intereses || 0) > 0 ||
             (input.dividendos || 0) > 0 ||
             (input.ganancias_fondos || 0) > 0 ||
-            (input.ingresos_alquiler || 0) > 0
+            (input.ingresos_alquiler || 0) > 0 ||
+            (input.cripto_ganancia_neta || 0) > 0 ||
+            (input.ganancias_acciones || 0) > 0 ||
+            (input.ganancias_reembolso_fondos || 0) > 0 ||
+            (input.ganancias_derivados || 0) > 0 ||
+            (input.premios_metalico_privados || 0) > 0 ||
+            (input.premios_metalico_publicos || 0) > 0
         if (!hasIncome) {
             setResult(null)
             return
