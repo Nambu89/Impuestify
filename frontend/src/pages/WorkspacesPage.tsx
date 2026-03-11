@@ -267,7 +267,7 @@ export default function WorkspacesPage() {
         if (!files || files.length === 0 || !selectedWorkspace) return
 
         if (files.length > 10) {
-            setError('Maximo 10 archivos por subida')
+            setError('Máximo 10 archivos por subida')
             if (fileInputRef.current) fileInputRef.current.value = ''
             return
         }
@@ -334,7 +334,7 @@ export default function WorkspacesPage() {
         if (droppedFiles.length === 0) return
 
         if (droppedFiles.length > 10) {
-            setError('Maximo 10 archivos por subida')
+            setError('Máximo 10 archivos por subida')
             return
         }
 
@@ -675,7 +675,7 @@ export default function WorkspacesPage() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="label" htmlFor="description">Descripcion</label>
+                                    <label className="label" htmlFor="description">Descripción</label>
                                     <textarea
                                         id="description"
                                         className="input textarea"
@@ -737,7 +737,7 @@ export default function WorkspacesPage() {
                                 <strong> "{workspaceToDelete.name}"</strong>?
                             </p>
                             <p className="delete-info">
-                                Esta accion eliminara {workspaceToDelete.file_count} archivo(s)
+                                Esta acción eliminará {workspaceToDelete.file_count} archivo(s)
                                 y no se puede deshacer.
                             </p>
                         </div>
