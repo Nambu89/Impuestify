@@ -35,7 +35,7 @@ export function useSubscription(): UseSubscriptionReturn {
 
     const fetchStatus = useCallback(async () => {
         if (!isAuthenticated) {
-            // Don't set loading=false here — wait until we actually check
+            setLoading(false)
             return
         }
 
@@ -47,7 +47,7 @@ export function useSubscription(): UseSubscriptionReturn {
         } catch (err: any) {
             // Ignore abort errors (page navigation)
             if (err.message?.includes('abort') || err.name === 'AbortError') return
-            setError(err.message || 'Error al obtener estado de suscripcion')
+            setError(err.message || 'Error al obtener estado de suscripción')
         } finally {
             setLoading(false)
         }
