@@ -7,6 +7,17 @@
 ## Sesiones Recientes
 ---
 
+[2026-03-11] [PM Sesion 6] - Bugs Ramon Palomares + ortografia + dropdown CSS + seed foral + deploy.
+- Fix slowapi crash 500: req→request en irpf_estimate.py (ambos endpoints)
+- Fix JWT 401 SSE: auto-refresh token en useStreamingChat.ts
+- Fix guia fiscal: StepInversiones + reindex cases 0-7 + hasIncome salario_base_mensual
+- 27 tildes corregidas en 12 archivos (autonomo, nomina, declaracion, estimacion, metodo, etc.)
+- Dropdown CSS oscuro: select.form-input option con fondo #1e293b
+- Seed 26 fechas forales 2026 en Turso (58 total: 32 estatales + 26 forales)
+- 3 deploys Railway: 2dd09ff, 8f077d3, b2079eb (1 fallo transitorio "Error configuring Network")
+- Commits: 2dd09ff, 8f077d3, b2079eb
+- Memorias actualizadas: MEMORY.md, ROADMAP.md, bugfixes-2026-03.md, agent-comms.md, claude-progress.txt
+
 [2026-03-11] [PM Sesion 5b] - Admin beta + bugs QA + email toggle + seed + deploy.
 - Admin: endpoints grant-beta/revoke-beta + botones verde/rojo en AdminUsersPage
 - Fix B-GF-ESTIMATOR: campos crypto en hasIncome. Fix B-LAND-PLAZOS: nombre completo modelo

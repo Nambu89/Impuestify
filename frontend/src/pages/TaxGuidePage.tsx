@@ -17,6 +17,14 @@ const CCAA_OPTIONS = [
     'Araba', 'Bizkaia', 'Gipuzkoa',
 ]
 
+const CCAA_DISPLAY: Record<string, string> = {
+    'Andalucia': 'Andalucía',
+    'Aragon': 'Aragón',
+    'Cataluna': 'Cataluña',
+    'Castilla y Leon': 'Castilla y León',
+    'Araba': 'Araba/Álava',
+}
+
 const STEP_ICONS = [MapPin, Briefcase, PiggyBank, HomeIcon, TrendingUp, Users, Gift, BarChart3]
 const QUICK_STEP_ICONS = [MapPin, BarChart3]
 
@@ -120,7 +128,7 @@ function WizardModeSelector({ mode, onChange }: { mode: 'quick' | 'full'; onChan
             >
                 <Zap size={16} />
                 <div>
-                    <strong>Rapido</strong>
+                    <strong>Rápido</strong>
                     <span>Solo salario y CCAA</span>
                 </div>
             </button>
@@ -165,7 +173,7 @@ function StepPersonal({ data, update }: StepProps) {
                     }}
                 >
                     <option value="">Selecciona tu CCAA</option>
-                    {CCAA_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                    {CCAA_OPTIONS.map(c => <option key={c} value={c}>{CCAA_DISPLAY[c] || c}</option>)}
                 </select>
             </div>
 
@@ -483,7 +491,7 @@ function StepAhorro({ data, update }: StepProps) {
             <h2 className="tg-step__title">Ahorro e inversiones</h2>
             <p className="tg-step__desc">Intereses, dividendos y ganancias patrimoniales tributan en la base del ahorro.</p>
 
-            <NumberInput label="Intereses de cuentas/depositos" value={data.intereses} onChange={v => update({ intereses: v })} suffix="EUR" />
+            <NumberInput label="Intereses de cuentas/depósitos" value={data.intereses} onChange={v => update({ intereses: v })} suffix="EUR" />
             <NumberInput label="Dividendos" value={data.dividendos} onChange={v => update({ dividendos: v })} suffix="EUR" />
             <NumberInput label="Ganancias de fondos/acciones" value={data.ganancias_fondos} onChange={v => update({ ganancias_fondos: v })} suffix="EUR" help="Ganancias netas realizadas (ventas - compras)" />
             <NumberInput label="Retenciones sobre capital mobiliario" value={data.retenciones_ahorro} onChange={v => update({ retenciones_ahorro: v })} suffix="EUR" help="19% retenido por bancos sobre intereses y dividendos" />
@@ -505,14 +513,12 @@ function StepInmuebles({ data, update }: StepProps) {
             <NumberInput label="Retenciones sobre alquileres" value={data.retenciones_alquiler} onChange={v => update({ retenciones_alquiler: v })} suffix="EUR" help="19% retenido por inquilinos empresas/profesionales" />
 
             <h3 className="tg-step__subtitle">Alquiler como inquilino</h3>
-            <CheckboxInput label="Tengo contrato de alquiler anterior al 1/1/2015" checked={data.alquiler_habitual_pre2015} onChange={v => update({ alquiler_habitual_pre2015: v })} help="Régimen transitorio: deducción del 10,05% sobre el alquiler pagado (máx. 9.040 EUR/año)" />
-            {data.alquiler_habitual_pre2015 && (
-                <NumberInput label="Alquiler anual pagado" value={data.alquiler_pagado_anual} onChange={v => update({ alquiler_pagado_anual: v })} suffix="EUR" />
-            )}
+            <NumberInput label="Alquiler anual pagado (vivienda habitual)" value={data.alquiler_pagado_anual} onChange={v => update({ alquiler_pagado_anual: v })} suffix="EUR" help="Total anual pagado. Necesario para deducciones autonómicas por alquiler" />
+            <CheckboxInput label="Contrato de alquiler anterior al 1/1/2015" checked={data.alquiler_habitual_pre2015} onChange={v => update({ alquiler_habitual_pre2015: v })} help="Régimen transitorio estatal: deducción adicional del 10,05% (máx. 9.040 EUR/año)" />
 
             <h3 className="tg-step__subtitle">Segundas viviendas</h3>
             <NumberInput label="Valor catastral de segundas viviendas" value={data.valor_catastral_segundas_viviendas} onChange={v => update({ valor_catastral_segundas_viviendas: v })} suffix="EUR" help="Viviendas no alquiladas ni vivienda habitual. Imputa 1,1%-2% como renta" />
-            <CheckboxInput label="Valor catastral revisado despues de 1994" checked={data.valor_catastral_revisado_post1994} onChange={v => update({ valor_catastral_revisado_post1994: v })} help="Si fue revisado antes de 1994 se aplica el 2% en lugar del 1,1%" />
+            <CheckboxInput label="Valor catastral revisado después de 1994" checked={data.valor_catastral_revisado_post1994} onChange={v => update({ valor_catastral_revisado_post1994: v })} help="Si fue revisado antes de 1994 se aplica el 2% en lugar del 1,1%" />
         </div>
     )
 }
@@ -609,8 +615,8 @@ function StepFamilia({ data, update }: StepProps) {
 
     return (
         <div className="tg-step">
-            <h2 className="tg-step__title">Situacion familiar</h2>
-            <p className="tg-step__desc">Los minimos personales y familiares reducen la base imponible.</p>
+            <h2 className="tg-step__title">Situación familiar</h2>
+            <p className="tg-step__desc">Los mínimos personales y familiares reducen la base imponible.</p>
 
             <NumberInput label="Número de hijos" value={data.num_descendientes} onChange={handleDescendientes} min={0} step={1} />
 
@@ -968,6 +974,7 @@ export default function TaxGuidePage() {
     const { profile, loading: profileLoading, save } = useFiscalProfile()
     const { result: discoveryResult, loading: discoveryLoading, error: discoveryError, discover } = useDeductionDiscovery()
     const profileAppliedRef = useRef(false)
+    const progressRef = useRef<HTMLDivElement>(null)
     const [savingProfile, setSavingProfile] = useState(false)
     const [saveProfileDone, setSaveProfileDone] = useState(false)
     const [discoveryAnswers, setDiscoveryAnswers] = useState<Record<string, boolean>>({})
@@ -979,6 +986,15 @@ export default function TaxGuidePage() {
 
     const isQuick = data.wizard_mode === 'quick'
     const icons = isQuick ? QUICK_STEP_ICONS : STEP_ICONS
+
+    // Auto-scroll progress bar to active step
+    useEffect(() => {
+        if (!progressRef.current) return
+        const activeBtn = progressRef.current.querySelector('.tg-progress__step--active') as HTMLElement
+        if (activeBtn) {
+            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+        }
+    }, [step])
 
     // Pre-fill from fiscal profile once the API has loaded
     useEffect(() => {
@@ -1088,6 +1104,13 @@ export default function TaxGuidePage() {
             retenciones_trabajo: data.retenciones_trabajo || null,
             retenciones_alquiler: data.retenciones_alquiler || null,
             retenciones_ahorro: data.retenciones_ahorro || null,
+            // Phase 2 fields
+            tributacion_conjunta: data.tributacion_conjunta,
+            tipo_unidad_familiar: data.tipo_unidad_familiar || null,
+            alquiler_habitual_pre2015: data.alquiler_habitual_pre2015,
+            alquiler_pagado_anual: data.alquiler_pagado_anual || null,
+            valor_catastral_segundas_viviendas: data.valor_catastral_segundas_viviendas || null,
+            valor_catastral_revisado_post1994: data.valor_catastral_revisado_post1994,
             // Activity income
             ingresos_actividad: data.ingresos_actividad || null,
             gastos_actividad: data.gastos_actividad || null,
@@ -1276,6 +1299,10 @@ export default function TaxGuidePage() {
                                 onAcknowledgeZeroIncome={setZeroIncomeAcknowledged}
                             />
                         </div>
+                        <div style={{ marginTop: 'var(--spacing-6)' }}>
+                            <h3 className="tg-step__subtitle">Alquiler</h3>
+                            <NumberInput label="Alquiler anual pagado (vivienda habitual)" value={data.alquiler_pagado_anual} onChange={v => updateData({ alquiler_pagado_anual: v })} suffix="EUR" help="Para calcular deducciones autonómicas por alquiler" />
+                        </div>
                     </div>
                 )
             case 1:
@@ -1340,7 +1367,7 @@ export default function TaxGuidePage() {
 
                 <main className="tax-guide__main">
                     {/* Progress bar */}
-                    <div className="tg-progress">
+                    <div className="tg-progress" ref={progressRef}>
                         {stepLabels.map((label, i) => {
                             const Icon = icons[i] || BarChart3
                             return (

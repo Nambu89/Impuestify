@@ -216,12 +216,22 @@
     margin-bottom: var(--spacing-6);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: var(--spacing-1);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    padding-bottom: var(--spacing-2);
 }
 
 .tg-progress::-webkit-scrollbar {
-    display: none;
+    height: 4px;
+}
+
+.tg-progress::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tg-progress::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
 }
 
 .tg-progress__step {
@@ -241,7 +251,12 @@
     flex-shrink: 0;
 }
 
-.tg-progress__step:hover {
+.tg-progress__step:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.tg-progress__step:hover:not(:disabled) {
     border-color: rgba(59, 130, 246, 0.4);
     color: rgba(255, 255, 255, 0.75);
 }
@@ -260,13 +275,17 @@
     color: var(--color-accent);
 }
 
+/* Always show labels — truncated on mobile, full on desktop */
 .tg-progress__label {
-    display: none;
+    display: inline;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 @media (min-width: 768px) {
     .tg-progress__label {
-        display: inline;
+        max-width: none;
     }
 }
 

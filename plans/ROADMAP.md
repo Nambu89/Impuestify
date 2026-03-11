@@ -23,13 +23,14 @@
 
 ---
 
-## COMPLETADO — Calendario Fiscal + Email Reminders (2026-03-10)
+## COMPLETADO — Calendario Fiscal + Email Reminders (2026-03-10/11)
 
-- 28 fechas estatales + 28 forales hardcodeadas (seed scripts)
+- 58 fechas 2026 en producción: 32 estatales + 26 forales
+- Seed foral ejecutado 2026-03-11: Gipuzkoa 8, Bizkaia 5, Araba 5, Navarra 8
 - Email reminders autónomos: 30 días antes, opt-in
 - Web Push: alertas 15d, 5d, 1d antes via VAPID
 - Frontend: CalendarPage, FiscalCalendar, UpcomingDeadlines, PushPermissionBanner
-- Commit: `a849ce1`
+- Commits: `a849ce1`, `b2079eb`
 
 ---
 
@@ -57,7 +58,7 @@
 ### Sprint 4 — QA + bugfix (DONE)
 - [x] Fix 10 bugs QA (ca3e9f4 + 60d23f2)
 - [x] QA regression: 7/10 confirmados FIXED
-- [ ] Deploy a Railway (pendiente)
+- [x] Deploy a Railway (2dd09ff, 8f077d3, b2079eb)
 - [ ] Ejecutar seed_deductions_xsd.py en Turso producción
 
 ---
@@ -128,10 +129,27 @@
 
 ---
 
+## COMPLETADO — Ortografía + Dropdown CSS + Seed Foral (2026-03-11)
+
+- 27 tildes corregidas en 12 archivos frontend (autónomo, nómina, declaración, estimación, método, cálculo, situación, número, régimen)
+- Dropdown CSS oscuro para selects en SettingsPage (CCAA, Situación Laboral, Grado Discapacidad)
+- 26 fechas forales seeded en producción Turso (58 total 2026)
+- Commit: `b2079eb`
+
+---
+
+## COMPLETADO — Bugfix Ramón Palomares (beta tester) (2026-03-11)
+
+- slowapi crash 500: `req: Request` → `request: Request` en irpf_estimate.py
+- JWT 401 en SSE chat: auto-refresh token en useStreamingChat.ts
+- Guía fiscal paso "Inversiones" faltante: StepInversiones + reindex switch cases
+- Commits: `2dd09ff`, `8f077d3`
+
+---
+
 ## BACKLOG
 
 ### Alta prioridad
-- [ ] Deploy a Railway (incluir seeds pendientes)
 - [ ] Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)
 - [ ] MFA / 2FA (recomendación auditoría)
 - [ ] CAPTCHA en login (recomendación auditoría)
@@ -161,5 +179,6 @@
 | Tests backend | 998 |
 | Tests frontend | build PASS |
 | Exchanges crypto soportados | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
-| Bugs fixeados (mar 2026) | 13 documentados |
+| Fechas fiscales 2026 | 58 (32 estatales + 26 forales) |
+| Bugs fixeados (mar 2026) | 16 documentados |
 | URLs monitorizadas (crawler) | 48 en 21 territorios |

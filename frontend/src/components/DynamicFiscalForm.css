@@ -40,9 +40,133 @@
     letter-spacing: 0.05em;
 }
 
-/* Override collapsible header to match SettingsPage */
+/* Collapsible header (self-contained, no SettingsPage dependency) */
+.collapsible-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    width: 100%;
+    padding: var(--spacing-3) var(--spacing-4);
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.04), rgba(6, 182, 212, 0.03));
+    border: 1.5px solid rgba(26, 86, 219, 0.1);
+    border-radius: var(--radius-xl);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-primary);
+    transition: all 0.2s ease;
+    text-align: left;
+    letter-spacing: 0.01em;
+}
+
+.collapsible-header:hover {
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.08), rgba(6, 182, 212, 0.05));
+    border-color: rgba(26, 86, 219, 0.2);
+}
+
+.collapsible-header svg {
+    color: var(--color-primary);
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.collapsible-content {
+    padding: var(--spacing-5) 0 var(--spacing-1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    animation: dff-collapsibleReveal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dff-collapsibleReveal {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 .dff-collapsible-header {
-    /* inherits .collapsible-header from SettingsPage.css */
+    /* extends .collapsible-header above */
+}
+
+/* Form input (self-contained, no SettingsPage dependency) */
+.form-input {
+    height: 48px;
+    padding: 0 var(--spacing-4);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-sm);
+    font-family: inherit;
+    color: var(--color-white);
+    background: rgba(255, 255, 255, 0.08);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-input::placeholder {
+    color: var(--color-gray-500);
+}
+
+.form-input:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
+}
+
+.form-input:disabled {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-gray-500);
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+select.form-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 40px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+select.form-input option {
+    background-color: #1e293b;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+textarea.form-input {
+    height: auto;
+    padding: var(--spacing-3) var(--spacing-4);
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Input with EUR suffix */
+.input-with-suffix {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-suffix .form-input {
+    padding-right: 72px;
+}
+
+.input-suffix {
+    position: absolute;
+    right: 14px;
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--color-gray-400);
+    pointer-events: none;
+    white-space: nowrap;
 }
 
 /* Fields grid: 2 columns on md+ */

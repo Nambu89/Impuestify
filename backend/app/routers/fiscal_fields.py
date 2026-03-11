@@ -24,6 +24,56 @@ router = APIRouter(prefix="/api/fiscal-profile", tags=["fiscal-profile"])
 
 
 # ---------------------------------------------------------------------------
+# Text cleanup for DB-sourced question labels (fixes seed spelling errors)
+# ---------------------------------------------------------------------------
+
+_TEXT_REPLACEMENTS = [
+    # "anyo" / "ano" → "año"
+    ("anyo", "año"),
+    ("ano ", "año "),
+    ("ano?", "año?"),
+    ("anos", "años"),
+    # Missing accents
+    ("Cuanto ", "¿Cuánto "),
+    ("Cuantos ", "¿Cuántos "),
+    ("Estan ", "¿Están "),
+    ("Basica", "Básica"),
+    ("maximo", "máximo"),
+    ("Maximo", "Máximo"),
+    ("animo", "ánimo"),
+    ("costo ", "costó "),
+    ("Deduccion ", "Deducción "),
+    ("deduccion ", "deducción "),
+    ("adopcion", "adopción"),
+    ("Adopcion", "Adopción"),
+    ("educacion", "educación"),
+    ("reduccion", "reducción"),
+    ("Reduccion", "Reducción"),
+    ("Prevision", "Previsión"),
+    ("prevision", "previsión"),
+    ("pension ", "pensión "),
+    ("Codigo", "Código"),
+    ("guarderia", "guardería"),
+    ("regimen ", "régimen "),
+    ("comun", "común"),
+    ("adquisicion", "adquisición"),
+]
+
+
+def _fix_text(text: str) -> str:
+    """Fix common spelling errors in DB-sourced question labels."""
+    if not text:
+        return text
+    # Add missing opening ¿ if text starts with a question word and ends with ?
+    for old, new in _TEXT_REPLACEMENTS:
+        text = text.replace(old, new)
+    # Ensure questions have opening ¿
+    if text.endswith("?") and "¿" not in text:
+        text = "¿" + text
+    return text
+
+
+# ---------------------------------------------------------------------------
 # Base sections — always present regardless of CCAA
 # ---------------------------------------------------------------------------
 
@@ -34,9 +84,13 @@ _BASE_SECTIONS: List[Dict[str, Any]] = [
         "fields": [
             {"key": "fecha_nacimiento", "label": "Fecha de nacimiento", "type": "date", "required": False},
             {"key": "situacion_laboral", "label": "Situación laboral", "type": "select",
-             "options": ["empleado", "autonomo", "desempleado", "pensionista", "estudiante"], "required": False},
+             "options": ["empleado", "autonomo", "desempleado", "pensionista", "estudiante"],
+             "option_labels": ["Empleado/a", "Autónomo/a", "Desempleado/a", "Pensionista", "Estudiante"],
+             "required": False},
             {"key": "estado_civil", "label": "Estado civil", "type": "select",
-             "options": ["soltero", "casado", "divorciado", "viudo", "pareja_de_hecho"], "required": False},
+             "options": ["soltero", "casado", "divorciado", "viudo", "pareja_de_hecho"],
+             "option_labels": ["Soltero/a", "Casado/a", "Divorciado/a", "Viudo/a", "Pareja de hecho"],
+             "required": False},
         ]
     },
     {
@@ -79,7 +133,9 @@ _BASE_SECTIONS: List[Dict[str, Any]] = [
             {"key": "discapacidad_contribuyente", "label": "Grado de discapacidad del contribuyente (%)", "type": "int", "required": False},
             {"key": "familia_numerosa", "label": "Familia numerosa", "type": "bool", "required": False},
             {"key": "tipo_familia_numerosa", "label": "Tipo de familia numerosa", "type": "select",
-             "options": ["general", "especial"], "required": False},
+             "options": ["general", "especial"],
+             "option_labels": ["General (3-4 hijos)", "Especial (5+ hijos)"],
+             "required": False},
             {"key": "nacimiento_adopcion_reciente", "label": "Nacimiento o adopción en el último año", "type": "bool", "required": False},
             {"key": "adopcion_internacional", "label": "Adopción internacional", "type": "bool", "required": False},
             {"key": "acogimiento_familiar", "label": "Acogimiento familiar", "type": "bool", "required": False},
@@ -248,15 +304,24 @@ def _section_actividad_economica() -> Dict[str, Any]:
         "fields": [
             {"key": "epigrafe_iae", "label": "Epígrafe IAE de la actividad", "type": "str", "required": False},
             {"key": "tipo_actividad", "label": "Tipo de actividad", "type": "select",
-             "options": ["profesional", "empresarial", "artistica"], "required": False},
+             "options": ["profesional", "empresarial", "artistica"],
+             "option_labels": ["Profesional", "Empresarial", "Artística"],
+             "required": False},
             {"key": "fecha_alta_autonomo", "label": "Fecha de alta como autónomo", "type": "date", "required": False},
             {"key": "metodo_estimacion_irpf", "label": "Método de estimación IRPF", "type": "select",
-             "options": ["directa_normal", "directa_simplificada", "objetiva"], "required": False},
+             "options": ["directa_normal", "directa_simplificada", "objetiva"],
+             "option_labels": ["Directa normal", "Directa simplificada", "Objetiva (módulos)"],
+             "required": False},
             {"key": "regimen_iva", "label": "Régimen de IVA", "type": "select",
-             "options": ["general", "simplificado", "recargo_equivalencia", "exento", "ipsi"], "required": False},
+             "options": ["general", "simplificado", "recargo_equivalencia", "exento", "ipsi"],
+             "option_labels": ["General", "Simplificado", "Recargo de equivalencia", "Exento", "IPSI (Ceuta/Melilla)"],
+             "required": False},
             {"key": "rendimientos_netos_mensuales", "label": "Rendimientos netos mensuales estimados (EUR)", "type": "float", "required": False},
             {"key": "base_cotizacion_reta", "label": "Base de cotización RETA (EUR/mes)", "type": "float", "required": False},
-            {"key": "tipo_retencion_facturas", "label": "Tipo de retención en facturas (%)", "type": "float", "required": False},
+            {"key": "tipo_retencion_facturas", "label": "Tipo de retención en facturas (%)", "type": "select",
+             "options": ["15", "7", "1", "2"],
+             "option_labels": ["15% (general)", "7% (primeros 3 años)", "1% (módulos)", "2% (actividades artísticas)"],
+             "required": False},
             {"key": "tarifa_plana", "label": "Acogido a tarifa plana de autónomos", "type": "bool", "required": False},
             {"key": "pluriactividad", "label": "Pluriactividad (autónomo + por cuenta ajena)", "type": "bool", "required": False},
         ]
@@ -298,7 +363,9 @@ def _section_ceuta_melilla() -> Dict[str, Any]:
         "fields": [
             {"key": "ceuta_melilla", "label": "Residente fiscal en Ceuta o Melilla (deducción 60% cuota IRPF)", "type": "bool", "required": False},
             {"key": "regimen_iva", "label": "Tipo impositivo IPSI aplicable", "type": "select",
-             "options": ["0.5", "1.0", "2.0", "4.0", "8.0", "10.0"], "required": False},
+             "options": ["0.5", "1.0", "2.0", "4.0", "8.0", "10.0"],
+             "option_labels": ["0,5%", "1%", "2%", "4%", "8%", "10%"],
+             "required": False},
         ]
     }
 
@@ -310,7 +377,9 @@ def _section_canarias() -> Dict[str, Any]:
         "condition": "ccaa=Canarias",
         "fields": [
             {"key": "regimen_iva", "label": "Régimen IGIC", "type": "select",
-             "options": ["general", "simplificado", "exento"], "required": False},
+             "options": ["general", "simplificado", "exento"],
+             "option_labels": ["General (7%)", "Simplificado", "Exento"],
+             "required": False},
         ]
     }
 
@@ -363,7 +432,7 @@ async def _build_deducciones_section(ccaa: str, db: TursoClient) -> Optional[Dic
 
             field = {
                 "key": key,
-                "label": q.get("text", key),
+                "label": _fix_text(q.get("text", key)),
                 "type": q.get("type", "bool"),
                 "required": False,
                 "_source_ccaa": ccaa,

@@ -23,6 +23,14 @@ const CCAA_OPTIONS = [
     'Murcia', 'Navarra', 'Araba', 'Bizkaia', 'Gipuzkoa', 'La Rioja', 'Ceuta', 'Melilla'
 ]
 
+const CCAA_DISPLAY: Record<string, string> = {
+    'Andalucia': 'Andalucía',
+    'Aragon': 'Aragón',
+    'Cataluna': 'Cataluña',
+    'Castilla y Leon': 'Castilla y León',
+    'Araba': 'Araba/Álava',
+}
+
 const SITUACION_OPTIONS = [
     { value: '', label: 'Selecciona...' },
     { value: 'asalariado', label: 'Asalariado/a' },
@@ -436,7 +444,7 @@ export default function SettingsPage() {
                                         <select className="form-input" value={fiscalForm.ccaa_residencia || ''}
                                             onChange={e => updateFiscal('ccaa_residencia', e.target.value || null)}>
                                             {CCAA_OPTIONS.map(c => (
-                                                <option key={c} value={c}>{c || 'Selecciona...'}</option>
+                                                <option key={c} value={c}>{c ? (CCAA_DISPLAY[c] || c) : 'Selecciona...'}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -468,6 +476,29 @@ export default function SettingsPage() {
                                             <option value="65">65% o más</option>
                                         </select>
                                     </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label className="checkbox-label">
+                                            <input type="checkbox"
+                                                checked={fiscalForm.tributacion_conjunta || false}
+                                                onChange={e => updateFiscal('tributacion_conjunta', e.target.checked)} />
+                                            Tributación conjunta
+                                        </label>
+                                        <span className="form-hint">Permite declarar con tu unidad familiar</span>
+                                    </div>
+                                    {fiscalForm.tributacion_conjunta && (
+                                        <div className="form-group">
+                                            <label>Tipo de unidad familiar</label>
+                                            <select className="form-input"
+                                                value={fiscalForm.tipo_unidad_familiar || 'matrimonio'}
+                                                onChange={e => updateFiscal('tipo_unidad_familiar', e.target.value)}>
+                                                <option value="matrimonio">Matrimonio (reducción 3.400 EUR)</option>
+                                                <option value="monoparental">Monoparental (reducción 2.150 EUR)</option>
+                                            </select>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* --- Ingresos del trabajo --- */}
@@ -586,6 +617,7 @@ export default function SettingsPage() {
                                 </button>
                                 {showInmuebles && (
                                     <div className="collapsible-content">
+                                        <h4 className="fiscal-subsection-title">Como arrendador (propietario)</h4>
                                         <div className="form-row">
                                             <div className="form-group">
                                                 <label>Ingresos por alquiler</label>
@@ -604,6 +636,52 @@ export default function SettingsPage() {
                                                         onChange={e => updateFiscal('valor_adquisicion_inmueble', e.target.value ? Number(e.target.value) : null)} />
                                                     <span className="input-suffix">EUR</span>
                                                 </div>
+                                            </div>
+                                        </div>
+
+                                        <h4 className="fiscal-subsection-title">Como inquilino (vivienda habitual)</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label>Alquiler anual pagado</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0"
+                                                        value={fiscalForm.alquiler_pagado_anual ?? ''}
+                                                        onChange={e => updateFiscal('alquiler_pagado_anual', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR/año</span>
+                                                </div>
+                                                <span className="form-hint">Necesario para deducciones autonómicas por alquiler</span>
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="checkbox-label">
+                                                    <input type="checkbox"
+                                                        checked={fiscalForm.alquiler_habitual_pre2015 || false}
+                                                        onChange={e => updateFiscal('alquiler_habitual_pre2015', e.target.checked)} />
+                                                    Contrato anterior al 1/1/2015
+                                                </label>
+                                                <span className="form-hint">Régimen transitorio estatal: deducción 10,05% (máx. 9.040 EUR)</span>
+                                            </div>
+                                        </div>
+
+                                        <h4 className="fiscal-subsection-title">Segundas viviendas</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label>Valor catastral segundas viviendas</label>
+                                                <div className="input-with-suffix">
+                                                    <input type="number" className="form-input" placeholder="0"
+                                                        value={fiscalForm.valor_catastral_segundas_viviendas ?? ''}
+                                                        onChange={e => updateFiscal('valor_catastral_segundas_viviendas', e.target.value ? Number(e.target.value) : null)} />
+                                                    <span className="input-suffix">EUR</span>
+                                                </div>
+                                                <span className="form-hint">Viviendas no alquiladas ni habitual. Imputa renta del 1,1%-2%</span>
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="checkbox-label">
+                                                    <input type="checkbox"
+                                                        checked={fiscalForm.valor_catastral_revisado_post1994 ?? true}
+                                                        onChange={e => updateFiscal('valor_catastral_revisado_post1994', e.target.checked)} />
+                                                    Valor catastral revisado después de 1994
+                                                </label>
+                                                <span className="form-hint">Si no fue revisado se aplica el 2% en lugar del 1,1%</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1001,7 +1079,7 @@ export default function SettingsPage() {
                                 </div>
                                 <p className="section-description">
                                     {subscription.status === 'grace_period'
-                                        ? 'Tienes acceso gratuito durante el periodo de gracia. Tu acceso continuara hasta el final del periodo.'
+                                        ? 'Tienes acceso gratuito durante el periodo de gracia. Tu acceso continuará hasta el final del periodo.'
                                         : `Plan ${subscription.planType || 'Particular'} activo.`}
                                 </p>
 

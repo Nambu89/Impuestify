@@ -7,6 +7,19 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-11] PM — DONE — Ortografia + dropdown CSS + seed foral calendario
+
+- **27 tildes corregidas** en 12 archivos frontend (autonomo, nomina, declaracion, estimacion, metodo, calculo, situacion, numero, regimen)
+- **Dropdown CSS oscuro**: `select.form-input option` con fondo #1e293b en SettingsPage
+- **Seed foral ejecutado**: 26 fechas forales 2026 en produccion Turso (Gipuzkoa 8, Bizkaia 5, Araba 5, Navarra 8)
+- **Total calendario**: 58 fechas 2026 (32 estatales + 26 forales)
+- **Guia fiscal fix**: StepInversiones + reindex switch cases + hasIncome guard para salario_base_mensual
+- **Deploy**: push main `b2079eb`, Railway auto-deploy OK
+- **Nota**: deploy anterior fallo con "Error configuring Network" (transitorio Railway, no es bug de codigo)
+- Commits: `2dd09ff`, `8f077d3`, `b2079eb`
+
+---
+
 ## [2026-03-11] PM — DONE — Fix 2 bugs reportados por Ramon Palomares (beta tester)
 
 - **Bug 1 (CRITICO): slowapi crash 500** en `/api/irpf/estimate` y `/api/irpf/deductions/discover`

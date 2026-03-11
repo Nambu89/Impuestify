@@ -49,7 +49,7 @@ GALICIA_2025 = [
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
             {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
         ]),
     },
@@ -79,20 +79,20 @@ GALICIA_2025 = [
         "max_amount": 300.0,
         "legal_reference": "Art. 7 Ley 15/2010 Galicia",
         "description": (
-            "10% de las cantidades satisfechas en el periodo, con maximo 300 EUR anuales. "
-            "Destinado a contribuyentes menores de 36 anyos. "
+            "10% de las cantidades satisfechas en el periodo, con máximo 300 EUR anuales. "
+            "Destinado a contribuyentes menores de 36 años. "
             "Base imponible menor o igual a 22.000 EUR individual / 31.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True, "menor_36_anos": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
         ]),
     },
     {
         "code": "GAL-CUIDADO-HIJOS",
-        "name": "Deduccion por cuidado de hijos menores de 3 anyos",
+        "name": "Deduccion por cuidado de hijos menores de 3 años",
         "type": "deduccion",
         "category": "familia",
         "percentage": 30.0,
@@ -100,14 +100,14 @@ GALICIA_2025 = [
         "legal_reference": "Art. 6 Ley 15/2010 Galicia",
         "description": (
             "30% de los gastos satisfechos en guarderias o centros de educacion infantil "
-            "para hijos menores de 3 anyos, con maximo de 400 EUR por hijo. "
+            "para hijos menores de 3 años, con máximo de 400 EUR por hijo. "
             "Requiere que ambos progenitores trabajen."
         ),
         "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
         "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 anyos?", "type": "bool"},
+            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 años?", "type": "bool"},
             {"key": "guarderia_autorizada", "text": "Estan en una guarderia o centro de educacion infantil?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este anyo?", "type": "number"},
+            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este año?", "type": "number"},
         ]),
     },
     {
@@ -158,14 +158,14 @@ GALICIA_2025 = [
         "legal_reference": "Art. 8 Ley 15/2010 Galicia",
         "description": (
             "7,5% de las cantidades pagadas por adquisicion de vivienda habitual para "
-            "contribuyentes menores de 36 anyos o familias numerosas. "
+            "contribuyentes menores de 36 años o familias numerosas. "
             "Tramo autonomico que complementa la DT 18a LIRPF cuando procede."
         ),
         "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
         "questions_json": json.dumps([
             {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
         ]),
     },
     {
@@ -207,8 +207,8 @@ ASTURIAS_2025 = [
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo, adoptado o acogido este anyo?", "type": "bool"},
-            {"key": "num_hijos_recientes", "text": "Cuantos hijos has tenido, adoptado o acogido este anyo?", "type": "number"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo, adoptado o acogido este año?", "type": "bool"},
+            {"key": "num_hijos_recientes", "text": "Cuantos hijos has tenido, adoptado o acogido este año?", "type": "number"},
         ]),
     },
     {
@@ -238,14 +238,14 @@ ASTURIAS_2025 = [
         "legal_reference": "Art. 8 Ley 4/2009 Asturias",
         "description": (
             "10% de las cantidades satisfechas por arrendamiento de vivienda habitual, "
-            "maximo 455 EUR. Incremento al 15% y 606 EUR para menores de 35, discapacitados mayor o igual al 65% "
+            "máximo 455 EUR. Incremento al 15% y 606 EUR para menores de 35, discapacitados mayor o igual al 65% "
             "o familias numerosas con BI menor o igual a 25.009 EUR."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 anyos?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
+            {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
         ]),
     },
     {
@@ -264,7 +264,7 @@ ASTURIAS_2025 = [
         "requirements_json": json.dumps({"vivienda_habitual_propiedad": True}),
         "questions_json": json.dumps([
             {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
         ]),
     },
     {
@@ -321,15 +321,15 @@ CANTABRIA_2025 = [
         "legal_reference": "Art. 5 Ley 6/2009 Cantabria",
         "description": (
             "10% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "con un maximo de 300 EUR anuales. Para menores de 35, discapacitados o familias "
-            "numerosas el porcentaje sube al 20% con maximo 600 EUR. "
+            "con un máximo de 300 EUR anuales. Para menores de 35, discapacitados o familias "
+            "numerosas el porcentaje sube al 20% con máximo 600 EUR. "
             "BI menor o igual a 22.946 EUR individual / 31.485 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 anyos?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
+            {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
         ]),
     },
     {
@@ -377,12 +377,12 @@ CANTABRIA_2025 = [
         "fixed_amount": 100.0,
         "legal_reference": "Art. 4 Ley 6/2009 Cantabria",
         "description": (
-            "100 EUR por tener a cargo a ascendientes mayores de 70 anyos o con discapacidad mayor o igual al 65% "
+            "100 EUR por tener a cargo a ascendientes mayores de 70 años o con discapacidad mayor o igual al 65% "
             "que convivan con el contribuyente y no tengan rentas superiores a 8.000 EUR."
         ),
         "requirements_json": json.dumps({"ascendiente_a_cargo": True}),
         "questions_json": json.dumps([
-            {"key": "ascendiente_a_cargo", "text": "Tienes padres u otros familiares mayores de 70 anyos o discapacitados a tu cargo?", "type": "bool"},
+            {"key": "ascendiente_a_cargo", "text": "Tienes padres u otros familiares mayores de 70 años o discapacitados a tu cargo?", "type": "bool"},
             {"key": "num_ascendientes", "text": "Cuantos familiares tienes a tu cargo?", "type": "number"},
         ]),
     },
@@ -400,8 +400,8 @@ CANTABRIA_2025 = [
         ),
         "requirements_json": json.dumps({"hijos_escolarizados": True}),
         "questions_json": json.dumps([
-            {"key": "hijos_escolarizados", "text": "Tienes hijos en edad escolar (6-16 anyos)?", "type": "bool"},
-            {"key": "gastos_educativos", "text": "Cuanto has gastado en libros, material y escolaridad este anyo?", "type": "number"},
+            {"key": "hijos_escolarizados", "text": "Tienes hijos en edad escolar (6-16 años)?", "type": "bool"},
+            {"key": "gastos_educativos", "text": "Cuanto has gastado en libros, material y escolaridad este año?", "type": "number"},
         ]),
     },
 ]
@@ -424,7 +424,7 @@ LA_RIOJA_2025 = [
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
             {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
         ]),
     },
@@ -438,14 +438,14 @@ LA_RIOJA_2025 = [
         "legal_reference": "Art. 9 Ley 10/2017 La Rioja",
         "description": (
             "Deduccion autonomica del 3% sobre las cantidades invertidas en la adquisicion "
-            "de vivienda habitual para contribuyentes menores de 36 anyos o familias numerosas "
+            "de vivienda habitual para contribuyentes menores de 36 años o familias numerosas "
             "como complemento al tramo autonomico. BI menor o igual a 18.030 EUR."
         ),
         "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
         "questions_json": json.dumps([
             {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
         ]),
     },
     {
@@ -458,7 +458,7 @@ LA_RIOJA_2025 = [
         "description": (
             "100 EUR para contribuyentes que contraten por primera vez acceso a Internet "
             "de banda ancha en municipios riojanos con menos de 3.000 habitantes. "
-            "Solo primer anyo de contratacion. BI menor o igual a 18.030 EUR."
+            "Solo primer año de contratacion. BI menor o igual a 18.030 EUR."
         ),
         "requirements_json": json.dumps({"primer_acceso_internet_rural": True}),
         "questions_json": json.dumps([
@@ -475,11 +475,11 @@ LA_RIOJA_2025 = [
         "legal_reference": "Art. 16 Ley 10/2017 La Rioja (modificada)",
         "description": (
             "15% del precio de adquisicion de una bicicleta de pedal con asistencia electrica "
-            "(pedelec), con maximo de 150 EUR. Para desplazamientos al trabajo o uso habitual."
+            "(pedelec), con máximo de 150 EUR. Para desplazamientos al trabajo o uso habitual."
         ),
         "requirements_json": json.dumps({"adquisicion_bici_electrica": True}),
         "questions_json": json.dumps([
-            {"key": "adquisicion_bici_electrica", "text": "Has comprado una bicicleta electrica (pedelec) este anyo?", "type": "bool"},
+            {"key": "adquisicion_bici_electrica", "text": "Has comprado una bicicleta electrica (pedelec) este año?", "type": "bool"},
             {"key": "precio_bici", "text": "Cuanto costo la bicicleta?", "type": "number"},
         ]),
     },
@@ -500,7 +500,7 @@ LA_RIOJA_2025 = [
         "requirements_json": json.dumps({"autonomo_domicilio": True}),
         "questions_json": json.dumps([
             {"key": "autonomo_domicilio", "text": "Eres autonomo y trabajas parcialmente desde tu domicilio?", "type": "bool"},
-            {"key": "gasto_suministros_hogar", "text": "Cuanto has pagado de suministros en tu hogar este anyo?", "type": "number"},
+            {"key": "gasto_suministros_hogar", "text": "Cuanto has pagado de suministros en tu hogar este año?", "type": "number"},
         ]),
     },
     {
@@ -512,14 +512,14 @@ LA_RIOJA_2025 = [
         "max_amount": 300.0,
         "legal_reference": "Art. 32.5 Ley 10/2017 La Rioja",
         "description": (
-            "10% del alquiler pagado por la vivienda habitual, maximo 300 EUR. "
+            "10% del alquiler pagado por la vivienda habitual, máximo 300 EUR. "
             "Menores de 36 anios: 20% max 400 EUR. "
             "BI menor o igual a 18.030 EUR individual / 30.050 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
         ]),
     },
 ]
@@ -543,7 +543,7 @@ ARAGON_2025 = [
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
             {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
             {"key": "municipio_rural", "text": "Resides en un municipio de menos de 10.000 habitantes?", "type": "bool"},
         ]),
@@ -562,7 +562,7 @@ ARAGON_2025 = [
         ),
         "requirements_json": json.dumps({"adopcion_internacional": True}),
         "questions_json": json.dumps([
-            {"key": "adopcion_internacional", "text": "Has adoptado un hijo en el extranjero este anyo?", "type": "bool"},
+            {"key": "adopcion_internacional", "text": "Has adoptado un hijo en el extranjero este año?", "type": "bool"},
         ]),
     },
     {
@@ -573,12 +573,12 @@ ARAGON_2025 = [
         "fixed_amount": 150.0,
         "legal_reference": "Art. 110-5 DL 1/2005 Aragon",
         "description": (
-            "150 EUR por cada persona mayor de 75 anyos o con grado de dependencia reconocido "
+            "150 EUR por cada persona mayor de 75 años o con grado de dependencia reconocido "
             "que conviva con el contribuyente y tenga rentas propias menores o iguales a 8.000 EUR anuales."
         ),
         "requirements_json": json.dumps({"familiar_dependiente_cargo": True}),
         "questions_json": json.dumps([
-            {"key": "familiar_dependiente_cargo", "text": "Tienes a tu cargo familiares mayores de 75 anyos o con dependencia reconocida?", "type": "bool"},
+            {"key": "familiar_dependiente_cargo", "text": "Tienes a tu cargo familiares mayores de 75 años o con dependencia reconocida?", "type": "bool"},
             {"key": "num_dependientes", "text": "Cuantos familiares dependientes tienes?", "type": "number"},
         ]),
     },
@@ -591,15 +591,15 @@ ARAGON_2025 = [
         "max_amount": 300.0,
         "legal_reference": "Art. 110-8 DL 1/2005 Aragon",
         "description": (
-            "10% del alquiler pagado, con un maximo de 300 EUR. Exclusivo para menores de "
-            "36 anyos o personas con discapacidad mayor o igual al 65%. "
+            "10% del alquiler pagado, con un máximo de 300 EUR. Exclusivo para menores de "
+            "36 años o personas con discapacidad mayor o igual al 65%. "
             "BI menor o igual a 35.000 EUR individual / 50.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
         ]),
     },
     {
@@ -618,7 +618,7 @@ ARAGON_2025 = [
         "requirements_json": json.dumps({"vivienda_rural_aragon": True}),
         "questions_json": json.dumps([
             {"key": "vivienda_rural_aragon", "text": "Has comprado tu vivienda habitual en un municipio aragones con menos de 3.000 habitantes?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
         ]),
     },
     {
@@ -650,14 +650,14 @@ ARAGON_2025 = [
         "legal_reference": "Art. 110-12 DL 1/2005 Aragon",
         "description": (
             "15% de los gastos satisfechos en guarderias o centros de educacion infantil "
-            "de primer ciclo para hijos menores de 3 anyos. Maximo 300 EUR por hijo. "
+            "de primer ciclo para hijos menores de 3 años. Maximo 300 EUR por hijo. "
             "BI menor o igual a 35.000 EUR individual / 50.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
         "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 anyos?", "type": "bool"},
+            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 años?", "type": "bool"},
             {"key": "guarderia_autorizada", "text": "Estan en una guarderia autorizada?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este anyo?", "type": "number"},
+            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este año?", "type": "number"},
         ]),
     },
     {
@@ -669,7 +669,7 @@ ARAGON_2025 = [
         "max_amount": 4800.0,
         "legal_reference": "Art. 110-10 DL 1/2005 Aragon",
         "description": (
-            "10% del alquiler pagado (maximo 4.800 EUR anuales, es decir hasta 480 EUR de deduccion) "
+            "10% del alquiler pagado (máximo 4.800 EUR anuales, es decir hasta 480 EUR de deduccion) "
             "cuando el contribuyente entrego su vivienda al banco mediante dacion en pago y luego "
             "firmo un contrato de arrendamiento con opcion de compra sobre la misma vivienda. "
             "BI menor o igual a 15.000 EUR individual / 25.000 EUR conjunta. "
@@ -678,7 +678,7 @@ ARAGON_2025 = [
         "requirements_json": json.dumps({"dacion_pago_alquiler": True}),
         "questions_json": json.dumps([
             {"key": "dacion_pago_alquiler", "text": "Entregaste tu vivienda al banco (dacion en pago) y ahora la alquilas con opcion de compra?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
         ]),
     },
     {
@@ -740,7 +740,7 @@ CASTILLA_Y_LEON_2025 = [
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
             {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
         ]),
     },
@@ -752,15 +752,15 @@ CASTILLA_Y_LEON_2025 = [
         "fixed_amount": 312.0,
         "legal_reference": "Art. 7 Ley 7/2022 CyL",
         "description": (
-            "312 EUR por cada hijo menor de 4 anyos cuando ambos progenitores trabajen "
+            "312 EUR por cada hijo menor de 4 años cuando ambos progenitores trabajen "
             "y no haya forma de atencion gratuita. Aplicable tambien para hijos de 4 a 16 "
-            "anyos durante el periodo de vacaciones escolares."
+            "años durante el periodo de vacaciones escolares."
         ),
         "requirements_json": json.dumps({"hijo_menor_4": True, "ambos_progenitores_trabajan": True}),
         "questions_json": json.dumps([
-            {"key": "hijo_menor_4", "text": "Tienes hijos menores de 4 anyos?", "type": "bool"},
+            {"key": "hijo_menor_4", "text": "Tienes hijos menores de 4 años?", "type": "bool"},
             {"key": "ambos_progenitores_trabajan", "text": "Trabajais ambos progenitores?", "type": "bool"},
-            {"key": "num_hijos_menores", "text": "Cuantos hijos menores de 4 anyos tienes?", "type": "number"},
+            {"key": "num_hijos_menores", "text": "Cuantos hijos menores de 4 años tienes?", "type": "number"},
         ]),
     },
     {
@@ -773,14 +773,14 @@ CASTILLA_Y_LEON_2025 = [
         "legal_reference": "Art. 9 Decreto Leg. 1/2013 CyL",
         "description": (
             "7,5% de las cantidades satisfechas por adquisicion de vivienda habitual "
-            "para contribuyentes menores de 36 anyos o residentes en municipios de riesgo "
+            "para contribuyentes menores de 36 años o residentes en municipios de riesgo "
             "de despoblacion. BI menor o igual a 18.900 EUR."
         ),
         "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
         "questions_json": json.dumps([
             {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
         ]),
     },
     {
@@ -793,13 +793,13 @@ CASTILLA_Y_LEON_2025 = [
         "legal_reference": "Art. 8 Decreto Leg. 1/2013 CyL",
         "description": (
             "15% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "con maximo de 459 EUR anuales (918 EUR en tributacion conjunta). "
+            "con máximo de 459 EUR anuales (918 EUR en tributacion conjunta). "
             "BI menor o igual a 18.900 EUR individual / 31.500 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
         ]),
     },
     {
@@ -841,7 +841,7 @@ CASTILLA_LA_MANCHA_2025 = [
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
             {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
             {"key": "municipio_rural", "text": "Resides en un municipio de menos de 2.500 habitantes?", "type": "bool"},
         ]),
@@ -891,13 +891,13 @@ CASTILLA_LA_MANCHA_2025 = [
         "legal_reference": "Art. 7 Ley 8/2013 CLM",
         "description": (
             "15% de los gastos de escolaridad, libros de texto y ensenanza de idiomas "
-            "para hijos en etapas de educacion obligatoria, maximo 300 EUR por hijo. "
+            "para hijos en etapas de educacion obligatoria, máximo 300 EUR por hijo. "
             "BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hijos_escolarizados": True}),
         "questions_json": json.dumps([
             {"key": "hijos_escolarizados", "text": "Tienes hijos en etapas de educacion obligatoria?", "type": "bool"},
-            {"key": "gastos_educativos", "text": "Cuanto has gastado en educacion este anyo?", "type": "number"},
+            {"key": "gastos_educativos", "text": "Cuanto has gastado en educacion este año?", "type": "number"},
         ]),
     },
     {
@@ -910,13 +910,13 @@ CASTILLA_LA_MANCHA_2025 = [
         "legal_reference": "Art. 8 Ley 8/2013 CLM",
         "description": (
             "15% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "con maximo de 450 EUR. Para menores de 36 anyos, mayores de 65 o con discapacidad. "
+            "con máximo de 450 EUR. Para menores de 36 años, mayores de 65 o con discapacidad. "
             "BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
         ]),
     },
 ]
@@ -953,13 +953,13 @@ EXTREMADURA_2025 = [
         "legal_reference": "Art. 9 DL 1/2018 Extremadura",
         "description": (
             "8% sobre las cantidades satisfechas en la adquisicion de vivienda habitual "
-            "para contribuyentes menores de 35 anyos. BI menor o igual a 19.000 EUR individual / 24.000 EUR conjunta."
+            "para contribuyentes menores de 35 años. BI menor o igual a 19.000 EUR individual / 24.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_35_anos": True}),
         "questions_json": json.dumps([
             {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 anyos?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+            {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
         ]),
     },
     {
@@ -1008,14 +1008,14 @@ EXTREMADURA_2025 = [
         "legal_reference": "Art. 10 DL 1/2018 Extremadura",
         "description": (
             "10% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "con maximo de 300 EUR. Para menores de 36 anyos o discapacitados. "
+            "con máximo de 300 EUR. Para menores de 36 años o discapacitados. "
             "BI menor o igual a 19.000 EUR individual / 24.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
         ]),
     },
 ]
@@ -1035,15 +1035,15 @@ MURCIA_2025 = [
         "legal_reference": "Art. 2 DL 1/2010 Murcia",
         "description": (
             "3% adicional sobre la cuota estatal de la deduccion por vivienda para "
-            "contribuyentes menores de 35 anyos. Aplicable junto con el regimen transitorio "
+            "contribuyentes menores de 35 años. Aplicable junto con el regimen transitorio "
             "estatal (DT 18a LIRPF) para adquisiciones anteriores a 2013. "
             "BI menor o igual a 24.000 EUR individual."
         ),
         "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_35_anos": True}),
         "questions_json": json.dumps([
             {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca anterior a 2013?", "type": "bool"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 anyos?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+            {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
         ]),
     },
     {
@@ -1056,14 +1056,14 @@ MURCIA_2025 = [
         "legal_reference": "Art. 4 DL 1/2010 Murcia",
         "description": (
             "15% de los gastos de guarderia o centros de educacion infantil para hijos "
-            "menores de 3 anyos, con maximo de 330 EUR por hijo. "
+            "menores de 3 años, con máximo de 330 EUR por hijo. "
             "BI menor o igual a 45.000 EUR individual / 60.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
         "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 anyos?", "type": "bool"},
+            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 años?", "type": "bool"},
             {"key": "guarderia_autorizada", "text": "Estan en una guarderia autorizada?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este anyo?", "type": "number"},
+            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este año?", "type": "number"},
         ]),
     },
     {
@@ -1130,14 +1130,14 @@ MURCIA_2025 = [
         "max_amount": 300.0,
         "legal_reference": "Art. 3 DL 1/2010 Murcia",
         "description": (
-            "10% del alquiler pagado por la vivienda habitual, maximo 300 EUR. "
+            "10% del alquiler pagado por la vivienda habitual, máximo 300 EUR. "
             "Menores de 35 anios: 20% max 600 EUR. "
             "BI menor o igual a 24.000 EUR individual / 33.600 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
         ]),
     },
 ]
@@ -1176,11 +1176,11 @@ BALEARES_2025 = [
         "description": (
             "15% de los gastos de matricula en escuelas oficiales de idiomas o centros "
             "reconocidos para la obtencion de certificados de idiomas (B2 o superior), "
-            "maximo 100 EUR. BI menor o igual a 25.000 EUR individual / 45.000 EUR conjunta."
+            "máximo 100 EUR. BI menor o igual a 25.000 EUR individual / 45.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"gastos_idiomas": True}),
         "questions_json": json.dumps([
-            {"key": "gastos_idiomas", "text": "Has pagado clases o examenes de certificacion de idiomas este anyo?", "type": "bool"},
+            {"key": "gastos_idiomas", "text": "Has pagado clases o examenes de certificacion de idiomas este año?", "type": "bool"},
             {"key": "importe_idiomas", "text": "Cuanto has gastado en idiomas?", "type": "number"},
         ]),
     },
@@ -1194,14 +1194,14 @@ BALEARES_2025 = [
         "legal_reference": "Art. 3 Ley 3/2022 Baleares",
         "description": (
             "15% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "maximo 440 EUR (880 EUR en conjunta). Para contribuyentes con BI menor o igual a 25.000 EUR individual "
-            "/ 45.000 EUR conjunta. Incremento hasta 650 EUR para menores de 36 anyos."
+            "máximo 440 EUR (880 EUR en conjunta). Para contribuyentes con BI menor o igual a 25.000 EUR individual "
+            "/ 45.000 EUR conjunta. Incremento hasta 650 EUR para menores de 36 años."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 anyos?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
+            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
         ]),
     },
     {
@@ -1252,13 +1252,13 @@ BALEARES_2025 = [
         "legal_reference": "Art. 6 Ley 3/2022 Baleares",
         "description": (
             "15% de las primas pagadas por seguros de vida y enfermedad para el contribuyente "
-            "y/o su conyuge, maximo 200 EUR. Excluye seguros cubiertos por el empleador. "
+            "y/o su conyuge, máximo 200 EUR. Excluye seguros cubiertos por el empleador. "
             "BI menor o igual a 25.000 EUR individual / 45.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"seguros_salud": True}),
         "questions_json": json.dumps([
             {"key": "seguros_salud", "text": "Pagas primas de seguros de vida o enfermedad por tu cuenta?", "type": "bool"},
-            {"key": "importe_primas", "text": "Cuanto has pagado de primas de seguro este anyo?", "type": "number"},
+            {"key": "importe_primas", "text": "Cuanto has pagado de primas de seguro este año?", "type": "number"},
         ]),
     },
 ]
@@ -1281,7 +1281,7 @@ CANARIAS_2025 = [
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este anyo?", "type": "bool"},
+            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
             {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
         ]),
     },
@@ -1339,7 +1339,7 @@ CANARIAS_2025 = [
         "questions_json": json.dumps([
             {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
             {"key": "adquisicion_antes_2013", "text": "La adquiriste antes del 1 de enero de 2013?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al anyo de hipoteca?", "type": "number"},
+            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
         ]),
     },
     {
@@ -1377,7 +1377,7 @@ CANARIAS_2025 = [
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
         ]),
     },
     {
