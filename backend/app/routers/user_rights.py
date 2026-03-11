@@ -135,6 +135,26 @@ class FiscalProfileRequest(BaseModel):
     pension_viudedad: Optional[bool] = None
     reduccion_jornada_cuidado: Optional[bool] = None
     cuenta_vivienda_aportaciones: Optional[float] = None
+    # --- Activity income (autonomo IRPF fields used by tax guide) ---
+    ingresos_actividad: Optional[float] = None
+    gastos_actividad: Optional[float] = None
+    cuota_autonomo_anual: Optional[float] = None
+    amortizaciones_actividad: Optional[float] = None
+    provisiones_actividad: Optional[float] = None
+    otros_gastos_actividad: Optional[float] = None
+    estimacion_actividad: Optional[str] = None  # "directa_simplificada" | "directa_normal" | "objetiva"
+    inicio_actividad: Optional[bool] = None
+    un_solo_cliente: Optional[bool] = None
+    retenciones_actividad: Optional[float] = None
+    pagos_fraccionados_130: Optional[float] = None
+    # --- Phase 2: Tributación conjunta + alquiler pre-2015 + rentas imputadas ---
+    tributacion_conjunta: Optional[bool] = None
+    tipo_unidad_familiar: Optional[str] = None  # "matrimonio" | "monoparental"
+    alquiler_habitual_pre2015: Optional[bool] = None
+    alquiler_pagado_anual: Optional[float] = None
+    valor_catastral_segundas_viviendas: Optional[float] = None
+    valor_catastral_revisado_post1994: Optional[bool] = None
+    gastos_alquiler_total: Optional[float] = None
     # --- Criptomonedas (casillas 1800-1814 Modelo 100) ---
     tiene_criptomonedas: Optional[bool] = None
     cripto_denominaciones: Optional[str] = None
@@ -472,6 +492,16 @@ _DATOS_FISCALES_KEYS = {
     # Sprint 1: Foral
     "epsv_aportaciones", "pension_viudedad",
     "reduccion_jornada_cuidado", "cuenta_vivienda_aportaciones",
+    # Activity income (autonomo IRPF)
+    "ingresos_actividad", "gastos_actividad", "cuota_autonomo_anual",
+    "amortizaciones_actividad", "provisiones_actividad", "otros_gastos_actividad",
+    "estimacion_actividad", "inicio_actividad", "un_solo_cliente",
+    "retenciones_actividad", "pagos_fraccionados_130",
+    # Phase 2: Tributación conjunta + alquiler pre-2015 + rentas imputadas
+    "tributacion_conjunta", "tipo_unidad_familiar",
+    "alquiler_habitual_pre2015", "alquiler_pagado_anual",
+    "valor_catastral_segundas_viviendas", "valor_catastral_revisado_post1994",
+    "gastos_alquiler_total",
     # Criptomonedas (casillas 1800-1814 Modelo 100)
     "tiene_criptomonedas", "cripto_denominaciones", "cripto_clave_contraprestacion",
     "cripto_valor_transmision_total", "cripto_valor_adquisicion_total",
@@ -486,6 +516,10 @@ _DATOS_FISCALES_KEYS = {
     "tiene_fondos_inversion", "ganancias_reembolso_fondos", "perdidas_reembolso_fondos",
     "tiene_acciones", "ganancias_acciones", "perdidas_acciones",
     "tiene_derivados", "ganancias_derivados", "perdidas_derivados",
+    # Fase 5: Datos para deducciones autonómicas
+    "donativos_autonomicos", "gastos_educativos", "inversion_vivienda",
+    "instalacion_renovable_importe", "vehiculo_electrico_importe",
+    "obras_mejora_importe", "cotizaciones_empleada_hogar",
 }
 
 

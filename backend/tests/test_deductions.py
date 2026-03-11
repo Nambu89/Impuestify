@@ -386,6 +386,97 @@ class TestDeductionIntegration:
         assert len(result["maybe_eligible"]) == 1
         assert result["maybe_eligible"][0]["code"] == "EST-VIV-HAB"
 
+    def test_compute_ccaa_fixed_amount_deduction(self):
+        """Fixed-amount CCAA deduction should return the fixed amount."""
+        from app.services.deduction_service import DeductionService
+
+        service = DeductionService()
+        eligible = [
+            {"code": "MAD-NACIMIENTO", "name": "Nacimiento Madrid", "scope": "territorial",
+             "fixed_amount": 721.70, "percentage": None, "max_amount": None},
+        ]
+        result = service.compute_ccaa_deduction_amounts(eligible, {})
+        assert len(result) == 1
+        assert result[0]["code"] == "MAD-NACIMIENTO"
+        assert result[0]["amount"] == 721.70
+
+    def test_compute_ccaa_rent_deduction(self):
+        """Percentage-based rent deduction should compute from alquiler_pagado_anual."""
+        from app.services.deduction_service import DeductionService
+
+        service = DeductionService()
+        eligible = [
+            {"code": "MAD-ALQUILER-VIV", "name": "Alquiler Madrid", "scope": "territorial",
+             "fixed_amount": None, "percentage": 30.0, "max_amount": 1237.20},
+        ]
+        user_data = {"alquiler_pagado_anual": 9600}  # 800/month
+        result = service.compute_ccaa_deduction_amounts(eligible, user_data)
+        assert len(result) == 1
+        # 30% of 9600 = 2880, capped at 1237.20
+        assert result[0]["amount"] == 1237.20
+
+    def test_compute_ccaa_rent_deduction_below_max(self):
+        """Rent deduction below max should not be capped."""
+        from app.services.deduction_service import DeductionService
+
+        service = DeductionService()
+        eligible = [
+            {"code": "AND-ALQUILER-VIV", "name": "Alquiler Andalucia", "scope": "territorial",
+             "fixed_amount": None, "percentage": 15.0, "max_amount": 600.0},
+        ]
+        user_data = {"alquiler_pagado_anual": 3000}  # 250/month
+        result = service.compute_ccaa_deduction_amounts(eligible, user_data)
+        assert len(result) == 1
+        # 15% of 3000 = 450, below max 600
+        assert result[0]["amount"] == 450.0
+
+    def test_compute_ccaa_skips_estatal_deductions(self):
+        """Should skip estatal deductions (handled by simulator)."""
+        from app.services.deduction_service import DeductionService
+
+        service = DeductionService()
+        eligible = [
+            {"code": "EST-MAT-1200", "name": "Maternidad", "scope": "Estatal",
+             "fixed_amount": 1200, "percentage": None, "max_amount": None},
+            {"code": "MAD-NACIMIENTO", "name": "Nacimiento Madrid", "scope": "territorial",
+             "fixed_amount": 721.70, "percentage": None, "max_amount": None},
+        ]
+        result = service.compute_ccaa_deduction_amounts(eligible, {})
+        assert len(result) == 1
+        assert result[0]["code"] == "MAD-NACIMIENTO"
+
+    def test_compute_ccaa_multiple_deductions(self):
+        """Should compute multiple CCAA deductions and sum them."""
+        from app.services.deduction_service import DeductionService
+
+        service = DeductionService()
+        eligible = [
+            {"code": "VAL-NACIMIENTO", "name": "Nacimiento Valencia", "scope": "territorial",
+             "fixed_amount": 300.0, "percentage": None, "max_amount": None},
+            {"code": "VAL-ALQUILER-VIV", "name": "Alquiler Valencia", "scope": "territorial",
+             "fixed_amount": None, "percentage": 20.0, "max_amount": 950.0},
+            {"code": "VAL-GUARDERIA", "name": "Guarderia Valencia", "scope": "territorial",
+             "fixed_amount": 298.0, "percentage": None, "max_amount": None},
+        ]
+        user_data = {"alquiler_pagado_anual": 7200}
+        result = service.compute_ccaa_deduction_amounts(eligible, user_data)
+        assert len(result) == 3
+        total = sum(d["amount"] for d in result)
+        # 300 + min(20%*7200, 950) + 298 = 300 + 950 + 298 = 1548
+        assert total == 1548.0
+
+    def test_compute_ccaa_zero_user_data(self):
+        """Percentage deductions with no user data should be skipped."""
+        from app.services.deduction_service import DeductionService
+
+        service = DeductionService()
+        eligible = [
+            {"code": "GAL-ALQUILER-VIV", "name": "Alquiler Galicia", "scope": "territorial",
+             "fixed_amount": None, "percentage": 10.0, "max_amount": 300.0},
+        ]
+        result = service.compute_ccaa_deduction_amounts(eligible, {})
+        assert len(result) == 0  # No rent data → no deduction
+
     @pytest.mark.asyncio
     async def test_deduction_no_requirements_is_maybe(self):
         """Deductions without requirements should be 'maybe_eligible'."""

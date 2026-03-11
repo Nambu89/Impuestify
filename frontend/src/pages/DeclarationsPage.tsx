@@ -181,7 +181,7 @@ function Form130({ data, onChange, territory }: {
                     </div>
                     {territory === 'Bizkaia' && (
                         <div className="decl-form__grid">
-                            <NumberInput label="Anos de actividad" value={data.anos_actividad || 3} onChange={v => u('anos_actividad', v)} step={1} help="Primeros 2 anos: regimen especial" />
+                            <NumberInput label="Años de actividad" value={data.anos_actividad || 3} onChange={v => u('anos_actividad', v)} step={1} help="Primeros 2 años: régimen especial" />
                         </div>
                     )}
                 </>

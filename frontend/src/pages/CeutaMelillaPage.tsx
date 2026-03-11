@@ -182,7 +182,7 @@ export default function CeutaMelillaPage() {
                     <FadeContent delay={400} duration={800}>
                         <img
                             src="/images/hero-ceuta-melilla.webp"
-                            alt="Ilustracion isometrica de Ceuta y Melilla con el 60% de deduccion IRPF"
+                            alt="Ilustración isométrica de Ceuta y Melilla con el 60% de deducción IRPF"
                             className="ceuta-hero__image"
                             loading="lazy"
                             width={1376}

@@ -366,6 +366,179 @@ class DeductionService:
 
         return answers
 
+    def compute_ccaa_deduction_amounts(
+        self,
+        eligible: List[Dict[str, Any]],
+        user_data: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        """
+        Compute exact EUR amounts for eligible CCAA deductions.
+
+        Takes eligible deductions (from evaluate_eligibility) and the user's
+        financial data to compute exact deduction amounts. Only computes
+        CCAA/territorial deductions (scope != 'estatal'), since estatal
+        deductions are already handled by the simulator.
+
+        Args:
+            eligible: List of eligible deduction dicts (from evaluate_eligibility).
+            user_data: Dict with user financial data:
+                - alquiler_pagado_anual: Annual rent paid
+                - edad_contribuyente: Taxpayer age
+                - num_descendientes: Number of children
+                - anios_nacimiento_desc: Birth years of children
+                - donativos_autonomicos: Donations to CCAA entities
+                - gastos_guarderia_anual: Annual childcare expenses
+                - gastos_educativos: Educational expenses
+                - base_imponible: Approximate gross income (for threshold checks)
+                - inversion_vivienda: Housing investment amount
+                - instalacion_renovable_importe: Renewable energy investment
+                - vehiculo_electrico_importe: Electric vehicle purchase amount
+                - obras_mejora_importe: Energy improvement works amount
+                - cotizaciones_empleada_hogar: Domestic employee SS contributions
+
+        Returns:
+            List of {code, name, amount, description} dicts for applied deductions.
+        """
+        results = []
+        alquiler = user_data.get("alquiler_pagado_anual", 0) or 0
+        edad = user_data.get("edad_contribuyente", 35) or 35
+        num_desc = user_data.get("num_descendientes", 0) or 0
+        nacimientos = user_data.get("anios_nacimiento_desc", []) or []
+        donativos_aut = user_data.get("donativos_autonomicos", 0) or 0
+        guarderia = user_data.get("gastos_guarderia_anual", 0) or 0
+        gastos_educ = user_data.get("gastos_educativos", 0) or 0
+        bi = user_data.get("base_imponible", 0) or 0
+        inversion_viv = user_data.get("inversion_vivienda", 0) or 0
+        renovable = user_data.get("instalacion_renovable_importe", 0) or 0
+        vehiculo_elec = user_data.get("vehiculo_electrico_importe", 0) or 0
+        obras_mejora = user_data.get("obras_mejora_importe", 0) or 0
+        cotiz_empleada = user_data.get("cotizaciones_empleada_hogar", 0) or 0
+        year = user_data.get("year", 2025)
+
+        for d in eligible:
+            # Skip estatal deductions — handled by simulator
+            scope = d.get("scope", d.get("territory", ""))
+            if scope == "Estatal" or d.get("code", "").startswith("EST-"):
+                continue
+
+            code = d.get("code", "")
+            name = d.get("name", "")
+            fixed = d.get("fixed_amount") or 0
+            pct = d.get("percentage") or 0
+            max_amt = d.get("max_amount") or 0
+            amount = 0.0
+
+            # --- Fixed-amount deductions (nacimiento, familia numerosa, etc.) ---
+            if fixed > 0 and pct == 0:
+                amount = fixed
+
+            # --- Percentage-based deductions (need user data to compute) ---
+            elif pct > 0:
+                # Rent deductions (alquiler vivienda habitual)
+                if "ALQUILER" in code or "ARRENDAMIENTO" in code or "VIVIENDA" in code.upper():
+                    if alquiler > 0:
+                        base = alquiler
+                        if max_amt > 0:
+                            # max_amount is the cap on the DEDUCTION, not the base
+                            amount = min(alquiler * pct / 100, max_amt)
+                        else:
+                            amount = alquiler * pct / 100
+
+                # Housing investment / purchase
+                elif "VIV-JOVEN" in code or "VIV-HABITUAL" in code or "ADQUISICION-VIV" in code or "COMPRA-VIV" in code:
+                    if inversion_viv > 0:
+                        base = min(inversion_viv, max_amt) if max_amt > 0 else inversion_viv
+                        amount = base * pct / 100
+
+                # Childcare (guarderia)
+                elif "GUARDERIA" in code or "CUIDADO-HIJOS" in code:
+                    if guarderia > 0:
+                        base = guarderia
+                        if max_amt > 0:
+                            amount = min(base * pct / 100, max_amt)
+                        else:
+                            amount = base * pct / 100
+
+                # Educational expenses
+                elif "GASTOS-EDUC" in code or "LIBROS" in code or "MAT-ESCOLAR" in code:
+                    if gastos_educ > 0:
+                        base = gastos_educ
+                        if max_amt > 0:
+                            amount = min(base * pct / 100, max_amt)
+                        else:
+                            amount = base * pct / 100
+
+                # Donations
+                elif "DONAT" in code or "DONAC" in code:
+                    if donativos_aut > 0:
+                        base = donativos_aut
+                        if max_amt > 0:
+                            amount = min(base * pct / 100, max_amt)
+                        else:
+                            amount = base * pct / 100
+
+                # Renewable energy installations
+                elif "RENOVABLE" in code or "SOSTENIBILIDAD" in code or "FOTOVOLT" in code:
+                    if renovable > 0:
+                        base = renovable
+                        if max_amt > 0:
+                            amount = min(base * pct / 100, max_amt)
+                        else:
+                            amount = base * pct / 100
+
+                # Electric vehicle
+                elif "VEH-ELEC" in code or "BICI" in code:
+                    if vehiculo_elec > 0:
+                        base = vehiculo_elec
+                        if max_amt > 0:
+                            amount = min(base * pct / 100, max_amt)
+                        else:
+                            amount = base * pct / 100
+
+                # Energy improvement works (rehabilitacion)
+                elif "REHAB" in code or "OBRAS-MEJORA" in code or "MEDIOAMBIENTE" in code:
+                    if obras_mejora > 0:
+                        base = min(obras_mejora, max_amt) if max_amt > 0 else obras_mejora
+                        amount = base * pct / 100
+
+                # Domestic employee (empleada hogar)
+                elif "CUIDADO-HIJOS" in code or "AYUDA-DOMESTICA" in code or "EMPLEADA" in code:
+                    if cotiz_empleada > 0:
+                        base = cotiz_empleada
+                        if max_amt > 0:
+                            amount = min(base * pct / 100, max_amt)
+                        else:
+                            amount = base * pct / 100
+
+                # Enterprise investment
+                elif "INVERSION-EMPRESA" in code:
+                    # Use max_amount as conservative estimate
+                    if max_amt > 0:
+                        amount = max_amt
+
+                # Generic percentage-based: compute from max_amount as base
+                else:
+                    if max_amt > 0:
+                        amount = max_amt * pct / 100
+                    elif pct > 0:
+                        # Cannot compute without a base — skip
+                        continue
+
+            # Skip zero amounts
+            if amount <= 0:
+                continue
+
+            results.append({
+                "code": code,
+                "name": name,
+                "amount": round(amount, 2),
+                "percentage": pct,
+                "max_amount": max_amt,
+                "fixed_amount": fixed,
+            })
+
+        return results
+
     def _summarize(self, d: Dict[str, Any]) -> Dict[str, Any]:
         """Create a summary dict for a deduction (without internal fields)."""
         summary = {

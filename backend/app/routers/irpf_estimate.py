@@ -4,12 +4,15 @@ Lightweight IRPF estimation endpoint for the Tax Guide live estimator.
 Does NOT go through the LLM agent — directly calls IRPFSimulator for
 fast (~50-100ms) real-time estimates as users fill in the wizard.
 """
+import logging
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.auth.jwt_handler import get_current_user, TokenData
 from app.security.rate_limiter import limiter
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/irpf", tags=["irpf"])
 
@@ -91,6 +94,16 @@ class IRPFEstimateRequest(BaseModel):
     # Fase 4: Loterías públicas (gravamen especial 20%, exentos primeros 40.000 EUR)
     premios_metalico_publicos: float = 0
     premios_especie_publicos: float = 0
+    # Fase 5: Datos para deducciones autonómicas (from DynamicFiscalForm)
+    deducciones_answers: dict = Field(default_factory=dict)
+    # User data for computing CCAA deduction amounts
+    donativos_autonomicos: float = 0
+    gastos_educativos: float = 0
+    inversion_vivienda: float = 0
+    instalacion_renovable_importe: float = 0
+    vehiculo_electrico_importe: float = 0
+    obras_mejora_importe: float = 0
+    cotizaciones_empleada_hogar: float = 0
 
 
 class IRPFBreakdown(BaseModel):
@@ -137,6 +150,9 @@ class IRPFEstimateResponse(BaseModel):
     # Fase 4
     ganancias_juegos_netas: float = 0
     gravamen_especial_loterias: float = 0
+    # Fase 5: Deducciones autonómicas
+    deducciones_autonomicas: List[dict] = Field(default_factory=list)
+    total_deducciones_autonomicas: float = 0
     trabajo: Optional[IRPFBreakdown] = None
     actividad: Optional[ActivityBreakdown] = None
     error: Optional[str] = None
@@ -174,6 +190,65 @@ async def estimate_irpf(
             retenciones_trabajo = ingresos_trabajo * body.irpf_retenido_porcentaje / 100
 
         simulator = IRPFSimulator(db)
+
+        # --- Compute CCAA deductions before simulation ---
+        from app.services.deduction_service import get_deduction_service, DeductionService
+
+        deduction_service = get_deduction_service()
+        ccaa_deductions_list = []
+        total_ccaa_deductions = 0.0
+
+        try:
+            # Build answers: merge profile-derived booleans + explicit answers from frontend
+            profile_for_answers = {
+                "num_descendientes": body.num_descendientes,
+                "num_ascendientes_65": body.num_ascendientes_65,
+                "num_ascendientes_75": body.num_ascendientes_75,
+                "discapacidad_contribuyente": body.discapacidad_contribuyente,
+                "familia_numerosa": body.familia_numerosa,
+                "madre_trabajadora_ss": body.madre_trabajadora_ss,
+                "ceuta_melilla": ceuta_melilla,
+                "hipoteca_pre2013": body.hipoteca_pre2013,
+                "aportaciones_plan_pensiones": body.aportaciones_plan_pensiones,
+                "donativos_ley_49_2002": body.donativos_ley_49_2002,
+                "alquiler_vivienda_habitual": body.alquiler_pagado_anual > 0,
+            }
+            answers = DeductionService.build_answers_from_profile(profile_for_answers, ccaa)
+            # Merge explicit answers from frontend DynamicFiscalForm
+            answers.update(body.deducciones_answers)
+
+            # Evaluate eligibility
+            eval_result = await deduction_service.evaluate_eligibility(
+                ccaa=ccaa,
+                tax_year=body.year,
+                answers=answers,
+            )
+
+            # Compute exact amounts for eligible CCAA deductions
+            user_data = {
+                "alquiler_pagado_anual": body.alquiler_pagado_anual,
+                "edad_contribuyente": body.edad_contribuyente,
+                "num_descendientes": body.num_descendientes,
+                "anios_nacimiento_desc": body.anios_nacimiento_desc,
+                "donativos_autonomicos": body.donativos_autonomicos,
+                "gastos_guarderia_anual": body.gastos_guarderia_anual,
+                "gastos_educativos": body.gastos_educativos,
+                "base_imponible": ingresos_trabajo + body.ingresos_actividad,
+                "inversion_vivienda": body.inversion_vivienda,
+                "instalacion_renovable_importe": body.instalacion_renovable_importe,
+                "vehiculo_electrico_importe": body.vehiculo_electrico_importe,
+                "obras_mejora_importe": body.obras_mejora_importe,
+                "cotizaciones_empleada_hogar": body.cotizaciones_empleada_hogar,
+                "year": body.year,
+            }
+            ccaa_deductions_list = deduction_service.compute_ccaa_deduction_amounts(
+                eligible=eval_result.get("eligible", []),
+                user_data=user_data,
+            )
+            total_ccaa_deductions = sum(d["amount"] for d in ccaa_deductions_list)
+        except Exception as e:
+            logger.warning("CCAA deduction computation failed (non-fatal): %s", e)
+            # Non-fatal: continue simulation without CCAA deductions
 
         # Build common simulation kwargs
         sim_kwargs = dict(
@@ -242,6 +317,10 @@ async def estimate_irpf(
             perdidas_juegos_privados=body.perdidas_juegos_privados,
             premios_metalico_publicos=body.premios_metalico_publicos,
             premios_especie_publicos=body.premios_especie_publicos,
+            # Retenciones del trabajo (calculadas arriba desde % o valor directo)
+            retenciones_trabajo=retenciones_trabajo,
+            # Fase 5: deducciones autonómicas pre-computed
+            deducciones_autonomicas_total=total_ccaa_deductions,
         )
 
         # Try requested year, fallback to year-1
@@ -250,10 +329,10 @@ async def estimate_irpf(
         except ValueError:
             result = await simulator.simulate(year=body.year - 1, **sim_kwargs)
 
-        # Use cuota_diferencial from simulator if available (includes all retenciones)
+        # cuota_diferencial now includes ALL retenciones (trabajo + alquiler + ahorro + actividad + 130)
         cuota_total = result.get("cuota_total", 0)
-        resultado = result.get("cuota_diferencial", cuota_total - retenciones_trabajo)
-        retenciones = result.get("total_retenciones", retenciones_trabajo)
+        resultado = result.get("cuota_diferencial", 0)
+        retenciones = result.get("total_retenciones", 0)
 
         trabajo = result.get("trabajo", {})
         actividad = result.get("actividad", {})
@@ -288,6 +367,8 @@ async def estimate_irpf(
             renta_imputada_inmuebles=round(result.get("renta_imputada_inmuebles", 0), 2),
             ganancias_juegos_netas=round(result.get("ganancias_juegos_netas", 0), 2),
             gravamen_especial_loterias=round(result.get("gravamen_especial_loterias", 0), 2),
+            deducciones_autonomicas=ccaa_deductions_list,
+            total_deducciones_autonomicas=round(result.get("deducciones_autonomicas_total", 0), 2),
             trabajo=IRPFBreakdown(
                 ingresos_brutos=trabajo.get("ingresos_brutos", 0),
                 gastos_deducibles=trabajo.get("gastos_deducibles", 0),

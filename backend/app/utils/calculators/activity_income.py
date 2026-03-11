@@ -115,7 +115,14 @@ class ActivityIncomeCalculator:
         # Cuantia: igual que Art. 20 trabajo (max 6.498 EUR, decreciente)
         reduccion_art32_2 = 0.0
         if un_solo_cliente and rendimiento_neto > 0:
-            reduccion_art32_2 = self._calculate_reduccion_art32_2(rendimiento_neto)
+            # Art. 32.2 requires ALL of:
+            #   1. All activities in estimación directa (not objetiva)
+            #   2. Net activity income < 14.450 EUR
+            # Note: condition 3 (other income <= 6.500 EUR) cannot be checked here
+            # as this calculator only sees activity income. The simulator should ideally
+            # enforce it, but for safety we at least enforce conditions 1 and 2.
+            if estimacion != "objetiva" and rendimiento_neto < 14450.0:
+                reduccion_art32_2 = self._calculate_reduccion_art32_2(rendimiento_neto)
 
         # Total reducciones (no acumulables: se aplica la mayor)
         # Nota: Art. 32.3 (inicio) y Art. 32.2 (dependiente) no son acumulables.

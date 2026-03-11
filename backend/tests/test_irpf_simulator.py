@@ -936,3 +936,73 @@ def test_both_tools_in_registry():
     assert "calculate_irpf" in tool_names
     assert "simulate_irpf" in TOOL_EXECUTORS
     assert "calculate_irpf" in TOOL_EXECUTORS
+
+
+# ─────────────────────────────────────────────────────────────
+# CCAA DEDUCTIONS IN SIMULATOR
+# ─────────────────────────────────────────────────────────────
+
+class TestCCAADeductionsInSimulator:
+    """Tests for the new deducciones_autonomicas_total parameter."""
+
+    @pytest.mark.asyncio
+    async def test_ccaa_deductions_reduce_cuota_autonomica(self):
+        """CCAA deductions should reduce cuota_liquida_autonomica."""
+        from app.utils.irpf_simulator import IRPFSimulator
+
+        db = build_mock_db()
+        sim = IRPFSimulator(db)
+        # Without CCAA deductions
+        r1 = await sim.simulate(
+            jurisdiction="Madrid", year=2024, ingresos_trabajo=40000,
+        )
+        # With 500 EUR CCAA deductions
+        r2 = await sim.simulate(
+            jurisdiction="Madrid", year=2024, ingresos_trabajo=40000,
+            deducciones_autonomicas_total=500,
+        )
+        assert r2["cuota_liquida_autonomica"] == r1["cuota_liquida_autonomica"] - 500
+        assert r2["deducciones_autonomicas_total"] == 500
+        assert r2["cuota_diferencial"] == r1["cuota_diferencial"] - 500
+
+    @pytest.mark.asyncio
+    async def test_ccaa_deductions_capped_at_cuota_autonomica(self):
+        """CCAA deductions cannot exceed cuota_liquida_autonomica (floor at 0)."""
+        from app.utils.irpf_simulator import IRPFSimulator
+
+        db = build_mock_db()
+        sim = IRPFSimulator(db)
+        # Low income → small cuota_liquida_aut
+        r = await sim.simulate(
+            jurisdiction="Madrid", year=2024, ingresos_trabajo=15000,
+            deducciones_autonomicas_total=99999,
+        )
+        assert r["cuota_liquida_autonomica"] == 0
+        # The applied amount should be capped
+        assert r["deducciones_autonomicas_total"] <= 99999
+
+    @pytest.mark.asyncio
+    async def test_ccaa_deductions_zero_by_default(self):
+        """Without CCAA deductions parameter, deducciones_autonomicas_total should be 0."""
+        from app.utils.irpf_simulator import IRPFSimulator
+
+        db = build_mock_db()
+        sim = IRPFSimulator(db)
+        r = await sim.simulate(
+            jurisdiction="Madrid", year=2024, ingresos_trabajo=30000,
+        )
+        assert r["deducciones_autonomicas_total"] == 0
+
+    @pytest.mark.asyncio
+    async def test_ccaa_deductions_in_total_deducciones_cuota(self):
+        """CCAA deductions should be included in total_deducciones_cuota."""
+        from app.utils.irpf_simulator import IRPFSimulator
+
+        db = build_mock_db()
+        sim = IRPFSimulator(db)
+        r = await sim.simulate(
+            jurisdiction="Madrid", year=2024, ingresos_trabajo=40000,
+            deducciones_autonomicas_total=300,
+        )
+        assert r["deducciones_autonomicas_total"] == 300
+        assert r["total_deducciones_cuota"] >= 300

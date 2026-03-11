@@ -65,19 +65,51 @@ class SavingsIncomeCalculator:
             Dict with base_ahorro, cuota breakdown (estatal + autonomica),
             and ganancias_patrimoniales_netas breakdown.
         """
-        # Rendimientos del capital mobiliario
+        # --- 1. Rendimientos del capital mobiliario (Art. 25 LIRPF) ---
         ingresos = intereses + dividendos + ganancias_fondos + otros_ahorro
-        rendimiento_neto = max(0, ingresos - gastos_administracion)
+        rendimiento_neto_rcm = ingresos - gastos_administracion  # Can be negative
 
-        # Ganancias patrimoniales del ahorro (arts. 46 y 49 LIRPF)
-        # Cada tipo compensa sus propias pérdidas; el neto total va a la base del ahorro
-        neto_acciones = max(0, ganancias_acciones - perdidas_acciones)
-        neto_fondos_reembolso = max(0, ganancias_reembolso_fondos - perdidas_reembolso_fondos)
-        neto_derivados = max(0, ganancias_derivados - perdidas_derivados)
-        neto_cripto = max(0, cripto_ganancia_neta - cripto_perdida_neta)
-        ganancias_patrimoniales_netas = (
-            neto_acciones + neto_fondos_reembolso + neto_derivados + neto_cripto
+        # --- 2. Ganancias patrimoniales del ahorro (Art. 46, 49 LIRPF) ---
+        # All gains and losses are NETTED TOGETHER across sub-types (not individually).
+        # Per Art. 49.1.b: "se compensarán entre sí" within ganancias patrimoniales.
+        total_ganancias = (
+            ganancias_acciones + ganancias_reembolso_fondos
+            + ganancias_derivados + cripto_ganancia_neta
         )
+        total_perdidas = (
+            perdidas_acciones + perdidas_reembolso_fondos
+            + perdidas_derivados + cripto_perdida_neta
+        )
+        ganancias_patrimoniales_netas = total_ganancias - total_perdidas
+
+        # Per-type netos (for reporting only)
+        neto_acciones = ganancias_acciones - perdidas_acciones
+        neto_fondos_reembolso = ganancias_reembolso_fondos - perdidas_reembolso_fondos
+        neto_derivados = ganancias_derivados - perdidas_derivados
+        neto_cripto = cripto_ganancia_neta - cripto_perdida_neta
+
+        # --- 3. Cross-compensation Art. 49 LIRPF (regla del 25%) ---
+        # If one category has net loss and the other has net gain,
+        # the loss can compensate up to 25% of the positive balance in the other.
+        compensacion_rcm_en_gp = 0.0
+        compensacion_gp_en_rcm = 0.0
+
+        if rendimiento_neto_rcm < 0 and ganancias_patrimoniales_netas > 0:
+            # RCM losses compensate up to 25% of GP gains
+            max_comp = ganancias_patrimoniales_netas * 0.25
+            compensacion_rcm_en_gp = min(abs(rendimiento_neto_rcm), max_comp)
+            rendimiento_neto_rcm += compensacion_rcm_en_gp  # becomes less negative or 0
+            ganancias_patrimoniales_netas -= compensacion_rcm_en_gp
+        elif ganancias_patrimoniales_netas < 0 and rendimiento_neto_rcm > 0:
+            # GP losses compensate up to 25% of RCM gains
+            max_comp = rendimiento_neto_rcm * 0.25
+            compensacion_gp_en_rcm = min(abs(ganancias_patrimoniales_netas), max_comp)
+            ganancias_patrimoniales_netas += compensacion_gp_en_rcm  # becomes less negative or 0
+            rendimiento_neto_rcm -= compensacion_gp_en_rcm
+
+        # Floor both at 0 for base del ahorro (remaining losses carry forward to next year)
+        rendimiento_neto = max(0, rendimiento_neto_rcm)
+        ganancias_patrimoniales_netas = max(0, ganancias_patrimoniales_netas)
 
         base_ahorro_total = rendimiento_neto + ganancias_patrimoniales_netas
 
@@ -112,6 +144,10 @@ class SavingsIncomeCalculator:
                 "neto_derivados": round(neto_derivados, 2),
                 "neto_cripto": round(neto_cripto, 2),
                 "total_neto": round(ganancias_patrimoniales_netas, 2),
+            },
+            "compensacion_art49": {
+                "rcm_en_gp": round(compensacion_rcm_en_gp, 2),
+                "gp_en_rcm": round(compensacion_gp_en_rcm, 2),
             },
             "breakdown": {"estatal": bd_est, "autonomica": bd_aut},
         }

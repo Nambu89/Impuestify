@@ -503,6 +503,25 @@ LA_RIOJA_2025 = [
             {"key": "gasto_suministros_hogar", "text": "Cuanto has pagado de suministros en tu hogar este anyo?", "type": "number"},
         ]),
     },
+    {
+        "code": "RIO-ARRENDAMIENTO-VIV",
+        "name": "Deduccion por arrendamiento de vivienda habitual en La Rioja",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 10.0,
+        "max_amount": 300.0,
+        "legal_reference": "Art. 32.5 Ley 10/2017 La Rioja",
+        "description": (
+            "10% del alquiler pagado por la vivienda habitual, maximo 300 EUR. "
+            "Menores de 36 anios: 20% max 400 EUR. "
+            "BI menor o igual a 18.030 EUR individual / 30.050 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "questions_json": json.dumps([
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+        ]),
+    },
 ]
 
 
@@ -1102,6 +1121,25 @@ MURCIA_2025 = [
             {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
         ]),
     },
+    {
+        "code": "MUR-ARRENDAMIENTO-VIV",
+        "name": "Deduccion por arrendamiento de vivienda habitual en Murcia",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 10.0,
+        "max_amount": 300.0,
+        "legal_reference": "Art. 3 DL 1/2010 Murcia",
+        "description": (
+            "10% del alquiler pagado por la vivienda habitual, maximo 300 EUR. "
+            "Menores de 35 anios: 20% max 600 EUR. "
+            "BI menor o igual a 24.000 EUR individual / 33.600 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "questions_json": json.dumps([
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
+        ]),
+    },
 ]
 
 
@@ -1321,6 +1359,25 @@ CANARIAS_2025 = [
         "questions_json": json.dumps([
             {"key": "donativo_entidad_canaria", "text": "Has donado a fundaciones con sede en Canarias?", "type": "bool"},
             {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+        ]),
+    },
+    {
+        "code": "CANA-ALQUILER-VIV",
+        "name": "Deduccion por alquiler de vivienda habitual en Canarias",
+        "type": "deduccion",
+        "category": "vivienda",
+        "percentage": 20.0,
+        "max_amount": 600.0,
+        "legal_reference": "Art. 6 DLeg 1/2009 Canarias",
+        "description": (
+            "20% del alquiler pagado por la vivienda habitual, max 600 EUR. "
+            "Requisitos: menores de 35 anios o mayores de 65. "
+            "BI menor o igual a 20.000 EUR individual / 30.000 EUR conjunta."
+        ),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "questions_json": json.dumps([
+            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al anyo?", "type": "number"},
         ]),
     },
     {

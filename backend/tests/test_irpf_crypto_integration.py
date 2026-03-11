@@ -114,7 +114,7 @@ class TestSavingsIncomeCalculatorNewParams:
 
     @pytest.mark.asyncio
     async def test_perdida_mayor_que_ganancia_da_cero(self, mock_db):
-        """Las pérdidas no pueden dejar el neto negativo en cripto."""
+        """Las pérdidas netas de cripto se reportan como valor real; base_ahorro se limita a 0."""
         from app.utils.calculators.savings_income import SavingsIncomeCalculator
         from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -128,7 +128,8 @@ class TestSavingsIncomeCalculatorNewParams:
             year=2024,
         )
 
-        assert result["ganancias_patrimoniales"]["neto_cripto"] == 0.0
+        # Per-type neto is raw (for reporting); total GP is floored at 0
+        assert result["ganancias_patrimoniales"]["neto_cripto"] == -3000.0
         assert result["base_ahorro"] == 0.0
 
     @pytest.mark.asyncio

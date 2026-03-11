@@ -187,6 +187,22 @@ class IRPFSimulator:
         donativos_forales: float,
         retenciones_alquiler: float,
         retenciones_ahorro: float,
+        retenciones_trabajo: float = 0,
+        # Ganancias patrimoniales del ahorro (para foral)
+        ganancias_acciones: float = 0,
+        perdidas_acciones: float = 0,
+        ganancias_reembolso_fondos: float = 0,
+        perdidas_reembolso_fondos: float = 0,
+        ganancias_derivados: float = 0,
+        perdidas_derivados: float = 0,
+        cripto_ganancia_neta: float = 0,
+        cripto_perdida_neta: float = 0,
+        # Juegos y loterías (para foral)
+        premios_metalico_privados: float = 0,
+        premios_especie_privados: float = 0,
+        perdidas_juegos_privados: float = 0,
+        premios_metalico_publicos: float = 0,
+        premios_especie_publicos: float = 0,
         **_ignored,
     ) -> Dict[str, Any]:
         """
@@ -255,13 +271,26 @@ class IRPFSimulator:
             reduccion_epsv = max(0.0, reduccion_epsv)
             bi_general = max(0.0, bi_general - reduccion_epsv)
 
-        # --- 4. Savings income ---
+        # --- 4. Savings income (including all ganancias patrimoniales) ---
+        _has_ahorro_foral = (
+            intereses > 0 or dividendos > 0 or ganancias_fondos > 0
+            or ganancias_acciones > 0 or ganancias_reembolso_fondos > 0
+            or ganancias_derivados > 0 or cripto_ganancia_neta > 0
+        )
         ahorro_result = None
-        if intereses > 0 or dividendos > 0 or ganancias_fondos > 0:
+        if _has_ahorro_foral:
             ahorro_result = await self.savings.calculate(
                 intereses=intereses,
                 dividendos=dividendos,
                 ganancias_fondos=ganancias_fondos,
+                ganancias_acciones=ganancias_acciones,
+                perdidas_acciones=perdidas_acciones,
+                ganancias_reembolso_fondos=ganancias_reembolso_fondos,
+                perdidas_reembolso_fondos=perdidas_reembolso_fondos,
+                ganancias_derivados=ganancias_derivados,
+                perdidas_derivados=perdidas_derivados,
+                cripto_ganancia_neta=cripto_ganancia_neta,
+                cripto_perdida_neta=cripto_perdida_neta,
                 jurisdiction=jurisdiction,
                 year=year,
             )
@@ -301,12 +330,45 @@ class IRPFSimulator:
         tipo_medio = (cuota_total / base_total * 100) if base_total > 0 else 0.0
 
         total_retenciones = (
-            retenciones_alquiler
+            retenciones_trabajo
+            + retenciones_alquiler
             + retenciones_ahorro
             + retenciones_actividad
             + pagos_fraccionados_130
         )
-        cuota_diferencial = round(cuota_total - total_retenciones, 2)
+
+        # Juegos y apuestas privados → base general (Art. 33.5 LIRPF)
+        ganancias_juegos_netas = 0.0
+        premios_juegos_brutos = premios_metalico_privados + premios_especie_privados
+        if premios_juegos_brutos > 0:
+            perdidas_comp = min(perdidas_juegos_privados, premios_juegos_brutos)
+            ganancias_juegos_netas = max(0.0, premios_juegos_brutos - perdidas_comp)
+            # Note: these were already added to bi_general before scale
+            # For foral, we add them here retroactively
+            # This requires recalculating, but since the foral scale was already applied
+            # we adjust the cuota proportionally
+            if ganancias_juegos_netas > 0 and bi_general > 0:
+                # Recalculate with juegos included
+                bi_general_con_juegos = bi_general + ganancias_juegos_netas
+                cuota_general_new, breakdown_foral = self._irpf_calc._apply_scale(
+                    bi_general_con_juegos, foral_scale
+                )
+                cuota_liquida = max(0.0, cuota_general_new - minimos_total)
+                if donativos_forales > 0:
+                    cuota_liquida = max(0.0, cuota_liquida - deduccion_donativos)
+                cuota_total = cuota_liquida + cuota_ahorro
+                bi_general = bi_general_con_juegos
+
+        # Gravamen especial sobre loterías públicas (Art. 75bis LIRPF)
+        EXENCION_LOTERIAS = 40_000.0
+        TIPO_ESPECIAL_LOTERIAS = 0.20
+        premios_publicos_totales = premios_metalico_publicos + premios_especie_publicos
+        gravamen_especial_loterias = 0.0
+        if premios_publicos_totales > EXENCION_LOTERIAS:
+            exceso_loterias = premios_publicos_totales - EXENCION_LOTERIAS
+            gravamen_especial_loterias = round(exceso_loterias * TIPO_ESPECIAL_LOTERIAS, 2)
+
+        cuota_diferencial = round(cuota_total + gravamen_especial_loterias - total_retenciones, 2)
         tipo_resultado = "a_pagar" if cuota_diferencial > 0 else "a_devolver"
 
         return {
@@ -361,10 +423,13 @@ class IRPFSimulator:
             "deduccion_vivienda_pre2013": 0.0,
             "deduccion_maternidad": 0.0,
             "deduccion_familia_numerosa": 0.0,
+            "deducciones_autonomicas_total": 0.0,
             "total_deducciones_cuota": round(deduccion_donativos, 2),
             "reduccion_tributacion_conjunta": 0.0,
             "deduccion_alquiler_pre2015": 0.0,
             "renta_imputada_inmuebles": 0.0,
+            "ganancias_juegos_netas": round(ganancias_juegos_netas, 2),
+            "gravamen_especial_loterias": round(gravamen_especial_loterias, 2),
             "retenciones_alquiler": round(retenciones_alquiler, 2),
             "retenciones_ahorro": round(retenciones_ahorro, 2),
             "breakdown_estatal": [],
@@ -456,6 +521,10 @@ class IRPFSimulator:
         # --- Fase 4: Loterías públicas (gravamen especial, Art. 75bis LIRPF) ---
         premios_metalico_publicos: float = 0,
         premios_especie_publicos: float = 0,
+        # --- Retenciones del trabajo (para cuota diferencial) ---
+        retenciones_trabajo: float = 0,
+        # --- Fase 5: Deducciones autonómicas (computed by endpoint) ---
+        deducciones_autonomicas_total: float = 0,
     ) -> Dict[str, Any]:
         """
         Run a complete IRPF simulation.
@@ -529,6 +598,22 @@ class IRPFSimulator:
                 donativos_forales=donativos_forales,
                 retenciones_alquiler=retenciones_alquiler,
                 retenciones_ahorro=retenciones_ahorro,
+                retenciones_trabajo=retenciones_trabajo,
+                # Ganancias patrimoniales del ahorro
+                ganancias_acciones=ganancias_acciones,
+                perdidas_acciones=perdidas_acciones,
+                ganancias_reembolso_fondos=ganancias_reembolso_fondos,
+                perdidas_reembolso_fondos=perdidas_reembolso_fondos,
+                ganancias_derivados=ganancias_derivados,
+                perdidas_derivados=perdidas_derivados,
+                cripto_ganancia_neta=cripto_ganancia_neta,
+                cripto_perdida_neta=cripto_perdida_neta,
+                # Juegos y loterías
+                premios_metalico_privados=premios_metalico_privados,
+                premios_especie_privados=premios_especie_privados,
+                perdidas_juegos_privados=perdidas_juegos_privados,
+                premios_metalico_publicos=premios_metalico_publicos,
+                premios_especie_publicos=premios_especie_publicos,
             )
 
         # --- Common regime (comun / ceuta_melilla / canarias) ---
@@ -772,9 +857,18 @@ class IRPFSimulator:
                     # Linear reduction from 17.707,20 to 24.107,20
                     factor = 1 - (bi_general - 17707.20) / (24107.20 - 17707.20)
                     deduccion_alquiler_pre2015 = round(base_alq * 0.1005 * factor, 2)
-                # Apply only to the estatal half (50% of the deduction)
-                ded_alq_est = deduccion_alquiler_pre2015 / 2
-                cuota_liquida_est = max(0, cuota_liquida_est - ded_alq_est)
+                # DT 15ª: deduction applies 100% to cuota estatal
+                cuota_liquida_est = max(0, cuota_liquida_est - deduccion_alquiler_pre2015)
+
+        # 9f. Deducciones autonómicas (CCAA-specific deductions on cuota autonómica)
+        # Pre-computed by the endpoint from eligible CCAA deductions.
+        # Applied ONLY to cuota_liquida_aut (never to estatal).
+        if deducciones_autonomicas_total > 0:
+            deducciones_autonomicas_total = min(deducciones_autonomicas_total, cuota_liquida_aut)
+            cuota_liquida_aut = max(0, cuota_liquida_aut - deducciones_autonomicas_total)
+            logger.info(
+                "CCAA deductions applied: -%.2f€ on cuota autonómica", deducciones_autonomicas_total
+            )
 
         # Apply cuota deductions
         # Donativos cannot reduce below zero; maternidad/familia numerosa CAN (refundable)
@@ -802,7 +896,8 @@ class IRPFSimulator:
 
         # --- 12. Retenciones y pagos a cuenta (para resultado final) ---
         total_retenciones = (
-            retenciones_alquiler
+            retenciones_trabajo
+            + retenciones_alquiler
             + retenciones_ahorro
             + retenciones_actividad
             + pagos_fraccionados_130
@@ -850,10 +945,11 @@ class IRPFSimulator:
             "deduccion_maternidad": round(deduccion_maternidad, 2),
             "deduccion_familia_numerosa": round(deduccion_familia_numerosa, 2),
             "deduccion_donativos": round(deduccion_donativos, 2),
+            "deducciones_autonomicas_total": round(deducciones_autonomicas_total, 2),
             "total_deducciones_cuota": round(
                 deduccion_vivienda_pre2013 + deduccion_maternidad
                 + deduccion_familia_numerosa + deduccion_donativos
-                + deduccion_alquiler_pre2015, 2
+                + deduccion_alquiler_pre2015 + deducciones_autonomicas_total, 2
             ),
             # Phase 2: new reductions/deductions/imputations
             "reduccion_tributacion_conjunta": round(reduccion_tributacion_conjunta, 2),
