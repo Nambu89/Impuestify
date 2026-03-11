@@ -70,12 +70,12 @@ class SubscriptionService:
         s = _get_stripe()
         db = await self._get_db()
 
-        # Check if subscription record already exists
+        # Check if subscription record already exists with a valid customer ID
         existing = await db.execute(
-            "SELECT stripe_customer_id FROM subscriptions WHERE user_id = ?",
+            "SELECT id, stripe_customer_id FROM subscriptions WHERE user_id = ?",
             [user_id],
         )
-        if existing.rows:
+        if existing.rows and existing.rows[0]["stripe_customer_id"]:
             return existing.rows[0]["stripe_customer_id"]
 
         # Create Stripe customer
@@ -86,15 +86,26 @@ class SubscriptionService:
         )
         logger.info("Stripe customer created", extra={"user_id": user_id, "customer_id": customer.id})
 
-        # Insert subscription record
-        sub_id = str(uuid.uuid4())
-        await db.execute(
-            """
-            INSERT INTO subscriptions (id, user_id, stripe_customer_id, plan_type, status)
-            VALUES (?, ?, ?, 'particular', 'inactive')
-            """,
-            [sub_id, user_id, customer.id],
-        )
+        if existing.rows:
+            # Row exists but stripe_customer_id was NULL (grace_period/beta users)
+            await db.execute(
+                """
+                UPDATE subscriptions
+                SET stripe_customer_id = ?, updated_at = datetime('now')
+                WHERE user_id = ?
+                """,
+                [customer.id, user_id],
+            )
+        else:
+            # No subscription record yet — create one
+            sub_id = str(uuid.uuid4())
+            await db.execute(
+                """
+                INSERT INTO subscriptions (id, user_id, stripe_customer_id, plan_type, status)
+                VALUES (?, ?, ?, 'particular', 'inactive')
+                """,
+                [sub_id, user_id, customer.id],
+            )
 
         return customer.id
 
@@ -113,23 +124,38 @@ class SubscriptionService:
         plan_type is stored as metadata so the webhook can update it in Turso.
         """
         if not settings.is_stripe_configured or not settings.STRIPE_PRICE_ID:
-            return None
+            raise ValueError("Stripe no está configurado. Contacta con soporte.")
 
         s = _get_stripe()
         db = await self._get_db()
 
-        # Get Stripe customer ID
+        # Get or create Stripe customer ID
         result = await db.execute(
             "SELECT stripe_customer_id FROM subscriptions WHERE user_id = ?",
             [user_id],
         )
-        if not result.rows:
-            raise ValueError("User has no subscription record. Register first.")
 
-        customer_id = result.rows[0]["stripe_customer_id"]
+        customer_id = result.rows[0]["stripe_customer_id"] if result.rows else None
+
+        # If no customer ID yet (grace_period/beta users), create one now
+        if not customer_id:
+            user_result = await db.execute(
+                "SELECT email, name FROM users WHERE id = ?", [user_id]
+            )
+            if not user_result.rows:
+                raise ValueError("Usuario no encontrado.")
+
+            email = user_result.rows[0]["email"]
+            name = user_result.rows[0].get("name")
+            customer_id = await self.create_stripe_customer(user_id, email, name)
+
+            if not customer_id:
+                raise ValueError("No se pudo crear el cliente en Stripe.")
 
         # Select the correct Stripe price based on plan_type
-        if plan_type == "autonomo" and settings.STRIPE_PRICE_ID_AUTONOMO:
+        if plan_type == "autonomo":
+            if not settings.STRIPE_PRICE_ID_AUTONOMO:
+                raise ValueError("El plan Autónomo no está configurado. Contacta con soporte.")
             price_id = settings.STRIPE_PRICE_ID_AUTONOMO
         else:
             price_id = settings.STRIPE_PRICE_ID

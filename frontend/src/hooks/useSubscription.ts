@@ -70,6 +70,10 @@ export function useSubscription(): UseSubscriptionReturn {
 
             if (result.checkout_url) {
                 window.location.href = result.checkout_url
+            } else {
+                const msg = 'No se pudo crear la sesión de pago. Inténtalo de nuevo.'
+                setError(msg)
+                throw new Error(msg)
             }
         } catch (err: any) {
             setError(err.message || 'Error al crear sesión de pago')
