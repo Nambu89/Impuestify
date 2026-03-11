@@ -28,6 +28,7 @@ const CanariasPage = lazy(() => import('./pages/CanariasPage'))
 const TaxGuidePage = lazy(() => import('./pages/TaxGuidePage'))
 const DeclarationsPage = lazy(() => import('./pages/DeclarationsPage'))
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
+const CryptoPage = lazy(() => import('./pages/CryptoPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -113,6 +114,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <CalendarPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/crypto"
+                        element={
+                            <ProtectedRoute>
+                                <CryptoPage />
                             </ProtectedRoute>
                         }
                     />

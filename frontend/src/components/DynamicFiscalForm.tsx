@@ -71,6 +71,8 @@ function FiscalFieldInput({
     }
 
     if (field.type === 'select') {
+        const options = field.options ?? []
+        const optionLabels = field.option_labels ?? []
         return (
             <div className="dff-field">
                 <label className="dff-label">
@@ -84,9 +86,9 @@ function FiscalFieldInput({
                     onChange={(e) => handleChange(e.target.value)}
                 >
                     <option value="">Selecciona...</option>
-                    {(field.options ?? []).map((opt) => (
+                    {options.map((opt, idx) => (
                         <option key={opt} value={opt}>
-                            {opt}
+                            {optionLabels[idx] ?? opt}
                         </option>
                     ))}
                 </select>
@@ -176,12 +178,18 @@ function CollapsibleSection({
 }) {
     const [open, setOpen] = useState(section.expanded_default ?? false)
 
+    // Filter fields by conditional_on: only show if the parent bool field is true
+    const visibleFields = section.fields.filter((field) => {
+        if (!field.conditional_on) return true
+        return !!values[field.conditional_on]
+    })
+
     if (!section.collapsible) {
         return (
             <div className={`dff-section ${compact ? 'dff-section--compact' : ''}`}>
                 <h4 className="dff-section-title">{section.title}</h4>
                 <div className="dff-fields-grid">
-                    {section.fields.map((field) => (
+                    {visibleFields.map((field) => (
                         <FiscalFieldInput
                             key={field.key}
                             field={field}
@@ -206,7 +214,7 @@ function CollapsibleSection({
             </button>
             {open && (
                 <div className="collapsible-content dff-fields-grid">
-                    {section.fields.map((field) => (
+                    {visibleFields.map((field) => (
                         <FiscalFieldInput
                             key={field.key}
                             field={field}

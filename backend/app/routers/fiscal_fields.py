@@ -156,6 +156,84 @@ _BASE_SECTIONS: List[Dict[str, Any]] = [
             {"key": "inversion_empresa_nueva", "label": "Ha invertido en empresa de nueva creación", "type": "bool", "required": False},
         ]
     },
+    {
+        "id": "criptomonedas",
+        "title": "Criptomonedas y monedas virtuales",
+        "description": "Casillas 1800-1814 del Modelo 100",
+        "fields": [
+            {"key": "tiene_criptomonedas", "label": "¿Has transmitido monedas virtuales en el ejercicio?", "type": "bool", "required": False},
+            {"key": "cripto_denominaciones", "label": "Monedas virtuales transmitidas (BTC, ETH, SOL...)", "type": "str", "required": False,
+             "hint": "Casilla 1802 — Denominación de la moneda virtual"},
+            {"key": "cripto_clave_contraprestacion", "label": "Tipo de contraprestación recibida", "type": "select",
+             "options": ["F", "N", "O", "B"],
+             "option_labels": ["Moneda de curso legal (EUR, USD...)", "Otra moneda virtual (cripto a cripto)", "Otro activo virtual (NFT, token)", "Bienes o servicios"],
+             "required": False,
+             "hint": "Casilla 1803"},
+            {"key": "cripto_valor_transmision_total", "label": "Valor total de transmisión (EUR)", "type": "float", "required": False,
+             "hint": "Suma casilla 1804"},
+            {"key": "cripto_valor_adquisicion_total", "label": "Valor total de adquisición (EUR)", "type": "float", "required": False,
+             "hint": "Suma casilla 1806"},
+            {"key": "cripto_ganancia_neta", "label": "Ganancia patrimonial neta por criptomonedas (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 1814 — suma ganancias"},
+            {"key": "cripto_perdida_neta", "label": "Pérdida patrimonial neta por criptomonedas (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 1813 — suma pérdidas"},
+            {"key": "cripto_en_extranjero_50k", "label": "¿Tienes saldo en exchanges extranjeros > 50.000 EUR al 31/dic?", "type": "bool", "required": False,
+             "hint": "Obligación Modelo 721"},
+            {"key": "tiene_staking_defi", "label": "¿Tienes ingresos por staking, DeFi, lending o minería?", "type": "bool", "required": False,
+             "hint": "Sin casilla propia — tributa como rendimiento de capital mobiliario o actividad económica"},
+            {"key": "exchanges_utilizados", "label": "Exchanges utilizados (Binance, Coinbase...)", "type": "str", "required": False},
+        ]
+    },
+    {
+        "id": "apuestas_juegos",
+        "title": "Premios, apuestas y juegos",
+        "description": "Casillas 0281-0297 del Modelo 100",
+        "fields": [
+            # --- Juegos privados (casillas 0281-0290) ---
+            {"key": "tiene_ganancias_juegos_privados", "label": "¿Has tenido premios en juegos, apuestas o concursos?", "type": "bool", "required": False,
+             "hint": "Casillas 0281-0290 — Juegos no organizados por el Estado"},
+            {"key": "premios_metalico_privados", "label": "Premios en metálico de juegos/apuestas (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0282"},
+            {"key": "premios_especie_privados", "label": "Premios en especie — valoración (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0283"},
+            {"key": "perdidas_juegos_privados", "label": "Pérdidas patrimoniales en juegos/apuestas (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0287 — compensan las ganancias del mismo tipo"},
+            # --- Loterías y juegos públicos (casillas 0291-0297) ---
+            {"key": "tiene_premios_loterias", "label": "¿Has tenido premios de loterías del Estado, ONCE o Cruz Roja?", "type": "bool", "required": False,
+             "hint": "Casillas 0291-0297 — Juegos organizados por organismos públicos"},
+            {"key": "premios_metalico_publicos", "label": "Premios en metálico de loterías públicas (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0292 — exentos los primeros 40.000 EUR"},
+            {"key": "premios_especie_publicos", "label": "Premios en especie de loterías públicas — valoración (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0293"},
+        ]
+    },
+    {
+        "id": "ganancias_patrimoniales_financieras",
+        "title": "Ganancias patrimoniales por inversiones financieras",
+        "description": "Casillas 0316-0354 del Modelo 100",
+        "fields": [
+            # --- Fondos de inversión (GPFondos, casillas 0316-0320) ---
+            {"key": "tiene_fondos_inversion", "label": "¿Has reembolsado participaciones en fondos de inversión?", "type": "bool", "required": False,
+             "hint": "Casillas 0316-0320"},
+            {"key": "ganancias_reembolso_fondos", "label": "Ganancias por reembolso de fondos (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0320 — ganancia patrimonial"},
+            {"key": "perdidas_reembolso_fondos", "label": "Pérdidas por reembolso de fondos (EUR)", "type": "float", "required": False},
+            # --- Acciones y participaciones (GPAcciones, casillas 0332-0339) ---
+            {"key": "tiene_acciones", "label": "¿Has vendido acciones o participaciones?", "type": "bool", "required": False,
+             "hint": "Casillas 0332-0339"},
+            {"key": "ganancias_acciones", "label": "Ganancias por venta de acciones (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0338"},
+            {"key": "perdidas_acciones", "label": "Pérdidas por venta de acciones (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0339"},
+            # --- Derivados/CFDs/Forex (GPDerechos, casillas 0347-0354) ---
+            {"key": "tiene_derivados", "label": "¿Has operado con derivados, CFDs o Forex?", "type": "bool", "required": False,
+             "hint": "Casillas 0347-0354 — Derechos y participaciones"},
+            {"key": "ganancias_derivados", "label": "Ganancias por derivados/CFDs/Forex (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0353"},
+            {"key": "perdidas_derivados", "label": "Pérdidas por derivados/CFDs/Forex (EUR)", "type": "float", "required": False,
+             "hint": "Casilla 0354"},
+        ]
+    },
 ]
 
 # ---------------------------------------------------------------------------

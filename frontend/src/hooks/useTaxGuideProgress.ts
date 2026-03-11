@@ -35,7 +35,24 @@ export interface TaxGuideData {
     dividendos: number
     ganancias_fondos: number
     retenciones_ahorro: number
-    // Step 4: Inmuebles
+    // Step 4: Inversiones y cripto (NEW)
+    tiene_criptomonedas: boolean
+    cripto_ganancia_neta: number
+    cripto_perdida_neta: number
+    tiene_acciones_fondos: boolean
+    ganancias_acciones: number
+    perdidas_acciones: number
+    ganancias_reembolso_fondos: number
+    perdidas_reembolso_fondos: number
+    tiene_derivados: boolean
+    ganancias_derivados: number
+    perdidas_derivados: number
+    tiene_ganancias_juegos_privados: boolean
+    premios_metalico_privados: number
+    perdidas_juegos_privados: number
+    tiene_premios_loterias: boolean
+    premios_metalico_publicos: number
+    // Step 5: Inmuebles
     ingresos_alquiler: number
     gastos_alquiler_total: number
     valor_adquisicion_inmueble: number
@@ -44,7 +61,7 @@ export interface TaxGuideData {
     alquiler_pagado_anual: number
     valor_catastral_segundas_viviendas: number
     valor_catastral_revisado_post1994: boolean
-    // Step 5: Familia
+    // Step 6: Familia
     num_descendientes: number
     anios_nacimiento_desc: number[]
     custodia_compartida: boolean
@@ -97,6 +114,23 @@ export const EMPTY_TAX_DATA: TaxGuideData = {
     dividendos: 0,
     ganancias_fondos: 0,
     retenciones_ahorro: 0,
+    // Inversiones y cripto
+    tiene_criptomonedas: false,
+    cripto_ganancia_neta: 0,
+    cripto_perdida_neta: 0,
+    tiene_acciones_fondos: false,
+    ganancias_acciones: 0,
+    perdidas_acciones: 0,
+    ganancias_reembolso_fondos: 0,
+    perdidas_reembolso_fondos: 0,
+    tiene_derivados: false,
+    ganancias_derivados: 0,
+    perdidas_derivados: 0,
+    tiene_ganancias_juegos_privados: false,
+    premios_metalico_privados: 0,
+    perdidas_juegos_privados: 0,
+    tiene_premios_loterias: false,
+    premios_metalico_publicos: 0,
     ingresos_alquiler: 0,
     gastos_alquiler_total: 0,
     valor_adquisicion_inmueble: 0,
@@ -130,6 +164,7 @@ export const STEP_LABELS = [
     'Trabajo',
     'Ahorro e inversiones',
     'Inmuebles',
+    'Inversiones y cripto',
     'Familia',
     'Deducciones',
     'Resultado',

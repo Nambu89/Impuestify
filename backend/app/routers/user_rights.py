@@ -135,6 +135,36 @@ class FiscalProfileRequest(BaseModel):
     pension_viudedad: Optional[bool] = None
     reduccion_jornada_cuidado: Optional[bool] = None
     cuenta_vivienda_aportaciones: Optional[float] = None
+    # --- Criptomonedas (casillas 1800-1814 Modelo 100) ---
+    tiene_criptomonedas: Optional[bool] = None
+    cripto_denominaciones: Optional[str] = None
+    cripto_clave_contraprestacion: Optional[str] = None  # F | N | O | B
+    cripto_valor_transmision_total: Optional[float] = None
+    cripto_valor_adquisicion_total: Optional[float] = None
+    cripto_ganancia_neta: Optional[float] = None
+    cripto_perdida_neta: Optional[float] = None
+    cripto_en_extranjero_50k: Optional[bool] = None
+    tiene_staking_defi: Optional[bool] = None
+    exchanges_utilizados: Optional[str] = None
+    # --- Apuestas y juegos — juegos privados (casillas 0281-0290) ---
+    tiene_ganancias_juegos_privados: Optional[bool] = None
+    premios_metalico_privados: Optional[float] = None
+    premios_especie_privados: Optional[float] = None
+    perdidas_juegos_privados: Optional[float] = None
+    # --- Apuestas y juegos — loterías públicas (casillas 0291-0297) ---
+    tiene_premios_loterias: Optional[bool] = None
+    premios_metalico_publicos: Optional[float] = None
+    premios_especie_publicos: Optional[float] = None
+    # --- Ganancias patrimoniales financieras (casillas 0316-0354) ---
+    tiene_fondos_inversion: Optional[bool] = None
+    ganancias_reembolso_fondos: Optional[float] = None
+    perdidas_reembolso_fondos: Optional[float] = None
+    tiene_acciones: Optional[bool] = None
+    ganancias_acciones: Optional[float] = None  # ya existía, se mantiene
+    perdidas_acciones: Optional[float] = None   # ya existía, se mantiene
+    tiene_derivados: Optional[bool] = None
+    ganancias_derivados: Optional[float] = None
+    perdidas_derivados: Optional[float] = None
 
 
 class UserDataExport(BaseModel):
@@ -442,6 +472,20 @@ _DATOS_FISCALES_KEYS = {
     # Sprint 1: Foral
     "epsv_aportaciones", "pension_viudedad",
     "reduccion_jornada_cuidado", "cuenta_vivienda_aportaciones",
+    # Criptomonedas (casillas 1800-1814 Modelo 100)
+    "tiene_criptomonedas", "cripto_denominaciones", "cripto_clave_contraprestacion",
+    "cripto_valor_transmision_total", "cripto_valor_adquisicion_total",
+    "cripto_ganancia_neta", "cripto_perdida_neta",
+    "cripto_en_extranjero_50k", "tiene_staking_defi", "exchanges_utilizados",
+    # Apuestas y juegos — privados (casillas 0281-0290)
+    "tiene_ganancias_juegos_privados", "premios_metalico_privados",
+    "premios_especie_privados", "perdidas_juegos_privados",
+    # Apuestas y juegos — loterías públicas (casillas 0291-0297)
+    "tiene_premios_loterias", "premios_metalico_publicos", "premios_especie_publicos",
+    # Ganancias patrimoniales financieras (casillas 0316-0354)
+    "tiene_fondos_inversion", "ganancias_reembolso_fondos", "perdidas_reembolso_fondos",
+    "tiene_acciones", "ganancias_acciones", "perdidas_acciones",
+    "tiene_derivados", "ganancias_derivados", "perdidas_derivados",
 }
 
 
@@ -671,6 +715,20 @@ async def delete_user_account(
     )
     await db.execute(
         "DELETE FROM workspaces WHERE user_id = ?",
+        [user_id]
+    )
+
+    # Crypto tables (GDPR: delete before user row due to FK constraints)
+    await db.execute(
+        "DELETE FROM crypto_gains WHERE user_id = ?",
+        [user_id]
+    )
+    await db.execute(
+        "DELETE FROM crypto_holdings WHERE user_id = ?",
+        [user_id]
+    )
+    await db.execute(
+        "DELETE FROM crypto_transactions WHERE user_id = ?",
         [user_id]
     )
 

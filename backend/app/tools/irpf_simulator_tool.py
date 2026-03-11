@@ -238,6 +238,58 @@ IMPORTANTE sobre ingresos:
                 "valor_catastral_revisado_post1994": {
                     "type": "boolean",
                     "description": "true (default) si el valor catastral del inmueble fue revisado a partir de 1994 → imputación del 1,1%. false si el catastro es anterior a 1994 → imputación del 2%. Solo relevante si valor_catastral_segundas_viviendas > 0."
+                },
+                "ganancias_acciones": {
+                    "type": "number",
+                    "description": "Ganancias brutas por venta de acciones o participaciones en el año (casilla 0338). Base del ahorro."
+                },
+                "perdidas_acciones": {
+                    "type": "number",
+                    "description": "Pérdidas por venta de acciones (casilla 0339). Compensan las ganancias de acciones."
+                },
+                "ganancias_reembolso_fondos": {
+                    "type": "number",
+                    "description": "Ganancias por reembolso de participaciones en fondos de inversión (casilla 0320). Base del ahorro."
+                },
+                "perdidas_reembolso_fondos": {
+                    "type": "number",
+                    "description": "Pérdidas por reembolso de fondos de inversión. Compensan las ganancias de fondos."
+                },
+                "ganancias_derivados": {
+                    "type": "number",
+                    "description": "Ganancias por operaciones con derivados, CFDs o Forex (casilla 0353). Base del ahorro."
+                },
+                "perdidas_derivados": {
+                    "type": "number",
+                    "description": "Pérdidas por derivados/CFDs/Forex (casilla 0354). Compensan las ganancias de derivados."
+                },
+                "cripto_ganancia_neta": {
+                    "type": "number",
+                    "description": "Ganancia patrimonial neta por transmisión de criptomonedas (casilla 1814). Base del ahorro. Usar cuando el usuario dice que ha vendido Bitcoin, Ethereum u otras criptomonedas con beneficio."
+                },
+                "cripto_perdida_neta": {
+                    "type": "number",
+                    "description": "Pérdida patrimonial neta por transmisión de criptomonedas (casilla 1813). Compensa las ganancias cripto del mismo ejercicio."
+                },
+                "premios_metalico_privados": {
+                    "type": "number",
+                    "description": "Premios en metálico de juegos, apuestas o concursos privados (casilla 0282). Van a la base imponible GENERAL (no al ahorro). Ejemplos: apuestas deportivas online, premios de concursos televisivos, póker online."
+                },
+                "premios_especie_privados": {
+                    "type": "number",
+                    "description": "Premios en especie de juegos/apuestas privados, valorados a precio de mercado (casilla 0283). Base general."
+                },
+                "perdidas_juegos_privados": {
+                    "type": "number",
+                    "description": "Pérdidas en juegos/apuestas privados (casilla 0287). Solo compensan ganancias del mismo tipo, no otras rentas."
+                },
+                "premios_metalico_publicos": {
+                    "type": "number",
+                    "description": "Premios en metálico de loterías del Estado, ONCE o Cruz Roja (casilla 0292). Exentos los primeros 40.000 EUR; el exceso tributa al 20% como gravamen especial separado (Art. 75bis LIRPF). NO van a la base general."
+                },
+                "premios_especie_publicos": {
+                    "type": "number",
+                    "description": "Premios en especie de loterías públicas, valorados a precio de mercado (casilla 0293). Mismo tratamiento que premios_metalico_publicos."
                 }
             },
             "required": ["comunidad_autonoma"]
@@ -299,6 +351,21 @@ async def simulate_irpf_tool(
     # Phase 2: Rentas imputadas inmuebles (Art. 85 LIRPF)
     valor_catastral_segundas_viviendas: float = 0,
     valor_catastral_revisado_post1994: bool = True,
+    # Fase 4: Ganancias patrimoniales del ahorro
+    ganancias_acciones: float = 0,
+    perdidas_acciones: float = 0,
+    ganancias_reembolso_fondos: float = 0,
+    perdidas_reembolso_fondos: float = 0,
+    ganancias_derivados: float = 0,
+    perdidas_derivados: float = 0,
+    cripto_ganancia_neta: float = 0,
+    cripto_perdida_neta: float = 0,
+    # Fase 4: Juegos privados y loterías públicas
+    premios_metalico_privados: float = 0,
+    premios_especie_privados: float = 0,
+    perdidas_juegos_privados: float = 0,
+    premios_metalico_publicos: float = 0,
+    premios_especie_publicos: float = 0,
 ) -> Dict[str, Any]:
     """Execute IRPF simulation and return formatted result."""
     try:
@@ -371,6 +438,19 @@ async def simulate_irpf_tool(
                 alquiler_pagado_anual=alquiler_pagado_anual,
                 valor_catastral_segundas_viviendas=valor_catastral_segundas_viviendas,
                 valor_catastral_revisado_post1994=valor_catastral_revisado_post1994,
+                ganancias_acciones=ganancias_acciones,
+                perdidas_acciones=perdidas_acciones,
+                ganancias_reembolso_fondos=ganancias_reembolso_fondos,
+                perdidas_reembolso_fondos=perdidas_reembolso_fondos,
+                ganancias_derivados=ganancias_derivados,
+                perdidas_derivados=perdidas_derivados,
+                cripto_ganancia_neta=cripto_ganancia_neta,
+                cripto_perdida_neta=cripto_perdida_neta,
+                premios_metalico_privados=premios_metalico_privados,
+                premios_especie_privados=premios_especie_privados,
+                perdidas_juegos_privados=perdidas_juegos_privados,
+                premios_metalico_publicos=premios_metalico_publicos,
+                premios_especie_publicos=premios_especie_publicos,
             )
         except ValueError:
             # Year not available — fallback to previous year
@@ -427,6 +507,19 @@ async def simulate_irpf_tool(
                 alquiler_pagado_anual=alquiler_pagado_anual,
                 valor_catastral_segundas_viviendas=valor_catastral_segundas_viviendas,
                 valor_catastral_revisado_post1994=valor_catastral_revisado_post1994,
+                ganancias_acciones=ganancias_acciones,
+                perdidas_acciones=perdidas_acciones,
+                ganancias_reembolso_fondos=ganancias_reembolso_fondos,
+                perdidas_reembolso_fondos=perdidas_reembolso_fondos,
+                ganancias_derivados=ganancias_derivados,
+                perdidas_derivados=perdidas_derivados,
+                cripto_ganancia_neta=cripto_ganancia_neta,
+                cripto_perdida_neta=cripto_perdida_neta,
+                premios_metalico_privados=premios_metalico_privados,
+                premios_especie_privados=premios_especie_privados,
+                perdidas_juegos_privados=perdidas_juegos_privados,
+                premios_metalico_publicos=premios_metalico_publicos,
+                premios_especie_publicos=premios_especie_publicos,
             )
 
         # Build formatted response

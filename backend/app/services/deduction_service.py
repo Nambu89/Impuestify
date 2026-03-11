@@ -296,6 +296,21 @@ class DeductionService:
             if "directa" in estimacion:
                 answers["autonomo_estimacion_directa"] = True
 
+        # Criptomonedas (casillas 1800-1814)
+        if profile.get("tiene_criptomonedas"):
+            answers["tiene_criptomonedas"] = True
+        if (profile.get("cripto_ganancia_neta", 0) or 0) > 0 or \
+           (profile.get("cripto_perdida_neta", 0) or 0) > 0:
+            answers["tiene_ganancias_cripto"] = True
+
+        # Ganancias patrimoniales financieras
+        if profile.get("tiene_acciones"):
+            answers["tiene_acciones"] = True
+        if profile.get("tiene_fondos_inversion"):
+            answers["tiene_fondos_inversion"] = True
+        if profile.get("tiene_derivados"):
+            answers["tiene_derivados"] = True
+
         # --- Direct 1:1 boolean mappings ---
         DIRECT_MAPPINGS = [
             "alquiler_vivienda_habitual",
@@ -332,6 +347,15 @@ class DeductionService:
             "tarifa_plana",
             "pluriactividad",
             "territorio_foral",
+            # Crypto / trading (new — direct boolean passthrough)
+            "tiene_criptomonedas",
+            "tiene_acciones",
+            "tiene_fondos_inversion",
+            "tiene_derivados",
+            "tiene_ganancias_juegos_privados",
+            "tiene_premios_loterias",
+            "cripto_en_extranjero_50k",
+            "tiene_staking_defi",
         ]
         for key in DIRECT_MAPPINGS:
             val = profile.get(key)

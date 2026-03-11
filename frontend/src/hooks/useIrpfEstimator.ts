@@ -52,6 +52,18 @@ export interface IrpfEstimateInput {
     salario_base_mensual?: number
     complementos_salariales?: number
     irpf_retenido_porcentaje?: number
+    // Inversiones, cripto y apuestas
+    cripto_ganancia_neta?: number
+    cripto_perdida_neta?: number
+    ganancias_acciones?: number
+    perdidas_acciones?: number
+    ganancias_reembolso_fondos?: number
+    perdidas_reembolso_fondos?: number
+    ganancias_derivados?: number
+    perdidas_derivados?: number
+    premios_metalico_privados?: number
+    perdidas_juegos_privados?: number
+    premios_metalico_publicos?: number
     // Phase 2 fields
     tributacion_conjunta?: boolean
     tipo_unidad_familiar?: string

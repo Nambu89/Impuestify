@@ -6,10 +6,13 @@ export interface FiscalField {
     label: string
     type: 'bool' | 'number' | 'select' | 'date' | 'text'
     options?: string[]
+    option_labels?: string[]  // Labels for select options (parallel array to options)
     required?: boolean
     foral_only?: boolean
     help_text?: string
+    hint?: string             // Backend uses "hint" — normalized to help_text on fetch
     deductions_count?: number
+    conditional_on?: string   // Key of a bool field that must be true to show this field
 }
 
 export interface FiscalSection {
@@ -66,6 +69,7 @@ export function useFiscalFields(ccaa: string | null): UseFiscalFieldsResult {
                 `/api/fiscal-profile/fields?ccaa=${encodeURIComponent(target)}`
             )
             // Normalize field types from backend (float/int/str → number/number/text)
+            // Also normalize "hint" → "help_text" (backend uses "hint")
             for (const section of data.sections) {
                 for (const field of section.fields) {
                     if (field.type === 'float' as any || field.type === 'int' as any) {
@@ -74,6 +78,10 @@ export function useFiscalFields(ccaa: string | null): UseFiscalFieldsResult {
                         (field as any).type = 'text'
                     } else if (field.type === 'list_int' as any) {
                         (field as any).type = 'text'  // comma-separated input
+                    }
+                    // Normalize hint → help_text so the component only handles one property
+                    if ((field as any).hint && !field.help_text) {
+                        field.help_text = (field as any).hint
                     }
                 }
             }

@@ -733,6 +733,73 @@ class TursoClient:
             """,
 
             "CREATE INDEX IF NOT EXISTS idx_notif_log_user ON notification_log(user_id)",
+
+            # =============================================
+            # CRYPTOCURRENCY TABLES
+            # =============================================
+
+            # Crypto transactions - raw transaction log per user
+            """
+            CREATE TABLE IF NOT EXISTS crypto_transactions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id),
+                exchange TEXT,
+                tx_type TEXT NOT NULL,
+                date_utc TEXT NOT NULL,
+                asset TEXT NOT NULL,
+                amount REAL NOT NULL,
+                price_eur REAL,
+                total_eur REAL,
+                fee_eur REAL DEFAULT 0,
+                counterpart_asset TEXT,
+                counterpart_amount REAL,
+                notes TEXT,
+                source_file TEXT,
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_crypto_tx_user ON crypto_transactions(user_id, date_utc)",
+
+            # Crypto holdings - aggregated per asset (calculated cache, avg_cost for UI only)
+            """
+            CREATE TABLE IF NOT EXISTS crypto_holdings (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id),
+                asset TEXT NOT NULL,
+                total_units REAL NOT NULL,
+                avg_cost_eur REAL,
+                total_invested_eur REAL,
+                current_value_eur REAL,
+                unrealized_pnl_eur REAL,
+                last_updated TEXT,
+                UNIQUE(user_id, asset)
+            )
+            """,
+
+            # Crypto gains - FIFO-calculated gains/losses per tax year
+            """
+            CREATE TABLE IF NOT EXISTS crypto_gains (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id),
+                tax_year INTEGER NOT NULL,
+                asset TEXT NOT NULL,
+                tx_type TEXT NOT NULL,
+                clave_contraprestacion TEXT,
+                date_acquisition TEXT,
+                date_transmission TEXT,
+                acquisition_value_eur REAL,
+                acquisition_fees_eur REAL,
+                transmission_value_eur REAL,
+                transmission_fees_eur REAL,
+                gain_loss_eur REAL,
+                anti_aplicacion INTEGER DEFAULT 0,
+                source_tx_id TEXT REFERENCES crypto_transactions(id),
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_crypto_gains_user_year ON crypto_gains(user_id, tax_year)",
         ]
         
         try:

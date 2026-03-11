@@ -440,6 +440,22 @@ class IRPFSimulator:
         # --- Foral-specific: EPSV and foral donativos ---
         aportaciones_epsv: float = 0,
         donativos_forales: float = 0,
+        # --- Fase 4: Ganancias patrimoniales del ahorro (acciones, fondos, derivados, cripto) ---
+        ganancias_acciones: float = 0,
+        perdidas_acciones: float = 0,
+        ganancias_reembolso_fondos: float = 0,
+        perdidas_reembolso_fondos: float = 0,
+        ganancias_derivados: float = 0,
+        perdidas_derivados: float = 0,
+        cripto_ganancia_neta: float = 0,
+        cripto_perdida_neta: float = 0,
+        # --- Fase 4: Ganancias juegos/apuestas privados (base general) ---
+        premios_metalico_privados: float = 0,
+        premios_especie_privados: float = 0,
+        perdidas_juegos_privados: float = 0,
+        # --- Fase 4: Loterías públicas (gravamen especial, Art. 75bis LIRPF) ---
+        premios_metalico_publicos: float = 0,
+        premios_especie_publicos: float = 0,
     ) -> Dict[str, Any]:
         """
         Run a complete IRPF simulation.
@@ -564,6 +580,15 @@ class IRPFSimulator:
         # --- 3. Base imponible general ---
         bi_general = trabajo_result["rendimiento_neto_reducido"] + rend_actividad + rend_inmuebles
 
+        # --- 3b-extra. Juegos y apuestas privados (casillas 0281-0290) → base general ---
+        # Las pérdidas de juegos SOLO compensan ganancias de juegos (no otras rentas).
+        ganancias_juegos_netas = 0.0
+        premios_juegos_brutos = premios_metalico_privados + premios_especie_privados
+        if premios_juegos_brutos > 0:
+            perdidas_comp = min(perdidas_juegos_privados, premios_juegos_brutos)
+            ganancias_juegos_netas = max(0.0, premios_juegos_brutos - perdidas_comp)
+            bi_general += ganancias_juegos_netas
+
         # --- 3b. Reduction: pension plan contributions (Art. 51-52 LIRPF) ---
         reduccion_planes_pensiones = 0.0
         if aportaciones_plan_pensiones > 0 or aportaciones_plan_pensiones_empresa > 0:
@@ -603,12 +628,26 @@ class IRPFSimulator:
             bi_general = max(0, bi_general - reduccion_tributacion_conjunta)
 
         # --- 4. Savings income (if any) ---
+        # Includes rendimientos del capital mobiliario AND ganancias patrimoniales del ahorro
+        _has_ahorro = (
+            intereses > 0 or dividendos > 0 or ganancias_fondos > 0
+            or ganancias_acciones > 0 or ganancias_reembolso_fondos > 0
+            or ganancias_derivados > 0 or cripto_ganancia_neta > 0
+        )
         ahorro_result = None
-        if intereses > 0 or dividendos > 0 or ganancias_fondos > 0:
+        if _has_ahorro:
             ahorro_result = await self.savings.calculate(
                 intereses=intereses,
                 dividendos=dividendos,
                 ganancias_fondos=ganancias_fondos,
+                ganancias_acciones=ganancias_acciones,
+                perdidas_acciones=perdidas_acciones,
+                ganancias_reembolso_fondos=ganancias_reembolso_fondos,
+                perdidas_reembolso_fondos=perdidas_reembolso_fondos,
+                ganancias_derivados=ganancias_derivados,
+                perdidas_derivados=perdidas_derivados,
+                cripto_ganancia_neta=cripto_ganancia_neta,
+                cripto_perdida_neta=cripto_perdida_neta,
                 jurisdiction=jurisdiction,
                 year=year,
             )
@@ -750,14 +789,27 @@ class IRPFSimulator:
         base_total = bi_general + base_ahorro
         tipo_medio = (cuota_total / base_total * 100) if base_total > 0 else 0.0
 
-        # --- 11. Retenciones y pagos a cuenta (para resultado final) ---
+        # --- 11. Gravamen especial sobre loterías públicas (Art. 75bis LIRPF) ---
+        # Exentos los primeros 40.000 EUR. Exceso tributa al 20% (retención en origen).
+        # NO van a la base general ni a la del ahorro — es un gravamen separado.
+        EXENCION_LOTERIAS = 40_000.0
+        TIPO_ESPECIAL_LOTERIAS = 0.20
+        premios_publicos_totales = premios_metalico_publicos + premios_especie_publicos
+        gravamen_especial_loterias = 0.0
+        if premios_publicos_totales > EXENCION_LOTERIAS:
+            exceso_loterias = premios_publicos_totales - EXENCION_LOTERIAS
+            gravamen_especial_loterias = round(exceso_loterias * TIPO_ESPECIAL_LOTERIAS, 2)
+
+        # --- 12. Retenciones y pagos a cuenta (para resultado final) ---
         total_retenciones = (
             retenciones_alquiler
             + retenciones_ahorro
             + retenciones_actividad
             + pagos_fraccionados_130
         )
-        cuota_diferencial = round(cuota_total - total_retenciones, 2)
+        cuota_diferencial = round(
+            cuota_total + gravamen_especial_loterias - total_retenciones, 2
+        )
         tipo_resultado = "a_pagar" if cuota_diferencial > 0 else "a_devolver"
 
         return {
@@ -807,6 +859,9 @@ class IRPFSimulator:
             "reduccion_tributacion_conjunta": round(reduccion_tributacion_conjunta, 2),
             "deduccion_alquiler_pre2015": round(deduccion_alquiler_pre2015, 2),
             "renta_imputada_inmuebles": round(renta_imputada_inmuebles, 2),
+            # Fase 4: juegos privados y loterías públicas
+            "ganancias_juegos_netas": round(ganancias_juegos_netas, 2),
+            "gravamen_especial_loterias": round(gravamen_especial_loterias, 2),
             # Retenciones y resultado final
             "retenciones_actividad": round(retenciones_actividad, 2),
             "pagos_fraccionados_130": round(pagos_fraccionados_130, 2),

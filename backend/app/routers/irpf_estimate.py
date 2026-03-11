@@ -75,6 +75,22 @@ class IRPFEstimateRequest(BaseModel):
     salario_base_mensual: float = 0
     complementos_salariales: float = 0
     irpf_retenido_porcentaje: float = 0
+    # Fase 4: Ganancias patrimoniales del ahorro (acciones, fondos, derivados, cripto)
+    ganancias_acciones: float = 0
+    perdidas_acciones: float = 0
+    ganancias_reembolso_fondos: float = 0
+    perdidas_reembolso_fondos: float = 0
+    ganancias_derivados: float = 0
+    perdidas_derivados: float = 0
+    cripto_ganancia_neta: float = 0
+    cripto_perdida_neta: float = 0
+    # Fase 4: Juegos y apuestas privados (base general, casillas 0281-0290)
+    premios_metalico_privados: float = 0
+    premios_especie_privados: float = 0
+    perdidas_juegos_privados: float = 0
+    # Fase 4: Loterías públicas (gravamen especial 20%, exentos primeros 40.000 EUR)
+    premios_metalico_publicos: float = 0
+    premios_especie_publicos: float = 0
 
 
 class IRPFBreakdown(BaseModel):
@@ -118,6 +134,9 @@ class IRPFEstimateResponse(BaseModel):
     reduccion_tributacion_conjunta: float = 0
     deduccion_alquiler_pre2015: float = 0
     renta_imputada_inmuebles: float = 0
+    # Fase 4
+    ganancias_juegos_netas: float = 0
+    gravamen_especial_loterias: float = 0
     trabajo: Optional[IRPFBreakdown] = None
     actividad: Optional[ActivityBreakdown] = None
     error: Optional[str] = None
@@ -208,6 +227,21 @@ async def estimate_irpf(
             alquiler_pagado_anual=request.alquiler_pagado_anual,
             valor_catastral_segundas_viviendas=request.valor_catastral_segundas_viviendas,
             valor_catastral_revisado_post1994=request.valor_catastral_revisado_post1994,
+            # Fase 4: ganancias patrimoniales del ahorro
+            ganancias_acciones=request.ganancias_acciones,
+            perdidas_acciones=request.perdidas_acciones,
+            ganancias_reembolso_fondos=request.ganancias_reembolso_fondos,
+            perdidas_reembolso_fondos=request.perdidas_reembolso_fondos,
+            ganancias_derivados=request.ganancias_derivados,
+            perdidas_derivados=request.perdidas_derivados,
+            cripto_ganancia_neta=request.cripto_ganancia_neta,
+            cripto_perdida_neta=request.cripto_perdida_neta,
+            # Fase 4: juegos privados y loterías
+            premios_metalico_privados=request.premios_metalico_privados,
+            premios_especie_privados=request.premios_especie_privados,
+            perdidas_juegos_privados=request.perdidas_juegos_privados,
+            premios_metalico_publicos=request.premios_metalico_publicos,
+            premios_especie_publicos=request.premios_especie_publicos,
         )
 
         # Try requested year, fallback to year-1
@@ -252,6 +286,8 @@ async def estimate_irpf(
             reduccion_tributacion_conjunta=round(result.get("reduccion_tributacion_conjunta", 0), 2),
             deduccion_alquiler_pre2015=round(result.get("deduccion_alquiler_pre2015", 0), 2),
             renta_imputada_inmuebles=round(result.get("renta_imputada_inmuebles", 0), 2),
+            ganancias_juegos_netas=round(result.get("ganancias_juegos_netas", 0), 2),
+            gravamen_especial_loterias=round(result.get("gravamen_especial_loterias", 0), 2),
             trabajo=IRPFBreakdown(
                 ingresos_brutos=trabajo.get("ingresos_brutos", 0),
                 gastos_deducibles=trabajo.get("gastos_deducibles", 0),

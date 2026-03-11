@@ -106,6 +106,7 @@
 - [ ] Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)
 - [ ] MFA / 2FA (recomendación auditoría)
 - [ ] CAPTCHA en login (recomendación auditoría)
+- [ ] Estrategia Social Media — plan en `plans/social-media-strategy-2026.md` (7 pilares, LinkedIn + Instagram, pre-campana Renta abril 2026)
 
 ### Media prioridad
 - [x] ~~Agente actualización documental (crawler automático AEAT/BOE)~~ → DONE (250e8a2)

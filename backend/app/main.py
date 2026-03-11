@@ -469,6 +469,10 @@ app.include_router(deadlines_router)
 from app.routers.session_docs import router as session_docs_router
 app.include_router(session_docs_router)
 
+# Crypto transactions & FIFO gains
+from app.routers.crypto import router as crypto_router
+app.include_router(crypto_router)
+
 # Prometheus instrumentation with custom metrics
 from app.metrics import setup_instrumentator, set_app_info
 setup_instrumentator(app)

@@ -15,6 +15,8 @@ from app.tools.isd_calculator_tool import ISD_CALCULATOR_TOOL, calculate_isd
 from app.tools.modelo_ipsi_tool import MODELO_IPSI_TOOL, calculate_modelo_ipsi_tool
 from app.tools.casilla_lookup_tool import CASILLA_LOOKUP_TOOL, lookup_casilla_tool
 from app.tools.fiscal_profile_tool import UPDATE_FISCAL_PROFILE_TOOL, update_fiscal_profile_tool
+from app.tools.crypto_gains_tool import CRYPTO_GAINS_TOOL, calculate_crypto_gains_tool
+from app.tools.crypto_csv_tool import CRYPTO_CSV_TOOL, parse_crypto_csv_tool
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
@@ -32,6 +34,8 @@ ALL_TOOLS = [
 	MODELO_IPSI_TOOL,
 	CASILLA_LOOKUP_TOOL,
 	UPDATE_FISCAL_PROFILE_TOOL,
+	CRYPTO_GAINS_TOOL,
+	CRYPTO_CSV_TOOL,
 ]
 
 # Registry of tool execution functions
@@ -48,6 +52,8 @@ TOOL_EXECUTORS = {
 	"calculate_modelo_ipsi": calculate_modelo_ipsi_tool,
 	"lookup_casilla": lookup_casilla_tool,
 	"update_fiscal_profile": update_fiscal_profile_tool,
+	"calculate_crypto_gains": calculate_crypto_gains_tool,
+	"parse_crypto_csv": parse_crypto_csv_tool,
 }
 
 __all__ = [
@@ -77,4 +83,8 @@ __all__ = [
 	"lookup_casilla_tool",
 	"UPDATE_FISCAL_PROFILE_TOOL",
 	"update_fiscal_profile_tool",
+	"CRYPTO_GAINS_TOOL",
+	"calculate_crypto_gains_tool",
+	"CRYPTO_CSV_TOOL",
+	"parse_crypto_csv_tool",
 ]

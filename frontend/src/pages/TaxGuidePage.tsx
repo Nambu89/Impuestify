@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, RotateCcw, MapPin, Briefcase, PiggyBank, Home as HomeIcon, Users, Gift, BarChart3, CheckCircle, Info, AlertTriangle, Zap, Shield } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RotateCcw, MapPin, Briefcase, PiggyBank, Home as HomeIcon, Users, Gift, BarChart3, CheckCircle, Info, AlertTriangle, Zap, Shield, TrendingUp } from 'lucide-react'
 import Header from '../components/Header'
 import LiveEstimatorBar from '../components/LiveEstimatorBar'
 import DynamicFiscalForm from '../components/DynamicFiscalForm'

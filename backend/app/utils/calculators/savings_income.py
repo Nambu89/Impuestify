@@ -28,6 +28,15 @@ class SavingsIncomeCalculator:
         ganancias_fondos: float = 0,
         otros_ahorro: float = 0,
         gastos_administracion: float = 0,
+        # Ganancias patrimoniales del ahorro (casillas 0316-0354, 1813-1814)
+        ganancias_acciones: float = 0,
+        perdidas_acciones: float = 0,
+        ganancias_reembolso_fondos: float = 0,
+        perdidas_reembolso_fondos: float = 0,
+        ganancias_derivados: float = 0,
+        perdidas_derivados: float = 0,
+        cripto_ganancia_neta: float = 0,
+        cripto_perdida_neta: float = 0,
         jurisdiction: str = "Estatal",
         year: int = 2024,
         **kwargs,
@@ -38,33 +47,55 @@ class SavingsIncomeCalculator:
         Args:
             intereses: Bank account/deposit interest (casilla 0027).
             dividendos: Dividends and equity income (casilla 0029).
-            ganancias_fondos: Fund/ETF capital gains (casilla 0031).
+            ganancias_fondos: Fund/ETF capital gains as rendimientos (casilla 0031).
             otros_ahorro: Other savings income.
             gastos_administracion: Deductible admin/custody expenses.
+            ganancias_acciones: Gross gains from share sales (casilla 0338).
+            perdidas_acciones: Losses from share sales (casilla 0339).
+            ganancias_reembolso_fondos: Gross gains from fund redemptions (casilla 0320).
+            perdidas_reembolso_fondos: Losses from fund redemptions.
+            ganancias_derivados: Gross gains from derivatives/CFDs/Forex (casilla 0353).
+            perdidas_derivados: Losses from derivatives/CFDs/Forex (casilla 0354).
+            cripto_ganancia_neta: Net crypto gains (casilla 1814).
+            cripto_perdida_neta: Net crypto losses (casilla 1813).
             jurisdiction: CCAA for autonomous savings scale.
             year: Fiscal year.
 
         Returns:
-            Dict with base_ahorro, cuota breakdown (estatal + autonomica).
+            Dict with base_ahorro, cuota breakdown (estatal + autonomica),
+            and ganancias_patrimoniales_netas breakdown.
         """
+        # Rendimientos del capital mobiliario
         ingresos = intereses + dividendos + ganancias_fondos + otros_ahorro
         rendimiento_neto = max(0, ingresos - gastos_administracion)
+
+        # Ganancias patrimoniales del ahorro (arts. 46 y 49 LIRPF)
+        # Cada tipo compensa sus propias pérdidas; el neto total va a la base del ahorro
+        neto_acciones = max(0, ganancias_acciones - perdidas_acciones)
+        neto_fondos_reembolso = max(0, ganancias_reembolso_fondos - perdidas_reembolso_fondos)
+        neto_derivados = max(0, ganancias_derivados - perdidas_derivados)
+        neto_cripto = max(0, cripto_ganancia_neta - cripto_perdida_neta)
+        ganancias_patrimoniales_netas = (
+            neto_acciones + neto_fondos_reembolso + neto_derivados + neto_cripto
+        )
+
+        base_ahorro_total = rendimiento_neto + ganancias_patrimoniales_netas
 
         cuota_est = 0.0
         cuota_aut = 0.0
         bd_est: List[Dict] = []
         bd_aut: List[Dict] = []
 
-        if rendimiento_neto > 0:
+        if base_ahorro_total > 0:
             state_scale = await self._get_ahorro_scale("Estatal", year)
             ccaa_scale = await self._get_ahorro_scale(jurisdiction, year)
 
-            cuota_est, bd_est = self._apply_scale(rendimiento_neto, state_scale)
+            cuota_est, bd_est = self._apply_scale(base_ahorro_total, state_scale)
             if ccaa_scale:
-                cuota_aut, bd_aut = self._apply_scale(rendimiento_neto, ccaa_scale)
+                cuota_aut, bd_aut = self._apply_scale(base_ahorro_total, ccaa_scale)
 
         return {
-            "base_ahorro": round(rendimiento_neto, 2),
+            "base_ahorro": round(base_ahorro_total, 2),
             "cuota_ahorro_estatal": round(cuota_est, 2),
             "cuota_ahorro_autonomica": round(cuota_aut, 2),
             "cuota_ahorro_total": round(cuota_est + cuota_aut, 2),
@@ -74,6 +105,13 @@ class SavingsIncomeCalculator:
                 "ganancias_fondos": round(ganancias_fondos, 2),
                 "otros": round(otros_ahorro, 2),
                 "gastos": round(gastos_administracion, 2),
+            },
+            "ganancias_patrimoniales": {
+                "neto_acciones": round(neto_acciones, 2),
+                "neto_reembolso_fondos": round(neto_fondos_reembolso, 2),
+                "neto_derivados": round(neto_derivados, 2),
+                "neto_cripto": round(neto_cripto, 2),
+                "total_neto": round(ganancias_patrimoniales_netas, 2),
             },
             "breakdown": {"estatal": bd_est, "autonomica": bd_aut},
         }
