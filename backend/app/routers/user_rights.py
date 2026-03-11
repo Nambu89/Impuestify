@@ -48,6 +48,7 @@ class FiscalProfileRequest(BaseModel):
     ccaa_residencia: Optional[str] = None
     fecha_nacimiento: Optional[str] = None
     situacion_laboral: Optional[str] = None
+    estado_civil: Optional[str] = None  # soltero|casado|divorciado|viudo|pareja_de_hecho
     ingresos_trabajo: Optional[float] = None
     ss_empleado: Optional[float] = None
     num_descendientes: Optional[int] = None
@@ -449,6 +450,7 @@ async def change_password(
 _PROFILE_COLUMNS = {"ccaa_residencia", "fecha_nacimiento", "situacion_laboral"}
 # All other FiscalProfileRequest fields go into datos_fiscales JSON
 _DATOS_FISCALES_KEYS = {
+    "estado_civil",
     "ingresos_trabajo", "ss_empleado", "num_descendientes",
     "anios_nacimiento_desc", "custodia_compartida",
     "num_ascendientes_65", "num_ascendientes_75",

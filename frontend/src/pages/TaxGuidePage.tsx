@@ -1051,6 +1051,7 @@ export default function TaxGuidePage() {
             alquiler_habitual_pre2015: profile.alquiler_habitual_pre2015 || false,
             alquiler_pagado_anual: profile.alquiler_pagado_anual || 0,
             valor_catastral_segundas_viviendas: profile.valor_catastral_segundas_viviendas || 0,
+            gastos_alquiler_total: (profile as any).gastos_alquiler_total || (profile as any).importe_alquiler_anual || 0,
             valor_catastral_revisado_post1994: profile.valor_catastral_revisado_post1994 ?? true,
             // Activity income
             ingresos_actividad: profile.ingresos_actividad || 0,
@@ -1071,6 +1072,44 @@ export default function TaxGuidePage() {
             irpf_retenido_porcentaje: profile.irpf_retenido_porcentaje || 0,
         })
     }, [profileLoading, profile]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Pre-fill DynamicFiscalForm values from fiscal profile (CCAA-specific fields)
+    useEffect(() => {
+        if (profileLoading || !profile.ccaa_residencia) return
+        // Only run once, in sync with profile prefill
+        setDynamicFormValues(prev => {
+            if (Object.keys(prev).length > 0) return prev // already populated
+            const vals: Record<string, any> = {}
+            // Sprint 1 CCAA-specific fields from profile
+            const ccaaKeys = [
+                'alquiler_vivienda_habitual', 'importe_alquiler_anual',
+                'vivienda_habitual_propiedad', 'rehabilitacion_vivienda',
+                'vivienda_rural', 'dacion_pago_alquiler', 'arrendador_vivienda_social',
+                'nacimiento_adopcion_reciente', 'adopcion_internacional',
+                'acogimiento_familiar', 'familia_monoparental',
+                'hijos_escolarizados', 'gastos_guarderia',
+                'ambos_progenitores_trabajan', 'hijos_estudios_universitarios',
+                'descendiente_discapacidad', 'ascendiente_discapacidad',
+                'ascendiente_a_cargo', 'familiar_discapacitado_cargo', 'empleada_hogar_cuidado',
+                'donativo_entidad_autonomica', 'donativo_investigacion',
+                'donativo_patrimonio', 'donativo_fundacion_local',
+                'vehiculo_electrico_nuevo', 'obras_mejora_energetica', 'instalacion_renovable',
+                'municipio_despoblado', 'inversion_empresa_nueva',
+                'epsv_aportaciones', 'pension_viudedad',
+                'reduccion_jornada_cuidado', 'cuenta_vivienda_aportaciones',
+                'donativos_autonomicos', 'gastos_educativos', 'inversion_vivienda',
+                'instalacion_renovable_importe', 'vehiculo_electrico_importe',
+                'obras_mejora_importe', 'cotizaciones_empleada_hogar',
+            ]
+            for (const key of ccaaKeys) {
+                const val = (profile as any)[key]
+                if (val !== null && val !== undefined) {
+                    vals[key] = val
+                }
+            }
+            return vals
+        })
+    }, [profileLoading, profile])
 
     // Save wizard data to fiscal profile
     const handleSaveProfile = useCallback(async () => {

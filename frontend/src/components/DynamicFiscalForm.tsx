@@ -228,13 +228,27 @@ function CollapsibleSection({
     )
 }
 
+// Base sections already covered by the parent form (SettingsPage or TaxGuidePage).
+// In compact mode, skip these to avoid duplicate fields.
+const BASE_SECTION_IDS = new Set([
+    'datos_personales', 'rendimientos_trabajo', 'rendimientos_ahorro',
+    'inmuebles', 'familia', 'discapacidad', 'reducciones',
+    'criptomonedas', 'apuestas_juegos', 'ganancias_patrimoniales_financieras',
+    'actividad_economica',
+])
+
 export default function DynamicFiscalForm({
     ccaa,
     values,
     onChange,
     compact = false,
 }: DynamicFiscalFormProps) {
-    const { sections, regime, loading } = useFiscalFields(ccaa)
+    const { sections: allSections, regime, loading } = useFiscalFields(ccaa)
+
+    // In compact mode, filter out base sections already handled by the parent form
+    const sections = compact
+        ? allSections.filter(s => !BASE_SECTION_IDS.has(s.id))
+        : allSections
 
     if (!ccaa) {
         return (
