@@ -375,6 +375,7 @@ async def ask_question_stream(
                         response = await agent.run(
                             query=request.question,
                             context=agent_doc_context,
+                            rag_context=rag_context,
                             sources=sources_data,
                             conversation_history=formatted_history,
                             user_id=current_user.user_id,

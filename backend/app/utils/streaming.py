@@ -22,16 +22,25 @@ MAX_STREAM_DURATION = 240  # 4 minutes - well under Railway's 5min limit
 
 # Friendly tool name mapping for UI display: (active_label, done_label)
 TOOL_DISPLAY_NAMES: Dict[str, tuple] = {
-    "simulate_irpf": ("Simulando tu IRPF", "Simulación de IRPF completada"),
-    "calculate_irpf": ("Calculando tramos IRPF", "Cálculo de tramos completado"),
-    "calculate_autonomous_quota": ("Calculando cuota de autónomo", "Cuota de autónomo calculada"),
+    "simulate_irpf": ("Simulando tu IRPF", "Simulacion de IRPF completada"),
+    "calculate_irpf": ("Calculando tramos IRPF", "Calculo de tramos completado"),
+    "calculate_autonomous_quota": ("Calculando cuota de autonomo", "Cuota de autonomo calculada"),
     "calculate_modelo_303": ("Calculando Modelo 303 (IVA)", "Modelo 303 calculado"),
     "calculate_modelo_130": ("Calculando Modelo 130 (IRPF)", "Modelo 130 calculado"),
+    "calculate_modelo_ipsi": ("Calculando IPSI trimestral", "IPSI calculado"),
     "discover_deductions": ("Buscando deducciones aplicables", "Deducciones encontradas"),
     "search_tax_regulations": ("Consultando normativa fiscal", "Normativa consultada"),
-    "analyze_payslip": ("Analizando tu nómina", "Nómina analizada"),
+    "analyze_payslip": ("Analizando tu nomina", "Nomina analizada"),
     "web_scraper": ("Consultando fuentes oficiales", "Fuentes consultadas"),
     "update_fiscal_profile": ("Actualizando tu perfil fiscal", "Perfil fiscal actualizado"),
+    "calculate_isd": ("Calculando Impuesto Sucesiones/Donaciones", "ISD calculado"),
+    "lookup_casilla": ("Consultando casillas IRPF", "Casilla encontrada"),
+    "calculate_crypto_gains": ("Calculando ganancias cripto", "Ganancias cripto calculadas"),
+    "parse_crypto_csv": ("Procesando CSV de exchange", "CSV procesado"),
+    "get_workspace_summary": ("Analizando workspace", "Workspace analizado"),
+    "calculate_vat_balance": ("Calculando balance IVA", "Balance IVA calculado"),
+    "project_annual_irpf": ("Proyectando IRPF anual", "Proyeccion completada"),
+    "get_quarterly_deadlines": ("Consultando plazos fiscales", "Plazos consultados"),
 }
 
 
