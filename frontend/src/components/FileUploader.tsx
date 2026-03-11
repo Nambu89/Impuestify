@@ -12,9 +12,9 @@ interface FileUploaderProps {
 type FileType = 'nomina' | 'factura' | 'declaracion' | 'otro'
 
 const FILE_TYPES: { value: FileType; label: string; icon: React.ReactNode }[] = [
-    { value: 'nomina', label: 'Nomina', icon: <FileText size={16} /> },
+    { value: 'nomina', label: 'Nómina', icon: <FileText size={16} /> },
     { value: 'factura', label: 'Factura', icon: <Receipt size={16} /> },
-    { value: 'declaracion', label: 'Declaracion', icon: <FileSpreadsheet size={16} /> },
+    { value: 'declaracion', label: 'Declaración', icon: <FileSpreadsheet size={16} /> },
     { value: 'otro', label: 'Otro', icon: <File size={16} /> }
 ]
 

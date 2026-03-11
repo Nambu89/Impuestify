@@ -62,7 +62,7 @@ export default function AdminUsersPage() {
     }
 
     const handleChangePlan = async (userId: string, email: string, newPlan: string) => {
-        const planLabel = newPlan === 'autonomo' ? 'Autonomo' : 'Particular'
+        const planLabel = newPlan === 'autonomo' ? 'Autónomo' : 'Particular'
         const confirmed = window.confirm(
             `Cambiar plan de ${email} a "${planLabel}"?`
         )
@@ -221,7 +221,7 @@ export default function AdminUsersPage() {
                                                             ? <Loader size={14} className="animate-spin" />
                                                             : <ArrowUpDown size={14} />
                                                         }
-                                                        Cambiar a Autonomo
+                                                        Cambiar a Autónomo
                                                     </button>
                                                 ) : (
                                                     <button
@@ -302,7 +302,7 @@ export default function AdminUsersPage() {
                                                                         ? <Loader size={14} className="animate-spin" />
                                                                         : <ArrowUpDown size={14} />
                                                                     }
-                                                                    Autonomo
+                                                                    Autónomo
                                                                 </button>
                                                             ) : (
                                                                 <button

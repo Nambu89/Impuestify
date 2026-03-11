@@ -201,7 +201,7 @@ export function useDeclarations() {
                 )
                 if (!controller.signal.aborted) {
                     setCalcResult(data)
-                    if (!data.success) setError(data.error || 'Error en el calculo')
+                    if (!data.success) setError(data.error || 'Error en el cálculo')
                 }
             } catch (err: any) {
                 if (err.name !== 'AbortError' && !controller.signal.aborted) {

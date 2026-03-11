@@ -89,13 +89,13 @@ export default function ContactPage() {
                         <>
                             <div className="contact-badge">
                                 <Building2 size={16} />
-                                <span>Plan Autonomos</span>
+                                <span>Plan Autónomos</span>
                             </div>
-                            <h1>Plan para autonomos y profesionales</h1>
+                            <h1>Plan para autónomos y profesionales</h1>
                             <p>
                                 Estamos preparando un plan especializado con herramientas adaptadas
-                                a las necesidades de autonomos y profesionales por cuenta propia.
-                                Dejanos tus datos y te informaremos en cuanto este disponible.
+                                a las necesidades de autónomos y profesionales por cuenta propia.
+                                Déjanos tus datos y te informaremos en cuanto esté disponible.
                             </p>
                         </>
                     ) : (

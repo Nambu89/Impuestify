@@ -173,7 +173,7 @@ export function useIrpfEstimator() {
                 )
                 if (!controller.signal.aborted) {
                     setResult(data)
-                    if (!data.success) setError(data.error || 'Error en la estimacion')
+                    if (!data.success) setError(data.error || 'Error en la estimación')
                 }
             } catch (err: any) {
                 if (err.name !== 'AbortError' && !controller.signal.aborted) {

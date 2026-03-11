@@ -20,7 +20,7 @@ export default function LiveEstimatorBar({ result, loading }: Props) {
             <div className="estimator-bar estimator-bar--empty">
                 <Calculator size={20} />
                 <span className="estimator-bar__hint">
-                    Introduce tus datos para ver la estimacion
+                    Introduce tus datos para ver la estimación
                 </span>
             </div>
         )

@@ -106,7 +106,7 @@ export default function AITransparencyPage() {
                         <li>Revisar las respuestas de la IA</li>
                         <li>Verificar fuentes citadas</li>
                         <li>Consultar con asesor fiscal para decisiones importantes</li>
-                        <li>Validar calculos antes de usarlos</li>
+                        <li>Validar cálculos antes de usarlos</li>
                     </ul>
                 </section>
 

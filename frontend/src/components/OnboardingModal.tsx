@@ -28,19 +28,19 @@ export default function OnboardingModal({ userName, onDismiss }: OnboardingModal
         {
             icon: <MessageSquare size={40} />,
             title: `Bienvenido${userName ? `, ${userName}` : ''}`,
-            desc: 'Impuestify es tu asistente fiscal con IA. Preguntale lo que quieras sobre impuestos, IRPF, deducciones, nominas o notificaciones de Hacienda.',
-            tip: 'Prueba: "Cuanto pago de IRPF si gano 35.000 EUR en Madrid?"',
+            desc: 'Impuestify es tu asistente fiscal con IA. Pregúntale lo que quieras sobre impuestos, IRPF, deducciones, nóminas o notificaciones de Hacienda.',
+            tip: 'Prueba: "¿Cuánto pago de IRPF si gano 35.000 EUR en Madrid?"',
         },
         {
             icon: <Calculator size={40} />,
-            title: 'Guia Fiscal interactiva',
-            desc: 'Usa la Guia Fiscal para calcular tu IRPF paso a paso. Descubre deducciones autonomicas que quiza no conocias.',
-            tip: 'Accede desde el menu: Guia Fiscal',
+            title: 'Guía Fiscal interactiva',
+            desc: 'Usa la Guía Fiscal para calcular tu IRPF paso a paso. Descubre deducciones autonómicas que quizá no conocías.',
+            tip: 'Accede desde el menú: Guía Fiscal',
         },
         {
             icon: <Upload size={40} />,
             title: 'Sube tus documentos',
-            desc: 'Puedes subir nominas, notificaciones de Hacienda o facturas. La IA los analiza y te da respuestas personalizadas.',
+            desc: 'Puedes subir nóminas, notificaciones de Hacienda o facturas. La IA los analiza y te da respuestas personalizadas.',
             tip: 'Ve a Workspaces para gestionar tus documentos',
         },
     ]

@@ -273,7 +273,7 @@ export default function Chat() {
                             <div className="chat-empty-state__suggestions">
                                 <button
                                     className="chat-suggestion-card"
-                                    onClick={() => handleSuggestionClick('Calcula mi IRPF en mi comunidad autonoma')}
+                                    onClick={() => handleSuggestionClick('Calcula mi IRPF en mi comunidad autónoma')}
                                 >
                                     <div className="chat-suggestion-card__icon">
                                         <Calculator size={20} />
@@ -282,16 +282,16 @@ export default function Chat() {
                                 </button>
                                 <button
                                     className="chat-suggestion-card"
-                                    onClick={() => handleSuggestionClick('Analiza mi ultima nomina y dime si las retenciones son correctas')}
+                                    onClick={() => handleSuggestionClick('Analiza mi última nómina y dime si las retenciones son correctas')}
                                 >
                                     <div className="chat-suggestion-card__icon">
                                         <FileText size={20} />
                                     </div>
-                                    <span className="chat-suggestion-card__text">Analiza mi nomina</span>
+                                    <span className="chat-suggestion-card__text">Analiza mi nómina</span>
                                 </button>
                                 <button
                                     className="chat-suggestion-card"
-                                    onClick={() => handleSuggestionClick('Que deducciones fiscales puedo aplicar en mi declaracion?')}
+                                    onClick={() => handleSuggestionClick('¿Qué deducciones fiscales puedo aplicar en mi declaración?')}
                                 >
                                     <div className="chat-suggestion-card__icon">
                                         <Search size={20} />

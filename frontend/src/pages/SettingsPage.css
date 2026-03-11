@@ -256,6 +256,13 @@ select.form-input {
     background-size: 16px;
     padding-right: 40px;
     cursor: pointer;
+    color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+select.form-input option {
+    background-color: #1e293b;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Textarea (date inputs need normal height) */

@@ -349,7 +349,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                     <h3 className="tg-step__subtitle">Actividad economica</h3>
 
                     <div className="tg-field">
-                        <label className="tg-field__label">Metodo de estimacion</label>
+                        <label className="tg-field__label">Método de estimación</label>
                         <select
                             className="tg-field__select"
                             value={data.estimacion_actividad}
@@ -406,7 +406,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                             value={data.provisiones_actividad}
                             onChange={v => update({ provisiones_actividad: v })}
                             suffix="EUR"
-                            help="Solo en estimacion directa normal"
+                            help="Solo en estimación directa normal"
                         />
                     )}
 
@@ -448,7 +448,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         label="Mas del 75% de ingresos de un solo cliente"
                         checked={data.un_solo_cliente}
                         onChange={v => update({ un_solo_cliente: v })}
-                        help="Autonomo economicamente dependiente (TRADE). Aplica reduccion similar a trabajo (Art. 32.2 LIRPF)"
+                        help="Autónomo económicamente dependiente (TRADE). Aplica reducción similar a trabajo (Art. 32.2 LIRPF)"
                     />
                 </>
             )}
@@ -531,8 +531,8 @@ function StepInversiones({ data, update }: StepProps) {
             }} />
             {data.tiene_criptomonedas && (
                 <>
-                    <NumberInput label="Ganancias netas cripto" value={data.cripto_ganancia_neta} onChange={v => update({ cripto_ganancia_neta: v })} suffix="EUR" help="Ganancias realizadas (ventas - compras, metodo FIFO)" />
-                    <NumberInput label="Perdidas netas cripto" value={data.cripto_perdida_neta} onChange={v => update({ cripto_perdida_neta: v })} suffix="EUR" help="Perdidas realizadas (no compensadas). Atencion: regla antiaplicacion 61 dias" />
+                    <NumberInput label="Ganancias netas cripto" value={data.cripto_ganancia_neta} onChange={v => update({ cripto_ganancia_neta: v })} suffix="EUR" help="Ganancias realizadas (ventas - compras, método FIFO)" />
+                    <NumberInput label="Perdidas netas cripto" value={data.cripto_perdida_neta} onChange={v => update({ cripto_perdida_neta: v })} suffix="EUR" help="Pérdidas realizadas (no compensadas). Atención: regla antiaplicación 61 días" />
                 </>
             )}
 
@@ -768,7 +768,7 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
                     )}
 
                     {!discoveryError && discoveryResult && discoveryResult.eligible.length === 0 && discoveryResult.missing_questions.length === 0 && !discoveryLoading && (
-                        <p className="tg-discovery__empty">No se encontraron deducciones adicionales para tu situacion.</p>
+                        <p className="tg-discovery__empty">No se encontraron deducciones adicionales para tu situación.</p>
                     )}
                 </div>
             )}
@@ -785,8 +785,8 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
     if (!result || !result.success) {
         return (
             <div className="tg-step">
-                <h2 className="tg-step__title">Resultado de la estimacion</h2>
-                <p className="tg-step__desc">{loading ? 'Calculando tu estimacion...' : 'Completa los pasos anteriores para ver tu resultado.'}</p>
+                <h2 className="tg-step__title">Resultado de la estimación</h2>
+                <p className="tg-step__desc">{loading ? 'Calculando tu estimación...' : 'Completa los pasos anteriores para ver tu resultado.'}</p>
             </div>
         )
     }
@@ -796,7 +796,7 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
 
     return (
         <div className="tg-step">
-            <h2 className="tg-step__title">Resultado de la estimacion</h2>
+            <h2 className="tg-step__title">Resultado de la estimación</h2>
 
             <div className={`tg-result-card ${isRefund ? 'tg-result-card--refund' : 'tg-result-card--payment'}`}>
                 <span className="tg-result-card__label">{isRefund ? 'Hacienda te devuelve' : 'A pagar a Hacienda'}</span>
@@ -886,9 +886,9 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
             )}
 
             <p className="tg-disclaimer">
-                Esta estimacion es orientativa y no constituye asesoramiento fiscal.
-                Los calculos se basan en las escalas y deducciones vigentes.
-                Para una declaracion precisa, consulta con un asesor fiscal.
+                Esta estimación es orientativa y no constituye asesoramiento fiscal.
+                Los cálculos se basan en las escalas y deducciones vigentes.
+                Para una declaración precisa, consulta con un asesor fiscal.
             </p>
 
             {saveProfileDone ? (
@@ -1288,7 +1288,7 @@ export default function TaxGuidePage() {
                     Simulador <span>IRPF</span>
                 </h1>
                 <p className="tax-guide__header-desc">
-                    Calcula tu declaracion de la renta con todas las deducciones de tu comunidad autonoma
+                    Calcula tu declaración de la renta con todas las deducciones de tu comunidad autónoma
                 </p>
             </div>
 

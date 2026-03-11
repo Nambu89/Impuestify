@@ -585,7 +585,7 @@ export default function DeclarationsPage() {
                                 disabled={!calcResult?.success || saving}
                             >
                                 {saving ? <Loader2 size={16} className="spin" /> : <Save size={16} />}
-                                {saved ? 'Guardado' : 'Guardar declaracion'}
+                                {saved ? 'Guardado' : 'Guardar declaración'}
                             </button>
                         </div>
 

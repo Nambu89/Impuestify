@@ -372,7 +372,7 @@ export default function CanariasPage() {
                             </div>
                             <p className="canarias-zec__example-note">
                                 Valores orientativos sujetos a los limites de base imponible
-                                por numero de empleados establecidos en la normativa ZEC vigente.
+                                por número de empleados establecidos en la normativa ZEC vigente.
                             </p>
                         </div>
                     </FadeContent>
@@ -522,10 +522,10 @@ export default function CanariasPage() {
                             </div>
                             <div className="canarias-faq__item">
                                 <h3>
-                                    Puedo aplicar la RIC como autonomo?
+                                    ¿Puedo aplicar la RIC como autónomo?
                                 </h3>
                                 <p>
-                                    Si. Los autonomos con actividad economica en Canarias pueden
+                                    Sí. Los autónomos con actividad económica en Canarias pueden
                                     aplicar la Reserva para Inversiones en Canarias (RIC) y
                                     reducir hasta el 90% de su base imponible en IRPF,
                                     destinando beneficios a inversiones productivas en el
@@ -534,15 +534,15 @@ export default function CanariasPage() {
                             </div>
                             <div className="canarias-faq__item">
                                 <h3>
-                                    Como ayuda Impuestify con el regimen canario?
+                                    ¿Cómo ayuda Impuestify con el régimen canario?
                                 </h3>
                                 <p>
-                                    Nuestro motor de IA tiene acceso a la normativa especifica
+                                    Nuestro motor de IA tiene acceso a la normativa específica
                                     de Canarias: Ley 20/1991 del IGIC, Ley 19/1994 del REF
                                     Canario (RIC y ZEC), y el Decreto Legislativo 1/2009 de
                                     deducciones IRPF. Puede calcular tu IGIC, estimar el ahorro
                                     con la RIC y descubrir todas las deducciones aplicables a
-                                    tu situacion.
+                                    tu situación.
                                 </p>
                             </div>
                         </div>
