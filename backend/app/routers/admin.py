@@ -2,8 +2,10 @@
 Admin Endpoints — Owner-only user management.
 
 Provides:
-- GET  /api/admin/users            — List all users with plan info
-- PUT  /api/admin/users/{id}/plan  — Change a user's plan_type
+- GET  /api/admin/users                  — List all users with plan info
+- PUT  /api/admin/users/{id}/plan        — Change a user's plan_type
+- PUT  /api/admin/users/{id}/grant-beta  — Grant free beta access until 31/12/2026
+- PUT  /api/admin/users/{id}/revoke-beta — Revoke beta access
 """
 import logging
 import json
@@ -174,4 +176,86 @@ async def change_user_plan(
         "message": f"Plan actualizado a '{request.plan_type}' para {user_email}",
         "user_id": user_id,
         "plan_type": request.plan_type,
+    }
+
+
+@router.put("/users/{user_id}/grant-beta")
+async def grant_beta_access(
+    user_id: str,
+    owner: TokenData = Depends(_require_owner),
+    db: TursoClient = Depends(get_db_client),
+):
+    """Grant free beta access to a user (active until 31/12/2026, no Stripe)."""
+    user_result = await db.execute(
+        "SELECT id, email FROM users WHERE id = ?", [user_id]
+    )
+    if not user_result.rows:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    user_email = user_result.rows[0]["email"]
+    now = datetime.utcnow().isoformat()
+    beta_end = "2026-12-31T23:59:59"
+
+    sub_result = await db.execute(
+        "SELECT id FROM subscriptions WHERE user_id = ?", [user_id]
+    )
+    if sub_result.rows:
+        await db.execute(
+            """UPDATE subscriptions
+               SET status = 'active', current_period_start = ?, current_period_end = ?, updated_at = ?
+               WHERE user_id = ?""",
+            [now, beta_end, now, user_id],
+        )
+    else:
+        await db.execute(
+            """INSERT INTO subscriptions
+               (id, user_id, stripe_customer_id, plan_type, status,
+                current_period_start, current_period_end, created_at, updated_at)
+               VALUES (?, ?, ?, 'particular', 'active', ?, ?, ?, ?)""",
+            [str(uuid.uuid4()), user_id, f"beta_{user_id[:8]}",
+             now, beta_end, now, now],
+        )
+
+    logger.info(
+        "Admin grant beta: user=%s email=%s until=%s by=%s",
+        user_id, user_email, beta_end, owner.email,
+    )
+
+    return {
+        "message": f"Acceso beta activado para {user_email} hasta 31/12/2026",
+        "user_id": user_id,
+        "subscription_status": "active",
+    }
+
+
+@router.put("/users/{user_id}/revoke-beta")
+async def revoke_beta_access(
+    user_id: str,
+    owner: TokenData = Depends(_require_owner),
+    db: TursoClient = Depends(get_db_client),
+):
+    """Revoke beta access (set subscription to inactive)."""
+    user_result = await db.execute(
+        "SELECT id, email FROM users WHERE id = ?", [user_id]
+    )
+    if not user_result.rows:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    user_email = user_result.rows[0]["email"]
+    now = datetime.utcnow().isoformat()
+
+    await db.execute(
+        "UPDATE subscriptions SET status = 'inactive', updated_at = ? WHERE user_id = ?",
+        [now, user_id],
+    )
+
+    logger.info(
+        "Admin revoke beta: user=%s email=%s by=%s",
+        user_id, user_email, owner.email,
+    )
+
+    return {
+        "message": f"Acceso beta revocado para {user_email}",
+        "user_id": user_id,
+        "subscription_status": "inactive",
     }

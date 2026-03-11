@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
 import {
     Users, RefreshCw, Shield, AlertCircle, CheckCircle,
-    Crown, ArrowUpDown, Loader
+    Crown, ArrowUpDown, Loader, UserCheck, UserX
 } from 'lucide-react'
 import { useApi } from '../hooks/useApi'
 import { useSubscription } from '../hooks/useSubscription'
@@ -26,6 +26,7 @@ export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserListItem[]>([])
     const [loading, setLoading] = useState(true)
     const [changingPlan, setChangingPlan] = useState<string | null>(null)
+    const [togglingBeta, setTogglingBeta] = useState<string | null>(null)
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
     const fetchUsers = useCallback(async () => {
@@ -79,6 +80,26 @@ export default function AdminUsersPage() {
             setMessage({ type: 'error', text: err.message || 'Error al cambiar plan' })
         } finally {
             setChangingPlan(null)
+        }
+    }
+
+    const handleToggleBeta = async (userId: string, email: string, isActive: boolean) => {
+        const action = isActive ? 'revocar' : 'activar'
+        const confirmed = window.confirm(
+            `¿${isActive ? 'Revocar' : 'Activar'} acceso beta para ${email}?`
+        )
+        if (!confirmed) return
+
+        try {
+            setTogglingBeta(userId)
+            const endpoint = isActive ? 'revoke-beta' : 'grant-beta'
+            await apiRequest(`/api/admin/users/${userId}/${endpoint}`, { method: 'PUT' })
+            setMessage({ type: 'success', text: `Beta ${isActive ? 'revocado' : 'activado'} para ${email}` })
+            await fetchUsers()
+        } catch (err: any) {
+            setMessage({ type: 'error', text: err.message || `Error al ${action} beta` })
+        } finally {
+            setTogglingBeta(null)
         }
     }
 
@@ -215,6 +236,19 @@ export default function AdminUsersPage() {
                                                         Cambiar a Particular
                                                     </button>
                                                 )}
+                                                <button
+                                                    className={`btn-plan ${u.subscription_status === 'active' ? 'btn-revoke-beta' : 'btn-grant-beta'}`}
+                                                    onClick={() => handleToggleBeta(u.id, u.email, u.subscription_status === 'active')}
+                                                    disabled={togglingBeta === u.id}
+                                                >
+                                                    {togglingBeta === u.id
+                                                        ? <Loader size={14} className="animate-spin" />
+                                                        : u.subscription_status === 'active'
+                                                            ? <UserX size={14} />
+                                                            : <UserCheck size={14} />
+                                                    }
+                                                    {u.subscription_status === 'active' ? 'Revocar beta' : 'Activar beta'}
+                                                </button>
                                             </div>
                                         )}
                                     </div>
@@ -253,33 +287,50 @@ export default function AdminUsersPage() {
                                                     </span>
                                                 </td>
                                                 <td className="cell-date">{formatDate(u.created_at)}</td>
-                                                <td>
+                                                <td className="cell-actions">
                                                     {u.is_owner ? (
                                                         <span className="owner-label">Owner</span>
-                                                    ) : u.plan_type !== 'autonomo' ? (
-                                                        <button
-                                                            className="btn-plan btn-to-autonomo"
-                                                            onClick={() => handleChangePlan(u.id, u.email, 'autonomo')}
-                                                            disabled={changingPlan === u.id}
-                                                        >
-                                                            {changingPlan === u.id
-                                                                ? <Loader size={14} className="animate-spin" />
-                                                                : <ArrowUpDown size={14} />
-                                                            }
-                                                            Autonomo
-                                                        </button>
                                                     ) : (
-                                                        <button
-                                                            className="btn-plan btn-to-particular"
-                                                            onClick={() => handleChangePlan(u.id, u.email, 'particular')}
-                                                            disabled={changingPlan === u.id}
-                                                        >
-                                                            {changingPlan === u.id
-                                                                ? <Loader size={14} className="animate-spin" />
-                                                                : <ArrowUpDown size={14} />
-                                                            }
-                                                            Particular
-                                                        </button>
+                                                        <>
+                                                            {u.plan_type !== 'autonomo' ? (
+                                                                <button
+                                                                    className="btn-plan btn-to-autonomo"
+                                                                    onClick={() => handleChangePlan(u.id, u.email, 'autonomo')}
+                                                                    disabled={changingPlan === u.id}
+                                                                >
+                                                                    {changingPlan === u.id
+                                                                        ? <Loader size={14} className="animate-spin" />
+                                                                        : <ArrowUpDown size={14} />
+                                                                    }
+                                                                    Autonomo
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    className="btn-plan btn-to-particular"
+                                                                    onClick={() => handleChangePlan(u.id, u.email, 'particular')}
+                                                                    disabled={changingPlan === u.id}
+                                                                >
+                                                                    {changingPlan === u.id
+                                                                        ? <Loader size={14} className="animate-spin" />
+                                                                        : <ArrowUpDown size={14} />
+                                                                    }
+                                                                    Particular
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                className={`btn-plan ${u.subscription_status === 'active' ? 'btn-revoke-beta' : 'btn-grant-beta'}`}
+                                                                onClick={() => handleToggleBeta(u.id, u.email, u.subscription_status === 'active')}
+                                                                disabled={togglingBeta === u.id}
+                                                            >
+                                                                {togglingBeta === u.id
+                                                                    ? <Loader size={14} className="animate-spin" />
+                                                                    : u.subscription_status === 'active'
+                                                                        ? <UserX size={14} />
+                                                                        : <UserCheck size={14} />
+                                                                }
+                                                                {u.subscription_status === 'active' ? 'Revocar' : 'Beta'}
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </td>
                                             </tr>
