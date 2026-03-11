@@ -1,3 +1,9 @@
+---
+name: backend
+description: Activate Backend Architect role — FastAPI, multi-agent, APIs, security, Turso DB
+disable-model-invocation: true
+---
+
 # /backend - Activar rol de Backend Architect
 
 Lee el archivo `.claude/agents/backend-architect.md` y adopta ese rol para esta sesion.

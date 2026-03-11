@@ -1,3 +1,9 @@
+---
+name: start
+description: Initialize development session — environment check, git status, test status
+disable-model-invocation: true
+---
+
 # /start - Iniciar sesión de desarrollo
 
 Este comando se ejecuta al inicio de cada sesión de Claude Code.

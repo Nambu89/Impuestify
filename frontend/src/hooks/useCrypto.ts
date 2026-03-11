@@ -2,22 +2,22 @@ import { useState, useCallback } from 'react'
 import { useApi } from './useApi'
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — aligned with backend/app/routers/crypto.py response models
 // ---------------------------------------------------------------------------
 
 export interface CryptoTransaction {
     id: string
-    user_id: string
     exchange: string
-    date: string
-    type: string          // buy | sell | trade | transfer | staking | mining | fee
+    tx_type: string       // buy | sell | trade | transfer | staking | mining | fee
+    date_utc: string
     asset: string
-    quantity: number
-    price_eur: number
-    total_eur: number
-    fee_eur: number
-    notes?: string
-    created_at: string
+    amount: number
+    price_eur: number | null
+    total_eur: number | null
+    fee_eur: number | null
+    counterpart_asset?: string | null
+    counterpart_amount?: number | null
+    notes?: string | null
 }
 
 export interface CryptoHolding {
@@ -25,18 +25,27 @@ export interface CryptoHolding {
     total_units: number
     avg_cost_eur: number
     total_invested_eur: number
-    exchange?: string
 }
 
 export interface CryptoGain {
     asset: string
-    buy_date: string
-    sell_date: string
-    quantity: number
-    acquisition_value_eur: number
-    transmission_value_eur: number
-    gain_loss_eur: number
+    tx_type: string
     clave_contraprestacion: string  // F | N | O | B
+    date_acquisition: string
+    date_transmission: string
+    acquisition_value_eur: number
+    acquisition_fees_eur: number
+    transmission_value_eur: number
+    transmission_fees_eur: number
+    gain_loss_eur: number
+    anti_aplicacion: boolean
+}
+
+interface GainsSummaryBackend {
+    casilla_1813: number  // perdidas
+    casilla_1814: number  // ganancias
+    net: number
+    total_transactions: number
 }
 
 export interface CryptoGainsSummary {
@@ -45,22 +54,37 @@ export interface CryptoGainsSummary {
     total_losses_eur: number     // Casilla 1813 (positive value)
     net_eur: number
     gains: CryptoGain[]
-    modelo_721_required: boolean
 }
 
-export interface CryptoTransactionsPage {
-    items: CryptoTransaction[]
+// Backend response shapes
+interface TransactionsResponse {
+    success: boolean
+    transactions: CryptoTransaction[]
     total: number
     page: number
-    page_size: number
+    per_page: number
+}
+
+interface HoldingsResponse {
+    success: boolean
+    holdings: CryptoHolding[]
+    total_invested_eur: number
+}
+
+interface GainsResponse {
+    success: boolean
+    tax_year: number
+    gains: CryptoGain[]
+    summary: GainsSummaryBackend
 }
 
 export interface UploadResult {
     success: boolean
     imported: number
-    exchange: string
-    errors?: string[]
-    message?: string
+    duplicates_skipped: number
+    exchange_detected: string
+    date_range: Record<string, string>
+    error?: string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +96,7 @@ interface UseCryptoResult {
     totalTransactions: number
     currentPage: number
     holdings: CryptoHolding[]
+    totalInvestedEur: number
     gainsSummary: CryptoGainsSummary | null
 
     loadingTransactions: boolean
@@ -105,6 +130,7 @@ export function useCrypto(): UseCryptoResult {
 
     // Holdings state
     const [holdings, setHoldings] = useState<CryptoHolding[]>([])
+    const [totalInvestedEur, setTotalInvestedEur] = useState(0)
     const [loadingHoldings, setLoadingHoldings] = useState(false)
     const [errorHoldings, setErrorHoldings] = useState<string | null>(null)
 
@@ -123,10 +149,10 @@ export function useCrypto(): UseCryptoResult {
         setLoadingTransactions(true)
         setErrorTransactions(null)
         try {
-            const data = await apiRequest<CryptoTransactionsPage>(
-                `/api/crypto/transactions?page=${page}&page_size=${PAGE_SIZE}`
+            const data = await apiRequest<TransactionsResponse>(
+                `/api/crypto/transactions?page=${page}&per_page=${PAGE_SIZE}`
             )
-            setTransactions(data.items)
+            setTransactions(data.transactions ?? [])
             setTotalTransactions(data.total)
             setCurrentPage(data.page)
         } catch (err: any) {
@@ -140,8 +166,9 @@ export function useCrypto(): UseCryptoResult {
         setLoadingHoldings(true)
         setErrorHoldings(null)
         try {
-            const data = await apiRequest<CryptoHolding[]>('/api/crypto/holdings')
-            setHoldings(data)
+            const data = await apiRequest<HoldingsResponse>('/api/crypto/holdings')
+            setHoldings(data.holdings ?? [])
+            setTotalInvestedEur(data.total_invested_eur ?? 0)
         } catch (err: any) {
             setErrorHoldings(err.message || 'Error cargando portfolio')
         } finally {
@@ -153,10 +180,16 @@ export function useCrypto(): UseCryptoResult {
         setLoadingGains(true)
         setErrorGains(null)
         try {
-            const data = await apiRequest<CryptoGainsSummary>(
+            const data = await apiRequest<GainsResponse>(
                 `/api/crypto/gains?tax_year=${taxYear}`
             )
-            setGainsSummary(data)
+            setGainsSummary({
+                tax_year: data.tax_year,
+                total_gains_eur: data.summary.casilla_1814,
+                total_losses_eur: Math.abs(data.summary.casilla_1813),
+                net_eur: data.summary.net,
+                gains: data.gains ?? [],
+            })
         } catch (err: any) {
             setErrorGains(err.message || 'Error cargando ganancias fiscales')
         } finally {
@@ -170,7 +203,7 @@ export function useCrypto(): UseCryptoResult {
         try {
             const TOKEN_KEY = 'access_token'
             const token = localStorage.getItem(TOKEN_KEY)
-            const API_URL = import.meta.env.VITE_API_URL || '/api'
+            const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/api$/, '')
 
             const formData = new FormData()
             formData.append('file', file)
@@ -187,7 +220,7 @@ export function useCrypto(): UseCryptoResult {
                 if (response.status === 401) {
                     localStorage.removeItem(TOKEN_KEY)
                     window.location.href = '/login?expired=true'
-                    throw new Error('Sesión expirada')
+                    throw new Error('Sesion expirada')
                 }
                 const err = await response.json().catch(() => ({}))
                 throw new Error(err.detail || `Error ${response.status}`)
@@ -210,7 +243,7 @@ export function useCrypto(): UseCryptoResult {
             setTotalTransactions((prev) => Math.max(0, prev - 1))
             return true
         } catch (err: any) {
-            setErrorTransactions(err.message || 'Error eliminando transacción')
+            setErrorTransactions(err.message || 'Error eliminando transaccion')
             return false
         }
     }, [apiRequest])
@@ -220,6 +253,7 @@ export function useCrypto(): UseCryptoResult {
         totalTransactions,
         currentPage,
         holdings,
+        totalInvestedEur,
         gainsSummary,
 
         loadingTransactions,

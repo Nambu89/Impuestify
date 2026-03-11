@@ -1,3 +1,9 @@
+---
+name: frontend
+description: Activate Frontend Developer role — React 18, TypeScript, Vite, CSS, UX/UI, PWA
+disable-model-invocation: true
+---
+
 # /frontend - Activar rol de Frontend Developer
 
 Lee el archivo `.claude/agents/frontend-dev.md` y adopta ese rol para esta sesion.

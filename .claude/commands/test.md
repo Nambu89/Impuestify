@@ -1,3 +1,9 @@
+---
+name: test
+description: Run backend pytest suite and frontend build check
+disable-model-invocation: true
+---
+
 # /test - Ejecutar tests del proyecto
 
 Ejecuta los tests del backend y reporta resultados:

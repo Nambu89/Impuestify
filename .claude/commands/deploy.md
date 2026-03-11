@@ -1,3 +1,9 @@
+---
+name: deploy
+description: Test, build, and deploy to Railway production
+disable-model-invocation: true
+---
+
 # /deploy - Preparar y desplegar a Railway
 
 Prepara el proyecto para deployment en Railway:

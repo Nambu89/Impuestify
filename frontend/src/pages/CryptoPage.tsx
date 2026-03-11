@@ -25,14 +25,14 @@ import './CryptoPage.css'
 const CURRENT_YEAR = new Date().getFullYear()
 const TAX_YEARS = [CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3]
 
-const TRANSACTION_TYPE_LABELS: Record<string, string> = {
+const TX_TYPE_LABELS: Record<string, string> = {
     buy: 'Compra',
     sell: 'Venta',
     trade: 'Intercambio',
     transfer: 'Transferencia',
     staking: 'Staking',
-    mining: 'Minería',
-    fee: 'Comisión',
+    mining: 'Mineria',
+    fee: 'Comision',
 }
 
 const CONTRAPRESTACION_LABELS: Record<string, string> = {
@@ -216,22 +216,22 @@ function TransactionsTab({ transactions, total, page, loading, error, onPageChan
                         {transactions.map((tx) => (
                             <tr key={tx.id} className="crypto-table__row">
                                 <td className="crypto-table__date">
-                                    {new Date(tx.date).toLocaleDateString('es-ES')}
+                                    {new Date(tx.date_utc).toLocaleDateString('es-ES')}
                                 </td>
                                 <td>
-                                    <span className={`crypto-badge crypto-badge--${tx.type}`}>
-                                        {TRANSACTION_TYPE_LABELS[tx.type] ?? tx.type}
+                                    <span className={`crypto-badge crypto-badge--${tx.tx_type}`}>
+                                        {TX_TYPE_LABELS[tx.tx_type] ?? tx.tx_type}
                                     </span>
                                 </td>
                                 <td className="crypto-table__asset">{tx.asset}</td>
                                 <td className="crypto-table__right crypto-table__mono">
-                                    {tx.quantity.toFixed(8)}
+                                    {tx.amount.toFixed(8)}
                                 </td>
                                 <td className="crypto-table__right crypto-table__mono">
-                                    {tx.price_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {(tx.price_eur ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="crypto-table__right crypto-table__mono">
-                                    {tx.total_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {(tx.total_eur ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="crypto-table__exchange">{tx.exchange}</td>
                                 <td>
@@ -325,9 +325,6 @@ function PortfolioTab({ holdings, loading, error }: PortfolioTabProps) {
                     <div key={h.asset} className="crypto-holding-card">
                         <div className="crypto-holding-card__header">
                             <span className="crypto-holding-card__asset">{h.asset}</span>
-                            {h.exchange && (
-                                <span className="crypto-holding-card__exchange">{h.exchange}</span>
-                            )}
                         </div>
                         <div className="crypto-holding-card__stats">
                             <div className="crypto-holding-card__stat">
@@ -425,18 +422,6 @@ function GainsTab({ summary, selectedYear, loading, error, onYearChange }: Gains
                 </div>
             ) : (
                 <>
-                    {/* Modelo 721 warning */}
-                    {summary.modelo_721_required && (
-                        <div className="crypto-alert crypto-alert--warning">
-                            <AlertTriangle size={16} />
-                            <div>
-                                <strong>Obligación Modelo 721:</strong> Tienes saldo en exchanges
-                                extranjeros superior a 50.000 EUR al 31 de diciembre. Debes presentar
-                                el Modelo 721 (declaración de criptomonedas en el extranjero).
-                            </div>
-                        </div>
-                    )}
-
                     {/* Summary cards */}
                     <div className="crypto-gains__summary">
                         <div className="crypto-gains__card crypto-gains__card--positive">
@@ -493,8 +478,8 @@ function GainsTab({ summary, selectedYear, loading, error, onYearChange }: Gains
                                                 className={`crypto-table__row ${g.gain_loss_eur < 0 ? 'crypto-table__row--loss' : 'crypto-table__row--gain'}`}
                                             >
                                                 <td className="crypto-table__asset">{g.asset}</td>
-                                                <td>{new Date(g.buy_date).toLocaleDateString('es-ES')}</td>
-                                                <td>{new Date(g.sell_date).toLocaleDateString('es-ES')}</td>
+                                                <td>{new Date(g.date_acquisition).toLocaleDateString('es-ES')}</td>
+                                                <td>{new Date(g.date_transmission).toLocaleDateString('es-ES')}</td>
                                                 <td>
                                                     <span className="crypto-badge crypto-badge--contraprestacion" title={CONTRAPRESTACION_LABELS[g.clave_contraprestacion] ?? g.clave_contraprestacion}>
                                                         {g.clave_contraprestacion}
@@ -566,7 +551,7 @@ export default function CryptoPage() {
     const handleUpload = useCallback(async (file: File) => {
         const result = await uploadFile(file)
         if (result?.success) {
-            setUploadSuccess({ imported: result.imported, exchange: result.exchange })
+            setUploadSuccess({ imported: result.imported, exchange: result.exchange_detected })
             // Refresh transactions after successful upload
             fetchTransactions(1)
             if (activeTab === 'portfolio') fetchHoldings()

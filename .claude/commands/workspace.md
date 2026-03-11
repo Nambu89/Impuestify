@@ -1,3 +1,9 @@
+---
+name: workspace
+description: Manage user workspaces (create, list, delete) via REST API
+disable-model-invocation: true
+---
+
 # /workspace - Gestionar Workspaces del Usuario
 
 Ayuda al usuario a gestionar sus espacios de trabajo (workspaces) para organizar documentos fiscales.

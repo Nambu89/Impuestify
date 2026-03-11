@@ -1,3 +1,9 @@
+---
+name: files
+description: Manage workspace files (upload, list, delete) via REST API
+disable-model-invocation: true
+---
+
 # /files - Gestionar Archivos del Workspace
 
 Ayuda al usuario a gestionar los archivos dentro de un workspace activo.

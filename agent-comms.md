@@ -7,6 +7,31 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-11] PM — DONE — Fix 2 bugs reportados por Ramon Palomares (beta tester)
+
+- **Bug 1 (CRITICO): slowapi crash 500** en `/api/irpf/estimate` y `/api/irpf/deductions/discover`
+  - Causa: parametro `req: Request` en vez de `request: Request` — slowapi no lo encontraba
+  - Fix: renombrar `req` → `request`, body Pydantic `request` → `body` en `irpf_estimate.py`
+- **Bug 2 (ALTO): JWT 401 en chat SSE** sin auto-refresh
+  - Causa: `useStreamingChat.ts` usa `fetch()` directo, no pasa por interceptor Axios de refresh
+  - Fix: anadir logica de refresh JWT en `useStreamingChat.ts` (retry con nuevo token o redirect a login)
+- **Pendiente**: Deploy a Railway para que Ramon pueda verificar el fix
+
+---
+
+## [2026-03-11] PM — DONE — Admin: botón activar/revocar beta + 3 bugs QA + email toggle + seed + deploy
+
+- **Admin beta**: PUT grant-beta / revoke-beta en admin.py + botones en AdminUsersPage (verde/rojo)
+- **B-GF-ESTIMATOR fix**: campos crypto/trading añadidos al hasIncome check del estimador
+- **B-LAND-PLAZOS fix**: getShortName muestra nombre completo del modelo fiscal
+- **B-MODELOS-RUTA**: no era bug de codigo, resuelto con deploy
+- **Email alerts toggle**: seccion en SettingsPage tab Notificaciones (POST /api/deadlines/email-alerts/toggle)
+- **Seed produccion**: 28 fechas estatal 2026 insertadas en Turso
+- **Deploy**: push a main (526f955), Railway auto-deploy
+- **Beta tester**: Ramon Palomares (ramonpalom@hotmail.com) activado hasta 31/12/2026
+
+---
+
 ## [2026-03-11] PM — DONE — Módulo Criptomonedas, Trading y Apuestas completo
 
 - **Plan RPI**: `plans/plan_crypto_trading_apuestas.md` — 20 tareas, 7 fases, verificado por plan-checker

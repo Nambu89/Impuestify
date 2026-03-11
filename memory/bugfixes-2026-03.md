@@ -1,5 +1,34 @@
 # Bugfixes Marzo 2026
 
+## [2026-03-11] slowapi crash 500 en /api/irpf/estimate y /deductions/discover + JWT 401 en SSE
+
+**Reportado por:** Ramon Palomares (beta tester)
+**Sintomas usuario:** (1) "Expecting value: line 1 column 1 (char 0)" al analizar nomina, (2) "HTTP error! status: 401" al preguntar sobre retenciones con hija
+
+**Causa raiz (2 bugs):**
+1. **slowapi requiere `request: Request` como nombre exacto del parametro**. Los endpoints usaban `req: Request` + `request: IRPFEstimateRequest` (body Pydantic). slowapi no encontraba `request` de tipo Request → crash `Exception: parameter 'request' must be an instance of starlette.requests.Request` → 500 Internal Server Error. El frontend recibia HTML de error y JSON.parse() fallaba con "Expecting value".
+2. **useStreamingChat.ts usa fetch() directo (no Axios)** → no pasa por el interceptor de auto-refresh JWT de useApi.ts. Cuando el token de 30min expiraba, la llamada a `/api/ask/stream` recibia 401 y se mostraba al usuario sin intentar refresh.
+
+**Fix backend:** Renombrar parametros en `irpf_estimate.py`:
+- `req: Request` → `request: Request` (slowapi lo encuentra)
+- `request: IRPFEstimateRequest` → `body: IRPFEstimateRequest` (evita conflicto de nombre)
+- Aplicado a ambos endpoints: `estimate_irpf()` y `discover_deductions_endpoint()`
+
+**Fix frontend:** Anadir auto-refresh JWT en `useStreamingChat.ts`:
+- Si fetch() recibe 401 → intentar refresh con `/auth/refresh`
+- Si refresh OK → reintentar el fetch con nuevo token
+- Si refresh falla → limpiar tokens y redirigir a `/login?expired=true`
+
+**Anti-patron documentado:** NUNCA usar `req: Request` cuando hay `@limiter.limit()` de slowapi. Siempre usar `request: Request` como primer parametro y nombrar el body Pydantic como `body` o `data`.
+
+**Archivos modificados:**
+- `backend/app/routers/irpf_estimate.py` (lineas 147-150, 347-350)
+- `frontend/src/hooks/useStreamingChat.ts` (lineas 136-163)
+
+**Tests:** 82 IRPF tests PASS, frontend build OK
+
+---
+
 ## [2026-03-05] Renderizado markdown en chat
 
 **Problema:** Las respuestas del agente con markdown (negritas, tablas, listas, encabezados) no se renderizaban correctamente. El texto se mostraba como raw markdown.

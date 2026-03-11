@@ -1,3 +1,9 @@
+---
+name: review
+description: Code review of pending git changes with quality checklist
+disable-model-invocation: true
+---
+
 # /review - Code review de los cambios actuales
 
 Realiza un code review de los cambios pendientes:

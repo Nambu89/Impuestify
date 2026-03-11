@@ -1,3 +1,9 @@
+---
+name: sync
+description: Sync with other agents via git pull and agent-comms channel
+disable-model-invocation: true
+---
+
 # /sync - Sincronizar con otros agentes
 
 Este comando sincroniza tu sesión con el trabajo de otros agentes.

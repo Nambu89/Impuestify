@@ -134,19 +134,18 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
         logger.debug('SSE sendStreamingMessage called', { message: message.substring(0, 50), conversationId });
 
         try {
-            const token = localStorage.getItem('access_token');
+            let token = localStorage.getItem('access_token');
             if (!token) {
                 throw new Error('No authentication token found');
             }
 
             logger.debug('SSE Fetching stream endpoint');
 
-            // Using fetch with streaming (better for auth)
-            const response = await fetch(`${API_URL}/api/ask/stream`, {
+            const buildFetchOptions = (authToken: string) => ({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
                     question: message,
@@ -156,9 +155,47 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                 })
             });
 
+            // Using fetch with streaming (better for auth)
+            let response = await fetch(`${API_URL}/api/ask/stream`, buildFetchOptions(token));
+
             logger.debug('SSE Response received:', response.status);
 
+            // Auto-refresh JWT on 401 and retry once
+            if (response.status === 401) {
+                logger.debug('SSE 401 received, attempting token refresh');
+                const refreshToken = localStorage.getItem('refresh_token');
+                if (refreshToken) {
+                    try {
+                        const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ refresh_token: refreshToken })
+                        });
+                        if (refreshRes.ok) {
+                            const refreshData = await refreshRes.json();
+                            const newToken = refreshData.access_token || refreshData.tokens?.access_token;
+                            const newRefresh = refreshData.refresh_token || refreshData.tokens?.refresh_token;
+                            if (newToken) {
+                                localStorage.setItem('access_token', newToken);
+                                if (newRefresh) localStorage.setItem('refresh_token', newRefresh);
+                                token = newToken;
+                                logger.debug('SSE Token refreshed, retrying stream');
+                                response = await fetch(`${API_URL}/api/ask/stream`, buildFetchOptions(newToken));
+                            }
+                        }
+                    } catch (refreshError) {
+                        logger.error('SSE Token refresh failed:', refreshError);
+                    }
+                }
+            }
+
             if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    window.location.href = '/login?expired=true';
+                    return;
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 

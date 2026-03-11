@@ -7,6 +7,13 @@
 ## Sesiones Recientes
 ---
 
+[2026-03-11] [PM Sesion 5b] - Admin beta + bugs QA + email toggle + seed + deploy.
+- Admin: endpoints grant-beta/revoke-beta + botones verde/rojo en AdminUsersPage
+- Fix B-GF-ESTIMATOR: campos crypto en hasIncome. Fix B-LAND-PLAZOS: nombre completo modelo
+- Email alerts toggle en SettingsPage. Seed 28 fechas estatal 2026 en produccion
+- Deploy a Railway (push main). Beta tester Ramon Palomares activado
+- Commits: dea9481, 8fe14ea, 526f955
+
 [2026-03-11] [PM Sesion 5] - Módulo Criptomonedas, Trading y Apuestas completo (20 tareas, 7 fases).
 - Revisión XSD Modelo 100 AEAT: casillas crypto (1800-1814), apuestas (0281-0297), trading (0316-0354)
 - Plan RPI creado + verificado por plan-checker (v2 corrigió 7 issues + 4 warnings: tildes, campo colisión, GDPR, migration)

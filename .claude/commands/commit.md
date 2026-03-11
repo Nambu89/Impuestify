@@ -1,3 +1,9 @@
+---
+name: commit
+description: Create descriptive git commits following project convention
+disable-model-invocation: true
+---
+
 # /commit - Commit descriptivo con convención
 
 Ejecuta los siguientes pasos para hacer un commit limpio:

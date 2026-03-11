@@ -145,8 +145,8 @@ class IRPFEstimateResponse(BaseModel):
 @router.post("/estimate", response_model=IRPFEstimateResponse)
 @limiter.limit("60/minute")
 async def estimate_irpf(
-    req: Request,
-    request: IRPFEstimateRequest,
+    request: Request,
+    body: IRPFEstimateRequest,
     current_user: TokenData = Depends(get_current_user),
 ):
     """Fast IRPF estimate for the interactive tax guide. No LLM involved."""
@@ -156,22 +156,22 @@ async def estimate_irpf(
         from app.database.turso_client import get_db_client
 
         db = await get_db_client()
-        ccaa = normalize_ccaa_name(request.comunidad_autonoma)
+        ccaa = normalize_ccaa_name(body.comunidad_autonoma)
 
-        ceuta_melilla = request.ceuta_melilla
+        ceuta_melilla = body.ceuta_melilla
         if not ceuta_melilla and ccaa.lower() in ("ceuta", "melilla"):
             ceuta_melilla = True
 
         # Auto-calculate annual gross from monthly salary if provided
-        ingresos_trabajo = request.ingresos_trabajo
-        if request.salario_base_mensual > 0 and ingresos_trabajo == 0:
-            mensual_total = request.salario_base_mensual + request.complementos_salariales
-            ingresos_trabajo = mensual_total * request.num_pagas_anuales
+        ingresos_trabajo = body.ingresos_trabajo
+        if body.salario_base_mensual > 0 and ingresos_trabajo == 0:
+            mensual_total = body.salario_base_mensual + body.complementos_salariales
+            ingresos_trabajo = mensual_total * body.num_pagas_anuales
 
         # Auto-calculate retenciones from percentage if provided
-        retenciones_trabajo = request.retenciones_trabajo
-        if request.irpf_retenido_porcentaje > 0 and retenciones_trabajo == 0 and ingresos_trabajo > 0:
-            retenciones_trabajo = ingresos_trabajo * request.irpf_retenido_porcentaje / 100
+        retenciones_trabajo = body.retenciones_trabajo
+        if body.irpf_retenido_porcentaje > 0 and retenciones_trabajo == 0 and ingresos_trabajo > 0:
+            retenciones_trabajo = ingresos_trabajo * body.irpf_retenido_porcentaje / 100
 
         simulator = IRPFSimulator(db)
 
@@ -179,76 +179,76 @@ async def estimate_irpf(
         sim_kwargs = dict(
             jurisdiction=ccaa,
             ingresos_trabajo=ingresos_trabajo,
-            ss_empleado=request.ss_empleado,
-            intereses=request.intereses,
-            dividendos=request.dividendos,
-            ganancias_fondos=request.ganancias_fondos,
-            ingresos_alquiler=request.ingresos_alquiler,
-            gastos_alquiler_total=request.gastos_alquiler_total,
-            valor_adquisicion_inmueble=request.valor_adquisicion_inmueble,
-            edad_contribuyente=request.edad_contribuyente,
-            num_descendientes=request.num_descendientes,
-            anios_nacimiento_desc=request.anios_nacimiento_desc or None,
-            custodia_compartida=request.custodia_compartida,
-            num_ascendientes_65=request.num_ascendientes_65,
-            num_ascendientes_75=request.num_ascendientes_75,
-            discapacidad_contribuyente=request.discapacidad_contribuyente,
+            ss_empleado=body.ss_empleado,
+            intereses=body.intereses,
+            dividendos=body.dividendos,
+            ganancias_fondos=body.ganancias_fondos,
+            ingresos_alquiler=body.ingresos_alquiler,
+            gastos_alquiler_total=body.gastos_alquiler_total,
+            valor_adquisicion_inmueble=body.valor_adquisicion_inmueble,
+            edad_contribuyente=body.edad_contribuyente,
+            num_descendientes=body.num_descendientes,
+            anios_nacimiento_desc=body.anios_nacimiento_desc or None,
+            custodia_compartida=body.custodia_compartida,
+            num_ascendientes_65=body.num_ascendientes_65,
+            num_ascendientes_75=body.num_ascendientes_75,
+            discapacidad_contribuyente=body.discapacidad_contribuyente,
             ceuta_melilla=ceuta_melilla,
             # Activity income (autonomos)
-            ingresos_actividad=request.ingresos_actividad,
-            gastos_actividad=request.gastos_actividad,
-            cuota_autonomo_anual=request.cuota_autonomo_anual,
-            amortizaciones_actividad=request.amortizaciones_actividad,
-            provisiones_actividad=request.provisiones_actividad,
-            otros_gastos_actividad=request.otros_gastos_actividad,
-            estimacion_actividad=request.estimacion_actividad,
-            inicio_actividad=request.inicio_actividad,
-            un_solo_cliente=request.un_solo_cliente,
-            retenciones_actividad=request.retenciones_actividad,
-            pagos_fraccionados_130=request.pagos_fraccionados_130,
+            ingresos_actividad=body.ingresos_actividad,
+            gastos_actividad=body.gastos_actividad,
+            cuota_autonomo_anual=body.cuota_autonomo_anual,
+            amortizaciones_actividad=body.amortizaciones_actividad,
+            provisiones_actividad=body.provisiones_actividad,
+            otros_gastos_actividad=body.otros_gastos_actividad,
+            estimacion_actividad=body.estimacion_actividad,
+            inicio_actividad=body.inicio_actividad,
+            un_solo_cliente=body.un_solo_cliente,
+            retenciones_actividad=body.retenciones_actividad,
+            pagos_fraccionados_130=body.pagos_fraccionados_130,
             # Phase 1
-            aportaciones_plan_pensiones=request.aportaciones_plan_pensiones,
-            aportaciones_plan_pensiones_empresa=request.aportaciones_plan_pensiones_empresa,
-            hipoteca_pre2013=request.hipoteca_pre2013,
-            capital_amortizado_hipoteca=request.capital_amortizado_hipoteca,
-            intereses_hipoteca=request.intereses_hipoteca,
-            madre_trabajadora_ss=request.madre_trabajadora_ss,
-            gastos_guarderia_anual=request.gastos_guarderia_anual,
-            familia_numerosa=request.familia_numerosa,
-            tipo_familia_numerosa=request.tipo_familia_numerosa,
-            donativos_ley_49_2002=request.donativos_ley_49_2002,
-            donativo_recurrente=request.donativo_recurrente,
-            retenciones_alquiler=request.retenciones_alquiler,
-            retenciones_ahorro=request.retenciones_ahorro,
+            aportaciones_plan_pensiones=body.aportaciones_plan_pensiones,
+            aportaciones_plan_pensiones_empresa=body.aportaciones_plan_pensiones_empresa,
+            hipoteca_pre2013=body.hipoteca_pre2013,
+            capital_amortizado_hipoteca=body.capital_amortizado_hipoteca,
+            intereses_hipoteca=body.intereses_hipoteca,
+            madre_trabajadora_ss=body.madre_trabajadora_ss,
+            gastos_guarderia_anual=body.gastos_guarderia_anual,
+            familia_numerosa=body.familia_numerosa,
+            tipo_familia_numerosa=body.tipo_familia_numerosa,
+            donativos_ley_49_2002=body.donativos_ley_49_2002,
+            donativo_recurrente=body.donativo_recurrente,
+            retenciones_alquiler=body.retenciones_alquiler,
+            retenciones_ahorro=body.retenciones_ahorro,
             # Phase 2
-            tributacion_conjunta=request.tributacion_conjunta,
-            tipo_unidad_familiar=request.tipo_unidad_familiar,
-            alquiler_habitual_pre2015=request.alquiler_habitual_pre2015,
-            alquiler_pagado_anual=request.alquiler_pagado_anual,
-            valor_catastral_segundas_viviendas=request.valor_catastral_segundas_viviendas,
-            valor_catastral_revisado_post1994=request.valor_catastral_revisado_post1994,
+            tributacion_conjunta=body.tributacion_conjunta,
+            tipo_unidad_familiar=body.tipo_unidad_familiar,
+            alquiler_habitual_pre2015=body.alquiler_habitual_pre2015,
+            alquiler_pagado_anual=body.alquiler_pagado_anual,
+            valor_catastral_segundas_viviendas=body.valor_catastral_segundas_viviendas,
+            valor_catastral_revisado_post1994=body.valor_catastral_revisado_post1994,
             # Fase 4: ganancias patrimoniales del ahorro
-            ganancias_acciones=request.ganancias_acciones,
-            perdidas_acciones=request.perdidas_acciones,
-            ganancias_reembolso_fondos=request.ganancias_reembolso_fondos,
-            perdidas_reembolso_fondos=request.perdidas_reembolso_fondos,
-            ganancias_derivados=request.ganancias_derivados,
-            perdidas_derivados=request.perdidas_derivados,
-            cripto_ganancia_neta=request.cripto_ganancia_neta,
-            cripto_perdida_neta=request.cripto_perdida_neta,
+            ganancias_acciones=body.ganancias_acciones,
+            perdidas_acciones=body.perdidas_acciones,
+            ganancias_reembolso_fondos=body.ganancias_reembolso_fondos,
+            perdidas_reembolso_fondos=body.perdidas_reembolso_fondos,
+            ganancias_derivados=body.ganancias_derivados,
+            perdidas_derivados=body.perdidas_derivados,
+            cripto_ganancia_neta=body.cripto_ganancia_neta,
+            cripto_perdida_neta=body.cripto_perdida_neta,
             # Fase 4: juegos privados y loterías
-            premios_metalico_privados=request.premios_metalico_privados,
-            premios_especie_privados=request.premios_especie_privados,
-            perdidas_juegos_privados=request.perdidas_juegos_privados,
-            premios_metalico_publicos=request.premios_metalico_publicos,
-            premios_especie_publicos=request.premios_especie_publicos,
+            premios_metalico_privados=body.premios_metalico_privados,
+            premios_especie_privados=body.premios_especie_privados,
+            perdidas_juegos_privados=body.perdidas_juegos_privados,
+            premios_metalico_publicos=body.premios_metalico_publicos,
+            premios_especie_publicos=body.premios_especie_publicos,
         )
 
         # Try requested year, fallback to year-1
         try:
-            result = await simulator.simulate(year=request.year, **sim_kwargs)
+            result = await simulator.simulate(year=body.year, **sim_kwargs)
         except ValueError:
-            result = await simulator.simulate(year=request.year - 1, **sim_kwargs)
+            result = await simulator.simulate(year=body.year - 1, **sim_kwargs)
 
         # Use cuota_diferencial from simulator if available (includes all retenciones)
         cuota_total = result.get("cuota_total", 0)
@@ -345,8 +345,8 @@ class DeductionDiscoverResponse(BaseModel):
 @router.post("/deductions/discover", response_model=DeductionDiscoverResponse)
 @limiter.limit("30/minute")
 async def discover_deductions_endpoint(
-    req: Request,
-    request: DeductionDiscoverRequest,
+    request: Request,
+    body: DeductionDiscoverRequest,
     current_user: TokenData = Depends(get_current_user),
 ):
     """Discover eligible deductions for a CCAA. No LLM — direct DB query."""
@@ -354,19 +354,19 @@ async def discover_deductions_endpoint(
         from app.services.deduction_service import get_deduction_service
         from app.tools.web_scraper_tool import normalize_ccaa_name
 
-        ccaa = normalize_ccaa_name(request.ccaa)
+        ccaa = normalize_ccaa_name(body.ccaa)
         service = get_deduction_service()
 
         result = await service.evaluate_eligibility(
             ccaa=ccaa,
-            tax_year=request.tax_year,
-            answers=request.answers,
+            tax_year=body.tax_year,
+            answers=body.answers,
         )
 
         questions = await service.get_missing_questions(
             ccaa=ccaa,
-            tax_year=request.tax_year,
-            answers=request.answers,
+            tax_year=body.tax_year,
+            answers=body.answers,
         )
 
         def to_item(d: dict) -> DeductionItem:

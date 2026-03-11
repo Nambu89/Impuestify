@@ -1,3 +1,9 @@
+---
+name: python
+description: Activate Python Pro role — Python 3.12+, async/await, debugging, optimization
+disable-model-invocation: true
+---
+
 # /python - Activar rol de Python Pro
 
 Lee el archivo `.claude/agents/python-pro.md` y adopta ese rol para esta sesion.
