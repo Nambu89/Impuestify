@@ -4,6 +4,35 @@
 
 ---
 
+## COMPLETADO — Módulo Criptomonedas, Trading y Apuestas (2026-03-11)
+
+> Plan: `plans/plan_crypto_trading_apuestas.md`
+
+### 7 fases implementadas (20 tareas)
+- [x] **Fase 1**: Campos perfil fiscal alineados con XSD Modelo 100 AEAT (casillas 1800-1814, 0281-0297, 0316-0354)
+- [x] **Fase 2**: Calculadora FIFO (antiaplicación Art. 33.5.f, 61 días) + Parser CSV 5 exchanges (Binance, Coinbase, Kraken, KuCoin, Bitget)
+- [x] **Fase 3**: Router REST crypto (upload, transactions, holdings, gains, delete) + rate limiting + magic bytes
+- [x] **Fase 4**: Integración simulador IRPF (cripto→base ahorro, juegos privados→base general, loterías→gravamen especial 20%)
+- [x] **Fase 5**: Tools chat (calculate_crypto_gains + parse_crypto_csv) registrados en TaxAgent
+- [x] **Fase 6**: Frontend CryptoPage (/crypto) con upload, 3 tabs, alerta Modelo 721
+- [x] **Fase 7**: Wizard paso "Inversiones y cripto" + marketing (SubscribePage + Home)
+- [x] Migración campos renombrados (migrate_fiscal_fields_crypto.py)
+- [x] GDPR: borrado tablas crypto en delete_user_account
+- [x] 140 tests nuevos (998 total) — 0 fail
+- Commit: `91faf01`
+
+---
+
+## COMPLETADO — Calendario Fiscal + Email Reminders (2026-03-10)
+
+- 28 fechas estatales + 28 forales hardcodeadas (seed scripts)
+- Email reminders autónomos: 30 días antes, opt-in
+- Web Push: alertas 15d, 5d, 1d antes via VAPID
+- Frontend: CalendarPage, FiscalCalendar, UpcomingDeadlines, PushPermissionBanner
+- Commit: `a849ce1`
+
+---
+
 ## COMPLETADO — Perfil Fiscal Adaptativo por CCAA (2026-03-08)
 
 > Plan: `plans/plan_perfil_fiscal_adaptativo.md`
@@ -110,9 +139,10 @@
 
 ### Media prioridad
 - [x] ~~Agente actualización documental (crawler automático AEAT/BOE)~~ → DONE (250e8a2)
+- [x] ~~Alertas de plazos fiscales~~ → DONE (a849ce1) — calendario + email + push
+- [x] ~~Criptomonedas, trading y apuestas~~ → DONE (91faf01) — FIFO, 5 exchanges, XSD casillas
 - [ ] Pipeline auto-ingesta RAG (leer `_pending_ingest.json` → embeddings)
 - [ ] ML fiscal features (ml_fiscal_features table)
-- [ ] Alertas de plazos fiscales
 
 ### Baja prioridad
 - [ ] Integración factura electrónica (FacturaE)
@@ -128,7 +158,8 @@
 | Documentos RAG | 439 (419 PDF + 9 Excel + 11 AEAT specs) |
 | Deducciones en BD | ~554 (192 v1/v2 + 339 XSD + 50 forales) |
 | CCAA cubiertas | 21 (15 común + 4 forales + Ceuta + Melilla) |
-| Tests backend | 762+ |
+| Tests backend | 998 |
 | Tests frontend | build PASS |
+| Exchanges crypto soportados | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
 | Bugs fixeados (mar 2026) | 13 documentados |
 | URLs monitorizadas (crawler) | 48 en 21 territorios |

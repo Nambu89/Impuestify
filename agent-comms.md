@@ -7,6 +7,58 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-11] PM — DONE — Módulo Criptomonedas, Trading y Apuestas completo
+
+- **Plan RPI**: `plans/plan_crypto_trading_apuestas.md` — 20 tareas, 7 fases, verificado por plan-checker
+- **Backend (14 archivos)**:
+  - `fiscal_fields.py`: 3 secciones alineadas XSD Modelo 100 (casillas 1800-1814, 0281-0297, 0316-0354)
+  - `user_rights.py`: ~25 campos nuevos en FiscalProfileRequest + GDPR delete crypto tables
+  - `crypto_fifo.py`: calculadora FIFO con antiaplicación Art. 33.5.f (61 días)
+  - `crypto_parser.py`: 5 exchanges (Binance, Coinbase, Kraken, KuCoin, Bitget)
+  - `crypto.py`: router REST 5 endpoints (upload, transactions, holdings, gains, delete)
+  - `crypto_gains_tool.py` + `crypto_csv_tool.py`: tools para TaxAgent
+  - `irpf_simulator.py` + `savings_income.py`: integración cripto/trading/apuestas en simulador
+  - `deduction_service.py`: bridge perfil → deduction answers actualizado
+  - `irpf_simulator_tool.py` + `irpf_estimate.py`: parámetros crypto/trading/apuestas
+  - `migrate_fiscal_fields_crypto.py`: migración campos renombrados
+- **Frontend (8 archivos)**:
+  - `CryptoPage.tsx` + `.css`: upload, 3 tabs, alerta Modelo 721
+  - `useCrypto.ts`: hook API crypto
+  - `TaxGuidePage.tsx`: nuevo paso "Inversiones y cripto"
+  - `DynamicFiscalForm.tsx`: soporte option_labels en select
+  - `SubscribePage.tsx` + `Home.tsx`: "Criptomonedas, trading y apuestas (FIFO)" en features
+- **Tests**: 140 nuevos (27 FIFO + 66 parser + 29 router + 17 integración) — 998 total, 0 fail
+- **Commit**: `91faf01`
+- **Pendiente**: Deploy a Railway
+
+---
+
+## [2026-03-10] Backend — DONE — Calendario fiscal completo + email reminders
+
+- **28 fechas estatales** hardcodeadas (seed_estatal_deadlines.py): todos los trimestrales (303, 130, 131, 111, 115), anuales (180, 190, 390, 347, 720), Renta (100), Sociedades (200), 2do plazo
+- **Email reminders autonomos**: 30 dias antes de vencimiento, opt-in via perfil
+- **Endpoints nuevos**: POST /api/deadlines/email-alerts/toggle + GET /status
+- **BD**: columna deadline_email_alerts en user_profiles
+- **Cron actualizado**: push + email en paralelo
+- **858 tests PASS**
+- Commit: `a849ce1`
+- **Pendiente**: Ejecutar `seed_estatal_deadlines.py --year 2026` en produccion (Railway)
+- **Pendiente frontend**: Boton toggle email alerts en perfil/calendario
+
+---
+
+## [2026-03-10] PM — NEEDS_REVIEW — Estrategia Social Media Impuestify
+
+**Plan completo**: `plans/social-media-strategy-2026.md`
+
+**Resumen**: Estrategia de contenido para LinkedIn + Instagram con 7 pilares (educacion fiscal, mitos, IA aplicada, forales, social proof, calendario fiscal, building in public). Cadencia: 3 posts/semana LinkedIn + 3-5 Reels/semana Instagram. 3 palancas de diferenciacion: IA real vs chatbot, unico en Pais Vasco/Navarra, producto digital puro. Herramientas: Metricool, Canva Pro, CapCut, PostNitro. Timeline: setup marzo, campana Renta abril-junio 2026.
+
+**Acciones prioritarias (8)**: calendario mensual, contenido forales, LinkedIn 3/semana, Instagram Reels, demos multi-agente, Stories calendario fiscal, presencia pre-Renta, contenido diferencial IA.
+
+**Para PM**: Revisar y aprobar plan. Definir quien ejecuta (fundador / marketing hire / freelancer).
+
+---
+
 ## [2026-03-09] QA — NEEDS_REVIEW — Sesion 15: QA Exhaustivo post-commit c608ac6
 
 ### Resultado: 13 PASS / 0 FAIL / 1 FLAKY — 4 bugs nuevos, 3 bugs corregidos confirmados

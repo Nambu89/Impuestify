@@ -7,6 +7,18 @@
 ## Sesiones Recientes
 ---
 
+[2026-03-11] [PM Sesion 5] - Módulo Criptomonedas, Trading y Apuestas completo (20 tareas, 7 fases).
+- Revisión XSD Modelo 100 AEAT: casillas crypto (1800-1814), apuestas (0281-0297), trading (0316-0354)
+- Plan RPI creado + verificado por plan-checker (v2 corrigió 7 issues + 4 warnings: tildes, campo colisión, GDPR, migration)
+- Backend: crypto_fifo.py (FIFO + antiaplicación 61d), crypto_parser.py (5 exchanges), crypto.py (5 endpoints REST), 2 tools chat
+- Integración simulador IRPF: cripto→base ahorro, juegos privados→base general, loterías→gravamen especial 20%
+- fiscal_fields.py reestructurado: 3 secciones alineadas XSD, clave contraprestación F/N/O/B
+- Frontend: CryptoPage + useCrypto + TaxGuidePage paso 8 + DynamicFiscalForm option_labels
+- Marketing: feature "Criptomonedas, trading y apuestas (FIFO)" en SubscribePage + Home
+- Migración ejecutada (0 perfiles afectados), GDPR delete crypto tables
+- 140 tests nuevos (998 total), 0 fail. Commit: 91faf01
+- Memorias actualizadas: MEMORY.md, ROADMAP.md, agent-comms.md, claude-progress.txt
+
 [2026-03-09] [QA Sesion 15] - QA exhaustivo post-commit c608ac6. 13 PASS / 0 FAIL / 1 FLAKY de 15 tests.
 - RESUELTOS CONFIRMADOS: B-GF-BLANK (guia fiscal pantalla negra), B-LAND-FADE (landing invisible), B13 (hamburger mobile), B-GUARD-01
 - PARCIAL: B-MOD-PERSIST — onboarding cierra OK al enviar 1er msg, pero modal IA aparece en su lugar (nuevo bug B-MOD-IA-PERSIST)
