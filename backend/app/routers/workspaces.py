@@ -403,6 +403,110 @@ async def upload_file(
         raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
 
 
+@router.post("/{workspace_id}/files/batch", response_model=List[FileUploadResponse], status_code=201)
+async def upload_files_batch(
+    workspace_id: str,
+    files: List[UploadFile] = File(...),
+    current_user: TokenData = Depends(get_current_user),
+    access: SubscriptionAccess = Depends(require_active_subscription),
+    service: WorkspaceService = Depends(get_workspace_service),
+    file_service: FileProcessingService = Depends(get_file_service),
+    db: TursoClient = Depends(get_db)
+):
+    """
+    Upload up to 10 files at once to a workspace.
+
+    Supported file types:
+    - PDF documents (invoices, payslips, tax declarations)
+    - Images (JPEG, PNG)
+    - Excel files (XLSX, XLS)
+
+    - **workspace_id**: Target workspace ID
+    - **files**: List of files to upload (max 10)
+
+    Each file is processed independently. If a file fails, processing continues
+    for the remaining files. The response includes results (and errors) for every
+    file in the batch.
+    """
+    MAX_BATCH_SIZE = 10
+
+    if len(files) > MAX_BATCH_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Batch upload limit is {MAX_BATCH_SIZE} files. Received {len(files)}."
+        )
+
+    # Verify workspace ownership once for the whole batch
+    workspace = await service.get_workspace(workspace_id, current_user.user_id)
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    # Snapshot current file count so we can enforce the per-workspace limit
+    # across the entire batch without re-querying after every upload.
+    current_count = workspace.file_count or 0
+    available_slots = workspace.max_files - current_count
+
+    if available_slots <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Workspace has reached maximum file limit ({workspace.max_files})"
+        )
+
+    results: List[FileUploadResponse] = []
+
+    for index, file in enumerate(files):
+        # Stop early if the workspace is now full
+        if index >= available_slots:
+            logger.warning(
+                f"Batch upload stopped at file {index + 1}: workspace {workspace_id} "
+                f"has no more slots (max {workspace.max_files})"
+            )
+            # Append a synthetic error entry for each remaining file
+            for remaining in files[index:]:
+                results.append(
+                    FileUploadResponse(
+                        id="",
+                        filename=remaining.filename or "unknown",
+                        file_type="",
+                        status="error: workspace file limit reached",
+                        size=0,
+                    )
+                )
+            break
+
+        try:
+            result = await file_service.process_file_upload(workspace_id, file)
+            results.append(FileUploadResponse(**result))
+            logger.info(f"Batch upload — file {file.filename} added to workspace {workspace_id}")
+        except ValueError as exc:
+            logger.warning(f"Batch upload — validation error for {file.filename}: {exc}")
+            results.append(
+                FileUploadResponse(
+                    id="",
+                    filename=file.filename or "unknown",
+                    file_type="",
+                    status=f"error: {exc}",
+                    size=0,
+                )
+            )
+        except Exception as exc:
+            logger.error(
+                f"Batch upload — unexpected error for {file.filename}: {exc}",
+                exc_info=True,
+            )
+            results.append(
+                FileUploadResponse(
+                    id="",
+                    filename=file.filename or "unknown",
+                    file_type="",
+                    status=f"error: {exc}",
+                    size=0,
+                )
+            )
+
+    return results
+
+
 @router.get("/{workspace_id}/files", response_model=List[WorkspaceFileResponse])
 async def list_files(
     workspace_id: str,

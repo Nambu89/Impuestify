@@ -297,6 +297,24 @@
     cursor: not-allowed;
 }
 
+.workspace-action-btn.rename-btn:hover:not(:disabled) {
+    color: var(--color-primary-light);
+    background: rgba(59, 130, 246, 0.12);
+}
+
+.workspace-rename-input {
+    width: 100%;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-white);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--color-primary-light);
+    outline: none;
+    padding: 0 0 2px;
+    margin-bottom: 2px;
+}
+
 /* ====== Files Panel ====== */
 
 .files-panel {

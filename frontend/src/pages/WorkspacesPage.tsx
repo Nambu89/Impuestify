@@ -11,7 +11,8 @@ import {
     Upload,
     File,
     FileSpreadsheet,
-    Receipt
+    Receipt,
+    Pencil
 } from 'lucide-react'
 import Header from '../components/Header'
 import { useApi } from '../hooks/useApi'
@@ -79,8 +80,11 @@ export default function WorkspacesPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formError, setFormError] = useState<string | null>(null)
     const [uploading, setUploading] = useState(false)
+    const [uploadProgress, setUploadProgress] = useState<string | null>(null)
     const [deletingFileId, setDeletingFileId] = useState<string | null>(null)
     const [isDragOver, setIsDragOver] = useState(false)
+    const [renamingId, setRenamingId] = useState<string | null>(null)
+    const [renamingValue, setRenamingValue] = useState('')
 
     // Refs
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -210,44 +214,89 @@ export default function WorkspacesPage() {
         }
     }
 
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0]
-        if (!file || !selectedWorkspace) return
+    const startRenaming = (workspace: Workspace, e: React.MouseEvent) => {
+        e.stopPropagation()
+        setRenamingId(workspace.id)
+        setRenamingValue(workspace.name)
+    }
 
-        setUploading(true)
+    const commitRename = async (workspace: Workspace) => {
+        const trimmed = renamingValue.trim()
+        setRenamingId(null)
+        setRenamingValue('')
+        if (!trimmed || trimmed === workspace.name) return
         try {
-            const formData = new FormData()
-            formData.append('file', file)
-
-            const token = localStorage.getItem('access_token')
-            const API_URL = import.meta.env.VITE_API_URL || '/api'
-
-            const response = await fetch(`${API_URL}/api/workspaces/${selectedWorkspace.id}/files`, {
-                method: 'POST',
-                headers: {
-                    ...(token && { Authorization: `Bearer ${token}` })
-                },
-                body: formData
+            await apiRequest(`/api/workspaces/${workspace.id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ name: trimmed })
             })
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}))
-                throw new Error(errorData.detail || 'Error al subir archivo')
-            }
-
-            // Refresh files list
-            fetchWorkspaceFiles(selectedWorkspace.id)
-            // Update workspace file count
             fetchWorkspaces()
         } catch (err: any) {
-            setError(err.message || 'Error al subir archivo')
-        } finally {
-            setUploading(false)
-            // Reset input so same file can be uploaded again
-            if (fileInputRef.current) {
-                fileInputRef.current.value = ''
+            setError(err.message || 'Error al renombrar el workspace')
+        }
+    }
+
+    const handleRenameKeyDown = (e: React.KeyboardEvent, workspace: Workspace) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            commitRename(workspace)
+        } else if (e.key === 'Escape') {
+            setRenamingId(null)
+            setRenamingValue('')
+        }
+    }
+
+    const uploadSingleFile = async (file: File, workspaceId: string): Promise<void> => {
+        const token = localStorage.getItem('access_token')
+        const API_URL = import.meta.env.VITE_API_URL || '/api'
+        const formDataObj = new FormData()
+        formDataObj.append('file', file)
+        const response = await fetch(`${API_URL}/api/workspaces/${workspaceId}/files`, {
+            method: 'POST',
+            headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+            body: formDataObj
+        })
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.detail || 'Error al subir archivo')
+        }
+    }
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files
+        if (!files || files.length === 0 || !selectedWorkspace) return
+
+        if (files.length > 10) {
+            setError('Maximo 10 archivos por subida')
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            return
+        }
+
+        setUploading(true)
+        const total = files.length
+        let succeeded = 0
+        const errors: string[] = []
+
+        for (let i = 0; i < total; i++) {
+            setUploadProgress(total > 1 ? `Subiendo ${i + 1}/${total} archivos...` : null)
+            try {
+                await uploadSingleFile(files[i], selectedWorkspace.id)
+                succeeded++
+            } catch (err: any) {
+                errors.push(`${files[i].name}: ${err.message}`)
             }
         }
+
+        setUploadProgress(null)
+        if (errors.length > 0) {
+            setError(errors.join(' | '))
+        }
+        if (succeeded > 0) {
+            fetchWorkspaceFiles(selectedWorkspace.id)
+            fetchWorkspaces()
+        }
+        setUploading(false)
+        if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
     const handleDragEnter = (e: React.DragEvent) => {
@@ -281,44 +330,46 @@ export default function WorkspacesPage() {
 
         if (!selectedWorkspace) return
 
-        const file = e.dataTransfer.files?.[0]
-        if (!file) return
+        const droppedFiles = Array.from(e.dataTransfer.files || [])
+        if (droppedFiles.length === 0) return
 
-        const accepted = ['.pdf', '.png', '.jpg', '.jpeg', '.doc', '.docx', '.xls', '.xlsx']
-        const ext = '.' + file.name.split('.').pop()?.toLowerCase()
-        if (!accepted.includes(ext)) {
+        if (droppedFiles.length > 10) {
+            setError('Maximo 10 archivos por subida')
+            return
+        }
+
+        const accepted = ['.pdf', '.png', '.jpg', '.jpeg', '.doc', '.docx', '.xls', '.xlsx', '.csv']
+        const invalid = droppedFiles.filter(f => {
+            const ext = '.' + f.name.split('.').pop()?.toLowerCase()
+            return !accepted.includes(ext)
+        })
+        if (invalid.length > 0) {
             setError(`Tipo de archivo no admitido. Formatos permitidos: ${accepted.join(', ')}`)
             return
         }
 
         setUploading(true)
-        try {
-            const formDataObj = new FormData()
-            formDataObj.append('file', file)
+        const total = droppedFiles.length
+        let succeeded = 0
+        const errors: string[] = []
 
-            const token = localStorage.getItem('access_token')
-            const API_URL = import.meta.env.VITE_API_URL || '/api'
-
-            const response = await fetch(`${API_URL}/api/workspaces/${selectedWorkspace.id}/files`, {
-                method: 'POST',
-                headers: {
-                    ...(token && { Authorization: `Bearer ${token}` })
-                },
-                body: formDataObj
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}))
-                throw new Error(errorData.detail || 'Error al subir archivo')
+        for (let i = 0; i < total; i++) {
+            setUploadProgress(total > 1 ? `Subiendo ${i + 1}/${total} archivos...` : null)
+            try {
+                await uploadSingleFile(droppedFiles[i], selectedWorkspace.id)
+                succeeded++
+            } catch (err: any) {
+                errors.push(`${droppedFiles[i].name}: ${err.message}`)
             }
+        }
 
+        setUploadProgress(null)
+        if (errors.length > 0) setError(errors.join(' | '))
+        if (succeeded > 0) {
             fetchWorkspaceFiles(selectedWorkspace.id)
             fetchWorkspaces()
-        } catch (err: any) {
-            setError(err.message || 'Error al subir archivo')
-        } finally {
-            setUploading(false)
         }
+        setUploading(false)
     }
 
     const formatDate = (dateString: string) => {
@@ -423,7 +474,20 @@ export default function WorkspacesPage() {
                                             </div>
 
                                             <div className="workspace-content">
-                                                <h3>{workspace.name}</h3>
+                                                {renamingId === workspace.id ? (
+                                                    <input
+                                                        className="workspace-rename-input"
+                                                        value={renamingValue}
+                                                        onChange={(e) => setRenamingValue(e.target.value)}
+                                                        onBlur={() => commitRename(workspace)}
+                                                        onKeyDown={(e) => handleRenameKeyDown(e, workspace)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        autoFocus
+                                                        maxLength={50}
+                                                    />
+                                                ) : (
+                                                    <h3>{workspace.name}</h3>
+                                                )}
                                                 {workspace.description && (
                                                     <p className="workspace-description">
                                                         {workspace.description}
@@ -443,6 +507,13 @@ export default function WorkspacesPage() {
                                             </div>
 
                                             <div className="workspace-actions">
+                                                <button
+                                                    className="btn btn-ghost workspace-action-btn rename-btn"
+                                                    onClick={(e) => startRenaming(workspace, e)}
+                                                    title="Renombrar workspace"
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
                                                 <button
                                                     className="btn btn-ghost workspace-action-btn"
                                                     onClick={(e) => openDeleteModal(workspace, e)}
@@ -470,6 +541,7 @@ export default function WorkspacesPage() {
                                     ref={fileInputRef}
                                     onChange={handleFileUpload}
                                     accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.csv"
+                                    multiple
                                     style={{ display: 'none' }}
                                 />
 
@@ -494,7 +566,7 @@ export default function WorkspacesPage() {
                                                 disabled={uploading}
                                             >
                                                 <Upload size={16} />
-                                                <span>{uploading ? 'Subiendo...' : 'Subir archivo'}</span>
+                                                <span>{uploadProgress || (uploading ? 'Subiendo...' : 'Subir archivos')}</span>
                                             </button>
                                         </div>
 

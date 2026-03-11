@@ -176,6 +176,16 @@ export function useWorkspaces() {
         }
     }, [])
 
+    const renameWorkspace = useCallback(async (workspaceId: string, newName: string) => {
+        const updated = await apiRequest<Workspace>(`/api/workspaces/${workspaceId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ name: newName })
+        })
+        setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, name: newName } : w))
+        setActiveWorkspace(prev => prev?.id === workspaceId ? { ...prev, name: newName } : prev)
+        return updated
+    }, [apiRequest])
+
     const deleteFile = useCallback(async (workspaceId: string, fileId: string) => {
         setLoading(true)
         setError(null)
@@ -208,6 +218,7 @@ export function useWorkspaces() {
         fetchWorkspaces,
         createWorkspace,
         deleteWorkspace,
+        renameWorkspace,
         selectWorkspace,
         fetchWorkspaceFiles,
         uploadFile,

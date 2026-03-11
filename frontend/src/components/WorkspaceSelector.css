@@ -63,10 +63,11 @@
 /* Dropdown */
 .workspace-selector-dropdown {
     position: absolute;
-    top: calc(100% + 4px);
+    bottom: calc(100% + 4px);
     left: 0;
-    right: 0;
     min-width: 220px;
+    max-height: 300px;
+    overflow-y: auto;
     background: var(--color-white);
     border: 1px solid var(--color-gray-200);
     border-radius: var(--radius-lg);
@@ -79,7 +80,7 @@
 @keyframes dropdownFadeIn {
     from {
         opacity: 0;
-        transform: translateY(-4px);
+        transform: translateY(4px);
     }
     to {
         opacity: 1;
@@ -148,6 +149,43 @@
 
 .workspace-selector-option.create-new:hover {
     background: rgba(26, 86, 219, 0.1);
+}
+
+.option-rename-input {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-700);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--color-primary);
+    outline: none;
+    padding: 0;
+    min-width: 0;
+}
+
+.option-rename-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--color-gray-400);
+    cursor: pointer;
+    padding: 0;
+    opacity: 0;
+    transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+
+.workspace-selector-option:hover .option-rename-btn {
+    opacity: 1;
+}
+
+.option-rename-btn:hover {
+    color: var(--color-primary);
 }
 
 .workspace-selector-divider {

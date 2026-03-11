@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, FolderOpen, Check, Plus } from 'lucide-react'
+import { ChevronDown, FolderOpen, Check, Plus, Pencil } from 'lucide-react'
 import { Workspace } from '../hooks/useWorkspaces'
 import './WorkspaceSelector.css'
 
@@ -8,15 +8,19 @@ interface WorkspaceSelectorProps {
     activeWorkspace: Workspace | null
     onWorkspaceChange?: (workspace: Workspace | null) => void
     onCreateNew?: () => void
+    onRenameWorkspace?: (workspaceId: string, newName: string) => void
 }
 
 export function WorkspaceSelector({
     workspaces,
     activeWorkspace,
     onWorkspaceChange,
-    onCreateNew
+    onCreateNew,
+    onRenameWorkspace
 }: WorkspaceSelectorProps) {
     const [isOpen, setIsOpen] = useState(false)
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [editingName, setEditingName] = useState('')
     const dropdownRef = useRef<HTMLDivElement>(null)
 
     // Close dropdown when clicking outside
@@ -34,6 +38,31 @@ export function WorkspaceSelector({
     const handleSelect = (workspace: Workspace | null) => {
         onWorkspaceChange?.(workspace)
         setIsOpen(false)
+    }
+
+    const startEditing = (workspace: Workspace, e: React.MouseEvent) => {
+        e.stopPropagation()
+        setEditingId(workspace.id)
+        setEditingName(workspace.name)
+    }
+
+    const commitRename = (workspaceId: string) => {
+        const trimmed = editingName.trim()
+        if (trimmed && onRenameWorkspace) {
+            onRenameWorkspace(workspaceId, trimmed)
+        }
+        setEditingId(null)
+        setEditingName('')
+    }
+
+    const handleRenameKeyDown = (e: React.KeyboardEvent, workspaceId: string) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            commitRename(workspaceId)
+        } else if (e.key === 'Escape') {
+            setEditingId(null)
+            setEditingName('')
+        }
     }
 
     return (
@@ -81,21 +110,43 @@ export function WorkspaceSelector({
 
                     {/* Workspace list */}
                     {workspaces.map((workspace) => (
-                        <button
+                        <div
                             key={workspace.id}
-                            type="button"
                             className={`workspace-selector-option ${activeWorkspace?.id === workspace.id ? 'selected' : ''}`}
-                            onClick={() => handleSelect(workspace)}
+                            onClick={() => editingId !== workspace.id && handleSelect(workspace)}
                             role="option"
                             aria-selected={activeWorkspace?.id === workspace.id}
                         >
                             <span className="option-icon">{workspace.icon}</span>
-                            <span className="option-name">{workspace.name}</span>
+                            {editingId === workspace.id ? (
+                                <input
+                                    className="option-rename-input"
+                                    value={editingName}
+                                    onChange={(e) => setEditingName(e.target.value)}
+                                    onBlur={() => commitRename(workspace.id)}
+                                    onKeyDown={(e) => handleRenameKeyDown(e, workspace.id)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    autoFocus
+                                    maxLength={50}
+                                />
+                            ) : (
+                                <span className="option-name">{workspace.name}</span>
+                            )}
                             <span className="option-count">{workspace.file_count}</span>
-                            {activeWorkspace?.id === workspace.id && (
+                            {activeWorkspace?.id === workspace.id && editingId !== workspace.id && (
                                 <Check size={14} className="check-icon" />
                             )}
-                        </button>
+                            {onRenameWorkspace && editingId !== workspace.id && (
+                                <button
+                                    type="button"
+                                    className="option-rename-btn"
+                                    onClick={(e) => startEditing(workspace, e)}
+                                    title="Renombrar"
+                                >
+                                    <Pencil size={12} />
+                                </button>
+                            )}
+                        </div>
                     ))}
 
                     {/* Create new option */}
