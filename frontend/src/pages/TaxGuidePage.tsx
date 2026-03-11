@@ -17,7 +17,7 @@ const CCAA_OPTIONS = [
     'Araba', 'Bizkaia', 'Gipuzkoa',
 ]
 
-const STEP_ICONS = [MapPin, Briefcase, PiggyBank, HomeIcon, Users, Gift, BarChart3]
+const STEP_ICONS = [MapPin, Briefcase, PiggyBank, HomeIcon, TrendingUp, Users, Gift, BarChart3]
 const QUICK_STEP_ICONS = [MapPin, BarChart3]
 
 // === Reusable inputs ===
@@ -513,6 +513,71 @@ function StepInmuebles({ data, update }: StepProps) {
             <h3 className="tg-step__subtitle">Segundas viviendas</h3>
             <NumberInput label="Valor catastral de segundas viviendas" value={data.valor_catastral_segundas_viviendas} onChange={v => update({ valor_catastral_segundas_viviendas: v })} suffix="EUR" help="Viviendas no alquiladas ni vivienda habitual. Imputa 1,1%-2% como renta" />
             <CheckboxInput label="Valor catastral revisado despues de 1994" checked={data.valor_catastral_revisado_post1994} onChange={v => update({ valor_catastral_revisado_post1994: v })} help="Si fue revisado antes de 1994 se aplica el 2% en lugar del 1,1%" />
+        </div>
+    )
+}
+
+// === Step 4: Inversiones y cripto ===
+
+function StepInversiones({ data, update }: StepProps) {
+    return (
+        <div className="tg-step">
+            <h2 className="tg-step__title">Inversiones y cripto</h2>
+            <p className="tg-step__desc">Ganancias y perdidas patrimoniales de acciones, fondos, criptomonedas, derivados y apuestas.</p>
+
+            <CheckboxInput label="Tengo criptomonedas" checked={data.tiene_criptomonedas} onChange={v => {
+                update({ tiene_criptomonedas: v })
+                if (!v) update({ cripto_ganancia_neta: 0, cripto_perdida_neta: 0 })
+            }} />
+            {data.tiene_criptomonedas && (
+                <>
+                    <NumberInput label="Ganancias netas cripto" value={data.cripto_ganancia_neta} onChange={v => update({ cripto_ganancia_neta: v })} suffix="EUR" help="Ganancias realizadas (ventas - compras, metodo FIFO)" />
+                    <NumberInput label="Perdidas netas cripto" value={data.cripto_perdida_neta} onChange={v => update({ cripto_perdida_neta: v })} suffix="EUR" help="Perdidas realizadas (no compensadas). Atencion: regla antiaplicacion 61 dias" />
+                </>
+            )}
+
+            <CheckboxInput label="Tengo acciones o fondos de inversion" checked={data.tiene_acciones_fondos} onChange={v => {
+                update({ tiene_acciones_fondos: v })
+                if (!v) update({ ganancias_acciones: 0, perdidas_acciones: 0, ganancias_reembolso_fondos: 0, perdidas_reembolso_fondos: 0 })
+            }} />
+            {data.tiene_acciones_fondos && (
+                <>
+                    <NumberInput label="Ganancias por venta de acciones" value={data.ganancias_acciones} onChange={v => update({ ganancias_acciones: v })} suffix="EUR" />
+                    <NumberInput label="Perdidas por venta de acciones" value={data.perdidas_acciones} onChange={v => update({ perdidas_acciones: v })} suffix="EUR" />
+                    <NumberInput label="Ganancias por reembolso de fondos" value={data.ganancias_reembolso_fondos} onChange={v => update({ ganancias_reembolso_fondos: v })} suffix="EUR" />
+                    <NumberInput label="Perdidas por reembolso de fondos" value={data.perdidas_reembolso_fondos} onChange={v => update({ perdidas_reembolso_fondos: v })} suffix="EUR" />
+                </>
+            )}
+
+            <CheckboxInput label="Tengo derivados (opciones, futuros, CFDs)" checked={data.tiene_derivados} onChange={v => {
+                update({ tiene_derivados: v })
+                if (!v) update({ ganancias_derivados: 0, perdidas_derivados: 0 })
+            }} />
+            {data.tiene_derivados && (
+                <>
+                    <NumberInput label="Ganancias de derivados" value={data.ganancias_derivados} onChange={v => update({ ganancias_derivados: v })} suffix="EUR" />
+                    <NumberInput label="Perdidas de derivados" value={data.perdidas_derivados} onChange={v => update({ perdidas_derivados: v })} suffix="EUR" />
+                </>
+            )}
+
+            <CheckboxInput label="Tengo premios de apuestas privadas" checked={data.tiene_ganancias_juegos_privados} onChange={v => {
+                update({ tiene_ganancias_juegos_privados: v })
+                if (!v) update({ premios_metalico_privados: 0, perdidas_juegos_privados: 0 })
+            }} help="Casinos, poker, apuestas deportivas privadas (tributan en base general)" />
+            {data.tiene_ganancias_juegos_privados && (
+                <>
+                    <NumberInput label="Premios de juegos privados" value={data.premios_metalico_privados} onChange={v => update({ premios_metalico_privados: v })} suffix="EUR" />
+                    <NumberInput label="Perdidas de juegos privados" value={data.perdidas_juegos_privados} onChange={v => update({ perdidas_juegos_privados: v })} suffix="EUR" help="Compensables solo con ganancias de juegos" />
+                </>
+            )}
+
+            <CheckboxInput label="Tengo premios de loterias publicas" checked={data.tiene_premios_loterias} onChange={v => {
+                update({ tiene_premios_loterias: v })
+                if (!v) update({ premios_metalico_publicos: 0 })
+            }} help="Loteria Nacional, Euromillones, ONCE, Cruz Roja. Gravamen especial 20% (exentos primeros 40.000 EUR)" />
+            {data.tiene_premios_loterias && (
+                <NumberInput label="Premios de loterias publicas" value={data.premios_metalico_publicos} onChange={v => update({ premios_metalico_publicos: v })} suffix="EUR" help="Importe bruto total. Los primeros 40.000 EUR estan exentos" />
+            )}
         </div>
     )
 }
@@ -1071,11 +1136,23 @@ export default function TaxGuidePage() {
             salario_base_mensual: data.salario_base_mensual,
             complementos_salariales: data.complementos_salariales,
             irpf_retenido_porcentaje: data.irpf_retenido_porcentaje,
+            // Inversiones y cripto
+            cripto_ganancia_neta: data.cripto_ganancia_neta,
+            cripto_perdida_neta: data.cripto_perdida_neta,
+            ganancias_acciones: data.ganancias_acciones,
+            perdidas_acciones: data.perdidas_acciones,
+            ganancias_reembolso_fondos: data.ganancias_reembolso_fondos,
+            perdidas_reembolso_fondos: data.perdidas_reembolso_fondos,
+            ganancias_derivados: data.ganancias_derivados,
+            perdidas_derivados: data.perdidas_derivados,
+            premios_metalico_privados: data.premios_metalico_privados,
+            perdidas_juegos_privados: data.perdidas_juegos_privados,
+            premios_metalico_publicos: data.premios_metalico_publicos,
         })
     }, [data, estimate])
 
-    // Phase B: Trigger deduction discovery when on step 5 (Deducciones) or result step
-    const isDeductionStep = isQuick ? step === 1 : step >= 5
+    // Phase B: Trigger deduction discovery when on step 6 (Deducciones) or result step
+    const isDeductionStep = isQuick ? step === 1 : step >= 6
     useEffect(() => {
         if (isDeductionStep && data.comunidad_autonoma) {
             const answers = buildAnswersFromData(data, discoveryAnswers)
@@ -1110,7 +1187,7 @@ export default function TaxGuidePage() {
         setDynamicFormValues(prev => ({ ...prev, [key]: value }))
     }, [])
 
-    // Render step content
+    // Render step content (8 steps: 0-7)
     const renderFullStep = () => {
         switch (step) {
             case 0: return <StepPersonal data={data} update={updateData} />
@@ -1124,8 +1201,9 @@ export default function TaxGuidePage() {
             )
             case 2: return <StepAhorro data={data} update={updateData} />
             case 3: return <StepInmuebles data={data} update={updateData} />
-            case 4: return <StepFamilia data={data} update={updateData} />
-            case 5: return (
+            case 4: return <StepInversiones data={data} update={updateData} />
+            case 5: return <StepFamilia data={data} update={updateData} />
+            case 6: return (
                 <StepDeducciones
                     data={data}
                     update={updateData}
@@ -1138,7 +1216,7 @@ export default function TaxGuidePage() {
                     onDynamicFormChange={handleDynamicFormChange}
                 />
             )
-            case 6: return <StepResultado result={result} loading={loading} onSaveProfile={handleSaveProfile} savingProfile={savingProfile} saveProfileDone={saveProfileDone} discoveryResult={discoveryResult} />
+            case 7: return <StepResultado result={result} loading={loading} onSaveProfile={handleSaveProfile} savingProfile={savingProfile} saveProfileDone={saveProfileDone} discoveryResult={discoveryResult} />
             default: return null
         }
     }
@@ -1192,7 +1270,7 @@ export default function TaxGuidePage() {
     // Block clicking directly on the result step in progress bar without required data
     const canGoToStep = (targetStep: number) => {
         if (isQuick) return !!data.comunidad_autonoma || targetStep === 0
-        // For result step (6), require CCAA + income
+        // For result step (7), require CCAA + income
         if (targetStep >= stepLabels.length - 1) {
             return !!data.comunidad_autonoma && step1HasIncome
         }

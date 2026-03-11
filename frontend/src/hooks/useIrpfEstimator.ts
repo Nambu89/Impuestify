@@ -132,8 +132,9 @@ export function useIrpfEstimator() {
             return
         }
 
-        // Must have some income to calculate
+        // Must have some income to calculate (check both annual and monthly salary)
         const hasIncome = (input.ingresos_trabajo || 0) > 0 ||
+            (input.salario_base_mensual || 0) > 0 ||
             (input.ingresos_actividad || 0) > 0 ||
             (input.intereses || 0) > 0 ||
             (input.dividendos || 0) > 0 ||
