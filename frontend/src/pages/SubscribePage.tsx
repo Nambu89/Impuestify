@@ -23,6 +23,7 @@ const PLAN_PARTICULAR = {
         'Workspace personal de documentos',
         'Fuentes oficiales citadas',
         'Informe IRPF exportable en PDF',
+        'Criptomonedas, trading y apuestas (FIFO)',
     ],
     notIncluded: [
         'Cálculo cuota autónomos (RETA)',
@@ -49,6 +50,7 @@ const PLAN_AUTONOMO = {
         'Workspaces con contexto IA aislado',
         'Cobertura foral completa (País Vasco + Navarra)',
         'Simulación IRPF con gastos deducibles',
+        'Criptomonedas, trading y apuestas (FIFO)',
     ],
     notIncluded: [],
 }

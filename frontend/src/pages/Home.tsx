@@ -322,6 +322,7 @@ export default function Home() {
                                 <li><CheckCircle size={18} /><span>Análisis de nóminas y notificaciones AEAT</span></li>
                                 <li><CheckCircle size={18} /><span>Workspace personal de documentos</span></li>
                                 <li><CheckCircle size={18} /><span>Informe IRPF exportable en PDF</span></li>
+                                <li><CheckCircle size={18} /><span>Criptomonedas, trading y apuestas (FIFO)</span></li>
                                 <li><CheckCircle size={18} /><span>Fuentes oficiales citadas</span></li>
                             </ul>
                             <Link to="/register" className="btn btn-primary btn-lg pricing-cta">
