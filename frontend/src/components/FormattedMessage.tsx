@@ -137,9 +137,15 @@ function parseContent(rawContent: string): ContentBlock[] {
     // Step 1b: Strip leaked technical lines (invoke_*, tool_name, function_call, Calling ...)
     content = content.replace(/^(?:invoke_\w+|tool_name|function_call|calling)\s*[:=]\s*\S+.*$/gim, '')
     content = content.replace(/^Calling\s+\w+\s+with.*$/gim, '')
+    // Strip ANY inline JSON objects (handles 1-level nested braces):
+    // {"call":"project_annual_irpf","args":{}} or {"base_imponible": 30000}
+    content = content.replace(/\{"[a-z_]+":(?:[^{}]|\{[^{}]*\})*\}/g, '')
     // Strip Spanish tool call phrases
     content = content.replace(/\(?\s*(?:LLAMADA|llamada)\s+A\s+(?:HERRAMIENTA|herramienta)\s+\w+\s*\)?/gi, '')
     content = content.replace(/Ahora\s+(?:hago|realizo|ejecuto)\s+el\s+c[aá]lculo\s+r[aá]pido\.?/gi, '')
+    // Strip internal reasoning leaked from LLM (workspace agent thinking)
+    content = content.replace(/(?:Llamo|Voy a (?:usar|llamar|ejecutar|utilizar|consultar)|Utilizo|Uso|Ejecuto|Consulto)\s+(?:la |el |a la |al )?(?:herramienta|tool|función|cálculo|simulador|motor)\b[^.!?\n]*[.!?]?\s*/gi, '')
+    content = content.replace(/(?:Calcularé|Primero voy a|Ahora (?:hago|realizo|ejecuto|calculo|analizo))\b[^.!?\n]*[.!?]?\s*/gi, '')
     // Strip broken source lines: "(pág. 0)" with no title
     content = content.replace(/^,?\s*\(p[aá]g\.\s*\d+\)\s*$/gm, '')
     content = content.replace(/^Fuentes:\s*\n(?:\s*,?\s*\(p[aá]g\.\s*\d+\)\s*\n?)+/gm, '')

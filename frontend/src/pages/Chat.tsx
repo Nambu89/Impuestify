@@ -486,7 +486,7 @@ export default function Chat() {
                         <div className="modal-header">
                             <h3>📎 Analizar documento</h3>
                             <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px', lineHeight: '1.5', marginBottom: '12px' }}>
-                                Sube un documento nómina o notificación de la AEAT en formato PDF.
+                                Sube un documento nómina o notificación de la AEAT en formato PDF o imagen.
                                 Analizaré el contenido, identificaré plazos importantes y te ayudaré
                                 a entender los pasos a seguir.
                             </p>

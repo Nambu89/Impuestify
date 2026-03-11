@@ -50,7 +50,11 @@ export function FileUploader({
             (type === '.pdf' && mimeType === 'application/pdf') ||
             (type === '.xlsx' && mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') ||
             (type === '.xls' && mimeType === 'application/vnd.ms-excel') ||
-            (type === '.csv' && (mimeType === 'text/csv' || mimeType === 'application/csv'))
+            (type === '.csv' && (mimeType === 'text/csv' || mimeType === 'application/csv')) ||
+            (type === '.docx' && mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') ||
+            (type === '.jpg' && (mimeType === 'image/jpeg')) ||
+            (type === '.jpeg' && (mimeType === 'image/jpeg')) ||
+            (type === '.png' && mimeType === 'image/png')
         )
 
         if (!isValidExtension) {

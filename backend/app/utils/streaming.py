@@ -223,25 +223,35 @@ def filter_json_from_content(content: str) -> str:
         Cleaned content suitable for user display
     """
     import re
-    
-    # Remove standalone JSON objects (common in tool responses)
-    # Matches: {"key": "value", ...}
-    content = re.sub(r'\{["\'](?:base_imponible|formatted_response|query|tool)["\']:[^}]+\}', '', content)
+
+    # Remove ANY standalone JSON objects (handles 1-level nested braces):
+    # {"call":"project_annual_irpf","args":{}} or {"base_imponible": 30000}
+    content = re.sub(r'\{["\'][a-z_]+["\']:(?:[^{}]|\{[^{}]*\})*\}', '', content)
 
     # Remove JSON in code blocks
     content = re.sub(r'```json\s*\{[^`]+\}\s*```', '', content)
 
     # Remove technical key-value lines leaked from tool calls
-    # e.g. "invoke_calculate_irpf_used: true", "tool_name: calculate_irpf"
     content = re.sub(r'^(?:invoke_\w+|tool_name|function_call|calling)\s*[:=]\s*\S+.*$', '', content, flags=re.MULTILINE | re.IGNORECASE)
 
     # Remove lines starting with "Calling " followed by a function name
     content = re.sub(r'^Calling\s+\w+\s+with.*$', '', content, flags=re.MULTILINE)
 
+    # Remove Spanish internal reasoning / planning phrases (thinking leaked into content)
+    # "Llamo a la herramienta de...", "Voy a usar/llamar/ejecutar...", "Utilizo la herramienta..."
+    content = re.sub(
+        r'(?:Llamo|Voy a (?:usar|llamar|ejecutar|utilizar|consultar)|Utilizo|Uso|Ejecuto|Consulto)'
+        r'\s+(?:la |el |a la |al )?(?:herramienta|tool|función|cálculo|simulador|motor)\b[^.!?\n]*[.!?]?\s*',
+        '', content, flags=re.IGNORECASE
+    )
+    # "Calcularé estimación para...", "Primero voy a analizar..."
+    content = re.sub(
+        r'(?:Calcular[eé]|Primero voy a|Ahora (?:hago|realizo|ejecuto|calculo|analizo))\b[^.!?\n]*[.!?]?\s*',
+        '', content, flags=re.IGNORECASE
+    )
+
     # Remove Spanish technical phrases about tool calls
-    # e.g. "(LLAMADA A HERRAMIENTA calculate_irpf)", "Ahora hago el cálculo rápido."
     content = re.sub(r'\(?\s*(?:LLAMADA|llamada)\s+A\s+(?:HERRAMIENTA|herramienta)\s+\w+\s*\)?', '', content, flags=re.IGNORECASE)
-    content = re.sub(r'Ahora\s+(?:hago|realizo|ejecuto)\s+el\s+c[aá]lculo\s+r[aá]pido\.?', '', content, flags=re.IGNORECASE)
 
     # Remove broken source lines: empty titles with just "(pág. N)"
     content = re.sub(r'^,?\s*\(p[aá]g\.\s*\d+\)\s*$', '', content, flags=re.MULTILINE)

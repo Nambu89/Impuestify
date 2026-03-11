@@ -49,11 +49,12 @@ export function NotificationUpload({ onAnalysisComplete }: NotificationUploadPro
 
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             const droppedFile = e.dataTransfer.files[0]
-            if (droppedFile.type === 'application/pdf') {
+            const allowed = ['application/pdf', 'image/jpeg', 'image/png']
+            if (allowed.includes(droppedFile.type)) {
                 setFile(droppedFile)
                 setError(null)
             } else {
-                setError('Solo se permiten archivos PDF')
+                setError('Solo se permiten archivos PDF o imágenes (JPG, PNG)')
             }
         }
     }, [])
@@ -61,11 +62,12 @@ export function NotificationUpload({ onAnalysisComplete }: NotificationUploadPro
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0]
-            if (selectedFile.type === 'application/pdf') {
+            const allowed = ['application/pdf', 'image/jpeg', 'image/png']
+            if (allowed.includes(selectedFile.type)) {
                 setFile(selectedFile)
                 setError(null)
             } else {
-                setError('Solo se permiten archivos PDF')
+                setError('Solo se permiten archivos PDF o imágenes (JPG, PNG)')
             }
         }
     }
@@ -159,12 +161,12 @@ export function NotificationUpload({ onAnalysisComplete }: NotificationUploadPro
                     <>
                         <div className="upload-icon">📎</div>
                         <p className="upload-text">
-                            Arrastra aquí tu notificación PDF<br />
+                            Arrastra tu documento (PDF o imagen)<br />
                             o haz clic para seleccionar
                         </p>
                         <input
                             type="file"
-                            accept="application/pdf"
+                            accept="application/pdf,image/jpeg,image/png"
                             onChange={handleFileChange}
                             disabled={uploading}
                             className="file-input"

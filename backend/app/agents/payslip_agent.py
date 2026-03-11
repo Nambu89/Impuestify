@@ -5,6 +5,7 @@ Uses OpenAI API with function calling for payslip analysis.
 """
 import os
 import logging
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
@@ -285,22 +286,33 @@ Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnico
 			with open(pdf_path, "rb") as f:
 				file_hash = hashlib.sha256(f.read()).hexdigest()
 			
-			logger.info(f"✅ Extracted {len(pdf_text)} characters from PDF")
-			
-			# Validate that PDF has extractable text
+			logger.info(f"Extracted {len(pdf_text)} characters from PDF")
+
+			# Validate that PDF has extractable text — try Vision OCR if empty
 			if not pdf_text or len(pdf_text) < 100:
-				logger.error("❌ PDF appears to be empty or image-only (no extractable text)")
-				return {
-					"type": "Nómina",
-					"summary": "⚠️ **Error al procesar la nómina**\n\nEl PDF no contiene texto extraíble. Esto puede ocurrir si:\n- Es una imagen escaneada sin OCR\n- El PDF está corrupto\n- El PDF está protegido\n\nPor favor, intenta con un PDF que contenga texto seleccionable.",
-					"file_hash": file_hash,
-					"notification_date": datetime.now().strftime("%Y-%m-%d"),
-					"deadlines": [],
-					"region": {"region": "No especificada", "is_foral": False},
-					"severity": "low",
-					"reference_links": [],
-					"payslip_data": {}
-				}
+				logger.warning("PDF text empty/minimal, attempting Vision OCR fallback")
+				try:
+					from app.utils.pdf_extractor import extract_with_vision_ocr
+					with open(pdf_path, "rb") as f:
+						ocr_result = await extract_with_vision_ocr(f.read(), Path(pdf_path).name)
+					if ocr_result.success and ocr_result.total_chars >= 50:
+						pdf_text = ocr_result.markdown_text
+						logger.info(f"Vision OCR recovered {ocr_result.total_chars} chars")
+					else:
+						raise ValueError("Vision OCR returned insufficient text")
+				except Exception as ocr_err:
+					logger.error(f"Vision OCR fallback failed: {ocr_err}")
+					return {
+						"type": "Nómina",
+						"summary": "**Error al procesar la nómina**\n\nNo se pudo extraer texto del PDF. Posibles causas:\n- Imagen escaneada de muy baja calidad\n- PDF corrupto o protegido\n\nPrueba a subir una foto más nítida o un PDF con texto seleccionable.",
+						"file_hash": file_hash,
+						"notification_date": datetime.now().strftime("%Y-%m-%d"),
+						"deadlines": [],
+						"region": {"region": "No especificada", "is_foral": False},
+						"severity": "low",
+						"reference_links": [],
+						"payslip_data": {}
+					}
 			
 			# SECURITY: Anonymize PII before sending to LLM
 			from app.services.payslip_extractor import PayslipExtractor

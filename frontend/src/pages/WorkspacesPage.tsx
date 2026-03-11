@@ -469,7 +469,7 @@ export default function WorkspacesPage() {
                                     type="file"
                                     ref={fileInputRef}
                                     onChange={handleFileUpload}
-                                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
+                                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.csv"
                                     style={{ display: 'none' }}
                                 />
 

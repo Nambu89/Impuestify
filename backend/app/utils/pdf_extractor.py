@@ -1,23 +1,30 @@
 """
-PDF Text Extractor for TaxIA using PyMuPDF4LLM
+PDF & Document Text Extractor for TaxIA
 
-Optimized for extracting text from PDFs for LLM processing.
 Supports:
-- Markdown extraction (preserves structure)
-- Table detection and formatting
-- Image extraction (optional)
-- Multi-column layout support
-- Page chunking for better context
+- PDF with selectable text (PyMuPDF / pymupdf4llm)
+- Scanned PDFs (OpenAI Vision API fallback when text is empty)
+- Images (JPG/PNG → OpenAI Vision API)
+- Markdown extraction, table detection, multi-page
 
-Perfect for AEAT notifications and tax documents.
+When PyMuPDF returns <50 chars per page, the Vision OCR fallback
+renders each page as a 200-DPI PNG and sends it to GPT-4o-mini.
 """
+import asyncio
+import base64
 import logging
+import os
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from dataclasses import dataclass
 import io
 
 logger = logging.getLogger(__name__)
+
+# Max pages to send to Vision API (cost control: ~$0.001/page)
+VISION_OCR_MAX_PAGES = 20
+# Minimum chars per page to consider text extraction successful
+MIN_CHARS_PER_PAGE = 50
 
 # Try to import pymupdf4llm
 try:
@@ -155,8 +162,15 @@ class PDFTextExtractor:
                     total_pages = 1
                     total_chars = len(markdown_text)
                 
-                logger.info(f"✅ Extracted {total_chars} chars from {total_pages} pages: {filename}")
-                
+                logger.info(f"Extracted {total_chars} chars from {total_pages} pages: {filename}")
+
+                # Check if text is too empty (scanned PDF) — fallback to Vision OCR
+                if _is_text_empty(pages):
+                    logger.warning(f"Text empty/minimal for {filename}, trying Vision OCR")
+                    ocr_result = await extract_with_vision_ocr(pdf_bytes, filename)
+                    if ocr_result.success and ocr_result.total_chars > 0:
+                        return ocr_result
+
                 return PDFExtractionResult(
                     success=True,
                     pages=pages,
@@ -164,7 +178,7 @@ class PDFTextExtractor:
                     total_chars=total_chars,
                     markdown_text=markdown_text
                 )
-            
+
             finally:
                 # Clean up temp file (Windows-safe)
                 try:
@@ -290,12 +304,7 @@ async def extract_pdf_text_plain(pdf_bytes: bytes, filename: str = "document.pdf
     The plain text preserves the spatial reading order which makes
     regex extraction reliable.
 
-    Args:
-        pdf_bytes: PDF file content
-        filename: Original filename
-
-    Returns:
-        PDFExtractionResult with extracted text
+    Falls back to Vision OCR if extracted text is too short (scanned PDF).
     """
     try:
         import fitz
@@ -320,6 +329,14 @@ async def extract_pdf_text_plain(pdf_bytes: bytes, filename: str = "document.pdf
 
         logger.info(f"Extracted {total_chars} chars (plain text) from {len(pages)} pages: {filename}")
 
+        # Check if text is too empty (scanned PDF) — fallback to Vision OCR
+        if _is_text_empty(pages):
+            logger.warning(f"Text empty/minimal for {filename} ({total_chars} chars), trying Vision OCR")
+            ocr_result = await extract_with_vision_ocr(pdf_bytes, filename)
+            if ocr_result.success and ocr_result.total_chars > 0:
+                return ocr_result
+            logger.warning(f"Vision OCR also failed for {filename}, returning empty result")
+
         return PDFExtractionResult(
             success=True,
             pages=pages,
@@ -337,4 +354,171 @@ async def extract_pdf_text_plain(pdf_bytes: bytes, filename: str = "document.pdf
             total_chars=0,
             markdown_text="",
             error=str(e)
+        )
+
+
+def _is_text_empty(pages: List[PDFPage], threshold: int = MIN_CHARS_PER_PAGE) -> bool:
+    """Check if extracted text is too short (likely a scanned/image PDF)."""
+    if not pages:
+        return True
+    avg_chars = sum(len(p.text.strip()) for p in pages) / len(pages)
+    return avg_chars < threshold
+
+
+async def extract_with_vision_ocr(
+    pdf_bytes: bytes,
+    filename: str = "document.pdf",
+    max_pages: int = VISION_OCR_MAX_PAGES,
+) -> PDFExtractionResult:
+    """
+    OCR fallback: render PDF pages as images and extract text via OpenAI Vision API.
+
+    Uses GPT-4o-mini for cost efficiency (~$0.001 per page at high detail).
+    Processes up to 5 pages concurrently to balance speed and rate limits.
+    """
+    try:
+        import fitz
+        from openai import AsyncOpenAI
+
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            return PDFExtractionResult(
+                success=False, pages=[], total_pages=0, total_chars=0,
+                markdown_text="", error="OPENAI_API_KEY not configured for Vision OCR"
+            )
+
+        client = AsyncOpenAI(api_key=api_key)
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        num_pages = min(len(doc), max_pages)
+
+        if num_pages < len(doc):
+            logger.warning(f"Vision OCR: truncating {len(doc)} pages to {max_pages} for {filename}")
+
+        async def _ocr_page(page_idx: int) -> PDFPage:
+            page = doc[page_idx]
+            pixmap = page.get_pixmap(dpi=200)
+            png_bytes = pixmap.tobytes("png")
+            b64_image = base64.b64encode(png_bytes).decode("utf-8")
+
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "Extrae TODO el texto visible de esta imagen de documento fiscal español. "
+                                "Mantén la estructura de tablas usando separadores |. "
+                                "Responde SOLO con el texto extraído, sin explicaciones."
+                            ),
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/png;base64,{b64_image}", "detail": "high"},
+                        },
+                    ],
+                }],
+                max_tokens=4096,
+            )
+
+            text = response.choices[0].message.content or ""
+            return PDFPage(page_number=page_idx + 1, text=text, metadata={"source": "vision_ocr"})
+
+        # Process pages in batches of 5 for concurrency control
+        pages: List[PDFPage] = []
+        for batch_start in range(0, num_pages, 5):
+            batch_end = min(batch_start + 5, num_pages)
+            batch = await asyncio.gather(
+                *[_ocr_page(i) for i in range(batch_start, batch_end)]
+            )
+            pages.extend(batch)
+
+        doc.close()
+
+        full_text_parts = [f"=== PAGINA {p.page_number} ===\n{p.text}" for p in pages]
+        full_text = "\n\n".join(full_text_parts)
+        total_chars = sum(len(p.text) for p in pages)
+
+        logger.info(f"Vision OCR extracted {total_chars} chars from {num_pages} pages: {filename}")
+
+        return PDFExtractionResult(
+            success=True,
+            pages=pages,
+            total_pages=num_pages,
+            total_chars=total_chars,
+            markdown_text=full_text,
+        )
+
+    except Exception as e:
+        logger.error(f"Vision OCR failed for {filename}: {e}")
+        return PDFExtractionResult(
+            success=False, pages=[], total_pages=0, total_chars=0,
+            markdown_text="", error=f"Vision OCR: {e}"
+        )
+
+
+async def extract_image_text(image_bytes: bytes, filename: str = "image.jpg") -> PDFExtractionResult:
+    """
+    Extract text from an image (JPG/PNG) using OpenAI Vision API.
+
+    Returns a PDFExtractionResult with a single page for consistency.
+    """
+    try:
+        from openai import AsyncOpenAI
+
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            return PDFExtractionResult(
+                success=False, pages=[], total_pages=0, total_chars=0,
+                markdown_text="", error="OPENAI_API_KEY not configured for Vision OCR"
+            )
+
+        # Detect mime type from extension
+        ext = Path(filename).suffix.lower()
+        mime = "image/jpeg" if ext in (".jpg", ".jpeg") else "image/png"
+
+        b64_image = base64.b64encode(image_bytes).decode("utf-8")
+        client = AsyncOpenAI(api_key=api_key)
+
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "Extrae TODO el texto visible de esta imagen de documento fiscal español. "
+                            "Mantén la estructura de tablas usando separadores |. "
+                            "Responde SOLO con el texto extraído, sin explicaciones."
+                        ),
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{mime};base64,{b64_image}", "detail": "high"},
+                    },
+                ],
+            }],
+            max_tokens=4096,
+        )
+
+        text = response.choices[0].message.content or ""
+        page = PDFPage(page_number=1, text=text, metadata={"source": "vision_ocr"})
+
+        logger.info(f"Vision extracted {len(text)} chars from image: {filename}")
+
+        return PDFExtractionResult(
+            success=True,
+            pages=[page],
+            total_pages=1,
+            total_chars=len(text),
+            markdown_text=text,
+        )
+
+    except Exception as e:
+        logger.error(f"Image text extraction failed for {filename}: {e}")
+        return PDFExtractionResult(
+            success=False, pages=[], total_pages=0, total_chars=0,
+            markdown_text="", error=f"Image OCR: {e}"
         )

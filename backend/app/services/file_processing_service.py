@@ -2,19 +2,27 @@
 File Processing Service for TaxIA
 
 Handles file uploads, classification, text extraction, and embeddings for Workspaces.
+Supports: PDF, DOCX, Excel, CSV, Images (JPG/PNG).
 Integrates specialized extractors for invoices and payslips.
 """
+import csv
+import io
+import json
 import logging
 import os
-import json
-from typing import Optional, Dict, Any
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import Optional, Dict, Any
 
 from fastapi import UploadFile
 
 from app.database.turso_client import get_db_client
-from app.utils.pdf_extractor import extract_pdf_text, extract_pdf_text_plain, PDFExtractionResult
+from app.utils.pdf_extractor import (
+    extract_pdf_text,
+    extract_pdf_text_plain,
+    extract_image_text,
+    PDFExtractionResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +35,10 @@ class FileProcessingService:
         "image/jpeg": "image",
         "image/png": "image",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "excel",
-        "application/vnd.ms-excel": "excel"
+        "application/vnd.ms-excel": "excel",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+        "text/csv": "csv",
+        "application/csv": "csv",
     }
 
     # Whether to generate embeddings (can be disabled for faster uploads)
@@ -68,7 +79,10 @@ class FileProcessingService:
         processing_status = "pending"
 
         try:
-            if file.content_type == "application/pdf":
+            mime = file.content_type or ""
+            fmt = self.ACCEPTED_TYPES.get(mime, "")
+
+            if mime == "application/pdf":
                 # Use plain text for payslips/invoices (tabular PDFs) —
                 # pymupdf4llm markdown mangles column layout making regex impossible.
                 # Use markdown for other docs (better structure for RAG).
@@ -89,15 +103,37 @@ class FileProcessingService:
                     elif file_category == "declaracion":
                         extracted_data = self._extract_declaration_data(extracted_text)
                     else:
-                        # Basic extraction for other document types
                         extracted_data = {"pages": result.total_pages}
-
                 else:
-                    extracted_text = ""
                     processing_status = "error"
                     logger.error(f"PDF extraction failed: {result.error}")
 
-            # TODO: Add Excel/Image handling
+            elif fmt == "docx":
+                extracted_text = self._extract_docx_text(content, file.filename)
+                processing_status = "completed" if extracted_text else "error"
+
+            elif fmt == "excel":
+                extracted_text = self._extract_excel_text(content, file.filename)
+                processing_status = "completed" if extracted_text else "error"
+
+            elif fmt == "csv":
+                extracted_text = self._extract_csv_text(content, file.filename)
+                processing_status = "completed" if extracted_text else "error"
+
+            elif fmt == "image":
+                img_result = await extract_image_text(content, file.filename)
+                if img_result.success:
+                    extracted_text = img_result.markdown_text
+                    processing_status = "completed"
+                else:
+                    processing_status = "error"
+                    logger.error(f"Image extraction failed: {img_result.error}")
+
+            # Guard: empty extraction should not be marked as completed
+            if processing_status == "completed" and (not extracted_text or len(extracted_text.strip()) < 10):
+                processing_status = "error"
+                extracted_data = {"error": "No se pudo extraer texto del documento"}
+                logger.warning(f"Empty extraction for {file.filename}, setting status=error")
 
         except Exception as e:
             logger.error(f"Error extracting text from {file.filename}: {e}")
@@ -208,6 +244,90 @@ class FileProcessingService:
         except Exception as e:
             logger.error(f"Payslip extraction failed: {e}")
             return {"error": str(e)}
+
+    # ------------------------------------------------------------------
+    # Multi-format text extraction
+    # ------------------------------------------------------------------
+
+    def _extract_docx_text(self, content: bytes, filename: str) -> str:
+        """Extract text from a DOCX file (paragraphs + tables)."""
+        try:
+            from docx import Document
+
+            doc = Document(io.BytesIO(content))
+            parts: list[str] = []
+
+            # Paragraphs
+            for para in doc.paragraphs:
+                text = para.text.strip()
+                if text:
+                    parts.append(text)
+
+            # Tables
+            for table in doc.tables:
+                for row in table.rows:
+                    cells = [cell.text.strip() for cell in row.cells]
+                    parts.append(" | ".join(cells))
+
+            result = "\n".join(parts)
+            logger.info(f"DOCX extracted {len(result)} chars from {filename}")
+            return result
+
+        except Exception as e:
+            logger.error(f"DOCX extraction failed for {filename}: {e}")
+            return ""
+
+    def _extract_excel_text(self, content: bytes, filename: str) -> str:
+        """Extract text from an Excel file (all sheets, all cells)."""
+        try:
+            from openpyxl import load_workbook
+
+            wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+            parts: list[str] = []
+
+            for sheet in wb.worksheets:
+                parts.append(f"=== Hoja: {sheet.title} ===")
+                for row in sheet.iter_rows(values_only=True):
+                    cells = [str(c) if c is not None else "" for c in row]
+                    # Skip completely empty rows
+                    if any(cells):
+                        parts.append(" | ".join(cells))
+
+            wb.close()
+            result = "\n".join(parts)
+            logger.info(f"Excel extracted {len(result)} chars from {filename}")
+            return result
+
+        except Exception as e:
+            logger.error(f"Excel extraction failed for {filename}: {e}")
+            return ""
+
+    def _extract_csv_text(self, content: bytes, filename: str) -> str:
+        """Extract text from a CSV file."""
+        try:
+            # Try UTF-8 first, then Latin-1 (common in Spanish docs)
+            for encoding in ("utf-8", "latin-1", "cp1252"):
+                try:
+                    text = content.decode(encoding)
+                    break
+                except (UnicodeDecodeError, ValueError):
+                    continue
+            else:
+                text = content.decode("utf-8", errors="replace")
+
+            reader = csv.reader(io.StringIO(text))
+            parts: list[str] = []
+            for row in reader:
+                if any(cell.strip() for cell in row):
+                    parts.append(" | ".join(row))
+
+            result = "\n".join(parts)
+            logger.info(f"CSV extracted {len(result)} chars from {filename}")
+            return result
+
+        except Exception as e:
+            logger.error(f"CSV extraction failed for {filename}: {e}")
+            return ""
 
     def _extract_declaration_data(self, text: str) -> Dict[str, Any]:
         """Extract structured data from tax declaration text (303/130/420)."""
