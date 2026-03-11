@@ -425,7 +425,7 @@ export default function SettingsPage() {
                         {fiscal.loading ? (
                             <div className="fiscal-loading"><Loader size={24} className="animate-spin" /> Cargando perfil fiscal...</div>
                         ) : (
-                            <form onSubmit={handleSaveFiscalProfile} className="settings-form">
+                            <form onSubmit={handleSaveFiscalProfile} className="settings-form" noValidate>
 
                                 {/* --- Datos personales fiscales --- */}
                                 <h3 className="fiscal-section-title">Datos personales</h3>

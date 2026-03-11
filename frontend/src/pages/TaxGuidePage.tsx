@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { ChevronLeft, ChevronRight, RotateCcw, MapPin, Briefcase, PiggyBank, Home as HomeIcon, Users, Gift, BarChart3, CheckCircle, Info, AlertTriangle, Zap, Shield, TrendingUp } from 'lucide-react'
 import Header from '../components/Header'
 import LiveEstimatorBar from '../components/LiveEstimatorBar'
@@ -956,8 +956,9 @@ function buildAnswersFromData(data: TaxGuideData, extra: Record<string, boolean>
 export default function TaxGuidePage() {
     const { step, data, updateData, nextStep, prevStep, goToStep, resetAll, stepLabels } = useTaxGuideProgress()
     const { result, loading, estimate } = useIrpfEstimator()
-    const { profile, save } = useFiscalProfile()
+    const { profile, loading: profileLoading, save } = useFiscalProfile()
     const { result: discoveryResult, loading: discoveryLoading, error: discoveryError, discover } = useDeductionDiscovery()
+    const profileAppliedRef = useRef(false)
     const [savingProfile, setSavingProfile] = useState(false)
     const [saveProfileDone, setSaveProfileDone] = useState(false)
     const [discoveryAnswers, setDiscoveryAnswers] = useState<Record<string, boolean>>({})
@@ -970,59 +971,81 @@ export default function TaxGuidePage() {
     const isQuick = data.wizard_mode === 'quick'
     const icons = isQuick ? QUICK_STEP_ICONS : STEP_ICONS
 
-    // Pre-fill from fiscal profile on first load
+    // Pre-fill from fiscal profile once the API has loaded
     useEffect(() => {
-        if (!data.comunidad_autonoma && profile.ccaa_residencia) {
-            updateData({
-                comunidad_autonoma: profile.ccaa_residencia,
-                ceuta_melilla: profile.ceuta_melilla || false,
-                ingresos_trabajo: profile.ingresos_trabajo || 0,
-                ss_empleado: profile.ss_empleado || 0,
-                intereses: profile.intereses || 0,
-                dividendos: profile.dividendos || 0,
-                ganancias_fondos: profile.ganancias_fondos || 0,
-                ingresos_alquiler: profile.ingresos_alquiler || 0,
-                valor_adquisicion_inmueble: profile.valor_adquisicion_inmueble || 0,
-                num_descendientes: profile.num_descendientes || 0,
-                anios_nacimiento_desc: profile.anios_nacimiento_desc || [],
-                custodia_compartida: profile.custodia_compartida || false,
-                num_ascendientes_65: profile.num_ascendientes_65 || 0,
-                num_ascendientes_75: profile.num_ascendientes_75 || 0,
-                discapacidad_contribuyente: profile.discapacidad_contribuyente || 0,
-                aportaciones_plan_pensiones: profile.aportaciones_plan_pensiones || 0,
-                aportaciones_plan_pensiones_empresa: profile.aportaciones_plan_pensiones_empresa || 0,
-                hipoteca_pre2013: profile.hipoteca_pre2013 || false,
-                capital_amortizado_hipoteca: profile.capital_amortizado_hipoteca || 0,
-                intereses_hipoteca: profile.intereses_hipoteca || 0,
-                madre_trabajadora_ss: profile.madre_trabajadora_ss || false,
-                gastos_guarderia_anual: profile.gastos_guarderia_anual || 0,
-                familia_numerosa: profile.familia_numerosa || false,
-                tipo_familia_numerosa: profile.tipo_familia_numerosa || 'general',
-                donativos_ley_49_2002: profile.donativos_ley_49_2002 || 0,
-                donativo_recurrente: profile.donativo_recurrente || false,
-                retenciones_trabajo: profile.retenciones_trabajo || 0,
-                retenciones_alquiler: profile.retenciones_alquiler || 0,
-                retenciones_ahorro: profile.retenciones_ahorro || 0,
-                // Activity income
-                ingresos_actividad: profile.ingresos_actividad || 0,
-                gastos_actividad: profile.gastos_actividad || 0,
-                cuota_autonomo_anual: profile.cuota_autonomo_anual || 0,
-                amortizaciones_actividad: profile.amortizaciones_actividad || 0,
-                provisiones_actividad: profile.provisiones_actividad || 0,
-                otros_gastos_actividad: profile.otros_gastos_actividad || 0,
-                estimacion_actividad: profile.estimacion_actividad || 'directa_simplificada',
-                inicio_actividad: profile.inicio_actividad || false,
-                un_solo_cliente: profile.un_solo_cliente || false,
-                retenciones_actividad: profile.retenciones_actividad || 0,
-                pagos_fraccionados_130: profile.pagos_fraccionados_130 || 0,
-                // Phase 3 fields
-                num_pagas_anuales: (profile.num_pagas_anuales as 12 | 14) || 14,
-                salario_base_mensual: profile.salario_base_mensual || 0,
-                complementos_salariales: profile.complementos_salariales || 0,
-                irpf_retenido_porcentaje: profile.irpf_retenido_porcentaje || 0,
-            })
+        if (profileLoading || profileAppliedRef.current) return
+        if (!profile.ccaa_residencia) return // No profile saved yet
+        profileAppliedRef.current = true
+
+        // Compute edad from fecha_nacimiento if available
+        let edad = data.edad_contribuyente
+        if (profile.fecha_nacimiento) {
+            const birth = new Date(profile.fecha_nacimiento)
+            const today = new Date()
+            edad = today.getFullYear() - birth.getFullYear()
+            if (today.getMonth() < birth.getMonth() ||
+                (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) {
+                edad--
+            }
         }
-    }, [profile.ccaa_residencia]) // eslint-disable-line react-hooks/exhaustive-deps
+
+        updateData({
+            comunidad_autonoma: profile.ccaa_residencia,
+            edad_contribuyente: edad,
+            ceuta_melilla: profile.ceuta_melilla || false,
+            ingresos_trabajo: profile.ingresos_trabajo || 0,
+            ss_empleado: profile.ss_empleado || 0,
+            intereses: profile.intereses || 0,
+            dividendos: profile.dividendos || 0,
+            ganancias_fondos: profile.ganancias_fondos || 0,
+            ingresos_alquiler: profile.ingresos_alquiler || 0,
+            valor_adquisicion_inmueble: profile.valor_adquisicion_inmueble || 0,
+            num_descendientes: profile.num_descendientes || 0,
+            anios_nacimiento_desc: profile.anios_nacimiento_desc || [],
+            custodia_compartida: profile.custodia_compartida || false,
+            num_ascendientes_65: profile.num_ascendientes_65 || 0,
+            num_ascendientes_75: profile.num_ascendientes_75 || 0,
+            discapacidad_contribuyente: profile.discapacidad_contribuyente || 0,
+            aportaciones_plan_pensiones: profile.aportaciones_plan_pensiones || 0,
+            aportaciones_plan_pensiones_empresa: profile.aportaciones_plan_pensiones_empresa || 0,
+            hipoteca_pre2013: profile.hipoteca_pre2013 || false,
+            capital_amortizado_hipoteca: profile.capital_amortizado_hipoteca || 0,
+            intereses_hipoteca: profile.intereses_hipoteca || 0,
+            madre_trabajadora_ss: profile.madre_trabajadora_ss || false,
+            gastos_guarderia_anual: profile.gastos_guarderia_anual || 0,
+            familia_numerosa: profile.familia_numerosa || false,
+            tipo_familia_numerosa: profile.tipo_familia_numerosa || 'general',
+            donativos_ley_49_2002: profile.donativos_ley_49_2002 || 0,
+            donativo_recurrente: profile.donativo_recurrente || false,
+            retenciones_trabajo: profile.retenciones_trabajo || 0,
+            retenciones_alquiler: profile.retenciones_alquiler || 0,
+            retenciones_ahorro: profile.retenciones_ahorro || 0,
+            // Phase 2 fields
+            tributacion_conjunta: profile.tributacion_conjunta || false,
+            tipo_unidad_familiar: profile.tipo_unidad_familiar || 'matrimonio',
+            alquiler_habitual_pre2015: profile.alquiler_habitual_pre2015 || false,
+            alquiler_pagado_anual: profile.alquiler_pagado_anual || 0,
+            valor_catastral_segundas_viviendas: profile.valor_catastral_segundas_viviendas || 0,
+            valor_catastral_revisado_post1994: profile.valor_catastral_revisado_post1994 ?? true,
+            // Activity income
+            ingresos_actividad: profile.ingresos_actividad || 0,
+            gastos_actividad: profile.gastos_actividad || 0,
+            cuota_autonomo_anual: profile.cuota_autonomo_anual || 0,
+            amortizaciones_actividad: profile.amortizaciones_actividad || 0,
+            provisiones_actividad: profile.provisiones_actividad || 0,
+            otros_gastos_actividad: profile.otros_gastos_actividad || 0,
+            estimacion_actividad: profile.estimacion_actividad || 'directa_simplificada',
+            inicio_actividad: profile.inicio_actividad || false,
+            un_solo_cliente: profile.un_solo_cliente || false,
+            retenciones_actividad: profile.retenciones_actividad || 0,
+            pagos_fraccionados_130: profile.pagos_fraccionados_130 || 0,
+            // Phase 3 fields
+            num_pagas_anuales: (profile.num_pagas_anuales as 12 | 14) || 14,
+            salario_base_mensual: profile.salario_base_mensual || 0,
+            complementos_salariales: profile.complementos_salariales || 0,
+            irpf_retenido_porcentaje: profile.irpf_retenido_porcentaje || 0,
+        })
+    }, [profileLoading, profile]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Save wizard data to fiscal profile
     const handleSaveProfile = useCallback(async () => {
@@ -1328,7 +1351,7 @@ export default function TaxGuidePage() {
                             <ChevronLeft size={18} /> Anterior
                         </button>
 
-                        <button className="tg-nav__btn tg-nav__btn--ghost" onClick={resetAll} title="Empezar de nuevo">
+                        <button className="tg-nav__btn tg-nav__btn--ghost" onClick={() => { profileAppliedRef.current = false; resetAll() }} title="Empezar de nuevo">
                             <RotateCcw size={16} />
                         </button>
 
