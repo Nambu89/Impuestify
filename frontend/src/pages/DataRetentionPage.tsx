@@ -124,17 +124,17 @@ export default function DataRetentionPage() {
                         <tbody>
                             <tr>
                                 <td>Access logs</td>
-                                <td>90 dias</td>
+                                <td>90 días</td>
                                 <td>Automática</td>
                             </tr>
                             <tr>
                                 <td>Error logs</td>
-                                <td>90 dias</td>
+                                <td>90 días</td>
                                 <td>Automática</td>
                             </tr>
                             <tr>
                                 <td>Security events</td>
-                                <td>90 dias</td>
+                                <td>90 días</td>
                                 <td>Automática</td>
                             </tr>
                         </tbody>
@@ -162,7 +162,7 @@ export default function DataRetentionPage() {
                             </tr>
                             <tr>
                                 <td>Session tokens</td>
-                                <td>30 min (access) / 7 dias (refresh)</td>
+                                <td>30 min (access) / 7 días (refresh)</td>
                                 <td>Automática</td>
                             </tr>
                         </tbody>
@@ -171,15 +171,15 @@ export default function DataRetentionPage() {
 
                 <section>
                     <h2>3. Excepciones Legales</h2>
-                    <p>En ciertos casos, podemos conservar datos mas alla de los plazos indicados:</p>
+                    <p>En ciertos casos, podemos conservar datos más allá de los plazos indicados:</p>
                     <ul>
                         <li>
-                            <strong>Obligacion Legal</strong>: Si existe obligacion legal de conservar datos
+                            <strong>Obligación Legal</strong>: Si existe obligación legal de conservar datos
                             (ej: requerimiento judicial). Base legal: RGPD Art. 6.1.c
                         </li>
                         <li>
                             <strong>Litigios</strong>: Si hay litigio pendiente, los datos relacionados
-                            se conservan hasta resolucion (RGPD Art. 17.3.e)
+                            se conservan hasta resolución (RGPD Art. 17.3.e)
                         </li>
                         <li>
                             <strong>Datos Anonimizados</strong>: Los datos completamente anonimizados
@@ -195,12 +195,12 @@ export default function DataRetentionPage() {
                         <strong>Cómo ejercerlo</strong>: Desde Configuración &gt; Eliminar cuenta,
                         o enviando email a <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>.
                     </p>
-                    <p><strong>Plazo</strong>: Maximo 1 mes desde solicitud (RGPD Art. 12.3)</p>
-                    <p><strong>Que se elimina</strong>:</p>
+                    <p><strong>Plazo</strong>: Máximo 1 mes desde solicitud (RGPD Art. 12.3)</p>
+                    <p><strong>Qué se elimina</strong>:</p>
                     <ul>
-                        <li>Cuenta de usuario (email, contrasena hash)</li>
+                        <li>Cuenta de usuario (email, contraseña hash)</li>
                         <li>Todas las conversaciones</li>
-                        <li>Documentos subidos (si aun existen)</li>
+                        <li>Documentos subidos (si aún existen)</li>
                         <li>Preferencias de usuario</li>
                         <li>Logs asociados (se anonimizan)</li>
                     </ul>
@@ -227,12 +227,12 @@ export default function DataRetentionPage() {
                             </tr>
                             <tr>
                                 <td>Logs</td>
-                                <td>90 dias</td>
+                                <td>90 días</td>
                                 <td>Cron job semanal</td>
                             </tr>
                             <tr>
                                 <td>Tokens expirados</td>
-                                <td>7 dias</td>
+                                <td>7 días</td>
                                 <td>Limpieza automática</td>
                             </tr>
                         </tbody>
@@ -252,8 +252,8 @@ export default function DataRetentionPage() {
                         <strong> Retención</strong>: 30 días. Después: eliminación permanente.
                     </p>
                     <p>
-                        Si un usuario solicita borrado, tambien se elimina de backups en el siguiente
-                        ciclo (maximo 30 dias). RGPD Art. 17.1 aplica a backups.
+                        Si un usuario solicita borrado, también se elimina de backups en el siguiente
+                        ciclo (máximo 30 días). RGPD Art. 17.1 aplica a backups.
                     </p>
                 </section>
 
@@ -270,16 +270,16 @@ export default function DataRetentionPage() {
                     <h2>7. Revisión y Actualización</h2>
                     <p>
                         Esta politica se revisa trimestralmente para asegurar plazos adecuados,
-                        cumplir nueva normativa y ajustar segun feedback de usuarios.
+                        cumplir nueva normativa y ajustar según feedback de usuarios.
                     </p>
                     <p><strong>Proxima revision</strong>: Marzo 2026</p>
                 </section>
 
                 <section>
-                    <h2>8. Derecho a Solicitar Informacion</h2>
+                    <h2>8. Derecho a Solicitar Información</h2>
                     <p>
                         Puede solicitar información sobre qué datos conservamos, cuándo serán eliminados
-                        y el motivo de conservacion.
+                        y el motivo de conservación.
                     </p>
                     <p><strong>Contacto</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a></p>
                 </section>

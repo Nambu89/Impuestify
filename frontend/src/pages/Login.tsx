@@ -135,7 +135,7 @@ export default function Login() {
                                     type="button"
                                     className="auth-input-toggle"
                                     onClick={() => setShowPassword((v) => !v)}
-                                    aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -143,7 +143,7 @@ export default function Login() {
                         </div>
 
                         <Link to="/forgot-password" className="auth-forgot-link">
-                            ¿Olvidaste tu contrasena?
+                            ¿Olvidaste tu contraseña?
                         </Link>
 
                         <TurnstileWidget
@@ -160,7 +160,7 @@ export default function Login() {
                             {isLoading ? (
                                 <>
                                     <Loader2 size={18} className="animate-spin" />
-                                    Iniciando sesion...
+                                    Iniciando sesión...
                                 </>
                             ) : (
                                 <>

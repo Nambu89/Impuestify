@@ -220,7 +220,7 @@ export function useCrypto(): UseCryptoResult {
                 if (response.status === 401) {
                     localStorage.removeItem(TOKEN_KEY)
                     window.location.href = '/login?expired=true'
-                    throw new Error('Sesion expirada')
+                    throw new Error('Sesión expirada')
                 }
                 const err = await response.json().catch(() => ({}))
                 throw new Error(err.detail || `Error ${response.status}`)

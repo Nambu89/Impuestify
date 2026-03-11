@@ -1074,7 +1074,7 @@ export default function SettingsPage() {
                                 <div className="subscription-badge active">
                                     <CheckCircle size={18} />
                                     <span>
-                                        {subscription.status === 'grace_period' ? 'Periodo de gracia' : 'Activa'}
+                                        {subscription.status === 'grace_period' ? 'Período de gracia' : 'Activa'}
                                     </span>
                                 </div>
                                 <p className="section-description">
@@ -1085,7 +1085,7 @@ export default function SettingsPage() {
 
                                 {subscription.currentPeriodEnd && subscription.status !== 'grace_period' && (
                                     <p className="subscription-detail">
-                                        <strong>Proximo cobro:</strong>{' '}
+                                        <strong>Próximo cobro:</strong>{' '}
                                         {new Date(subscription.currentPeriodEnd).toLocaleDateString('es-ES', {
                                             day: 'numeric', month: 'long', year: 'numeric'
                                         })}
@@ -1297,14 +1297,14 @@ export default function SettingsPage() {
                                     <div className="notification-prefs">
                                         <h3 className="fiscal-section-title">Cuando avisar</h3>
                                         <p className="section-description" style={{ marginBottom: 'var(--spacing-3)' }}>
-                                            Elige con cuanta antelacion quieres recibir la alerta.
+                                            Elige con cuánta antelación quieres recibir la alerta.
                                         </p>
                                         <div className="notification-days-grid">
                                             {([15, 5, 1] as const).map((day) => {
                                                 const label =
-                                                    day === 1 ? '1 dia antes (urgente)' :
-                                                    day === 5 ? '5 dias antes' :
-                                                    '15 dias antes'
+                                                    day === 1 ? '1 día antes (urgente)' :
+                                                    day === 5 ? '5 días antes' :
+                                                    '15 días antes'
                                                 const checked = alertDays.includes(day)
                                                 const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                                     const next = e.target.checked
@@ -1339,7 +1339,7 @@ export default function SettingsPage() {
                             <h2>Alertas por email</h2>
                         </div>
                         <p className="section-description">
-                            Recibe un email recordatorio 30 dias antes de cada plazo fiscal importante.
+                            Recibe un email recordatorio 30 días antes de cada plazo fiscal importante.
                         </p>
 
                         <div className="gdpr-action">
@@ -1371,7 +1371,7 @@ export default function SettingsPage() {
                         {emailAlertsEnabled && (
                             <div className="notification-hint" style={{ marginTop: 'var(--spacing-3)', background: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.3)', color: '#22c55e' }}>
                                 <CheckCircle size={16} />
-                                <span>Las alertas por email estan activas. Recibiras un recordatorio 30 dias antes de cada plazo.</span>
+                                <span>Las alertas por email están activas. Recibirás un recordatorio 30 días antes de cada plazo.</span>
                             </div>
                         )}
                     </section>

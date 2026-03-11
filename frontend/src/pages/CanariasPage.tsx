@@ -127,7 +127,7 @@ export default function CanariasPage() {
                     <FadeContent delay={0} duration={600}>
                         <div className="canarias-hero__badge">
                             <Sun size={16} />
-                            <span>Regimen Fiscal Especial</span>
+                            <span>Régimen Fiscal Especial</span>
                         </div>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -143,7 +143,7 @@ export default function CanariasPage() {
                         </h1>
                         <p className="canarias-hero__subtitle">
                             Canarias tiene un{' '}
-                            <strong>regimen fiscal radicalmente distinto</strong> al
+                            <strong>régimen fiscal radicalmente distinto</strong> al
                             peninsular. Sin IVA, con IGIC al 7%, la Zona Especial Canaria
                             al 4% en Sociedades, la RIC para reducir hasta el 90% de la
                             base imponible y deducciones IRPF exclusivas. Impuestify
@@ -184,7 +184,7 @@ export default function CanariasPage() {
                     <FadeContent delay={300} duration={600}>
                         <img
                             src="/images/hero-canarias.webp"
-                            alt="Mapa fiscal de Canarias con regimen IGIC y ZEC"
+                            alt="Mapa fiscal de Canarias con régimen IGIC y ZEC"
                             className="canarias-hero__image"
                             loading="lazy"
                         />
@@ -208,7 +208,7 @@ export default function CanariasPage() {
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">
-                            Ventajas del regimen canario
+                            Ventajas del régimen canario
                         </h2>
                         <p className="section-subtitle">
                             Un sistema fiscal diseñado para compensar la insularidad y
@@ -284,7 +284,7 @@ export default function CanariasPage() {
                         </div>
                         <p className="canarias-comparacion__note">
                             El IGIC tiene tipos propios regulados por la Ley 20/1991. Los tipos
-                            aplicables pueden variar segun el producto o servicio. Consulta la
+                            aplicables pueden variar según el producto o servicio. Consulta la
                             normativa vigente o usa nuestro asistente para tu caso concreto.
                         </p>
                     </FadeContent>
@@ -299,8 +299,8 @@ export default function CanariasPage() {
                             Zona Especial Canaria — 4% en Sociedades
                         </h2>
                         <p className="section-subtitle">
-                            Un regimen excepcional para empresas que se establezcan y
-                            generen empleo real en el archipielago
+                            Un régimen excepcional para empresas que se establezcan y
+                            generen empleo real en el archipiélago
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -311,7 +311,7 @@ export default function CanariasPage() {
                                     <h3>Constituye tu empresa en la ZEC</h3>
                                     <p>
                                         Registro en el Consorcio de la Zona Especial Canaria,
-                                        con domicilio social y sede de direccion efectiva en
+                                        con domicilio social y sede de dirección efectiva en
                                         Canarias. La inscripcion es previa al inicio de la
                                         actividad.
                                     </p>
@@ -334,9 +334,9 @@ export default function CanariasPage() {
                                 <div className="canarias-zec__step-content">
                                     <h3>Tributa al 4% en Impuesto de Sociedades</h3>
                                     <p>
-                                        Sobre los beneficios hasta los limites establecidos
-                                        por empleado (cantidades crecientes segun plantilla).
-                                        El beneficio que supere el limite tributa al tipo
+                                        Sobre los beneficios hasta los límites establecidos
+                                        por empleado (cantidades crecientes según plantilla).
+                                        El beneficio que supere el límite tributa al tipo
                                         general del 25%.
                                     </p>
                                 </div>
@@ -358,7 +358,7 @@ export default function CanariasPage() {
                                     <span>8.000 EUR</span>
                                 </div>
                                 <div className="canarias-zec__example-row canarias-zec__example-row--general">
-                                    <span>Cuota regimen general (25%)</span>
+                                    <span>Cuota régimen general (25%)</span>
                                     <span>50.000 EUR</span>
                                 </div>
                                 <div className="canarias-zec__example-row canarias-zec__example-row--total">
@@ -371,7 +371,7 @@ export default function CanariasPage() {
                                 </div>
                             </div>
                             <p className="canarias-zec__example-note">
-                                Valores orientativos sujetos a los limites de base imponible
+                                Valores orientativos sujetos a los límites de base imponible
                                 por número de empleados establecidos en la normativa ZEC vigente.
                             </p>
                         </div>
@@ -513,7 +513,7 @@ export default function CanariasPage() {
                                     ¿Qué es la Zona Especial Canaria?
                                 </h3>
                                 <p>
-                                    La ZEC es un regimen especial aprobado por la Union Europea
+                                    La ZEC es un régimen especial aprobado por la Unión Europea
                                     que permite a empresas radicadas en Canarias tributar al 4%
                                     en el Impuesto de Sociedades, frente al 25% general, siempre
                                     que cumplan requisitos de creacion de empleo e inversion en
@@ -560,7 +560,7 @@ export default function CanariasPage() {
                             </div>
                             <h2>Calcula tu ahorro fiscal en Canarias</h2>
                             <p>
-                                La unica IA fiscal que entiende el regimen canario: IGIC,
+                                La única IA fiscal que entiende el régimen canario: IGIC,
                                 ZEC, RIC y deducciones propias. Resultados personalizados
                                 con citas a la norma oficial.
                             </p>

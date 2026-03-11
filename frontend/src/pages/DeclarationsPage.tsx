@@ -126,7 +126,7 @@ function Form130({ data, onChange, territory }: {
         <div className="decl-form">
             {isComun && (
                 <>
-                    <h3 className="decl-form__section">Seccion I: Estimacion directa (acumulado)</h3>
+                    <h3 className="decl-form__section">Sección I: Estimación directa (acumulado)</h3>
                     <div className="decl-form__grid">
                         <NumberInput label="Ingresos acumulados" value={data.ingresos_acumulados || 0} onChange={v => u('ingresos_acumulados', v)} suffix="EUR" help="Desde 1 de enero" />
                         <NumberInput label="Gastos acumulados" value={data.gastos_acumulados || 0} onChange={v => u('gastos_acumulados', v)} suffix="EUR" help="Desde 1 de enero" />
@@ -135,7 +135,7 @@ function Form130({ data, onChange, territory }: {
                     </div>
                     <h3 className="decl-form__section">Deducciones</h3>
                     <div className="decl-form__grid">
-                        <NumberInput label="Rend. neto ano anterior" value={data.rend_neto_anterior || 0} onChange={v => u('rend_neto_anterior', v)} suffix="EUR" help="Para Art. 80 bis" />
+                        <NumberInput label="Rend. neto año anterior" value={data.rend_neto_anterior || 0} onChange={v => u('rend_neto_anterior', v)} suffix="EUR" help="Para Art. 80 bis" />
                         <CheckboxInput label="Vivienda habitual (hipoteca)" checked={data.tiene_vivienda_habitual || false} onChange={v => u('tiene_vivienda_habitual', v)} />
                         <CheckboxInput label="Residente Ceuta/Melilla" checked={data.ceuta_melilla || false} onChange={v => u('ceuta_melilla', v)} />
                     </div>
@@ -157,13 +157,13 @@ function Form130({ data, onChange, territory }: {
             {isForal && (
                 <>
                     <h3 className="decl-form__section">
-                        {territory} - Regimen {data.regimen === 'excepcional' ? 'excepcional' : 'general'}
+                        {territory} - Régimen {data.regimen === 'excepcional' ? 'excepcional' : 'general'}
                     </h3>
                     <div className="decl-form__grid">
                         <div className="decl-field">
-                            <label className="decl-field__label">Regimen</label>
+                            <label className="decl-field__label">Régimen</label>
                             <select className="decl-field__input" value={data.regimen || 'general'} onChange={e => u('regimen', e.target.value)}>
-                                <option value="general">General (5% rend. penultimo)</option>
+                                <option value="general">General (5% rend. penúltimo)</option>
                                 <option value="excepcional">Excepcional (1% volumen)</option>
                             </select>
                         </div>
@@ -339,7 +339,7 @@ function ResultCard({ result, modelo }: { result: Record<string, any>; modelo: M
                     </div>
                     {result.casillas['13_deduccion_art80bis'] > 0 && (
                         <div className="decl-result__row">
-                            <span>Deduccion Art. 80 bis</span>
+                            <span>Deducción Art. 80 bis</span>
                             <span>-{result.casillas['13_deduccion_art80bis'].toFixed(2)} EUR</span>
                         </div>
                     )}

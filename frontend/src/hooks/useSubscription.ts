@@ -72,7 +72,7 @@ export function useSubscription(): UseSubscriptionReturn {
                 window.location.href = result.checkout_url
             }
         } catch (err: any) {
-            setError(err.message || 'Error al crear sesion de pago')
+            setError(err.message || 'Error al crear sesión de pago')
             throw err
         }
     }, [apiRequest])

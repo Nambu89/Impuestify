@@ -192,7 +192,7 @@ export function FileUploader({
                             <Upload size={32} />
                         </div>
                         <p className="drop-zone-text">
-                            Arrastra un archivo aqui o <span>haz clic para seleccionar</span>
+                            Arrastra un archivo aquí o <span>haz clic para seleccionar</span>
                         </p>
                         <p className="drop-zone-hint">
                             PDF, Excel o CSV (max. {maxSizeMB}MB)

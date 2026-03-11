@@ -68,17 +68,17 @@ export default function Register() {
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!emailRegex.test(email)) {
-            setError('Por favor, introduce un email valido')
+            setError('Por favor, introduce un email válido')
             return
         }
 
         if (password !== confirmPassword) {
-            setError('Las contrasenas no coinciden')
+            setError('Las contraseñas no coinciden')
             return
         }
 
         if (password.length < 8) {
-            setError('La contrasena debe tener al menos 8 caracteres')
+            setError('La contraseña debe tener al menos 8 caracteres')
             return
         }
 
@@ -233,7 +233,7 @@ export default function Register() {
                                     type={showPassword ? 'text' : 'password'}
                                     id="password"
                                     className="auth-input auth-input--with-toggle"
-                                    placeholder="Minimo 8 caracteres"
+                                    placeholder="Mínimo 8 caracteres"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
@@ -244,7 +244,7 @@ export default function Register() {
                                     type="button"
                                     className="auth-input-toggle"
                                     onClick={() => setShowPassword((v) => !v)}
-                                    aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -252,7 +252,7 @@ export default function Register() {
                         </div>
 
                         <div className="auth-input-group">
-                            <label htmlFor="confirmPassword">Confirmar contrasena</label>
+                            <label htmlFor="confirmPassword">Confirmar contraseña</label>
                             <div className="auth-input-wrapper">
                                 <span className="auth-input-icon">
                                     <Lock size={18} />
@@ -261,7 +261,7 @@ export default function Register() {
                                     type={showConfirmPassword ? 'text' : 'password'}
                                     id="confirmPassword"
                                     className="auth-input auth-input--with-toggle"
-                                    placeholder="Repite la contrasena"
+                                    placeholder="Repite la contraseña"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required
@@ -271,7 +271,7 @@ export default function Register() {
                                     type="button"
                                     className="auth-input-toggle"
                                     onClick={() => setShowConfirmPassword((v) => !v)}
-                                    aria-label={showConfirmPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                                    aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                                 >
                                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>

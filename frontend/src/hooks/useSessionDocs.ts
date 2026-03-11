@@ -55,7 +55,7 @@ export function useSessionDocs(): UseSessionDocsReturn {
 
     const uploadDoc = useCallback(async (file: File): Promise<SessionDoc | null> => {
         if (docs.length >= MAX_DOCS) {
-            setUploadError(`Maximo ${MAX_DOCS} documentos por sesion`)
+            setUploadError(`Máximo ${MAX_DOCS} documentos por sesión`)
             return null
         }
 

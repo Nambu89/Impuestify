@@ -17,7 +17,7 @@ export default function AITransparencyPage() {
                 <p className="last-updated">Ultima actualizacion: 3 de enero de 2026</p>
 
                 <div className="alert alert-info">
-                    <strong><AlertTriangle size={16} className="inline-icon" /> Declaracion Importante</strong>
+                    <strong><AlertTriangle size={16} className="inline-icon" /> Declaración Importante</strong>
                     <p>
                         Impuestify utiliza un sistema de inteligencia artificial para responder
                         a sus consultas. La IA puede cometer errores. NO sustituye el asesoramiento
@@ -51,7 +51,7 @@ export default function AITransparencyPage() {
                 </section>
 
                 <section>
-                    <h2>2. Clasificacion segun AI Act</h2>
+                    <h2>2. Clasificación según AI Act</h2>
                     <div className="badge-large">Sistema de IA de RIESGO LIMITADO (Art. 52)</div>
                     <p>
                         Impuestify es un asistente que interactua con usuarios, pero <strong>NO toma decisiones automatizadas</strong> que afecten derechos fundamentales.

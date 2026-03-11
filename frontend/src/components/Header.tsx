@@ -82,7 +82,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     <button
                         className="logout-btn"
                         onClick={handleLogout}
-                        title="Cerrar sesion"
+                        title="Cerrar sesión"
                     >
                         <LogOut size={18} />
                     </button>
