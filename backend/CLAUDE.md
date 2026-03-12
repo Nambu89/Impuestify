@@ -105,7 +105,7 @@ Tool registration: `app/tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS)
 | FileProcessingService | `file_processing_service.py` | PDF/Excel → structured data pipeline |
 | InvoiceExtractor | `invoice_extractor.py` | 30+ regex patterns for Spanish invoices |
 | WorkspaceEmbeddingService | `workspace_embedding_service.py` | OpenAI embeddings (3072 dim), Turso storage |
-| DeductionService | `deduction_service.py` | get_all_deductions(ccaa), evaluate_eligibility |
+| DeductionService | `deduction_service.py` | get_all_deductions(ccaa), evaluate_eligibility. **IMPORTANTE**: territory names en BD usan nombre corto ("Madrid"), NO normalizado ("Comunidad de Madrid"). `build_answers_from_profile()` deriva automáticamente `menor_35/36/40_anos` desde `edad_contribuyente`. |
 | ReportGenerator | `report_generator.py` | PDF ReportLab (IRPF report) |
 | EmailService | `email_service.py` | Resend wrapper for advisor emails |
 | RAGService | `rag_service.py` | Search + rerank orchestration |
@@ -356,3 +356,6 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | `h11 LocalProtocolError: Illegal header value` | CSP header en `main.py` NO debe tener trailing space/semicolon en el ultimo directive. Cambiar `"frame-ancestors 'none'; "` a `"frame-ancestors 'none'"` |
 | `UnicodeEncodeError: charmap codec` en Windows | Ejecutar con `PYTHONUTF8=1` env var. Los print() con emojis crashean en cp1252. |
 | Usuarios de test QA | Run `python scripts/seed_test_users.py`. Crea particular (Madrid) + autonomo (Cataluna) con suscripcion active. |
+| Deducciones CCAA 0 resultados | `normalize_ccaa_name()` convierte "Madrid"→"Comunidad de Madrid" pero BD deductions usa territory="Madrid". Usar nombre corto (sin normalizar) para deduction lookups, normalizado solo para escalas IRPF. Ver `ccaa_for_deductions` en `irpf_estimate.py`. |
+| `menor_XX_anos` nunca True en deducciones | `build_answers_from_profile()` no derivaba age keys. Asegurar que `edad_contribuyente` se pasa en el profile dict y que el bloque de derivación edad→`menor_35/36/40_anos` existe en `deduction_service.py`. |
+| DynamicFiscalForm valores no llegan al estimate | DynamicFiscalForm guarda en `dynamicFormValues` (state separado), no en `data` del wizard. Al construir el payload del estimate, añadir fallbacks: `data.campo || dynamicFormValues.campo_ccaa || 0`. |

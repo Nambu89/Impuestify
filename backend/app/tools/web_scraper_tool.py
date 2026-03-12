@@ -31,6 +31,7 @@ OFFICIAL_SOURCES = {
 CCAA_NORMALIZATION = {
     "madrid": "Comunidad de Madrid",
     "cataluña": "Cataluña",
+    "cataluna": "Cataluña",
     "catalunya": "Cataluña",
     "valencia": "Comunitat Valenciana",
     "comunidad valenciana": "Comunitat Valenciana",
