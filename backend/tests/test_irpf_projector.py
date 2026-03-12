@@ -54,8 +54,10 @@ MOCK_MPYF = {
 }
 
 MOCK_TRABAJO = {
-    "otros_gastos": 2000, "reduccion_max": 6498, "reduccion_rend_min": 14852,
-    "reduccion_rend_max": 19747.5, "cuotas_colegio_max": 500,
+    "otros_gastos": 2000, "reduccion_max": 7302, "reduccion_rend_min": 14852,
+    "reduccion_rend_mid": 17673.52, "reduccion_rend_max": 19747.5,
+    "reduccion_factor_1": 1.75, "reduccion_factor_2": 1.14,
+    "reduccion_mid_value": 2364.34, "cuotas_colegio_max": 500,
     "defensa_juridica_max": 300, "ss_empleado_pct": 6.35,
 }
 

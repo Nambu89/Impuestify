@@ -296,3 +296,168 @@
 **Problema:** No existia tool para actualizar perfil fiscal desde el chat.
 **Solucion:** Crear `update_fiscal_profile` tool. Integrado en TaxAgent + WorkspaceAgent.
 **Archivos:** `backend/app/tools/fiscal_profile_tool.py` (nuevo), `backend/app/tools/__init__.py`, `backend/app/agents/tax_agent.py`, `backend/app/agents/workspace_agent.py`, `backend/app/utils/streaming.py`
+
+---
+
+## [2026-03-12] Auditoria CCAA deducciones: 13 errores corregidos
+
+### Bug 15: Double-counting deducciones alquiler forales
+**Problema:** Las deducciones de alquiler en los 4 territorios forales (Araba, Bizkaia, Gipuzkoa, Navarra) se contaban DOS VECES en `compute_ccaa_deduction_amounts`.
+**Causa raiz:** `seed_deductions_forales_v2.py` tenia codigos `-VIVIENDA` (ARA-VIVIENDA, BIZ-VIVIENDA, etc.) que duplicaban los `-ALQUILER-VIV` de `seed_deductions_territorial.py`. Ambos matcheaban el patron `"VIVIENDA" in code.upper()` en el servicio.
+**Solucion:** Eliminar los 4 registros `-VIVIENDA` de `forales_v2.py`. Eliminar los 4 registros `-DISCAPACIDAD` duplicados tambien. Anadir logica de cleanup para borrar registros legacy de produccion. Tightened pattern matching: eliminar `"VIVIENDA" in code.upper()` de la deteccion de alquiler.
+**Archivos:** `backend/scripts/seed_deductions_forales_v2.py`, `backend/app/services/deduction_service.py`
+
+### Bug 16: VAL-ALQUILER-VIV max_amount incorrecto
+**Problema:** max_amount era 950 EUR (tier enhanced) en vez de 800 EUR (tier general).
+**Datos correctos AEAT 2024:** 20%/800 general, 25%/950 con 1 condicion, 30%/1100 con 2+ condiciones.
+**Archivos:** `backend/scripts/seed_deductions_territorial.py`
+
+### Bug 17: ARA-DESC-HIJOS fixed_amount incorrecto
+**Problema:** 734.80 EUR incluia el bonus rural (+10%) baked in. El importe base correcto es 668 EUR.
+**Fuente:** AEAT + Diputacion Foral de Araba (Art. 79 NF 33/2013).
+**Archivos:** `backend/scripts/seed_deductions_territorial.py`
+
+### Bug 18: ARA-DISCAPACIDAD fixed_amount incorrecto
+**Problema:** 888 EUR era el valor de Bizkaia, no de Araba. Araba tiene 932.40 EUR.
+**Fuente:** Art. 82 NF 33/2013 Araba (actualizado NF 3/2025).
+**Archivos:** `backend/scripts/seed_deductions_territorial.py`
+
+### Bug 19: ARG-ARRENDAMIENTO-VIV deduccion inexistente
+**Problema:** Aragon NO tiene deduccion general por alquiler de vivienda habitual. Solo existe una deduccion por dacion en pago (10%, max 4.800 EUR, Art. 110-8 DL 1/2005).
+**Solucion:** Renombrar a `ARG-DACION-ALQUILER`, corregir condiciones y limites.
+**Archivos:** `backend/scripts/seed_deductions_territorial_v2.py`
+
+### Bug 20: AST-ARRENDAMIENTO-VIV valores desactualizados
+**Problema:** 10%/455 + 15%/606 eran de un ano anterior. Correcto 2024: 10%/500 + 30%/1500.
+**Fuente:** AEAT manual IRPF 2024 - Asturias.
+**Archivos:** `backend/scripts/seed_deductions_territorial_v2.py`
+
+### Bug 21: CANA-ALQUILER-VIV porcentaje e importes incorrectos
+**Problema:** 20%/600 EUR era incorrecto. Correcto: 24%/740 EUR (760 para <40 o >=75). Limites renta incorrectos: 22.000/33.000 → 45.500/60.500.
+**Fuente:** Art. 15 DLeg 1/2009 Canarias (mod. Ley 4/2018).
+**Archivos:** `backend/scripts/seed_deductions_territorial_v2.py`
+
+### Bugs 22-25: Descripciones incompletas/incorrectas
+- **GAL-ALQUILER-VIV**: edad <=36 → <=35, faltaba tier 20%/600 para 2+ hijos menores, faltaba regla discapacidad duplica importes
+- **CANT-ARRENDAMIENTO-VIV**: edad <35 → <36 o >=65, sin limite de renta, dos deducciones incompatibles
+- **RIO-ARRENDAMIENTO-VIV**: ambos tiers requieren <36 (no es general), aclarar condicion municipio
+- **deduction_service.py**: anadir VIV-RURAL al patron de inversion vivienda
+
+**Tests:** 1008 passed, 0 failed
+**Anti-patron:** NUNCA copiar importes de un territorio foral a otro (Bizkaia != Araba). NUNCA crear deducciones sin verificar contra AEAT/BOCA/BOE oficial. NUNCA usar codigos ambiguos (ARA- puede ser Araba o Aragon).
+
+---
+
+## [2026-03-12] Auditoria AEAT 8 CCAA restantes — 18 errores corregidos
+
+**Origen:** Verificacion sistematica contra AEAT Manual IRPF 2024 de Madrid, Cataluna, Andalucia, CyL, CLM, Extremadura, Baleares, Murcia.
+
+### Bug 26: AND-AYUDA-DOMESTICA — porcentaje 15% → 20%
+- **Archivo:** `seed_deductions_territorial.py`
+- **Causa:** Porcentaje inventado. Oficial: 20% de cotizaciones SS empleada hogar
+- **Legal:** Arts. 19, 4 y DT 3a Ley 5/2021
+
+### Bug 27: EXT-TRABAJO-DEPENDIENTE — importe 200€ → 75€, limites incorrectos
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Importe 200€ no existe. Oficial: 75€, rend. trabajo <=12.000€, otros <=300€
+- **Legal:** Art. 2 DL 1/2018 (no Art. 7)
+
+### Bug 28: EXT-VIV-JOVEN — porcentaje 8% → 3%/5%, edad <35 → <36
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** 8% no existe. Oficial: 3% general, 5% rural (<3.000 hab). Max base 9.040€
+- **Legal:** Arts. 8, 12 bis y 13 DL 1/2018
+
+### Bug 29: EXT-ARRENDAMIENTO-VIV — CRITICO: 10%/300€ → 30%/1.000€
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Valores totalmente obsoletos. Reformado por ley reciente
+- **Cambios:** 10→30%, 300→1.000€ (1.500 rural), BI 19.000→28.000€
+- **Legal:** Arts. 9, 12 bis y 13 DL 1/2018
+
+### Bug 30: EXT-CUIDADO-DISCAPACIDAD — referencia legal incorrecta
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Art. 8 → Arts. 5, 12 bis y 13. Faltaba variante 220€ dependencia
+- **Legal:** Arts. 5, 12 bis y 13 DL 1/2018
+
+### Bug 31: CYL-FAM-NUM — importe 246€ → 600€
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** 246€ es valor totalmente desactualizado. Oficial: 600/1.500/2.500€
+- **Legal:** Arts. 3 y 10 DL 1/2013
+
+### Bug 32: CYL-NACIMIENTO — 2o hijo 1.262→1.475€, 3o 1.515→2.351€
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Importes desactualizados. Anadido bonus rural y discapacidad
+- **Legal:** Arts. 4.1-3 y 10 DL 1/2013
+
+### Bug 33: CYL-CUIDADO-HIJOS — 312€ fijo → 30%/322€ + 100%/1.320€
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** No es deduccion de importe fijo. Son 2 sub-deducciones (hogar + guarderia)
+- **Legal:** Arts. 5.1 y 10 DL 1/2013
+
+### Bug 34: CYL-VIV-JOVEN — 7,5% → 15%, faltaba max base 10.000€
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Porcentaje incorrecto. Es 15% para vivienda rural, max base 10.000€/anio
+- **Legal:** Arts. 7.1 y 10 DL 1/2013
+
+### Bug 35: CYL-ALQUILER-VIV — 15% → 20%, faltaba edad <36 y bonus rural
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Porcentaje desactualizado. 20% standard, 25%/612€ rural
+- **Legal:** Arts. 7.4, 7.5 y 10 DL 1/2013
+
+### Bug 36: CLM-DISCAPACIDAD — umbral >=33% → >=65%
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** 300€ solo aplica a >=65%, no >=33% como decia la descripcion
+- **Legal:** Arts. 1 y 13 Ley 8/2013
+
+### Bug 37: CLM-ARRENDAMIENTO-VIV — limites renta 27.000→12.500€
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Limites de renta MUY incorrectos (27.000→12.500 indiv, 36.000→25.000 conj)
+- **Legal:** Arts. 9 y 13 Ley 8/2013
+
+### Bug 38: CLM-GASTOS-EDUCATIVOS — estructura simplificada incorrectamente
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** No es simple 15%/300€. Es 100% libros + 15% otros, con tramos de renta
+- **Legal:** Arts. 3 y 13 Ley 8/2013
+
+### Bug 39: BAL-ARRENDAMIENTO-VIV — max 440→530€, limites renta incorrectos
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** 440€ es viejo. Oficial: 530€ (650€ tier mejorado 20%). BI 33.000/52.800€
+- **Legal:** Art. 3 bis DL 1/2014
+
+### Bug 40: MUR-VIV-JOVEN — 3%→5%, edad <35→<=40, max 300€
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Todos los valores incorrectos. 5%/300€/<=40 anios/BI 40.000€
+- **Legal:** Art. 1 DL 1/2010
+
+### Bug 41: MUR-GUARDERIA — 15%/330€ → 20%/1.000€
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Todos los valores incorrectos. BI 30.000/50.000€
+- **Legal:** Art. 1.Tres DL 1/2010
+
+### Bug 42: MUR-MEDIOAMBIENTE — CRITICO: 10%/300€ → 50%/7.000€
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Deduccion actualizada masivamente. 50%/37,5%/25% por tramos, max 7.000€
+- **Legal:** Art. 1.Seis DL 1/2010
+
+### Bug 43: MUR-ARRENDAMIENTO-VIV — BI 24.000→24.380€, edad <35→<=40
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Limite de renta ligeramente incorrecto, umbral de edad equivocado
+- **Legal:** Art. 1.Trece DL 1/2010
+
+### Bug 44: ARG-DACION-PAGO duplicado de ARG-DACION-ALQUILER
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Misma deduccion con 2 codigos distintos (Art. 110-8 y Art. 110-10). Eliminado duplicado.
+
+**Archivos modificados:** `seed_deductions_territorial.py`, `seed_deductions_territorial_v2.py`
+**Tests:** 67 passed, 0 failed (test_deductions + test_irpf_simulator)
+### Bug 45: BAL-IDIOMAS — max 100→110€, limites renta incorrectos
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Max 100€ → 110€ por hijo. BI 25.000→33.000 / 45.000→52.800€. Descripcion: es extraescolar de idiomas para hijos, no certificacion B2 adultos.
+
+### Bug 46: MUR-DONATIVOS — porcentaje 30% → 50%
+- **Archivo:** `seed_deductions_territorial_v2.py`
+- **Causa:** Actualizado por Ley 4/2022 de Mecenazgo de Murcia. 50% donaciones puras dinerarias (no 30%).
+- **Legal:** Art. 1.Siete DL 1/2010 (mod. Ley 4/2022)
+
+**Total bugs auditoria CCAA:** 21 corregidos (Bugs 26-46)
+**Tests:** 67 passed, 0 failed
+**Anti-patron:** NUNCA inventar valores de deducciones sin verificar contra la web oficial de AEAT (sede.agenciatributaria.gob.es). Las CCAA actualizan sus deducciones frecuentemente — verificar siempre contra datos del ejercicio fiscal mas reciente.

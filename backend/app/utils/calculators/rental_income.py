@@ -61,17 +61,20 @@ class RentalIncomeCalculator:
             pct = params.get("amortizacion_pct", 3)
             amortizacion = valor_adquisicion * (pct / 100)
 
-        total_gastos = (
-            gastos_financiacion
-            + gastos_reparacion
-            + gastos_comunidad
+        # Art. 23.1.a LIRPF: ONLY financing + repair costs are capped at income.
+        # Other expenses (IBI, community fees, insurance, amortization) have no cap.
+        gastos_limitados = min(
+            gastos_financiacion + gastos_reparacion,
+            ingresos_alquiler,
+        )
+        gastos_no_limitados = (
+            gastos_comunidad
             + gastos_seguros
             + gastos_suministros
             + ibi
             + amortizacion
         )
-        # Deductible expenses cannot exceed income (art. 23.1)
-        total_gastos = min(total_gastos, ingresos_alquiler)
+        total_gastos = gastos_limitados + gastos_no_limitados
         rendimiento_neto = ingresos_alquiler - total_gastos
 
         # Housing rental reduction (art. 23.2 LIRPF)

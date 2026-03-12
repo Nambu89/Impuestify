@@ -564,11 +564,14 @@ async def get_fiscal_profile(
             datos = {}
 
     # Separate values from metadata
+    # Skip keys that are already top-level columns to avoid frontend merge conflicts
     fields = {}
     field_meta = {}
     for key, entry in datos.items():
         if key.startswith("_"):
             continue
+        if key in _PROFILE_COLUMNS:
+            continue  # Already returned as top-level; don't duplicate in fields
         if isinstance(entry, dict) and "value" in entry:
             fields[key] = entry["value"]
             field_meta[key] = {

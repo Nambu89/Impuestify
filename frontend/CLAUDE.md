@@ -91,6 +91,22 @@ try {
 }
 ```
 
+## Loading State (OBLIGATORIO)
+
+En hooks async con estado `loading`, **TODA rama de ejecución** debe llamar `setLoading(false)` — incluyendo early returns y guards. Nunca dejar `loading = true` sin salida. Si hay un guard al inicio (`if (!isAuthenticated) return`), hacer `setLoading(false)` antes del return. Un `loading` que nunca se resetea = spinner infinito en la UI.
+
+## Ortografía Española (OBLIGATORIO)
+
+Todo texto visible al usuario DEBE llevar tildes correctas. Tras escribir/modificar strings en español, auditar con grep TODOS los archivos tocados. Palabras que SIEMPRE llevan tilde:
+
+`sesión, régimen, contraseña, período, próximo, máximo, mínimo, válido, días, año, también, además, aquí, según, dirección, descripción, declaración, estimación, deducción, sección, obligación, información, única, más, aún, acción, límite, archipiélago, Unión, cálculo, método, número, teléfono, código, básico, único, técnico, económico, último, página, configuración, clasificación, resolución, conservación, penúltimo`
+
+**NO confundir** variables JS (`data.regimen`, `contrasena` como key) con texto visible (`"Régimen"`, `"Contraseña"`). Solo corregir strings entre comillas que el usuario ve en pantalla.
+
+## DynamicFiscalForm: Modo Compact (OBLIGATORIO)
+
+Cuando `DynamicFiscalForm` se usa con `compact=true` (en TaxGuidePage y SettingsPage), las **secciones base** se filtran automáticamente para evitar campos duplicados. Las secciones filtradas son: `datos_personales`, `rendimientos_trabajo`, `rendimientos_ahorro`, `inmuebles`, `familia`, `discapacidad`, `reducciones`, `criptomonedas`, `apuestas_juegos`, `ganancias_patrimoniales_financieras`, `actividad_economica`. Solo se muestran secciones CCAA-específicas (vivienda Sprint 1, donaciones, sostenibilidad, territorio, deducciones_autonomicas, forales). Si se añade una nueva sección base al backend, **añadirla también a `BASE_SECTION_IDS`** en `DynamicFiscalForm.tsx`.
+
 ## Markdown Rendering Rules
 
 - **ALWAYS** use `remarkPlugins={[remarkGfm]}` on every `<ReactMarkdown>` component (tables, strikethrough, task lists need it)

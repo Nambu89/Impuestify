@@ -435,7 +435,7 @@ class DeductionService:
             # --- Percentage-based deductions (need user data to compute) ---
             elif pct > 0:
                 # Rent deductions (alquiler vivienda habitual)
-                if "ALQUILER" in code or "ARRENDAMIENTO" in code or "VIVIENDA" in code.upper():
+                if "ALQUILER" in code or "ARRENDAMIENTO" in code:
                     if alquiler > 0:
                         base = alquiler
                         if max_amt > 0:
@@ -445,7 +445,7 @@ class DeductionService:
                             amount = alquiler * pct / 100
 
                 # Housing investment / purchase
-                elif "VIV-JOVEN" in code or "VIV-HABITUAL" in code or "ADQUISICION-VIV" in code or "COMPRA-VIV" in code:
+                elif "VIV-JOVEN" in code or "VIV-HABITUAL" in code or "ADQUISICION-VIV" in code or "COMPRA-VIV" in code or "VIV-RURAL" in code:
                     if inversion_viv > 0:
                         base = min(inversion_viv, max_amt) if max_amt > 0 else inversion_viv
                         amount = base * pct / 100

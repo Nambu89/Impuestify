@@ -39,7 +39,7 @@ UPDATE_FISCAL_PROFILE_TOOL = {
                 },
                 "situacion_laboral": {
                     "type": "string",
-                    "enum": ["empleado", "autonomo", "desempleado", "pensionista", "estudiante"],
+                    "enum": ["asalariado", "autonomo", "desempleado", "pensionista"],
                     "description": "Situacion laboral del contribuyente"
                 },
                 "estado_civil": {
@@ -127,13 +127,13 @@ async def update_fiscal_profile_tool(user_id: str, db_client: Any, **kwargs) -> 
 
             if key in top_level_fields:
                 top_level_updates[key] = value
-
-            # All fields also go into datos_fiscales JSON
-            datos_fiscales[key] = {
-                "value": value,
-                "_source": "agent",
-                "_updated": now,
-            }
+            else:
+                # Only non-column fields go into datos_fiscales JSON
+                datos_fiscales[key] = {
+                    "value": value,
+                    "_source": "agent",
+                    "_updated": now,
+                }
             updated_keys.append(key)
 
         if not updated_keys:

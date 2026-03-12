@@ -351,6 +351,8 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | Rate limit 429 on login/register during dev | Increase `RATE_LIMIT_PER_MINUTE` or clear Redis. Login/register are now hard-limited at 5/min, forgot-password at 3/min. |
 | slowapi crash: `parameter 'request' must be an instance of starlette.requests.Request` | El primer parametro del endpoint DEBE llamarse `request: Request`. Si hay body Pydantic, nombrarlo `body` o `data`, NUNCA `request`. Ejemplo: `async def my_endpoint(request: Request, body: MyModel)` |
 | CORS errors | Check `ALLOWED_ORIGINS` includes frontend URL |
+| Checkout spinner infinito (backend) | `create_stripe_customer()` retornaba NULL si row existía con `stripe_customer_id = NULL` (beta/grace users). NUNCA retornar None en servicios que el frontend espera un valor — siempre raise ValueError. |
+| Subscribe page spinner infinito (frontend) | `useSubscription.fetchStatus()` retornaba sin `setLoading(false)` cuando `!isAuthenticated`. En hooks async con loading state, TODA rama debe resetear loading. |
 | `h11 LocalProtocolError: Illegal header value` | CSP header en `main.py` NO debe tener trailing space/semicolon en el ultimo directive. Cambiar `"frame-ancestors 'none'; "` a `"frame-ancestors 'none'"` |
 | `UnicodeEncodeError: charmap codec` en Windows | Ejecutar con `PYTHONUTF8=1` env var. Los print() con emojis crashean en cp1252. |
 | Usuarios de test QA | Run `python scripts/seed_test_users.py`. Crea particular (Madrid) + autonomo (Cataluna) con suscripcion active. |

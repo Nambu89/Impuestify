@@ -178,9 +178,13 @@ MPYF_CCAA_OVERRIDES = {
 
 TRABAJO_PARAMS = {
     "otros_gastos": (2000, "LIRPF art.19.2.f"),
-    "reduccion_max": (6498, "LIRPF art.20.1"),
+    "reduccion_max": (7302, "LIRPF art.20.1 — desde 2024 (Ley 31/2022)"),
     "reduccion_rend_min": (14852, "LIRPF art.20.1 — umbral inferior"),
+    "reduccion_rend_mid": (17673.52, "LIRPF art.20.1 — punto de inflexión"),
     "reduccion_rend_max": (19747.5, "LIRPF art.20.1 — umbral superior"),
+    "reduccion_factor_1": (1.75, "LIRPF art.20.1 — factor tramo 1 (rend_min..rend_mid)"),
+    "reduccion_factor_2": (1.14, "LIRPF art.20.1 — factor tramo 2 (rend_mid..rend_max)"),
+    "reduccion_mid_value": (2364.34, "LIRPF art.20.1 — reducción en punto de inflexión"),
     "cuotas_colegio_max": (500, "LIRPF art.19.2.d"),
     "defensa_juridica_max": (300, "LIRPF art.19.2.e"),
     "ss_empleado_pct": (6.35, "LGSS — contingencias comunes 4.70 + desempleo 1.55 + FP 0.10"),

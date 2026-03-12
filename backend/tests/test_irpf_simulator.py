@@ -98,9 +98,13 @@ MOCK_MPYF_VALENCIA = {
 
 MOCK_TRABAJO_PARAMS = {
     "otros_gastos": 2000,
-    "reduccion_max": 6498,
+    "reduccion_max": 7302,
     "reduccion_rend_min": 14852,
+    "reduccion_rend_mid": 17673.52,
     "reduccion_rend_max": 19747.5,
+    "reduccion_factor_1": 1.75,
+    "reduccion_factor_2": 1.14,
+    "reduccion_mid_value": 2364.34,
     "cuotas_colegio_max": 500,
     "defensa_juridica_max": 300,
     "ss_empleado_pct": 6.35,
@@ -223,7 +227,7 @@ async def test_repo_cache():
     params = await repo.get_params("trabajo", 2024, "Estatal")
 
     assert params["otros_gastos"] == 2000
-    assert params["reduccion_max"] == 6498
+    assert params["reduccion_max"] == 7302
 
 
 @pytest.mark.asyncio
@@ -296,10 +300,10 @@ async def test_work_income_low_salary_full_reduction():
     # SS: 15000 * 6.35% = 952.5
     # Otros: 2000
     # Rendimiento neto: 15000 - 2952.5 = 12047.5
-    # 12047.5 < 14852 → full reduction of 6498
+    # 12047.5 < 14852 → full reduction of 7302 (art. 20 LIRPF 2024+)
     assert result["rendimiento_neto"] == pytest.approx(12047.5, abs=1)
-    assert result["reduccion_trabajo"] == pytest.approx(6498, abs=1)
-    expected_reduced = max(0, 12047.5 - 6498)
+    assert result["reduccion_trabajo"] == pytest.approx(7302, abs=1)
+    expected_reduced = max(0, 12047.5 - 7302)
     assert result["rendimiento_neto_reducido"] == pytest.approx(expected_reduced, abs=1)
 
 
@@ -544,10 +548,13 @@ async def test_rental_expenses_capped():
         year=2024,
     )
 
-    # Total expenses = 3000 + 6000 = 9000, but capped at 5000 (income)
-    assert result["total_gastos"] == 5000
-    assert result["rendimiento_neto"] == 0
-    assert result["reduccion_vivienda"] == 0
+    # Art. 23.1.a LIRPF: only financing+repair costs are capped at income.
+    # gastos_comunidad (3000) + amortizacion (6000) = 9000 — these are NOT capped.
+    # No financing/repair costs in this test, so total = 9000.
+    assert result["total_gastos"] == 9000
+    # Net = 5000 - 9000 = -4000 (negative net is allowed per Art. 23.1)
+    assert result["rendimiento_neto"] == -4000
+    assert result["reduccion_vivienda"] == 0  # No reduction when net <= 0
 
 
 # ─────────────────────────────────────────────────────────────

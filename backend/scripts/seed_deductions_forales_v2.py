@@ -1,11 +1,14 @@
 """
-Seed foral IRPF deductions v2 — 27 deductions for 4 foral territories.
+Seed foral IRPF deductions v2 — 19 deductions for 4 foral territories.
+
+NOTE: Vivienda and Discapacidad deductions are in seed_deductions_territorial.py
+      (ARA/BIZ/GIP/NAV-ALQUILER-VIV and -DISCAPACIDAD). Not duplicated here.
 
 Territories covered:
-- Araba     (8 deductions, codes ARA-*)
-- Bizkaia   (6 deductions, codes BIZ-*)
-- Gipuzkoa  (6 deductions, codes GIP-*)
-- Navarra   (7 deductions, codes NAV-*)
+- Araba     (6 deductions, codes ARA-*)
+- Bizkaia   (4 deductions, codes BIZ-*)
+- Gipuzkoa  (4 deductions, codes GIP-*)
+- Navarra   (5 deductions, codes NAV-*)
 
 Idempotent: uses INSERT OR IGNORE on the UNIQUE code column.
 
@@ -33,25 +36,8 @@ from app.database.turso_client import TursoClient  # noqa: E402
 # Araba (Norma Foral 33/2013, actualizada 2025)
 # ---------------------------------------------------------------------------
 ARABA_FORALES_V2 = [
-    {
-        "code": "ARA-VIVIENDA",
-        "name": "Deducción por alquiler de vivienda habitual",
-        "type": "deduccion",
-        "category": "vivienda",
-        "territory": "Araba",
-        "percentage": 20.0,
-        "max_amount": 1600.0,
-        "legal_reference": "Art. 86 NF 33/2013 Araba",
-        "description": (
-            "20% del alquiler pagado, máximo 1.600 EUR/año. "
-            "Solo si la base imponible es inferior a 30.000 EUR."
-        ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año (EUR)?", "type": "number"},
-        ]),
-    },
+    # ARA-VIVIENDA removed — duplicate of ARA-ALQUILER-VIV in seed_deductions_territorial.py
+    # ARA-DISCAPACIDAD removed — duplicate of ARA-DISCAPACIDAD in seed_deductions_territorial.py
     {
         "code": "ARA-NACIMIENTO",
         "name": "Deducción por nacimiento o adopción",
@@ -84,24 +70,6 @@ ARABA_FORALES_V2 = [
         "questions_json": json.dumps([
             {"key": "hijos_menores_3", "text": "¿Tienes hijos menores de 3 años en guardería?", "type": "bool"},
             {"key": "gastos_guarderia", "text": "¿Cuánto has pagado en guardería este año (EUR)?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "ARA-DISCAPACIDAD",
-        "name": "Deducción por discapacidad propia o familiar",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "territory": "Araba",
-        "fixed_amount": 800.0,
-        "legal_reference": "Art. 82 NF 33/2013 Araba",
-        "description": (
-            "800 EUR para discapacidad entre 33% y 65%; "
-            "1.500 EUR para discapacidad igual o superior al 65%."
-        ),
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes o tienes a cargo a alguien con discapacidad reconocida?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿El grado es del 33-65% o >= 65%?", "type": "text"},
         ]),
     },
     {
@@ -182,22 +150,8 @@ ARABA_FORALES_V2 = [
 # Bizkaia (Norma Foral 13/2013, actualizada 2025)
 # ---------------------------------------------------------------------------
 BIZKAIA_FORALES_V2 = [
-    {
-        "code": "BIZ-VIVIENDA",
-        "name": "Deducción por alquiler de vivienda habitual",
-        "type": "deduccion",
-        "category": "vivienda",
-        "territory": "Bizkaia",
-        "percentage": 20.0,
-        "max_amount": 1600.0,
-        "legal_reference": "Art. 87 NF 13/2013 Bizkaia",
-        "description": "20% del alquiler pagado, máximo 1.600 EUR/año.",
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año (EUR)?", "type": "number"},
-        ]),
-    },
+    # BIZ-VIVIENDA removed — duplicate of BIZ-ALQUILER-VIV in seed_deductions_territorial.py
+    # BIZ-DISCAPACIDAD removed — duplicate of BIZ-DISCAPACIDAD in seed_deductions_territorial.py
     {
         "code": "BIZ-NACIMIENTO",
         "name": "Deducción por nacimiento o adopción",
@@ -230,21 +184,6 @@ BIZKAIA_FORALES_V2 = [
         "questions_json": json.dumps([
             {"key": "hijos_menores_3", "text": "¿Tienes hijos menores de 3 años en guardería?", "type": "bool"},
             {"key": "gastos_guarderia", "text": "¿Cuánto has pagado en guardería este año (EUR)?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "BIZ-DISCAPACIDAD",
-        "name": "Deducción por discapacidad propia o familiar",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "territory": "Bizkaia",
-        "fixed_amount": 800.0,
-        "legal_reference": "Art. 83 NF 13/2013 Bizkaia",
-        "description": "800 EUR (33-65%); 1.500 EUR (>= 65%).",
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes o tienes a cargo a alguien con discapacidad reconocida?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿El grado es del 33-65% o >= 65%?", "type": "text"},
         ]),
     },
     {
@@ -283,22 +222,8 @@ BIZKAIA_FORALES_V2 = [
 # Gipuzkoa (Norma Foral 3/2014, actualizada 2025)
 # ---------------------------------------------------------------------------
 GIPUZKOA_FORALES_V2 = [
-    {
-        "code": "GIP-VIVIENDA",
-        "name": "Deducción por alquiler de vivienda habitual",
-        "type": "deduccion",
-        "category": "vivienda",
-        "territory": "Gipuzkoa",
-        "percentage": 20.0,
-        "max_amount": 1600.0,
-        "legal_reference": "Art. 89 NF 3/2014 Gipuzkoa",
-        "description": "20% del alquiler pagado, máximo 1.600 EUR/año.",
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año (EUR)?", "type": "number"},
-        ]),
-    },
+    # GIP-VIVIENDA removed — duplicate of GIP-ALQUILER-VIV in seed_deductions_territorial.py
+    # GIP-DISCAPACIDAD removed — duplicate of GIP-DISCAPACIDAD in seed_deductions_territorial.py
     {
         "code": "GIP-NACIMIENTO",
         "name": "Deducción por nacimiento o adopción",
@@ -331,21 +256,6 @@ GIPUZKOA_FORALES_V2 = [
         "questions_json": json.dumps([
             {"key": "hijos_menores_3", "text": "¿Tienes hijos menores de 3 años en guardería?", "type": "bool"},
             {"key": "gastos_guarderia", "text": "¿Cuánto has pagado en guardería (EUR)?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "GIP-DISCAPACIDAD",
-        "name": "Deducción por discapacidad propia o familiar",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "territory": "Gipuzkoa",
-        "fixed_amount": 800.0,
-        "legal_reference": "Art. 85 NF 3/2014 Gipuzkoa",
-        "description": "800 EUR (33-65%); 1.500 EUR (>= 65%).",
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes discapacidad reconocida o tienes a cargo a alguien con discapacidad?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿El grado es del 33-65% o >= 65%?", "type": "text"},
         ]),
     },
     {
@@ -384,28 +294,8 @@ GIPUZKOA_FORALES_V2 = [
 # Navarra (Ley Foral 22/1998, DFL 2025)
 # ---------------------------------------------------------------------------
 NAVARRA_FORALES_V2 = [
-    {
-        "code": "NAV-VIVIENDA",
-        "name": "Deducción por alquiler de vivienda habitual",
-        "type": "deduccion",
-        "category": "vivienda",
-        "territory": "Navarra",
-        "percentage": 15.0,
-        "max_amount": 1200.0,
-        "legal_reference": "Art. 62 LF 22/1998 Navarra",
-        "description": (
-            "15% del alquiler pagado, máximo 1.200 EUR/año. "
-            "Solo aplicable si la base imponible es inferior a 30.000 EUR."
-        ),
-        "requirements_json": json.dumps({
-            "alquiler_vivienda_habitual": True,
-            "base_imponible_max": 30000,
-        }),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "¿Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "¿Cuánto pagas de alquiler al año (EUR)?", "type": "number"},
-        ]),
-    },
+    # NAV-VIVIENDA removed — duplicate of NAV-ALQUILER-VIV in seed_deductions_territorial.py
+    # NAV-DISCAPACIDAD removed — duplicate of NAV-DISCAPACIDAD in seed_deductions_territorial.py
     {
         "code": "NAV-NACIMIENTO",
         "name": "Deducción por nacimiento o adopción",
@@ -438,21 +328,6 @@ NAVARRA_FORALES_V2 = [
         "questions_json": json.dumps([
             {"key": "hijos_menores_3", "text": "¿Tienes hijos menores de 3 años en guardería?", "type": "bool"},
             {"key": "gastos_guarderia", "text": "¿Cuánto has pagado en guardería (EUR)?", "type": "number"},
-        ]),
-    },
-    {
-        "code": "NAV-DISCAPACIDAD",
-        "name": "Deducción por discapacidad propia o familiar",
-        "type": "deduccion",
-        "category": "discapacidad",
-        "territory": "Navarra",
-        "fixed_amount": 900.0,
-        "legal_reference": "Art. 61 LF 22/1998 Navarra",
-        "description": "900 EUR (33-65%); 1.500 EUR (>= 65%).",
-        "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "¿Tienes o tienes a cargo a alguien con discapacidad reconocida?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "¿El grado es del 33-65% o >= 65%?", "type": "text"},
         ]),
     },
     {
@@ -521,6 +396,14 @@ ALL_FORAL_V2 = (
 TAX_YEAR = 2025
 
 
+DEPRECATED_DUPLICATE_CODES = [
+    "ARA-VIVIENDA",   # duplicate of ARA-ALQUILER-VIV
+    "BIZ-VIVIENDA",   # duplicate of BIZ-ALQUILER-VIV
+    "GIP-VIVIENDA",   # duplicate of GIP-ALQUILER-VIV
+    "NAV-VIVIENDA",   # duplicate of NAV-ALQUILER-VIV
+]
+
+
 async def seed_deductions_forales_v2() -> None:
     """Insert foral deductions v2 (INSERT OR IGNORE for idempotency)."""
     print("=" * 60)
@@ -529,6 +412,13 @@ async def seed_deductions_forales_v2() -> None:
 
     db = TursoClient()
     await db.connect()
+
+    # Clean up deprecated duplicate codes from previous runs
+    for code in DEPRECATED_DUPLICATE_CODES:
+        check = await db.execute("SELECT id FROM deductions WHERE code = ?", [code])
+        if check.rows:
+            await db.execute("DELETE FROM deductions WHERE code = ?", [code])
+            print(f"  [CLEANUP] Removed deprecated duplicate: {code}")
 
     inserted = 0
     skipped = 0

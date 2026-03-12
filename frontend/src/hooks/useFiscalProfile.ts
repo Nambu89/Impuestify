@@ -176,10 +176,11 @@ export function useFiscalProfile() {
 
             const merged: FiscalProfile = {
                 ...EMPTY_PROFILE,
+                ...data.fields,
+                // Top-level DB columns ALWAYS override datos_fiscales duplicates
                 ccaa_residencia: data.ccaa_residencia,
                 situacion_laboral: data.situacion_laboral,
                 fecha_nacimiento: data.fecha_nacimiento,
-                ...data.fields,
             }
 
             setProfile(merged)

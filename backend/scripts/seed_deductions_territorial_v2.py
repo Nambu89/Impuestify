@@ -79,14 +79,17 @@ GALICIA_2025 = [
         "max_amount": 300.0,
         "legal_reference": "Art. 7 Ley 15/2010 Galicia",
         "description": (
-            "10% de las cantidades satisfechas en el periodo, con máximo 300 EUR anuales. "
-            "Destinado a contribuyentes menores de 36 años. "
-            "Base imponible menor o igual a 22.000 EUR individual / 31.000 EUR conjunta."
+            "10% de las cantidades satisfechas en el periodo, con maximo 300 EUR anuales. "
+            "Solo para contribuyentes de 35 anios o menos. "
+            "Incremento al 20% con maximo 600 EUR si ademas tiene 2 o mas hijos menores. "
+            "Con discapacidad mayor o igual al 33%: importes se duplican (600/1.200 EUR). "
+            "Contrato posterior al 01/01/2003. Fianza depositada en IGVS. "
+            "BI total - minimos menor o igual a 22.000 EUR individual / 31.000 EUR conjunta."
         ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True, "menor_36_anos": True}),
+        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
             {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+            {"key": "menor_35_anos", "text": "Tienes 35 años o menos?", "type": "bool"},
             {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
         ]),
     },
@@ -234,12 +237,13 @@ ASTURIAS_2025 = [
         "type": "deduccion",
         "category": "vivienda",
         "percentage": 10.0,
-        "max_amount": 455.0,
-        "legal_reference": "Art. 8 Ley 4/2009 Asturias",
+        "max_amount": 500.0,
+        "legal_reference": "Art. 8 Ley 4/2009 Asturias (actualizado 2024)",
         "description": (
             "10% de las cantidades satisfechas por arrendamiento de vivienda habitual, "
-            "máximo 455 EUR. Incremento al 15% y 606 EUR para menores de 35, discapacitados mayor o igual al 65% "
-            "o familias numerosas con BI menor o igual a 25.009 EUR."
+            "maximo 500 EUR. Incremento al 30% y 1.500 EUR para menores de 35, familias numerosas, "
+            "monoparentales, victimas VG o residentes en concejos en riesgo de despoblacion. "
+            "BI general + ahorro menor o igual a 35.000 EUR individual / 45.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
@@ -321,9 +325,10 @@ CANTABRIA_2025 = [
         "legal_reference": "Art. 5 Ley 6/2009 Cantabria",
         "description": (
             "10% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "con un máximo de 300 EUR anuales. Para menores de 35, discapacitados o familias "
-            "numerosas el porcentaje sube al 20% con máximo 600 EUR. "
-            "BI menor o igual a 22.946 EUR individual / 31.485 EUR conjunta."
+            "con un maximo de 300 EUR anuales (600 EUR en tributacion conjunta). "
+            "Para menores de 36, mayores de 65 o discapacidad mayor o igual al 65%. "
+            "Sin limite de renta. El alquiler debe superar el 10% de los ingresos. "
+            "Incompatible con la deduccion por zonas de reto demografico (20%, max 600/1.200 EUR)."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
@@ -512,9 +517,10 @@ LA_RIOJA_2025 = [
         "max_amount": 300.0,
         "legal_reference": "Art. 32.5 Ley 10/2017 La Rioja",
         "description": (
-            "10% del alquiler pagado por la vivienda habitual, máximo 300 EUR. "
-            "Menores de 36 anios: 20% max 400 EUR. "
-            "BI menor o igual a 18.030 EUR individual / 30.050 EUR conjunta."
+            "SOLO para menores de 36 anios. 10% del alquiler pagado, maximo 300 EUR. "
+            "Si ademas se reside en pequenio municipio de La Rioja: 20%, max 400 EUR. "
+            "BL general menor o igual a 18.030 EUR individual / 30.050 EUR conjunta. "
+            "BL del ahorro menor o igual a 1.800 EUR. Contrato con ITP presentado."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
@@ -583,23 +589,23 @@ ARAGON_2025 = [
         ]),
     },
     {
-        "code": "ARG-ARRENDAMIENTO-VIV",
-        "name": "Deduccion por arrendamiento de vivienda habitual jovenes",
+        "code": "ARG-DACION-ALQUILER",
+        "name": "Deduccion por arrendamiento de vivienda tras dacion en pago en Aragon",
         "type": "deduccion",
         "category": "vivienda",
         "percentage": 10.0,
-        "max_amount": 300.0,
+        "max_amount": 4800.0,
         "legal_reference": "Art. 110-8 DL 1/2005 Aragon",
         "description": (
-            "10% del alquiler pagado, con un máximo de 300 EUR. Exclusivo para menores de "
-            "36 años o personas con discapacidad mayor o igual al 65%. "
-            "BI menor o igual a 35.000 EUR individual / 50.000 EUR conjunta."
+            "10% del alquiler pagado, maximo 4.800 EUR/anio. SOLO para contribuyentes que "
+            "entregaron su vivienda habitual mediante dacion en pago y alquilan la misma. "
+            "BI general + ahorro menor o igual a 15.000 EUR individual / 25.000 EUR conjunta. "
+            "NO es una deduccion general por alquiler — Aragon no tiene deduccion general por arrendamiento."
         ),
-        "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
+        "requirements_json": json.dumps({"dacion_pago_alquiler": True}),
         "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
+            {"key": "dacion_pago_alquiler", "text": "Entregaste tu vivienda por dacion en pago y ahora la alquilas?", "type": "bool"},
             {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
         ]),
     },
     {
@@ -661,27 +667,6 @@ ARAGON_2025 = [
         ]),
     },
     {
-        "code": "ARG-DACION-PAGO",
-        "name": "Deduccion por alquiler de vivienda tras dacion en pago en Aragon",
-        "type": "deduccion",
-        "category": "vivienda",
-        "percentage": 10.0,
-        "max_amount": 4800.0,
-        "legal_reference": "Art. 110-10 DL 1/2005 Aragon",
-        "description": (
-            "10% del alquiler pagado (máximo 4.800 EUR anuales, es decir hasta 480 EUR de deduccion) "
-            "cuando el contribuyente entrego su vivienda al banco mediante dacion en pago y luego "
-            "firmo un contrato de arrendamiento con opcion de compra sobre la misma vivienda. "
-            "BI menor o igual a 15.000 EUR individual / 25.000 EUR conjunta. "
-            "Fianza depositada ante la DGA."
-        ),
-        "requirements_json": json.dumps({"dacion_pago_alquiler": True}),
-        "questions_json": json.dumps([
-            {"key": "dacion_pago_alquiler", "text": "Entregaste tu vivienda al banco (dacion en pago) y ahora la alquilas con opcion de compra?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-        ]),
-    },
-    {
         "code": "ARG-ARRENDADOR-SOCIAL",
         "name": "Deduccion para arrendadores de vivienda social en Aragon",
         "type": "deduccion",
@@ -712,12 +697,12 @@ CASTILLA_Y_LEON_2025 = [
         "name": "Deduccion por familia numerosa en Castilla y Leon",
         "type": "deduccion",
         "category": "familia",
-        "fixed_amount": 246.0,
-        "legal_reference": "Art. 10 Ley 7/2022 CyL (Decreto Leg. 1/2013)",
+        "fixed_amount": 600.0,
+        "legal_reference": "Arts. 3 y 10 Decreto Leg. 1/2013 CyL",
         "description": (
-            "246 EUR para familias numerosas generales; 492 EUR para especiales. "
-            "La deduccion se incrementa en 246 EUR por cada hijo a partir del quinto. "
-            "Sin limite de renta declarado."
+            "600 EUR para familias numerosas generales (3 hijos); 1.500 EUR (4 hijos); "
+            "2.500 EUR (5 hijos); +1.000 EUR por cada hijo a partir del 6o. "
+            "+600 EUR si conyuge o hijo con discapacidad >=65%. Sin limite de renta."
         ),
         "requirements_json": json.dumps({"familia_numerosa": True}),
         "questions_json": json.dumps([
@@ -732,11 +717,11 @@ CASTILLA_Y_LEON_2025 = [
         "type": "deduccion",
         "category": "familia",
         "fixed_amount": 1010.0,
-        "legal_reference": "Art. 6 Ley 7/2022 CyL",
+        "legal_reference": "Arts. 4.1-3 y 10 Decreto Leg. 1/2013 CyL",
         "description": (
-            "1.010 EUR por el primer hijo; 1.262 EUR por el segundo; 1.515 EUR por el tercero y "
-            "siguientes. Aplicable en el periodo del nacimiento o adopcion. "
-            "BI menor o igual a 71.007 EUR individual / 80.000 EUR conjunta."
+            "1.010 EUR por el primer hijo; 1.475 EUR por el segundo; 2.351 EUR por el tercero y "
+            "siguientes. En municipios <=5.000 hab: 1.420/2.070/3.300 EUR. "
+            "Importes duplicados si hijo con discapacidad >=33%."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
         "questions_json": json.dumps([
@@ -749,12 +734,13 @@ CASTILLA_Y_LEON_2025 = [
         "name": "Deduccion por cuidado de hijos menores en Castilla y Leon",
         "type": "deduccion",
         "category": "familia",
-        "fixed_amount": 312.0,
-        "legal_reference": "Art. 7 Ley 7/2022 CyL",
+        "percentage": 30.0,
+        "max_amount": 322.0,
+        "legal_reference": "Arts. 5.1 y 10 Decreto Leg. 1/2013 CyL",
         "description": (
-            "312 EUR por cada hijo menor de 4 años cuando ambos progenitores trabajen "
-            "y no haya forma de atencion gratuita. Aplicable tambien para hijos de 4 a 16 "
-            "años durante el periodo de vacaciones escolares."
+            "30% de cotizaciones SS empleada hogar, max 322 EUR; o 100% guarderia/escuela infantil, "
+            "max 1.320 EUR por hijo menor de 4 anios. Ambos progenitores deben trabajar. "
+            "BI menor o igual a 18.900 EUR individual / 31.500 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hijo_menor_4": True, "ambos_progenitores_trabajan": True}),
         "questions_json": json.dumps([
@@ -768,13 +754,14 @@ CASTILLA_Y_LEON_2025 = [
         "name": "Deduccion por inversion en vivienda habitual para jovenes en CyL",
         "type": "deduccion",
         "category": "vivienda",
-        "percentage": 7.5,
-        "max_amount": None,
-        "legal_reference": "Art. 9 Decreto Leg. 1/2013 CyL",
+        "percentage": 15.0,
+        "max_amount": 10000.0,
+        "legal_reference": "Arts. 7.1 y 10 Decreto Leg. 1/2013 CyL",
         "description": (
-            "7,5% de las cantidades satisfechas por adquisicion de vivienda habitual "
-            "para contribuyentes menores de 36 años o residentes en municipios de riesgo "
-            "de despoblacion. BI menor o igual a 18.900 EUR."
+            "15% de las cantidades satisfechas por adquisicion o rehabilitacion de vivienda "
+            "habitual en municipios rurales (<=10.000 hab) para menores de 36 anios. "
+            "Base maxima 10.000 EUR/anio. Valor vivienda <150.000 EUR. "
+            "BI menor o igual a 18.900 EUR individual / 31.500 EUR conjunta."
         ),
         "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
         "questions_json": json.dumps([
@@ -788,12 +775,13 @@ CASTILLA_Y_LEON_2025 = [
         "name": "Deduccion por alquiler de vivienda habitual en Castilla y Leon",
         "type": "deduccion",
         "category": "vivienda",
-        "percentage": 15.0,
+        "percentage": 20.0,
         "max_amount": 459.0,
-        "legal_reference": "Art. 8 Decreto Leg. 1/2013 CyL",
+        "legal_reference": "Arts. 7.4, 7.5 y 10 Decreto Leg. 1/2013 CyL",
         "description": (
-            "15% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "con máximo de 459 EUR anuales (918 EUR en tributacion conjunta). "
+            "20% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
+            "max 459 EUR (918 EUR conjunta). En municipios <=10.000 hab: 25%, max 612 EUR. "
+            "Requisito: menor de 36 anios. "
             "BI menor o igual a 18.900 EUR individual / 31.500 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
@@ -852,11 +840,10 @@ CASTILLA_LA_MANCHA_2025 = [
         "type": "deduccion",
         "category": "discapacidad",
         "fixed_amount": 300.0,
-        "legal_reference": "Art. 6 Ley 8/2013 CLM",
+        "legal_reference": "Arts. 1 y 13 Ley 8/2013 CLM",
         "description": (
-            "300 EUR para contribuyentes con grado de discapacidad igual o superior al 33%. "
-            "Deduccion adicional de hasta 900 EUR para discapacidad mayor o igual al 65% o personas en "
-            "situacion de dependencia Grado I, II o III."
+            "300 EUR para contribuyentes con discapacidad >=65%. "
+            "Deduccion adicional: 300 EUR Grado I, 600 EUR Grado II, 900 EUR Grado III dependencia."
         ),
         "requirements_json": json.dumps({"discapacidad_reconocida": True}),
         "questions_json": json.dumps([
@@ -888,11 +875,11 @@ CASTILLA_LA_MANCHA_2025 = [
         "category": "educacion",
         "percentage": 15.0,
         "max_amount": 300.0,
-        "legal_reference": "Art. 7 Ley 8/2013 CLM",
+        "legal_reference": "Arts. 3 y 13 Ley 8/2013 CLM",
         "description": (
-            "15% de los gastos de escolaridad, libros de texto y ensenanza de idiomas "
-            "para hijos en etapas de educacion obligatoria, máximo 300 EUR por hijo. "
-            "BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
+            "100% libros de texto + 15% otros gastos educativos (idiomas, escolaridad). "
+            "Max por tramos de BI: 50-200 EUR individual, 75-300 EUR conjunta segun nivel de renta. "
+            "Limites especiales para familias numerosas (BI hasta 40.000 EUR)."
         ),
         "requirements_json": json.dumps({"hijos_escolarizados": True}),
         "questions_json": json.dumps([
@@ -907,11 +894,12 @@ CASTILLA_LA_MANCHA_2025 = [
         "category": "vivienda",
         "percentage": 15.0,
         "max_amount": 450.0,
-        "legal_reference": "Art. 8 Ley 8/2013 CLM",
+        "legal_reference": "Arts. 9 y 13 Ley 8/2013 CLM",
         "description": (
             "15% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "con máximo de 450 EUR. Para menores de 36 años, mayores de 65 o con discapacidad. "
-            "BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
+            "max 450 EUR. En municipios rurales (<=2.500 hab o <=10.000 si >30km de ciudad 50.000+): "
+            "20%, max 612 EUR. Requisito: menor de 36 anios. "
+            "BI menor o igual a 12.500 EUR individual / 25.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
@@ -931,11 +919,11 @@ EXTREMADURA_2025 = [
         "name": "Deduccion por trabajo dependiente con renta baja en Extremadura",
         "type": "deduccion",
         "category": "trabajo",
-        "fixed_amount": 200.0,
-        "legal_reference": "Art. 7 DL 1/2018 Extremadura",
+        "fixed_amount": 75.0,
+        "legal_reference": "Art. 2 DL 1/2018 Extremadura",
         "description": (
-            "200 EUR para contribuyentes que obtengan rendimientos del trabajo con BI general "
-            "menor o igual a 19.000 EUR. Fomento del empleo en la region con menores niveles de renta."
+            "75 EUR para contribuyentes con rendimientos netos del trabajo <=12.000 EUR "
+            "y otros rendimientos netos <=300 EUR (excluidos exentos)."
         ),
         "requirements_json": json.dumps({"rendimientos_trabajo": True, "renta_baja": True}),
         "questions_json": json.dumps([
@@ -948,14 +936,16 @@ EXTREMADURA_2025 = [
         "name": "Deduccion por adquisicion de vivienda habitual para jovenes en Extremadura",
         "type": "deduccion",
         "category": "vivienda",
-        "percentage": 8.0,
-        "max_amount": None,
-        "legal_reference": "Art. 9 DL 1/2018 Extremadura",
+        "percentage": 3.0,
+        "max_amount": 9040.0,
+        "legal_reference": "Arts. 8, 12 bis y 13 DL 1/2018 Extremadura",
         "description": (
-            "8% sobre las cantidades satisfechas en la adquisicion de vivienda habitual "
-            "para contribuyentes menores de 35 años. BI menor o igual a 19.000 EUR individual / 24.000 EUR conjunta."
+            "3% de las cantidades invertidas en adquisicion de vivienda habitual NUEVA "
+            "(primera transmision), max base 9.040 EUR. En municipios <3.000 hab: 5%. "
+            "Menores de 36 anios. BI <=19.000 EUR individual / 24.000 EUR conjunta "
+            "(28.000/45.000 en municipios rurales)."
         ),
-        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_35_anos": True}),
+        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
         "questions_json": json.dumps([
             {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
             {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
@@ -986,11 +976,12 @@ EXTREMADURA_2025 = [
         "type": "deduccion",
         "category": "discapacidad",
         "fixed_amount": 150.0,
-        "legal_reference": "Art. 8 DL 1/2018 Extremadura",
+        "legal_reference": "Arts. 5, 12 bis y 13 DL 1/2018 Extremadura",
         "description": (
             "150 EUR por cada familiar ascendiente o colateral hasta tercer grado con "
-            "discapacidad mayor o igual al 65% que conviva con el contribuyente y tenga rentas menores o iguales a 8.000 EUR. "
-            "Maximo por cada contribuyente: 300 EUR."
+            "discapacidad >=65% o incapacidad judicial, que conviva con el contribuyente "
+            "y tenga rentas <=8.000 EUR. 220 EUR si dependencia reconocida. "
+            "BI <=19.000 EUR individual / 24.000 EUR conjunta (28.000/45.000 rural)."
         ),
         "requirements_json": json.dumps({"familiar_discapacitado_cargo": True}),
         "questions_json": json.dumps([
@@ -1003,13 +994,13 @@ EXTREMADURA_2025 = [
         "name": "Deduccion por arrendamiento de vivienda habitual en Extremadura",
         "type": "deduccion",
         "category": "vivienda",
-        "percentage": 10.0,
-        "max_amount": 300.0,
-        "legal_reference": "Art. 10 DL 1/2018 Extremadura",
+        "percentage": 30.0,
+        "max_amount": 1000.0,
+        "legal_reference": "Arts. 9, 12 bis y 13 DL 1/2018 Extremadura",
         "description": (
-            "10% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "con máximo de 300 EUR. Para menores de 36 años o discapacitados. "
-            "BI menor o igual a 19.000 EUR individual / 24.000 EUR conjunta."
+            "30% del alquiler de vivienda habitual, max 1.000 EUR (1.500 EUR en municipios <3.000 hab). "
+            "Para menores de 36, familias numerosas, monoparentales con 2+ hijos, discapacidad >=65%. "
+            "BI <=28.000 EUR individual / 45.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
@@ -1030,16 +1021,15 @@ MURCIA_2025 = [
         "name": "Deduccion por inversion en vivienda habitual para jovenes en Murcia",
         "type": "deduccion",
         "category": "vivienda",
-        "percentage": 3.0,
-        "max_amount": None,
-        "legal_reference": "Art. 2 DL 1/2010 Murcia",
+        "percentage": 5.0,
+        "max_amount": 300.0,
+        "legal_reference": "Art. 1 DL 1/2010 Murcia",
         "description": (
-            "3% adicional sobre la cuota estatal de la deduccion por vivienda para "
-            "contribuyentes menores de 35 años. Aplicable junto con el regimen transitorio "
-            "estatal (DT 18a LIRPF) para adquisiciones anteriores a 2013. "
-            "BI menor o igual a 24.000 EUR individual."
+            "5% de las cantidades invertidas en adquisicion de vivienda habitual, max 300 EUR. "
+            "Para contribuyentes de 40 anios o menos. "
+            "BI general + ahorro <=40.000 EUR. BL ahorro <=1.800 EUR."
         ),
-        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_35_anos": True}),
+        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_40_anos": True}),
         "questions_json": json.dumps([
             {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca anterior a 2013?", "type": "bool"},
             {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
@@ -1051,13 +1041,13 @@ MURCIA_2025 = [
         "name": "Deduccion por gastos de guarderia en Murcia",
         "type": "deduccion",
         "category": "familia",
-        "percentage": 15.0,
-        "max_amount": 330.0,
-        "legal_reference": "Art. 4 DL 1/2010 Murcia",
+        "percentage": 20.0,
+        "max_amount": 1000.0,
+        "legal_reference": "Art. 1.Tres DL 1/2010 Murcia",
         "description": (
-            "15% de los gastos de guarderia o centros de educacion infantil para hijos "
-            "menores de 3 años, con máximo de 330 EUR por hijo. "
-            "BI menor o igual a 45.000 EUR individual / 60.000 EUR conjunta."
+            "20% de los gastos de guarderia o centros de educacion infantil primer ciclo (0-3 anios), "
+            "max 1.000 EUR por hijo (500 EUR si ambos padres aplican). "
+            "BI <=30.000 EUR individual / 50.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
         "questions_json": json.dumps([
@@ -1088,13 +1078,13 @@ MURCIA_2025 = [
         "name": "Deduccion por inversiones medioambientales en vivienda en Murcia",
         "type": "deduccion",
         "category": "medioambiente",
-        "percentage": 10.0,
-        "max_amount": 300.0,
-        "legal_reference": "Art. 6 DL 1/2010 Murcia",
+        "percentage": 50.0,
+        "max_amount": 7000.0,
+        "legal_reference": "Art. 1.Seis DL 1/2010 Murcia",
         "description": (
-            "10% de las inversiones en sistemas de energia solar, eolica u otras renovables "
-            "en la vivienda habitual, asi como instalaciones de ahorro de agua. "
-            "Maximo 300 EUR por periodo. BI menor o igual a 45.000 EUR."
+            "50% de las inversiones en energias renovables (solar, eolica, biomasa) para vivienda habitual "
+            "si BI <=33.007,20 EUR. 37,5% si BI <=53.007,20 EUR. 25% si BI <=80.000 EUR. "
+            "Max 7.000 EUR. Incluye ahorro de agua domestica."
         ),
         "requirements_json": json.dumps({"instalacion_renovable": True}),
         "questions_json": json.dumps([
@@ -1107,13 +1097,12 @@ MURCIA_2025 = [
         "name": "Deduccion por donativos al patrimonio historico de Murcia",
         "type": "deduccion",
         "category": "donativos",
-        "percentage": 30.0,
+        "percentage": 50.0,
         "max_amount": None,
-        "legal_reference": "Art. 7 DL 1/2010 Murcia",
+        "legal_reference": "Art. 1.Siete DL 1/2010 Murcia (mod. Ley 4/2022)",
         "description": (
-            "30% de los donativos para la adquisicion o conservacion de bienes del "
-            "patrimonio historico-artistico de la Region de Murcia. "
-            "Limite: 10% de la cuota integra autonomica."
+            "50% de los donativos puros dinerarios para proteccion del patrimonio cultural "
+            "y actividades sociales de la Region de Murcia."
         ),
         "requirements_json": json.dumps({"donativo_patrimonio_murcia": True}),
         "questions_json": json.dumps([
@@ -1128,11 +1117,12 @@ MURCIA_2025 = [
         "category": "vivienda",
         "percentage": 10.0,
         "max_amount": 300.0,
-        "legal_reference": "Art. 3 DL 1/2010 Murcia",
+        "legal_reference": "Art. 1.Trece DL 1/2010 Murcia",
         "description": (
-            "10% del alquiler pagado por la vivienda habitual, máximo 300 EUR. "
-            "Menores de 35 anios: 20% max 600 EUR. "
-            "BI menor o igual a 24.000 EUR individual / 33.600 EUR conjunta."
+            "10% del alquiler pagado por la vivienda habitual, max 300 EUR. "
+            "Para menores de 40 anios, familias numerosas o discapacidad >=65%. "
+            "BI general + ahorro <=24.380 EUR (40.000 EUR para menores de 40). "
+            "BL ahorro <=1.800 EUR."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
@@ -1171,12 +1161,12 @@ BALEARES_2025 = [
         "type": "deduccion",
         "category": "educacion",
         "percentage": 15.0,
-        "max_amount": 100.0,
+        "max_amount": 110.0,
         "legal_reference": "Art. 2 Ley 3/2022 Baleares",
         "description": (
-            "15% de los gastos de matricula en escuelas oficiales de idiomas o centros "
-            "reconocidos para la obtencion de certificados de idiomas (B2 o superior), "
-            "máximo 100 EUR. BI menor o igual a 25.000 EUR individual / 45.000 EUR conjunta."
+            "15% de los gastos extraescolares de aprendizaje de idiomas extranjeros "
+            "para hijos del contribuyente, max 110 EUR por hijo. "
+            "BI <=33.000 EUR individual / 52.800 EUR conjunta."
         ),
         "requirements_json": json.dumps({"gastos_idiomas": True}),
         "questions_json": json.dumps([
@@ -1190,12 +1180,12 @@ BALEARES_2025 = [
         "type": "deduccion",
         "category": "vivienda",
         "percentage": 15.0,
-        "max_amount": 440.0,
-        "legal_reference": "Art. 3 Ley 3/2022 Baleares",
+        "max_amount": 530.0,
+        "legal_reference": "Art. 3 bis DL 1/2014 Baleares",
         "description": (
-            "15% de las cantidades satisfechas por arrendamiento de la vivienda habitual, "
-            "máximo 440 EUR (880 EUR en conjunta). Para contribuyentes con BI menor o igual a 25.000 EUR individual "
-            "/ 45.000 EUR conjunta. Incremento hasta 650 EUR para menores de 36 años."
+            "15% del alquiler de vivienda habitual, max 530 EUR. Para menores de 36 o mayores de 65 inactivos. "
+            "Tier mejorado: 20%, max 650 EUR (menores de 30, discapacidad >=33%, familia numerosa/monoparental). "
+            "BI <=33.000 EUR individual / 52.800 EUR conjunta (39.600/63.360 familia numerosa)."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([
@@ -1366,13 +1356,14 @@ CANARIAS_2025 = [
         "name": "Deduccion por alquiler de vivienda habitual en Canarias",
         "type": "deduccion",
         "category": "vivienda",
-        "percentage": 20.0,
-        "max_amount": 600.0,
-        "legal_reference": "Art. 6 DLeg 1/2009 Canarias",
+        "percentage": 24.0,
+        "max_amount": 740.0,
+        "legal_reference": "Art. 15 DLeg 1/2009 Canarias (mod. Ley 4/2018)",
         "description": (
-            "20% del alquiler pagado por la vivienda habitual, max 600 EUR. "
-            "Requisitos: menores de 35 anios o mayores de 65. "
-            "BI menor o igual a 20.000 EUR individual / 30.000 EUR conjunta."
+            "24% del alquiler pagado por la vivienda habitual, max 740 EUR. "
+            "Para menores de 40 anios o mayores de 75: max 760 EUR. "
+            "El alquiler debe superar el 10% de la BI. "
+            "BI general + ahorro menor o igual a 45.500 EUR individual / 60.500 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
         "questions_json": json.dumps([

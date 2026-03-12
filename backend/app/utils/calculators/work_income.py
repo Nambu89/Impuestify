@@ -86,18 +86,26 @@ class WorkIncomeCalculator:
     @staticmethod
     def _calculate_reduccion(rend_neto: float, params: Dict[str, float]) -> float:
         """
-        Work income reduction (art. 20 LIRPF).
+        Work income reduction (art. 20 LIRPF) — two-segment formula (2024+).
 
-        - If rend_neto <= rend_min: full reduction (reduccion_max)
-        - If rend_min < rend_neto <= rend_max: proportional reduction
-        - If rend_neto > rend_max: no reduction
+        AEAT manual Renta 2024:
+        - rend_neto ≤ 14.852:        reducción = 7.302 EUR
+        - 14.852 < rend ≤ 17.673,52: 7.302 − 1,75 × (rend − 14.852)
+        - 17.673,52 < rend ≤ 19.747,50: 2.364,34 − 1,14 × (rend − 17.673,52)
+        - > 19.747,50:               0
         """
-        max_red = params.get("reduccion_max", 6498)
+        max_red = params.get("reduccion_max", 7302)
         rend_min = params.get("reduccion_rend_min", 14852)
+        rend_mid = params.get("reduccion_rend_mid", 17673.52)
         rend_max = params.get("reduccion_rend_max", 19747.5)
+        factor_1 = params.get("reduccion_factor_1", 1.75)
+        factor_2 = params.get("reduccion_factor_2", 1.14)
+        mid_value = params.get("reduccion_mid_value", 2364.34)
 
         if rend_neto <= rend_min:
             return max_red
+        elif rend_neto <= rend_mid:
+            return max(0, max_red - factor_1 * (rend_neto - rend_min))
         elif rend_neto <= rend_max:
-            return max_red - ((rend_neto - rend_min) * max_red / (rend_max - rend_min))
+            return max(0, mid_value - factor_2 * (rend_neto - rend_mid))
         return 0
