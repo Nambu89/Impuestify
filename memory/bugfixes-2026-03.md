@@ -1,5 +1,31 @@
 # Bugfixes Marzo 2026
 
+## [2026-03-12] Bug 47: Deducciones autonómicas CCAA no aparecen en Resultado de Guía Fiscal
+
+**Detectado por:** QA Playwright test Guía Fiscal
+**Síntomas:** Paso 8 (Resultado) no mostraba sección "Deducciones autonómicas" ni restaba las deducciones CCAA de la cuota. Madrid alquiler 8.000 EUR + edad 37 debería dar MAD-ALQUILER-VIV = 1.237,20 EUR.
+
+**Causa raíz (3 bugs):**
+
+1. **Territory name mismatch** (`irpf_estimate.py`): `normalize_ccaa_name("Madrid")` → `"Comunidad de Madrid"` pero las deducciones en BD usan `territory = "Madrid"`. SQL `WHERE territory = 'Comunidad de Madrid'` → 0 resultados.
+   - **Fix:** Usar `body.comunidad_autonoma` (nombre corto) para deduction lookups, mantener `ccaa` normalizado para escalas IRPF.
+
+2. **Age-based answers never derived** (`deduction_service.py`): Requirement keys `menor_40_anos`, `menor_36_anos`, `menor_35_anos` nunca se derivaban de `edad_contribuyente`. `build_answers_from_profile()` no recibía edad.
+   - **Fix:** Añadir `edad_contribuyente` al `profile_for_answers` dict + derivar `menor_35/36/40_anos` automáticamente en `build_answers_from_profile()`.
+
+3. **Frontend `alquiler_pagado_anual` always 0** (`TaxGuidePage.tsx`): DynamicFiscalForm guarda el alquiler en `dynamicFormValues.importe_alquiler_anual`, pero el estimate enviaba `data.alquiler_pagado_anual` que era 0.
+   - **Fix:** Fallback `data.alquiler_pagado_anual || dynamicFormValues.importe_alquiler_anual || 0`.
+
+**Archivos modificados:**
+- `backend/app/routers/irpf_estimate.py` — `ccaa_for_deductions` + `edad_contribuyente` en profile
+- `backend/app/services/deduction_service.py` — derivación edad en `build_answers_from_profile()`
+- `frontend/src/pages/TaxGuidePage.tsx` — fallback `importe_alquiler_anual`
+- `frontend/src/hooks/useIrpfEstimator.ts` — interfaces `IrpfEstimateInput` y `IrpfEstimateResult` con campos CCAA
+
+**Resultado verificado:** Madrid, 37 años, alquiler 8.000 EUR → MAD-ALQUILER-VIV: -1.237,20 EUR → "Hacienda te devuelve 128,19 EUR" (antes: "A pagar 1.109,01 EUR")
+
+---
+
 ## [2026-03-11] slowapi crash 500 en /api/irpf/estimate y /deductions/discover + JWT 401 en SSE
 
 **Reportado por:** Ramon Palomares (beta tester)

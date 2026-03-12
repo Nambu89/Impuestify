@@ -198,6 +198,11 @@ async def estimate_irpf(
         ccaa_deductions_list = []
         total_ccaa_deductions = 0.0
 
+        # Deductions use short territory names (e.g. "Madrid"), while IRPF scales
+        # use normalized names (e.g. "Comunidad de Madrid").  Use the raw name
+        # from the frontend for deduction lookups.
+        ccaa_for_deductions = body.comunidad_autonoma
+
         try:
             # Build answers: merge profile-derived booleans + explicit answers from frontend
             profile_for_answers = {
@@ -212,14 +217,15 @@ async def estimate_irpf(
                 "aportaciones_plan_pensiones": body.aportaciones_plan_pensiones,
                 "donativos_ley_49_2002": body.donativos_ley_49_2002,
                 "alquiler_vivienda_habitual": body.alquiler_pagado_anual > 0,
+                "edad_contribuyente": body.edad_contribuyente,
             }
-            answers = DeductionService.build_answers_from_profile(profile_for_answers, ccaa)
+            answers = DeductionService.build_answers_from_profile(profile_for_answers, ccaa_for_deductions)
             # Merge explicit answers from frontend DynamicFiscalForm
             answers.update(body.deducciones_answers)
 
             # Evaluate eligibility
             eval_result = await deduction_service.evaluate_eligibility(
-                ccaa=ccaa,
+                ccaa=ccaa_for_deductions,
                 tax_year=body.year,
                 answers=answers,
             )

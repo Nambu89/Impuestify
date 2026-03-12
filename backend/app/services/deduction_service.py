@@ -272,6 +272,30 @@ class DeductionService:
         if profile.get("madre_trabajadora_ss"):
             answers["madre_trabajadora"] = True
 
+        # Age-based derivations (menor_35/36/40_anos)
+        edad = profile.get("edad_contribuyente")
+        if edad is not None:
+            try:
+                edad = int(edad)
+                if edad <= 35:
+                    answers["menor_35_anos"] = True
+                    answers["menor_36_anos"] = True
+                    answers["menor_40_anos"] = True
+                elif edad <= 36:
+                    answers["menor_35_anos"] = False
+                    answers["menor_36_anos"] = True
+                    answers["menor_40_anos"] = True
+                elif edad <= 40:
+                    answers["menor_35_anos"] = False
+                    answers["menor_36_anos"] = False
+                    answers["menor_40_anos"] = True
+                else:
+                    answers["menor_35_anos"] = False
+                    answers["menor_36_anos"] = False
+                    answers["menor_40_anos"] = False
+            except (ValueError, TypeError):
+                pass
+
         # Ceuta / Melilla residency
         if profile.get("ceuta_melilla") or ccaa in ("Ceuta", "Melilla"):
             answers["residente_ceuta_melilla"] = True

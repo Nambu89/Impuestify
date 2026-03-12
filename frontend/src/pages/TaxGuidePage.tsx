@@ -1210,7 +1210,7 @@ export default function TaxGuidePage() {
             tributacion_conjunta: data.tributacion_conjunta,
             tipo_unidad_familiar: data.tipo_unidad_familiar,
             alquiler_habitual_pre2015: data.alquiler_habitual_pre2015,
-            alquiler_pagado_anual: data.alquiler_pagado_anual,
+            alquiler_pagado_anual: data.alquiler_pagado_anual || dynamicFormValues.importe_alquiler_anual || 0,
             valor_catastral_segundas_viviendas: data.valor_catastral_segundas_viviendas,
             valor_catastral_revisado_post1994: data.valor_catastral_revisado_post1994,
             // Activity income

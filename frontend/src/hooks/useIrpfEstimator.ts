@@ -64,6 +64,15 @@ export interface IrpfEstimateInput {
     premios_metalico_privados?: number
     perdidas_juegos_privados?: number
     premios_metalico_publicos?: number
+    // CCAA deductions
+    deducciones_answers?: Record<string, any>
+    donativos_autonomicos?: number
+    gastos_educativos?: number
+    inversion_vivienda?: number
+    instalacion_renovable_importe?: number
+    vehiculo_electrico_importe?: number
+    obras_mejora_importe?: number
+    cotizaciones_empleada_hogar?: number
     // Phase 2 fields
     tributacion_conjunta?: boolean
     tipo_unidad_familiar?: string
@@ -96,6 +105,9 @@ export interface IrpfEstimateResult {
     reduccion_tributacion_conjunta: number
     deduccion_alquiler_pre2015: number
     renta_imputada_inmuebles: number
+    // Fase 5: CCAA deductions
+    deducciones_autonomicas?: Array<{ code: string; name: string; amount: number; percentage?: number; max_amount?: number; fixed_amount?: number }>
+    total_deducciones_autonomicas?: number
     trabajo?: {
         ingresos_brutos: number
         gastos_deducibles: number
