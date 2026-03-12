@@ -7,6 +7,14 @@
 ## Sesiones Recientes
 ---
 
+[2026-03-12] [PM Sesion 8] - QA Guía Fiscal 5 territorios + Bug 47+48 CCAA fixes.
+- Bug 47 (3 sub-bugs): territory name mismatch, edad→menor_XX, alquiler_pagado_anual=0 → d61b69b
+- Bug 48: "cataluna" sin tilde faltaba en CCAA_NORMALIZATION → Cataluña no encontraba escalas → 1bf61ac
+- QA API 35/35 PASS: Aragón, Cataluña, Canarias, Gipuzkoa (foral), Melilla (60%)
+- Test script reutilizable: tests/qa-territories.mjs
+- Troubleshooting actualizado: 4 entradas nuevas en backend/CLAUDE.md
+- Bugfixes documentados: memory/bugfixes-2026-03.md (Bug 47+48)
+
 [2026-03-11] [PM Sesion 6] - Bugs Ramon Palomares + ortografia + dropdown CSS + seed foral + deploy.
 - Fix slowapi crash 500: req→request en irpf_estimate.py (ambos endpoints)
 - Fix JWT 401 SSE: auto-refresh token en useStreamingChat.ts

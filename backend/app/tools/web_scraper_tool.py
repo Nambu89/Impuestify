@@ -27,53 +27,16 @@ OFFICIAL_SOURCES = {
     "segsocial.es": "Seguridad Social"
 }
 
-# CCAA name normalization mapping
-CCAA_NORMALIZATION = {
-    "madrid": "Comunidad de Madrid",
-    "cataluña": "Cataluña",
-    "cataluna": "Cataluña",
-    "catalunya": "Cataluña",
-    "valencia": "Comunitat Valenciana",
-    "comunidad valenciana": "Comunitat Valenciana",
-    "baleares": "Illes Balears",
-    "islas baleares": "Illes Balears",
-    "murcia": "Región de Murcia",
-    "andalucía": "Andalucía",
-    "andalucia": "Andalucía",
-    "aragón": "Aragón",
-    "aragon": "Aragón",
-    "asturias": "Asturias",
-    "canarias": "Canarias",
-    "cantabria": "Cantabria",
-    "castilla y león": "Castilla y León",
-    "castilla y leon": "Castilla y León",
-    "castilla-la mancha": "Castilla-La Mancha",
-    "castilla la mancha": "Castilla-La Mancha",
-    "extremadura": "Extremadura",
-    "galicia": "Galicia",
-    "la rioja": "La Rioja",
-    "rioja": "La Rioja",
-    "ceuta": "Ceuta",
-    "melilla": "Melilla",
-    "ciudad autónoma de ceuta": "Ceuta",
-    "ciudad autonoma de ceuta": "Ceuta",
-    "ciudad autónoma de melilla": "Melilla",
-    "ciudad autonoma de melilla": "Melilla",
-}
+# CCAA normalization — delegates to canonical module
+from app.utils.ccaa_constants import normalize_ccaa, CCAA_ALIASES
+
+# Legacy alias kept for backwards compatibility (tests import it)
+CCAA_NORMALIZATION = CCAA_ALIASES
 
 
 def normalize_ccaa_name(name: str) -> str:
-    """
-    Normalize CCAA name to match database format.
-    
-    Args:
-        name: CCAA name (any format)
-        
-    Returns:
-        Normalized CCAA name
-    """
-    name_lower = name.lower().strip()
-    return CCAA_NORMALIZATION.get(name_lower, name)
+    """Legacy wrapper — use normalize_ccaa() from ccaa_constants instead."""
+    return normalize_ccaa(name)
 
 
 def validate_official_source(url: str) -> Optional[str]:

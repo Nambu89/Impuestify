@@ -370,11 +370,11 @@ async def simulate_irpf_tool(
     """Execute IRPF simulation and return formatted result."""
     try:
         from app.utils.irpf_simulator import IRPFSimulator
-        from app.tools.web_scraper_tool import normalize_ccaa_name
+        from app.utils.ccaa_constants import normalize_ccaa
         from app.database.turso_client import get_db_client
 
         db = await get_db_client()
-        ccaa = normalize_ccaa_name(comunidad_autonoma)
+        ccaa = normalize_ccaa(comunidad_autonoma)
 
         # Auto-detect Ceuta/Melilla from CCAA if not explicitly set
         if not ceuta_melilla and ccaa.lower() in ("ceuta", "melilla"):

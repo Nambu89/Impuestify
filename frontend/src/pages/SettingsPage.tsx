@@ -12,24 +12,16 @@ import { useFiscalProfile, FiscalProfile } from '../hooks/useFiscalProfile'
 import { usePushNotifications } from '../hooks/usePushNotifications'
 import Header from '../components/Header'
 import DynamicFiscalForm from '../components/DynamicFiscalForm'
+import { CCAA_IDS, getCcaaLabel } from '../constants/ccaa'
 import './SettingsPage.css'
 
 type TabKey = 'personal' | 'security' | 'fiscal' | 'subscription' | 'privacy' | 'notifications'
 
-const CCAA_OPTIONS = [
-    '', 'Andalucia', 'Aragon', 'Asturias', 'Baleares', 'Canarias',
-    'Cantabria', 'Castilla y Leon', 'Castilla-La Mancha', 'Cataluna',
-    'Valencia', 'Extremadura', 'Galicia', 'Madrid',
-    'Murcia', 'Navarra', 'Araba', 'Bizkaia', 'Gipuzkoa', 'La Rioja', 'Ceuta', 'Melilla'
-]
+const CCAA_OPTIONS = ['', ...CCAA_IDS]
 
-const CCAA_DISPLAY: Record<string, string> = {
-    'Andalucia': 'Andalucía',
-    'Aragon': 'Aragón',
-    'Cataluna': 'Cataluña',
-    'Castilla y Leon': 'Castilla y León',
-    'Araba': 'Araba/Álava',
-}
+const CCAA_DISPLAY: Record<string, string> = Object.fromEntries(
+    CCAA_IDS.filter(id => getCcaaLabel(id) !== id).map(id => [id, getCcaaLabel(id)])
+)
 
 const SITUACION_OPTIONS = [
     { value: '', label: 'Selecciona...' },

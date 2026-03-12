@@ -7,23 +7,14 @@ import { useTaxGuideProgress, STEP_LABELS, QUICK_STEP_LABELS, type TaxGuideData 
 import { useIrpfEstimator } from '../hooks/useIrpfEstimator'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
 import { useDeductionDiscovery, type MissingQuestion } from '../hooks/useDeductionDiscovery'
+import { CCAA_IDS, getCcaaLabel, isForal, isCeutaMelilla } from '../constants/ccaa'
 import './TaxGuidePage.css'
 
-const CCAA_OPTIONS = [
-    'Andalucia', 'Aragon', 'Asturias', 'Baleares', 'Canarias',
-    'Cantabria', 'Castilla-La Mancha', 'Castilla y Leon', 'Cataluna',
-    'Ceuta', 'Valencia', 'Extremadura', 'Galicia',
-    'La Rioja', 'Madrid', 'Melilla', 'Murcia', 'Navarra',
-    'Araba', 'Bizkaia', 'Gipuzkoa',
-]
+const CCAA_OPTIONS = [...CCAA_IDS]
 
-const CCAA_DISPLAY: Record<string, string> = {
-    'Andalucia': 'Andalucía',
-    'Aragon': 'Aragón',
-    'Cataluna': 'Cataluña',
-    'Castilla y Leon': 'Castilla y León',
-    'Araba': 'Araba/Álava',
-}
+const CCAA_DISPLAY: Record<string, string> = Object.fromEntries(
+    CCAA_IDS.filter(id => getCcaaLabel(id) !== id).map(id => [id, getCcaaLabel(id)])
+)
 
 const STEP_ICONS = [MapPin, Briefcase, PiggyBank, HomeIcon, TrendingUp, Users, Gift, BarChart3]
 const QUICK_STEP_ICONS = [MapPin, BarChart3]
@@ -74,11 +65,11 @@ function CheckboxInput({ label, checked, onChange, help }: {
 function CcaaTip({ ccaa }: { ccaa: string }) {
     if (!ccaa) return null
 
-    const isCeutaMelilla = ccaa === 'Ceuta' || ccaa === 'Melilla'
+    const _isCeutaMelilla = isCeutaMelilla(ccaa)
     const isCanarias = ccaa === 'Canarias'
-    const isForal = ['Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra'].includes(ccaa)
+    const _isForal = isForal(ccaa)
 
-    if (isCeutaMelilla) {
+    if (_isCeutaMelilla) {
         return (
             <div className="tg-tip tg-tip--success">
                 <Shield size={18} />
@@ -90,7 +81,7 @@ function CcaaTip({ ccaa }: { ccaa: string }) {
         )
     }
 
-    if (isForal) {
+    if (_isForal) {
         return (
             <div className="tg-tip tg-tip--warning">
                 <AlertTriangle size={18} />
@@ -168,7 +159,7 @@ function StepPersonal({ data, update }: StepProps) {
                         const ccaa = e.target.value
                         update({
                             comunidad_autonoma: ccaa,
-                            ceuta_melilla: ccaa === 'Ceuta' || ccaa === 'Melilla',
+                            ceuta_melilla: isCeutaMelilla(ccaa),
                         })
                     }}
                 >

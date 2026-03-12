@@ -10,7 +10,7 @@ const territories = [
   {
     name: 'ARAGÓN (régimen común)',
     payload: {
-      comunidad_autonoma: 'Aragon',
+      comunidad_autonoma: 'Aragón',
       year: 2025,
       edad_contribuyente: 32,
       ingresos_trabajo: 28000,
@@ -45,7 +45,7 @@ const territories = [
   {
     name: 'CATALUÑA (régimen común, escala propia)',
     payload: {
-      comunidad_autonoma: 'Cataluna',
+      comunidad_autonoma: 'Cataluña',
       year: 2025,
       edad_contribuyente: 45,
       ingresos_trabajo: 55000,

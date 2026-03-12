@@ -3,40 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Mail, Lock, User, Eye, EyeOff, Loader2, Calculator, Map, AlertCircle, CheckCircle, MapPin } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import TurnstileWidget from '../components/TurnstileWidget'
+import { CCAA_OPTIONS_WITH_PLACEHOLDER, FORAL_CCAA, getCcaaLabel, isForal as isForalFn, isCeutaMelilla as isCeutaMelillaFn } from '../constants/ccaa'
 import './Auth.css'
 
-const CCAA_OPTIONS = [
-    { value: '', label: 'Selecciona tu comunidad' },
-    { value: 'Andalucia', label: 'Andalucía' },
-    { value: 'Aragon', label: 'Aragón' },
-    { value: 'Asturias', label: 'Asturias' },
-    { value: 'Baleares', label: 'Illes Balears' },
-    { value: 'Canarias', label: 'Canarias' },
-    { value: 'Cantabria', label: 'Cantabria' },
-    { value: 'Castilla y Leon', label: 'Castilla y León' },
-    { value: 'Castilla-La Mancha', label: 'Castilla-La Mancha' },
-    { value: 'Cataluna', label: 'Cataluña' },
-    { value: 'Ceuta', label: 'Ceuta' },
-    { value: 'Valencia', label: 'Comunitat Valenciana' },
-    { value: 'Extremadura', label: 'Extremadura' },
-    { value: 'Galicia', label: 'Galicia' },
-    { value: 'Gipuzkoa', label: 'Gipuzkoa' },
-    { value: 'La Rioja', label: 'La Rioja' },
-    { value: 'Madrid', label: 'Comunidad de Madrid' },
-    { value: 'Melilla', label: 'Melilla' },
-    { value: 'Murcia', label: 'Murcia' },
-    { value: 'Navarra', label: 'Navarra' },
-    { value: 'Araba', label: 'Araba/Álava' },
-    { value: 'Bizkaia', label: 'Bizkaia' },
-]
+const CCAA_OPTIONS = CCAA_OPTIONS_WITH_PLACEHOLDER
 
-const FORAL_CCAA = ['Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra']
-const FORAL_NAMES: Record<string, string> = {
-    'Araba': 'Araba/Álava',
-    'Bizkaia': 'Bizkaia',
-    'Gipuzkoa': 'Gipuzkoa',
-    'Navarra': 'Navarra',
-}
+const FORAL_NAMES: Record<string, string> = Object.fromEntries(
+    FORAL_CCAA.map(id => [id, getCcaaLabel(id)])
+)
 
 export default function Register() {
     const navigate = useNavigate()
@@ -53,8 +27,8 @@ export default function Register() {
     const [isLoading, setIsLoading] = useState(false)
     const [turnstileToken, setTurnstileToken] = useState('')
 
-    const isForal = FORAL_CCAA.includes(ccaa)
-    const isCeutaMelilla = ccaa === 'Ceuta' || ccaa === 'Melilla'
+    const isForal = isForalFn(ccaa)
+    const isCeutaMelilla = isCeutaMelillaFn(ccaa)
     const isCanarias = ccaa === 'Canarias'
 
     const handleSubmit = async (e: React.FormEvent) => {

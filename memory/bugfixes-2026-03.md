@@ -1,5 +1,22 @@
 # Bugfixes Marzo 2026
 
+## [2026-03-12] Bug 48: Cataluña "No scale found" — falta "cataluna" en CCAA_NORMALIZATION
+
+**Detectado por:** QA API test 5 territorios
+**Síntomas:** POST /api/irpf/estimate con `comunidad_autonoma: "Cataluna"` devuelve `success: false, error: "No scale found for Cataluna 2024"`. Todos los campos del resultado a 0.
+
+**Causa raíz:** `CCAA_NORMALIZATION` en `web_scraper_tool.py` tenía keys `"cataluña"` y `"catalunya"` pero NO `"cataluna"` (sin tilde en la ñ). El frontend envía `"Cataluna"` → `normalize_ccaa_name("Cataluna")` busca `"cataluna"` (lowercase) → no match → devuelve `"Cataluna"` sin cambio → BD tiene `jurisdiction = "Cataluña"` → SQL 0 resultados.
+
+**Fix:** Añadir `"cataluna": "Cataluña"` al dict `CCAA_NORMALIZATION`.
+
+**Archivo:** `backend/app/tools/web_scraper_tool.py` (línea 34)
+
+**Lección:** Siempre incluir variantes sin tilde de TODAS las CCAA en el dict de normalización, ya que el frontend usa nombres sin acentos.
+
+**Commit:** `1bf61ac`
+
+---
+
 ## [2026-03-12] Bug 47: Deducciones autonómicas CCAA no aparecen en Resultado de Guía Fiscal
 
 **Detectado por:** QA Playwright test Guía Fiscal

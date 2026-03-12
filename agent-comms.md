@@ -7,6 +7,22 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-12] PM — DONE — Bug 47+48: CCAA deductions + Cataluña scales
+
+- **Bug 47 (3 sub-bugs)**: territory name mismatch, edad→menor_XX_anos, alquiler_pagado_anual=0
+  - Commit: `d61b69b`
+- **Bug 48**: `"cataluna"` faltaba en CCAA_NORMALIZATION → "No scale found for Cataluna"
+  - Commit: `1bf61ac`
+- **QA 5 territorios**: 35/35 PASS (Aragón, Cataluña, Canarias, Gipuzkoa, Melilla)
+  - Aragón: A pagar 250€, ARG-ARRENDAMIENTO-VIV 300€
+  - Cataluña: A pagar 2.444€, tipo medio 28.52%
+  - Canarias: A pagar 519€, CANA-ALQUILER-VIV 600€
+  - Gipuzkoa: Devolver 8.500€ (mínimos forales > cuota, correcto)
+  - Melilla: Devolver 2.108€, deducción 60% = 3.588€
+- **Test script**: `tests/qa-territories.mjs` reutilizable
+
+---
+
 ## [2026-03-11] PM — DONE — Ortografia + dropdown CSS + seed foral calendario
 
 - **27 tildes corregidas** en 12 archivos frontend (autonomo, nomina, declaracion, estimacion, metodo, calculo, situacion, numero, regimen)

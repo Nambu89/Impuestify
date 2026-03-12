@@ -70,14 +70,14 @@ async def calculate_irpf_tool(
 	"""
 	try:
 		from app.utils.irpf_calculator import IRPFCalculator
-		from app.tools.web_scraper_tool import normalize_ccaa_name
+		from app.utils.ccaa_constants import normalize_ccaa
 		from app.tools.search_tool import search_tax_regulations_tool
 		
 		# Initialize calculator
 		calculator = IRPFCalculator()
 		
 		# Normalize CCAA name
-		ccaa_normalized = normalize_ccaa_name(comunidad_autonoma)
+		ccaa_normalized = normalize_ccaa(comunidad_autonoma)
 		logger.info(f"Calculating IRPF: {base_imponible}€, {ccaa_normalized}, {year}")
 		
 		# ATTEMPT 1: Calculate with local DB

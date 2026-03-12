@@ -168,11 +168,11 @@ async def estimate_irpf(
     """Fast IRPF estimate for the interactive tax guide. No LLM involved."""
     try:
         from app.utils.irpf_simulator import IRPFSimulator
-        from app.tools.web_scraper_tool import normalize_ccaa_name
+        from app.utils.ccaa_constants import normalize_ccaa
         from app.database.turso_client import get_db_client
 
         db = await get_db_client()
-        ccaa = normalize_ccaa_name(body.comunidad_autonoma)
+        ccaa = normalize_ccaa(body.comunidad_autonoma)
 
         ceuta_melilla = body.ceuta_melilla
         if not ceuta_melilla and ccaa.lower() in ("ceuta", "melilla"):
@@ -198,11 +198,6 @@ async def estimate_irpf(
         ccaa_deductions_list = []
         total_ccaa_deductions = 0.0
 
-        # Deductions use short territory names (e.g. "Madrid"), while IRPF scales
-        # use normalized names (e.g. "Comunidad de Madrid").  Use the raw name
-        # from the frontend for deduction lookups.
-        ccaa_for_deductions = body.comunidad_autonoma
-
         try:
             # Build answers: merge profile-derived booleans + explicit answers from frontend
             profile_for_answers = {
@@ -219,13 +214,13 @@ async def estimate_irpf(
                 "alquiler_vivienda_habitual": body.alquiler_pagado_anual > 0,
                 "edad_contribuyente": body.edad_contribuyente,
             }
-            answers = DeductionService.build_answers_from_profile(profile_for_answers, ccaa_for_deductions)
+            answers = DeductionService.build_answers_from_profile(profile_for_answers, ccaa)
             # Merge explicit answers from frontend DynamicFiscalForm
             answers.update(body.deducciones_answers)
 
             # Evaluate eligibility
             eval_result = await deduction_service.evaluate_eligibility(
-                ccaa=ccaa_for_deductions,
+                ccaa=ccaa,
                 tax_year=body.year,
                 answers=answers,
             )
@@ -439,9 +434,9 @@ async def discover_deductions_endpoint(
     """Discover eligible deductions for a CCAA. No LLM — direct DB query."""
     try:
         from app.services.deduction_service import get_deduction_service
-        from app.tools.web_scraper_tool import normalize_ccaa_name
+        from app.utils.ccaa_constants import normalize_ccaa
 
-        ccaa = normalize_ccaa_name(body.ccaa)
+        ccaa = normalize_ccaa(body.ccaa)
         service = get_deduction_service()
 
         result = await service.evaluate_eligibility(
