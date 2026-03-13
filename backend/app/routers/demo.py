@@ -247,7 +247,7 @@ Responde de forma concisa y profesional:"""
                         {"role": "user", "content": user_prompt}
                     ],
                     "max_completion_tokens": 400,
-                    "temperature": 1
+                    "temperature": 0.3
                 }
             )
             
@@ -458,11 +458,14 @@ async def demo_chat(
         sources=[]  # Simplified for demo
     )
     if not output_check.is_safe:
-        logger.warning(f"⚠️ Demo output guardrail violation: {output_check.violations}")
-        truncated = guardrails_system.apply_safety_wrapper(
-            truncated,
-            risk_level=output_check.risk_level
-        )
+        # Skip "too short" warning for demo — concise responses are expected
+        real_violations = [v for v in output_check.violations if "too short" not in v.lower()]
+        if real_violations:
+            logger.warning(f"⚠️ Demo output guardrail violation: {real_violations}")
+            truncated = guardrails_system.apply_safety_wrapper(
+                truncated,
+                risk_level=output_check.risk_level
+            )
     
     # Add watermark
     final_response = add_demo_watermark(truncated)
