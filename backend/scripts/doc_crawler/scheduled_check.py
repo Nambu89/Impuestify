@@ -40,6 +40,7 @@ from backend.scripts.doc_crawler.inventory import (
     update_document,
 )
 from backend.scripts.doc_crawler.notifier import append_log, write_pending_ingest
+from backend.scripts.doc_crawler.drift_analyzer import analyze_drift
 from backend.scripts.doc_crawler.watchlist import get_items, get_stats
 
 LOG_FILE = DOCS_DIR / "_crawler_scheduled.log"
@@ -175,6 +176,21 @@ def run_scheduled_check() -> dict:
         logger.info("Sin documentos nuevos esta semana.")
 
     logger.info(f"Reporte: {CRAWLER_REPORT}")
+
+    # ── Drift Analyzer (Layer 2) — runs if pending changes exist ──
+    if new_count > 0 and PENDING_INGEST.exists():
+        logger.info("")
+        logger.info("Running Fiscal Drift Analyzer...")
+        try:
+            drift_result = analyze_drift(dry_run=False, skip_llm=False)
+            logger.info(f"Drift analysis: {drift_result.get('status', 'unknown')}")
+            if drift_result.get("email_sent"):
+                logger.info("Drift alert email sent via Resend")
+        except Exception as e:
+            logger.warning(f"Drift analysis failed (non-blocking): {e}")
+    else:
+        logger.info("No changes detected — skipping drift analysis.")
+
     logger.info("=" * 60)
 
     return summary

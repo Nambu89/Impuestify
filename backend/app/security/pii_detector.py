@@ -139,7 +139,7 @@ class PIIDetector:
             
             # Use Llama Guard 4 to detect S7 (Privacy)
             completion = self.client.chat.completions.create(
-                model=settings.GROQ_MODEL_SAFETY, # llama-guard-4-12b
+                model=settings.GROQ_MODEL_SAFETY,
                 messages=[{"role": "user", "content": text}],
                 temperature=0.0
             )

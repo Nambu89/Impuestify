@@ -122,12 +122,12 @@ class Settings(BaseSettings):
     # 🛡️ Content Moderation (Llama Guard via Groq)
     # -------------------------------
     GROQ_API_KEY: Optional[str] = Field(default=None)
-    GROQ_MODEL: str = Field(default="meta-llama/llama-guard-4-12b")
+    GROQ_MODEL: str = Field(default="openai/gpt-oss-safeguard-20b")
     
     # Specialized Groq Models (v2.8 Security Upgrade)
     GROQ_MODEL_ROUTER: str = Field(default="llama-3.1-8b-instant")
     GROQ_MODEL_PROMPT_GUARD: str = Field(default="meta-llama/llama-prompt-guard-2-86m")
-    GROQ_MODEL_SAFETY: str = Field(default="meta-llama/llama-guard-4-12b")  # For SQLi (S14) & PII (S7)
+    GROQ_MODEL_SAFETY: str = Field(default="openai/gpt-oss-safeguard-20b")  # For SQLi (S14) & PII (S7)
     
     ENABLE_CONTENT_MODERATION: bool = Field(default=True)
 

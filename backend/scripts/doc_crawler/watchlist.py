@@ -420,6 +420,69 @@ CCAA_ITEMS = [
 
 
 # ═══════════════════════════════════════════════════════════════
+# Ceuta y Melilla — IPSI y Estatutos
+# ═══════════════════════════════════════════════════════════════
+
+CEUTA_MELILLA_ITEMS = [
+    # Ceuta — IPSI (Ley 8/1991)
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1991/BOE-A-1991-7678-consolidado.pdf",
+        dest="Ceuta/Ceuta-Ley_8_1991_IPSI_Ceuta_consolidado.pdf",
+        territory="Ceuta",
+        description="Ley 8/1991 IPSI Ceuta consolidado",
+        priority="medium",
+    ),
+    # Melilla — IPSI (Ley 13/1996, art. 40+)
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1996/BOE-A-1996-29117-consolidado.pdf",
+        dest="Melilla/Melilla-Ley_13_1996_IPSI_Melilla_consolidado.pdf",
+        territory="Melilla",
+        description="Ley 13/1996 IPSI Melilla (Titulo II) consolidado",
+        priority="medium",
+    ),
+    # Ceuta — Estatuto de Autonomia
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1995/BOE-A-1995-5539-consolidado.pdf",
+        dest="Ceuta/Ceuta-Ley_Organica_1_1995_Estatuto_consolidado.pdf",
+        territory="Ceuta",
+        description="Estatuto Autonomia Ceuta consolidado",
+        priority="low",
+    ),
+    # Melilla — Estatuto de Autonomia
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1995/BOE-A-1995-5540-consolidado.pdf",
+        dest="Melilla/Melilla-Ley_Organica_2_1995_Estatuto_consolidado.pdf",
+        territory="Melilla",
+        description="Estatuto Autonomia Melilla consolidado",
+        priority="low",
+    ),
+]
+
+
+# ═══════════════════════════════════════════════════════════════
+# Canarias — IGIC y REF
+# ═══════════════════════════════════════════════════════════════
+
+CANARIAS_EXTRA_ITEMS = [
+    # IGIC — Ley 20/1991 (equivalente IVA en Canarias)
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1991/BOE-A-1991-14463-consolidado.pdf",
+        dest="Canarias/Canarias-Ley_20_1991_IGIC_consolidado.pdf",
+        territory="Canarias",
+        description="Ley 20/1991 IGIC Canarias consolidado",
+    ),
+    # REF Canarias — Ley 19/1994 (Regimen Economico Fiscal)
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1994/BOE-A-1994-15341-consolidado.pdf",
+        dest="Canarias/Canarias-Ley_19_1994_REF_consolidado.pdf",
+        territory="Canarias",
+        description="Ley 19/1994 REF Canarias consolidado",
+        priority="medium",
+    ),
+]
+
+
+# ═══════════════════════════════════════════════════════════════
 # Seguridad Social
 # ═══════════════════════════════════════════════════════════════
 
@@ -447,6 +510,8 @@ ALL_ITEMS: list[WatchItem] = (
     + GIPUZKOA_ITEMS
     + ARABA_ITEMS
     + CCAA_ITEMS
+    + CEUTA_MELILLA_ITEMS
+    + CANARIAS_EXTRA_ITEMS
     + SS_ITEMS
 )
 

@@ -373,8 +373,8 @@ async def demo_chat(
     pii_result = pii_detector.detect(body.question)
     sanitized_question = body.question
     if pii_result.has_pii:
-        logger.info(f"🔒 Demo PII detected and redacted: {pii_result.pii_types}")
-        sanitized_question = pii_result.redacted_text
+        logger.info(f"🔒 Demo PII detected and redacted: {pii_result.detected_types}")
+        sanitized_question = pii_result.masked_text
     
     # === SECURITY LAYER 5: Llama Guard Content Moderation ===
     try:
@@ -382,11 +382,11 @@ async def demo_chat(
         if llama_guard:
             moderation = await llama_guard.moderate(body.question)
             if not moderation.is_safe:
-                logger.warning(f"🛡️ Demo Llama Guard blocked: {moderation.categories}")
+                logger.warning(f"🛡️ Demo Llama Guard blocked: {moderation.blocked_categories}")
                 demo_stats["total_errors"] += 1
                 audit_logger.log_security_event(
                     event_type=AuditEventType.SECURITY_VIOLATION,
-                    details={"type": "llama_guard", "categories": moderation.categories, "ip": client_ip[:10]},
+                    details={"type": "llama_guard", "categories": moderation.blocked_categories, "ip": client_ip[:10]},
                     user_id="demo"
                 )
                 raise HTTPException(status_code=400, detail="Content violates safety guidelines")

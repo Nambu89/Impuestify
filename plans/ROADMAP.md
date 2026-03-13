@@ -129,6 +129,16 @@
 
 ---
 
+## COMPLETADO — 4 Bugs Beta Testers (2026-03-13)
+
+- Bug 52: Password reset no enviaba email — dominio `.es` → `.com` (Resend)
+- Bug 50: Workspaces loading infinito — timeout + race condition + NULL guard
+- Bug 49: NotificationAgent respuestas verbosas — patrón answer-first
+- Bug 51: Comparativa conjunta vs individual incompleta — loop tool_calls
+- Commit: `b148564`
+
+---
+
 ## COMPLETADO — Ortografía + Dropdown CSS + Seed Foral (2026-03-11)
 
 - 27 tildes corregidas en 12 archivos frontend (autónomo, nómina, declaración, estimación, método, cálculo, situación, número, régimen)
@@ -150,9 +160,9 @@
 ## BACKLOG
 
 ### Alta prioridad
-- [ ] Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)
+- [x] ~~Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)~~ → DONE (2026-03-13)
 - [ ] MFA / 2FA (recomendación auditoría)
-- [ ] CAPTCHA en login (recomendación auditoría)
+- [x] ~~CAPTCHA en login (recomendación auditoría)~~ → DONE — Cloudflare Turnstile en Login + Register (frontend TurnstileWidget.tsx + backend verify_turnstile())
 - [ ] Estrategia Social Media — plan en `plans/social-media-strategy-2026.md` (7 pilares, LinkedIn + Instagram, pre-campana Renta abril 2026)
 
 ### Media prioridad
@@ -176,9 +186,10 @@
 | Documentos RAG | 439 (419 PDF + 9 Excel + 11 AEAT specs) |
 | Deducciones en BD | ~554 (192 v1/v2 + 339 XSD + 50 forales) |
 | CCAA cubiertas | 21 (15 común + 4 forales + Ceuta + Melilla) |
-| Tests backend | 998 |
+| Tests backend | 1009 |
 | Tests frontend | build PASS |
 | Exchanges crypto soportados | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
 | Fechas fiscales 2026 | 58 (32 estatales + 26 forales) |
-| Bugs fixeados (mar 2026) | 16 documentados |
-| URLs monitorizadas (crawler) | 48 en 21 territorios |
+| Bugs fixeados (mar 2026) | 52 documentados (Bugs 1-52) |
+| URLs monitorizadas (crawler) | 54 en 23 territorios |
+| Drift Analyzer | Layer 1 (free) + Layer 2 (haiku headless) |

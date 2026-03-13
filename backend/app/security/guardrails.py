@@ -54,11 +54,15 @@ class TaxIAGuardrails:
     """
     
     # Prohibited topics (tax evasion indicators)
+    # NOTE: Only include phrases that are UNAMBIGUOUSLY evasion.
+    # "no declarar" was removed — users legitimately ask "¿qué pasa si no declaro?"
+    # which is an informational query about penalties, not evasion advice.
     PROHIBITED_KEYWORDS = [
         'evasión fiscal', 'evadir impuestos', 'ocultar ingresos',
-        'no declarar', 'dinero negro', 'economía sumergida',
+        'dinero negro', 'economía sumergida',
         'factura falsa', 'sociedades offshore', 'paraíso fiscal',
-        'eludir', 'evitar pagar impuestos ilegalmente',
+        'evitar pagar impuestos ilegalmente',
+        'cómo no pagar impuestos', 'como no pagar impuestos',
         'fraude fiscal', 'delito fiscal'
     ]
     

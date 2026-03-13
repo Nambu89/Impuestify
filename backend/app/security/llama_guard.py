@@ -1,8 +1,9 @@
 """
-Llama Guard 4 Content Moderation for TaxIA
+Content Moderation for TaxIA (via Groq API)
 
 Uses Groq API (free tier: 14,400 requests/day) to moderate content
-before sending to OpenAI. Detects 14 categories of harmful content.
+before sending to OpenAI. Model: openai/gpt-oss-safeguard-20b.
+Detects 14 categories of harmful content.
 
 Features:
 - Spanish language support

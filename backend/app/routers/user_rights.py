@@ -394,7 +394,7 @@ async def update_user_profile(
 
 @router.put("/password")
 async def change_password(
-    request: PasswordChangeRequest,
+    body: PasswordChangeRequest,
     current_user: TokenData = Depends(get_current_user),
     db: TursoClient = Depends(get_db_client)
 ):
@@ -418,14 +418,14 @@ async def change_password(
     current_hash = user_result.rows[0]["password_hash"]
 
     # 2. Verify current password
-    if not verify_password(request.current_password, current_hash):
+    if not verify_password(body.current_password, current_hash):
         raise HTTPException(
             status_code=400,
             detail="La contraseña actual es incorrecta"
         )
 
     # 3. Hash new password and update
-    new_hash = hash_password(request.new_password)
+    new_hash = hash_password(body.new_password)
     await db.execute(
         "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
         [new_hash, user_id]
@@ -594,7 +594,7 @@ async def get_fiscal_profile(
 
 @router.put("/fiscal-profile")
 async def update_fiscal_profile(
-    request: FiscalProfileRequest,
+    body: FiscalProfileRequest,
     current_user: TokenData = Depends(get_current_user),
     db: TursoClient = Depends(get_db_client)
 ):
@@ -624,7 +624,7 @@ async def update_fiscal_profile(
                 datos_fiscales = {}
 
     # Merge new values into datos_fiscales with source="manual"
-    request_data = request.model_dump(exclude_none=True)
+    request_data = body.model_dump(exclude_none=True)
 
     for key in _DATOS_FISCALES_KEYS:
         if key in request_data:

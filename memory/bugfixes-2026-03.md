@@ -1,5 +1,56 @@
 # Bugfixes Marzo 2026
 
+## [2026-03-13] Bugs 49-52: 4 bugs beta testers (Commit b148564)
+
+### Bug 52: Password reset no envia email (Jose Antonio Alvarez)
+**Causa raiz:** Dominio incorrecto `impuestify.es` en defaults de config.py y .env.example. El dominio verificado en Resend es `impuestify.com`. Resend rechazaba emails desde dominio no verificado.
+**Fix:** 6 referencias `.es` → `.com` en config.py (RESEND_FROM_EMAIL, VAPID_CLAIMS_EMAIL, FRONTEND_URL), report_generator.py, CLAUDE.md, test_fiscal_deadlines.py, .env.example, e2e spec.
+**Accion usuario:** Cambiar RESEND_FROM_EMAIL en Railway produccion a `noreply@impuestify.com`.
+**Archivos:** config.py, report_generator.py, CLAUDE.md, test_fiscal_deadlines.py, .env.example, regression spec
+
+### Bug 50: Workspaces loading infinito al agregar mas de uno (Juan Pablo Sanchez)
+**Causa raiz:** 4 problemas encadenados:
+1. `useApi.ts`: fetch() sin timeout — Promise nunca resuelve si servidor tarda
+2. `WorkspacesPage.tsx`: dependency array incorrecto causa re-fetches multiples
+3. `useWorkspaces.ts`: race condition al cambiar workspace mientras anterior carga
+4. `workspaces.py`: crash en `created_at.isoformat()` si campo es NULL → 500
+**Fix:**
+- useApi.ts: AbortController + timeout 30s
+- useWorkspaces.ts: filesRequestIdRef para descartar respuestas obsoletas
+- workspaces.py: guard `(w.created_at or datetime.utcnow()).isoformat()`
+**Archivos:** useApi.ts, useWorkspaces.ts, workspaces.py
+
+### Bug 49: NotificationAgent respuestas excesivamente verbosas
+
+**Detectado por:** Beta tester — certificado de rentas PDF producía respuesta que justificaba cada detalle obvio antes de la conclusión.
+
+**Causa raíz:**
+1. `SYSTEM_PROMPT` del NotificationAgent imponía 6 secciones obligatorias con headers markdown fijos (¿Qué es esto?, Plazos, Tu situación fiscal, Qué tienes que hacer, Enlaces útiles, Consejos) — el LLM las rellenaba todas aunque estuvieran vacías o fueran triviales.
+2. `_build_analysis_prompt` terminaba con "Genera una explicación siguiendo EXACTAMENTE la estructura del SYSTEM_PROMPT" — forzaba al LLM a cumplir la plantilla completa.
+3. `format_notification_friendly` en `notifications.py` envolvía el `summary` del LLM en OTRA capa con intro hardcodeada + pasos hardcodeados por tipo de notificación → duplicación total del contenido.
+
+**Fix:**
+- `backend/app/agents/notification_agent.py`:
+  - `SYSTEM_PROMPT` reescrito con patrón answer-first (misma regla que TaxAgent): responde primero, explica solo lo no obvio, no rellenes secciones vacías.
+  - Instrucción final de `_build_analysis_prompt` cambiada de "EXACTAMENTE la estructura" a "responde directamente, sé breve".
+- `backend/app/routers/notifications.py`:
+  - `format_notification_friendly` simplificada: el `summary` del LLM pasa directamente como cuerpo principal. Solo añade bloque de plazos calculados (datos estructurados server-side) y footer de 1 línea.
+
+**Archivos modificados:**
+- `backend/app/agents/notification_agent.py`
+- `backend/app/routers/notifications.py`
+
+**Tests:** 5/5 notification tests PASS. 1009 total sin regresiones.
+
+### Bug 51: Comparativa conjunta vs individual solo muestra un resultado (Juan Pablo Sanchez)
+**Causa raiz:** `tax_agent.py` linea ~443 solo procesaba `tool_calls[0]` — descartaba el resto. Cuando OpenAI proponia 2 tool calls (conjunta + individual), solo ejecutaba la primera. System prompt sin instrucciones de comparativa.
+**Fix:**
+- Loop sobre todos los tool_calls (no solo [0])
+- Instruccion de comparativa anadida al system prompt: "Si pide comparativa → llama multiples veces, presenta tabla markdown"
+**Archivos:** tax_agent.py
+
+---
+
 ## [2026-03-12] Bug 48: Cataluña "No scale found" — falta "cataluna" en CCAA_NORMALIZATION
 
 **Detectado por:** QA API test 5 territorios

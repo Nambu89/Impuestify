@@ -122,7 +122,10 @@ class TestWatchlist:
         territories = get_territories()
         assert "AEAT" in territories
         assert "Estatal" in territories
-        assert len(territories) >= 5
+        assert "Ceuta" in territories
+        assert "Melilla" in territories
+        assert "Canarias" in territories
+        assert len(territories) >= 20
 
     def test_stats(self):
         stats = get_stats()
@@ -310,3 +313,63 @@ class TestDownload:
         # Second request to same domain should be blocked
         result2 = download_document("http://ratelimited.com/other.pdf", tmp_path / "other.pdf")
         assert result2["status"] == "blocked"
+
+
+# ── Drift Analyzer Tests ────────────────────────────────────────
+
+
+class TestDriftAnalyzer:
+    def test_classify_irpf(self):
+        from backend.scripts.doc_crawler.drift_analyzer import classify_file
+        priority, reason = classify_file("AEAT/IRPF/AEAT-Manual_Practico_IRPF_2025_Tomo1.pdf")
+        assert priority == "high"
+        assert "IRPF" in reason
+
+    def test_classify_ipsi(self):
+        from backend.scripts.doc_crawler.drift_analyzer import classify_file
+        priority, _ = classify_file("Ceuta/Ceuta-Ley_8_1991_IPSI_Ceuta_consolidado.pdf")
+        assert priority == "high"
+
+    def test_classify_igic(self):
+        from backend.scripts.doc_crawler.drift_analyzer import classify_file
+        priority, _ = classify_file("Canarias/Canarias-Ley_20_1991_IGIC_consolidado.pdf")
+        assert priority == "high"
+
+    def test_classify_tributos_cedidos(self):
+        from backend.scripts.doc_crawler.drift_analyzer import classify_file
+        priority, _ = classify_file("Madrid/Madrid-DLeg_1_2010_TributosCedidos_consolidado.pdf")
+        assert priority == "high"
+
+    def test_classify_estatuto_medium(self):
+        from backend.scripts.doc_crawler.drift_analyzer import classify_file
+        priority, _ = classify_file("Melilla/Melilla-Ley_Organica_2_1995_Estatuto_consolidado.pdf")
+        assert priority == "medium"
+
+    def test_classify_unknown_low(self):
+        from backend.scripts.doc_crawler.drift_analyzer import classify_file
+        priority, _ = classify_file("docs/random_document.pdf")
+        assert priority == "low"
+
+    def test_extract_territory(self):
+        from backend.scripts.doc_crawler.drift_analyzer import extract_territory
+        assert extract_territory("Ceuta/Ceuta-Ley_IPSI.pdf") == "Ceuta"
+        assert extract_territory("AEAT/IRPF/Manual.pdf") == "AEAT"
+        assert extract_territory("Canarias/IGIC.pdf") == "Canarias"
+
+    def test_analyze_no_pending(self, tmp_path):
+        from backend.scripts.doc_crawler.drift_analyzer import analyze_drift
+        from backend.scripts.doc_crawler import config
+        original = config.PENDING_INGEST
+        config.PENDING_INGEST = tmp_path / "nonexistent.json"
+        try:
+            result = analyze_drift(dry_run=True)
+            assert result["status"] == "no_changes"
+        finally:
+            config.PENDING_INGEST = original
+
+    def test_build_analysis_prompt(self):
+        from backend.scripts.doc_crawler.drift_analyzer import build_analysis_prompt
+        changes = [{"path": "test.pdf", "priority": "high", "territory": "Madrid", "reason": "test"}]
+        prompt = build_analysis_prompt(changes)
+        assert "Madrid" in prompt
+        assert "JSON" in prompt

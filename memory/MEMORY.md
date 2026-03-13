@@ -1,6 +1,6 @@
 # TaxIA — Memoria del Agente
 
-> Ultima actualizacion: 2026-03-09 (sesion 3)
+> Ultima actualizacion: 2026-03-13 (sesion 9)
 > Ver detalles en archivos separados por tema
 > Bugs fixeados: `memory/bugfixes-2026-03.md`
 
@@ -10,7 +10,7 @@
 |---------|-----------|
 | `memory/MEMORY.md` | Este indice + resumen de cada area |
 | `memory/backend-subscription.md` | Detalles backend Stripe |
-| `memory/crawler-state.md` | Estado del crawler de documentos + automatizacion semanal |
+| `memory/crawler-state.md` | Estado del crawler + drift analyzer (54 URLs, 23 territorios) |
 | `memory/frontend-features.md` | UX/Streaming, PWA, Landing, DeductionCards, Cookies, Admin |
 | `memory/bugfixes-2026-03.md` | Bugs fixeados marzo 2026 (13 bugs documentados) |
 | `memory/mcp-design-tools.md` | Google Stitch + Nano Banana MCP config y modelos Gemini 3 |
@@ -18,6 +18,7 @@
 | `memory/agent-system-improvements.md` | Mejoras GSD al sistema multi-agente (2026-03-08) |
 | `memory/awesome-claude-code.md` | Integracion herramientas awesome-claude-code (2026-03-08) |
 | `memory/aeat-docs-integration.md` | Integracion docs AEAT: casillas, XSD, XLS, VeriFactu (2026-03-08) |
+| `memory/beta_testers.md` | 4 beta testers activos (Ramon, Juan Pablo, Jose Antonio, Maria) |
 
 ## Arquitectura del proyecto
 
@@ -99,15 +100,17 @@
 - SSE v3.0: content_chunk (append) + content (replace)
 - PWA manual, Landing con React Bits, DeductionCards en Chat
 
-## Crawler Automatizado (COMPLETO — 2026-03-09)
+## Crawler Automatizado + Drift Analyzer (2026-03-13)
 
-- Modulo `backend/scripts/doc_crawler/` — 9 ficheros Python + .bat, 32 tests PASS
-- 48 URLs: 25 alta, 19 media, 4 baja — 21 territorios
+- Modulo `backend/scripts/doc_crawler/` — 10 ficheros Python + .bat, 41 tests PASS
+- **54 URLs**: 23 territorios (incluyendo Ceuta, Melilla, Canarias IGIC)
 - Rate limit: 4s/request, 50/dominio/sesion, backoff 10/30/60/STOP, robots.txt
 - Windows Task Scheduler: `TaxIA-DocCrawler-Weekly`, lunes 09:00
 - CLI: `python -m backend.scripts.doc_crawler [--territory X] [--dry-run] [--stats]`
-- Genera `_pending_ingest.json` para pipeline RAG
-- Commit: `250e8a2`
+- **Drift Analyzer** (Layer 2): `drift_analyzer.py` — clasifica cambios por prioridad (free), invoca Claude haiku headless solo para high/medium (cheap). Genera `plans/drift-report-YYYY-MM-DD.md`
+- Integrado en `scheduled_check.py`: post-crawl automatico si hay cambios
+- CLI drift: `python -m backend.scripts.doc_crawler.drift_analyzer [--dry-run] [--skip-llm]`
+- Commit: `250e8a2` (crawler) + pendiente commit drift analyzer
 
 ## Biblioteca RAG
 

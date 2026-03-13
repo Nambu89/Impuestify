@@ -7,6 +7,25 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-13] PM — DONE — seed_deductions_xsd.py ejecutado en Turso produccion
+
+- 339 deducciones XSD Modelo 100 AEAT insertadas (15 CCAA)
+- 0 errores, idempotente (DELETE existing + INSERT fresh)
+- Tarea pendiente desde 2026-03-08, ahora completada
+
+---
+
+## [2026-03-13] PM — DONE — Bugs 49-52: 4 bugs beta testers (Commit b148564)
+
+- **Bug 52** (Jose Antonio Alvarez): Password reset no enviaba email — dominio `.es` → `.com` en 6 archivos. Resend rechazaba dominio no verificado. **Pendiente usuario**: cambiar `RESEND_FROM_EMAIL` en Railway.
+- **Bug 50** (Juan Pablo Sanchez): Workspaces loading infinito — AbortController+timeout en useApi, request ID en useWorkspaces, NULL guard en workspaces.py
+- **Bug 49** (Ramon Palomares): NotificationAgent verboso — system prompt answer-first, eliminado doble formateo
+- **Bug 51** (Juan Pablo Sanchez): Comparativa conjunta vs individual incompleta — loop tool_calls + instrucción comparativa en system prompt
+- **Tests**: 1009 PASS, frontend build OK
+- **Deploy**: pushed `b148564` to main, Railway auto-deploy
+
+---
+
 ## [2026-03-12] PM — DONE — Bug 47+48: CCAA deductions + Cataluña scales
 
 - **Bug 47 (3 sub-bugs)**: territory name mismatch, edad→menor_XX_anos, alquiler_pagado_anual=0
