@@ -12,7 +12,7 @@
 | `memory/backend-subscription.md` | Detalles backend Stripe |
 | `memory/crawler-state.md` | Estado del crawler + drift analyzer (54 URLs, 23 territorios) |
 | `memory/frontend-features.md` | UX/Streaming, PWA, Landing, DeductionCards, Cookies, Admin |
-| `memory/bugfixes-2026-03.md` | Bugs fixeados marzo 2026 (13 bugs documentados) |
+| `memory/bugfixes-2026-03.md` | Bugs fixeados marzo 2026 (55 bugs documentados) |
 | `memory/mcp-design-tools.md` | Google Stitch + Nano Banana MCP config y modelos Gemini 3 |
 | `memory/response-quality-gap.md` | Analisis calidad respuesta vs Google/Claude — plan de mejora |
 | `memory/agent-system-improvements.md` | Mejoras GSD al sistema multi-agente (2026-03-08) |

@@ -145,14 +145,27 @@ class PIIDetector:
             )
             
             response = completion.choices[0].message.content.strip()
-            
-            # Llama Guard Check
-            is_unsafe = "unsafe" in response.lower() and "S7" in response
-            
+
+            # Support both Llama Guard format ("unsafe\nS7") and
+            # gpt-oss-safeguard-20b format (empty = safe, refusal text = unsafe)
+            response_lower = response.lower()
+            if not response:
+                # Empty response = safe (gpt-oss-safeguard-20b)
+                is_unsafe = False
+            elif response_lower.startswith("unsafe") and "S7" in response:
+                # Llama Guard format with specific S7 category
+                is_unsafe = True
+            elif response_lower.startswith("safe"):
+                is_unsafe = False
+            else:
+                # Natural language refusal = model considers content unsafe
+                refusal_indicators = ["i'm sorry", "i cannot", "i can't", "cannot help", "can't help", "unable to"]
+                is_unsafe = any(ind in response_lower for ind in refusal_indicators)
+
             detected_types = ["PII (Privacy Violation S7)"] if is_unsafe else []
-            
+
             if is_unsafe and self.log_detections:
-                 logger.warning(f"🚨 PII detected by Llama Guard: {response}")
+                 logger.warning(f"🚨 PII detected by moderation model: {response}")
 
             return PIIDetectionResult(
                 has_pii=is_unsafe,

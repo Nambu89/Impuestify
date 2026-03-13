@@ -112,13 +112,27 @@ class SQLInjectionValidator:
             )
             
             response = completion.choices[0].message.content.strip()
-            
-            is_unsafe = "unsafe" in response.lower() and "S14" in response
-            
+
+            # Support both Llama Guard format ("unsafe\nS14") and
+            # gpt-oss-safeguard-20b format (empty = safe, refusal text = unsafe)
+            response_lower = response.lower()
+            if not response:
+                # Empty response = safe (gpt-oss-safeguard-20b)
+                is_unsafe = False
+            elif response_lower.startswith("unsafe") and "S14" in response:
+                # Llama Guard format with specific S14 category
+                is_unsafe = True
+            elif response_lower.startswith("safe"):
+                is_unsafe = False
+            else:
+                # Natural language refusal = model considers content unsafe
+                refusal_indicators = ["i'm sorry", "i cannot", "i can't", "cannot help", "can't help", "unable to"]
+                is_unsafe = any(ind in response_lower for ind in refusal_indicators)
+
             violations = []
             if is_unsafe:
                 violations.append("AI Detected: Code Interpreter Abuse / SQL Injection (S14)")
-                logger.warning(f"🚨 SQL Injection detected by Llama Guard: {response}")
+                logger.warning(f"🚨 SQL Injection detected by moderation model: {response}")
                 
             return SQLInjectionResult(
                 is_safe=not is_unsafe,

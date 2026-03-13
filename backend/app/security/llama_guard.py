@@ -99,7 +99,8 @@ class LlamaGuard:
         "S11": "Si estás pasando por un momento difícil, te recomiendo hablar con un profesional. Teléfono de la Esperanza: 717 003 717",
         "S12": "Lo siento, no puedo ayudar con contenido sexual.",
         "S13": "Lo siento, no puedo proporcionar contenido electoral sesgado.",
-        "S14": "Lo siento, no puedo ayudar con código malicioso."
+        "S14": "Lo siento, no puedo ayudar con código malicioso.",
+        "CONTENT_BLOCKED": "Lo siento, no puedo procesar esta consulta. Por favor, reformula tu pregunta sobre temas fiscales.",
     }
     
     DEFAULT_BLOCK_MESSAGE = (
@@ -233,44 +234,75 @@ class LlamaGuard:
                 error=str(e)
             )
     
+    # Refusal indicators for models that return natural language instead of safe/unsafe
+    REFUSAL_INDICATORS = [
+        "i'm sorry", "i cannot", "i can't", "i am not able",
+        "i'm not able", "i must decline", "i won't", "i will not",
+        "not appropriate", "cannot assist", "cannot help",
+        "can't help", "can't assist", "unable to",
+        "no puedo", "lo siento", "no es apropiado",
+    ]
+
     def _parse_response(self, content: str, original_text: str = "") -> tuple[bool, List[str]]:
-        """Parse Llama Guard response into safety decision."""
-        content = content.strip().lower()
-        
-        if content.startswith("safe"):
+        """Parse moderation model response into safety decision.
+
+        Supports two response formats:
+        - Llama Guard: "safe" or "unsafe\\nS1,S2,..."
+        - gpt-oss-safeguard-20b: empty string = safe, natural language refusal = unsafe
+        """
+        content = content.strip()
+        content_lower = content.lower()
+
+        # Empty response = safe (gpt-oss-safeguard-20b format)
+        if not content:
             return True, []
-        
-        if content.startswith("unsafe"):
-            # Extract categories from response
+
+        # Llama Guard format: starts with "safe"
+        if content_lower.startswith("safe"):
+            return True, []
+
+        # Llama Guard format: starts with "unsafe" + category codes
+        if content_lower.startswith("unsafe"):
             categories = []
             for cat in self.RISK_CATEGORIES.keys():
-                if cat.lower() in content:
+                if cat.lower() in content_lower:
                     categories.append(cat)
-            
+
             # FILTER S6 (Professional Advice) - Tax advice is Impuestify's core function
             categories = [cat for cat in categories if cat != "S6"]
-            
-            # FILTER S1/S2/S13 (Crimes/Elections) if fiscal context detected - prevents false positives
-            # like "ponedoras de huevos" being flagged as violence, or regional tax questions as elections
+
+            # FILTER S1/S2/S13 (Crimes/Elections) if fiscal context detected
             if original_text:
                 text_lower = original_text.lower()
                 has_fiscal_context = any(term in text_lower for term in self.FISCAL_WHITELIST)
                 if has_fiscal_context:
-                    # Remove crime and elections categories for fiscal queries
                     filtered_cats = ["S1", "S2", "S13"]
                     removed = [cat for cat in categories if cat in filtered_cats]
                     if removed:
                         logger.info(f"✅ Filtering {removed} due to fiscal context in: {original_text[:50]}...")
                     categories = [cat for cat in categories if cat not in filtered_cats]
-            
-            # If all categories were filtered, consider it safe
+
             if not categories:
                 return True, []
-            
+
             return False, categories
-        
-        # Unknown format, assume safe
-        logger.warning(f"⚠️ Unknown Llama Guard response format: {content[:50]}")
+
+        # gpt-oss-safeguard-20b format: natural language refusal = unsafe
+        if any(indicator in content_lower for indicator in self.REFUSAL_INDICATORS):
+            logger.warning(f"🚫 Content blocked (model refusal): {content[:80]}")
+
+            # Check fiscal whitelist before blocking
+            if original_text:
+                text_lower = original_text.lower()
+                has_fiscal_context = any(term in text_lower for term in self.FISCAL_WHITELIST)
+                if has_fiscal_context:
+                    logger.info(f"✅ Overriding model refusal due to fiscal context in: {original_text[:50]}...")
+                    return True, []
+
+            return False, ["CONTENT_BLOCKED"]
+
+        # Non-empty but not a recognized refusal — treat as safe
+        logger.debug(f"ℹ️ Moderation response (not a refusal): {content[:50]}")
         return True, []
     
     def _calculate_risk_level(self, categories: List[str]) -> str:

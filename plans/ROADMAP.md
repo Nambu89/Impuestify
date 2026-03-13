@@ -190,6 +190,6 @@
 | Tests frontend | build PASS |
 | Exchanges crypto soportados | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
 | Fechas fiscales 2026 | 58 (32 estatales + 26 forales) |
-| Bugs fixeados (mar 2026) | 52 documentados (Bugs 1-52) |
+| Bugs fixeados (mar 2026) | 55 documentados (Bugs 1-55) |
 | URLs monitorizadas (crawler) | 54 en 23 territorios |
 | Drift Analyzer | Layer 1 (free) + Layer 2 (haiku headless) |

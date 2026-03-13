@@ -1,5 +1,25 @@
 # Bugfixes Marzo 2026
 
+## [2026-03-13] Bugs 53-55: Groq model 404, guardrails false positive, demo router (Commit fdfd0c0)
+
+### Bug 53: Groq model meta-llama/llama-guard-4-12b devuelve 404
+**Causa raiz:** Groq elimino el modelo `meta-llama/llama-guard-4-12b` de su plataforma. Afectaba a 3 modulos: llama_guard.py (content moderation), sql_injection.py (S14), pii_detector.py (S7).
+**Fix:** Cambiar `GROQ_MODEL` y `GROQ_MODEL_SAFETY` defaults a `openai/gpt-oss-safeguard-20b` en config.py. Actualizar .env local y .env.example.
+**Accion usuario:** Cambiar GROQ_MODEL en Railway produccion. CUIDADO: no poner "m" extra al inicio del nombre del modelo.
+**Archivos:** config.py, .env, .env.example, llama_guard.py (docstring), pii_detector.py (comment)
+
+### Bug 54: Guardrails bloquea pregunta legitima "no declarar"
+**Causa raiz:** `PROHIBITED_KEYWORDS` en guardrails.py contenia "no declarar" y "eludir" que son demasiado amplios. Un usuario preguntando "cuanto es el limite sin necesidad de declarar el IRPF" era bloqueado como evasion fiscal.
+**Fix:** Eliminado "no declarar" y "eludir". Anadido "como no pagar impuestos" (intencion clara de evasion).
+**Archivos:** guardrails.py
+
+### Bug 55: demo.py atributos incorrectos en ModerationResult y PIIDetectionResult
+**Causa raiz:** demo.py usaba `moderation.categories` (no existe, correcto: `blocked_categories`), `pii_result.pii_types` (correcto: `detected_types`), `pii_result.redacted_text` (correcto: `masked_text`). Bugs latentes que no crasheaban porque los try/except los capturaban, pero habrian fallado con el nuevo modelo funcional.
+**Fix:** Corregir los 3 atributos. Tambien renombrado `request` → `body` en user_rights.py (change_password + update_fiscal_profile) como prevencion del patron slowapi.
+**Archivos:** demo.py, user_rights.py
+
+---
+
 ## [2026-03-13] Bugs 49-52: 4 bugs beta testers (Commit b148564)
 
 ### Bug 52: Password reset no envia email (Jose Antonio Alvarez)
