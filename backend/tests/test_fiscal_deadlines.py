@@ -759,7 +759,7 @@ class TestVapidConfig:
         s = Settings()
         assert s.VAPID_PUBLIC_KEY is None
         assert s.VAPID_PRIVATE_KEY is None
-        assert s.VAPID_CLAIMS_EMAIL == "mailto:soporte@impuestify.es"
+        assert s.VAPID_CLAIMS_EMAIL == "mailto:soporte@impuestify.com"
 
 
 # ============================================================

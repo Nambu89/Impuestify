@@ -128,6 +128,10 @@ export function useApi() {
 
     const apiRequest = useCallback(async <T = any>(url: string, options?: RequestInit): Promise<T> => {
         logger.debug('API Request:', url, options?.method || 'GET')
+
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000)
+
         try {
             const token = localStorage.getItem(TOKEN_KEY)
 
@@ -139,7 +143,8 @@ export function useApi() {
 
             const response = await fetch(`${API_URL}${url}`, {  // ✅ Prefijo con API_URL
                 ...options,
-                headers
+                headers,
+                signal: controller.signal
             })
 
             logger.debug('API Response:', url, response.status)
@@ -172,8 +177,14 @@ export function useApi() {
 
             return await response.json()
         } catch (error: any) {
+            if (error.name === 'AbortError') {
+                logger.warn('apiRequest timeout:', url)
+                throw new Error('La solicitud tardó demasiado. Inténtalo de nuevo.')
+            }
             logger.error('apiRequest error:', error)
             throw new Error(error.message || 'Error de conexión')
+        } finally {
+            clearTimeout(timeoutId)
         }
     }, [])
 

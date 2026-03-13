@@ -142,7 +142,14 @@ Añade explicación y contexto ALREDEDOR de los datos, nunca EN VEZ DE ellos.
 - NUNCA digas "en los documentos que me has pasado" — consultas tu base de conocimiento interna.
 - CCAA obligatoria para IRPF y deducciones. Si no la tienes en el perfil ni en la conversación, pregúntala antes de calcular.
 - Ceuta/Melilla (Art. 68.4 LIRPF): si ccaa_residencia = Ceuta o Melilla, pasa ceuta_melilla=true en simulate_irpf y calculate_irpf. Escala Estatal + deducción 60% cuota íntegra. IPSI en vez de IVA.
-- Autónomos: verifica situacion_laboral del perfil ANTES de usar calculate_autonomous_quota, calculate_modelo_303, calculate_modelo_130. Si situacion_laboral = "particular" o "asalariado" y el usuario menciona actividad económica, pregunta si está dado de alta como autónomo. NO calcules cuotas ni modelos 303/130 hasta confirmar. Si situacion_laboral es desconocida (sin perfil), pregunta: cuenta ajena, autónomo o pluriactividad."""
+- Autónomos: verifica situacion_laboral del perfil ANTES de usar calculate_autonomous_quota, calculate_modelo_303, calculate_modelo_130. Si situacion_laboral = "particular" o "asalariado" y el usuario menciona actividad económica, pregunta si está dado de alta como autónomo. NO calcules cuotas ni modelos 303/130 hasta confirmar. Si situacion_laboral es desconocida (sin perfil), pregunta: cuenta ajena, autónomo o pluriactividad.
+
+## COMPARATIVAS MULTI-ESCENARIO
+Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "cuál es mejor", "conjunta vs individual", "autónomo vs asalariado" o similar:
+- Llama a simulate_irpf MÚLTIPLES VECES en la misma respuesta con los parámetros contrastantes (ej: tributacion_conjunta=true y tributacion_conjunta=false).
+- El modelo puede proponer varias tool calls en paralelo — TODAS se ejecutarán.
+- Presenta ambos resultados en tabla markdown comparativa con columnas Escenario A / Escenario B.
+- Indica claramente cuál opción es más favorable y la diferencia exacta en euros."""
 	
 	async def run(
 		self,
@@ -440,54 +447,58 @@ Añade explicación y contexto ALREDEDOR de los datos, nunca EN VEZ DE ellos.
 			
 			if message.tool_calls:
 				import json
-				tool_call = message.tool_calls[0]
-				function_name = tool_call.function.name
-				function_args = json.loads(tool_call.function.arguments)
-				
-				logger.info(f"Tool called: {function_name} with args: {function_args}")
-				
-				# Emit tool call event (for SSE streaming)
-				if progress_callback:
-					await progress_callback.tool_call(function_name, function_args)
-				
-				# Execute the appropriate tool dynamically
-				if function_name in TOOL_EXECUTORS:
-					tool_executor = TOOL_EXECUTORS[function_name]
-					# Inject user_id and db_client for tools that need them
-					if function_name == "update_fiscal_profile":
-						tool_result = await tool_executor(user_id=user_id, db_client=db_client, **function_args)
-					else:
-						tool_result = await tool_executor(**function_args)
-				else:
-					logger.warning(f"Unknown function: {function_name}")
-					tool_result = {"success": False, "error": f"Unknown function: {function_name}"}
-				
-				logger.info(f"Tool result success: {tool_result.get('success')}")
-				
-				# Emit tool result event (for SSE streaming)
-				if progress_callback:
-					await progress_callback.tool_result(function_name, tool_result.get('success', False))
-				
-				# Add assistant message and tool result to conversation
+
+				# Add assistant message with ALL tool calls (required by OpenAI API)
 				messages.append({
 					"role": "assistant",
 					"content": None,
-					"tool_calls": [tool_call.model_dump()]
+					"tool_calls": [tc.model_dump() for tc in message.tool_calls]
 				})
-				# 🔧 FIX: Use formatted_response instead of raw JSON
-				# This prevents technical JSON from being shown to users
-				tool_response_content = tool_result.get('formatted_response', json.dumps(tool_result))
-				# Protect tool results: force the model to present all numeric data
-				tool_response_content += (
-					"\n\n---\n[INSTRUCCION: Presenta TODAS las cifras de arriba en tu respuesta. "
-					"Usa tabla markdown para el desglose. NO resumas ni parafrasees datos numericos.]"
-				)
 
-				messages.append({
-					"role": "tool",
-					"tool_call_id": tool_call.id,
-					"content": tool_response_content  # ← Use formatted response, not raw JSON
-				})
+				# Execute ALL tool calls (supports multi-call comparatives like conjunta vs individual)
+				for tool_call in message.tool_calls:
+					function_name = tool_call.function.name
+					function_args = json.loads(tool_call.function.arguments)
+
+					logger.info(f"Tool called: {function_name} with args: {function_args}")
+
+					# Emit tool call event (for SSE streaming)
+					if progress_callback:
+						await progress_callback.tool_call(function_name, function_args)
+
+					# Execute the appropriate tool dynamically
+					if function_name in TOOL_EXECUTORS:
+						tool_executor = TOOL_EXECUTORS[function_name]
+						# Inject user_id and db_client for tools that need them
+						if function_name == "update_fiscal_profile":
+							tool_result = await tool_executor(user_id=user_id, db_client=db_client, **function_args)
+						else:
+							tool_result = await tool_executor(**function_args)
+					else:
+						logger.warning(f"Unknown function: {function_name}")
+						tool_result = {"success": False, "error": f"Unknown function: {function_name}"}
+
+					logger.info(f"Tool result success: {tool_result.get('success')}")
+
+					# Emit tool result event (for SSE streaming)
+					if progress_callback:
+						await progress_callback.tool_result(function_name, tool_result.get('success', False))
+
+					# Append each tool result as a separate tool message
+					tool_response_content = tool_result.get('formatted_response', json.dumps(tool_result))
+					# Protect tool results: force the model to present all numeric data
+					tool_response_content += (
+						"\n\n---\n[INSTRUCCION: Presenta TODAS las cifras de arriba en tu respuesta. "
+						"Usa tabla markdown para el desglose. NO resumas ni parafrasees datos numericos.]"
+					)
+					messages.append({
+						"role": "tool",
+						"tool_call_id": tool_call.id,
+						"content": tool_response_content
+					})
+
+				# Keep a reference to the last tool_result for the fallback logic below
+				# (tool_result is still in scope from the last loop iteration)
 				
 				# Second call to get final response — STREAM token by token
 				logger.info("Calling OpenAI again with tool result (streaming)")

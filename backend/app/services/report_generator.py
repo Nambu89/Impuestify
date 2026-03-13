@@ -253,7 +253,7 @@ def generate_irpf_report(
     ))
     elements.append(Spacer(1, 3 * mm))
     elements.append(Paragraph(
-        f"Generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')} por Impuestify (impuestify.es)",
+        f"Generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')} por Impuestify (impuestify.com)",
         ParagraphStyle("Footer", parent=small_style, alignment=TA_CENTER),
     ))
 

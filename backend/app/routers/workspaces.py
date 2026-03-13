@@ -8,6 +8,7 @@ for analysis by the WorkspaceAgent.
 from fastapi import APIRouter, HTTPException, Depends, Request, UploadFile, File
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
+from datetime import datetime
 import logging
 
 from app.database.turso_client import TursoClient
@@ -138,8 +139,8 @@ async def create_workspace(
             is_default=workspace.is_default,
             max_files=workspace.max_files,
             max_size_mb=workspace.max_size_mb,
-            created_at=workspace.created_at.isoformat(),
-            updated_at=workspace.updated_at.isoformat(),
+            created_at=(workspace.created_at or datetime.utcnow()).isoformat(),
+            updated_at=(workspace.updated_at or datetime.utcnow()).isoformat(),
             file_count=workspace.file_count or 0
         )
     except Exception as e:
@@ -170,8 +171,8 @@ async def list_workspaces(
                 is_default=w.is_default,
                 max_files=w.max_files,
                 max_size_mb=w.max_size_mb,
-                created_at=w.created_at.isoformat(),
-                updated_at=w.updated_at.isoformat(),
+                created_at=(w.created_at or datetime.utcnow()).isoformat(),
+                updated_at=(w.updated_at or datetime.utcnow()).isoformat(),
                 file_count=w.file_count or 0
             )
             for w in workspaces
@@ -238,8 +239,8 @@ async def get_workspace(
                 is_default=workspace.is_default,
                 max_files=workspace.max_files,
                 max_size_mb=workspace.max_size_mb,
-                created_at=workspace.created_at.isoformat(),
-                updated_at=workspace.updated_at.isoformat(),
+                created_at=(workspace.created_at or datetime.utcnow()).isoformat(),
+                updated_at=(workspace.updated_at or datetime.utcnow()).isoformat(),
                 file_count=workspace.file_count or 0
             ),
             files=files
@@ -312,8 +313,8 @@ async def update_workspace(
             is_default=updated.is_default,
             max_files=updated.max_files,
             max_size_mb=updated.max_size_mb,
-            created_at=updated.created_at.isoformat(),
-            updated_at=updated.updated_at.isoformat(),
+            created_at=(updated.created_at or datetime.utcnow()).isoformat(),
+            updated_at=(updated.updated_at or datetime.utcnow()).isoformat(),
             file_count=updated.file_count or 0
         )
     except HTTPException:

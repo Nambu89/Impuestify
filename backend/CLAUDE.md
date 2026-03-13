@@ -24,7 +24,7 @@ cd backend && pytest tests/ -v --tb=short
 | `STRIPE_SECRET_KEY` + `WEBHOOK_SECRET` + `PRICE_ID` | Payments |
 | `RESEND_API_KEY` + `RESEND_FROM_EMAIL` | Email to advisors |
 | `ALLOWED_ORIGINS` | CORS (frontend URL) |
-| `FRONTEND_URL` | Base URL for reset-password link (default: https://impuestify.es) |
+| `FRONTEND_URL` | Base URL for reset-password link (default: https://impuestify.com) |
 
 ## Multi-Agent System (`app/agents/`)
 
@@ -45,6 +45,11 @@ Extracts 13 fields from payslips (gross/net salary, IRPF, SS, extras). Calculate
 
 ### NotificationAgent (`notification_agent.py`)
 Analyzes AEAT notification PDFs. Extracts amounts, deadlines, concepts.
+
+**REGLA: Patrón answer-first — NO estructura rígida de secciones**
+- El `SYSTEM_PROMPT` usa patrón answer-first igual que TaxAgent: responde primero, explica solo lo no obvio.
+- NO imponer secciones fijas (¿Qué es esto?, Plazos, Tu situación fiscal, etc.) — el LLM las rellenaría aunque estuvieran vacías.
+- `format_notification_friendly` en `notifications.py` NO debe añadir intro hardcodeada ni pasos hardcodeados por tipo — solo envuelve el summary del LLM con el bloque de plazos calculados server-side y un footer mínimo.
 
 ### WorkspaceAgent (`workspace_agent.py`)
 Analyzes uploaded documents. Tools: `get_workspace_summary`, `calculate_vat_balance`, `project_annual_irpf`, `get_quarterly_deadlines`.

@@ -176,14 +176,14 @@ class Settings(BaseSettings):
     # 📧 Email (Resend)
     # -------------------------------
     RESEND_API_KEY: Optional[str] = Field(default=None)
-    RESEND_FROM_EMAIL: str = Field(default="noreply@impuestify.es")
+    RESEND_FROM_EMAIL: str = Field(default="noreply@impuestify.com")
 
     # -------------------------------
     # 🔔 Web Push (VAPID)
     # -------------------------------
     VAPID_PUBLIC_KEY: Optional[str] = Field(default=None)
     VAPID_PRIVATE_KEY: Optional[str] = Field(default=None)
-    VAPID_CLAIMS_EMAIL: str = Field(default="mailto:soporte@impuestify.es")
+    VAPID_CLAIMS_EMAIL: str = Field(default="mailto:soporte@impuestify.com")
 
     # -------------------------------
     # 🛡️ Cloudflare Turnstile
@@ -193,7 +193,7 @@ class Settings(BaseSettings):
     # -------------------------------
     # 🌐 Frontend
     # -------------------------------
-    FRONTEND_URL: str = Field(default="https://impuestify.es")
+    FRONTEND_URL: str = Field(default="https://impuestify.com")
 
     # -------------------------------
     # 👤 Owner & Contact

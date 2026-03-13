@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useApi } from './useApi'
 
 export interface Workspace {
@@ -41,6 +41,7 @@ export function useWorkspaces() {
     const [workspaceFiles, setWorkspaceFiles] = useState<WorkspaceFile[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const filesRequestIdRef = useRef<number>(0)
 
     const fetchWorkspaces = useCallback(async () => {
         setLoading(true)
@@ -116,18 +117,28 @@ export function useWorkspaces() {
     }, [])
 
     const fetchWorkspaceFiles = useCallback(async (workspaceId: string) => {
+        // Increment request ID to detect stale responses from previous workspace
+        const requestId = ++filesRequestIdRef.current
+
         setLoading(true)
         try {
             const data = await apiRequest<WorkspaceFile[]>(`/api/workspaces/${workspaceId}/files`, {
                 method: 'GET'
             })
-            setWorkspaceFiles(data || [])
+            // Only update state if no newer request has been issued
+            if (requestId === filesRequestIdRef.current) {
+                setWorkspaceFiles(data || [])
+            }
             return data
         } catch (err: any) {
-            setWorkspaceFiles([])
+            if (requestId === filesRequestIdRef.current) {
+                setWorkspaceFiles([])
+            }
             throw err
         } finally {
-            setLoading(false)
+            if (requestId === filesRequestIdRef.current) {
+                setLoading(false)
+            }
         }
     }, [apiRequest])
 

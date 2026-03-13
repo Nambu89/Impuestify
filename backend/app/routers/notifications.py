@@ -429,144 +429,51 @@ def format_notification_friendly(
 	severity: str
 ) -> str:
 	"""
-	Format notification in friendly, conversational language.
-	
-	NO hardcoding - adapts to any notification type.
-	
+	Wrap the LLM summary with structured deadline data.
+
+	The LLM already produces an answer-first response. This function only adds:
+	- A structured deadlines block (calculated server-side, more reliable than LLM)
+	- A "questions?" prompt at the end
+
 	Args:
 		notification_type: Type detected by agent (e.g., "Providencia de apremio")
-		summary: Agent's summary text
-		deadlines: List of deadline dicts
+		summary: Agent's summary text (answer-first format)
+		deadlines: List of deadline dicts with pre-calculated dates
 		region: Region info dict
 		severity: Severity level (low/medium/high/critical)
-		
+
 	Returns:
-		Formatted friendly message
+		Formatted message
 	"""
-	
-	# Detect type and create intro (generic, adapts to any type)
-	type_lower = notification_type.lower()
-	
-	if "providencia" in type_lower and "apremio" in type_lower:
-		emoji = "⚠️"
-		intro = """🔔 **Tienes una notificación de Hacienda**
+	parts = [summary]
 
-Tranquilo, te explico qué es. Es una **"Providencia de Apremio"** — básicamente es un aviso de que tienes una deuda pendiente que no se pagó a tiempo."""
-	
-	elif "requerimiento" in type_lower:
-		emoji = "📬"
-		intro = """📬 **Hacienda te pide información**
-
-Te han enviado un **requerimiento** — necesitan que les mandes documentos o datos."""
-	
-	elif "sanción" in type_lower or "multa" in type_lower:
-		emoji = "🚨"
-		intro = """🚨 **Notificación de sanción**
-
-Hacienda te ha puesto una sanción. Te explico qué significa."""
-	
-	elif "liquidación" in type_lower:
-		emoji = "📊"
-		intro = """📊 **Liquidación de Hacienda**
-
-Te han enviado una liquidación — es el cálculo de lo que Hacienda dice que debes pagar."""
-	
-	elif "propuesta" in type_lower:
-		emoji = "📝"
-		intro = """📝 **Propuesta de liquidación**
-
-Es una propuesta de Hacienda sobre lo que creen que debes. Todavía puedes alegar."""
-	
-	else:
-		emoji = "📄"
-		intro = f"""📄 **Notificación de Hacienda**
-
-Has recibido: **{notification_type}**"""
-	
-	# Build response parts
-	parts = [intro, "\n---\n"]
-	
-	# Section 1: What is it (the summary from agent)
-	parts.append(f"\n## {emoji} ¿Qué es esto?\n\n{summary}\n")
-	
-	# Section 2: Deadlines (if any)
+	# Append structured deadlines block only if deadlines exist and are not already
+	# mentioned in the summary (the LLM may have included them)
 	if deadlines:
-		parts.append("\n## ⏰ ¿Cuándo tengo que actuar?\n")
-		
+		deadline_lines = []
 		for deadline in deadlines:
 			desc = deadline.get('description', 'Plazo')
 			date = deadline.get('date')
 			days = deadline.get('days_remaining')
 			urgent = deadline.get('is_urgent', False)
-			
+
 			urgency_emoji = "🔴" if urgent else "📅"
-			
+
 			if date and days is not None:
 				if days < 0:
-					parts.append(f"{urgency_emoji} **{desc}**: Ya venció (hace {abs(days)} días)\n")
+					deadline_lines.append(f"{urgency_emoji} **{desc}**: vencido (hace {abs(days)} días)")
 				elif days == 0:
-					parts.append(f"{urgency_emoji} **{desc}**: **¡HOY ES EL ÚLTIMO DÍA!**\n")
+					deadline_lines.append(f"{urgency_emoji} **{desc}**: **HOY es el último día**")
 				elif days <= 3:
-					parts.append(f"{urgency_emoji} **{desc}**: Quedan **{days} días** (fecha: {date})\n")
+					deadline_lines.append(f"{urgency_emoji} **{desc}**: {date} (quedan {days} días)")
 				else:
-					parts.append(f"{urgency_emoji} **{desc}**: {days} días (fecha: {date})\n")
+					deadline_lines.append(f"{urgency_emoji} **{desc}**: {date} ({days} días)")
 			else:
-				parts.append(f"{urgency_emoji} **{desc}**\n")
-	
-	# Section 3: What to do
-	parts.append("\n## ✅ ¿Qué hago ahora?\n")
-	
-	if "providencia" in type_lower and "apremio" in type_lower:
-		parts.append("""
-1. **Si puedes pagar**: Hazlo cuanto antes para pagar menos recargo
-2. **Si no puedes**: Pide un aplazamiento URGENTE (antes de que acabe el plazo)
-3. **Si no estás de acuerdo**: Tienes 1 mes para recurrir
+				deadline_lines.append(f"{urgency_emoji} **{desc}**")
 
-💳 **Formas de pago**:
-- Online: [Sede Electrónica AEAT](https://sede.agenciatributaria.gob.es) → "Pagar, aplazar y consultar"
-- Teléfono: 91 553 68 01 (lunes a viernes, 9h-14h)
-- Banco: Con el documento de pago del PDF
-""")
-	
-	elif "requerimiento" in type_lower:
-		parts.append("""
-1. **Prepara la documentación** que te piden
-2. **Envíala antes del plazo** (o pide ampliación si necesitas más tiempo)
-3. **Guarda justificante** de envío
+		if deadline_lines:
+			parts.append("\n\n**Plazos calculados:**\n" + "\n".join(deadline_lines))
 
-📤 **Cómo enviar**:
-- Online: [Sede Electrónica AEAT](https://sede.agenciatributaria.gob.es) → "Registros y presentación"
-- Presencial: En tu oficina de Hacienda (pide cita previa)
-""")
-	
-	elif "liquidación" in type_lower or "propuesta" in type_lower:
-		parts.append("""
-1. **Revisa los cálculos** con cuidado
-2. **Si estás de acuerdo**: Paga en plazo
-3. **Si NO estás de acuerdo**: Presenta alegaciones (tienes plazo para ello)
+	parts.append("\n\n---\n¿Tienes dudas? Pregúntame lo que no entiendas.")
 
-💡 **Consejo**: Para temas de liquidaciones, mejor consulta con un asesor fiscal.
-""")
-	
-	else:
-		# Generic advice for unknown types
-		parts.append("""
-1. Lee toda la notificación con calma
-2. Identifica si hay plazos o acciones requeridas
-3. Si tienes dudas, consulta con un asesor fiscal o llama a Hacienda: 91 553 68 01
-""")
-	
-	# Section 4: Region info (if relevant)
-	if region and region.get('is_foral'):
-		parts.append(f"\n📍 **Región**: {region.get('region', 'No especificada')} (régimen foral)\n")
-	
-	# Footer
-	parts.append("""
----
-
-💡 **¿Tienes dudas?** Pregúntame lo que no entiendas sobre esta notificación.
-
-⚠️ **Aviso**: Esta explicación es orientativa. Para decisiones importantes (recurrir, alegar, etc.) consulta con un asesor fiscal profesional.
-""")
-	
 	return "".join(parts)
