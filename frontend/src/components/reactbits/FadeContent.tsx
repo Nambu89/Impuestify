@@ -1,5 +1,11 @@
 // Lightweight FadeContent using IntersectionObserver (no GSAP dependency)
+// SEO: bots/crawlers/prerender see content immediately (no opacity:0)
 import React, { useRef, useEffect, useState } from 'react'
+
+// Detect bots/crawlers/prerender — show content immediately for SEO
+const isBot = typeof navigator !== 'undefined' && (
+  /bot|crawl|spider|slurp|googlebot|bingbot|yandex|baidu|duckduck|facebookexternalhit|linkedinbot|twitterbot|whatsapp|preview|prerender|lighthouse|pagespeed|headless/i.test(navigator.userAgent)
+)
 
 interface FadeContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
@@ -25,9 +31,11 @@ const FadeContent: React.FC<FadeContentProps> = ({
   ...props
 }) => {
   const ref = useRef<HTMLDivElement>(null)
-  const [isVisible, setIsVisible] = useState(false)
+  const [isVisible, setIsVisible] = useState(isBot)
 
   useEffect(() => {
+    if (isBot) return
+
     const el = ref.current
     if (!el) return
 
