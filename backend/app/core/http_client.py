@@ -50,8 +50,8 @@ class HTTPClientManager:
             return
         
         # Get configuration from environment
-        self._max_connections = int(os.environ.get("HTTPX_MAX_CONNECTIONS", "100"))
-        self._max_keepalive = int(os.environ.get("HTTPX_MAX_KEEPALIVE_CONNECTIONS", "20"))
+        self._max_connections = int(os.environ.get("HTTPX_MAX_CONNECTIONS", "250"))
+        self._max_keepalive = int(os.environ.get("HTTPX_MAX_KEEPALIVE_CONNECTIONS", "50"))
         self._timeout = float(os.environ.get("HTTPX_TIMEOUT", "30.0"))
         
         # Create connection limits

@@ -389,7 +389,7 @@ def rate_limit_ask() -> Callable:
 	Strict limit to prevent cost explosion.
 	OPTIONS bypass handled in middleware.
 	"""
-	return limiter.limit("20/hour;5/minute")
+	return limiter.limit("60/hour;10/minute")
 
 
 def rate_limit_notification() -> Callable:
@@ -399,7 +399,7 @@ def rate_limit_notification() -> Callable:
 	Very strict limit due to high computational cost.
 	OPTIONS bypass handled in middleware.
 	"""
-	return limiter.limit("10/hour;2/minute")
+	return limiter.limit("30/hour;5/minute")
 
 
 def rate_limit_auth() -> Callable:
