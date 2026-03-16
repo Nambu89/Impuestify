@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
     Shield, CheckCircle, CreditCard, Calculator, ArrowLeft,
-    Loader, AlertCircle, Briefcase, X, Zap
+    Loader, AlertCircle, Briefcase, X, Zap, Video
 } from 'lucide-react'
 import { useSubscription } from '../hooks/useSubscription'
 import { useAuth } from '../hooks/useAuth'
@@ -31,6 +31,25 @@ const PLAN_PARTICULAR = {
         'Pago fraccionado IRPF (Modelo 130)',
         'Retenciones en facturas',
     ],
+}
+
+const PLAN_CREATOR = {
+    id: 'creator',
+    name: 'Creator',
+    price: 30,
+    icon: Video,
+    description: 'Para creadores de contenido e influencers',
+    features: [
+        'Todo lo del plan Particular',
+        'Simulador IRPF completo con royalties y derechos de autor',
+        'Calculadora IVA por plataforma (YouTube, TikTok, Twitch)',
+        'Búsqueda de epígrafe IAE para creadores de contenido',
+        'Modelo 349 — operaciones intracomunitarias',
+        'Asistente IA especializado en fiscalidad de creadores',
+        'Cobertura forales + Canarias + Ceuta/Melilla',
+        'Workspaces con contexto IA aislado',
+    ],
+    notIncluded: [],
 }
 
 const PLAN_AUTONOMO = {
@@ -125,9 +144,9 @@ export default function SubscribePage() {
                     </p>
                 </div>
 
-                <div className="subscribe-plans">
+                <div className="subscribe-plans subscribe-plans--three">
                     {/* Plan Particular */}
-                    <div className={`subscribe-plan ${planParam === 'autonomo' ? '' : ''}`}>
+                    <div className="subscribe-plan">
                         <div className="subscribe-plan__header">
                             <div className="subscribe-plan__icon">
                                 <Calculator size={28} />
@@ -177,6 +196,63 @@ export default function SubscribePage() {
                             </button>
                         ) : (
                             <Link to="/register" className="btn btn-secondary btn-lg subscribe-plan__cta">
+                                Crear cuenta
+                            </Link>
+                        )}
+                    </div>
+
+                    {/* Plan Creator */}
+                    <div className="subscribe-plan subscribe-plan--creator">
+                        <div className="subscribe-plan__badge subscribe-plan__badge--creator">
+                            <Zap size={14} />
+                            Oferta 2026
+                        </div>
+                        <div className="subscribe-plan__header">
+                            <div className="subscribe-plan__icon">
+                                <Video size={28} />
+                            </div>
+                            <h2>{PLAN_CREATOR.name}</h2>
+                            <p className="subscribe-plan__desc">{PLAN_CREATOR.description}</p>
+                        </div>
+
+                        <div className="subscribe-plan__price">
+                            <span className="subscribe-plan__currency">EUR</span>
+                            <span className="subscribe-plan__value subscribe-plan__value--creator">{PLAN_CREATOR.price}</span>
+                            <div className="subscribe-plan__price-aside">
+                                <span className="subscribe-plan__period">/mes</span>
+                                <span className="subscribe-plan__original-price">49 EUR en 2027</span>
+                            </div>
+                        </div>
+
+                        <ul className="subscribe-plan__features">
+                            {PLAN_CREATOR.features.map((f) => (
+                                <li key={f}>
+                                    <CheckCircle size={16} className="subscribe-plan__icon-yes subscribe-plan__icon-yes--creator" />
+                                    <span>{f}</span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        {isAuthenticated ? (
+                            <button
+                                onClick={() => handleCheckout('creator')}
+                                className="btn btn-lg subscribe-plan__cta subscribe-plan__cta--creator"
+                                disabled={isRedirecting}
+                            >
+                                {isRedirecting && selectedPlan === 'creator' ? (
+                                    <>
+                                        <Loader size={18} className="animate-spin" />
+                                        Redirigiendo a Stripe...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CreditCard size={18} />
+                                        Empezar como Creator
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <Link to="/register?plan=creator" className="btn btn-lg subscribe-plan__cta subscribe-plan__cta--creator">
                                 Crear cuenta
                             </Link>
                         )}

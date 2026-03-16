@@ -121,6 +121,10 @@
     margin-bottom: var(--spacing-6);
 }
 
+.subscribe-plans--three {
+    grid-template-columns: 1fr;
+}
+
 /* ========== PLAN CARD — BASE ========== */
 .subscribe-plan {
     background: rgba(255, 255, 255, 0.05);
@@ -140,6 +144,110 @@
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     transform: translateY(-3px);
+}
+
+/* ========== CREATOR PLAN — PURPLE ACCENT ========== */
+.subscribe-plan--creator {
+    border-color: rgba(139, 92, 246, 0.45);
+    box-shadow:
+        var(--shadow-xl),
+        0 0 0 1px rgba(139, 92, 246, 0.1),
+        0 0 32px rgba(139, 92, 246, 0.12);
+}
+
+/* Gradient accent bar at the top — purple/violet */
+.subscribe-plan--creator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+}
+
+.subscribe-plan--creator:hover {
+    border-color: rgba(139, 92, 246, 0.65);
+    box-shadow:
+        var(--shadow-xl),
+        0 0 0 1px rgba(139, 92, 246, 0.18),
+        0 0 48px rgba(139, 92, 246, 0.18);
+    transform: translateY(-5px);
+}
+
+/* Creator plan icon — purple gradient */
+.subscribe-plan--creator .subscribe-plan__icon {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+}
+
+/* Creator badge */
+.subscribe-plan__badge--creator {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
+    animation: creator-badge-pulse 3s ease-in-out infinite;
+}
+
+@keyframes creator-badge-pulse {
+    0%, 100% {
+        box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
+    }
+    50% {
+        box-shadow: 0 2px 22px rgba(236, 72, 153, 0.6);
+    }
+}
+
+/* Creator price number — purple gradient */
+.subscribe-plan__value--creator {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Price aside (period + original price stacked) */
+.subscribe-plan__price-aside {
+    display: flex;
+    flex-direction: column;
+    align-self: flex-end;
+    padding-bottom: 4px;
+    gap: 2px;
+}
+
+.subscribe-plan__original-price {
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.3);
+    text-decoration: line-through;
+    white-space: nowrap;
+}
+
+/* Creator checkmark — purple tint */
+.subscribe-plan__icon-yes--creator {
+    color: #a78bfa;
+    background: rgba(139, 92, 246, 0.15);
+}
+
+/* Creator CTA button */
+.subscribe-plan__cta--creator {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    border: none;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.38);
+    transition: box-shadow var(--transition-base), transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.subscribe-plan__cta--creator:hover:not(:disabled) {
+    box-shadow: 0 6px 30px rgba(139, 92, 246, 0.55);
+    transform: translateY(-1px);
+    opacity: 0.95;
+}
+
+.subscribe-plan__cta--creator:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 /* ========== POPULAR PLAN — GLOWING BORDER ========== */
@@ -400,6 +508,7 @@
     }
 
     .subscribe-container {
+        max-width: 1100px;
         padding: var(--spacing-12) var(--spacing-8) var(--spacing-16);
     }
 
@@ -415,10 +524,23 @@
         font-size: var(--font-size-lg);
     }
 
+    /* 2 cols en tablet: Particular + Creator en fila, Autónomo abajo centrado */
     .subscribe-plans {
         grid-template-columns: 1fr 1fr;
         align-items: start;
         gap: var(--spacing-8);
+    }
+
+    .subscribe-plans--three {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Autónomo ocupa las 2 columnas en tablet */
+    .subscribe-plans--three .subscribe-plan--popular {
+        grid-column: 1 / -1;
+        max-width: 540px;
+        margin: 0 auto;
+        width: 100%;
     }
 
     .subscribe-plan {
@@ -437,15 +559,28 @@
     }
 
     .subscribe-page::before {
-        width: 700px;
+        width: 900px;
         height: 420px;
     }
 
     .subscribe-container {
+        max-width: 1200px;
         padding: var(--spacing-16) var(--spacing-8) var(--spacing-20);
     }
 
     .subscribe-header h1 {
         font-size: var(--font-size-4xl);
+    }
+
+    /* 3 columnas en desktop */
+    .subscribe-plans--three {
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: start;
+    }
+
+    .subscribe-plans--three .subscribe-plan--popular {
+        grid-column: auto;
+        max-width: none;
+        margin: 0;
     }
 }

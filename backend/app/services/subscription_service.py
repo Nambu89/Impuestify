@@ -157,6 +157,10 @@ class SubscriptionService:
             if not settings.STRIPE_PRICE_ID_AUTONOMO:
                 raise ValueError("El plan Autónomo no está configurado. Contacta con soporte.")
             price_id = settings.STRIPE_PRICE_ID_AUTONOMO
+        elif plan_type == "creator":
+            if not settings.STRIPE_PRICE_ID_CREATOR:
+                raise ValueError("El plan Creator no está configurado. Contacta con soporte.")
+            price_id = settings.STRIPE_PRICE_ID_CREATOR
         else:
             price_id = settings.STRIPE_PRICE_ID
 

@@ -544,6 +544,111 @@
     color: var(--color-white);
 }
 
+/* Grid de 2 tarjetas en pricing */
+.pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+}
+
+/* Nombre y descripción del plan en la tarjeta */
+.pricing-plan-name {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-white);
+    margin: 0 0 var(--spacing-1);
+}
+
+.pricing-plan-desc {
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0;
+}
+
+/* Importe dentro del grid — separado del header */
+.pricing-grid .pricing-amount {
+    margin: var(--spacing-5) 0;
+    padding-top: var(--spacing-5);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Badge "Oferta 2026" */
+.pricing-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 13px;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    border-radius: var(--radius-full);
+    color: white;
+}
+
+.pricing-badge--creator {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    box-shadow: 0 2px 12px rgba(139, 92, 246, 0.45);
+}
+
+/* Tarjeta Creator — variante morado */
+.pricing-card--creator {
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(139, 92, 246, 0.1),
+        0 0 32px rgba(139, 92, 246, 0.12);
+}
+
+.pricing-card--creator::before {
+    background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
+}
+
+/* Icono Creator */
+.pricing-icon--creator {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+}
+
+/* Precio Creator — gradiente morado/rosa */
+.pricing-value--creator {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Checkmarks del plan Creator */
+.pricing-check--creator {
+    color: #a78bfa;
+}
+
+/* CTA Creator */
+.pricing-cta--creator {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    border: none;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.38);
+    transition: box-shadow var(--transition-base), transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.pricing-cta--creator:hover {
+    box-shadow: 0 6px 30px rgba(139, 92, 246, 0.55);
+    transform: translateY(-1px);
+    opacity: 0.95;
+}
+
+/* Note centrada debajo del grid */
+.pricing-note--center {
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.35);
+    margin-top: var(--spacing-2);
+}
+
 /* ========== CTA SECTION ========== */
 .cta {
     padding: var(--spacing-12) 0;
@@ -672,6 +777,11 @@
 
     .pricing-value {
         font-size: 56px;
+    }
+
+    .pricing-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-8);
     }
 
     /* CTA */

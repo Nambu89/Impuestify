@@ -25,7 +25,7 @@ router = APIRouter(prefix="/subscription", tags=["subscription"])
 class CheckoutRequest(BaseModel):
     success_url: str
     cancel_url: str
-    plan_type: str = "particular"  # "particular" or "autonomo"
+    plan_type: str = "particular"  # "particular" | "autonomo" | "creator"
 
 
 class CheckoutResponse(BaseModel):

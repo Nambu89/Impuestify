@@ -94,7 +94,7 @@ async def ask_question_stream(
         )
     
     # === CONTENT RESTRICTION: Autonomo detection (only block "particular" plan) ===
-    if not access.is_owner and access.plan_type != "autonomo" and detect_autonomo_query(request.question):
+    if not access.is_owner and access.plan_type not in ("autonomo", "creator") and detect_autonomo_query(request.question):
         async def autonomo_block_stream():
             yield {"event": "content", "data": get_autonomo_block_response()}
             yield {"event": "done", "data": ""}
@@ -362,7 +362,7 @@ async def ask_question_stream(
             async def run_agent():
                 done_emitted = False
                 try:
-                    restricted_mode = not access.is_owner and access.plan_type != "autonomo"
+                    restricted_mode = not access.is_owner and access.plan_type not in ("autonomo", "creator")
 
                     if use_workspace_agent:
                         # Use WorkspaceAgent for workspace/session-doc queries

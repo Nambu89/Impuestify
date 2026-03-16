@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import {
     MessageSquare, Shield, FileText, ArrowRight, Calculator, CreditCard,
-    CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink, CalendarDays
+    CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink, CalendarDays, Video
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
@@ -300,42 +300,81 @@ export default function Home() {
             <section className="pricing">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">Plan Particular</h2>
-                        <p className="section-subtitle">Para trabajadores por cuenta ajena</p>
+                        <h2 className="section-title">Planes y precios</h2>
+                        <p className="section-subtitle">Sin permanencia. Cancela cuando quieras.</p>
                     </FadeContent>
                     <FadeContent delay={100} duration={500}>
-                        <div className="pricing-card">
-                            <div className="pricing-header">
-                                <div className="pricing-icon">
-                                    <Calculator size={32} />
+                        <div className="pricing-grid">
+                            {/* Particular */}
+                            <div className="pricing-card">
+                                <div className="pricing-header">
+                                    <div className="pricing-icon">
+                                        <Calculator size={32} />
+                                    </div>
+                                    <div>
+                                        <h3 className="pricing-plan-name">Particular</h3>
+                                        <p className="pricing-plan-desc">Para trabajadores por cuenta ajena</p>
+                                    </div>
                                 </div>
                                 <div className="pricing-amount">
                                     <span className="pricing-currency">EUR</span>
                                     <span className="pricing-value">5</span>
                                     <span className="pricing-period">/mes</span>
                                 </div>
+                                <ul className="pricing-features">
+                                    <li><CheckCircle size={18} /><span>Consultas fiscales ilimitadas con IA</span></li>
+                                    <li><CheckCircle size={18} /><span>Motor de 128 deducciones personalizadas</span></li>
+                                    <li><CheckCircle size={18} /><span>Cobertura completa: 17 CCAA + forales</span></li>
+                                    <li><CheckCircle size={18} /><span>Análisis de nóminas y notificaciones AEAT</span></li>
+                                    <li><CheckCircle size={18} /><span>Informe IRPF exportable en PDF</span></li>
+                                    <li><CheckCircle size={18} /><span>Criptomonedas, trading y apuestas (FIFO)</span></li>
+                                </ul>
+                                <Link to="/register" className="btn btn-secondary btn-lg pricing-cta">
+                                    <CreditCard size={20} />
+                                    Comenzar
+                                </Link>
                             </div>
-                            <ul className="pricing-features">
-                                <li><CheckCircle size={18} /><span>Consultas fiscales ilimitadas con IA</span></li>
-                                <li><CheckCircle size={18} /><span>Motor de deducciones con 128 deducciones</span></li>
-                                <li><CheckCircle size={18} /><span>Cobertura completa: 17 CCAA + forales</span></li>
-                                <li><CheckCircle size={18} /><span>Análisis de nóminas y notificaciones AEAT</span></li>
-                                <li><CheckCircle size={18} /><span>Workspace personal de documentos</span></li>
-                                <li><CheckCircle size={18} /><span>Informe IRPF exportable en PDF</span></li>
-                                <li><CheckCircle size={18} /><span>Criptomonedas, trading y apuestas (FIFO)</span></li>
-                                <li><CheckCircle size={18} /><span>Fuentes oficiales citadas</span></li>
-                            </ul>
-                            <Link to="/register" className="btn btn-primary btn-lg pricing-cta">
-                                <CreditCard size={20} />
-                                Comenzar
-                            </Link>
-                            <p className="pricing-note">
-                                Pago seguro con Stripe. Cancela cuando quieras.
-                            </p>
+
+                            {/* Creator */}
+                            <div className="pricing-card pricing-card--creator">
+                                <div className="pricing-badge pricing-badge--creator">
+                                    <Zap size={13} />
+                                    Oferta 2026
+                                </div>
+                                <div className="pricing-header">
+                                    <div className="pricing-icon pricing-icon--creator">
+                                        <Video size={32} />
+                                    </div>
+                                    <div>
+                                        <h3 className="pricing-plan-name">Creator</h3>
+                                        <p className="pricing-plan-desc">Para creadores de contenido e influencers</p>
+                                    </div>
+                                </div>
+                                <div className="pricing-amount">
+                                    <span className="pricing-currency">EUR</span>
+                                    <span className="pricing-value pricing-value--creator">30</span>
+                                    <span className="pricing-period">/mes</span>
+                                </div>
+                                <ul className="pricing-features">
+                                    <li><CheckCircle size={18} className="pricing-check--creator" /><span>Todo lo del plan Particular</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--creator" /><span>Simulador IRPF con royalties y derechos de autor</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--creator" /><span>IVA por plataforma (YouTube, TikTok, Twitch)</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--creator" /><span>Epígrafe IAE para creadores</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--creator" /><span>Modelo 349 — operaciones intracomunitarias</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--creator" /><span>Asistente IA especializado en creadores</span></li>
+                                </ul>
+                                <Link to="/subscribe" className="btn btn-lg pricing-cta pricing-cta--creator">
+                                    <CreditCard size={20} />
+                                    Empezar como Creator
+                                </Link>
+                            </div>
                         </div>
                         <p className="pricing-autonomos">
                             ¿Eres autónomo o profesional por cuenta propia?{' '}
-                            <Link to="/subscribe?plan=autonomo">Ver plan Autónomo — 39 €/mes</Link>
+                            <Link to="/subscribe">Ver plan Autónomo — 39 €/mes</Link>
+                        </p>
+                        <p className="pricing-note pricing-note--center">
+                            Pago seguro con Stripe. Sin permanencia, cancela cuando quieras.
                         </p>
                     </FadeContent>
                 </div>
