@@ -15,6 +15,195 @@
     margin: 0 auto;
 }
 
+/* ========== SHARED ADMIN STYLES ========== */
+/* (Duplicated here because each page loads only its own CSS) */
+
+.admin-header {
+    margin-bottom: var(--spacing-5);
+}
+
+.admin-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-2);
+}
+
+.admin-title-row h1 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-white);
+    margin: 0;
+}
+
+.admin-title-row h1 svg {
+    color: var(--color-primary);
+}
+
+.admin-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+.btn-refresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-refresh:hover:not(:disabled) {
+    border-color: var(--color-primary-light);
+    color: var(--color-primary-light);
+    background: rgba(26, 86, 219, 0.1);
+}
+
+.btn-refresh:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.admin-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-5);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    animation: acpSlideDown 0.3s ease;
+}
+
+@keyframes acpSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.admin-message.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.admin-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.admin-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-12);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-loading p {
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+.animate-spin {
+    animation: acpSpin 1s linear infinite;
+}
+
+@keyframes acpSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Clases de paginacion compartidas con AdminFeedbackPage */
+.afp-page-btn {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.afp-page-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-white);
+}
+
+.afp-page-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.afp-page-info {
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Boton save compartido con AdminFeedbackPage */
+.afp-save-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    width: 100%;
+    padding: var(--spacing-3);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    border: none;
+    border-radius: var(--radius-lg);
+    color: var(--color-white);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+.afp-save-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.afp-save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Close button compartido con AdminFeedbackPage */
+.afp-detail__close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+}
+
+.afp-detail__close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-white);
+}
+
 /* ========== FILTERS ========== */
 .acp-filters {
     display: flex;

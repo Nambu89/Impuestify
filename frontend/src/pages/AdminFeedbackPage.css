@@ -15,6 +15,117 @@
     margin: 0 auto;
 }
 
+/* ========== SHARED ADMIN STYLES ========== */
+/* (Duplicated here because each page loads only its own CSS) */
+
+.admin-header {
+    margin-bottom: var(--spacing-5);
+}
+
+.admin-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-2);
+}
+
+.admin-title-row h1 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-white);
+    margin: 0;
+}
+
+.admin-title-row h1 svg {
+    color: var(--color-primary);
+}
+
+.admin-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+.btn-refresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-refresh:hover:not(:disabled) {
+    border-color: var(--color-primary-light);
+    color: var(--color-primary-light);
+    background: rgba(26, 86, 219, 0.1);
+}
+
+.btn-refresh:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.admin-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-5);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    animation: afpSlideDown 0.3s ease;
+}
+
+@keyframes afpSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.admin-message.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.admin-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.admin-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-12);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-loading p {
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+.animate-spin {
+    animation: afpSpin 1s linear infinite;
+}
+
+@keyframes afpSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* ========== STATS BAR ========== */
 .afp-stats {
     display: grid;
