@@ -1,6 +1,6 @@
 # Impuestify - Asistente Fiscal Inteligente
 
-Impuestify es un asistente fiscal especializado en normativa española que utiliza **RAG (Retrieval-Augmented Generation)** con **OpenAI GPT-5-mini** para proporcionar respuestas precisas, conversacionales y contextualizadas sobre temas fiscales. Cubre las 17 CCAA, los 4 territorios forales (Araba, Bizkaia, Gipuzkoa, Navarra) y Ceuta/Melilla.
+Impuestify es un asistente fiscal especializado en normativa española que utiliza **RAG (Retrieval-Augmented Generation)** con **OpenAI GPT-5-mini** para proporcionar respuestas precisas, conversacionales y contextualizadas sobre temas fiscales. Cubre las 17 CCAA, los 4 territorios forales (Araba, Bizkaia, Gipuzkoa, Navarra) y Ceuta/Melilla. Especializado en 3 segmentos: asalariados, creadores de contenido e independientes.
 
 ## Caracteristicas Principales
 
@@ -49,10 +49,11 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 
 ### Motor de Deducciones
 
-- 64 deducciones totales: 16 estatales + 48 territoriales
-- Territorios cubiertos: Araba(8), Bizkaia(6), Gipuzkoa(6), Navarra(7), Madrid(6), Cataluna(5), Andalucia(5), Valencia(6)
+- 600+ deducciones totales: 16 estatales + 195 territoriales v1/v2 + 339 XSD oficiales AEAT + 50 forales
+- Territorios cubiertos: 17 CCAA + 4 forales (Araba, Bizkaia, Gipuzkoa, Navarra) + Ceuta/Melilla
+- XSD Modelo 100: ~100% cobertura (gastos granulares, módulos, royalties, IAE lookup)
 - `simulate_irpf` encadena automaticamente `discover_deductions`
-- Scripts de seed: `seed_deductions.py`, `seed_deductions_territorial.py`, `seed_estatal_scale.py`
+- Scripts de seed: `seed_deductions.py`, `seed_deductions_territorial.py`, `seed_deductions_xsd.py`, `seed_forales_v2.py`, `seed_estatal_scale.py`
 
 ### Analisis de Nominas
 
@@ -77,10 +78,11 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 
 ### Suscripciones Stripe
 
-| Plan | Precio | Audiencia |
-|------|--------|-----------|
-| Particular | 5 EUR/mes | Asalariados, pensionistas |
-| Autonomo | 39 EUR/mes (IVA incluido) | Trabajadores por cuenta propia |
+| Plan | Precio | Audiencia | Features |
+|------|--------|-----------|----------|
+| Particular | 5 EUR/mes | Asalariados, pensionistas | Guía fiscal, análisis nóminas, deducciones básicas |
+| Creator | 49 EUR/mes | Influencers, YouTubers, streamers, bloggers | + IVA por plataforma, Modelo 349, DAC7, CNAE 60.39, perfiles multi-rol |
+| Autonomo | 39 EUR/mes (IVA incluido) | Trabajadores por cuenta propia | + Todos los modelos (303/130/131), cripto, workspace, calendario |
 
 - Stripe Checkout + Customer Portal integrados
 - `ProtectedRoute` con subscription guard automatico
@@ -418,10 +420,12 @@ Ver [SECURITY.md](SECURITY.md) para mas detalles.
 
 ```bash
 cd backend
-pytest tests/ -v
+pytest tests/ -v                         # 1083+ tests PASS
 pytest tests/test_security.py -v        # Tests de seguridad
-pytest tests/test_deductions.py -v      # Tests motor deducciones
-pytest tests/test_workspace_components.py -v  # 34 tests workspaces
+pytest tests/test_deductions.py -v      # Tests motor deducciones (600+ deducciones)
+pytest tests/test_workspace_components.py -v  # Workspaces
+pytest tests/test_crypto.py -v          # Criptomonedas + trading
+pytest tests/test_crawler.py -v         # Doc crawler (50+ tests)
 ```
 
 ### Frontend
@@ -429,6 +433,7 @@ pytest tests/test_workspace_components.py -v  # 34 tests workspaces
 ```bash
 cd frontend
 npm run build  # Verifica que compila sin errores TypeScript
+# Expected: Build OK
 ```
 
 ## Estructura del Proyecto
@@ -517,19 +522,41 @@ TaxIA/
 +-- README.md
 ```
 
-## v3.0 - Marzo 2026
+## v3.2 - Marzo 2026 (Sesion 12)
 
 ### Novedades principales
+
+**Plan Creator (49 EUR/mes)** — Nuevo segmento para influencers, YouTubers, streamers y bloggers. Contexto TaxAgent especializado: CNAE 60.39, IAE 8690, IVA por plataforma (Google/Meta/YouTube/Twitch), Modelo 349, DAC7. Landing `/creadores-de-contenido` con SEO-GEO.
+
+**Sistema de Feedback Completo** — Widget de rating en chat, ChatRating component, Admin Dashboard (3 nuevas pages: Feedback, Contacto, Dashboard). Dropdown admin en Header.
+
+**XSD Modelo 100 ~100%** — 339 deducciones oficiales AEAT. Cobertura granular de gastos, módulos, royalties, IAE lookup integrado.
+
+**Comparativa Tributación Conjunta** — Tool `compare_joint_individual` para 4 escenarios (individual vs conjunta, ambos). TaxAgent integrado.
+
+**Modelos CCAA-aware** — Modelo 303→300 (Gipuzkoa), F69 (Navarra), 420 IGIC (Canarias), IPSI (Ceuta/Melilla). Labels dinámicos en UI.
+
+**Perfiles Multi-rol Fiscal** — Campo `roles_adicionales` (no excluyentes). Adaptativo por CCAA, REGIMEN. Soporta combinaciones: asalariado+autónomo, creador+particular, etc.
+
+**Push Notifications** — VAPID keys configuradas. Alertas 15d, 5d, 1d antes de plazos fiscales.
+
+**Crawler 90 URLs** — 23 territorios + documentos creadores/influencers. Drift analyzer integrado.
+
+**Fecha Renta Corregida** — 8 de abril 2026 (no 5 de abril). Actualizado en calendario + emails.
+
+---
+
+## v3.0 - Marzo 2026 (Sesion 9-11)
 
 **Simulador IRPF completo** — Motor clase-base con cobertura de todos los territorios espanoles. Phase 1 (pensiones, hipoteca, maternidad, familia numerosa, donativos) y Phase 2 (tributacion conjunta, alquiler pre-2015, rentas imputadas). Endpoint REST sin LLM para respuestas de ~50-100ms.
 
 **Guia Fiscal Interactiva** — Wizard de 7 pasos en `/guia-fiscal` con estimacion IRPF en tiempo real (LiveEstimatorBar), persistencia en localStorage y sincronizacion con el perfil fiscal.
 
-**Motor de Deducciones** — 64 deducciones totales (16 estatales + 48 territoriales para 8 territorios). `simulate_irpf` encadena automaticamente `discover_deductions`.
+**Motor de Deducciones** — 600+ deducciones totales. `simulate_irpf` encadena automaticamente `discover_deductions`.
 
 **Suscripciones Stripe** — Plan Particular (5 EUR/mes) y Autonomo (39 EUR/mes IVA incluido). Checkout, Customer Portal y subscription guard integrados.
 
-**Perfil Fiscal Extendido** — 13 campos autonomo + campos Phase 1+2 IRPF en JSON. Panel de administracion de usuarios (owner-only).
+**Perfil Fiscal Adaptativo por CCAA** — 90+ campos dinamicos. Perfil foral con validaciones especializadas.
 
 **Export PDF + Email** — Informes IRPF en PDF via ReportLab. Envio al asesor via Resend.
 

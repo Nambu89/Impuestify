@@ -18,14 +18,15 @@ TaxIA (Impuestify) is a Spanish tax assistant using RAG + multi-agent architectu
 TaxIA/
 ├── backend/         # FastAPI Python 3.12+ (see backend/CLAUDE.md)
 ├── frontend/        # React 18 + Vite + TS (see frontend/CLAUDE.md)
-├── docs/            # 428 RAG documents (PDFs + Excel) by territory
+├── docs/            # 439+ RAG documents (PDFs + Excel) by territory
 ├── data/            # FAISS embeddings, knowledge_updates/
 ├── .claude/
-│   ├── commands/    # 14 slash commands
+│   ├── commands/    # 14+ slash commands
 │   ├── skills/      # Domain knowledge modules
-│   └── subagents/   # 6 agent personas
+│   └── subagents/   # 6+ agent personas
 ├── agent-comms.md   # Inter-agent communication log
-├── memory/          # Persistent agent memory
+├── memory/          # Persistent agent memory (MEMORY.md index)
+├── plans/           # Roadmap, implementation plans, drift reports
 └── .env             # Environment variables (root)
 ```
 
@@ -64,6 +65,8 @@ TaxIA/
 4. **Always** validate file uploads (magic numbers + size limits)
 5. **Always** rate-limit expensive endpoints (LLM calls, PDF processing)
 6. Owner-only endpoints: check `current_user.is_owner`
+7. **ORTOGRAFIA PRE-PUSH OBLIGATORIA**: Verify tildes on ALL user-visible strings before pushing
+8. **JWT_SECRET_KEY must be changed** on Railway (user action required — currently default)
 
 ## Code Review Checklist
 
@@ -114,10 +117,32 @@ Después de arreglar cualquier bug, SIEMPRE documentar en estos 3 sitios:
 
 El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela un anti-patrón (ej: "no preguntes en exceso" causó que el agente no clarificara datos clave), documentar el anti-patrón y su corrección como regla permanente.
 
+## Subscription Plans (Updated 2026-03-17)
+
+| Plan | Price | Audience | Features |
+|------|-------|----------|----------|
+| Particular | 5 EUR/mes | Salaried, pensionists | IRPF guide, payslip analysis, basic deductions |
+| Creator | 49 EUR/mes | Influencers, YouTubers, streamers, bloggers | + IVA by platform, Modelo 349, DAC7, CNAE 60.39, multi-role profiles |
+| Autonomo | 39 EUR/mes IVA incl. | Self-employed | + All models (303/130/131), crypto, workspace, calendar |
+
+## Key Updates (2026-03-17)
+
+- **Tests**: 1083+ backend PASS + frontend build OK
+- **Crawler**: 90 URLs, 23 territories + Creators/Influencers docs
+- **Feedback System**: Widget + ChatRating + Admin Dashboard (3 pages) COMPLETE
+- **XSD Modelo 100**: ~100% coverage (granular expenses, modules, royalties, IAE lookup)
+- **Joint Declaration**: Comparison tool for 4 scenarios (tool: `compare_joint_individual`)
+- **CCAA-aware Models**: 303→300 Gipuzkoa, F69 Navarra, 420 IGIC Canarias, IPSI Ceuta/Melilla
+- **Landing /creadores-de-contenido**: SEO-GEO optimized, Creator segment marketing
+- **Multi-role Fiscal**: `roles_adicionales` (non-exclusive), adaptive by CCAA
+- **TaxAgent Creator Context**: IAE 8690, IVA by platform, Modelo 349, DAC7, CNAE 60.39
+- **Push Notifications**: VAPID keys configured
+- **Tax Date Correction**: Filing date 8 April 2026 (not 5 April)
+
 ## Compacting Strategy
 
 When context reaches ~50%, Claude Code compresses history. To preserve critical info:
 - Re-read `CLAUDE.md` + relevant descendant CLAUDE.md after compaction
-- Check `memory/MEMORY.md` for project state
+- Check `memory/MEMORY.md` for project state (updated 2026-03-17, session 12)
 - Check `agent-comms.md` for pending inter-agent tasks
 - Check `claude-progress.txt` for session history

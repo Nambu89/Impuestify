@@ -8,6 +8,7 @@ Python 3.12+ | FastAPI 0.104+ | Microsoft Agent Framework 1.0.0b | OpenAI API | 
 cd backend && pip install -r requirements.txt
 cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 cd backend && pytest tests/ -v --tb=short
+# Expected: 1083+ tests PASS
 ```
 
 ### Environment Variables (required)
@@ -99,8 +100,16 @@ Pipeline (in order):
 | `web_scraper` | `web_scraper_tool.py` | AEAT/BOE/SS scraping + CCAA normalization |
 | `lookup_casilla` | `casilla_lookup_tool.py` | Busca casillas IRPF Modelo 100 por numero o descripcion (2064 casillas en BD) |
 | `calculate_modelo_ipsi` | `modelo_ipsi_tool.py` | IPSI Ceuta/Melilla: 6 tipos (0.5%-10%), trimestral |
+| `compare_joint_individual` | `joint_comparison_tool.py` | **NEW**: Comparativa tributacion conjunta vs individual. 4 escenarios |
+| `iae_lookup` | `iae_lookup_tool.py` | **NEW**: Lookup codigo IAE para creadores (8690, 9020, 6010.1, etc.) |
 
 Tool registration: `app/tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS)
+
+## New Routers (Session 12)
+
+| Router | Prefix | Purpose |
+|--------|--------|---------|
+| `feedback.py` | `/api/feedback` | **NEW**: Chat rating + feedback collection (owner-only retrieval) |
 
 ## Services (`app/services/`)
 
@@ -115,6 +124,7 @@ Tool registration: `app/tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS)
 | EmailService | `email_service.py` | Resend wrapper for advisor emails |
 | RAGService | `rag_service.py` | Search + rerank orchestration |
 | PayslipExtractor | `payslip_extractor.py` | PDF text extraction for payslips |
+| **FeedbackService** | **`feedback_service.py`** | **NEW**: Feedback CRUD, rating aggregation, export (owner-only) |
 
 ## Database Schema (Turso SQLite)
 
@@ -129,9 +139,10 @@ CREATE TABLE users (
   is_owner BOOLEAN DEFAULT FALSE,
   is_active BOOLEAN DEFAULT TRUE,
   subscription_status TEXT DEFAULT 'none',
-  subscription_plan TEXT DEFAULT 'particular',
+  subscription_plan TEXT DEFAULT 'particular',  -- 'particular', 'creator', 'autonomo'
   stripe_customer_id TEXT,
   grace_period_until TEXT,
+  roles_adicionales TEXT,  -- JSON array: ['autonomo', 'creador', 'inversor'] (non-exclusive)
   created_at TIMESTAMP, updated_at TIMESTAMP
 );
 
@@ -239,6 +250,18 @@ CREATE TABLE irpf_casillas (
 );
 -- Indexes: idx_casillas_num, idx_casillas_desc
 -- Seed: scripts/seed_casillas.py (parses diccionarioXSD_2024.properties)
+
+-- Feedback (NEW)
+CREATE TABLE feedback (
+  id TEXT PRIMARY KEY,
+  user_id TEXT REFERENCES users(id),
+  conversation_id TEXT REFERENCES conversations(id),
+  rating INTEGER CHECK(rating >= 1 AND rating <= 5),
+  comment TEXT,
+  metadata TEXT,  -- JSON: useful, clear, sources, etc.
+  created_at TIMESTAMP
+);
+-- Indexes: idx_feedback_user, idx_feedback_created
 
 -- Reports
 CREATE TABLE reports (

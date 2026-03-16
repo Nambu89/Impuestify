@@ -7,6 +7,37 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-17] Documentation Auditor — DONE — Auditoria y actualizacion completa documentacion sesion 12
+
+- **Archivos actualizados**: CLAUDE.md, README.md, memory/MEMORY.md, backend/CLAUDE.md, frontend/CLAUDE.md, plans/ROADMAP.md, agent-comms.md
+- **Documentacion feature completado**: Plan Creator 49 EUR, feedback system, CCAA-aware models, multi-role profiles, push notifications, crawler 90 URLs, fecha Renta corregida
+- **Tests**: 1083+ backend PASS, frontend build OK
+- **Notas criticas**:
+  - JWT_SECRET_KEY debe cambiarse en Railway (accion usuario)
+  - ORTOGRAFIA PRE-PUSH OBLIGATORIA verificada en rules
+  - Feedback system completamente integrado
+  - 4 nuevas pages admin (Feedback, Contacts, Dashboard, Creators landing)
+- **Pendiente**: Ejecutar auditorias ortografia en branches posteriores
+- **Siguiente**: Backend/Frontend agent deben implementar los cambios si aun no estan hechos. Verifier debe pasar antes de merge
+
+---
+
+## [2026-03-17] Competitive — DONE — Inventario completo modelos fiscales creadores todos los territorios
+
+- **Archivo**: `plans/creators-tax-models-all-territories.md` — 9 secciones, todos los territorios cubiertos
+- **Cobertura**: Regimen comun (15 CCAA) + Bizkaia + Gipuzkoa + Araba + Navarra + Canarias (IGIC) + Ceuta/Melilla (IPSI)
+- **Hallazgo critico 1**: Gipuzkoa usa modelo **300** (no 303) para IVA trimestral — dato no cubierto en RAG actual
+- **Hallazgo critico 2**: Navarra usa modelo **F69** (no 303) para IVA trimestral y **715/759** en lugar de 111/115
+- **Hallazgo critico 3**: TicketBAI (PV) y BATUZ (Bizkaia) son obligaciones SIN EQUIVALENTE en regimen comun — no cubiertas en RAG
+- **Hallazgo critico 4**: Modelo 349 NO aplica desde Canarias (no son territorio UE para IVA armonizado) — las facturas a Google/Meta desde Canarias son exportacion, no intracomunitaria
+- **Hallazgo critico 5**: ZEC solo viable para SL con 3-5 empleados y 50-100K EUR inversion — NO para autonomos creadores tipicos
+- **Gaps de RAG identificados**: F69 Navarra, Modelo 300 Gipuzkoa, TicketBAI PV, IGIC 420/425, modelos 721, 715/759 Navarra
+- **URLs para crawler**: 25+ URLs nuevas identificadas (AEAT, haciendas forales, Canarias, Ceuta/Melilla)
+- **Accion para Backend Agent**: Considerar indexar PDF instrucciones F69 Navarra y modelo 300 Gipuzkoa en RAG
+- **Accion para Backend Agent**: Verificar si modelos 420 IGIC y IPSI Ceuta/Melilla estan cubiertos en calendario fiscal del sistema
+
+---
+
 ## [2026-03-16] Competitive — DONE — Actualizacion datos mercado creadores Q1 2026
 
 - **Archivo**: `plans/creators-market-update-2026-Q1.md` — 14 secciones, datos actualizados con fuentes
