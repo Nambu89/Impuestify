@@ -264,6 +264,85 @@ class TestCheckAccess:
         assert access.has_access is False
         assert access.status == "past_due"
 
+    @pytest.mark.asyncio
+    async def test_creator_plan_active(self, service, mock_db):
+        """User with active creator plan has access."""
+        with patch("app.services.subscription_service.settings") as mock_settings:
+            mock_settings.OWNER_EMAIL = "other@example.com"
+
+            mock_db.execute.return_value = FakeResult([
+                FakeRow({"is_owner": False, "plan_type": "creator", "status": "active", "current_period_end": None})
+            ])
+
+            access = await service.check_access(
+                user_id="user-8", email="user@example.com"
+            )
+
+        assert access.has_access is True
+        assert access.plan_type == "creator"
+        assert access.status == "active"
+        assert access.reason == "active_subscription"
+
+
+# ---------------------------------------------------------------------------
+# create_checkout_session() — creator plan tests
+# ---------------------------------------------------------------------------
+
+class TestCheckoutCreatorPlan:
+    """Tests for creator plan checkout session creation."""
+
+    @pytest.mark.asyncio
+    async def test_creator_plan_uses_creator_price_id(self, service, mock_db):
+        """create_checkout_session with plan_type='creator' uses STRIPE_PRICE_ID_CREATOR."""
+        mock_db.execute.return_value = FakeResult([
+            FakeRow({"stripe_customer_id": "cus_test123"})
+        ])
+
+        with patch("app.services.subscription_service.settings") as mock_settings, \
+             patch("app.services.subscription_service._get_stripe") as mock_get_stripe:
+            mock_settings.is_stripe_configured = True
+            mock_settings.STRIPE_PRICE_ID = "price_particular"
+            mock_settings.STRIPE_PRICE_ID_AUTONOMO = "price_autonomo"
+            mock_settings.STRIPE_PRICE_ID_CREATOR = "price_creator123"
+
+            mock_stripe = MagicMock()
+            mock_stripe.checkout.Session.create.return_value = MagicMock(url="https://checkout.stripe.com/creator")
+            mock_get_stripe.return_value = mock_stripe
+
+            url = await service.create_checkout_session(
+                user_id="user-1",
+                success_url="https://impuestify.com/success",
+                cancel_url="https://impuestify.com/cancel",
+                plan_type="creator",
+            )
+
+        assert url == "https://checkout.stripe.com/creator"
+        call_kwargs = mock_stripe.checkout.Session.create.call_args[1]
+        assert call_kwargs["line_items"][0]["price"] == "price_creator123"
+        assert call_kwargs["metadata"]["plan_type"] == "creator"
+
+    @pytest.mark.asyncio
+    async def test_creator_plan_not_configured_raises(self, service, mock_db):
+        """create_checkout_session raises ValueError when STRIPE_PRICE_ID_CREATOR is None."""
+        mock_db.execute.return_value = FakeResult([
+            FakeRow({"stripe_customer_id": "cus_test123"})
+        ])
+
+        with patch("app.services.subscription_service.settings") as mock_settings, \
+             patch("app.services.subscription_service._get_stripe"):
+            mock_settings.is_stripe_configured = True
+            mock_settings.STRIPE_PRICE_ID = "price_particular"
+            mock_settings.STRIPE_PRICE_ID_AUTONOMO = "price_autonomo"
+            mock_settings.STRIPE_PRICE_ID_CREATOR = None
+
+            with pytest.raises(ValueError, match="Creator"):
+                await service.create_checkout_session(
+                    user_id="user-1",
+                    success_url="https://impuestify.com/success",
+                    cancel_url="https://impuestify.com/cancel",
+                    plan_type="creator",
+                )
+
 
 # ---------------------------------------------------------------------------
 # detect_autonomo_query() tests
