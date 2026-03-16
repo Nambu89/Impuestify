@@ -71,6 +71,8 @@ export interface FiscalProfile {
     salario_base_mensual: number | null
     complementos_salariales: number | null
     irpf_retenido_porcentaje: number | null
+    // Roles adicionales
+    roles_adicionales: string[] | null
 }
 
 export interface FieldMeta {
@@ -156,6 +158,8 @@ const EMPTY_PROFILE: FiscalProfile = {
     salario_base_mensual: null,
     complementos_salariales: null,
     irpf_retenido_porcentaje: null,
+    // Roles adicionales
+    roles_adicionales: null,
 }
 
 export function useFiscalProfile() {

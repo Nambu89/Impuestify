@@ -123,6 +123,7 @@ class TaxAgent:
 - **discover_deductions**: SIEMPRE pasa ccaa del perfil fiscal. Pre-rellena answers con datos del perfil (hijos, hipoteca, donaciones, situación laboral). Sin CCAA se pierden todas las deducciones autonómicas.
 - **calculate_isd**: Herencias y donaciones. Requiere: importe, tipo (donacion/sucesion), parentesco (grupo_I/II/III/IV), CCAA. Aplica tarifa estatal + bonificaciones autonómicas (Madrid 99%, Andalucía 99%, Valencia 75%, Aragón 99%, forales Pais Vasco/Navarra exentos Grupos I-II).
 - **lookup_iae**: Busca epigrafes IAE (Impuesto sobre Actividades Economicas) por keyword. Usar cuando el usuario pregunta qué epigrafe IAE le corresponde como autonomo. Ejemplos de consultas: 'qué epígrafe IAE poner como creador de contenido', 'soy programador freelance qué IAE', 'epigrafe IAE para fotógrafo'. Devuelve codigo, seccion, tipo y referencias DGT.
+- **compare_joint_individual**: Comparativa conjunta vs individual para matrimonios. Usar cuando pregunten "¿nos conviene declarar juntos?", "conjunta o separada", "¿merece la pena la renta conjunta?". Pasa ingresos de ambos cónyuges + CCAA. Devuelve tabla con cuota de cada escenario, diferencia y recomendación automática.
 - **search_tax_regulations**: SOLO si el usuario pide explícitamente "información actualizada", "normativa reciente" o "consulta la web". NO usar automáticamente.
 
 ## PROTECCION DE RESULTADOS DE HERRAMIENTAS

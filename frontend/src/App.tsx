@@ -33,6 +33,7 @@ const TaxGuidePage = lazy(() => import('./pages/TaxGuidePage'))
 const DeclarationsPage = lazy(() => import('./pages/DeclarationsPage'))
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const CryptoPage = lazy(() => import('./pages/CryptoPage'))
+const CreatorsPage = lazy(() => import('./pages/CreatorsPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()

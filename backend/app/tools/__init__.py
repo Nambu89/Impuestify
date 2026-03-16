@@ -18,6 +18,7 @@ from app.tools.fiscal_profile_tool import UPDATE_FISCAL_PROFILE_TOOL, update_fis
 from app.tools.crypto_gains_tool import CRYPTO_GAINS_TOOL, calculate_crypto_gains_tool
 from app.tools.crypto_csv_tool import CRYPTO_CSV_TOOL, parse_crypto_csv_tool
 from app.tools.iae_lookup_tool import IAE_LOOKUP_TOOL, lookup_iae
+from app.tools.joint_comparison_tool import JOINT_COMPARISON_TOOL, compare_joint_individual_executor
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
@@ -38,6 +39,7 @@ ALL_TOOLS = [
 	CRYPTO_GAINS_TOOL,
 	CRYPTO_CSV_TOOL,
 	IAE_LOOKUP_TOOL,
+	JOINT_COMPARISON_TOOL,
 ]
 
 # Registry of tool execution functions
@@ -57,6 +59,7 @@ TOOL_EXECUTORS = {
 	"calculate_crypto_gains": calculate_crypto_gains_tool,
 	"parse_crypto_csv": parse_crypto_csv_tool,
 	"lookup_iae": lookup_iae,
+	"compare_joint_individual": compare_joint_individual_executor,
 }
 
 __all__ = [
@@ -92,4 +95,6 @@ __all__ = [
 	"parse_crypto_csv_tool",
 	"IAE_LOOKUP_TOOL",
 	"lookup_iae",
+	"JOINT_COMPARISON_TOOL",
+	"compare_joint_individual_executor",
 ]

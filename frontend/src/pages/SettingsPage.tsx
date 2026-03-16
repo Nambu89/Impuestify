@@ -470,6 +470,37 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
 
+                                {/* --- Roles adicionales --- */}
+                                <div className="form-group fiscal-roles-group">
+                                    <label className="fiscal-roles-label">Roles adicionales (selecciona todos los que apliquen)</label>
+                                    <div className="fiscal-roles-grid">
+                                        {[
+                                            { value: 'creador_contenido', label: 'Creador de contenido / Influencer' },
+                                            { value: 'inversor', label: 'Inversor (acciones, fondos, cripto)' },
+                                            { value: 'propietario_alquiler', label: 'Propietario de inmuebles en alquiler' },
+                                            { value: 'pluriactividad', label: 'Pluriactividad (asalariado + autónomo)' },
+                                        ].map(({ value, label }) => {
+                                            const current = fiscalForm.roles_adicionales ?? []
+                                            const checked = current.includes(value)
+                                            return (
+                                                <label key={value} className="fiscal-role-checkbox">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={checked}
+                                                        onChange={e => {
+                                                            const next = e.target.checked
+                                                                ? [...current, value]
+                                                                : current.filter(r => r !== value)
+                                                            updateFiscal('roles_adicionales', next.length > 0 ? next : [])
+                                                        }}
+                                                    />
+                                                    <span>{label}</span>
+                                                </label>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+
                                 <div className="form-row">
                                     <div className="form-group">
                                         <label className="checkbox-label">
