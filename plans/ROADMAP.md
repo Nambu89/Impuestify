@@ -163,7 +163,7 @@
 - [x] ~~Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)~~ → DONE (2026-03-13)
 - [ ] MFA / 2FA (recomendación auditoría)
 - [x] ~~CAPTCHA en login (recomendación auditoría)~~ → DONE — Cloudflare Turnstile en Login + Register (frontend TurnstileWidget.tsx + backend verify_turnstile())
-- [ ] Estrategia Social Media — plan en `plans/social-media-strategy-2026.md` (7 pilares, LinkedIn + Instagram, pre-campana Renta abril 2026)
+- [x] ~~Estrategia Social Media~~ — DONE (2026-03-15, TikTok integrado 2026-03-16). Plan en `plans/social-media-strategy-2026.md` + contenido Q1 en `plans/social-media-content-plan-2026-Q1.md` + research TikTok en `plans/tiktok-research-2026.md`. 3 canales: Instagram + LinkedIn + TikTok. 4 carruseles generados, 10 posts completos, 15 guiones Reels, 9 screenshots. Pendiente: ejecucion por Fernando (setup Metricool, LinkedIn, TikTok @impuestify, primer post 21 marzo)
 
 ### Media prioridad
 - [x] ~~Agente actualización documental (crawler automático AEAT/BOE)~~ → DONE (250e8a2)

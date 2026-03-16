@@ -498,6 +498,287 @@ SS_ITEMS = [
 
 
 # ═══════════════════════════════════════════════════════════════
+# Creadores de Contenido / Emprendedores Digitales
+# ═══════════════════════════════════════════════════════════════
+
+CREATORS_ITEMS = [
+    # ── Estatuto del Trabajo Autonomo (base legal autonomos/emprendedores) ──
+    # Ya en BOE_ITEMS como Ley 20/2007 — no duplicar
+
+    # ── Ley de Emprendedores ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2013/BOE-A-2013-10074-consolidado.pdf",
+        dest="Estatal/Emprendedores/Estatal-Ley_14_2013_Emprendedores_consolidado.pdf",
+        territory="Estatal",
+        description="Ley 14/2013 de apoyo a emprendedores consolidado",
+    ),
+
+    # ── Ley Startups (Ley 28/2022 Crea y Crece) ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2022/BOE-A-2022-21739-consolidado.pdf",
+        dest="Estatal/Emprendedores/Estatal-Ley_28_2022_Startups_consolidado.pdf",
+        territory="Estatal",
+        description="Ley 28/2022 startups y emprendimiento consolidado",
+    ),
+
+    # ── Ley Crea y Crece (facturacion electronica obligatoria) ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2022/BOE-A-2022-15818-consolidado.pdf",
+        dest="Estatal/Emprendedores/Estatal-Ley_18_2022_CreaYCrece_consolidado.pdf",
+        territory="Estatal",
+        description="Ley 18/2022 Crea y Crece (facturacion electronica) consolidado",
+    ),
+
+    # ── Modelo 720 — Declaracion bienes en el extranjero ──
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo720/Instrucciones_Modelo720.pdf",
+        dest="AEAT/Modelos/AEAT-Modelo720_BienesExtranjero_Instrucciones.pdf",
+        territory="AEAT",
+        description="Instrucciones Modelo 720 bienes en el extranjero",
+        priority="high",
+    ),
+
+    # ── Modelo 349 — Operaciones intracomunitarias (facturacion a Google/Meta/ByteDance) ──
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo349/Instrucciones_Modelo349.pdf",
+        dest="AEAT/Modelos/AEAT-Modelo349_OperacionesIntracomunitarias_Instrucciones.pdf",
+        territory="AEAT",
+        description="Instrucciones Modelo 349 operaciones intracomunitarias",
+        priority="high",
+    ),
+
+    # ── Modelo 036/037 — Alta censal autonomos / IAE ──
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo036_037/Instrucciones_Modelo036.pdf",
+        dest="AEAT/Modelos/AEAT-Modelo036_AltaCensal_Instrucciones.pdf",
+        territory="AEAT",
+        description="Instrucciones Modelo 036 alta censal / IAE",
+        priority="high",
+    ),
+
+    # ── Convenios doble imposicion (principales para plataformas digitales) ──
+    # Irlanda (Google, Meta, Apple)
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1994/BOE-A-1994-6657-consolidado.pdf",
+        dest="Estatal/ConveniosDI/Estatal-CDI_Espana_Irlanda_consolidado.pdf",
+        territory="Estatal",
+        description="Convenio doble imposicion Espana-Irlanda (Google, Meta, Apple)",
+        priority="high",
+    ),
+    # Paises Bajos (Booking, Adyen)
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1972/BOE-A-1972-879-consolidado.pdf",
+        dest="Estatal/ConveniosDI/Estatal-CDI_Espana_PaisesBajos_consolidado.pdf",
+        territory="Estatal",
+        description="Convenio doble imposicion Espana-Paises Bajos",
+        priority="medium",
+    ),
+    # Reino Unido (ByteDance/TikTok, Twitch)
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2014/BOE-A-2014-6268-consolidado.pdf",
+        dest="Estatal/ConveniosDI/Estatal-CDI_Espana_ReinoUnido_consolidado.pdf",
+        territory="Estatal",
+        description="Convenio doble imposicion Espana-Reino Unido (TikTok, Twitch)",
+        priority="high",
+    ),
+    # EEUU (YouTube/Google US, Amazon/Twitch)
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1990/BOE-A-1990-30994-consolidado.pdf",
+        dest="Estatal/ConveniosDI/Estatal-CDI_Espana_EEUU_consolidado.pdf",
+        territory="Estatal",
+        description="Convenio doble imposicion Espana-EEUU (YouTube, Amazon, Twitch)",
+        priority="high",
+    ),
+
+    # ── Reglamento VeriFactu (facturacion electronica obligatoria) ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2024/BOE-A-2024-22138-consolidado.pdf",
+        dest="Estatal/VeriFactu/Estatal-RD_1007_2023_VeriFactu_Reglamento_consolidado.pdf",
+        territory="Estatal",
+        description="RD 1007/2023 Reglamento VeriFactu facturacion electronica consolidado",
+        priority="medium",
+    ),
+
+    # ── IAE — Tarifas (epigrafes para creadores de contenido) ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/1990/BOE-A-1990-23930-consolidado.pdf",
+        dest="Estatal/IAE/Estatal-RDLeg_1175_1990_Tarifas_IAE_consolidado.pdf",
+        territory="Estatal",
+        description="RDLeg 1175/1990 Tarifas IAE consolidado (epigrafes creadores)",
+        priority="high",
+    ),
+
+    # ── Ley IVA servicios digitales / reglas de localizacion ──
+    # Ya en BOE_ITEMS como Ley 37/1992 — no duplicar
+
+    # ── Canarias — ZEC para emprendedores digitales ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2000/BOE-A-2000-2085-consolidado.pdf",
+        dest="Canarias/ZEC/Canarias-RD_2_2000_ZEC_Reglamento_consolidado.pdf",
+        territory="Canarias",
+        description="RD 2/2000 Reglamento ZEC Canarias consolidado",
+        priority="medium",
+    ),
+]
+
+
+# ═══════════════════════════════════════════════════════════════
+# Influencers / Creadores de Contenido — Normativa especifica
+# Estructura: docs/Influencers/{territorio}/
+# ═══════════════════════════════════════════════════════════════
+
+INFLUENCERS_ITEMS = [
+    # ── Estatal: Ley General Comunicacion Audiovisual (regula influencers) ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2022/BOE-A-2022-11789-consolidado.pdf",
+        dest="Influencers/Estatal/Influencers-Ley_13_2022_Comunicacion_Audiovisual_consolidado.pdf",
+        territory="Estatal",
+        description="Ley 13/2022 General Comunicacion Audiovisual (regula influencers)",
+        priority="high",
+    ),
+    # ── RD 444/2024 desarrollo Ley Audiovisual (obligaciones influencers) ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2024/BOE-A-2024-8716-consolidado.pdf",
+        dest="Influencers/Estatal/Influencers-RD_444_2024_DesarrolloLeyAudiovisual_consolidado.pdf",
+        territory="Estatal",
+        description="RD 444/2024 desarrollo Ley Audiovisual (obligaciones influencers)",
+        priority="high",
+    ),
+    # ── CNAE-2025 (nuevo codigo 60.39 para creadores) ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2025/BOE-A-2025-587-consolidado.pdf",
+        dest="Influencers/Estatal/Influencers-RD_10_2025_CNAE2025_consolidado.pdf",
+        territory="Estatal",
+        description="RD 10/2025 CNAE-2025 (nuevo codigo 60.39 creadores contenido)",
+        priority="high",
+    ),
+    # ── Plan Tributario AEAT 2026 (influencers como objetivo) ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2026/BOE-A-2026-5082-consolidado.pdf",
+        dest="Influencers/Estatal/Influencers-Resolucion_AEAT_PlanTributario_2026.pdf",
+        territory="Estatal",
+        description="Plan Tributario AEAT 2026 (influencers objetivo prioritario)",
+        priority="high",
+        status="active",
+    ),
+    # ── DAC7 / Modelo 238 (plataformas reportan ingresos creadores) ──
+    WatchItem(
+        url="https://www.boe.es/buscar/pdf/2023/BOE-A-2023-24843-consolidado.pdf",
+        dest="Influencers/Estatal/Influencers-RD_1065_2023_DAC7_Modelo238_consolidado.pdf",
+        territory="Estatal",
+        description="RD 1065/2007 mod. DAC7 Modelo 238 (plataformas reportan ingresos)",
+        priority="high",
+    ),
+
+    # ── Forales: guias autonomos / creadores ──
+    # Bizkaia — Manual autonomos
+    WatchItem(
+        url="https://www.bizkaia.eus/fitxategiak/4/Ogasuna/Guia_actividades_economicas.pdf",
+        dest="Influencers/Bizkaia/Influencers-Bizkaia_Guia_Actividades_Economicas.pdf",
+        territory="Bizkaia",
+        description="Bizkaia guia actividades economicas (IAE foral, autonomos, creadores)",
+        priority="high",
+    ),
+    # Gipuzkoa — Guia autonomos
+    WatchItem(
+        url="https://www.gipuzkoa.eus/documents/2456431/0/Guia+fiscal+autonomos.pdf",
+        dest="Influencers/Gipuzkoa/Influencers-Gipuzkoa_Guia_Fiscal_Autonomos.pdf",
+        territory="Gipuzkoa",
+        description="Gipuzkoa guia fiscal autonomos (aplicable a creadores)",
+        priority="high",
+    ),
+    # Araba — Guia autonomos
+    WatchItem(
+        url="https://web.araba.eus/documents/105044/0/Guia+fiscal+actividades+economicas.pdf",
+        dest="Influencers/Araba/Influencers-Araba_Guia_Fiscal_Actividades_Economicas.pdf",
+        territory="Araba",
+        description="Araba guia fiscal actividades economicas (IAE foral, creadores)",
+        priority="high",
+    ),
+    # Navarra — Autonomos actividades economicas
+    WatchItem(
+        url="https://www.navarra.es/documents/48192/17863227/Guia+para+iniciar+una+actividad+economica.pdf",
+        dest="Influencers/Navarra/Influencers-Navarra_Guia_Iniciar_Actividad_Economica.pdf",
+        territory="Navarra",
+        description="Navarra guia inicio actividad economica (autonomos, creadores)",
+        priority="high",
+    ),
+
+    # ── Canarias: REF + ZEC para emprendedores digitales ──
+    WatchItem(
+        url="https://www.gobiernodecanarias.org/hacienda/ref/docs/guia_ref_fiscal.pdf",
+        dest="Influencers/Canarias/Influencers-Canarias_Guia_REF_Fiscal.pdf",
+        territory="Canarias",
+        description="Canarias guia REF fiscal (ventajas emprendedores digitales)",
+        priority="high",
+    ),
+
+    # ── CCAA: Guias autonomos / emprendedores de haciendas autonomicas ──
+    # Madrid — Guia autonomos
+    WatchItem(
+        url="https://www.comunidad.madrid/sites/default/files/doc/empleo/guia_emprendedores.pdf",
+        dest="Influencers/Madrid/Influencers-Madrid_Guia_Emprendedores.pdf",
+        territory="Madrid",
+        description="Madrid guia emprendedores (deducciones autoempleo, creadores)",
+        priority="medium",
+    ),
+    # Cataluna — Guia autonomos
+    WatchItem(
+        url="https://empresa.gencat.cat/web/.content/emprenedoria/fitxers/Guia-fiscal-emprenedors.pdf",
+        dest="Influencers/Cataluna/Influencers-Cataluna_Guia_Fiscal_Emprendedores.pdf",
+        territory="Cataluna",
+        description="Cataluna guia fiscal emprendedores",
+        priority="medium",
+    ),
+    # Andalucia — Incentivos autonomos
+    WatchItem(
+        url="https://www.juntadeandalucia.es/export/drupaljda/Guia_Incentivos_Autonomos.pdf",
+        dest="Influencers/Andalucia/Influencers-Andalucia_Guia_Incentivos_Autonomos.pdf",
+        territory="Andalucia",
+        description="Andalucia guia incentivos autonomos (deducciones autoempleo)",
+        priority="medium",
+    ),
+    # Valencia — Guia fiscal autonomos
+    WatchItem(
+        url="https://www.gva.es/contenidos/publicaciones/Guia_fiscal_autonomos_CV.pdf",
+        dest="Influencers/Valencia/Influencers-Valencia_Guia_Fiscal_Autonomos.pdf",
+        territory="Valencia",
+        description="Valencia guia fiscal autonomos",
+        priority="medium",
+    ),
+
+    # ── Ceuta y Melilla: IPSI para actividades digitales ──
+    WatchItem(
+        url="https://www.tributosceuta.org/downloads/IPSI_Guia_Actividades.pdf",
+        dest="Influencers/Ceuta/Influencers-Ceuta_IPSI_Guia_Actividades.pdf",
+        territory="Ceuta",
+        description="Ceuta IPSI guia actividades (creadores digitales)",
+        priority="medium",
+    ),
+
+    # ── Articulos/guias de referencia (HTML→PDF no viable, status html_only) ──
+    # AEAT — Regimenes estimacion directa
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/Sede/irpf/empresarios-individuales-profesionales/regimenes-determinar-rendimiento-actividad.html",
+        dest="Influencers/Estatal/AEAT-Regimenes_Estimacion_Directa_Autonomos.html",
+        territory="Estatal",
+        description="AEAT regimenes estimacion directa autonomos (ref para creadores)",
+        priority="high",
+        status="html_only",
+    ),
+    # AEAT — Modelo 349 operaciones intracomunitarias
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/Sede/iva/operadores-intracomunitarios/modelo349.html",
+        dest="Influencers/Estatal/AEAT-Modelo349_Intracomunitarias_Info.html",
+        territory="Estatal",
+        description="AEAT info Modelo 349 (creadores facturan a Google/Meta Ireland)",
+        priority="high",
+        status="html_only",
+    ),
+]
+
+
+# ═══════════════════════════════════════════════════════════════
 # All items combined
 # ═══════════════════════════════════════════════════════════════
 
@@ -513,6 +794,8 @@ ALL_ITEMS: list[WatchItem] = (
     + CEUTA_MELILLA_ITEMS
     + CANARIAS_EXTRA_ITEMS
     + SS_ITEMS
+    + CREATORS_ITEMS
+    + INFLUENCERS_ITEMS
 )
 
 

@@ -32,7 +32,7 @@ def _run_schtasks(cmd_str: str) -> tuple[int, str, str]:
     return result.returncode, stdout, stderr
 
 
-def _generate_task_xml(day: str, time: str) -> str:
+def _generate_task_xml(day: str, time: str, run_always: bool = False) -> str:
     """Generate XML task definition for Task Scheduler."""
     day_element = DAY_MAP.get(day.upper(), "Monday")
 
@@ -44,6 +44,8 @@ def _generate_task_xml(day: str, time: str) -> str:
         days_ahead += 7
     next_date = today + timedelta(days=days_ahead)
     start_boundary = f"{next_date.strftime('%Y-%m-%d')}T{time}:00"
+
+    logon_type = "Password" if run_always else "InteractiveToken"
 
     return f"""<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -61,7 +63,7 @@ def _generate_task_xml(day: str, time: str) -> str:
   </Triggers>
   <Principals>
     <Principal id="Author">
-      <LogonType>InteractiveToken</LogonType>
+      <LogonType>{logon_type}</LogonType>
       <RunLevel>LeastPrivilege</RunLevel>
     </Principal>
   </Principals>
@@ -86,27 +88,33 @@ def _generate_task_xml(day: str, time: str) -> str:
 </Task>"""
 
 
-def create_task(day: str = "MON", time: str = "09:00") -> bool:
+def create_task(day: str = "MON", time: str = "09:00", run_always: bool = False) -> bool:
     """Register the weekly task in Windows Task Scheduler using XML import."""
     if not BAT_FILE.exists():
         print(f"Error: run_check.bat not found at {BAT_FILE}")
         return False
 
+    mode = "Run whether user is logged on or not" if run_always else "Solo interactivo"
     print(f"Registrando tarea: {TASK_NAME}")
     print(f"  Dia: {day} a las {time}")
+    print(f"  Modo: {mode}")
     print(f"  Script: {BAT_FILE}")
     print(f"  Working dir: {PROJECT_ROOT}")
     print()
 
     # Generate XML and write to temp file
-    xml_content = _generate_task_xml(day, time)
+    xml_content = _generate_task_xml(day, time, run_always=run_always)
     xml_path = BAT_FILE.parent / "_task.xml"
     xml_path.write_text(xml_content, encoding="utf-16")
 
     try:
-        rc, stdout, stderr = _run_schtasks(
-            f'schtasks /create /tn "{TASK_NAME}" /xml "{xml_path}" /f'
-        )
+        # When run_always=True, schtasks needs /RU to prompt for password
+        cmd = f'schtasks /create /tn "{TASK_NAME}" /xml "{xml_path}" /f'
+        if run_always:
+            import getpass
+            username = getpass.getuser()
+            cmd += f' /RU "{username}"'
+        rc, stdout, stderr = _run_schtasks(cmd)
         if rc == 0:
             print(f"Tarea '{TASK_NAME}' registrada correctamente.")
             print(f"Verificar: taskschd.msc o --check")
@@ -154,6 +162,8 @@ def main():
     parser.add_argument("--check", action="store_true", help="Check if task exists")
     parser.add_argument("--day", default="MON", help="Day of week (MON-SUN, default: MON)")
     parser.add_argument("--time", default="09:00", help="Time (HH:MM, default: 09:00)")
+    parser.add_argument("--run-always", action="store_true",
+                        help="Run whether user is logged on or not (prompts for password)")
 
     args = parser.parse_args()
 
@@ -162,7 +172,7 @@ def main():
     elif args.check:
         check_task()
     else:
-        create_task(day=args.day, time=args.time)
+        create_task(day=args.day, time=args.time, run_always=args.run_always)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ import Chat from './pages/Chat'
 import Dashboard from './pages/Dashboard'
 import Footer from './components/Footer'
 import CookieConsentBanner from './components/CookieConsent'
+import FeedbackWidget from './components/FeedbackWidget'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { useSubscription } from './hooks/useSubscription'
 
@@ -16,6 +17,9 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const WorkspacesPage = lazy(() => import('./pages/WorkspacesPage'))
 const SubscribePage = lazy(() => import('./pages/SubscribePage'))
 const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'))
+const AdminFeedbackPage = lazy(() => import('./pages/AdminFeedbackPage'))
+const AdminContactPage = lazy(() => import('./pages/AdminContactPage'))
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'))
 const ContactPage = lazy(() => import('./pages/ContactPage'))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 const AITransparencyPage = lazy(() => import('./pages/AITransparencyPage'))
@@ -158,10 +162,34 @@ function App() {
                         }
                     />
                     <Route
+                        path="/admin"
+                        element={
+                            <ProtectedRoute requireSubscription={false}>
+                                <AdminDashboardPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
                         path="/admin/users"
                         element={
                             <ProtectedRoute requireSubscription={false}>
                                 <AdminUsersPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/feedback"
+                        element={
+                            <ProtectedRoute requireSubscription={false}>
+                                <AdminFeedbackPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/contact"
+                        element={
+                            <ProtectedRoute requireSubscription={false}>
+                                <AdminContactPage />
                             </ProtectedRoute>
                         }
                     />
@@ -171,6 +199,9 @@ function App() {
 
                 {/* Cookie consent banner (LSSI-CE + RGPD) */}
                 <CookieConsentBanner />
+
+                {/* Feedback widget — authenticated users only, hidden on public pages */}
+                <FeedbackWidget />
 
                 {/* Footer — hidden on full-screen app pages */}
                 <AppFooter />

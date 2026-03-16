@@ -800,6 +800,49 @@ class TursoClient:
             """,
 
             "CREATE INDEX IF NOT EXISTS idx_crypto_gains_user_year ON crypto_gains(user_id, tax_year)",
+
+            # =============================================
+            # FEEDBACK & CHAT RATINGS TABLES
+            # =============================================
+
+            # Feedback table — bug reports, feature requests, general comments
+            """
+            CREATE TABLE IF NOT EXISTS feedback (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                type TEXT NOT NULL CHECK(type IN ('bug', 'feature', 'general')),
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                page_url TEXT,
+                screenshot_data TEXT,
+                status TEXT DEFAULT 'new' CHECK(status IN ('new', 'reviewed', 'planned', 'in_progress', 'done', 'wont_fix')),
+                priority TEXT DEFAULT 'normal' CHECK(priority IN ('low', 'normal', 'high', 'critical')),
+                admin_notes TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)",
+            "CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback(type)",
+
+            # Chat ratings — thumbs up/down per assistant message
+            """
+            CREATE TABLE IF NOT EXISTS chat_ratings (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                message_id TEXT NOT NULL,
+                conversation_id TEXT,
+                rating INTEGER NOT NULL CHECK(rating IN (-1, 1)),
+                comment TEXT,
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_ratings_user ON chat_ratings(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_ratings_message ON chat_ratings(message_id)",
+            "CREATE INDEX IF NOT EXISTS idx_ratings_rating ON chat_ratings(rating)",
         ]
         
         try:

@@ -771,6 +771,16 @@ async def delete_user_account(
         [user_id]
     )
 
+    # Feedback & chat ratings (GDPR Art.17 — defense-in-depth, tables have ON DELETE CASCADE)
+    await db.execute(
+        "DELETE FROM feedback WHERE user_id = ?",
+        [user_id]
+    )
+    await db.execute(
+        "DELETE FROM chat_ratings WHERE user_id = ?",
+        [user_id]
+    )
+
     # Sessions
     await db.execute(
         "DELETE FROM sessions WHERE user_id = ?",

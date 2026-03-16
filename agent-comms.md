@@ -7,6 +7,100 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-16] Competitive — DONE — Actualizacion datos mercado creadores Q1 2026
+
+- **Archivo**: `plans/creators-market-update-2026-Q1.md` — 14 secciones, datos actualizados con fuentes
+- **Hallazgo critico 1**: TaxDown ya no es startup — 4M usuarios, >10M EUR facturacion, rentable. Mucho mas grande de lo esperado.
+- **Hallazgo critico 2**: Plan control tributario AEAT 2026 incluye influencers como objetivo prioritario — catalizador de urgencia para nuestro mercado
+- **Hallazgo critico 3**: DAC7 Modelo 238 ya presentado en enero 2026 — Hacienda tiene datos de plataformas de 2025
+- **Hallazgo critico 4**: VeriFactu para autonomos prorrogado a 1 julio 2027 (antes teniamos dato incorrecto de julio 2025)
+- **Hallazgo critico 5**: Inversion influencer marketing ES: 158M EUR en 2025 (vs 125,9M en 2024, +25,9%)
+- **Hallazgo critico 6**: 285.000 influencers activos con >10K seguidores (IAB Spain III edicion) — mercado potencial mucho mayor
+- **Dato confirmado**: Ningun nuevo competidor IA fiscal detectado en Q1 2026
+
+---
+
+## [2026-03-16] Competitive — DONE — Research pricing y modelo de negocio segmento Creadores / Emprendedores Digitales
+
+- **Archivo**: `plans/creators-pricing-research-2026.md` — 8 secciones, pricing verificado, propuesta concreta
+- **Mercado**: 235.000 creadores activos en Espana, 207.000 con ingresos declarables, SAM ~40.000 dispuestos a pagar herramienta digital
+- **Competidor clave**: OnlyTax (70 EUR + IVA/mes, sin IA, sin forales) — lider del nicho pero precio fuera de small creators
+- **Hallazgo clave 1**: Ninguna herramienta automatiza el Modelo 349 para YouTubers/creadores — gap enorme y buscado en Google
+- **Hallazgo clave 2**: Calculo withholding tax W-8BEN de Google — nadie lo automatiza en Espana
+- **Hallazgo clave 3**: Epigrafes IAE para creadores son una fuente de confusion — quick win para el chatbot IA
+- **Propuesta**: Plan Autonomo + Modulo Creador a 49 EUR/mes (+10 EUR sobre Plan Autonomo base)
+- **Nombre recomendado**: "Plan Creator"
+- **TAM**: 70.56M EUR/ano | SAM: 23.52M EUR/ano | SOM 3 anos: 0.7-1.2M EUR/ano
+- **Roadmap**: Fase 1 (abril 2026): quick wins en chatbot RAG — Fase 2 (mayo-junio): modulo completo + pricing activo
+
+---
+
+## [2026-03-16] Competitive — DONE — Research exhaustivo creadores de contenido y emprendedores digitales (sesion anterior)
+
+- **Archivo**: `plans/creators-entrepreneurs-research-2026.md` — 11 secciones, datos verificados con fuentes
+- **Mercado**: 15.000+ creadores con >100k seguidores en Espana; 50.000-150.000 potenciales usuarios de Impuestify
+- **Competidor clave del nicho**: OnlyTax (~70 EUR/mes, lider de mercado, sin IA, sin cobertura foral)
+- **Hallazgo clave 1**: OnlyTax domina el nicho de creadores en Espana pero NO tiene IA — ventana de diferenciacion enorme
+- **Hallazgo clave 2**: Ni OnlyTax ni nadie cubre al creador de contenido FORAL (vasco, navarro) con herramientas digitales
+- **Hallazgo clave 3**: La casuistica de IVA por plataforma (Google Ireland, TikTok UK, OnlyFans UK) es compleja y nadie la automatiza
+- **Hallazgo clave 4**: Consultas DGT criticas identificadas: V0773-22, V2390/2024, V2428-25 — PENDIENTE indexar en RAG
+- **Hallazgo clave 5**: CNAE-2025 (RD 10/2025 enero 2025) reconoce oficialmente a creadores — nuevo codigo 60.39
+- **Hallazgo clave 6**: VeriFactu obligatorio para autonomos en julio 2027 — modulo de facturacion necesario
+- **URLs crawler**: 25+ URLs oficiales identificadas (DGT, AEAT, BOE, Haciendas Forales, Canarias)
+- **Proximos pasos**: (1) Indexar PDFs/docs DGT en RAG, (2) Landing SEO creadores, (3) Calculadora IVA por plataforma
+
+---
+
+## [2026-03-16] PM — DONE — TikTok integrado en estrategia Social Media
+
+- **Estrategia actualizada**: `plans/social-media-strategy-2026.md` — seccion 3C TikTok completa, calendario semanal 3 canales (12 piezas/semana), timeline, metricas, UTMs
+- **Research**: `plans/tiktok-research-2026.md` — 9 secciones con fuentes verificadas
+- **Roadmap actualizado**: `plans/ROADMAP.md` — TikTok integrado en entrada Social Media
+- **Memoria actualizada**: `memory/project_social_media.md` — 3 plataformas documentadas
+- **Prioridad canales**: Instagram #1 > LinkedIn #2 > TikTok #3
+- **Pendiente Fernando**: Crear cuenta @impuestify en TikTok (Business Account) + primeros 3 videos semana 24-28 marzo
+- **Tambien en esta sesion**: Crawler reconfigurado a lunes 09:00 (Task Scheduler). Fernando debe marcar "Run whether user is logged on or not" en taskschd.msc
+
+---
+
+## [2026-03-16] Competitive — DONE — TikTok research exhaustivo completado
+
+- **Archivo**: `plans/tiktok-research-2026.md` — 9 secciones, datos verificados con fuentes
+- **Veredicto**: SI a TikTok, prioridad MEDIA-ALTA, empezar en abril 2026 (apertura Campana Renta)
+- **Hallazgo clave 1**: 23,4M usuarios en Espana (H1 2025), 70% mayores de 25 — publico objetivo presente
+- **Hallazgo clave 2**: Nicho fiscal en TikTok practicamente vacio — TaxDown tiene presencia inconsistente
+- **Hallazgo clave 3**: Hacienda lanzo campana TikTok en febrero 2026 — valida el canal para contenido fiscal
+- **Hallazgo clave 4**: Contenido foral (Pais Vasco, Navarra) es territorio VIRGEN en TikTok — nadie lo hace
+- **Riesgo**: DSA Europa — TikTok sancionado preliminarmente (feb 2026), riesgo de ban bajo pero riesgo de cambios al algoritmo medio
+- **No hacer**: No subir Reels de Instagram con watermark — TikTok penaliza activamente
+- **Ads**: Esperar hasta tener base organica y validacion de conversion
+- **Memoria actualizada**: `.claude/agent-memory/competitive-intel/MEMORY.md`
+
+---
+
+## [2026-03-15] PM — DONE — Estrategia Social Media completa y verificada
+
+- **Estrategia global**: `plans/social-media-strategy-2026.md` — 12 secciones, 7 pilares, LinkedIn + Instagram
+- **Plan contenido 6 semanas**: `plans/social-media-content-plan-2026-Q1.md` — 10 posts completos + 15 guiones Reels
+- **4 carruseles PDF+PNG**: L2 (deducciones autonomos), L4 (guia IRPF), L7 (errores renta), L8 (calendario fiscal) en `social_media/carruseles/`
+- **9 screenshots producto**: `social_media/screenshots/` — landing, subscribe, forales, Ceuta/Melilla, Canarias
+- **Carousel generator**: `backend/scripts/carousel_generator.py` — generador Pillow con paleta Impuestify
+- **Pendiente usuario**: Setup Metricool, optimizar perfil LinkedIn Fernando, crear Company Page, estructura Google Drive
+- **Timeline**: Primer post LinkedIn 21 marzo, primer Reel Instagram 22 marzo, campana Renta desde 8 abril
+
+---
+
+## [2026-03-13] QA — DONE — QA flujo suscripciones produccion (qa-report-2026-03-13.md)
+
+- **5/7 tests PASS**, 2 FAIL (ver reporte completo en `plans/qa-report-2026-03-13.md`)
+- **B-SUB-01 (MAYOR)**: `/subscribe` muestra "Crear cuenta" (link a /register) para usuarios autenticados — deberia iniciar checkout Stripe. Gap critico en funnel de conversion para usuarios con cuenta sin suscripcion.
+- **B-LAND-FADE (REGRESION)**: Landing secciones intermedias siguen negras sin scroll en headless — fue marcado como FIXED en sesion 15 pero se reproduce. Impacto SEO.
+- **Cloudflare Turnstile**: Bloquea login automatizado en produccion. Tests que requieren auth no pudieron ejecutarse. Recomendacion: bypass via API directa para staging.
+- **Lo que funciona bien**: /subscribe carga ambos planes y precios correctos, proteccion de rutas OK, 0 errores JS de consola, 0 requests 5xx.
+- Screenshots en `tests/e2e/screenshots/sub-*.png`
+
+---
+
 ## [2026-03-13] PM — DONE — seed_deductions_xsd.py ejecutado en Turso produccion
 
 - 339 deducciones XSD Modelo 100 AEAT insertadas (15 CCAA)
@@ -120,15 +214,11 @@
 
 ---
 
-## [2026-03-10] PM — NEEDS_REVIEW — Estrategia Social Media Impuestify
+## [2026-03-10] PM — DONE — Estrategia Social Media Impuestify (completada 2026-03-15)
 
-**Plan completo**: `plans/social-media-strategy-2026.md`
-
-**Resumen**: Estrategia de contenido para LinkedIn + Instagram con 7 pilares (educacion fiscal, mitos, IA aplicada, forales, social proof, calendario fiscal, building in public). Cadencia: 3 posts/semana LinkedIn + 3-5 Reels/semana Instagram. 3 palancas de diferenciacion: IA real vs chatbot, unico en Pais Vasco/Navarra, producto digital puro. Herramientas: Metricool, Canva Pro, CapCut, PostNitro. Timeline: setup marzo, campana Renta abril-junio 2026.
-
-**Acciones prioritarias (8)**: calendario mensual, contenido forales, LinkedIn 3/semana, Instagram Reels, demos multi-agente, Stories calendario fiscal, presencia pre-Renta, contenido diferencial IA.
-
-**Para PM**: Revisar y aprobar plan. Definir quien ejecuta (fundador / marketing hire / freelancer).
+**Plan completo**: `plans/social-media-strategy-2026.md` + `plans/social-media-content-plan-2026-Q1.md`
+**Assets generados**: 4 carruseles en `social_media/carruseles/`, 9 screenshots en `social_media/screenshots/`
+**Estado**: COMPLETO — todos los entregables creados. Pendiente ejecucion por Fernando.
 
 ---
 

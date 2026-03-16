@@ -441,6 +441,10 @@ app.include_router(contact_router)
 from app.routers.admin import router as admin_router
 app.include_router(admin_router)
 
+# Feedback & Chat Ratings (authenticated users)
+from app.routers.feedback import router as feedback_router
+app.include_router(feedback_router)
+
 # Export & Report Endpoints
 from app.routers.export import router as export_router
 app.include_router(export_router)
