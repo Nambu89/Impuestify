@@ -437,7 +437,7 @@ export default function Home() {
                     </FadeContent>
                     <FadeContent delay={200} duration={500}>
                         <div className="creators-promo__cta-wrap">
-                            <Link to="/creadores-de-contenido" className="btn btn-lg creators-promo__cta">
+                            <Link to="/subscribe" className="btn btn-lg creators-promo__cta">
                                 <Video size={20} />
                                 Ver Plan Creator — 49 EUR/mes
                                 <ArrowRight size={18} />

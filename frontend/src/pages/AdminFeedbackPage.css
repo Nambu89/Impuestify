@@ -199,6 +199,11 @@
     border-color: rgba(59, 130, 246, 0.4);
 }
 
+.afp-select option {
+    background: #1e293b;
+    color: rgba(255, 255, 255, 0.9);
+}
+
 .afp-filter-btn {
     padding: var(--spacing-2) var(--spacing-5);
     background: var(--color-primary);
@@ -580,6 +585,11 @@
 .afp-edit-select:focus,
 .afp-edit-textarea:focus {
     border-color: rgba(59, 130, 246, 0.4);
+}
+
+.afp-edit-select option {
+    background: #1e293b;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .afp-edit-textarea {

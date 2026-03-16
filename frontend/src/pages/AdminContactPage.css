@@ -228,6 +228,11 @@
     border-color: rgba(59, 130, 246, 0.4);
 }
 
+.acp-select option {
+    background: #1e293b;
+    color: rgba(255, 255, 255, 0.9);
+}
+
 /* ========== LAYOUT ========== */
 .acp-layout {
     display: flex;

@@ -101,7 +101,19 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
                 setIsSubscribed(true)
             } catch (err: any) {
-                setError(err.message || 'Error al activar notificaciones')
+                // Map common browser push errors to user-friendly messages
+                const raw = err.message || ''
+                let userMessage = 'Error al activar notificaciones'
+                if (raw.includes('push service error') || raw.includes('Registration failed')) {
+                    userMessage = 'El servicio de notificaciones no está disponible en este momento. Inténtalo de nuevo más tarde.'
+                } else if (raw.includes('VAPID') || raw.includes('applicationServerKey')) {
+                    userMessage = 'Error de configuración del servidor. Contacta con soporte.'
+                } else if (raw.includes('permission') || raw.includes('denied')) {
+                    userMessage = 'Permiso de notificaciones denegado'
+                } else if (raw) {
+                    userMessage = raw
+                }
+                setError(userMessage)
             } finally {
                 setLoading(false)
             }

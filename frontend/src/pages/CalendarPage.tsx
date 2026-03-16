@@ -7,7 +7,7 @@ import './CalendarPage.css'
 
 export default function CalendarPage() {
     const { deadlines, loading, error, refresh } = useDeadlines({
-        days: 180,
+        days: 365,
         isPublic: false,
     })
 

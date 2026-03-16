@@ -147,7 +147,7 @@ interface TimelineProps {
 
 function Timeline({ deadlines, currentMonth, currentYear, onMonthChange }: TimelineProps) {
     const months = []
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 12; i++) {
         let m = (currentMonth + i) % 12
         let y = currentYear + Math.floor((currentMonth + i) / 12)
         months.push({ month: m, year: y })

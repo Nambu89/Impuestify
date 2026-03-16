@@ -48,7 +48,7 @@ export default function PushPermissionBanner({ onDismiss }: PushPermissionBanner
             <Bell size={18} className="push-banner__icon" />
             <div className="push-banner__content">
                 <p className="push-banner__text">
-                    Activa las notificaciones para no perderte ningun plazo fiscal
+                    Activa las notificaciones para no perderte ningún plazo fiscal
                 </p>
                 {error && <p className="push-banner__error">{error}</p>}
             </div>
