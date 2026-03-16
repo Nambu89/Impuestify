@@ -28,6 +28,13 @@ class WorkIncomeCalculator:
         colegio_profesional: float = 0,
         defensa_juridica: float = 0,
         year: int = 2024,
+        # --- Fase 4.1: Incremento desempleado nuevo empleo (casilla 0020) ---
+        # Incremento gastos deducibles si acepta empleo en municipio distinto
+        # Max 2.000 EUR adicionales sobre los 2.000 EUR base
+        incremento_desempleado_nuevo_empleo: float = 0,
+        # --- Fase 4.2: Incremento discapacidad trabajador activo (casilla 0021) ---
+        # 3.500 EUR si discapacidad >= 33%; 7.750 EUR si >= 65% o movilidad reducida
+        incremento_discapacidad_activo: float = 0,
         **kwargs,
     ) -> Dict[str, Any]:
         """

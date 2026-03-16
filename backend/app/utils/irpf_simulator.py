@@ -525,6 +525,42 @@ class IRPFSimulator:
         retenciones_trabajo: float = 0,
         # --- Fase 5: Deducciones autonómicas (computed by endpoint) ---
         deducciones_autonomicas_total: float = 0,
+        # --- Fase XSD: Gastos granulares actividad (casillas 0181-0217) ---
+        gastos_compras: float = 0,
+        gastos_sueldos: float = 0,
+        gastos_ss_empresa: float = 0,
+        gastos_arrendamientos: float = 0,
+        gastos_reparaciones_actividad: float = 0,
+        gastos_servicios_profesionales: float = 0,
+        gastos_tributos: float = 0,
+        gastos_financieros_actividad: float = 0,
+        gastos_suministros_actividad: float = 0,
+        gastos_otros: float = 0,
+        gastos_publicidad: float = 0,
+        gastos_formacion: float = 0,
+        gastos_software: float = 0,
+        # --- Fase XSD: Ingresos granulares actividad (casillas 0171-0179) ---
+        ingresos_ventas: float = 0,
+        ingresos_subvenciones: float = 0,
+        ingresos_financieros_actividad: float = 0,
+        ingresos_otros_actividad: float = 0,
+        # --- Fase XSD: Royalties / Derechos de autor ---
+        ingresos_derechos_autor: float = 0,
+        reduccion_derechos_autor: bool = False,
+        # --- Fase XSD: Estimacion objetiva (modulos) ---
+        modulos_rendimiento_neto: float = 0,
+        modulos_indice_corrector: float = 1.0,
+        # --- Fase XSD: WorkIncome nuevos params ---
+        defensa_juridica: float = 0,
+        incremento_desempleado_nuevo_empleo: float = 0,
+        incremento_discapacidad_activo: float = 0,
+        # --- Fase XSD: Gastos granulares alquiler (casillas 0105-0126) ---
+        gastos_financiacion_alquiler: float = 0,
+        gastos_reparacion_alquiler: float = 0,
+        gastos_comunidad_alquiler: float = 0,
+        ibi_alquiler: float = 0,
+        gastos_seguros_alquiler: float = 0,
+        gastos_suministros_alquiler: float = 0,
     ) -> Dict[str, Any]:
         """
         Run a complete IRPF simulation.
@@ -614,6 +650,38 @@ class IRPFSimulator:
                 perdidas_juegos_privados=perdidas_juegos_privados,
                 premios_metalico_publicos=premios_metalico_publicos,
                 premios_especie_publicos=premios_especie_publicos,
+                # Fase XSD: nuevos params (aceptados via **_ignored en _simulate_foral
+                # para los que no aplican, pero pasados para los que sí)
+                gastos_compras=gastos_compras,
+                gastos_sueldos=gastos_sueldos,
+                gastos_ss_empresa=gastos_ss_empresa,
+                gastos_arrendamientos=gastos_arrendamientos,
+                gastos_reparaciones_actividad=gastos_reparaciones_actividad,
+                gastos_servicios_profesionales=gastos_servicios_profesionales,
+                gastos_tributos=gastos_tributos,
+                gastos_financieros_actividad=gastos_financieros_actividad,
+                gastos_suministros_actividad=gastos_suministros_actividad,
+                gastos_otros=gastos_otros,
+                gastos_publicidad=gastos_publicidad,
+                gastos_formacion=gastos_formacion,
+                gastos_software=gastos_software,
+                ingresos_ventas=ingresos_ventas,
+                ingresos_subvenciones=ingresos_subvenciones,
+                ingresos_financieros_actividad=ingresos_financieros_actividad,
+                ingresos_otros_actividad=ingresos_otros_actividad,
+                ingresos_derechos_autor=ingresos_derechos_autor,
+                reduccion_derechos_autor=reduccion_derechos_autor,
+                modulos_rendimiento_neto=modulos_rendimiento_neto,
+                modulos_indice_corrector=modulos_indice_corrector,
+                defensa_juridica=defensa_juridica,
+                incremento_desempleado_nuevo_empleo=incremento_desempleado_nuevo_empleo,
+                incremento_discapacidad_activo=incremento_discapacidad_activo,
+                gastos_financiacion_alquiler=gastos_financiacion_alquiler,
+                gastos_reparacion_alquiler=gastos_reparacion_alquiler,
+                gastos_comunidad_alquiler=gastos_comunidad_alquiler,
+                ibi_alquiler=ibi_alquiler,
+                gastos_seguros_alquiler=gastos_seguros_alquiler,
+                gastos_suministros_alquiler=gastos_suministros_alquiler,
             )
 
         # --- Common regime (comun / ceuta_melilla / canarias) ---
@@ -628,13 +696,16 @@ class IRPFSimulator:
             ss_empleado=ss_empleado,
             cuotas_sindicales=cuotas_sindicales,
             colegio_profesional=colegio_profesional,
+            defensa_juridica=defensa_juridica,
+            incremento_desempleado_nuevo_empleo=incremento_desempleado_nuevo_empleo,
+            incremento_discapacidad_activo=incremento_discapacidad_activo,
             year=year,
         )
 
         # --- 1b. Activity income (autonomos) ---
         actividad_result = None
         rend_actividad = 0.0
-        if ingresos_actividad > 0:
+        if ingresos_actividad > 0 or ingresos_ventas > 0 or ingresos_derechos_autor > 0 or modulos_rendimiento_neto > 0:
             actividad_result = await self.activity.calculate(
                 ingresos_actividad=ingresos_actividad,
                 gastos_actividad=gastos_actividad,
@@ -646,6 +717,31 @@ class IRPFSimulator:
                 inicio_actividad=inicio_actividad,
                 un_solo_cliente=un_solo_cliente,
                 year=year,
+                # Fase XSD: gastos granulares actividad
+                gastos_compras=gastos_compras,
+                gastos_sueldos=gastos_sueldos,
+                gastos_ss_empresa=gastos_ss_empresa,
+                gastos_arrendamientos=gastos_arrendamientos,
+                gastos_reparaciones=gastos_reparaciones_actividad,
+                gastos_servicios_profesionales=gastos_servicios_profesionales,
+                gastos_tributos=gastos_tributos,
+                gastos_financieros=gastos_financieros_actividad,
+                gastos_suministros=gastos_suministros_actividad,
+                gastos_otros=gastos_otros,
+                gastos_publicidad=gastos_publicidad,
+                gastos_formacion=gastos_formacion,
+                gastos_software=gastos_software,
+                # Fase XSD: ingresos granulares actividad
+                ingresos_ventas=ingresos_ventas,
+                ingresos_subvenciones=ingresos_subvenciones,
+                ingresos_financieros_actividad=ingresos_financieros_actividad,
+                ingresos_otros_actividad=ingresos_otros_actividad,
+                # Fase XSD: royalties
+                ingresos_derechos_autor=ingresos_derechos_autor,
+                reduccion_derechos_autor=reduccion_derechos_autor,
+                # Fase XSD: modulos
+                modulos_rendimiento_neto=modulos_rendimiento_neto,
+                modulos_indice_corrector=modulos_indice_corrector,
             )
             rend_actividad = actividad_result["rendimiento_neto_reducido"]
 
@@ -653,13 +749,33 @@ class IRPFSimulator:
         inmuebles_result = None
         rend_inmuebles = 0.0
         if ingresos_alquiler > 0:
-            inmuebles_result = await self.rental.calculate(
-                ingresos_alquiler=ingresos_alquiler,
-                gastos_comunidad=gastos_alquiler_total,  # simplified: user provides total
-                valor_adquisicion=valor_adquisicion_inmueble,
-                es_vivienda_habitual=es_vivienda_habitual,
-                year=year,
+            # Use granular rental expenses if provided; otherwise fall back to gastos_alquiler_total
+            _rental_granulares_sum = (
+                gastos_financiacion_alquiler + gastos_reparacion_alquiler
+                + gastos_comunidad_alquiler + ibi_alquiler
+                + gastos_seguros_alquiler + gastos_suministros_alquiler
             )
+            if _rental_granulares_sum > 0:
+                inmuebles_result = await self.rental.calculate(
+                    ingresos_alquiler=ingresos_alquiler,
+                    gastos_financiacion=gastos_financiacion_alquiler,
+                    gastos_reparacion=gastos_reparacion_alquiler,
+                    gastos_comunidad=gastos_comunidad_alquiler,
+                    ibi=ibi_alquiler,
+                    gastos_seguros=gastos_seguros_alquiler,
+                    gastos_suministros=gastos_suministros_alquiler,
+                    valor_adquisicion=valor_adquisicion_inmueble,
+                    es_vivienda_habitual=es_vivienda_habitual,
+                    year=year,
+                )
+            else:
+                inmuebles_result = await self.rental.calculate(
+                    ingresos_alquiler=ingresos_alquiler,
+                    gastos_comunidad=gastos_alquiler_total,  # simplified: user provides total
+                    valor_adquisicion=valor_adquisicion_inmueble,
+                    es_vivienda_habitual=es_vivienda_habitual,
+                    year=year,
+                )
             rend_inmuebles = inmuebles_result["rendimiento_neto_reducido"]
 
         # --- 3. Base imponible general ---

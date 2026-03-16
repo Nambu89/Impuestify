@@ -290,6 +290,136 @@ IMPORTANTE sobre ingresos:
                 "premios_especie_publicos": {
                     "type": "number",
                     "description": "Premios en especie de loterías públicas, valorados a precio de mercado (casilla 0293). Mismo tratamiento que premios_metalico_publicos."
+                },
+                # --- Fase XSD: Gastos granulares actividad (casillas 0181-0217) ---
+                "gastos_compras": {
+                    "type": "number",
+                    "description": "Compras de mercaderías y materias primas (casilla 0181). Gasto deducible de actividad económica en estimación directa."
+                },
+                "gastos_sueldos": {
+                    "type": "number",
+                    "description": "Sueldos y salarios del personal empleado (casilla 0190). Solo para autónomos con trabajadores a cargo."
+                },
+                "gastos_ss_empresa": {
+                    "type": "number",
+                    "description": "Seguridad Social a cargo de la empresa (casilla 0191). Cuotas SS del empresario por sus empleados."
+                },
+                "gastos_arrendamientos": {
+                    "type": "number",
+                    "description": "Alquileres de locales, oficinas y bienes afectos a la actividad (casilla 0196)."
+                },
+                "gastos_reparaciones_actividad": {
+                    "type": "number",
+                    "description": "Gastos de reparación y conservación de bienes afectos a la actividad (casilla 0197)."
+                },
+                "gastos_servicios_profesionales": {
+                    "type": "number",
+                    "description": "Servicios de profesionales independientes: gestoría, abogados, consultores (casilla 0198)."
+                },
+                "gastos_tributos": {
+                    "type": "number",
+                    "description": "Tributos y tasas deducibles: IAE, IBI de local, tasas municipales (casilla 0201)."
+                },
+                "gastos_financieros_actividad": {
+                    "type": "number",
+                    "description": "Gastos financieros de la actividad: intereses de préstamos afectos (casilla 0203)."
+                },
+                "gastos_suministros_actividad": {
+                    "type": "number",
+                    "description": "Suministros afectos a la actividad: luz, agua, internet, teléfono (casilla 0205). Para trabajadores en domicilio, hasta el 30% de la parte proporcional del inmueble."
+                },
+                "gastos_otros": {
+                    "type": "number",
+                    "description": "Otros gastos deducibles no clasificados en categorías anteriores (casilla 0217)."
+                },
+                "gastos_publicidad": {
+                    "type": "number",
+                    "description": "Gastos de publicidad, marketing y promoción de la actividad (va en casilla 0217)."
+                },
+                "gastos_formacion": {
+                    "type": "number",
+                    "description": "Gastos de formación y actualización profesional relacionados con la actividad (va en 0217)."
+                },
+                "gastos_software": {
+                    "type": "number",
+                    "description": "Licencias de software, suscripciones SaaS y herramientas digitales afectas (va en 0217)."
+                },
+                # --- Fase XSD: Ingresos granulares actividad (casillas 0171-0179) ---
+                "ingresos_ventas": {
+                    "type": "number",
+                    "description": "Ingresos por ventas de bienes y prestación de servicios (casilla 0171). Si se proporciona este campo junto con otros ingresos granulares, sustituyen a ingresos_actividad."
+                },
+                "ingresos_subvenciones": {
+                    "type": "number",
+                    "description": "Subvenciones de explotación y de capital afectas a la actividad (casilla 0173)."
+                },
+                "ingresos_financieros_actividad": {
+                    "type": "number",
+                    "description": "Ingresos financieros de la actividad económica (casilla 0175)."
+                },
+                "ingresos_otros_actividad": {
+                    "type": "number",
+                    "description": "Otros ingresos de la actividad no clasificados en categorías anteriores (casilla 0179)."
+                },
+                # --- Fase XSD: Royalties / Derechos de autor ---
+                "ingresos_derechos_autor": {
+                    "type": "number",
+                    "description": "Ingresos por royalties o derechos de autor (casilla 0128). Aplicable a creadores de contenido, escritores, músicos, artistas. Se suman al rendimiento de actividad. Si reduccion_derechos_autor=true, se aplica reducción del 30% (Art. 32.1 LIRPF)."
+                },
+                "reduccion_derechos_autor": {
+                    "type": "boolean",
+                    "description": "true si los derechos de autor se han generado en más de 2 años (Art. 32.1 LIRPF). Aplica reducción del 30% sobre ingresos_derechos_autor."
+                },
+                "retencion_derechos_autor": {
+                    "type": "number",
+                    "description": "Retenciones IRPF practicadas sobre los ingresos por derechos de autor (19% general). Se suman a retenciones_actividad para el cálculo del resultado final."
+                },
+                # --- Fase XSD: Estimacion objetiva (modulos) ---
+                "modulos_rendimiento_neto": {
+                    "type": "number",
+                    "description": "Rendimiento neto previo calculado por módulos (estimacion_actividad='objetiva'). Es el resultado de aplicar los módulos de la AEAT a la actividad del autónomo. Solo relevante si estimacion_actividad='objetiva'."
+                },
+                "modulos_indice_corrector": {
+                    "type": "number",
+                    "description": "Índice corrector aplicable en estimación objetiva (default 1.0). Valores habituales: 0.75 (inicio actividad), 0.90 (determinadas actividades). Solo si estimacion_actividad='objetiva'."
+                },
+                # --- Fase XSD: WorkIncome nuevos params ---
+                "defensa_juridica": {
+                    "type": "number",
+                    "description": "Gastos de defensa jurídica del trabajador frente al empleador (casilla 0016). Deducible con límite de 300 EUR/año."
+                },
+                "incremento_desempleado_nuevo_empleo": {
+                    "type": "number",
+                    "description": "Incremento de gastos deducibles del trabajo por aceptar empleo en municipio distinto siendo desempleado (casilla 0020). Hasta 2.000 EUR adicionales sobre los 2.000 EUR base."
+                },
+                "incremento_discapacidad_activo": {
+                    "type": "number",
+                    "description": "Incremento de gastos deducibles por discapacidad del trabajador activo (casilla 0021). 3.500 EUR si discapacidad >=33%; 7.750 EUR si >=65% o movilidad reducida."
+                },
+                # --- Fase XSD: Gastos granulares alquiler (casillas 0105-0126) ---
+                "gastos_financiacion_alquiler": {
+                    "type": "number",
+                    "description": "Intereses y gastos de financiación del inmueble alquilado (casilla 0105). Incluye intereses hipotecarios. Limitados al importe de los ingresos íntegros (Art. 23.1.a LIRPF)."
+                },
+                "gastos_reparacion_alquiler": {
+                    "type": "number",
+                    "description": "Gastos de reparación y conservación del inmueble alquilado (casilla 0106). Limitados conjuntamente con financiación al importe de ingresos íntegros."
+                },
+                "gastos_comunidad_alquiler": {
+                    "type": "number",
+                    "description": "Cuotas de comunidad de propietarios del inmueble alquilado (casilla 0109). Sin límite de importe."
+                },
+                "ibi_alquiler": {
+                    "type": "number",
+                    "description": "IBI (Impuesto sobre Bienes Inmuebles) del inmueble alquilado. Deducible sin límite."
+                },
+                "gastos_seguros_alquiler": {
+                    "type": "number",
+                    "description": "Primas de seguro del inmueble alquilado: hogar, responsabilidad civil, impago (casilla 0114). Sin límite."
+                },
+                "gastos_suministros_alquiler": {
+                    "type": "number",
+                    "description": "Suministros del inmueble alquilado a cargo del propietario: agua, luz, gas (casilla 0113). Sin límite."
                 }
             },
             "required": ["comunidad_autonoma"]
@@ -366,6 +496,43 @@ async def simulate_irpf_tool(
     perdidas_juegos_privados: float = 0,
     premios_metalico_publicos: float = 0,
     premios_especie_publicos: float = 0,
+    # Fase XSD: Gastos granulares actividad (casillas 0181-0217)
+    gastos_compras: float = 0,
+    gastos_sueldos: float = 0,
+    gastos_ss_empresa: float = 0,
+    gastos_arrendamientos: float = 0,
+    gastos_reparaciones_actividad: float = 0,
+    gastos_servicios_profesionales: float = 0,
+    gastos_tributos: float = 0,
+    gastos_financieros_actividad: float = 0,
+    gastos_suministros_actividad: float = 0,
+    gastos_otros: float = 0,
+    gastos_publicidad: float = 0,
+    gastos_formacion: float = 0,
+    gastos_software: float = 0,
+    # Fase XSD: Ingresos granulares actividad (casillas 0171-0179)
+    ingresos_ventas: float = 0,
+    ingresos_subvenciones: float = 0,
+    ingresos_financieros_actividad: float = 0,
+    ingresos_otros_actividad: float = 0,
+    # Fase XSD: Royalties / Derechos de autor
+    ingresos_derechos_autor: float = 0,
+    reduccion_derechos_autor: bool = False,
+    retencion_derechos_autor: float = 0,
+    # Fase XSD: Estimacion objetiva (modulos)
+    modulos_rendimiento_neto: float = 0,
+    modulos_indice_corrector: float = 1.0,
+    # Fase XSD: WorkIncome nuevos params
+    defensa_juridica: float = 0,
+    incremento_desempleado_nuevo_empleo: float = 0,
+    incremento_discapacidad_activo: float = 0,
+    # Fase XSD: Gastos granulares alquiler (casillas 0105-0126)
+    gastos_financiacion_alquiler: float = 0,
+    gastos_reparacion_alquiler: float = 0,
+    gastos_comunidad_alquiler: float = 0,
+    ibi_alquiler: float = 0,
+    gastos_seguros_alquiler: float = 0,
+    gastos_suministros_alquiler: float = 0,
 ) -> Dict[str, Any]:
     """Execute IRPF simulation and return formatted result."""
     try:
@@ -387,6 +554,115 @@ async def simulate_irpf_tool(
 
         simulator = IRPFSimulator(db)
 
+        # retencion_derechos_autor se suma a retenciones_actividad en el tool (no en el simulator)
+        retenciones_actividad_total = retenciones_actividad + retencion_derechos_autor
+
+        # Determine if granular rental expenses are provided
+        # If any granular rental field > 0, use them; otherwise fall back to gastos_alquiler_total
+        _rental_granulares_sum = (
+            gastos_financiacion_alquiler + gastos_reparacion_alquiler
+            + gastos_comunidad_alquiler + ibi_alquiler
+            + gastos_seguros_alquiler + gastos_suministros_alquiler
+        )
+        _use_rental_granulares = _rental_granulares_sum > 0
+
+        # Build shared kwargs for both simulate() calls (normal and fallback)
+        _simulate_kwargs = dict(
+            ingresos_trabajo=ingresos_trabajo,
+            ss_empleado=ss_empleado,
+            intereses=intereses,
+            dividendos=dividendos,
+            ganancias_fondos=ganancias_fondos,
+            ingresos_alquiler=ingresos_alquiler,
+            gastos_alquiler_total=gastos_alquiler_total,
+            valor_adquisicion_inmueble=valor_adquisicion_inmueble,
+            edad_contribuyente=edad_contribuyente,
+            num_descendientes=num_descendientes,
+            anios_nacimiento_desc=anios_nacimiento_desc,
+            custodia_compartida=custodia_compartida,
+            num_ascendientes_65=num_ascendientes_65,
+            num_ascendientes_75=num_ascendientes_75,
+            discapacidad_contribuyente=discapacidad_contribuyente,
+            ceuta_melilla=ceuta_melilla,
+            ingresos_actividad=ingresos_actividad,
+            gastos_actividad=gastos_actividad,
+            cuota_autonomo_anual=cuota_autonomo_anual,
+            amortizaciones_actividad=amortizaciones_actividad,
+            estimacion_actividad=estimacion_actividad,
+            inicio_actividad=inicio_actividad,
+            un_solo_cliente=un_solo_cliente,
+            retenciones_actividad=retenciones_actividad_total,
+            pagos_fraccionados_130=pagos_fraccionados_130,
+            aportaciones_plan_pensiones=aportaciones_plan_pensiones,
+            aportaciones_plan_pensiones_empresa=aportaciones_plan_pensiones_empresa,
+            hipoteca_pre2013=hipoteca_pre2013,
+            capital_amortizado_hipoteca=capital_amortizado_hipoteca,
+            intereses_hipoteca=intereses_hipoteca,
+            madre_trabajadora_ss=madre_trabajadora_ss,
+            gastos_guarderia_anual=gastos_guarderia_anual,
+            familia_numerosa=familia_numerosa,
+            tipo_familia_numerosa=tipo_familia_numerosa,
+            donativos_ley_49_2002=donativos_ley_49_2002,
+            donativo_recurrente=donativo_recurrente,
+            retenciones_alquiler=retenciones_alquiler,
+            retenciones_ahorro=retenciones_ahorro,
+            tributacion_conjunta=tributacion_conjunta,
+            tipo_unidad_familiar=tipo_unidad_familiar,
+            alquiler_habitual_pre2015=alquiler_habitual_pre2015,
+            alquiler_pagado_anual=alquiler_pagado_anual,
+            valor_catastral_segundas_viviendas=valor_catastral_segundas_viviendas,
+            valor_catastral_revisado_post1994=valor_catastral_revisado_post1994,
+            ganancias_acciones=ganancias_acciones,
+            perdidas_acciones=perdidas_acciones,
+            ganancias_reembolso_fondos=ganancias_reembolso_fondos,
+            perdidas_reembolso_fondos=perdidas_reembolso_fondos,
+            ganancias_derivados=ganancias_derivados,
+            perdidas_derivados=perdidas_derivados,
+            cripto_ganancia_neta=cripto_ganancia_neta,
+            cripto_perdida_neta=cripto_perdida_neta,
+            premios_metalico_privados=premios_metalico_privados,
+            premios_especie_privados=premios_especie_privados,
+            perdidas_juegos_privados=perdidas_juegos_privados,
+            premios_metalico_publicos=premios_metalico_publicos,
+            premios_especie_publicos=premios_especie_publicos,
+            # Fase XSD: Gastos granulares actividad
+            gastos_compras=gastos_compras,
+            gastos_sueldos=gastos_sueldos,
+            gastos_ss_empresa=gastos_ss_empresa,
+            gastos_arrendamientos=gastos_arrendamientos,
+            gastos_reparaciones_actividad=gastos_reparaciones_actividad,
+            gastos_servicios_profesionales=gastos_servicios_profesionales,
+            gastos_tributos=gastos_tributos,
+            gastos_financieros_actividad=gastos_financieros_actividad,
+            gastos_suministros_actividad=gastos_suministros_actividad,
+            gastos_otros=gastos_otros,
+            gastos_publicidad=gastos_publicidad,
+            gastos_formacion=gastos_formacion,
+            gastos_software=gastos_software,
+            # Fase XSD: Ingresos granulares actividad
+            ingresos_ventas=ingresos_ventas,
+            ingresos_subvenciones=ingresos_subvenciones,
+            ingresos_financieros_actividad=ingresos_financieros_actividad,
+            ingresos_otros_actividad=ingresos_otros_actividad,
+            # Fase XSD: Royalties
+            ingresos_derechos_autor=ingresos_derechos_autor,
+            reduccion_derechos_autor=reduccion_derechos_autor,
+            # Fase XSD: Modulos
+            modulos_rendimiento_neto=modulos_rendimiento_neto,
+            modulos_indice_corrector=modulos_indice_corrector,
+            # Fase XSD: WorkIncome
+            defensa_juridica=defensa_juridica,
+            incremento_desempleado_nuevo_empleo=incremento_desempleado_nuevo_empleo,
+            incremento_discapacidad_activo=incremento_discapacidad_activo,
+            # Fase XSD: Gastos granulares alquiler (solo si se proporcionan)
+            gastos_financiacion_alquiler=gastos_financiacion_alquiler if _use_rental_granulares else 0,
+            gastos_reparacion_alquiler=gastos_reparacion_alquiler if _use_rental_granulares else 0,
+            gastos_comunidad_alquiler=gastos_comunidad_alquiler if _use_rental_granulares else 0,
+            ibi_alquiler=ibi_alquiler if _use_rental_granulares else 0,
+            gastos_seguros_alquiler=gastos_seguros_alquiler if _use_rental_granulares else 0,
+            gastos_suministros_alquiler=gastos_suministros_alquiler if _use_rental_granulares else 0,
+        )
+
         # Try requested year first, fallback to year-1 if no data
         effective_year = year
         year_warning = ""
@@ -394,63 +670,7 @@ async def simulate_irpf_tool(
             result = await simulator.simulate(
                 jurisdiction=ccaa,
                 year=year,
-                ingresos_trabajo=ingresos_trabajo,
-                ss_empleado=ss_empleado,
-                intereses=intereses,
-                dividendos=dividendos,
-                ganancias_fondos=ganancias_fondos,
-                ingresos_alquiler=ingresos_alquiler,
-                gastos_alquiler_total=gastos_alquiler_total,
-                valor_adquisicion_inmueble=valor_adquisicion_inmueble,
-                edad_contribuyente=edad_contribuyente,
-                num_descendientes=num_descendientes,
-                anios_nacimiento_desc=anios_nacimiento_desc,
-                custodia_compartida=custodia_compartida,
-                num_ascendientes_65=num_ascendientes_65,
-                num_ascendientes_75=num_ascendientes_75,
-                discapacidad_contribuyente=discapacidad_contribuyente,
-                ceuta_melilla=ceuta_melilla,
-                ingresos_actividad=ingresos_actividad,
-                gastos_actividad=gastos_actividad,
-                cuota_autonomo_anual=cuota_autonomo_anual,
-                amortizaciones_actividad=amortizaciones_actividad,
-                estimacion_actividad=estimacion_actividad,
-                inicio_actividad=inicio_actividad,
-                un_solo_cliente=un_solo_cliente,
-                retenciones_actividad=retenciones_actividad,
-                pagos_fraccionados_130=pagos_fraccionados_130,
-                aportaciones_plan_pensiones=aportaciones_plan_pensiones,
-                aportaciones_plan_pensiones_empresa=aportaciones_plan_pensiones_empresa,
-                hipoteca_pre2013=hipoteca_pre2013,
-                capital_amortizado_hipoteca=capital_amortizado_hipoteca,
-                intereses_hipoteca=intereses_hipoteca,
-                madre_trabajadora_ss=madre_trabajadora_ss,
-                gastos_guarderia_anual=gastos_guarderia_anual,
-                familia_numerosa=familia_numerosa,
-                tipo_familia_numerosa=tipo_familia_numerosa,
-                donativos_ley_49_2002=donativos_ley_49_2002,
-                donativo_recurrente=donativo_recurrente,
-                retenciones_alquiler=retenciones_alquiler,
-                retenciones_ahorro=retenciones_ahorro,
-                tributacion_conjunta=tributacion_conjunta,
-                tipo_unidad_familiar=tipo_unidad_familiar,
-                alquiler_habitual_pre2015=alquiler_habitual_pre2015,
-                alquiler_pagado_anual=alquiler_pagado_anual,
-                valor_catastral_segundas_viviendas=valor_catastral_segundas_viviendas,
-                valor_catastral_revisado_post1994=valor_catastral_revisado_post1994,
-                ganancias_acciones=ganancias_acciones,
-                perdidas_acciones=perdidas_acciones,
-                ganancias_reembolso_fondos=ganancias_reembolso_fondos,
-                perdidas_reembolso_fondos=perdidas_reembolso_fondos,
-                ganancias_derivados=ganancias_derivados,
-                perdidas_derivados=perdidas_derivados,
-                cripto_ganancia_neta=cripto_ganancia_neta,
-                cripto_perdida_neta=cripto_perdida_neta,
-                premios_metalico_privados=premios_metalico_privados,
-                premios_especie_privados=premios_especie_privados,
-                perdidas_juegos_privados=perdidas_juegos_privados,
-                premios_metalico_publicos=premios_metalico_publicos,
-                premios_especie_publicos=premios_especie_publicos,
+                **_simulate_kwargs,
             )
         except ValueError:
             # Year not available — fallback to previous year
@@ -463,63 +683,7 @@ async def simulate_irpf_tool(
             result = await simulator.simulate(
                 jurisdiction=ccaa,
                 year=effective_year,
-                ingresos_trabajo=ingresos_trabajo,
-                ss_empleado=ss_empleado,
-                intereses=intereses,
-                dividendos=dividendos,
-                ganancias_fondos=ganancias_fondos,
-                ingresos_alquiler=ingresos_alquiler,
-                gastos_alquiler_total=gastos_alquiler_total,
-                valor_adquisicion_inmueble=valor_adquisicion_inmueble,
-                edad_contribuyente=edad_contribuyente,
-                num_descendientes=num_descendientes,
-                anios_nacimiento_desc=anios_nacimiento_desc,
-                custodia_compartida=custodia_compartida,
-                num_ascendientes_65=num_ascendientes_65,
-                num_ascendientes_75=num_ascendientes_75,
-                discapacidad_contribuyente=discapacidad_contribuyente,
-                ceuta_melilla=ceuta_melilla,
-                ingresos_actividad=ingresos_actividad,
-                gastos_actividad=gastos_actividad,
-                cuota_autonomo_anual=cuota_autonomo_anual,
-                amortizaciones_actividad=amortizaciones_actividad,
-                estimacion_actividad=estimacion_actividad,
-                inicio_actividad=inicio_actividad,
-                un_solo_cliente=un_solo_cliente,
-                retenciones_actividad=retenciones_actividad,
-                pagos_fraccionados_130=pagos_fraccionados_130,
-                aportaciones_plan_pensiones=aportaciones_plan_pensiones,
-                aportaciones_plan_pensiones_empresa=aportaciones_plan_pensiones_empresa,
-                hipoteca_pre2013=hipoteca_pre2013,
-                capital_amortizado_hipoteca=capital_amortizado_hipoteca,
-                intereses_hipoteca=intereses_hipoteca,
-                madre_trabajadora_ss=madre_trabajadora_ss,
-                gastos_guarderia_anual=gastos_guarderia_anual,
-                familia_numerosa=familia_numerosa,
-                tipo_familia_numerosa=tipo_familia_numerosa,
-                donativos_ley_49_2002=donativos_ley_49_2002,
-                donativo_recurrente=donativo_recurrente,
-                retenciones_alquiler=retenciones_alquiler,
-                retenciones_ahorro=retenciones_ahorro,
-                tributacion_conjunta=tributacion_conjunta,
-                tipo_unidad_familiar=tipo_unidad_familiar,
-                alquiler_habitual_pre2015=alquiler_habitual_pre2015,
-                alquiler_pagado_anual=alquiler_pagado_anual,
-                valor_catastral_segundas_viviendas=valor_catastral_segundas_viviendas,
-                valor_catastral_revisado_post1994=valor_catastral_revisado_post1994,
-                ganancias_acciones=ganancias_acciones,
-                perdidas_acciones=perdidas_acciones,
-                ganancias_reembolso_fondos=ganancias_reembolso_fondos,
-                perdidas_reembolso_fondos=perdidas_reembolso_fondos,
-                ganancias_derivados=ganancias_derivados,
-                perdidas_derivados=perdidas_derivados,
-                cripto_ganancia_neta=cripto_ganancia_neta,
-                cripto_perdida_neta=cripto_perdida_neta,
-                premios_metalico_privados=premios_metalico_privados,
-                premios_especie_privados=premios_especie_privados,
-                perdidas_juegos_privados=perdidas_juegos_privados,
-                premios_metalico_publicos=premios_metalico_publicos,
-                premios_especie_publicos=premios_especie_publicos,
+                **_simulate_kwargs,
             )
 
         # Build formatted response

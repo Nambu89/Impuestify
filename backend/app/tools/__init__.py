@@ -17,6 +17,7 @@ from app.tools.casilla_lookup_tool import CASILLA_LOOKUP_TOOL, lookup_casilla_to
 from app.tools.fiscal_profile_tool import UPDATE_FISCAL_PROFILE_TOOL, update_fiscal_profile_tool
 from app.tools.crypto_gains_tool import CRYPTO_GAINS_TOOL, calculate_crypto_gains_tool
 from app.tools.crypto_csv_tool import CRYPTO_CSV_TOOL, parse_crypto_csv_tool
+from app.tools.iae_lookup_tool import IAE_LOOKUP_TOOL, lookup_iae
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
@@ -36,6 +37,7 @@ ALL_TOOLS = [
 	UPDATE_FISCAL_PROFILE_TOOL,
 	CRYPTO_GAINS_TOOL,
 	CRYPTO_CSV_TOOL,
+	IAE_LOOKUP_TOOL,
 ]
 
 # Registry of tool execution functions
@@ -54,6 +56,7 @@ TOOL_EXECUTORS = {
 	"update_fiscal_profile": update_fiscal_profile_tool,
 	"calculate_crypto_gains": calculate_crypto_gains_tool,
 	"parse_crypto_csv": parse_crypto_csv_tool,
+	"lookup_iae": lookup_iae,
 }
 
 __all__ = [
@@ -87,4 +90,6 @@ __all__ = [
 	"calculate_crypto_gains_tool",
 	"CRYPTO_CSV_TOOL",
 	"parse_crypto_csv_tool",
+	"IAE_LOOKUP_TOOL",
+	"lookup_iae",
 ]

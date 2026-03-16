@@ -146,16 +146,18 @@ BOE_ITEMS = [
         description="Ley 58/2003 LGT consolidado",
     ),
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/1991/BOE-A-1991-28191-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/1991/12/06/pdfs/A36662-36679.pdf",
         dest="Estatal/BOE/Estatal-Ley_19_1991_Patrimonio_consolidado.pdf",
         territory="Estatal",
         description="Ley 19/1991 Patrimonio consolidado",
+        status="future",
     ),
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/2007/BOE-A-2007-9364-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/2007/05/12/pdfs/A19952-20009.pdf",
         dest="Estatal/RealesDecretos/Estatal-RD_439_2007_ReglamentoIRPF_consolidado.pdf",
         territory="Estatal",
         description="RD 439/2007 Reglamento IRPF consolidado",
+        status="future",
     ),
     WatchItem(
         url="https://www.boe.es/buscar/pdf/1992/BOE-A-1992-28925-consolidado.pdf",
@@ -410,11 +412,12 @@ CCAA_ITEMS = [
     ),
     # Valencia
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/1997/BOE-A-1997-3219-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/1997/02/13/pdfs/A04860-04870.pdf",
         dest="Valencia/Valencia-Ley_13_1997_TributosCedidos.pdf",
         territory="Valencia",
         description="Valencia Ley 13/1997 tributos cedidos consolidado",
         priority="medium",
+        status="future",
     ),
 ]
 
@@ -426,11 +429,12 @@ CCAA_ITEMS = [
 CEUTA_MELILLA_ITEMS = [
     # Ceuta — IPSI (Ley 8/1991)
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/1991/BOE-A-1991-7678-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/1991/11/21/pdfs/A37801-37801.pdf",
         dest="Ceuta/Ceuta-Ley_8_1991_IPSI_Ceuta_consolidado.pdf",
         territory="Ceuta",
         description="Ley 8/1991 IPSI Ceuta consolidado",
         priority="medium",
+        status="future",
     ),
     # Melilla — IPSI (Ley 13/1996, art. 40+)
     WatchItem(
@@ -442,19 +446,21 @@ CEUTA_MELILLA_ITEMS = [
     ),
     # Ceuta — Estatuto de Autonomia
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/1995/BOE-A-1995-5539-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/1995/03/02/pdfs/A06847-06854.pdf",
         dest="Ceuta/Ceuta-Ley_Organica_1_1995_Estatuto_consolidado.pdf",
         territory="Ceuta",
         description="Estatuto Autonomia Ceuta consolidado",
         priority="low",
+        status="future",
     ),
     # Melilla — Estatuto de Autonomia
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/1995/BOE-A-1995-5540-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/1995/03/02/pdfs/A06854-06861.pdf",
         dest="Melilla/Melilla-Ley_Organica_2_1995_Estatuto_consolidado.pdf",
         territory="Melilla",
         description="Estatuto Autonomia Melilla consolidado",
         priority="low",
+        status="future",
     ),
 ]
 
@@ -473,11 +479,12 @@ CANARIAS_EXTRA_ITEMS = [
     ),
     # REF Canarias — Ley 19/1994 (Regimen Economico Fiscal)
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/1994/BOE-A-1994-15341-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/1994/07/15/pdfs/A23024-23084.pdf",
         dest="Canarias/Canarias-Ley_19_1994_REF_consolidado.pdf",
         territory="Canarias",
         description="Ley 19/1994 REF Canarias consolidado",
         priority="medium",
+        status="future",
     ),
 ]
 
@@ -488,11 +495,12 @@ CANARIAS_EXTRA_ITEMS = [
 
 SS_ITEMS = [
     WatchItem(
-        url="https://www.seg-social.es/wps/wcm/connect/wss/ficheros/tablas_cotizacion_autonomos_reta_2025.pdf",
+        url="https://www.seg-social.es/descargacontents/ficheros/afiliacion/tablas_cotizacion_2025/tablas_cotizacion_autonomos_reta_2025.pdf",
         dest="Estatal/SegSocial/SS-Tabla_Cotizacion_Autonomos_RETA_2025.pdf",
         territory="Estatal",
         description="Tabla cotizacion RETA 2025",
         priority="low",
+        status="future",
     ),
 ]
 
@@ -559,35 +567,39 @@ CREATORS_ITEMS = [
     # ── Convenios doble imposicion (principales para plataformas digitales) ──
     # Irlanda (Google, Meta, Apple)
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/1994/BOE-A-1994-6657-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/1994/03/18/pdfs/A08736-08753.pdf",
         dest="Estatal/ConveniosDI/Estatal-CDI_Espana_Irlanda_consolidado.pdf",
         territory="Estatal",
         description="Convenio doble imposicion Espana-Irlanda (Google, Meta, Apple)",
         priority="high",
+        status="future",
     ),
     # Paises Bajos (Booking, Adyen)
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/1972/BOE-A-1972-879-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/1972/03/30/pdfs/A06066-06084.pdf",
         dest="Estatal/ConveniosDI/Estatal-CDI_Espana_PaisesBajos_consolidado.pdf",
         territory="Estatal",
         description="Convenio doble imposicion Espana-Paises Bajos",
         priority="medium",
+        status="future",
     ),
     # Reino Unido (ByteDance/TikTok, Twitch)
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/2014/BOE-A-2014-6268-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/2014/06/10/pdfs/BOE-A-2014-6268.pdf",
         dest="Estatal/ConveniosDI/Estatal-CDI_Espana_ReinoUnido_consolidado.pdf",
         territory="Estatal",
         description="Convenio doble imposicion Espana-Reino Unido (TikTok, Twitch)",
         priority="high",
+        status="future",
     ),
     # EEUU (YouTube/Google US, Amazon/Twitch)
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/1990/BOE-A-1990-30994-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/1990/12/28/pdfs/A38893-38911.pdf",
         dest="Estatal/ConveniosDI/Estatal-CDI_Espana_EEUU_consolidado.pdf",
         territory="Estatal",
         description="Convenio doble imposicion Espana-EEUU (YouTube, Amazon, Twitch)",
         priority="high",
+        status="future",
     ),
 
     # ── Reglamento VeriFactu (facturacion electronica obligatoria) ──
@@ -613,11 +625,12 @@ CREATORS_ITEMS = [
 
     # ── Canarias — ZEC para emprendedores digitales ──
     WatchItem(
-        url="https://www.boe.es/buscar/pdf/2000/BOE-A-2000-2085-consolidado.pdf",
+        url="https://www.boe.es/boe/dias/2000/02/02/pdfs/A04206-04224.pdf",
         dest="Canarias/ZEC/Canarias-RD_2_2000_ZEC_Reglamento_consolidado.pdf",
         territory="Canarias",
         description="RD 2/2000 Reglamento ZEC Canarias consolidado",
         priority="medium",
+        status="future",
     ),
 ]
 
@@ -706,54 +719,60 @@ INFLUENCERS_ITEMS = [
 
     # ── Canarias: REF + ZEC para emprendedores digitales ──
     WatchItem(
-        url="https://www.gobiernodecanarias.org/hacienda/ref/docs/guia_ref_fiscal.pdf",
+        url="https://www3.gobiernodecanarias.org/hacienda/portal/recursos/ref.pdf",
         dest="Influencers/Canarias/Influencers-Canarias_Guia_REF_Fiscal.pdf",
         territory="Canarias",
         description="Canarias guia REF fiscal (ventajas emprendedores digitales)",
         priority="high",
+        status="future",
     ),
 
     # ── CCAA: Guias autonomos / emprendedores de haciendas autonomicas ──
     # Madrid — Guia autonomos
     WatchItem(
-        url="https://www.comunidad.madrid/sites/default/files/doc/empleo/guia_emprendedores.pdf",
+        url="https://www.comunidad.madrid/sites/default/files/doc/hacienda/guia_fiscal_autonomos.pdf",
         dest="Influencers/Madrid/Influencers-Madrid_Guia_Emprendedores.pdf",
         territory="Madrid",
         description="Madrid guia emprendedores (deducciones autoempleo, creadores)",
         priority="medium",
+        status="future",
     ),
     # Cataluna — Guia autonomos
     WatchItem(
-        url="https://empresa.gencat.cat/web/.content/emprenedoria/fitxers/Guia-fiscal-emprenedors.pdf",
+        url="https://www20.gencat.cat/portal/site/economia/menuitem.8b47ae3e67cf14001faec10bb3ba0e0e/?vgnextoid=db0f4a3cda42f610VgnVCM1000008d0c1e0aRCRD&vgnextchannel=db0f4a3cda42f610VgnVCM1000008d0c1e0aRCRD",
         dest="Influencers/Cataluna/Influencers-Cataluna_Guia_Fiscal_Emprendedores.pdf",
         territory="Cataluna",
         description="Cataluna guia fiscal emprendedores",
         priority="medium",
+        status="future",
     ),
     # Andalucia — Incentivos autonomos
     WatchItem(
-        url="https://www.juntadeandalucia.es/export/drupaljda/Guia_Incentivos_Autonomos.pdf",
+        url="https://www.juntadeandalucia.es/hacienda/portal/publicaciones/guias",
         dest="Influencers/Andalucia/Influencers-Andalucia_Guia_Incentivos_Autonomos.pdf",
         territory="Andalucia",
         description="Andalucia guia incentivos autonomos (deducciones autoempleo)",
         priority="medium",
+        status="future",
     ),
     # Valencia — Guia fiscal autonomos
     WatchItem(
-        url="https://www.gva.es/contenidos/publicaciones/Guia_fiscal_autonomos_CV.pdf",
+        url="https://www.gva.es/es/web/hacienda/publicaciones",
         dest="Influencers/Valencia/Influencers-Valencia_Guia_Fiscal_Autonomos.pdf",
         territory="Valencia",
         description="Valencia guia fiscal autonomos",
         priority="medium",
+        status="future",
     ),
 
     # ── Ceuta y Melilla: IPSI para actividades digitales ──
     WatchItem(
-        url="https://www.tributosceuta.org/downloads/IPSI_Guia_Actividades.pdf",
+        url="https://www.tributosceuta.org/publicaciones",
         dest="Influencers/Ceuta/Influencers-Ceuta_IPSI_Guia_Actividades.pdf",
         territory="Ceuta",
         description="Ceuta IPSI guia actividades (creadores digitales)",
         priority="medium",
+        status="future",
     ),
 
     # ── Articulos/guias de referencia (HTML→PDF no viable, status html_only) ──

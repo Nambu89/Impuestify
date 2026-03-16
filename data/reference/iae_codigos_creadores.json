@@ -1,0 +1,234 @@
+[
+  {
+    "codigo": "8690",
+    "seccion": "2",
+    "descripcion": "Otros servicios NEC (creadores de contenido, influencers)",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Epigrafe generico recomendado por DGT (V0773-22) para creadores de contenido digital. Seccion 2 = actividades profesionales. Aplicable a YouTubers, instagramers y cualquier creador sin epigrafe especifico."
+  },
+  {
+    "codigo": "763",
+    "seccion": "1",
+    "descripcion": "Servicios tecnicos de programacion informatica",
+    "tipo": "empresarial",
+    "retencion_pct": 15,
+    "notas": "Programadores, desarrolladores web/movil, ingenieros de software freelance. Seccion 1 = actividades empresariales. Alternativa profesional: epigrafe 773."
+  },
+  {
+    "codigo": "773",
+    "seccion": "2",
+    "descripcion": "Servicios profesionales de programacion e informatica",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Epigrafe profesional para programadores y desarrolladores. Preferible a 763 si el autonomo tributa como profesional (seccion 2). Incluye consultores tecnicos IT."
+  },
+  {
+    "codigo": "751",
+    "seccion": "2",
+    "descripcion": "Servicios de publicidad, relaciones publicas y similares",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Publicidad online, gestion de campanas paid media (Google Ads, Meta Ads). Tambien cubre consultores de marketing digital y especialistas en performance marketing."
+  },
+  {
+    "codigo": "752",
+    "seccion": "2",
+    "descripcion": "Servicios de estudios de mercado y opinion publica",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Investigacion de mercados, analisis de datos de marketing, consultoria de estrategia de contenido basada en datos."
+  },
+  {
+    "codigo": "761",
+    "seccion": "2",
+    "descripcion": "Servicios de consultoria y organizacion de empresas",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Consultores de negocio, coaches ejecutivos, asesores de estrategia digital. El epigrafe mas comun para consultores generales."
+  },
+  {
+    "codigo": "941",
+    "seccion": "2",
+    "descripcion": "Ensenanza de formacion y perfeccionamiento profesional",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Formacion online, cursos en Udemy/Teachable/plataformas propias, academias digitales. Si la formacion es en centros reglados puede estar exenta de IVA (Art. 20.Uno.9 LIVA)."
+  },
+  {
+    "codigo": "944",
+    "seccion": "2",
+    "descripcion": "Otras actividades de ensenanza",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Mentorias, workshops, masterclasses, coaching educativo online. Alternativa a 941 para actividades formativas no regladas."
+  },
+  {
+    "codigo": "774",
+    "seccion": "2",
+    "descripcion": "Servicios de diseno grafico e ilustracion",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Disenadores graficos, ilustradores, artistas visuales freelance. Incluye diseno de logos, identidad corporativa, infografias, motion graphics."
+  },
+  {
+    "codigo": "779",
+    "seccion": "2",
+    "descripcion": "Otros servicios independientes",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Epigrafe residual para profesionales independientes sin epigrafe especifico. Usado por community managers, social media managers y gestores de redes sociales."
+  },
+  {
+    "codigo": "769",
+    "seccion": "1",
+    "descripcion": "Otros servicios empresariales NEC",
+    "tipo": "empresarial",
+    "retencion_pct": 15,
+    "notas": "Servicios digitales B2B, SaaS, aplicaciones web como negocio. Alternativa empresarial a 779 para quienes prefieren seccion 1."
+  },
+  {
+    "codigo": "721",
+    "seccion": "1",
+    "descripcion": "Produccion de peliculas cinematograficas, videos y programas de television",
+    "tipo": "empresarial",
+    "retencion_pct": 15,
+    "notas": "Produccion audiovisual profesional: spots publicitarios, videoclips, documentales, series de YouTube. Incluye productoras unipersonales."
+  },
+  {
+    "codigo": "722",
+    "seccion": "1",
+    "descripcion": "Actividades de grabacion de sonido y edicion musical",
+    "tipo": "empresarial",
+    "retencion_pct": 15,
+    "notas": "Podcasters con produccion propia, musicos independientes, productores musicales, estudios de grabacion. Incluye distribucion de contenido de audio digital."
+  },
+  {
+    "codigo": "738",
+    "seccion": "1",
+    "descripcion": "Actividades de agencias de noticias y periodismo digital",
+    "tipo": "empresarial",
+    "retencion_pct": 15,
+    "notas": "Periodistas digitales, newsletters de pago, medios independientes online. Redactores de contenidos informativos con actividad empresarial."
+  },
+  {
+    "codigo": "763",
+    "seccion": "2",
+    "descripcion": "Servicios de traductores e interpretes",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Traductores y redactores multilingues freelance. Incluye localizacion de software, subtitulado y transcripcion. Epigrafe seccion 2 especifico para traductores profesionales."
+  },
+  {
+    "codigo": "765",
+    "seccion": "2",
+    "descripcion": "Servicios de redaccion, correccion y edicion literaria",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Redactores de contenidos (copywriters), correctores de estilo, ghostwriters, editores de libros. Tambien para autores de e-books y publicaciones digitales."
+  },
+  {
+    "codigo": "771",
+    "seccion": "2",
+    "descripcion": "Servicios de fotografia",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Fotografos profesionales: bodas, producto, publicidad, stock photography. Incluye edicion y retoque fotografico como actividad principal."
+  },
+  {
+    "codigo": "849",
+    "seccion": "2",
+    "descripcion": "Otros servicios relacionados con actividades artisticas y de espectaculos",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Streamers de videojuegos (Twitch, YouTube Gaming), presentadores de eventos online, animadores digitales. Actividades de entretenimiento en directo por internet."
+  },
+  {
+    "codigo": "862",
+    "seccion": "2",
+    "descripcion": "Servicios de coaching y desarrollo personal",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Coaches de vida, mindfulness, productividad personal, bienestar. Distinto del coaching ejecutivo empresarial (761). DGT asimila el coaching no reglado a epigrafe profesional general."
+  },
+  {
+    "codigo": "754",
+    "seccion": "2",
+    "descripcion": "Servicios de marketing digital y estrategia online",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Consultores de marketing digital, SEO, SEM, email marketing. Estrategas de contenido y growth hackers. Alternativa a 751 con enfoque mas digital."
+  },
+  {
+    "codigo": "756",
+    "seccion": "2",
+    "descripcion": "Community management y gestion de redes sociales",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Community managers, social media managers, gestores de comunidades online. Profesionales que gestionan la presencia digital de terceros en RRSS."
+  },
+  {
+    "codigo": "742",
+    "seccion": "1",
+    "descripcion": "Actividades de desarrollo de videojuegos y software interactivo",
+    "tipo": "empresarial",
+    "retencion_pct": 15,
+    "notas": "Desarrolladores indie de videojuegos, estudios de juego unipersonales, modders profesionales. Incluye apps moviles de entretenimiento."
+  },
+  {
+    "codigo": "793",
+    "seccion": "2",
+    "descripcion": "Servicios de analisis de datos y business intelligence",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Data scientists, analistas de datos freelance, consultores de BI. Tambien para profesionales de inteligencia artificial aplicada y machine learning."
+  },
+  {
+    "codigo": "757",
+    "seccion": "2",
+    "descripcion": "Servicios de diseno UX/UI y experiencia de usuario",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Disenadores de interfaz y experiencia de usuario, arquitectos de informacion, product designers. Complementa al epigrafe de programacion (773) en perfiles full-stack."
+  },
+  {
+    "codigo": "762",
+    "seccion": "2",
+    "descripcion": "Servicios de relaciones publicas y comunicacion corporativa",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "PR freelance, gestores de comunicacion de marca, especialistas en crisis de reputacion online. Distinto de 751 (publicidad) en que el foco es comunicacion estrategica."
+  },
+  {
+    "codigo": "912",
+    "seccion": "2",
+    "descripcion": "Servicios de contabilidad y asesoria fiscal",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Asesores fiscales, contables, gestores administrativos. Requiere titulacion habilitante segun actividad. Mencionado aqui como referencia para autonomos del sector fintech."
+  },
+  {
+    "codigo": "745",
+    "seccion": "1",
+    "descripcion": "Actividades de hosting, cloud computing y servicios de infraestructura digital",
+    "tipo": "empresarial",
+    "retencion_pct": 15,
+    "notas": "Proveedores de servicios en la nube, hosting web, CDN, y servicios de infraestructura IT como negocio. Para DevOps y SRE con actividad empresarial propia."
+  },
+  {
+    "codigo": "759",
+    "seccion": "2",
+    "descripcion": "Servicios de formacion en habilidades digitales",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Formadores en herramientas digitales (Excel, Notion, IA generativa, edicion de video). Alternativa a 941 para formacion no reglada en competencias digitales."
+  },
+  {
+    "codigo": "8690",
+    "seccion": "2",
+    "descripcion": "Creacion de contenido digital y monetizacion de plataformas (podcasters, streamers)",
+    "tipo": "profesional",
+    "retencion_pct": 15,
+    "notas": "Segun DGT V0773-22 y consultas vinculantes posteriores, los ingresos de AdSense, Patreon, Twitch subs, afiliados de Amazon y similares se encuadran en epigrafe 8690 seccion 2. La retencion del 15% aplica solo cuando el pagador es empresa espanola. Plataformas extranjeras (Google, Meta, Amazon) NO practican retencion — el autonomo debe hacer pagos fraccionados (Modelo 130 o 131)."
+  }
+]
