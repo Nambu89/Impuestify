@@ -34,9 +34,11 @@ export default function AdminContactPage() {
                 page,
                 limit: LIMIT,
             })
-            setItems(result.items)
-            setTotal(result.total)
+            setItems(result?.items || [])
+            setTotal(result?.total || 0)
         } catch (err: any) {
+            setItems([])
+            setTotal(0)
             setMessage({ type: 'error', text: err.message || 'Error al cargar solicitudes de contacto' })
         } finally {
             setLoading(false)

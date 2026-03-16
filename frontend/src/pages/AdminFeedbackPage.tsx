@@ -75,9 +75,11 @@ export default function AdminFeedbackPage() {
                 page,
                 limit: LIMIT,
             })
-            setItems(result.items)
-            setTotal(result.total)
+            setItems(result?.items || [])
+            setTotal(result?.total || 0)
         } catch (err: any) {
+            setItems([])
+            setTotal(0)
             setMessage({ type: 'error', text: err.message || 'Error al cargar feedbacks' })
         } finally {
             setLoading(false)

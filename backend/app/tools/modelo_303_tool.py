@@ -4,6 +4,10 @@ Modelo 303 (IVA Trimestral) Calculator Tool for TaxIA
 Calculates the main fields of the quarterly VAT return (Modelo 303)
 for self-employed / businesses under the general regime (regimen general).
 
+CCAA-aware: automatically routes Canarias to IGIC/Modelo 420, redirects
+Ceuta/Melilla to calculate_modelo_ipsi, and annotates foral territories
+(Gipuzkoa → Mod.300, Navarra → F69, Bizkaia/Araba → Mod.303 foral + TicketBAI).
+
 Based on AEAT Disenos de Registro specifications.
 Does NOT generate flat files — only computes amounts.
 """
@@ -11,7 +15,41 @@ from typing import Dict, Any
 from datetime import datetime
 import logging
 
+from app.utils.ccaa_constants import normalize_ccaa, FORAL_VASCO, CEUTA_MELILLA, CANARIAS_SET
+
 logger = logging.getLogger(__name__)
+
+# Foral territories that still use IVA but with a different model/hacienda
+_FORAL_IVA_CONFIG: dict[str, dict] = {
+    "Gipuzkoa": {
+        "modelo": "300",
+        "impuesto": "IVA",
+        "tipo_general": 0.21,
+        "donde_presentar": "Hacienda Foral de Gipuzkoa (gipuzkoa.eus)",
+        "nota_extra": "TicketBAI obligatorio para todas las facturas desde 2022.",
+    },
+    "Navarra": {
+        "modelo": "F69",
+        "impuesto": "IVA",
+        "tipo_general": 0.21,
+        "donde_presentar": "Hacienda Foral de Navarra (hacienda.navarra.es)",
+        "nota_extra": None,
+    },
+    "Bizkaia": {
+        "modelo": "303 (foral)",
+        "impuesto": "IVA",
+        "tipo_general": 0.21,
+        "donde_presentar": "Hacienda Foral de Bizkaia (bizkaia.eus)",
+        "nota_extra": "TicketBAI + BATUZ obligatorio (envio continuo de facturas).",
+    },
+    "Araba": {
+        "modelo": "303 (foral)",
+        "impuesto": "IVA",
+        "tipo_general": 0.21,
+        "donde_presentar": "Hacienda Foral de Araba (araba.eus)",
+        "nota_extra": "TicketBAI obligatorio para todas las facturas.",
+    },
+}
 
 # Tool definition for OpenAI function calling
 MODELO_303_TOOL = {
@@ -19,21 +57,30 @@ MODELO_303_TOOL = {
 	"function": {
 		"name": "calculate_modelo_303",
 		"description": """SIEMPRE DEBES USAR ESTA FUNCION cuando el usuario pregunte sobre:
-- Modelo 303
-- Declaracion trimestral de IVA
-- IVA trimestral
-- Liquidacion de IVA
-- Cuanto IVA tengo que pagar este trimestre
+- Modelo 303 / Modelo 300 / Modelo F69 / Modelo 420
+- Declaracion trimestral de IVA o IGIC
+- IVA trimestral / IGIC trimestral
+- Liquidacion de IVA o IGIC
+- Cuanto IVA o IGIC tengo que pagar este trimestre
 - IVA devengado / IVA deducible / IVA repercutido / IVA soportado
 
 OBLIGATORIO usar esta funcion si el usuario quiere calcular o simular el resultado
-de su declaracion trimestral de IVA (regimen general).
+de su declaracion trimestral de IVA o IGIC (regimen general).
 
-La funcion calcula las casillas principales del Modelo 303:
-- IVA devengado (repercutido) por tipos: 21%, 10%, 4%
-- IVA deducible (soportado) en compras
+PASA SIEMPRE la ccaa del usuario. La funcion se adapta automaticamente:
+- Canarias → calcula IGIC al 7% (Modelo 420, Gobierno de Canarias)
+- Gipuzkoa → Modelo 300 con TicketBAI
+- Navarra → Modelo F69 (Hacienda Foral de Navarra)
+- Bizkaia → Modelo 303 foral + BATUZ/TicketBAI
+- Araba → Modelo 303 foral + TicketBAI
+- Ceuta/Melilla → redirige a calculate_modelo_ipsi (IPSI, no IVA)
+- Resto (regimen comun) → Modelo 303 AEAT, tipos 21%/10%/4%
+
+La funcion calcula las casillas principales del modelo correspondiente:
+- Cuota devengada (repercutida) por tipos
+- Cuota deducible (soportada) en compras
 - Resultado: a ingresar, a compensar o a devolver
-- Adquisiciones intracomunitarias
+- Adquisiciones intracomunitarias o extracanarias
 - Compensacion de periodos anteriores""",
 		"parameters": {
 			"type": "object",
@@ -42,49 +89,53 @@ La funcion calcula las casillas principales del Modelo 303:
 					"type": "integer",
 					"description": "Trimestre de la declaracion (1, 2, 3 o 4)"
 				},
+				"ccaa": {
+					"type": "string",
+					"description": "CCAA o territorio del usuario. Ejemplos: 'Madrid', 'Canarias', 'Gipuzkoa', 'Navarra', 'Bizkaia', 'Araba', 'Ceuta', 'Melilla'. Si no se indica, se asume regimen comun (Modelo 303 AEAT)."
+				},
 				"year": {
 					"type": "integer",
 					"description": "Ano fiscal. Por defecto: ano actual"
 				},
 				"base_21": {
 					"type": "number",
-					"description": "Base imponible de operaciones al 21% de IVA (ventas/servicios al tipo general)"
+					"description": "Base imponible de operaciones al tipo general (21% IVA en regimen comun; 7% IGIC en Canarias). Para Canarias este campo se usa como base al tipo general IGIC (7%)."
 				},
 				"base_10": {
 					"type": "number",
-					"description": "Base imponible de operaciones al 10% de IVA (tipo reducido). Por defecto: 0"
+					"description": "Base imponible de operaciones al 10% de IVA (tipo reducido, regimen comun). Para Canarias usar base_igic_3 en su lugar. Por defecto: 0"
 				},
 				"base_4": {
 					"type": "number",
-					"description": "Base imponible de operaciones al 4% de IVA (tipo superreducido). Por defecto: 0"
+					"description": "Base imponible de operaciones al 4% de IVA (tipo superreducido, regimen comun). Por defecto: 0"
 				},
 				"base_adquisiciones_intra": {
 					"type": "number",
-					"description": "Base imponible de adquisiciones intracomunitarias. Por defecto: 0"
+					"description": "Base imponible de adquisiciones intracomunitarias (regimen comun) o extracanarias (Canarias). Por defecto: 0"
 				},
 				"tipo_adquisiciones_intra": {
 					"type": "number",
-					"description": "Tipo de IVA aplicable a adquisiciones intracomunitarias (%). Por defecto: 21"
+					"description": "Tipo de IVA/IGIC aplicable a adquisiciones intracomunitarias/extracanarias (%). Por defecto: 21 en regimen comun, 7 en Canarias"
 				},
 				"iva_deducible_bienes_corrientes": {
 					"type": "number",
-					"description": "IVA soportado deducible en compras de bienes y servicios corrientes (casilla 29)"
+					"description": "IVA/IGIC soportado deducible en compras de bienes y servicios corrientes (casilla 29 en Mod.303 / cuota corrientes en Mod.420)"
 				},
 				"base_deducible_bienes_corrientes": {
 					"type": "number",
-					"description": "Base imponible de las compras deducibles de bienes corrientes (casilla 28, informativo). Por defecto: 0"
+					"description": "Base imponible de las compras deducibles de bienes corrientes (informativo). Por defecto: 0"
 				},
 				"iva_deducible_bienes_inversion": {
 					"type": "number",
-					"description": "IVA soportado deducible en bienes de inversion (casilla 31). Por defecto: 0"
+					"description": "IVA/IGIC soportado deducible en bienes de inversion. Por defecto: 0"
 				},
 				"iva_deducible_importaciones": {
 					"type": "number",
-					"description": "IVA soportado deducible en importaciones (casilla 33). Por defecto: 0"
+					"description": "IVA/IGIC soportado deducible en importaciones. Por defecto: 0"
 				},
 				"iva_deducible_intracomunitarias": {
 					"type": "number",
-					"description": "IVA soportado deducible en adquisiciones intracomunitarias (casilla 37). Por defecto: 0"
+					"description": "IVA soportado deducible en adquisiciones intracomunitarias (casilla 37, solo regimen comun). Por defecto: 0"
 				},
 				"rectificacion_deducciones": {
 					"type": "number",
@@ -109,11 +160,12 @@ async def calculate_modelo_303_tool(
 	trimestre: int,
 	base_21: float,
 	iva_deducible_bienes_corrientes: float,
+	ccaa: str = None,
 	year: int = None,
 	base_10: float = 0,
 	base_4: float = 0,
 	base_adquisiciones_intra: float = 0,
-	tipo_adquisiciones_intra: float = 21,
+	tipo_adquisiciones_intra: float = None,
 	base_deducible_bienes_corrientes: float = 0,
 	iva_deducible_bienes_inversion: float = 0,
 	iva_deducible_importaciones: float = 0,
@@ -124,20 +176,28 @@ async def calculate_modelo_303_tool(
 	restricted_mode: bool = False
 ) -> Dict[str, Any]:
 	"""
-	Calculate the quarterly VAT return (Modelo 303) under the general regime.
+	Calculate the quarterly VAT/IGIC return, routing by CCAA:
+	  - Canarias        → IGIC Modelo 420 (7% tipo general)
+	  - Ceuta / Melilla → redirect hint to calculate_modelo_ipsi
+	  - Gipuzkoa        → IVA Modelo 300, TicketBAI
+	  - Navarra          → IVA Modelo F69
+	  - Bizkaia          → IVA Modelo 303 foral + BATUZ/TicketBAI
+	  - Araba            → IVA Modelo 303 foral + TicketBAI
+	  - Resto            → IVA Modelo 303 AEAT (comportamiento anterior intacto)
 
 	Args:
 		trimestre: Quarter (1-4)
-		base_21: Tax base for 21% VAT operations
-		iva_deducible_bienes_corrientes: Deductible input VAT on current goods/services
+		base_21: Tax base at general rate (21% IVA or 7% IGIC for Canarias)
+		iva_deducible_bienes_corrientes: Deductible input tax on current goods/services
+		ccaa: CCAA or territory of the user (optional; defaults to regimen comun)
 		year: Fiscal year (default: current year)
-		base_10: Tax base for 10% VAT operations
-		base_4: Tax base for 4% VAT operations
-		base_adquisiciones_intra: Tax base for intra-community acquisitions
-		tipo_adquisiciones_intra: VAT rate for intra-community acquisitions
+		base_10: Tax base for 10% VAT (regimen comun only)
+		base_4: Tax base for 4% VAT (regimen comun only)
+		base_adquisiciones_intra: Tax base for intra-community / extra-canarian acquisitions
+		tipo_adquisiciones_intra: Rate for intra-community acquisitions (%; defaults 21 or 7)
 		base_deducible_bienes_corrientes: Tax base for deductible current goods (informational)
-		iva_deducible_bienes_inversion: Deductible input VAT on investment goods
-		iva_deducible_importaciones: Deductible input VAT on imports
+		iva_deducible_bienes_inversion: Deductible input tax on investment goods
+		iva_deducible_importaciones: Deductible input tax on imports
 		iva_deducible_intracomunitarias: Deductible input VAT on intra-community acquisitions
 		rectificacion_deducciones: Adjustment to deductions (+/-)
 		compensacion_periodos_anteriores: Amounts to offset from prior periods
@@ -181,7 +241,56 @@ async def calculate_modelo_303_tool(
 		# Ensure compensacion is non-negative
 		compensacion_periodos_anteriores = max(compensacion_periodos_anteriores, 0)
 
-		# ===== IVA DEVENGADO (output VAT) =====
+		# ===== CCAA ROUTING =====
+		ccaa_canonical = normalize_ccaa(ccaa) if ccaa else None
+
+		# --- Ceuta / Melilla: redirect to IPSI tool ---
+		if ccaa_canonical in CEUTA_MELILLA:
+			msg = (
+				f"En {ccaa_canonical} no se aplica IVA sino IPSI "
+				f"(Impuesto sobre la Produccion, los Servicios y la Importacion). "
+				f"Usa la funcion calculate_modelo_ipsi para calcular tu autoliquidacion trimestral. "
+				f"Los tipos IPSI son: 0,5% / 1% / 2% / 4% (general) / 8% / 10%."
+			)
+			return {
+				"success": False,
+				"redirect": "calculate_modelo_ipsi",
+				"ccaa": ccaa_canonical,
+				"modelo": "IPSI",
+				"impuesto": "IPSI",
+				"donde_presentar": f"Ciudad Autonoma de {ccaa_canonical}",
+				"formatted_response": msg,
+			}
+
+		# --- Canarias: IGIC via Modelo 420 ---
+		if ccaa_canonical in CANARIAS_SET:
+			return await _calculate_igic_420(
+				trimestre=trimestre,
+				year=year,
+				base_7=base_21,  # caller passes general-rate base as base_21
+				base_3=base_10,  # tipo reducido IGIC 3%
+				base_extracanarias=base_adquisiciones_intra,
+				tipo_extracanarias=(tipo_adquisiciones_intra / 100) if tipo_adquisiciones_intra is not None else 0.07,
+				cuota_corrientes=iva_deducible_bienes_corrientes,
+				cuota_inversion=iva_deducible_bienes_inversion,
+				cuota_importaciones=iva_deducible_importaciones,
+				rectificacion=rectificacion_deducciones,
+				compensacion=compensacion_periodos_anteriores,
+			)
+
+		# --- Foral IVA territories (Gipuzkoa, Navarra, Bizkaia, Araba) ---
+		if ccaa_canonical in _FORAL_IVA_CONFIG:
+			foral_cfg = _FORAL_IVA_CONFIG[ccaa_canonical]
+			# Fall through to the standard IVA calculation below, but annotate the output
+			foral_override = foral_cfg
+		else:
+			foral_override = None
+
+		# Default tipo_adquisiciones_intra for IVA regimen comun
+		if tipo_adquisiciones_intra is None:
+			tipo_adquisiciones_intra = 21
+
+		# ===== IVA DEVENGADO (output VAT) — regimen comun + foral IVA =====
 		casilla_01 = base_21
 		casilla_03 = round(base_21 * 0.21, 2)
 
@@ -255,9 +364,21 @@ async def calculate_modelo_303_tool(
 			4: "octubre-diciembre"
 		}[trimestre]
 
+		# Determine model/hacienda from foral config or regimen comun defaults
+		if foral_override:
+			modelo_label = foral_override["modelo"]
+			donde_presentar = foral_override["donde_presentar"]
+			nota_territorial = foral_override.get("nota_extra") or ""
+		else:
+			modelo_label = "303"
+			donde_presentar = "AEAT (sede.agenciatributaria.gob.es)"
+			nota_territorial = ""
+
 		# Build formatted response
 		lines = []
-		lines.append(f"**Modelo 303 — {trimestre_label} {year} ({trimestre_meses})**")
+		lines.append(f"**Modelo {modelo_label} — {trimestre_label} {year} ({trimestre_meses})**")
+		if foral_override or ccaa_canonical:
+			lines.append(f"Presentacion: {donde_presentar}")
 		lines.append("")
 
 		# IVA Devengado section
@@ -310,11 +431,13 @@ async def calculate_modelo_303_tool(
 
 		lines.append("")
 		lines.append("Este calculo cubre solo el **regimen general** de IVA. No incluye regimenes especiales (simplificado, recargo de equivalencia, agricultura, bienes usados, etc.).")
+		if nota_territorial:
+			lines.append(f"\nNota territorial: {nota_territorial}")
 
 		formatted_response = "\n".join(lines)
 
 		logger.info(
-			f"Modelo 303 calculated: {trimestre_label} {year}, "
+			f"Modelo {modelo_label} calculated: ccaa={ccaa_canonical}, {trimestre_label} {year}, "
 			f"devengado={casilla_27}, deducible={casilla_45}, "
 			f"resultado={resultado_final} ({tipo_resultado})"
 		)
@@ -323,6 +446,12 @@ async def calculate_modelo_303_tool(
 			"success": True,
 			"trimestre": trimestre,
 			"year": year,
+			"ccaa": ccaa_canonical,
+			"modelo": modelo_label,
+			"impuesto": "IVA",
+			"tipo_aplicado": 21,
+			"donde_presentar": donde_presentar,
+			"notas": nota_territorial or None,
 			"iva_devengado": {
 				"cuota_21": casilla_03,
 				"cuota_10": casilla_06,
@@ -355,3 +484,156 @@ async def calculate_modelo_303_tool(
 			"error": str(e),
 			"formatted_response": f"Error al calcular el Modelo 303: {str(e)}"
 		}
+
+
+async def _calculate_igic_420(
+	trimestre: int,
+	year: int,
+	base_7: float,
+	base_3: float,
+	base_extracanarias: float,
+	tipo_extracanarias: float,
+	cuota_corrientes: float,
+	cuota_inversion: float,
+	cuota_importaciones: float,
+	rectificacion: float,
+	compensacion: float,
+) -> Dict[str, Any]:
+	"""
+	Delegate Canarias IGIC calculation to the existing Modelo420Calculator.
+
+	Maps the simplified IVA-style input params from calculate_modelo_303
+	to Modelo420Calculator's full interface.
+	"""
+	from app.utils.calculators.modelo_420 import Modelo420Calculator
+
+	calc = Modelo420Calculator(None)
+	result = await calc.calculate(
+		base_3=base_3,
+		base_7=base_7,
+		base_extracanarias=base_extracanarias,
+		tipo_extracanarias=tipo_extracanarias,
+		cuota_corrientes_interiores=cuota_corrientes,
+		cuota_inversion_interiores=cuota_inversion,
+		cuota_importaciones_corrientes=cuota_importaciones,
+		rectificacion_deducciones=rectificacion,
+		cuotas_compensar_anteriores=compensacion,
+		quarter=trimestre,
+	)
+
+	total_devengado = result["total_devengado"]
+	total_deducible = result["total_deducible"]
+	resultado = result["resultado_liquidacion"]
+
+	trimestre_label = {1: "1T", 2: "2T", 3: "3T", 4: "4T"}[trimestre]
+	trimestre_meses = {
+		1: "enero-marzo",
+		2: "abril-junio",
+		3: "julio-septiembre",
+		4: "octubre-diciembre",
+	}[trimestre]
+
+	if resultado > 0:
+		tipo_resultado = "A ingresar"
+	elif resultado < 0:
+		tipo_resultado = "A devolver" if trimestre == 4 else "A compensar"
+	else:
+		tipo_resultado = "Sin actividad"
+
+	lines = []
+	lines.append(f"**Modelo 420 (IGIC) — Canarias — {trimestre_label} {year} ({trimestre_meses})**")
+	lines.append("Presentacion: Gobierno de Canarias (sede.gobiernodecanarias.org)")
+	lines.append("")
+	lines.append("**IGIC Devengado (repercutido)**")
+	dsg = result["desglose_devengado"]
+	if dsg["tipo_reducido"]["base"] > 0:
+		lines.append(f"- Base 3% (reducido): {dsg['tipo_reducido']['base']:,.2f} EUR | Cuota: {dsg['tipo_reducido']['cuota']:,.2f} EUR")
+	if dsg["tipo_general"]["base"] > 0:
+		lines.append(f"- Base 7% (general): {dsg['tipo_general']['base']:,.2f} EUR | Cuota: {dsg['tipo_general']['cuota']:,.2f} EUR")
+	if dsg["adquisiciones_extracanarias"]["base"] > 0:
+		lines.append(
+			f"- Adquisiciones extracanarias: {dsg['adquisiciones_extracanarias']['base']:,.2f} EUR "
+			f"al {dsg['adquisiciones_extracanarias']['tipo']*100:.1f}% | "
+			f"Cuota: {dsg['adquisiciones_extracanarias']['cuota']:,.2f} EUR"
+		)
+	lines.append(f"- **Total devengado: {total_devengado:,.2f} EUR**")
+	lines.append("")
+	lines.append("**IGIC Deducible (soportado)**")
+	ddc = result["desglose_deducible"]
+	if ddc["cuota_corrientes_interiores"] > 0:
+		lines.append(f"- Bienes y servicios corrientes: {ddc['cuota_corrientes_interiores']:,.2f} EUR")
+	if ddc["cuota_inversion_interiores"] > 0:
+		lines.append(f"- Bienes de inversion: {ddc['cuota_inversion_interiores']:,.2f} EUR")
+	if ddc["cuota_importaciones_corrientes"] > 0:
+		lines.append(f"- Importaciones: {ddc['cuota_importaciones_corrientes']:,.2f} EUR")
+	if ddc["rectificacion_deducciones"] != 0:
+		signo = "+" if ddc["rectificacion_deducciones"] > 0 else ""
+		lines.append(f"- Rectificacion deducciones: {signo}{ddc['rectificacion_deducciones']:,.2f} EUR")
+	lines.append(f"- **Total a deducir: {total_deducible:,.2f} EUR**")
+	lines.append("")
+	lines.append("**Resultado**")
+	lines.append(f"- Resultado regimen general: {result['resultado_regimen_general']:,.2f} EUR")
+	if compensacion > 0:
+		lines.append(f"- Compensacion periodos anteriores: -{result['cuotas_compensar_anteriores']:,.2f} EUR")
+	lines.append(f"- **Resultado final: {resultado:,.2f} EUR — {tipo_resultado}**")
+	lines.append("")
+	if resultado > 0:
+		lines.append(
+			f"Debes ingresar {resultado:,.2f} EUR al Gobierno de Canarias antes del dia 20 del mes "
+			f"siguiente al trimestre (o 30 de enero para el 4T)."
+		)
+	elif resultado < 0 and trimestre < 4:
+		lines.append(
+			f"El resultado negativo de {abs(resultado):,.2f} EUR se compensa en el siguiente trimestre "
+			f"(cuotas a compensar del proximo Modelo 420)."
+		)
+	elif resultado < 0 and trimestre == 4:
+		lines.append(f"En el 4T puedes solicitar la devolucion de {abs(resultado):,.2f} EUR o compensar.")
+	lines.append("")
+	lines.append(
+		"IGIC = Impuesto General Indirecto Canario. Canarias NO pertenece al territorio IVA armonizado de la UE "
+		"(Art. 6 Directiva IVA). El Modelo 349 (operaciones intracomunitarias) NO aplica desde Canarias: "
+		"las facturas a Google Ireland, Meta Ireland, etc. son EXPORTACION de servicios, no operacion intracomunitaria."
+	)
+	lines.append("Este calculo cubre solo el **regimen general** del IGIC. No incluye regimenes especiales.")
+
+	logger.info(
+		f"Modelo 420 (IGIC) Canarias calculated: {trimestre_label} {year}, "
+		f"devengado={total_devengado}, deducible={total_deducible}, resultado={resultado} ({tipo_resultado})"
+	)
+
+	return {
+		"success": True,
+		"trimestre": trimestre,
+		"year": year,
+		"ccaa": "Canarias",
+		"modelo": "420",
+		"impuesto": "IGIC",
+		"tipo_aplicado": 7,
+		"donde_presentar": "Gobierno de Canarias (sede.gobiernodecanarias.org)",
+		"notas": (
+			"Canarias no pertenece al territorio IVA armonizado de la UE. "
+			"El Modelo 349 NO aplica desde Canarias. "
+			"Facturas a plataformas extranjeras (Google, Meta, etc.) = exportacion de servicios."
+		),
+		"igic_devengado": {
+			"cuota_3": dsg["tipo_reducido"]["cuota"],
+			"cuota_7": dsg["tipo_general"]["cuota"],
+			"cuota_extracanarias": dsg["adquisiciones_extracanarias"]["cuota"],
+			"total_devengado": total_devengado,
+		},
+		"igic_deducible": {
+			"bienes_corrientes": ddc["cuota_corrientes_interiores"],
+			"bienes_inversion": ddc["cuota_inversion_interiores"],
+			"importaciones": ddc["cuota_importaciones_corrientes"],
+			"rectificacion": ddc["rectificacion_deducciones"],
+			"total_deducible": total_deducible,
+		},
+		"resultado": {
+			"regimen_general": result["resultado_regimen_general"],
+			"compensacion_anterior": result["cuotas_compensar_anteriores"],
+			"resultado_final": resultado,
+			"tipo": tipo_resultado,
+		},
+		"formatted_response": "\n".join(lines),
+	}

@@ -46,11 +46,14 @@ export default function AdminDashboardPage() {
                 adminGetContactRequests({ status: 'pending', limit: 5 }),
                 adminGetChatRatings({ rating: '-1', limit: 5 }),
             ])
-            setDashboard(dash)
-            setRecentFeedback(fb.items)
-            setPendingContacts(contacts.items)
-            setNegativeRatings(ratings.items)
+            setDashboard(dash || null)
+            setRecentFeedback(fb?.items || [])
+            setPendingContacts(contacts?.items || [])
+            setNegativeRatings(ratings?.items || [])
         } catch (err: any) {
+            setRecentFeedback([])
+            setPendingContacts([])
+            setNegativeRatings([])
             setError(err.message || 'Error al cargar el dashboard')
         } finally {
             setLoading(false)
