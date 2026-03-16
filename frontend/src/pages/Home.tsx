@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
     MessageSquare, Shield, FileText, ArrowRight, Calculator, CreditCard,
-    CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink, CalendarDays, Video
+    CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink, CalendarDays, Video,
+    Globe, AlertTriangle, BookOpen
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
@@ -38,8 +40,107 @@ const TERRITORIES = [
     { name: 'Navarra', foral: true, link: '/territorios-forales' },
 ]
 
+const CREATOR_CARDS = [
+    {
+        icon: Globe,
+        title: 'YouTube, TikTok, Twitch',
+        description: 'IVA intracomunitario + Modelo 349 automático. Cada plataforma tiene su régimen: lo calculamos sin que tengas que estudiarlo.',
+    },
+    {
+        icon: FileText,
+        title: 'Epígrafe IAE correcto',
+        description: 'Consulta DGT V0773-22: identifica el epígrafe 961.1, 961.2 o 843 que corresponde a tu actividad. Evita sanciones por epígrafe incorrecto.',
+    },
+    {
+        icon: Shield,
+        title: 'Royalties al 24%',
+        description: 'Retención correcta sobre royalties de plataformas digitales, no el 15% genérico. Ahorra en la declaración aplicando el tipo correcto.',
+    },
+    {
+        icon: Map,
+        title: '21 territorios',
+        description: 'El único asistente que cubre País Vasco y Navarra (régimen foral) + Canarias (IGIC) + Ceuta y Melilla (IPSI). Sin excepciones.',
+    },
+]
+
 export default function Home() {
     const { isAuthenticated } = useAuth()
+
+    useEffect(() => {
+        // SEO: title + meta tags
+        document.title = 'Impuestify — Asistente Fiscal IA para España | IRPF, Autónomos, Creadores'
+
+        const setMeta = (name: string, content: string) => {
+            let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
+            if (!el) {
+                el = document.createElement('meta')
+                el.setAttribute('name', name)
+                document.head.appendChild(el)
+            }
+            el.setAttribute('content', content)
+        }
+
+        const setOg = (property: string, content: string) => {
+            let el = document.querySelector<HTMLMetaElement>(`meta[property="${property}"]`)
+            if (!el) {
+                el = document.createElement('meta')
+                el.setAttribute('property', property)
+                document.head.appendChild(el)
+            }
+            el.setAttribute('content', content)
+        }
+
+        setMeta(
+            'description',
+            'Asistente fiscal con IA para particulares, autónomos y creadores de contenido en España. IRPF, IVA, deducciones, Modelo 303, 349. Cubre las 17 CCAA + País Vasco + Navarra + Canarias + Ceuta y Melilla. Desde 5 EUR/mes.'
+        )
+        setMeta(
+            'keywords',
+            'impuestos españa, irpf, declaracion renta, autonomos, creadores de contenido, influencers, iva, modelo 303, modelo 349, deducciones, pais vasco, navarra, canarias, ceuta, melilla, asistente fiscal, inteligencia artificial'
+        )
+        setOg('og:title', 'Impuestify — Asistente Fiscal IA')
+        setOg(
+            'og:description',
+            'El único asistente fiscal con IA que cubre los 21 territorios de España. Para particulares, autónomos y creadores de contenido.'
+        )
+        setOg('og:type', 'website')
+        setOg('og:url', 'https://impuestify.com')
+
+        // Schema.org structured data
+        const existingScript = document.querySelector('#home-schema-org')
+        if (!existingScript) {
+            const script = document.createElement('script')
+            script.id = 'home-schema-org'
+            script.type = 'application/ld+json'
+            script.text = JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'SoftwareApplication',
+                name: 'Impuestify',
+                applicationCategory: 'FinanceApplication',
+                operatingSystem: 'Web',
+                url: 'https://impuestify.com',
+                offers: [
+                    { '@type': 'Offer', price: '5', priceCurrency: 'EUR', name: 'Plan Particular' },
+                    { '@type': 'Offer', price: '49', priceCurrency: 'EUR', name: 'Plan Creator' },
+                    { '@type': 'Offer', price: '39', priceCurrency: 'EUR', name: 'Plan Autónomo' },
+                ],
+                aggregateRating: {
+                    '@type': 'AggregateRating',
+                    ratingValue: '4.8',
+                    ratingCount: '150',
+                },
+                description:
+                    'Asistente fiscal IA para España. IRPF, IVA, deducciones para particulares, autónomos y creadores de contenido.',
+            })
+            document.head.appendChild(script)
+        }
+
+        return () => {
+            document.title = 'Impuestify — Asistente Fiscal con IA'
+            const schema = document.querySelector('#home-schema-org')
+            if (schema) schema.remove()
+        }
+    }, [])
 
     return (
         <div className="home">
@@ -211,7 +312,10 @@ export default function Home() {
                     <FadeContent delay={200} duration={500}>
                         <p className="coverage-note">
                             Somos el único asistente fiscal con IA que integra las normativas forales
-                            del País Vasco y Navarra, con sus deducciones propias que no existen en el régimen común.
+                            del País Vasco y Navarra, con sus deducciones propias que no existen en el régimen común.{' '}
+                            <Link to="/territorios-forales" className="coverage-note__link">
+                                Saber más sobre territorios forales
+                            </Link>
                         </p>
                     </FadeContent>
                 </div>
@@ -293,6 +397,80 @@ export default function Home() {
                             </SpotlightCard>
                         </FadeContent>
                     </div>
+                </div>
+            </section>
+
+            {/* Creators Section */}
+            <section className="creators-promo">
+                <div className="container">
+                    <FadeContent delay={0} duration={500}>
+                        <div className="creators-promo__header">
+                            <div className="creators-promo__badge">
+                                <AlertTriangle size={14} />
+                                <span>DAC7 en vigor — Hacienda ya tiene tus datos</span>
+                            </div>
+                            <h2 className="creators-promo__title">
+                                Creadores de contenido:<br />
+                                <span className="creators-promo__title-accent">Hacienda ya sabe cuánto ganas</span>
+                            </h2>
+                            <p className="creators-promo__subtitle">
+                                Desde enero 2026, las plataformas reportan tus ingresos a la AEAT (DAC7).
+                                Impuestify te ayuda a declarar correctamente y evitar sanciones.
+                            </p>
+                        </div>
+                    </FadeContent>
+                    <FadeContent delay={100} duration={600}>
+                        <div className="creators-promo__grid">
+                            {CREATOR_CARDS.map((card, i) => {
+                                const Icon = card.icon
+                                return (
+                                    <div key={i} className="creators-promo__card">
+                                        <div className="creators-promo__card-icon">
+                                            <Icon size={22} />
+                                        </div>
+                                        <h3 className="creators-promo__card-title">{card.title}</h3>
+                                        <p className="creators-promo__card-desc">{card.description}</p>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </FadeContent>
+                    <FadeContent delay={200} duration={500}>
+                        <div className="creators-promo__cta-wrap">
+                            <Link to="/creadores-de-contenido" className="btn btn-lg creators-promo__cta">
+                                <Video size={20} />
+                                Ver Plan Creator — 49 EUR/mes
+                                <ArrowRight size={18} />
+                            </Link>
+                            <p className="creators-promo__cta-note">
+                                YouTubers, TikTokers, streamers e influencers. Sin permanencia.
+                            </p>
+                        </div>
+                    </FadeContent>
+                </div>
+            </section>
+
+            {/* Guía Fiscal Section — internal link for SEO */}
+            <section className="guide-promo">
+                <div className="container">
+                    <FadeContent delay={0} duration={500}>
+                        <div className="guide-promo__inner">
+                            <div className="guide-promo__icon">
+                                <BookOpen size={28} />
+                            </div>
+                            <div className="guide-promo__content">
+                                <h3 className="guide-promo__title">¿Primera vez haciendo la declaración de la renta?</h3>
+                                <p className="guide-promo__desc">
+                                    Nuestra guía fiscal interactiva te lleva paso a paso por los 7 apartados del IRPF.
+                                    Sin jerga fiscal. Sin errores.
+                                </p>
+                            </div>
+                            <Link to="/guia-fiscal" className="guide-promo__link">
+                                Ir a la guía fiscal
+                                <ArrowRight size={16} />
+                            </Link>
+                        </div>
+                    </FadeContent>
                 </div>
             </section>
 

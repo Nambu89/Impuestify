@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
     ArrowRight, CheckCircle, X, Video, ChevronLeft, Zap,
-    FileText, Globe, Calculator, Bell, Shield, ChevronDown
+    FileText, Globe, Calculator, Bell, Shield, ChevronDown, Map
 } from 'lucide-react'
 import FadeContent from '../components/reactbits/FadeContent'
 import SpotlightCard from '../components/reactbits/SpotlightCard'
@@ -127,7 +127,7 @@ export default function CreatorsPage() {
     const [openFaq, setOpenFaq] = useState<number | null>(null)
 
     useEffect(() => {
-        document.title = 'Impuestos para Creadores de Contenido | Impuestify'
+        document.title = 'Impuestos para Creadores de Contenido | YouTubers, TikTokers, Streamers | Impuestify'
 
         const setMeta = (name: string, content: string) => {
             let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
@@ -151,21 +151,53 @@ export default function CreatorsPage() {
 
         setMeta(
             'description',
-            'Asistente fiscal con IA para YouTubers, TikTokers, streamers e influencers. IRPF, IVA por plataforma, Modelo 349, epígrafe IAE. Cobertura foral completa. Desde 49 EUR/mes.'
+            'Asistente fiscal IA para creadores de contenido en España. YouTube, TikTok, Twitch, Instagram. Epígrafe IAE, IVA intracomunitario, Modelo 349, royalties. 21 territorios incluyendo País Vasco y Navarra. 49 EUR/mes.'
         )
         setMeta(
             'keywords',
-            'impuestos creadores contenido, IRPF influencer, IVA YouTube España, fiscalidad TikTok, Modelo 349 creadores, epígrafe IAE influencer, DAC7 España, tributación streamer'
+            'impuestos creadores contenido, IRPF influencer, IVA YouTube España, fiscalidad TikTok, Modelo 349 creadores, epígrafe IAE influencer, DAC7 España, tributación streamer, royalties creadores, fiscalidad youtuber, impuestos twitch, hacienda influencer'
         )
-        setOg('og:title', 'Impuestos para Creadores de Contenido | Impuestify')
+        setOg('og:title', 'Impuestos para Creadores de Contenido | YouTubers, TikTokers, Streamers | Impuestify')
         setOg(
             'og:description',
-            'El único asistente fiscal con IA que entiende YouTube, TikTok, Twitch e Instagram. IRPF, IVA por plataforma, Modelo 349 y cobertura foral completa. Desde 49 EUR/mes.'
+            'El único asistente fiscal con IA que entiende YouTube, TikTok, Twitch e Instagram. IRPF, IVA intracomunitario, Modelo 349, epígrafe IAE y cobertura foral completa. 49 EUR/mes.'
         )
         setOg('og:type', 'website')
+        setOg('og:url', 'https://impuestify.com/creadores-de-contenido')
+
+        // Schema.org para CreatorsPage
+        const existingScript = document.querySelector('#creators-schema-org')
+        if (!existingScript) {
+            const script = document.createElement('script')
+            script.id = 'creators-schema-org'
+            script.type = 'application/ld+json'
+            script.text = JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'WebPage',
+                name: 'Impuestos para Creadores de Contenido — Impuestify',
+                description:
+                    'Asistente fiscal IA especializado en creadores de contenido digitales en España. YouTube, TikTok, Twitch, Patreon. IRPF, IVA intracomunitario, Modelo 349.',
+                url: 'https://impuestify.com/creadores-de-contenido',
+                breadcrumb: {
+                    '@type': 'BreadcrumbList',
+                    itemListElement: [
+                        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
+                        {
+                            '@type': 'ListItem',
+                            position: 2,
+                            name: 'Creadores de Contenido',
+                            item: 'https://impuestify.com/creadores-de-contenido',
+                        },
+                    ],
+                },
+            })
+            document.head.appendChild(script)
+        }
 
         return () => {
             document.title = 'Impuestify — Asistente Fiscal con IA'
+            const schema = document.querySelector('#creators-schema-org')
+            if (schema) schema.remove()
         }
     }, [])
 
@@ -416,6 +448,32 @@ export default function CreatorsPage() {
                                     )}
                                 </div>
                             ))}
+                        </div>
+                    </FadeContent>
+                </div>
+            </section>
+
+            {/* ==================== LINKS INTERNOS SEO ==================== */}
+            <section className="creators-internal-links">
+                <div className="container">
+                    <FadeContent delay={0} duration={500}>
+                        <div className="creators-internal-links__grid">
+                            <Link to="/territorios-forales" className="creators-internal-links__card">
+                                <Map size={20} />
+                                <div>
+                                    <strong>País Vasco y Navarra</strong>
+                                    <span>Régimen foral: deducciones exclusivas que no existen en el régimen común</span>
+                                </div>
+                                <ArrowRight size={16} />
+                            </Link>
+                            <Link to="/canarias" className="creators-internal-links__card">
+                                <Globe size={20} />
+                                <div>
+                                    <strong>Canarias — IGIC</strong>
+                                    <span>Impuesto General Indirecto Canario: cómo facturar desde las islas</span>
+                                </div>
+                                <ArrowRight size={16} />
+                            </Link>
                         </div>
                     </FadeContent>
                 </div>
