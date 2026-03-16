@@ -5,6 +5,7 @@
     min-height: 100vh;
     background: var(--color-secondary);
     position: relative;
+    overflow-x: hidden;
 }
 
 /* Radial glow overlay on the dark section */
@@ -12,9 +13,9 @@
     content: '';
     position: absolute;
     top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
+    left: 0;
+    right: 0;
+    width: 100%;
     height: 360px;
     background: radial-gradient(ellipse at 50% 30%, rgba(26, 86, 219, 0.22) 0%, transparent 65%);
     pointer-events: none;
@@ -35,6 +36,8 @@
 /* ========== MAIN CONTAINER ========== */
 .subscribe-container {
     max-width: 900px;
+    width: 100%;
+    box-sizing: border-box;
     margin: 0 auto;
     padding: var(--spacing-8) var(--spacing-4) var(--spacing-12);
     position: relative;
@@ -119,6 +122,9 @@
     grid-template-columns: 1fr;
     gap: var(--spacing-6);
     margin-bottom: var(--spacing-6);
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .subscribe-plans--three {
@@ -136,6 +142,9 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
 }
@@ -374,7 +383,7 @@
 
 /* Gradient price number */
 .subscribe-plan__value {
-    font-size: 46px;
+    font-size: 40px;
     font-weight: 800;
     line-height: 1;
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
@@ -559,7 +568,6 @@
     }
 
     .subscribe-page::before {
-        width: 900px;
         height: 420px;
     }
 
