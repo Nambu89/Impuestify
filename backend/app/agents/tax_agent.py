@@ -166,6 +166,17 @@ Si el usuario menciona YouTube, TikTok, Twitch, Instagram, Patreon, OnlyFans, Su
 7. **CNAE-2025**: Nuevo codigo 60.39 para creadores de contenido digital (RD 10/2025).
 8. **Plan Tributario AEAT 2026**: Hacienda ha puesto a los influencers como objetivo prioritario de inspeccion.
 
+## USUARIOS CON MULTIPLES ROLES (NO EXCLUYENTES)
+Un usuario puede ser asalariado + autonomo + creador de contenido + inversor + propietario simultaneamente.
+- Lee el perfil completo (situacion_laboral + roles_adicionales) ANTES de responder.
+- No asumas que solo tiene un tipo de renta. Si el perfil muestra multiples roles, considera TODOS.
+- TODAS las rentas se suman en la declaracion:
+  - Trabajo (nomina) + Actividad economica (facturas) + Alquiler → base imponible general
+  - Intereses + dividendos + ganancias patrimoniales → base del ahorro
+- Obligaciones por rol: Modelo 303/130 solo si es autonomo/creador. Modelo 349 solo si factura a UE.
+- La tributacion conjunta afecta a TODAS las rentas del matrimonio.
+- NO fuerces al usuario a elegir un solo rol. Responde considerando toda su situacion.
+
 ## COMPARATIVAS MULTI-ESCENARIO
 Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "cuál es mejor", "conjunta vs individual", "autónomo vs asalariado" o similar:
 - Llama a simulate_irpf MÚLTIPLES VECES en la misma respuesta con los parámetros contrastantes (ej: tributacion_conjunta=true y tributacion_conjunta=false).
@@ -247,8 +258,25 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 			fp_lines = []
 			# Highlight employment status at the top
 			sit_laboral = fiscal_profile.get("situacion_laboral", "")
+			roles_adicionales = fiscal_profile.get("roles_adicionales", [])
+			if isinstance(roles_adicionales, str):
+				import json as _json
+				try:
+					roles_adicionales = _json.loads(roles_adicionales)
+				except Exception:
+					roles_adicionales = []
+
 			if sit_laboral and sit_laboral.lower() in ("particular", "asalariado"):
-				fp_lines.append(f"- ⚠️ Situación laboral: {sit_laboral} (NO es autónomo — NO usar herramientas de autónomos sin preguntar)")
+				if roles_adicionales:
+					fp_lines.append(f"- Situación laboral principal: {sit_laboral}")
+					fp_lines.append(f"- Roles adicionales: {', '.join(roles_adicionales)}")
+					fp_lines.append("- ⚠️ Este usuario tiene MÚLTIPLES roles fiscales. Considera TODAS sus fuentes de renta al responder.")
+				else:
+					fp_lines.append(f"- ⚠️ Situación laboral: {sit_laboral} (NO es autónomo — NO usar herramientas de autónomos sin preguntar)")
+			elif roles_adicionales:
+				fp_lines.append(f"- Situación laboral principal: {sit_laboral}")
+				fp_lines.append(f"- Roles adicionales: {', '.join(roles_adicionales)}")
+				fp_lines.append("- ⚠️ Este usuario tiene MÚLTIPLES roles fiscales. Considera TODAS sus fuentes de renta al responder.")
 			label_map = {
 				"ccaa_residencia": "CCAA residencia",
 				"situacion_laboral": "Situación laboral",
@@ -292,7 +320,9 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 						fp_lines.append(f"- {label}: {val}")
 			if fp_lines:
 				is_autonomo_profile = sit_laboral.lower() in ("autónomo", "autonomo", "pluriactividad") if sit_laboral else False
-				if is_autonomo_profile:
+				has_creator_role = "creador_contenido" in roles_adicionales
+				has_multi_roles = len(roles_adicionales) > 0
+				if is_autonomo_profile or has_creator_role:
 					fiscal_context = "\n\n📋 **PERFIL FISCAL DE AUTÓNOMO** (usa estos datos para pre-rellenar herramientas):\n" + "\n".join(fp_lines)
 					fiscal_context += "\n\n⚠️ Usa el perfil fiscal para pre-rellenar parámetros de calculate_modelo_303, calculate_modelo_130 y calculate_autonomous_quota."
 				else:
@@ -721,9 +751,16 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 		query_lower = query.lower()
 		requires_tool_hint = ""
 
-		# Determine user employment status from fiscal profile
+		# Determine user employment status from fiscal profile (roles are additive)
 		situacion = (fiscal_profile or {}).get("situacion_laboral", "").lower() if fiscal_profile else ""
-		is_autonomo = situacion in ("autónomo", "autonomo", "pluriactividad")
+		fp_roles = (fiscal_profile or {}).get("roles_adicionales", []) if fiscal_profile else []
+		if isinstance(fp_roles, str):
+			import json as _json2
+			try:
+				fp_roles = _json2.loads(fp_roles)
+			except Exception:
+				fp_roles = []
+		is_autonomo = situacion in ("autónomo", "autonomo", "pluriactividad") or "creador_contenido" in fp_roles or "pluriactividad" in fp_roles
 
 		if any(kw in query_lower for kw in ["cuota", "cotiza", "autónomo", "autonomo", "pago como"]):
 			if any(char.isdigit() for char in query):
