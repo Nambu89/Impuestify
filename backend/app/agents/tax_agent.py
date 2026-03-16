@@ -177,6 +177,15 @@ Un usuario puede ser asalariado + autonomo + creador de contenido + inversor + p
 - La tributacion conjunta afecta a TODAS las rentas del matrimonio.
 - NO fuerces al usuario a elegir un solo rol. Responde considerando toda su situacion.
 
+## VARIACIONES TERRITORIALES PARA CREADORES
+- **Gipuzkoa**: Modelo 300 (NO 303) para IVA trimestral. TicketBAI obligatorio.
+- **Navarra**: Modelo F69 (NO 303) para IVA. Modelos 715 (retenciones) y 759 (alquileres) en vez de 111/115.
+- **Bizkaia**: Modelo 303 foral + BATUZ (envio continuo facturas). TicketBAI obligatorio.
+- **Araba**: Modelo 303 foral. TicketBAI obligatorio.
+- **Canarias**: Modelo 420 IGIC (NO 303 IVA). Modelo 425 resumen anual. El Modelo 349 NO aplica desde Canarias (no es territorio IVA armonizado UE). REF Canarias puede beneficiar a creadores con SL.
+- **Ceuta/Melilla**: IPSI (2-4%) en vez de IVA (21%). Deduccion 60% IRPF. Bonificacion 50% cuotas SS. Muy atractivo para nomadas digitales pero requiere residencia real.
+- **Modelo 721**: Criptomonedas en exchanges extranjeros (desde 2023, sustituye al 720 para cripto). Plazo: hasta 31 marzo.
+
 ## COMPARATIVAS MULTI-ESCENARIO
 Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "cuál es mejor", "conjunta vs individual", "autónomo vs asalariado" o similar:
 - Llama a simulate_irpf MÚLTIPLES VECES en la misma respuesta con los parámetros contrastantes (ej: tributacion_conjunta=true y tributacion_conjunta=false).

@@ -798,6 +798,62 @@ INFLUENCERS_ITEMS = [
 
 
 # ═══════════════════════════════════════════════════════════════
+# Modelos fiscales especificos creadores — forales + Canarias
+# ═══════════════════════════════════════════════════════════════
+
+CREATOR_MODELS_ITEMS = [
+    # ── Gipuzkoa: Modelo 300 (equivalente al 303) ──
+    WatchItem(
+        url="https://www.gipuzkoa.eus/documents/2456431/0/Modelo+300+instrucciones.pdf",
+        dest="Influencers/Gipuzkoa/Influencers-Gipuzkoa_Modelo300_IVA_Instrucciones.pdf",
+        territory="Gipuzkoa",
+        description="Gipuzkoa Modelo 300 IVA trimestral (equivalente al 303 estatal)",
+        priority="high",
+    ),
+    # ── Navarra: F69 (equivalente al 303) ──
+    WatchItem(
+        url="http://www.navarra.es/appsext/impresos/instrucciones/INSTRF69.PDF",
+        dest="Influencers/Navarra/Influencers-Navarra_F69_IVA_Instrucciones.pdf",
+        territory="Navarra",
+        description="Navarra F69 IVA trimestral (equivalente al 303 estatal)",
+        priority="high",
+    ),
+    # ── Canarias: Modelo 420 IGIC ──
+    WatchItem(
+        url="https://sede.gobiernodecanarias.org/sede/descargar/11825",
+        dest="Influencers/Canarias/Influencers-Canarias_Modelo420_IGIC_Instrucciones.pdf",
+        territory="Canarias",
+        description="Canarias Modelo 420 IGIC trimestral (equivalente al 303/IVA)",
+        priority="high",
+    ),
+    # ── Modelo 721 Criptomonedas extranjero ──
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo721/Instrucciones_Modelo721.pdf",
+        dest="Influencers/Estatal/Influencers-Modelo721_Criptomonedas_Instrucciones.pdf",
+        territory="Estatal",
+        description="Modelo 721 declaracion criptomonedas en extranjero (desde 2023)",
+        priority="high",
+    ),
+    # ── Tributacion Autonomica 2025 — Hacienda (deducciones por CCAA) ──
+    WatchItem(
+        url="https://www.hacienda.gob.es/SGFAL/FinanciacionTerritorial/Autonomica/Capitulo-IV-Tributacion-Autonomica-2025.pdf",
+        dest="Influencers/Estatal/Influencers-Tributacion_Autonomica_2025_Hacienda.pdf",
+        territory="Estatal",
+        description="Tributacion autonomica 2025 — deducciones por CCAA para autonomos/creadores",
+        priority="high",
+    ),
+    # ── DAC7 Modelo 238 — FAQ vendedores/creadores ──
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo238/FAQ_Modelo238.pdf",
+        dest="Influencers/Estatal/Influencers-DAC7_Modelo238_FAQ.pdf",
+        territory="Estatal",
+        description="DAC7 Modelo 238 FAQ para vendedores/creadores en plataformas digitales",
+        priority="high",
+    ),
+]
+
+
+# ═══════════════════════════════════════════════════════════════
 # All items combined
 # ═══════════════════════════════════════════════════════════════
 
@@ -815,6 +871,7 @@ ALL_ITEMS: list[WatchItem] = (
     + SS_ITEMS
     + CREATORS_ITEMS
     + INFLUENCERS_ITEMS
+    + CREATOR_MODELS_ITEMS
 )
 
 
