@@ -87,6 +87,15 @@ AUTONOMO_KEYWORDS: List[str] = [
     "casillas iva",
     "casillas del 303",
     # IPSI removed — applies to ALL residents of Ceuta/Melilla, not autonomo-specific
+    # Creadores de contenido / intracomunitarias (requieren plan Creator o Autonomo)
+    "modelo 349",
+    "intracomunitarias",
+    "intracomunitaria",
+    "dac7",
+    "modelo 238",
+    "royalties",
+    "derechos de autor",
+    "sponsorship",
 ]
 
 # Response shown to salaried-plan users who ask about autonomo topics.

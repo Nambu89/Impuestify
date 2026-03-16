@@ -402,7 +402,7 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "is_active": 1,
         },
 
-        # Modelo 100 Campana Renta — anual (online desde 2 abril, fin 30 junio)
+        # Modelo 100 Campana Renta — anual (online desde 8 abril, fin 30 junio)
         {
             "id": _make_id("100", TERRITORY, "anual", y),
             "model": "100",
@@ -410,13 +410,14 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "territory": TERRITORY,
             "period": "anual",
             "tax_year": y,
-            "start_date": f"{y}-04-02",
+            "start_date": f"{y}-04-08",
             "end_date": f"{y}-06-30",
             "domiciliation_date": f"{y}-06-25",
             "applies_to": "todos",
             "description": (
-                f"Campana de la Renta {y - 1}. Presentacion online desde el 2 de abril. "
-                "Atencion telefonica desde mayo. Presentacion presencial con cita previa desde junio. "
+                f"Campana de la Renta {y - 1}. Presentacion online desde el 8 de abril. "
+                "Atencion telefonica desde el 9 de mayo (cita previa desde el 9 de abril). "
+                "Presentacion presencial desde el 1 de junio (cita previa desde el 29 de mayo). "
                 "Domiciliacion bancaria: hasta el 25 de junio."
             ),
             "source_url": SOURCE_URL,

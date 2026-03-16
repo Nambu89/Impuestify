@@ -68,9 +68,17 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                         <Link to="/dashboard" className="nav-link">Dashboard</Link>
                     )}
                     {isOwner && (
-                        <Link to="/admin/users" className="nav-link">
-                            <Shield size={16} /> Admin
-                        </Link>
+                        <div className="nav-dropdown">
+                            <button className="nav-link nav-dropdown__trigger">
+                                <Shield size={16} /> Admin
+                            </button>
+                            <div className="nav-dropdown__menu">
+                                <Link to="/admin" className="nav-dropdown__item">Dashboard</Link>
+                                <Link to="/admin/users" className="nav-dropdown__item">Usuarios</Link>
+                                <Link to="/admin/feedback" className="nav-dropdown__item">Feedback</Link>
+                                <Link to="/admin/contact" className="nav-dropdown__item">Contacto</Link>
+                            </div>
+                        </div>
                     )}
                 </nav>
 
@@ -112,9 +120,20 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                         <Settings size={20} /> Configuración
                     </Link>
                     {isOwner && (
-                        <Link to="/admin/users" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
-                            <Shield size={20} /> Admin
-                        </Link>
+                        <>
+                            <Link to="/admin" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                                <Shield size={20} /> Dashboard Admin
+                            </Link>
+                            <Link to="/admin/users" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                                <Shield size={20} /> Usuarios
+                            </Link>
+                            <Link to="/admin/feedback" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                                <Shield size={20} /> Feedback
+                            </Link>
+                            <Link to="/admin/contact" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                                <Shield size={20} /> Contacto
+                            </Link>
+                        </>
                     )}
                     {onMenuToggle && (
                         <button

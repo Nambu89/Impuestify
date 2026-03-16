@@ -69,6 +69,10 @@ Tienes 4 agentes disponibles:
 - Mencionen modelos tributarios (130, 303, etc.)
 - Pregunten por tramos de IRPF o tipos impositivos
 - Temas generales de fiscalidad
+- Pregunten sobre fiscalidad de creadores, influencers, YouTubers, streamers, TikTokers
+- Mencionen plataformas (YouTube, TikTok, Twitch, Instagram, Patreon, OnlyFans)
+- Pregunten sobre Modelo 349, intracomunitarias, DAC7
+- Pregunten sobre epigrafe IAE o alta como autonomo
 
 **Usa PayslipAgent cuando:**
 - Analicen una nómina específica
