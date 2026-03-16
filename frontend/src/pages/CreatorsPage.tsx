@@ -65,7 +65,7 @@ const COMPARISON_ROWS = [
         feature: 'Precio mensual',
         gestoria: '80-150 EUR/mes',
         onlytax: '84,70 EUR/mes',
-        impuestify: '30 EUR/mes',
+        impuestify: '49 EUR/mes',
         highlight: true,
     },
     {
@@ -151,7 +151,7 @@ export default function CreatorsPage() {
 
         setMeta(
             'description',
-            'Asistente fiscal con IA para YouTubers, TikTokers, streamers e influencers. IRPF, IVA por plataforma, Modelo 349, epígrafe IAE. Cobertura foral completa. Desde 30 EUR/mes.'
+            'Asistente fiscal con IA para YouTubers, TikTokers, streamers e influencers. IRPF, IVA por plataforma, Modelo 349, epígrafe IAE. Cobertura foral completa. Desde 49 EUR/mes.'
         )
         setMeta(
             'keywords',
@@ -160,7 +160,7 @@ export default function CreatorsPage() {
         setOg('og:title', 'Impuestos para Creadores de Contenido | Impuestify')
         setOg(
             'og:description',
-            'El único asistente fiscal con IA que entiende YouTube, TikTok, Twitch e Instagram. IRPF, IVA por plataforma, Modelo 349 y cobertura foral completa. Desde 30 EUR/mes.'
+            'El único asistente fiscal con IA que entiende YouTube, TikTok, Twitch e Instagram. IRPF, IVA por plataforma, Modelo 349 y cobertura foral completa. Desde 49 EUR/mes.'
         )
         setOg('og:type', 'website')
 
@@ -215,7 +215,7 @@ export default function CreatorsPage() {
                     <FadeContent delay={200} duration={600}>
                         <div className="creators-hero__actions">
                             <Link to="/subscribe" className="btn btn-primary btn-lg">
-                                Empezar por 30 EUR/mes
+                                Empezar por 49 EUR/mes
                                 <ArrowRight size={20} />
                             </Link>
                             <a href="#features" className="btn btn-secondary btn-lg">
@@ -282,7 +282,7 @@ export default function CreatorsPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Qué incluye el Plan Creator</h2>
                         <p className="section-subtitle">
-                            30 EUR/mes. Todo lo que necesitas para declarar bien como creador digital.
+                            49 EUR/mes. Todo lo que necesitas para declarar bien como creador digital.
                         </p>
                     </FadeContent>
                     <div className="creators-features__grid">
@@ -429,7 +429,7 @@ export default function CreatorsPage() {
                             <div className="creators-cta__icon">
                                 <Video size={36} />
                             </div>
-                            <h2>Empieza a declarar bien por 30 EUR/mes</h2>
+                            <h2>Empieza a declarar bien por 49 EUR/mes</h2>
                             <p>
                                 Sin permanencia. Sin sorpresas. El asistente fiscal que entiende
                                 tu actividad como creador digital mejor que ninguna gestoría tradicional.
@@ -439,7 +439,7 @@ export default function CreatorsPage() {
                                 <ArrowRight size={20} />
                             </Link>
                             <p className="creators-cta__note">
-                                30 EUR/mes. Cancela cuando quieras.
+                                49 EUR/mes. Cancela cuando quieras.
                             </p>
                         </div>
                     </FadeContent>

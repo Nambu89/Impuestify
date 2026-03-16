@@ -352,7 +352,7 @@ export default function Home() {
                                 </div>
                                 <div className="pricing-amount">
                                     <span className="pricing-currency">EUR</span>
-                                    <span className="pricing-value pricing-value--creator">30</span>
+                                    <span className="pricing-value pricing-value--creator">49</span>
                                     <span className="pricing-period">/mes</span>
                                 </div>
                                 <ul className="pricing-features">

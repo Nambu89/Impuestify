@@ -36,7 +36,7 @@ const PLAN_PARTICULAR = {
 const PLAN_CREATOR = {
     id: 'creator',
     name: 'Creator',
-    price: 30,
+    price: 49,
     icon: Video,
     description: 'Para creadores de contenido e influencers',
     features: [
@@ -218,10 +218,7 @@ export default function SubscribePage() {
                         <div className="subscribe-plan__price">
                             <span className="subscribe-plan__currency">EUR</span>
                             <span className="subscribe-plan__value subscribe-plan__value--creator">{PLAN_CREATOR.price}</span>
-                            <div className="subscribe-plan__price-aside">
-                                <span className="subscribe-plan__period">/mes</span>
-                                <span className="subscribe-plan__original-price">49 EUR en 2027</span>
-                            </div>
+                            <span className="subscribe-plan__period">/mes</span>
                         </div>
 
                         <ul className="subscribe-plan__features">
