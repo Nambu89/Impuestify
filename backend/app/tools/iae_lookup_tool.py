@@ -130,16 +130,32 @@ async def lookup_iae(
             len(unique_results),
         )
 
+        # Territorial notes injected when query mentions Pais Vasco territories
+        pv_keywords = ("pais vasco", "país vasco", "bizkaia", "gipuzkoa", "araba", "alava", "álava", "euskadi")
+        notas_territoriales = []
+        if any(kw in query_lower for kw in pv_keywords):
+            notas_territoriales.append(
+                "En Pais Vasco es obligatorio usar software TicketBAI homologado para TODAS las facturas. "
+                "Ademas, Bizkaia exige BATUZ (envio continuo de registros de facturacion). "
+                "El IAE se presenta ante la respectiva Hacienda Foral, no ante la AEAT."
+            )
+
+        nota_base = (
+            "El epigrafe 8690 seccion 2 es el mas habitual para creadores de contenido "
+            "digital (DGT V0773-22). Si ningun resultado encaja, consulta la clasificacion "
+            "IAE oficial del BOE o solicita una consulta vinculante a la DGT."
+        )
+        nota_final = nota_base
+        if notas_territoriales:
+            nota_final = nota_base + " | " + " ".join(notas_territoriales)
+
         return {
             "success": True,
             "query": query,
             "count": len(unique_results),
             "results": unique_results[:10],
-            "nota": (
-                "El epigrafe 8690 seccion 2 es el mas habitual para creadores de contenido "
-                "digital (DGT V0773-22). Si ningun resultado encaja, consulta la clasificacion "
-                "IAE oficial del BOE o solicita una consulta vinculante a la DGT."
-            ),
+            "nota": nota_final,
+            "notas_territoriales": notas_territoriales if notas_territoriales else None,
         }
 
     except FileNotFoundError:
