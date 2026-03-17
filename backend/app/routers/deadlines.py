@@ -69,11 +69,14 @@ CCAA_TO_FORAL: dict[str, str] = {
 }
 
 SITUACION_TO_APPLIES: dict[str, list[str]] = {
-    "autonomo": ["autonomos", "todos"],
+    "autonomo": ["autonomos", "todos", "particulares"],
+    "autónomo": ["autonomos", "todos", "particulares"],
+    "asalariado": ["todos", "particulares"],
     "empleado": ["todos", "particulares"],
     "particular": ["todos", "particulares"],
     "desempleado": ["todos", "particulares"],
     "pensionista": ["todos", "particulares"],
+    "jubilado": ["todos", "particulares"],
 }
 
 
@@ -98,12 +101,13 @@ def _row_to_deadline(row: dict) -> FiscalDeadlineOut:
 async def _get_user_territory(user_id: str, db: TursoClient) -> tuple[str, list[str]]:
     """
     Get territory and applies_to filter for a user based on their fiscal profile.
+    Considers roles_adicionales (non-exclusive roles) from datos_fiscales JSON.
 
     Returns:
         (territory, applies_to_list)
     """
     profile_result = await db.execute(
-        "SELECT ccaa_residencia, situacion_laboral FROM user_profiles WHERE user_id = ?",
+        "SELECT ccaa_residencia, situacion_laboral, datos_fiscales FROM user_profiles WHERE user_id = ?",
         [user_id],
     )
     profile_rows = profile_result.rows or []
@@ -117,6 +121,21 @@ async def _get_user_territory(user_id: str, db: TursoClient) -> tuple[str, list[
     # Map CCAA to territory
     territory = CCAA_TO_FORAL.get(ccaa, "Estatal")
     applies_to = SITUACION_TO_APPLIES.get(situacion, ["todos", "particulares"])
+
+    # Check roles_adicionales — if user has creator/pluriactividad role, include autonomos deadlines
+    datos_fiscales = profile.get("datos_fiscales")
+    if datos_fiscales:
+        import json as _json
+        try:
+            datos = _json.loads(datos_fiscales) if isinstance(datos_fiscales, str) else datos_fiscales
+            roles = datos.get("roles_adicionales", [])
+            if isinstance(roles, str):
+                roles = _json.loads(roles)
+            if any(r in roles for r in ("creador_contenido", "pluriactividad", "autonomo")):
+                if "autonomos" not in applies_to:
+                    applies_to = list(set(applies_to + ["autonomos"]))
+        except Exception:
+            pass
 
     return territory, applies_to
 
