@@ -676,6 +676,96 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
+
+        # =============================================
+        # INFORMATIVOS PARTICULARES — applies_to = "todos"
+        # Plazos reales que afectan a cualquier contribuyente
+        # (no solo autonomos), incluyendo asalariados y pensionistas.
+        # =============================================
+
+        # Modelo 721 — Monedas virtuales en el extranjero (anual, enero-marzo)
+        {
+            "id": _make_id("721", TERRITORY, "anual", y),
+            "model": "721",
+            "model_name": "Monedas virtuales en el extranjero Modelo 721",
+            "territory": TERRITORY,
+            "period": "anual",
+            "tax_year": y,
+            "start_date": f"{y}-01-01",
+            "end_date": f"{y}-03-31",
+            "domiciliation_date": None,
+            "applies_to": "todos",
+            "description": (
+                "Declaracion informativa sobre monedas virtuales situadas en el extranjero "
+                f"del ejercicio {y - 1}. Obligatorio si el valor total supera los 50.000 EUR "
+                "a 31 de diciembre. Plazo: 1 de enero - 31 de marzo."
+            ),
+            "source_url": SOURCE_URL,
+            "is_active": 1,
+        },
+
+        # Modelo 714 — Impuesto sobre el Patrimonio (campana Renta, abril-junio)
+        {
+            "id": _make_id("714", TERRITORY, "anual", y),
+            "model": "714",
+            "model_name": f"Impuesto sobre el Patrimonio {y - 1} — Modelo 714",
+            "territory": TERRITORY,
+            "period": "anual",
+            "tax_year": y,
+            "start_date": f"{y}-04-08",
+            "end_date": f"{y}-06-30",
+            "domiciliation_date": f"{y}-06-25",
+            "applies_to": "todos",
+            "description": (
+                f"Declaracion del Impuesto sobre el Patrimonio del ejercicio {y - 1}. "
+                "Obligatorio si el patrimonio neto supera los 700.000 EUR "
+                "(el minimo exento varia por CCAA; en algunas como Madrid la bonificacion es del 100%). "
+                "Se presenta junto con la Campana de la Renta: 8 de abril - 30 de junio."
+            ),
+            "source_url": SOURCE_URL,
+            "is_active": 1,
+        },
+
+        # Modelo 100 — Cita previa atencion telefonica (referencia informativa)
+        {
+            "id": _make_id("100", TERRITORY, "cita_telefonica", y),
+            "model": "100",
+            "model_name": "Cita previa atencion telefonica Renta",
+            "territory": TERRITORY,
+            "period": "cita_telefonica",
+            "tax_year": y,
+            "start_date": f"{y}-05-09",
+            "end_date": f"{y}-05-09",
+            "domiciliation_date": None,
+            "applies_to": "todos",
+            "description": (
+                f"Desde el 9 de mayo se puede solicitar cita previa para la confeccion telefonica "
+                f"de la declaracion de la Renta {y - 1}. La atencion telefonica comienza el mismo dia."
+            ),
+            "source_url": SOURCE_URL,
+            "is_active": 1,
+        },
+
+        # Modelo 100 — Atencion presencial en oficinas AEAT (referencia informativa)
+        {
+            "id": _make_id("100", TERRITORY, "atencion_presencial", y),
+            "model": "100",
+            "model_name": "Atencion presencial en oficinas AEAT",
+            "territory": TERRITORY,
+            "period": "atencion_presencial",
+            "tax_year": y,
+            "start_date": f"{y}-06-01",
+            "end_date": f"{y}-06-30",
+            "domiciliation_date": None,
+            "applies_to": "todos",
+            "description": (
+                f"Desde el 1 de junio: atencion presencial en oficinas de la AEAT para confeccion "
+                f"de la declaracion de la Renta {y - 1} (cita previa desde el 29 de mayo). "
+                "Plazo limite de presentacion: 30 de junio."
+            ),
+            "source_url": SOURCE_URL,
+            "is_active": 1,
+        },
     ]
 
     return deadlines

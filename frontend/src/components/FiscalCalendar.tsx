@@ -175,8 +175,11 @@ function Timeline({ deadlines, currentMonth, currentYear, onMonthChange }: Timel
             <div className="fc-timeline__months">
                 {months.map(({ month, year }) => {
                     const dotsCount = deadlines.filter(d => {
+                        const start = new Date(d.start_date)
                         const end = new Date(d.end_date)
-                        return end.getMonth() === month && end.getFullYear() === year
+                        const mStart = new Date(year, month, 1)
+                        const mEnd = new Date(year, month + 1, 0)
+                        return start <= mEnd && end >= mStart
                     }).length
                     const isActive = month === currentMonth && year === currentYear
                     return (
@@ -270,19 +273,21 @@ export default function FiscalCalendar({ deadlines, loading, error }: FiscalCale
         setCurrentYear(year)
     }
 
-    // Filter by applies_to
+    // Filter by applies_to (past deadlines are kept — shown with atenuated style in past months)
     const filtered = deadlines.filter(d => {
-        if (d.urgency === 'past') return false
         if (activeFilter === 'todos') return true
         if (activeFilter === 'autonomos') return d.applies_to === 'autonomos' || d.applies_to === 'todos'
         if (activeFilter === 'particulares') return d.applies_to === 'particulares' || d.applies_to === 'todos'
         return true
     })
 
-    // Filter by current month
+    // Filter by current month — show any deadline whose range overlaps with this month
     const monthDeadlines = filtered.filter(d => {
+        const start = new Date(d.start_date)
         const end = new Date(d.end_date)
-        return end.getMonth() === currentMonth && end.getFullYear() === currentYear
+        const monthStart = new Date(currentYear, currentMonth, 1)
+        const monthEnd = new Date(currentYear, currentMonth + 1, 0)
+        return start <= monthEnd && end >= monthStart
     })
 
     // Sort by end_date
