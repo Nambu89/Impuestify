@@ -82,6 +82,13 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
                 // 3. Register push subscription via Service Worker
                 const registration = await navigator.serviceWorker.ready
+
+                // Clear any stale subscription (VAPID key mismatch causes "push service error")
+                const existingSub = await registration.pushManager.getSubscription()
+                if (existingSub) {
+                    await existingSub.unsubscribe()
+                }
+
                 const subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: urlBase64ToUint8Array(vapidKey),
