@@ -215,7 +215,9 @@ class TursoClient:
                 processing_status TEXT DEFAULT 'pending',
                 error_message TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
-                updated_at TEXT DEFAULT (datetime('now'))
+                updated_at TEXT DEFAULT (datetime('now')),
+                integrity_score REAL DEFAULT 1.0,
+                integrity_findings TEXT DEFAULT NULL
             )
             """,
             
@@ -423,6 +425,8 @@ class TursoClient:
                 processing_status TEXT DEFAULT 'pending',
                 error_message TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
+                integrity_score REAL DEFAULT NULL,
+                integrity_findings TEXT DEFAULT NULL,
                 FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
             )
             """,

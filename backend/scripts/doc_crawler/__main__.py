@@ -18,7 +18,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from backend.scripts.doc_crawler.config import DOCS_DIR
-from backend.scripts.doc_crawler.crawler import download_document, reset_session_state
+from backend.scripts.doc_crawler.crawler import download_document, get_scan_summary, reset_session_state
 from backend.scripts.doc_crawler.inventory import (
     generate_report,
     get_relative_path,
@@ -125,10 +125,21 @@ def cmd_run(args: argparse.Namespace) -> None:
     unchanged = sum(1 for r in results if r.get("status") == "unchanged")
     failed = sum(1 for r in results if r.get("status") in ("failed", "invalid", "rate_limited"))
 
+    quarantined = sum(1 for r in results if r.get("status") == "quarantined")
+
     print()
     print(f"Done: {new} new, {updated} updated, {unchanged} unchanged, {failed} failed")
+    if quarantined:
+        print(f"Quarantined: {quarantined} documents moved to docs/_quarantine/ (review manually)")
     if new + updated > 0:
         print(f"Pending ingest: {new + updated} files flagged for RAG")
+
+    scan = get_scan_summary()
+    if scan["scanned"] > 0:
+        print(
+            f"Integrity scan: {scan['scanned']} docs scanned — "
+            f"{scan['clean']} clean, {scan['quarantined']} quarantined"
+        )
 
 
 def cmd_pending(args: argparse.Namespace) -> None:

@@ -3,6 +3,8 @@ Core download engine — download, validate, deduplicate documents.
 """
 import hashlib
 import logging
+import shutil
+import sys
 import time
 from collections import defaultdict
 from pathlib import Path
@@ -12,16 +14,34 @@ import requests
 
 from .config import (
     BACKOFF_SCHEDULE_S,
+    DOCS_DIR,
     HEADERS,
     INTER_REQUEST_DELAY_S,
     MAX_DOWNLOADS_PER_DOMAIN,
     MIN_FILE_SIZE_BYTES,
     PDF_MAGIC,
+    PROJECT_ROOT,
     REQUEST_TIMEOUT_S,
     XLS_MAGIC,
     XLSX_MAGIC,
 )
 from .robots import can_fetch
+
+# ── Document Integrity Scanner ─────────────────────────────────────────────────
+# Ensure backend/ is in sys.path so app.security imports resolve when the
+# crawler is executed as a standalone script (not via FastAPI).
+_BACKEND_ROOT = str(PROJECT_ROOT / "backend")
+if _BACKEND_ROOT not in sys.path:
+    sys.path.insert(0, _BACKEND_ROOT)
+
+try:
+    from app.security.document_integrity import document_integrity_scanner as _dis
+    _DIS_AVAILABLE = True
+except Exception as _dis_import_err:  # pragma: no cover
+    logger_pre = logging.getLogger(__name__)
+    logger_pre.warning("Document integrity scanner unavailable: %s", _dis_import_err)
+    _DIS_AVAILABLE = False
+    _dis = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +50,36 @@ logger = logging.getLogger(__name__)
 _domain_counts: dict[str, int] = defaultdict(int)
 _domain_last_request: dict[str, float] = {}
 _blocked_domains: set[str] = set()
+
+# Track integrity scan totals across this session
+_scan_total: int = 0
+_scan_clean: int = 0
+_scan_quarantined: int = 0
+
+
+def extract_text_for_scan(filepath: Path) -> str:
+    """
+    Lightweight text extraction from a PDF for integrity scanning.
+    Not intended for RAG — just enough text to detect injected instructions.
+    Returns empty string for non-PDFs or on any extraction error.
+    """
+    try:
+        import fitz  # PyMuPDF — already in requirements
+        doc = fitz.open(str(filepath))
+        text = "\n".join(page.get_text() for page in doc)
+        doc.close()
+        return text
+    except Exception:
+        return ""
+
+
+def get_scan_summary() -> dict:
+    """Return cumulative integrity scan counters for this session."""
+    return {
+        "scanned": _scan_total,
+        "clean": _scan_clean,
+        "quarantined": _scan_quarantined,
+    }
 
 
 def _get_domain(url: str) -> str:
@@ -210,13 +260,72 @@ def download_document(
             size = dest_path.stat().st_size
             logger.info(f"[{status.upper()}] {dest_path.name} ({size / 1024:.0f} KB)")
 
-            return {
+            # ── Integrity scan (PDFs only) ──────────────────────────────────
+            integrity_score: float | None = None
+            integrity_findings: list[str] = []
+
+            if _DIS_AVAILABLE and file_type == "pdf":
+                try:
+                    global _scan_total, _scan_clean, _scan_quarantined
+                    text = extract_text_for_scan(dest_path)
+                    if text:
+                        _scan_total += 1
+                        scan_result = _dis.scan(text, source="crawler")
+                        integrity_score = scan_result.risk_score
+                        integrity_findings = [f.pattern_id for f in scan_result.findings]
+
+                        if scan_result.risk_score > 0.6:
+                            # Derive territory from dest_path relative to DOCS_DIR
+                            try:
+                                rel_parts = dest_path.relative_to(DOCS_DIR).parts
+                                territory_dir = rel_parts[0] if len(rel_parts) > 1 else "_unknown"
+                            except ValueError:
+                                territory_dir = "_unknown"
+
+                            quarantine_dir = DOCS_DIR / "_quarantine" / territory_dir
+                            quarantine_dir.mkdir(parents=True, exist_ok=True)
+                            quarantine_path = quarantine_dir / dest_path.name
+                            shutil.move(str(dest_path), str(quarantine_path))
+                            _scan_quarantined += 1
+
+                            logger.warning(
+                                "Document quarantined: %s (risk=%.2f, findings=%s)",
+                                dest_path.name,
+                                scan_result.risk_score,
+                                integrity_findings,
+                            )
+
+                            return {
+                                "success": True,
+                                "status": "quarantined",
+                                "message": (
+                                    f"Quarantined: {dest_path.name} "
+                                    f"(risk={scan_result.risk_score:.2f}, "
+                                    f"findings={len(scan_result.findings)})"
+                                ),
+                                "hash": new_hash,
+                                "size": size,
+                                "integrity_score": integrity_score,
+                                "integrity_findings": integrity_findings,
+                            }
+                        else:
+                            _scan_clean += 1
+                except Exception as _scan_err:
+                    # Fail open — log and continue without quarantine
+                    logger.warning("Integrity scan failed for %s: %s", dest_path.name, _scan_err)
+            # ───────────────────────────────────────────────────────────────
+
+            result_dict: dict = {
                 "success": True,
                 "status": status,
                 "message": f"{status.capitalize()}: {dest_path.name} ({size / 1024:.0f} KB)",
                 "hash": new_hash,
                 "size": size,
             }
+            if integrity_score is not None:
+                result_dict["integrity_score"] = integrity_score
+                result_dict["integrity_findings"] = integrity_findings
+            return result_dict
 
         except requests.exceptions.RequestException as e:
             last_error = str(e)

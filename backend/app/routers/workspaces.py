@@ -79,6 +79,8 @@ class FileUploadResponse(BaseModel):
     file_type: str
     status: str
     size: int
+    integrity_score: Optional[float] = None
+    integrity_findings: Optional[str] = None
 
 
 # === Dependencies ===

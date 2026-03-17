@@ -11,12 +11,14 @@ import json
 import logging
 import os
 import uuid
+from dataclasses import asdict
 from datetime import datetime
 from typing import Optional, Dict, Any
 
 from fastapi import UploadFile
 
 from app.database.turso_client import get_db_client
+from app.security.document_integrity import document_integrity_scanner
 from app.utils.pdf_extractor import (
     extract_pdf_text,
     extract_pdf_text_plain,
@@ -139,6 +141,60 @@ class FileProcessingService:
             logger.error(f"Error extracting text from {file.filename}: {e}")
             processing_status = "error"
 
+        # Document Integrity Scan (Capa 13) — fail open: scanner errors never block processing
+        integrity_score: Optional[float] = None
+        integrity_findings: Optional[str] = None
+
+        if extracted_text:
+            try:
+                scan_result = document_integrity_scanner.scan(extracted_text, source="upload")
+
+                # Merge metadata findings if the PDF validator produced metadata
+                pdf_metadata = getattr(file, "_integrity_metadata", None)
+                if pdf_metadata and isinstance(pdf_metadata, dict):
+                    meta_findings = document_integrity_scanner.scan_metadata(pdf_metadata)
+                    if meta_findings:
+                        scan_result.findings.extend(meta_findings)
+                        from app.security.document_integrity import _compute_risk_score
+                        scan_result.risk_score = round(_compute_risk_score(scan_result.findings), 4)
+                        scan_result.is_safe = scan_result.risk_score < 0.3
+
+                integrity_score = scan_result.risk_score
+                integrity_findings = json.dumps([asdict(f) for f in scan_result.findings]) if scan_result.findings else None
+
+                if scan_result.risk_score > 0.8:
+                    # BLOCK: do not pass to agents, do not generate embeddings
+                    logger.error(
+                        "Document integrity BLOCK: file=%s risk_score=%.2f findings=%d — "
+                        "processing_status set to blocked_integrity",
+                        file.filename, scan_result.risk_score, len(scan_result.findings),
+                    )
+                    processing_status = "blocked_integrity"
+
+                elif scan_result.risk_score >= 0.6:
+                    # SANITIZE: replace critical/high fragments before passing to agents
+                    logger.warning(
+                        "Document integrity SANITIZE: file=%s risk_score=%.2f — "
+                        "sanitizing extracted text",
+                        file.filename, scan_result.risk_score,
+                    )
+                    extracted_text = document_integrity_scanner.sanitize(extracted_text, scan_result.findings)
+
+                elif scan_result.risk_score >= 0.3:
+                    # WARN: process normally but log
+                    logger.warning(
+                        "Document integrity WARN: file=%s risk_score=%.2f findings=%d",
+                        file.filename, scan_result.risk_score, len(scan_result.findings),
+                    )
+                # else: PASS — process normally, no log needed
+
+            except Exception as scan_exc:
+                # Fail open: log and continue without integrity data
+                logger.error(
+                    "Document integrity scan failed for %s (fail-open): %s",
+                    file.filename, scan_exc,
+                )
+
         # Save to Database
         db = await get_db_client()
         now = datetime.utcnow().isoformat()
@@ -147,9 +203,10 @@ class FileProcessingService:
             """
             INSERT INTO workspace_files (
                 id, workspace_id, filename, file_type, mime_type,
-                file_size, extracted_text, extracted_data, processing_status, created_at
+                file_size, extracted_text, extracted_data, processing_status,
+                integrity_score, integrity_findings, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 file_id,
@@ -161,11 +218,14 @@ class FileProcessingService:
                 extracted_text,
                 json.dumps(extracted_data) if isinstance(extracted_data, dict) and extracted_data else None,
                 processing_status,
+                integrity_score,
+                integrity_findings,
                 now
             ]
         )
 
         # Generate embeddings asynchronously (if enabled and extraction succeeded)
+        # Blocked documents must NOT generate embeddings
         embedding_status = "skipped"
         if self.ENABLE_EMBEDDINGS and processing_status == "completed" and extracted_text:
             try:
@@ -184,7 +244,9 @@ class FileProcessingService:
             "status": processing_status,
             "size": file_size,
             "extracted_data": extracted_data,
-            "embedding_status": embedding_status
+            "embedding_status": embedding_status,
+            "integrity_score": integrity_score,
+            "integrity_findings": integrity_findings,
         }
 
     def _classify_file_type(self, filename: str) -> str:
