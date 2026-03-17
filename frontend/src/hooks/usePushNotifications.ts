@@ -72,7 +72,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
                 const apiUrl = import.meta.env.VITE_API_URL || '/api'
                 const vapidResponse = await fetch(`${apiUrl}/api/push/vapid-key`)
                 if (!vapidResponse.ok) {
-                    throw new Error('No se pudo obtener la clave VAPID del servidor')
+                    throw new Error(`VAPID fetch failed: HTTP ${vapidResponse.status}`)
                 }
                 const vapidData = await vapidResponse.json()
                 const vapidKey = vapidData.public_key || vapidData.publicKey
@@ -82,17 +82,25 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
                 // 3. Register push subscription via Service Worker
                 const registration = await navigator.serviceWorker.ready
+                console.log('[Push] SW ready, scope:', registration.scope)
+                console.log('[Push] SW state:', registration.active?.state)
 
                 // Clear any stale subscription (VAPID key mismatch causes "push service error")
                 const existingSub = await registration.pushManager.getSubscription()
                 if (existingSub) {
+                    console.log('[Push] Clearing stale subscription')
                     await existingSub.unsubscribe()
                 }
 
+                // Convert VAPID key and subscribe
+                const appServerKey = urlBase64ToUint8Array(vapidKey)
+                console.log('[Push] applicationServerKey length:', appServerKey.length, 'bytes')
+
                 const subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(vapidKey),
+                    applicationServerKey: appServerKey,
                 })
+                console.log('[Push] Subscribed successfully:', subscription.endpoint)
 
                 // 4. Send subscription to backend
                 const subJson = subscription.toJSON()
@@ -108,17 +116,13 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
                 setIsSubscribed(true)
             } catch (err: any) {
-                // Map common browser push errors to user-friendly messages
-                const raw = err.message || ''
-                let userMessage = 'Error al activar notificaciones'
-                if (raw.includes('push service error') || raw.includes('Registration failed')) {
-                    userMessage = 'El servicio de notificaciones no está disponible en este momento. Inténtalo de nuevo más tarde.'
-                } else if (raw.includes('VAPID') || raw.includes('applicationServerKey')) {
-                    userMessage = 'Error de configuración del servidor. Contacta con soporte.'
-                } else if (raw.includes('permission') || raw.includes('denied')) {
+                console.error('[Push] Error completo:', err)
+                console.error('[Push] name:', err.name, 'message:', err.message)
+
+                const raw = err.message || String(err)
+                let userMessage = raw // Mostrar error real para diagnostico
+                if (raw.includes('permission') || raw.includes('denied')) {
                     userMessage = 'Permiso de notificaciones denegado'
-                } else if (raw) {
-                    userMessage = raw
                 }
                 setError(userMessage)
             } finally {
