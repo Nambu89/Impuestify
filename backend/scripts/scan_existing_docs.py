@@ -195,7 +195,7 @@ async def scan_documents(dry_run: bool = False, limit: int | None = None) -> Non
         )
 
     finally:
-        await db.close()
+        await db.disconnect()
 
 
 def main() -> None:

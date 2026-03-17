@@ -87,8 +87,8 @@ INTEGRITY_PATTERNS: List[IntegrityPattern] = [
         "Roleplay-based role hijacking (EN)"),
     IntegrityPattern(
         "RH-005", "role_hijacking", "critical",
-        re.compile(r"(DAN|jailbreak|developer\s+mode|god\s+mode)\s*(mode)?", re.IGNORECASE),
-        "Known jailbreak keyword (DAN/developer mode)"),
+        re.compile(r"(DAN\s+mode|jailbreak\s+(mode|enabled)|developer\s+mode|god\s+mode)", re.IGNORECASE),
+        "Known jailbreak keyword (DAN mode/developer mode)"),
 
     # === CRITICAL: Data Exfiltration ===
     IntegrityPattern(

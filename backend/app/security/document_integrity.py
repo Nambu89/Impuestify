@@ -42,7 +42,9 @@ THRESHOLD_SANITIZE = 0.8
 SANITIZE_PLACEHOLDER = "[contenido eliminado por seguridad]"
 
 # Repetition spam: same phrase repeated more than this many times is suspicious
-REPETITION_THRESHOLD = 5
+# PDFs have headers/footers on every page — only flag long phrases repeated excessively
+REPETITION_THRESHOLD = 50
+REPETITION_MIN_WORDS = 8  # Headers/footers are short (3-6 words); real spam is longer
 
 # Max rounds for recursive URL decode
 _URL_DECODE_ROUNDS = 5
@@ -312,8 +314,8 @@ class DocumentIntegrityScanner:
         phrase_counts: Dict[str, int] = {}
         phrase_positions: Dict[str, int] = {}
 
-        # Sliding window of 5 words
-        window_size = 5
+        # Sliding window — only phrases of REPETITION_MIN_WORDS+ words count
+        window_size = REPETITION_MIN_WORDS
         for i in range(len(words) - window_size + 1):
             phrase = " ".join(words[i:i + window_size]).lower().strip()
             # Skip very common fiscal phrases (numbers + dates heavy)
