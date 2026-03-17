@@ -82,25 +82,40 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
                 // 3. Register push subscription via Service Worker
                 const registration = await navigator.serviceWorker.ready
-                console.log('[Push] SW ready, scope:', registration.scope)
-                console.log('[Push] SW state:', registration.active?.state)
 
-                // Clear any stale subscription (VAPID key mismatch causes "push service error")
+                // Clear any stale subscription
                 const existingSub = await registration.pushManager.getSubscription()
                 if (existingSub) {
-                    console.log('[Push] Clearing stale subscription')
                     await existingSub.unsubscribe()
                 }
 
-                // Convert VAPID key and subscribe
-                const appServerKey = urlBase64ToUint8Array(vapidKey)
-                console.log('[Push] applicationServerKey length:', appServerKey.length, 'bytes')
-
-                const subscription = await registration.pushManager.subscribe({
+                // Check push permission state before attempting subscribe
+                const pushPermState = await registration.pushManager.permissionState({
                     userVisibleOnly: true,
-                    applicationServerKey: appServerKey,
+                    applicationServerKey: urlBase64ToUint8Array(vapidKey),
                 })
-                console.log('[Push] Subscribed successfully:', subscription.endpoint)
+
+                if (pushPermState === 'denied') {
+                    setError('Las notificaciones push están bloqueadas en tu navegador. Revisa Configuración → Privacidad → Notificaciones.')
+                    return
+                }
+
+                // Attempt subscription with retry (some browsers need a second attempt)
+                const appServerKey = urlBase64ToUint8Array(vapidKey)
+                let subscription: PushSubscription
+                try {
+                    subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: appServerKey,
+                    })
+                } catch (firstErr: any) {
+                    // Retry once after a brief pause — FCM can be flaky on first attempt
+                    await new Promise(r => setTimeout(r, 1500))
+                    subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: appServerKey,
+                    })
+                }
 
                 // 4. Send subscription to backend
                 const subJson = subscription.toJSON()
@@ -116,13 +131,20 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
                 setIsSubscribed(true)
             } catch (err: any) {
-                console.error('[Push] Error completo:', err)
-                console.error('[Push] name:', err.name, 'message:', err.message)
-
                 const raw = err.message || String(err)
-                let userMessage = raw // Mostrar error real para diagnostico
+
+                let userMessage: string
                 if (raw.includes('permission') || raw.includes('denied')) {
                     userMessage = 'Permiso de notificaciones denegado'
+                } else if (raw.includes('push service error') || raw.includes('Registration failed')) {
+                    userMessage = (
+                        'No se pudo conectar con el servicio de notificaciones (FCM). ' +
+                        'Prueba a: 1) Desactivar extensiones del navegador (MetaMask, ad blockers), ' +
+                        '2) Comprobar que las notificaciones de Chrome están activadas en Windows (Configuración → Sistema → Notificaciones), ' +
+                        '3) Intentarlo en una ventana sin extensiones.'
+                    )
+                } else {
+                    userMessage = raw
                 }
                 setError(userMessage)
             } finally {
