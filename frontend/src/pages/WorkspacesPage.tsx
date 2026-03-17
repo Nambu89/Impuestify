@@ -15,6 +15,7 @@ import {
     Pencil
 } from 'lucide-react'
 import Header from '../components/Header'
+import IntegrityBadge from '../components/IntegrityBadge'
 import { useApi } from '../hooks/useApi'
 import './WorkspacesPage.css'
 
@@ -38,6 +39,8 @@ interface WorkspaceFile {
     file_size: number
     processing_status: string
     created_at: string
+    integrity_score: number | null
+    integrity_findings: string | null
 }
 
 interface CreateWorkspaceData {
@@ -589,7 +592,14 @@ export default function WorkspacesPage() {
                                                             {FILE_TYPE_ICONS[file.file_type] || FILE_TYPE_ICONS.otro}
                                                         </div>
                                                         <div className="file-info">
-                                                            <span className="file-name">{file.filename}</span>
+                                                            <div className="file-name-row">
+                                                                <span className="file-name">{file.filename}</span>
+                                                                <IntegrityBadge
+                                                                    score={file.integrity_score ?? null}
+                                                                    findings={file.integrity_findings ?? undefined}
+                                                                    compact
+                                                                />
+                                                            </div>
                                                             <span className="file-meta">
                                                                 {formatFileSize(file.file_size)} • {formatDate(file.created_at)}
                                                             </span>

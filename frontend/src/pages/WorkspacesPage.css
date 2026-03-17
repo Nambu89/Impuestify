@@ -450,14 +450,22 @@
     min-width: 0;
 }
 
+.file-name-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    min-width: 0;
+}
+
 .file-name {
-    display: block;
     font-size: var(--font-size-sm);
     font-weight: 500;
     color: var(--color-white);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
 }
 
 .file-meta {

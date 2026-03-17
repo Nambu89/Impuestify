@@ -79,7 +79,7 @@ class HybridRetriever:
         territory_filter: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Hybrid search: FTS5 + Vector → RRF fusion.
+        Hybrid search: FTS5 + Vector → RRF fusion → trust scoring.
 
         Args:
             query: User's question text
@@ -115,18 +115,21 @@ class HybridRetriever:
                 logger.info(
                     f"🔀 Hybrid: {len(fts_results)} FTS5 + {len(vector_results)} Vector → {len(fused)} fused"
                 )
-                return fused
+                results = fused
             elif vector_results:
-                return vector_results[:k]
+                results = vector_results[:k]
             elif fts_results:
-                return fts_results[:k]
+                results = fts_results[:k]
             else:
                 return []
         else:
             # Fallback: FTS5 only
             results = await self._fts_search(query, k=k, territory=territory_filter)
             logger.info(f"🔍 FTS5-only: {len(results)} results")
-            return results
+
+        # Apply document integrity trust scoring (Capa 13 — Document Integrity)
+        results = await self._apply_trust_scoring(results)
+        return results
 
     # ============================================================
     # VECTOR SEARCH (Upstash)
@@ -350,6 +353,94 @@ class HybridRetriever:
     # ============================================================
     # HELPERS
     # ============================================================
+
+    async def _get_doc_trust(self, chunk_id: str) -> float:
+        """
+        Get the integrity trust score for the document that contains this chunk.
+        Default 1.0 = clean / not yet scanned (fail-open).
+
+        Looks up document_id via document_chunks, then queries documents.integrity_score.
+        """
+        if not self.db or not chunk_id:
+            return 1.0
+        try:
+            # Resolve chunk → document
+            chunk_result = await self.db.execute(
+                "SELECT document_id FROM document_chunks WHERE id = ?",
+                [chunk_id],
+            )
+            rows = chunk_result.rows or []
+            if not rows:
+                return 1.0
+            document_id = rows[0].get("document_id")
+            if not document_id:
+                return 1.0
+
+            # Fetch integrity_score from documents table
+            doc_result = await self.db.execute(
+                "SELECT integrity_score FROM documents WHERE id = ?",
+                [document_id],
+            )
+            doc_rows = doc_result.rows or []
+            if not doc_rows:
+                return 1.0
+            score = doc_rows[0].get("integrity_score")
+            return float(score) if score is not None else 1.0
+        except Exception:
+            return 1.0  # fail open — RAG must keep working
+
+    async def _apply_trust_scoring(
+        self, results: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Weight each result's similarity score by its document's integrity trust score.
+
+        - trust == 1.0 (clean / not scanned): no change
+        - trust < 1.0 (warnings): score penalised proportionally
+        - trust < 0.1 (blocked): result excluded entirely
+
+        Applies in-place score mutation; blocked docs are filtered out.
+        Fail-open: any DB error returns original results unchanged.
+        """
+        if not results:
+            return results
+
+        # Fetch trust scores in parallel for all chunks
+        trust_scores = await asyncio.gather(
+            *[self._get_doc_trust(r.get("id", "")) for r in results],
+            return_exceptions=True,
+        )
+
+        kept: List[Dict[str, Any]] = []
+        blocked = 0
+        for result, trust in zip(results, trust_scores):
+            # Treat any exception as trust=1.0 (fail open)
+            if isinstance(trust, Exception):
+                trust = 1.0
+            trust = float(trust)
+
+            if trust < 0.1:
+                # Document is blocked by integrity scanner — exclude from results
+                blocked += 1
+                logger.warning(
+                    "RAG trust: excluding blocked document for chunk %s (trust=%.2f)",
+                    result.get("id", "?"), trust,
+                )
+                continue
+
+            if trust < 1.0:
+                # Penalise score proportionally
+                original = result.get("similarity", 0)
+                result = result.copy()
+                result["similarity"] = original * trust
+                result["_integrity_trust"] = round(trust, 4)
+
+            kept.append(result)
+
+        if blocked:
+            logger.warning("RAG trust: %d result(s) excluded (integrity_score < 0.1)", blocked)
+
+        return kept
 
     @staticmethod
     def _clean_fts_query(query: str) -> str:
