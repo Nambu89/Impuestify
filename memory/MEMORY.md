@@ -1,24 +1,28 @@
 # TaxIA — Memoria del Agente
 
-> Ultima actualizacion: 2026-03-13 (sesion 9)
+> Ultima actualizacion: 2026-03-17 (sesion 13)
 > Ver detalles en archivos separados por tema
-> Bugs fixeados: `memory/bugfixes-2026-03.md`
+> Bugs fixeados: `memory/bugfixes-2026-03.md` (62 bugs documentados, sesion 13)
 
 ## Indice de archivos de memoria
 
 | Archivo | Contenido |
 |---------|-----------|
 | `memory/MEMORY.md` | Este indice + resumen de cada area |
-| `memory/backend-subscription.md` | Detalles backend Stripe |
-| `memory/crawler-state.md` | Estado del crawler + drift analyzer (54 URLs, 23 territorios) |
-| `memory/frontend-features.md` | UX/Streaming, PWA, Landing, DeductionCards, Cookies, Admin |
-| `memory/bugfixes-2026-03.md` | Bugs fixeados marzo 2026 (55 bugs documentados) |
+| `memory/backend-subscription.md` | Stripe: Particular 5 EUR, Creator 49 EUR, Autonomo 39 EUR |
+| `memory/crawler-state.md` | Estado del crawler + drift analyzer (90 URLs, 23 territorios, Influencers+Creadores docs) |
+| `memory/frontend-features.md` | UX/Streaming, PWA, Landing, DeductionCards, Cookies, Admin, Feedback, CreatorsPage, SEO-GEO, AdminDashboard |
+| `memory/bugfixes-2026-03.md` | Bugs fixeados marzo 2026 (62 bugs documentados, sesion 13) |
 | `memory/mcp-design-tools.md` | Google Stitch + Nano Banana MCP config y modelos Gemini 3 |
 | `memory/response-quality-gap.md` | Analisis calidad respuesta vs Google/Claude — plan de mejora |
 | `memory/agent-system-improvements.md` | Mejoras GSD al sistema multi-agente (2026-03-08) |
 | `memory/awesome-claude-code.md` | Integracion herramientas awesome-claude-code (2026-03-08) |
 | `memory/aeat-docs-integration.md` | Integracion docs AEAT: casillas, XSD, XLS, VeriFactu (2026-03-08) |
+| `memory/project_creators_segment.md` | Segmento Creadores de Contenido: 3 planes, TaxAgent contexto, roles adicionales |
+| `memory/project_upgrade_downgrade.md` | CRITICO: Validar plan Stripe compatible al cambiar roles — proxima sesion 13 |
 | `memory/beta_testers.md` | 4 beta testers activos (Ramon, Juan Pablo, Jose Antonio, Maria) |
+| `memory/feedback_ortografia_pre_push.md` | Regla obligatoria: verificar tildes ANTES de push — reputacion marca |
+| `memory/reference_mission_control.md` | Herramienta futura: dashboard orquestacion 6 agentes IA |
 
 ## Arquitectura del proyecto
 
@@ -63,13 +67,15 @@
 - `build_answers_from_profile()`: bridge automatico perfil → deduction answers
 - Seeds: `seed_deductions.py` + `_territorial.py` + `_v2.py` + `_xsd.py` + `_forales_v2.py` + `seed_estatal_scale.py` + `seed_foral_scales.py`
 
-## Suscripciones Stripe (COMPLETO — DUAL PLAN)
+## Suscripciones Stripe (COMPLETO — TRIPLE PLAN)
 
 > Detalles: `memory/backend-subscription.md`
 
-- Plan Particular: 5 EUR/mes | Plan Autonomo: 39 EUR/mes IVA incl.
+- Plan Particular: 5 EUR/mes | Plan Creator: 49 EUR/mes | Plan Autonomo: 39 EUR/mes IVA incl.
 - Owner: `fernando.prada@proton.me` (sin restricciones)
-- 13 usuarios existentes: grace_period hasta 31/12/2026
+- 15+ usuarios existentes: grace_period hasta 31/12/2026
+- Segmento Creator: influencers, streamers, YouTubers, bloggers, creadores audiovisuales
+- **PENDIENTE sesion 13:** Validar plan compatible al cambiar roles (ver `project_upgrade_downgrade.md`)
 
 ## Perfil Fiscal Adaptativo por CCAA (COMPLETO)
 
@@ -100,17 +106,17 @@
 - SSE v3.0: content_chunk (append) + content (replace)
 - PWA manual, Landing con React Bits, DeductionCards en Chat
 
-## Crawler Automatizado + Drift Analyzer (2026-03-13)
+## Crawler Automatizado + Drift Analyzer (2026-03-17)
 
-- Modulo `backend/scripts/doc_crawler/` — 10 ficheros Python + .bat, 41 tests PASS
-- **54 URLs**: 23 territorios (incluyendo Ceuta, Melilla, Canarias IGIC)
+- Modulo `backend/scripts/doc_crawler/` — 12 ficheros Python + .bat, 50+ tests PASS
+- **90 URLs**: 23 territorios + URLs Influencers/Creadores (AEAT, haciendas forales, Canarias IGIC, Ceuta/Melilla, plataformas)
 - Rate limit: 4s/request, 50/dominio/sesion, backoff 10/30/60/STOP, robots.txt
 - Windows Task Scheduler: `TaxIA-DocCrawler-Weekly`, lunes 09:00
 - CLI: `python -m backend.scripts.doc_crawler [--territory X] [--dry-run] [--stats]`
 - **Drift Analyzer** (Layer 2): `drift_analyzer.py` — clasifica cambios por prioridad (free), invoca Claude haiku headless solo para high/medium (cheap). Genera `plans/drift-report-YYYY-MM-DD.md`
 - Integrado en `scheduled_check.py`: post-crawl automatico si hay cambios
 - CLI drift: `python -m backend.scripts.doc_crawler.drift_analyzer [--dry-run] [--skip-llm]`
-- Commit: `250e8a2` (crawler) + pendiente commit drift analyzer
+- Commit: `250e8a2` (crawler) + drift analyzer
 
 ## Biblioteca RAG
 
@@ -126,11 +132,20 @@
 - **Post-Bugfix Protocol**: Documentar en 3 sitios (CLAUDE.md, bugfixes, agent-comms)
 - **Quality Gates**: `/check-plan` (pre) + `/verify` (post) obligatorios
 - **Revision exhaustiva**: Al aplicar cambios, revisar TODAS las paginas afectadas
+- **Feedback System**: Widget + ChatRating + AdminFeedbackPage/AdminContactPage/AdminDashboardPage (completo)
+- **Admin Dashboard**: 3 nuevas pages, dropdown en Header, owner-only
+- **Multi-role Fiscal**: `roles_adicionales` (no excluyentes), adaptativo por CCAA
 
 ## Notas tecnicas
 
 - venv/ en raiz (TaxIA/venv/), en Windows usar `venv/Scripts/python.exe`
 - PYTHONUTF8=1 necesario para backend en Windows (emojis en prints)
-- Tests: `python -m pytest tests/ -v` — 762+ tests
+- Tests: `python -m pytest tests/ -v` — **1138 tests PASS** (55 nuevos DIS sesion 13), frontend build OK
 - `.mcp.json` en `.gitignore` (contiene API keys)
 - `data/reference/` — JSON de referencia generados (no en BD)
+- **ORTOGRAFIA PRE-PUSH OBLIGATORIA** (ver `feedback_ortografia_pre_push.md`): Verificar tildes en TODOS los strings visibles
+- **Fecha Renta 2026**: 8 de abril (corregida de 5 de abril)
+- **Push Notifications**: VAPID keys configuradas (sesion 13 fix: regenerar SECP256R1, clear stale, retry). Notificaciones 15d/5d/1d antes de plazos. Funciona en browser limpio (Playwright), bloqueado por MetaMask/adblocker.
+- **JWT_SECRET_KEY**: Debe cambiarse en Railway (accion usuario)
+- **Crawler**: 90 URLs, 23 territorios, Windows Task Scheduler lunes 09:00
+- **Deadlines estatales**: 32 (28 base + 4 nuevos sesion 13: Modelo 721, 714, cita previa, atención presencial)

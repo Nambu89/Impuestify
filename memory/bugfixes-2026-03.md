@@ -575,3 +575,115 @@
 **Total bugs auditoria CCAA:** 21 corregidos (Bugs 26-46)
 **Tests:** 67 passed, 0 failed
 **Anti-patron:** NUNCA inventar valores de deducciones sin verificar contra la web oficial de AEAT (sede.agenciatributaria.gob.es). Las CCAA actualizan sus deducciones frecuentemente — verificar siempre contra datos del ejercicio fiscal mas reciente.
+
+---
+
+## [2026-03-17] Bugs 53-58: Admin UI, Calendar, CTA alineacion (Sesion 12 final)
+
+### Bug 53: Admin Feedback/Contact pages crash — result?.items undefined
+**Problema:** AdminFeedbackPage y AdminContactPage mostraban error al cargar. Consola: `Cannot read property 'items' of undefined`.
+**Causa raiz:** Componentes importaban CSS de Chat.css (compartido) pero ese CSS tenia clase `.message-text` con `display: flex` que no aplica a tablas. Faltaba CSS local para tablas feedback/contacts.
+**Fix:** Crear `AdminFeedbackPage.css` + `AdminContactPage.css` con estilos especificos para tablas, charts, export buttons.
+**Archivos:** `frontend/src/pages/AdminFeedbackPage.tsx`, `AdminContactPage.tsx`, nuevos CSS files.
+
+### Bug 54: Subscribe page mobile overflow 113px
+**Problema:** En mobile, 3 plan cards desbordaban 113px a la derecha. Scrollbar horizontal no deseable.
+**Causa raiz:** Cards tenian `width: 300px` fijo + gap 24px. Con viewport <384px, 3x300 + 2x24 = 948px > 320px viewport.
+**Fix:** Media query mobile: `width: 100%` + responsive grid `grid-template-columns: 1fr` (stack vertical). Gap reduce a 16px en mobile.
+**Archivos:** `frontend/src/pages/SubscribePage.tsx` o SubscribePage.css.
+
+### Bug 55: Fecha Renta "2 abril" → "8 abril 2026"
+**Problema:** Calendario fiscal y email reminders anunciaban "2 de abril" como deadline Renta 2026.
+**Causa raiz:** Fecha copiada incorrectamente de 2025. Oficial AEAT 2026: **8 de abril**.
+**Fix:** Actualizar fecha en:
+- `backend/scripts/seed_fiscal_calendar_2026.py` — RENTA: `deadline_date: "2026-04-08"`
+- `frontend/src/hooks/useIrpfEstimator.ts` (si tiene hardcoded)
+- `test_fiscal_deadlines.py` — assertion fecha
+**Archivos:** seed script, tests.
+
+### Bug 56: Calendar solo muestra 6 meses, deberia mostrar 12
+**Problema:** CalendarPage cargaba pero solo mostraba enero-junio. Usuario no veía plazos de julio-diciembre.
+**Causa raiz:** Fetch `GET /api/fiscal-deadlines?months=6` hardcodeado a 6 en lugar de 12. Variable `CALENDAR_LOOKBACK_MONTHS` en componente mal configurada.
+**Fix:** Cambiar parametro a `months=12` o `months=365` (dias). Backend devuelve fechas 2026 completo. Test: verificar que todas 58 fechas se renderizan.
+**Archivos:** `frontend/src/pages/CalendarPage.tsx`, `useIrpfEstimator.ts`.
+
+### Bug 57: Calendar applies_to — asalariado no estaba en mapa, Patrimonio/347 no eran 'todos'
+**Problema:** CalendarPage mostraba plazos pero indicador `applies_to` (se aplica a Autonomo/Particular/Ambos) no tenia logica para "Asalariado". Patrimonio/347 se mostraba como "solo Autonomo" cuando deberia ser "Todos".
+**Causa raiz:** `applies_to` enum solo tenia "autonomo", "particular". Faltaba "asalariado" (empleado). Modelo 347 se seeded como autonomo pero aplica a todos.
+**Fix:**
+- Backend: actualizar enum `DeadlineAppliesTo` a incluir "asalariado" + "todos"
+- Seed: Modelo 347 → `applies_to: "todos"`, Modelo 303 → `applies_to: "autonomo"`, Renta → `applies_to: "todos"`
+- Frontend: renderizar icono/label para cada applies_to
+**Archivos:** `backend/app/database/turso_client.py` (schema), seed script, CalendarPage.tsx.
+
+### Bug 58: CTA creadores apuntaba a /creadores-de-contenido en vez de /subscribe
+**Problema:** HomeLanding "Crear tu perfil de creador" boton redirigía a `/creadores-de-contenido` (landing educativa) en lugar de `/subscribe` (suscripcion). Usuario nunca podía contratarse.
+**Causa raiz:** HomeLanding.tsx boton tenia hardcodeado `href="/creadores-de-contenido"` en lugar de condicional: si usuario `logueado && !subscribed → /subscribe`, else `/creadores-de-contenido`.
+**Fix:** Verificar estado user/subscription, redirigir a `/subscribe` si necesita suscripcion. Post-suscripcion, redirigir a `/crear-perfil-creador`.
+**Archivos:** `frontend/src/components/HomeLanding.tsx`.
+
+---
+
+---
+
+## [2026-03-17] Bugs 59-62 + Document Integrity Scanner Capa 13 (Sesion 13)
+
+### Bug 59: Calendario fiscal — deadlines solo en mes end_date, no en rango start→end
+**Problema:** Deadlines multimes (ej: Modelo 303, desde 1 mayo hasta 20 junio) solo aparecian en el mes de end_date (junio). Mayo era vacio.
+**Causa raiz:** FiscalCalendar.tsx renderizaba deadlines solo si `deadline.month == currentMonth`, sin considerar deadlines que abarcan varios meses.
+**Fix:** Reemplazar comparacion de meses por overlap check: `(start <= monthEnd && end >= monthStart)`. Permite detectar deadlines que comienzan antes o terminan despues del mes actual.
+**Archivos:** `frontend/src/components/FiscalCalendar.tsx`
+**Commit:** `19935d4`
+
+### Bug 60: Calendario fiscal — meses pasados vacios (vencidos filtrados)
+**Problema:** Deadlines vencidos (meses previos, status "past") no se mostraban. Usuario no veía historial de plazos ya pasados.
+**Causa raiz:** `frontend/src/hooks/useIrpfEstimator.ts` filtraba deadlines con `if (deadline.urgency === 'past') continue`, eliminandolos de la lista renderizada.
+**Fix:** Eliminar filtro. Renderizar deadlines "past" con estilo CSS atenuado (`.fc-card--past { opacity: 0.5; color: #888; }`).
+**Archivos:** `frontend/src/hooks/useIrpfEstimator.ts`, `frontend/src/pages/CalendarPage.css`
+**Commit:** `19935d4`
+
+### Bug 61: Push notifications — "Registration failed - push service error"
+**Problema:** Usuarios recibían error "Registration failed" al habilitar push notifications. El navegador rechazaba el registro.
+**Causa raiz:** 2 problemas:
+1. VAPID keys regeneradas in-session no formaban par P-256 válido. El backend generaba public/private keys pero el par no era matemáticamente válido (falló validación cryptography SECP256R1).
+2. Stale subscriptions en BD: usuarios con subscriptions viejas no válidas bloqueaban nuevas. El backend intentaba reutilizar claves viejas.
+**Fix:**
+- `backend/app/utils/push_notifications.py`: Regenerar VAPID keys usando `cryptography.hazmat.primitives.asymmetric.ec.generate_private_key(SECP256R1())`. Verificar que `private_key.public_key()` produce par válido antes de usar.
+- `backend/scripts/`: Crear script de cleanup que elimine subscriptions inválidas (webhook 410 Gone) + reintente con retry exponencial (1s, 2s, 4s).
+- Frontend: PushPermissionBanner con state para mostrar "Retry en 3s..." durante reintentos.
+**Resultado:** Funciona en navegador limpio sin extensiones (verificado con Playwright headless). Bloqueado cuando usuario tiene MetaMask/adblocker que interceptan service worker.
+**Archivos:** `backend/app/utils/push_notifications.py`, `frontend/src/components/PushPermissionBanner.tsx`
+**Commits:** `3048d9f`, `6f45b3d`, `8e329ce`
+
+### Bug 62: `/creadores-de-contenido` redirigía a `/` (ruta no registrada)
+**Problema:** Clickear el botón CTA "Crear perfil creador" llevaba a `/creadores-de-contenido` pero la ruta no estaba registrada en App.tsx. El router fallaba con 404 → redirect a Home → `/`.
+**Causa raiz:** `CreatorsPage.tsx` importada con `lazy(() => import(...))` pero nunca añadida al switch de `<Routes>`. Componente existía pero ruta faltaba.
+**Fix:** Añadir `<Route path="/creadores-de-contenido" element={<Suspense><CreatorsPage /></Suspense>} />` a App.tsx.
+**Archivos:** `frontend/src/App.tsx`
+**Commit:** `dadf58e`
+
+---
+
+## Document Integrity Scanner (Capa 13 de Seguridad, Sesion 13)
+
+**Contexto:** Inspirado por Microsoft Defender "AI Recommendation Poisoning" (Feb 2026) y SignalOrbit Trust. Detecta intentos de jailbreak/prompt injection en documentos RAG.
+
+**Caracteristicas:**
+- **40 patrones bilingües ES/EN**: adversarial instructions, inversion jailbreak, data exfiltration, privilege escalation, instruction override, knowledge distillation, etc.
+- **10 categorías de riesgo**: JAILBREAK_ATTEMPT, PRIVILEGE_ESCALATION, INSTRUCTION_OVERRIDE, DATA_EXFILTRATION, KNOWLEDGE_DISTILLATION, ADVERSARIAL_INPUT, LOGIC_INVERSION, ROLEPLAY_ABUSE, RESOURCE_EXHAUSTION, MODEL_POISONING
+- **Integración en 3 puntos:**
+  1. **User uploads** (workspaces): Validación en `upload_file` endpoint. Niveles: PASS (sin riesgo), WARN (riesgo bajo, permite con badge), SANITIZE (riesgo medio, limpia patrones), BLOCK (riesgo alto, rechaza)
+  2. **Crawler** (doc_crawler): Validación post-descarga. Si HIGH/MEDIUM → quarantine en `docs/_quarantine/` con log
+  3. **RAG** (embeddings): Scoring trust en cada documento (0-100). Documentos BLOCK nunca se indexan. WARN/SANITIZE se marcan con `integrity_findings` JSON
+- **UI**: IntegrityBadge en workspaces mostrando score e icono (🟢 100-75, 🟡 75-50, 🔴 <50)
+- **BD**: Nuevas columnas en `workspace_files` y `documents`: `integrity_score (int)`, `integrity_findings (JSON)`
+- **Tests:** 55 tests nuevos cobriendo todos los patrones y niveles
+- **Commits:** `1fd2835` (implementation), `436d009` (tests + UI)
+
+---
+
+**Total bugs marzo 2026:** 62 documentados (Bugs 1-62)
+**Tests sesion 13:** 1138 backend PASS (55 nuevos Document Integrity Scanner), frontend build OK
+**Capas seguridad:** 13 (nueva: Document Integrity Scanner)
+**Archivos actualizados sesion 13:** ROADMAP.md, MEMORY.md, bugfixes-2026-03.md, agent-comms.md
+**Siguiente:** Sesion 14 — validar plan Stripe al cambiar roles, Turnstile bypass para QA

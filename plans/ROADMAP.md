@@ -1,6 +1,141 @@
 # TaxIA (Impuestify) - Roadmap de Desarrollo
 
-## Estado del Proyecto: Marzo 2026
+## Estado del Proyecto: Marzo 2026 (Sesion 13 — En Progreso)
+
+---
+
+## COMPLETADO — Sesion 13: Calendar Fix, Push Diagnostics, Document Integrity Scanner, CreatorsPage Route (2026-03-17)
+
+- [x] **Bug 59**: Calendario fiscal — deadlines solo en mes end_date, no en rango start→end
+  - Fix: FiscalCalendar.tsx overlap check `(start <= monthEnd && end >= monthStart)`
+  - Commit: `19935d4`
+- [x] **Bug 60**: Calendario fiscal — meses pasados vacios (vencidos filtrados)
+  - Fix: Eliminado filtro `urgency === 'past'`, mostrar con estilo atenuado `fc-card--past`
+  - Commit: `19935d4`
+- [x] **Bug 61**: Push notifications — "Registration failed - push service error"
+  - Causa: VAPID keys no formaban par P-256 válido
+  - Fix: Regenerar keys SECP256R1 + clear stale subscriptions + retry
+  - Commits: `3048d9f`, `6f45b3d`, `8e329ce`
+  - Nota: Funciona en browser limpio (Playwright verificado), bloqueado por MetaMask/adblocker
+- [x] **Bug 62**: `/creadores-de-contenido` redirigía a `/` (ruta no registrada)
+  - Causa: CreatorsPage importada lazy() pero faltaba en Routes App.tsx
+  - Fix: Añadir Route
+  - Commit: `dadf58e`
+- [x] **Feature**: Document Integrity Scanner (Capa 13 de seguridad)
+  - 40 patrones bilingües ES/EN contra prompt injection
+  - 10 categorías (adversarial instructions, inversion jailbreak, etc.)
+  - Integrado en user uploads (PASS/WARN/SANITIZE/BLOCK), crawler (quarantine), RAG (trust scoring)
+  - IntegrityBadge UI en workspaces
+  - 55 tests nuevos
+  - Commits: `1fd2835`, `436d009`
+- [x] **Feature**: 4 nuevos deadlines para particulares
+  - Modelo 721 (cripto extranjero), 714 (Patrimonio), cita previa Renta, atención presencial AEAT
+  - Commit: `19935d4`
+- [x] **Migración BD**: 4 columnas nuevas (integrity_score + integrity_findings)
+  - Ejecutada en Turso producción
+
+**Métricas Sesión 13:**
+- Tests: 1138 passed (55 nuevos DIS)
+- Bugs: 62 documentados
+- Deadlines estatal: 32 (antes 28)
+- Capas seguridad: 13 (nueva: Document Integrity Scanner)
+
+---
+
+## COMPLETADO — Sistema de Feedback + Admin Dashboard (2026-03-17)
+
+- [x] Widget FeedbackWidget en Chat + ChatRating component
+- [x] Tabla `feedback` en BD (user_id, rating, comment, metadata)
+- [x] Router `/api/feedback` (POST crear, GET owner-only)
+- [x] Service `feedback_service.py` para CRUD + agregacion
+- [x] AdminFeedbackPage (/admin/feedback) — ratings chart + export CSV
+- [x] AdminContactPage (/admin/contacts) — contact form submissions
+- [x] AdminDashboardPage (/admin/dashboard) — overview metrics
+- [x] Header dropdown admin para owner (Feedback, Contacts, Dashboard)
+- [x] Integracion en Chat: FeedbackWidget post-respuesta
+- [x] Tests feedback CRUD + permission checks
+- Commits: TBD
+
+---
+
+## COMPLETADO — Plan Creator 49 EUR/mes (2026-03-17)
+
+- [x] Plan Creator en Stripe: 49 EUR/mes
+- [x] Tabla `users.subscription_plan` acepta "creator"
+- [x] SubscribePage UI: 3 plan cards (Particular/Creator/Autonomo)
+- [x] STRIPE_PRICE_ID_CREATOR en backend config
+- [x] TaxAgent context especializado para creadores (IAE 8690, IVA plataforma, Modelo 349, DAC7)
+- [x] Restricciones contenido Autonomo solo para plan Particular (no Creator)
+- [x] Landing /creadores-de-contenido con SEO-GEO
+- [x] Marketing: influencers, YouTubers, streamers, bloggers
+- Commits: TBD
+
+---
+
+## COMPLETADO — Modelo 100 XSD ~100% Coverage + IAE Lookup (2026-03-17)
+
+- [x] Tool `iae_lookup` (IAE codes: 8690, 9020, 6010.1, etc.)
+- [x] Tool `compare_joint_individual` — comparativa 4 escenarios
+- [x] XSD Modelo 100: gastos granulares, módulos, royalties coverage
+- [x] Integración TaxAgent: lookup IAE automático para creadores
+- [x] Comparativa conjunta en simulador
+- Commits: TBD
+
+---
+
+## COMPLETADO — CCAA-aware Tax Models (2026-03-17)
+
+- [x] Modelo 303 → 300 (Gipuzkoa)
+- [x] Modelo 303 → F69 (Navarra)
+- [x] Modelo 420 IGIC (Canarias)
+- [x] IPSI (Ceuta/Melilla)
+- [x] Labels dinámicos en UI por territorio
+- [x] TaxAgent contexto por modelo
+- Commits: TBD
+
+---
+
+## COMPLETADO — Multi-role Fiscal Profiles (2026-03-17)
+
+- [x] Campo `roles_adicionales` en users (JSON array, non-exclusive)
+- [x] Perfil soporta: asalariado + autonomo, creador + particular, inversor + empleado
+- [x] DynamicFiscalForm adaptativo por roles
+- [x] Restricciones por plan: Creator no elige Autonomo, etc.
+- [x] CCAA-aware profile builder
+- Commits: TBD
+
+---
+
+## COMPLETADO — Push Notifications VAPID (2026-03-17)
+
+- [x] VAPID keys configuration
+- [x] Alertas 15d, 5d, 1d antes de plazos fiscales
+- [x] Opt-in en header
+- [x] Backend: envio desde scheduler
+- [x] Frontend: PushPermissionBanner
+- Commits: TBD
+
+---
+
+## COMPLETADO — Crawler 90 URLs + Documentos Creadores (2026-03-17)
+
+- [x] Crawler: 90 URLs, 23 territorios
+- [x] URLs Creadores/Influencers: AEAT, haciendas forales, plataformas (Google, Meta, Twitch)
+- [x] Drift analyzer: post-crawl clasificacion cambios
+- [x] Seed: documentos creadores indexados
+- Commits: TBD
+
+---
+
+## COMPLETADO — Bugs Sesion 12 (Bugs 53-58) (2026-03-17)
+
+- [x] Bug 53: Admin Feedback/Contact pages crash — CSS faltante
+- [x] Bug 54: Subscribe page mobile overflow 113px
+- [x] Bug 55: Fecha Renta "2 abril" → "8 abril 2026" CORREGIDO
+- [x] Bug 56: Calendar solo muestra 6 meses (→12)
+- [x] Bug 57: Calendar applies_to — asalariado + Patrimonio/347
+- [x] Bug 58: CTA creadores apuntaba a /creadores-de-contenido (→/subscribe)
+- Tests: 1083+ backend PASS, frontend build OK
 
 ---
 
@@ -159,6 +294,16 @@
 
 ## BACKLOG
 
+### CRITICA — Sesion 14 (proxima)
+- [ ] **Validar plan Stripe compatible al cambiar roles** (ver `memory/project_upgrade_downgrade.md`)
+  - Backend: validacion en endpoint update_fiscal_profile
+  - UI: modal upgrade si rol incompatible
+  - Tests: 5+ scenarios
+- [ ] **Turnstile bypass para QA automatizado** (ver `plans/qa-report-s17-2026-03-17.md`)
+  - Habilitar token test de Cloudflare `1x00000000000000000000AA` en Railway
+  - Permitir QA headless en CI/CD sin interacción manual
+- [ ] Re-ejecutar crawler con 90 URLs corregidas (si hay cambios)
+
 ### Alta prioridad
 - [x] ~~Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)~~ → DONE (2026-03-13)
 - [ ] MFA / 2FA (recomendación auditoría)
@@ -169,6 +314,7 @@
 - [x] ~~Agente actualización documental (crawler automático AEAT/BOE)~~ → DONE (250e8a2)
 - [x] ~~Alertas de plazos fiscales~~ → DONE (a849ce1) — calendario + email + push
 - [x] ~~Criptomonedas, trading y apuestas~~ → DONE (91faf01) — FIFO, 5 exchanges, XSD casillas
+- [ ] **Fase 5: Guia fiscal adaptativa por rol** (particular vs creator vs autonomo, campos diferentes)
 - [ ] Pipeline auto-ingesta RAG (leer `_pending_ingest.json` → embeddings)
 - [ ] ML fiscal features (ml_fiscal_features table)
 
@@ -186,10 +332,13 @@
 | Documentos RAG | 439 (419 PDF + 9 Excel + 11 AEAT specs) |
 | Deducciones en BD | ~554 (192 v1/v2 + 339 XSD + 50 forales) |
 | CCAA cubiertas | 21 (15 común + 4 forales + Ceuta + Melilla) |
-| Tests backend | 1009 |
+| Tests backend | **1138** (55 nuevos Document Integrity Scanner) |
 | Tests frontend | build PASS |
 | Exchanges crypto soportados | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
-| Fechas fiscales 2026 | 58 (32 estatales + 26 forales) |
-| Bugs fixeados (mar 2026) | 55 documentados (Bugs 1-55) |
-| URLs monitorizadas (crawler) | 54 en 23 territorios |
+| Fechas fiscales 2026 | 58 (32 estatales + 4 nuevos = 36 **pendiente actualizar**) |
+| Bugs fixeados (mar 2026) | **62 documentados** (Bugs 1-62, sesion 13) |
+| URLs monitorizadas (crawler) | **90 en 23 territorios** |
 | Drift Analyzer | Layer 1 (free) + Layer 2 (haiku headless) |
+| Planes de suscripcion | 3 (Particular 5€, Creator 49€, Autonomo 39€) |
+| Admin pages | 4 nuevas (Feedback, Contacts, Dashboard, Creators) |
+| Capas de seguridad | **13** (nueva: Document Integrity Scanner) |

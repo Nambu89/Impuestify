@@ -7,18 +7,84 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
-## [2026-03-17] Documentation Auditor — DONE — Auditoria y actualizacion completa documentacion sesion 12
+## [2026-03-17] PM Coordinator — DONE — Sesion 13 completa
 
-- **Archivos actualizados**: CLAUDE.md, README.md, memory/MEMORY.md, backend/CLAUDE.md, frontend/CLAUDE.md, plans/ROADMAP.md, agent-comms.md
-- **Documentacion feature completado**: Plan Creator 49 EUR, feedback system, CCAA-aware models, multi-role profiles, push notifications, crawler 90 URLs, fecha Renta corregida
-- **Tests**: 1083+ backend PASS, frontend build OK
+- **Bugs fixeados**: 4 (Bugs 59-62)
+  - Bug 59: Calendario fiscal — deadlines solo en mes end_date, no en rango (commit `19935d4`)
+  - Bug 60: Meses pasados vacios (vencidos filtrados) (commit `19935d4`)
+  - Bug 61: Push notifications "Registration failed" — VAPID keys invalid (commits `3048d9f`, `6f45b3d`, `8e329ce`)
+  - Bug 62: `/creadores-de-contenido` redirigía a `/` (commit `dadf58e`)
+
+- **Features nuevas**: 1 capa de seguridad
+  - Document Integrity Scanner (Capa 13): 40 patrones ES/EN, 10 categorías, integrado en uploads/crawler/RAG, 55 tests (commits `1fd2835`, `436d009`)
+
+- **Mejoras**:
+  - 4 deadlines nuevos para particulares (Modelo 721, 714, cita previa, atención presencial)
+  - Migración BD: 4 columnas (integrity_score + integrity_findings)
+
+- **Métricas actualizadas**:
+  - Tests: 1138 (55 nuevos DIS)
+  - Bugs: 62 documentados
+  - Capas seguridad: 13
+  - Deadlines: 32 estatal (antes 28)
+
+- **Archivos documentación actualizados**:
+  - `plans/ROADMAP.md` — sesion 13 completada, backlog sesion 14 anadido
+  - `memory/MEMORY.md` — datos sesion 13, 1138 tests, 13 capas seguridad
+  - `memory/bugfixes-2026-03.md` — bugs 59-62 + Document Integrity Scanner
+  - `agent-comms.md` — entrada sesion 13
+
+- **QA Status**: Pendiente verificacion manual en navegador (Turnstile bloquea CI/CD). Recomendacion: habilitar token test de Cloudflare en Railway.
+
+- **Siguiente sesion 14**: Validar plan Stripe al cambiar roles, Turnstile bypass para QA automatizado
+
+---
+
+## [2026-03-17] QA Tester — DONE — Sesion 17 post-deploy (commit bc5056a)
+
+- **Tests ejecutados**: 9 (3 PASS, 5 SKIP por Turnstile, 0 FAIL)
+- **Reporte**: `plans/qa-report-s17-2026-03-17.md`
+
+- **Bugs nuevos**:
+  - B-QA-TURNSTILE-01: Cloudflare Turnstile bloquea login headless en CI — fix del calendario NO verificado
+  - B-CREADORES-RUTA-01: `/creadores-de-contenido` redirige a `/` sin pagina dedicada
+
+- **Bugs posiblemente resueltos**:
+  - B-LAND-FADE: Screenshots de landing (5 niveles de scroll) no muestran secciones negras — puede estar fixed
+
+- **Para PM**: El fix del calendario (deadlines Modelo 100 Abril, 714 Junio) NO pudo verificarse automaticamente. Requiere verificacion manual en el navegador.
+
+- **Accion recomendada para Developer**: Habilitar token de test Cloudflare (`1x00000000000000000000AA`) en Railway para permitir QA automatizado. Ver `plans/qa-report-s17-2026-03-17.md` seccion "Limitacion principal: Turnstile en CI/CD".
+
+---
+
+## [2026-03-17] Documentation Auditor — DONE — Actualizacion completa documentacion sesion 12 (final)
+
+- **Archivos actualizados**:
+  - `memory/MEMORY.md` — indice + datos actualizados (tests 1083+, crawler 90 URLs, bugs 58)
+  - `memory/bugfixes-2026-03.md` — bugs 53-58 anadidos (Admin CSS, Calendar, CTA alineacion)
+  - `memory/project_upgrade_downgrade.md` — CRITICO: validar plan Stripe compatible al cambiar roles (sesion 13)
+  - `memory/feedback_ortografia_pre_push.md` — regla obligatoria verificar tildes
+  - `memory/reference_mission_control.md` — dashboard futura para orquestacion 6 agentes
+  - `plans/ROADMAP.md` — bugs 53-58, backlog sesion 13 anadido, metricas actualizadas
+  - `agent-comms.md` — entrada final sesion 12
+
+- **Resumen sesion 12**:
+  - Bugs fixeados: 58 total (documentados en bugfixes-2026-03.md)
+  - Features completados: Plan Creator 49 EUR, feedback system, CCAA-aware models, multi-role profiles, push notifications, crawler 90 URLs + drift analyzer
+  - Tests: 1083+ backend PASS, frontend build OK
+  - Memorias agregadas: 3 nuevos archivos (upgrade/downgrade, ortografia, mission control)
+
 - **Notas criticas**:
   - JWT_SECRET_KEY debe cambiarse en Railway (accion usuario)
-  - ORTOGRAFIA PRE-PUSH OBLIGATORIA verificada en rules
-  - Feedback system completamente integrado
-  - 4 nuevas pages admin (Feedback, Contacts, Dashboard, Creators landing)
-- **Pendiente**: Ejecutar auditorias ortografia en branches posteriores
-- **Siguiente**: Backend/Frontend agent deben implementar los cambios si aun no estan hechos. Verifier debe pasar antes de merge
+  - ORTOGRAFIA PRE-PUSH OBLIGATORIA verificada en feedback rules
+  - Feedback system completamente integrado (widget + rating + 3 pages admin)
+  - Crawler ahora monitoriza 90 URLs en 23 territorios (fue 54→90)
+  - Fecha Renta corregida: 8 de abril (no 2)
+
+- **Pendiente CRITICA sesion 13**: Validar plan Stripe compatible cuando usuario cambia roles (ver memory/project_upgrade_downgrade.md)
+- **Pendiente sesion 13**: Diagnosticar error push notifications post-VAPID
+- **Siguiente**: Backend/Frontend agent implementar cambios documentados si aun no estan hechos. Verifier debe pasar antes de merge a main
 
 ---
 
