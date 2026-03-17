@@ -96,6 +96,7 @@ function App() {
                     <Route path="/territorios-forales" element={<ForalPage />} />
                     <Route path="/ceuta-melilla" element={<CeutaMelillaPage />} />
                     <Route path="/canarias" element={<CanariasPage />} />
+                    <Route path="/creadores-de-contenido" element={<CreatorsPage />} />
 
                     {/* Protected Routes (require auth + subscription) */}
                     <Route
