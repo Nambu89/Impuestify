@@ -32,12 +32,25 @@ logger = logging.getLogger(__name__)
 
 TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
+# Cloudflare's official always-passing test token (safe to hardcode — it's public documentation)
+TURNSTILE_TEST_TOKEN = "1x00000000000000000000AA"
+
 
 async def verify_turnstile(token: str, remote_ip: Optional[str] = None) -> bool:
-    """Verify a Cloudflare Turnstile token. Returns True if valid."""
+    """Verify a Cloudflare Turnstile token. Returns True if valid.
+
+    In test mode (TURNSTILE_TEST_MODE=True), accepts Cloudflare's official
+    test token '1x00000000000000000000AA' without making a network call.
+    This allows E2E / automated QA tests to bypass the captcha challenge.
+    """
     secret = settings.TURNSTILE_SECRET_KEY
     if not secret:
         logger.warning("TURNSTILE_SECRET_KEY not configured — skipping verification")
+        return True
+
+    # Accept Cloudflare's official test token when test mode is explicitly enabled
+    if settings.TURNSTILE_TEST_MODE and token == TURNSTILE_TEST_TOKEN:
+        logger.info("Turnstile test token accepted (TURNSTILE_TEST_MODE=True)")
         return True
 
     payload = {"secret": secret, "response": token}

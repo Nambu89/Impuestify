@@ -5,6 +5,7 @@ Tests JWT token generation, password hashing, and auth endpoints.
 """
 import pytest
 from datetime import datetime, timedelta
+from unittest.mock import patch, AsyncMock
 from app.auth.jwt_handler import (
     create_access_token,
     create_refresh_token,
@@ -12,6 +13,7 @@ from app.auth.jwt_handler import (
     TokenData
 )
 from app.auth.password import hash_password, verify_password, needs_rehash
+from app.routers.auth import verify_turnstile, TURNSTILE_TEST_TOKEN
 
 
 class TestPasswordHashing:
@@ -139,6 +141,76 @@ class TestTokenData:
     def test_token_data_optional_email(self):
         """Email should be optional in TokenData"""
         data = TokenData(user_id="user123")
-        
+
         assert data.user_id == "user123"
         assert data.email is None
+
+
+class TestVerifyTurnstile:
+    """Tests for Turnstile test mode bypass logic."""
+
+    @pytest.mark.asyncio
+    async def test_test_mode_accepts_official_test_token(self):
+        """With TURNSTILE_TEST_MODE=True, the official CF test token must pass."""
+        with patch("app.routers.auth.settings") as mock_settings:
+            mock_settings.TURNSTILE_SECRET_KEY = "some-secret"
+            mock_settings.TURNSTILE_TEST_MODE = True
+            result = await verify_turnstile(TURNSTILE_TEST_TOKEN)
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_test_mode_off_does_not_short_circuit(self):
+        """With TURNSTILE_TEST_MODE=False, the test token must NOT bypass Cloudflare."""
+        from unittest.mock import MagicMock
+
+        with patch("app.routers.auth.settings") as mock_settings:
+            mock_settings.TURNSTILE_SECRET_KEY = "some-secret"
+            mock_settings.TURNSTILE_TEST_MODE = False
+
+            # Simulate Cloudflare returning failure for the test token.
+            # httpx.Response.json() is synchronous, so use MagicMock for it.
+            mock_response = MagicMock()
+            mock_response.json.return_value = {"success": False, "error-codes": ["invalid-input-response"]}
+
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_response)
+
+            with patch("httpx.AsyncClient") as mock_client_cls:
+                mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+                mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                result = await verify_turnstile(TURNSTILE_TEST_TOKEN)
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_no_secret_always_skips_verification(self):
+        """Without TURNSTILE_SECRET_KEY, verification is skipped (existing behavior)."""
+        with patch("app.routers.auth.settings") as mock_settings:
+            mock_settings.TURNSTILE_SECRET_KEY = None
+            mock_settings.TURNSTILE_TEST_MODE = False
+            result = await verify_turnstile("any-token")
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_test_mode_only_accepts_official_token(self):
+        """With TURNSTILE_TEST_MODE=True, arbitrary tokens still go to Cloudflare."""
+        from unittest.mock import MagicMock
+
+        with patch("app.routers.auth.settings") as mock_settings:
+            mock_settings.TURNSTILE_SECRET_KEY = "some-secret"
+            mock_settings.TURNSTILE_TEST_MODE = True
+
+            mock_response = MagicMock()
+            mock_response.json.return_value = {"success": False, "error-codes": ["invalid-input-response"]}
+
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_response)
+
+            with patch("httpx.AsyncClient") as mock_client_cls:
+                mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+                mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                result = await verify_turnstile("not-the-test-token")
+
+        assert result is False

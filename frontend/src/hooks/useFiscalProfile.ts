@@ -1,6 +1,15 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useApi } from './useApi'
 
+const TOKEN_KEY = 'access_token'
+const API_URL = import.meta.env.VITE_API_URL || '/api'
+
+export interface PlanUpgradeNeeded {
+    required_plan: string
+    current_plan: string
+    message: string
+}
+
 export interface FiscalProfile {
     ccaa_residencia: string | null
     situacion_laboral: string | null
@@ -169,6 +178,11 @@ export function useFiscalProfile() {
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [planUpgradeNeeded, setPlanUpgradeNeeded] = useState<PlanUpgradeNeeded | null>(null)
+
+    const clearPlanUpgrade = useCallback(() => {
+        setPlanUpgradeNeeded(null)
+    }, [])
 
     const refresh = useCallback(async () => {
         setLoading(true)
@@ -199,26 +213,59 @@ export function useFiscalProfile() {
     const save = useCallback(async (data: Partial<FiscalProfile>) => {
         setSaving(true)
         setError(null)
+        setPlanUpgradeNeeded(null)
         try {
-            await apiRequest('/api/users/me/fiscal-profile', {
+            const token = localStorage.getItem(TOKEN_KEY)
+            const response = await fetch(`${API_URL}/api/users/me/fiscal-profile`, {
                 method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                },
                 body: JSON.stringify(data),
             })
+
+            if (response.status === 403) {
+                const body = await response.json().catch(() => null)
+                if (body?.detail === 'plan_incompatible') {
+                    setPlanUpgradeNeeded({
+                        required_plan: body.required_plan,
+                        current_plan: body.current_plan,
+                        message: body.message,
+                    })
+                    return false
+                }
+                setError('No tienes permiso para realizar esta acción')
+                return false
+            }
+
+            if (response.status === 401) {
+                localStorage.removeItem(TOKEN_KEY)
+                window.location.href = '/login?expired=true'
+                return false
+            }
+
+            if (!response.ok) {
+                const body = await response.json().catch(() => null)
+                setError(body?.detail || `Error ${response.status}`)
+                return false
+            }
+
             // Refresh to get updated field_meta
             await refresh()
             return true
         } catch (err: any) {
-            setError(err.message)
+            setError(err.message || 'Error de conexión')
             return false
         } finally {
             setSaving(false)
         }
-    }, [apiRequest, refresh])
+    }, [refresh])
 
     // Load on mount
     useEffect(() => {
         refresh()
     }, [refresh])
 
-    return { profile, fieldMeta, loading, saving, error, save, refresh }
+    return { profile, fieldMeta, loading, saving, error, save, refresh, planUpgradeNeeded, clearPlanUpgrade }
 }

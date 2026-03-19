@@ -21,6 +21,7 @@ import logging
 from app.auth.jwt_handler import get_current_user, TokenData
 from app.auth.password import hash_password, verify_password
 from app.database.turso_client import get_db_client, TursoClient
+from app.services.subscription_service import get_subscription_service, validate_plan_role_compatibility
 
 logger = logging.getLogger(__name__)
 
@@ -625,6 +626,29 @@ async def update_fiscal_profile(
 
     # Merge new values into datos_fiscales with source="manual"
     request_data = body.model_dump(exclude_none=True)
+
+    # --- Plan-role compatibility check ---
+    situacion = request_data.get("situacion_laboral")
+    if situacion:
+        sub_service = await get_subscription_service()
+        access = await sub_service.check_access(user_id, current_user.email)
+        incompatible = validate_plan_role_compatibility(
+            access.plan_type, situacion, access.is_owner
+        )
+        if incompatible:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "detail": "plan_incompatible",
+                    "message": (
+                        f"Tu plan {incompatible['current_plan'].capitalize()} "
+                        f"no incluye el perfil de {situacion}"
+                    ),
+                    "required_plan": incompatible["required_plan"],
+                    "current_plan": incompatible["current_plan"],
+                    "upgrade_url": "/subscribe",
+                },
+            )
 
     for key in _DATOS_FISCALES_KEYS:
         if key in request_data:

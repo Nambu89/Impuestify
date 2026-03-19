@@ -14,8 +14,9 @@ class WatchItem:
     priority: str = "high"              # high, medium, low
     territory: str = ""
     description: str = ""
-    status: str = "active"              # active, future, html_only
+    status: str = "active"              # active, future, html_only, deprecated
     pattern: str = ""                   # URL template for future docs
+    notes: str = ""                     # Audit notes (TIPO A/B/C/D classification)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -66,12 +67,16 @@ AEAT_ITEMS = [
         dest="AEAT/IRPF/AEAT-Cuadro_tipos_retenciones_IRPF_2025.pdf",
         territory="AEAT",
         description="Cuadro tipos retenciones IRPF 2025",
+        status="future",
+        notes="Pendiente publicacion AEAT en sede.agenciatributaria.gob.es",
     ),
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Retenciones/2026/Cuadro_tipos_retenciones_2026.pdf",
         dest="AEAT/IRPF/AEAT-Cuadro_tipos_retenciones_IRPF_2026.pdf",
         territory="AEAT",
         description="Cuadro tipos retenciones IRPF 2026",
+        status="future",
+        notes="Pendiente publicacion AEAT",
     ),
 
     # ── Algoritmo retenciones ──
@@ -80,12 +85,16 @@ AEAT_ITEMS = [
         dest="AEAT/IRPF/AEAT-Algoritmo_2025.pdf",
         territory="AEAT",
         description="Algoritmo retenciones IRPF 2025",
+        status="future",
+        notes="Pendiente publicacion AEAT",
     ),
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Retenciones/2026/Algoritmo_2026.pdf",
         dest="AEAT/IRPF/AEAT-Algoritmo_2026.pdf",
         territory="AEAT",
         description="Algoritmo retenciones IRPF 2026",
+        status="future",
+        notes="Pendiente publicacion AEAT",
     ),
 
     # ── Instrucciones Modelos ──
@@ -94,18 +103,24 @@ AEAT_ITEMS = [
         dest="AEAT/Modelos/AEAT-Modelo303_IVA_Instrucciones_2025.pdf",
         territory="AEAT",
         description="Instrucciones Modelo 303 IVA 2025",
+        status="future",
+        notes="Pendiente publicacion AEAT",
     ),
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo390/2025/Instrucciones_Modelo390_2025.pdf",
         dest="AEAT/Modelos/AEAT-Modelo390_IVA_Instrucciones_2025.pdf",
         territory="AEAT",
         description="Instrucciones Modelo 390 IVA 2025",
+        status="future",
+        notes="Pendiente publicacion AEAT",
     ),
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo190/Instrucciones_Modelo190.pdf",
         dest="AEAT/Modelos/AEAT-Modelo190_Retenciones_Instrucciones.pdf",
         territory="AEAT",
         description="Instrucciones Modelo 190 retenciones",
+        status="future",
+        notes="Pendiente publicacion AEAT en pagina actualizada",
     ),
 ]
 
@@ -146,18 +161,20 @@ BOE_ITEMS = [
         description="Ley 58/2003 LGT consolidado",
     ),
     WatchItem(
-        url="https://www.boe.es/boe/dias/1991/12/06/pdfs/A36662-36679.pdf",
+        url="https://www.boe.es/buscar/pdf/1991/BOE-A-1991-28191-consolidado.pdf",
         dest="Estatal/BOE/Estatal-Ley_19_1991_Patrimonio_consolidado.pdf",
         territory="Estatal",
         description="Ley 19/1991 Patrimonio consolidado",
         status="future",
+        notes="TIPO B: URL verificada pero PDF consolidado no disponible. Alternativa: /boe/dias/1991/12/06/pdfs/A37801-37801.pdf (publicacion original, no consolidada)",
     ),
     WatchItem(
-        url="https://www.boe.es/boe/dias/2007/05/12/pdfs/A19952-20009.pdf",
+        url="https://www.boe.es/buscar/pdf/2007/BOE-A-2007-9364-consolidado.pdf",
         dest="Estatal/RealesDecretos/Estatal-RD_439_2007_ReglamentoIRPF_consolidado.pdf",
         territory="Estatal",
         description="RD 439/2007 Reglamento IRPF consolidado",
         status="future",
+        notes="TIPO B: URL consolidada no disponible en BOE. Alternativa: /boe/dias/2007/05/12/pdfs/ (publicacion original)",
     ),
     WatchItem(
         url="https://www.boe.es/buscar/pdf/1992/BOE-A-1992-28925-consolidado.pdf",
@@ -202,6 +219,8 @@ AEAT_DR_ITEMS = [
         territory="AEAT",
         description="Diseno Registro Modelo 303 IVA 2026",
         priority="medium",
+        status="future",
+        notes="TIPO A: Pendiente publicacion AEAT para ejercicio 2026",
     ),
     WatchItem(
         url=f"{AEAT_DR_BASE}/DR390_e2025.xlsx",
@@ -210,6 +229,8 @@ AEAT_DR_ITEMS = [
         territory="AEAT",
         description="Diseno Registro Modelo 390 IVA 2025",
         priority="medium",
+        status="future",
+        notes="TIPO A: Pendiente publicacion AEAT para ejercicio 2025",
     ),
     WatchItem(
         url=f"{AEAT_DR_BASE}/DR130_e2019.xls",
@@ -218,6 +239,8 @@ AEAT_DR_ITEMS = [
         territory="AEAT",
         description="Diseno Registro Modelo 130 pagos fraccionados",
         priority="low",
+        status="future",
+        notes="TIPO A: Historico (2019). Buscar version actualizada 2025 o posterior",
     ),
     WatchItem(
         url=f"{AEAT_DR_BASE}/DR131_e2025.xlsx",
@@ -226,6 +249,8 @@ AEAT_DR_ITEMS = [
         territory="AEAT",
         description="Diseno Registro Modelo 131 modulos",
         priority="low",
+        status="future",
+        notes="TIPO A: Pendiente publicacion AEAT para ejercicio 2025",
     ),
 ]
 
@@ -236,10 +261,12 @@ AEAT_DR_ITEMS = [
 
 NAVARRA_ITEMS = [
     WatchItem(
-        url="https://www.navarra.es/documents/48192/17863227/Manual+te%C3%B3rico+de+la+campa%C3%B1a+de+2024.pdf",
+        url="https://www.navarra.es/es/documents/48192/17863227/Manual+te%C3%B3rico+de+la+campa%C3%B1a+de+2024.pdf",
         dest="Navarra/IRPF/Navarra-Manual_teorico_IRPF_2024.pdf",
         territory="Navarra",
         description="Manual teorico IRPF Navarra 2024",
+        status="future",
+        notes="TIPO B: URL da error 500. Comprobar portal Hacienda Navarra para actualizacion anual (2025)",
     ),
     WatchItem(
         url="https://www.boe.es/buscar/pdf/2016/BOE-A-2016-11953-consolidado.pdf",
@@ -261,6 +288,8 @@ BIZKAIA_ITEMS = [
         dest="Bizkaia/IRPF/Bizkaia-Manual_Renta_Patrimonio_2024.pdf",
         territory="Bizkaia",
         description="Manual Renta/Patrimonio Bizkaia 2024",
+        status="future",
+        notes="TIPO B: URL da error 404. Buscar manual actualizado 2025 en portal Hacienda Bizkaia",
     ),
 ]
 
@@ -275,6 +304,8 @@ GIPUZKOA_ITEMS = [
         dest="Gipuzkoa/IRPF/Gipuzkoa-Manual_Divulgacion_Renta2024.pdf",
         territory="Gipuzkoa",
         description="Manual Divulgacion Renta Gipuzkoa 2024",
+        status="future",
+        notes="TIPO B: URL da error 404. Buscar en portal Hacienda Gipuzkoa version 2025",
     ),
 ]
 
@@ -289,6 +320,8 @@ ARABA_ITEMS = [
         dest="Araba/IRPF/Araba-Manual_Renta_2024.pdf",
         territory="Araba",
         description="Manual Renta Araba 2024",
+        status="future",
+        notes="TIPO B: URL da error 404. Buscar en portal Hacienda Araba version 2025",
     ),
 ]
 
@@ -305,6 +338,8 @@ CCAA_ITEMS = [
         territory="Andalucia",
         description="Andalucia Ley 5/2021 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible. Verificar en sede BOE",
     ),
     # Aragon
     WatchItem(
@@ -313,6 +348,8 @@ CCAA_ITEMS = [
         territory="Aragon",
         description="Aragon DLeg 1/2005 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Asturias
     WatchItem(
@@ -321,6 +358,8 @@ CCAA_ITEMS = [
         territory="Asturias",
         description="Asturias DLeg 2/2014 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Baleares
     WatchItem(
@@ -329,6 +368,8 @@ CCAA_ITEMS = [
         territory="Baleares",
         description="Baleares DLeg 1/2014 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Canarias
     WatchItem(
@@ -337,6 +378,8 @@ CCAA_ITEMS = [
         territory="Canarias",
         description="Canarias DLeg 1/2009 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Cantabria
     WatchItem(
@@ -345,6 +388,8 @@ CCAA_ITEMS = [
         territory="Cantabria",
         description="Cantabria DLeg 62/2008 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Castilla-La Mancha
     WatchItem(
@@ -353,6 +398,8 @@ CCAA_ITEMS = [
         territory="CastillaLaMancha",
         description="CLM Ley 8/2013 medidas tributarias consolidado",
         priority="low",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Castilla y Leon
     WatchItem(
@@ -361,6 +408,8 @@ CCAA_ITEMS = [
         territory="CastillaYLeon",
         description="CyL DLeg 1/2013 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Cataluna
     WatchItem(
@@ -369,6 +418,8 @@ CCAA_ITEMS = [
         territory="Cataluna",
         description="Cataluna DLeg 1/2024 Libro Sexto tributos cedidos",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Extremadura
     WatchItem(
@@ -377,6 +428,8 @@ CCAA_ITEMS = [
         territory="Extremadura",
         description="Extremadura DLeg 1/2018 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Galicia
     WatchItem(
@@ -385,6 +438,8 @@ CCAA_ITEMS = [
         territory="Galicia",
         description="Galicia DLeg 1/2011 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # La Rioja
     WatchItem(
@@ -393,6 +448,8 @@ CCAA_ITEMS = [
         territory="LaRioja",
         description="La Rioja Ley 10/2017 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Madrid
     WatchItem(
@@ -401,6 +458,8 @@ CCAA_ITEMS = [
         territory="Madrid",
         description="Madrid DLeg 1/2010 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Murcia
     WatchItem(
@@ -409,6 +468,8 @@ CCAA_ITEMS = [
         territory="Murcia",
         description="Murcia DLeg 1/2010 tributos cedidos consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Valencia
     WatchItem(
@@ -418,6 +479,7 @@ CCAA_ITEMS = [
         description="Valencia Ley 13/1997 tributos cedidos consolidado",
         priority="medium",
         status="future",
+        notes="TIPO B: URL de dias historica. Buscar consolidado en sede BOE actual",
     ),
 ]
 
@@ -435,6 +497,7 @@ CEUTA_MELILLA_ITEMS = [
         description="Ley 8/1991 IPSI Ceuta consolidado",
         priority="medium",
         status="future",
+        notes="TIPO B: URL de publicacion original (1991). Buscar consolidado en BOE act.php",
     ),
     # Melilla — IPSI (Ley 13/1996, art. 40+)
     WatchItem(
@@ -443,6 +506,8 @@ CEUTA_MELILLA_ITEMS = [
         territory="Melilla",
         description="Ley 13/1996 IPSI Melilla (Titulo II) consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # Ceuta — Estatuto de Autonomia
     WatchItem(
@@ -452,6 +517,7 @@ CEUTA_MELILLA_ITEMS = [
         description="Estatuto Autonomia Ceuta consolidado",
         priority="low",
         status="future",
+        notes="TIPO B: URL de publicacion original (1995). Buscar consolidado en BOE act.php",
     ),
     # Melilla — Estatuto de Autonomia
     WatchItem(
@@ -461,6 +527,7 @@ CEUTA_MELILLA_ITEMS = [
         description="Estatuto Autonomia Melilla consolidado",
         priority="low",
         status="future",
+        notes="TIPO B: URL de publicacion original (1995). Buscar consolidado en BOE act.php",
     ),
 ]
 
@@ -476,6 +543,8 @@ CANARIAS_EXTRA_ITEMS = [
         dest="Canarias/Canarias-Ley_20_1991_IGIC_consolidado.pdf",
         territory="Canarias",
         description="Ley 20/1991 IGIC Canarias consolidado",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # REF Canarias — Ley 19/1994 (Regimen Economico Fiscal)
     WatchItem(
@@ -485,6 +554,7 @@ CANARIAS_EXTRA_ITEMS = [
         description="Ley 19/1994 REF Canarias consolidado",
         priority="medium",
         status="future",
+        notes="TIPO B: URL de publicacion original (1994). Buscar consolidado en BOE act.php",
     ),
 ]
 
@@ -501,6 +571,7 @@ SS_ITEMS = [
         description="Tabla cotizacion RETA 2025",
         priority="low",
         status="future",
+        notes="TIPO B: URL estructura cambio. Buscar en portal Seguridad Social versión actualizada",
     ),
 ]
 
@@ -544,6 +615,8 @@ CREATORS_ITEMS = [
         territory="AEAT",
         description="Instrucciones Modelo 720 bienes en el extranjero",
         priority="high",
+        status="future",
+        notes="TIPO A: Pendiente publicacion AEAT en pagina actualizada",
     ),
 
     # ── Modelo 349 — Operaciones intracomunitarias (facturacion a Google/Meta/ByteDance) ──
@@ -553,6 +626,8 @@ CREATORS_ITEMS = [
         territory="AEAT",
         description="Instrucciones Modelo 349 operaciones intracomunitarias",
         priority="high",
+        status="future",
+        notes="TIPO A: Pendiente publicacion AEAT en pagina actualizada",
     ),
 
     # ── Modelo 036/037 — Alta censal autonomos / IAE ──
@@ -562,6 +637,8 @@ CREATORS_ITEMS = [
         territory="AEAT",
         description="Instrucciones Modelo 036 alta censal / IAE",
         priority="high",
+        status="future",
+        notes="TIPO A: Pendiente publicacion AEAT en pagina actualizada",
     ),
 
     # ── Convenios doble imposicion (principales para plataformas digitales) ──
@@ -573,6 +650,7 @@ CREATORS_ITEMS = [
         description="Convenio doble imposicion Espana-Irlanda (Google, Meta, Apple)",
         priority="high",
         status="future",
+        notes="TIPO B: URL de publicacion original (1994). Buscar consolidado en BOE act.php",
     ),
     # Paises Bajos (Booking, Adyen)
     WatchItem(
@@ -582,6 +660,7 @@ CREATORS_ITEMS = [
         description="Convenio doble imposicion Espana-Paises Bajos",
         priority="medium",
         status="future",
+        notes="TIPO B: URL de publicacion original (1972). Buscar consolidado en BOE act.php",
     ),
     # Reino Unido (ByteDance/TikTok, Twitch)
     WatchItem(
@@ -591,6 +670,7 @@ CREATORS_ITEMS = [
         description="Convenio doble imposicion Espana-Reino Unido (TikTok, Twitch)",
         priority="high",
         status="future",
+        notes="TIPO B: URL de publicacion original (2014). Buscar consolidado en BOE act.php",
     ),
     # EEUU (YouTube/Google US, Amazon/Twitch)
     WatchItem(
@@ -600,6 +680,7 @@ CREATORS_ITEMS = [
         description="Convenio doble imposicion Espana-EEUU (YouTube, Amazon, Twitch)",
         priority="high",
         status="future",
+        notes="TIPO B: URL de publicacion original (1990). Buscar consolidado en BOE act.php",
     ),
 
     # ── Reglamento VeriFactu (facturacion electronica obligatoria) ──
@@ -609,6 +690,8 @@ CREATORS_ITEMS = [
         territory="Estatal",
         description="RD 1007/2023 Reglamento VeriFactu facturacion electronica consolidado",
         priority="medium",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
 
     # ── IAE — Tarifas (epigrafes para creadores de contenido) ──
@@ -631,6 +714,7 @@ CREATORS_ITEMS = [
         description="RD 2/2000 Reglamento ZEC Canarias consolidado",
         priority="medium",
         status="future",
+        notes="TIPO B: URL de publicacion original (2000). Buscar consolidado en BOE act.php",
     ),
 ]
 
@@ -648,6 +732,8 @@ INFLUENCERS_ITEMS = [
         territory="Estatal",
         description="Ley 13/2022 General Comunicacion Audiovisual (regula influencers)",
         priority="high",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
     # ── RD 444/2024 desarrollo Ley Audiovisual (obligaciones influencers) ──
     WatchItem(
@@ -672,7 +758,8 @@ INFLUENCERS_ITEMS = [
         territory="Estatal",
         description="Plan Tributario AEAT 2026 (influencers objetivo prioritario)",
         priority="high",
-        status="active",
+        status="future",
+        notes="TIPO A: PDF para ano futuro (2026) puede no estar publicado aun",
     ),
     # ── DAC7 / Modelo 238 (plataformas reportan ingresos creadores) ──
     WatchItem(
@@ -681,6 +768,8 @@ INFLUENCERS_ITEMS = [
         territory="Estatal",
         description="RD 1065/2007 mod. DAC7 Modelo 238 (plataformas reportan ingresos)",
         priority="high",
+        status="future",
+        notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
 
     # ── Forales: guias autonomos / creadores ──
@@ -691,6 +780,8 @@ INFLUENCERS_ITEMS = [
         territory="Bizkaia",
         description="Bizkaia guia actividades economicas (IAE foral, autonomos, creadores)",
         priority="high",
+        status="future",
+        notes="TIPO B: URL da error 404. Buscar version actualizada en portal Bizkaia Hacienda",
     ),
     # Gipuzkoa — Guia autonomos
     WatchItem(
@@ -699,6 +790,8 @@ INFLUENCERS_ITEMS = [
         territory="Gipuzkoa",
         description="Gipuzkoa guia fiscal autonomos (aplicable a creadores)",
         priority="high",
+        status="future",
+        notes="TIPO B: URL da error 404. Buscar version actualizada en portal Gipuzkoa Hacienda",
     ),
     # Araba — Guia autonomos
     WatchItem(
@@ -707,6 +800,8 @@ INFLUENCERS_ITEMS = [
         territory="Araba",
         description="Araba guia fiscal actividades economicas (IAE foral, creadores)",
         priority="high",
+        status="future",
+        notes="TIPO B: URL da error 404. Buscar version actualizada en portal Araba Hacienda",
     ),
     # Navarra — Autonomos actividades economicas
     WatchItem(
@@ -715,6 +810,8 @@ INFLUENCERS_ITEMS = [
         territory="Navarra",
         description="Navarra guia inicio actividad economica (autonomos, creadores)",
         priority="high",
+        status="future",
+        notes="TIPO B: URL da error 404. Buscar version actualizada en portal Navarra Hacienda",
     ),
 
     # ── Canarias: REF + ZEC para emprendedores digitales ──
@@ -725,6 +822,7 @@ INFLUENCERS_ITEMS = [
         description="Canarias guia REF fiscal (ventajas emprendedores digitales)",
         priority="high",
         status="future",
+        notes="TIPO B: URL da error 404. Buscar guia REF en portal Gobierno Canarias",
     ),
 
     # ── CCAA: Guias autonomos / emprendedores de haciendas autonomicas ──
@@ -736,8 +834,9 @@ INFLUENCERS_ITEMS = [
         description="Madrid guia emprendedores (deducciones autoempleo, creadores)",
         priority="medium",
         status="future",
+        notes="TIPO B: URL da error 404. Buscar guia en portal Hacienda Madrid",
     ),
-    # Cataluna — Guia autonomos
+    # Cataluna — Guia autonomos (TIPO D: bloqueado por robots.txt)
     WatchItem(
         url="https://www20.gencat.cat/portal/site/economia/menuitem.8b47ae3e67cf14001faec10bb3ba0e0e/?vgnextoid=db0f4a3cda42f610VgnVCM1000008d0c1e0aRCRD&vgnextchannel=db0f4a3cda42f610VgnVCM1000008d0c1e0aRCRD",
         dest="Influencers/Cataluna/Influencers-Cataluna_Guia_Fiscal_Emprendedores.pdf",
@@ -745,6 +844,7 @@ INFLUENCERS_ITEMS = [
         description="Cataluna guia fiscal emprendedores",
         priority="medium",
         status="future",
+        notes="TIPO D: Bloqueado por robots.txt del dominio. Contactar directamente Gencat",
     ),
     # Andalucia — Incentivos autonomos
     WatchItem(
@@ -754,6 +854,7 @@ INFLUENCERS_ITEMS = [
         description="Andalucia guia incentivos autonomos (deducciones autoempleo)",
         priority="medium",
         status="future",
+        notes="TIPO B: URL da error 404. Buscar guia en portal Junta Andalucia Hacienda",
     ),
     # Valencia — Guia fiscal autonomos
     WatchItem(
@@ -763,6 +864,7 @@ INFLUENCERS_ITEMS = [
         description="Valencia guia fiscal autonomos",
         priority="medium",
         status="future",
+        notes="TIPO B: Validation failed. Buscar guia PDF en portal Generalitat Valencia",
     ),
 
     # ── Ceuta y Melilla: IPSI para actividades digitales ──
@@ -773,6 +875,7 @@ INFLUENCERS_ITEMS = [
         description="Ceuta IPSI guia actividades (creadores digitales)",
         priority="medium",
         status="future",
+        notes="TIPO B: URL da error 404. Buscar guia en portal Tributos Ceuta",
     ),
 
     # ── Articulos/guias de referencia (HTML→PDF no viable, status html_only) ──

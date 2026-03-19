@@ -12,6 +12,7 @@ import { useFiscalProfile, FiscalProfile } from '../hooks/useFiscalProfile'
 import { usePushNotifications } from '../hooks/usePushNotifications'
 import Header from '../components/Header'
 import DynamicFiscalForm from '../components/DynamicFiscalForm'
+import { UpgradePlanModal } from '../components/UpgradePlanModal'
 import { CCAA_IDS, getCcaaLabel } from '../constants/ccaa'
 import './SettingsPage.css'
 
@@ -61,6 +62,8 @@ export default function SettingsPage() {
     const fiscal = useFiscalProfile()
     const [fiscalForm, setFiscalForm] = useState<Partial<FiscalProfile>>({})
     const [childYears, setChildYears] = useState<string[]>([])
+    // Track last saved situacion_laboral to revert if plan upgrade is required
+    const [lastSavedSituacion, setLastSavedSituacion] = useState<string | null>(null)
 
     // Collapsible sections
     const [showAhorro, setShowAhorro] = useState(false)
@@ -85,6 +88,7 @@ export default function SettingsPage() {
     useEffect(() => {
         if (!fiscal.loading && fiscal.profile) {
             setFiscalForm(fiscal.profile)
+            setLastSavedSituacion(fiscal.profile.situacion_laboral ?? null)
             const desc = fiscal.profile.anios_nacimiento_desc
             if (desc && desc.length > 0) {
                 setChildYears(desc.map(String))

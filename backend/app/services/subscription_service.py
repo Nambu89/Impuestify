@@ -457,6 +457,52 @@ class SubscriptionService:
         logger.info(f"Grace period granted until {end_date}", extra={"user_id": user_id})
 
 
+def validate_plan_role_compatibility(
+    plan_type: Optional[str],
+    situacion_laboral: str,
+    is_owner: bool = False,
+) -> Optional[dict]:
+    """
+    Validate if a subscription plan allows a given fiscal role.
+
+    Returns None if compatible, or a dict with upgrade info if incompatible.
+    Plans hierarchy: autonomo > creator > particular.
+    """
+    if is_owner:
+        return None
+
+    effective_plan = plan_type or "particular"
+    situacion_lower = (situacion_laboral or "").lower().strip()
+
+    # Roles allowed per plan (cumulative)
+    PARTICULAR_ROLES: set = {"asalariado", "pensionista", "desempleado", ""}
+    CREATOR_ROLES: set = PARTICULAR_ROLES | {"creador", "influencer", "youtuber", "streamer"}
+    # autonomo allows everything (None = unrestricted)
+
+    PLAN_ALLOWED: dict = {
+        "particular": PARTICULAR_ROLES,
+        "creator": CREATOR_ROLES,
+        "autonomo": None,  # None = all allowed
+    }
+
+    allowed = PLAN_ALLOWED.get(effective_plan, PARTICULAR_ROLES)
+    if allowed is None:  # autonomo plan
+        return None
+    if situacion_lower in allowed:
+        return None
+
+    # Determine minimum required plan
+    if situacion_lower in CREATOR_ROLES:
+        required = "creator"
+    else:
+        required = "autonomo"
+
+    return {
+        "required_plan": required,
+        "current_plan": effective_plan,
+    }
+
+
 # Global singleton
 _subscription_service: Optional[SubscriptionService] = None
 

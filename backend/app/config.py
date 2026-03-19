@@ -190,6 +190,10 @@ class Settings(BaseSettings):
     # 🛡️ Cloudflare Turnstile
     # -------------------------------
     TURNSTILE_SECRET_KEY: Optional[str] = Field(default=None)
+    TURNSTILE_TEST_MODE: bool = Field(
+        default=False,
+        description="Set True in QA/staging to accept Cloudflare's official test token"
+    )
 
     # -------------------------------
     # 🌐 Frontend
