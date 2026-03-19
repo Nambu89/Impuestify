@@ -1,6 +1,21 @@
 # TaxIA (Impuestify) - Roadmap de Desarrollo
 
-## Estado del Proyecto: Marzo 2026 (Sesion 13 — En Progreso)
+## Estado del Proyecto: Marzo 2026 (Sesion 15 — En Progreso)
+
+---
+
+## COMPLETADO — Sesion 15: Guia Fiscal Adaptativa por Rol (2026-03-19)
+
+- [x] **Feature**: Guia fiscal adaptativa — 3 flujos diferentes segun plan usuario
+  - PARTICULAR (7 pasos): sin actividad economica, wizard simplificado
+  - CREATOR (8 pasos): step dedicado "Actividad como creador" con grid plataformas, IAE, IVA intracomunitario, withholding tax, gastos creator, M349
+  - AUTONOMO (8 pasos): step dedicado "Actividad economica" (reorganizado)
+- [x] **Frontend**: useTaxGuideProgress con userPlan, getStepContent(), StepCreadorActividad, resultado adaptativo con obligaciones por rol
+- [x] **Backend**: Campos creator en irpf_estimate.py (plataformas_ingresos, gastos granulares, withholding, IAE, M349 flag)
+- [x] **Tests**: 12 tests creator PASS
+- [x] **CSS**: Estilos creator step + obligaciones grid + responsive
+- [x] **Research**: Necesidades usuarios (particulares/autonomos/creadores) — `plans/user-needs-research-2026.md`
+- Archivos: useTaxGuideProgress.ts, TaxGuidePage.tsx, TaxGuidePage.css, useIrpfEstimator.ts, irpf_estimate.py, test_irpf_estimate_creator.py
 
 ---
 
@@ -314,7 +329,7 @@
 - [x] ~~Agente actualización documental (crawler automático AEAT/BOE)~~ → DONE (250e8a2)
 - [x] ~~Alertas de plazos fiscales~~ → DONE (a849ce1) — calendario + email + push
 - [x] ~~Criptomonedas, trading y apuestas~~ → DONE (91faf01) — FIFO, 5 exchanges, XSD casillas
-- [ ] **Fase 5: Guia fiscal adaptativa por rol** (particular vs creator vs autonomo, campos diferentes)
+- [x] ~~**Fase 5: Guia fiscal adaptativa por rol**~~ → DONE (2026-03-19, sesion 15)
 - [ ] Pipeline auto-ingesta RAG (leer `_pending_ingest.json` → embeddings)
 - [ ] ML fiscal features (ml_fiscal_features table)
 

@@ -30,6 +30,17 @@ export interface TaxGuideData {
     un_solo_cliente: boolean
     retenciones_actividad: number
     pagos_fraccionados_130: number
+    // Creator-specific fields
+    plataformas_ingresos: Record<string, number>
+    epigrafe_iae: string
+    tiene_ingresos_intracomunitarios: boolean
+    ingresos_intracomunitarios: number
+    withholding_tax_pagado: number
+    gastos_equipo: number
+    gastos_software: number
+    gastos_coworking: number
+    gastos_transporte: number
+    gastos_formacion: number
     // Step 3: Ahorro e inversiones
     intereses: number
     dividendos: number
@@ -110,6 +121,17 @@ export const EMPTY_TAX_DATA: TaxGuideData = {
     un_solo_cliente: false,
     retenciones_actividad: 0,
     pagos_fraccionados_130: 0,
+    // Creator-specific defaults
+    plataformas_ingresos: {},
+    epigrafe_iae: '',
+    tiene_ingresos_intracomunitarios: false,
+    ingresos_intracomunitarios: 0,
+    withholding_tax_pagado: 0,
+    gastos_equipo: 0,
+    gastos_software: 0,
+    gastos_coworking: 0,
+    gastos_transporte: 0,
+    gastos_formacion: 0,
     intereses: 0,
     dividendos: 0,
     ganancias_fondos: 0,
@@ -170,16 +192,56 @@ export const STEP_LABELS = [
     'Resultado',
 ]
 
-export const QUICK_STEP_LABELS = [
-    'Datos basicos',
+export const STEP_LABELS_PARTICULAR = [
+    'Datos personales',
+    'Trabajo',
+    'Ahorro e inversiones',
+    'Inmuebles',
+    'Familia',
+    'Deducciones',
     'Resultado',
 ]
 
-export function useTaxGuideProgress() {
+export const STEP_LABELS_CREATOR = [
+    'Datos personales',
+    'Trabajo',
+    'Actividad como creador',
+    'Ahorro e inversiones',
+    'Inmuebles',
+    'Familia',
+    'Deducciones',
+    'Resultado',
+]
+
+export const STEP_LABELS_AUTONOMO = [
+    'Datos personales',
+    'Trabajo',
+    'Actividad económica',
+    'Ahorro e inversiones',
+    'Inmuebles',
+    'Familia',
+    'Deducciones',
+    'Resultado',
+]
+
+export const QUICK_STEP_LABELS = [
+    'Datos básicos',
+    'Resultado',
+]
+
+function getStepLabelsByPlan(userPlan?: string): string[] {
+    if (userPlan === 'particular') return STEP_LABELS_PARTICULAR
+    if (userPlan === 'creator') return STEP_LABELS_CREATOR
+    // autonomo or default
+    return STEP_LABELS_AUTONOMO
+}
+
+export function useTaxGuideProgress(userPlan?: string) {
     const [step, setStep] = useState(0)
     const [data, setData] = useState<TaxGuideData>(EMPTY_TAX_DATA)
 
-    const stepLabels = data.wizard_mode === 'quick' ? QUICK_STEP_LABELS : STEP_LABELS
+    const fullStepLabels = getStepLabelsByPlan(userPlan)
+    const stepLabels = data.wizard_mode === 'quick' ? QUICK_STEP_LABELS : fullStepLabels
 
     // Load saved progress on mount
     useEffect(() => {

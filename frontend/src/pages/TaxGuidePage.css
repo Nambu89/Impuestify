@@ -856,3 +856,140 @@
     color: #f87171;
     background: rgba(239, 68, 68, 0.08);
 }
+
+/* ===== Creator Step Styles ===== */
+
+.creator-platforms-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.creator-platform-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: border-color 0.2s;
+}
+
+.creator-platform-item:focus-within {
+    border-color: var(--color-primary-light, #3b82f6);
+}
+
+.creator-platform-icon {
+    font-size: 1.2rem;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.creator-platform-item label {
+    flex: 1;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.creator-platform-item input[type="number"] {
+    width: 100px;
+    text-align: right;
+}
+
+.creator-expenses-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.creator-info-card {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.creator-info-card--warning {
+    background: rgba(234, 179, 8, 0.1);
+    border-left: 3px solid #eab308;
+}
+
+.creator-info-card--info {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid #3b82f6;
+}
+
+.creator-info-card strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.creator-info-card p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== Resultado: Obligaciones por rol ===== */
+
+.resultado-obligaciones {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.resultado-obligaciones h3 {
+    margin-bottom: 16px;
+    font-size: 1.1rem;
+}
+
+.obligaciones-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.obligacion-card {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.obligacion-card--alert {
+    border-color: #eab308;
+    background: rgba(234, 179, 8, 0.08);
+}
+
+.obligacion-card strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--color-primary-light, #3b82f6);
+}
+
+.obligacion-card p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 768px) {
+    .creator-platforms-grid,
+    .creator-expenses-grid,
+    .obligaciones-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .creator-platform-item input[type="number"] {
+        width: 80px;
+    }
+}

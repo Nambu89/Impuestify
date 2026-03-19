@@ -104,6 +104,17 @@ class IRPFEstimateRequest(BaseModel):
     vehiculo_electrico_importe: float = 0
     obras_mejora_importe: float = 0
     cotizaciones_empleada_hogar: float = 0
+    # Creator-specific fields
+    plataformas_ingresos: Optional[dict] = None  # {"youtube": 5000, "twitch": 2000, ...}
+    epigrafe_iae: Optional[str] = None  # "8690", "9020", "6010.1"
+    tiene_ingresos_intracomunitarios: Optional[bool] = False
+    ingresos_intracomunitarios: Optional[float] = 0
+    withholding_tax_pagado: Optional[float] = 0
+    gastos_equipo: Optional[float] = 0
+    gastos_software: Optional[float] = 0
+    gastos_coworking: Optional[float] = 0
+    gastos_transporte: Optional[float] = 0
+    gastos_formacion: Optional[float] = 0
 
 
 class IRPFBreakdown(BaseModel):
@@ -155,6 +166,10 @@ class IRPFEstimateResponse(BaseModel):
     total_deducciones_autonomicas: float = 0
     trabajo: Optional[IRPFBreakdown] = None
     actividad: Optional[ActivityBreakdown] = None
+    # Creator-specific response fields
+    plataformas_desglose: Optional[dict] = None
+    modelo_349_requerido: Optional[bool] = None
+    iae_seleccionado: Optional[str] = None
     error: Optional[str] = None
 
 
@@ -188,6 +203,33 @@ async def estimate_irpf(
         retenciones_trabajo = body.retenciones_trabajo
         if body.irpf_retenido_porcentaje > 0 and retenciones_trabajo == 0 and ingresos_trabajo > 0:
             retenciones_trabajo = ingresos_trabajo * body.irpf_retenido_porcentaje / 100
+
+        # Creator: override ingresos_actividad from platform breakdown if provided
+        ingresos_actividad = body.ingresos_actividad
+        if body.plataformas_ingresos:
+            platform_total = sum(
+                v for v in body.plataformas_ingresos.values()
+                if isinstance(v, (int, float)) and v > 0
+            )
+            if platform_total > 0:
+                ingresos_actividad = platform_total
+
+        # Creator: override gastos_actividad from granular expense fields if provided
+        gastos_actividad = body.gastos_actividad
+        gastos_creator = (
+            (body.gastos_equipo or 0)
+            + (body.gastos_software or 0)
+            + (body.gastos_coworking or 0)
+            + (body.gastos_transporte or 0)
+            + (body.gastos_formacion or 0)
+        )
+        if gastos_creator > 0:
+            gastos_actividad = gastos_creator
+
+        # Creator: add foreign withholding tax to activity retenciones
+        retenciones_actividad = body.retenciones_actividad
+        if body.withholding_tax_pagado and body.withholding_tax_pagado > 0:
+            retenciones_actividad += body.withholding_tax_pagado
 
         simulator = IRPFSimulator(db)
 
@@ -234,7 +276,7 @@ async def estimate_irpf(
                 "donativos_autonomicos": body.donativos_autonomicos,
                 "gastos_guarderia_anual": body.gastos_guarderia_anual,
                 "gastos_educativos": body.gastos_educativos,
-                "base_imponible": ingresos_trabajo + body.ingresos_actividad,
+                "base_imponible": ingresos_trabajo + ingresos_actividad,
                 "inversion_vivienda": body.inversion_vivienda,
                 "instalacion_renovable_importe": body.instalacion_renovable_importe,
                 "vehiculo_electrico_importe": body.vehiculo_electrico_importe,
@@ -270,9 +312,9 @@ async def estimate_irpf(
             num_ascendientes_75=body.num_ascendientes_75,
             discapacidad_contribuyente=body.discapacidad_contribuyente,
             ceuta_melilla=ceuta_melilla,
-            # Activity income (autonomos)
-            ingresos_actividad=body.ingresos_actividad,
-            gastos_actividad=body.gastos_actividad,
+            # Activity income (autonomos / creators)
+            ingresos_actividad=ingresos_actividad,
+            gastos_actividad=gastos_actividad,
             cuota_autonomo_anual=body.cuota_autonomo_anual,
             amortizaciones_actividad=body.amortizaciones_actividad,
             provisiones_actividad=body.provisiones_actividad,
@@ -280,7 +322,7 @@ async def estimate_irpf(
             estimacion_actividad=body.estimacion_actividad,
             inicio_actividad=body.inicio_actividad,
             un_solo_cliente=body.un_solo_cliente,
-            retenciones_actividad=body.retenciones_actividad,
+            retenciones_actividad=retenciones_actividad,
             pagos_fraccionados_130=body.pagos_fraccionados_130,
             # Phase 1
             aportaciones_plan_pensiones=body.aportaciones_plan_pensiones,
@@ -386,6 +428,14 @@ async def estimate_irpf(
                 rendimiento_neto_reducido=actividad.get("rendimiento_neto_reducido", 0),
                 estimacion=actividad.get("estimacion", "directa_simplificada"),
             ) if actividad else None,
+            # Creator-specific response fields
+            plataformas_desglose=body.plataformas_ingresos if body.plataformas_ingresos else None,
+            modelo_349_requerido=(
+                True
+                if body.tiene_ingresos_intracomunitarios and (body.ingresos_intracomunitarios or 0) > 0
+                else False
+            ),
+            iae_seleccionado=body.epigrafe_iae if body.epigrafe_iae else None,
         )
 
     except Exception as e:

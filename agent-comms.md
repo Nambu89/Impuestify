@@ -7,6 +7,31 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-19] PM Coordinator — DONE — Sesion 15: Guia Fiscal Adaptativa por Rol
+
+- **Feature principal**: Guia fiscal (/guia-fiscal) ahora muestra pasos diferentes segun plan del usuario
+  - PARTICULAR: 7 pasos (sin actividad economica)
+  - CREATOR: 8 pasos (con step dedicado plataformas, IAE, IVA intracomunitario, withholding, M349)
+  - AUTONOMO: 8 pasos (con step actividad economica reorganizado)
+
+- **Archivos modificados (6)**:
+  - `frontend/src/hooks/useTaxGuideProgress.ts` — userPlan param, 4 configs step labels, campos creator
+  - `frontend/src/pages/TaxGuidePage.tsx` — getStepContent(), StepCreadorActividad, resultado adaptativo
+  - `frontend/src/pages/TaxGuidePage.css` — estilos creator + obligaciones
+  - `frontend/src/hooks/useIrpfEstimator.ts` — campos creator en input
+  - `backend/app/routers/irpf_estimate.py` — campos creator opcionales + modelo_349 flag
+  - `backend/tests/test_irpf_estimate_creator.py` — 12 tests PASS
+
+- **Research completado**: `plans/user-needs-research-2026.md`
+  - Particulares: detector deducciones autonomicas (9.000M EUR perdidos/ano), simulador rapido, conjunta vs individual
+  - Autonomos: "cuanto me queda limpio", estimador M130 trimestral, 200h/ano en burocracia
+  - Creadores: wizard alta autonomo, IVA por plataforma, DAC7, epigrafe IAE
+
+- **Build**: frontend PASS (6.93s), backend 12/12 tests PASS
+- **Pendiente**: commit + deploy
+
+---
+
 ## [2026-03-17] PM Coordinator — DONE — Sesion 13 completa
 
 - **Bugs fixeados**: 4 (Bugs 59-62)

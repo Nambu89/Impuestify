@@ -3,9 +3,10 @@ import { ChevronLeft, ChevronRight, RotateCcw, MapPin, Briefcase, PiggyBank, Hom
 import Header from '../components/Header'
 import LiveEstimatorBar from '../components/LiveEstimatorBar'
 import DynamicFiscalForm from '../components/DynamicFiscalForm'
-import { useTaxGuideProgress, STEP_LABELS, QUICK_STEP_LABELS, type TaxGuideData } from '../hooks/useTaxGuideProgress'
+import { useTaxGuideProgress, QUICK_STEP_LABELS, type TaxGuideData } from '../hooks/useTaxGuideProgress'
 import { useIrpfEstimator } from '../hooks/useIrpfEstimator'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
+import { useSubscription } from '../hooks/useSubscription'
 import { useDeductionDiscovery, type MissingQuestion } from '../hooks/useDeductionDiscovery'
 import { CCAA_IDS, getCcaaLabel, isForal, isCeutaMelilla } from '../constants/ccaa'
 import './TaxGuidePage.css'
@@ -16,8 +17,40 @@ const CCAA_DISPLAY: Record<string, string> = Object.fromEntries(
     CCAA_IDS.filter(id => getCcaaLabel(id) !== id).map(id => [id, getCcaaLabel(id)])
 )
 
+// Iconos para cada plan: particular (7 pasos), creator/autonomo (8 pasos)
+const STEP_ICONS_PARTICULAR = [MapPin, Briefcase, PiggyBank, HomeIcon, Users, Gift, BarChart3]
+const STEP_ICONS_FULL = [MapPin, Briefcase, Briefcase, PiggyBank, HomeIcon, Users, Gift, BarChart3]
 const STEP_ICONS = [MapPin, Briefcase, PiggyBank, HomeIcon, TrendingUp, Users, Gift, BarChart3]
 const QUICK_STEP_ICONS = [MapPin, BarChart3]
+
+const CREATOR_PLATFORMS = [
+    { id: 'youtube', name: 'YouTube / AdSense', icon: '▶' },
+    { id: 'twitch', name: 'Twitch', icon: '🎮' },
+    { id: 'tiktok', name: 'TikTok', icon: '🎵' },
+    { id: 'instagram', name: 'Instagram', icon: '📸' },
+    { id: 'onlyfans', name: 'OnlyFans', icon: '💎' },
+    { id: 'patreon', name: 'Patreon', icon: '🎨' },
+    { id: 'substack', name: 'Substack / Newsletter', icon: '✉' },
+    { id: 'sponsors', name: 'Patrocinios directos', icon: '🤝' },
+    { id: 'merch', name: 'Merchandising', icon: '👕' },
+    { id: 'otros', name: 'Otros ingresos', icon: '💰' },
+]
+
+type StepContent = 'personal' | 'trabajo' | 'actividad_creator' | 'actividad_autonomo' | 'ahorro' | 'inmuebles' | 'familia' | 'deducciones' | 'resultado'
+
+function getStepContent(stepIndex: number, plan: string): StepContent {
+    if (plan === 'particular') {
+        const map: StepContent[] = ['personal', 'trabajo', 'ahorro', 'inmuebles', 'familia', 'deducciones', 'resultado']
+        return map[stepIndex] ?? 'resultado'
+    }
+    if (plan === 'creator') {
+        const map: StepContent[] = ['personal', 'trabajo', 'actividad_creator', 'ahorro', 'inmuebles', 'familia', 'deducciones', 'resultado']
+        return map[stepIndex] ?? 'resultado'
+    }
+    // autonomo (default)
+    const map: StepContent[] = ['personal', 'trabajo', 'actividad_autonomo', 'ahorro', 'inmuebles', 'familia', 'deducciones', 'resultado']
+    return map[stepIndex] ?? 'resultado'
+}
 
 // === Reusable inputs ===
 
@@ -579,6 +612,260 @@ function StepInversiones({ data, update }: StepProps) {
     )
 }
 
+// === Step: Actividad como creador de contenido ===
+
+function StepCreadorActividad({ data, update }: StepProps) {
+    return (
+        <div className="tg-step">
+            <h2 className="tg-step__title">Actividad como creador de contenido</h2>
+            <p className="tg-step__desc">Indica tus ingresos por plataforma y gastos de tu actividad.</p>
+
+            <div className="creator-info-card creator-info-card--warning">
+                <AlertTriangle size={20} />
+                <div>
+                    <strong>¿Sabías que...?</strong>
+                    <p>Desde el primer euro de ingreso como creador, estás obligado a darte de alta como autónomo en la Seguridad Social y en Hacienda.</p>
+                </div>
+            </div>
+
+            <h3 className="tg-step__subtitle">Ingresos por plataforma (anuales)</h3>
+            <div className="creator-platforms-grid">
+                {CREATOR_PLATFORMS.map(p => (
+                    <div key={p.id} className="creator-platform-item">
+                        <span className="creator-platform-icon">{p.icon}</span>
+                        <label>{p.name}</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={data.plataformas_ingresos[p.id] || 0}
+                            onChange={e => update({
+                                plataformas_ingresos: { ...data.plataformas_ingresos, [p.id]: Number(e.target.value) || 0 }
+                            })}
+                        />
+                        <span className="tg-field__suffix">EUR</span>
+                    </div>
+                ))}
+            </div>
+
+            <h3 className="tg-step__subtitle">Epígrafe IAE</h3>
+            <div className="tg-field">
+                <select
+                    value={data.epigrafe_iae}
+                    onChange={e => update({ epigrafe_iae: e.target.value })}
+                    className="tg-field__select"
+                >
+                    <option value="">Selecciona tu epígrafe</option>
+                    <option value="8690">8690 — Otros servicios profesionales (recomendado)</option>
+                    <option value="9020">9020 — Servicios de publicidad y relaciones públicas</option>
+                    <option value="6010.1">6010.1 — Comercio al por menor</option>
+                    <option value="9611">961.1 — Producción y distribución cinematográfica</option>
+                    <option value="otro">Otro epígrafe</option>
+                </select>
+            </div>
+
+            <h3 className="tg-step__subtitle">Gastos deducibles de tu actividad</h3>
+            <div className="creator-expenses-grid">
+                <div className="tg-field">
+                    <label className="tg-field__label">Equipo (cámara, micro, PC, iluminación)</label>
+                    <div className="tg-field__input-wrap">
+                        <input type="number" min="0" className="tg-field__input" value={data.gastos_equipo || ''} onChange={e => update({ gastos_equipo: Number(e.target.value) || 0 })} placeholder="0" />
+                        <span className="tg-field__suffix">EUR</span>
+                    </div>
+                </div>
+                <div className="tg-field">
+                    <label className="tg-field__label">Software (Adobe, OBS, edición)</label>
+                    <div className="tg-field__input-wrap">
+                        <input type="number" min="0" className="tg-field__input" value={data.gastos_software || ''} onChange={e => update({ gastos_software: Number(e.target.value) || 0 })} placeholder="0" />
+                        <span className="tg-field__suffix">EUR</span>
+                    </div>
+                </div>
+                <div className="tg-field">
+                    <label className="tg-field__label">Coworking / oficina</label>
+                    <div className="tg-field__input-wrap">
+                        <input type="number" min="0" className="tg-field__input" value={data.gastos_coworking || ''} onChange={e => update({ gastos_coworking: Number(e.target.value) || 0 })} placeholder="0" />
+                        <span className="tg-field__suffix">EUR</span>
+                    </div>
+                </div>
+                <div className="tg-field">
+                    <label className="tg-field__label">Transporte y viajes a eventos</label>
+                    <div className="tg-field__input-wrap">
+                        <input type="number" min="0" className="tg-field__input" value={data.gastos_transporte || ''} onChange={e => update({ gastos_transporte: Number(e.target.value) || 0 })} placeholder="0" />
+                        <span className="tg-field__suffix">EUR</span>
+                    </div>
+                </div>
+                <div className="tg-field">
+                    <label className="tg-field__label">Formación profesional</label>
+                    <div className="tg-field__input-wrap">
+                        <input type="number" min="0" className="tg-field__input" value={data.gastos_formacion || ''} onChange={e => update({ gastos_formacion: Number(e.target.value) || 0 })} placeholder="0" />
+                        <span className="tg-field__suffix">EUR</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 className="tg-step__subtitle">Seguridad Social y retenciones</h3>
+            <NumberInput
+                label="Cuota de autónomos anual (RETA)"
+                value={data.cuota_autonomo_anual}
+                onChange={v => update({ cuota_autonomo_anual: v })}
+                suffix="EUR"
+                help="Cuota mensual x 12. Ej: 293 EUR/mes = 3.516 EUR/año"
+            />
+            <NumberInput
+                label="Pagos fraccionados (Modelo 130) ya realizados"
+                value={data.pagos_fraccionados_130}
+                onChange={v => update({ pagos_fraccionados_130: v })}
+                suffix="EUR"
+                help="Suma de los 4 trimestres del Modelo 130 pagados"
+            />
+
+            <div className="creator-info-card creator-info-card--info">
+                <Info size={20} />
+                <div>
+                    <strong>IVA en plataformas internacionales</strong>
+                    <p>Los pagos de YouTube (Google Ireland), Twitch (Amazon Luxembourg) o Meta (Meta Ireland) son operaciones intracomunitarias. No aplicas IVA español, pero debes presentar el Modelo 349.</p>
+                </div>
+            </div>
+
+            <CheckboxInput
+                label="Tengo ingresos de plataformas de la UE (Google Ireland, Amazon Luxembourg, Meta Ireland...)"
+                checked={data.tiene_ingresos_intracomunitarios}
+                onChange={v => update({ tiene_ingresos_intracomunitarios: v })}
+            />
+            {data.tiene_ingresos_intracomunitarios && (
+                <NumberInput
+                    label="Total ingresos intracomunitarios anuales"
+                    value={data.ingresos_intracomunitarios}
+                    onChange={v => update({ ingresos_intracomunitarios: v })}
+                    suffix="EUR"
+                />
+            )}
+
+            <div className="creator-info-card creator-info-card--info">
+                <Info size={20} />
+                <div>
+                    <strong>Withholding tax (retención EE. UU.)</strong>
+                    <p>YouTube puede retener hasta el 30% sobre ingresos de audiencia estadounidense. Si enviaste el formulario W-8BEN, la retención se reduce al 0-15% por el convenio España-EE. UU.</p>
+                </div>
+            </div>
+            <NumberInput
+                label="Withholding tax pagado (retención plataformas EE. UU.)"
+                value={data.withholding_tax_pagado}
+                onChange={v => update({ withholding_tax_pagado: v })}
+                suffix="EUR"
+                help="Importe retenido directamente por la plataforma en origen"
+            />
+        </div>
+    )
+}
+
+// === Step: Actividad económica (autónomo) ===
+// Extrae la sección de actividad económica del StepTrabajo original para autonomos
+
+function StepActividadAutonomo({ data, update }: StepProps) {
+    return (
+        <div className="tg-step">
+            <h2 className="tg-step__title">Actividad económica</h2>
+            <p className="tg-step__desc">Ingresos, gastos y cotizaciones de tu actividad como autónomo.</p>
+
+            <div className="tg-field">
+                <label className="tg-field__label">Método de estimación</label>
+                <select
+                    className="tg-field__select"
+                    value={data.estimacion_actividad}
+                    onChange={e => update({ estimacion_actividad: e.target.value })}
+                >
+                    <option value="directa_simplificada">Estimación directa simplificada</option>
+                    <option value="directa_normal">Estimación directa normal</option>
+                    <option value="objetiva">Estimación objetiva (módulos)</option>
+                </select>
+                <span className="tg-field__help">
+                    {data.estimacion_actividad === 'directa_simplificada'
+                        ? 'La más común. Incluye 5% de gastos de difícil justificación (máx. 2.000 EUR)'
+                        : data.estimacion_actividad === 'directa_normal'
+                        ? 'Requiere contabilidad ajustada al Código de Comercio. Permite provisiones'
+                        : 'Solo si tu actividad está incluida en la Orden de Módulos'}
+                </span>
+            </div>
+
+            <NumberInput
+                label="Ingresos de actividad (anual)"
+                value={data.ingresos_actividad}
+                onChange={v => update({ ingresos_actividad: v })}
+                suffix="EUR"
+                help="Total facturado (base imponible, sin IVA/IGIC)"
+            />
+            <NumberInput
+                label="Gastos deducibles de actividad"
+                value={data.gastos_actividad}
+                onChange={v => update({ gastos_actividad: v })}
+                suffix="EUR"
+                help="Suministros, alquiler local, seguros, material, marketing..."
+            />
+            <NumberInput
+                label="Cuota de autónomo anual"
+                value={data.cuota_autonomo_anual}
+                onChange={v => update({ cuota_autonomo_anual: v })}
+                suffix="EUR"
+                help="Cuota mensual x 12. Ej: 293 EUR/mes = 3.516 EUR/año"
+            />
+            <NumberInput
+                label="Amortizaciones"
+                value={data.amortizaciones_actividad}
+                onChange={v => update({ amortizaciones_actividad: v })}
+                suffix="EUR"
+                help="Amortización de activos fijos (ordenador, vehículo, mobiliario...)"
+            />
+
+            {data.estimacion_actividad === 'directa_normal' && (
+                <NumberInput
+                    label="Provisiones"
+                    value={data.provisiones_actividad}
+                    onChange={v => update({ provisiones_actividad: v })}
+                    suffix="EUR"
+                    help="Solo en estimación directa normal"
+                />
+            )}
+
+            <NumberInput
+                label="Otros gastos deducibles"
+                value={data.otros_gastos_actividad}
+                onChange={v => update({ otros_gastos_actividad: v })}
+                suffix="EUR"
+            />
+
+            <h3 className="tg-step__subtitle">Retenciones y pagos a cuenta</h3>
+            <NumberInput
+                label="Retenciones en facturas (anual)"
+                value={data.retenciones_actividad}
+                onChange={v => update({ retenciones_actividad: v })}
+                suffix="EUR"
+                help="15% (o 7% nuevos autónomos) retenido por tus clientes profesionales"
+            />
+            <NumberInput
+                label="Pagos fraccionados Modelo 130"
+                value={data.pagos_fraccionados_130}
+                onChange={v => update({ pagos_fraccionados_130: v })}
+                suffix="EUR"
+                help="Suma de los 4 trimestres del Modelo 130 pagados"
+            />
+
+            <h3 className="tg-step__subtitle">Reducciones</h3>
+            <CheckboxInput
+                label="Inicio de actividad (primeros 2 años con beneficio)"
+                checked={data.inicio_actividad}
+                onChange={v => update({ inicio_actividad: v })}
+                help="Reducción del 20% sobre el rendimiento neto positivo (Art. 32.3 LIRPF)"
+            />
+            <CheckboxInput
+                label="Más del 75% de ingresos de un solo cliente"
+                checked={data.un_solo_cliente}
+                onChange={v => update({ un_solo_cliente: v })}
+                help="Autónomo económicamente dependiente (TRADE). Aplica reducción similar a trabajo (Art. 32.2 LIRPF)"
+            />
+        </div>
+    )
+}
+
 // === Step 5: Familia ===
 
 function StepFamilia({ data, update }: StepProps) {
@@ -775,9 +1062,9 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
 
 // === Step 7: Resultado ===
 
-function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProfileDone, discoveryResult }: {
+function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProfileDone, discoveryResult, userPlan, data }: {
     result: any; loading: boolean; onSaveProfile: () => void; savingProfile: boolean; saveProfileDone: boolean
-    discoveryResult: any
+    discoveryResult: any; userPlan?: string; data?: TaxGuideData
 }) {
     if (!result || !result.success) {
         return (
@@ -891,6 +1178,55 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                 </div>
             )}
 
+            {/* Obligaciones por rol */}
+            {userPlan === 'creator' && (
+                <div className="resultado-obligaciones">
+                    <h3>Obligaciones como creador de contenido</h3>
+                    <div className="obligaciones-grid">
+                        {data?.tiene_ingresos_intracomunitarios && (
+                            <div className="obligacion-card obligacion-card--alert">
+                                <strong>Modelo 349</strong>
+                                <p>Debes presentar declaración de operaciones intracomunitarias (trimestral)</p>
+                            </div>
+                        )}
+                        <div className="obligacion-card">
+                            <strong>Modelo 130</strong>
+                            <p>Pago fraccionado IRPF trimestral (20% del rendimiento neto acumulado)</p>
+                        </div>
+                        <div className="obligacion-card">
+                            <strong>DAC7</strong>
+                            <p>Las plataformas ya reportan tus ingresos a la AEAT. Asegúrate de que tu declaración coincida.</p>
+                        </div>
+                        {data?.epigrafe_iae && (
+                            <div className="obligacion-card">
+                                <strong>Epígrafe IAE: {data.epigrafe_iae}</strong>
+                                <p>Tu actividad está clasificada con este epígrafe en Hacienda</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {userPlan === 'autonomo' && (
+                <div className="resultado-obligaciones">
+                    <h3>Tus obligaciones trimestrales</h3>
+                    <div className="obligaciones-grid">
+                        <div className="obligacion-card">
+                            <strong>Modelo 130</strong>
+                            <p>Pago fraccionado IRPF (20% rendimiento neto acumulado)</p>
+                        </div>
+                        <div className="obligacion-card">
+                            <strong>Modelo 303</strong>
+                            <p>Autoliquidación IVA trimestral</p>
+                        </div>
+                        <div className="obligacion-card">
+                            <strong>Cuota RETA</strong>
+                            <p>Cotización mensual a la Seguridad Social</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <p className="tg-disclaimer">
                 Esta estimación es orientativa y no constituye asesoramiento fiscal.
                 Los cálculos se basan en las escalas y deducciones vigentes.
@@ -960,7 +1296,9 @@ function buildAnswersFromData(data: TaxGuideData, extra: Record<string, boolean>
 // === Main component ===
 
 export default function TaxGuidePage() {
-    const { step, data, updateData, nextStep, prevStep, goToStep, resetAll, stepLabels } = useTaxGuideProgress()
+    const { planType } = useSubscription()
+    const userPlan = planType || 'particular'
+    const { step, data, updateData, nextStep, prevStep, goToStep, resetAll, stepLabels } = useTaxGuideProgress(userPlan)
     const { result, loading, estimate } = useIrpfEstimator()
     const { profile, loading: profileLoading, save } = useFiscalProfile()
     const { result: discoveryResult, loading: discoveryLoading, error: discoveryError, discover } = useDeductionDiscovery()
@@ -976,7 +1314,11 @@ export default function TaxGuidePage() {
     const [slideDir, setSlideDir] = useState<'left' | 'right' | ''>('')
 
     const isQuick = data.wizard_mode === 'quick'
-    const icons = isQuick ? QUICK_STEP_ICONS : STEP_ICONS
+    const icons = isQuick
+        ? QUICK_STEP_ICONS
+        : userPlan === 'particular'
+            ? STEP_ICONS_PARTICULAR
+            : STEP_ICONS_FULL
 
     // Auto-scroll progress bar to active step
     useEffect(() => {
@@ -1245,8 +1587,9 @@ export default function TaxGuidePage() {
         })
     }, [data, estimate, dynamicFormValues, discoveryAnswers])
 
-    // Phase B: Trigger deduction discovery when on step 6 (Deducciones) or result step
-    const isDeductionStep = isQuick ? step === 1 : step >= 6
+    // Phase B: Trigger deduction discovery when on deducciones/resultado step
+    const currentStepContent = isQuick ? 'resultado' : getStepContent(step, userPlan)
+    const isDeductionStep = isQuick ? step === 1 : (currentStepContent === 'deducciones' || currentStepContent === 'resultado')
     useEffect(() => {
         if (isDeductionStep && data.comunidad_autonoma) {
             const answers = buildAnswersFromData(data, discoveryAnswers)
@@ -1281,37 +1624,61 @@ export default function TaxGuidePage() {
         setDynamicFormValues(prev => ({ ...prev, [key]: value }))
     }, [])
 
-    // Render step content (8 steps: 0-7)
+    // Render step content — uses getStepContent to map step index to content type by plan
     const renderFullStep = () => {
-        switch (step) {
-            case 0: return <StepPersonal data={data} update={updateData} />
-            case 1: return (
-                <StepTrabajo
-                    data={data}
-                    update={updateData}
-                    zeroIncomeAcknowledged={zeroIncomeAcknowledged}
-                    onAcknowledgeZeroIncome={setZeroIncomeAcknowledged}
-                />
-            )
-            case 2: return <StepAhorro data={data} update={updateData} />
-            case 3: return <StepInmuebles data={data} update={updateData} />
-            case 4: return <StepInversiones data={data} update={updateData} />
-            case 5: return <StepFamilia data={data} update={updateData} />
-            case 6: return (
-                <StepDeducciones
-                    data={data}
-                    update={updateData}
-                    discoveryResult={discoveryResult}
-                    discoveryLoading={discoveryLoading}
-                    discoveryError={discoveryError}
-                    discoveryAnswers={discoveryAnswers}
-                    onAnswerQuestion={handleAnswerQuestion}
-                    dynamicFormValues={dynamicFormValues}
-                    onDynamicFormChange={handleDynamicFormChange}
-                />
-            )
-            case 7: return <StepResultado result={result} loading={loading} onSaveProfile={handleSaveProfile} savingProfile={savingProfile} saveProfileDone={saveProfileDone} discoveryResult={discoveryResult} />
-            default: return null
+        const content = getStepContent(step, userPlan)
+        switch (content) {
+            case 'personal':
+                return <StepPersonal data={data} update={updateData} />
+            case 'trabajo':
+                return (
+                    <StepTrabajo
+                        data={data}
+                        update={updateData}
+                        zeroIncomeAcknowledged={zeroIncomeAcknowledged}
+                        onAcknowledgeZeroIncome={setZeroIncomeAcknowledged}
+                        hiddenActivitySection={userPlan === 'particular'}
+                    />
+                )
+            case 'actividad_creator':
+                return <StepCreadorActividad data={data} update={updateData} />
+            case 'actividad_autonomo':
+                return <StepActividadAutonomo data={data} update={updateData} />
+            case 'ahorro':
+                return <StepAhorro data={data} update={updateData} />
+            case 'inmuebles':
+                return <StepInmuebles data={data} update={updateData} />
+            case 'familia':
+                return <StepFamilia data={data} update={updateData} />
+            case 'deducciones':
+                return (
+                    <StepDeducciones
+                        data={data}
+                        update={updateData}
+                        discoveryResult={discoveryResult}
+                        discoveryLoading={discoveryLoading}
+                        discoveryError={discoveryError}
+                        discoveryAnswers={discoveryAnswers}
+                        onAnswerQuestion={handleAnswerQuestion}
+                        dynamicFormValues={dynamicFormValues}
+                        onDynamicFormChange={handleDynamicFormChange}
+                    />
+                )
+            case 'resultado':
+                return (
+                    <StepResultado
+                        result={result}
+                        loading={loading}
+                        onSaveProfile={handleSaveProfile}
+                        savingProfile={savingProfile}
+                        saveProfileDone={saveProfileDone}
+                        discoveryResult={discoveryResult}
+                        userPlan={userPlan}
+                        data={data}
+                    />
+                )
+            default:
+                return null
         }
     }
 
@@ -1355,8 +1722,9 @@ export default function TaxGuidePage() {
         }
         return data.ingresos_trabajo
     }
+    const platformTotal = Object.values(data.plataformas_ingresos || {}).reduce((a, b) => a + b, 0)
     const step1HasIncome = !isQuick
-        ? (getEffectiveIngresos() > 0 || data.ingresos_actividad > 0 || zeroIncomeAcknowledged)
+        ? (getEffectiveIngresos() > 0 || data.ingresos_actividad > 0 || platformTotal > 0 || zeroIncomeAcknowledged)
         : true // quick mode combines steps 0+1, validation handled by CCAA check
     const canProceed = (() => {
         if (isQuick) return !!data.comunidad_autonoma

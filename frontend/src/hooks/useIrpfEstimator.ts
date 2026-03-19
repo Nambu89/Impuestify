@@ -64,6 +64,17 @@ export interface IrpfEstimateInput {
     premios_metalico_privados?: number
     perdidas_juegos_privados?: number
     premios_metalico_publicos?: number
+    // Creator-specific (mapean a campos existentes del backend)
+    plataformas_ingresos?: Record<string, number>
+    epigrafe_iae?: string
+    tiene_ingresos_intracomunitarios?: boolean
+    ingresos_intracomunitarios?: number
+    withholding_tax_pagado?: number
+    gastos_equipo?: number
+    gastos_software?: number
+    gastos_coworking?: number
+    gastos_transporte?: number
+    gastos_formacion?: number
     // CCAA deductions
     deducciones_answers?: Record<string, any>
     donativos_autonomicos?: number
@@ -145,9 +156,11 @@ export function useIrpfEstimator() {
         }
 
         // Must have some income to calculate (check both annual and monthly salary)
+        const platformTotal = Object.values(input.plataformas_ingresos || {}).reduce((a, b) => a + b, 0)
         const hasIncome = (input.ingresos_trabajo || 0) > 0 ||
             (input.salario_base_mensual || 0) > 0 ||
             (input.ingresos_actividad || 0) > 0 ||
+            platformTotal > 0 ||
             (input.intereses || 0) > 0 ||
             (input.dividendos || 0) > 0 ||
             (input.ganancias_fondos || 0) > 0 ||
