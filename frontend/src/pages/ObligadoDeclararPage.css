@@ -1,0 +1,719 @@
+/* =========================================================
+   ObligadoDeclararPage.css
+   Dark theme — consistente con el resto de landings
+   ========================================================= */
+
+/* ── Layout base ─────────────────────────────────────────── */
+
+.od-page {
+    min-height: 100vh;
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+}
+
+.od-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+}
+
+.od-container--narrow {
+    max-width: 760px;
+}
+
+/* ── Hero ─────────────────────────────────────────────────── */
+
+.od-hero {
+    padding: 100px var(--spacing-lg) 64px;
+    background: linear-gradient(135deg, var(--color-secondary), #162032);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.od-hero::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(26, 86, 219, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.od-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    background: rgba(26, 86, 219, 0.18);
+    border: 1px solid rgba(26, 86, 219, 0.35);
+    color: var(--color-primary-light);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-lg);
+}
+
+.od-hero-title {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: var(--spacing-md);
+    background: linear-gradient(135deg, var(--color-white) 60%, rgba(255, 255, 255, 0.6));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.od-hero-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.65);
+    max-width: 620px;
+    margin: 0 auto;
+    line-height: 1.7;
+}
+
+/* ── Checker ─────────────────────────────────────────────── */
+
+.od-checker-section {
+    padding: 48px var(--spacing-lg) 64px;
+}
+
+.od-checker-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-2xl);
+    padding: 40px 44px;
+    backdrop-filter: blur(12px);
+}
+
+.od-checker-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--color-white);
+}
+
+.od-checker-desc {
+    color: rgba(255, 255, 255, 0.55);
+    margin-bottom: 32px;
+    font-size: 0.95rem;
+}
+
+/* Pregunta */
+
+.od-question {
+    margin-bottom: 28px;
+}
+
+.od-question-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 12px;
+}
+
+.od-question-label svg {
+    color: var(--color-primary-light);
+    flex-shrink: 0;
+}
+
+.od-question-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+.od-question-hint svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Botones de opción */
+
+.od-btn-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.od-option-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.od-option-btn:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-white);
+}
+
+.od-option-btn--active {
+    border-color: var(--color-primary-light);
+    background: rgba(59, 130, 246, 0.18);
+    color: var(--color-white);
+    font-weight: 600;
+}
+
+/* Input numérico */
+
+.od-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.od-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 80px 0 16px;
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--color-white);
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    appearance: none;
+    -moz-appearance: textfield;
+}
+
+.od-input:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.od-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.od-input::-webkit-inner-spin-button,
+.od-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+
+.od-input-suffix {
+    position: absolute;
+    right: 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+}
+
+/* Botón comprobar */
+
+.od-check-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 14px 28px;
+    border-radius: var(--radius-xl);
+    border: none;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: var(--color-white);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.od-check-btn:hover:not(:disabled) {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+.od-check-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* Resultado */
+
+.od-result {
+    margin-top: 24px;
+    padding: 20px 24px;
+    border-radius: var(--radius-xl);
+    border: 1px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: odResultIn 0.35s ease;
+}
+
+@keyframes odResultIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.od-result--obligado {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+.od-result--no_obligado {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.od-result--revisar {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+.od-result-icon {
+    align-self: flex-start;
+}
+
+.od-result--obligado .od-result-icon { color: rgb(245, 158, 11); }
+.od-result--no_obligado .od-result-icon { color: rgb(16, 185, 129); }
+.od-result--revisar .od-result-icon { color: var(--color-primary-light); }
+
+.od-result-body strong {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--color-white);
+}
+
+.od-result-body p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+
+.od-result-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-primary-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.od-result-cta:hover {
+    color: var(--color-accent);
+}
+
+.od-reset-btn {
+    align-self: flex-start;
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-lg);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.82rem;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.od-reset-btn:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.od-checker-disclaimer {
+    margin-top: 20px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.3);
+    line-height: 1.5;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    padding-top: 16px;
+}
+
+/* ── Secciones genéricas ─────────────────────────────────── */
+
+.od-section {
+    padding: 72px var(--spacing-lg);
+}
+
+.od-section--alt {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.od-section-title {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--color-white);
+}
+
+.od-section-desc {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin-bottom: 36px;
+    line-height: 1.7;
+    max-width: 680px;
+}
+
+/* ── Tabla de límites ─────────────────────────────────────── */
+
+.od-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.od-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.od-table thead tr {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.od-table th {
+    padding: 14px 20px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+}
+
+.od-table td {
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.8);
+    vertical-align: top;
+    line-height: 1.5;
+}
+
+.od-table tr:last-child td {
+    border-bottom: none;
+}
+
+.od-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.od-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.od-badge--info {
+    background: rgba(59, 130, 246, 0.18);
+    color: var(--color-primary-light);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.od-badge--warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: rgb(253, 186, 116);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ── Novedades ───────────────────────────────────────────── */
+
+.od-novedades-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.od-novedad-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--radius-xl);
+    padding: 24px 28px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.od-novedad-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.od-novedad-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-white);
+    margin-bottom: 10px;
+}
+
+.od-novedad-desc {
+    font-size: 0.87rem;
+    color: rgba(255, 255, 255, 0.58);
+    line-height: 1.65;
+}
+
+/* ── Conviene declarar ───────────────────────────────────── */
+
+.od-conviene-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.od-conviene-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-xl);
+    padding: 20px 24px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.od-conviene-card:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.od-conviene-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    background: rgba(26, 86, 219, 0.2);
+    border: 1px solid rgba(26, 86, 219, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary-light);
+}
+
+.od-conviene-body strong {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-white);
+    margin-bottom: 6px;
+}
+
+.od-conviene-body p {
+    font-size: 0.87rem;
+    color: rgba(255, 255, 255, 0.58);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── CTA central ─────────────────────────────────────────── */
+
+.od-cta-section {
+    padding: 64px var(--spacing-lg);
+}
+
+.od-cta-card {
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.2), rgba(6, 182, 212, 0.12));
+    border: 1px solid rgba(26, 86, 219, 0.3);
+    border-radius: var(--radius-2xl);
+    padding: 48px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+}
+
+.od-cta-title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    color: var(--color-white);
+    margin-bottom: 14px;
+}
+
+.od-cta-desc {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1.7;
+    margin-bottom: 28px;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.od-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: var(--color-white);
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    margin-bottom: 14px;
+}
+
+.od-cta-btn:hover {
+    opacity: 0.88;
+    transform: translateY(-2px);
+}
+
+.od-cta-note {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.38);
+    margin: 0;
+}
+
+/* ── FAQ ─────────────────────────────────────────────────── */
+
+.od-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.od-faq-item {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.od-faq-item--open {
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.od-faq-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 24px;
+    background: rgba(255, 255, 255, 0.04);
+    border: none;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.od-faq-trigger:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.od-faq-trigger svg {
+    flex-shrink: 0;
+    color: var(--color-primary-light);
+}
+
+.od-faq-answer {
+    padding: 0 24px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    animation: odFaqIn 0.2s ease;
+}
+
+@keyframes odFaqIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.od-faq-answer p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .od-hero {
+        padding: 80px var(--spacing-md) 48px;
+    }
+
+    .od-checker-card {
+        padding: 28px 24px;
+    }
+
+    .od-btn-group {
+        flex-direction: column;
+    }
+
+    .od-option-btn {
+        text-align: center;
+    }
+
+    .od-cta-card {
+        padding: 32px 24px;
+    }
+
+    .od-section {
+        padding: 52px var(--spacing-md);
+    }
+
+    .od-table th,
+    .od-table td {
+        padding: 12px 14px;
+        font-size: 0.83rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .od-hero-title {
+        font-size: 1.75rem;
+    }
+
+    .od-checker-card {
+        padding: 24px 18px;
+    }
+
+    .od-check-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .od-novedades-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .od-faq-trigger {
+        padding: 16px 18px;
+        font-size: 0.88rem;
+    }
+
+    .od-faq-answer {
+        padding: 0 18px 16px;
+    }
+}

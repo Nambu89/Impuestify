@@ -35,6 +35,9 @@ const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const CryptoPage = lazy(() => import('./pages/CryptoPage'))
 const CreatorsPage = lazy(() => import('./pages/CreatorsPage'))
 const NetSalaryPage = lazy(() => import('./pages/NetSalaryPage'))
+const M130CalculatorPage = lazy(() => import('./pages/M130CalculatorPage'))
+const ChecklistBorradorPage = lazy(() => import('./pages/ChecklistBorradorPage'))
+const ObligadoDeclararPage = lazy(() => import('./pages/ObligadoDeclararPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -98,6 +101,8 @@ function App() {
                     <Route path="/ceuta-melilla" element={<CeutaMelillaPage />} />
                     <Route path="/canarias" element={<CanariasPage />} />
                     <Route path="/creadores-de-contenido" element={<CreatorsPage />} />
+                    <Route path="/checklist-borrador" element={<ChecklistBorradorPage />} />
+                    <Route path="/obligado-declarar" element={<ObligadoDeclararPage />} />
 
                     {/* Protected Routes (require auth + subscription) */}
                     <Route
@@ -129,6 +134,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <NetSalaryPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/calculadora-m130"
+                        element={
+                            <ProtectedRoute>
+                                <M130CalculatorPage />
                             </ProtectedRoute>
                         }
                     />
