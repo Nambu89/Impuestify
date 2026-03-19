@@ -474,6 +474,197 @@ class DeductionDiscoverResponse(BaseModel):
     missing_questions: List[dict] = []
 
 
+
+# === Net Salary Calculator for Autonomos (lightweight, no LLM) ===
+
+class NetSalaryRequest(BaseModel):
+    facturacion_bruta_mensual: float  # Lo que factura al mes (sin IVA)
+    tipo_iva: float = 21.0  # IVA que aplica (21%, 10%, 4%, 0% para exentos)
+    retencion_irpf: float = 15.0  # % retencion IRPF en facturas (15% normal, 7% nuevos autonomos)
+    cuota_autonomo_mensual: float = 293.0  # Cuota SS mensual (base minima 2026: 293 EUR)
+    gastos_deducibles_mensual: float = 0  # Gastos mensuales deducibles
+    comunidad_autonoma: Optional[str] = None  # Para calcular tipo medio IRPF real
+    es_nuevo_autonomo: bool = False  # Primeros 2 anos: tipo reducido 7%
+
+
+class NetSalaryResponse(BaseModel):
+    success: bool = True
+    # Mensual
+    facturacion_bruta: float
+    iva_repercutido: float
+    total_factura: float
+    retencion_irpf_factura: float
+    cobro_efectivo: float
+    cuota_autonomo: float
+    gastos_deducibles: float
+    iva_a_pagar_hacienda: float
+    neto_mensual: float
+    # Anual
+    facturacion_bruta_anual: float
+    irpf_estimado_anual: float
+    cuota_autonomo_anual: float
+    neto_anual: float
+    # Resumen
+    tipo_irpf_efectivo: float
+    porcentaje_neto: float
+    ahorro_retencion_vs_irpf: float
+    error: Optional[str] = None
+
+
+# Tramos IRPF estatal 2025 (Art. 63 LIRPF)
+_TRAMOS_IRPF_2025 = [
+    (12450.0,   0.19),
+    (7750.0,    0.24),   # 20200 - 12450
+    (15000.0,   0.30),   # 35200 - 20200
+    (24800.0,   0.37),   # 60000 - 35200
+    (240000.0,  0.45),   # 300000 - 60000
+    (float("inf"), 0.47),
+]
+
+
+def _calcular_irpf_simplificado(base_imponible: float) -> float:
+    """Calcula cuota IRPF anual usando escala estatal+autonómica simplificada 2025.
+
+    La cuota total se estima como el doble de la cuota estatal (mitad estatal +
+    mitad autonómica media), aproximacion razonable para la escala general.
+    """
+    if base_imponible <= 0:
+        return 0.0
+
+    # Minimo personal exento (5.550 EUR contribuyente sin hijos)
+    MINIMO_PERSONAL = 5550.0
+    base_liquidable = max(base_imponible - MINIMO_PERSONAL, 0.0)
+
+    cuota_estatal = 0.0
+    restante = base_liquidable
+    for tramo, tipo in _TRAMOS_IRPF_2025:
+        if restante <= 0:
+            break
+        aplicable = min(restante, tramo)
+        cuota_estatal += aplicable * tipo
+        restante -= aplicable
+
+    # Cuota total = estatal + autonómica (aprox misma escala que la estatal)
+    return round(cuota_estatal * 2, 2)
+
+
+def _compute_net_salary(body: NetSalaryRequest) -> NetSalaryResponse:
+    """Logica pura de calculo de sueldo neto autonomo.
+
+    Separada del endpoint HTTP para poder ser testeada directamente sin
+    pasar por el decorador de slowapi (que requiere Request real de Starlette).
+    """
+    # Si es nuevo autonomo, la retencion es 7% (Art. 101.5.b LIRPF)
+    retencion_pct = 7.0 if body.es_nuevo_autonomo else body.retencion_irpf
+
+    # --- Mensual ---
+    iva_repercutido = round(body.facturacion_bruta_mensual * body.tipo_iva / 100, 2)
+    total_factura = round(body.facturacion_bruta_mensual + iva_repercutido, 2)
+    retencion_irpf_factura = round(body.facturacion_bruta_mensual * retencion_pct / 100, 2)
+    cobro_efectivo = round(total_factura - retencion_irpf_factura, 2)
+
+    # IVA soportado simplificado: 21% sobre gastos deducibles (estimacion conservadora)
+    iva_soportado = round(body.gastos_deducibles_mensual * 0.21, 2)
+    iva_a_pagar_hacienda = round(max(iva_repercutido - iva_soportado, 0.0), 2)
+
+    neto_mensual = round(
+        cobro_efectivo - body.cuota_autonomo_mensual - body.gastos_deducibles_mensual,
+        2,
+    )
+
+    # --- Anual ---
+    facturacion_anual = round(body.facturacion_bruta_mensual * 12, 2)
+    cuota_autonomo_anual = round(body.cuota_autonomo_mensual * 12, 2)
+    gastos_anuales = round(body.gastos_deducibles_mensual * 12, 2)
+
+    # Rendimiento neto de actividades economicas (estimacion directa simplificada)
+    rendimiento_bruto = facturacion_anual - gastos_anuales - cuota_autonomo_anual
+
+    # Gastos de dificil justificacion: 5% rendimiento neto previo (max 2.000 EUR, Art. 30.2 LIRPF)
+    gasto_dificil = round(min(max(rendimiento_bruto, 0.0) * 0.05, 2000.0), 2)
+    base_imponible = round(max(rendimiento_bruto - gasto_dificil, 0.0), 2)
+
+    irpf_estimado_anual = _calcular_irpf_simplificado(base_imponible)
+
+    retencion_anual = round(facturacion_anual * retencion_pct / 100, 2)
+    ahorro_retencion_vs_irpf = round(retencion_anual - irpf_estimado_anual, 2)
+
+    neto_anual = round(
+        facturacion_anual - irpf_estimado_anual - cuota_autonomo_anual - gastos_anuales,
+        2,
+    )
+
+    # --- Resumen ---
+    tipo_irpf_efectivo = (
+        round((irpf_estimado_anual / facturacion_anual) * 100, 2)
+        if facturacion_anual > 0
+        else 0.0
+    )
+    porcentaje_neto = (
+        round((neto_anual / facturacion_anual) * 100, 2)
+        if facturacion_anual > 0
+        else 0.0
+    )
+
+    return NetSalaryResponse(
+        success=True,
+        facturacion_bruta=body.facturacion_bruta_mensual,
+        iva_repercutido=iva_repercutido,
+        total_factura=total_factura,
+        retencion_irpf_factura=retencion_irpf_factura,
+        cobro_efectivo=cobro_efectivo,
+        cuota_autonomo=body.cuota_autonomo_mensual,
+        gastos_deducibles=body.gastos_deducibles_mensual,
+        iva_a_pagar_hacienda=iva_a_pagar_hacienda,
+        neto_mensual=neto_mensual,
+        facturacion_bruta_anual=facturacion_anual,
+        irpf_estimado_anual=irpf_estimado_anual,
+        cuota_autonomo_anual=cuota_autonomo_anual,
+        neto_anual=neto_anual,
+        tipo_irpf_efectivo=tipo_irpf_efectivo,
+        porcentaje_neto=porcentaje_neto,
+        ahorro_retencion_vs_irpf=ahorro_retencion_vs_irpf,
+    )
+
+
+@router.post("/net-salary", response_model=NetSalaryResponse)
+@limiter.limit("60/minute")
+async def calculate_net_salary(
+    request: Request,
+    body: NetSalaryRequest,
+    current_user: TokenData = Depends(get_current_user),
+):
+    """Calcula el sueldo neto mensual y anual de un autonomo despues de impuestos.
+
+    Sin LLM — calculo directo (~10ms). Incluye IVA repercutido, retencion IRPF,
+    cuota SS, gastos deducibles y estimacion de IRPF anual real.
+    """
+    try:
+        return _compute_net_salary(body)
+    except Exception as e:
+        logger.exception("Error en calculate_net_salary")
+        return NetSalaryResponse(
+            success=False,
+            facturacion_bruta=0,
+            iva_repercutido=0,
+            total_factura=0,
+            retencion_irpf_factura=0,
+            cobro_efectivo=0,
+            cuota_autonomo=0,
+            gastos_deducibles=0,
+            iva_a_pagar_hacienda=0,
+            neto_mensual=0,
+            facturacion_bruta_anual=0,
+            irpf_estimado_anual=0,
+            cuota_autonomo_anual=0,
+            neto_anual=0,
+            tipo_irpf_efectivo=0,
+            porcentaje_neto=0,
+            ahorro_retencion_vs_irpf=0,
+            error=str(e),
+        )
+
+
 @router.post("/deductions/discover", response_model=DeductionDiscoverResponse)
 @limiter.limit("30/minute")
 async def discover_deductions_endpoint(

@@ -1,0 +1,656 @@
+/* ============================================================
+   NetSalaryPage.css — Calculadora Sueldo Neto Autonomo
+   Dark theme — Professional Blue palette
+   ============================================================ */
+
+.ns-page {
+    min-height: 100vh;
+    background: var(--color-secondary);
+    color: var(--color-white);
+}
+
+/* ---- Main container ---- */
+.ns-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+}
+
+/* ---- Hero ---- */
+.ns-hero {
+    text-align: center;
+    padding: 3rem 1rem 2.5rem;
+}
+
+.ns-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+    color: var(--color-white);
+}
+
+.ns-title-highlight {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.ns-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+    max-width: 520px;
+    margin-inline: auto;
+}
+
+/* ---- Layout ---- */
+.ns-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.ns-layout--split {
+    /* en desktop con resultado visible, 2 columnas */
+}
+
+@media (min-width: 900px) {
+    .ns-layout--split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+        gap: 2rem;
+    }
+}
+
+/* ---- Inputs panel ---- */
+.ns-inputs-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* ---- Input principal ---- */
+.ns-main-input-wrap {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem 1.75rem;
+    backdrop-filter: blur(12px);
+}
+
+.ns-main-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+}
+
+.ns-main-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-xl, 14px);
+    padding: 0.75rem 1.25rem;
+    transition: border-color 0.2s;
+}
+
+.ns-main-input-row:focus-within {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.ns-euro-icon {
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+.ns-main-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-white);
+    min-width: 0;
+    -moz-appearance: textfield;
+}
+
+.ns-main-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.ns-main-input::-webkit-outer-spin-button,
+.ns-main-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+.ns-eur-suffix {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+}
+
+.ns-main-hint {
+    margin: 0.75rem 0 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ---- Advanced section ---- */
+.ns-advanced {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.ns-advanced-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+}
+
+.ns-advanced-toggle:hover {
+    color: var(--color-white);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.ns-advanced-body {
+    padding: 0.5rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* ---- Form fields ---- */
+.ns-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ns-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.ns-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.ns-field-hint {
+    margin: 0;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.ns-radio-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ns-radio-btn {
+    padding: 0.45rem 1rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ns-radio-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-white);
+}
+
+.ns-radio-btn--active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-white);
+    box-shadow: 0 2px 8px rgba(26, 86, 219, 0.35);
+}
+
+.ns-input {
+    height: 44px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 0 1rem;
+    color: var(--color-white);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+}
+
+.ns-input::-webkit-outer-spin-button,
+.ns-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+.ns-input:focus {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* ---- Toggle (nuevo autonomo) ---- */
+.ns-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+}
+
+.ns-toggle-input {
+    display: none;
+}
+
+.ns-toggle-track {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.ns-toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transition: transform 0.2s, background 0.2s;
+}
+
+.ns-toggle-input:checked + .ns-toggle-track {
+    background: var(--color-primary);
+}
+
+.ns-toggle-input:checked + .ns-toggle-track::after {
+    transform: translateX(16px);
+    background: white;
+}
+
+/* ---- Disclaimer ---- */
+.ns-disclaimer {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.875rem 1.25rem;
+    background: rgba(6, 182, 212, 0.06);
+    border: 1px solid rgba(6, 182, 212, 0.15);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1.5;
+}
+
+.ns-disclaimer svg {
+    flex-shrink: 0;
+    color: var(--color-accent);
+    margin-top: 1px;
+}
+
+.ns-link {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.ns-link:hover {
+    color: var(--color-primary-light);
+}
+
+/* ============================================================
+   Resultado
+   ============================================================ */
+.ns-result-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    animation: nsFadeSlide 0.3s ease;
+}
+
+@keyframes nsFadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---- Loading ---- */
+.ns-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+}
+
+.ns-spinner {
+    width: 22px;
+    height: 22px;
+    border: 2.5px solid rgba(255, 255, 255, 0.15);
+    border-top-color: var(--color-primary-light);
+    border-radius: 50%;
+    animation: nsSpin 0.8s linear infinite;
+}
+
+@keyframes nsSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ---- Error ---- */
+.ns-error {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 12px;
+    color: rgba(252, 165, 165, 0.9);
+    font-size: 0.9rem;
+}
+
+/* ---- Net card ---- */
+.ns-net-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.1));
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 20px;
+    padding: 2rem 1.75rem;
+    text-align: center;
+    backdrop-filter: blur(12px);
+}
+
+.ns-net-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(52, 211, 153, 0.85);
+    margin-bottom: 0.75rem;
+}
+
+.ns-net-amount {
+    font-size: clamp(2.4rem, 6vw, 3.5rem);
+    font-weight: 800;
+    color: #34d399;
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.ns-net-currency {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: rgba(52, 211, 153, 0.7);
+}
+
+.ns-net-annual {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    color: rgba(52, 211, 153, 0.65);
+    font-weight: 500;
+}
+
+.ns-net-pct {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* ---- Breakdown card ---- */
+.ns-breakdown-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.ns-breakdown-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0 0 1.25rem;
+}
+
+.ns-breakdown-row {
+    margin-bottom: 0.85rem;
+}
+
+.ns-breakdown-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.ns-breakdown-label {
+    flex: 1;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.6);
+    min-width: 0;
+}
+
+.ns-breakdown-amount {
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.ns-breakdown-pct {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+    min-width: 38px;
+    text-align: right;
+}
+
+.ns-breakdown-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ns-breakdown-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ns-breakdown-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.5rem 0;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+/* ---- Colores semanticos ---- */
+.ns-color-base {
+    color: rgba(255, 255, 255, 0.8);
+}
+.ns-color-base.ns-breakdown-fill {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ns-color-irpf {
+    color: #f87171;
+}
+.ns-color-irpf.ns-breakdown-fill {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.ns-color-cuota {
+    color: #fb923c;
+}
+.ns-color-cuota.ns-breakdown-fill {
+    background: linear-gradient(90deg, #f97316, #fb923c);
+}
+
+.ns-color-iva {
+    color: #fbbf24;
+}
+.ns-color-iva.ns-breakdown-fill {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.ns-color-gastos {
+    color: rgba(255, 255, 255, 0.4);
+}
+.ns-color-gastos.ns-breakdown-fill {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ns-color-neto {
+    color: #34d399;
+}
+.ns-color-neto.ns-breakdown-fill {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+/* ---- Info card ---- */
+.ns-info-card {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.83rem;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.ns-info-card svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ns-info-card p {
+    margin: 0;
+}
+
+.ns-info-card p + p {
+    margin-top: 0.4rem;
+}
+
+.ns-info-card--devolucion {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.ns-info-card--devolucion svg {
+    color: #34d399;
+}
+
+.ns-info-card--pago {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.ns-info-card--pago svg {
+    color: #f87171;
+}
+
+.ns-info-highlight {
+    font-weight: 600;
+}
+
+.ns-info-highlight--green {
+    color: #34d399;
+}
+
+.ns-info-highlight--red {
+    color: #f87171;
+}
+
+/* ============================================================
+   Responsive — mobile first
+   ============================================================ */
+@media (max-width: 600px) {
+    .ns-main {
+        padding: 1rem 1rem 3rem;
+    }
+
+    .ns-hero {
+        padding: 2rem 0.5rem 1.5rem;
+    }
+
+    .ns-main-input-wrap {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .ns-main-input {
+        font-size: 1.6rem;
+    }
+
+    .ns-advanced-body {
+        padding: 0.5rem 1.25rem 1.25rem;
+    }
+
+    .ns-label-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ns-net-card {
+        padding: 1.5rem 1.25rem;
+    }
+}

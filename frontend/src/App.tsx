@@ -34,6 +34,7 @@ const DeclarationsPage = lazy(() => import('./pages/DeclarationsPage'))
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const CryptoPage = lazy(() => import('./pages/CryptoPage'))
 const CreatorsPage = lazy(() => import('./pages/CreatorsPage'))
+const NetSalaryPage = lazy(() => import('./pages/NetSalaryPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -120,6 +121,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <CalendarPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/calculadora-neto"
+                        element={
+                            <ProtectedRoute>
+                                <NetSalaryPage />
                             </ProtectedRoute>
                         }
                     />

@@ -1,0 +1,64 @@
+# RuFlo V3 Runtime Configuration
+# Generated: 2026-03-19T18:44:49.533Z
+
+version: "3.0.0"
+
+swarm:
+  topology: hierarchical-mesh
+  maxAgents: 15
+  autoScale: true
+  coordinationStrategy: consensus
+
+memory:
+  backend: hybrid
+  enableHNSW: true
+  persistPath: .claude-flow/data
+  cacheSize: 100
+  # ADR-049: Self-Learning Memory
+  learningBridge:
+    enabled: true
+    sonaMode: balanced
+    confidenceDecayRate: 0.005
+    accessBoostAmount: 0.03
+    consolidationThreshold: 10
+  memoryGraph:
+    enabled: true
+    pageRankDamping: 0.85
+    maxNodes: 5000
+    similarityThreshold: 0.8
+  agentScopes:
+    enabled: true
+    defaultScope: project
+
+neural:
+  enabled: true
+  modelPath: .claude-flow/neural
+
+hooks:
+  enabled: true
+  autoExecute: true
+
+mcp:
+  autoStart: false
+  port: 3000
+
+# === Impuestify Project Integration ===
+project:
+  name: impuestify
+  teamDefinition: .claude-flow/agents/impuestify-team.yaml
+  # Existing agent definitions (Ruflo reads these for context)
+  agentSources: .claude/agents/
+  skillSources: .claude/skills/
+  commandSources: .claude/commands/
+  # Memory source of truth (Ruflo indexes read-only, does NOT write)
+  memorySource: memory/
+  memoryIndex: memory/MEMORY.md
+  # Inter-agent communication log
+  commLog: agent-comms.md
+  # Project docs for context
+  projectDocs:
+    - CLAUDE.md
+    - backend/CLAUDE.md
+    - frontend/CLAUDE.md
+    - plans/ROADMAP.md
+    - plans/DECISIONS.md

@@ -1,0 +1,267 @@
+# Impuestify Development Team — Ruflo Agent Definitions
+# Maps to existing .claude/agents/*.md definitions
+# Ruflo uses these for swarm orchestration and routing
+
+version: "1.0"
+team: impuestify
+
+# === QUEEN: Strategic Coordinator ===
+agents:
+  - name: pm-coordinator
+    role: queen
+    tier: strategic
+    model: opus
+    source: .claude/agents/pm-coordinator.md
+    capabilities:
+      - project-management
+      - roadmap-planning
+      - architecture-decisions
+      - task-decomposition
+      - delegation
+      - research
+    domains:
+      - management
+      - research
+      - documentation
+    skills:
+      - project-research
+      - roadmap-manager
+    maxConcurrent: 1
+    timeout: 600
+
+  # === TACTICAL QUEENS ===
+  - name: backend-architect
+    role: queen
+    tier: tactical
+    model: opus
+    source: .claude/agents/backend-architect.md
+    capabilities:
+      - fastapi
+      - python
+      - database-turso
+      - security
+      - api-design
+      - testing-backend
+    domains:
+      - backend
+      - database
+      - security
+    skills:
+      - turso-patterns
+      - security-layers
+      - sse-streaming
+      - stripe-integration
+      - irpf-calculation
+    maxConcurrent: 2
+    timeout: 600
+
+  - name: frontend-dev
+    role: queen
+    tier: tactical
+    model: opus
+    source: .claude/agents/frontend-dev.md
+    capabilities:
+      - react
+      - typescript
+      - css
+      - vite
+      - pwa
+      - ux-design
+    domains:
+      - frontend
+      - ui
+      - styling
+    skills:
+      - playwright-testing
+    maxConcurrent: 2
+    timeout: 600
+
+  # === WORKERS ===
+  - name: python-pro
+    role: worker
+    tier: execution
+    model: sonnet
+    source: .claude/agents/python-pro.md
+    capabilities:
+      - python-optimization
+      - debugging
+      - async-patterns
+      - profiling
+    domains:
+      - backend
+      - optimization
+    skills:
+      - systematic-debugging
+    maxConcurrent: 1
+    timeout: 300
+
+  - name: qa-tester
+    role: worker
+    tier: execution
+    model: sonnet
+    source: .claude/agents/qa-tester.md
+    capabilities:
+      - playwright-e2e
+      - regression-testing
+      - bug-reporting
+      - screenshot-verification
+    domains:
+      - qa
+      - testing
+    skills:
+      - playwright-testing
+      - verification-before-completion
+    maxConcurrent: 1
+    timeout: 600
+
+  - name: doc-crawler
+    role: worker
+    tier: execution
+    model: haiku
+    source: .claude/agents/doc-crawler.md
+    capabilities:
+      - web-crawling
+      - pdf-extraction
+      - document-classification
+      - rate-limiting
+    domains:
+      - research
+      - documentation
+    maxConcurrent: 1
+    timeout: 300
+
+  - name: competitive-intel
+    role: worker
+    tier: execution
+    model: sonnet
+    source: .claude/agents/competitive-intel.md
+    capabilities:
+      - market-analysis
+      - pricing-research
+      - competitor-tracking
+      - trend-analysis
+    domains:
+      - research
+      - strategy
+    skills:
+      - project-research
+    maxConcurrent: 1
+    timeout: 300
+
+  - name: doc-auditor
+    role: worker
+    tier: execution
+    model: haiku
+    source: .claude/agents/doc-auditor.md
+    capabilities:
+      - documentation-audit
+      - changelog-update
+      - readme-maintenance
+      - memory-management
+    domains:
+      - documentation
+    maxConcurrent: 1
+    timeout: 300
+
+  - name: plan-checker
+    role: worker
+    tier: verification
+    model: sonnet
+    source: .claude/agents/plan-checker.md
+    capabilities:
+      - plan-verification
+      - scope-analysis
+      - dependency-check
+      - risk-assessment
+    domains:
+      - qa
+      - management
+    skills:
+      - verification-before-completion
+    maxConcurrent: 1
+    timeout: 120
+    # Auto-trigger before presenting any plan to user
+    triggers:
+      - event: plan-created
+        action: verify
+
+  - name: verifier
+    role: worker
+    tier: verification
+    model: sonnet
+    source: .claude/agents/verifier.md
+    capabilities:
+      - post-implementation-check
+      - goal-backward-verification
+      - test-execution
+      - build-verification
+    domains:
+      - qa
+      - testing
+    skills:
+      - verification-before-completion
+    maxConcurrent: 1
+    timeout: 300
+    # Auto-trigger after all tasks in a plan are completed
+    triggers:
+      - event: plan-completed
+        action: verify
+
+# === ROUTING RULES ===
+routing:
+  # Domain-based routing (Q-Learning will optimize over time)
+  rules:
+    - pattern: "backend|fastapi|endpoint|router|database|turso|security"
+      agent: backend-architect
+      priority: high
+
+    - pattern: "frontend|react|component|css|hook|page|ui|ux"
+      agent: frontend-dev
+      priority: high
+
+    - pattern: "test|playwright|e2e|qa|bug|regression"
+      agent: qa-tester
+      priority: high
+
+    - pattern: "python|optimize|debug|profile|performance"
+      agent: python-pro
+      priority: medium
+
+    - pattern: "crawl|document|pdf|aeat|boe|url"
+      agent: doc-crawler
+      priority: medium
+
+    - pattern: "competitor|market|pricing|taxdown|declarando"
+      agent: competitive-intel
+      priority: medium
+
+    - pattern: "docs|readme|changelog|memory|audit"
+      agent: doc-auditor
+      priority: low
+
+    - pattern: "plan|roadmap|decision|strategy|architecture"
+      agent: pm-coordinator
+      priority: high
+
+# === COORDINATION ===
+coordination:
+  # Quality gates (mapped from CLAUDE.md)
+  qualityGates:
+    prePlan:
+      agent: plan-checker
+      required: true
+      passCondition: "PASS"
+
+    postImplementation:
+      agent: verifier
+      required: true
+      passCondition: "VERIFIED"
+
+  # Anti-drift: max task cycles before checkpoint
+  maxTaskCyclesBeforeCheckpoint: 5
+
+  # Shared memory namespace for inter-agent communication
+  sharedMemory:
+    namespace: impuestify-dev
+    # agent-comms.md equivalent — Ruflo indexes this
+    commLog: agent-comms.md
