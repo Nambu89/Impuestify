@@ -4,13 +4,15 @@
 
 ## Project Overview
 
-TaxIA (Impuestify) is a Spanish tax assistant using RAG + multi-agent architecture (FastAPI + React). Provides IRPF calculation, deduction discovery, payslip analysis, AEAT notification parsing, and an interactive 7-step tax guide (/guia-fiscal) for all 17 CCAA + 4 foral territories + Ceuta/Melilla.
+TaxIA (Impuestify) is a Spanish tax assistant using RAG + multi-agent architecture (FastAPI + React). Provides IRPF calculation, deduction discovery, payslip analysis, AEAT notification parsing, adaptive tax guides by role (Particular/Creator/Autonomo), and net salary calculator (/calculadora-neto) for autonomous workers across 5 fiscal regimes (Madrid, Andalucía, Canarias, Melilla, País Vasco). Covers all 17 CCAA + 4 foral territories + Ceuta/Melilla.
 
 ## Request Flow
 
 **Chat:** User → React frontend → FastAPI `/api/ask/stream` → JWT auth → Rate limiting → Guardrails (LlamaGuard4, prompt injection, PII) → Semantic cache → CoordinatorAgent → [TaxAgent|PayslipAgent|NotificationAgent|WorkspaceAgent] → Tools + RAG → OpenAI GPT → SSE response
 
-**Tax Guide (no LLM):** User → `/guia-fiscal` wizard → POST `/api/irpf/estimate` → `irpf_simulator.py` → JSON response (~50-100ms, no LLM, no auth required for estimate)
+**Tax Guide (no LLM):** User → `/guia-fiscal` wizard (adaptive: 7 steps for Particular, 8 for Creator/Autonomo) → POST `/api/irpf/estimate` → `irpf_simulator.py` → JSON response (~50-100ms, no LLM, no auth required for estimate)
+
+**Net Salary Calculator (no LLM):** Self-employed → `/calculadora-neto` → POST `/api/irpf/net-salary` → Backend calculates net monthly/annual salary (5 fiscal regimes: Madrid, Andalucía, Canarias, Melilla, País Vasco) → JSON with gross, IVA, IRPF, SS, net breakdown (~100ms)
 
 ## Directory Layout
 
@@ -125,9 +127,11 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 | Creator | 49 EUR/mes | Influencers, YouTubers, streamers, bloggers | + IVA by platform, Modelo 349, DAC7, CNAE 60.39, multi-role profiles |
 | Autonomo | 39 EUR/mes IVA incl. | Self-employed | + All models (303/130/131), crypto, workspace, calendar |
 
-## Key Updates (2026-03-17)
+## Key Updates (2026-03-19)
 
-- **Tests**: 1083+ backend PASS + frontend build OK
+- **Tests**: 1104+ backend PASS (21 new net-salary) + frontend build OK
+- **Adaptive Tax Guide by Role**: PARTICULAR (7 steps), CREATOR (8 steps + plataformas/IAE/IVA intracomunitario/withholding/M349), AUTONOMO (8 steps + actividad económica). Adaptive result with role-specific obligations
+- **Net Salary Calculator** (NEW): `/calculadora-neto` endpoint. 5 fiscal regimes (Madrid common IVA 21%, Andalucía, Canarias IGIC 7%, Melilla IPSI 4% + 60% deduction, País Vasco 7-tranche foral). SS auto-calculated by income (15 brackets RDL 13/2022). IGIC/IPSI auto-detection. 21 tests PASS. Disclaimer on each response
 - **Crawler**: 90 URLs, 23 territories + Creators/Influencers docs
 - **Feedback System**: Widget + ChatRating + Admin Dashboard (3 pages) COMPLETE
 - **XSD Modelo 100**: ~100% coverage (granular expenses, modules, royalties, IAE lookup)
@@ -143,6 +147,6 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 
 When context reaches ~50%, Claude Code compresses history. To preserve critical info:
 - Re-read `CLAUDE.md` + relevant descendant CLAUDE.md after compaction
-- Check `memory/MEMORY.md` for project state (updated 2026-03-17, session 12)
+- Check `memory/MEMORY.md` for project state (updated 2026-03-19, session 15)
 - Check `agent-comms.md` for pending inter-agent tasks
 - Check `claude-progress.txt` for session history

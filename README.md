@@ -36,16 +36,31 @@ Impuestify es un asistente fiscal especializado en normativa española que utili
 - Endpoint REST: `POST /api/irpf/estimate` — sin LLM, ~50-100ms de latencia
 - Los forales (Pais Vasco + Navarra) usan su propio sistema IRPF; no incluyen deducciones estatales
 
-### Guia Fiscal Interactiva (Tax Guide Wizard)
+### Guia Fiscal Adaptativa por Rol
 
-- Asistente de 7 pasos en `/guia-fiscal` que guia al usuario por toda su declaracion
-- Pasos: Personal → Trabajo → Ahorro → Inmuebles → Familia → Deducciones → Resultado
-- **LiveEstimatorBar**: barra sticky en movil / panel lateral en escritorio con estimacion en tiempo real
-  - Verde con animacion CountUp para devoluciones, rojo para cuotas a pagar
-  - Llamadas con debounce de 600ms y AbortController
+- Wizard inteligente en `/guia-fiscal` que adapta pasos y campos segun el plan del usuario:
+  - **Particular (7 pasos)**: Personal → Trabajo → Ahorro → Inmuebles → Familia → Deducciones → Resultado
+  - **Creator (8 pasos)**: + Step dedicado "Actividad como creador" con grid de 10 plataformas (YouTube, Twitch, TikTok, Instagram, OnlyFans, Patreon...), selector de epigrafe IAE, gastos de creador, info IVA intracomunitario, withholding tax W-8BEN, Modelo 349
+  - **Autonomo (8 pasos)**: + Step dedicado "Actividad economica" con ingresos, gastos, cuota SS, retenciones, pagos fraccionados M130
+- **Resultado adaptativo**: muestra obligaciones por rol (M349/DAC7 para creators, M130/M303/RETA para autonomos)
+- **LiveEstimatorBar**: barra sticky con estimacion en tiempo real (debounce 600ms)
 - Persistencia en localStorage via hook `useTaxGuideProgress`
-- Pre-rellena datos desde el perfil fiscal existente del usuario
-- "Guardar en mi perfil" sincroniza los datos del wizard al perfil fiscal
+
+### Calculadora Sueldo Neto Autonomo (NUEVO)
+
+- Pagina dedicada `/calculadora-neto`: **"¿Cuanto te queda limpio?"**
+- Input: facturacion bruta mensual → resultado inmediato con desglose visual
+- **5 regimenes fiscales** con deteccion automatica por CCAA:
+  - Madrid/Andalucia: IVA 21%, escala comun
+  - Canarias: IGIC 7% (auto-detectado)
+  - Ceuta/Melilla: IPSI 4% + deduccion 60% cuota IRPF (Art. 68.4 LIRPF)
+  - Pais Vasco: escala foral propia (7 tramos)
+  - Navarra: escala foral propia (11 tramos)
+- **Cuota SS auto-calculada** por ingresos reales (15 tramos, RDL 13/2022)
+- Desglose: facturacion bruta, IVA/IGIC/IPSI, retencion IRPF, cuota autonomo, gastos, neto mensual y anual
+- Barras visuales proporcionales con colores semanticos
+- Disclaimer legal en cada respuesta
+- 21 tests backend PASS (territoriales + edge cases)
 
 ### Motor de Deducciones
 
@@ -521,6 +536,20 @@ TaxIA/
 +-- railway.toml
 +-- README.md
 ```
+
+## v3.3 - Marzo 2026 (Sesion 15)
+
+### Novedades principales
+
+**Guia Fiscal Adaptativa por Rol** — La guia `/guia-fiscal` ahora muestra pasos diferentes segun el plan: Particular (7 pasos simplificados), Creator (8 pasos con grid de plataformas, IAE, IVA intracomunitario, withholding tax, M349, DAC7), Autonomo (8 pasos con actividad economica). Resultado con obligaciones especificas por rol.
+
+**Calculadora Sueldo Neto Autonomo** — Nueva pagina `/calculadora-neto`. La unica calculadora en Espana que cubre automaticamente los 5 regimenes fiscales: comun (IVA 21%), Canarias (IGIC 7%), Ceuta/Melilla (IPSI 4% + deduccion 60%), Pais Vasco (escala foral 7 tramos) y Navarra (11 tramos). Cuota SS auto-calculada por ingresos reales (15 tramos, RDL 13/2022). 21 tests.
+
+**Ruflo v3.5 Integration** — Plataforma de orquestacion multi-agente para el workflow de desarrollo. 10 agentes registrados, 13 hooks lifecycle, memoria semantica HNSW, background daemon workers. Mejora la productividad del equipo de desarrollo.
+
+**Research de Necesidades** — Investigacion exhaustiva de las necesidades de particulares, autonomos y creadores. Cobertura: 70% particular, 60% autonomo, 90% creador.
+
+---
 
 ## v3.2 - Marzo 2026 (Sesion 12)
 

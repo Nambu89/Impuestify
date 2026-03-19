@@ -85,7 +85,7 @@ Pipeline (in order):
 | `export.py` | `/api/export` | PDF export + email to advisor |
 | `subscriptions.py` | `/api/subscriptions` | Stripe checkout + portal |
 | `admin.py` | `/api/admin` | Owner-only user admin |
-| `irpf_estimate.py` | `/api/irpf` | **NEW**: Lightweight POST /api/irpf/estimate (no LLM, ~50-100ms) |
+| `irpf_estimate.py` | `/api/irpf` | Lightweight POST /api/irpf/estimate (no LLM, ~50-100ms) + **NEW** POST /api/irpf/net-salary (net salary calculator, 5 regimes, 21 tests) |
 
 ## Tools (Function Calling) (`app/tools/`)
 

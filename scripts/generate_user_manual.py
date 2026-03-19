@@ -414,44 +414,78 @@ def build_manual():
     )
 
     # --- 8. Guía Fiscal interactiva ---
-    doc.add_heading('8. Guía Fiscal interactiva', level=1)
+    doc.add_heading('8. Guía Fiscal interactiva (adaptativa por rol)', level=1)
     doc.add_paragraph(
-        'La Guía Fiscal es un asistente paso a paso que te ayuda a estimar tu declaración de la renta '
-        'de forma visual e interactiva. Accede desde el menú principal > "Guía Fiscal".'
+        'La Guía Fiscal es un asistente paso a paso que adapta su contenido según tu plan de suscripción. '
+        'Accede desde el menú principal > "Guía Fiscal".'
     )
 
-    doc.add_heading('Los 7 pasos', level=2)
+    doc.add_heading('Plan Particular (7 pasos)', level=2)
+    doc.add_paragraph(
+        'Si tu plan es Particular, la guía muestra 7 pasos simplificados sin la sección de actividad económica:'
+    )
     add_step(doc, 1, 'Datos personales',
-             'Indica tu comunidad autónoma, edad, y si tributas en régimen conjunto. '
-             'Si vives en Ceuta o Melilla, se aplicará automáticamente la bonificación del 60%.')
-    add_step(doc, 2, 'Trabajo',
-             'Introduce tus ingresos brutos del trabajo, cotizaciones a la Seguridad Social '
-             'y retenciones IRPF practicadas por tu empresa.')
-    add_step(doc, 3, 'Ahorro e inversiones',
-             'Indica intereses bancarios, dividendos, ganancias de fondos de inversión y sus retenciones.')
-    add_step(doc, 4, 'Inmuebles',
-             'Si tienes inmuebles en alquiler, indica ingresos y gastos. Si pagaste alquiler de vivienda '
-             'habitual antes de 2015, puedes aplicar la deducción transitoria. También se calculan las '
-             'rentas imputadas de segundas viviendas.')
-    add_step(doc, 5, 'Familia',
-             'Información sobre descendientes (hijos), ascendientes mayores de 65/75 años, '
-             'discapacidad, maternidad y familia numerosa.')
-    add_step(doc, 6, 'Deducciones',
-             'Planes de pensiones, hipoteca anterior a 2013, donativos a ONGs... '
-             'El sistema aplica automáticamente los límites legales.')
-    add_step(doc, 7, 'Resultado',
-             'Visualiza el resultado completo: cuota líquida, retenciones pagadas, resultado '
-             '(a pagar o a devolver), tipo medio efectivo y desglose de todas las deducciones aplicadas.')
+             'Comunidad autónoma, edad, tributación conjunta. Si vives en Ceuta/Melilla, bonificación 60% automática.')
+    add_step(doc, 2, 'Trabajo', 'Ingresos brutos, cotizaciones SS, retenciones IRPF.')
+    add_step(doc, 3, 'Ahorro e inversiones', 'Intereses, dividendos, fondos, criptomonedas.')
+    add_step(doc, 4, 'Inmuebles', 'Alquileres, deducción pre-2015, rentas imputadas.')
+    add_step(doc, 5, 'Familia', 'Descendientes, ascendientes, discapacidad, maternidad.')
+    add_step(doc, 6, 'Deducciones', 'Planes de pensiones, hipoteca pre-2013, donativos, deducciones autonómicas.')
+    add_step(doc, 7, 'Resultado', 'Cuota líquida, retenciones, resultado (a pagar o devolver), tipo medio efectivo.')
+
+    doc.add_heading('Plan Creator (8 pasos)', level=2)
+    doc.add_paragraph(
+        'Si tu plan es Creator, la guía incluye un paso dedicado "Actividad como creador" con:'
+    )
+    doc.add_paragraph(
+        '• Grid de 10 plataformas (YouTube, Twitch, TikTok, Instagram, OnlyFans, Patreon, Substack, sponsors, merch, otros)\n'
+        '• Selector de epígrafe IAE (8690, 9020, 6010.1, 961.1)\n'
+        '• Gastos deducibles de creador (equipo, software, coworking, transporte, formación)\n'
+        '• Información sobre IVA intracomunitario (Google Ireland, Amazon Luxembourg, Meta Ireland)\n'
+        '• Withholding tax W-8BEN (retención plataformas USA)\n'
+        '• Toggle Modelo 349 (operaciones intracomunitarias)\n'
+        '• Resultado con obligaciones: Modelo 349, Modelo 130, DAC7, epígrafe IAE'
+    )
+
+    doc.add_heading('Plan Autónomo (8 pasos)', level=2)
+    doc.add_paragraph(
+        'Si tu plan es Autónomo, la guía incluye un paso dedicado "Actividad económica" con ingresos, '
+        'gastos, cuota autónomos, amortizaciones, régimen de estimación (directa simplificada/normal/objetiva), '
+        'retenciones y pagos fraccionados. El resultado muestra obligaciones: Modelo 130, Modelo 303, cuota RETA.'
+    )
 
     doc.add_paragraph(
         'Mientras completas los pasos, una barra de estimación en tiempo real te muestra el resultado '
-        'parcial. Verde si te sale a devolver, rojo si te sale a pagar, con el importe actualizado '
-        'automáticamente.'
+        'parcial. Verde si te sale a devolver, rojo si te sale a pagar.'
     )
 
+    doc.add_heading('8a. Calculadora Sueldo Neto (NUEVO)', level=1)
     doc.add_paragraph(
-        'Al terminar, puedes pedir a la IA que guarde los datos en tu perfil fiscal. '
-        'Los campos se rellenan automáticamente con los datos que has introducido durante la guía.'
+        'La Calculadora de Sueldo Neto responde a la pregunta más frecuente de los autónomos: '
+        '"¿Cuánto me queda limpio de lo que facturo?". Accede desde el menú > "Calculadora Neto" '
+        'o directamente en /calculadora-neto.'
+    )
+    doc.add_paragraph(
+        'Introduce tu facturación mensual bruta y obtén un desglose inmediato: IVA/IGIC/IPSI repercutido, '
+        'retención IRPF, cuota de autónomos, gastos deducibles y tu neto real mensual y anual.'
+    )
+    doc.add_heading('5 regímenes fiscales automáticos', level=2)
+    doc.add_paragraph(
+        'La calculadora detecta automáticamente tu régimen fiscal según tu comunidad autónoma:\n\n'
+        '• Madrid, Andalucía y resto de régimen común: IVA 21%, escala IRPF estatal + autonómica\n'
+        '• Canarias: IGIC 7% (en vez de IVA 21%), misma escala IRPF\n'
+        '• Ceuta y Melilla: IPSI 4% + deducción del 60% sobre la cuota IRPF (Art. 68.4 LIRPF)\n'
+        '• País Vasco (Araba, Bizkaia, Gipuzkoa): IVA 21% pero escala IRPF foral propia (7 tramos)\n'
+        '• Navarra: escala IRPF foral propia (11 tramos)'
+    )
+    doc.add_paragraph(
+        'La cuota de Seguridad Social se calcula automáticamente según tus ingresos reales '
+        '(sistema de cotización por ingresos reales, RDL 13/2022, 15 tramos). '
+        'También puedes introducir tu cuota manualmente si la conoces.'
+    )
+    doc.add_paragraph(
+        'Nota: esta estimación es orientativa. El resultado real depende de tu situación personal, '
+        'familiar y de tu comunidad autónoma. Consulta con un asesor fiscal para una declaración precisa.'
     )
 
     # --- 8b. Calendario fiscal ---
