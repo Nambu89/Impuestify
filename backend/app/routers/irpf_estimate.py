@@ -478,12 +478,12 @@ class DeductionDiscoverResponse(BaseModel):
 # === Net Salary Calculator for Autonomos (lightweight, no LLM) ===
 
 class NetSalaryRequest(BaseModel):
-    facturacion_bruta_mensual: float  # Lo que factura al mes (sin IVA)
-    tipo_iva: float = 21.0  # IVA que aplica (21%, 10%, 4%, 0% para exentos)
+    facturacion_bruta_mensual: float  # Lo que factura al mes (sin IVA/IGIC/IPSI)
+    tipo_iva: Optional[float] = None  # None = auto-detectar por CCAA (IVA 21%, IGIC 7%, IPSI 4%)
     retencion_irpf: float = 15.0  # % retencion IRPF en facturas (15% normal, 7% nuevos autonomos)
-    cuota_autonomo_mensual: float = 293.0  # Cuota SS mensual (base minima 2026: 293 EUR)
+    cuota_autonomo_mensual: Optional[float] = None  # None = auto-calcular por ingresos (cotizacion por ingresos reales 2025)
     gastos_deducibles_mensual: float = 0  # Gastos mensuales deducibles
-    comunidad_autonoma: Optional[str] = None  # Para calcular tipo medio IRPF real
+    comunidad_autonoma: Optional[str] = None  # Para IRPF territorial + impuesto indirecto + deducciones
     es_nuevo_autonomo: bool = False  # Primeros 2 anos: tipo reducido 7%
 
 
@@ -508,6 +508,12 @@ class NetSalaryResponse(BaseModel):
     tipo_irpf_efectivo: float
     porcentaje_neto: float
     ahorro_retencion_vs_irpf: float
+    # Territorial info
+    regimen_fiscal: Optional[str] = None  # comun, foral_vasco, foral_navarra, ceuta_melilla, canarias
+    impuesto_indirecto: Optional[str] = None  # IVA, IGIC, IPSI
+    tipo_impuesto_indirecto: Optional[float] = None  # 21%, 7%, 4%, etc.
+    deduccion_ceuta_melilla: Optional[float] = None  # 60% cuota IRPF
+    disclaimer: str = "Estimación orientativa. El resultado real depende de tu situación personal, familiar y de tu comunidad autónoma."
     error: Optional[str] = None
 
 
@@ -520,6 +526,106 @@ _TRAMOS_IRPF_2025 = [
     (240000.0,  0.45),   # 300000 - 60000
     (float("inf"), 0.47),
 ]
+
+
+# Cuota autonomos por tramos de ingresos reales 2025 (RDL 13/2022, tabla general)
+# Fuente: https://www.seg-social.es/wps/portal/wss/internet/Trabajadores/CotizacionRecaudacionTrabajadores/36537
+_CUOTAS_SS_2025 = [
+    (670,    225.0),   # Rendimiento neto mensual <= 670 EUR
+    (900,    250.0),
+    (1166.70, 267.0),
+    (1300,   291.0),
+    (1500,   294.0),
+    (1700,   294.0),
+    (1850,   310.0),
+    (2030,   315.0),
+    (2330,   320.0),
+    (2760,   330.0),
+    (3190,   350.0),
+    (3620,   370.0),
+    (4050,   390.0),
+    (6000,   400.0),
+    (float("inf"), 530.0),  # > 6000 EUR/mes
+]
+
+
+def _cuota_autonomo_por_ingresos(facturacion_bruta_mensual: float) -> float:
+    """Estima cuota SS mensual segun tabla de cotizacion por ingresos reales 2025.
+
+    El rendimiento neto se aproxima como facturacion * 0.60 (asumiendo ~40% gastos+impuestos).
+    """
+    # Rendimiento neto estimado (facturacion - gastos tipicos ~40%)
+    rendimiento_neto_mensual = facturacion_bruta_mensual * 0.60
+    for tope, cuota in _CUOTAS_SS_2025:
+        if rendimiento_neto_mensual <= tope:
+            return cuota
+    return 530.0  # maximo
+
+
+# Escala IRPF foral vasca 2025 (Bizkaia/Gipuzkoa/Araba) — 7 tramos
+_TRAMOS_FORAL_VASCO = [
+    (17360.0,  0.23),
+    (17360.0,  0.28),   # 34720 - 17360
+    (17360.0,  0.35),   # 52080 - 34720
+    (17360.0,  0.40),   # 69440 - 52080
+    (17360.0,  0.45),   # 86800 - 69440
+    (93200.0,  0.46),   # 180000 - 86800
+    (float("inf"), 0.49),
+]
+
+# Escala IRPF foral Navarra 2025 — 11 tramos (simplificada a principales)
+_TRAMOS_FORAL_NAVARRA = [
+    (4484.0,   0.13),
+    (4484.0,   0.2224),
+    (8969.0,   0.2576),
+    (12307.0,  0.3136),
+    (17913.0,  0.3552),
+    (23643.0,  0.3968),
+    (63434.0,  0.4384),
+    (99085.0,  0.468),
+    (165808.0, 0.4976),
+    (float("inf"), 0.528),
+]
+
+
+def _calcular_irpf_territorial(base_imponible: float, regime: str) -> float:
+    """Calcula IRPF anual segun el regimen territorial.
+
+    - comun/canarias: escala estatal x 2 (estatal + autonomica media)
+    - ceuta_melilla: escala comun (la deduccion 60% se aplica despues)
+    - foral_vasco: escala propia unica (no hay mitad estatal/autonomica)
+    - foral_navarra: escala propia unica
+    """
+    if base_imponible <= 0:
+        return 0.0
+
+    if regime == "foral_vasco":
+        # Minimo personal exento vasco: 5.472 EUR (se aplica como deduccion en cuota)
+        MINIMO_FORAL_VASCO = 5472.0
+        base_liq = max(base_imponible - MINIMO_FORAL_VASCO, 0.0)
+        return round(_aplicar_escala(base_liq, _TRAMOS_FORAL_VASCO), 2)
+
+    if regime == "foral_navarra":
+        # Minimo personal Navarra: diferente calculo, simplificamos con 5.500
+        MINIMO_FORAL_NAVARRA = 5500.0
+        base_liq = max(base_imponible - MINIMO_FORAL_NAVARRA, 0.0)
+        return round(_aplicar_escala(base_liq, _TRAMOS_FORAL_NAVARRA), 2)
+
+    # Regimen comun (incluye canarias y ceuta_melilla — misma escala IRPF)
+    return _calcular_irpf_simplificado(base_imponible)
+
+
+def _aplicar_escala(base_liquidable: float, tramos: list) -> float:
+    """Aplica una escala progresiva de tramos a una base liquidable."""
+    cuota = 0.0
+    restante = base_liquidable
+    for tramo, tipo in tramos:
+        if restante <= 0:
+            break
+        aplicable = min(restante, tramo)
+        cuota += aplicable * tipo
+        restante -= aplicable
+    return cuota
 
 
 def _calcular_irpf_simplificado(base_imponible: float) -> float:
@@ -551,30 +657,56 @@ def _calcular_irpf_simplificado(base_imponible: float) -> float:
 def _compute_net_salary(body: NetSalaryRequest) -> NetSalaryResponse:
     """Logica pura de calculo de sueldo neto autonomo.
 
-    Separada del endpoint HTTP para poder ser testeada directamente sin
-    pasar por el decorador de slowapi (que requiere Request real de Starlette).
+    Territorial-aware: aplica el regimen correcto segun CCAA:
+    - Madrid, Malaga (Andalucia): IVA 21%, escala comun (estatal + autonomica)
+    - Tenerife (Canarias): IGIC 7% (no IVA), escala comun
+    - Melilla: IPSI 4% (no IVA), deduccion 60% cuota IRPF
+    - Bilbao (Bizkaia): IVA 21%, escala foral vasca (7 tramos propios)
     """
+    from app.utils.regime_classifier import classify_regime
+
+    # --- Regimen territorial ---
+    ccaa = body.comunidad_autonoma
+    regime = classify_regime(ccaa) if ccaa else "comun"
+
+    # Impuesto indirecto por territorio
+    if body.tipo_iva is not None:
+        tipo_indirecto = body.tipo_iva
+        nombre_indirecto = "IVA" if tipo_indirecto > 5 else ("IGIC" if tipo_indirecto == 7 else "IPSI")
+    elif regime == "canarias":
+        tipo_indirecto = 7.0   # IGIC general
+        nombre_indirecto = "IGIC"
+    elif regime == "ceuta_melilla":
+        tipo_indirecto = 4.0   # IPSI tipo general servicios
+        nombre_indirecto = "IPSI"
+    else:
+        tipo_indirecto = 21.0  # IVA general
+        nombre_indirecto = "IVA"
+
     # Si es nuevo autonomo, la retencion es 7% (Art. 101.5.b LIRPF)
     retencion_pct = 7.0 if body.es_nuevo_autonomo else body.retencion_irpf
 
+    # --- Cuota SS por ingresos reales (RDL 13/2022, tabla 2025) ---
+    if body.cuota_autonomo_mensual is not None:
+        cuota_ss = body.cuota_autonomo_mensual
+    else:
+        cuota_ss = _cuota_autonomo_por_ingresos(body.facturacion_bruta_mensual)
+
     # --- Mensual ---
-    iva_repercutido = round(body.facturacion_bruta_mensual * body.tipo_iva / 100, 2)
+    iva_repercutido = round(body.facturacion_bruta_mensual * tipo_indirecto / 100, 2)
     total_factura = round(body.facturacion_bruta_mensual + iva_repercutido, 2)
     retencion_irpf_factura = round(body.facturacion_bruta_mensual * retencion_pct / 100, 2)
     cobro_efectivo = round(total_factura - retencion_irpf_factura, 2)
 
-    # IVA soportado simplificado: 21% sobre gastos deducibles (estimacion conservadora)
-    iva_soportado = round(body.gastos_deducibles_mensual * 0.21, 2)
-    iva_a_pagar_hacienda = round(max(iva_repercutido - iva_soportado, 0.0), 2)
+    # Impuesto indirecto soportado sobre gastos (mismo tipo que el repercutido)
+    indirecto_soportado = round(body.gastos_deducibles_mensual * tipo_indirecto / 100, 2)
+    indirecto_a_pagar = round(max(iva_repercutido - indirecto_soportado, 0.0), 2)
 
-    neto_mensual = round(
-        cobro_efectivo - body.cuota_autonomo_mensual - body.gastos_deducibles_mensual,
-        2,
-    )
+    neto_mensual = round(cobro_efectivo - cuota_ss - body.gastos_deducibles_mensual, 2)
 
     # --- Anual ---
     facturacion_anual = round(body.facturacion_bruta_mensual * 12, 2)
-    cuota_autonomo_anual = round(body.cuota_autonomo_mensual * 12, 2)
+    cuota_autonomo_anual = round(cuota_ss * 12, 2)
     gastos_anuales = round(body.gastos_deducibles_mensual * 12, 2)
 
     # Rendimiento neto de actividades economicas (estimacion directa simplificada)
@@ -584,7 +716,14 @@ def _compute_net_salary(body: NetSalaryRequest) -> NetSalaryResponse:
     gasto_dificil = round(min(max(rendimiento_bruto, 0.0) * 0.05, 2000.0), 2)
     base_imponible = round(max(rendimiento_bruto - gasto_dificil, 0.0), 2)
 
-    irpf_estimado_anual = _calcular_irpf_simplificado(base_imponible)
+    # --- IRPF territorial ---
+    irpf_estimado_anual = _calcular_irpf_territorial(base_imponible, regime)
+
+    # Deduccion 60% Ceuta/Melilla (Art. 68.4 LIRPF)
+    deduccion_cm = 0.0
+    if regime == "ceuta_melilla":
+        deduccion_cm = round(irpf_estimado_anual * 0.60, 2)
+        irpf_estimado_anual = round(irpf_estimado_anual - deduccion_cm, 2)
 
     retencion_anual = round(facturacion_anual * retencion_pct / 100, 2)
     ahorro_retencion_vs_irpf = round(retencion_anual - irpf_estimado_anual, 2)
@@ -613,9 +752,9 @@ def _compute_net_salary(body: NetSalaryRequest) -> NetSalaryResponse:
         total_factura=total_factura,
         retencion_irpf_factura=retencion_irpf_factura,
         cobro_efectivo=cobro_efectivo,
-        cuota_autonomo=body.cuota_autonomo_mensual,
+        cuota_autonomo=cuota_ss,
         gastos_deducibles=body.gastos_deducibles_mensual,
-        iva_a_pagar_hacienda=iva_a_pagar_hacienda,
+        iva_a_pagar_hacienda=indirecto_a_pagar,
         neto_mensual=neto_mensual,
         facturacion_bruta_anual=facturacion_anual,
         irpf_estimado_anual=irpf_estimado_anual,
@@ -624,6 +763,10 @@ def _compute_net_salary(body: NetSalaryRequest) -> NetSalaryResponse:
         tipo_irpf_efectivo=tipo_irpf_efectivo,
         porcentaje_neto=porcentaje_neto,
         ahorro_retencion_vs_irpf=ahorro_retencion_vs_irpf,
+        regimen_fiscal=regime if ccaa else None,
+        impuesto_indirecto=nombre_indirecto,
+        tipo_impuesto_indirecto=tipo_indirecto,
+        deduccion_ceuta_melilla=deduccion_cm if deduccion_cm > 0 else None,
     )
 
 

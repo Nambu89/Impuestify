@@ -22,9 +22,9 @@ from app.routers.irpf_estimate import (
 
 def _r(
     facturacion_bruta_mensual: float = 3000.0,
-    tipo_iva: float = 21.0,
+    tipo_iva: float | None = None,
     retencion_irpf: float = 15.0,
-    cuota_autonomo_mensual: float = 293.0,
+    cuota_autonomo_mensual: float | None = None,
     gastos_deducibles_mensual: float = 0.0,
     es_nuevo_autonomo: bool = False,
     comunidad_autonoma: str | None = None,
@@ -86,12 +86,12 @@ class TestBasic3000EUR:
         assert r.retencion_irpf_factura == pytest.approx(450.0)
         assert r.cobro_efectivo == pytest.approx(3180.0)  # 3630 - 450
 
-        # Sin gastos: neto = cobro_efectivo - cuota_ss
-        assert r.neto_mensual == pytest.approx(3180.0 - 293.0)
+        # Sin gastos: neto = cobro_efectivo - cuota_ss (auto-calculada)
+        assert r.neto_mensual == pytest.approx(r.cobro_efectivo - r.cuota_autonomo)
 
         # Anual
         assert r.facturacion_bruta_anual == pytest.approx(36_000.0)
-        assert r.cuota_autonomo_anual == pytest.approx(293.0 * 12)
+        assert r.cuota_autonomo_anual == pytest.approx(r.cuota_autonomo * 12)
 
         # IRPF anual positivo
         assert r.irpf_estimado_anual > 0
@@ -144,7 +144,7 @@ class TestZeroFacturacion:
         assert r.tipo_irpf_efectivo == 0.0
         assert r.porcentaje_neto == 0.0
         # Neto negativo: cuota SS sigue pagandose aunque no se facture
-        assert r.neto_mensual == pytest.approx(0.0 - 293.0)
+        assert r.neto_mensual == pytest.approx(0.0 - r.cuota_autonomo)
 
 
 # ---------------------------------------------------------------------------
@@ -288,3 +288,90 @@ class TestResponseStructure:
 
         # Invariante: cuota_autonomo_anual = cuota_autonomo * 12
         assert r.cuota_autonomo_anual == pytest.approx(r.cuota_autonomo * 12, rel=1e-4)
+
+
+# ---------------------------------------------------------------------------
+# Tests territoriales: los 5 regimenes fiscales
+# ---------------------------------------------------------------------------
+
+class TestTerritorialMadrid:
+    """Madrid: regimen comun, IVA 21%."""
+    def test_madrid_comun(self):
+        r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Comunidad de Madrid")
+        assert r.regimen_fiscal == "comun"
+        assert r.impuesto_indirecto == "IVA"
+        assert r.tipo_impuesto_indirecto == 21.0
+        assert r.iva_repercutido == pytest.approx(630.0)
+        assert r.deduccion_ceuta_melilla is None
+
+
+class TestTerritorialMalaga:
+    """Malaga (Andalucia): regimen comun, IVA 21%, escala autonomica diferente."""
+    def test_malaga_comun(self):
+        r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Andalucía")
+        assert r.regimen_fiscal == "comun"
+        assert r.impuesto_indirecto == "IVA"
+        assert r.tipo_impuesto_indirecto == 21.0
+        # Mismo IRPF que Madrid en esta v1 (escala simplificada x2)
+        r_mad = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Comunidad de Madrid")
+        assert r.irpf_estimado_anual == pytest.approx(r_mad.irpf_estimado_anual)
+
+
+class TestTerritorialTenerife:
+    """Tenerife (Canarias): IGIC 7% en vez de IVA 21%."""
+    def test_canarias_igic(self):
+        r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Canarias")
+        assert r.regimen_fiscal == "canarias"
+        assert r.impuesto_indirecto == "IGIC"
+        assert r.tipo_impuesto_indirecto == 7.0
+        assert r.iva_repercutido == pytest.approx(210.0)  # 3000 * 7%
+        # Total factura menor que en peninsula
+        r_mad = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Comunidad de Madrid")
+        assert r.total_factura < r_mad.total_factura
+
+
+class TestTerritorialMelilla:
+    """Melilla: IPSI 4%, deduccion 60% cuota IRPF."""
+    def test_melilla_ipsi_y_deduccion(self):
+        r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Melilla")
+        assert r.regimen_fiscal == "ceuta_melilla"
+        assert r.impuesto_indirecto == "IPSI"
+        assert r.tipo_impuesto_indirecto == 4.0
+        assert r.iva_repercutido == pytest.approx(120.0)  # 3000 * 4%
+        # Deduccion 60% Ceuta/Melilla aplicada
+        assert r.deduccion_ceuta_melilla is not None
+        assert r.deduccion_ceuta_melilla > 0
+        # IRPF mucho menor que Madrid gracias al 60%
+        r_mad = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Comunidad de Madrid")
+        assert r.irpf_estimado_anual < r_mad.irpf_estimado_anual * 0.5
+
+
+class TestTerritorialBilbao:
+    """Bilbao (Bizkaia): foral vasco, IVA 21%, escala propia."""
+    def test_bizkaia_foral(self):
+        r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Bizkaia")
+        assert r.regimen_fiscal == "foral_vasco"
+        assert r.impuesto_indirecto == "IVA"
+        assert r.tipo_impuesto_indirecto == 21.0
+        # El IRPF foral vasco es diferente al comun
+        r_mad = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Comunidad de Madrid")
+        # No deben ser iguales (escalas diferentes)
+        assert r.irpf_estimado_anual != pytest.approx(r_mad.irpf_estimado_anual, rel=0.01)
+
+
+class TestCuotaSSPorIngresos:
+    """Cuota SS auto-calculada por ingresos reales (sin cuota manual)."""
+    def test_cuota_baja_ingresos(self):
+        # 1000 EUR/mes facturacion -> rendimiento ~600 -> cuota baja
+        r = _r(facturacion_bruta_mensual=1000.0)
+        assert r.cuota_autonomo < 260.0  # Tramo bajo
+
+    def test_cuota_alta_ingresos(self):
+        # 8000 EUR/mes facturacion -> rendimiento ~4800 -> cuota alta
+        r = _r(facturacion_bruta_mensual=8000.0)
+        assert r.cuota_autonomo > 350.0  # Tramo alto
+
+    def test_cuota_manual_override(self):
+        # Si el usuario pasa cuota manual, no se auto-calcula
+        r = _r(facturacion_bruta_mensual=3000.0, cuota_autonomo_mensual=293.0)
+        assert r.cuota_autonomo == 293.0
