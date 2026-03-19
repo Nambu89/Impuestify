@@ -396,6 +396,15 @@ export default function Home() {
                                 <p>Guardrails IA: moderación de contenido, detección de inyección y filtrado de datos personales. RGPD compliant.</p>
                             </SpotlightCard>
                         </FadeContent>
+                        <FadeContent delay={400} duration={400}>
+                            <SpotlightCard className="feature-card" spotlightColor="rgba(234, 179, 8, 0.1)">
+                                <div className="feature-icon">
+                                    <Calculator size={28} />
+                                </div>
+                                <h3>Calculadora Neto</h3>
+                                <p>Descubre cuánto te queda limpio como autónomo. Desglose real: IRPF, IVA, Seguridad Social y gastos.</p>
+                            </SpotlightCard>
+                        </FadeContent>
                     </div>
                 </div>
             </section>
