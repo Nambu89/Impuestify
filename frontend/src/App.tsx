@@ -39,6 +39,7 @@ const GastosDeduciblesPage = lazy(() => import('./pages/GastosDeduciblesPage'))
 const M130CalculatorPage = lazy(() => import('./pages/M130CalculatorPage'))
 const ChecklistBorradorPage = lazy(() => import('./pages/ChecklistBorradorPage'))
 const ObligadoDeclararPage = lazy(() => import('./pages/ObligadoDeclararPage'))
+const IvaCreatorsPage = lazy(() => import('./pages/IvaCreatorsPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -151,6 +152,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <M130CalculatorPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/calculadora-iva-creadores"
+                        element={
+                            <ProtectedRoute>
+                                <IvaCreatorsPage />
                             </ProtectedRoute>
                         }
                     />

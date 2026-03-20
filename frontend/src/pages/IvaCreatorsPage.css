@@ -1,0 +1,1015 @@
+/* ============================================================
+   IvaCreatorsPage.css — Calculadora IVA Plataformas Creadores
+   Dark theme — Professional Blue palette
+   ============================================================ */
+
+.ic-page {
+    min-height: 100vh;
+    background: var(--color-secondary);
+    color: var(--color-white);
+}
+
+/* ---- Main ---- */
+.ic-main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 5rem;
+}
+
+/* ---- Hero ---- */
+.ic-hero {
+    text-align: center;
+    padding: 3rem 1rem 2.5rem;
+}
+
+.ic-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.9rem;
+    background: rgba(6, 182, 212, 0.12);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1.25rem;
+}
+
+.ic-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+    color: var(--color-white);
+}
+
+.ic-title-highlight {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.ic-subtitle {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 auto;
+    max-width: 560px;
+    line-height: 1.6;
+}
+
+/* ---- Layout dos columnas ---- */
+.ic-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+@media (min-width: 960px) {
+    .ic-layout {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+        gap: 2rem;
+    }
+}
+
+.ic-left,
+.ic-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* ---- Sección genérica ---- */
+.ic-section {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 20px;
+    padding: 1.75rem;
+    backdrop-filter: blur(12px);
+}
+
+.ic-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-white);
+    margin: 0 0 0.4rem;
+}
+
+.ic-section-hint {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0 0 1.25rem;
+}
+
+/* ---- Grid de plataformas ---- */
+.ic-platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.625rem;
+}
+
+.ic-platform-card {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 0.875rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.18s ease;
+    position: relative;
+}
+
+.ic-platform-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.ic-platform-card--selected {
+    background: rgba(26, 86, 219, 0.18);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+}
+
+.ic-platform-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.ic-platform-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ic-platform-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ic-platform-country {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 1px;
+}
+
+.ic-platform-check {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    color: var(--color-primary-light);
+}
+
+/* ---- Detalle plataforma seleccionada ---- */
+.ic-detail-section {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 1.5rem 1.75rem;
+    animation: icFadeSlide 0.25s ease;
+}
+
+@keyframes icFadeSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.ic-detail-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-white);
+    margin: 0 0 0.25rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ic-detail-company {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.ic-detail-description {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 1rem;
+    line-height: 1.5;
+}
+
+.ic-detail-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.ic-tag {
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.ic-tag--eu {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.ic-tag--noneu {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.ic-tag--intra {
+    background: rgba(16, 185, 129, 0.12);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.ic-tag--import {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.ic-tag--m349 {
+    background: rgba(139, 92, 246, 0.15);
+    color: #c4b5fd;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* ---- Reglas de detalle ---- */
+.ic-detail-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+}
+
+.ic-rule {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.ic-rule-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.ic-rule-icon--ok    { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.ic-rule-icon--warn  { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.ic-rule-icon--info  { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.ic-rule-icon--alert { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+/* ---- Calculadora: entradas ---- */
+.ic-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 0.875rem;
+}
+
+.ic-entry-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.625rem;
+    align-items: center;
+}
+
+@media (min-width: 480px) {
+    .ic-entry-row {
+        grid-template-columns: 1fr 1fr auto;
+    }
+}
+
+.ic-select {
+    height: 46px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0 1rem;
+    color: var(--color-white);
+    font-size: 0.88rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+}
+
+.ic-select option {
+    background: #1e293b;
+    color: var(--color-white);
+}
+
+.ic-select:focus {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.ic-amount-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0 0.875rem;
+    height: 46px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ic-amount-wrap:focus-within {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.ic-amount-icon {
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+.ic-amount-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--color-white);
+    font-size: 0.95rem;
+    font-weight: 600;
+    min-width: 0;
+    -moz-appearance: textfield;
+}
+
+.ic-amount-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.ic-amount-input::-webkit-outer-spin-button,
+.ic-amount-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+.ic-amount-suffix {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
+}
+
+.ic-remove-btn {
+    width: 40px;
+    height: 40px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+    color: #f87171;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.ic-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: scale(1.05);
+}
+
+.ic-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.1rem;
+    background: rgba(26, 86, 219, 0.15);
+    border: 1px solid rgba(26, 86, 219, 0.3);
+    border-radius: 10px;
+    color: var(--color-primary-light);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.ic-add-btn:hover {
+    background: rgba(26, 86, 219, 0.25);
+    transform: translateY(-1px);
+}
+
+/* ---- Disclaimer ---- */
+.ic-disclaimer {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.875rem 1.25rem;
+    background: rgba(6, 182, 212, 0.06);
+    border: 1px solid rgba(6, 182, 212, 0.15);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1.55;
+}
+
+.ic-disclaimer svg {
+    flex-shrink: 0;
+    color: var(--color-accent);
+    margin-top: 1px;
+}
+
+/* ============================================================
+   Panel de resultados
+   ============================================================ */
+
+/* ---- Tarjeta total ---- */
+.ic-total-card {
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.2), rgba(6, 182, 212, 0.12));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 20px;
+    padding: 1.75rem;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    animation: icFadeSlide 0.3s ease;
+}
+
+.ic-total-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(147, 197, 253, 0.85);
+    margin-bottom: 0.7rem;
+}
+
+.ic-total-amount {
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    color: #93c5fd;
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.ic-total-currency {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(147, 197, 253, 0.6);
+}
+
+.ic-total-sub {
+    margin-top: 0.4rem;
+    font-size: 0.88rem;
+    color: rgba(147, 197, 253, 0.55);
+}
+
+/* ---- Tarjeta IVA 303 ---- */
+.ic-iva-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 18px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.ic-iva-card-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0 0 1.1rem;
+}
+
+.ic-iva-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.ic-iva-row--total {
+    padding-top: 0.75rem;
+}
+
+.ic-iva-row-label {
+    color: rgba(255, 255, 255, 0.6);
+    flex: 1;
+}
+
+.ic-iva-row-amount {
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.ic-iva-row-amount--devenged { color: #fbbf24; }
+.ic-iva-row-amount--supported { color: #34d399; }
+.ic-iva-row-amount--zero { color: rgba(255, 255, 255, 0.8); font-size: 1.05rem; }
+
+.ic-iva-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0.35rem 0;
+}
+
+.ic-iva-note {
+    margin: 0.9rem 0 0;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.35);
+    line-height: 1.55;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border-left: 3px solid rgba(6, 182, 212, 0.3);
+}
+
+/* ---- Desglose por plataforma ---- */
+.ic-breakdown-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.ic-breakdown-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.35);
+    margin: 0 0 1.1rem;
+}
+
+.ic-breakdown-row {
+    margin-bottom: 1rem;
+}
+
+.ic-breakdown-row-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.ic-breakdown-flag { font-size: 1rem; }
+
+.ic-breakdown-platform {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-white);
+    flex: 1;
+}
+
+.ic-breakdown-type {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+}
+
+.ic-breakdown-type--intra {
+    background: rgba(16, 185, 129, 0.12);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.ic-breakdown-type--import {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.ic-breakdown-row-nums {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 0.75rem;
+    font-size: 0.78rem;
+    margin-bottom: 0.45rem;
+}
+
+.ic-breakdown-num-label { color: rgba(255, 255, 255, 0.4); }
+.ic-breakdown-num { color: rgba(255, 255, 255, 0.8); font-weight: 600; text-align: right; }
+.ic-breakdown-neutral { color: rgba(255, 255, 255, 0.5); }
+
+.ic-breakdown-track {
+    height: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ic-breakdown-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---- Obligaciones ---- */
+.ic-obligations-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.ic-obligations-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.75);
+    margin: 0 0 1rem;
+}
+
+.ic-obligations-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ic-obligation {
+    display: flex;
+    gap: 0.65rem;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    padding: 0.75rem;
+    border-radius: 10px;
+}
+
+.ic-obligation svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ic-obligation--required {
+    background: rgba(16, 185, 129, 0.07);
+    border: 1px solid rgba(16, 185, 129, 0.15);
+    color: rgba(110, 231, 183, 0.9);
+}
+
+.ic-obligation--required svg { color: #34d399; }
+
+.ic-obligation--info {
+    background: rgba(59, 130, 246, 0.07);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    color: rgba(147, 197, 253, 0.9);
+}
+
+.ic-obligation--info svg { color: #93c5fd; }
+
+.ic-obligation--warn {
+    background: rgba(245, 158, 11, 0.07);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+}
+
+.ic-obligation--warn svg { color: #f59e0b; }
+
+/* ---- Detalle técnico (acordeón) ---- */
+.ic-tech-section {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.ic-tech-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1.25rem;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+}
+
+.ic-tech-toggle:hover {
+    color: var(--color-white);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.ic-tech-body {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* ---- VAT detail (acordeón por plataforma) ---- */
+.ic-vat-detail {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.ic-vat-detail--intra {
+    border-color: rgba(16, 185, 129, 0.15);
+}
+
+.ic-vat-detail--import {
+    border-color: rgba(245, 158, 11, 0.15);
+}
+
+.ic-vat-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s;
+    gap: 0.75rem;
+}
+
+.ic-vat-header:hover { background: rgba(255, 255, 255, 0.07); }
+
+.ic-vat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+}
+
+.ic-vat-platform-flag { font-size: 1.1rem; flex-shrink: 0; }
+
+.ic-vat-platform-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-white);
+    display: block;
+}
+
+.ic-vat-company {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.35);
+    display: block;
+}
+
+.ic-vat-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.ic-vat-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.ic-vat-badge--intra {
+    background: rgba(16, 185, 129, 0.12);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.ic-vat-badge--import {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.ic-vat-body {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    animation: icFadeSlide 0.2s ease;
+}
+
+.ic-vat-rule-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ic-vat-rule {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 0.5rem 1rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.ic-vat-rule-label {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding-top: 1px;
+}
+
+.ic-vat-rule-value {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.ic-vat-rule-value--highlight {
+    color: #34d399;
+    font-weight: 600;
+}
+
+/* ---- Estado vacío ---- */
+.ic-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    opacity: 0.45;
+}
+
+.ic-empty-icon {
+    margin-bottom: 1.25rem;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.ic-empty-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 0 0.5rem;
+}
+
+.ic-empty-sub {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.35);
+    margin: 0;
+    max-width: 360px;
+    line-height: 1.55;
+}
+
+/* ============================================================
+   Sección educativa
+   ============================================================ */
+.ic-edu-section {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.ic-edu-title {
+    font-size: clamp(1.3rem, 3vw, 1.75rem);
+    font-weight: 800;
+    color: var(--color-white);
+    text-align: center;
+    margin: 0 0 2.5rem;
+}
+
+.ic-edu-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+}
+
+@media (min-width: 600px) {
+    .ic-edu-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .ic-edu-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.ic-edu-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 1.75rem 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ic-edu-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.ic-edu-card-num {
+    font-size: 2rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 0.75rem;
+}
+
+.ic-edu-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-white);
+    margin: 0 0 0.6rem;
+    line-height: 1.3;
+}
+
+.ic-edu-card p {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ============================================================
+   Responsive — mobile first
+   ============================================================ */
+@media (max-width: 600px) {
+    .ic-main {
+        padding: 1rem 1rem 3rem;
+    }
+
+    .ic-hero {
+        padding: 2rem 0.5rem 1.5rem;
+    }
+
+    .ic-section {
+        padding: 1.25rem;
+    }
+
+    .ic-platform-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ic-entry-row {
+        grid-template-columns: 1fr;
+    }
+
+    .ic-vat-rule {
+        grid-template-columns: 1fr;
+    }
+
+    .ic-vat-rule-label {
+        font-size: 0.68rem;
+        margin-bottom: 2px;
+    }
+}
+
+@media (max-width: 360px) {
+    .ic-platform-grid {
+        grid-template-columns: 1fr;
+    }
+}

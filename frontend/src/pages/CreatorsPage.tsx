@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
     ArrowRight, CheckCircle, X, Video, ChevronLeft, Zap,
-    FileText, Globe, Calculator, Bell, Shield, ChevronDown, Map
+    FileText, Globe, Calculator, Bell, Shield, ChevronDown, Map, MapPin
 } from 'lucide-react'
 import FadeContent from '../components/reactbits/FadeContent'
 import SpotlightCard from '../components/reactbits/SpotlightCard'
@@ -151,12 +151,14 @@ export default function CreatorsPage() {
 
         setMeta(
             'description',
-            'Asistente fiscal IA para creadores de contenido en España. YouTube, TikTok, Twitch, Instagram. Epígrafe IAE, IVA intracomunitario, Modelo 349, royalties. 21 territorios incluyendo País Vasco y Navarra. 49 EUR/mes.'
+            'Calculadora fiscal para creadores de contenido en España. IRPF, IVA por plataforma (YouTube, TikTok, Twitch), IAE 8690, Modelo 349, DAC7. Canarias IGIC 7%, Ceuta/Melilla IPSI, País Vasco foral. Desde 49 EUR/mes.'
         )
         setMeta(
             'keywords',
-            'impuestos creadores contenido, IRPF influencer, IVA YouTube España, fiscalidad TikTok, Modelo 349 creadores, epígrafe IAE influencer, DAC7 España, tributación streamer, royalties creadores, fiscalidad youtuber, impuestos twitch, hacienda influencer'
+            'impuestos youtuber España, IRPF influencer Madrid, IVA streamer Canarias, fiscal creador contenido autónomo, fiscalidad TikTok España, Modelo 349 creadores, epígrafe IAE influencer, DAC7 España, tributación streamer, royalties creadores, impuestos twitch, hacienda influencer, IVA YouTube España'
         )
+        setMeta('geo.region', 'ES')
+        setMeta('geo.placename', 'España')
         setOg('og:title', 'Impuestos para Creadores de Contenido | YouTubers, TikTokers, Streamers | Impuestify')
         setOg(
             'og:description',
@@ -173,11 +175,24 @@ export default function CreatorsPage() {
             script.type = 'application/ld+json'
             script.text = JSON.stringify({
                 '@context': 'https://schema.org',
-                '@type': 'WebPage',
-                name: 'Impuestos para Creadores de Contenido — Impuestify',
+                '@type': 'WebApplication',
+                name: 'Impuestify para Creadores de Contenido',
                 description:
-                    'Asistente fiscal IA especializado en creadores de contenido digitales en España. YouTube, TikTok, Twitch, Patreon. IRPF, IVA intracomunitario, Modelo 349.',
+                    'Asistente fiscal con IA especializado en creadores de contenido digitales en España. IRPF, IVA por plataforma (YouTube, TikTok, Twitch), IAE 8690, Modelo 349, DAC7.',
+                applicationCategory: 'FinanceApplication',
+                operatingSystem: 'Web',
                 url: 'https://impuestify.com/creadores-de-contenido',
+                offers: {
+                    '@type': 'Offer',
+                    price: '49',
+                    priceCurrency: 'EUR',
+                    priceSpecification: {
+                        '@type': 'UnitPriceSpecification',
+                        price: '49',
+                        priceCurrency: 'EUR',
+                        unitCode: 'MON',
+                    },
+                },
                 breadcrumb: {
                     '@type': 'BreadcrumbList',
                     itemListElement: [
@@ -189,6 +204,14 @@ export default function CreatorsPage() {
                             item: 'https://impuestify.com/creadores-de-contenido',
                         },
                     ],
+                },
+                mainEntity: {
+                    '@type': 'FAQPage',
+                    mainEntity: FAQS.map((f) => ({
+                        '@type': 'Question',
+                        name: f.q,
+                        acceptedAnswer: { '@type': 'Answer', text: f.a },
+                    })),
                 },
             })
             document.head.appendChild(script)
@@ -229,7 +252,7 @@ export default function CreatorsPage() {
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
                         <h1 className="creators-hero__title">
-                            Impuestos para{' '}
+                            Fiscalidad para{' '}
                             <GradientText
                                 colors={['#1a56db', '#06b6d4', '#3b82f6', '#1a56db']}
                                 animationSpeed={6}
@@ -237,17 +260,19 @@ export default function CreatorsPage() {
                             >
                                 Creadores de Contenido
                             </GradientText>
+                            {' '}en España
                         </h1>
                         <p className="creators-hero__subtitle">
                             El único asistente fiscal con IA que entiende{' '}
                             <strong>YouTube, TikTok, Twitch e Instagram</strong>.
-                            Con cobertura foral completa para País Vasco y Navarra.
+                            IRPF, IVA por plataforma, IAE para influencers y DAC7.
+                            Cobertura en los 21 territorios: régimen común, foral y Canarias.
                         </p>
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
                         <div className="creators-hero__actions">
-                            <Link to="/subscribe" className="btn btn-primary btn-lg">
-                                Empezar por 49 EUR/mes
+                            <Link to="/subscribe?highlight=creator" className="btn btn-primary btn-lg">
+                                Empieza por 49 EUR/mes
                                 <ArrowRight size={20} />
                             </Link>
                             <a href="#features" className="btn btn-secondary btn-lg">
@@ -314,7 +339,7 @@ export default function CreatorsPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Qué incluye el Plan Creator</h2>
                         <p className="section-subtitle">
-                            49 EUR/mes. Todo lo que necesitas para declarar bien como creador digital.
+                            49 EUR/mes. IVA por plataforma, IAE para influencers, Modelo 349 y DAC7 — todo lo que necesitas para declarar correctamente como creador digital.
                         </p>
                     </FadeContent>
                     <div className="creators-features__grid">
@@ -453,6 +478,89 @@ export default function CreatorsPage() {
                 </div>
             </section>
 
+            {/* ==================== VENTAJAS TERRITORIALES (GEO SEO) ==================== */}
+            <section className="creators-territories">
+                <div className="container">
+                    <FadeContent delay={0} duration={500}>
+                        <h2 className="section-title">Ventajas fiscales por territorio</h2>
+                        <p className="section-subtitle">
+                            Tu CCAA de residencia puede reducir significativamente tu factura fiscal como creador
+                        </p>
+                    </FadeContent>
+                    <FadeContent delay={100} duration={600}>
+                        <div className="creators-territories__grid">
+                            <Link to="/canarias" className="creators-territories__card creators-territories__card--canarias">
+                                <div className="creators-territories__card-header">
+                                    <Globe size={20} />
+                                    <span className="creators-territories__badge">IGIC 7%</span>
+                                </div>
+                                <h3>Canarias</h3>
+                                <ul className="creators-territories__list">
+                                    <li>IGIC al 7% en lugar de IVA al 21%</li>
+                                    <li>ZEC: Impuesto de Sociedades al 4%</li>
+                                    <li>RIC: reduce hasta el 90% de la base imponible</li>
+                                    <li>IVA streamer Canarias: tipo especial IGIC</li>
+                                </ul>
+                                <span className="creators-territories__link">
+                                    Ver fiscalidad canaria <ArrowRight size={14} />
+                                </span>
+                            </Link>
+
+                            <Link to="/ceuta-melilla" className="creators-territories__card creators-territories__card--ceuta">
+                                <div className="creators-territories__card-header">
+                                    <MapPin size={20} />
+                                    <span className="creators-territories__badge">IPSI 4%</span>
+                                </div>
+                                <h3>Ceuta y Melilla</h3>
+                                <ul className="creators-territories__list">
+                                    <li>IPSI al 4% en lugar de IVA al 21%</li>
+                                    <li>Deducción del 60% en IRPF por rentas obtenidas</li>
+                                    <li>Sin IVA en operaciones locales</li>
+                                    <li>Uno de los regímenes más favorables de Europa</li>
+                                </ul>
+                                <span className="creators-territories__link">
+                                    Ver fiscalidad Ceuta y Melilla <ArrowRight size={14} />
+                                </span>
+                            </Link>
+
+                            <Link to="/territorios-forales" className="creators-territories__card creators-territories__card--foral">
+                                <div className="creators-territories__card-header">
+                                    <Map size={20} />
+                                    <span className="creators-territories__badge">Régimen foral</span>
+                                </div>
+                                <h3>País Vasco y Navarra</h3>
+                                <ul className="creators-territories__list">
+                                    <li>IRPF influencer Madrid vs País Vasco: hasta 5 puntos menos</li>
+                                    <li>7 tramos en País Vasco vs 6 en régimen común</li>
+                                    <li>Deducciones exclusivas no disponibles en el resto</li>
+                                    <li>Gestión autónoma de Hacienda Foral</li>
+                                </ul>
+                                <span className="creators-territories__link">
+                                    Ver territorios forales <ArrowRight size={14} />
+                                </span>
+                            </Link>
+
+                            <div className="creators-territories__card creators-territories__card--madrid">
+                                <div className="creators-territories__card-header">
+                                    <MapPin size={20} />
+                                    <span className="creators-territories__badge">Deflactación</span>
+                                </div>
+                                <h3>Madrid</h3>
+                                <ul className="creators-territories__list">
+                                    <li>Deflactación de la tarifa autonómica del IRPF</li>
+                                    <li>Bonificación del 100% en sucesiones y donaciones</li>
+                                    <li>Deducción por arrendamiento de vivienda habitual</li>
+                                    <li>Hub de creadores: ecosistema fiscal competitivo</li>
+                                </ul>
+                                <span className="creators-territories__link creators-territories__link--disabled">
+                                    Consulta tu caso al asistente
+                                </span>
+                            </div>
+                        </div>
+                    </FadeContent>
+                </div>
+            </section>
+
             {/* ==================== LINKS INTERNOS SEO ==================== */}
             <section className="creators-internal-links">
                 <div className="container">
@@ -474,6 +582,14 @@ export default function CreatorsPage() {
                                 </div>
                                 <ArrowRight size={16} />
                             </Link>
+                            <Link to="/ceuta-melilla" className="creators-internal-links__card">
+                                <MapPin size={20} />
+                                <div>
+                                    <strong>Ceuta y Melilla — IPSI</strong>
+                                    <span>IPSI 4% y deducción del 60% en IRPF: el régimen más favorable</span>
+                                </div>
+                                <ArrowRight size={16} />
+                            </Link>
                         </div>
                     </FadeContent>
                 </div>
@@ -492,12 +608,12 @@ export default function CreatorsPage() {
                                 Sin permanencia. Sin sorpresas. El asistente fiscal que entiende
                                 tu actividad como creador digital mejor que ninguna gestoría tradicional.
                             </p>
-                            <Link to="/subscribe" className="btn btn-primary btn-lg">
-                                Empezar ahora
+                            <Link to="/subscribe?highlight=creator" className="btn btn-primary btn-lg">
+                                Empieza por 49 EUR/mes
                                 <ArrowRight size={20} />
                             </Link>
                             <p className="creators-cta__note">
-                                49 EUR/mes. Cancela cuando quieras.
+                                49 EUR/mes. Sin permanencia. Cancela cuando quieras.
                             </p>
                         </div>
                     </FadeContent>

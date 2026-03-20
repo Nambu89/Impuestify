@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet } from 'lucide-react'
+import { FileText, LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
@@ -54,6 +54,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     </Link>
                     <Link to="/calculadora-neto" className="nav-link">
                         <Wallet size={16} /> Calculadora Neto
+                    </Link>
+                    <Link to="/calculadora-iva-creadores" className="nav-link">
+                        <Receipt size={16} /> IVA Creadores
                     </Link>
                     <Link to="/modelos-trimestrales" className="nav-link">
                         <ClipboardList size={16} /> Modelos
@@ -112,6 +115,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     </Link>
                     <Link to="/calculadora-neto" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <Wallet size={20} /> Calculadora Neto
+                    </Link>
+                    <Link to="/calculadora-iva-creadores" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                        <Receipt size={20} /> IVA Creadores
                     </Link>
                     <Link to="/modelos-trimestrales" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <ClipboardList size={20} /> Modelos Trimestrales
