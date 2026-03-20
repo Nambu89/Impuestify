@@ -137,16 +137,21 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 				detected_foral = region
 				break
 		
-		# Build SQL with metadata filter
+		# Build SQL with metadata filter (parameterized)
+		metadata_filter = ""
+		metadata_params = []
 		if detected_foral:
 			logger.info(f"📍 Detected Hacienda Foral: {detected_foral}, filtering for regional docs")
-			metadata_filter = f"AND (LOWER(d.filename) LIKE '%{detected_foral}%' OR LOWER(d.source) LIKE '%{detected_foral}%')"
+			metadata_filter = "AND (LOWER(d.filename) LIKE ? OR LOWER(d.source) LIKE ?)"
+			foral_pattern = f"%{detected_foral}%"
+			metadata_params = [foral_pattern, foral_pattern]
 		else:
 			# Prioritize AEAT documents: exclude Haciendas Forales
 			logger.info("📍 No foral region detected, prioritizing AEAT general documents")
 			foral_exclusions = ['navarra', 'guipuzkoa', 'gipuzkoa', 'bizkaia', 'araba', 'álava', 'alava']
-			exclusion_conditions = " AND ".join([f"LOWER(d.filename) NOT LIKE '%{region}%'" for region in foral_exclusions])
-			metadata_filter = f"AND ({exclusion_conditions})"
+			exclusion_parts = " AND ".join(["LOWER(d.filename) NOT LIKE ?" for _ in foral_exclusions])
+			metadata_filter = f"AND ({exclusion_parts})"
+			metadata_params = [f"%{region}%" for region in foral_exclusions]
 		
 		# === CCAA-Specific Tax Table Search (Phase 1) ===
 		ccaa_tax_table_chunks = []
@@ -176,8 +181,9 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 					break
 			
 			if foral_match:
-				# Search in foral manual(s)
-				doc_conditions = ' OR '.join([f"d.filename LIKE '%{doc}%'" for doc in foral_match])
+				# Search in foral manual(s) — parameterized
+				doc_conditions = ' OR '.join(["d.filename LIKE ?" for _ in foral_match])
+				doc_params = [f"%{doc}%" for doc in foral_match]
 				ccaa_sql = f"""
 				SELECT 
 					c.id,
@@ -217,7 +223,8 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 				"""
 			
 			try:
-				ccaa_result = await db.execute(ccaa_sql, [ccaa_fts_query])
+				ccaa_params = [ccaa_fts_query] + (doc_params if foral_match else metadata_params)
+				ccaa_result = await db.execute(ccaa_sql, ccaa_params)
 				
 				if ccaa_result.rows:
 					logger.info(f"✅ Found {len(ccaa_result.rows)} CCAA tax table chunks")
@@ -259,7 +266,7 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 			LIMIT ?
 			"""
 			
-			result = await db.execute(sql, [fts_query, k])
+			result = await db.execute(sql, [fts_query] + metadata_params + [k])
 			
 			if result.rows:
 				logger.info(f"✅ FTS5 found {len(result.rows)} results")
