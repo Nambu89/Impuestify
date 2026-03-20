@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "postinstall": "node scripts/postinstall-patches.js"
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.2"
   },
