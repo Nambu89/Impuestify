@@ -7,6 +7,33 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-20] PM Coordinator — DONE — Sesion 17: RuFlo MCP Activacion + Configuracion
+
+- **RuFlo MCP activado** tras reinicio de Claude Code
+  - 259 tools disponibles via stdio (PID 20724)
+  - Todos los componentes healthy: swarm, memory, neural, mcp
+  - 26 hooks activos (vs 13 en sesion 16)
+  - 4/5 AgentDB controllers: hierarchicalMemory, tieredCache, memoryGraph, memoryConsolidation
+  - ReasoningBank deshabilitado (ONNX binding falla en Windows)
+
+- **Intelligence re-bootstrapped**:
+  - Pretrain deep: 126 files, 45 patterns, 24 strategies, 69 trajectories
+  - 3 patrones HNSW-indexed: architecture, security, frontend
+  - 7 entries memoria namespace impuestify + 3 patterns
+  - Busqueda semantica verificada: <10ms, HNSW + BM25 hybrid
+
+- **Bug conocido**: `swarm_init` falla en Windows (store interno no persiste entre restarts)
+  - Workaround: agentes se crean individualmente via `agent_spawn` (verificado OK)
+  - No bloquea funcionalidad real
+
+- **Capacidad RuFlo**: ~85% (subio de 75% en sesion 16)
+
+- **Pendiente**:
+  - [ ] ReasoningBank: investigar fix ONNX en Windows o deploy en Railway
+  - [ ] swarm_init bug: reportar a ruflo o esperar fix en proxima version
+
+---
+
 ## [2026-03-20] PM Coordinator — DONE — Sesion 16: Multi-Pagadores IRPF + RuFlo Setup
 
 - **Feature principal**: Soporte multi-pagadores en perfil fiscal y simulador IRPF
@@ -659,7 +686,7 @@ Tests: 763 PASS | Frontend build OK | Turso seeded
 - **Texto tecnico:** NO se filtra ningun texto interno — OK
 - **Fuentes:** Sin "(pag. 0)" — OK
 - **Timeline thinking:** Funciona perfectamente — UX buena en la fase de procesamiento
-- **Login owner fernando.prada@proton.me:** FALLA con REDACTED_PASSWORD — password incorrecto o problema de cuenta
+- **Login owner fernando.prada@proton.me:** FALLA — password incorrecto o problema de cuenta
 
 ### Accion requerida (backend)
 1. URGENTE: Investigar por que el stream SSE se congela cuando el agente intenta redactar tras tool call
