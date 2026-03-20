@@ -13,6 +13,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 from app.auth.jwt_handler import (
     create_tokens_for_user,
+    create_mfa_token,
     create_reset_token,
     verify_token,
     TokenResponse,
@@ -208,7 +209,7 @@ async def register(request: Request, data: RegisterRequest):
         )
 
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login")
 @limiter.limit("5/minute")
 async def login(request: Request, data: LoginRequest):
     """
@@ -237,6 +238,21 @@ async def login(request: Request, data: LoginRequest):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email o contraseña incorrectos"
         )
+
+    # Check if MFA is enabled for this user
+    try:
+        db = await get_db_client()
+        mfa_result = await db.execute(
+            "SELECT is_enabled FROM user_mfa WHERE user_id = ? AND is_enabled = 1",
+            [user.id],
+        )
+        if mfa_result.rows:
+            # MFA is enabled — return a short-lived mfa_token instead of full JWT
+            mfa_token = create_mfa_token(user.id, user.email)
+            return {"mfa_required": True, "mfa_token": mfa_token}
+    except Exception as e:
+        # If MFA check fails (e.g. table not yet created), proceed without MFA
+        logger.warning(f"MFA check failed (non-blocking): {e}")
 
     # Check subscription status
     sub_service = await get_subscription_service()

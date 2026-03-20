@@ -847,6 +847,21 @@ class TursoClient:
             "CREATE INDEX IF NOT EXISTS idx_ratings_user ON chat_ratings(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_ratings_message ON chat_ratings(message_id)",
             "CREATE INDEX IF NOT EXISTS idx_ratings_rating ON chat_ratings(rating)",
+
+            # =============================================
+            # MFA / 2FA TABLE
+            # =============================================
+
+            """
+            CREATE TABLE IF NOT EXISTS user_mfa (
+                user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                totp_secret TEXT NOT NULL,
+                is_enabled BOOLEAN DEFAULT 0,
+                backup_codes TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            )
+            """,
         ]
         
         try:

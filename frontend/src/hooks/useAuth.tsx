@@ -16,6 +16,7 @@ interface AuthContextType {
     isAuthenticated: boolean
     isLoading: boolean
     login: (email: string, password: string, turnstile_token?: string) => Promise<void>
+    completeMfaLogin: (mfaToken: string, code: string) => Promise<void>
     register: (email: string, password: string, name?: string, ccaa_residencia?: string, turnstile_token?: string) => Promise<void>
     logout: () => void
 }
@@ -106,6 +107,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 ...(turnstile_token && { turnstile_token }),
             })
 
+            // MFA required — throw special error with mfa_token
+            if (response.data.mfa_required) {
+                const mfaError: any = new Error('MFA_REQUIRED')
+                mfaError.mfa_token = response.data.mfa_token
+                throw mfaError
+            }
+
             const { user, tokens } = response.data
 
             logger.debug('Login successful')
@@ -116,6 +124,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             logger.error('Login failed:', error)
             throw error
         }
+    }
+
+    const completeMfaLogin = async (mfaToken: string, code: string) => {
+        const response = await authApi.post('/auth/mfa/validate', {
+            mfa_token: mfaToken,
+            code,
+        })
+        const { user, tokens } = response.data
+        localStorage.setItem(TOKEN_KEY, tokens.access_token)
+        localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token)
+        setUser(user)
     }
 
     const register = async (email: string, password: string, name?: string, ccaa_residencia?: string, turnstile_token?: string) => {
@@ -154,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isAuthenticated: !!user,
             isLoading,
             login,
+            completeMfaLogin,
             register,
             logout
         }}>

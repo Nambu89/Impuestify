@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     User, Download, Trash2, Save, AlertCircle, CheckCircle,
     Loader, Shield, Lock, Calculator, ChevronDown, ChevronRight, RefreshCw,
-    CreditCard, ExternalLink, Bell, BellOff, Mail
+    CreditCard, ExternalLink, Bell, BellOff, Mail, Smartphone, Copy, X, KeyRound
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useApi } from '../hooks/useApi'
 import { useSubscription } from '../hooks/useSubscription'
 import { useFiscalProfile, FiscalProfile } from '../hooks/useFiscalProfile'
 import { usePushNotifications } from '../hooks/usePushNotifications'
+import { useMfa, MfaSetupData } from '../hooks/useMfa'
 import Header from '../components/Header'
 import DynamicFiscalForm from '../components/DynamicFiscalForm'
 import MultiPagadorForm from '../components/MultiPagadorForm'
@@ -58,6 +59,16 @@ export default function SettingsPage() {
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+
+    // MFA state
+    const mfa = useMfa()
+    const [mfaStep, setMfaStep] = useState<'idle' | 'setup' | 'verify' | 'backup_codes' | 'disable'>('idle')
+    const [mfaSetupData, setMfaSetupData] = useState<MfaSetupData | null>(null)
+    const [mfaCode, setMfaCode] = useState('')
+    const [mfaBackupCodes, setMfaBackupCodes] = useState<string[]>([])
+    const [mfaError, setMfaError] = useState('')
+    const [secretCopied, setSecretCopied] = useState(false)
+    const mfaInputRef = useRef<HTMLInputElement>(null)
 
     // Fiscal profile hook
     const fiscal = useFiscalProfile()
@@ -128,6 +139,13 @@ export default function SettingsPage() {
             setMessage({ type: 'success', text: `Plan actualizado. Ahora puedes seleccionar el perfil de ${requestedRole}.` })
         }
     }, [])
+
+    // Fetch MFA status when security tab is opened
+    useEffect(() => {
+        if (activeTab === 'security' && !mfa.statusLoaded) {
+            mfa.checkStatus()
+        }
+    }, [activeTab]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Fetch email alerts status
     useEffect(() => {
@@ -300,6 +318,92 @@ export default function SettingsPage() {
         }
     }
 
+    // ---- MFA HANDLERS ----
+
+    const handleMfaSetup = async () => {
+        setMfaError('')
+        setMfaCode('')
+        try {
+            const data = await mfa.setup()
+            if (data) {
+                setMfaSetupData(data)
+                setMfaStep('setup')
+                setTimeout(() => mfaInputRef.current?.focus(), 100)
+            }
+        } catch (err: any) {
+            setMfaError(err.message || 'Error al iniciar la configuración')
+        }
+    }
+
+    const handleMfaVerify = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setMfaError('')
+        if (mfaCode.length !== 6) {
+            setMfaError('El código debe tener 6 dígitos')
+            return
+        }
+        try {
+            const result = await mfa.verify(mfaCode)
+            if (result.success) {
+                setMfaBackupCodes(result.backup_codes || [])
+                setMfaStep('backup_codes')
+                setMfaCode('')
+                setMessage({ type: 'success', text: 'Autenticación en dos pasos activada correctamente' })
+            }
+        } catch (err: any) {
+            setMfaError(err.message || 'Código incorrecto')
+            setMfaCode('')
+            mfaInputRef.current?.focus()
+        }
+    }
+
+    const handleMfaDisable = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setMfaError('')
+        if (mfaCode.length !== 6) {
+            setMfaError('El código debe tener 6 dígitos')
+            return
+        }
+        try {
+            const ok = await mfa.disable(mfaCode)
+            if (ok) {
+                setMfaStep('idle')
+                setMfaCode('')
+                setMessage({ type: 'success', text: 'Autenticación en dos pasos desactivada' })
+            }
+        } catch (err: any) {
+            setMfaError(err.message || 'Código incorrecto')
+            setMfaCode('')
+            mfaInputRef.current?.focus()
+        }
+    }
+
+    const handleCopySecret = () => {
+        if (mfaSetupData?.secret) {
+            navigator.clipboard.writeText(mfaSetupData.secret)
+            setSecretCopied(true)
+            setTimeout(() => setSecretCopied(false), 2000)
+        }
+    }
+
+    const handleDownloadBackupCodes = () => {
+        const content = mfaBackupCodes.join('\n')
+        const blob = new Blob([content], { type: 'text/plain' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'impuestify-codigos-respaldo.txt'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+    }
+
+    const handleMfaCodeChange = (value: string) => {
+        const digits = value.replace(/\D/g, '').slice(0, 6)
+        setMfaCode(digits)
+    }
+
     // ---- ADD/REMOVE child year helpers ----
     const addChildYear = () => setChildYears(prev => [...prev, ''])
     const removeChildYear = (index: number) =>
@@ -397,6 +501,8 @@ export default function SettingsPage() {
 
                 {/* ==================== SECURITY TAB ==================== */}
                 {activeTab === 'security' && (
+                    <>
+                    {/* ---- Cambiar contraseña ---- */}
                     <section className="settings-section">
                         <div className="section-header">
                             <Lock size={24} />
@@ -429,6 +535,234 @@ export default function SettingsPage() {
                             </button>
                         </form>
                     </section>
+
+                    {/* ---- Autenticación en dos pasos (2FA) ---- */}
+                    <section className="settings-section">
+                        <div className="section-header">
+                            <Smartphone size={24} />
+                            <h2>Autenticación en dos pasos (2FA)</h2>
+                        </div>
+
+                        <p className="section-description">
+                            Protege tu cuenta con un segundo factor de autenticación.
+                            Cada vez que inicies sesión necesitarás introducir un código temporal
+                            generado por tu aplicación de autenticación (Google Authenticator, Authy, etc.).
+                        </p>
+
+                        {mfa.loading && mfaStep === 'idle' && (
+                            <div className="mfa-loading">
+                                <Loader size={18} className="animate-spin" />
+                                Comprobando estado...
+                            </div>
+                        )}
+
+                        {mfaError && (
+                            <div className="mfa-error">
+                                <AlertCircle size={16} />
+                                {mfaError}
+                            </div>
+                        )}
+
+                        {/* Estado: MFA activo */}
+                        {mfa.mfaEnabled && mfaStep === 'idle' && (
+                            <div className="mfa-status-block mfa-status-block--active">
+                                <div className="mfa-status-badge">
+                                    <CheckCircle size={18} />
+                                    2FA activado
+                                </div>
+                                <p className="mfa-status-desc">
+                                    Tu cuenta está protegida con autenticación en dos pasos.
+                                </p>
+                                <button
+                                    type="button"
+                                    className="btn btn-danger-outline"
+                                    onClick={() => { setMfaStep('disable'); setMfaError(''); setMfaCode('') }}
+                                >
+                                    <X size={16} /> Desactivar 2FA
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Estado: MFA inactivo */}
+                        {!mfa.mfaEnabled && mfaStep === 'idle' && !mfa.loading && (
+                            <div className="mfa-status-block">
+                                <div className="mfa-status-badge mfa-status-badge--inactive">
+                                    <Shield size={18} />
+                                    2FA desactivado
+                                </div>
+                                <p className="mfa-status-desc">
+                                    Te recomendamos activar el 2FA para mayor seguridad.
+                                </p>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleMfaSetup}
+                                    disabled={mfa.loading}
+                                >
+                                    {mfa.loading
+                                        ? <><Loader size={16} className="animate-spin" /> Preparando...</>
+                                        : <><KeyRound size={16} /> Activar autenticación en dos pasos</>
+                                    }
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Step: Configurar QR */}
+                        {mfaStep === 'setup' && mfaSetupData && (
+                            <div className="mfa-setup">
+                                <h3 className="mfa-setup-title">
+                                    <span className="mfa-step-badge">1</span>
+                                    Escanea el código QR con tu app de autenticación
+                                </h3>
+                                <div className="mfa-qr-wrapper">
+                                    <img
+                                        src={`data:image/png;base64,${mfaSetupData.qr_code_base64}`}
+                                        alt="Código QR para autenticación 2FA"
+                                        className="mfa-qr-image"
+                                    />
+                                </div>
+
+                                <div className="mfa-secret-block">
+                                    <span className="mfa-secret-label">
+                                        ¿No puedes escanear el QR? Introduce este código manualmente:
+                                    </span>
+                                    <div className="mfa-secret-row">
+                                        <code className="mfa-secret-code">{mfaSetupData.secret}</code>
+                                        <button
+                                            type="button"
+                                            className="mfa-copy-btn"
+                                            onClick={handleCopySecret}
+                                            title="Copiar código secreto"
+                                        >
+                                            {secretCopied ? <CheckCircle size={15} /> : <Copy size={15} />}
+                                            {secretCopied ? 'Copiado' : 'Copiar'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <h3 className="mfa-setup-title">
+                                    <span className="mfa-step-badge">2</span>
+                                    Introduce el código de 6 dígitos para confirmar
+                                </h3>
+
+                                <form onSubmit={handleMfaVerify} className="mfa-verify-form">
+                                    <input
+                                        ref={mfaInputRef}
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        maxLength={6}
+                                        className="mfa-totp-input"
+                                        placeholder="000000"
+                                        value={mfaCode}
+                                        onChange={e => handleMfaCodeChange(e.target.value)}
+                                        autoComplete="one-time-code"
+                                        aria-label="Código de verificación 2FA"
+                                    />
+                                    <div className="mfa-form-actions">
+                                        <button
+                                            type="button"
+                                            className="btn btn-ghost"
+                                            onClick={() => { setMfaStep('idle'); setMfaError(''); setMfaCode('') }}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary"
+                                            disabled={mfa.loading || mfaCode.length !== 6}
+                                        >
+                                            {mfa.loading
+                                                ? <><Loader size={16} className="animate-spin" /> Verificando...</>
+                                                : <><CheckCircle size={16} /> Verificar y activar</>
+                                            }
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* Step: Backup codes */}
+                        {mfaStep === 'backup_codes' && (
+                            <div className="mfa-backup">
+                                <div className="mfa-backup-header">
+                                    <CheckCircle size={24} className="mfa-success-icon" />
+                                    <h3>2FA activado correctamente</h3>
+                                </div>
+                                <p className="mfa-backup-desc">
+                                    Guarda estos códigos de respaldo en un lugar seguro. Podrás usarlos
+                                    para acceder a tu cuenta si pierdes acceso a tu app de autenticación.
+                                    <strong> Cada código solo se puede usar una vez.</strong>
+                                </p>
+                                <div className="mfa-backup-grid">
+                                    {mfaBackupCodes.map((code, i) => (
+                                        <code key={i} className="mfa-backup-code">{code}</code>
+                                    ))}
+                                </div>
+                                <div className="mfa-form-actions">
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={handleDownloadBackupCodes}
+                                    >
+                                        <Download size={16} /> Descargar códigos
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary"
+                                        onClick={() => setMfaStep('idle')}
+                                    >
+                                        <CheckCircle size={16} /> Listo
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Step: Desactivar */}
+                        {mfaStep === 'disable' && (
+                            <div className="mfa-setup">
+                                <p className="mfa-status-desc">
+                                    Para desactivar el 2FA, introduce el código actual de tu app de autenticación.
+                                </p>
+                                <form onSubmit={handleMfaDisable} className="mfa-verify-form">
+                                    <input
+                                        ref={mfaInputRef}
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        maxLength={6}
+                                        className="mfa-totp-input"
+                                        placeholder="000000"
+                                        value={mfaCode}
+                                        onChange={e => handleMfaCodeChange(e.target.value)}
+                                        autoComplete="one-time-code"
+                                        aria-label="Código de verificación para desactivar 2FA"
+                                        autoFocus
+                                    />
+                                    <div className="mfa-form-actions">
+                                        <button
+                                            type="button"
+                                            className="btn btn-ghost"
+                                            onClick={() => { setMfaStep('idle'); setMfaError(''); setMfaCode('') }}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-danger"
+                                            disabled={mfa.loading || mfaCode.length !== 6}
+                                        >
+                                            {mfa.loading
+                                                ? <><Loader size={16} className="animate-spin" /> Desactivando...</>
+                                                : <><X size={16} /> Desactivar 2FA</>
+                                            }
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+                    </section>
+                    </>
                 )}
 
                 {/* ==================== FISCAL PROFILE TAB ==================== */}

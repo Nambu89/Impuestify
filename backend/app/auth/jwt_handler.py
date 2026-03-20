@@ -177,6 +177,34 @@ async def get_current_user_required(
     return token_data
 
 
+def create_mfa_token(user_id: str, email: str) -> str:
+    """
+    Create a short-lived MFA pending token.
+
+    This token is issued after successful password verification when
+    the user has MFA enabled.  It must be exchanged for a full
+    access/refresh token pair by providing a valid TOTP code.
+
+    Args:
+        user_id: User's unique identifier
+        email: User's email address
+
+    Returns:
+        Encoded JWT token string (5 min TTL, type=mfa_pending)
+    """
+    return jwt.encode(
+        {
+            "sub": user_id,
+            "email": email,
+            "type": "mfa_pending",
+            "exp": datetime.utcnow() + timedelta(minutes=5),
+            "iat": datetime.utcnow(),
+        },
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
 def create_reset_token(user_id: str, email: str) -> str:
     """
     Create a password reset token.
