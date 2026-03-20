@@ -50,6 +50,8 @@ export function UpgradePlanModal({
     const price = PLAN_PRICES[requiredPlan]
 
     const handleUpgrade = () => {
+        // Guardar rol solicitado para pre-seleccionar tras upgrade
+        localStorage.setItem('requested_role', requiredPlan)
         navigate(`/subscribe?highlight=${requiredPlan}`)
         onClose()
     }

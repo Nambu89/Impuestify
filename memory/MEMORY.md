@@ -1,6 +1,6 @@
 # TaxIA — Memoria del Agente
 
-> Ultima actualizacion: 2026-03-19 (sesion 15)
+> Ultima actualizacion: 2026-03-20 (sesion 17)
 > Ver detalles en archivos separados por tema
 > Bugs fixeados: `memory/bugfixes-2026-03.md` (62 bugs documentados, sesion 13)
 
@@ -23,6 +23,7 @@
 | `memory/beta_testers.md` | 4 beta testers activos (Ramon, Juan Pablo, Jose Antonio, Maria) |
 | `memory/feedback_ortografia_pre_push.md` | Regla obligatoria: verificar tildes ANTES de push — reputacion marca |
 | `memory/reference_mission_control.md` | Herramienta futura: dashboard orquestacion 6 agentes IA |
+| `memory/feedback_ruflo_workflow.md` | RuFlo V3.5: workflow estandar, config, limitaciones Windows, capacidad ~85% |
 
 ## Arquitectura del proyecto
 

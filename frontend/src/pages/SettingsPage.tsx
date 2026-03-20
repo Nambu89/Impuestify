@@ -72,6 +72,9 @@ export default function SettingsPage() {
     const [showDeducciones, setShowDeducciones] = useState(false)
     const [showAutonomo, setShowAutonomo] = useState(false)
 
+    // Upgrade modal
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+
     // UI state
     const [isLoading, setIsLoading] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -116,6 +119,15 @@ export default function SettingsPage() {
             }
         }
     }, [fiscal.loading, fiscal.profile])
+
+    // Post-upgrade: pre-seleccionar rol solicitado antes del upgrade
+    useEffect(() => {
+        const requestedRole = localStorage.getItem('requested_role')
+        if (requestedRole) {
+            localStorage.removeItem('requested_role')
+            setMessage({ type: 'success', text: `Plan actualizado. Ahora puedes seleccionar el perfil de ${requestedRole}.` })
+        }
+    }, [])
 
     // Fetch email alerts status
     useEffect(() => {
@@ -224,7 +236,10 @@ export default function SettingsPage() {
 
         const ok = await fiscal.save(dataToSave)
         if (ok) {
+            setLastSavedSituacion(dataToSave.situacion_laboral ?? null)
             setMessage({ type: 'success', text: 'Perfil fiscal guardado correctamente' })
+        } else if (fiscal.planUpgradeNeeded) {
+            setShowUpgradeModal(true)
         } else if (fiscal.error) {
             setMessage({ type: 'error', text: fiscal.error })
         }
@@ -307,6 +322,7 @@ export default function SettingsPage() {
         ) : null
 
     return (
+        <>
         <div className="settings-page">
             <Header />
 
@@ -1449,5 +1465,22 @@ export default function SettingsPage() {
                 )}
             </div>
         </div>
+
+        {showUpgradeModal && fiscal.planUpgradeNeeded && (
+            <UpgradePlanModal
+                isOpen={showUpgradeModal}
+                currentPlan={fiscal.planUpgradeNeeded.current_plan}
+                requiredPlan={fiscal.planUpgradeNeeded.required_plan}
+                message={fiscal.planUpgradeNeeded.message}
+                onClose={() => {
+                    setShowUpgradeModal(false)
+                    fiscal.clearPlanUpgrade()
+                    // Revertir situacion_laboral al último valor guardado
+                    updateFiscal('situacion_laboral', lastSavedSituacion)
+                    setFiscalForm(prev => ({ ...prev, situacion_laboral: lastSavedSituacion }))
+                }}
+            />
+        )}
+        </>
     )
 }

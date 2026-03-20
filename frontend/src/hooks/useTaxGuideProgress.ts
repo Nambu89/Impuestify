@@ -10,6 +10,7 @@ export interface TaxGuideData {
     ceuta_melilla: boolean
     tributacion_conjunta: boolean
     tipo_unidad_familiar: string  // "matrimonio" | "monoparental"
+    situacion_laboral: string  // "asalariado" | "autonomo" | "pensionista" | "desempleado" | ""
     // Step 2: Trabajo
     salary_input_mode: 'annual' | 'monthly'  // UI-only
     ingresos_trabajo: number
@@ -105,6 +106,7 @@ export const EMPTY_TAX_DATA: TaxGuideData = {
     ceuta_melilla: false,
     tributacion_conjunta: false,
     tipo_unidad_familiar: 'matrimonio',
+    situacion_laboral: '',
     salary_input_mode: 'annual',
     ingresos_trabajo: 0,
     ss_empleado: 0,
