@@ -136,6 +136,101 @@ class TestReportGenerator:
         assert isinstance(pdf_bytes, bytes)
         assert len(pdf_bytes) > 1000  # Should be substantial
 
+    def test_generate_report_with_chat_content(self):
+        """Should include personalized analysis section from chat content."""
+        from app.services.report_generator import generate_irpf_report
+
+        chat_md = """### Resumen de tu declaración
+
+Con unos **ingresos brutos de 35.000 EUR** en Madrid, tu situación fiscal es la siguiente:
+
+- **Cuota íntegra total**: 8.700 EUR
+- **Retenciones soportadas**: 6.500 EUR
+- **Resultado**: a pagar 2.200 EUR
+
+Te recomiendo revisar si puedes aplicar la **deducción por alquiler** si tienes contrato anterior a 2015."""
+
+        pdf_bytes = generate_irpf_report(
+            user_name="Carlos Test",
+            simulation_data={
+                "ingresos_trabajo": 35000.0,
+                "cuota_integra_total": 8700.0,
+                "cuota_liquida": 5800.0,
+                "tipo_efectivo": 16.57,
+            },
+            chat_content=chat_md,
+        )
+
+        assert isinstance(pdf_bytes, bytes)
+        assert pdf_bytes[:5] == b"%PDF-"
+        assert len(pdf_bytes) > 1000
+
+    def test_generate_report_with_extended_simulation_fields(self):
+        """Should render additional simulation fields (retenciones, resultado)."""
+        from app.services.report_generator import generate_irpf_report
+
+        pdf_bytes = generate_irpf_report(
+            user_name="Ana Extended",
+            simulation_data={
+                "ingresos_trabajo": 40000.0,
+                "ss_empleado": 2540.0,
+                "base_imponible_general": 35460.0,
+                "base_imponible_ahorro": 500.0,
+                "cuota_integra_estatal": 5200.0,
+                "cuota_integra_autonomica": 4800.0,
+                "cuota_integra_total": 10000.0,
+                "mpyf_total": 5550.0,
+                "reduccion_conjunta": 3400.0,
+                "deduccion_vivienda": 1356.0,
+                "deduccion_donativos": 200.0,
+                "cuota_liquida": 7500.0,
+                "retenciones_trabajo": 6000.0,
+                "resultado_declaracion": 1500.0,
+                "tipo_efectivo": 18.75,
+            },
+        )
+
+        assert isinstance(pdf_bytes, bytes)
+        assert pdf_bytes[:5] == b"%PDF-"
+
+
+class TestMarkdownParser:
+    """Tests for the markdown-to-reportlab parser."""
+
+    def test_parse_bold(self):
+        from app.services.report_generator import _parse_markdown_to_reportlab
+
+        result = _parse_markdown_to_reportlab("Texto con **negrita** aqui")
+        assert len(result) == 1
+        assert "<b>negrita</b>" in result[0]
+
+    def test_parse_headers(self):
+        from app.services.report_generator import _parse_markdown_to_reportlab
+
+        result = _parse_markdown_to_reportlab("### Mi titulo\n\nTexto normal")
+        assert "<b>Mi titulo</b>" in result[0]
+        assert "Texto normal" in result[1]
+
+    def test_parse_bullets(self):
+        from app.services.report_generator import _parse_markdown_to_reportlab
+
+        result = _parse_markdown_to_reportlab("- Primer punto\n- Segundo punto")
+        assert any("\u2022 Primer punto" in p for p in result)
+        assert any("\u2022 Segundo punto" in p for p in result)
+
+    def test_parse_empty_string(self):
+        from app.services.report_generator import _parse_markdown_to_reportlab
+
+        result = _parse_markdown_to_reportlab("")
+        assert result == []
+
+    def test_parse_mixed_content(self):
+        from app.services.report_generator import _parse_markdown_to_reportlab
+
+        md = "### Resumen\n\nTu **cuota** es alta.\n\n- Punto 1\n- Punto **2**"
+        result = _parse_markdown_to_reportlab(md)
+        assert len(result) >= 3
+
 
 # ============================================================
 # EMAIL SERVICE TESTS
@@ -221,6 +316,50 @@ class TestExportRouter:
         req = IRPFReportRequest(ccaa="Madrid", ingresos_trabajo=30000, year=2025)
         assert req.ccaa == "Madrid"
         assert req.ingresos_trabajo == 30000
+
+    def test_request_model_extended_fields(self):
+        """IRPFReportRequest should accept extended fiscal fields."""
+        from app.routers.export import IRPFReportRequest
+
+        req = IRPFReportRequest(
+            ccaa="Madrid",
+            ingresos_trabajo=35000,
+            year=2025,
+            retenciones_trabajo=5500,
+            ss_empleado=2222,
+            aportaciones_plan_pensiones=1500,
+            tributacion_conjunta=True,
+            tipo_unidad_familiar="matrimonio",
+            hipoteca_pre2013=True,
+            capital_amortizado_hipoteca=6000,
+            intereses_hipoteca=2000,
+            donativos=300,
+            familia_numerosa=True,
+            madre_trabajadora_ss=True,
+            edad_contribuyente=42,
+            num_descendientes=2,
+            ceuta_melilla=False,
+            ingresos_actividad=10000,
+            gastos_actividad=3000,
+            chat_content="**Resumen**: tu declaracion sale a devolver.",
+        )
+        assert req.retenciones_trabajo == 5500
+        assert req.tributacion_conjunta is True
+        assert req.chat_content is not None
+        assert req.familia_numerosa is True
+        assert req.edad_contribuyente == 42
+
+    def test_request_model_defaults_backward_compatible(self):
+        """Extended fields should all have defaults for backward compatibility."""
+        from app.routers.export import IRPFReportRequest
+
+        req = IRPFReportRequest(ccaa="Andalucia")
+        assert req.retenciones_trabajo == 0
+        assert req.ss_empleado == 0
+        assert req.tributacion_conjunta is False
+        assert req.chat_content is None
+        assert req.familia_numerosa is False
+        assert req.ingresos_actividad == 0
 
     def test_share_request_model(self):
         """ShareWithAdvisorRequest should validate email."""

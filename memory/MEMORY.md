@@ -76,7 +76,7 @@
 - Owner: `fernando.prada@proton.me` (sin restricciones)
 - 15+ usuarios existentes: grace_period hasta 31/12/2026
 - Segmento Creator: influencers, streamers, YouTubers, bloggers, creadores audiovisuales
-- **PENDIENTE sesion 13:** Validar plan compatible al cambiar roles (ver `project_upgrade_downgrade.md`)
+- **COMPLETADO sesion 17:** Validar plan compatible al cambiar roles — UpgradePlanModal en SettingsPage (commit `8440917`)
 
 ## Perfil Fiscal Adaptativo por CCAA (COMPLETO)
 

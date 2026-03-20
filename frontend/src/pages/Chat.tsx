@@ -23,6 +23,7 @@ import remarkGfm from 'remark-gfm'
 import { FormattedMessage } from '../components/FormattedMessage'
 import OnboardingModal from '../components/OnboardingModal'
 import { useAuth } from '../hooks/useAuth'
+import { useFiscalProfile } from '../hooks/useFiscalProfile'
 import './Chat.css'
 
 interface Message {
@@ -39,6 +40,7 @@ interface Message {
 
 export default function Chat() {
     const { user } = useAuth()
+    const { profile: fiscalProfile, refresh: refreshFiscalProfile } = useFiscalProfile()
     const { askQuestion } = useApi()
     const { getConversation } = useConversations()
     const { workspaces, activeWorkspace, selectWorkspace, fetchWorkspaces } = useWorkspaces()
@@ -58,9 +60,10 @@ export default function Chat() {
     const chatMessagesRef = useRef<HTMLDivElement>(null)
     const userJustSentRef = useRef(false)
 
-    // Fetch workspaces on mount (only once)
+    // Fetch workspaces and fiscal profile on mount (only once)
     useEffect(() => {
         fetchWorkspaces()
+        refreshFiscalProfile()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])  // Empty dependency array = run only once on mount
 
@@ -369,6 +372,7 @@ export default function Chat() {
                                                                 ? messages[index - 1].content
                                                                 : undefined
                                                         }
+                                                        fiscalProfile={fiscalProfile as any}
                                                     />
                                                 )}
                                             </>

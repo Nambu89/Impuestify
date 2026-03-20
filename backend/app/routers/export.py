@@ -28,6 +28,39 @@ class IRPFReportRequest(BaseModel):
     ingresos_trabajo: float = Field(0, description="Ingresos brutos anuales del trabajo")
     year: int = Field(2025, description="Ano fiscal")
     answers: Optional[Dict[str, Any]] = Field(default=None, description="Respuestas para deducciones")
+    # Extended fields for complete simulation
+    retenciones_trabajo: float = Field(0, description="Retenciones IRPF en nómina")
+    ss_empleado: float = Field(0, description="Cotización SS empleado anual")
+    aportaciones_plan_pensiones: float = Field(0, description="Aportaciones plan pensiones")
+    tributacion_conjunta: bool = Field(False, description="Tributación conjunta")
+    tipo_unidad_familiar: str = Field("matrimonio", description="Tipo unidad familiar")
+    hipoteca_pre2013: bool = Field(False, description="Hipoteca anterior a 2013")
+    capital_amortizado_hipoteca: float = Field(0, description="Capital amortizado hipoteca")
+    intereses_hipoteca: float = Field(0, description="Intereses hipoteca")
+    donativos: float = Field(0, description="Donativos Ley 49/2002")
+    donativo_recurrente: bool = Field(False, description="Donativo recurrente 2+ años")
+    familia_numerosa: bool = Field(False, description="Familia numerosa")
+    tipo_familia_numerosa: str = Field("general", description="Tipo familia numerosa")
+    madre_trabajadora_ss: bool = Field(False, description="Madre trabajadora con hijos <3")
+    gastos_guarderia_anual: float = Field(0, description="Gastos guardería anual")
+    edad_contribuyente: int = Field(35, description="Edad del contribuyente")
+    num_descendientes: int = Field(0, description="Número de descendientes")
+    num_ascendientes_65: int = Field(0, description="Ascendientes >65")
+    num_ascendientes_75: int = Field(0, description="Ascendientes >75")
+    discapacidad_contribuyente: int = Field(0, description="Porcentaje discapacidad")
+    ceuta_melilla: bool = Field(False, description="Residente Ceuta/Melilla")
+    # Activity income
+    ingresos_actividad: float = Field(0, description="Ingresos actividad económica")
+    gastos_actividad: float = Field(0, description="Gastos actividad económica")
+    cuota_autonomo_anual: float = Field(0, description="Cuota autónomo anual")
+    retenciones_actividad: float = Field(0, description="Retenciones actividad")
+    pagos_fraccionados_130: float = Field(0, description="Pagos fraccionados M130")
+    # Savings
+    intereses: float = Field(0, description="Intereses cuentas/depósitos")
+    dividendos: float = Field(0, description="Dividendos")
+    ganancias_fondos: float = Field(0, description="Ganancias fondos")
+    # Chat content for personalized analysis
+    chat_content: Optional[str] = Field(default=None, description="Contenido markdown del análisis del asistente")
 
 
 class ShareWithAdvisorRequest(BaseModel):
@@ -85,13 +118,42 @@ async def generate_irpf_report(
 
     # Run IRPF simulation
     simulation_data = None
-    if body.ingresos_trabajo > 0:
+    has_income = body.ingresos_trabajo > 0 or body.ingresos_actividad > 0
+    if has_income:
         try:
             from app.tools.irpf_simulator_tool import simulate_irpf_tool
             sim_result = await simulate_irpf_tool(
                 comunidad_autonoma=body.ccaa,
                 ingresos_trabajo=body.ingresos_trabajo,
                 year=body.year,
+                ss_empleado=body.ss_empleado,
+                retenciones_trabajo=body.retenciones_trabajo,
+                aportaciones_plan_pensiones=body.aportaciones_plan_pensiones,
+                tributacion_conjunta=body.tributacion_conjunta,
+                tipo_unidad_familiar=body.tipo_unidad_familiar,
+                hipoteca_pre2013=body.hipoteca_pre2013,
+                capital_amortizado_hipoteca=body.capital_amortizado_hipoteca,
+                intereses_hipoteca=body.intereses_hipoteca,
+                donativos_ley_49_2002=body.donativos,
+                donativo_recurrente=body.donativo_recurrente,
+                familia_numerosa=body.familia_numerosa,
+                tipo_familia_numerosa=body.tipo_familia_numerosa,
+                madre_trabajadora_ss=body.madre_trabajadora_ss,
+                gastos_guarderia_anual=body.gastos_guarderia_anual,
+                edad_contribuyente=body.edad_contribuyente,
+                num_descendientes=body.num_descendientes,
+                num_ascendientes_65=body.num_ascendientes_65,
+                num_ascendientes_75=body.num_ascendientes_75,
+                discapacidad_contribuyente=body.discapacidad_contribuyente,
+                ceuta_melilla=body.ceuta_melilla,
+                ingresos_actividad=body.ingresos_actividad,
+                gastos_actividad=body.gastos_actividad,
+                cuota_autonomo_anual=body.cuota_autonomo_anual,
+                retenciones_actividad=body.retenciones_actividad,
+                pagos_fraccionados_130=body.pagos_fraccionados_130,
+                intereses=body.intereses,
+                dividendos=body.dividendos,
+                ganancias_fondos=body.ganancias_fondos,
             )
             if sim_result.get("success"):
                 simulation_data = sim_result
@@ -122,6 +184,7 @@ async def generate_irpf_report(
         deductions=deductions,
         fiscal_profile=fiscal_profile,
         estimated_savings=estimated_savings,
+        chat_content=body.chat_content,
     )
 
     # Save report to DB

@@ -12,12 +12,70 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 
+def _parse_markdown_to_reportlab(markdown_text: str) -> List[str]:
+    """
+    Convert basic markdown to ReportLab-compatible paragraphs.
+
+    Handles:
+    - **bold** → <b>bold</b>
+    - ### headers → <b>header text</b>
+    - - bullet items → bullet character prefix
+    - Blank lines → paragraph breaks
+    """
+    import re
+
+    lines = markdown_text.split("\n")
+    paragraphs: List[str] = []
+    current_paragraph: List[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Skip empty lines (paragraph break)
+        if not stripped:
+            if current_paragraph:
+                paragraphs.append(" ".join(current_paragraph))
+                current_paragraph = []
+            continue
+
+        # Headers: ### Text → bold
+        if stripped.startswith("#"):
+            if current_paragraph:
+                paragraphs.append(" ".join(current_paragraph))
+                current_paragraph = []
+            header_text = re.sub(r"^#+\s*", "", stripped)
+            paragraphs.append(f"<b>{header_text}</b>")
+            continue
+
+        # Bullet lists: - item or * item
+        if re.match(r"^[-*]\s+", stripped):
+            if current_paragraph:
+                paragraphs.append(" ".join(current_paragraph))
+                current_paragraph = []
+            bullet_text = re.sub(r"^[-*]\s+", "", stripped)
+            # Convert **bold** inside bullets too
+            bullet_text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", bullet_text)
+            paragraphs.append(f"\u2022 {bullet_text}")
+            continue
+
+        # Regular text: convert **bold**
+        processed = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", stripped)
+        current_paragraph.append(processed)
+
+    # Flush remaining paragraph
+    if current_paragraph:
+        paragraphs.append(" ".join(current_paragraph))
+
+    return paragraphs
+
+
 def generate_irpf_report(
     user_name: str,
     simulation_data: Optional[Dict[str, Any]] = None,
     deductions: Optional[List[Dict[str, Any]]] = None,
     fiscal_profile: Optional[Dict[str, Any]] = None,
     estimated_savings: float = 0.0,
+    chat_content: Optional[str] = None,
 ) -> bytes:
     """
     Generate a PDF report with IRPF simulation and deductions.
@@ -28,6 +86,7 @@ def generate_irpf_report(
         deductions: List of eligible deductions
         fiscal_profile: User's fiscal profile
         estimated_savings: Estimated savings from deductions
+        chat_content: Optional markdown content from the assistant's analysis
 
     Returns:
         PDF file as bytes
@@ -128,11 +187,11 @@ def generate_irpf_report(
     if fiscal_profile:
         fp_fields = {
             "ccaa_residencia": "CCAA de residencia",
-            "situacion_laboral": "Situacion laboral",
-            "epigrafe_iae": "Epigrafe IAE",
+            "situacion_laboral": "Situación laboral",
+            "epigrafe_iae": "Epígrafe IAE",
             "tipo_actividad": "Tipo de actividad",
-            "metodo_estimacion_irpf": "Metodo estimacion IRPF",
-            "regimen_iva": "Regimen IVA",
+            "metodo_estimacion_irpf": "Método estimación IRPF",
+            "regimen_iva": "Régimen IVA",
         }
         for key, label in fp_fields.items():
             val = fiscal_profile.get(key)
@@ -156,21 +215,32 @@ def generate_irpf_report(
 
     # === IRPF SIMULATION ===
     if simulation_data:
-        elements.append(Paragraph("Simulacion IRPF", heading_style))
+        elements.append(Paragraph("Simulación IRPF", heading_style))
 
         sim_rows = [["Concepto", "Importe"]]
 
         field_map = [
             ("ingresos_trabajo", "Ingresos brutos del trabajo"),
-            ("ss_empleado", "Cotizacion SS empleado"),
+            ("ss_empleado", "Cotización SS empleado"),
             ("otros_gastos", "Otros gastos deducibles"),
-            ("reduccion_trabajo", "Reduccion rendimientos trabajo"),
+            ("reduccion_trabajo", "Reducción rendimientos trabajo"),
             ("base_imponible_general", "Base imponible general"),
-            ("cuota_integra_estatal", "Cuota integra estatal"),
-            ("cuota_integra_autonomica", "Cuota integra autonomica"),
-            ("cuota_integra_total", "Cuota integra total"),
-            ("mpyf_total", "Minimo personal y familiar"),
-            ("cuota_liquida", "Cuota liquida"),
+            ("base_imponible_ahorro", "Base imponible del ahorro"),
+            ("cuota_integra_estatal", "Cuota íntegra estatal"),
+            ("cuota_integra_autonomica", "Cuota íntegra autonómica"),
+            ("cuota_integra_total", "Cuota íntegra total"),
+            ("mpyf_total", "Mínimo personal y familiar"),
+            ("reduccion_conjunta", "Reducción tributación conjunta"),
+            ("deduccion_vivienda", "Deducción vivienda habitual"),
+            ("deduccion_donativos", "Deducción por donativos"),
+            ("deduccion_maternidad", "Deducción por maternidad"),
+            ("deduccion_familia_numerosa", "Deducción familia numerosa"),
+            ("deducciones_autonomicas_total", "Deducciones autonómicas"),
+            ("cuota_liquida", "Cuota líquida"),
+            ("retenciones_trabajo", "Retenciones del trabajo"),
+            ("retenciones_actividad", "Retenciones actividad"),
+            ("pagos_fraccionados_130", "Pagos fraccionados M130"),
+            ("resultado_declaracion", "Resultado declaración"),
             ("tipo_efectivo", "Tipo efectivo"),
         ]
 
@@ -201,7 +271,7 @@ def generate_irpf_report(
     if deductions:
         elements.append(Paragraph("Deducciones aplicables", heading_style))
 
-        ded_rows = [["Deduccion", "Tipo", "Ahorro estimado"]]
+        ded_rows = [["Deducción", "Tipo", "Ahorro estimado"]]
         for d in deductions:
             name = d.get("name", "")
             dtype = d.get("type", "deduccion").capitalize()
@@ -238,16 +308,26 @@ def generate_irpf_report(
                 green_amount_style,
             ))
 
+    # === PERSONALIZED ANALYSIS (from chat) ===
+    if chat_content:
+        elements.append(Paragraph("Análisis personalizado", heading_style))
+        # Parse basic markdown: **bold** → <b>bold</b>, remove ### headers, bullet lists
+        analysis_text = _parse_markdown_to_reportlab(chat_content)
+        for paragraph_text in analysis_text:
+            if paragraph_text.strip():
+                elements.append(Paragraph(paragraph_text, body_style))
+                elements.append(Spacer(1, 2 * mm))
+
     # === DISCLAIMER ===
     elements.append(Spacer(1, 10 * mm))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=gray))
     elements.append(Spacer(1, 3 * mm))
     elements.append(Paragraph(
-        "AVISO LEGAL: Este informe ha sido generado automaticamente por Impuestify y tiene "
-        "caracter meramente orientativo e informativo. No constituye asesoramiento fiscal "
-        "profesional ni sustituye la consulta a un asesor fiscal cualificado. Los calculos "
-        "se basan en la informacion proporcionada por el usuario y en la normativa fiscal "
-        "vigente en el momento de la generacion. Impuestify no se responsabiliza de errores "
+        "AVISO LEGAL: Este informe ha sido generado automáticamente por Impuestify y tiene "
+        "carácter meramente orientativo e informativo. No constituye asesoramiento fiscal "
+        "profesional ni sustituye la consulta a un asesor fiscal cualificado. Los cálculos "
+        "se basan en la información proporcionada por el usuario y en la normativa fiscal "
+        "vigente en el momento de la generación. Impuestify no se responsabiliza de errores "
         "u omisiones en los datos proporcionados ni de las decisiones tomadas en base a este informe.",
         small_style,
     ))

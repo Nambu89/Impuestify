@@ -20,7 +20,7 @@ RuFlo V3.5 es el workflow estandar para desarrollo multi-agente en Impuestify.
 
 **Limitaciones conocidas (2026-03-20):**
 - `swarm_init` falla en Windows (store interno undefined). Agentes funcionan individualmente
-- ReasoningBank: implementado en `agentic-flow` (node_modules/agentic-flow/dist/reasoningbank/), ruflo usa bridge controller. Falla en Windows por 3 capas: (1) @xenova/transformers v2.17.2 static import de onnxruntime-node, (2) ruta OneDrive con espacios, (3) dos versiones conflictivas onnxruntime-node 1.14.0 vs 1.24.3. Fix: instalar VC++ 2022 Redistributable x64, o patch local onnx.js, o WSL2. En Railway/Linux funciona sin cambios
+- ReasoningBank: FUNCIONA en Windows tras 2 patches (sesion 17): (1) renombrar nested onnxruntime-node 1.24.3 NAPI v6 → fallback a top-level 1.14.0 NAPI v3, (2) crear alias agentdb/dist/controllers/index.js. Init OK, DB .swarm/memory.db, embeddings all-MiniLM-L6-v2 ONNX. Bugs menores: runTask y retrieveMemories tienen schema mismatches de AgentDB v1.3.9. Patches se pierden en npm install
 - Intelligence stats se resetean tras restart (pretrain repobla desde archivos)
 - Version MCP reporta 3.0.0 pero CLI es 3.5.41 (cache desactualizado)
 - AgentDB v1.3.9 tiene ESM import issues — ruflo incluye runtime patch automatico

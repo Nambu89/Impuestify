@@ -1,6 +1,6 @@
 # TaxIA (Impuestify) - Roadmap de Desarrollo
 
-## Estado del Proyecto: Marzo 2026 (Sesion 15 — En Progreso)
+## Estado del Proyecto: Marzo 2026 (Sesion 17 — 2026-03-20)
 
 ---
 
@@ -307,16 +307,19 @@
 
 ---
 
+## COMPLETADO — Sesion 17: Stripe Role Validation + Security Cleanup (2026-03-20)
+
+- [x] **RuFlo MCP activado**: 259 tools, 26 hooks, 4/5 AgentDB controllers, ~85% capacidad
+- [x] **Security cleanup**: secretos eliminados de historial git (filter-repo 3 pasadas, 235 commits)
+- [x] **Stripe role validation**: UpgradePlanModal en SettingsPage (commit `8440917`)
+  - Backend 403 plan_incompatible → modal visible → revert form on close → localStorage post-upgrade
+- [x] **Turnstile bypass QA**: ya implementado en codigo (`TURNSTILE_TEST_MODE=True` en Railway)
+
+---
+
 ## BACKLOG
 
-### CRITICA — Sesion 14 (proxima)
-- [ ] **Validar plan Stripe compatible al cambiar roles** (ver `memory/project_upgrade_downgrade.md`)
-  - Backend: validacion en endpoint update_fiscal_profile
-  - UI: modal upgrade si rol incompatible
-  - Tests: 5+ scenarios
-- [ ] **Turnstile bypass para QA automatizado** (ver `plans/qa-report-s17-2026-03-17.md`)
-  - Habilitar token test de Cloudflare `1x00000000000000000000AA` en Railway
-  - Permitir QA headless en CI/CD sin interacción manual
+### CRITICA
 - [ ] Re-ejecutar crawler con 90 URLs corregidas (si hay cambios)
 
 ### Alta prioridad
@@ -347,7 +350,7 @@
 | Documentos RAG | 439 (419 PDF + 9 Excel + 11 AEAT specs) |
 | Deducciones en BD | ~554 (192 v1/v2 + 339 XSD + 50 forales) |
 | CCAA cubiertas | 21 (15 común + 4 forales + Ceuta + Melilla) |
-| Tests backend | **1138** (55 nuevos Document Integrity Scanner) |
+| Tests backend | **1199** (23 nuevos multi-pagadores sesion 16) |
 | Tests frontend | build PASS |
 | Exchanges crypto soportados | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
 | Fechas fiscales 2026 | 58 (32 estatales + 4 nuevos = 36 **pendiente actualizar**) |

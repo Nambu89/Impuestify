@@ -1,29 +1,27 @@
 ---
 name: Stripe subscription upgrade/downgrade per role change
-description: CRITICO — cuando usuario cambia rol (e.g., particular→creator), validar subscription plan compatible
+description: COMPLETADO sesion 17 — validacion plan-role en SettingsPage con UpgradePlanModal
 type: project
 ---
 
-## Regla: Validar plan compatibility al cambiar roles
+## Regla: Validar plan compatibility al cambiar roles — COMPLETADO
 
-**Hecho:** Los 3 planes Stripe tienen restricciones por rol:
-- **Particular** (5 EUR): solo rol "Particular" (Modelo 100 basico)
-- **Creator** (49 EUR): rol "Creator" (Modelo 100 creator, IAE, IVA trimestral)
-- **Autonomo** (39 EUR): rol "Autonomo" (Modelos 303/420/130, RETA, estimacion trimestral)
+**Estado:** DONE (sesion 17, 2026-03-20, commit `8440917`)
 
-Si usuario tiene subscription plan Particular pero intenta cambiar su rol a "Creator" o "Autonomo", necesita upgrade.
+Los 3 planes Stripe tienen restricciones por rol:
+- **Particular** (5 EUR): asalariado, pensionista, desempleado
+- **Creator** (49 EUR): + creador, influencer, youtuber, streamer
+- **Autonomo** (39 EUR): sin restriccion (superset)
 
-## Accion pendiente (Sesion 13)
+## Implementacion completa
 
-1. **Backend:** Añadir validacion en `DynamicFiscalForm` POST: si `roles_adicionales` incluye nuevo rol, validar que `subscription_plan` es compatible.
-2. **UI:** Si plan incompatible → Modal "Necesitas upgrade a plan Creator/Autonomo" con boton a `/subscribe`.
-3. **Redireccion post-upgrade:** Guardar `requested_role` en localStorage, post-pago redirigir a perfil fiscal con ese rol ya seleccionado.
+1. **Backend:** `validate_plan_role_compatibility()` en `subscription_service.py` — devuelve 403 `plan_incompatible`
+2. **Frontend hook:** `useFiscalProfile.ts` detecta 403 y set `planUpgradeNeeded` state
+3. **UpgradePlanModal:** Componente completo con precio, descripcion, boton "Ver planes"
+4. **SettingsPage:** Modal se renderiza al intentar cambiar a rol incompatible. onClose revierte form. onUpgrade guarda `requested_role` en localStorage + navega a `/subscribe?highlight=plan`
+5. **Post-upgrade:** SettingsPage lee `requested_role` de localStorage al montar y muestra mensaje de confirmacion
+6. **TaxGuidePage:** No necesita gate — wizard se adapta automaticamente por `userPlan`
 
-## Why
-Sin esta validacion, un usuario particular puede completar un perfil de autonomo pero luego no podra usar herramientas de autonomo porque su plan no tiene acceso.
+**Why:** Sin validacion, usuario particular podia completar perfil de autonomo pero no acceder a herramientas.
 
-## How to apply
-Cuando usuario hace POST a actualizar su perfil fiscal (`update_fiscal_profile` endpoint) con nuevos `roles_adicionales`, verificar que `subscription_plan` lo permite. Si no, devolver 403 con mensaje "plan_incompatible" y detalles de upgrade requerido.
-
-**Sesion:** 12, fecha 2026-03-17
-**Prioridad:** CRITICA (proxima sesion 13)
+**How to apply:** Ya implementado. Si se añaden nuevos planes o roles, actualizar `PLAN_ALLOWED_ROLES` en `subscription_service.py`.
