@@ -1,5 +1,5 @@
 /* ============================================================
-   NetSalaryPage.css — Calculadora Sueldo Neto Autonomo
+   NetSalaryPage.css — Calculadora Sueldo Neto Autónomo
    Dark theme — Professional Blue palette
    ============================================================ */
 
@@ -619,6 +619,30 @@
 
 .ns-info-highlight--red {
     color: #f87171;
+}
+
+/* Warning: reserva mensual */
+.ns-reserve-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #fbbf24;
+}
+
+.ns-reserve-warning svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #f59e0b;
+}
+
+.ns-reserve-warning strong {
+    color: #fcd34d;
 }
 
 /* ============================================================

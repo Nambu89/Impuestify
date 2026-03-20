@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ChevronDown, ChevronUp, TrendingDown, Info, Euro, Percent, Minus, CheckCircle2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, TrendingDown, Info, Euro, Percent, Minus, CheckCircle2, AlertTriangle } from 'lucide-react'
 import Header from '../components/Header'
 import { useNetSalary, type NetSalaryInput } from '../hooks/useNetSalary'
 import './NetSalaryPage.css'
@@ -91,10 +91,10 @@ export default function NetSalaryPage() {
                 {/* Hero */}
                 <div className="ns-hero">
                     <h1 className="ns-title">
-                        <span className="ns-title-highlight">¿Cuanto te queda</span> limpio?
+                        <span className="ns-title-highlight">¿Cuánto te queda</span> limpio?
                     </h1>
                     <p className="ns-subtitle">
-                        Calcula tu sueldo neto real como autonomo — en segundos, sin rodeos
+                        Calcula tu sueldo neto real como autónomo — en segundos, sin rodeos
                     </p>
                 </div>
 
@@ -107,7 +107,7 @@ export default function NetSalaryPage() {
                         {/* Input principal */}
                         <div className="ns-main-input-wrap">
                             <label className="ns-main-label" htmlFor="facturacion">
-                                Facturacion mensual bruta
+                                Facturación mensual bruta
                             </label>
                             <div className="ns-main-input-row">
                                 <Euro size={24} className="ns-euro-icon" />
@@ -126,7 +126,7 @@ export default function NetSalaryPage() {
                             </div>
                             {bruto > 0 && (
                                 <p className="ns-main-hint">
-                                    {formatEur(bruto * 12)} EUR al ano antes de impuestos
+                                    {formatEur(bruto * 12)} EUR al año antes de impuestos
                                 </p>
                             )}
                         </div>
@@ -168,7 +168,7 @@ export default function NetSalaryPage() {
                                     <div className="ns-field">
                                         <div className="ns-label-row">
                                             <label className="ns-label">
-                                                <Percent size={14} /> Retencion IRPF en facturas
+                                                <Percent size={14} /> Retención IRPF en facturas
                                             </label>
                                             <label className="ns-toggle-label">
                                                 <input
@@ -178,7 +178,7 @@ export default function NetSalaryPage() {
                                                     onChange={e => handleNuevoAutonomo(e.target.checked)}
                                                 />
                                                 <span className="ns-toggle-track" />
-                                                <span className="ns-toggle-text">Soy nuevo autonomo (7%)</span>
+                                                <span className="ns-toggle-text">Soy nuevo autónomo (7%)</span>
                                             </label>
                                         </div>
                                         <div className="ns-radio-group">
@@ -203,7 +203,7 @@ export default function NetSalaryPage() {
                                     {/* Cuota autonomo */}
                                     <div className="ns-field">
                                         <label className="ns-label" htmlFor="cuota">
-                                            Cuota de autonomo mensual (EUR)
+                                            Cuota de autónomo mensual (EUR)
                                         </label>
                                         <input
                                             id="cuota"
@@ -214,7 +214,7 @@ export default function NetSalaryPage() {
                                             value={input.cuota_autonomo_mensual}
                                             onChange={e => setInput(prev => ({ ...prev, cuota_autonomo_mensual: parseFloat(e.target.value) || 0 }))}
                                         />
-                                        <p className="ns-field-hint">Base minima 2025: 230,15 EUR | Base media: 293 EUR</p>
+                                        <p className="ns-field-hint">Base mínima 2025: 230,15 EUR | Base media: 293 EUR</p>
                                     </div>
 
                                     {/* Gastos deducibles */}
@@ -231,7 +231,7 @@ export default function NetSalaryPage() {
                                             value={input.gastos_deducibles_mensual}
                                             onChange={e => setInput(prev => ({ ...prev, gastos_deducibles_mensual: parseFloat(e.target.value) || 0 }))}
                                         />
-                                        <p className="ns-field-hint">Material, suministros, vehiculo, formacion, etc.</p>
+                                        <p className="ns-field-hint">Material, suministros, vehículo, formación, etc.</p>
                                     </div>
 
                                 </div>
@@ -242,9 +242,9 @@ export default function NetSalaryPage() {
                         <div className="ns-disclaimer">
                             <Info size={14} />
                             <span>
-                                Calculo orientativo basado en estimacion IRPF general. Para una
-                                simulacion exacta usa la{' '}
-                                <a href="/guia-fiscal" className="ns-link">Guia Fiscal</a>.
+                                Cálculo orientativo basado en estimación IRPF general. Para una
+                                simulación exacta usa la{' '}
+                                <a href="/guia-fiscal" className="ns-link">Guía Fiscal</a>.
                             </span>
                         </div>
                     </section>
@@ -268,30 +268,41 @@ export default function NetSalaryPage() {
 
                             {hasResult && result && (
                                 <>
-                                    {/* Card principal */}
+                                    {/* Card principal — neto fiscal real (después de IRPF) */}
                                     <div className="ns-net-card">
                                         <div className="ns-net-label">
                                             <CheckCircle2 size={20} />
-                                            Te quedan limpios al mes
+                                            Tu neto real al mes
                                         </div>
                                         <div className="ns-net-amount">
-                                            {formatEur(result.neto_mensual)}
+                                            {formatEur(result.neto_anual / 12)}
                                             <span className="ns-net-currency">EUR</span>
                                         </div>
                                         <div className="ns-net-annual">
-                                            {formatEur(result.neto_anual)} EUR al ano
+                                            {formatEur(result.neto_anual)} EUR al año (tras IRPF, SS y gastos)
                                         </div>
                                         <div className="ns-net-pct">
-                                            {formatPct(result.porcentaje_neto)}% de tu facturacion bruta
+                                            {formatPct(result.porcentaje_neto)}% de tu facturación bruta
                                         </div>
                                     </div>
+
+                                    {/* Warning: reserva mensual si retenciones no cubren IRPF */}
+                                    {result.ahorro_retencion_vs_irpf < 0 && (
+                                        <div className="ns-reserve-warning">
+                                            <AlertTriangle size={16} />
+                                            <span>
+                                                Reserva <strong>{formatEur(Math.abs(result.ahorro_retencion_vs_irpf) / 12)} EUR/mes</strong> para
+                                                la declaración de la renta — tus retenciones no cubren el IRPF estimado.
+                                            </span>
+                                        </div>
+                                    )}
 
                                     {/* Desglose */}
                                     <div className="ns-breakdown-card">
                                         <h3 className="ns-breakdown-title">Desglose mensual</h3>
 
                                         <BreakdownBar
-                                            label="Facturacion bruta"
+                                            label="Facturación bruta"
                                             amount={result.facturacion_bruta}
                                             pct={100}
                                             colorClass="ns-color-base"
@@ -312,7 +323,7 @@ export default function NetSalaryPage() {
                                             colorClass="ns-color-irpf"
                                         />
                                         <BreakdownBar
-                                            label="Cuota de autonomo (RETA)"
+                                            label="Cuota de autónomo (RETA)"
                                             amount={result.cuota_autonomo}
                                             pct={(result.cuota_autonomo / result.facturacion_bruta) * 100}
                                             colorClass="ns-color-cuota"
@@ -332,8 +343,8 @@ export default function NetSalaryPage() {
                                         </div>
 
                                         <BreakdownBar
-                                            label="NETO real"
-                                            amount={result.neto_mensual}
+                                            label="NETO fiscal real"
+                                            amount={result.neto_anual / 12}
                                             pct={result.porcentaje_neto}
                                             colorClass="ns-color-neto"
                                             isBase
@@ -347,19 +358,19 @@ export default function NetSalaryPage() {
                                             <div>
                                                 <p>
                                                     Hacienda te retiene{' '}
-                                                    <strong>{formatEur(result.retencion_irpf_factura * 12)} EUR al ano</strong>{' '}
-                                                    a traves de las retenciones de tus facturas, pero tu IRPF real estimado es{' '}
+                                                    <strong>{formatEur(result.retencion_irpf_factura * 12)} EUR al año</strong>{' '}
+                                                    a través de las retenciones de tus facturas, pero tu IRPF real estimado es{' '}
                                                     <strong>{formatEur(result.irpf_estimado_anual)} EUR</strong>.
                                                 </p>
                                                 {result.ahorro_retencion_vs_irpf > 0 ? (
                                                     <p className="ns-info-highlight ns-info-highlight--green">
-                                                        Te devolverian aprox. {formatEur(result.ahorro_retencion_vs_irpf)} EUR
-                                                        en la declaracion de la renta.
+                                                        Te devolverían aprox. {formatEur(result.ahorro_retencion_vs_irpf)} EUR
+                                                        en la declaración de la renta.
                                                     </p>
                                                 ) : (
                                                     <p className="ns-info-highlight ns-info-highlight--red">
-                                                        Tendrias que pagar aprox. {formatEur(Math.abs(result.ahorro_retencion_vs_irpf))} EUR
-                                                        adicionales en la declaracion de la renta.
+                                                        Tendrías que pagar aprox. {formatEur(Math.abs(result.ahorro_retencion_vs_irpf))} EUR
+                                                        adicionales en la declaración de la renta.
                                                     </p>
                                                 )}
                                             </div>
