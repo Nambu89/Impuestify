@@ -1,0 +1,142 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'package.json'
+      - 'requirements.txt'
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly scan every Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  # --- Layer 1: Static Analysis (SAST) ---
+  sast:
+    name: Static Analysis (Bandit + Semgrep)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit (Python backend)
+        run: |
+          bandit -r backend/app \
+            --severity-level medium \
+            -s B101,B603,B404 \
+            -f json -o bandit-results.json || true
+          # Show summary
+          python -c "
+          import json
+          data = json.load(open('bandit-results.json'))
+          results = data.get('results', [])
+          high = [r for r in results if r['issue_severity'] == 'HIGH']
+          print(f'Bandit: {len(results)} findings ({len(high)} HIGH)')
+          if high:
+              for h in high:
+                  print(f'  CRITICAL: {h[\"test_id\"]} {h[\"filename\"]}:{h[\"line_number\"]}')
+              exit(1)
+          "
+
+      - name: Run Semgrep
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: .semgrep.yml
+        env:
+          SEMGREP_RULES: p/python p/typescript
+
+      - name: Upload SAST results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-results
+          path: bandit-results.json
+
+  # --- Layer 2: Dependency Audit ---
+  deps:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Audit Python dependencies
+        run: |
+          pip install pip-audit
+          pip install -r backend/requirements.txt
+          pip-audit --format json --output pip-audit-results.json || true
+          python -c "
+          import json
+          data = json.load(open('pip-audit-results.json'))
+          vulns = data.get('dependencies', [])
+          critical = [v for v in vulns if v.get('vulns')]
+          print(f'pip-audit: {len(critical)} packages with vulnerabilities')
+          for v in critical[:5]:
+              print(f'  {v[\"name\"]} {v[\"version\"]}: {len(v[\"vulns\"])} CVEs')
+          "
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit npm dependencies
+        working-directory: frontend
+        run: |
+          npm install --ignore-scripts
+          npm audit --json > ../npm-audit-results.json 2>/dev/null || true
+          node -e "
+          const data = JSON.parse(require('fs').readFileSync('../npm-audit-results.json', 'utf8'));
+          const total = data.metadata?.vulnerabilities || {};
+          console.log('npm audit:', JSON.stringify(total));
+          if ((total.critical || 0) + (total.high || 0) > 0) {
+            console.log('CRITICAL/HIGH vulnerabilities found!');
+            process.exit(1);
+          }
+          "
+
+      - name: Upload dependency audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit
+          path: |
+            pip-audit-results.json
+            npm-audit-results.json
+
+  # --- Layer 3: DAST (weekly only) ---
+  dast:
+    name: OWASP ZAP API Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.9.0
+        with:
+          target: 'https://impuestify.com/openapi.json'
+          format: openapi
+          cmd_options: '-l WARN'
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: report_html.html
