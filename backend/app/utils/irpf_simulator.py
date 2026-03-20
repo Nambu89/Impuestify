@@ -203,6 +203,9 @@ class IRPFSimulator:
         perdidas_juegos_privados: float = 0,
         premios_metalico_publicos: float = 0,
         premios_especie_publicos: float = 0,
+        # --- Multi-pagador / retribuciones especie ---
+        retribuciones_especie: float = 0,
+        ingresos_cuenta: float = 0,
         **_ignored,
     ) -> Dict[str, Any]:
         """
@@ -216,8 +219,10 @@ class IRPFSimulator:
         4. Foral donativos deduction rate (30% vasco / 25% navarra).
         """
         # --- 1. Work income ---
+        # Add retribuciones en especie + ingresos a cuenta to work income
+        ingresos_trabajo_total = ingresos_trabajo + retribuciones_especie + ingresos_cuenta
         trabajo_result = await self.work.calculate(
-            ingresos_brutos=ingresos_trabajo,
+            ingresos_brutos=ingresos_trabajo_total,
             ss_empleado=ss_empleado,
             cuotas_sindicales=cuotas_sindicales,
             colegio_profesional=colegio_profesional,
@@ -561,6 +566,9 @@ class IRPFSimulator:
         ibi_alquiler: float = 0,
         gastos_seguros_alquiler: float = 0,
         gastos_suministros_alquiler: float = 0,
+        # --- Multi-pagador / retribuciones especie ---
+        retribuciones_especie: float = 0,
+        ingresos_cuenta: float = 0,
     ) -> Dict[str, Any]:
         """
         Run a complete IRPF simulation.
@@ -682,6 +690,8 @@ class IRPFSimulator:
                 ibi_alquiler=ibi_alquiler,
                 gastos_seguros_alquiler=gastos_seguros_alquiler,
                 gastos_suministros_alquiler=gastos_suministros_alquiler,
+                retribuciones_especie=retribuciones_especie,
+                ingresos_cuenta=ingresos_cuenta,
             )
 
         # --- Common regime (comun / ceuta_melilla / canarias) ---
@@ -691,8 +701,10 @@ class IRPFSimulator:
             logger.info("Auto-detected Ceuta/Melilla from jurisdiction=%s", jurisdiction)
 
         # --- 1. Work income ---
+        # Add retribuciones en especie + ingresos a cuenta to work income
+        ingresos_trabajo_total = ingresos_trabajo + retribuciones_especie + ingresos_cuenta
         trabajo_result = await self.work.calculate(
-            ingresos_brutos=ingresos_trabajo,
+            ingresos_brutos=ingresos_trabajo_total,
             ss_empleado=ss_empleado,
             cuotas_sindicales=cuotas_sindicales,
             colegio_profesional=colegio_profesional,

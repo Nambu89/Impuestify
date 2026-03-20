@@ -1,4 +1,4 @@
-import { TrendingDown, TrendingUp, Loader2, Calculator } from 'lucide-react'
+import { TrendingDown, TrendingUp, Loader2, Calculator, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import CountUp from './reactbits/CountUp'
 import type { IrpfEstimateResult } from '../hooks/useIrpfEstimator'
 import './LiveEstimatorBar.css'
@@ -52,6 +52,18 @@ export default function LiveEstimatorBar({ result, loading }: Props) {
                             Tipo medio: {tipoMedio.toFixed(1)}%
                         </span>
                     </div>
+                    {result?.obligacion_declarar?.obligado === true && (
+                        <div className="estimator-bar__obligacion estimator-bar__obligacion--obligado" title={result.obligacion_declarar.motivo}>
+                            <AlertTriangle size={13} />
+                            <span>Estás obligado a declarar</span>
+                        </div>
+                    )}
+                    {result?.obligacion_declarar?.obligado === false && (
+                        <div className="estimator-bar__obligacion estimator-bar__obligacion--libre" title={result.obligacion_declarar.motivo}>
+                            <CheckCircle2 size={13} />
+                            <span>No estás obligado a declarar</span>
+                        </div>
+                    )}
                 </>
             )}
         </div>

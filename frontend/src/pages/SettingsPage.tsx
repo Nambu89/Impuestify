@@ -12,6 +12,7 @@ import { useFiscalProfile, FiscalProfile } from '../hooks/useFiscalProfile'
 import { usePushNotifications } from '../hooks/usePushNotifications'
 import Header from '../components/Header'
 import DynamicFiscalForm from '../components/DynamicFiscalForm'
+import MultiPagadorForm from '../components/MultiPagadorForm'
 import { UpgradePlanModal } from '../components/UpgradePlanModal'
 import { CCAA_IDS, getCcaaLabel } from '../constants/ccaa'
 import './SettingsPage.css'
@@ -551,6 +552,48 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* --- Pagadores --- */}
+                                <h3 className="fiscal-section-title">Pagadores</h3>
+                                <p className="section-description" style={{ marginBottom: 'var(--spacing-3)', fontSize: '0.85rem' }}>
+                                    Si tienes varios pagadores (empleadores), puedes detallarlos aquí para un cálculo más preciso.
+                                </p>
+
+                                <div className="form-group">
+                                    <label>Número de pagadores</label>
+                                    <select
+                                        className="form-input"
+                                        value={fiscalForm.num_pagadores || 1}
+                                        onChange={e => {
+                                            const n = parseInt(e.target.value, 10)
+                                            if (n > 1 && (!fiscalForm.pagadores || fiscalForm.pagadores.length === 0)) {
+                                                updateFiscal('pagadores', Array.from({ length: n }, () => ({
+                                                    nombre: '',
+                                                    clave: 'empleado' as const,
+                                                    retribuciones_dinerarias: 0,
+                                                    retenciones: 0,
+                                                    gastos_deducibles: 0,
+                                                    retribuciones_especie: 0,
+                                                    ingresos_cuenta: 0,
+                                                })))
+                                            }
+                                            updateFiscal('num_pagadores', n)
+                                        }}
+                                    >
+                                        <option value={1}>1 pagador</option>
+                                        <option value={2}>2 pagadores</option>
+                                        <option value={3}>3 pagadores</option>
+                                        <option value={4}>4+ pagadores</option>
+                                    </select>
+                                    <span className="form-hint">Con 2+ pagadores el límite de obligación de declarar baja a 15.876 EUR</span>
+                                </div>
+
+                                {(fiscalForm.num_pagadores || 1) > 1 && (
+                                    <MultiPagadorForm
+                                        pagadores={fiscalForm.pagadores || []}
+                                        onChange={pagadores => updateFiscal('pagadores', pagadores)}
+                                    />
+                                )}
 
                                 {/* --- Situación familiar (MPYF) --- */}
                                 <h3 className="fiscal-section-title">Situación familiar (MPYF)</h3>

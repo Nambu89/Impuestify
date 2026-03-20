@@ -17,6 +17,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/irpf", tags=["irpf"])
 
 
+class PagadorItem(BaseModel):
+    """A single employer/payer record (mirrors AEAT Datos Fiscales structure)."""
+    nombre: str = ""
+    nif: Optional[str] = None
+    clave: str = "empleado"  # empleado|pensionista|desempleo|otro
+    retribuciones_dinerarias: float = 0
+    retenciones: float = 0
+    gastos_deducibles: float = 0  # SS del trabajador para este pagador
+    retribuciones_especie: float = 0
+    ingresos_cuenta: float = 0
+
+
 class IRPFEstimateRequest(BaseModel):
     comunidad_autonoma: str
     year: int = 2025
@@ -115,6 +127,9 @@ class IRPFEstimateRequest(BaseModel):
     gastos_coworking: Optional[float] = 0
     gastos_transporte: Optional[float] = 0
     gastos_formacion: Optional[float] = 0
+    # Multi-pagador support (AEAT Datos Fiscales)
+    pagadores: List[PagadorItem] = Field(default_factory=list)
+    num_pagadores: int = 1
 
 
 class IRPFBreakdown(BaseModel):
@@ -133,6 +148,12 @@ class ActivityBreakdown(BaseModel):
     tipo_reduccion: str = "ninguna"
     rendimiento_neto_reducido: float = 0
     estimacion: str = "directa_simplificada"
+
+
+class ObligacionDeclarar(BaseModel):
+    obligado: bool = False
+    motivo: str = ""
+    limite_aplicable: float = 22000
 
 
 class IRPFEstimateResponse(BaseModel):
@@ -170,7 +191,87 @@ class IRPFEstimateResponse(BaseModel):
     plataformas_desglose: Optional[dict] = None
     modelo_349_requerido: Optional[bool] = None
     iae_seleccionado: Optional[str] = None
+    # Obligacion de declarar (Art. 96 LIRPF)
+    obligacion_declarar: Optional[ObligacionDeclarar] = None
     error: Optional[str] = None
+
+
+# Limites obligacion declarar (Art. 96 LIRPF, actualizables por ejercicio)
+OBLIGACION_LIMITES = {
+    2025: {
+        "un_pagador": 22_000,
+        "multi_pagador": 15_876,
+        "segundo_pagador_minimo": 1_500,
+        "rentas_inmobiliarias": 1_000,
+        "rendimientos_capital": 1_600,
+        "ganancias_patrimoniales": 1_000,
+    }
+}
+
+
+def _calcular_obligacion_declarar(
+    body: IRPFEstimateRequest,
+    ingresos_trabajo: float,
+    num_pagadores: int,
+    year: int = 2025,
+) -> dict:
+    """Determina si el contribuyente esta obligado a declarar (Art. 96 LIRPF)."""
+    limites = OBLIGACION_LIMITES.get(year, OBLIGACION_LIMITES[2025])
+
+    # Default: no obligado
+    obligado = False
+    motivo = ""
+    limite_aplicable = limites["un_pagador"]
+
+    # Regla 1: Rendimientos trabajo con 1 pagador
+    if num_pagadores <= 1:
+        if ingresos_trabajo > limites["un_pagador"]:
+            obligado = True
+            motivo = f"Rendimientos del trabajo superiores a {limites['un_pagador']:,.0f} EUR con un pagador"
+    else:
+        # Regla 2: Multi-pagador — calcular suma del 2o pagador en adelante
+        if body.pagadores:
+            # Ordenar por retribuciones DESC, sumar del 2o en adelante
+            importes = sorted(
+                [p.retribuciones_dinerarias for p in body.pagadores],
+                reverse=True,
+            )
+            suma_secundarios = sum(importes[1:])
+        else:
+            # Sin desglose, asumir que supera el minimo si hay >1 pagador
+            suma_secundarios = limites["segundo_pagador_minimo"] + 1
+
+        if suma_secundarios > limites["segundo_pagador_minimo"]:
+            limite_aplicable = limites["multi_pagador"]
+            if ingresos_trabajo > limites["multi_pagador"]:
+                obligado = True
+                motivo = (
+                    f"Rendimientos del trabajo superiores a {limites['multi_pagador']:,.0f} EUR "
+                    f"con {num_pagadores} pagadores (suma del 2.o en adelante: "
+                    f"{suma_secundarios:,.2f} EUR > {limites['segundo_pagador_minimo']:,.0f} EUR)"
+                )
+        else:
+            # 2o pagador < 1.500 → aplica limite de 22.000
+            limite_aplicable = limites["un_pagador"]
+            if ingresos_trabajo > limites["un_pagador"]:
+                obligado = True
+                motivo = f"Rendimientos del trabajo superiores a {limites['un_pagador']:,.0f} EUR"
+
+    # Regla 3: Otras rentas que obligan siempre
+    rendimientos_capital = body.intereses + body.dividendos + body.ganancias_fondos
+    if rendimientos_capital > limites["rendimientos_capital"]:
+        obligado = True
+        motivo = motivo or f"Rendimientos del capital superiores a {limites['rendimientos_capital']:,.0f} EUR"
+
+    if body.ingresos_alquiler > limites["rentas_inmobiliarias"]:
+        obligado = True
+        motivo = motivo or f"Rentas inmobiliarias superiores a {limites['rentas_inmobiliarias']:,.0f} EUR"
+
+    return {
+        "obligado": obligado,
+        "motivo": motivo,
+        "limite_aplicable": limite_aplicable,
+    }
 
 
 @router.post("/estimate", response_model=IRPFEstimateResponse)
@@ -203,6 +304,19 @@ async def estimate_irpf(
         retenciones_trabajo = body.retenciones_trabajo
         if body.irpf_retenido_porcentaje > 0 and retenciones_trabajo == 0 and ingresos_trabajo > 0:
             retenciones_trabajo = ingresos_trabajo * body.irpf_retenido_porcentaje / 100
+
+        # --- Multi-pagador aggregation ---
+        if body.pagadores:
+            ingresos_trabajo = sum(
+                p.retribuciones_dinerarias + p.retribuciones_especie + p.ingresos_cuenta
+                for p in body.pagadores
+            )
+            retenciones_trabajo = sum(p.retenciones for p in body.pagadores)
+            ss_empleado = sum(p.gastos_deducibles for p in body.pagadores)
+            num_pagadores = len(body.pagadores)
+        else:
+            ss_empleado = body.ss_empleado
+            num_pagadores = body.num_pagadores
 
         # Creator: override ingresos_actividad from platform breakdown if provided
         ingresos_actividad = body.ingresos_actividad
@@ -297,7 +411,7 @@ async def estimate_irpf(
         sim_kwargs = dict(
             jurisdiction=ccaa,
             ingresos_trabajo=ingresos_trabajo,
-            ss_empleado=body.ss_empleado,
+            ss_empleado=ss_empleado,
             intereses=body.intereses,
             dividendos=body.dividendos,
             ganancias_fondos=body.ganancias_fondos,
@@ -386,6 +500,8 @@ async def estimate_irpf(
         if bi_general > 0:
             tipo_medio = round((cuota_total / bi_general) * 100, 2)
 
+        obligacion = _calcular_obligacion_declarar(body, ingresos_trabajo, num_pagadores, body.year)
+
         return IRPFEstimateResponse(
             success=True,
             resultado_estimado=round(resultado, 2),
@@ -436,6 +552,7 @@ async def estimate_irpf(
                 else False
             ),
             iae_seleccionado=body.epigrafe_iae if body.epigrafe_iae else None,
+            obligacion_declarar=ObligacionDeclarar(**obligacion),
         )
 
     except Exception as e:

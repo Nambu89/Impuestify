@@ -127,11 +127,13 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 | Creator | 49 EUR/mes | Influencers, YouTubers, streamers, bloggers | + IVA by platform, Modelo 349, DAC7, CNAE 60.39, multi-role profiles |
 | Autonomo | 39 EUR/mes IVA incl. | Self-employed | + All models (303/130/131), crypto, workspace, calendar |
 
-## Key Updates (2026-03-19)
+## Key Updates (2026-03-20)
 
-- **Tests**: 1104+ backend PASS (21 new net-salary) + frontend build OK
+- **Tests**: 1199 backend PASS (23 new multi-pagadores) + frontend build OK
+- **Multi-Pagadores IRPF** (NEW): PagadorItem model (8 campos), agregacion pagadores→totales, obligacion declarar Art.96 LIRPF (22.000/15.876 EUR), MultiPagadorForm component (acordeones estilo app AEAT), integrado en TaxGuidePage + SettingsPage + LiveEstimatorBar. Retribuciones especie + ingresos a cuenta en simulador. LLM tool actualizado
+- **RuFlo V3.5** (NEW): Workflow multi-agente estandar. npm deps instaladas, MCP configurado, puente SubagentStart/Stop→swarm-state.json, 13/27 hooks funcionales, intelligence bootstrapped (226 entries). Auditoria: plans/ruflo-audit-report.md
 - **Adaptive Tax Guide by Role**: PARTICULAR (7 steps), CREATOR (8 steps + plataformas/IAE/IVA intracomunitario/withholding/M349), AUTONOMO (8 steps + actividad económica). Adaptive result with role-specific obligations
-- **Net Salary Calculator** (NEW): `/calculadora-neto` endpoint. 5 fiscal regimes (Madrid common IVA 21%, Andalucía, Canarias IGIC 7%, Melilla IPSI 4% + 60% deduction, País Vasco 7-tranche foral). SS auto-calculated by income (15 brackets RDL 13/2022). IGIC/IPSI auto-detection. 21 tests PASS. Disclaimer on each response
+- **Net Salary Calculator**: `/calculadora-neto` endpoint. 5 fiscal regimes (Madrid common IVA 21%, Andalucía, Canarias IGIC 7%, Melilla IPSI 4% + 60% deduction, País Vasco 7-tranche foral). SS auto-calculated by income (15 brackets RDL 13/2022). IGIC/IPSI auto-detection. 21 tests PASS. Disclaimer on each response
 - **Crawler**: 90 URLs, 23 territories + Creators/Influencers docs
 - **Feedback System**: Widget + ChatRating + Admin Dashboard (3 pages) COMPLETE
 - **XSD Modelo 100**: ~100% coverage (granular expenses, modules, royalties, IAE lookup)
@@ -147,6 +149,6 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 
 When context reaches ~50%, Claude Code compresses history. To preserve critical info:
 - Re-read `CLAUDE.md` + relevant descendant CLAUDE.md after compaction
-- Check `memory/MEMORY.md` for project state (updated 2026-03-19, session 15)
+- Check `memory/MEMORY.md` for project state (updated 2026-03-20, session 16)
 - Check `agent-comms.md` for pending inter-agent tasks
 - Check `claude-progress.txt` for session history

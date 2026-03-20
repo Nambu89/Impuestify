@@ -1,0 +1,237 @@
+/* MultiPagadorForm — Acordeón de pagadores estilo app AEAT */
+
+/* ====== Contenedor principal ====== */
+
+.mp-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
+}
+
+/* ====== Tarjeta de cada pagador ====== */
+
+.mp-pagador {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+    transition: border-color var(--transition-fast);
+}
+
+.mp-pagador:focus-within {
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+/* ====== Cabecera clickable del acordeón ====== */
+
+.mp-pagador__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-3) var(--spacing-4);
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition-fast);
+    outline: none;
+    gap: var(--spacing-3);
+}
+
+.mp-pagador__header:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.mp-pagador__header--expanded {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.mp-pagador__header-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    min-width: 0;
+    flex: 1;
+}
+
+.mp-pagador__header-index {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: var(--color-white);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.mp-pagador__header-name {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-white);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mp-pagador__header-summary {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 2px;
+}
+
+.mp-pagador__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    flex-shrink: 0;
+}
+
+.mp-pagador__chevron {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.mp-pagador__delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.08);
+    color: rgba(239, 68, 68, 0.7);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: var(--font-family);
+    padding: 0;
+}
+
+.mp-pagador__delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.6);
+    color: #f87171;
+}
+
+/* ====== Contenido del acordeón ====== */
+
+.mp-pagador__fields {
+    padding: var(--spacing-4);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ====== Toggle de campos extra ====== */
+
+.mp-pagador__extra-toggle {
+    background: none;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-lg);
+    color: rgba(255, 255, 255, 0.4);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family);
+    cursor: pointer;
+    padding: var(--spacing-2) var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+    transition: all var(--transition-fast);
+    text-align: left;
+}
+
+.mp-pagador__extra-toggle:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    color: rgba(255, 255, 255, 0.65);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.mp-pagador__extra-fields {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: var(--spacing-3);
+    margin-top: var(--spacing-1);
+}
+
+/* ====== Botón añadir pagador ====== */
+
+.mp-form__add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    width: 100%;
+    padding: var(--spacing-3) var(--spacing-4);
+    border: 1px dashed rgba(59, 130, 246, 0.35);
+    border-radius: var(--radius-xl);
+    background: rgba(26, 86, 219, 0.06);
+    color: var(--color-primary-light);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.mp-form__add-btn:hover {
+    border-color: rgba(59, 130, 246, 0.6);
+    background: rgba(26, 86, 219, 0.12);
+    color: var(--color-white);
+}
+
+/* ====== Fila de totales ====== */
+
+.mp-totals {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-2);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-4);
+    margin-top: var(--spacing-2);
+}
+
+.mp-totals__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--spacing-1);
+}
+
+.mp-totals__label {
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+}
+
+.mp-totals__value {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color-white);
+}
+
+/* ====== Responsive: stack en móvil ====== */
+
+@media (max-width: 480px) {
+    .mp-totals {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-3);
+    }
+
+    .mp-totals__item {
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+    }
+
+    .mp-pagador__fields {
+        padding: var(--spacing-3);
+    }
+}

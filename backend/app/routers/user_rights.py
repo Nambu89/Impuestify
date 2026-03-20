@@ -187,6 +187,9 @@ class FiscalProfileRequest(BaseModel):
     tiene_derivados: Optional[bool] = None
     ganancias_derivados: Optional[float] = None
     perdidas_derivados: Optional[float] = None
+    # --- Multi-pagador (AEAT Datos Fiscales) ---
+    pagadores: Optional[List[dict]] = None  # List of PagadorItem-compatible dicts
+    num_pagadores: Optional[int] = None
 
 
 class UserDataExport(BaseModel):
@@ -523,6 +526,8 @@ _DATOS_FISCALES_KEYS = {
     "donativos_autonomicos", "gastos_educativos", "inversion_vivienda",
     "instalacion_renovable_importe", "vehiculo_electrico_importe",
     "obras_mejora_importe", "cotizaciones_empleada_hogar",
+    # Multi-pagador (AEAT Datos Fiscales)
+    "pagadores", "num_pagadores",
 }
 
 

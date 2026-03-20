@@ -113,6 +113,33 @@
     opacity: 0.7;
 }
 
+/* Obligación de declarar */
+
+.estimator-bar__obligacion {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: var(--radius-full, 9999px);
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: default;
+}
+
+.estimator-bar__obligacion--obligado {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #fbbf24;
+}
+
+.estimator-bar__obligacion--libre {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+}
+
 /* Spin animation */
 @keyframes spin {
     to { transform: rotate(360deg); }

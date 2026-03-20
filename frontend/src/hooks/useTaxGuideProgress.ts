@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { Pagador } from './useFiscalProfile'
 
 const STORAGE_KEY = 'tax_guide_progress'
 
@@ -93,6 +94,9 @@ export interface TaxGuideData {
     donativo_recurrente: boolean
     // Wizard mode
     wizard_mode: 'quick' | 'full'
+    // Multi-pagador
+    num_pagadores: number
+    pagadores: Pagador[]
 }
 
 export const EMPTY_TAX_DATA: TaxGuideData = {
@@ -179,6 +183,9 @@ export const EMPTY_TAX_DATA: TaxGuideData = {
     donativos_ley_49_2002: 0,
     donativo_recurrente: false,
     wizard_mode: 'full',
+    // Multi-pagador
+    num_pagadores: 1,
+    pagadores: [],
 }
 
 export const STEP_LABELS = [

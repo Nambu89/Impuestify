@@ -7,6 +7,49 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-20] PM Coordinator — DONE — Sesion 16: Multi-Pagadores IRPF + RuFlo Setup
+
+- **Feature principal**: Soporte multi-pagadores en perfil fiscal y simulador IRPF
+  - PagadorItem model (8 campos, mirrors AEAT Datos Fiscales)
+  - Agregacion automatica: pagadores[] → ingresos_trabajo + retenciones + SS
+  - Obligacion de declarar (Art. 96 LIRPF): 22.000/15.876 EUR, constantes por ejercicio
+  - MultiPagadorForm component (acordeones estilo app AEAT)
+  - Integrado en: TaxGuidePage (Step 2 toggle), SettingsPage (seccion pagadores), LiveEstimatorBar (alerta)
+  - LLM tool actualizado: irpf_simulator_tool.py con pagadores + num_pagadores
+  - Retribuciones en especie + ingresos a cuenta en simulador
+
+- **Archivos creados/modificados (14)**:
+  - Backend (5): irpf_estimate.py, user_rights.py, irpf_simulator.py, irpf_simulator_tool.py, test_multi_pagadores.py
+  - Frontend (9): MultiPagadorForm.tsx, MultiPagadorForm.css, useFiscalProfile.ts, useIrpfEstimator.ts, useTaxGuideProgress.ts, TaxGuidePage.tsx, SettingsPage.tsx, LiveEstimatorBar.tsx, LiveEstimatorBar.css
+
+- **Tests**: 23 nuevos multi-pagadores PASS, 1199 total backend PASS, frontend build OK
+
+- **RuFlo V3.5**: Instalacion auditada y mejorada
+  - npm install ruflo better-sqlite3 sql.js (dependencies instaladas)
+  - MCP server configurado en .mcp.json
+  - Puente SubagentStart/Stop → swarm-state.json implementado
+  - 5 nuevos hook handlers: pre-edit, post-bash, compact-manual, compact-auto, notify
+  - Intelligence bootstrapped: 226 entries, 198 edges (PageRank)
+  - Auditoria: plans/ruflo-audit-report.md (27% → 55% capacidad)
+  - PENDIENTE: habilitar MCP en enabledMcpjsonServers, daemon start, security scan
+
+- **RuFlo mejoras adicionales (misma sesion)**:
+  - MCP server configurado en .mcp.json + habilitado en enabledMcpjsonServers
+  - Daemon arrancado (PID 8316)
+  - Security scan ejecutado (solo passwords QA test users)
+  - Router conectado con 10 agentes Impuestify del team YAML
+  - Router ADAPTATIVO implementado: scores por (patron, agente), feedback en SubagentStop, persiste en routing-history.json
+  - Memoria inter-agente: `npx ruflo memory` funcional (sql.js + HNSW, namespace impuestify)
+  - 5 hooks nuevos: pre-edit, post-bash, compact-manual, compact-auto, notify
+  - Intelligence graph: 226 entries, 198 edges (PageRank)
+  - Capacidad RuFlo: 27% → ~75%
+
+- **Pendiente para proxima sesion**:
+  - [ ] Commit + push de todos los cambios (multi-pagadores + ruflo)
+  - [ ] Reiniciar Claude Code para activar MCP server de RuFlo (259 tools)
+  - [ ] ReasoningBank init (requiere Linux/Railway — ONNX no funciona en Windows)
+  - [ ] Arreglar AgentDB controller path warning
+
 ## [2026-03-19] PM Coordinator — DONE — Sesion 15: Guia Fiscal Adaptativa por Rol
 
 - **Feature principal**: Guia fiscal (/guia-fiscal) ahora muestra pasos diferentes segun plan del usuario

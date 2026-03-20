@@ -420,6 +420,34 @@ IMPORTANTE sobre ingresos:
                 "gastos_suministros_alquiler": {
                     "type": "number",
                     "description": "Suministros del inmueble alquilado a cargo del propietario: agua, luz, gas (casilla 0113). Sin límite."
+                },
+                "pagadores": {
+                    "type": "array",
+                    "description": "Lista de pagadores/empleadores con desglose de retribuciones. Si el usuario menciona varios pagadores, usar este campo.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "nombre": {"type": "string", "description": "Nombre del pagador"},
+                            "retribuciones_dinerarias": {"type": "number", "description": "Retribuciones dinerarias brutas de este pagador"},
+                            "retenciones": {"type": "number", "description": "Retenciones IRPF de este pagador"},
+                            "gastos_deducibles": {"type": "number", "description": "Gastos deducibles (SS) de este pagador"},
+                        }
+                    }
+                },
+                "num_pagadores": {
+                    "type": "integer",
+                    "description": "Numero de pagadores/empleadores del contribuyente. Si es > 1, puede afectar al limite de obligacion de declarar (15.876 EUR vs 22.000 EUR).",
+                    "default": 1
+                },
+                "retribuciones_especie": {
+                    "type": "number",
+                    "description": "Retribuciones en especie recibidas (coche empresa, seguro medico, etc.). Se suman a la base imponible del trabajo.",
+                    "default": 0
+                },
+                "ingresos_cuenta": {
+                    "type": "number",
+                    "description": "Ingresos a cuenta repercutidos al trabajador. Se suman a la base imponible del trabajo.",
+                    "default": 0
                 }
             },
             "required": ["comunidad_autonoma"]
@@ -533,6 +561,11 @@ async def simulate_irpf_tool(
     ibi_alquiler: float = 0,
     gastos_seguros_alquiler: float = 0,
     gastos_suministros_alquiler: float = 0,
+    # Multi-pagador support
+    pagadores: Optional[List[dict]] = None,
+    num_pagadores: int = 1,
+    retribuciones_especie: float = 0,
+    ingresos_cuenta: float = 0,
 ) -> Dict[str, Any]:
     """Execute IRPF simulation and return formatted result."""
     try:
@@ -546,6 +579,16 @@ async def simulate_irpf_tool(
         # Auto-detect Ceuta/Melilla from CCAA if not explicitly set
         if not ceuta_melilla and ccaa.lower() in ("ceuta", "melilla"):
             ceuta_melilla = True
+
+        # Multi-pagador aggregation: if pagadores list provided, aggregate totals
+        if pagadores:
+            ingresos_trabajo = sum(
+                p.get("retribuciones_dinerarias", 0) + p.get("retribuciones_especie", 0) + p.get("ingresos_cuenta", 0)
+                for p in pagadores
+            )
+            retenciones_trabajo = sum(p.get("retenciones", 0) for p in pagadores)
+            ss_empleado = sum(p.get("gastos_deducibles", 0) for p in pagadores)
+            num_pagadores = len(pagadores)
 
         logger.info(
             "Simulating IRPF: %s€ trabajo, %s, %s, ceuta_melilla=%s",
@@ -661,6 +704,9 @@ async def simulate_irpf_tool(
             ibi_alquiler=ibi_alquiler if _use_rental_granulares else 0,
             gastos_seguros_alquiler=gastos_seguros_alquiler if _use_rental_granulares else 0,
             gastos_suministros_alquiler=gastos_suministros_alquiler if _use_rental_granulares else 0,
+            # Multi-pagador / retribuciones especie
+            retribuciones_especie=retribuciones_especie,
+            ingresos_cuenta=ingresos_cuenta,
         )
 
         # Try requested year first, fallback to year-1 if no data

@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { ChevronLeft, ChevronRight, RotateCcw, MapPin, Briefcase, PiggyBank, Home as HomeIcon, Users, Gift, BarChart3, CheckCircle, Info, AlertTriangle, Zap, Shield, TrendingUp } from 'lucide-react'
 import Header from '../components/Header'
 import LiveEstimatorBar from '../components/LiveEstimatorBar'
+import MultiPagadorForm from '../components/MultiPagadorForm'
 import DynamicFiscalForm from '../components/DynamicFiscalForm'
 import { useTaxGuideProgress, QUICK_STEP_LABELS, type TaxGuideData } from '../hooks/useTaxGuideProgress'
+import { type Pagador } from '../hooks/useFiscalProfile'
 import { useIrpfEstimator } from '../hooks/useIrpfEstimator'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
 import { useSubscription } from '../hooks/useSubscription'
@@ -256,23 +258,77 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
             <h2 className="tg-step__title">Rendimientos del trabajo</h2>
             <p className="tg-step__desc">Incluye tu salario, cotizaciones y retenciones.</p>
 
-            {/* Salary input mode toggle */}
+            {/* Número de pagadores */}
             <div className="tg-toggle-group">
                 <button
-                    className={`tg-toggle-group__btn ${!isMonthly ? 'tg-toggle-group__btn--active' : ''}`}
-                    onClick={() => update({ salary_input_mode: 'annual' })}
+                    className={`tg-toggle-group__btn ${data.num_pagadores <= 1 ? 'tg-toggle-group__btn--active' : ''}`}
+                    onClick={() => update({ num_pagadores: 1, pagadores: [] })}
                 >
-                    Salario anual
+                    Un pagador
                 </button>
                 <button
-                    className={`tg-toggle-group__btn ${isMonthly ? 'tg-toggle-group__btn--active' : ''}`}
-                    onClick={() => update({ salary_input_mode: 'monthly' })}
+                    className={`tg-toggle-group__btn ${data.num_pagadores > 1 ? 'tg-toggle-group__btn--active' : ''}`}
+                    onClick={() => update({
+                        num_pagadores: 2,
+                        pagadores: data.pagadores?.length
+                            ? data.pagadores
+                            : [
+                                { nombre: '', nif: undefined, clave: 'empleado', retribuciones_dinerarias: 0, retenciones: 0, gastos_deducibles: 0, retribuciones_especie: 0, ingresos_cuenta: 0 } as Pagador,
+                                { nombre: '', nif: undefined, clave: 'empleado', retribuciones_dinerarias: 0, retenciones: 0, gastos_deducibles: 0, retribuciones_especie: 0, ingresos_cuenta: 0 } as Pagador,
+                            ],
+                    })}
                 >
-                    Salario mensual
+                    Varios pagadores
                 </button>
             </div>
 
-            {isMonthly ? (
+            {data.num_pagadores > 1 ? (
+                <>
+                    <MultiPagadorForm
+                        pagadores={data.pagadores || []}
+                        onChange={(pagadores) => {
+                            const totalIngresos = pagadores.reduce(
+                                (sum, p) => sum + p.retribuciones_dinerarias + p.retribuciones_especie + p.ingresos_cuenta,
+                                0
+                            )
+                            const totalRetenciones = pagadores.reduce((sum, p) => sum + p.retenciones, 0)
+                            const totalSS = pagadores.reduce((sum, p) => sum + p.gastos_deducibles, 0)
+                            update({
+                                pagadores,
+                                num_pagadores: pagadores.length,
+                                ingresos_trabajo: totalIngresos,
+                                retenciones_trabajo: totalRetenciones,
+                                ss_empleado: totalSS,
+                            })
+                        }}
+                    />
+
+                    {data.ingresos_trabajo > 15876 && (
+                        <div className="tg-alert tg-alert--warning">
+                            Con {data.num_pagadores} pagadores y más de 15.876 EUR de ingresos,
+                            es probable que estés obligado a presentar la declaración de la renta.
+                        </div>
+                    )}
+                </>
+            ) : (
+                <>
+                {/* Salary input mode toggle */}
+                <div className="tg-toggle-group">
+                    <button
+                        className={`tg-toggle-group__btn ${!isMonthly ? 'tg-toggle-group__btn--active' : ''}`}
+                        onClick={() => update({ salary_input_mode: 'annual' })}
+                    >
+                        Salario anual
+                    </button>
+                    <button
+                        className={`tg-toggle-group__btn ${isMonthly ? 'tg-toggle-group__btn--active' : ''}`}
+                        onClick={() => update({ salary_input_mode: 'monthly' })}
+                    >
+                        Salario mensual
+                    </button>
+                </div>
+
+                {isMonthly ? (
                 <>
                     <NumberInput
                         label="Salario base mensual"
@@ -358,6 +414,8 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                 suffix="EUR"
                 help="Si pusiste el %, se calcula automáticamente. Si lo sabes exacto, ponlo aquí."
             />
+                </>
+            )}
 
             {/* Activity income section for autonomos */}
             <div style={{ marginTop: 'var(--spacing-6)' }}>

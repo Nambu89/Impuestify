@@ -10,6 +10,17 @@ export interface PlanUpgradeNeeded {
     message: string
 }
 
+export interface Pagador {
+    nombre: string
+    nif?: string
+    clave: 'empleado' | 'pensionista' | 'desempleo' | 'otro'
+    retribuciones_dinerarias: number
+    retenciones: number
+    gastos_deducibles: number
+    retribuciones_especie: number
+    ingresos_cuenta: number
+}
+
 export interface FiscalProfile {
     ccaa_residencia: string | null
     situacion_laboral: string | null
@@ -82,6 +93,9 @@ export interface FiscalProfile {
     irpf_retenido_porcentaje: number | null
     // Roles adicionales
     roles_adicionales: string[] | null
+    // Multi-pagador
+    pagadores: Pagador[] | null
+    num_pagadores: number | null
 }
 
 export interface FieldMeta {
@@ -169,6 +183,9 @@ const EMPTY_PROFILE: FiscalProfile = {
     irpf_retenido_porcentaje: null,
     // Roles adicionales
     roles_adicionales: null,
+    // Multi-pagador
+    pagadores: null,
+    num_pagadores: null,
 }
 
 export function useFiscalProfile() {

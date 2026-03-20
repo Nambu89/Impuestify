@@ -492,6 +492,26 @@
     color: #93c5fd;
 }
 
+/* ====== Alert banners ====== */
+
+.tg-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-3);
+    padding: var(--spacing-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-4);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    backdrop-filter: blur(8px);
+}
+
+.tg-alert--warning {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fcd34d;
+}
+
 /* ====== Deduction Discovery ====== */
 
 .tg-discovery {

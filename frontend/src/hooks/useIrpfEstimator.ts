@@ -84,6 +84,18 @@ export interface IrpfEstimateInput {
     vehiculo_electrico_importe?: number
     obras_mejora_importe?: number
     cotizaciones_empleada_hogar?: number
+    // Multi-pagador
+    pagadores?: Array<{
+        nombre: string
+        nif?: string
+        clave: 'empleado' | 'pensionista' | 'desempleo' | 'otro'
+        retribuciones_dinerarias: number
+        retenciones: number
+        gastos_deducibles: number
+        retribuciones_especie: number
+        ingresos_cuenta: number
+    }>
+    num_pagadores?: number
     // Phase 2 fields
     tributacion_conjunta?: boolean
     tipo_unidad_familiar?: string
@@ -134,6 +146,11 @@ export interface IrpfEstimateResult {
         tipo_reduccion: string
         rendimiento_neto_reducido: number
         estimacion: string
+    }
+    obligacion_declarar?: {
+        obligado: boolean
+        motivo: string
+        limite_aplicable: number
     }
     error?: string
 }

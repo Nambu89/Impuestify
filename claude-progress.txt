@@ -7,6 +7,17 @@
 ## Sesiones Recientes
 ---
 
+[2026-03-20] [PM Coordinator Sesion 16] - Multi-Pagadores IRPF + RuFlo Setup
+- Feature: Soporte multi-pagadores como app AEAT (PagadorItem, agregacion, obligacion declarar Art.96 LIRPF)
+- 14 archivos creados/modificados, 23 tests nuevos, 1199 backend PASS, frontend build OK
+- Componente MultiPagadorForm (acordeones estilo AEAT) integrado en TaxGuidePage + SettingsPage + LiveEstimatorBar
+- Simulador IRPF: retribuciones_especie + ingresos_cuenta en base imponible trabajo
+- LLM tool: pagadores + num_pagadores en irpf_simulator_tool.py (function calling)
+- RuFlo V3.5: auditoria completa (27%→55%), npm deps instaladas, MCP configurado, 5 hooks nuevos, intelligence bootstrapped
+- Pendiente: commit/push, habilitar MCP server (reinicio CC), daemon, security scan
+- Plan detallado: plans/plan_multi_pagadores.md (verificado por plan-checker)
+- Auditoria RuFlo: plans/ruflo-audit-report.md
+
 [2026-03-17] [Documentation Auditor Sesion 13] - Actualizacion completa documentacion sesion 13 + eventos de sesion.
 - Archivos actualizados: `plans/ROADMAP.md` (seccion S13 anadida), `memory/MEMORY.md` (1138 tests, 13 capas seguridad), `memory/bugfixes-2026-03.md` (Bugs 59-62 + Document Integrity Scanner), `agent-comms.md` (entrada PM Coordinator sesion 13)
 - Datos sincronizados: Bugs 59-62 (calendar fixes, push notifications, /creadores route), Document Integrity Scanner (capa 13, 40 patrones, 55 tests), 4 deadlines nuevos (Modelo 721, 714, cita previa, presencial)
