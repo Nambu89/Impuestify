@@ -1,0 +1,19 @@
+# Bandit configuration for Impuestify backend
+# Docs: https://bandit.readthedocs.io/
+
+# Skip tests
+skips:
+  - B101  # assert_used — we use asserts in tests
+  - B603  # subprocess_without_shell_equals_true — not applicable
+  - B404  # import_subprocess — needed for scripts
+
+# Only scan backend Python code
+targets:
+  - backend/app
+
+# Exclude test files from certain checks
+exclude_dirs:
+  - backend/tests
+  - venv
+  - node_modules
+  - .claude-flow

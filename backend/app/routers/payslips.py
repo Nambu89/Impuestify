@@ -50,7 +50,8 @@ async def upload_payslip(
 		os.makedirs(upload_dir, exist_ok=True)
 		
 		# Guardar archivo temporalmente
-		file_path = os.path.join(upload_dir, f"{user_id}_{file.filename}")
+		safe_name = os.path.basename(file.filename or "upload.pdf")
+		file_path = os.path.join(upload_dir, f"{user_id}_{safe_name}")
 		with open(file_path, "wb") as f:
 			content = await file.read()
 			f.write(content)

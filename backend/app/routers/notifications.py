@@ -120,7 +120,8 @@ async def analyze_notification(
 	temp_dir = "/tmp/taxia_notifications"
 	os.makedirs(temp_dir, exist_ok=True)
 	
-	temp_filename = f"{uuid.uuid4()}_{file.filename}"
+	safe_name = os.path.basename(file.filename or "upload.pdf")
+	temp_filename = f"{uuid.uuid4()}_{safe_name}"
 	temp_path = os.path.join(temp_dir, temp_filename)
 	
 	try:

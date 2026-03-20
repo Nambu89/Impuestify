@@ -1,0 +1,69 @@
+# Semgrep rules for Impuestify
+# Custom rules + community rulesets
+
+rules:
+  # --- SQL Injection ---
+  - id: no-fstring-sql
+    patterns:
+      - pattern: |
+          $DB.execute(f"...", ...)
+    message: "SQL query uses f-string — use parameterized queries with ? placeholders"
+    languages: [python]
+    severity: ERROR
+
+  - id: no-format-sql
+    patterns:
+      - pattern: |
+          $DB.execute("...".format(...), ...)
+    message: "SQL query uses .format() — use parameterized queries with ? placeholders"
+    languages: [python]
+    severity: ERROR
+
+  # --- Hardcoded secrets ---
+  - id: no-hardcoded-password
+    pattern: |
+      password = "..."
+    message: "Hardcoded password detected — use environment variables"
+    languages: [python]
+    severity: WARNING
+    paths:
+      exclude:
+        - "**/tests/**"
+        - "**/test_*"
+
+  - id: no-hardcoded-api-key
+    pattern-regex: '(api_key|secret_key|token)\s*=\s*["\x27][A-Za-z0-9_\-\.]{20,}["\x27]'
+    message: "Possible hardcoded API key — use environment variables"
+    languages: [python]
+    severity: WARNING
+    paths:
+      exclude:
+        - "**/tests/**"
+
+  # --- FastAPI security ---
+  - id: fastapi-no-auth-on-sensitive
+    patterns:
+      - pattern: |
+          @$ROUTER.$METHOD("$PATH")
+          async def $FUNC($REQ: Request, ...):
+              ...
+      - metavariable-regex:
+          metavariable: $PATH
+          regex: '.*(admin|user|profile|subscription|export|workspace).*'
+      - pattern-not: |
+          @$ROUTER.$METHOD("$PATH")
+          async def $FUNC(..., current_user=Depends(get_current_user), ...):
+              ...
+    message: "Sensitive endpoint without authentication — add Depends(get_current_user)"
+    languages: [python]
+    severity: WARNING
+
+  # --- PII logging ---
+  - id: no-log-email
+    pattern-regex: 'logger\.(info|debug|warning|error)\(.*email.*\)'
+    message: "Logging PII (email) — redact before logging"
+    languages: [python]
+    severity: WARNING
+    paths:
+      exclude:
+        - "**/tests/**"
