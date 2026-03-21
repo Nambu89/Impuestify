@@ -309,11 +309,16 @@
 
 ## COMPLETADO — Sesion 17: Stripe Role Validation + Security Cleanup (2026-03-20)
 
-- [x] **RuFlo MCP activado**: 259 tools, 26 hooks, 4/5 AgentDB controllers, ~85% capacidad
+- [x] **RuFlo MCP activado**: 259 tools, 26 hooks, ~95% capacidad. ReasoningBank funcional (2 patches + postinstall)
 - [x] **Security cleanup**: secretos eliminados de historial git (filter-repo 3 pasadas, 235 commits)
 - [x] **Stripe role validation**: UpgradePlanModal en SettingsPage (commit `8440917`)
-  - Backend 403 plan_incompatible → modal visible → revert form on close → localStorage post-upgrade
-- [x] **Turnstile bypass QA**: ya implementado en codigo (`TURNSTILE_TEST_MODE=True` en Railway)
+- [x] **Turnstile bypass QA**: ya implementado (`TURNSTILE_TEST_MODE=True` en Railway)
+- [x] **Calculadora neto**: 22 tildes + neto fiscal real (neto_anual/12) + warning reserva IRPF (commit `c70dea5`)
+- [x] **PDF export completo**: 30+ campos fiscales + observaciones chat + tildes (commit `c3aa17c`)
+- [x] **ReasoningBank Windows**: 2 patches + postinstall automatico (commit `ed6f5dd`)
+- [x] **SONA trajectories**: 7 trayectorias registradas, 18 entries HNSW
+- [x] **SEO-GEO CreatorsPage**: meta tags, JSON-LD FAQPage, GEO cards 4 territorios, long-tail keywords (commit `718cff0`)
+- [x] **Calculadora IVA Creadores**: `/calculadora-iva-creadores` — 7 plataformas, multi-calc, Modelo 303/349 (commit `718cff0`)
 
 ---
 
@@ -325,6 +330,11 @@
 ### Alta prioridad
 - [x] ~~Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)~~ → DONE (2026-03-13)
 - [ ] MFA / 2FA (recomendación auditoría)
+- [ ] **Security audit stack** (4 capas, todo gratis):
+  - [ ] Semana 1: Bandit + Semgrep como pre-commit hooks (SAST)
+  - [ ] Semana 2: OWASP ZAP headless contra staging (DAST)
+  - [ ] Semana 3: Nuclei templates web-app/FastAPI/JWT
+  - [ ] Semana 4: Todo en GitHub Actions (CI/CD security gate)
 - [x] ~~CAPTCHA en login (recomendación auditoría)~~ → DONE — Cloudflare Turnstile en Login + Register (frontend TurnstileWidget.tsx + backend verify_turnstile())
 - [x] ~~Estrategia Social Media~~ — DONE (2026-03-15, TikTok integrado 2026-03-16). Plan en `plans/social-media-strategy-2026.md` + contenido Q1 en `plans/social-media-content-plan-2026-Q1.md` + research TikTok en `plans/tiktok-research-2026.md`. 3 canales: Instagram + LinkedIn + TikTok. 4 carruseles generados, 10 posts completos, 15 guiones Reels, 9 screenshots. Pendiente: ejecucion por Fernando (setup Metricool, LinkedIn, TikTok @impuestify, primer post 21 marzo)
 
@@ -333,6 +343,9 @@
 - [x] ~~Alertas de plazos fiscales~~ → DONE (a849ce1) — calendario + email + push
 - [x] ~~Criptomonedas, trading y apuestas~~ → DONE (91faf01) — FIFO, 5 exchanges, XSD casillas
 - [x] ~~**Fase 5: Guia fiscal adaptativa por rol**~~ → DONE (2026-03-19, sesion 15)
+- [x] ~~Landing SEO creadores de contenido~~ → DONE (2026-03-20, sesion 17, commit `718cff0`)
+- [x] ~~Calculadora IVA por plataforma~~ → DONE (2026-03-20, sesion 17, commit `718cff0`)
+- [ ] **Google SSO** — login/registro con "Continuar con Google" (@react-oauth/google + google-auth backend)
 - [ ] Pipeline auto-ingesta RAG (leer `_pending_ingest.json` → embeddings)
 - [ ] ML fiscal features (ml_fiscal_features table)
 
@@ -350,8 +363,9 @@
 | Documentos RAG | 439 (419 PDF + 9 Excel + 11 AEAT specs) |
 | Deducciones en BD | ~554 (192 v1/v2 + 339 XSD + 50 forales) |
 | CCAA cubiertas | 21 (15 común + 4 forales + Ceuta + Melilla) |
-| Tests backend | **1199** (23 nuevos multi-pagadores sesion 16) |
+| Tests backend | **1199+27** (export tests nuevos sesion 17) |
 | Tests frontend | build PASS |
+| RuFlo MCP | **259 tools**, 26 hooks, ~95% capacidad, SONA 5 traj |
 | Exchanges crypto soportados | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
 | Fechas fiscales 2026 | 58 (32 estatales + 4 nuevos = 36 **pendiente actualizar**) |
 | Bugs fixeados (mar 2026) | **62 documentados** (Bugs 1-62, sesion 13) |

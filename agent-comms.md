@@ -7,7 +7,37 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
-## [2026-03-20] PM Coordinator — DONE — Sesion 17: RuFlo MCP Activacion + Configuracion
+## [2026-03-20] PM Coordinator — DONE — Sesion 17: RuFlo + Security + Features + PDF Export
+
+### Tareas completadas (8)
+1. **RuFlo MCP** (~95%): 259 tools, 26 hooks, SONA 5 trayectorias, ReasoningBank funcional
+2. **Security cleanup**: filter-repo 3 pasadas, 235 commits reescritos, 0 secretos en historial
+3. **Stripe role validation**: UpgradePlanModal en SettingsPage (commit `8440917`)
+4. **Calculadora neto**: 22 tildes + neto fiscal real + warning reserva IRPF (commit `c70dea5`)
+5. **ReasoningBank**: 2 patches Windows + postinstall automatico (commit `ed6f5dd`)
+6. **PDF export completo**: 30+ campos + observaciones chat + tildes (commit `c3aa17c`)
+7. **Turnstile bypass QA**: ya implementado, falta env var en Railway
+8. **Memorias**: 8 archivos actualizados/creados
+
+### Commits sesion 17
+- `ab9a941` security: remove secrets from tracked files
+- `8440917` feat: Stripe role validation
+- `c70dea5` fix: calculadora neto ortografia + neto fiscal real
+- `ed6f5dd` chore: postinstall ReasoningBank patches
+- `c3aa17c` feat: PDF export completo
+- `718cff0` feat: SEO-GEO creators landing + IVA platform calculator
+
+### Pendiente proxima sesion
+- [ ] MFA / 2FA (unica tarea critica restante)
+- [x] ~~Rotar API keys (Stitch, Gemini, Google OAuth)~~ — DONE por Fernando
+- [x] ~~TURNSTILE_TEST_MODE=True en Railway~~ — DONE por Fernando
+- [x] ~~Cambiar passwords expuestos~~ — DONE por Fernando
+- [ ] Pipeline auto-ingesta RAG
+- [ ] Re-ejecutar crawler 90 URLs
+
+---
+
+## [2026-03-20] PM Coordinator — DONE — Sesion 17 (early): RuFlo MCP Activacion
 
 - **RuFlo MCP activado** tras reinicio de Claude Code
   - 259 tools disponibles via stdio (PID 20724)

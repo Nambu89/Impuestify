@@ -395,6 +395,24 @@
     }
 }
 
+/* ========== GOOGLE SSO DIVIDER ========== */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.25rem 0;
+    color: var(--color-gray-400, #9ca3af);
+    font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-gray-200, #e5e7eb);
+}
+
 /* ========== CCAA FIELD (Register) ========== */
 .auth-select {
     appearance: none;

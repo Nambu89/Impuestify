@@ -875,6 +875,11 @@ class TursoClient:
                 await self.execute("ALTER TABLE users ADD COLUMN is_owner BOOLEAN DEFAULT 0")
                 logger.info("Added is_owner column to users table")
 
+            # Add google_id column to users if it doesn't exist (Google SSO)
+            if "google_id" not in existing_columns:
+                await self.execute("ALTER TABLE users ADD COLUMN google_id TEXT")
+                logger.info("Added google_id column to users table")
+
             # Add deadline_email_alerts column to user_profiles if it doesn't exist
             result = await self.execute("PRAGMA table_info(user_profiles)")
             profile_columns = {row["name"] for row in result.rows}

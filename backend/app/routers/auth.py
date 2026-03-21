@@ -1,11 +1,13 @@
 """
 Auth Router for TaxIA
 
-Provides authentication endpoints: register, login, refresh, logout.
+Provides authentication endpoints: register, login, refresh, logout, Google SSO.
 Cloudflare Turnstile verification on login/register.
 """
 import logging
+import uuid
 from typing import Optional
+from datetime import datetime
 
 import httpx
 from fastapi import APIRouter, HTTPException, status, Depends, Request
@@ -105,6 +107,12 @@ class ResetPasswordRequest(BaseModel):
     """Reset password request"""
     token: str
     new_password: str = Field(..., min_length=8, description="Minimo 8 caracteres")
+
+
+class GoogleAuthRequest(BaseModel):
+    """Google SSO login/register request"""
+    id_token: str
+    turnstile_token: Optional[str] = None
 
 
 class UserResponse(BaseModel):
@@ -231,6 +239,14 @@ async def login(request: Request, data: LoginRequest):
             detail="Verificación de seguridad requerida."
         )
 
+    # Check if user exists and registered via Google (no password)
+    existing_user = await user_service.get_user_by_email(data.email)
+    if existing_user and not existing_user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Esta cuenta fue creada con Google. Inicia sesión con Google."
+        )
+
     user = await user_service.authenticate_user(data.email, data.password)
 
     if not user:
@@ -267,6 +283,155 @@ async def login(request: Request, data: LoginRequest):
             name=user.name,
             is_active=user.is_active,
             is_admin=user.is_admin,
+            is_owner=access.is_owner,
+            subscription_status=access.status
+        ),
+        tokens=tokens
+    )
+
+
+@router.post("/google")
+@limiter.limit("10/minute")
+async def google_login(request: Request, body: GoogleAuthRequest):
+    """
+    Login or register with Google ID token.
+
+    Flow:
+    1. Verify the Google ID token
+    2. Look up user by google_id or email
+    3. If exists by google_id -> login
+    4. If exists by email but no google_id -> link + login
+    5. If not exists -> create new user (no password) + login
+    6. If MFA enabled -> return mfa_required
+    """
+    from google.oauth2 import id_token as google_id_token
+    from google.auth.transport import requests as google_requests
+
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Google SSO no está configurado en este servidor"
+        )
+
+    # Optional Turnstile verification
+    if body.turnstile_token:
+        remote_ip = request.client.host if request.client else None
+        if not await verify_turnstile(body.turnstile_token, remote_ip):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verificación de seguridad fallida. Inténtalo de nuevo."
+            )
+
+    # Verify Google ID token
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            body.id_token,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de Google inválido o expirado"
+        )
+
+    google_id = idinfo.get("sub")
+    email = idinfo.get("email")
+    name = idinfo.get("name")
+
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se pudo obtener el email de la cuenta de Google"
+        )
+
+    db = await get_db_client()
+
+    # 1. Look up by google_id
+    result = await db.execute(
+        "SELECT * FROM users WHERE google_id = ?", [google_id]
+    )
+    user_row = result.rows[0] if result.rows else None
+
+    # 2. If not found by google_id, look up by email
+    if not user_row:
+        result = await db.execute(
+            "SELECT * FROM users WHERE email = ?", [email]
+        )
+        user_row = result.rows[0] if result.rows else None
+
+        if user_row:
+            # Link google_id to existing account
+            await db.execute(
+                "UPDATE users SET google_id = ?, updated_at = ? WHERE id = ?",
+                [google_id, datetime.utcnow().isoformat(), user_row["id"]]
+            )
+            logger.info(f"Linked Google account to existing user: {email}")
+
+    # 3. If user still not found, create new account
+    if not user_row:
+        user_id = str(uuid.uuid4())
+        now = datetime.utcnow().isoformat()
+        await db.execute(
+            """
+            INSERT INTO users (id, email, password_hash, name, google_id, is_active, is_admin, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [user_id, email, "", name, google_id, True, False, now, now]
+        )
+        logger.info(f"Created new user via Google SSO: {email}")
+
+        # Create Stripe customer for the new user
+        sub_service = await get_subscription_service()
+        try:
+            await sub_service.create_stripe_customer(
+                user_id=user_id, email=email, name=name
+            )
+        except Exception as e:
+            logger.warning(f"Stripe customer creation failed (non-blocking): {e}")
+
+        # Fetch the newly created row
+        result = await db.execute("SELECT * FROM users WHERE id = ?", [user_id])
+        user_row = result.rows[0]
+
+    # Build user object
+    user_id = user_row["id"]
+    user_email = user_row["email"]
+    user_name = user_row.get("name")
+    is_active = bool(user_row.get("is_active", True))
+    is_admin = bool(user_row.get("is_admin", False))
+
+    if not is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta está desactivada"
+        )
+
+    # Check MFA
+    try:
+        mfa_result = await db.execute(
+            "SELECT is_enabled FROM user_mfa WHERE user_id = ? AND is_enabled = 1",
+            [user_id],
+        )
+        if mfa_result.rows:
+            mfa_token = create_mfa_token(user_id, user_email)
+            return {"mfa_required": True, "mfa_token": mfa_token}
+    except Exception as e:
+        logger.warning(f"MFA check failed (non-blocking): {e}")
+
+    # Check subscription status
+    sub_service = await get_subscription_service()
+    access = await sub_service.check_access(user_id=user_id, email=user_email)
+
+    tokens = create_tokens_for_user(user_id, user_email)
+
+    return AuthResponse(
+        user=UserResponse(
+            id=user_id,
+            email=user_email,
+            name=user_name,
+            is_active=is_active,
+            is_admin=is_admin,
             is_owner=access.is_owner,
             subscription_status=access.status
         ),

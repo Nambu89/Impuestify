@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Mail, Lock, Eye, EyeOff, Loader2, Calculator, Map, Shield, AlertCircle, KeyRound } from 'lucide-react'
+import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../hooks/useAuth'
 import TurnstileWidget from '../components/TurnstileWidget'
 import './Auth.css'
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+
 export default function Login() {
     const navigate = useNavigate()
-    const { login, completeMfaLogin } = useAuth()
+    const { login, googleLogin, completeMfaLogin } = useAuth()
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -194,14 +197,49 @@ export default function Login() {
                     <h2>Bienvenido de nuevo</h2>
                     <p className="auth-card__subtitle">Inicia sesión para continuar</p>
 
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        {error && (
-                            <div className="auth-message auth-message--error">
-                                <AlertCircle size={16} />
-                                {error}
-                            </div>
-                        )}
+                    {error && (
+                        <div className="auth-message auth-message--error">
+                            <AlertCircle size={16} />
+                            {error}
+                        </div>
+                    )}
 
+                    {GOOGLE_CLIENT_ID && (
+                        <>
+                            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                <GoogleLogin
+                                    onSuccess={async (response) => {
+                                        if (!response.credential) return
+                                        setError('')
+                                        setIsLoading(true)
+                                        try {
+                                            await googleLogin(response.credential)
+                                            navigate('/chat')
+                                        } catch (err: any) {
+                                            if (err.message === 'MFA_REQUIRED' && err.mfa_token) {
+                                                setMfaStep(true)
+                                                setMfaToken(err.mfa_token)
+                                                setIsLoading(false)
+                                                return
+                                            }
+                                            const detail = err?.response?.data?.detail
+                                            setError(detail || 'Error con Google. Inténtalo de nuevo.')
+                                        } finally {
+                                            setIsLoading(false)
+                                        }
+                                    }}
+                                    onError={() => setError('Error al conectar con Google.')}
+                                    text="continue_with"
+                                    shape="rectangular"
+                                    width="320"
+                                    locale="es"
+                                />
+                            </div>
+                            <div className="auth-divider"><span>o</span></div>
+                        </>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="auth-form">
                         <div className="auth-input-group">
                             <label htmlFor="email">Email</label>
                             <div className="auth-input-wrapper">

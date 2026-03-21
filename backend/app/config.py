@@ -196,6 +196,14 @@ class Settings(BaseSettings):
     )
 
     # -------------------------------
+    # 🔑 Google OAuth (SSO)
+    # -------------------------------
+    GOOGLE_CLIENT_ID: Optional[str] = Field(
+        default=None,
+        description="Google OAuth Client ID for SSO login/register"
+    )
+
+    # -------------------------------
     # 🌐 Frontend
     # -------------------------------
     FRONTEND_URL: str = Field(default="https://impuestify.com")

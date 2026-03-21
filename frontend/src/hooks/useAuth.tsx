@@ -16,6 +16,7 @@ interface AuthContextType {
     isAuthenticated: boolean
     isLoading: boolean
     login: (email: string, password: string, turnstile_token?: string) => Promise<void>
+    googleLogin: (idToken: string) => Promise<void>
     completeMfaLogin: (mfaToken: string, code: string) => Promise<void>
     register: (email: string, password: string, name?: string, ccaa_residencia?: string, turnstile_token?: string) => Promise<void>
     logout: () => void
@@ -126,6 +127,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    const googleLogin = async (idToken: string) => {
+        logger.debug('Google SSO login')
+        try {
+            const response = await authApi.post('/auth/google', { id_token: idToken })
+
+            // MFA required
+            if (response.data.mfa_required) {
+                const mfaError: any = new Error('MFA_REQUIRED')
+                mfaError.mfa_token = response.data.mfa_token
+                throw mfaError
+            }
+
+            const { user, tokens } = response.data
+
+            logger.debug('Google login successful')
+            localStorage.setItem(TOKEN_KEY, tokens.access_token)
+            localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token)
+            setUser(user)
+        } catch (error) {
+            logger.error('Google login failed:', error)
+            throw error
+        }
+    }
+
     const completeMfaLogin = async (mfaToken: string, code: string) => {
         const response = await authApi.post('/auth/mfa/validate', {
             mfa_token: mfaToken,
@@ -173,6 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isAuthenticated: !!user,
             isLoading,
             login,
+            googleLogin,
             completeMfaLogin,
             register,
             logout

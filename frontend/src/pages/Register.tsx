@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Mail, Lock, User, Eye, EyeOff, Loader2, Calculator, Map, AlertCircle, CheckCircle, MapPin } from 'lucide-react'
+import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../hooks/useAuth'
 import TurnstileWidget from '../components/TurnstileWidget'
 import { CCAA_OPTIONS_WITH_PLACEHOLDER, FORAL_CCAA, getCcaaLabel, isForal as isForalFn, isCeutaMelilla as isCeutaMelillaFn } from '../constants/ccaa'
 import './Auth.css'
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 const CCAA_OPTIONS = CCAA_OPTIONS_WITH_PLACEHOLDER
 
@@ -14,7 +17,7 @@ const FORAL_NAMES: Record<string, string> = Object.fromEntries(
 
 export default function Register() {
     const navigate = useNavigate()
-    const { register } = useAuth()
+    const { register, googleLogin } = useAuth()
 
     const [name, setName] = useState('')
     const [ccaa, setCcaa] = useState('')
@@ -117,14 +120,43 @@ export default function Register() {
                     <h2>Crear cuenta</h2>
                     <p className="auth-card__subtitle">Crea tu cuenta en Impuestify</p>
 
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        {error && (
-                            <div className="auth-message auth-message--error">
-                                <AlertCircle size={16} />
-                                {error}
-                            </div>
-                        )}
+                    {error && (
+                        <div className="auth-message auth-message--error">
+                            <AlertCircle size={16} />
+                            {error}
+                        </div>
+                    )}
 
+                    {GOOGLE_CLIENT_ID && (
+                        <>
+                            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                <GoogleLogin
+                                    onSuccess={async (response) => {
+                                        if (!response.credential) return
+                                        setError('')
+                                        setIsLoading(true)
+                                        try {
+                                            await googleLogin(response.credential)
+                                            navigate('/chat')
+                                        } catch (err: any) {
+                                            const detail = err?.response?.data?.detail
+                                            setError(detail || 'Error con Google. Inténtalo de nuevo.')
+                                        } finally {
+                                            setIsLoading(false)
+                                        }
+                                    }}
+                                    onError={() => setError('Error al conectar con Google.')}
+                                    text="signup_with"
+                                    shape="rectangular"
+                                    width="320"
+                                    locale="es"
+                                />
+                            </div>
+                            <div className="auth-divider"><span>o</span></div>
+                        </>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="auth-form">
                         <div className="auth-input-group">
                             <label htmlFor="name">Nombre (opcional)</label>
                             <div className="auth-input-wrapper">
