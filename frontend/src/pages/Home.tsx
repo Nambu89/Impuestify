@@ -608,6 +608,25 @@ export default function Home() {
                     </FadeContent>
                 </div>
             </section>
+
+            {/* Footer with legal links — required for Google OAuth verification */}
+            <footer className="home-footer">
+                <div className="container">
+                    <p className="home-footer__desc">
+                        Impuestify es un asistente fiscal con inteligencia artificial para particulares, autónomos y creadores de contenido en España.
+                        Cubre los 21 territorios fiscales con más de 600 deducciones, simulador IRPF y guía fiscal personalizada.
+                    </p>
+                    <nav className="home-footer__links">
+                        <Link to="/privacy-policy">Política de Privacidad</Link>
+                        <Link to="/terms">Términos y Condiciones</Link>
+                        <Link to="/politica-cookies">Política de Cookies</Link>
+                        <Link to="/security">Seguridad</Link>
+                    </nav>
+                    <p className="home-footer__copy">
+                        © {new Date().getFullYear()} Impuestify — impuestify.com
+                    </p>
+                </div>
+            </footer>
         </div>
     )
 }
