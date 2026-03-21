@@ -931,7 +931,7 @@
 
 @media (min-width: 1024px) {
     .ic-edu-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
 }
 
@@ -972,6 +972,79 @@
     color: rgba(255, 255, 255, 0.5);
     margin: 0;
     line-height: 1.6;
+}
+
+/* ============================================================
+   Selector de zona fiscal
+   ============================================================ */
+.ic-zone-selector {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+}
+
+@media (min-width: 540px) {
+    .ic-zone-selector {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.ic-zone-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.18s ease;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.4;
+}
+
+.ic-zone-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.ic-zone-btn--active {
+    background: rgba(26, 86, 219, 0.18);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+}
+
+.ic-zone-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-white);
+    line-height: 1.3;
+}
+
+.ic-zone-tax {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--color-primary-light);
+}
+
+.ic-zone-btn--active .ic-zone-tax {
+    color: #93c5fd;
+}
+
+.ic-zone-modelo {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 /* ============================================================
