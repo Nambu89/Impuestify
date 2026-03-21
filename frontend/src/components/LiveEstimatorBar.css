@@ -24,10 +24,21 @@
     }
 }
 
-/* Desktop: inline card */
+/* Desktop sidebar: compact vertical layout to fit 280px sidebar */
 @media (min-width: 768px) {
     .estimator-bar {
         box-shadow: var(--shadow-md);
+        flex-wrap: wrap;
+    }
+
+    .estimator-bar__meta {
+        text-align: left;
+    }
+
+    .estimator-bar__obligacion {
+        width: 100%;
+        justify-content: center;
+        margin-top: 4px;
     }
 }
 

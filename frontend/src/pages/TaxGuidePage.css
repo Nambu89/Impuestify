@@ -81,6 +81,7 @@
         position: sticky;
         top: 80px;
         height: fit-content;
+        overflow: hidden;
     }
 }
 
