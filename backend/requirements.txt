@@ -71,3 +71,10 @@ pywebpush>=2.0.0
 # --- Document Extraction (multi-format) ---
 python-docx>=1.1.0
 openpyxl>=3.1.0
+
+# --- MFA/2FA (TOTP) ---
+pyotp>=2.9.0
+qrcode[pil]>=7.0
+
+# --- Google SSO ---
+google-auth>=2.0.0
