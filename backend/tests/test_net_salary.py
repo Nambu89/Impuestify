@@ -28,6 +28,7 @@ def _r(
     gastos_deducibles_mensual: float = 0.0,
     es_nuevo_autonomo: bool = False,
     comunidad_autonoma: str | None = None,
+    tarifa_plana: bool = False,
 ):
     """Atajo para construir un NetSalaryRequest y calcular el resultado."""
     body = NetSalaryRequest(
@@ -38,6 +39,7 @@ def _r(
         gastos_deducibles_mensual=gastos_deducibles_mensual,
         es_nuevo_autonomo=es_nuevo_autonomo,
         comunidad_autonoma=comunidad_autonoma,
+        tarifa_plana=tarifa_plana,
     )
     return _compute_net_salary(body)
 
@@ -375,3 +377,49 @@ class TestCuotaSSPorIngresos:
         # Si el usuario pasa cuota manual, no se auto-calcula
         r = _r(facturacion_bruta_mensual=3000.0, cuota_autonomo_mensual=293.0)
         assert r.cuota_autonomo == 293.0
+
+
+# ---------------------------------------------------------------------------
+# Tests tarifa plana (DA 52a LGSS, RDL 13/2022): 80 EUR/mes nuevos autonomos
+# ---------------------------------------------------------------------------
+
+class TestTarifaPlana:
+    def test_tarifa_plana_cuota_80(self):
+        """Tarifa plana fuerza cuota SS a 80 EUR/mes."""
+        r = _r(facturacion_bruta_mensual=3000.0, tarifa_plana=True)
+        assert r.cuota_autonomo == 80.0
+        assert r.cuota_autonomo_anual == pytest.approx(960.0)
+
+    def test_tarifa_plana_overrides_auto_calculo(self):
+        """Tarifa plana tiene prioridad sobre auto-calculo por ingresos."""
+        r_auto = _r(facturacion_bruta_mensual=3000.0, tarifa_plana=False)
+        r_plana = _r(facturacion_bruta_mensual=3000.0, tarifa_plana=True)
+        assert r_auto.cuota_autonomo > 80.0  # Auto-calculo da mas de 80
+        assert r_plana.cuota_autonomo == 80.0
+
+    def test_tarifa_plana_overrides_cuota_manual(self):
+        """Tarifa plana tiene prioridad incluso sobre cuota manual."""
+        r = _r(facturacion_bruta_mensual=3000.0, cuota_autonomo_mensual=350.0, tarifa_plana=True)
+        assert r.cuota_autonomo == 80.0
+
+    def test_tarifa_plana_mejora_neto(self):
+        """Con tarifa plana, el neto mensual es mayor."""
+        r_sin = _r(facturacion_bruta_mensual=3000.0)
+        r_con = _r(facturacion_bruta_mensual=3000.0, tarifa_plana=True)
+        assert r_con.neto_mensual > r_sin.neto_mensual
+        assert r_con.neto_anual > r_sin.neto_anual
+
+    def test_tarifa_plana_con_nuevo_autonomo(self):
+        """Tarifa plana + nuevo autonomo (retencion 7%): escenario tipico."""
+        r = _r(facturacion_bruta_mensual=2000.0, es_nuevo_autonomo=True, tarifa_plana=True)
+        assert r.cuota_autonomo == 80.0
+        # Retencion 7% para nuevos autonomos
+        assert r.retencion_irpf_factura == pytest.approx(140.0)  # 2000 * 7%
+
+    def test_tarifa_plana_todos_los_regimenes(self):
+        """Tarifa plana funciona en todos los regimenes territoriales."""
+        ccaas = ["Comunidad de Madrid", "Canarias", "Melilla", "Bizkaia", "Andalucía"]
+        for ccaa in ccaas:
+            r = _r(facturacion_bruta_mensual=2500.0, tarifa_plana=True, comunidad_autonoma=ccaa)
+            assert r.cuota_autonomo == 80.0, f"Fallo en {ccaa}"
+            assert r.cuota_autonomo_anual == pytest.approx(960.0), f"Fallo anual en {ccaa}"

@@ -602,6 +602,7 @@ class NetSalaryRequest(BaseModel):
     gastos_deducibles_mensual: float = 0  # Gastos mensuales deducibles
     comunidad_autonoma: Optional[str] = None  # Para IRPF territorial + impuesto indirecto + deducciones
     es_nuevo_autonomo: bool = False  # Primeros 2 anos: tipo reducido 7%
+    tarifa_plana: bool = False  # Tarifa plana 80 EUR/mes (DA 52a LGSS, RDL 13/2022). Requisitos: no haber sido autonomo en 2 anos previos, no societario
 
 
 class NetSalaryResponse(BaseModel):
@@ -804,7 +805,9 @@ def _compute_net_salary(body: NetSalaryRequest) -> NetSalaryResponse:
     retencion_pct = 7.0 if body.es_nuevo_autonomo else body.retencion_irpf
 
     # --- Cuota SS por ingresos reales (RDL 13/2022, tabla 2025) ---
-    if body.cuota_autonomo_mensual is not None:
+    if body.tarifa_plana:
+        cuota_ss = 80.0  # DA 52a LGSS: 80 EUR/mes durante 12-24 meses para nuevos autonomos
+    elif body.cuota_autonomo_mensual is not None:
         cuota_ss = body.cuota_autonomo_mensual
     else:
         cuota_ss = _cuota_autonomo_por_ingresos(body.facturacion_bruta_mensual)

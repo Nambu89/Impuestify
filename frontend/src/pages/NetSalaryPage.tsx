@@ -18,6 +18,7 @@ const DEFAULT_INPUT: NetSalaryInput = {
     cuota_autonomo_mensual: 293,
     gastos_deducibles_mensual: 0,
     es_nuevo_autonomo: false,
+    tarifa_plana: false,
 }
 
 function formatEur(value: number): string {
@@ -72,6 +73,13 @@ export default function NetSalaryPage() {
             ...prev,
             es_nuevo_autonomo: checked,
             retencion_irpf: checked ? 7 : 15,
+        }))
+    }, [])
+
+    const handleTarifaPlana = useCallback((checked: boolean) => {
+        setInput(prev => ({
+            ...prev,
+            tarifa_plana: checked,
         }))
     }, [])
 
@@ -200,6 +208,26 @@ export default function NetSalaryPage() {
                                         </div>
                                     </div>
 
+                                    {/* Tarifa plana */}
+                                    <div className="ns-field">
+                                        <label className="ns-toggle-label">
+                                            <input
+                                                type="checkbox"
+                                                className="ns-toggle-input"
+                                                checked={input.tarifa_plana}
+                                                onChange={e => handleTarifaPlana(e.target.checked)}
+                                            />
+                                            <span className="ns-toggle-track" />
+                                            <span className="ns-toggle-text">Tarifa plana de nuevo autónomo (80 EUR/mes)</span>
+                                        </label>
+                                        {input.tarifa_plana && (
+                                            <p className="ns-field-hint ns-field-hint--info">
+                                                Cuota fija de 80 EUR/mes durante 12 meses, ampliable a 24 si tus ingresos netos son inferiores al SMI.
+                                                Requisitos: no haber sido autónomo en los 2 años anteriores y no ser autónomo societario (RDL 13/2022).
+                                            </p>
+                                        )}
+                                    </div>
+
                                     {/* Cuota autonomo */}
                                     <div className="ns-field">
                                         <label className="ns-label" htmlFor="cuota">
@@ -211,10 +239,15 @@ export default function NetSalaryPage() {
                                             className="ns-input"
                                             min={0}
                                             step={10}
-                                            value={input.cuota_autonomo_mensual}
+                                            value={input.tarifa_plana ? 80 : input.cuota_autonomo_mensual}
+                                            disabled={input.tarifa_plana}
                                             onChange={e => setInput(prev => ({ ...prev, cuota_autonomo_mensual: parseFloat(e.target.value) || 0 }))}
                                         />
-                                        <p className="ns-field-hint">Base mínima 2025: 230,15 EUR | Base media: 293 EUR</p>
+                                        <p className="ns-field-hint">
+                                            {input.tarifa_plana
+                                                ? 'Cuota fija por tarifa plana — DA 52ª LGSS'
+                                                : 'Base mínima 2025: 230,15 EUR | Base media: 293 EUR'}
+                                        </p>
                                     </div>
 
                                     {/* Gastos deducibles */}

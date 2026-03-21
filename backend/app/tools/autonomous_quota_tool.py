@@ -60,6 +60,10 @@ La función calcula la cuota mensual exacta de autónomos en España para 2025 s
 				"year": {
 					"type": "integer",
 					"description": "Año de cotización. Por defecto: 2026"
+				},
+				"tarifa_plana": {
+					"type": "boolean",
+					"description": "Si el usuario indica que tiene tarifa plana de nuevo autónomo (80 EUR/mes, DA 52ª LGSS, RDL 13/2022). Aplica cuando: no ha sido autónomo en los 2 años anteriores y no es autónomo societario. Duración: 12 meses, ampliable a 24 si rendimientos netos < SMI. Por defecto: false"
 				}
 			},
 			"required": ["ingresos_netos_mensuales"]
@@ -72,7 +76,8 @@ async def calculate_autonomous_quota_tool(
 	ingresos_netos_mensuales: float,
 	region: str = "general",
 	year: int = 2026,
-	restricted_mode: bool = False
+	restricted_mode: bool = False,
+	tarifa_plana: bool = False
 ) -> Dict[str, Any]:
 	"""
 	Calculate the autonomous worker quota based on net monthly income.
@@ -82,6 +87,7 @@ async def calculate_autonomous_quota_tool(
 		region: Region (general, ceuta, melilla)
 		year: Year for calculation (default 2025)
 		restricted_mode: If True, return restriction message instead of calculating
+		tarifa_plana: If True, return flat rate 80 EUR/month (DA 52a LGSS, RDL 13/2022)
 
 	Returns:
 		Dict with quota information and formatted response
@@ -94,6 +100,43 @@ async def calculate_autonomous_quota_tool(
 			"success": False,
 			"error": "restricted",
 			"formatted_response": get_autonomo_block_response()
+		}
+
+	# Tarifa plana: 80 EUR/mes para nuevos autónomos (DA 52ª LGSS, RDL 13/2022)
+	if tarifa_plana:
+		region_name = {"general": "España", "ceuta": "Ceuta", "melilla": "Melilla"}.get(region, region)
+		return {
+			"success": True,
+			"tramo": "Tarifa plana",
+			"cuota_minima": 80.0,
+			"cuota_maxima": 80.0,
+			"bonificacion_percent": 0,
+			"region": region,
+			"year": year,
+			"tarifa_plana": True,
+			"formatted_response": f"""✅ **Tarifa Plana de Nuevo Autónomo — {region_name}**
+
+📊 **Tus rendimientos netos**: {ingresos_netos_mensuales}€/mes
+
+💰 **Cuota mensual: 80,00€** (fija)
+📅 **Duración**: 12 meses, ampliable a 24 si tus rendimientos netos son inferiores al SMI
+
+📋 **Base de cotización**: 653,59€ (base mínima del Tramo 1)
+
+📌 **Requisitos**:
+- No haber estado de alta como autónomo en los **2 años anteriores** (3 si ya disfrutaste de tarifa plana)
+- No ser autónomo societario (administrador/socio de sociedad mercantil)
+- Estar al corriente de pago con Seguridad Social y AEAT
+- Haberla solicitado en el momento del alta (modelo TA.0521)
+
+👥 **Colectivos con 24 meses automáticos** (sin demostrar ingresos < SMI):
+- Discapacidad ≥ 33%
+- Víctimas de violencia de género
+- Víctimas de terrorismo
+
+⚠️ **Al finalizar la tarifa plana**, pasarás automáticamente al sistema de cotización por ingresos reales (15 tramos, RDL 13/2022).
+
+📖 **Normativa**: Disposición adicional 52ª LGSS (RDL 13/2022, de 26 de julio)"""
 		}
 
 	try:

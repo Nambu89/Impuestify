@@ -32,7 +32,7 @@ from app.services.subscription_service import get_subscription_service
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/auth/mfa", tags=["MFA"])
+router = APIRouter(prefix="/auth/mfa", tags=["MFA"])
 
 
 # ---------------------------------------------------------------------------

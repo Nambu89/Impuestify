@@ -8,6 +8,7 @@ export interface NetSalaryInput {
     cuota_autonomo_mensual: number
     gastos_deducibles_mensual: number
     es_nuevo_autonomo: boolean
+    tarifa_plana: boolean
 }
 
 export interface NetSalaryResult {

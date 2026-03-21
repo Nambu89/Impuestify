@@ -212,6 +212,12 @@
     color: rgba(255, 255, 255, 0.3);
 }
 
+.ns-field-hint--info {
+    color: rgba(59, 130, 246, 0.7);
+    margin-top: 0.35rem;
+    line-height: 1.4;
+}
+
 .ns-radio-group {
     display: flex;
     gap: 0.5rem;
