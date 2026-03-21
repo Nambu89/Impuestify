@@ -94,7 +94,7 @@ export default function PrivacyPolicyPage() {
                 <section>
                     <h2>8. Seguridad</h2>
                     <p>Implementamos cifrado TLS, hashing seguro de contraseñas, rate limiting y auditoría.</p>
-                    <p>Ver <Link to="/security">SECURITY.md</Link></p>
+                    <p>Ver nuestra <Link to="/security">Política de Seguridad</Link></p>
                 </section>
 
                 <section>
