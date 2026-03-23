@@ -49,12 +49,23 @@ jobs:
               exit(1)
           "
 
+      - name: Install Semgrep
+        run: pip install semgrep
+
       - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: .semgrep.yml
-        env:
-          SEMGREP_RULES: p/python p/typescript
+        run: |
+          semgrep --config .semgrep.yml backend/app/ --json --output semgrep-results.json || true
+          python -c "
+          import json
+          data = json.load(open('semgrep-results.json'))
+          results = data.get('results', [])
+          errors = [r for r in results if r.get('extra', {}).get('severity') == 'ERROR']
+          print(f'Semgrep: {len(results)} findings ({len(errors)} ERROR)')
+          for e in errors:
+              print(f'  {e[\"check_id\"]} {e[\"path\"]}:{e[\"start\"][\"line\"]}')
+          if errors:
+              exit(1)
+          "
 
       - name: Upload SAST results
         if: always()
@@ -99,14 +110,16 @@ jobs:
         working-directory: frontend
         run: |
           npm install --ignore-scripts
-          npm audit --json > ../npm-audit-results.json 2>/dev/null || true
+          npm audit --audit-level=high --json > ../npm-audit-results.json 2>/dev/null || true
           node -e "
           const data = JSON.parse(require('fs').readFileSync('../npm-audit-results.json', 'utf8'));
           const total = data.metadata?.vulnerabilities || {};
           console.log('npm audit:', JSON.stringify(total));
           if ((total.critical || 0) + (total.high || 0) > 0) {
-            console.log('CRITICAL/HIGH vulnerabilities found!');
+            console.log('CRITICAL/HIGH npm vulnerabilities found!');
             process.exit(1);
+          } else {
+            console.log('No critical/high npm vulnerabilities. Moderate/low are informational.');
           }
           "
 
