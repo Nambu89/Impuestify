@@ -1,0 +1,44 @@
+# Impuestify — robots.txt
+User-agent: *
+
+# Public pages (allow)
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /subscribe
+Allow: /contact
+Allow: /privacy-policy
+Allow: /ai-transparency
+Allow: /politica-cookies
+Allow: /terms
+Allow: /data-retention
+Allow: /territorios-forales
+Allow: /ceuta-melilla
+Allow: /canarias
+Allow: /creadores-de-contenido
+Allow: /checklist-borrador
+Allow: /obligado-declarar
+
+# Protected pages (disallow — require auth, redirect to /login)
+Disallow: /chat
+Disallow: /settings
+Disallow: /workspaces
+Disallow: /dashboard
+Disallow: /guia-fiscal
+Disallow: /modelos-trimestrales
+Disallow: /calendario
+Disallow: /calculadora-neto
+Disallow: /calculadora-iva-creadores
+Disallow: /calculadora-m130
+Disallow: /gastos-deducibles
+Disallow: /crypto
+Disallow: /admin
+Disallow: /admin/users
+Disallow: /admin/feedback
+Disallow: /admin/contact
+
+# API
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://impuestify.com/sitemap.xml
