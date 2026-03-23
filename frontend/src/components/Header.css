@@ -7,12 +7,13 @@
     left: 0;
     right: 0;
     z-index: var(--z-sticky);
-    background: rgba(15, 23, 42, 0.92);
+    background: #ffffff;
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     height: 60px;
     transition: background var(--transition-base);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .header-content {
@@ -33,13 +34,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-gray-200);
+    color: var(--color-primary);
     border-radius: var(--radius-md);
     transition: background var(--transition-fast);
 }
 
 .menu-toggle:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(26, 86, 219, 0.08);
 }
 
 .menu-toggle svg {
@@ -50,17 +51,13 @@
 .logo {
     display: flex;
     align-items: center;
-    gap: var(--spacing-2);
-    font-size: var(--font-size-lg);
-    font-weight: 700;
-    color: var(--color-white);
     text-decoration: none;
 }
 
-.logo svg {
-    color: var(--color-primary);
-    width: 24px;
-    height: 24px;
+.logo-img {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
 }
 
 .nav {
@@ -77,7 +74,7 @@
 .user-name {
     display: none;
     /* Hidden on mobile */
-    color: var(--color-gray-300);
+    color: var(--color-secondary);
     font-weight: 500;
     font-size: var(--font-size-sm);
 }
@@ -100,7 +97,7 @@
     border: none;
     padding: var(--spacing-2);
     cursor: pointer;
-    color: var(--color-gray-400);
+    color: #64748b;
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
     display: flex;
@@ -124,14 +121,8 @@
         padding: 0 var(--spacing-5);
     }
 
-    .logo {
-        font-size: var(--font-size-xl);
-        gap: var(--spacing-2);
-    }
-
-    .logo svg {
-        width: 28px;
-        height: 28px;
+    .logo-img {
+        height: 36px;
     }
 
     .user-name {
@@ -153,7 +144,7 @@
     }
 
     .nav-link {
-        color: var(--color-gray-300);
+        color: var(--color-primary-dark);
         font-weight: 500;
         text-decoration: none;
         font-size: var(--font-size-sm);
@@ -161,7 +152,7 @@
     }
 
     .nav-link:hover {
-        color: var(--color-white);
+        color: var(--color-accent);
     }
 }
 
@@ -187,12 +178,12 @@
     top: 100%;
     right: 0;
     margin-top: 8px;
-    background: rgba(15, 23, 42, 0.98);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     padding: 4px;
     min-width: 160px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     z-index: 1000;
 }
 
@@ -203,7 +194,7 @@
 }
 
 .nav-dropdown__item {
-    color: var(--color-gray-300);
+    color: var(--color-primary-dark);
     text-decoration: none;
     padding: 8px 12px;
     border-radius: 6px;
@@ -213,8 +204,8 @@
 }
 
 .nav-dropdown__item:hover {
-    color: var(--color-white);
-    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-accent);
+    background: rgba(26, 86, 219, 0.06);
 }
 
 /* Mobile nav overlay */
@@ -229,8 +220,8 @@
 }
 
 .mobile-nav {
-    background: var(--color-secondary);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
@@ -242,7 +233,7 @@
     align-items: center;
     gap: var(--spacing-3);
     padding: var(--spacing-4) var(--spacing-5);
-    color: var(--color-gray-200);
+    color: var(--color-primary-dark);
     text-decoration: none;
     font-size: var(--font-size-base);
     font-weight: 500;
@@ -250,8 +241,8 @@
 }
 
 .mobile-nav__link:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--color-white);
+    background: rgba(26, 86, 219, 0.06);
+    color: var(--color-accent);
 }
 
 .mobile-nav__link--btn {
@@ -260,7 +251,7 @@
     background: none;
     cursor: pointer;
     font-family: var(--font-family);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* ========== TABLET/DESKTOP (768px+): hide mobile nav, hide hamburger ========== */
@@ -284,8 +275,8 @@
         padding: 0 var(--spacing-6);
     }
 
-    .logo {
-        font-size: 22px;
+    .logo-img {
+        height: 40px;
     }
 
     .nav {

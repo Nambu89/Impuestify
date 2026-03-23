@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt } from 'lucide-react'
+import { LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
@@ -43,8 +43,13 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                 </button>
 
                 <Link to="/chat" className="logo">
-                    <FileText size={28} />
-                    <span>Impuestify</span>
+                    <img
+                        src="/images/logo-header.webp"
+                        alt="Impuestify"
+                        className="logo-img"
+                        width="241"
+                        height="80"
+                    />
                 </Link>
 
                 <nav className="nav">
