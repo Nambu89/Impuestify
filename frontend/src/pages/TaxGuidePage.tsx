@@ -1411,6 +1411,9 @@ export default function TaxGuidePage() {
             ceuta_melilla: profile.ceuta_melilla || false,
             ingresos_trabajo: profile.ingresos_trabajo || 0,
             ss_empleado: profile.ss_empleado || 0,
+            // Multi-pagador from fiscal profile
+            pagadores: profile.pagadores || [],
+            num_pagadores: profile.num_pagadores || 1,
             intereses: profile.intereses || 0,
             dividendos: profile.dividendos || 0,
             ganancias_fondos: profile.ganancias_fondos || 0,
@@ -1534,6 +1537,9 @@ export default function TaxGuidePage() {
             retenciones_trabajo: data.retenciones_trabajo || null,
             retenciones_alquiler: data.retenciones_alquiler || null,
             retenciones_ahorro: data.retenciones_ahorro || null,
+            // Multi-pagador
+            pagadores: data.pagadores?.length ? data.pagadores : null,
+            num_pagadores: data.num_pagadores > 1 ? data.num_pagadores : null,
             // Phase 2 fields
             tributacion_conjunta: data.tributacion_conjunta,
             tipo_unidad_familiar: data.tipo_unidad_familiar || null,
@@ -1598,6 +1604,9 @@ export default function TaxGuidePage() {
             donativo_recurrente: data.donativo_recurrente,
             retenciones_alquiler: data.retenciones_alquiler,
             retenciones_ahorro: data.retenciones_ahorro,
+            // Multi-pagador
+            pagadores: data.pagadores?.length ? data.pagadores : [],
+            num_pagadores: data.num_pagadores || 1,
             tributacion_conjunta: data.tributacion_conjunta,
             tipo_unidad_familiar: data.tipo_unidad_familiar,
             alquiler_habitual_pre2015: data.alquiler_habitual_pre2015,

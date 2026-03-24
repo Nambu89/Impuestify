@@ -429,6 +429,33 @@ async def populate():
     if result.rows:
         print(f"  ✓ tipo_aplicable = {result.rows[0]['tipo_aplicable']}%")
 
+    # --- Duplicate 2024 params into 2025 (same values, IRPF unchanged) ---
+    print("\n📅 Duplicating tax_parameters from 2024 → 2025...")
+    await db.execute("DELETE FROM tax_parameters WHERE year = 2025")
+    await db.execute("""
+        INSERT INTO tax_parameters (id, category, param_key, year, jurisdiction, value, description, legal_ref)
+        SELECT
+            lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(6))),
+            category, param_key, 2025, jurisdiction, value, description, legal_ref
+        FROM tax_parameters WHERE year = 2024
+    """)
+    dup_result = await db.execute("SELECT COUNT(*) as cnt FROM tax_parameters WHERE year = 2025")
+    dup_count = dup_result.rows[0]["cnt"] if dup_result.rows else 0
+    print(f"  ✓ {dup_count} parámetros duplicados a 2025")
+
+    print("\n📅 Duplicating irpf_scales ahorro from 2024 → 2025...")
+    await db.execute("DELETE FROM irpf_scales WHERE year = 2025 AND scale_type = 'ahorro'")
+    await db.execute("""
+        INSERT INTO irpf_scales (id, jurisdiction, year, scale_type, tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable)
+        SELECT
+            lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(6))),
+            jurisdiction, 2025, scale_type, tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable
+        FROM irpf_scales WHERE year = 2024 AND scale_type = 'ahorro'
+    """)
+    dup_result = await db.execute("SELECT COUNT(*) as cnt FROM irpf_scales WHERE year = 2025 AND scale_type = 'ahorro'")
+    dup_count = dup_result.rows[0]["cnt"] if dup_result.rows else 0
+    print(f"  ✓ {dup_count} filas ahorro duplicadas a 2025")
+
     await db.disconnect()
     print(f"\n{'='*60}")
     print("✅ Population complete!")

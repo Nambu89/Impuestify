@@ -37,6 +37,9 @@ class TaxParameterRepository:
         """
         Get all parameters for a category/year/jurisdiction.
 
+        Falls back to year-1 if no params exist for the requested year
+        (tax params rarely change between consecutive years).
+
         Returns:
             Dict mapping param_key to value, e.g.:
             {'contribuyente': 5550, 'contribuyente_65': 6700, ...}
@@ -51,6 +54,20 @@ class TaxParameterRepository:
             [category, year, jurisdiction],
         )
         params = {row["param_key"]: row["value"] for row in result.rows}
+
+        # Fallback to previous year if no params found for requested year
+        if not params and year > 2023:
+            logger.info(
+                "No tax_parameters for %s/%d/%s — falling back to %d",
+                category, year, jurisdiction, year - 1,
+            )
+            result = await self._db.execute(
+                "SELECT param_key, value FROM tax_parameters "
+                "WHERE category = ? AND year = ? AND jurisdiction = ?",
+                [category, year - 1, jurisdiction],
+            )
+            params = {row["param_key"]: row["value"] for row in result.rows}
+
         self._cache[cache_key] = params
         return params
 
