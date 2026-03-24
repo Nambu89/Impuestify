@@ -30,6 +30,12 @@ class MPYFCalculator:
         num_ascendientes_65: int = 0,
         num_ascendientes_75: int = 0,
         discapacidad_contribuyente: int = 0,
+        # --- XSD Gap: Discapacidad descendientes (Art. 60.2 LIRPF, casilla 0519) ---
+        num_descendientes_discapacidad_33: int = 0,
+        num_descendientes_discapacidad_65: int = 0,
+        # --- XSD Gap: Discapacidad ascendientes (Art. 60.3 LIRPF, casilla 0520) ---
+        num_ascendientes_discapacidad_33: int = 0,
+        num_ascendientes_discapacidad_65: int = 0,
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -59,12 +65,16 @@ class MPYFCalculator:
             anios_nacimiento_desc, custodia_compartida,
             num_ascendientes_65, num_ascendientes_75,
             discapacidad_contribuyente, year,
+            num_descendientes_discapacidad_33, num_descendientes_discapacidad_65,
+            num_ascendientes_discapacidad_33, num_ascendientes_discapacidad_65,
         )
         mpyf_autonomico = self._compute(
             aut_params, edad_contribuyente, num_descendientes,
             anios_nacimiento_desc, custodia_compartida,
             num_ascendientes_65, num_ascendientes_75,
             discapacidad_contribuyente, year,
+            num_descendientes_discapacidad_33, num_descendientes_discapacidad_65,
+            num_ascendientes_discapacidad_33, num_ascendientes_discapacidad_65,
         )
 
         return {
@@ -83,6 +93,10 @@ class MPYFCalculator:
         asc75: int,
         disc: int,
         year: int,
+        n_desc_disc_33: int = 0,
+        n_desc_disc_65: int = 0,
+        n_asc_disc_33: int = 0,
+        n_asc_disc_65: int = 0,
     ) -> float:
         """Compute total MPYF from a set of parameter amounts."""
         total = 0.0
@@ -115,11 +129,31 @@ class MPYFCalculator:
         total += asc75 * params.get("ascendiente_75", 0)
         total += asc65 * params.get("ascendiente_65", 0)
 
-        # Disability (art. 60)
+        # Disability of taxpayer (art. 60.1)
         if disc >= 65:
             total += params.get("discapacidad_65_plus", 0)
             total += params.get("gastos_asistencia", 0)
         elif disc >= 33:
             total += params.get("discapacidad_33_65", 0)
+
+        # Disability of descendants (art. 60.2, casilla 0519)
+        # 33-64%: 3,000 EUR per descendant; 65%+: 9,000 + 3,000 gastos asistencia
+        minimo_discapacidad_desc = 0
+        minimo_discapacidad_desc += n_desc_disc_33 * params.get("discapacidad_33_65", 3000)
+        minimo_discapacidad_desc += n_desc_disc_65 * (
+            params.get("discapacidad_65_plus", 9000)
+            + params.get("gastos_asistencia", 3000)
+        )
+        total += minimo_discapacidad_desc
+
+        # Disability of ascendants (art. 60.3, casilla 0520)
+        # Same amounts as descendants
+        minimo_discapacidad_asc = 0
+        minimo_discapacidad_asc += n_asc_disc_33 * params.get("discapacidad_33_65", 3000)
+        minimo_discapacidad_asc += n_asc_disc_65 * (
+            params.get("discapacidad_65_plus", 9000)
+            + params.get("gastos_asistencia", 3000)
+        )
+        total += minimo_discapacidad_asc
 
         return total

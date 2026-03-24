@@ -576,6 +576,18 @@ class IRPFSimulator:
         perdidas_gp_ahorro_anteriores: Optional[Dict[int, float]] = None,
         perdidas_rcm_anteriores: Optional[Dict[int, float]] = None,
         perdidas_gp_general_anteriores: Optional[Dict[int, float]] = None,
+        # --- XSD Gap: Pension compensatoria ex-conyuge (Art. 55 LIRPF, casilla 0475) ---
+        pension_compensatoria_exconyuge: float = 0,
+        # --- XSD Gap: Anualidades por alimentos a hijos (Art. 64 LIRPF, casillas 0476-0478) ---
+        anualidades_alimentos_hijos: float = 0,
+        # --- XSD Gap: Doble imposicion internacional (Art. 80 LIRPF, casilla 0588) ---
+        impuestos_pagados_extranjero: float = 0,
+        # --- XSD Gap: Discapacidad descendientes MPYF (Art. 60.2, casilla 0519) ---
+        num_descendientes_discapacidad_33: int = 0,
+        num_descendientes_discapacidad_65: int = 0,
+        # --- XSD Gap: Discapacidad ascendientes MPYF (Art. 60.3, casilla 0520) ---
+        num_ascendientes_discapacidad_33: int = 0,
+        num_ascendientes_discapacidad_65: int = 0,
     ) -> Dict[str, Any]:
         """
         Run a complete IRPF simulation.
@@ -824,6 +836,12 @@ class IRPFSimulator:
             reduccion_planes_pensiones = max(0, reduccion_planes_pensiones)
             bi_general = max(0, bi_general - reduccion_planes_pensiones)
 
+        # --- 3x. Pension compensatoria ex-conyuge (Art. 55 LIRPF, casilla 0475) ---
+        reduccion_pension_compensatoria = 0.0
+        if pension_compensatoria_exconyuge > 0:
+            reduccion_pension_compensatoria = min(pension_compensatoria_exconyuge, bi_general)
+            bi_general = max(0, bi_general - reduccion_pension_compensatoria)
+
         # --- 3c. Rentas imputadas de inmuebles urbanos (Art. 85 LIRPF) ---
         # Owners of non-rented urban properties (other than primary residence) must
         # include 1.1% (if valor catastral revised post-1994) or 2% of valor catastral
@@ -910,6 +928,10 @@ class IRPFSimulator:
             num_ascendientes_65=num_ascendientes_65,
             num_ascendientes_75=num_ascendientes_75,
             discapacidad_contribuyente=discapacidad_contribuyente,
+            num_descendientes_discapacidad_33=num_descendientes_discapacidad_33,
+            num_descendientes_discapacidad_65=num_descendientes_discapacidad_65,
+            num_ascendientes_discapacidad_33=num_ascendientes_discapacidad_33,
+            num_ascendientes_discapacidad_65=num_ascendientes_discapacidad_65,
         )
 
         # --- 7. Apply MPYF: subtract MPYF quota from cuota íntegra ---
@@ -1033,6 +1055,28 @@ class IRPFSimulator:
         # Maternidad + familia numerosa are refundable (can make cuota negative)
         cuota_total -= (deduccion_maternidad + deduccion_familia_numerosa)
 
+        # --- 3y. Anualidades por alimentos a hijos (Art. 64 LIRPF, casillas 0476-0478) ---
+        # Child support payments are taxed SEPARATELY at the general scale (more favorable
+        # than adding them to the main base, which would push into higher brackets).
+        cuota_anualidades_alimentos = 0.0
+        if anualidades_alimentos_hijos > 0:
+            alimentos_result = await self._irpf_calc.calculate_irpf(
+                base_liquidable=anualidades_alimentos_hijos,
+                jurisdiction=jurisdiction,
+                year=year,
+            )
+            cuota_anualidades_alimentos = alimentos_result["cuota_total"]
+            cuota_total += cuota_anualidades_alimentos
+
+        # --- 9g. Doble imposicion internacional (Art. 80 LIRPF, casilla 0588) ---
+        # Deduction for taxes paid abroad on foreign income.
+        # Cannot exceed the Spanish tax attributable to that foreign income.
+        # Simplified: cap at cuota_total.
+        deduccion_doble_imposicion = 0.0
+        if impuestos_pagados_extranjero > 0:
+            deduccion_doble_imposicion = min(impuestos_pagados_extranjero, max(0, cuota_total))
+            cuota_total = max(0, cuota_total - deduccion_doble_imposicion)
+
         base_total = bi_general + base_ahorro
         tipo_medio = (cuota_total / base_total * 100) if base_total > 0 else 0.0
 
@@ -1102,8 +1146,13 @@ class IRPFSimulator:
             "total_deducciones_cuota": round(
                 deduccion_vivienda_pre2013 + deduccion_maternidad
                 + deduccion_familia_numerosa + deduccion_donativos
-                + deduccion_alquiler_pre2015 + deducciones_autonomicas_total, 2
+                + deduccion_alquiler_pre2015 + deducciones_autonomicas_total
+                + deduccion_doble_imposicion, 2
             ),
+            # XSD gaps: new reductions/deductions
+            "reduccion_pension_compensatoria": round(reduccion_pension_compensatoria, 2),
+            "cuota_anualidades_alimentos": round(cuota_anualidades_alimentos, 2),
+            "deduccion_doble_imposicion": round(deduccion_doble_imposicion, 2),
             # Phase 2: new reductions/deductions/imputations
             "reduccion_tributacion_conjunta": round(reduccion_tributacion_conjunta, 2),
             "deduccion_alquiler_pre2015": round(deduccion_alquiler_pre2015, 2),
