@@ -1,5 +1,6 @@
 """
 Core download engine — download, validate, deduplicate documents.
+Uses Scrapling for anti-bot-detection HTTP requests.
 """
 import hashlib
 import logging
@@ -10,12 +11,11 @@ from collections import defaultdict
 from pathlib import Path
 from urllib.parse import urlparse
 
-import requests
+from scrapling import Fetcher
 
 from .config import (
     BACKOFF_SCHEDULE_S,
     DOCS_DIR,
-    HEADERS,
     INTER_REQUEST_DELAY_S,
     MAX_DOWNLOADS_PER_DOMAIN,
     MIN_FILE_SIZE_BYTES,
@@ -26,6 +26,10 @@ from .config import (
     XLSX_MAGIC,
 )
 from .robots import can_fetch
+
+# Singleton Scrapling fetcher — generates realistic browser fingerprints
+# timeout is passed per-request via .get(timeout=...)
+_fetcher = Fetcher()
 
 # ── Document Integrity Scanner ─────────────────────────────────────────────────
 # Ensure backend/ is in sys.path so app.security imports resolve when the
@@ -143,6 +147,35 @@ def compute_hash(path: Path) -> str:
     return h.hexdigest()
 
 
+def check_url_exists(url: str) -> dict:
+    """
+    Quick HEAD/GET check to verify a URL is reachable (HTTP 200).
+    Uses Scrapling for anti-bot fingerprinting.
+
+    Returns:
+        dict with keys: reachable (bool), status_code (int), message (str)
+    """
+    domain = _get_domain(url)
+    _wait_for_rate_limit(domain)
+
+    try:
+        response = _fetcher.get(url, timeout=REQUEST_TIMEOUT_S)
+        _domain_last_request[domain] = time.time()
+        reachable = response.status in (200, 301, 302)
+        return {
+            "reachable": reachable,
+            "status_code": response.status,
+            "message": f"HTTP {response.status}" if reachable else f"HTTP {response.status} — URL no accesible",
+        }
+    except Exception as e:
+        _domain_last_request[domain] = time.time()
+        return {
+            "reachable": False,
+            "status_code": 0,
+            "message": f"Connection error: {e}",
+        }
+
+
 def download_document(
     url: str,
     dest_path: Path,
@@ -150,7 +183,7 @@ def download_document(
     dry_run: bool = False,
 ) -> dict:
     """
-    Download a document with rate limiting and validation.
+    Download a document using Scrapling (anti-bot) with rate limiting and validation.
 
     Returns:
         dict with keys: success, status, message, hash, size
@@ -184,7 +217,6 @@ def download_document(
     # Check if file already exists and hasn't changed
     if dest_path.exists():
         existing_hash = compute_hash(dest_path)
-        # File exists — we'll compare hash after download to detect updates
     else:
         existing_hash = None
 
@@ -202,20 +234,15 @@ def download_document(
     # Rate limit
     _wait_for_rate_limit(domain)
 
-    # Download with retry and backoff
+    # Download with retry and backoff (using Scrapling)
     last_error = None
     for attempt, backoff in enumerate(BACKOFF_SCHEDULE_S + [None]):
         try:
-            logger.info(f"Downloading: {url}")
-            response = requests.get(
-                url,
-                headers=HEADERS,
-                timeout=REQUEST_TIMEOUT_S,
-                allow_redirects=True,
-            )
+            logger.info(f"Downloading (Scrapling): {url}")
+            response = _fetcher.get(url, timeout=REQUEST_TIMEOUT_S)
             _domain_last_request[domain] = time.time()
 
-            if response.status_code == 429:
+            if response.status == 429:
                 logger.warning(f"Rate limited (429) by {domain} — blocking domain")
                 _blocked_domains.add(domain)
                 return {
@@ -224,12 +251,25 @@ def download_document(
                     "message": f"HTTP 429 from {domain} — domain blocked for this session",
                 }
 
-            response.raise_for_status()
+            # 4xx errors (except 429) are definitive — no retry
+            if 400 <= response.status < 500:
+                return {
+                    "success": False,
+                    "status": "failed",
+                    "message": f"HTTP {response.status} — URL not found: {dest_path.name}",
+                }
+
+            # 5xx errors — retry with backoff
+            if response.status >= 500:
+                raise ConnectionError(f"HTTP {response.status} (server error) for {url}")
+
+            # Scrapling stores raw bytes in .body
+            content_bytes = response.body
 
             # Write to temp file, then validate
             temp_path = dest_path.with_suffix(dest_path.suffix + ".tmp")
             with open(temp_path, "wb") as f:
-                f.write(response.content)
+                f.write(content_bytes)
 
             if not validate_file(temp_path, file_type):
                 temp_path.unlink(missing_ok=True)
@@ -275,7 +315,6 @@ def download_document(
                         integrity_findings = [f.pattern_id for f in scan_result.findings]
 
                         if scan_result.risk_score > 0.6:
-                            # Derive territory from dest_path relative to DOCS_DIR
                             try:
                                 rel_parts = dest_path.relative_to(DOCS_DIR).parts
                                 territory_dir = rel_parts[0] if len(rel_parts) > 1 else "_unknown"
@@ -311,7 +350,6 @@ def download_document(
                         else:
                             _scan_clean += 1
                 except Exception as _scan_err:
-                    # Fail open — log and continue without quarantine
                     logger.warning("Integrity scan failed for %s: %s", dest_path.name, _scan_err)
             # ───────────────────────────────────────────────────────────────
 
@@ -327,14 +365,13 @@ def download_document(
                 result_dict["integrity_findings"] = integrity_findings
             return result_dict
 
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             last_error = str(e)
             logger.warning(f"Attempt {attempt + 1} failed for {url}: {e}")
             if backoff is not None:
                 logger.info(f"Backing off {backoff}s...")
                 time.sleep(backoff)
             else:
-                # All retries exhausted
                 break
 
     return {
