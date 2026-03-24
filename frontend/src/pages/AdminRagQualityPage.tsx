@@ -265,10 +265,9 @@ export default function AdminRagQualityPage() {
         setEvaluating(true)
         setMessage(null)
         try {
-            await apiRequest('/api/admin/rag-quality/evaluate', { method: 'POST' })
-            setMessage({ type: 'success', text: 'Evaluación iniciada. Los resultados estarán disponibles en 30-60 segundos.' })
-            // Poll after 65s
-            setTimeout(() => fetchData(), 65000)
+            await apiRequest('/api/admin/rag-quality/evaluate', { method: 'POST', timeout: 600000 })
+            setMessage({ type: 'success', text: 'Evaluación completada.' })
+            await fetchData()
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message || 'Error al iniciar la evaluación' })
         } finally {

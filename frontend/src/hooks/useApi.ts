@@ -126,11 +126,12 @@ export function useApi() {
         }
     }, [])
 
-    const apiRequest = useCallback(async <T = any>(url: string, options?: RequestInit): Promise<T> => {
+    const apiRequest = useCallback(async <T = any>(url: string, options?: RequestInit & { timeout?: number }): Promise<T> => {
         logger.debug('API Request:', url, options?.method || 'GET')
 
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 30000)
+        const timeoutMs = options?.timeout || 30000
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
         try {
             const token = localStorage.getItem(TOKEN_KEY)
