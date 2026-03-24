@@ -173,20 +173,36 @@ class IRPFCalculator:
     async def _get_scale(self, jurisdiction: str, year: int) -> List[Dict]:
         """
         Get tax scale from database.
-        
+        Normalizes jurisdiction name (e.g. "Comunidad de Madrid" → "Madrid")
+        and falls back to previous year if current year not found.
+
         Returns:
             List of scale rows ordered by tramo_num
         """
+        from app.utils.ccaa_constants import normalize_ccaa
+
+        # Normalize: "Comunidad de Madrid" → "Madrid", etc.
+        normalized = normalize_ccaa(jurisdiction)
+
         result = await self.db.execute("""
             SELECT tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable
             FROM irpf_scales
             WHERE jurisdiction = ? AND year = ? AND scale_type = 'general'
             ORDER BY tramo_num
-        """, [jurisdiction, year])
-        
+        """, [normalized, year])
+
+        # Fallback: try previous year if current not found
+        if not result.rows and year > 2024:
+            result = await self.db.execute("""
+                SELECT tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable
+                FROM irpf_scales
+                WHERE jurisdiction = ? AND year = ? AND scale_type = 'general'
+                ORDER BY tramo_num
+            """, [normalized, year - 1])
+
         if not result.rows:
-            raise ValueError(f"No scale found for {jurisdiction} {year}")
-        
+            raise ValueError(f"No scale found for {normalized} {year}")
+
         return [dict(row) for row in result.rows]
     
     def _apply_scale(
