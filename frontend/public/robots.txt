@@ -36,6 +36,7 @@ Disallow: /admin
 Disallow: /admin/users
 Disallow: /admin/feedback
 Disallow: /admin/contact
+Disallow: /admin/rag-quality
 
 # API
 Disallow: /api/

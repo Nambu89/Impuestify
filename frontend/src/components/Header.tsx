@@ -88,6 +88,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                                 <Link to="/admin/users" className="nav-dropdown__item">Usuarios</Link>
                                 <Link to="/admin/feedback" className="nav-dropdown__item">Feedback</Link>
                                 <Link to="/admin/contact" className="nav-dropdown__item">Contacto</Link>
+                                <Link to="/admin/rag-quality" className="nav-dropdown__item">Calidad RAG</Link>
                             </div>
                         </div>
                     )}
@@ -149,6 +150,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             </Link>
                             <Link to="/admin/contact" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                                 <Shield size={20} /> Contacto
+                            </Link>
+                            <Link to="/admin/rag-quality" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                                <Shield size={20} /> Calidad RAG
                             </Link>
                         </>
                     )}

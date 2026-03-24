@@ -40,6 +40,7 @@ const M130CalculatorPage = lazy(() => import('./pages/M130CalculatorPage'))
 const ChecklistBorradorPage = lazy(() => import('./pages/ChecklistBorradorPage'))
 const ObligadoDeclararPage = lazy(() => import('./pages/ObligadoDeclararPage'))
 const IvaCreatorsPage = lazy(() => import('./pages/IvaCreatorsPage'))
+const AdminRagQualityPage = lazy(() => import('./pages/AdminRagQualityPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -232,6 +233,14 @@ function App() {
                         element={
                             <ProtectedRoute requireSubscription={false}>
                                 <AdminContactPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/rag-quality"
+                        element={
+                            <ProtectedRoute requireSubscription={false}>
+                                <AdminRagQualityPage />
                             </ProtectedRoute>
                         }
                     />

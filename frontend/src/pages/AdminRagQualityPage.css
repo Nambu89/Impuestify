@@ -1,0 +1,654 @@
+/* ─── AdminRagQualityPage ─────────────────────────────────────────────────── */
+
+.arqp-page {
+    min-height: 100vh;
+    background: var(--color-secondary);
+}
+
+.arqp-main {
+    padding: 2rem 0 4rem;
+}
+
+.arqp-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* ─── Action bar ─────────────────────────────────────────────────────────── */
+
+.arqp-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-xl);
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.arqp-action-bar__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.arqp-action-bar__last {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.arqp-action-bar__count {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.arqp-eval-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    border: none;
+    border-radius: var(--radius-xl);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    white-space: nowrap;
+}
+
+.arqp-eval-btn:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.arqp-eval-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ─── Evaluation progress ────────────────────────────────────────────────── */
+
+.arqp-eval-progress {
+    padding: 0.75rem 1.25rem;
+    background: rgba(26, 86, 219, 0.12);
+    border: 1px solid rgba(26, 86, 219, 0.3);
+    border-radius: var(--radius-xl);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+}
+
+.arqp-eval-progress p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.5rem;
+}
+
+.arqp-eval-progress__bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    border-radius: 2px;
+    animation: arqp-progress-slide 2s ease-in-out infinite;
+    background-size: 200% 100%;
+}
+
+@keyframes arqp-progress-slide {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ─── Empty state ────────────────────────────────────────────────────────── */
+
+.arqp-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem 2rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.arqp-empty h3 {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+.arqp-empty p {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ─── Score cards ────────────────────────────────────────────────────────── */
+
+.arqp-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+@media (max-width: 900px) {
+    .arqp-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .arqp-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.rag-score-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-xl);
+    transition: transform 0.2s;
+}
+
+.rag-score-card:hover {
+    transform: translateY(-2px);
+}
+
+.rag-score-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    flex-shrink: 0;
+}
+
+.rag-score-card.score--good .rag-score-card__icon {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.rag-score-card.score--warning .rag-score-card__icon {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.rag-score-card.score--danger .rag-score-card__icon {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.rag-score-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.rag-score-card__value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.rag-score-card.score--good .rag-score-card__value { color: #10b981; }
+.rag-score-card.score--warning .rag-score-card__value { color: #f59e0b; }
+.rag-score-card.score--danger .rag-score-card__value { color: #ef4444; }
+
+.rag-score-card__label {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ─── Delta badge ────────────────────────────────────────────────────────── */
+
+.rag-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 0.1rem;
+}
+
+.rag-delta--up { color: #10b981; }
+.rag-delta--down { color: #ef4444; }
+.rag-delta--neutral { color: rgba(255, 255, 255, 0.35); }
+
+/* ─── Score classes (text color) ─────────────────────────────────────────── */
+
+.score--good { color: #10b981; }
+.score--warning { color: #f59e0b; }
+.score--danger { color: #ef4444; }
+
+/* ─── Sections ───────────────────────────────────────────────────────────── */
+
+.arqp-section {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.arqp-section__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 1.25rem;
+}
+
+.arqp-section__subtitle {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.35);
+    margin-left: 0.5rem;
+}
+
+/* ─── Trend rows ─────────────────────────────────────────────────────────── */
+
+.arqp-trend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rag-trend-row {
+    display: grid;
+    grid-template-columns: 70px 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rag-trend-row__date {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+}
+
+.rag-trend-row__bars {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.rag-trend-row__bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.rag-trend-row__bar-label {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.rag-trend-row__count {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+    .rag-trend-row {
+        grid-template-columns: 1fr;
+    }
+
+    .rag-trend-row__bars {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ─── Progress bars ──────────────────────────────────────────────────────── */
+
+.rag-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    position: relative;
+    overflow: visible;
+}
+
+.rag-bar__fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.rag-bar__fill.score--good { background: #10b981; }
+.rag-bar__fill.score--warning { background: #f59e0b; }
+.rag-bar__fill.score--danger { background: #ef4444; }
+
+.rag-bar__label {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+    min-width: 36px;
+}
+
+/* ─── Collapsible ────────────────────────────────────────────────────────── */
+
+.arqp-collapsible {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.arqp-collapsible span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.arqp-collapsible[aria-expanded="true"] {
+    margin-bottom: 1.25rem;
+}
+
+/* ─── Category breakdown ─────────────────────────────────────────────────── */
+
+.arqp-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.arqp-category-row {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-lg);
+}
+
+.arqp-category-row__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.arqp-category-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    flex: 1;
+    min-width: 0;
+}
+
+.arqp-category-count {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.arqp-category-avg {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.arqp-category-bars {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+}
+
+.arqp-category-bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.arqp-category-bar-item > span {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+@media (max-width: 700px) {
+    .arqp-category-bars {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ─── Question table ─────────────────────────────────────────────────────── */
+
+.arqp-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.arqp-table-wrapper {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .arqp-table-wrapper {
+        display: none;
+    }
+}
+
+.arqp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.arqp-table thead tr {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.arqp-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.rag-table__row {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.rag-table__row:hover,
+.rag-table__row--expanded {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.arqp-table td {
+    padding: 0.75rem 1rem;
+    color: rgba(255, 255, 255, 0.75);
+    vertical-align: middle;
+}
+
+.rag-cell-question {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rag-cell-expand {
+    width: 32px;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Status icon ────────────────────────────────────────────────────────── */
+
+.rag-status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.rag-status--good { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.rag-status--warning { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.rag-status--danger { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+/* ─── Category badge ─────────────────────────────────────────────────────── */
+
+.rag-category-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    background: rgba(26, 86, 219, 0.15);
+    color: var(--color-primary-light);
+    border-radius: var(--radius-md);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ─── Detail panel (expanded row) ────────────────────────────────────────── */
+
+.rag-table__detail-row td {
+    padding: 0;
+    border-top: none;
+}
+
+.rag-detail-panel {
+    padding: 1rem 1.25rem 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.rag-detail-panel__scores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.rag-detail-panel__scores strong {
+    font-weight: 700;
+}
+
+.rag-detail-panel__block {
+    margin-bottom: 0.75rem;
+}
+
+.rag-detail-panel__block-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.35);
+    margin-bottom: 0.35rem;
+}
+
+.rag-detail-panel__block-text {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Mobile cards ───────────────────────────────────────────────────────── */
+
+.arqp-mobile-cards {
+    display: none;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .arqp-mobile-cards {
+        display: flex;
+    }
+}
+
+.arqp-mobile-card {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-lg);
+}
+
+.arqp-mobile-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.arqp-mobile-card__question {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+}
+
+.arqp-mobile-card__scores {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.arqp-mobile-card__scores strong {
+    font-weight: 700;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .arqp-action-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .arqp-eval-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .arqp-section {
+        padding: 1rem;
+    }
+}
