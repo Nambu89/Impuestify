@@ -222,7 +222,7 @@ function QuestionRow({ q }: { q: QuestionResult }) {
 
 export default function AdminRagQualityPage() {
     const { isOwner, loading: subLoading } = useSubscription()
-    const api = useApi()
+    const { apiRequest } = useApi()
 
     const [latest, setLatest] = useState<EvaluationResult | null>(null)
     const [history, setHistory] = useState<HistoryEntry[]>([])
@@ -236,18 +236,18 @@ export default function AdminRagQualityPage() {
         setLoading(true)
         setError(null)
         try {
-            const [latestRes, historyRes] = await Promise.all([
-                api.get('/api/admin/rag-quality/results').catch(() => ({ data: null })),
-                api.get('/api/admin/rag-quality/history').catch(() => ({ data: [] })),
+            const [latestData, historyData] = await Promise.all([
+                apiRequest<EvaluationResult | null>('/api/admin/rag-quality/results').catch(() => null),
+                apiRequest<{ evaluations: HistoryEntry[]; count: number }>('/api/admin/rag-quality/history').catch(() => ({ evaluations: [], count: 0 })),
             ])
-            setLatest(latestRes.data)
-            setHistory(historyRes.data || [])
+            setLatest(latestData)
+            setHistory(historyData?.evaluations || [])
         } catch (err: any) {
             setError(err.message || 'Error al cargar resultados de calidad RAG')
         } finally {
             setLoading(false)
         }
-    }, [api])
+    }, [apiRequest])
 
     useEffect(() => {
         if (isOwner) fetchData()
@@ -265,12 +265,12 @@ export default function AdminRagQualityPage() {
         setEvaluating(true)
         setMessage(null)
         try {
-            await api.post('/api/admin/rag-quality/evaluate')
+            await apiRequest('/api/admin/rag-quality/evaluate', { method: 'POST' })
             setMessage({ type: 'success', text: 'Evaluación iniciada. Los resultados estarán disponibles en 30-60 segundos.' })
             // Poll after 65s
             setTimeout(() => fetchData(), 65000)
         } catch (err: any) {
-            setMessage({ type: 'error', text: err.response?.data?.detail || err.message || 'Error al iniciar la evaluación' })
+            setMessage({ type: 'error', text: err.message || 'Error al iniciar la evaluación' })
         } finally {
             setEvaluating(false)
         }
