@@ -130,6 +130,12 @@ class IRPFEstimateRequest(BaseModel):
     # Multi-pagador support (AEAT Datos Fiscales)
     pagadores: List[PagadorItem] = Field(default_factory=list)
     num_pagadores: int = 1
+    # Renta imputada multi-inmueble (Art. 85 LIRPF)
+    inmuebles_imputacion: Optional[List[dict]] = None
+    # Compensacion perdidas anos anteriores (Art. 48-49 LIRPF)
+    perdidas_gp_ahorro_anteriores: Optional[Dict[int, float]] = None
+    perdidas_rcm_anteriores: Optional[Dict[int, float]] = None
+    perdidas_gp_general_anteriores: Optional[Dict[int, float]] = None
 
 
 class IRPFBreakdown(BaseModel):
@@ -459,6 +465,11 @@ async def estimate_irpf(
             alquiler_pagado_anual=body.alquiler_pagado_anual,
             valor_catastral_segundas_viviendas=body.valor_catastral_segundas_viviendas,
             valor_catastral_revisado_post1994=body.valor_catastral_revisado_post1994,
+            inmuebles_imputacion=body.inmuebles_imputacion,
+            # Compensacion perdidas anos anteriores
+            perdidas_gp_ahorro_anteriores=body.perdidas_gp_ahorro_anteriores,
+            perdidas_rcm_anteriores=body.perdidas_rcm_anteriores,
+            perdidas_gp_general_anteriores=body.perdidas_gp_general_anteriores,
             # Fase 4: ganancias patrimoniales del ahorro
             ganancias_acciones=body.ganancias_acciones,
             perdidas_acciones=body.perdidas_acciones,

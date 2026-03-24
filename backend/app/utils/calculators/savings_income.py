@@ -8,7 +8,7 @@ Calculates:
 - Net savings income after expenses
 - Applies the savings tax scale (tarifa del ahorro, LIRPF art. 66)
 """
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -39,6 +39,9 @@ class SavingsIncomeCalculator:
         cripto_perdida_neta: float = 0,
         jurisdiction: str = "Estatal",
         year: int = 2024,
+        # Phase 2: Prior year losses (Art. 49)
+        perdidas_gp_anteriores: Optional[Dict[int, float]] = None,
+        perdidas_rcm_anteriores: Optional[Dict[int, float]] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -107,6 +110,21 @@ class SavingsIncomeCalculator:
             ganancias_patrimoniales_netas += compensacion_gp_en_rcm  # becomes less negative or 0
             rendimiento_neto_rcm -= compensacion_gp_en_rcm
 
+        # --- Phase 2: Prior year loss compensation (Art. 49) ---
+        loss_result = None
+        if perdidas_gp_anteriores or perdidas_rcm_anteriores:
+            from app.utils.calculators.loss_compensation import LossCompensationCalculator
+            loss_calc = LossCompensationCalculator()
+            loss_result = loss_calc.compensar_ahorro(
+                rcm_ejercicio=rendimiento_neto_rcm,
+                gp_ahorro_ejercicio=ganancias_patrimoniales_netas,
+                perdidas_gp_anteriores=perdidas_gp_anteriores or {},
+                perdidas_rcm_anteriores=perdidas_rcm_anteriores or {},
+                year=year,
+            )
+            rendimiento_neto_rcm = loss_result["rcm_final"]
+            ganancias_patrimoniales_netas = loss_result["gp_ahorro_final"]
+
         # Floor both at 0 for base del ahorro (remaining losses carry forward to next year)
         rendimiento_neto = max(0, rendimiento_neto_rcm)
         ganancias_patrimoniales_netas = max(0, ganancias_patrimoniales_netas)
@@ -150,6 +168,7 @@ class SavingsIncomeCalculator:
                 "gp_en_rcm": round(compensacion_gp_en_rcm, 2),
             },
             "breakdown": {"estatal": bd_est, "autonomica": bd_aut},
+            "loss_compensation": loss_result,
         }
 
     async def _get_ahorro_scale(self, jurisdiction: str, year: int) -> List[Dict]:

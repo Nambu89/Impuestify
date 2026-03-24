@@ -27,6 +27,7 @@ from app.utils.calculators.savings_income import SavingsIncomeCalculator
 from app.utils.calculators.rental_income import RentalIncomeCalculator
 from app.utils.calculators.mpyf import MPYFCalculator
 from app.utils.calculators.activity_income import ActivityIncomeCalculator
+from app.utils.calculators.imputed_income import ImputedIncomeCalculator
 from app.utils.regime_classifier import classify_regime
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,7 @@ class IRPFSimulator:
         self.savings = SavingsIncomeCalculator(self._repo, db)
         self.rental = RentalIncomeCalculator(self._repo)
         self.mpyf = MPYFCalculator(self._repo)
+        self.imputed = ImputedIncomeCalculator()
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -507,6 +509,7 @@ class IRPFSimulator:
         # --- Phase 2: Rentas imputadas inmuebles (Art. 85 LIRPF) ---
         valor_catastral_segundas_viviendas: float = 0,
         valor_catastral_revisado_post1994: bool = True,
+        inmuebles_imputacion: Optional[List[Dict]] = None,
         # --- Foral-specific: EPSV and foral donativos ---
         aportaciones_epsv: float = 0,
         donativos_forales: float = 0,
@@ -569,6 +572,10 @@ class IRPFSimulator:
         # --- Multi-pagador / retribuciones especie ---
         retribuciones_especie: float = 0,
         ingresos_cuenta: float = 0,
+        # --- Phase 2: Prior year losses (Art. 48-49 LIRPF) ---
+        perdidas_gp_ahorro_anteriores: Optional[Dict[int, float]] = None,
+        perdidas_rcm_anteriores: Optional[Dict[int, float]] = None,
+        perdidas_gp_general_anteriores: Optional[Dict[int, float]] = None,
     ) -> Dict[str, Any]:
         """
         Run a complete IRPF simulation.
@@ -821,11 +828,14 @@ class IRPFSimulator:
         # Owners of non-rented urban properties (other than primary residence) must
         # include 1.1% (if valor catastral revised post-1994) or 2% of valor catastral
         # as income in their general base BEFORE applying the general scale.
-        renta_imputada_inmuebles = 0.0
-        if valor_catastral_segundas_viviendas > 0:
-            rate = 0.011 if valor_catastral_revisado_post1994 else 0.02
-            renta_imputada_inmuebles = round(valor_catastral_segundas_viviendas * rate, 2)
-            bi_general += renta_imputada_inmuebles
+        imputed_result = self.imputed.calculate(
+            inmuebles=inmuebles_imputacion,
+            valor_catastral_total=valor_catastral_segundas_viviendas,
+            valor_catastral_revisado=valor_catastral_revisado_post1994,
+            year=year,
+        )
+        renta_imputada_inmuebles = imputed_result["renta_imputada_total"]
+        bi_general += renta_imputada_inmuebles
 
         # --- 3d. Tributación conjunta (Art. 84 LIRPF) ---
         # If filing jointly, reduce bi_general by:
@@ -863,9 +873,24 @@ class IRPFSimulator:
                 cripto_perdida_neta=cripto_perdida_neta,
                 jurisdiction=jurisdiction,
                 year=year,
+                perdidas_gp_anteriores=perdidas_gp_ahorro_anteriores,
+                perdidas_rcm_anteriores=perdidas_rcm_anteriores,
             )
 
         base_ahorro = ahorro_result["base_ahorro"] if ahorro_result else 0.0
+
+        # --- 4b. General base loss compensation (Art. 48 LIRPF) ---
+        loss_general_result = None
+        if perdidas_gp_general_anteriores:
+            from app.utils.calculators.loss_compensation import LossCompensationCalculator
+            loss_calc = LossCompensationCalculator()
+            loss_general_result = loss_calc.compensar_general(
+                rendimientos_netos=bi_general,
+                gp_general_ejercicio=0.0,  # GP general already netted into bi_general
+                perdidas_gp_general_anteriores=perdidas_gp_general_anteriores,
+                year=year,
+            )
+            bi_general = loss_general_result["base_general_compensada"]
 
         # --- 5. Apply general progressive scale ---
         general_result = await self._irpf_calc.calculate_irpf(
@@ -1083,6 +1108,8 @@ class IRPFSimulator:
             "reduccion_tributacion_conjunta": round(reduccion_tributacion_conjunta, 2),
             "deduccion_alquiler_pre2015": round(deduccion_alquiler_pre2015, 2),
             "renta_imputada_inmuebles": round(renta_imputada_inmuebles, 2),
+            "detalle_inmuebles_imputados": imputed_result.get("detalle_inmuebles", []),
+            "num_inmuebles_imputados": imputed_result.get("num_inmuebles_imputados", 0),
             # Fase 4: juegos privados y loterías públicas
             "ganancias_juegos_netas": round(ganancias_juegos_netas, 2),
             "gravamen_especial_loterias": round(gravamen_especial_loterias, 2),
@@ -1092,4 +1119,6 @@ class IRPFSimulator:
             "total_retenciones": round(total_retenciones, 2),
             "cuota_diferencial": cuota_diferencial,
             "tipo_resultado": tipo_resultado,
+            # Loss compensation (Art. 48-49 LIRPF)
+            "loss_compensation_general": loss_general_result,
         }
