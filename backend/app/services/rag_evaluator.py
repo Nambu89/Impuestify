@@ -37,14 +37,15 @@ def _tokenize(text: str) -> set[str]:
 
 
 def _keyword_overlap(text_a: str, text_b: str) -> float:
-    """Compute Jaccard-like keyword overlap between two texts."""
+    """Compute recall-oriented keyword overlap: what % of text_a tokens appear in text_b."""
     tokens_a = _tokenize(text_a)
     tokens_b = _tokenize(text_b)
     if not tokens_a or not tokens_b:
         return 0.0
-    intersection = tokens_a & tokens_b
-    union = tokens_a | tokens_b
-    return len(intersection) / len(union) if union else 0.0
+    # Use recall (not Jaccard) — what fraction of query terms appear in source
+    # This is fairer when text_b >> text_a (long source, short question)
+    found = tokens_a & tokens_b
+    return len(found) / len(tokens_a)
 
 
 def _key_term_recall(expected: str, response: str) -> float:
@@ -174,72 +175,111 @@ class RAGEvaluator:
         """
         Faithfulness: does the response cite sources and stay grounded?
 
-        Heuristic:
-        - +0.4 if sources are present
-        - +0.3 if answer mentions legal references (articulo, ley, modelo, real decreto)
-        - +0.3 if answer does not contain hedging phrases that suggest hallucination
+        Scoring (max 1.0):
+        - Sources present & quantity: 0.30 (more sources = more grounded)
+        - Legal references in answer: 0.30 (articles, laws, casillas, models)
+        - Concrete data (cifras, importes): 0.15
+        - No hallucination hedging: 0.25
         """
-        score = 0.0
-
-        # Sources present
-        if sources and len(sources) > 0:
-            score += 0.4
-
-        # Legal reference mentions
         import re
-        legal_patterns = [
-            r"artículo\s+\d+", r"art\.\s*\d+", r"ley\s+\d+",
-            r"real\s+decreto", r"modelo\s+\d{3}", r"rdl\s+\d+",
-            r"lirpf", r"aeat", r"boe",
-        ]
-        legal_count = sum(
-            1 for p in legal_patterns if re.search(p, answer.lower())
-        )
-        score += min(0.3, legal_count * 0.1)
+        score = 0.0
+        answer_lower = answer.lower()
 
-        # Hallucination hedging penalty
+        # 1. Sources present & quantity (0.30)
+        num_sources = len(sources) if sources else 0
+        if num_sources >= 3:
+            score += 0.30
+        elif num_sources >= 1:
+            score += 0.15 + (num_sources * 0.05)
+
+        # 2. Legal references (0.30) — more diverse refs = more grounded
+        legal_patterns = [
+            r"art[íi]culo?\s+\d+", r"art\.\s*\d+", r"ley\s+\d+",
+            r"real\s+decreto", r"modelo\s+\d{2,3}", r"rdl\s+\d+",
+            r"lirpf", r"aeat", r"boe", r"norma\s+foral", r"casilla",
+            r"decreto\s+legislativo", r"orden\s+", r"disposici[oó]n",
+        ]
+        legal_count = sum(1 for p in legal_patterns if re.search(p, answer_lower))
+        score += min(0.30, legal_count * 0.06)
+
+        # 3. Concrete fiscal data (0.15) — shows factual response
+        has_amounts = bool(re.search(r"\d+[\.,]?\d*\s*(?:euros?|EUR|eur)", answer, re.IGNORECASE))
+        has_percentages = bool(re.search(r"\d+[\.,]?\d*\s*%", answer))
+        has_years = bool(re.search(r"20[12]\d", answer))
+        concrete = (0.05 if has_amounts else 0) + (0.05 if has_percentages else 0) + (0.05 if has_years else 0)
+        score += concrete
+
+        # 4. No hallucination hedging (0.25)
         hedging = [
             "no estoy seguro", "podría ser", "no tengo información",
-            "no puedo confirmar", "desconozco",
+            "no puedo confirmar", "desconozco", "no tengo acceso",
         ]
-        hedge_count = sum(1 for h in hedging if h in answer.lower())
-        score += max(0.0, 0.3 - hedge_count * 0.15)
+        hedge_count = sum(1 for h in hedging if h in answer_lower)
+        score += max(0.0, 0.25 - hedge_count * 0.12)
 
         return min(1.0, score)
 
     def _evaluate_response_quality(self, answer: str) -> float:
         """
-        Response quality: structure, length, and format.
+        Response quality: completeness, specificity, structure, and correctness signals.
 
-        - Adequate length (>100 chars, <5000 chars)
-        - Contains numbers/amounts (fiscal specificity)
-        - Structured (paragraphs or bullet points)
+        Scoring (max 1.0):
+        - Length adequacy: 0.20 (100-5000 chars ideal)
+        - Fiscal specificity: 0.25 (numbers, EUR, %, articles, casillas)
+        - Structure: 0.20 (paragraphs, bullets, headers)
+        - Legal references: 0.15 (Art., Ley, LIRPF, NF, casilla)
+        - No errors/hedging: 0.20
         """
         if not answer:
             return 0.0
 
+        import re
         score = 0.0
         length = len(answer)
+        answer_lower = answer.lower()
 
-        # Length scoring
-        if 100 < length < 5000:
-            score += 0.3
-        elif length >= 50:
+        # 1. Length adequacy (0.20)
+        if 200 < length < 5000:
+            score += 0.20
+        elif 100 < length <= 200:
             score += 0.15
+        elif length >= 50:
+            score += 0.08
 
-        # Fiscal specificity (numbers, percentages, amounts)
-        import re
-        numbers = re.findall(r"\d+[\.,]?\d*\s*(?:euros?|EUR|%)", answer)
-        if numbers:
-            score += min(0.3, len(numbers) * 0.05)
+        # 2. Fiscal specificity (0.25) — numbers, amounts, percentages
+        numbers = re.findall(r"\d+[\.,]?\d*\s*(?:euros?|EUR|%|eur)", answer, re.IGNORECASE)
+        raw_numbers = re.findall(r"\d{2,}", answer)  # Any number with 2+ digits
+        specificity = min(0.25, (len(numbers) * 0.04 + len(raw_numbers) * 0.02))
+        score += specificity
 
-        # Structure (line breaks, bullets, bold)
-        if "\n" in answer or "- " in answer or "**" in answer:
-            score += 0.2
+        # 3. Structure (0.20) — paragraphs, bullets, bold, headers
+        has_paragraphs = answer.count("\n\n") >= 1
+        has_bullets = "- " in answer or "* " in answer or re.search(r"^\d+\.", answer, re.MULTILINE)
+        has_bold = "**" in answer
+        structure_score = 0.0
+        if has_paragraphs: structure_score += 0.08
+        if has_bullets: structure_score += 0.07
+        if has_bold: structure_score += 0.05
+        score += min(0.20, structure_score)
 
-        # No error message
-        if "error" not in answer.lower()[:50]:
-            score += 0.2
+        # 4. Legal references (0.15) — articles, laws, casillas
+        legal_patterns = [
+            r"art[íi]culo?\s+\d+", r"ley\s+\d+", r"lirpf", r"norma\s+foral",
+            r"casilla\s+\d+", r"real\s+decreto", r"decreto\s+legislativo",
+            r"modelo\s+\d{2,3}", r"art\.\s*\d+",
+        ]
+        legal_matches = sum(1 for p in legal_patterns if re.search(p, answer_lower))
+        score += min(0.15, legal_matches * 0.04)
+
+        # 5. No errors/hedging (0.20)
+        error_signals = ["error", "no puedo", "no tengo información", "desconozco"]
+        hedging_signals = ["no estoy seguro", "podría ser", "no puedo confirmar"]
+        has_error = any(e in answer_lower[:100] for e in error_signals)
+        has_hedging = any(h in answer_lower for h in hedging_signals)
+        if not has_error and not has_hedging:
+            score += 0.20
+        elif not has_error:
+            score += 0.10
 
         return min(1.0, score)
 
