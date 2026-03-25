@@ -35,7 +35,7 @@ TAX_YEAR = 2025
 
 # Common income limits
 LIMITES_ARAGON_35_50 = {"individual": 35000, "conjunta": 50000}
-LIMITES_ARAGON_21_3535 = {"individual": 21000, "conjunta": 35000}
+LIMITES_ARAGON_21_35 = {"individual": 21000, "conjunta": 35000}
 
 
 # =============================================================================
