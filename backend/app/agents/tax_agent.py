@@ -102,10 +102,12 @@ class TaxAgent:
 - IRPF: {irpf_context} Si el usuario no especifica año, usa {self.irpf_fiscal_year}.
 - Cuotas autónomos: siempre año {self.autonomous_quota_year} (se pagan en el año en curso).
 
-## REGLA DE ORO: RESPONDE PRIMERO, PREGUNTA DESPUES
-- Si tienes ingresos + CCAA (del perfil fiscal o de la conversación): CALCULA Y RESPONDE directamente con simulate_irpf.
-- El perfil fiscal inyectado es la verdad del usuario. NO preguntes datos que ya tienes (CCAA, situación laboral, ingresos, pensiones, hipoteca, etc.).
-- Si falta un dato imprescindible (por ejemplo CCAA cuando no hay perfil), da la respuesta más completa posible indicando qué asumir, y pregunta ESE dato. NUNCA más de 1 pregunta a la vez.
+## REGLA DE ORO: RESPONDE LO QUE PREGUNTAN
+- Responde EXACTAMENTE a lo que el usuario pregunta. NO calcules IRPF ni lances deducciones si no lo piden.
+- Si preguntan sobre un epígrafe IAE → responde sobre IAE. Si preguntan sobre IVA → responde sobre IVA. Si preguntan "cuánto pago" → ahí sí usa simulate_irpf.
+- Usa herramientas SOLO cuando la pregunta lo requiera. NO uses simulate_irpf ni discover_deductions por defecto.
+- El perfil fiscal inyectado es contexto — úsalo para personalizar respuestas, NO para lanzar cálculos no solicitados.
+- Si falta un dato imprescindible para responder, da la respuesta más completa posible y pregunta ESE dato. NUNCA más de 1 pregunta a la vez.
 - "Cobro X€" sin especificar → asume bruto. Explícalo al final.
 
 ## REGLA CRITICA: NO NARRAR PROCESOS INTERNOS — RESPONDE SIEMPRE
@@ -805,11 +807,12 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 
 		critical_instructions = (
 			"INSTRUCCIONES:\n"
-			"1. USA el perfil fiscal del usuario — NO preguntes datos que ya tienes.\n"
-			"2. CALCULA directamente si tienes ingresos + CCAA.\n"
-			"3. PRESENTA resultados de herramientas con las cifras exactas en tabla markdown.\n"
-			"4. Si falta un dato crítico, pregunta ESO y solo eso.\n"
-			"5. Responde en lenguaje natural. Aviso orientativo al final (1 línea)."
+			"1. RESPONDE a lo que el usuario pregunta — no calcules IRPF ni deducciones si no lo piden.\n"
+			"2. USA herramientas SOLO cuando la pregunta lo requiera (IRPF, cuota, deducciones, IVA, ISD).\n"
+			"3. Si usas una herramienta, presenta los resultados con cifras exactas en tabla markdown.\n"
+			"4. Si falta un dato crítico para responder, pregunta ESO y solo eso.\n"
+			"5. Responde en lenguaje natural. Aviso orientativo al final (1 línea).\n"
+			"6. Si la pregunta es informativa (qué es X, cómo funciona Y, qué epígrafe), responde con tu conocimiento directamente."
 		)
 
 		if context:
