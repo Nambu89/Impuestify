@@ -132,6 +132,14 @@ class IRPFEstimateRequest(BaseModel):
     num_pagadores: int = 1
     # Renta imputada multi-inmueble (Art. 85 LIRPF)
     inmuebles_imputacion: Optional[List[dict]] = None
+    # Session 20: XSD gaps (Art. 55, 64, 80, 60.2, 60.3 LIRPF)
+    pension_compensatoria_exconyuge: float = 0
+    anualidades_alimentos_hijos: float = 0
+    impuestos_pagados_extranjero: float = 0
+    num_descendientes_discapacidad_33: int = 0
+    num_descendientes_discapacidad_65: int = 0
+    num_ascendientes_discapacidad_33: int = 0
+    num_ascendientes_discapacidad_65: int = 0
     # Compensacion perdidas anos anteriores (Art. 48-49 LIRPF)
     perdidas_gp_ahorro_anteriores: Optional[Dict[int, float]] = None
     perdidas_rcm_anteriores: Optional[Dict[int, float]] = None
@@ -493,6 +501,14 @@ async def estimate_irpf(
             retenciones_trabajo=retenciones_trabajo,
             # Fase 5: deducciones autonómicas pre-computed
             deducciones_autonomicas_total=total_ccaa_deductions,
+            # Session 20: XSD gaps (Art. 55, 64, 80, 60.2, 60.3 LIRPF)
+            pension_compensatoria_exconyuge=body.pension_compensatoria_exconyuge,
+            anualidades_alimentos_hijos=body.anualidades_alimentos_hijos,
+            impuestos_pagados_extranjero=body.impuestos_pagados_extranjero,
+            num_descendientes_discapacidad_33=body.num_descendientes_discapacidad_33,
+            num_descendientes_discapacidad_65=body.num_descendientes_discapacidad_65,
+            num_ascendientes_discapacidad_33=body.num_ascendientes_discapacidad_33,
+            num_ascendientes_discapacidad_65=body.num_ascendientes_discapacidad_65,
         )
 
         # Try requested year, fallback to year-1
