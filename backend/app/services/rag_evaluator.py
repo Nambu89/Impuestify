@@ -115,6 +115,7 @@ class RAGEvaluator:
                     "id": chunk.get("id", f"chunk_{i}"),
                     "source": source,
                     "text_preview": text[:200],
+                    "text_full": text[:2000],  # Full text for context relevance scoring
                 })
 
             rag_context = "\n\n".join(rag_parts) if rag_parts else ""
@@ -274,16 +275,20 @@ class RAGEvaluator:
         # 1. Faithfulness (sources + grounding)
         faithfulness = self._evaluate_faithfulness(answer, sources)
 
-        # 2. Context relevance (keyword overlap between question and sources)
-        source_texts = " ".join(
-            s.get("text_preview", s.get("text", ""))
+        # 2. Context relevance (keyword overlap on full text + embedding similarity)
+        source_texts_full = " ".join(
+            s.get("text_full", s.get("text_preview", s.get("text", "")))
             for s in sources
             if isinstance(s, dict)
         )
-        if source_texts:
-            context_relevance = _keyword_overlap(question, source_texts)
-            # Boost if sources seem topically relevant
-            context_relevance = min(1.0, context_relevance * 3)
+        if source_texts_full:
+            keyword_relevance = _keyword_overlap(question, source_texts_full)
+            # Also check overlap between expected answer and sources (are sources useful?)
+            answer_source_overlap = _keyword_overlap(expected, source_texts_full)
+            # Embedding similarity between question and source texts
+            embedding_relevance = await self._embedding_similarity(question, source_texts_full[:1000])
+            # Weighted: 30% question-source keywords, 30% answer-source keywords, 40% embedding
+            context_relevance = min(1.0, (keyword_relevance * 0.3 + answer_source_overlap * 0.3 + embedding_relevance * 0.4))
         else:
             context_relevance = 0.0
 
