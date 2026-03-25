@@ -185,6 +185,10 @@ class IRPFEstimateResponse(BaseModel):
     reduccion_tributacion_conjunta: float = 0
     deduccion_alquiler_pre2015: float = 0
     renta_imputada_inmuebles: float = 0
+    # Session 20: XSD gaps (Art. 55, 64, 80 LIRPF)
+    reduccion_pension_compensatoria: float = 0
+    cuota_anualidades_alimentos: float = 0
+    deduccion_doble_imposicion: float = 0
     # Fase 4
     ganancias_juegos_netas: float = 0
     gravamen_especial_loterias: float = 0
@@ -535,6 +539,9 @@ async def estimate_irpf(
             reduccion_tributacion_conjunta=round(result.get("reduccion_tributacion_conjunta", 0), 2),
             deduccion_alquiler_pre2015=round(result.get("deduccion_alquiler_pre2015", 0), 2),
             renta_imputada_inmuebles=round(result.get("renta_imputada_inmuebles", 0), 2),
+            reduccion_pension_compensatoria=round(result.get("reduccion_pension_compensatoria", 0), 2),
+            cuota_anualidades_alimentos=round(result.get("cuota_anualidades_alimentos", 0), 2),
+            deduccion_doble_imposicion=round(result.get("deduccion_doble_imposicion", 0), 2),
             ganancias_juegos_netas=round(result.get("ganancias_juegos_netas", 0), 2),
             gravamen_especial_loterias=round(result.get("gravamen_especial_loterias", 0), 2),
             deducciones_autonomicas=ccaa_deductions_list,
