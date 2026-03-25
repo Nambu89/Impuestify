@@ -143,9 +143,13 @@ function parseContent(rawContent: string): ContentBlock[] {
     // Strip Spanish tool call phrases
     content = content.replace(/\(?\s*(?:LLAMADA|llamada)\s+A\s+(?:HERRAMIENTA|herramienta)\s+\w+\s*\)?/gi, '')
     content = content.replace(/Ahora\s+(?:hago|realizo|ejecuto)\s+el\s+c[aá]lculo\s+r[aá]pido\.?/gi, '')
-    // Strip internal reasoning leaked from LLM (workspace agent thinking)
-    content = content.replace(/(?:Llamo|Voy a (?:usar|llamar|ejecutar|utilizar|consultar)|Utilizo|Uso|Ejecuto|Consulto)\s+(?:la |el |a la |al )?(?:herramienta|tool|función|cálculo|simulador|motor)\b[^.!?\n]*[.!?]?\s*/gi, '')
-    content = content.replace(/(?:Calcularé|Primero voy a|Ahora (?:hago|realizo|ejecuto|calculo|analizo))\b[^.!?\n]*[.!?]?\s*/gi, '')
+    // Strip internal reasoning leaked from LLM (agent thinking, search narration)
+    content = content.replace(/(?:Llamo|Voy a (?:usar|llamar|ejecutar|utilizar|consultar|buscar|volver)|Utilizo|Uso|Ejecuto|Consulto)\s+(?:la |el |a la |al |en )?(?:herramienta|tool|funci[oó]n|c[aá]lculo|simulador|motor|cat[aá]logo|base de datos|b[uú]squeda)\b[^.!?\n]*[.!?]?\s*/gi, '')
+    content = content.replace(/(?:Calcular[eé]|Primero voy a|Ahora (?:hago|realizo|ejecuto|calculo|analizo|busco)|Realizando\s+(?:nueva\s+)?b[uú]squeda|Buscando\s+(?:en|con|informaci))\b[^.!?\n]*[.!?]?\s*/gi, '')
+    // Strip search narration patterns (agent describing its search process)
+    content = content.replace(/(?:Voy a (?:volver a |intentar |re)?\s*buscar)\b[^.!?\n]*[.!?]?\s*/gi, '')
+    content = content.replace(/(?:(?:No |no )?(?:he encontrado|encuentro|aparece)\s+(?:el |la |los |las |ningún|ninguna|resultados))\b[^.!?\n]*[.!?]?\s*/gi, '')
+    content = content.replace(/(?:Déjame|Permíteme|Voy a)\s+(?:verificar|comprobar|revisar|consultar|buscar)\b[^.!?\n]*[.!?]?\s*/gi, '')
     // Strip broken source lines: "(pág. 0)" with no title
     content = content.replace(/^,?\s*\(p[aá]g\.\s*\d+\)\s*$/gm, '')
     content = content.replace(/^Fuentes:\s*\n(?:\s*,?\s*\(p[aá]g\.\s*\d+\)\s*\n?)+/gm, '')
