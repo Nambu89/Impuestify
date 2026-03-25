@@ -37,6 +37,8 @@
     color: var(--color-primary);
     border-radius: var(--radius-md);
     transition: background var(--transition-fast);
+    min-width: 44px;
+    min-height: 44px;
 }
 
 .menu-toggle:hover {

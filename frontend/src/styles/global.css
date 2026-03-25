@@ -172,6 +172,7 @@ a:hover {
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-base);
+  min-height: 44px; /* Apple HIG touch target minimum */
 }
 
 .btn-primary {

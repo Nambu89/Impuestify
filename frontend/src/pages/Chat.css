@@ -372,12 +372,15 @@
     white-space: pre;
 }
 
-/* Tables (GFM) */
+/* Tables (GFM) — scrollable on mobile */
 .message-text table {
     width: 100%;
     border-collapse: collapse;
     margin: 0.6em 0;
     font-size: 0.9em;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .message-text thead th {
@@ -915,9 +918,23 @@
     }
 }
 
-/* ========== VERY SMALL SCREENS (400px-) ========== */
-@media (max-width: 400px) {
+/* ========== VERY SMALL SCREENS (430px-) ========== */
+@media (max-width: 430px) {
     .chat-empty-state__suggestions {
         grid-template-columns: 1fr;
+    }
+
+    /* Reduce chat container padding on very small screens */
+    .chat-container {
+        padding: var(--spacing-4) var(--spacing-3);
+    }
+
+    /* Ensure user message bubbles don't overflow */
+    .message.user {
+        max-width: 95%;
+    }
+
+    .message.assistant {
+        max-width: 98%;
     }
 }
