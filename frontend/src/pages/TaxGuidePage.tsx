@@ -976,6 +976,46 @@ function StepFamilia({ data, update }: StepProps) {
                 </select>
             </div>
 
+            {data.num_descendientes > 0 && (
+                <>
+                    <h3 className="tg-step__subtitle">Discapacidad de los hijos</h3>
+                    <NumberInput
+                        label="Hijos con discapacidad 33%-64%"
+                        value={data.num_descendientes_discapacidad_33}
+                        onChange={v => update({ num_descendientes_discapacidad_33: Math.min(v, data.num_descendientes) })}
+                        min={0} step={1}
+                        help="Incrementa el mínimo por descendientes en 3.000 EUR por hijo (Art. 60.2 LIRPF)"
+                    />
+                    <NumberInput
+                        label="Hijos con discapacidad 65% o más"
+                        value={data.num_descendientes_discapacidad_65}
+                        onChange={v => update({ num_descendientes_discapacidad_65: Math.min(v, data.num_descendientes) })}
+                        min={0} step={1}
+                        help="Incrementa el mínimo por descendientes en 9.000 EUR por hijo (Art. 60.2 LIRPF)"
+                    />
+                </>
+            )}
+
+            {(data.num_ascendientes_65 > 0 || data.num_ascendientes_75 > 0) && (
+                <>
+                    <h3 className="tg-step__subtitle">Discapacidad de los ascendientes</h3>
+                    <NumberInput
+                        label="Ascendientes con discapacidad 33%-64%"
+                        value={data.num_ascendientes_discapacidad_33}
+                        onChange={v => update({ num_ascendientes_discapacidad_33: v })}
+                        min={0} step={1}
+                        help="Incrementa el mínimo por ascendientes en 3.000 EUR por persona (Art. 60.3 LIRPF)"
+                    />
+                    <NumberInput
+                        label="Ascendientes con discapacidad 65% o más"
+                        value={data.num_ascendientes_discapacidad_65}
+                        onChange={v => update({ num_ascendientes_discapacidad_65: v })}
+                        min={0} step={1}
+                        help="Incrementa el mínimo por ascendientes en 9.000 EUR por persona (Art. 60.3 LIRPF)"
+                    />
+                </>
+            )}
+
             <CheckboxInput label="Madre trabajadora dada de alta en la SS" checked={data.madre_trabajadora_ss} onChange={v => update({ madre_trabajadora_ss: v })} help="Deducción por maternidad: 1.200 EUR/hijo menor de 3 años" />
 
             {data.madre_trabajadora_ss && (
@@ -1032,6 +1072,31 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
             {data.donativos_ley_49_2002 > 0 && (
                 <CheckboxInput label="Donante recurrente (3+ años misma entidad)" checked={data.donativo_recurrente} onChange={v => update({ donativo_recurrente: v })} help="Sube al 45% el exceso sobre 250 EUR" />
             )}
+
+            <h3 className="tg-step__subtitle">Obligaciones familiares</h3>
+            <NumberInput
+                label="Pensión compensatoria al excónyuge (anual)"
+                value={data.pension_compensatoria_exconyuge}
+                onChange={v => update({ pension_compensatoria_exconyuge: v })}
+                suffix="EUR"
+                help="Reduce la base imponible general. Solo pensiones fijadas por resolución judicial (Art. 55 LIRPF)"
+            />
+            <NumberInput
+                label="Anualidades por alimentos a los hijos (anual)"
+                value={data.anualidades_alimentos_hijos}
+                onChange={v => update({ anualidades_alimentos_hijos: v })}
+                suffix="EUR"
+                help="Reciben tributación separada y favorable. Solo si fijadas por decisión judicial (Art. 64 LIRPF)"
+            />
+
+            <h3 className="tg-step__subtitle">Ingresos del extranjero</h3>
+            <NumberInput
+                label="Impuestos pagados en el extranjero (anual)"
+                value={data.impuestos_pagados_extranjero}
+                onChange={v => update({ impuestos_pagados_extranjero: v })}
+                suffix="EUR"
+                help="Para deducción por doble imposición internacional. Impuestos análogos al IRPF pagados fuera de España (Art. 80 LIRPF)"
+            />
 
             {/* Task 1: DynamicFiscalForm — CCAA-specific deduction fields */}
             {data.comunidad_autonoma && (
@@ -1159,17 +1224,18 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                     <BreakdownRow label="Tipo medio efectivo" value={result.tipo_medio_efectivo} suffix="%" />
                 </div>
 
-                {(result.reduccion_planes_pensiones > 0 || result.reduccion_tributacion_conjunta > 0) && (
+                {(result.reduccion_planes_pensiones > 0 || result.reduccion_tributacion_conjunta > 0 || (result.reduccion_pension_compensatoria ?? 0) > 0) && (
                     <>
                         <h3 className="tg-breakdown__title">Reducciones aplicadas</h3>
                         <div className="tg-breakdown__grid">
                             {result.reduccion_planes_pensiones > 0 && <BreakdownRow label="Planes de pensiones" value={result.reduccion_planes_pensiones} prefix="-" />}
                             {result.reduccion_tributacion_conjunta > 0 && <BreakdownRow label="Tributación conjunta" value={result.reduccion_tributacion_conjunta} prefix="-" />}
+                            {(result.reduccion_pension_compensatoria ?? 0) > 0 && <BreakdownRow label="Pensión compensatoria (Art. 55)" value={result.reduccion_pension_compensatoria!} prefix="-" />}
                         </div>
                     </>
                 )}
 
-                {(result.total_deducciones_cuota > 0 || result.deduccion_alquiler_pre2015 > 0) && (
+                {(result.total_deducciones_cuota > 0 || result.deduccion_alquiler_pre2015 > 0 || (result.cuota_anualidades_alimentos ?? 0) > 0 || (result.deduccion_doble_imposicion ?? 0) > 0) && (
                     <>
                         <h3 className="tg-breakdown__title">Deducciones en cuota</h3>
                         <div className="tg-breakdown__grid">
@@ -1178,6 +1244,8 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                             {result.deduccion_maternidad > 0 && <BreakdownRow label="Maternidad" value={result.deduccion_maternidad} prefix="-" />}
                             {result.deduccion_familia_numerosa > 0 && <BreakdownRow label="Familia numerosa" value={result.deduccion_familia_numerosa} prefix="-" />}
                             {result.deduccion_donativos > 0 && <BreakdownRow label="Donativos" value={result.deduccion_donativos} prefix="-" />}
+                            {(result.cuota_anualidades_alimentos ?? 0) > 0 && <BreakdownRow label="Anualidades por alimentos (Art. 64)" value={result.cuota_anualidades_alimentos!} prefix="-" />}
+                            {(result.deduccion_doble_imposicion ?? 0) > 0 && <BreakdownRow label="Doble imposición internacional (Art. 80)" value={result.deduccion_doble_imposicion!} prefix="-" />}
                             {result.total_deducciones_autonomicas > 0 && <BreakdownRow label="Deducciones autonómicas" value={result.total_deducciones_autonomicas} prefix="-" />}
                         </div>
                         {/* Detail CCAA deductions if any */}
@@ -1651,6 +1719,15 @@ export default function TaxGuidePage() {
             vehiculo_electrico_importe: data.vehiculo_electrico_importe || dynamicFormValues.vehiculo_electrico_importe || 0,
             obras_mejora_importe: data.obras_mejora_importe || dynamicFormValues.obras_mejora_importe || 0,
             cotizaciones_empleada_hogar: data.cotizaciones_empleada_hogar || dynamicFormValues.cotizaciones_empleada_hogar || 0,
+            // Obligaciones familiares y doble imposición
+            pension_compensatoria_exconyuge: data.pension_compensatoria_exconyuge,
+            anualidades_alimentos_hijos: data.anualidades_alimentos_hijos,
+            impuestos_pagados_extranjero: data.impuestos_pagados_extranjero,
+            // Discapacidad de descendientes y ascendientes
+            num_descendientes_discapacidad_33: data.num_descendientes_discapacidad_33,
+            num_descendientes_discapacidad_65: data.num_descendientes_discapacidad_65,
+            num_ascendientes_discapacidad_33: data.num_ascendientes_discapacidad_33,
+            num_ascendientes_discapacidad_65: data.num_ascendientes_discapacidad_65,
         })
     }, [data, estimate, dynamicFormValues, discoveryAnswers])
 

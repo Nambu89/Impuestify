@@ -93,6 +93,16 @@ export interface TaxGuideData {
     intereses_hipoteca: number
     donativos_ley_49_2002: number
     donativo_recurrente: boolean
+    // Obligaciones familiares (Art. 55 y 64 LIRPF)
+    pension_compensatoria_exconyuge: number
+    anualidades_alimentos_hijos: number
+    // Doble imposición internacional (Art. 80 LIRPF)
+    impuestos_pagados_extranjero: number
+    // Discapacidad de descendientes y ascendientes (Art. 60.2 y 60.3 LIRPF)
+    num_descendientes_discapacidad_33: number
+    num_descendientes_discapacidad_65: number
+    num_ascendientes_discapacidad_33: number
+    num_ascendientes_discapacidad_65: number
     // Wizard mode
     wizard_mode: 'quick' | 'full'
     // Multi-pagador
@@ -184,6 +194,16 @@ export const EMPTY_TAX_DATA: TaxGuideData = {
     intereses_hipoteca: 0,
     donativos_ley_49_2002: 0,
     donativo_recurrente: false,
+    // Obligaciones familiares
+    pension_compensatoria_exconyuge: 0,
+    anualidades_alimentos_hijos: 0,
+    // Doble imposición internacional
+    impuestos_pagados_extranjero: 0,
+    // Discapacidad de descendientes y ascendientes
+    num_descendientes_discapacidad_33: 0,
+    num_descendientes_discapacidad_65: 0,
+    num_ascendientes_discapacidad_33: 0,
+    num_ascendientes_discapacidad_65: 0,
     wizard_mode: 'full',
     // Multi-pagador
     num_pagadores: 1,

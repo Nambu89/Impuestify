@@ -7,9 +7,112 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
-## [2026-03-20] PM Coordinator — DONE — Sesion 17: RuFlo + Security + Features + PDF Export
+## [2026-03-25] PM Coordinator — 🟢 DONE — Sesion 21: 9 CCAA seeds + frontend params + plan GP
+
+### Tareas completadas (5)
+1. **Seeds CCAA Fase 2**: CLM 25 + Asturias 26 + Cantabria 21 = 72 deducciones nuevas
+2. **Seeds CCAA Fase 3a**: Baleares 24 + La Rioja 24 + Extremadura 19 = 67 deducciones nuevas
+3. **Seeds CCAA Fase 3b**: Aragon 19 + CyL 17 + Cataluna 13 = 49 deducciones nuevas
+4. **Frontend params simulador**: 7 campos XSD (pension compensatoria, alimentos hijos, doble imposicion, discapacidad desc/asc) conectados al wizard + estimador + resultados. Build OK
+5. **Plan GP transmision inmuebles**: Plan completo en plans/plan_gp_transmision_inmuebles.md (Art. 38 reinversion + DT 9a abatimiento + casillas 0355-0370)
+
+### Archivos creados (9 seeds)
+- `backend/scripts/seed_deductions_clm_2025.py` (25 deducciones)
+- `backend/scripts/seed_deductions_asturias_2025.py` (26 deducciones)
+- `backend/scripts/seed_deductions_cantabria_2025.py` (21 deducciones)
+- `backend/scripts/seed_deductions_baleares_2025.py` (24 deducciones)
+- `backend/scripts/seed_deductions_larioja_2025.py` (24 deducciones)
+- `backend/scripts/seed_deductions_extremadura_2025.py` (19 deducciones)
+- `backend/scripts/seed_deductions_aragon_2025.py` (19 deducciones)
+- `backend/scripts/seed_deductions_cyl_2025.py` (17 deducciones)
+- `backend/scripts/seed_deductions_cataluna_2025.py` (13 deducciones)
+
+### Archivos modificados (frontend)
+- `frontend/src/hooks/useIrpfEstimator.ts` — 7 campos input + 3 campos resultado
+- `frontend/src/pages/TaxGuidePage.tsx` — formularios discapacidad, obligaciones familiares, doble imposicion, seccion resultados
+- `frontend/src/hooks/useTaxGuideProgress.ts` — nuevos defaults
+
+### Motor deducciones actualizado
+- Total deducciones 2025: 160 (sesion 20) + 188 CCAA + 60 forales (sesion 21) = **408 nuevas**
+- 15/15 CCAA regimen comun seeded al 100% vs AEAT 2025
+- 4/4 territorios forales seeded con 15 deducciones cada uno (EPSV, Norma Foral)
+- Ceuta/Melilla: correctamente 0 autonomicas (solo 60% estatal)
+- **21/21 territorios cubiertos. Gap: 0%**
+
+### Pendiente proxima sesion
+- [ ] Ejecutar 16 seeds en produccion (Turso) — 6 sesion 20 + 9 CCAA + 1 foral sesion 21
+- [ ] GP transmision inmuebles — implementar calculator (plan listo)
+- [ ] 2o declarante conjunta — XSD gap HIGH pendiente
+- [ ] Tests para nuevos seeds (validar syntax + insert)
+- [ ] Agent Lightning: SKIP por ahora
+
+---
+
+## [2026-03-25] PM Coordinator — 🟢 DONE — Sesion 20: Simulador IRPF + XSD gaps + 160 deducciones CCAA
 
 ### Tareas completadas (8)
+1. **Renta imputada multi-inmueble** (Art. 85): imputed_income.py, 18 tests
+2. **Compensacion perdidas anteriores** (Art. 48-49): loss_compensation.py, 19 tests
+3. **Pension compensatoria ex-conyuge** (Art. 55): reduce base general
+4. **Anualidades alimentos hijos** (Art. 64): tributacion separada
+5. **Doble imposicion internacional** (Art. 80): deduccion cuota
+6. **Discapacidad desc/asc MPYF** (Art. 60.2-3): 3K/12K EUR, 11 tests
+7. **Auditoria XSD Modelo 100**: 7 HIGH + 14 MEDIUM + 12 LOW gaps identificados
+8. **Auditoria + seed deducciones CCAA**: 160 nuevas (Valencia 40, Madrid 23, Andalucia 17, Canarias 27, Galicia 25, Murcia 28)
+
+### Commits sesion 20
+- `97fdd56` feat: imputed income + loss compensation + audit reports
+- `e022d4b` feat: 5 XSD gaps + Valencia 40 + Madrid 23 + Andalucia 17
+- `96b03a4` feat: Canarias 27 + Galicia 25 + Murcia 28
+
+### Pendiente proxima sesion
+- [ ] Ejecutar 6 seeds nuevos en produccion (Turso)
+- [ ] Terminar CLM + Asturias + Cantabria (agente no termino por timeout)
+- [ ] Seedear Fase 3: Baleares, La Rioja, Extremadura, Aragon, CyL, Cataluna
+- [ ] Conectar nuevos params simulador al frontend
+- [ ] GP transmision inmuebles (venta propiedad) — gap HIGH pendiente
+- [ ] Agent Lightning: SKIP por ahora, re-evaluar con 500+ conversaciones
+
+---
+
+## [2026-03-24] PM Coordinator — 🟢 DONE — Sesion 19: Crawler upgrade + RAG masiva + tax_parameters
+
+### Tareas completadas (8)
+1. **Crawler v2**: Scrapling anti-bot, ciclos reintento, --verify-urls, 404 sin backoff
+2. **27 URLs BOE corregidas**: 19 CCAA + 8 historicos (Valencia, CDIs, REF, ZEC, estatutos)
+3. **20 URLs deprecated**: forales manuales, guias regionales, Seg Social, CDI UK
+4. **17 nuevos PDFs descargados**: 13 CCAA regimen comun + Regl IRPF/ISD + Ley Audiovisual + DAC7 + Tributacion Autonomica 2025
+5. **Ingesta RAG masiva**: ~4,900 chunks nuevos (Azure DI + OpenAI). DB: 409 docs, 80K chunks, 74K embeddings
+6. **tax_parameters seed**: 2024+2025 ejecutado en prod (240 params + 160 ahorro scales). Bug 64 MPYF arreglado
+7. **RAG Quality eval timeout fix**: useApi acepta timeout custom, evaluacion 600s
+8. **Memorias + SONA**: 5 patrones HNSW, memoria proyecto actualizada
+
+### Commits sesion 19
+- `a3679a0` feat: crawler upgrade — Scrapling anti-bot, multi-cycle retry, 27 BOE URLs corrected
+- `1e6796d` fix: RAG quality evaluation timeout — extend to 10min for 30-question eval
+
+### Pendiente proxima sesion
+- [ ] Ejecutar crawler para descargar 7 PDFs nuevos (Valencia, Ceuta/Melilla estatutos, CDIs, REF, ZEC)
+- [ ] Ingestar esos 7 PDFs en RAG
+- [ ] Vigilar publicacion Manual Renta AEAT 2025 (~abril 2026)
+- [ ] Revisar 2 docs en `docs/_quarantine/`
+
+---
+
+## [2026-03-24] Backend/Frontend — 🟢 DONE — Bug 64: IRPF cálculo ~850€ discrepancia
+- **Root cause**: `tax_parameters` solo seeded para 2024, frontend envía year=2025 → MPYF = 0
+- **Fix**: Year fallback en TaxParameterRepository + seed 2025 + pagadores en profile/estimate
+- **Commit**: `74ac9c4` — pushed to main
+- **RESUELTO**: `populate_tax_parameters.py` ejecutado en Turso prod (sesion 19)
+
+## [2026-03-24] Frontend/Backend — 🟢 DONE — Bug 63: RAG Quality Dashboard crash
+- **Fix**: `useApi()` retorna `{apiRequest}`, no axios. AdminRagQualityPage usaba `.get()/.post()` inexistentes.
+- **Fix**: Backend field names no coincidían con interfaces TS (`timestamp`→`evaluated_at`, etc.).
+- **Commit**: `77820a0` — pushed to main
+
+## [2026-03-20] PM Coordinator — DONE — Sesion 17: RuFlo + Security + Features + PDF Export
+
+### Tareas completadas (17)
 1. **RuFlo MCP** (~95%): 259 tools, 26 hooks, SONA 5 trayectorias, ReasoningBank funcional
 2. **Security cleanup**: filter-repo 3 pasadas, 235 commits reescritos, 0 secretos en historial
 3. **Stripe role validation**: UpgradePlanModal en SettingsPage (commit `8440917`)
@@ -26,6 +129,17 @@
 - `ed6f5dd` chore: postinstall ReasoningBank patches
 - `c3aa17c` feat: PDF export completo
 - `718cff0` feat: SEO-GEO creators landing + IVA platform calculator
+- `254e35b` security: path traversal fix
+- `f0718ec` security: SQL parameterization chat.py
+- `6c7505f` feat: security pipeline (Bandit+ZAP+Nuclei+GH Actions)
+- `dc6768d` feat: MFA/2FA TOTP
+- `52ccb95` feat: Google SSO
+- `75e08fe` fix: privacy policy SECURITY.md label
+- `18d20ac` fix: Home footer privacy link
+- `75d2b48` fix: requirements.txt (deploy fix)
+- `905a188` fix: index.html noscript for Google verification
+- `3195606` feat: IVA calculator CCAA tax zones
+- `e890ca4` fix: zone selector CSS
 
 ### Pendiente proxima sesion
 - [ ] MFA / 2FA (unica tarea critica restante)

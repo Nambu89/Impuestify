@@ -103,6 +103,16 @@ export interface IrpfEstimateInput {
     alquiler_pagado_anual?: number
     valor_catastral_segundas_viviendas?: number
     valor_catastral_revisado_post1994?: boolean
+    // Obligaciones familiares (Art. 55 y 64 LIRPF)
+    pension_compensatoria_exconyuge?: number
+    anualidades_alimentos_hijos?: number
+    // Doble imposición internacional (Art. 80 LIRPF)
+    impuestos_pagados_extranjero?: number
+    // Discapacidad de descendientes y ascendientes (Art. 60.2 y 60.3 LIRPF)
+    num_descendientes_discapacidad_33?: number
+    num_descendientes_discapacidad_65?: number
+    num_ascendientes_discapacidad_33?: number
+    num_ascendientes_discapacidad_65?: number
 }
 
 export interface IrpfEstimateResult {
@@ -128,6 +138,10 @@ export interface IrpfEstimateResult {
     reduccion_tributacion_conjunta: number
     deduccion_alquiler_pre2015: number
     renta_imputada_inmuebles: number
+    // Session 20: nuevos campos de resultado
+    reduccion_pension_compensatoria?: number
+    cuota_anualidades_alimentos?: number
+    deduccion_doble_imposicion?: number
     // Fase 5: CCAA deductions
     deducciones_autonomicas?: Array<{ code: string; name: string; amount: number; percentage?: number; max_amount?: number; fixed_amount?: number }>
     total_deducciones_autonomicas?: number
