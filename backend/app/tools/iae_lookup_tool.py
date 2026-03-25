@@ -26,8 +26,15 @@ from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
-# Absolute path resolved at import time — works regardless of cwd
-IAE_DATA_PATH = Path(__file__).resolve().parents[3] / "data" / "reference" / "iae_codigos_creadores.json"
+# Try multiple paths: backend/data/ (Railway), then project root data/ (local dev)
+_tool_dir = Path(__file__).resolve().parent  # backend/app/tools/
+_backend_dir = _tool_dir.parents[1]          # backend/
+_project_dir = _tool_dir.parents[2]          # TaxIA/
+_candidates = [
+    _backend_dir / "data" / "reference" / "iae_codigos_creadores.json",  # Railway: backend/data/reference/
+    _project_dir / "data" / "reference" / "iae_codigos_creadores.json",  # Local: TaxIA/data/reference/
+]
+IAE_DATA_PATH = next((p for p in _candidates if p.exists()), _candidates[0])
 
 IAE_LOOKUP_TOOL = {
     "type": "function",
