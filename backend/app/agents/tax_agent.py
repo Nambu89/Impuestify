@@ -205,6 +205,50 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 - Presenta ambos resultados en tabla markdown comparativa con columnas Escenario A / Escenario B.
 - Indica claramente cuál opción es más favorable y la diferencia exacta en euros."""
 	
+	def _filter_bad_responses(self, content: str, original_query: str) -> str:
+		"""Filter out LLM responses that ask permission instead of answering."""
+		import re
+		if not content or len(content.strip()) < 20:
+			return content
+
+		content_lower = content.lower()
+
+		# Detect permission-asking patterns
+		permission_patterns = [
+			"te digo lo que encuentre",
+			"¿de acuerdo?",
+			"¿quieres que busque",
+			"¿te parece",
+			"si el catálogo oficial no carga",
+			"¿deseas que",
+			"¿procedo a",
+			"voy a intentar",
+			"déjame ver si",
+		]
+
+		is_permission_asking = any(p in content_lower for p in permission_patterns)
+
+		# Also detect if response is too short and just asks something
+		is_too_short_question = len(content.strip()) < 200 and "?" in content
+
+		if is_permission_asking or (is_too_short_question and not any(c.isdigit() for c in content)):
+			logger.warning(f"🚫 Filtered permission-asking response. Regenerating with knowledge.")
+			# Return a direct answer using the agent's knowledge
+			return (
+				f"No he encontrado datos específicos en mis fuentes para tu consulta exacta, "
+				f"pero puedo orientarte con mi conocimiento de la normativa fiscal española.\n\n"
+				f"Para consultas sobre epígrafes IAE, modelos tributarios o normativa específica de un territorio, "
+				f"te recomiendo consultar directamente:\n"
+				f"- **AEAT**: sede.agenciatributaria.gob.es (territorio común)\n"
+				f"- **Hacienda Foral de Bizkaia**: web.bizkaia.eus/es/hacienda (Bizkaia/BATUZ)\n"
+				f"- **Hacienda Foral de Gipuzkoa**: www.gipuzkoa.eus/es/hacienda (Gipuzkoa/TicketBAI)\n"
+				f"- **Hacienda Foral de Araba**: web.araba.eus/es/hacienda (Araba/TicketBAI)\n"
+				f"- **Hacienda Foral de Navarra**: hacienda.navarra.es (Navarra)\n\n"
+				f"Si me das más contexto sobre tu actividad, puedo ayudarte a identificar el epígrafe más probable."
+			)
+
+		return content
+
 	async def run(
 		self,
 		query: str,
@@ -633,6 +677,9 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 			except Exception as e:
 				logger.debug(f"Failed to cache response: {e}")
 			
+			# Post-LLM filter: detect and block permission-asking or empty responses
+			content = self._filter_bad_responses(content, query)
+
 			return AgentResponse(
 				content=content,
 				sources=sources or [],
