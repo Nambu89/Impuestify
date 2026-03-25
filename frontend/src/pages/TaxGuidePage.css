@@ -733,6 +733,13 @@
 .tg-result-card--refund .tg-result-card__amount { color: #34d399; }
 .tg-result-card--payment .tg-result-card__amount { color: #f87171; }
 
+.tg-result-card__disclaimer {
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: var(--spacing-1);
+    font-style: italic;
+}
+
 @media (max-width: 767px) {
     .tg-result-card__amount {
         font-size: var(--font-size-3xl);
@@ -810,11 +817,27 @@
 
 .tg-disclaimer {
     font-size: var(--font-size-xs);
-    color: rgba(255, 255, 255, 0.3);
-    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1.6;
     margin-top: var(--spacing-6);
-    padding-top: var(--spacing-4);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: var(--spacing-4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.03);
+}
+.tg-disclaimer__title {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: var(--spacing-2);
+    font-size: var(--font-size-sm);
+}
+.tg-disclaimer__list {
+    list-style: disc;
+    padding-left: var(--spacing-4);
+    margin: var(--spacing-2) 0;
+}
+.tg-disclaimer__list li {
+    margin-bottom: var(--spacing-1);
 }
 
 /* ====== Navigation ====== */

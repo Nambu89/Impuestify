@@ -103,6 +103,9 @@ export interface TaxGuideData {
     num_descendientes_discapacidad_65: number
     num_ascendientes_discapacidad_33: number
     num_ascendientes_discapacidad_65: number
+    // Pérdidas ejercicios anteriores (Art. 48-49 LIRPF)
+    perdidas_gp_ahorro_pendientes: number
+    perdidas_rcm_pendientes: number
     // Wizard mode
     wizard_mode: 'quick' | 'full'
     // Multi-pagador
@@ -204,6 +207,9 @@ export const EMPTY_TAX_DATA: TaxGuideData = {
     num_descendientes_discapacidad_65: 0,
     num_ascendientes_discapacidad_33: 0,
     num_ascendientes_discapacidad_65: 0,
+    // Pérdidas ejercicios anteriores
+    perdidas_gp_ahorro_pendientes: 0,
+    perdidas_rcm_pendientes: 0,
     wizard_mode: 'full',
     // Multi-pagador
     num_pagadores: 1,

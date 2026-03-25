@@ -1098,6 +1098,23 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
                 help="Para deducción por doble imposición internacional. Impuestos análogos al IRPF pagados fuera de España (Art. 80 LIRPF)"
             />
 
+            <h3 className="tg-step__subtitle">Pérdidas de ejercicios anteriores</h3>
+            <p className="tg-step__hint">Si tuviste pérdidas patrimoniales o de capital en los últimos 4 años que no se han compensado, indícalas aquí. Reducen tu base imponible (Art. 48-49 LIRPF).</p>
+            <NumberInput
+                label="Pérdidas patrimoniales del ahorro (acciones, fondos, cripto)"
+                value={data.perdidas_gp_ahorro_pendientes}
+                onChange={v => update({ perdidas_gp_ahorro_pendientes: v })}
+                suffix="EUR"
+                help="Pérdidas por venta de acciones, fondos, ETFs o criptomonedas de los últimos 4 ejercicios pendientes de compensar"
+            />
+            <NumberInput
+                label="Pérdidas por rendimientos del capital mobiliario"
+                value={data.perdidas_rcm_pendientes}
+                onChange={v => update({ perdidas_rcm_pendientes: v })}
+                suffix="EUR"
+                help="Rendimientos negativos de depósitos, bonos, seguros u otros productos financieros"
+            />
+
             {/* Task 1: DynamicFiscalForm — CCAA-specific deduction fields */}
             {data.comunidad_autonoma && (
                 <>
@@ -1206,8 +1223,9 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
             <h2 className="tg-step__title">Resultado de la estimación</h2>
 
             <div className={`tg-result-card ${isRefund ? 'tg-result-card--refund' : 'tg-result-card--payment'}`}>
-                <span className="tg-result-card__label">{isRefund ? 'Hacienda te devuelve' : 'A pagar a Hacienda'}</span>
+                <span className="tg-result-card__label">{isRefund ? 'Hacienda te devuelve (aprox.)' : 'A pagar a Hacienda (aprox.)'}</span>
                 <span className="tg-result-card__amount">{abs.toLocaleString('es-ES', { minimumFractionDigits: 2 })} EUR</span>
+                <span className="tg-result-card__disclaimer">Resultado aproximado, no vinculante</span>
             </div>
 
             <div className="tg-breakdown">
@@ -1353,11 +1371,17 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                 </div>
             )}
 
-            <p className="tg-disclaimer">
-                Esta estimación es orientativa y no constituye asesoramiento fiscal.
-                Los cálculos se basan en las escalas y deducciones vigentes.
-                Para una declaración precisa, consulta con un asesor fiscal.
-            </p>
+            <div className="tg-disclaimer">
+                <p className="tg-disclaimer__title">Resultado aproximado</p>
+                <p>Esta estimación es orientativa y no constituye asesoramiento fiscal profesional. El resultado puede variar respecto a tu declaración final por factores como:</p>
+                <ul className="tg-disclaimer__list">
+                    <li>Pérdidas de ejercicios anteriores pendientes de compensar</li>
+                    <li>Rendimientos irregulares, imputaciones de renta o retribuciones en especie</li>
+                    <li>Datos fiscales exactos proporcionados por la AEAT (certificados de retenciones)</li>
+                    <li>Deducciones autonómicas que requieran documentación específica</li>
+                </ul>
+                <p>Para una declaración precisa, consulta con un asesor fiscal o utiliza el borrador de la AEAT con tus datos fiscales reales.</p>
+            </div>
 
             {saveProfileDone ? (
                 <div className="tg-save-done">
@@ -1728,6 +1752,9 @@ export default function TaxGuidePage() {
             num_descendientes_discapacidad_65: data.num_descendientes_discapacidad_65,
             num_ascendientes_discapacidad_33: data.num_ascendientes_discapacidad_33,
             num_ascendientes_discapacidad_65: data.num_ascendientes_discapacidad_65,
+            // Pérdidas ejercicios anteriores (simplificado: como si fueran del año anterior)
+            perdidas_gp_ahorro_anteriores: data.perdidas_gp_ahorro_pendientes ? { 2024: data.perdidas_gp_ahorro_pendientes } : undefined,
+            perdidas_rcm_anteriores: data.perdidas_rcm_pendientes ? { 2024: data.perdidas_rcm_pendientes } : undefined,
         })
     }, [data, estimate, dynamicFormValues, discoveryAnswers])
 
