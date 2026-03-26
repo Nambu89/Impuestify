@@ -800,7 +800,22 @@ async def purge_semantic_cache(
     """Purge semantic cache to force fresh LLM responses. Owner-only."""
     if not current_user.is_owner:
         raise HTTPException(status_code=403, detail="Owner only")
+    return await _do_purge_cache()
 
+
+@router.delete("/semantic-cache")
+async def purge_semantic_cache_by_key(
+    key: str = Query(..., description="Admin secret key"),
+):
+    """Purge semantic cache with secret key (no JWT needed, bypasses CAPTCHA)."""
+    import os
+    expected = os.getenv("JWT_SECRET_KEY", "")
+    if not expected or key != expected:
+        raise HTTPException(status_code=403, detail="Invalid key")
+    return await _do_purge_cache()
+
+
+async def _do_purge_cache():
     try:
         from app.security.semantic_cache import get_semantic_cache
         cache = get_semantic_cache()
@@ -808,6 +823,7 @@ async def purge_semantic_cache(
             return {"status": "disabled", "message": "Semantic cache is not enabled"}
         stats_before = cache.get_stats()
         cache._index.reset()
+        print(f"🗑️ Semantic cache PURGED ({stats_before.get('vector_count', 0)} vectors)", flush=True)
         return {
             "status": "purged",
             "vectors_before": stats_before.get("vector_count", 0),
