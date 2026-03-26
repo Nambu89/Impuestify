@@ -10,6 +10,9 @@ import sys
 import argparse
 from pathlib import Path
 
+# Fix Windows encoding
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 project_root = backend_dir.parent
@@ -20,7 +23,7 @@ load_dotenv(project_root / ".env")
 try:
     from upstash_vector import Index
 except ImportError:
-    print("❌ upstash_vector not installed")
+    print("ERROR: upstash_vector not installed")
     sys.exit(1)
 
 
@@ -33,31 +36,32 @@ def main():
     token = os.getenv("UPSTASH_VECTOR_REST_TOKEN")
 
     if not url or not token:
-        print("❌ UPSTASH_VECTOR_REST_URL / TOKEN not set")
+        print("ERROR: UPSTASH_VECTOR_REST_URL / TOKEN not set")
         sys.exit(1)
 
+    print(f"Connecting to: {url[:40]}...")
     index = Index(url=url, token=token)
 
     try:
         info = index.info()
-        print(f"📊 Semantic Cache stats:")
+        print(f"Semantic Cache stats:")
         print(f"   Vectors: {info.vector_count}")
         print(f"   Dimensions: {info.dimension}")
         print(f"   Similarity: {info.similarity_function}")
     except Exception as e:
-        print(f"⚠️ Could not get info: {e}")
+        print(f"WARNING: Could not get info: {e}")
 
     if args.stats:
         return
 
-    print("\n🗑️  Resetting semantic cache (deleting all cached responses)...")
+    print("\nResetting semantic cache (deleting all cached responses)...")
     try:
         index.reset()
-        print("✅ Semantic cache purged!")
+        print("OK: Semantic cache purged!")
         info = index.info()
         print(f"   Vectors after reset: {info.vector_count}")
     except Exception as e:
-        print(f"❌ Reset failed: {e}")
+        print(f"ERROR: Reset failed: {e}")
 
 
 if __name__ == "__main__":

@@ -438,16 +438,12 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 
 			if cache_result.hit:
 				# Reject stale cached responses that indicate RAG failure
-				_bad_cache_patterns = [
-					"no he encontrado datos",
-					"no he encontrado información específica",
-					"te recomiendo consultar directamente",
-					"no dispongo de información específica",
-				]
-				cached_lower = (cache_result.response or "").lower()
-				is_stale = any(p in cached_lower for p in _bad_cache_patterns)
+				_bad = ["no he encontrado datos", "te recomiendo consultar directamente", "no dispongo de informaci"]
+				cached_text = cache_result.response or ""
+				is_stale = any(p in cached_text.lower() for p in _bad)
+				print(f"💾 Cache check: stale={is_stale}, len={len(cached_text)}, preview='{cached_text[:80]}'", flush=True)
 				if is_stale:
-					print(f"🗑️ Semantic Cache REJECTED stale response (similarity={cache_result.similarity:.3f})", flush=True)
+					print(f"🗑️ REJECTED stale cached response", flush=True)
 				else:
 					print(f"💾 Semantic Cache HIT (similarity={cache_result.similarity:.3f})", flush=True)
 					return AgentResponse(
@@ -884,15 +880,18 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 		)
 
 		if context:
-			return f"""{requires_tool_hint}Información de la base de conocimiento fiscal (AEAT, BOE, normativas forales):
+			return f"""{requires_tool_hint}[CONTEXTO INTERNO DEL SISTEMA — El usuario NO ha proporcionado esto. Son fragmentos recuperados automaticamente de nuestra base documental RAG (AEAT, BOE, normativas forales). NO digas "fuentes que has pegado/proporcionado/aportado/suministrado". Usa estos datos como tu conocimiento interno para responder.]
 
 {context}
 
 ---
 
-Pregunta: {query}
+Pregunta del usuario: {query}
 
-{critical_instructions}"""
+{critical_instructions}
+7. NUNCA digas que el usuario te ha proporcionado, pegado o aportado documentos. El contexto anterior es INTERNO del sistema.
+8. NO reproduzcas tablas tecnicas de TicketBAI, esquemas XML o datos de comunicacion electronica a menos que el usuario lo pida expresamente.
+9. Respuesta concisa: responde la pregunta directa, anade contexto foral relevante, y para."""
 		else:
 			if requires_tool_hint:
 				return f"{requires_tool_hint}\nPregunta: {query}\n\n{critical_instructions}"
