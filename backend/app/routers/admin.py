@@ -791,3 +791,27 @@ async def list_chat_ratings(
             "created_at": row["created_at"],
         })
     return items
+
+
+@router.post("/purge-semantic-cache")
+async def purge_semantic_cache(
+    current_user: TokenData = Depends(get_current_user),
+):
+    """Purge semantic cache to force fresh LLM responses. Owner-only."""
+    if not current_user.is_owner:
+        raise HTTPException(status_code=403, detail="Owner only")
+
+    try:
+        from app.security.semantic_cache import get_semantic_cache
+        cache = get_semantic_cache()
+        if not cache.enabled:
+            return {"status": "disabled", "message": "Semantic cache is not enabled"}
+        stats_before = cache.get_stats()
+        cache._index.reset()
+        return {
+            "status": "purged",
+            "vectors_before": stats_before.get("vector_count", 0),
+            "message": "Semantic cache purged successfully",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Purge failed: {e}")
