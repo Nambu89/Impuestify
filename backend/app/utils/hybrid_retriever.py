@@ -110,22 +110,22 @@ class HybridRetriever:
                 vector_results = []
 
             # Fuse with RRF
+            print(f"🔀 Hybrid search: FTS5={len(fts_results) if not isinstance(fts_results, Exception) else 'ERR'}, Vector={len(vector_results) if not isinstance(vector_results, Exception) else 'ERR'}", flush=True)
             if fts_results and vector_results:
                 fused = self._rrf_fusion(fts_results, vector_results, k=k)
-                logger.info(
-                    f"🔀 Hybrid: {len(fts_results)} FTS5 + {len(vector_results)} Vector → {len(fused)} fused"
-                )
+                print(f"🔀 RRF fused: {len(fused)} results", flush=True)
                 results = fused
             elif vector_results:
                 results = vector_results[:k]
             elif fts_results:
                 results = fts_results[:k]
             else:
+                print("⚠️ Both FTS5 and Vector returned 0 results", flush=True)
                 return []
         else:
             # Fallback: FTS5 only
             results = await self._fts_search(query, k=k, territory=territory_filter)
-            logger.info(f"🔍 FTS5-only: {len(results)} results")
+            print(f"🔍 FTS5-only: {len(results)} results", flush=True)
 
         # Apply document integrity trust scoring (Capa 13 — Document Integrity)
         results = await self._apply_trust_scoring(results)

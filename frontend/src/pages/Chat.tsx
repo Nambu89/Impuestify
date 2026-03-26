@@ -346,14 +346,14 @@ export default function Chat() {
                                                     )}
                                                 </div>
                                                 {/* Fuentes sin bullets, formato inline */}
-                                                {message.sources && message.sources.length > 0 && (
+                                                {message.sources && message.sources.filter(s => s.title).length > 0 && (
                                                     <div className="message-sources">
                                                         <p className="sources-title">
                                                             <FileText size={14} />
-                                                            Fuentes: {message.sources.map((source, idx) => (
+                                                            Fuentes: {message.sources.filter(s => s.title).map((source, idx) => (
                                                                 <span key={idx}>
                                                                     {idx > 0 && ', '}
-                                                                    {source.title} (pág. {source.page})
+                                                                    {source.title}{source.page > 0 ? ` (pág. ${source.page})` : ''}
                                                                 </span>
                                                             ))}
                                                         </p>

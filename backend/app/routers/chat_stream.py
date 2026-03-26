@@ -338,9 +338,9 @@ async def ask_question_stream(
                         else:
                             # Normalize long CCAA names to DB source values
                             ccaa_for_rag = _REGION_TO_DB_SOURCE.get(detected_region, detected_region)
-                        logger.info(f"📍 RAG territory from question: {detected_region} → DB filter: {ccaa_for_rag}")
-                except Exception:
-                    pass
+                        print(f"📍 RAG territory from question: {detected_region} → DB filter: {ccaa_for_rag}", flush=True)
+                except Exception as e:
+                    print(f"⚠️ RegionDetector error: {e}", flush=True)
 
                 if not ccaa_for_rag:
                     try:
@@ -355,22 +355,25 @@ async def ask_question_stream(
                         logger.debug(f"Could not pre-fetch CCAA for RAG filter: {_rag_ccaa_err}")
 
                 # First search WITH territory filter
+                print(f"🔍 RAG search: query='{rag_query_used[:60]}', territory={ccaa_for_rag}", flush=True)
                 relevant_chunks = await retriever.search(
                     query=rag_query_used,
                     query_embedding=query_embedding,
                     k=request.k or 5,
                     territory_filter=ccaa_for_rag,
                 )
+                print(f"📊 RAG results with filter: {len(relevant_chunks)} chunks", flush=True)
 
                 # If no results with filter, retry WITHOUT filter (broader search)
                 if not relevant_chunks:
-                    logger.info("🔄 No RAG chunks with territory filter, retrying without filter")
+                    print("🔄 No RAG chunks with territory filter, retrying without filter", flush=True)
                     relevant_chunks = await retriever.search(
                         query=rag_query_used,
                         query_embedding=query_embedding,
                         k=request.k or 5,
                         territory_filter=None,
                     )
+                    print(f"📊 RAG results without filter: {len(relevant_chunks)} chunks", flush=True)
 
             # Prepare context - ALLOW empty RAG if we have conversation history or user memory
             if relevant_chunks:

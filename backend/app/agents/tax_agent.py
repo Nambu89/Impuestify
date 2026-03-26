@@ -432,12 +432,12 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 		# === SPEED: Semantic Cache Check ===
 		try:
 			from app.security.semantic_cache import get_semantic_cache
-			
+
 			semantic_cache = get_semantic_cache()
 			cache_result = await semantic_cache.get_similar(query)
-			
+
 			if cache_result.hit:
-				logger.info(f"💾 Semantic Cache HIT (similarity={cache_result.similarity:.3f})")
+				print(f"💾 Semantic Cache HIT (similarity={cache_result.similarity:.3f})", flush=True)
 				return AgentResponse(
 					content=cache_result.response,
 					sources=sources or [],
