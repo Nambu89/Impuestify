@@ -1,0 +1,14 @@
+# Railway Config — Impuestify Backend
+# Docs: https://docs.railway.com/reference/config-as-code
+# Root Directory: /backend (set in Railway dashboard)
+
+[build]
+builder = "RAILPACK"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
