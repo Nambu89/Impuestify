@@ -26,6 +26,38 @@ from app.security import sql_validator, guardrails_system
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
 from app.services.subscription_service import SubscriptionAccess
 from app.utils.streaming import ProgressCallback, sse_generator, filter_json_from_content
+
+
+def _filter_permission_asking(content: str) -> str:
+    """Filter LLM responses that ask permission instead of answering."""
+    if not content or len(content.strip()) < 20:
+        return content
+    content_lower = content.lower()
+    permission_patterns = [
+        "te digo lo que encuentre",
+        "¿de acuerdo?",
+        "¿quieres que busque",
+        "¿te parece",
+        "si el catálogo oficial no carga",
+        "¿deseas que",
+        "¿procedo a",
+        "voy a intentar",
+        "déjame ver si",
+    ]
+    if any(p in content_lower for p in permission_patterns):
+        return (
+            "No he encontrado datos específicos en mis fuentes para tu consulta exacta, "
+            "pero puedo orientarte con mi conocimiento de la normativa fiscal española.\n\n"
+            "Para consultas sobre epígrafes IAE, modelos tributarios o normativa específica, "
+            "te recomiendo consultar directamente:\n"
+            "- **AEAT**: sede.agenciatributaria.gob.es\n"
+            "- **Hacienda Foral de Bizkaia**: web.bizkaia.eus/es/hacienda\n"
+            "- **Hacienda Foral de Gipuzkoa**: www.gipuzkoa.eus/es/hacienda\n"
+            "- **Hacienda Foral de Araba**: web.araba.eus/es/hacienda\n"
+            "- **Hacienda Foral de Navarra**: hacienda.navarra.es\n\n"
+            "Si me das más contexto sobre tu actividad, puedo ayudarte a identificar el epígrafe más probable."
+        )
+    return content
 from app.utils.followup_detector import classify_followup
 from app.utils.query_contextualizer import contextualize_query
 
@@ -404,8 +436,7 @@ async def ask_question_stream(
                     clean_content = filter_json_from_content(response.content)
 
                     # Filter permission-asking / internal reasoning from LLM
-                    from app.agents.tax_agent import TaxAgent
-                    clean_content = TaxAgent()._filter_bad_responses(clean_content, request.question)
+                    clean_content = _filter_permission_asking(clean_content)
 
                     # Stream final content
                     await callback.content(clean_content)
