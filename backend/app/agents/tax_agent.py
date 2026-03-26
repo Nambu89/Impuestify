@@ -437,18 +437,30 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 			cache_result = await semantic_cache.get_similar(query)
 
 			if cache_result.hit:
-				print(f"💾 Semantic Cache HIT (similarity={cache_result.similarity:.3f})", flush=True)
-				return AgentResponse(
-					content=cache_result.response,
-					sources=sources or [],
-					metadata={
-						"cache_hit": True,
-						"similarity": cache_result.similarity,
-						"model": self.model,
-						"agent": self.name
-					},
-					agent_name=self.name
-				)
+				# Reject stale cached responses that indicate RAG failure
+				_bad_cache_patterns = [
+					"no he encontrado datos",
+					"no he encontrado información específica",
+					"te recomiendo consultar directamente",
+					"no dispongo de información específica",
+				]
+				cached_lower = (cache_result.response or "").lower()
+				is_stale = any(p in cached_lower for p in _bad_cache_patterns)
+				if is_stale:
+					print(f"🗑️ Semantic Cache REJECTED stale response (similarity={cache_result.similarity:.3f})", flush=True)
+				else:
+					print(f"💾 Semantic Cache HIT (similarity={cache_result.similarity:.3f})", flush=True)
+					return AgentResponse(
+						content=cache_result.response,
+						sources=sources or [],
+						metadata={
+							"cache_hit": True,
+							"similarity": cache_result.similarity,
+							"model": self.model,
+							"agent": self.name
+						},
+						agent_name=self.name
+					)
 		except ImportError:
 			logger.debug("Semantic Cache not available, skipping cache lookup")
 		except Exception as e:
