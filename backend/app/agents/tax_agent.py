@@ -685,12 +685,18 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 				logger.warning("⚠️ Internal JSON-like pattern detected in response (not replacing — may be legitimate content)")
 			
 			# === SPEED: Store successful response in Semantic Cache ===
-			try:
-				from app.security.semantic_cache import get_semantic_cache
-				semantic_cache = get_semantic_cache()
-				await semantic_cache.store(query, content)
-			except Exception as e:
-				logger.debug(f"Failed to cache response: {e}")
+			# Skip caching responses that indicate RAG failure (prevents poisoning)
+			_nocache_patterns = ["no he encontrado datos", "te recomiendo consultar directamente", "no dispongo de información"]
+			should_cache = not any(p in (content or "").lower() for p in _nocache_patterns)
+			if should_cache:
+				try:
+					from app.security.semantic_cache import get_semantic_cache
+					semantic_cache = get_semantic_cache()
+					await semantic_cache.store(query, content)
+				except Exception as e:
+					logger.debug(f"Failed to cache response: {e}")
+			else:
+				print(f"🚫 NOT caching RAG-failure response (contains bad pattern)", flush=True)
 			
 			# Post-LLM filter: detect and block permission-asking or empty responses
 			content = self._filter_bad_responses(content, query)
