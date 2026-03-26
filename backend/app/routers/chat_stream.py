@@ -302,14 +302,43 @@ async def ask_question_stream(
                 query_embedding = await get_query_embedding(rag_query_used)
 
                 # Territory filter: detect CCAA from question first, fallback to profile
+                # Mapping: RegionDetector names → documents.source values in DB
+                _REGION_TO_DB_SOURCE = {
+                    "Comunidad de Madrid": "Madrid",
+                    "Comunitat Valenciana": "Valencia",
+                    "Principado de Asturias": "Asturias",
+                    "Región de Murcia": "Murcia",
+                    "Illes Balears": "Baleares",
+                    "Castilla y León": "Castilla y León",
+                    "Castilla-La Mancha": "Castilla-La Mancha",
+                    "La Rioja": "La Rioja",
+                }
+                # Foral territories: use province (Bizkaia/Gipuzkoa/Araba) not "País Vasco"
+                _FORAL_PROVINCES = {"bizkaia", "vizcaya", "gipuzkoa", "guipúzcoa", "guipuzkoa", "araba", "álava", "alava"}
+                _PROVINCE_TO_DB = {
+                    "bizkaia": "Bizkaia", "vizcaya": "Bizkaia",
+                    "gipuzkoa": "Gipuzkoa", "guipúzcoa": "Gipuzkoa", "guipuzkoa": "Gipuzkoa",
+                    "araba": "Araba", "álava": "Araba", "alava": "Araba",
+                }
+
                 ccaa_for_rag = None
                 try:
                     # 1. Detect CCAA mentioned in the question (takes priority)
                     from app.utils.region_detector import RegionDetector
                     region_info = RegionDetector().detect_from_text(rag_query_used)
                     if region_info.get('confidence') in ('high', 'medium'):
-                        ccaa_for_rag = region_info['region']
-                        logger.info(f"📍 RAG territory from question: {ccaa_for_rag}")
+                        detected_region = region_info['region']
+                        detected_province = (region_info.get('province') or '').lower()
+                        # For foral territories, use the specific province name
+                        if detected_province in _FORAL_PROVINCES:
+                            ccaa_for_rag = _PROVINCE_TO_DB.get(detected_province, detected_region)
+                        elif detected_region == "País Vasco":
+                            # Generic "Euskadi"/"País Vasco" without specific territory → skip filter
+                            ccaa_for_rag = None
+                        else:
+                            # Normalize long CCAA names to DB source values
+                            ccaa_for_rag = _REGION_TO_DB_SOURCE.get(detected_region, detected_region)
+                        logger.info(f"📍 RAG territory from question: {detected_region} → DB filter: {ccaa_for_rag}")
                 except Exception:
                     pass
 

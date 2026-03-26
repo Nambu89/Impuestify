@@ -21,12 +21,17 @@ class RegionDetector:
         "leganés": "Comunidad de Madrid",
         
         # Cataluña
+        "cataluña": "Cataluña",
+        "cataluna": "Cataluña",
+        "catalunya": "Cataluña",
         "barcelona": "Cataluña",
         "tarragona": "Cataluña",
         "lleida": "Cataluña",
         "girona": "Cataluña",
         
         # Andalucía
+        "andalucía": "Andalucía",
+        "andalucia": "Andalucía",
         "sevilla": "Andalucía",
         "málaga": "Andalucía",
         "granada": "Andalucía",
@@ -37,11 +42,14 @@ class RegionDetector:
         "jaén": "Andalucía",
         
         # Comunitat Valenciana
+        "comunitat valenciana": "Comunitat Valenciana",
+        "comunidad valenciana": "Comunitat Valenciana",
         "valencia": "Comunitat Valenciana",
         "alicante": "Comunitat Valenciana",
         "castellón": "Comunitat Valenciana",
         
         # Galicia
+        "galicia": "Galicia",
         "a coruña": "Galicia",
         "santiago de compostela": "Galicia",
         "vigo": "Galicia",
@@ -50,6 +58,9 @@ class RegionDetector:
         "lugo": "Galicia",
         
         # País Vasco (FORAL)
+        "país vasco": "País Vasco",
+        "pais vasco": "País Vasco",
+        "euskadi": "País Vasco",
         "bilbao": "País Vasco",
         "vitoria-gasteiz": "País Vasco",
         "vitoria": "País Vasco",
@@ -65,16 +76,21 @@ class RegionDetector:
         "guipuzkoa": "País Vasco",
         
         # Navarra (FORAL)
+        "navarra": "Navarra",
         "pamplona": "Navarra",
         "iruña": "Navarra",
         "tudela": "Navarra",
         
         # Aragón
+        "aragón": "Aragón",
+        "aragon": "Aragón",
         "zaragoza": "Aragón",
         "huesca": "Aragón",
         "teruel": "Aragón",
         
         # Castilla y León
+        "castilla y león": "Castilla y León",
+        "castilla y leon": "Castilla y León",
         "valladolid": "Castilla y León",
         "salamanca": "Castilla y León",
         "burgos": "Castilla y León",
@@ -86,6 +102,8 @@ class RegionDetector:
         "zamora": "Castilla y León",
         
         # Castilla-La Mancha
+        "castilla-la mancha": "Castilla-La Mancha",
+        "castilla la mancha": "Castilla-La Mancha",
         "toledo": "Castilla-La Mancha",
         "albacete": "Castilla-La Mancha",
         "ciudad real": "Castilla-La Mancha",
@@ -93,31 +111,44 @@ class RegionDetector:
         "guadalajara": "Castilla-La Mancha",
         
         # Extremadura
+        "extremadura": "Extremadura",
         "badajoz": "Extremadura",
         "cáceres": "Extremadura",
         "mérida": "Extremadura",
         
         # Murcia
+        "región de murcia": "Región de Murcia",
+        "region de murcia": "Región de Murcia",
         "murcia": "Región de Murcia",
         "cartagena": "Región de Murcia",
         
         # Asturias
+        "asturias": "Principado de Asturias",
+        "principado de asturias": "Principado de Asturias",
         "oviedo": "Principado de Asturias",
         "gijón": "Principado de Asturias",
         
         # Cantabria
+        "cantabria": "Cantabria",
         "santander": "Cantabria",
         
         # La Rioja
+        "la rioja": "La Rioja",
+        "rioja": "La Rioja",
         "logroño": "La Rioja",
         
         # Baleares
+        "baleares": "Illes Balears",
+        "illes balears": "Illes Balears",
+        "islas baleares": "Illes Balears",
+        "mallorca": "Illes Balears",
         "palma": "Illes Balears",
         "palma de mallorca": "Illes Balears",
         "ibiza": "Illes Balears",
         "menorca": "Illes Balears",
         
         # Canarias
+        "canarias": "Canarias",
         "las palmas": "Canarias",
         "santa cruz de tenerife": "Canarias",
         "tenerife": "Canarias",
