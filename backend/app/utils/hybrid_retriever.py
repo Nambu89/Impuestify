@@ -446,16 +446,31 @@ class HybridRetriever:
     def _clean_fts_query(query: str) -> str:
         """
         Clean a user query for FTS5 MATCH syntax.
-        Removes special chars and joins words with spaces (implicit AND).
+        Uses OR between words for better recall (implicit AND is too strict
+        for natural language queries — no chunk contains ALL 20+ words).
+        Filters Spanish stop words to improve relevance.
         """
-        # Remove FTS5 special operators
-        stop_words = {"OR", "AND", "NOT", "NEAR"}
+        fts_operators = {"OR", "AND", "NOT", "NEAR"}
+        spanish_stops = {
+            "que", "de", "en", "el", "la", "los", "las", "un", "una",
+            "por", "para", "con", "del", "al", "es", "se", "su", "no",
+            "lo", "le", "da", "ya", "te", "me", "si", "como", "pero",
+            "mas", "este", "esta", "son", "hay", "ser", "muy", "todo",
+            "toda", "todos", "todas", "cual", "donde", "cuando", "entre",
+            "sobre", "tras", "desde", "hasta", "sin", "hacia", "ante",
+            "bajo", "todas", "busca", "utiliza", "estan", "esten",
+            "relacionadas", "fuentes", "todas",
+        }
         words = []
         for word in query.split():
             clean = "".join(c for c in word if c.isalnum())
-            if clean and clean.upper() not in stop_words and len(clean) > 1:
+            if (clean
+                and clean.upper() not in fts_operators
+                and clean.lower() not in spanish_stops
+                and len(clean) > 2):
                 words.append(clean)
-        return " ".join(words) if words else query
+        # Use OR for better recall — AND is too strict for long queries
+        return " OR ".join(words) if words else query
 
 
 # ============================================================
