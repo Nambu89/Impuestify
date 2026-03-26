@@ -402,7 +402,11 @@ async def ask_question_stream(
                     
                     # Filter JSON from final content
                     clean_content = filter_json_from_content(response.content)
-                    
+
+                    # Filter permission-asking / internal reasoning from LLM
+                    from app.agents.tax_agent import TaxAgent
+                    clean_content = TaxAgent()._filter_bad_responses(clean_content, request.question)
+
                     # Stream final content
                     await callback.content(clean_content)
                     

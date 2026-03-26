@@ -652,6 +652,9 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 				content = message.content or ""
 				finish_reason = response.choices[0].finish_reason
 
+				# Apply post-LLM filter BEFORE streaming to user
+				content = self._filter_bad_responses(content, query)
+
 				if content and progress_callback:
 					# Stream the already-received content chunk by chunk
 					if progress_callback:
