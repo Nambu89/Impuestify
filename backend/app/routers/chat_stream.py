@@ -301,18 +301,31 @@ async def ask_question_stream(
                 retriever = HybridRetriever(db_client=db)
                 query_embedding = await get_query_embedding(rag_query_used)
 
-                # Territory filter: prioritize docs matching user's CCAA
+                # Territory filter: detect CCAA from question first, fallback to profile
                 ccaa_for_rag = None
                 try:
-                    fp_rag_result = await db.execute(
-                        "SELECT ccaa_residencia FROM user_profiles WHERE user_id = ?",
-                        [current_user.user_id]
-                    )
-                    if fp_rag_result.rows and fp_rag_result.rows[0].get("ccaa_residencia"):
-                        ccaa_for_rag = fp_rag_result.rows[0]["ccaa_residencia"]
-                except Exception as _rag_ccaa_err:
-                    logger.debug(f"Could not pre-fetch CCAA for RAG filter: {_rag_ccaa_err}")
+                    # 1. Detect CCAA mentioned in the question (takes priority)
+                    from app.utils.region_detector import RegionDetector
+                    region_info = RegionDetector().detect_from_text(rag_query_used)
+                    if region_info.get('confidence') in ('high', 'medium'):
+                        ccaa_for_rag = region_info['region']
+                        logger.info(f"📍 RAG territory from question: {ccaa_for_rag}")
+                except Exception:
+                    pass
 
+                if not ccaa_for_rag:
+                    try:
+                        # 2. Fallback to user profile CCAA
+                        fp_rag_result = await db.execute(
+                            "SELECT ccaa_residencia FROM user_profiles WHERE user_id = ?",
+                            [current_user.user_id]
+                        )
+                        if fp_rag_result.rows and fp_rag_result.rows[0].get("ccaa_residencia"):
+                            ccaa_for_rag = fp_rag_result.rows[0]["ccaa_residencia"]
+                    except Exception as _rag_ccaa_err:
+                        logger.debug(f"Could not pre-fetch CCAA for RAG filter: {_rag_ccaa_err}")
+
+                # First search WITH territory filter
                 relevant_chunks = await retriever.search(
                     query=rag_query_used,
                     query_embedding=query_embedding,
@@ -320,16 +333,24 @@ async def ask_question_stream(
                     territory_filter=ccaa_for_rag,
                 )
 
+                # If no results with filter, retry WITHOUT filter (broader search)
+                if not relevant_chunks:
+                    logger.info("🔄 No RAG chunks with territory filter, retrying without filter")
+                    relevant_chunks = await retriever.search(
+                        query=rag_query_used,
+                        query_embedding=query_embedding,
+                        k=request.k or 5,
+                        territory_filter=None,
+                    )
+
             # Prepare context - ALLOW empty RAG if we have conversation history or user memory
             if relevant_chunks:
-                # Filter out chunks with missing metadata (page=0, empty title)
-                # These produce broken "(pág. 0)" sources in the response
-                valid_chunks = [
-                    c for c in relevant_chunks
-                    if c.get('title') and c.get('page', 0) > 0
-                ]
+                # Use all chunks but format sources gracefully
+                valid_chunks = relevant_chunks
                 rag_context = "\n\n".join([
-                    f"Fuente: {chunk['title']} (Página {chunk['page']})\n{chunk['text']}"
+                    f"Fuente: {chunk.get('title') or chunk.get('source', 'Documento')}"
+                    + (f" (Página {chunk['page']})" if chunk.get('page', 0) > 0 else "")
+                    + f"\n{chunk.get('text', '')}"
                     for chunk in valid_chunks
                 ])
                 sources_data = [
