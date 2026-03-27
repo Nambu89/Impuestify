@@ -480,17 +480,17 @@ export default function Chat() {
                     >
                         {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
                     </button>
-                    {activeConversationId && messages.length > 0 && (
-                        <button
-                            type="button"
-                            className="btn chat-share-btn"
-                            onClick={() => setShowShareModal(true)}
-                            title="Compartir conversación"
-                        >
-                            <Share2 size={18} />
-                        </button>
-                    )}
                 </form>
+                {activeConversationId && messages.length > 0 && (
+                    <button
+                        type="button"
+                        className="chat-share-btn"
+                        onClick={() => setShowShareModal(true)}
+                        title="Compartir conversación"
+                    >
+                        <Share2 size={16} />
+                    </button>
+                )}
                 <p className="chat-disclaimer">
                     Impuestify usa IA. Verifica siempre la información importante con un profesional.
                 </p>
@@ -571,7 +571,7 @@ export default function Chat() {
             {showShareModal && activeConversationId && (
                 <ShareModal
                     conversationId={activeConversationId}
-                    conversationTitle={conversations.find(c => c.id === activeConversationId)?.title || 'Conversación'}
+                    conversationTitle={'Consulta fiscal'}
                     onClose={() => setShowShareModal(false)}
                 />
             )}
