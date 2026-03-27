@@ -1011,3 +1011,118 @@ async def discover_deductions_endpoint(
 
     except Exception as e:
         return DeductionDiscoverResponse(success=False)
+
+
+# =====================================================================
+# POST /api/irpf/withholding — Calculadora de retenciones IRPF (PUBLICA)
+# =====================================================================
+
+class DescendienteRequest(BaseModel):
+    ano_nacimiento: int = 2015
+    ano_adopcion: Optional[int] = None
+    por_entero: bool = True
+    discapacidad: str = "sin"  # sin | 33-65 | 65+
+    movilidad_reducida: bool = False
+
+
+class AscendienteRequest(BaseModel):
+    ano_nacimiento: int = 1950
+    convivencia: int = 1
+    discapacidad: str = "sin"
+    movilidad_reducida: bool = False
+
+
+class WithholdingRequest(BaseModel):
+    retribucion_bruta_anual: float = Field(..., gt=0, description="Salario bruto anual en EUR")
+    situacion_familiar: str = Field("3", description="1=soltero con hijos | 2=casado conyuge <1500 | 3=resto")
+    situacion_laboral: str = Field("activo", description="activo | pensionista | desempleado")
+    tipo_contrato: str = Field("indefinido", description="indefinido | temporal")
+    ano_nacimiento: int = Field(1990, description="Ano de nacimiento del perceptor")
+    discapacidad: str = Field("sin", description="sin | 33-65 | 65+")
+    movilidad_reducida: bool = False
+    descendientes: List[DescendienteRequest] = Field(default_factory=list)
+    ascendientes: List[AscendienteRequest] = Field(default_factory=list)
+    cotizaciones_ss: Optional[float] = Field(None, description="Si None, se estima al 6.35%")
+    pension_compensatoria: float = 0
+    anualidades_alimentos: float = 0
+    hipoteca_pre2013: bool = False
+    movilidad_geografica: bool = False
+    ceuta_melilla: bool = False
+    num_pagas: int = Field(14, ge=1, le=18)
+
+
+@router.post("/withholding")
+@limiter.limit("120/minute")
+async def calculate_withholding(
+    request: Request,
+    body: WithholdingRequest,
+):
+    """Calcula el tipo de retencion IRPF en nomina. Algoritmo oficial AEAT 2026.
+
+    Endpoint PUBLICO (sin autenticacion) — herramienta gratuita para atraer trafico.
+    No usa LLM, calculo directo (~5ms).
+    """
+    try:
+        from app.utils.calculators.withholding_rate import (
+            calcular_retencion,
+            WithholdingInput,
+            SituacionFamiliar,
+            SituacionLaboral,
+            TipoContrato,
+            Discapacidad,
+            Descendiente,
+            Ascendiente,
+        )
+
+        # Map string inputs to enums
+        sit_fam_map = {"1": SituacionFamiliar.SITUACION1, "2": SituacionFamiliar.SITUACION2, "3": SituacionFamiliar.SITUACION3}
+        sit_lab_map = {"activo": SituacionLaboral.ACTIVO, "pensionista": SituacionLaboral.PENSIONISTA, "desempleado": SituacionLaboral.DESEMPLEADO}
+        contrato_map = {"indefinido": TipoContrato.INDEFINIDO, "temporal": TipoContrato.TEMPORAL}
+        disc_map = {"sin": Discapacidad.SIN, "33-65": Discapacidad.DE33A65, "65+": Discapacidad.DESDE65}
+
+        inp = WithholdingInput(
+            retribucion_bruta_anual=body.retribucion_bruta_anual,
+            situacion_familiar=sit_fam_map.get(body.situacion_familiar, SituacionFamiliar.SITUACION3),
+            situacion_laboral=sit_lab_map.get(body.situacion_laboral, SituacionLaboral.ACTIVO),
+            tipo_contrato=contrato_map.get(body.tipo_contrato, TipoContrato.INDEFINIDO),
+            ano_nacimiento=body.ano_nacimiento,
+            discapacidad=disc_map.get(body.discapacidad, Discapacidad.SIN),
+            movilidad_reducida=body.movilidad_reducida,
+            descendientes=[
+                Descendiente(
+                    ano_nacimiento=d.ano_nacimiento,
+                    ano_adopcion=d.ano_adopcion,
+                    por_entero=d.por_entero,
+                    discapacidad=disc_map.get(d.discapacidad, Discapacidad.SIN),
+                    movilidad_reducida=d.movilidad_reducida,
+                )
+                for d in body.descendientes
+            ],
+            ascendientes=[
+                Ascendiente(
+                    ano_nacimiento=a.ano_nacimiento,
+                    convivencia=a.convivencia,
+                    discapacidad=disc_map.get(a.discapacidad, Discapacidad.SIN),
+                    movilidad_reducida=a.movilidad_reducida,
+                )
+                for a in body.ascendientes
+            ],
+            cotizaciones_ss=body.cotizaciones_ss,
+            pension_compensatoria=body.pension_compensatoria,
+            anualidades_alimentos=body.anualidades_alimentos,
+            hipoteca_pre2013=body.hipoteca_pre2013,
+            movilidad_geografica=body.movilidad_geografica,
+            ceuta_melilla=body.ceuta_melilla,
+            num_pagas=body.num_pagas,
+        )
+
+        result = calcular_retencion(inp)
+        return {
+            "success": True,
+            **result.to_dict(),
+            "disclaimer": "Calculo segun algoritmo oficial AEAT 2026. Orientativo — consulta con tu empresa o asesor.",
+        }
+
+    except Exception as e:
+        logger.exception("Error en calculate_withholding")
+        raise HTTPException(status_code=500, detail=str(e))
