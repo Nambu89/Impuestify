@@ -139,9 +139,9 @@ export default function CalculadoraRetencionesPage() {
 
               <label>Situación familiar</label>
               <select value={situacionFamiliar} onChange={e => setSituacionFamiliar(e.target.value)} className="calc-ret-select">
-                <option value="3">Soltero/a sin hijos a cargo, o casado/a (cónyuge con rentas {'>'} 1.500 EUR)</option>
-                <option value="1">Soltero/a, viudo/a o divorciado/a con hijos a cargo</option>
-                <option value="2">Casado/a (cónyuge sin rentas o {'<'} 1.500 EUR)</option>
+                <option value="3">Soltero/a sin hijos, o casado/a (cónyuge con rentas)</option>
+                <option value="1">Soltero/a o viudo/a con hijos a cargo</option>
+                <option value="2">Casado/a (cónyuge sin rentas o rentas bajas)</option>
               </select>
 
               <div className="calc-ret-row">
