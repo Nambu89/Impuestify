@@ -405,6 +405,17 @@ export default function Home() {
                                 <p>Descubre cuánto te queda limpio como autónomo. Desglose real: IRPF, IVA, Seguridad Social y gastos.</p>
                             </SpotlightCard>
                         </FadeContent>
+                        <FadeContent delay={500} duration={400}>
+                            <a href="/calculadora-retenciones" style={{ textDecoration: 'none' }}>
+                                <SpotlightCard className="feature-card" spotlightColor="rgba(16, 185, 129, 0.1)">
+                                    <div className="feature-icon">
+                                        <Calculator size={28} />
+                                    </div>
+                                    <h3>Calculadora Retenciones</h3>
+                                    <p>¿Cuánto te retienen de IRPF en la nómina? Calcula tu tipo de retención con el algoritmo oficial de la AEAT.</p>
+                                </SpotlightCard>
+                            </a>
+                        </FadeContent>
                     </div>
                 </div>
             </section>

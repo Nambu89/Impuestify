@@ -60,6 +60,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     <Link to="/calculadora-neto" className="nav-link">
                         <Wallet size={16} /> Calculadora Neto
                     </Link>
+                    <Link to="/calculadora-retenciones" className="nav-link">
+                        <Calculator size={16} /> Retenciones
+                    </Link>
                     <Link to="/calculadora-iva-creadores" className="nav-link">
                         <Receipt size={16} /> IVA Creadores
                     </Link>
@@ -121,6 +124,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     </Link>
                     <Link to="/calculadora-neto" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <Wallet size={20} /> Calculadora Neto
+                    </Link>
+                    <Link to="/calculadora-retenciones" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                        <Calculator size={20} /> Retenciones IRPF
                     </Link>
                     <Link to="/calculadora-iva-creadores" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <Receipt size={20} /> IVA Creadores
