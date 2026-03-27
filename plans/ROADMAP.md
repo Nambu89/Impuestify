@@ -1,6 +1,64 @@
 # TaxIA (Impuestify) - Roadmap de Desarrollo
 
-## Estado del Proyecto: Marzo 2026 (Sesion 17 — 2026-03-20)
+## Estado del Proyecto: Marzo 2026 (Sesion 23 — 2026-03-28)
+
+---
+
+## COMPLETADO — Sesion 23: 7 Features Fiscales + Compliance Audit (2026-03-28)
+
+- [x] **P1: GP Transmision Inmuebles** — Calculator backend (Art.35+DT9a+Art.38), VentaInmueble model, simulador integrado, plazo 24m reinversion. 16 tests
+- [x] **P2: Gastos Deducibles Autonomos** — Ya existente (activity_income.py + GastosDeduciblesPage.tsx)
+- [x] **P3: Plusvalia Municipal (IIVTNU)** — Calculator (método objetivo + real), STC 182/2021, endpoint REST público, tool chat. 17 tests
+- [x] **P4: ISD 21/21 CCAA completo** — 12 CCAA nuevas (Galicia→Melilla), donaciones Extremadura/Asturias corregidas. 76 tests
+- [x] **P5: Modelo 720/721** — Tools chat + endpoints REST públicos + registrado TaxAgent. Umbrales 50K/20K, post-reforma 2022. 25 tests
+- [x] **P6: 2o Declarante Conjunta** — SegundoDeclarante model, simulador extendido, 4 escenarios comparativa, ventas inmuebles SD. 21 tests
+- [x] **P7: Pipeline Auto-Ingesta RAG** — auto_ingest.py (--dry-run/--limit), SHA-256 dedup, FTS5 rebuild, crawler integrado. 14 tests
+- [x] **Compliance Audit** — 4 issues fiscales detectados y corregidos (Extremadura donaciones, Asturias Grupo II, Art.38 plazo, 2o declarante inmuebles)
+- [x] **Regression fix** — test_conjunta_monoparental_andalucia (encoding tildes)
+
+**Metricas Sesion 23:**
+- Tests nuevos: ~170
+- Tests totales: ~1646
+- Regresiones: 0
+- Archivos creados: ~15
+- Archivos modificados: ~12
+- Agentes paralelos: 6 (implementacion) + 2 (fixes)
+
+---
+
+## COMPLETADO — Sesion 22: RAG Pipeline Fix + AEAT Crawler + Multi-Agent Upgrade (2026-03-26/27)
+
+- [x] **Repo migrado**: `Nambu89/TaxIA` → `Nambu89/Impuestify` (289 commits conservados)
+- [x] **RAG Pipeline fix completo** (8 bugs: 65-72):
+  - Territory mismatch: RegionDetector → DB source normalization (Bizkaia, no Pais Vasco)
+  - FTS5 query: OR entre keywords (antes AND implicito → 0 resultados)
+  - Semantic cache: rechazo patrones stale + prevencion cache poisoning + purge script
+  - Frontend: filtrar sources sin titulo y page=0
+  - Logs: print(flush=True) para diagnostico en Railway
+- [x] **System prompt rewrite** con tecnicas GPT-5/Claude/NotebookLM/Perplexity:
+  - Etiquetas `<contexto_fiscal>` para RAG (patron NotebookLM)
+  - Nivel detalle 3/10 (patron GPT-5.2 oververbosity scale)
+  - "Muestra, no cuentes" (patron GPT-5.4 show dont tell)
+  - Anti-narracion de proceso interno
+- [x] **AEAT Full Crawler** — 2 scripts nuevos:
+  - `crawl_aeat_full.py`: 7 PDFs (Renta 2025 P1+P2, IVA 2025, Patrimonio 2025, Sociedades 2024, VeriFactu, Facturacion)
+  - `crawl_aeat_html.py`: 19 paginas HTML con Playwright (IAE, retenciones, VeriFactu, pagos fraccionados)
+- [x] **Ingesta masiva**: 454 docs, 89,174 chunks, 82,098 embeddings
+- [x] **Limpieza RAG**: 29 PDFs duplicados eliminados, 47 chunks ruido (<50 chars) borrados
+- [x] **FTS5 auto-rebuild** integrado en pipeline de ingesta
+- [x] **min_chunk_size** subido de 100 a 200 chars
+- [x] **Superpowers v5.0.6** instalado (plugin oficial Anthropic)
+- [x] **3 skills GSD** adaptadas: fresh-context-execution, wave-execution, atomic-commits
+- [x] **Marketing**: Documento Word con respuestas para plan de marketing (Erika Cepeda)
+
+**Metricas Sesion 22:**
+- Docs: 454 (+45 desde sesion anterior)
+- Chunks: 89,174 (+8,693)
+- Embeddings: 82,098 (+7,450)
+- FTS5: 89,174 (sincronizado)
+- Tests: 1,212 passed
+- Bugs: 72 documentados
+- Commits: 2c06abe..9000c43
 
 ---
 
@@ -316,25 +374,31 @@
 - [x] **Calculadora neto**: 22 tildes + neto fiscal real (neto_anual/12) + warning reserva IRPF (commit `c70dea5`)
 - [x] **PDF export completo**: 30+ campos fiscales + observaciones chat + tildes (commit `c3aa17c`)
 - [x] **ReasoningBank Windows**: 2 patches + postinstall automatico (commit `ed6f5dd`)
-- [x] **SONA trajectories**: 7 trayectorias registradas, 18 entries HNSW
-- [x] **SEO-GEO CreatorsPage**: meta tags, JSON-LD FAQPage, GEO cards 4 territorios, long-tail keywords (commit `718cff0`)
-- [x] **Calculadora IVA Creadores**: `/calculadora-iva-creadores` — 7 plataformas, multi-calc, Modelo 303/349 (commit `718cff0`)
+- [x] **SONA trajectories**: 11 trayectorias registradas, 20+ entries HNSW
+- [x] **SEO-GEO CreatorsPage**: meta tags, JSON-LD FAQPage, GEO cards 4 territorios (commit `718cff0`)
+- [x] **Calculadora IVA Creadores**: 7 plataformas + 3 zonas fiscales IVA/IGIC/IPSI (commits `718cff0`, `3195606`)
+- [x] **Security pipeline**: Bandit + Semgrep + OWASP ZAP + Nuclei + GitHub Actions (commit `6c7505f`)
+- [x] **Path traversal fix**: payslips.py + notifications.py (commit `254e35b`)
+- [x] **SQL parameterization**: chat.py RAG queries (commit `f0718ec`)
+- [x] **MFA/2FA TOTP**: pyotp + QR + backup codes + login step 2 (commit `dc6768d`)
+- [x] **Google SSO**: login/register con Google OAuth (commit `52ccb95`)
+- [x] **Home footer**: privacy link + app description para Google OAuth verification
+- [x] **B2B gestorias research**: informe mercado en `docs/competitive/`
+- [x] **Limpieza raiz**: 80+ archivos basura organizados en `backups/`
 
 ---
 
 ## BACKLOG
 
 ### CRITICA
+- [x] ~~Railway auto-deploy~~ RESUELTO (2026-03-27)
 - [ ] Re-ejecutar crawler con 90 URLs corregidas (si hay cambios)
 
 ### Alta prioridad
 - [x] ~~Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)~~ → DONE (2026-03-13)
-- [ ] MFA / 2FA (recomendación auditoría)
-- [ ] **Security audit stack** (4 capas, todo gratis):
-  - [ ] Semana 1: Bandit + Semgrep como pre-commit hooks (SAST)
-  - [ ] Semana 2: OWASP ZAP headless contra staging (DAST)
-  - [ ] Semana 3: Nuclei templates web-app/FastAPI/JWT
-  - [ ] Semana 4: Todo en GitHub Actions (CI/CD security gate)
+- [x] ~~MFA / 2FA~~ → DONE (2026-03-20, sesion 17, TOTP + backup codes)
+- [x] ~~Security audit stack (4 capas)~~ → DONE (Bandit+Semgrep+ZAP+Nuclei+GitHub Actions)
+- [x] ~~Google SSO~~ → DONE (2026-03-20, sesion 17, login/register con Google)
 - [x] ~~CAPTCHA en login (recomendación auditoría)~~ → DONE — Cloudflare Turnstile en Login + Register (frontend TurnstileWidget.tsx + backend verify_turnstile())
 - [x] ~~Estrategia Social Media~~ — DONE (2026-03-15, TikTok integrado 2026-03-16). Plan en `plans/social-media-strategy-2026.md` + contenido Q1 en `plans/social-media-content-plan-2026-Q1.md` + research TikTok en `plans/tiktok-research-2026.md`. 3 canales: Instagram + LinkedIn + TikTok. 4 carruseles generados, 10 posts completos, 15 guiones Reels, 9 screenshots. Pendiente: ejecucion por Fernando (setup Metricool, LinkedIn, TikTok @impuestify, primer post 21 marzo)
 
@@ -345,8 +409,8 @@
 - [x] ~~**Fase 5: Guia fiscal adaptativa por rol**~~ → DONE (2026-03-19, sesion 15)
 - [x] ~~Landing SEO creadores de contenido~~ → DONE (2026-03-20, sesion 17, commit `718cff0`)
 - [x] ~~Calculadora IVA por plataforma~~ → DONE (2026-03-20, sesion 17, commit `718cff0`)
-- [ ] **Google SSO** — login/registro con "Continuar con Google" (@react-oauth/google + google-auth backend)
-- [ ] Pipeline auto-ingesta RAG (leer `_pending_ingest.json` → embeddings)
+- [x] ~~**Google SSO**~~ → DONE (2026-03-20, sesion 17)
+- [x] ~~Pipeline auto-ingesta RAG~~ → DONE (2026-03-28, sesion 23, auto_ingest.py)
 - [ ] ML fiscal features (ml_fiscal_features table)
 
 ### Baja prioridad
@@ -360,17 +424,19 @@
 
 | Métrica | Valor |
 |---------|-------|
-| Documentos RAG | 439 (419 PDF + 9 Excel + 11 AEAT specs) |
-| Deducciones en BD | ~554 (192 v1/v2 + 339 XSD + 50 forales) |
+| Documentos RAG | 454 (PDF + Excel + AEAT specs) |
+| Deducciones en BD | ~1,008 (21/21 territorios) |
 | CCAA cubiertas | 21 (15 común + 4 forales + Ceuta + Melilla) |
-| Tests backend | **1199+27** (export tests nuevos sesion 17) |
+| ISD CCAA cubiertas | **21/21** (sesion 23) |
+| Tests backend | **~1,646** (sesion 23: +170 nuevos) |
 | Tests frontend | build PASS |
-| RuFlo MCP | **259 tools**, 26 hooks, ~95% capacidad, SONA 5 traj |
+| Calculadoras públicas | 4 (retenciones, neto, plusvalía, 720/721) |
+| Tools chat fiscales | ~20 (GP inmuebles, plusvalía, ISD, 720, 721, cripto, comparativa conjunta...) |
+| RuFlo MCP | **259 tools**, 26 hooks, ~95% capacidad |
 | Exchanges crypto soportados | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
-| Fechas fiscales 2026 | 58 (32 estatales + 4 nuevos = 36 **pendiente actualizar**) |
-| Bugs fixeados (mar 2026) | **62 documentados** (Bugs 1-62, sesion 13) |
+| Fechas fiscales 2026 | 58 (32 estatales + 26 forales) |
+| Bugs fixeados (mar 2026) | **72 documentados** |
 | URLs monitorizadas (crawler) | **90 en 23 territorios** |
-| Drift Analyzer | Layer 1 (free) + Layer 2 (haiku headless) |
 | Planes de suscripcion | 3 (Particular 5€, Creator 49€, Autonomo 39€) |
-| Admin pages | 4 nuevas (Feedback, Contacts, Dashboard, Creators) |
-| Capas de seguridad | **13** (nueva: Document Integrity Scanner) |
+| Admin pages | 4 (Feedback, Contacts, Dashboard, Creators) |
+| Capas de seguridad | **13** |

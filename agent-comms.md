@@ -7,6 +7,108 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-03-28] PM Coordinator — 🟢 DONE — Sesion 23: 7 Features Fiscales + Compliance Audit
+
+### Tareas completadas (7 features + 4 fixes)
+1. **P1: GP Transmision Inmuebles** — capital_gains_property.py, VentaInmueble, simulador, Art.35+DT9a+Art.38 (plazo 24m). 16 tests
+2. **P3: Plusvalia Municipal (IIVTNU)** — Calculator (objetivo+real), STC 182/2021, endpoint REST, tool chat. 17 tests
+3. **P4: ISD 21/21 CCAA** — 12 CCAA nuevas + fix donaciones Extremadura (DL 1/2018) + Asturias Grupo II. 76 tests
+4. **P5: Modelo 720/721** — 2 tools chat + 2 endpoints REST + TaxAgent. Umbrales 50K/20K. 25 tests
+5. **P6: 2o Declarante Conjunta** — SegundoDeclarante model, simulador extendido, 4 escenarios comparativa, inmuebles SD. 21 tests
+6. **P7: Pipeline Auto-Ingesta RAG** — auto_ingest.py (--dry-run/--limit), SHA-256 dedup, FTS5 rebuild. 14 tests
+7. **P2: Gastos Deducibles Autonomos** — Verificado existente (activity_income.py + GastosDeduciblesPage.tsx)
+
+### Compliance fixes
+- ISD Extremadura donaciones 99% (DL 1/2018 Art.15)
+- ISD Asturias Grupo II donaciones 95%
+- GP reinversion plazo 24 meses Art.38.1 LIRPF
+- 2o declarante ventas inmuebles en base ahorro
+- Regression fix: test_conjunta_monoparental_andalucia (encoding tildes)
+
+### Archivos creados (~15)
+- backend/app/utils/calculators/capital_gains_property.py
+- backend/app/utils/calculators/plusvalia_municipal.py
+- backend/app/tools/modelo_720_tool.py
+- backend/app/tools/modelo_721_tool.py
+- backend/app/tools/plusvalia_municipal_tool.py
+- backend/app/routers/modelo_720.py
+- backend/app/routers/plusvalia.py
+- backend/scripts/auto_ingest.py
+- backend/tests/test_capital_gains_property.py
+- backend/tests/test_plusvalia_municipal.py
+- backend/tests/test_isd_ccaa_completo.py
+- backend/tests/test_modelo_720_721.py
+- backend/tests/test_segundo_declarante.py
+- backend/tests/test_auto_ingest.py
+
+### Archivos modificados (~12)
+- backend/app/utils/irpf_simulator.py (GP inmuebles + 2o declarante)
+- backend/app/routers/irpf_estimate.py (VentaInmueble + SegundoDeclarante)
+- backend/app/tools/__init__.py (720/721 + plusvalia)
+- backend/app/tools/isd_calculator_tool.py (12 CCAA + fixes)
+- backend/app/tools/joint_comparison_tool.py (4 escenarios)
+- backend/app/main.py (routers 720 + plusvalia)
+- backend/tests/test_irpf_regression.py (tilde encoding fix)
+
+### Metricas
+- Tests nuevos: ~170
+- Tests totales: ~1,646
+- Regresiones: 0
+- Agentes paralelos: 8 (6 implementacion + 2 fixes)
+
+### Pendiente proxima sesion
+- [ ] Frontend: wizard steps para GP inmuebles, plusvalia, 720/721, 2o declarante
+- [ ] ML fiscal features (ml_fiscal_features table)
+- [ ] Re-ejecutar crawler 90 URLs
+- [ ] Verificar Asturias donaciones Grupo II rate exacto (actualmente 95% conservador)
+
+---
+
+## [2026-03-26] PM Coordinator — 🟢 DONE — Sesion 22: RAG pipeline fix completo (8 bugs)
+
+### Tareas completadas (8)
+1. **Repo migrado**: `Nambu89/TaxIA` → `Nambu89/Impuestify` (289 commits conservados)
+2. **Territory mismatch**: RegionDetector → DB source mapping (Pais Vasco→Bizkaia, etc.)
+3. **Logs Railway**: logger.info → print(flush=True) para diagnostico
+4. **FTS5 fix**: OR entre keywords + rebuild 80,481 chunks + stop words espanolas
+5. **Semantic cache**: Rechazo patrones stale + prevencion cache poisoning + purge script
+6. **System prompt rewrite**: Tecnicas GPT-5/Claude/NotebookLM (atribucion RAG, concision, anti-narracion)
+7. **Frontend sources**: Filtrar "(pag. 0)" y sources sin titulo
+8. **Archivos basura**: Limpieza de 20+ archivos junk en raiz del proyecto
+
+### Commits: 2c06abe, 5aee9f8, 8b61be6, 2af4830, 1845e1c, f0c6e3e, 8adb0e0, 8f44c8a, 4d7f4ae
+
+---
+
+## [2026-03-26] (anterior) PM Coordinator — 🟢 DONE — Railway CLI deploy + RAG territory fix (RESUELTO 2026-03-27)
+
+### Problema
+Railway dejo de auto-deployar despues del commit `e395e12` (19:57). 15 commits posteriores NO estan en produccion.
+GitHub Webhooks pagina VACIA — Railway no recibe push events.
+railway.toml invalido (usa [[services]] que no existe en el schema).
+
+### Soluciones intentadas SIN exito
+- Empty commit + push → no deployea
+- Touch requirements.txt → no deployea
+- Disconnect/reconnect repo en Railway → no arregla
+- Ctrl+K Deploy Latest en Railway → no funciona
+- `railway up` desde backend/ → "Could not find root directory: /backend"
+- `railway up` desde raiz → "os error 33" (OneDrive lock)
+- `taskkill python.exe` + retry → sigue bloqueado
+
+### ACCION INMEDIATA proxima sesion
+1. **Deployar fix RAG** (commit f5018ac): `cp backend C:\tmp\taxia-deployX` → `railway link` → `railway up`
+2. Probar pregunta ponedoras Bizkaia en conversacion nueva
+3. Reconectar GitHub al servicio Railway (investigar por que Bad Credentials)
+
+### Bugs de produccion NO deployados
+- TaxAgent pide permiso ("Te digo lo que encuentre, ¿de acuerdo?") — fix en `4acd27c`
+- TaxAgent lanza IRPF para toda pregunta — fix en `b0e61be`
+- IAE lookup file not found — fix en `370ff29` (puede estar deployado)
+- Responsive mobile CSS — fix en `cec0a04`
+
+---
+
 ## [2026-03-25] PM Coordinator — 🟢 DONE — Sesion 21: 9 CCAA seeds + frontend params + plan GP
 
 ### Tareas completadas (5)

@@ -1,8 +1,9 @@
-# TaxIA — Memoria del Agente
+# TaxIA (Impuestify) — Memoria del Agente
 
-> Ultima actualizacion: 2026-03-20 (sesion 17)
+> Ultima actualizacion: 2026-03-26 (sesion 22)
 > Ver detalles en archivos separados por tema
-> Bugs fixeados: `memory/bugfixes-2026-03.md` (62 bugs documentados, sesion 13)
+> Bugs fixeados: `memory/bugfixes-2026-03.md` (72 bugs documentados, sesion 22)
+> Repo: `Nambu89/Impuestify` (migrado de TaxIA sesion 22)
 
 ## Indice de archivos de memoria
 
@@ -12,7 +13,7 @@
 | `memory/backend-subscription.md` | Stripe: Particular 5 EUR, Creator 49 EUR, Autonomo 39 EUR |
 | `memory/crawler-state.md` | Estado del crawler + drift analyzer (90 URLs, 23 territorios, Influencers+Creadores docs) |
 | `memory/frontend-features.md` | UX/Streaming, PWA, Landing, DeductionCards, Cookies, Admin, Feedback, CreatorsPage, SEO-GEO, AdminDashboard |
-| `memory/bugfixes-2026-03.md` | Bugs fixeados marzo 2026 (62 bugs documentados, sesion 13) |
+| `memory/bugfixes-2026-03.md` | Bugs fixeados marzo 2026 (72 bugs documentados, sesion 22) |
 | `memory/mcp-design-tools.md` | Google Stitch + Nano Banana MCP config y modelos Gemini 3 |
 | `memory/response-quality-gap.md` | Analisis calidad respuesta vs Google/Claude — plan de mejora |
 | `memory/agent-system-improvements.md` | Mejoras GSD al sistema multi-agente (2026-03-08) |
@@ -24,15 +25,19 @@
 | `memory/feedback_ortografia_pre_push.md` | Regla obligatoria: verificar tildes ANTES de push — reputacion marca |
 | `memory/reference_mission_control.md` | Herramienta futura: dashboard orquestacion 6 agentes IA |
 | `memory/feedback_ruflo_workflow.md` | RuFlo V3.5: workflow estandar, config, limitaciones Windows, capacidad ~85% |
+| `memory/feedback_no_browser_console.md` | NUNCA sugerir F12/consola navegador — bloqueado por seguridad |
+| `memory/feedback_always_research_first.md` | SIEMPRE investigar en web antes de implementar. Nunca asumir |
+| `memory/project_session22_rag_fix.md` | Sesion 22: 8 bugs RAG, repo Impuestify, system prompt GPT-5/Claude |
 
 ## Arquitectura del proyecto
 
 - Backend: `backend/app/` — FastAPI + OpenAI function calling
 - Frontend: `frontend/src/` — React 18 + Vite 5 + TypeScript
-- Docs RAG: `docs/` — 439 archivos organizados por territorio
+- Docs RAG: `docs/` — 431 docs unicos organizados por territorio (29 duplicados limpiados sesion 22)
 - Agent comms: `agent-comms.md` (raiz) — canal inter-agentes
-- Skills: `.claude/skills/` — 10 modulos (6 dominio + 4 desarrollo)
+- Skills: `.claude/skills/` — 47+ modulos (dominio + desarrollo + GSD patterns)
 - Subagentes: `.claude/subagents/` — 6 agentes (backend, frontend, python, docscrawler, plan-checker, verifier)
+- Plugin: **Superpowers v5.0.6** (instalado sesion 22 — TDD, brainstorming, planning, code review)
 - Hooks: `.claude/hooks/` — bash-gate.js + quality-check.js
 - Commands: `.claude/commands/` — 20 slash commands
 
@@ -119,34 +124,58 @@
 - CLI drift: `python -m backend.scripts.doc_crawler.drift_analyzer [--dry-run] [--skip-llm]`
 - Commit: `250e8a2` (crawler) + drift analyzer
 
-## Biblioteca RAG
+## Biblioteca RAG (actualizado sesion 22)
 
-- 419 PDFs + 9 Excel + 11 AEAT specs = **439 archivos** en `docs/`
+- **431 documentos unicos** en Turso (29 duplicados eliminados del disco)
+- **84,279 chunks** indexados | **78,446 embeddings** (OpenAI text-embedding-3-large)
+- **FTS5**: 84,279 chunks (rebuild sesion 22). DEBE re-ejecutar `rebuild_fts5.py` despues de cada ingesta
+- **Crawler sesion 22**: 8 nuevos (CDIs Irlanda/PaisesBajos/EEUU, ZEC Canarias, + 4 legislacion CCAA)
+- **Docs clave nuevos**: Tarifas IAE (RDLeg 1175/1990, 185 pag), Tributacion Autonomica 2025 (533 pag)
 - Ver `memory/crawler-state.md` para estado detallado
 
-### Pendiente ~abril 2026
-1. Manual Practico Renta 2025 (AEAT) — en watchlist como "future"
-2. Orden HAC Modelo 100 ejercicio 2025
+### Pendiente proxima sesion (23)
+1. **P2: Gastos deducibles autonomos** — catalogo interactivo ~50 gastos con DGT rulings, plan 39 EUR
+2. **P3: Plusvalia municipal (IIVTNU)** — 2 metodos (objetivo + real) post-reforma RDL 26/2021
+3. **P4: ISD completo** — extender 11 CCAA faltantes en `_bonificaciones_ccaa()` (solo datos, no logica)
+4. **P5: Modelo 720/721** — checker umbral 50K por categoria, crypto exchanges
+5. **Share conversations** — testear en produccion, verificar anonimizacion PII
+6. Manual Practico Renta 2025 (AEAT) — ya descargado e ingestado
+7. Manual IVA 2025 (AEAT) — ya descargado e ingestado
+8. Orden HAC Modelo 100 ejercicio 2025 — en watchlist
+
+## RAG Pipeline (actualizado sesion 22)
+
+- **Hybrid search**: FTS5 (BM25, OR entre keywords) + Upstash Vector (cosine similarity) + RRF fusion
+- **FTS5 query**: OR entre keywords (antes AND implicito → 0 resultados). Stop words espanolas filtradas
+- **Territory filter**: RegionDetector → normalizado a DB source values (Bizkaia, no Pais Vasco)
+- **Semantic cache**: Upstash Vector separado. Purgar con `railway run python backend/scripts/purge_semantic_cache.py`
+- **Cache poisoning prevention**: No cachea respuestas con "no he encontrado datos". Rechaza stale hits
+- **Upstash produccion**: `welcomed-katydid-49284-us1` (diferente al .env local `obliging-haddock-89900-eu1`)
+- **System prompt TaxAgent**: Tecnicas GPT-5/Claude/NotebookLM — etiquetas `<contexto_fiscal>`, nivel 3/10, show don't tell
+- **Calculadora Retenciones IRPF**: `/calculadora-retenciones` — publica, sin auth, algoritmo AEAT 2026 (28 tests)
+- **Share Conversations**: `/shared/:token` — enlaces publicos con anonimizacion PII. ShareModal + SharedConversationPage
 
 ## Reglas de proceso
 
 - **Post-Bugfix Protocol**: Documentar en 3 sitios (CLAUDE.md, bugfixes, agent-comms)
 - **Quality Gates**: `/check-plan` (pre) + `/verify` (post) obligatorios
 - **Revision exhaustiva**: Al aplicar cambios, revisar TODAS las paginas afectadas
+- **SIEMPRE investigar antes de implementar**: WebSearch, docs oficiales, GitHub issues. NUNCA asumir
+- **NUNCA sugerir consola navegador (F12)**: Bloqueada por seguridad. Usar Railway CLI o scripts
 - **Feedback System**: Widget + ChatRating + AdminFeedbackPage/AdminContactPage/AdminDashboardPage (completo)
 - **Admin Dashboard**: 3 nuevas pages, dropdown en Header, owner-only
 - **Multi-role Fiscal**: `roles_adicionales` (no excluyentes), adaptativo por CCAA
 
 ## Notas tecnicas
 
+- **Repo**: `Nambu89/Impuestify` (migrado de TaxIA sesion 22)
 - venv/ en raiz (TaxIA/venv/), en Windows usar `venv/Scripts/python.exe`
 - PYTHONUTF8=1 necesario para backend en Windows (emojis en prints)
-- Tests: `python -m pytest tests/ -v` — **1138 tests PASS** (55 nuevos DIS sesion 13), frontend build OK
+- Tests: `python -m pytest tests/ -v` — **1240+ tests PASS** (sesion 22, +28 withholding), frontend build OK
 - `.mcp.json` en `.gitignore` (contiene API keys)
 - `data/reference/` — JSON de referencia generados (no en BD)
-- **ORTOGRAFIA PRE-PUSH OBLIGATORIA** (ver `feedback_ortografia_pre_push.md`): Verificar tildes en TODOS los strings visibles
+- **ORTOGRAFIA PRE-PUSH OBLIGATORIA**: Verificar tildes en TODOS los strings visibles
 - **Fecha Renta 2026**: 8 de abril (corregida de 5 de abril)
-- **Push Notifications**: VAPID keys configuradas (sesion 13 fix: regenerar SECP256R1, clear stale, retry). Notificaciones 15d/5d/1d antes de plazos. Funciona en browser limpio (Playwright), bloqueado por MetaMask/adblocker.
 - **JWT_SECRET_KEY**: Debe cambiarse en Railway (accion usuario)
 - **Crawler**: 90 URLs, 23 territorios, Windows Task Scheduler lunes 09:00
-- **Deadlines estatales**: 32 (28 base + 4 nuevos sesion 13: Modelo 721, 714, cita previa, atención presencial)
+- **Deadlines estatales**: 32 (28 base + 4 nuevos sesion 13)

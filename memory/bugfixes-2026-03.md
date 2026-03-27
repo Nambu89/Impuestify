@@ -662,6 +662,32 @@
 **Archivos:** `frontend/src/App.tsx`
 **Commit:** `dadf58e`
 
+### Bug 64: IRPF cálculo ~850€ de discrepancia — MPYF = 0 para year 2025
+**Problema:** Simulación IRPF sale a pagar 502,70€ en Impuestify vs a devolver 347€ en TaxDown (~850€ de diferencia). Contribuyente con 3 pagadores, Madrid, 30.838,54€ bruto.
+**Causa raíz (principal):** `tax_parameters` DB solo tiene datos para `year=2024`, pero el frontend envía `year=2025`. `TaxParameterRepository.get_params("mpyf", 2025, "Estatal")` devolvía dict vacío → `params.get("contribuyente", 0)` = 0 → MPYF total = 0 → cuota MPYF = 0 → ~1.000€ de deducción perdida.
+**Causa raíz (secundaria):** TaxGuidePage no cargaba ni guardaba `pagadores`/`num_pagadores` del perfil fiscal, y no los enviaba en el estimate.
+**Fix:**
+1. `TaxParameterRepository.get_params`: fallback a year-1 si no hay params para year solicitado
+2. `populate_tax_parameters.py`: duplicar 2024→2025 al final del seed
+3. `TaxGuidePage`: cargar/guardar `pagadores`/`num_pagadores` del perfil fiscal
+4. `TaxGuidePage`: enviar `pagadores`/`num_pagadores` en la llamada al estimate
+**Archivos:** `backend/app/utils/tax_parameter_repository.py`, `backend/scripts/populate_tax_parameters.py`, `frontend/src/pages/TaxGuidePage.tsx`
+**Commit:** `74ac9c4`
+**Regla CRÍTICA:** Cuando se añade un año fiscal nuevo, SIEMPRE verificar que `tax_parameters` y `irpf_scales` tienen datos para ese año. El fallback year-1 es safety net, no sustituto de datos correctos.
+**Acción pendiente:** Ejecutar `python scripts/populate_tax_parameters.py` en Railway producción para seedear 2025.
+
+### Bug 63: RAG Quality Dashboard — "l.get is not a function" al cargar o ejecutar evaluación
+**Problema:** Admin RAG Quality page crasheaba con `l.get is not a function` al abrir o pulsar "Ejecutar evaluación".
+**Causa raiz (dual):**
+1. **Frontend:** `AdminRagQualityPage` usaba `api.get()` / `api.post()` pero `useApi()` retorna `{ askQuestion, getHealth, apiRequest }`, NO una instancia axios. `l.get` es la versión minificada del error.
+2. **Backend:** Los campos de respuesta no coincidían con las interfaces TypeScript del frontend: `timestamp` vs `evaluated_at`, `faithfulness` vs `avg_faithfulness`, `num_questions` vs `total_questions`, `details` vs `questions`, `category_scores` (dict) vs `categories` (array).
+**Fix:**
+- Frontend: Cambiar a `const { apiRequest } = useApi()` y usar `apiRequest(url)` / `apiRequest(url, { method: 'POST' })`.
+- Backend: Renombrar campos en `/results` y `/history` para coincidir con interfaces. Mapear `details[]` → `questions[]` y `category_scores{}` → `categories[]`.
+**Archivos:** `frontend/src/pages/AdminRagQualityPage.tsx`, `backend/app/routers/rag_quality.py`
+**Commit:** `77820a0`
+**Regla:** Siempre usar `apiRequest` de `useApi()`, NUNCA `.get()/.post()` (eso es axios directo). Verificar que field names del backend coincidan con interfaces TS del frontend.
+
 ---
 
 ## Document Integrity Scanner (Capa 13 de Seguridad, Sesion 13)
@@ -682,8 +708,60 @@
 
 ---
 
-**Total bugs marzo 2026:** 62 documentados (Bugs 1-62)
-**Tests sesion 13:** 1138 backend PASS (55 nuevos Document Integrity Scanner), frontend build OK
-**Capas seguridad:** 13 (nueva: Document Integrity Scanner)
-**Archivos actualizados sesion 13:** ROADMAP.md, MEMORY.md, bugfixes-2026-03.md, agent-comms.md
-**Siguiente:** Sesion 14 — validar plan Stripe al cambiar roles, Turnstile bypass para QA
+---
+
+## [2026-03-26] Bugs 65-72: RAG pipeline completo + system prompt (Sesion 22, Commits 2c06abe..4d7f4ae)
+
+### Bug 65: GitHub repo roto — Railway no deployaba
+**Causa raiz:** Railway desconectado del repo `Nambu89/TaxIA`. Webhooks vacios.
+**Fix:** Migrar a nuevo repo `Nambu89/Impuestify`. Push con historial completo (289 commits). Railway conectado al nuevo repo.
+**Archivos:** git remote set-url
+
+### Bug 66: Territory mismatch — RegionDetector vs documents.source
+**Causa raiz:** RegionDetector devolvia "Pais Vasco" pero `documents.source` contiene "Bizkaia". FTS5 query `WHERE d.source = 'Pais Vasco'` → 0 resultados. Igual para "Comunidad de Madrid" vs "Madrid", "Principado de Asturias" vs "Asturias", etc.
+**Fix:** Mapping `_REGION_TO_DB_SOURCE` en chat_stream.py + `_PROVINCE_TO_DB` para territorios forales. Tambien anadidos nombres de CCAA al RegionDetector (antes solo tenia ciudades).
+**Archivos:** chat_stream.py, region_detector.py
+
+### Bug 67: Logs invisibles en Railway
+**Causa raiz:** No hay `logging.basicConfig()` en la app. Root logger = WARNING. Todos los `logger.info()` (RAG, cache, retriever) descartados silenciosamente.
+**Fix:** Cambiados logs criticos de RAG a `print(flush=True)` para que aparezcan en Railway.
+**Archivos:** chat_stream.py, hybrid_retriever.py, tax_agent.py
+
+### Bug 68: FTS5 siempre 0 resultados
+**Causa raiz:** DOS problemas:
+1. FTS5 desincronizado: 65,250 de 80,481 chunks indexados (15K faltaban tras ingesta sesion 19)
+2. `_clean_fts_query` usaba AND implicito entre palabras. Query de 20+ palabras → ningun chunk contiene TODAS → 0 resultados siempre
+**Fix:** (1) Ejecutar `rebuild_fts5.py` → 80,481 chunks. (2) Cambiar a OR entre keywords + filtrado de stop words espanolas.
+**Archivos:** hybrid_retriever.py, scripts/rebuild_fts5.py (ejecutado remotamente)
+
+### Bug 69: Semantic cache devuelve respuesta mala cacheada
+**Causa raiz:** Respuesta "No he encontrado datos" fue cacheada en Upstash Vector (similarity=1.000). Toda pregunta similar devuelve la respuesta mala sin ejecutar RAG.
+**Fix:** (1) TaxAgent rechaza cached responses con patrones "no he encontrado datos" / "te recomiendo consultar directamente". (2) No cachear respuestas que contienen esos patrones (prevencion de cache poisoning). (3) Script `purge_semantic_cache.py` para resetear via `railway run`. (4) Endpoint admin `POST /api/admin/purge-semantic-cache` + `DELETE /api/admin/semantic-cache?key=JWT_SECRET`.
+**Archivos:** tax_agent.py, admin.py, scripts/purge_semantic_cache.py
+
+### Bug 70: Semantic cache en produccion usa indice Upstash diferente al local
+**Causa raiz:** `.env` local tiene `UPSTASH_VECTOR_REST_URL=obliging-haddock-89900-eu1` pero Railway tiene `welcomed-katydid-49284-us1`. El purge local no afectaba produccion.
+**Fix:** Usar `railway run python scripts/purge_semantic_cache.py` que hereda env vars de Railway.
+**Nota:** DNS de Upstash no resuelve desde la red local del usuario. Solo funciona via Railway CLI.
+
+### Bug 71: LLM dice "fuentes que has pegado" / respuesta verbosa
+**Causa raiz:** El RAG context se inyectaba como texto ambiguo ("Informacion de la base de conocimiento fiscal"). El LLM lo confundia con input del usuario. Ademas, incluia tablas tecnicas de TicketBAI/XML irrelevantes.
+**Fix:** Investigacion de system prompts de GPT-5.x, Claude, Perplexity y NotebookLM. Tecnicas aplicadas:
+1. Etiquetas `<contexto_fiscal>` (patron NotebookLM/Perplexity)
+2. "El usuario NO te ha proporcionado esos textos" (patron Claude)
+3. Nivel detalle 3/10 (patron GPT-5.2 oververbosity scale)
+4. "Muestra, no cuentes" (patron GPT-5.4 show don't tell)
+5. "JSON, scores, IDs = NUNCA visibles" (patron o3 channel separation)
+**Archivos:** tax_agent.py (system prompt + _build_prompt)
+
+### Bug 72: Frontend mostraba "(pag. 0)" en fuentes vacias
+**Causa raiz:** Chat.tsx renderizaba `source.page` incondicionalmente. Sources sin titulo o con page=0 mostraban "(pag. 0)" sin nombre.
+**Fix:** Filtrar sources sin titulo. Solo mostrar pagina cuando > 0.
+**Archivos:** frontend/src/pages/Chat.tsx
+
+---
+
+**Total bugs marzo 2026:** 72 documentados (Bugs 1-72)
+**Tests sesion 22:** 1212 backend PASS (3 fallos pre-existentes no relacionados), frontend build OK
+**Commits sesion 22:** 2c06abe, 5aee9f8, 8b61be6, 2af4830, 1845e1c, f0c6e3e, 8adb0e0, 8f44c8a, 4d7f4ae
+**Repo:** Migrado de Nambu89/TaxIA a Nambu89/Impuestify

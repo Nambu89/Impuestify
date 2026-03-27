@@ -17,6 +17,38 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/irpf", tags=["irpf"])
 
 
+class VentaInmueble(BaseModel):
+    """A single property sale for capital gains calculation (Art. 33-38 + DT 9a LIRPF)."""
+    tipo: str = "otro"  # "vivienda_habitual" | "otro"
+    precio_venta: float = 0
+    precio_adquisicion: float = 0
+    fecha_adquisicion: Optional[str] = None  # YYYY-MM-DD
+    fecha_venta: Optional[str] = None  # YYYY-MM-DD
+    gastos_adquisicion: float = 0  # notaria, registro, ITP
+    gastos_venta: float = 0  # plusvalia municipal, agencia
+    mejoras: float = 0
+    amortizaciones: float = 0  # si estuvo alquilado
+    reinversion_vivienda_habitual: bool = False
+    importe_reinversion: float = 0
+    fecha_nueva_adquisicion: Optional[str] = None  # YYYY-MM-DD (Art. 38.1: 24-month limit)
+
+
+class SegundoDeclarante(BaseModel):
+    """Second declarant data for joint filing (Art. 82-84 LIRPF)."""
+    ingresos_trabajo: float = 0
+    ingresos_actividad: float = 0
+    gastos_actividad: float = 0
+    ingresos_alquiler: float = 0
+    gastos_alquiler: float = 0
+    intereses: float = 0
+    dividendos: float = 0
+    ganancias_patrimoniales: float = 0
+    edad: int = 30
+    discapacidad: int = 0  # 0, 33, 65
+    aportaciones_plan_pensiones: float = 0
+    ventas_inmuebles: Optional[List[VentaInmueble]] = None  # GP inmuebles 2o declarante
+
+
 class PagadorItem(BaseModel):
     """A single employer/payer record (mirrors AEAT Datos Fiscales structure)."""
     nombre: str = ""
@@ -144,6 +176,10 @@ class IRPFEstimateRequest(BaseModel):
     perdidas_gp_ahorro_anteriores: Optional[Dict[int, float]] = None
     perdidas_rcm_anteriores: Optional[Dict[int, float]] = None
     perdidas_gp_general_anteriores: Optional[Dict[int, float]] = None
+    # Venta de inmuebles — GP transmision patrimonial (Art. 33-38 + DT 9a LIRPF)
+    ventas_inmuebles: Optional[List[VentaInmueble]] = None
+    # Segundo declarante para tributacion conjunta real (Art. 82-84 LIRPF)
+    segundo_declarante: Optional[SegundoDeclarante] = None
 
 
 class IRPFBreakdown(BaseModel):
@@ -203,6 +239,8 @@ class IRPFEstimateResponse(BaseModel):
     # Fase 5: Deducciones autonómicas
     deducciones_autonomicas: List[dict] = Field(default_factory=list)
     total_deducciones_autonomicas: float = 0
+    # GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF)
+    ganancias_inmuebles: Optional[dict] = None
     trabajo: Optional[IRPFBreakdown] = None
     actividad: Optional[ActivityBreakdown] = None
     # Creator-specific response fields
@@ -211,6 +249,8 @@ class IRPFEstimateResponse(BaseModel):
     iae_seleccionado: Optional[str] = None
     # Obligacion de declarar (Art. 96 LIRPF)
     obligacion_declarar: Optional[ObligacionDeclarar] = None
+    # Segundo declarante desglose (Art. 82-84 LIRPF)
+    segundo_declarante_desglose: Optional[dict] = None
     error: Optional[str] = None
 
 
@@ -509,6 +549,10 @@ async def estimate_irpf(
             num_descendientes_discapacidad_65=body.num_descendientes_discapacidad_65,
             num_ascendientes_discapacidad_33=body.num_ascendientes_discapacidad_33,
             num_ascendientes_discapacidad_65=body.num_ascendientes_discapacidad_65,
+            # GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF)
+            ventas_inmuebles=[v.model_dump() for v in body.ventas_inmuebles] if body.ventas_inmuebles else None,
+            # Segundo declarante (Art. 82-84 LIRPF)
+            segundo_declarante=body.segundo_declarante.model_dump() if body.segundo_declarante else None,
         )
 
         # Try requested year, fallback to year-1
@@ -562,6 +606,7 @@ async def estimate_irpf(
             gravamen_especial_loterias=round(result.get("gravamen_especial_loterias", 0), 2),
             deducciones_autonomicas=ccaa_deductions_list,
             total_deducciones_autonomicas=round(result.get("deducciones_autonomicas_total", 0), 2),
+            ganancias_inmuebles=result.get("ganancias_inmuebles"),
             trabajo=IRPFBreakdown(
                 ingresos_brutos=trabajo.get("ingresos_brutos", 0),
                 gastos_deducibles=trabajo.get("gastos_deducibles", 0),
@@ -587,6 +632,7 @@ async def estimate_irpf(
             ),
             iae_seleccionado=body.epigrafe_iae if body.epigrafe_iae else None,
             obligacion_declarar=ObligacionDeclarar(**obligacion),
+            segundo_declarante_desglose=result.get("segundo_declarante_desglose"),
         )
 
     except Exception as e:

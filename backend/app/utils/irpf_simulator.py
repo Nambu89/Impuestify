@@ -28,6 +28,7 @@ from app.utils.calculators.rental_income import RentalIncomeCalculator
 from app.utils.calculators.mpyf import MPYFCalculator
 from app.utils.calculators.activity_income import ActivityIncomeCalculator
 from app.utils.calculators.imputed_income import ImputedIncomeCalculator
+from app.utils.calculators.capital_gains_property import PropertyCapitalGainsCalculator
 from app.utils.regime_classifier import classify_regime
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,7 @@ class IRPFSimulator:
         self.rental = RentalIncomeCalculator(self._repo)
         self.mpyf = MPYFCalculator(self._repo)
         self.imputed = ImputedIncomeCalculator()
+        self.property_gains = PropertyCapitalGainsCalculator()
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -208,6 +210,8 @@ class IRPFSimulator:
         # --- Multi-pagador / retribuciones especie ---
         retribuciones_especie: float = 0,
         ingresos_cuenta: float = 0,
+        # --- GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF) ---
+        ventas_inmuebles: Optional[List[Dict]] = None,
         **_ignored,
     ) -> Dict[str, Any]:
         """
@@ -304,6 +308,16 @@ class IRPFSimulator:
 
         base_ahorro = ahorro_result["base_ahorro"] if ahorro_result else 0.0
 
+        # --- 4a-bis. GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF) ---
+        ganancias_inmuebles_result = None
+        if ventas_inmuebles:
+            ganancias_inmuebles_result = await self.property_gains.calculate(
+                ventas=ventas_inmuebles,
+                year=year,
+            )
+            gp_inmuebles_neta = ganancias_inmuebles_result["ganancia_neta_total"]
+            base_ahorro += gp_inmuebles_neta
+
         # --- 5. Apply foral unified scale to base imponible general ---
         foral_scale = await self._get_foral_scale(jurisdiction, year)
         cuota_general, breakdown_foral = self._irpf_calc._apply_scale(
@@ -312,7 +326,18 @@ class IRPFSimulator:
 
         # Savings: use the common savings scale (foral territories also apply
         # escalas del ahorro similar to comun; use SavingsIncomeCalculator result)
-        cuota_ahorro = ahorro_result["cuota_ahorro_total"] if ahorro_result else 0.0
+        # If property gains were added, recalculate savings tax on the full base_ahorro
+        if ganancias_inmuebles_result and ganancias_inmuebles_result["ganancia_neta_total"] > 0:
+            if base_ahorro > 0:
+                ahorro_scale_est = await self.savings._get_ahorro_scale("Estatal", year)
+                ahorro_scale_aut = await self.savings._get_ahorro_scale(jurisdiction, year)
+                cuota_ahorro_est, _ = self.savings._apply_scale(base_ahorro, ahorro_scale_est)
+                cuota_ahorro_aut, _ = self.savings._apply_scale(base_ahorro, ahorro_scale_aut) if ahorro_scale_aut else (0.0, [])
+                cuota_ahorro = round(cuota_ahorro_est + cuota_ahorro_aut, 2)
+            else:
+                cuota_ahorro = 0.0
+        else:
+            cuota_ahorro = ahorro_result["cuota_ahorro_total"] if ahorro_result else 0.0
 
         # --- 6. Apply personal/family minimums as DIRECT quota deductions ---
         minimos_total = self._compute_foral_minimos(
@@ -441,6 +466,8 @@ class IRPFSimulator:
             "retenciones_ahorro": round(retenciones_ahorro, 2),
             "breakdown_estatal": [],
             "breakdown_autonomica": [],
+            # GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF)
+            "ganancias_inmuebles": ganancias_inmuebles_result,
         }
 
     async def simulate(
@@ -588,6 +615,10 @@ class IRPFSimulator:
         # --- XSD Gap: Discapacidad ascendientes MPYF (Art. 60.3, casilla 0520) ---
         num_ascendientes_discapacidad_33: int = 0,
         num_ascendientes_discapacidad_65: int = 0,
+        # --- GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF) ---
+        ventas_inmuebles: Optional[List[Dict]] = None,
+        # --- Segundo declarante para tributacion conjunta real (Art. 82-84 LIRPF) ---
+        segundo_declarante: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Run a complete IRPF simulation.
@@ -711,6 +742,7 @@ class IRPFSimulator:
                 gastos_suministros_alquiler=gastos_suministros_alquiler,
                 retribuciones_especie=retribuciones_especie,
                 ingresos_cuenta=ingresos_cuenta,
+                ventas_inmuebles=ventas_inmuebles,
             )
 
         # --- Common regime (comun / ceuta_melilla / canarias) ---
@@ -868,6 +900,111 @@ class IRPFSimulator:
                 reduccion_tributacion_conjunta = 3400.0
             bi_general = max(0, bi_general - reduccion_tributacion_conjunta)
 
+        # --- 3e. Segundo declarante en tributacion conjunta (Art. 82-84 LIRPF) ---
+        # When filing jointly with a second declarant, SUM their income into the
+        # combined base. Their personal minimum is added to MPYF later.
+        segundo_declarante_desglose = None
+        sd_ahorro_extra = 0.0
+        sd_mpyf_contribuyente_extra = 0  # edad del 2o declarante para MPYF
+        sd_discapacidad = 0
+        if tributacion_conjunta and segundo_declarante:
+            sd = segundo_declarante
+            sd_trabajo = sd.get("ingresos_trabajo", 0)
+            sd_actividad = sd.get("ingresos_actividad", 0)
+            sd_gastos_act = sd.get("gastos_actividad", 0)
+            sd_alquiler = sd.get("ingresos_alquiler", 0)
+            sd_gastos_alq = sd.get("gastos_alquiler", 0)
+            sd_intereses = sd.get("intereses", 0)
+            sd_dividendos = sd.get("dividendos", 0)
+            sd_ganancias_pat = sd.get("ganancias_patrimoniales", 0)
+            sd_edad = sd.get("edad", 30)
+            sd_discapacidad = sd.get("discapacidad", 0)
+            sd_pp = sd.get("aportaciones_plan_pensiones", 0)
+
+            # 2o declarante: rendimiento neto del trabajo
+            sd_rend_trabajo = 0.0
+            if sd_trabajo > 0:
+                sd_trabajo_result = await self.work.calculate(
+                    ingresos_brutos=sd_trabajo,
+                    ss_empleado=0,
+                    year=year,
+                )
+                sd_rend_trabajo = sd_trabajo_result["rendimiento_neto_reducido"]
+
+            # 2o declarante: rendimiento neto de actividad
+            sd_rend_actividad = 0.0
+            if sd_actividad > 0:
+                sd_actividad_result = await self.activity.calculate(
+                    ingresos_actividad=sd_actividad,
+                    gastos_actividad=sd_gastos_act,
+                    year=year,
+                )
+                sd_rend_actividad = sd_actividad_result["rendimiento_neto_reducido"]
+
+            # 2o declarante: rendimiento neto de alquiler
+            sd_rend_alquiler = 0.0
+            if sd_alquiler > 0:
+                sd_rental_result = await self.rental.calculate(
+                    ingresos_alquiler=sd_alquiler,
+                    gastos_comunidad=sd_gastos_alq,
+                    year=year,
+                )
+                sd_rend_alquiler = sd_rental_result["rendimiento_neto_reducido"]
+
+            # Sum 2o declarante's general income into combined base
+            sd_bi_general = sd_rend_trabajo + sd_rend_actividad + sd_rend_alquiler
+
+            # 2o declarante: reduccion planes pensiones
+            sd_reduccion_pp = 0.0
+            if sd_pp > 0:
+                sd_own_limit = min(sd_pp, 1500)
+                sd_pct_limit = sd_rend_trabajo * 0.30 if sd_rend_trabajo > 0 else 0
+                sd_reduccion_pp = min(sd_own_limit, sd_pct_limit)
+                sd_reduccion_pp = max(0, sd_reduccion_pp)
+                sd_bi_general = max(0, sd_bi_general - sd_reduccion_pp)
+
+            bi_general += sd_bi_general
+
+            # 2o declarante: ahorro (intereses + dividendos + ganancias patrimoniales)
+            sd_ahorro_extra = sd_intereses + sd_dividendos + sd_ganancias_pat
+
+            # Store edad and discapacidad for MPYF calculation
+            sd_mpyf_contribuyente_extra = sd_edad
+
+            # 2o declarante: GP transmision inmuebles (Art. 33-38 + DT 9a LIRPF)
+            sd_ventas_inmuebles = sd.get("ventas_inmuebles")
+            sd_ganancias_inmuebles_result = None
+            sd_gp_inmuebles_neta = 0.0
+            if sd_ventas_inmuebles:
+                sd_ventas_dicts = sd_ventas_inmuebles
+                if hasattr(sd_ventas_inmuebles[0], "model_dump"):
+                    sd_ventas_dicts = [v.model_dump() for v in sd_ventas_inmuebles]
+                sd_ganancias_inmuebles_result = await self.property_gains.calculate(
+                    ventas=sd_ventas_dicts,
+                    year=year,
+                )
+                sd_gp_inmuebles_neta = sd_ganancias_inmuebles_result["ganancia_neta_total"]
+                sd_ahorro_extra += sd_gp_inmuebles_neta
+
+            segundo_declarante_desglose = {
+                "ingresos_trabajo": sd_trabajo,
+                "rendimiento_neto_trabajo": round(sd_rend_trabajo, 2),
+                "ingresos_actividad": sd_actividad,
+                "rendimiento_neto_actividad": round(sd_rend_actividad, 2),
+                "ingresos_alquiler": sd_alquiler,
+                "rendimiento_neto_alquiler": round(sd_rend_alquiler, 2),
+                "base_imponible_general_sd": round(sd_bi_general, 2),
+                "reduccion_planes_pensiones_sd": round(sd_reduccion_pp, 2),
+                "ahorro_sd": round(sd_ahorro_extra, 2),
+                "edad": sd_edad,
+                "discapacidad": sd_discapacidad,
+                "ganancias_inmuebles_sd": sd_ganancias_inmuebles_result,
+            }
+            logger.info(
+                "2o declarante: BI general=%.2f, ahorro=%.2f (incl GP inmuebles=%.2f), edad=%d",
+                sd_bi_general, sd_ahorro_extra, sd_gp_inmuebles_neta, sd_edad,
+            )
+
         # --- 4. Savings income (if any) ---
         # Includes rendimientos del capital mobiliario AND ganancias patrimoniales del ahorro
         _has_ahorro = (
@@ -896,6 +1033,21 @@ class IRPFSimulator:
             )
 
         base_ahorro = ahorro_result["base_ahorro"] if ahorro_result else 0.0
+
+        # Add segundo declarante ahorro to the combined savings base
+        if sd_ahorro_extra > 0:
+            base_ahorro += sd_ahorro_extra
+
+        # --- 4a-bis. GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF) ---
+        # Property capital gains go to base del ahorro (Art. 46 LIRPF)
+        ganancias_inmuebles_result = None
+        if ventas_inmuebles:
+            ganancias_inmuebles_result = await self.property_gains.calculate(
+                ventas=ventas_inmuebles,
+                year=year,
+            )
+            gp_inmuebles_neta = ganancias_inmuebles_result["ganancia_neta_total"]
+            base_ahorro += gp_inmuebles_neta
 
         # --- 4b. General base loss compensation (Art. 48 LIRPF) ---
         loss_general_result = None
@@ -934,6 +1086,40 @@ class IRPFSimulator:
             num_ascendientes_discapacidad_65=num_ascendientes_discapacidad_65,
         )
 
+        # --- 6b. Add segundo declarante personal minimum to MPYF (Art. 82-84 LIRPF) ---
+        # In joint filing, both declarants contribute their personal minimum.
+        if tributacion_conjunta and segundo_declarante and sd_mpyf_contribuyente_extra > 0:
+            est_params = await self._repo.get_params("mpyf", year, "Estatal")
+            aut_params = await self._repo.get_with_fallback("mpyf", year, jurisdiction)
+
+            def _sd_personal_min(params, edad, disc):
+                m = 0.0
+                if edad >= 75:
+                    m += params.get("contribuyente_75", 0)
+                elif edad >= 65:
+                    m += params.get("contribuyente_65", 0)
+                else:
+                    m += params.get("contribuyente", 0)
+                # Disability of 2nd declarant (Art. 60.1)
+                if disc >= 65:
+                    m += params.get("discapacidad_65_plus", 0)
+                    m += params.get("gastos_asistencia", 0)
+                elif disc >= 33:
+                    m += params.get("discapacidad_33_65", 0)
+                return m
+
+            sd_mpyf_est = _sd_personal_min(est_params, sd_mpyf_contribuyente_extra, sd_discapacidad)
+            sd_mpyf_aut = _sd_personal_min(aut_params, sd_mpyf_contribuyente_extra, sd_discapacidad)
+            mpyf_result["mpyf_estatal"] = round(mpyf_result["mpyf_estatal"] + sd_mpyf_est, 2)
+            mpyf_result["mpyf_autonomico"] = round(mpyf_result["mpyf_autonomico"] + sd_mpyf_aut, 2)
+            if segundo_declarante_desglose:
+                segundo_declarante_desglose["mpyf_personal_estatal"] = round(sd_mpyf_est, 2)
+                segundo_declarante_desglose["mpyf_personal_autonomico"] = round(sd_mpyf_aut, 2)
+            logger.info(
+                "2o declarante MPYF: estatal=+%.2f, autonomico=+%.2f",
+                sd_mpyf_est, sd_mpyf_aut,
+            )
+
         # --- 7. Apply MPYF: subtract MPYF quota from cuota íntegra ---
         state_scale = await self._irpf_calc._get_scale("Estatal", year)
         ccaa_key = (
@@ -958,7 +1144,22 @@ class IRPFSimulator:
         # 60% deduction on the cuota íntegra (estatal + autonómica + ahorro)
         # for income earned by residents in Ceuta or Melilla.
         deduccion_ceuta_melilla = 0.0
-        cuota_ahorro = ahorro_result["cuota_ahorro_total"] if ahorro_result else 0.0
+        # If property gains were added, recalculate savings tax on the full base_ahorro
+        if ganancias_inmuebles_result and ganancias_inmuebles_result["ganancia_neta_total"] > 0:
+            # Recalculate savings tax on the total base_ahorro (which now includes property GP)
+            if base_ahorro > 0:
+                ahorro_scale_est = await self.savings._get_ahorro_scale("Estatal", year)
+                ahorro_scale_aut = await self.savings._get_ahorro_scale(
+                    "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction,
+                    year,
+                )
+                cuota_ahorro_est, _ = self.savings._apply_scale(base_ahorro, ahorro_scale_est)
+                cuota_ahorro_aut, _ = self.savings._apply_scale(base_ahorro, ahorro_scale_aut) if ahorro_scale_aut else (0.0, [])
+                cuota_ahorro = round(cuota_ahorro_est + cuota_ahorro_aut, 2)
+            else:
+                cuota_ahorro = 0.0
+        else:
+            cuota_ahorro = ahorro_result["cuota_ahorro_total"] if ahorro_result else 0.0
 
         if ceuta_melilla:
             cuota_integra_total = general_result["cuota_total"] + cuota_ahorro
@@ -1170,4 +1371,8 @@ class IRPFSimulator:
             "tipo_resultado": tipo_resultado,
             # Loss compensation (Art. 48-49 LIRPF)
             "loss_compensation_general": loss_general_result,
+            # GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF)
+            "ganancias_inmuebles": ganancias_inmuebles_result,
+            # Segundo declarante desglose (Art. 82-84 LIRPF)
+            "segundo_declarante_desglose": segundo_declarante_desglose,
         }

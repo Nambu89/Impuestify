@@ -104,7 +104,7 @@ def _autonomica_scale(ccaa: str, year: int = 2024) -> list[dict]:
             {"jurisdiction": "Madrid", "year": year, "scale_type": "general",
              "tramo_num": 5, "base_hasta": None, "cuota_integra": 7127.54, "resto_base": None, "tipo_aplicable": 20.5},
         ]
-    elif ccaa in ("Sevilla", "Andalucia"):
+    elif ccaa in ("Sevilla", "Andalucia", "Andalucía"):
         return [
             {"jurisdiction": ccaa, "year": year, "scale_type": "general",
              "tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
@@ -126,7 +126,7 @@ def _autonomica_scale(ccaa: str, year: int = 2024) -> list[dict]:
             {"jurisdiction": ccaa, "year": year, "scale_type": "general",
              "tramo_num": 4, "base_hasta": None, "cuota_integra": 4362.75, "resto_base": None, "tipo_aplicable": 18.5},
         ]
-    elif ccaa in ("Barcelona", "Cataluna"):
+    elif ccaa in ("Barcelona", "Cataluna", "Cataluña"):
         return [
             {"jurisdiction": ccaa, "year": year, "scale_type": "general",
              "tramo_num": 1, "base_hasta": 17707.2, "cuota_integra": 0, "resto_base": 17707.2, "tipo_aplicable": 10.5},
@@ -227,8 +227,11 @@ def _default_params() -> dict:
 async def _run_simulation(jurisdiction: str, year: int = 2024, **kwargs):
     """Run IRPFSimulator.simulate() with mocked DB + scales."""
     from app.utils.irpf_simulator import IRPFSimulator
+    from app.utils.ccaa_constants import normalize_ccaa
 
-    ccaa_key = jurisdiction
+    # Normalize jurisdiction so mock scale rows match what the simulator queries
+    # (e.g. "Andalucia" → "Andalucía" with tilde)
+    ccaa_key = normalize_ccaa(jurisdiction)
     scales = _estatal_scale(year) + _autonomica_scale(ccaa_key, year)
 
     # For foral jurisdictions, add foral scale

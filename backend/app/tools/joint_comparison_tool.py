@@ -133,12 +133,13 @@ async def compare_joint_individual_executor(
     """
     Ejecuta la comparativa conjunta vs individual.
 
-    Llama a IRPFSimulator.simulate() 3 veces:
+    Calcula hasta 4 escenarios:
       1. Declarante en declaracion individual.
       2. Conyuge en declaracion individual.
-      3. Ambos en declaracion conjunta matrimonio (ingresos sumados).
+      3. Conjunta matrimonio (3.400 EUR reduccion, usando segundo_declarante).
+      4. Conjunta monoparental (2.150 EUR reduccion, si aplica).
 
-    Retorna tabla comparativa + recomendacion.
+    Retorna tabla comparativa + recomendacion de la opcion mas favorable.
     """
     from app.utils.irpf_simulator import IRPFSimulator
     from app.utils.ccaa_constants import normalize_ccaa
@@ -165,6 +166,13 @@ async def compare_joint_individual_executor(
         madre_trabajadora_ss=madre_trabajadora_ss,
         gastos_guarderia_anual=0.0,
     )
+
+    # Build segundo_declarante dict for conjunta scenarios
+    segundo_declarante_data = {
+        "ingresos_trabajo": ingresos_conyuge,
+        "aportaciones_plan_pensiones": aportaciones_pp_conyuge,
+        "edad": edad_declarante,  # Assume same age if not specified
+    }
 
     # ------------------------------------------------------------------
     # Escenario 1: Declarante individual
@@ -199,19 +207,32 @@ async def compare_joint_individual_executor(
     )
 
     # ------------------------------------------------------------------
-    # Escenario 3: Conjunta matrimonio
-    # Se suman todos los ingresos, retenciones y aportaciones PP.
-    # La reduccion por conjunta (3400 EUR) la aplica el simulador
-    # automaticamente al detectar tributacion_conjunta=True y
-    # tipo_unidad_familiar="matrimonio".
+    # Escenario 3: Conjunta matrimonio (3.400 EUR reduccion)
+    # Usa segundo_declarante para calculo real con MPYF de ambos.
     # ------------------------------------------------------------------
-    r_conjunta = await simulator.simulate(
-        ingresos_trabajo=ingresos_declarante + ingresos_conyuge,
+    r_conjunta_matrimonio = await simulator.simulate(
+        ingresos_trabajo=ingresos_declarante,
         tributacion_conjunta=True,
         tipo_unidad_familiar="matrimonio",
-        aportaciones_plan_pensiones=aportaciones_pp + aportaciones_pp_conyuge,
+        aportaciones_plan_pensiones=aportaciones_pp,
         donativos_ley_49_2002=donativos + donativos_conyuge,
         retenciones_trabajo=retenciones_declarante + retenciones_conyuge,
+        segundo_declarante=segundo_declarante_data,
+        **base_familiar,
+    )
+
+    # ------------------------------------------------------------------
+    # Escenario 4: Conjunta monoparental (2.150 EUR reduccion)
+    # Solo aplica a unidades familiares monoparentales (Art. 82.2 LIRPF).
+    # Incluido para completitud de la comparativa.
+    # ------------------------------------------------------------------
+    r_conjunta_monoparental = await simulator.simulate(
+        ingresos_trabajo=ingresos_declarante,
+        tributacion_conjunta=True,
+        tipo_unidad_familiar="monoparental",
+        aportaciones_plan_pensiones=aportaciones_pp,
+        donativos_ley_49_2002=donativos,
+        retenciones_trabajo=retenciones_declarante,
         **base_familiar,
     )
 
@@ -220,23 +241,36 @@ async def compare_joint_individual_executor(
     # ------------------------------------------------------------------
     cuota_declarante = r_declarante.get("cuota_diferencial", 0.0)
     cuota_conyuge = r_conyuge.get("cuota_diferencial", 0.0)
-    cuota_conjunta = r_conjunta.get("cuota_diferencial", 0.0)
+    cuota_conjunta_mat = r_conjunta_matrimonio.get("cuota_diferencial", 0.0)
+    cuota_conjunta_mono = r_conjunta_monoparental.get("cuota_diferencial", 0.0)
 
     total_individual = cuota_declarante + cuota_conyuge
-    diferencia = cuota_conjunta - total_individual  # positivo => conjunta cuesta mas
 
-    recomendacion = "conjunta" if cuota_conjunta < total_individual else "individual"
-    ahorro = abs(diferencia)
+    # Find the best option
+    opciones = {
+        "individual": total_individual,
+        "conjunta_matrimonio": cuota_conjunta_mat,
+        "conjunta_monoparental": cuota_conjunta_mono,
+    }
+    recomendacion = min(opciones, key=opciones.get)
+    mejor_cuota = opciones[recomendacion]
+    ahorro_vs_individual = total_individual - mejor_cuota
 
-    if recomendacion == "conjunta":
+    if recomendacion == "individual":
         nota = (
-            f"La declaracion conjunta ahorra {ahorro:.2f} EUR respecto a dos "
-            f"declaraciones individuales."
+            f"Mejor declarar por separado: las declaraciones individuales "
+            f"ahorran {abs(mejor_cuota - min(cuota_conjunta_mat, cuota_conjunta_mono)):.2f} EUR "
+            f"respecto a la mejor opcion conjunta."
+        )
+    elif recomendacion == "conjunta_matrimonio":
+        nota = (
+            f"La declaracion conjunta (matrimonio) ahorra {ahorro_vs_individual:.2f} EUR "
+            f"respecto a dos declaraciones individuales."
         )
     else:
         nota = (
-            f"Mejor declarar por separado: las declaraciones individuales "
-            f"ahorran {ahorro:.2f} EUR respecto a la conjunta."
+            f"La declaracion conjunta monoparental ahorra {ahorro_vs_individual:.2f} EUR "
+            f"respecto a la declaracion individual."
         )
 
     return {
@@ -253,14 +287,28 @@ async def compare_joint_individual_executor(
             },
             "total_pagar": round(total_individual, 2),
         },
+        "escenario_conjunta_matrimonio": {
+            "ingresos_conjuntos": ingresos_declarante + ingresos_conyuge,
+            "cuota_diferencial": round(cuota_conjunta_mat, 2),
+            "tipo_efectivo": r_conjunta_matrimonio.get("tipo_efectivo_total", 0.0),
+            "reduccion_aplicada": r_conjunta_matrimonio.get("reduccion_tributacion_conjunta", 3400.0),
+            "segundo_declarante": r_conjunta_matrimonio.get("segundo_declarante_desglose"),
+        },
+        "escenario_conjunta_monoparental": {
+            "ingresos_declarante": ingresos_declarante,
+            "cuota_diferencial": round(cuota_conjunta_mono, 2),
+            "tipo_efectivo": r_conjunta_monoparental.get("tipo_efectivo_total", 0.0),
+            "reduccion_aplicada": r_conjunta_monoparental.get("reduccion_tributacion_conjunta", 2150.0),
+        },
+        # Backwards compatibility: escenario_conjunta = matrimonio
         "escenario_conjunta": {
             "ingresos_conjuntos": ingresos_declarante + ingresos_conyuge,
-            "cuota_diferencial": round(cuota_conjunta, 2),
-            "tipo_efectivo": r_conjunta.get("tipo_efectivo_total", 0.0),
-            "reduccion_aplicada": r_conjunta.get("reduccion_tributacion_conjunta", 3400.0),
+            "cuota_diferencial": round(cuota_conjunta_mat, 2),
+            "tipo_efectivo": r_conjunta_matrimonio.get("tipo_efectivo_total", 0.0),
+            "reduccion_aplicada": r_conjunta_matrimonio.get("reduccion_tributacion_conjunta", 3400.0),
         },
-        "diferencia": round(diferencia, 2),
+        "diferencia": round(cuota_conjunta_mat - total_individual, 2),
         "recomendacion": recomendacion,
-        "ahorro": round(ahorro, 2),
+        "ahorro": round(abs(ahorro_vs_individual), 2),
         "nota": nota,
     }

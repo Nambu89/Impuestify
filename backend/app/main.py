@@ -489,6 +489,14 @@ app.include_router(crypto_router)
 from app.routers.rag_quality import router as rag_quality_router
 app.include_router(rag_quality_router)
 
+# Modelo 720/721 (Bienes y Cripto Extranjero)
+from app.routers.modelo_720 import router as modelo_720_router
+app.include_router(modelo_720_router)
+
+# Plusvalia Municipal (IIVTNU)
+from app.routers.plusvalia import router as plusvalia_router
+app.include_router(plusvalia_router)
+
 # Prometheus instrumentation with custom metrics
 from app.metrics import setup_instrumentator, set_app_info
 setup_instrumentator(app)

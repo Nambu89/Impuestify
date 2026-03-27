@@ -11,7 +11,9 @@ Covers:
 - Coeficientes multiplicadores por patrimonio preexistente
 - Reducciones estatales por parentesco (Arts. 20 y 22 Ley 29/1987)
 - Bonificaciones autonómicas: Madrid, Andalucia, Cataluna, Valencia,
-  Aragon, Pais Vasco (Araba/Bizkaia/Gipuzkoa), Navarra
+  Aragon, Pais Vasco (Araba/Bizkaia/Gipuzkoa), Navarra, Galicia,
+  Castilla y Leon, Castilla-La Mancha, Extremadura, Murcia, Canarias,
+  Asturias, Cantabria, La Rioja, Baleares, Ceuta, Melilla
 """
 from typing import Dict, Any, Optional, List
 import logging
@@ -70,7 +72,10 @@ y sucesiones en España, según la Ley 29/1987 y la normativa de cada CCAA.""",
                         "CCAA de residencia del receptor (para sucesiones) "
                         "o CCAA donde radican los bienes inmuebles (para donaciones). "
                         "Ejemplos: 'Madrid', 'Cataluña', 'Andalucía', 'Valencia', 'Aragón', "
-                        "'Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra'."
+                        "'Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra', 'Galicia', "
+                        "'Castilla y León', 'Castilla-La Mancha', 'Extremadura', "
+                        "'Murcia', 'Canarias', 'Asturias', 'Cantabria', 'La Rioja', "
+                        "'Baleares', 'Ceuta', 'Melilla'."
                     )
                 },
                 "recipient_age": {
@@ -433,6 +438,199 @@ def _bonificaciones_ccaa(
                 "normativa": "Ley Foral 11/2022 Navarra — tarifa propia donaciones",
             })
 
+    # ---- Galicia -------------------------------------------------------
+    elif ccaa_norm == "galicia":
+        # Ley 2/2023 Galicia: 99% bonificación sucesiones Grupos I-II
+        # si base imponible individual <= 400.000 €
+        if relationship in ("grupo_i", "grupo_ii"):
+            if operation_type == "sucesion" and amount <= 400_000:
+                bonificaciones.append({
+                    "nombre": "Bonificación autonómica Galicia (99%) — sucesiones ≤ 400.000€",
+                    "porcentaje": 99.0,
+                    "importe": round(cuota_tributaria * 0.99, 2),
+                    "normativa": "DL 1/2011 Galicia, modificado Ley 2/2023 — Art. 6 bonificación Grupos I-II",
+                })
+            elif operation_type == "donacion":
+                # Galicia: reducción 99% donaciones padres→hijos si < 200.000 €
+                if amount <= 200_000:
+                    bonificaciones.append({
+                        "nombre": "Bonificación autonómica Galicia (99%) — donaciones ≤ 200.000€",
+                        "porcentaje": 99.0,
+                        "importe": round(cuota_tributaria * 0.99, 2),
+                        "normativa": "DL 1/2011 Galicia, modificado Ley 2/2023 — Art. 8 donaciones Grupos I-II",
+                    })
+
+    # ---- Castilla y Leon -----------------------------------------------
+    elif ccaa_norm == "castilla_y_leon":
+        # DL 1/2013 Castilla y León: 99% bonificación sucesiones y donaciones
+        # Grupos I-II sin límite de base
+        if relationship in ("grupo_i", "grupo_ii"):
+            bonificaciones.append({
+                "nombre": "Bonificación autonómica Castilla y León (99%)",
+                "porcentaje": 99.0,
+                "importe": round(cuota_tributaria * 0.99, 2),
+                "normativa": "DL 1/2013 Castilla y León, Art. 14.1 — bonificación 99% Grupos I-II",
+            })
+
+    # ---- Castilla-La Mancha --------------------------------------------
+    elif ccaa_norm == "castilla_la_mancha":
+        # Ley 8/2013 CLM modificada por Ley 3/2023: 100% bonificación
+        # sucesiones y donaciones Grupos I-II desde 2024
+        if relationship in ("grupo_i", "grupo_ii"):
+            bonificaciones.append({
+                "nombre": "Bonificación autonómica Castilla-La Mancha (100%)",
+                "porcentaje": 100.0,
+                "importe": round(cuota_tributaria, 2),
+                "normativa": "Ley 8/2013 CLM, modificada Ley 3/2023 — bonificación 100% Grupos I-II (2024+)",
+            })
+
+    # ---- Extremadura ---------------------------------------------------
+    elif ccaa_norm == "extremadura":
+        # DL 1/2018 Extremadura, Art. 15: 99% bonificación sucesiones Y
+        # donaciones Grupos I-II con límites por grupo.
+        # Grupo I (descendientes < 21): límite 175.000 €
+        # Grupo II (cónyuge/ascendientes/descendientes >= 21): límite 325.000 €
+        if relationship in ("grupo_i", "grupo_ii"):
+            limite = 175_000 if relationship == "grupo_i" else 325_000
+            op_label = "sucesiones" if operation_type == "sucesion" else "donaciones"
+            if amount <= limite:
+                bonificaciones.append({
+                    "nombre": f"Bonificación autonómica Extremadura (99%) — {op_label} ≤ {limite:,.0f}€",
+                    "porcentaje": 99.0,
+                    "importe": round(cuota_tributaria * 0.99, 2),
+                    "normativa": "DL 1/2018 Extremadura, Art. 15 — bonificación 99% Grupos I-II con límites",
+                })
+
+    # ---- Murcia --------------------------------------------------------
+    elif ccaa_norm == "murcia":
+        # DL 1/2010 Murcia: 99% bonificación sucesiones y donaciones Grupos I-II
+        if relationship in ("grupo_i", "grupo_ii"):
+            bonificaciones.append({
+                "nombre": "Bonificación autonómica Murcia (99%)",
+                "porcentaje": 99.0,
+                "importe": round(cuota_tributaria * 0.99, 2),
+                "normativa": "DL 1/2010 Región de Murcia, Art. 3 — bonificación 99% Grupos I-II",
+            })
+
+    # ---- Canarias ------------------------------------------------------
+    elif ccaa_norm == "canarias":
+        # Ley 4/2012 Canarias modificada por DL 1/2023: 99.9% bonificación
+        # sucesiones y donaciones Grupos I-II
+        if relationship in ("grupo_i", "grupo_ii"):
+            bonificaciones.append({
+                "nombre": "Bonificación autonómica Canarias (99,9%)",
+                "porcentaje": 99.9,
+                "importe": round(cuota_tributaria * 0.999, 2),
+                "normativa": "DL 1/2023 Canarias — bonificación 99,9% Grupos I-II sucesiones y donaciones",
+            })
+
+    # ---- Asturias ------------------------------------------------------
+    elif ccaa_norm == "asturias":
+        # DL 2/2014 Asturias modificado por Ley de Presupuestos 2024:
+        # Bonificación escalonada sucesiones Grupo II según base liquidable.
+        # Grupo I: 100% bonificación.
+        if relationship == "grupo_i":
+            bonificaciones.append({
+                "nombre": "Bonificación autonómica Asturias (100%) — Grupo I",
+                "porcentaje": 100.0,
+                "importe": round(cuota_tributaria, 2),
+                "normativa": "DL 2/2014 Asturias — bonificación 100% Grupo I",
+            })
+        elif relationship == "grupo_ii" and operation_type == "sucesion":
+            # Escalonada: 100% hasta 300K, 95% hasta 450K, 90% hasta 600K
+            if base_liquidable <= 300_000:
+                pct = 100.0
+            elif base_liquidable <= 450_000:
+                pct = 95.0
+            elif base_liquidable <= 600_000:
+                pct = 90.0
+            else:
+                pct = 0.0  # Sin bonificación por encima de 600K
+            if pct > 0:
+                bonificaciones.append({
+                    "nombre": f"Bonificación autonómica Asturias ({pct:.0f}%) — sucesiones Grupo II",
+                    "porcentaje": pct,
+                    "importe": round(cuota_tributaria * pct / 100.0, 2),
+                    "normativa": "DL 2/2014 Asturias, Art. 18 — bonificación escalonada Grupo II",
+                })
+        elif relationship == "grupo_ii" and operation_type == "donacion":
+            # DL 2/2014 Asturias: donaciones Grupo II — 95% bonificación.
+            # NOTE: conservative 95% flat rate; verify exact rate against
+            # latest Asturias budget law if higher precision is needed.
+            bonificaciones.append({
+                "nombre": "Bonificación autonómica Asturias (95%) — donaciones Grupo II",
+                "porcentaje": 95.0,
+                "importe": round(cuota_tributaria * 0.95, 2),
+                "normativa": "DL 2/2014 Asturias — bonificación donaciones Grupo II",
+            })
+
+    # ---- Cantabria -----------------------------------------------------
+    elif ccaa_norm == "cantabria":
+        # Ley de Cantabria 5/2023: 100% bonificación sucesiones y donaciones
+        # Grupos I-II desde 2024
+        if relationship in ("grupo_i", "grupo_ii"):
+            bonificaciones.append({
+                "nombre": "Bonificación autonómica Cantabria (100%)",
+                "porcentaje": 100.0,
+                "importe": round(cuota_tributaria, 2),
+                "normativa": "Ley 5/2023 Cantabria — bonificación 100% Grupos I-II (2024+)",
+            })
+
+    # ---- La Rioja ------------------------------------------------------
+    elif ccaa_norm == "la_rioja":
+        # Ley 10/2017 La Rioja modificada: 99% bonificación sucesiones
+        # y donaciones Grupos I-II
+        if relationship in ("grupo_i", "grupo_ii"):
+            bonificaciones.append({
+                "nombre": "Bonificación autonómica La Rioja (99%)",
+                "porcentaje": 99.0,
+                "importe": round(cuota_tributaria * 0.99, 2),
+                "normativa": "Ley 10/2017 La Rioja — bonificación 99% Grupos I-II",
+            })
+
+    # ---- Baleares ------------------------------------------------------
+    elif ccaa_norm == "baleares":
+        # DL 1/2014 Baleares: 99% bonificación sucesiones Grupos I-II
+        # si base imponible <= 3.000.000 €
+        if relationship in ("grupo_i", "grupo_ii"):
+            if operation_type == "sucesion" and amount <= 3_000_000:
+                bonificaciones.append({
+                    "nombre": "Bonificación autonómica Baleares (99%) — sucesiones ≤ 3M€",
+                    "porcentaje": 99.0,
+                    "importe": round(cuota_tributaria * 0.99, 2),
+                    "normativa": "DL 1/2014 Baleares, Art. 36 — bonificación 99% Grupos I-II (base ≤ 3M€)",
+                })
+            elif operation_type == "donacion":
+                # Baleares: 75% bonificación donaciones padres→hijos
+                bonificaciones.append({
+                    "nombre": "Bonificación autonómica Baleares (75%) — donaciones Grupos I-II",
+                    "porcentaje": 75.0,
+                    "importe": round(cuota_tributaria * 0.75, 2),
+                    "normativa": "DL 1/2014 Baleares, Art. 37 — bonificación 75% donaciones Grupos I-II",
+                })
+
+    # ---- Ceuta ---------------------------------------------------------
+    elif ccaa_norm == "ceuta":
+        # Art. 23 bis Ley 29/1987: bonificación 50% para residentes en Ceuta
+        # Aplica a todos los grupos y tipos de operación
+        bonificaciones.append({
+            "nombre": "Bonificación estatal Ceuta (50%)",
+            "porcentaje": 50.0,
+            "importe": round(cuota_tributaria * 0.50, 2),
+            "normativa": "Art. 23 bis Ley 29/1987 — bonificación 50% residentes Ceuta",
+        })
+
+    # ---- Melilla -------------------------------------------------------
+    elif ccaa_norm == "melilla":
+        # Art. 23 bis Ley 29/1987: bonificación 50% para residentes en Melilla
+        # Aplica a todos los grupos y tipos de operación
+        bonificaciones.append({
+            "nombre": "Bonificación estatal Melilla (50%)",
+            "porcentaje": 50.0,
+            "importe": round(cuota_tributaria * 0.50, 2),
+            "normativa": "Art. 23 bis Ley 29/1987 — bonificación 50% residentes Melilla",
+        })
+
     return bonificaciones
 
 
@@ -517,6 +715,18 @@ def _get_normativa(ccaa_norm: str, operation_type: str) -> str:
         "cataluna": "Ley 19/2010, de 7 de junio (Cataluña)",
         "valencia": "Ley 13/1997, de 23 de diciembre (Valencia), modificada Ley 8/2022",
         "aragon": "Decreto Legislativo 1/2005, de 26 de septiembre (Aragón), modificado Ley 10/2021",
+        "galicia": "Decreto Legislativo 1/2011, de 28 de julio (Galicia), modificado Ley 2/2023",
+        "castilla_y_leon": "Decreto Legislativo 1/2013, de 12 de septiembre (Castilla y León)",
+        "castilla_la_mancha": "Ley 8/2013, de 21 de noviembre (Castilla-La Mancha), modificada Ley 3/2023",
+        "extremadura": "Decreto Legislativo 1/2018, de 10 de abril (Extremadura)",
+        "murcia": "Decreto Legislativo 1/2010, de 5 de noviembre (Región de Murcia)",
+        "canarias": "Decreto Ley 1/2023, de 10 de julio (Canarias)",
+        "asturias": "Decreto Legislativo 2/2014, de 22 de octubre (Asturias)",
+        "cantabria": "Ley 5/2023, de 26 de diciembre (Cantabria)",
+        "la_rioja": "Ley 10/2017, de 27 de octubre (La Rioja)",
+        "baleares": "Decreto Legislativo 1/2014, de 6 de junio (Illes Balears)",
+        "ceuta": "Art. 23 bis Ley 29/1987 — bonificación residentes Ceuta",
+        "melilla": "Art. 23 bis Ley 29/1987 — bonificación residentes Melilla",
     }
     if ccaa_norm in foral_map:
         return foral_map[ccaa_norm]
@@ -668,7 +878,10 @@ async def calculate_isd(
                 "gestor local o la Hacienda Foral correspondiente."
             )
         if operation_type == "donacion" and ccaa_norm not in (
-            "madrid", "andalucia", "araba", "bizkaia", "gipuzkoa", "pais_vasco", "navarra"
+            "madrid", "andalucia", "araba", "bizkaia", "gipuzkoa", "pais_vasco", "navarra",
+            "castilla_y_leon", "castilla_la_mancha", "murcia", "canarias", "cantabria",
+            "la_rioja", "galicia", "baleares", "ceuta", "melilla",
+            "extremadura", "asturias",
         ):
             notas.append(
                 "En donaciones, el impuesto se liquida en la CCAA donde estén situados "

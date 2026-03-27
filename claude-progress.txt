@@ -7,6 +7,66 @@
 ## Sesiones Recientes
 ---
 
+[2026-03-28] [Sesion 23] - 7 Features Fiscales: GP Inmuebles (Art.35+DT9a+Art.38), Plusvalia Municipal (IIVTNU, 2 metodos), ISD 21/21 CCAA completo, Modelo 720/721, 2o Declarante Conjunta, Pipeline Auto-Ingesta RAG. Compliance audit: 4 fixes (Extremadura donaciones, Asturias Grupo II, plazo 24m Art.38, SD inmuebles). ~170 tests nuevos, 0 regresiones. 8 agentes paralelos via RuFlo.
+
+[2026-03-27] [Sesion 22] - RAG Pipeline Fix + AEAT Crawler + Multi-Agent Upgrade + Marketing
+  REPO: Migrado Nambu89/TaxIA → Nambu89/Impuestify (289 commits conservados)
+  RAG FIX (8 bugs 65-72):
+  - Territory mismatch: RegionDetector → DB source normalization
+  - FTS5: OR entre keywords (antes AND → 0 resultados siempre)
+  - Semantic cache: rechazo stale + prevencion cache poisoning + purge script
+  - Frontend: filtrar sources sin titulo y page=0
+  - Logs: print(flush=True) para Railway
+  SYSTEM PROMPT: Rewrite con tecnicas GPT-5/Claude/NotebookLM (etiquetas contexto_fiscal, nivel 3/10, show dont tell)
+  AEAT CRAWLER:
+  - crawl_aeat_full.py: 7 PDFs (Renta 2025, IVA 2025, Patrimonio, Sociedades, VeriFactu)
+  - crawl_aeat_html.py: 19 paginas HTML con Playwright JS rendering
+  INGESTA: 454 docs, 89,174 chunks, 82,098 embeddings. 29 duplicados limpiados. 47 chunks ruido eliminados
+  PIPELINE: min_chunk_size 100→200, FTS5 auto-rebuild en ingesta
+  MULTI-AGENTE: Superpowers v5.0.6 instalado + 3 skills GSD (fresh-context, wave-execution, atomic-commits)
+  MARKETING: Word con respuestas para plan marketing (Erika Cepeda)
+  CALCULADORA RETENCIONES: Algoritmo AEAT 2026 (47 pag), 28 tests, endpoint publico, pagina /calculadora-retenciones, dark theme, landing + header
+  SHARE CONVERSATIONS: Tabla shared_conversations, 3 endpoints, anonimizacion PII, ShareModal, SharedConversationPage /shared/:token, WhatsApp/Twitter/LinkedIn
+  METRICAS: 1,240+ tests, 72 bugs, 17 commits
+
+[2026-03-26] [PM Coordinator Sesion 21 cont.] - Railway CLI deploy + RAG territory fix + anti-permiso filter
+  - Railway auto-deploy roto (GitHub App permisos). Solucion: deploy via CLI (railway up desde C:\tmp)
+  - Bug RAG encontrado: territory_filter usaba CCAA perfil, no de la pregunta → 0 chunks para Bizkaia
+  - Fix: RegionDetector en chat_stream.py + fallback sin filtro si 0 resultados (commit f5018ac)
+  - Filtro anti-permiso: _filter_permission_asking en chat_stream.py funciona en produccion
+  - TaxAgent: regla "RESPONDE LO QUE PREGUNTAN" + "NO NARRAR PROCESOS INTERNOS"
+  - Business plan B2B gestorias: plans/business-plan-2026.md
+  - RAG evaluator recalibrado (4 metricas)
+  - Responsive CSS parcial (Chat, Header, Home, global)
+  - PENDIENTE: deployar fix RAG (f5018ac) via railway up
+  - 15 commits sin deployar desde las 19:57 del 25/03
+  - GitHub webhooks VACIO — Railway no recibe push events
+  - railway.toml invalido (usa [[services]] inexistente en schema)
+  - railway CLI: login OK, link OK, up FALLA (OneDrive lock / root dir mismatch)
+  - Soluciones intentadas sin exito: empty commit, disconnect/reconnect, cache bust, CLI up
+  - PENDIENTE: copiar a C:\tmp y railway up desde ahi, o arreglar webhook
+  - Fixes no deployados: TaxAgent pide permiso, IRPF default para todo, IAE file, responsive CSS
+  - Otros: business plan B2B gestorias, RAG evaluator recalibrado, post-LLM filter
+
+[2026-03-25] [PM Coordinator Sesion 21] - 408 deducciones 2025 (9 CCAA + 4 forales) + frontend XSD params + E2E Playwright
+  - 9 CCAA seeds: CLM 25, Asturias 26, Cantabria 21, Baleares 24, La Rioja 24, Extremadura 19, Aragon 19, CyL 17, Cataluna 13
+  - 4 forales seed: Araba 15, Bizkaia 15, Gipuzkoa 15, Navarra 15 (EPSV, Norma Foral)
+  - Frontend: 7 params conectados (pension compensatoria, alimentos, doble imposicion, discapacidad desc/asc)
+  - Backend: IRPFEstimateResponse expone 3 campos nuevos
+  - Plan GP transmision inmuebles (Art. 38 + DT 9a)
+  - E2E Playwright: 6/8 PASS (API estimates Madrid/Araba/Canarias + landing pages)
+  - Commits: 3dd7e69, 9c44573 | Push a Railway
+
+[2026-03-25] [PM Coordinator Sesion 20] - Simulador IRPF masivo + Deducciones CCAA
+- Features: Renta imputada multi-inmueble (Art. 85) + Compensacion perdidas anteriores (Art. 48-49)
+- XSD gaps: Pension compensatoria, alimentos hijos, doble imposicion, discapacidad MPYF (5 de 7 HIGH)
+- Auditorias: XSD Modelo 100 (33 gaps) + Deducciones CCAA (260/349 faltaban)
+- Seed deducciones: Valencia 40 + Madrid 23 + Andalucia 17 + Canarias 27 + Galicia 25 + Murcia 28 = 160 nuevas
+- 9/15 CCAA completas al 100%. Gap reducido 74.5% → ~37%
+- Research: Agent Lightning (Microsoft) → SKIP, es training offline no runtime
+- 48 tests nuevos, 0 regresiones. 3 commits: 97fdd56, e022d4b, 96b03a4
+- Pendiente: ejecutar seeds en prod, 6 CCAA restantes, GP transmision inmuebles, frontend params
+
 [2026-03-20] [PM Coordinator Sesion 16] - Multi-Pagadores IRPF + RuFlo Setup
 - Feature: Soporte multi-pagadores como app AEAT (PagadorItem, agregacion, obligacion declarar Art.96 LIRPF)
 - 14 archivos creados/modificados, 23 tests nuevos, 1199 backend PASS, frontend build OK
