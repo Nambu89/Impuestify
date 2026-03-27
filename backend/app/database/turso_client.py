@@ -862,6 +862,21 @@ class TursoClient:
                 updated_at TEXT DEFAULT (datetime('now'))
             )
             """,
+
+            # Shared conversations (public share links)
+            """
+            CREATE TABLE IF NOT EXISTS shared_conversations (
+                id TEXT PRIMARY KEY,
+                share_token TEXT UNIQUE NOT NULL,
+                user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+                conversation_id TEXT REFERENCES conversations(id) ON DELETE CASCADE,
+                title TEXT,
+                messages TEXT NOT NULL,
+                anonymized BOOLEAN DEFAULT 1,
+                created_at TEXT DEFAULT (datetime('now')),
+                view_count INTEGER DEFAULT 0
+            )
+            """,
         ]
         
         try:

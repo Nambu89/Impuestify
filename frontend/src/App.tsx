@@ -42,6 +42,7 @@ const ObligadoDeclararPage = lazy(() => import('./pages/ObligadoDeclararPage'))
 const IvaCreatorsPage = lazy(() => import('./pages/IvaCreatorsPage'))
 const AdminRagQualityPage = lazy(() => import('./pages/AdminRagQualityPage'))
 const CalculadoraRetencionesPage = lazy(() => import('./pages/CalculadoraRetencionesPage'))
+const SharedConversationPage = lazy(() => import('./pages/SharedConversationPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -142,6 +143,7 @@ function App() {
                         }
                     />
                     <Route path="/calculadora-retenciones" element={<CalculadoraRetencionesPage />} />
+                    <Route path="/shared/:token" element={<SharedConversationPage />} />
                     <Route
                         path="/gastos-deducibles"
                         element={

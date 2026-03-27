@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Loader2, FileText, Upload, Zap, Calculator, Search, Shield } from 'lucide-react'
+import { Send, Loader2, FileText, Upload, Zap, Calculator, Search, Shield, Share2 } from 'lucide-react'
+import ShareModal from '../components/ShareModal'
 import Header from '../components/Header'
 import AITransparencyModal from '../components/AITransparencyModal'
 import { useApi } from '../hooks/useApi'
@@ -52,6 +53,7 @@ export default function Chat() {
     const [showNotificationModal, setShowNotificationModal] = useState(false)
     const [notificationAnalysis, setNotificationAnalysis] = useState<any>(null)
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
+    const [showShareModal, setShowShareModal] = useState(false)
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [useStreaming] = useState(true)
     const [onboardingDone, setOnboardingDone] = useState(() => !!localStorage.getItem('onboarding_seen'))
@@ -478,6 +480,16 @@ export default function Chat() {
                     >
                         {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
                     </button>
+                    {activeConversationId && messages.length > 0 && (
+                        <button
+                            type="button"
+                            className="btn chat-share-btn"
+                            onClick={() => setShowShareModal(true)}
+                            title="Compartir conversación"
+                        >
+                            <Share2 size={18} />
+                        </button>
+                    )}
                 </form>
                 <p className="chat-disclaimer">
                     Impuestify usa IA. Verifica siempre la información importante con un profesional.
@@ -554,6 +566,14 @@ export default function Chat() {
                     </button>
                     <NotificationAnalysisDisplay analysis={notificationAnalysis} />
                 </div>
+            )}
+
+            {showShareModal && activeConversationId && (
+                <ShareModal
+                    conversationId={activeConversationId}
+                    conversationTitle={conversations.find(c => c.id === activeConversationId)?.title || 'Conversación'}
+                    onClose={() => setShowShareModal(false)}
+                />
             )}
         </div>
     )

@@ -457,6 +457,10 @@ app.include_router(export_router)
 from app.routers.demo import router as demo_router
 app.include_router(demo_router)
 
+# Shared Conversations (public share links)
+from app.routers.shared import router as shared_router
+app.include_router(shared_router)
+
 # IRPF Live Estimator (lightweight, no LLM)
 from app.routers.irpf_estimate import router as irpf_estimate_router
 app.include_router(irpf_estimate_router)
