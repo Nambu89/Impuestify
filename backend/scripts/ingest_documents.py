@@ -387,7 +387,7 @@ async def ingest(
 
     chunker = DocumentLayoutChunker(
         max_chunk_size=1500,
-        min_chunk_size=100,
+        min_chunk_size=200,
         overlap_size=150,
         preserve_tables=True,
     )
@@ -617,13 +617,37 @@ async def ingest(
 
     # ── Summary ──
     print("=" * 60)
-    print("✅ INGESTA COMPLETADA")
+    print("INGESTA COMPLETADA")
     print(f"   Procesados:  {stats['processed']}")
     print(f"   Saltados:    {stats['skipped']}")
     print(f"   Errores:     {stats['errors']}")
     print(f"   Chunks:      {stats['chunks']}")
     print(f"   Modelo:      {OpenAIEmbeddingGenerator.MODEL} ({OpenAIEmbeddingGenerator.DIMENSIONS}d)")
     print("=" * 60)
+
+    # ── Auto-rebuild FTS5 if new chunks were added ──
+    if stats['chunks'] > 0 and not dry_run:
+        print("\nReconstruyendo indice FTS5...")
+        try:
+            db2 = TursoClient()
+            await db2.connect()
+            await db2.execute("DROP TABLE IF EXISTS document_chunks_fts")
+            await db2.execute("""
+                CREATE VIRTUAL TABLE document_chunks_fts USING fts5(
+                    chunk_id UNINDEXED,
+                    content
+                )
+            """)
+            await db2.execute("""
+                INSERT INTO document_chunks_fts(chunk_id, content)
+                SELECT id, content FROM document_chunks
+            """)
+            r = await db2.execute("SELECT COUNT(*) as cnt FROM document_chunks")
+            count = r.rows[0]['cnt']
+            print(f"FTS5 reconstruido: {count} chunks indexados")
+            await db2.disconnect()
+        except Exception as e:
+            print(f"Error reconstruyendo FTS5: {e}")
 
 
 async def _reembed_existing(dry_run: bool = False):
