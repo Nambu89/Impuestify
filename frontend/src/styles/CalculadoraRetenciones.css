@@ -37,8 +37,60 @@
 }
 
 @media (max-width: 768px) {
+  .calc-ret-page {
+    padding: 1rem 0.75rem;
+  }
+
+  .calc-ret-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .calc-ret-header h1 {
+    font-size: 1.35rem;
+  }
+
   .calc-ret-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .calc-ret-form,
+  .calc-ret-result {
+    border-radius: 12px;
+    padding: 1rem;
+  }
+
+  .calc-ret-result {
+    position: static;
+  }
+
+  .calc-ret-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .calc-ret-percentage {
+    font-size: 2.75rem;
+  }
+
+  .calc-ret-hijo-row {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .calc-ret-input-sm {
+    width: 80px;
+  }
+
+  .calc-ret-submit {
+    padding: 1rem;
+    font-size: 1.05rem;
+  }
+
+  .calc-ret-cta {
+    padding: 1rem;
   }
 }
 
