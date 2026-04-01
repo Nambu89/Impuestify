@@ -127,11 +127,19 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 | Creator | 49 EUR/mes | Influencers, YouTubers, streamers, bloggers | + IVA by platform, Modelo 349, DAC7, CNAE 60.39, multi-role profiles |
 | Autonomo | 39 EUR/mes IVA incl. | Self-employed | + All models (303/130/131), crypto, workspace, calendar |
 
-## Key Updates (2026-03-20)
+## Key Updates (2026-03-27)
 
-- **Tests**: 1199 backend PASS (23 new multi-pagadores) + frontend build OK
-- **Multi-Pagadores IRPF** (NEW): PagadorItem model (8 campos), agregacion pagadores→totales, obligacion declarar Art.96 LIRPF (22.000/15.876 EUR), MultiPagadorForm component (acordeones estilo app AEAT), integrado en TaxGuidePage + SettingsPage + LiveEstimatorBar. Retribuciones especie + ingresos a cuenta en simulador. LLM tool actualizado
-- **RuFlo V3.5** (NEW): Workflow multi-agente estandar. npm deps instaladas, MCP configurado, puente SubagentStart/Stop→swarm-state.json, 13/27 hooks funcionales, intelligence bootstrapped (226 entries). Auditoria: plans/ruflo-audit-report.md
+- **Repo**: Migrado a `Nambu89/Impuestify` (antes TaxIA). Railway auto-deploy conectado
+- **Tests**: 1212 backend PASS + frontend build OK
+- **RAG Pipeline** (FIXED sesion 22): 454 docs, 89,174 chunks, 82,098 embeddings, FTS5 sync. Territory filter normalizado, FTS5 OR query, semantic cache poisoning prevention, auto-rebuild FTS5 en ingesta
+- **System Prompt** (REWRITE sesion 22): Tecnicas GPT-5/Claude/NotebookLM — etiquetas `<contexto_fiscal>`, nivel 3/10, show dont tell, zero process narration
+- **AEAT Crawler** (NEW): crawl_aeat_full.py (PDFs con Scrapling) + crawl_aeat_html.py (HTML con Playwright). 7 PDFs + 19 HTMLs descargados e ingestados
+- **Superpowers v5.0.6** (NEW): Plugin oficial Anthropic instalado. TDD, brainstorming, planning, code review
+- **3 skills GSD** (NEW): fresh-context-execution, wave-execution, atomic-commits
+- **Multi-Pagadores IRPF**: PagadorItem model, obligacion declarar Art.96 LIRPF
+- **Calculadora Retenciones IRPF** (NEW): `/calculadora-retenciones` publica, algoritmo AEAT 2026, 28 tests, lead magnet SEO
+- **Share Conversations** (NEW): `/shared/:token` enlaces publicos con anonimizacion PII (DNI, IBAN, importes)
+- **RuFlo V3.5**: Workflow multi-agente + Superpowers + GSD patterns (~90% capacidad)
 - **Adaptive Tax Guide by Role**: PARTICULAR (7 steps), CREATOR (8 steps + plataformas/IAE/IVA intracomunitario/withholding/M349), AUTONOMO (8 steps + actividad económica). Adaptive result with role-specific obligations
 - **Net Salary Calculator**: `/calculadora-neto` endpoint. 5 fiscal regimes (Madrid common IVA 21%, Andalucía, Canarias IGIC 7%, Melilla IPSI 4% + 60% deduction, País Vasco 7-tranche foral). SS auto-calculated by income (15 brackets RDL 13/2022). IGIC/IPSI auto-detection. 21 tests PASS. Disclaimer on each response
 - **Crawler**: 90 URLs, 23 territories + Creators/Influencers docs
@@ -144,6 +152,12 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 - **TaxAgent Creator Context**: IAE 8690, IVA by platform, Modelo 349, DAC7, CNAE 60.39
 - **Push Notifications**: VAPID keys configured
 - **Tax Date Correction**: Filing date 8 April 2026 (not 5 April)
+
+## Dev Tools (local only, not deployed)
+
+- **Feature flags**: `.feature_flags.json` — toggle features locally. Env var override: `FF_FEATURE_NAME=true/false`. See `.feature_flags.json.example`
+- **AutoDream**: `python scripts/autodream.py` — code analysis report (large files, missing tests, TODOs)
+- **Task types**: Use specialized `subagent_type` in Agent tool: `coder`, `researcher`, `tester`, `reviewer`, `Explore`
 
 ## Compacting Strategy
 

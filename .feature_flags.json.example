@@ -1,0 +1,8 @@
+{
+    "warmup_greeting": true,
+    "semantic_window": true,
+    "conversation_analyzer": true,
+    "cost_tracker": true,
+    "territory_plugins": true,
+    "retribucion_especie": true
+}

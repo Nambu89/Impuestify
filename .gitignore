@@ -78,6 +78,9 @@ CLAUDE.local.md
 # Gemini AI config
 .gemini/
 
+# Feature flags (local dev config)
+.feature_flags.json
+
 # Scripts temporales (descargas, migraciones one-off)
 download_*.py
 tmp_*.py
