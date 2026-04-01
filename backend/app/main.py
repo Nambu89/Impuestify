@@ -19,8 +19,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from slowapi.errors import RateLimitExceeded
-from prometheus_fastapi_instrumentator import Instrumentator
-
 from .config import settings
 
 # Security imports
@@ -248,6 +246,18 @@ async def lifespan(app: FastAPI):
 		logger.warning("⚠️ Seguridad AI deshabilitada (Llama Guard, Prompt Guard, etc.)")
 
 	
+	# Register territory plugins (21 CCAA across 5 fiscal regimes)
+	try:
+		from app.territories.startup import register_all_territories
+		register_all_territories()
+		from app.territories.registry import list_territories
+		territory_count = len(list_territories())
+		print(f"✅ Territory plugins registrados: {territory_count} CCAA")
+		logger.info("✅ Territory plugins registrados", count=territory_count)
+	except Exception as e:
+		print(f"⚠️  Error registrando territory plugins: {e}")
+		logger.warning("⚠️  Error registrando territory plugins", error=str(e))
+
 	logger.info("=" * 80)
 	logger.info("✅ Impuestify INICIADO CORRECTAMENTE")
 	logger.info("=" * 80)
@@ -496,11 +506,6 @@ app.include_router(modelo_720_router)
 # Plusvalia Municipal (IIVTNU)
 from app.routers.plusvalia import router as plusvalia_router
 app.include_router(plusvalia_router)
-
-# Prometheus instrumentation with custom metrics
-from app.metrics import setup_instrumentator, set_app_info
-setup_instrumentator(app)
-set_app_info(version="1.0.0", environment="production")
 
 # === Dependencias ===
 

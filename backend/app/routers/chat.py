@@ -6,7 +6,7 @@ Handles question-answering using:
 - OpenAI for answer generation
 - TaxAgent for orchestration
 """
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 import time
@@ -24,7 +24,9 @@ from app.auth.subscription_guard import require_active_subscription
 from app.security import sql_validator, guardrails_system, rate_limit_ask
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
 from app.services.subscription_service import SubscriptionAccess
-from app.metrics import record_tokens, record_request, record_error, record_rag_search, record_llm_latency
+from app.services.cost_tracker import CostTracker
+from app.services.conversation_analyzer import ConversationAnalyzer
+from app.services.warmup_service import WarmupService
 
 logger = logging.getLogger(__name__)
 
@@ -334,10 +336,23 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 
 # === Routes ===
 
+@router.post("/chat/warmup")
+async def warmup_chat(request: Request, current_user: TokenData = Depends(get_current_user)):
+    """
+    Pre-warm RAG context and return a personalized greeting for the user.
+    Called when opening a new chat conversation, before the user types anything.
+    """
+    db = await get_db(request)
+    warmup = WarmupService(db)
+    result = await warmup.warmup(current_user.user_id)
+    return result
+
+
 @router.post("/ask", response_model=ImpuestifyResponse)
 async def ask_question(
 	req: Request,
 	request: QuestionRequest,
+	background_tasks: BackgroundTasks,
 	db: TursoClient = Depends(get_db),
 	current_user: TokenData = Depends(get_current_user),
 	access: SubscriptionAccess = Depends(require_active_subscription)
@@ -460,9 +475,18 @@ async def ask_question(
 			
 			logger.info(f"💾 Using cached context for conversation {conversation_id}")
 		else:
-			# Cache MISS - load from database
-			conversation_history = await conv_service.get_recent_messages(conversation_id, limit=20)
-			logger.info(f"📂 Loaded {len(conversation_history)} messages from database")
+			# Cache MISS - use semantic window for intelligent message selection
+			try:
+				from app.services.semantic_window import SemanticWindow
+				semantic_window = SemanticWindow(max_messages=15, recent_guaranteed=5)
+				conversation_history = await semantic_window.select(
+					conversation_id, request.question
+				)
+				logger.info(f"Semantic window selected {len(conversation_history)} messages from database")
+			except Exception as sw_err:
+				logger.warning(f"SemanticWindow failed, falling back to recent messages: {sw_err}")
+				conversation_history = await conv_service.get_recent_messages(conversation_id, limit=20)
+				logger.info(f"Loaded {len(conversation_history)} messages from database")
 			
 		# === Load workspace context if workspace_id provided ===
 		workspace_context = ""
@@ -691,14 +715,37 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 		]
 		
 		processing_time = time.time() - start_time
-		
-		# Record metrics
-		record_rag_search(len(relevant_chunks), search_time)
-		record_llm_latency(settings.OPENAI_MODEL, agent_time)
-		record_request("ask", "POST", 200, "authenticated")
-		
+
+		# Track usage costs (non-blocking, errors are swallowed)
+		try:
+			cost_tracker = CostTracker(db)
+			# Estimate tokens: ~4 chars per token for input, actual for output
+			est_input_tokens = len(request.question) // 4 + len(combined_context) // 4
+			est_output_tokens = len(answer) // 4
+			await cost_tracker.track(
+				user_id=current_user.user_id,
+				model=settings.OPENAI_MODEL,
+				input_tokens=est_input_tokens,
+				output_tokens=est_output_tokens,
+				endpoint="/api/ask",
+				processing_time=processing_time,
+				cached=bool(cached_context),
+			)
+		except Exception as e:
+			logger.debug("Cost tracking skipped: %s", e)
+
 		logger.info(f"✅ Consulta procesada: {processing_time:.2f}s, {len(sources)} fuentes, conversation: {conversation_id}")
-		
+
+		# 10b. Schedule post-conversation analysis (non-blocking)
+		async def _analyze_in_background(conv_id: str, uid: str):
+			try:
+				analyzer = ConversationAnalyzer()
+				await analyzer.analyze(conv_id, uid)
+			except Exception as exc:
+				logger.debug("Background conversation analysis failed: %s", exc)
+
+		background_tasks.add_task(_analyze_in_background, conversation_id, current_user.user_id)
+
 		# 10. Return response
 		return ImpuestifyResponse(
 			answer=answer,

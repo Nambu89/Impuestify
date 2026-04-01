@@ -351,6 +351,10 @@ class TursoClient:
                 tokens_used INTEGER DEFAULT 0,
                 processing_time REAL,
                 cached BOOLEAN DEFAULT 0,
+                model TEXT,
+                input_tokens INTEGER DEFAULT 0,
+                output_tokens INTEGER DEFAULT 0,
+                cost_usd REAL DEFAULT 0.0,
                 created_at TEXT DEFAULT (datetime('now')),
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
             )
@@ -903,6 +907,19 @@ class TursoClient:
                     "ALTER TABLE user_profiles ADD COLUMN deadline_email_alerts BOOLEAN DEFAULT 0"
                 )
                 logger.info("Added deadline_email_alerts column to user_profiles table")
+
+            # Add cost tracking columns to usage_metrics if they don't exist
+            result = await self.execute("PRAGMA table_info(usage_metrics)")
+            um_columns = {row["name"] for row in result.rows}
+            for col, coltype in [("model", "TEXT"), ("input_tokens", "INTEGER DEFAULT 0"),
+                                  ("output_tokens", "INTEGER DEFAULT 0"), ("cost_usd", "REAL DEFAULT 0.0")]:
+                col_name = col.split()[0]  # just the column name
+                if col_name not in um_columns:
+                    try:
+                        await self.execute(f"ALTER TABLE usage_metrics ADD COLUMN {col} {coltype}")
+                        logger.info("Added %s column to usage_metrics table", col_name)
+                    except Exception:
+                        pass  # column already exists
 
             logger.info("Database schema initialized successfully")
         except Exception as e:

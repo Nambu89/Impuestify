@@ -122,6 +122,17 @@ export function useConversations() {
         }
     }, [apiRequest])
 
+    const warmupChat = useCallback(async (): Promise<{ greeting: string; rag_preloaded: boolean } | null> => {
+        try {
+            const response = await apiRequest<{ greeting: string; rag_preloaded: boolean }>('/api/chat/warmup', { method: 'POST' })
+            logger.debug('Warmup response:', response)
+            return response
+        } catch (e) {
+            console.warn('Chat warmup failed:', e)
+            return null
+        }
+    }, [apiRequest])
+
     const deleteConversation = useCallback(async (conversationId: string) => {
         logger.debug('Deleting conversation:', conversationId)
         setLoading(true)
@@ -149,6 +160,7 @@ export function useConversations() {
         createConversation,
         getConversation,
         updateConversationTitle,
-        deleteConversation
+        deleteConversation,
+        warmupChat
     }
 }

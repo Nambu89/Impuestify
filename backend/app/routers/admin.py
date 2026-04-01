@@ -22,12 +22,13 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
 
 from app.auth.jwt_handler import get_current_user, TokenData
 from app.database.turso_client import get_db_client, TursoClient
 from app.services.subscription_service import get_subscription_service
+from app.services.cost_tracker import CostTracker
 
 logger = logging.getLogger(__name__)
 
@@ -399,6 +400,22 @@ async def get_dashboard(
             "total": contact_total,
         },
     }
+
+
+# ============================================================
+# COST TRACKING
+# ============================================================
+
+@router.get("/costs")
+async def get_cost_dashboard(
+    request: Request,
+    period: str = Query("month", pattern="^(week|month|year)$"),
+    owner: TokenData = Depends(_require_owner),
+    db: TursoClient = Depends(get_db_client),
+):
+    """Owner-only: Get cost tracking dashboard data (token usage, estimated costs)."""
+    tracker = CostTracker(db)
+    return await tracker.get_global_summary(period)
 
 
 # ============================================================

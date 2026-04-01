@@ -43,7 +43,7 @@ export default function Chat() {
     const { user } = useAuth()
     const { profile: fiscalProfile, refresh: refreshFiscalProfile } = useFiscalProfile()
     const { askQuestion } = useApi()
-    const { getConversation } = useConversations()
+    const { getConversation, warmupChat } = useConversations()
     const { workspaces, activeWorkspace, selectWorkspace, fetchWorkspaces } = useWorkspaces()
     const { streamState, isStreaming, sendStreamingMessage } = useStreamingChat()
     const { docs: sessionDocs, docIds: sessionDocIds, isUploading: isDocUploading, uploadError: docUploadError, uploadDoc, removeDoc } = useSessionDocs()
@@ -61,6 +61,7 @@ export default function Chat() {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const chatMessagesRef = useRef<HTMLDivElement>(null)
     const userJustSentRef = useRef(false)
+    const warmupAttemptedRef = useRef(false)
 
     // Fetch workspaces and fiscal profile on mount (only once)
     useEffect(() => {
@@ -68,6 +69,23 @@ export default function Chat() {
         refreshFiscalProfile()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])  // Empty dependency array = run only once on mount
+
+    // Warmup: fetch personalized greeting for new conversations
+    useEffect(() => {
+        if (messages.length === 0 && !activeConversationId && !warmupAttemptedRef.current) {
+            warmupAttemptedRef.current = true
+            warmupChat().then((result) => {
+                if (result?.greeting) {
+                    setMessages([{
+                        id: 'warmup-greeting',
+                        role: 'assistant',
+                        content: result.greeting
+                    }])
+                }
+            })
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeConversationId])
 
     // Workspace change handler
     const handleWorkspaceChange = (workspace: Workspace | null) => {
@@ -120,6 +138,8 @@ export default function Chat() {
         setActiveConversationId(null)
         setNotificationAnalysis(null)
         setSidebarOpen(false) // ✅ NUEVO: Cerrar sidebar al crear nuevo
+        // Reset warmup flag so the useEffect triggers for the new conversation
+        warmupAttemptedRef.current = false
     }
 
     const handleSuggestionClick = (text: string) => {

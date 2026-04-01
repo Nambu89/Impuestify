@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calculator, ChevronDown, ChevronUp, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { Calculator, ChevronDown, ChevronUp, Plus, Trash2, AlertCircle, Info } from 'lucide-react';
 import '../styles/CalculadoraRetenciones.css';
 
 interface Descendiente {
@@ -38,6 +38,7 @@ export default function CalculadoraRetencionesPage() {
   const [ceutaMelilla, setCeutaMelilla] = useState(false);
   const [hipoteca, setHipoteca] = useState(false);
   const [descendientes, setDescendientes] = useState<Descendiente[]>([]);
+  const [retribucionEspecie, setRetribucionEspecie] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [result, setResult] = useState<WithholdingResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -64,6 +65,7 @@ export default function CalculadoraRetencionesPage() {
           ceuta_melilla: ceutaMelilla,
           hipoteca_pre2013: hipoteca,
           num_pagas: parseInt(numPagas),
+          retribucion_en_especie: retribucionEspecie ? parseFloat(retribucionEspecie) : 0,
           descendientes: descendientes.map(d => ({
             ano_nacimiento: d.ano_nacimiento,
             por_entero: d.por_entero,
@@ -85,7 +87,7 @@ export default function CalculadoraRetencionesPage() {
   };
 
   const addHijo = () => {
-    setDescendientes([...descendientes, { ano_nacimiento: 2020, por_entero: true, discapacidad: 'sin' }]);
+    setDescendientes([...descendientes, { ano_nacimiento: 2020, por_entero: false, discapacidad: 'sin' }]);
   };
 
   const removeHijo = (idx: number) => {
@@ -138,11 +140,48 @@ export default function CalculadoraRetencionesPage() {
               </div>
 
               <label>Situación familiar</label>
-              <select value={situacionFamiliar} onChange={e => setSituacionFamiliar(e.target.value)} className="calc-ret-select">
-                <option value="3">Soltero/a sin hijos, o casado/a (cónyuge con rentas)</option>
-                <option value="1">Soltero/a o viudo/a con hijos a cargo</option>
-                <option value="2">Casado/a (cónyuge sin rentas o rentas bajas)</option>
-              </select>
+              <div className="calc-ret-radio-group">
+                <label className="calc-ret-radio-option">
+                  <input
+                    type="radio"
+                    name="situacionFamiliar"
+                    value="3"
+                    checked={situacionFamiliar === '3'}
+                    onChange={e => setSituacionFamiliar(e.target.value)}
+                  />
+                  <div className="calc-ret-radio-content">
+                    <span className="calc-ret-radio-label">Soltero/a, viudo/a, divorciado/a o separado/a sin hijos a cargo exclusivo; o casado/a con cónyuge con rentas superiores a 1.500 EUR/año</span>
+                    <span className="calc-ret-radio-help">La opción más común. Aplica si no tienes hijos a tu cargo exclusivo o tu cónyuge tiene ingresos propios.</span>
+                  </div>
+                </label>
+                <label className="calc-ret-radio-option">
+                  <input
+                    type="radio"
+                    name="situacionFamiliar"
+                    value="1"
+                    checked={situacionFamiliar === '1'}
+                    onChange={e => setSituacionFamiliar(e.target.value)}
+                  />
+                  <div className="calc-ret-radio-content">
+                    <span className="calc-ret-radio-label">Soltero/a, viudo/a, divorciado/a o separado/a con hijos menores de 18 años que conviven exclusivamente contigo</span>
+                    <span className="calc-ret-radio-help">Custodia exclusiva de al menos un hijo. Los hijos deben vivir únicamente contigo.</span>
+                  </div>
+                </label>
+                <label className="calc-ret-radio-option">
+                  <input
+                    type="radio"
+                    name="situacionFamiliar"
+                    value="2"
+                    checked={situacionFamiliar === '2'}
+                    onChange={e => setSituacionFamiliar(e.target.value)}
+                  />
+                  <div className="calc-ret-radio-content">
+                    <span className="calc-ret-radio-label">Casado/a y no separado/a legalmente, cónyuge sin rentas o con rentas inferiores a 1.500 EUR/año</span>
+                    <span className="calc-ret-radio-help">Tu cónyuge no trabaja o tiene ingresos muy bajos (menos de 1.500 EUR brutos anuales).</span>
+                  </div>
+                </label>
+              </div>
+              <p className="calc-ret-radio-footer"><Info size={13} /> Según Modelo 145 de la AEAT</p>
 
               <div className="calc-ret-row">
                 <div>
@@ -158,6 +197,17 @@ export default function CalculadoraRetencionesPage() {
                   </select>
                 </div>
               </div>
+
+              <label>Retribución en especie / Salario flexible (EUR/año)</label>
+              <input
+                type="number"
+                value={retribucionEspecie}
+                onChange={e => setRetribucionEspecie(e.target.value)}
+                placeholder="Ej: 1500"
+                className="calc-ret-input"
+                min="0"
+              />
+              <p className="calc-ret-field-help">Cheque restaurante, transporte, seguro médico, guardería (Edenred, Sodexo, etc.). Importe exento anual.</p>
             </div>
 
             {/* HIJOS */}
@@ -190,7 +240,7 @@ export default function CalculadoraRetencionesPage() {
                         setDescendientes(updated);
                       }}
                     />
-                    100%
+                    Custodia exclusiva (100%)
                   </label>
                   <button onClick={() => removeHijo(i)} className="calc-ret-del-btn"><Trash2 size={14} /></button>
                 </div>

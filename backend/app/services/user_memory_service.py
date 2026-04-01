@@ -91,6 +91,32 @@ class UserMemoryService:
         'tax_context': ['declaración', 'irpf', 'iva', 'modelo', 'hacienda', 'tributos'],
     }
     
+    # Extended patterns for fiscal fact extraction (Task 10)
+    EXTENDED_PATTERNS = {
+        "hipoteca": r"hipoteca|pr[eé]stamo hipotecario|pago mensual de \d+",
+        "guarderia": r"guarder[ií]a|escuela infantil|0[- ]?3 a[nñ]os",
+        "plan_pensiones": r"plan de pensiones|aporta(?:ci[oó]n|ndo).*?(?:pensiones|\d+)",
+        "donaciones": r"donativos?|dona(?:ci[oó]n|ndo)|ONG|fundaci[oó]n",
+        "criptomonedas": r"cripto|bitcoin|ethereum|binance|coinbase",
+        "alquiler": r"alquil(?:o|er)|inquilino|arrendamiento",
+        "autonomo_gastos": r"deducir.*gastos|factur(?:a|o)|suministros|coworking",
+        "discapacidad": r"discapacidad|minusval[ií]a|\d+\s*%.*discapacidad",
+        "familia_numerosa": r"familia numerosa|[34] hijos|t[ií]tulo.*familia",
+    }
+
+    # Human-readable labels for extended patterns
+    EXTENDED_LABELS = {
+        "hipoteca": "El usuario tiene una hipoteca activa",
+        "guarderia": "El usuario tiene hijos en guarderia/escuela infantil",
+        "plan_pensiones": "El usuario aporta a un plan de pensiones",
+        "donaciones": "El usuario realiza donaciones/donativos",
+        "criptomonedas": "El usuario posee o invierte en criptomonedas",
+        "alquiler": "El usuario vive de alquiler",
+        "autonomo_gastos": "El usuario tiene gastos deducibles de actividad economica",
+        "discapacidad": "El usuario tiene reconocida una discapacidad",
+        "familia_numerosa": "El usuario es miembro de familia numerosa",
+    }
+
     # Regex patterns for numeric value extraction
     NUMERIC_PATTERNS = {
         # Age patterns: "tengo 37 años", "cumplo 37", "37 años"
@@ -400,7 +426,7 @@ class UserMemoryService:
         donor_relation = self._extract_donor_relation(message)
         if donor_relation:
             relation_label = {
-                'mother': 'madre', 'father': 'padre', 
+                'mother': 'madre', 'father': 'padre',
                 'grandmother': 'abuela', 'grandfather': 'abuelo',
                 'partner': 'pareja/cónyuge'
             }.get(donor_relation, donor_relation)
@@ -411,7 +437,21 @@ class UserMemoryService:
                 confidence=0.9,
                 source='user_statement'
             ))
-        
+
+        # ==========================================
+        # Extended fiscal fact patterns (Task 10)
+        # ==========================================
+        for fact_type, pattern in self.EXTENDED_PATTERNS.items():
+            if re.search(pattern, message_lower):
+                label = self.EXTENDED_LABELS.get(fact_type, f"Detectado: {fact_type}")
+                facts.append(UserFact(
+                    fact_id=self._generate_fact_id(fact_type, fact_type),
+                    fact_type=fact_type,
+                    content=label,
+                    confidence=0.85,
+                    source='user_statement'
+                ))
+
         return facts
     
     def _generate_fact_id(self, fact_type: str, content_key: str) -> str:

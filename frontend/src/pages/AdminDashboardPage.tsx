@@ -3,8 +3,9 @@ import { Navigate, Link } from 'react-router-dom'
 import {
     Shield, RefreshCw, Users, CreditCard, Bug, ThumbsUp,
     AlertCircle, Loader, ArrowRight, MessageCircle, Lightbulb,
-    Mail, ThumbsDown
+    Mail, ThumbsDown, DollarSign
 } from 'lucide-react'
+import { useApi } from '../hooks/useApi'
 import { useSubscription } from '../hooks/useSubscription'
 import { useFeedback, DashboardData, FeedbackItem, ContactRequest, ChatRatingItem } from '../hooks/useFeedback'
 import Header from '../components/Header'
@@ -25,14 +26,32 @@ const STATUS_LABELS: Record<string, string> = {
     wont_fix: 'Descartado',
 }
 
+interface CostSummary {
+    period: string
+    total_requests: number
+    total_tokens: number
+    total_cost_usd: number
+    total_cost_eur: number
+    top_users: Array<{
+        user_id: string
+        email: string
+        subscription_plan: string
+        user_cost_usd: number
+        request_count: number
+    }>
+    by_plan: Record<string, { plan_cost_usd: number; user_count: number }>
+}
+
 export default function AdminDashboardPage() {
     const { isOwner, loading: subLoading } = useSubscription()
     const { adminGetDashboard, adminGetFeedback, adminGetContactRequests, adminGetChatRatings } = useFeedback()
+    const { apiRequest } = useApi()
 
     const [dashboard, setDashboard] = useState<DashboardData | null>(null)
     const [recentFeedback, setRecentFeedback] = useState<FeedbackItem[]>([])
     const [pendingContacts, setPendingContacts] = useState<ContactRequest[]>([])
     const [negativeRatings, setNegativeRatings] = useState<ChatRatingItem[]>([])
+    const [costData, setCostData] = useState<CostSummary | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -50,6 +69,14 @@ export default function AdminDashboardPage() {
             setRecentFeedback(fb?.items || [])
             setPendingContacts(contacts?.items || [])
             setNegativeRatings(ratings?.items || [])
+
+            // Fetch cost data separately (non-blocking if it fails)
+            try {
+                const costs = await apiRequest<CostSummary>('/api/admin/costs?period=month')
+                setCostData(costs)
+            } catch {
+                setCostData(null)
+            }
         } catch (err: any) {
             setRecentFeedback([])
             setPendingContacts([])
@@ -58,7 +85,7 @@ export default function AdminDashboardPage() {
         } finally {
             setLoading(false)
         }
-    }, [adminGetDashboard, adminGetFeedback, adminGetContactRequests, adminGetChatRatings])
+    }, [adminGetDashboard, adminGetFeedback, adminGetContactRequests, adminGetChatRatings, apiRequest])
 
     useEffect(() => {
         if (isOwner) fetchAll()
@@ -166,6 +193,23 @@ export default function AdminDashboardPage() {
                                         </span>
                                     </div>
                                 </div>
+
+                                {costData && (
+                                    <div className="adp-kpi adp-kpi--costs">
+                                        <div className="adp-kpi__icon">
+                                            <DollarSign size={22} />
+                                        </div>
+                                        <div className="adp-kpi__content">
+                                            <span className="adp-kpi__value">
+                                                {costData.total_cost_eur.toFixed(2)} EUR
+                                            </span>
+                                            <span className="adp-kpi__label">Coste LLM este mes</span>
+                                            <span className="adp-kpi__sub">
+                                                {costData.total_requests} peticiones · {(costData.total_tokens / 1000).toFixed(0)}K tokens
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Sections row */}
@@ -267,6 +311,40 @@ export default function AdminDashboardPage() {
                                         </ul>
                                     )}
                                 </div>
+
+                                {/* Top users by cost */}
+                                {costData && costData.top_users.length > 0 && (
+                                    <div className="adp-section">
+                                        <div className="adp-section__header">
+                                            <h3>
+                                                <DollarSign size={16} />
+                                                Top usuarios por coste
+                                            </h3>
+                                        </div>
+                                        <ul className="adp-list">
+                                            {costData.top_users.slice(0, 5).map((user, idx) => (
+                                                <li key={user.user_id || idx} className="adp-list-item">
+                                                    <div className="adp-list-item__main">
+                                                        <span className="adp-list-item__email">
+                                                            {user.email || user.user_id?.slice(0, 8)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="adp-list-item__meta">
+                                                        <span className="adp-status-mini">
+                                                            {user.subscription_plan || 'none'}
+                                                        </span>
+                                                        <span className="adp-kpi__value" style={{ fontSize: '0.85rem' }}>
+                                                            ${user.user_cost_usd?.toFixed(4)}
+                                                        </span>
+                                                        <span className="adp-date">
+                                                            {user.request_count} req
+                                                        </span>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Quick links */}

@@ -1095,6 +1095,7 @@ class WithholdingRequest(BaseModel):
     movilidad_geografica: bool = False
     ceuta_melilla: bool = False
     num_pagas: int = Field(14, ge=1, le=18)
+    retribucion_en_especie: float = Field(0, ge=0, description="Retribucion en especie exenta (cheque restaurante, seguro medico, transporte, guarderia)")
 
 
 @router.post("/withholding")
@@ -1154,6 +1155,7 @@ async def calculate_withholding(
                 for a in body.ascendientes
             ],
             cotizaciones_ss=body.cotizaciones_ss,
+            retribucion_en_especie=body.retribucion_en_especie,
             pension_compensatoria=body.pension_compensatoria,
             anualidades_alimentos=body.anualidades_alimentos,
             hipoteca_pre2013=body.hipoteca_pre2013,

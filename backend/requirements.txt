@@ -25,9 +25,6 @@ redis>=5.0.0  # For Upstash Redis TCP endpoint (SlowAPI compatible)
 # --- AI Safety & Guardrails ---
 guardrails-ai>=0.5.0
 
-# --- Monitoring ---
-prometheus-fastapi-instrumentator>=6.1.0
-
 # --- PDF Processing ---
 pymupdf4llm>=0.2.6
 pymupdf>=1.23.0

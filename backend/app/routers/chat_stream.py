@@ -194,7 +194,20 @@ async def ask_question_stream(
                 notification_context = cached_context.get("notification_content", "")
                 await cache.refresh_ttl(conversation_id)
             else:
-                conversation_history = await conv_service.get_recent_messages(conversation_id, limit=20)
+                # Semantic window: select messages by relevance instead of fixed limit
+                try:
+                    from app.services.semantic_window import SemanticWindow
+                    semantic_window = SemanticWindow(max_messages=15, recent_guaranteed=5)
+                    conversation_history = await semantic_window.select(
+                        conversation_id, request.question
+                    )
+                    logger.info(
+                        f"Semantic window selected {len(conversation_history)} messages "
+                        f"for conversation {conversation_id}"
+                    )
+                except Exception as sw_err:
+                    logger.warning(f"SemanticWindow failed, falling back to recent messages: {sw_err}")
+                    conversation_history = await conv_service.get_recent_messages(conversation_id, limit=20)
 
             # === Load workspace context if workspace_id provided ===
             workspace_context = ""

@@ -214,6 +214,74 @@
   margin: 0;
 }
 
+/* ---- Radio group (situacion familiar) ---- */
+.calc-ret-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.calc-ret-radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin: 0;
+}
+
+.calc-ret-radio-option:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.calc-ret-radio-option input[type="radio"] {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+  accent-color: var(--color-accent, #06b6d4);
+}
+
+.calc-ret-radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.calc-ret-radio-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.35;
+}
+
+.calc-ret-radio-help {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.3;
+}
+
+.calc-ret-radio-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0.35rem 0 0;
+}
+
+/* ---- Field help text ---- */
+.calc-ret-field-help {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0.25rem 0 0;
+  line-height: 1.3;
+}
+
 /* ---- Toggle avanzado ---- */
 .calc-ret-toggle {
   display: flex;

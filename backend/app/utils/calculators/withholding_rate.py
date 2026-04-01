@@ -82,6 +82,7 @@ class WithholdingInput:
     prolongacion_actividad: bool = False  # >65 anos activo
     ceuta_melilla: bool = False
 
+    retribucion_en_especie: float = 0.0  # Retribucion en especie exenta (reduce base)
     num_pagas: int = 14  # 12 o 14 (para calcular mensual)
 
 
@@ -189,6 +190,10 @@ def calcular_retencion(inp: WithholdingInput) -> WithholdingResult:
     """
     RETRIB = inp.retribucion_bruta_anual
     ANO_ACTUAL = 2026
+
+    # Retribucion en especie exenta reduce la base sujeta a retencion
+    ESPECIE_EXENTA = max(0.0, min(inp.retribucion_en_especie, RETRIB))
+    RETRIB = RETRIB - ESPECIE_EXENTA
 
     # ================================================================
     # 1. COTIZACIONES A LA SEGURIDAD SOCIAL
