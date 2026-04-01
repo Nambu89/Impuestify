@@ -13,10 +13,17 @@ class CeutaMelillaTerritory(TerritoryPlugin):
     IRPF: Uses estatal scale for both portions (no autonomica scale).
     60% deduction on cuota integra (Art. 68.4 LIRPF).
     Deductions: Estatal only + IPSI.
-    Indirect tax: IPSI (6 rate tiers: 0.5%, 1%, 2%, 4%, 8%, 10%).
+    Indirect tax: IPSI -- Ceuta Modelo 001 (general 3%), Melilla Modelo 420 (general 4%).
+    IPSI rate tiers: 0.5%, 1%, 2%, 4% (Ceuta 3%), 8%, 10%.
     """
     territories = ["Ceuta", "Melilla"]
     regime = "ceuta_melilla"
+
+    # IPSI general rates per city
+    IPSI_RATES = {
+        "Ceuta": 0.03,    # 3% general
+        "Melilla": 0.04,  # 4% general
+    }
 
     async def get_irpf_scales(self, year: int) -> List[ScaleData]:
         return []
@@ -40,8 +47,15 @@ class CeutaMelillaTerritory(TerritoryPlugin):
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 
-    def get_indirect_tax_model(self) -> str:
-        return "ipsi"
+    def get_indirect_tax_model(self, ccaa: str = None) -> str:
+        """Ceuta uses Modelo 001 IPSI, Melilla uses Modelo 420 IPSI."""
+        if ccaa == "Ceuta":
+            return "001"  # Modelo 001 IPSI Ceuta
+        return "420"  # Modelo 420 IPSI Melilla
+
+    def get_ipsi_general_rate(self, ccaa: str) -> float:
+        """Return the general IPSI rate for the given city."""
+        return self.IPSI_RATES.get(ccaa, 0.04)
 
     def get_minimos_personales(self) -> MinimosConfig:
         # Same base MPYF as common, but applied to estatal-only scale

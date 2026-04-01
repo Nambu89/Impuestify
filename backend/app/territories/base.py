@@ -70,9 +70,26 @@ class TerritoryPlugin(ABC):
         ...
 
     @abstractmethod
-    def get_indirect_tax_model(self) -> str:
-        """Return the indirect tax modelo: '303' (IVA), '420' (IGIC), or 'ipsi'."""
+    def get_indirect_tax_model(self, ccaa: str = None) -> str:
+        """Return the indirect tax modelo: '303' (IVA), '420' (IGIC), 'ipsi', etc.
+
+        Args:
+            ccaa: Optional sub-territory for regimes where the model varies
+                  (e.g. Gipuzkoa uses '300' vs Bizkaia/Araba '303').
+        """
         ...
+
+    def get_renta_model(self, ccaa: str = None) -> str:
+        """Return IRPF annual model number. Default: '100'."""
+        return "100"
+
+    def get_is_model(self) -> str:
+        """Return IS (Impuesto de Sociedades) model number. Default: '200'."""
+        return "200"
+
+    def get_retenciones_model(self) -> str:
+        """Return retenciones trimestrales model number. Default: '111'."""
+        return "111"
 
     @abstractmethod
     def get_minimos_personales(self) -> MinimosConfig:

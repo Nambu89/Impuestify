@@ -55,7 +55,7 @@ class CommonTerritory(TerritoryPlugin):
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 
-    def get_indirect_tax_model(self) -> str:
+    def get_indirect_tax_model(self, ccaa: str = None) -> str:
         return "303"
 
     def get_minimos_personales(self) -> MinimosConfig:

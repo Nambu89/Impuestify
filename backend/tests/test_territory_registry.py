@@ -16,7 +16,7 @@ class FakePlugin(TerritoryPlugin):
     async def get_deductions(self, ccaa, year, db):
         return []
 
-    def get_indirect_tax_model(self):
+    def get_indirect_tax_model(self, ccaa=None):
         return "303"
 
     def get_minimos_personales(self):

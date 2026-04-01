@@ -12,9 +12,11 @@ class ForalVascoTerritory(TerritoryPlugin):
 
     IRPF: Single unified foral scale (7 brackets).
     Deductions: Foral only (no estatal deductions).
-    Indirect tax: IVA foral + TicketBAI.
-    Minimos: Applied as direct quota deduction (EUR off the bill).
+    Indirect tax: IVA foral (303 for Bizkaia/Araba, 300 for Gipuzkoa).
+    TicketBAI/Batuz: Mandatory electronic invoicing across all 3 territories.
+    Retenciones: Modelo 110 (not 111 as in common regime).
     EPSV: Replaces pension plan contributions.
+    Minimos: Applied as direct quota deduction (EUR off the bill).
     """
     territories = ["Araba", "Bizkaia", "Gipuzkoa"]
     regime = "foral_vasco"
@@ -41,8 +43,21 @@ class ForalVascoTerritory(TerritoryPlugin):
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 
-    def get_indirect_tax_model(self) -> str:
-        return "303"  # IVA foral (+ TicketBAI obligation)
+    def get_indirect_tax_model(self, ccaa: str = None) -> str:
+        """Gipuzkoa uses Modelo 300, Bizkaia/Araba use 303."""
+        if ccaa == "Gipuzkoa":
+            return "300"
+        return "303"  # Bizkaia, Araba
+
+    def get_renta_model(self, ccaa: str = None) -> str:
+        """Gipuzkoa uses Modelo 109 for IRPF, Bizkaia/Araba use 100."""
+        if ccaa == "Gipuzkoa":
+            return "109"
+        return "100"  # Bizkaia, Araba
+
+    def get_retenciones_model(self) -> str:
+        """All 3 Basque territories use Modelo 110 (not 111)."""
+        return "110"
 
     def get_minimos_personales(self) -> MinimosConfig:
         return MinimosConfig(

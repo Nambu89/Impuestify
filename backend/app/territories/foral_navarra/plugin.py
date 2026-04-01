@@ -12,7 +12,10 @@ class ForalNavarraTerritory(TerritoryPlugin):
 
     IRPF: Single unified foral scale (11 brackets).
     Deductions: Foral only.
-    Indirect tax: IVA + Modelo F69.
+    Indirect tax: IVA via Modelo F69 (not 303).
+    Renta: Modelo F-90 (not 100).
+    IS: Modelo S-90 (not 200).
+    Retenciones: Modelo 111 (same as AEAT).
     Minimos: Applied as direct quota deduction.
     """
     territories = ["Navarra"]
@@ -40,8 +43,21 @@ class ForalNavarraTerritory(TerritoryPlugin):
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 
-    def get_indirect_tax_model(self) -> str:
-        return "303"  # IVA + F69 Navarra
+    def get_indirect_tax_model(self, ccaa: str = None) -> str:
+        """Navarra uses Modelo F69 for IVA (not the common 303)."""
+        return "F69"
+
+    def get_renta_model(self, ccaa: str = None) -> str:
+        """Navarra uses Modelo F-90 for IRPF (not 100)."""
+        return "F-90"
+
+    def get_is_model(self) -> str:
+        """Navarra uses Modelo S-90 for IS (not 200)."""
+        return "S-90"
+
+    def get_retenciones_model(self) -> str:
+        """Navarra uses Modelo 111 for retenciones (same as AEAT)."""
+        return "111"
 
     def get_minimos_personales(self) -> MinimosConfig:
         return MinimosConfig(

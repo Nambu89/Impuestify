@@ -14,7 +14,9 @@ class CanariasTerritory(TerritoryPlugin):
     Deductions: Estatal + Canarias territorial.
     Indirect tax: IGIC (Modelo 420), NOT IVA.
     General IGIC rate: 7% (vs 21% peninsular IVA).
-    Modelo 349 does NOT apply (Canarias is not harmonized EU territory).
+    Modelo 349 does NOT apply -- Canarias is not harmonized EU VAT territory.
+    AIEM (Arbitrio sobre Importaciones y Entregas de Mercancias en Canarias)
+    applies on specific goods imported into the islands.
     """
     territories = ["Canarias"]
     regime = "canarias"
@@ -41,7 +43,7 @@ class CanariasTerritory(TerritoryPlugin):
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 
-    def get_indirect_tax_model(self) -> str:
+    def get_indirect_tax_model(self, ccaa: str = None) -> str:
         return "420"  # IGIC
 
     def get_minimos_personales(self) -> MinimosConfig:
@@ -55,4 +57,9 @@ class CanariasTerritory(TerritoryPlugin):
         )
 
     def get_rag_filters(self, ccaa: str) -> Dict[str, Any]:
-        return {"territory": "Canarias", "regime": "canarias", "igic": True}
+        return {
+            "territory": "Canarias",
+            "regime": "canarias",
+            "igic": True,
+            "modelo_349": False,  # Not applicable in Canarias
+        }
