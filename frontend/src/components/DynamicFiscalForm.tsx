@@ -8,6 +8,7 @@ export interface DynamicFiscalFormProps {
     values: Record<string, any>
     onChange: (key: string, value: any) => void
     compact?: boolean
+    situacionLaboral?: string
 }
 
 function FieldBadges({ field }: { field: FiscalField }) {
@@ -242,6 +243,7 @@ export default function DynamicFiscalForm({
     values,
     onChange,
     compact = false,
+    situacionLaboral,
 }: DynamicFiscalFormProps) {
     const { sections: allSections, regime, loading } = useFiscalFields(ccaa)
 
@@ -275,6 +277,11 @@ export default function DynamicFiscalForm({
 
     return (
         <div className={`dff-root ${compact ? 'dff-root--compact' : ''}`}>
+            {situacionLaboral === 'farmaceutico' && (
+                <div className="dff-regime-badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0' }}>
+                    Farmacéutico/a — Recargo de Equivalencia (CNAE 47.73)
+                </div>
+            )}
             {regime && (
                 <div className="dff-regime-badge">
                     {regime === 'foral_vasco' && 'Régimen foral vasco'}

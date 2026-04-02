@@ -820,10 +820,41 @@ function StepCreadorActividad({ data, update }: StepProps) {
 // Extrae la sección de actividad económica del StepTrabajo original para autonomos
 
 function StepActividadAutonomo({ data, update }: StepProps) {
+    const isFarmaceutico = data.situacion_laboral === 'farmaceutico'
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Actividad económica</h2>
             <p className="tg-step__desc">Ingresos, gastos y cotizaciones de tu actividad como autónomo.</p>
+
+            <div className="tg-field">
+                <label className="tg-field__label">Tipo de actividad</label>
+                <select
+                    className="tg-field__select"
+                    value={data.situacion_laboral === 'farmaceutico' ? 'farmaceutico' : 'autonomo'}
+                    onChange={e => {
+                        const val = e.target.value
+                        if (val === 'farmaceutico') {
+                            update({
+                                situacion_laboral: 'farmaceutico',
+                                epigrafe_iae: '652.1',
+                            })
+                        } else {
+                            update({
+                                situacion_laboral: 'autonomo',
+                                epigrafe_iae: data.epigrafe_iae === '652.1' ? '' : data.epigrafe_iae,
+                            })
+                        }
+                    }}
+                >
+                    <option value="autonomo">Autónomo general</option>
+                    <option value="farmaceutico">Farmacéutico/a (CNAE 47.73)</option>
+                </select>
+                {isFarmaceutico && (
+                    <span className="tg-field__help">
+                        CNAE 47.73 / IAE 652.1 — Sujeto al Régimen de Recargo de Equivalencia (Art. 154-163 LIVA). No presentas Modelo 303 (IVA).
+                    </span>
+                )}
+            </div>
 
             <div className="tg-field">
                 <label className="tg-field__label">Método de estimación</label>
@@ -1124,6 +1155,7 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
                         values={dynamicFormValues}
                         onChange={onDynamicFormChange}
                         compact
+                        situacionLaboral={data.situacion_laboral}
                     />
                 </>
             )}
@@ -1351,7 +1383,44 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                 </div>
             )}
 
-            {userPlan === 'autonomo' && (
+            {userPlan === 'autonomo' && data?.situacion_laboral === 'farmaceutico' && (
+                <div className="resultado-obligaciones">
+                    <h3>Obligaciones como farmacéutico</h3>
+                    <div className="tg-re-note" style={{
+                        background: 'var(--color-info-bg, #eff6ff)',
+                        border: '1px solid var(--color-info-border, #bfdbfe)',
+                        borderRadius: '8px',
+                        padding: '1rem',
+                        marginBottom: '1rem',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <Shield size={16} />
+                            <strong>Recargo de Equivalencia</strong>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.5' }}>
+                            Como farmacéutico sujeto al Recargo de Equivalencia (Art. 154-163 LIVA), no necesitas presentar
+                            el Modelo 303 (IVA) ni el 390 (resumen anual IVA). El IVA + RE lo ingresa tu proveedor.
+                            Tipos RE: 5,2% (IVA 21%), 1,4% (IVA 10%), 0,5% (IVA 4%).
+                        </p>
+                    </div>
+                    <div className="obligaciones-grid">
+                        <div className="obligacion-card">
+                            <strong>Modelo 130</strong>
+                            <p>Pago fraccionado IRPF trimestral (20% del rendimiento neto acumulado)</p>
+                        </div>
+                        <div className="obligacion-card">
+                            <strong>Cuota RETA</strong>
+                            <p>Cotización mensual a la Seguridad Social</p>
+                        </div>
+                        <div className="obligacion-card">
+                            <strong>CNAE 47.73 / IAE 652.1</strong>
+                            <p>Comercio al por menor de productos farmacéuticos</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {userPlan === 'autonomo' && data?.situacion_laboral !== 'farmaceutico' && (
                 <div className="resultado-obligaciones">
                     <h3>Tus obligaciones trimestrales</h3>
                     <div className="obligaciones-grid">

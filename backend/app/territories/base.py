@@ -172,7 +172,7 @@ class TerritoryPlugin(ABC):
         Territory plugins override to substitute their own models.
 
         Profile keys:
-            - situacion_laboral: "particular" | "autonomo" | "sociedad"
+            - situacion_laboral: "particular" | "autonomo" | "sociedad" | "farmaceutico"
             - tiene_empleados: bool
             - tiene_alquileres: bool
             - estimacion: "directa_simplificada" | "directa_normal" | "objetiva"
@@ -313,6 +313,101 @@ class TerritoryPlugin(ABC):
                     obligatorio=True,
                     deadlines=DEADLINES_2026.get("modelo_347", []),
                 ))
+
+            return obligations
+
+        # ── Farmaceutico (Recargo de Equivalencia — no 303/390) ──
+        if situacion == "farmaceutico":
+            # Pago fraccionado IRPF (same as autonomo)
+            pago_frac = "131" if estimacion == "objetiva" else "130"
+            obligations.append(ModelObligation(
+                modelo=pago_frac,
+                nombre=f"Modelo {pago_frac} - Pago fraccionado IRPF",
+                descripcion="Pago fraccionado trimestral a cuenta del IRPF" + (
+                    " (estimacion objetiva)" if pago_frac == "131" else " (estimacion directa)"
+                ),
+                periodicidad="trimestral",
+                aplica_si="farmaceutico",
+                obligatorio=True,
+                deadlines=_trimestral_deadlines(pago_frac),
+            ))
+
+            # Renta anual
+            obligations.append(ModelObligation(
+                modelo=renta_modelo,
+                nombre=f"Modelo {renta_modelo} - IRPF",
+                descripcion="Declaracion anual del IRPF",
+                periodicidad="anual",
+                aplica_si="farmaceutico",
+                obligatorio=True,
+                deadlines=DEADLINES_2026.get("renta_100", []),
+            ))
+
+            # Retenciones si tiene empleados
+            if tiene_empleados:
+                obligations.append(ModelObligation(
+                    modelo=retenciones_modelo,
+                    nombre=f"Modelo {retenciones_modelo} - Retenciones trabajo",
+                    descripcion="Retenciones e ingresos a cuenta del trabajo personal",
+                    periodicidad="trimestral",
+                    aplica_si="retenedor",
+                    obligatorio=True,
+                    deadlines=_trimestral_deadlines(retenciones_modelo),
+                ))
+                obligations.append(ModelObligation(
+                    modelo="190",
+                    nombre="Modelo 190 - Resumen anual retenciones",
+                    descripcion="Resumen anual de retenciones e ingresos a cuenta del trabajo",
+                    periodicidad="anual",
+                    aplica_si="retenedor",
+                    obligatorio=True,
+                    deadlines=DEADLINES_2026.get("resumen_190", []),
+                ))
+
+            # Retenciones alquiler si tiene alquileres
+            if tiene_alquileres:
+                obligations.append(ModelObligation(
+                    modelo="115",
+                    nombre="Modelo 115 - Retenciones alquiler",
+                    descripcion="Retenciones por alquiler de inmuebles urbanos",
+                    periodicidad="trimestral",
+                    aplica_si="farmaceutico",
+                    obligatorio=True,
+                    deadlines=_trimestral_deadlines("115"),
+                ))
+                obligations.append(ModelObligation(
+                    modelo="180",
+                    nombre="Modelo 180 - Resumen anual alquiler",
+                    descripcion="Resumen anual de retenciones por alquiler de inmuebles",
+                    periodicidad="anual",
+                    aplica_si="farmaceutico",
+                    obligatorio=True,
+                    deadlines=DEADLINES_2026.get("resumen_180", []),
+                ))
+
+            # Operaciones con terceros >3.005,06 EUR
+            if ops_terceros:
+                obligations.append(ModelObligation(
+                    modelo="347",
+                    nombre="Modelo 347 - Operaciones con terceros",
+                    descripcion="Declaracion anual de operaciones con terceros superiores a 3.005,06 EUR",
+                    periodicidad="anual",
+                    aplica_si="farmaceutico",
+                    obligatorio=True,
+                    deadlines=DEADLINES_2026.get("modelo_347", []),
+                ))
+
+            # NOTE: No 303 (IVA) and no 390 (resumen anual IVA)
+            # The farmaceutico is under Recargo de Equivalencia (Art. 154-163 LIVA)
+            # IVA + RE is charged by suppliers; the farmaceutico does not file IVA returns
+            for ob in obligations:
+                if ob.notas is None:
+                    ob.notas = ""
+            obligations[0].notas = (
+                (obligations[0].notas or "") +
+                " Sujeto a Recargo de Equivalencia (Art. 154-163 LIVA) — no presenta Modelo 303 (IVA) ni 390. "
+                "El IVA + RE lo ingresa el proveedor."
+            ).strip()
 
             return obligations
 

@@ -45,6 +45,7 @@ const CalculadoraRetencionesPage = lazy(() => import('./pages/CalculadoraRetenci
 const CalculadoraUmbralesPage = lazy(() => import('./pages/CalculadoraUmbralesPage'))
 const SharedConversationPage = lazy(() => import('./pages/SharedConversationPage'))
 const ModelObligationsPage = lazy(() => import('./pages/ModelObligationsPage'))
+const FarmaciasPage = lazy(() => import('./pages/FarmaciasPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -111,6 +112,7 @@ function App() {
                     <Route path="/checklist-borrador" element={<ChecklistBorradorPage />} />
                     <Route path="/obligado-declarar" element={<ObligadoDeclararPage />} />
                     <Route path="/modelos-obligatorios" element={<ModelObligationsPage />} />
+                    <Route path="/farmacias" element={<FarmaciasPage />} />
 
                     {/* Protected Routes (require auth + subscription) */}
                     <Route

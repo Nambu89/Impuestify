@@ -853,7 +853,8 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 				fp_roles = _json2.loads(fp_roles)
 			except Exception:
 				fp_roles = []
-		is_autonomo = situacion in ("autónomo", "autonomo", "pluriactividad") or "creador_contenido" in fp_roles or "pluriactividad" in fp_roles
+		is_farmaceutico = situacion == "farmaceutico"
+		is_autonomo = situacion in ("autónomo", "autonomo", "pluriactividad", "farmaceutico") or "creador_contenido" in fp_roles or "pluriactividad" in fp_roles
 
 		if any(kw in query_lower for kw in ["cuota", "cotiza", "autónomo", "autonomo", "pago como"]):
 			if any(char.isdigit() for char in query):
@@ -877,6 +878,23 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 			else:
 				requires_tool_hint = "\nUSA discover_deductions. Si conoces la CCAA del usuario, pásala. Si no, pregúntala.\n"
 
+		# Pharmacy-specific context injection
+		pharmacy_context = ""
+		if is_farmaceutico:
+			pharmacy_context = (
+				"\n## CONTEXTO FARMACEUTICO\n"
+				"El usuario es farmaceutico (CNAE 47.73, IAE 652.1). Reglas especiales:\n"
+				"- Sujeto al Regimen Especial de Recargo de Equivalencia (Art. 154-163 LIVA).\n"
+				"- NO presenta Modelo 303 (IVA trimestral) ni 390 (resumen anual IVA).\n"
+				"- El IVA + RE lo ingresa su proveedor. No puede deducir IVA soportado.\n"
+				"- Tipos RE: 5.2% (sobre IVA 21%), 1.4% (sobre IVA 10%), 0.5% (sobre IVA 4%).\n"
+				"- SI presenta Modelo 130 (pago fraccionado IRPF trimestral) y Modelo 100 (renta anual).\n"
+				"- Deducciones especificas: cuota colegial, RC profesional, formacion continua, "
+				"fondo de comercio (5% anual), local comercial, vehiculo reparto (50%).\n"
+				"- Factura SIN IVA (ticket simplificado). No lleva libro registro de IVA.\n"
+				"- NUNCA calcules Modelo 303 para un farmaceutico. Si pregunta por IVA, explica el RE.\n"
+			)
+
 		critical_instructions = (
 			"INSTRUCCIONES:\n"
 			"1. RESPONDE a lo que el usuario pregunta — no calcules IRPF ni deducciones si no lo piden.\n"
@@ -888,7 +906,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 		)
 
 		if context:
-			return f"""{requires_tool_hint}<contexto_fiscal>
+			return f"""{requires_tool_hint}{pharmacy_context}<contexto_fiscal>
 {context}
 </contexto_fiscal>
 
@@ -896,8 +914,8 @@ Pregunta del usuario: {query}
 
 {critical_instructions}"""
 		else:
-			if requires_tool_hint:
-				return f"{requires_tool_hint}\nPregunta: {query}\n\n{critical_instructions}"
+			if requires_tool_hint or pharmacy_context:
+				return f"{requires_tool_hint}{pharmacy_context}\nPregunta: {query}\n\n{critical_instructions}"
 			return f"Pregunta: {query}\n\n{critical_instructions}"
 	
 	async def ask(self, question: str, context: Optional[str] = None) -> str:

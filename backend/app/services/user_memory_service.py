@@ -51,7 +51,7 @@ class UserProfile:
     """Structured user profile stored in Turso DB."""
     user_id: str
     ccaa_residencia: Optional[str] = None
-    situacion_laboral: Optional[str] = None  # 'asalariado', 'autonomo', 'pensionista', 'desempleado'
+    situacion_laboral: Optional[str] = None  # 'asalariado', 'autonomo', 'pensionista', 'desempleado', 'farmaceutico'
     tiene_vivienda: Optional[bool] = None
     primera_vivienda: Optional[bool] = None
     fecha_nacimiento: Optional[str] = None

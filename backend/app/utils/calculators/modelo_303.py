@@ -36,9 +36,33 @@ class Modelo303Calculator:
     all state lives in the ``calculate`` call.
     """
 
+    # Recargo de Equivalencia rates (Art. 154-163 LIVA)
+    # Applies to retail traders who are personas fisicas (e.g. pharmacies, CNAE 47.73)
+    RE_RATES = {
+        21: 5.2,   # IVA general 21% -> RE 5.2%
+        10: 1.4,   # IVA reducido 10% -> RE 1.4%
+        4: 0.5,    # IVA superreducido 4% -> RE 0.5%
+    }
+
     def __init__(self, repo: TaxParameterRepository) -> None:
         # Kept for interface consistency with the rest of the calculator package.
         self._repo = repo
+
+    @staticmethod
+    def is_recargo_equivalencia(situacion_laboral: str = "", cnae: str = "") -> bool:
+        """Check if the taxpayer is subject to Recargo de Equivalencia.
+
+        Applies to retail traders (comerciantes minoristas) who are personas fisicas.
+        The canonical case is pharmacies (CNAE 47.73, IAE 652.1).
+
+        When RE applies:
+        - The taxpayer does NOT file Modelo 303 (IVA quarterly)
+        - The taxpayer does NOT file Modelo 390 (IVA annual summary)
+        - IVA + RE is charged and remitted by the supplier
+        - The taxpayer cannot deduct input IVA (IVA soportado)
+        - Invoices to customers are issued without IVA (simplified tickets)
+        """
+        return situacion_laboral == "farmaceutico"
 
     async def calculate(
         self,

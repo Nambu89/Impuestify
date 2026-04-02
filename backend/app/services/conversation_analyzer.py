@@ -23,7 +23,7 @@ Si un dato NO se menciona, NO lo incluyas.
 
 Campos posibles:
 - ccaa (str): comunidad autonoma de residencia
-- situacion_laboral (str): asalariado/autonomo/pensionista/desempleado
+- situacion_laboral (str): asalariado/autonomo/pensionista/desempleado/farmaceutico
 - hijos (int): numero de hijos
 - edad_hijos (list[int]): edades de los hijos
 - custodia_compartida (bool)

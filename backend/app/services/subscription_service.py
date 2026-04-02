@@ -477,7 +477,7 @@ def validate_plan_role_compatibility(
     # Roles allowed per plan (cumulative)
     PARTICULAR_ROLES: set = {"asalariado", "pensionista", "desempleado", ""}
     CREATOR_ROLES: set = PARTICULAR_ROLES | {"creador", "influencer", "youtuber", "streamer"}
-    # autonomo allows everything (None = unrestricted)
+    # autonomo allows everything (None = unrestricted, includes 'farmaceutico')
 
     PLAN_ALLOWED: dict = {
         "particular": PARTICULAR_ROLES,

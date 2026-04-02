@@ -921,6 +921,33 @@
     line-height: 1.6;
 }
 
+.home-footer__sectors {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.home-footer__sectors-label {
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.home-footer__sectors a {
+    color: var(--color-primary-light, #3b82f6);
+    font-size: 0.8rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.home-footer__sectors a:hover {
+    color: var(--color-white);
+}
+
 .home-footer__links {
     display: flex;
     justify-content: center;

@@ -649,6 +649,11 @@ export default function Home() {
                         Impuestify es un asistente fiscal con inteligencia artificial para particulares, autónomos y creadores de contenido en España.
                         Cubre los 21 territorios fiscales con más de 600 deducciones, simulador IRPF y guía fiscal personalizada.
                     </p>
+                    <nav className="home-footer__sectors">
+                        <span className="home-footer__sectors-label">Sectores:</span>
+                        <Link to="/creadores-de-contenido">Creadores de Contenido</Link>
+                        <Link to="/farmacias">Farmacias</Link>
+                    </nav>
                     <nav className="home-footer__links">
                         <Link to="/privacy-policy">Política de Privacidad</Link>
                         <Link to="/terms">Términos y Condiciones</Link>
