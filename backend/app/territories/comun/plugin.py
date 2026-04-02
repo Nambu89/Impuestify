@@ -2,7 +2,7 @@
 from typing import Any, Dict, List
 
 from app.territories.base import (
-    TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig, Deadline,
+    TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig, Deadline, ModelObligation,
 )
 
 

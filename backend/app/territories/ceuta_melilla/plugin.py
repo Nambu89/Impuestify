@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 from app.territories.base import (
     TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig,
+    ModelObligation, Deadline, DEADLINES_2026, _trimestral_deadlines,
 )
 
 
@@ -66,6 +67,29 @@ class CeutaMelillaTerritory(TerritoryPlugin):
             ascendiente_75=2550.0,
             apply_as="base_reduction",
         )
+
+    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+        """Ceuta/Melilla: IPSI instead of IVA, no 349, organismo split."""
+        ccaa = profile.get("ccaa", "Ceuta")
+        # Force no intra-comunitarias (349 not applicable)
+        profile_no_intra = {**profile, "ccaa": ccaa, "tiene_ops_intracomunitarias": False}
+        obligations = super().get_model_obligations(profile_no_intra)
+
+        ipsi_modelo = self.get_indirect_tax_model(ccaa)
+        ciudad = f"Ciudad Autonoma de {ccaa}"
+
+        for ob in obligations:
+            if ob.modelo == ipsi_modelo:
+                ob.nombre = f"Modelo {ipsi_modelo} - IPSI trimestral ({ccaa})"
+                ob.descripcion = (
+                    f"Impuesto sobre la Produccion, los Servicios y la Importacion en {ccaa}"
+                )
+                ob.organismo = ciudad
+                rate = self.IPSI_RATES.get(ccaa, 0.04)
+                ob.notas = f"IPSI tipo general {rate*100:.0f}%. No aplica IVA ni Modelo 349"
+            # Rest of models stay AEAT
+
+        return obligations
 
     def get_rag_filters(self, ccaa: str) -> Dict[str, Any]:
         return {"territory": ccaa, "regime": "ceuta_melilla", "deduccion_60": True}

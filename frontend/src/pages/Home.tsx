@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
     MessageSquare, Shield, FileText, ArrowRight, Calculator, CreditCard,
     CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink, CalendarDays, Video,
-    Globe, AlertTriangle, BookOpen
+    Globe, AlertTriangle, BookOpen, Building2
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
@@ -413,6 +413,28 @@ export default function Home() {
                                     </div>
                                     <h3>Calculadora Retenciones</h3>
                                     <p>¿Cuánto te retienen de IRPF en la nómina? Calcula tu tipo de retención con el algoritmo oficial de la AEAT.</p>
+                                </SpotlightCard>
+                            </a>
+                        </FadeContent>
+                        <FadeContent delay={600} duration={400}>
+                            <a href="/calculadora-umbrales" style={{ textDecoration: 'none' }}>
+                                <SpotlightCard className="feature-card" spotlightColor="rgba(139, 92, 246, 0.1)">
+                                    <div className="feature-icon">
+                                        <Building2 size={28} />
+                                    </div>
+                                    <h3>Umbrales Contables</h3>
+                                    <p>¿Tu empresa debe usar PGC Normal o PYMES? ¿Necesita auditoría? Clasifica tu empresa según la LSC.</p>
+                                </SpotlightCard>
+                            </a>
+                        </FadeContent>
+                        <FadeContent delay={700} duration={400}>
+                            <a href="/modelos-obligatorios" style={{ textDecoration: 'none' }}>
+                                <SpotlightCard className="feature-card" spotlightColor="rgba(6, 182, 212, 0.1)">
+                                    <div className="feature-icon">
+                                        <FileText size={28} />
+                                    </div>
+                                    <h3>Obligaciones Fiscales</h3>
+                                    <p>¿Qué modelos tienes que presentar? Descubre tus obligaciones fiscales según tu perfil, CCAA y actividad.</p>
                                 </SpotlightCard>
                             </a>
                         </FadeContent>

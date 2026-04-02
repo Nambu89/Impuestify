@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt } from 'lucide-react'
+import { LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt, Building2, FileText } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
@@ -66,6 +66,12 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     <Link to="/calculadora-iva-creadores" className="nav-link">
                         <Receipt size={16} /> IVA Creadores
                     </Link>
+                    <Link to="/calculadora-umbrales" className="nav-link">
+                        <Building2 size={16} /> Umbrales
+                    </Link>
+                    <Link to="/modelos-obligatorios" className="nav-link">
+                        <FileText size={16} /> Obligaciones
+                    </Link>
                     <Link to="/modelos-trimestrales" className="nav-link">
                         <ClipboardList size={16} /> Modelos
                     </Link>
@@ -130,6 +136,12 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     </Link>
                     <Link to="/calculadora-iva-creadores" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <Receipt size={20} /> IVA Creadores
+                    </Link>
+                    <Link to="/calculadora-umbrales" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                        <Building2 size={20} /> Umbrales Contables
+                    </Link>
+                    <Link to="/modelos-obligatorios" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
+                        <FileText size={20} /> Obligaciones Fiscales
                     </Link>
                     <Link to="/modelos-trimestrales" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <ClipboardList size={20} /> Modelos Trimestrales

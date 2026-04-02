@@ -1,8 +1,11 @@
 """Canarias territory plugin -- IGIC instead of IVA, common IRPF."""
 from typing import Any, Dict, List
 
+from typing import Any, Dict, List
+
 from app.territories.base import (
     TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig,
+    ModelObligation, Deadline, DEADLINES_2026, _trimestral_deadlines,
 )
 
 
@@ -55,6 +58,39 @@ class CanariasTerritory(TerritoryPlugin):
             ascendiente_75=2550.0,
             apply_as="base_reduction",
         )
+
+    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+        """Canarias: IGIC 420 instead of IVA 303, resumen 425 instead of 390, NO 349.
+        AIEM models (450, 455) if applicable."""
+        # Get base obligations from parent
+        profile_with_ccaa = {**profile, "ccaa": "Canarias"}
+        # Force no intra-comunitarias (349 not applicable in Canarias)
+        profile_no_intra = {**profile_with_ccaa, "tiene_ops_intracomunitarias": False}
+        obligations = super().get_model_obligations(profile_no_intra)
+
+        # Add Canarias-specific notes to IGIC model
+        for ob in obligations:
+            if ob.modelo == "420":
+                ob.nombre = "Modelo 420 - IGIC trimestral"
+                ob.descripcion = "Autoliquidacion trimestral del Impuesto General Indirecto Canario (IGIC 7%)"
+                ob.organismo = "ATC"
+                ob.notas = "Canarias no aplica IVA sino IGIC. Tipo general 7%"
+
+        # Add resumen anual IGIC (425 instead of 390)
+        situacion = profile.get("situacion_laboral", "particular")
+        if situacion in ("autonomo", "sociedad"):
+            obligations.append(ModelObligation(
+                modelo="425",
+                nombre="Modelo 425 - Resumen anual IGIC",
+                descripcion="Resumen anual del Impuesto General Indirecto Canario",
+                periodicidad="anual",
+                aplica_si=situacion,
+                obligatorio=True,
+                deadlines=[Deadline(modelo="425", description="Resumen anual IGIC", date="2026-01-30", period="annual")],
+                organismo="ATC",
+            ))
+
+        return obligations
 
     def get_rag_filters(self, ccaa: str) -> Dict[str, Any]:
         return {

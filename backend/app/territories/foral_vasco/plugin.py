@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 from app.territories.base import (
     TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig,
+    ModelObligation, Deadline, DEADLINES_2026, _trimestral_deadlines,
 )
 
 
@@ -67,3 +68,38 @@ class ForalVascoTerritory(TerritoryPlugin):
             ascendiente_75=4080.0,
             apply_as="quota_deduction",
         )
+
+    def _get_organismo(self, ccaa: str) -> str:
+        """Return the Diputacion Foral identifier."""
+        mapping = {"Gipuzkoa": "DFG", "Bizkaia": "DFB", "Araba": "DFA"}
+        return mapping.get(ccaa, "DFG")
+
+    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+        """Foral Vasco: 300 (Gipuzkoa) or 303 (Bizkaia/Araba), 110 not 111,
+        109 (Gipuzkoa) or 100, TicketBAI/Batuz mandatory."""
+        ccaa = profile.get("ccaa", "Gipuzkoa")
+        profile_with_ccaa = {**profile, "ccaa": ccaa}
+        obligations = super().get_model_obligations(profile_with_ccaa)
+
+        organismo = self._get_organismo(ccaa)
+
+        # Update organismo and add TicketBAI note
+        for ob in obligations:
+            ob.organismo = organismo
+            if ob.notas:
+                ob.notas += ". TicketBAI/Batuz obligatorio"
+            else:
+                ob.notas = "TicketBAI/Batuz obligatorio"
+
+            # Rename IRPF model
+            if ob.modelo == "109":
+                ob.nombre = "Modelo 109 - IRPF (Gipuzkoa)"
+                ob.descripcion = "Declaracion anual del IRPF ante la Diputacion Foral de Gipuzkoa"
+            elif ob.modelo == "300":
+                ob.nombre = "Modelo 300 - IVA trimestral (Gipuzkoa)"
+                ob.descripcion = "Autoliquidacion trimestral del IVA ante la DFG"
+            elif ob.modelo == "110":
+                ob.nombre = "Modelo 110 - Retenciones trabajo (foral)"
+                ob.descripcion = "Retenciones e ingresos a cuenta del trabajo (modelo foral)"
+
+        return obligations

@@ -42,7 +42,9 @@ const ObligadoDeclararPage = lazy(() => import('./pages/ObligadoDeclararPage'))
 const IvaCreatorsPage = lazy(() => import('./pages/IvaCreatorsPage'))
 const AdminRagQualityPage = lazy(() => import('./pages/AdminRagQualityPage'))
 const CalculadoraRetencionesPage = lazy(() => import('./pages/CalculadoraRetencionesPage'))
+const CalculadoraUmbralesPage = lazy(() => import('./pages/CalculadoraUmbralesPage'))
 const SharedConversationPage = lazy(() => import('./pages/SharedConversationPage'))
+const ModelObligationsPage = lazy(() => import('./pages/ModelObligationsPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -108,6 +110,7 @@ function App() {
                     <Route path="/creadores-de-contenido" element={<CreatorsPage />} />
                     <Route path="/checklist-borrador" element={<ChecklistBorradorPage />} />
                     <Route path="/obligado-declarar" element={<ObligadoDeclararPage />} />
+                    <Route path="/modelos-obligatorios" element={<ModelObligationsPage />} />
 
                     {/* Protected Routes (require auth + subscription) */}
                     <Route
@@ -143,6 +146,7 @@ function App() {
                         }
                     />
                     <Route path="/calculadora-retenciones" element={<CalculadoraRetencionesPage />} />
+                    <Route path="/calculadora-umbrales" element={<CalculadoraUmbralesPage />} />
                     <Route path="/shared/:token" element={<SharedConversationPage />} />
                     <Route
                         path="/gastos-deducibles"

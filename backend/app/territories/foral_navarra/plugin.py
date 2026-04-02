@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 from app.territories.base import (
     TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig,
+    ModelObligation, Deadline, DEADLINES_2026, _trimestral_deadlines,
 )
 
 
@@ -67,3 +68,24 @@ class ForalNavarraTerritory(TerritoryPlugin):
             ascendiente_75=900.0,
             apply_as="quota_deduction",
         )
+
+    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+        """Navarra: F69 instead of 303, F-90 instead of 100, S-90 instead of 200.
+        organismo: HTN (Hacienda Tributaria de Navarra)."""
+        profile_with_ccaa = {**profile, "ccaa": "Navarra"}
+        obligations = super().get_model_obligations(profile_with_ccaa)
+
+        for ob in obligations:
+            ob.organismo = "HTN"
+
+            if ob.modelo == "F69":
+                ob.nombre = "Modelo F69 - IVA trimestral (Navarra)"
+                ob.descripcion = "Autoliquidacion trimestral del IVA ante Hacienda Tributaria de Navarra"
+            elif ob.modelo == "F-90":
+                ob.nombre = "Modelo F-90 - IRPF (Navarra)"
+                ob.descripcion = "Declaracion anual del IRPF ante HTN"
+            elif ob.modelo == "S-90":
+                ob.nombre = "Modelo S-90 - Impuesto sobre Sociedades (Navarra)"
+                ob.descripcion = "Declaracion anual del IS ante HTN"
+
+        return obligations

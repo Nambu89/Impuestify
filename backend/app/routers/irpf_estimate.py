@@ -1174,3 +1174,167 @@ async def calculate_withholding(
     except Exception as e:
         logger.exception("Error en calculate_withholding")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# Company Size / Accounting Thresholds Calculator (Phase 1B)
+# ---------------------------------------------------------------------------
+
+class CompanyYearData(BaseModel):
+    """Financial data for one fiscal year."""
+    activo: float = Field(..., ge=0, description="Total activo (EUR)")
+    negocios: float = Field(..., ge=0, description="Cifra de negocios (EUR)")
+    empleados: int = Field(..., ge=0, description="Numero medio de empleados")
+
+
+class CompanySizeRequest(BaseModel):
+    """Request for company size classification."""
+    year_1: CompanyYearData = Field(..., description="Datos del ejercicio N-1")
+    year_2: CompanyYearData = Field(..., description="Datos del ejercicio N")
+    ejercicio: int = Field(2025, ge=2020, le=2030, description="Ejercicio de referencia para umbrales")
+
+
+@router.post("/company-size")
+@limiter.limit("120/minute")
+async def calculate_company_size(
+    request: Request,
+    body: CompanySizeRequest,
+):
+    """
+    Classify a company by size (micro/small/medium/large) and determine:
+    - PGC applicable (PYMES vs Normal)
+    - Balance abreviado eligibility
+    - PyG abreviada eligibility
+    - Audit obligation
+
+    Based on LSC Art. 257-258 + Directiva UE 2023/2775.
+    Public endpoint (no auth required).
+    """
+    try:
+        from app.utils.calculators.company_size import (
+            classify_company,
+            YearData,
+        )
+
+        y1 = YearData(
+            activo=body.year_1.activo,
+            negocios=body.year_1.negocios,
+            empleados=body.year_1.empleados,
+        )
+        y2 = YearData(
+            activo=body.year_2.activo,
+            negocios=body.year_2.negocios,
+            empleados=body.year_2.empleados,
+        )
+
+        result = classify_company(y1, y2, ejercicio=body.ejercicio)
+
+        return {
+            "success": True,
+            "clasificacion": result.clasificacion,
+            "clasificacion_label": result.clasificacion_label,
+            "pgc_aplicable": result.pgc_aplicable,
+            "pgc_detalle": result.pgc_detalle,
+            "balance_abreviado": result.balance_abreviado,
+            "memoria_abreviada": result.memoria_abreviada,
+            "pyg_abreviada": result.pyg_abreviada,
+            "auditoria_obligatoria": result.auditoria_obligatoria,
+            "notas": result.notas,
+            "umbrales_clasificacion": result.umbrales_clasificacion,
+            "umbrales_auditoria": result.umbrales_auditoria,
+            "umbrales_balance": result.umbrales_balance,
+            "umbrales_pyg": result.umbrales_pyg,
+            "ejercicio_referencia": result.ejercicio_referencia,
+            "disclaimer": result.disclaimer,
+        }
+
+    except Exception as e:
+        logger.exception("Error en calculate_company_size")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Model Obligations Advisor ──────────────────────────────────────
+
+
+class ModelObligationsRequest(BaseModel):
+    """Request body for the model obligations advisor."""
+    ccaa: str
+    situacion_laboral: str = "particular"  # particular | autonomo | sociedad
+    tiene_empleados: bool = False
+    tiene_alquileres: bool = False
+    estimacion: str = "directa_simplificada"  # directa_simplificada | directa_normal | objetiva
+    tiene_ops_intracomunitarias: bool = False
+    tiene_ops_terceros_3005: bool = False
+    paga_dividendos: bool = False
+
+
+@router.post("/model-obligations")
+@limiter.limit("60/minute")
+async def get_model_obligations(
+    request: Request,
+    body: ModelObligationsRequest,
+):
+    """Returns the list of fiscal models a taxpayer must file based on their profile and CCAA.
+
+    Public endpoint (no auth required). No LLM involved -- direct territory plugin logic (~5ms).
+    """
+    try:
+        from app.territories.registry import get_territory
+        from app.utils.ccaa_constants import normalize_ccaa
+
+        ccaa = normalize_ccaa(body.ccaa)
+
+        try:
+            plugin = get_territory(ccaa)
+        except KeyError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Comunidad autonoma no reconocida: '{body.ccaa}'"
+            )
+
+        profile = {
+            "ccaa": ccaa,
+            "situacion_laboral": body.situacion_laboral,
+            "tiene_empleados": body.tiene_empleados,
+            "tiene_alquileres": body.tiene_alquileres,
+            "estimacion": body.estimacion,
+            "tiene_ops_intracomunitarias": body.tiene_ops_intracomunitarias,
+            "tiene_ops_terceros_3005": body.tiene_ops_terceros_3005,
+            "paga_dividendos": body.paga_dividendos,
+        }
+
+        obligations = plugin.get_model_obligations(profile)
+
+        return {
+            "success": True,
+            "ccaa": ccaa,
+            "situacion_laboral": body.situacion_laboral,
+            "total_modelos": len(obligations),
+            "modelos": [
+                {
+                    "modelo": ob.modelo,
+                    "nombre": ob.nombre,
+                    "descripcion": ob.descripcion,
+                    "periodicidad": ob.periodicidad,
+                    "aplica_si": ob.aplica_si,
+                    "obligatorio": ob.obligatorio,
+                    "organismo": ob.organismo,
+                    "notas": ob.notas,
+                    "deadlines": [
+                        {
+                            "description": d.description,
+                            "date": d.date,
+                            "period": d.period,
+                        }
+                        for d in ob.deadlines
+                    ],
+                }
+                for ob in obligations
+            ],
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error en get_model_obligations")
+        raise HTTPException(status_code=500, detail=str(e))
