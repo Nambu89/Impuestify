@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Calculator, ChevronDown, ChevronUp, Plus, Trash2, AlertCircle, Info } from 'lucide-react';
+import { Calculator, ChevronDown, ChevronUp, Plus, Trash2, AlertCircle, Info, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import '../styles/CalculadoraRetenciones.css';
 
 interface Descendiente {
@@ -99,6 +100,9 @@ export default function CalculadoraRetencionesPage() {
   return (
     <div className="calc-ret-page">
       <div className="calc-ret-container">
+        <Link to="/" className="calc-back-link">
+          <ArrowLeft size={16} /> Volver a inicio
+        </Link>
         <div className="calc-ret-header">
           <Calculator size={32} />
           <div>

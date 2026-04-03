@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Building2, AlertCircle, Info, CheckCircle, XCircle } from 'lucide-react';
+import { Building2, AlertCircle, Info, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import '../styles/CalculadoraUmbrales.css';
 
 interface ThresholdDetail {
@@ -144,6 +145,9 @@ export default function CalculadoraUmbralesPage() {
   return (
     <div className="calc-umb-page">
       <div className="calc-umb-container">
+        <Link to="/" className="calc-back-link">
+          <ArrowLeft size={16} /> Volver a inicio
+        </Link>
         <div className="calc-umb-header">
           <Building2 size={32} />
           <div>

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt, Building2, FileText } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt, Building2, FileText, ChevronDown } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
@@ -14,6 +14,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     const { isOwner } = useSubscription()
     const navigate = useNavigate()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const [toolsOpen, setToolsOpen] = useState(false)
+    const [mobileToolsOpen, setMobileToolsOpen] = useState(false)
+    const toolsRef = useRef<HTMLDivElement>(null)
 
     const handleLogout = () => {
         logout()
@@ -29,6 +32,17 @@ export default function Header({ onMenuToggle }: HeaderProps) {
             .toUpperCase()
             .slice(0, 2)
     }
+
+    // Close tools dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+                setToolsOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     return (
         <>
@@ -53,28 +67,50 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                 </Link>
 
                 <nav className="nav">
-                    <Link to="/chat" className="nav-link">Chat</Link>
-                    <Link to="/guia-fiscal" className="nav-link">
-                        <Calculator size={16} /> Guia Fiscal
+                    <Link to="/chat" className="nav-link">
+                        <MessageSquare size={16} /> Chat
                     </Link>
-                    <Link to="/calculadora-neto" className="nav-link">
-                        <Wallet size={16} /> Calculadora Neto
-                    </Link>
-                    <Link to="/calculadora-retenciones" className="nav-link">
-                        <Calculator size={16} /> Retenciones
-                    </Link>
-                    <Link to="/calculadora-iva-creadores" className="nav-link">
-                        <Receipt size={16} /> IVA Creadores
-                    </Link>
-                    <Link to="/calculadora-umbrales" className="nav-link">
-                        <Building2 size={16} /> Umbrales
-                    </Link>
-                    <Link to="/modelos-obligatorios" className="nav-link">
-                        <FileText size={16} /> Obligaciones
-                    </Link>
-                    <Link to="/modelos-trimestrales" className="nav-link">
-                        <ClipboardList size={16} /> Modelos
-                    </Link>
+
+                    {/* Herramientas dropdown */}
+                    <div
+                        className={`nav-dropdown${toolsOpen ? ' nav-dropdown--open' : ''}`}
+                        ref={toolsRef}
+                        onMouseEnter={() => setToolsOpen(true)}
+                        onMouseLeave={() => setToolsOpen(false)}
+                    >
+                        <button
+                            className="nav-link nav-dropdown__trigger"
+                            onClick={() => setToolsOpen(!toolsOpen)}
+                            aria-expanded={toolsOpen}
+                            aria-haspopup="true"
+                        >
+                            <Calculator size={16} /> Herramientas <ChevronDown size={14} className={`nav-chevron${toolsOpen ? ' nav-chevron--up' : ''}`} />
+                        </button>
+                        <div className="nav-dropdown__menu nav-dropdown__menu--tools" role="menu">
+                            <Link to="/guia-fiscal" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <Calculator size={15} /> Guía Fiscal
+                            </Link>
+                            <Link to="/calculadora-neto" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <Wallet size={15} /> Calculadora Neto
+                            </Link>
+                            <Link to="/calculadora-retenciones" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <Calculator size={15} /> Retenciones IRPF
+                            </Link>
+                            <Link to="/calculadora-iva-creadores" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <Receipt size={15} /> IVA Creadores
+                            </Link>
+                            <Link to="/calculadora-umbrales" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <Building2 size={15} /> Umbrales Contables
+                            </Link>
+                            <Link to="/modelos-obligatorios" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <FileText size={15} /> Obligaciones Fiscales
+                            </Link>
+                            <Link to="/modelos-trimestrales" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <ClipboardList size={15} /> Modelos Trimestrales
+                            </Link>
+                        </div>
+                    </div>
+
                     <Link to="/crypto" className="nav-link">
                         <Bitcoin size={16} /> Crypto
                     </Link>
@@ -90,9 +126,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     {isOwner && (
                         <div className="nav-dropdown">
                             <button className="nav-link nav-dropdown__trigger">
-                                <Shield size={16} /> Admin
+                                <Shield size={16} /> Admin <ChevronDown size={14} />
                             </button>
-                            <div className="nav-dropdown__menu">
+                            <div className="nav-dropdown__menu" role="menu">
                                 <Link to="/admin" className="nav-dropdown__item">Dashboard</Link>
                                 <Link to="/admin/users" className="nav-dropdown__item">Usuarios</Link>
                                 <Link to="/admin/feedback" className="nav-dropdown__item">Feedback</Link>
@@ -125,27 +161,6 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     <Link to="/chat" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <MessageSquare size={20} /> Chat
                     </Link>
-                    <Link to="/guia-fiscal" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
-                        <Calculator size={20} /> Guia Fiscal
-                    </Link>
-                    <Link to="/calculadora-neto" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
-                        <Wallet size={20} /> Calculadora Neto
-                    </Link>
-                    <Link to="/calculadora-retenciones" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
-                        <Calculator size={20} /> Retenciones IRPF
-                    </Link>
-                    <Link to="/calculadora-iva-creadores" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
-                        <Receipt size={20} /> IVA Creadores
-                    </Link>
-                    <Link to="/calculadora-umbrales" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
-                        <Building2 size={20} /> Umbrales Contables
-                    </Link>
-                    <Link to="/modelos-obligatorios" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
-                        <FileText size={20} /> Obligaciones Fiscales
-                    </Link>
-                    <Link to="/modelos-trimestrales" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
-                        <ClipboardList size={20} /> Modelos Trimestrales
-                    </Link>
                     <Link to="/crypto" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <Bitcoin size={20} /> Criptomonedas
                     </Link>
@@ -155,6 +170,42 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     <Link to="/settings" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
                         <Settings size={20} /> Configuración
                     </Link>
+
+                    {/* Herramientas group */}
+                    <button
+                        className="mobile-nav__group-toggle"
+                        onClick={() => setMobileToolsOpen(!mobileToolsOpen)}
+                        aria-expanded={mobileToolsOpen}
+                    >
+                        <span className="mobile-nav__group-label"><Calculator size={20} /> Herramientas</span>
+                        <ChevronDown size={18} className={mobileToolsOpen ? 'mobile-nav__chevron--up' : ''} />
+                    </button>
+                    {mobileToolsOpen && (
+                        <div className="mobile-nav__group">
+                            <Link to="/guia-fiscal" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <Calculator size={18} /> Guía Fiscal
+                            </Link>
+                            <Link to="/calculadora-neto" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <Wallet size={18} /> Calculadora Neto
+                            </Link>
+                            <Link to="/calculadora-retenciones" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <Calculator size={18} /> Retenciones IRPF
+                            </Link>
+                            <Link to="/calculadora-iva-creadores" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <Receipt size={18} /> IVA Creadores
+                            </Link>
+                            <Link to="/calculadora-umbrales" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <Building2 size={18} /> Umbrales Contables
+                            </Link>
+                            <Link to="/modelos-obligatorios" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <FileText size={18} /> Obligaciones Fiscales
+                            </Link>
+                            <Link to="/modelos-trimestrales" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <ClipboardList size={18} /> Modelos Trimestrales
+                            </Link>
+                        </div>
+                    )}
+
                     {isOwner && (
                         <>
                             <Link to="/admin" className="mobile-nav__link" onClick={() => setMobileMenuOpen(false)}>
