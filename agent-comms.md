@@ -7,6 +7,63 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-04-06] PM Coordinator — 🟢 DONE — Sesion 26: Phase 3 Clasificador Facturas + Contabilidad PGC
+
+### Tareas completadas
+1. **InvoiceOCRService** — Gemini 3 Flash Vision, extrae datos facturas PDF/imagen → JSON estructurado. 23 tests
+2. **InvoiceClassifierService** — Clasifica facturas en cuentas PGC (grupos 1-7). 8 tests
+3. **ContabilidadService** — Asientos partida doble, Libro Diario, Mayor, Balance, PyG. 21 tests
+4. **ContabilidadExportService** — CSV/Excel para Registro Mercantil. 4 tests
+5. **Invoices Router** — POST upload, GET list, GET detail, PUT reclassify, DELETE. Rate limited.
+6. **Contabilidad Router** — GET libro-diario, libro-mayor, balance, pyg, export/{libro}
+7. **Frontend** — ClasificadorFacturasPage + ContabilidadPage (responsive mobile-first)
+8. **Seed PGC** — 66 cuentas (grupos 1-7), script idempotente
+9. **QA** — 3 bugs encontrados y arreglados (CORS, trimestre, filtro tipo)
+
+### Archivos creados (11 nuevos)
+- backend/app/services/invoice_ocr_service.py
+- backend/app/services/invoice_classifier_service.py
+- backend/app/services/contabilidad_service.py
+- backend/app/services/contabilidad_export_service.py
+- backend/app/routers/invoices.py
+- backend/app/routers/contabilidad.py
+- backend/scripts/seed_pgc_accounts.py
+- backend/tests/test_invoice_ocr.py, test_invoice_classifier.py, test_contabilidad.py, test_contabilidad_export.py
+- frontend/src/pages/ClasificadorFacturasPage.tsx + .css
+- frontend/src/pages/ContabilidadPage.tsx + .css
+
+### Metricas
+- Tests nuevos: 56 | Tests totales: 1758 | Regresiones: 0
+- Commit: ecc0f0e
+
+### Pendiente proxima sesion
+- [ ] Seed PGC accounts en produccion Turso
+- [ ] Reclasificacion manual (modal busqueda PGC incompleto)
+- [ ] Testing E2E con facturas reales (Playwright)
+- [ ] Frontend wizard steps para GP inmuebles, plusvalia, 720/721, 2o declarante
+
+---
+
+## [2026-04-03] QA Agent — 🟢 DONE — Phase 3 QA: 3 bugs arreglados
+
+### BUG CRITICO detectado — Contabilidad Libro Diario roto
+
+**B3 [CRITICA] ContabilidadPage.tsx linea 180:**
+`LibroDiario` envia `trimestre=todos` (string) al backend que espera `Optional[int]`.
+Backend responde 422. Libro Diario siempre muestra empty state por defecto.
+Fix: en `LibroDiario`, cambiar `new URLSearchParams({ year, trimestre })` a no incluir
+`trimestre` si su valor es `"todos"`. Mismo fix en `ExportButton`.
+Archivo: `frontend/src/pages/ContabilidadPage.tsx` linea 180.
+
+**B4 [MEDIA] ExportButton mismo problema:** trimestre="todos" en export URL.
+
+**U2 [MEDIA] ClasificadorFacturas:** filtro por tipo (emitida/recibida) visible pero sin efecto.
+El array `filtered` en `InvoiceList` no aplica el filtro por `tipo`.
+
+**Reporte completo:** `plans/qa-report-phase3-2026-04-03.md`
+
+---
+
 ## [2026-03-28] PM Coordinator — 🟢 DONE — Sesion 23: 7 Features Fiscales + Compliance Audit
 
 ### Tareas completadas (7 features + 4 fixes)

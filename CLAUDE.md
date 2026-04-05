@@ -127,10 +127,13 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 | Creator | 49 EUR/mes | Influencers, YouTubers, streamers, bloggers | + IVA by platform, Modelo 349, DAC7, CNAE 60.39, multi-role profiles |
 | Autonomo | 39 EUR/mes IVA incl. | Self-employed | + All models (303/130/131), crypto, workspace, calendar |
 
-## Key Updates (2026-03-27)
+## Key Updates (2026-04-06)
 
+- **Phase 3: Clasificador Facturas + Contabilidad PGC** (sesion 26): Gemini 3 Flash Vision OCR ($0.0003/factura), clasificacion PGC automatica, asientos partida doble, Libro Diario/Mayor/Balance/PyG, export CSV/Excel para Registro Mercantil. 56 tests, 10 endpoints, 66 cuentas PGC. Frontend responsive mobile-first.
+- **Google Gemini API**: `google-genai` SDK integrado. Env var: `GOOGLE_GEMINI_API_KEY`. Modelo: `gemini-3-flash-preview`
+- **ADR-009**: Gemini 3 Flash para OCR facturas (33x mas barato que Azure DI). ADR-010: Contabilidad completa
+- **Tests**: 1758 backend PASS + frontend build OK
 - **Repo**: Migrado a `Nambu89/Impuestify` (antes TaxIA). Railway auto-deploy conectado
-- **Tests**: 1212 backend PASS + frontend build OK
 - **RAG Pipeline** (FIXED sesion 22): 454 docs, 89,174 chunks, 82,098 embeddings, FTS5 sync. Territory filter normalizado, FTS5 OR query, semantic cache poisoning prevention, auto-rebuild FTS5 en ingesta
 - **System Prompt** (REWRITE sesion 22): Tecnicas GPT-5/Claude/NotebookLM — etiquetas `<contexto_fiscal>`, nivel 3/10, show dont tell, zero process narration
 - **AEAT Crawler** (NEW): crawl_aeat_full.py (PDFs con Scrapling) + crawl_aeat_html.py (HTML con Playwright). 7 PDFs + 19 HTMLs descargados e ingestados
