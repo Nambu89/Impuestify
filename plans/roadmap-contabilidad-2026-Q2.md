@@ -317,24 +317,28 @@ Prerequisito: 1A completado (get_model_obligations existe en plugins)
 
 ---
 
-## FASE 3: Clasificador de Facturas
+## FASE 3: Clasificador de Facturas + Contabilidad PGC
 
-**Estimacion:** 3-4 sesiones | **Dependencias:** Fase 1 completada. No depende de Fase 2.
+**Estimacion:** 4-5 sesiones | **Dependencias:** Fase 1 completada. No depende de Fase 2.
+**ADR:** ADR-009 (Gemini 3 Flash para OCR) + ADR-010 (Contabilidad completa)
 
-### 3A. Pipeline OCR
+### 3A. Pipeline OCR con Gemini 3 Flash
 
 | ID | Tarea | Archivo(s) | Complejidad | Parallelizable |
 |----|-------|-----------|-------------|----------------|
-| 3A-B1 | Evaluar OCR: Azure Document Intelligence (ya tenemos key) vs Tesseract local | Research | Media | Si |
-| 3A-B2 | Crear `InvoiceOCRService` que recibe PDF/imagen y extrae texto + campos | `backend/app/services/invoice_ocr_service.py` (NUEVO) | Alta | Tras 3A-B1 |
-| 3A-B3 | Extender `InvoiceExtractor` existente para usar OCR en imagenes (actualmente solo PDF) | `backend/app/services/invoice_extractor.py` | Media | Tras 3A-B2 |
-| 3A-B4 | Endpoint `POST /api/invoices/classify` (auth required, plan Autonomo) | `backend/app/routers/invoices.py` (NUEVO) | Media | Tras 3A-B3 |
-| 3A-B5 | Tests OCR con facturas de ejemplo | `backend/tests/test_invoice_ocr.py` (NUEVO) | Media | Tras 3A-B4 |
+| 3A-B1 | ~~Evaluar OCR~~ DONE (ADR-009): Gemini 3 Flash Vision. SDK `google-genai`. JSON estructurado via `response_json_schema`. $0.0003/factura. Azure DI se mantiene SOLO para ingesta RAG interna | Research DONE | - | - |
+| 3A-B2 | Anadir `google-genai` a requirements.txt + `GOOGLE_GEMINI_API_KEY` a config.py | `requirements.txt`, `backend/app/config.py` | Baja | Si |
+| 3A-B3 | Crear `InvoiceOCRService` con Gemini 3 Flash: PDF/imagen → Factura (Pydantic) | `backend/app/services/invoice_ocr_service.py` (NUEVO) | Alta | Tras 3A-B2 |
+| 3A-B4 | Validacion post-extraccion: NIF checksum + cuadre IVA + cuadre total | Dentro de `invoice_ocr_service.py` | Media | Con 3A-B3 |
+| 3A-B5 | Endpoint `POST /api/invoices/upload` (auth, plan Autonomo, rate limit 10/min) | `backend/app/routers/invoices.py` (NUEVO) | Media | Tras 3A-B3 |
+| 3A-B6 | Tests OCR con facturas de ejemplo (PDF + imagen) | `backend/tests/test_invoice_ocr.py` (NUEVO) | Media | Tras 3A-B5 |
 
-**Nota:** Ya tenemos `AZURE_DI_ENDPOINT` y `AZURE_DI_API_KEY` configurados (usados para ingesta RAG). Azure DI es la opcion preferida porque:
-- Ya pagamos por el servicio
-- Soporta facturas espanolas nativamente (prebuilt-invoice model)
-- Extrae campos estructurados (emisor, receptor, importes, IVA)
+**Motor OCR:** Gemini 3 Flash Vision (`gemini-3-flash-preview`)
+- Procesa PDFs nativamente (texto nativo no consume tokens)
+- Soporta imagenes JPG/PNG (fotos de facturas)
+- JSON estructurado garantizado via `response_json_schema` + Pydantic
+- Coste: ~$0.0003/factura (33x mas barato que Azure DI)
+- Fallback: gpt-5-mini si Gemini falla (ya integrado)
 
 ### 3B. Clasificacion PGC
 

@@ -881,6 +881,85 @@ class TursoClient:
                 view_count INTEGER DEFAULT 0
             )
             """,
+
+            # =============================================
+            # --- Phase 3: Contabilidad ---
+            # =============================================
+
+            # PGC accounts — Plan General Contable
+            """
+            CREATE TABLE IF NOT EXISTS pgc_accounts (
+                id TEXT PRIMARY KEY,
+                code TEXT NOT NULL,
+                name TEXT NOT NULL,
+                group_code TEXT NOT NULL,
+                group_name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                description TEXT,
+                keywords TEXT,
+                common_for TEXT,
+                is_active BOOLEAN DEFAULT 1
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_pgc_code ON pgc_accounts(code)",
+
+            # Libro registro — Invoice registry (emitidas + recibidas)
+            """
+            CREATE TABLE IF NOT EXISTS libro_registro (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                workspace_file_id TEXT,
+                tipo TEXT NOT NULL,
+                numero_factura TEXT,
+                fecha_factura TEXT,
+                fecha_operacion TEXT,
+                emisor_nif TEXT,
+                emisor_nombre TEXT,
+                receptor_nif TEXT,
+                receptor_nombre TEXT,
+                concepto TEXT,
+                base_imponible REAL NOT NULL,
+                tipo_iva REAL,
+                cuota_iva REAL,
+                tipo_re REAL,
+                cuota_re REAL,
+                retencion_irpf_pct REAL,
+                retencion_irpf REAL,
+                total REAL NOT NULL,
+                cuenta_pgc TEXT,
+                cuenta_pgc_nombre TEXT,
+                clasificacion_confianza TEXT,
+                trimestre INTEGER,
+                year INTEGER NOT NULL,
+                raw_extraction TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_libro_user_year ON libro_registro(user_id, year)",
+
+            # Asientos contables — Journal entries (double-entry accounting)
+            """
+            CREATE TABLE IF NOT EXISTS asientos_contables (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                libro_registro_id TEXT REFERENCES libro_registro(id) ON DELETE CASCADE,
+                fecha TEXT NOT NULL,
+                numero_asiento INTEGER NOT NULL,
+                cuenta_code TEXT NOT NULL,
+                cuenta_nombre TEXT NOT NULL,
+                debe REAL DEFAULT 0,
+                haber REAL DEFAULT 0,
+                concepto TEXT,
+                year INTEGER NOT NULL,
+                trimestre INTEGER NOT NULL,
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+            """,
+
+            "CREATE INDEX IF NOT EXISTS idx_asientos_user_year ON asientos_contables(user_id, year)",
         ]
         
         try:

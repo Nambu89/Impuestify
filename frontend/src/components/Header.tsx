@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt, Building2, FileText, ChevronDown } from 'lucide-react'
+import { LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt, Building2, FileText, BookOpen, ChevronDown } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
@@ -108,6 +108,12 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             <Link to="/modelos-trimestrales" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
                                 <ClipboardList size={15} /> Modelos Trimestrales
                             </Link>
+                            <Link to="/clasificador-facturas" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <FileText size={15} /> Clasificador Facturas
+                            </Link>
+                            <Link to="/contabilidad" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <BookOpen size={15} /> Contabilidad
+                            </Link>
                         </div>
                     </div>
 
@@ -202,6 +208,12 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             </Link>
                             <Link to="/modelos-trimestrales" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
                                 <ClipboardList size={18} /> Modelos Trimestrales
+                            </Link>
+                            <Link to="/clasificador-facturas" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <FileText size={18} /> Clasificador Facturas
+                            </Link>
+                            <Link to="/contabilidad" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <BookOpen size={18} /> Contabilidad
                             </Link>
                         </div>
                     )}

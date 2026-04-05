@@ -507,6 +507,14 @@ app.include_router(modelo_720_router)
 from app.routers.plusvalia import router as plusvalia_router
 app.include_router(plusvalia_router)
 
+# Contabilidad (Libros contables + export CSV/Excel)
+from app.routers.contabilidad import router as contabilidad_router
+app.include_router(contabilidad_router)
+
+# Invoice Classifier + Contabilidad
+from app.routers.invoices import router as invoices_router
+app.include_router(invoices_router)
+
 # === Dependencias ===
 
 async def get_rag_engine():

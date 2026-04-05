@@ -1,0 +1,844 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ClasificadorFacturasPage.css — Mobile-first
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page layout ─────────────────────────────────────────────────────────── */
+
+.cf-page {
+    min-height: 100vh;
+    background: var(--color-secondary);
+    color: #fff;
+    padding: 80px 16px 40px;
+}
+
+.cf-page__inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+
+.cf-page-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.cf-page-header__icon {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: rgba(26, 86, 219, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary-light, #3b82f6);
+}
+
+.cf-page-header__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+    line-height: 1.2;
+}
+
+.cf-page-header__subtitle {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+
+.cf-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cf-section--results {
+    gap: 20px;
+}
+
+.cf-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    color: #fff;
+}
+
+/* ── Upload zone ─────────────────────────────────────────────────────────── */
+
+.cf-upload-zone {
+    width: 100%;
+    border: 2px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    background: rgba(255, 255, 255, 0.03);
+    text-align: center;
+}
+
+.cf-upload-zone:hover,
+.cf-upload-zone:focus-visible {
+    border-color: var(--color-primary-light, #3b82f6);
+    background: rgba(26, 86, 219, 0.07);
+    outline: none;
+}
+
+.cf-upload-zone--dragging {
+    border-color: var(--color-accent, #06b6d4);
+    background: rgba(6, 182, 212, 0.09);
+}
+
+.cf-upload-icon {
+    color: var(--color-primary-light, #3b82f6);
+    opacity: 0.8;
+}
+
+.cf-upload-zone--dragging .cf-upload-icon {
+    color: var(--color-accent, #06b6d4);
+}
+
+.cf-upload-input {
+    display: none;
+}
+
+.cf-upload-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #fff;
+}
+
+.cf-upload-subtitle {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0;
+}
+
+.cf-upload-btn {
+    margin-top: 6px;
+    padding: 8px 20px;
+    background: var(--color-primary, #1a56db);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.cf-upload-btn:hover {
+    background: var(--color-primary-dark, #1e40af);
+}
+
+/* ── Upload progress ─────────────────────────────────────────────────────── */
+
+.cf-progress {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.cf-progress__spinner {
+    color: var(--color-accent, #06b6d4);
+    animation: cf-spin 1s linear infinite;
+}
+
+@keyframes cf-spin {
+    to { transform: rotate(360deg); }
+}
+
+.cf-progress__steps {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.cf-progress__step {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.35);
+    transition: color 0.3s ease;
+}
+
+.cf-progress__step--active {
+    color: #fff;
+    font-weight: 600;
+}
+
+/* ── Upload done bar ─────────────────────────────────────────────────────── */
+
+.cf-upload-done-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.cf-upload-done-bar__icon {
+    color: #22c55e;
+    flex-shrink: 0;
+}
+
+/* ── Alerts ──────────────────────────────────────────────────────────────── */
+
+.cf-alert {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    align-items: flex-start;
+}
+
+.cf-alert--warning {
+    background: rgba(234, 179, 8, 0.12);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+    color: #fde68a;
+}
+
+.cf-alert--error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #fca5a5;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.cf-alert__list {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    line-height: 1.6;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+
+.cf-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cf-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cf-card__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #fff;
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+
+.cf-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge--green {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.badge--yellow {
+    background: rgba(234, 179, 8, 0.15);
+    color: #fde047;
+    border: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+.badge--red {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* ── Grid ────────────────────────────────────────────────────────────────── */
+
+.cf-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.cf-grid--2 {
+    grid-template-columns: 1fr;
+}
+
+/* ── Fields ──────────────────────────────────────────────────────────────── */
+
+.cf-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cf-field__label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.cf-field__value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #fff;
+}
+
+.cf-field__sub {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── Lines ───────────────────────────────────────────────────────────────── */
+
+.cf-lines__toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--color-accent, #06b6d4);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s;
+}
+
+.cf-lines__toggle:hover {
+    opacity: 0.8;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+
+.cf-table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.825rem;
+}
+
+.cf-table th,
+.cf-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: nowrap;
+}
+
+.cf-table th {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+}
+
+.cf-table td {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.cf-table tr:last-child td {
+    border-bottom: none;
+}
+
+.cf-table__num {
+    text-align: right;
+}
+
+/* ── Totals ──────────────────────────────────────────────────────────────── */
+
+.cf-totals {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+}
+
+.cf-totals__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.cf-totals__row--negative span:last-child {
+    color: #fca5a5;
+}
+
+.cf-totals__row--total {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 8px;
+    margin-top: 4px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+}
+
+/* ── PGC Classification ──────────────────────────────────────────────────── */
+
+.cf-pgc-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.cf-pgc-code {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-light, #3b82f6);
+    font-family: 'Fira Code', 'Courier New', monospace;
+}
+
+.cf-pgc-name {
+    font-size: 0.925rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cf-pgc-alternatives__label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0 0 8px;
+}
+
+.cf-pgc-alternatives__list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cf-pgc-alt-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+
+.cf-pgc-alt-btn:hover:not(:disabled) {
+    background: rgba(26, 86, 219, 0.15);
+    border-color: var(--color-primary-light, #3b82f6);
+}
+
+.cf-pgc-alt-btn__code {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    color: var(--color-primary-light, #3b82f6);
+    font-weight: 600;
+}
+
+.cf-pgc-alt-btn__name {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.cf-pgc-search {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cf-pgc-search__input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.cf-pgc-search__input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 0.875rem;
+}
+
+.cf-pgc-search__input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.cf-pgc-search__hint {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.35);
+    margin: 0;
+}
+
+.cf-pgc-search__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.cf-pgc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 4px;
+}
+
+.cf-pgc-confirmed {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.cf-pgc-confirmed__icon {
+    color: #4ade80;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+.cf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.cf-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cf-btn--primary {
+    background: var(--color-primary, #1a56db);
+    color: #fff;
+}
+
+.cf-btn--primary:hover:not(:disabled) {
+    background: var(--color-primary-dark, #1e40af);
+}
+
+.cf-btn--ghost {
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.cf-btn--ghost:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.cf-btn--danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.cf-btn--danger:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.cf-btn--sm {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+/* ── Icon buttons ────────────────────────────────────────────────────────── */
+
+.cf-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cf-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.cf-icon-btn--danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.cf-row-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* ── Invoice list ────────────────────────────────────────────────────────── */
+
+.cf-list-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cf-list-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cf-list-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cf-select {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.cf-select:focus {
+    border-color: var(--color-primary-light, #3b82f6);
+}
+
+.cf-select option {
+    background: #1e293b;
+    color: #fff;
+}
+
+/* ── Table: desktop only ─────────────────────────────────────────────────── */
+
+.cf-table-wrap--desktop {
+    display: none;
+}
+
+.cf-table--list th,
+.cf-table--list td {
+    white-space: nowrap;
+}
+
+.cf-pgc-tag {
+    display: inline-block;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.78rem;
+    color: var(--color-primary-light, #3b82f6);
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.cf-pgc-tag-name {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* ── Mobile cards ────────────────────────────────────────────────────────── */
+
+.cf-mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cf-mobile-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cf-mobile-card__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    gap: 8px;
+}
+
+.cf-mobile-card__label {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.cf-mobile-card__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.cf-mobile-card__actions .cf-btn {
+    flex: 1;
+    justify-content: center;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+
+.cf-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 48px 20px;
+    color: rgba(255, 255, 255, 0.3);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.cf-empty p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+
+.cf-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 24px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.875rem;
+}
+
+/* ── Disclaimer ──────────────────────────────────────────────────────────── */
+
+.cf-disclaimer {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    text-align: center;
+    margin: 0;
+    padding-top: 8px;
+    line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tablet — 768px+
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 768px) {
+    .cf-page {
+        padding: 90px 24px 48px;
+    }
+
+    .cf-page-header__title {
+        font-size: 1.875rem;
+    }
+
+    .cf-upload-zone {
+        padding: 48px 40px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .cf-grid--2 {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .cf-list-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .cf-list-filters {
+        flex-wrap: nowrap;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Desktop — 1024px+
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1024px) {
+    .cf-page {
+        padding: 90px 40px 60px;
+    }
+
+    .cf-table-wrap--desktop {
+        display: block;
+    }
+
+    .cf-mobile-cards {
+        display: none;
+    }
+
+    .cf-section--results {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+    }
+}

@@ -49,6 +49,15 @@ class Settings(BaseSettings):
     AZURE_DOCUMENT_INTELLIGENCE_KEY: Optional[str] = Field(default=None)
 
     # -------------------------------
+    # 🔮 Google Gemini (Invoice OCR)
+    # -------------------------------
+    GOOGLE_GEMINI_API_KEY: Optional[str] = Field(default=None)
+    GEMINI_MODEL: str = Field(
+        default="gemini-3-flash-preview",
+        description="Gemini model for invoice OCR"
+    )
+
+    # -------------------------------
     # 🗄️ Turso Database
     # -------------------------------
     TURSO_DATABASE_URL: Optional[str] = Field(default=None)

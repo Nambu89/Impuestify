@@ -46,6 +46,8 @@ const CalculadoraUmbralesPage = lazy(() => import('./pages/CalculadoraUmbralesPa
 const SharedConversationPage = lazy(() => import('./pages/SharedConversationPage'))
 const ModelObligationsPage = lazy(() => import('./pages/ModelObligationsPage'))
 const FarmaciasPage = lazy(() => import('./pages/FarmaciasPage'))
+const ClasificadorFacturasPage = lazy(() => import('./pages/ClasificadorFacturasPage'))
+const ContabilidadPage = lazy(() => import('./pages/ContabilidadPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -251,6 +253,22 @@ function App() {
                         element={
                             <ProtectedRoute requireSubscription={false}>
                                 <AdminRagQualityPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/clasificador-facturas"
+                        element={
+                            <ProtectedRoute requireSubscription={true}>
+                                <ClasificadorFacturasPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/contabilidad"
+                        element={
+                            <ProtectedRoute requireSubscription={true}>
+                                <ContabilidadPage />
                             </ProtectedRoute>
                         }
                     />

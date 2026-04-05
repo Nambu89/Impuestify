@@ -1,0 +1,605 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ContabilidadPage.css — Mobile-first
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page layout ─────────────────────────────────────────────────────────── */
+
+.cont-page {
+    min-height: 100vh;
+    background: var(--color-secondary);
+    color: #fff;
+    padding: 80px 16px 40px;
+}
+
+.cont-page__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+
+.cont-page-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.cont-page-header__icon {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: rgba(6, 182, 212, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent, #06b6d4);
+}
+
+.cont-page-header__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+    line-height: 1.2;
+}
+
+.cont-page-header__subtitle {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ── Filters ─────────────────────────────────────────────────────────────── */
+
+.cont-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.cont-filters__spacer {
+    flex: 1;
+}
+
+.cont-select {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 0;
+}
+
+.cont-select:focus {
+    border-color: var(--color-accent, #06b6d4);
+}
+
+.cont-select option {
+    background: #1e293b;
+    color: #fff;
+}
+
+/* ── Export button ───────────────────────────────────────────────────────── */
+
+.cont-export {
+    position: relative;
+}
+
+.cont-export__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.cont-export__btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.cont-export__label {
+    display: none;
+}
+
+.cont-export__chevron--up {
+    transform: rotate(180deg);
+}
+
+.cont-export__menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 50;
+    min-width: 160px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.cont-export__item {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cont-export__item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+
+.cont-tabs {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.cont-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.cont-tab {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.cont-tab:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cont-tab--active {
+    color: var(--color-accent, #06b6d4);
+    border-bottom-color: var(--color-accent, #06b6d4);
+    font-weight: 600;
+}
+
+/* ── Panel ───────────────────────────────────────────────────────────────── */
+
+.cont-panel {
+    min-height: 200px;
+}
+
+/* ── Table section ───────────────────────────────────────────────────────── */
+
+.cont-table-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+
+.cont-table-wrap {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cont-table-wrap--desktop {
+    display: none;
+}
+
+.cont-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.825rem;
+}
+
+.cont-table th,
+.cont-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.cont-table th {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.cont-table td {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cont-table tr:last-child td {
+    border-bottom: none;
+}
+
+.cont-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.cont-table__num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.cont-table__concepto {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cont-table__totals td {
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: none;
+    color: #fff;
+}
+
+/* ── Account code ────────────────────────────────────────────────────────── */
+
+.cont-account-code {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: var(--color-accent, #06b6d4);
+    background: rgba(6, 182, 212, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* ── Saldo colors ────────────────────────────────────────────────────────── */
+
+.cont-saldo--pos {
+    color: #60efad;
+    font-weight: 600;
+}
+
+.cont-saldo--neg {
+    color: #fca5a5;
+    font-weight: 600;
+}
+
+.cont-debit {
+    color: #93c5fd;
+}
+
+.cont-credit {
+    color: #86efac;
+}
+
+/* ── Mobile cards ────────────────────────────────────────────────────────── */
+
+.cont-mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cont-mobile-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.cont-mobile-card__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.83rem;
+    gap: 8px;
+}
+
+.cont-mobile-card__label {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+
+.cont-mobile-totals {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cont-mobile-totals strong {
+    color: #fff;
+}
+
+/* ── Balance check ───────────────────────────────────────────────────────── */
+
+.cont-balance-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 12px;
+}
+
+.cont-balance-check--ok {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+}
+
+.cont-balance-check--err {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+/* ── Pérdidas y Ganancias ────────────────────────────────────────────────── */
+
+.cont-pyg {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cont-pyg__block {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cont-pyg__block--ingresos .cont-pyg__block-header {
+    background: rgba(34, 197, 94, 0.1);
+    border-bottom: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.cont-pyg__block--gastos .cont-pyg__block-header {
+    background: rgba(239, 68, 68, 0.1);
+    border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.cont-pyg__block-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+}
+
+.cont-pyg__block--ingresos .cont-pyg__block-header {
+    color: #4ade80;
+}
+
+.cont-pyg__block--gastos .cont-pyg__block-header {
+    color: #fca5a5;
+}
+
+.cont-pyg__block-header h4 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    flex: 1;
+    color: inherit;
+}
+
+.cont-pyg__total {
+    font-weight: 700;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.cont-pyg__total--ingresos {
+    color: #4ade80;
+}
+
+.cont-pyg__total--gastos {
+    color: #fca5a5;
+}
+
+.cont-pyg__table {
+    border-radius: 0;
+    border: none;
+}
+
+.cont-pyg__ingreso {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.cont-pyg__gasto {
+    color: #fca5a5;
+    font-weight: 600;
+}
+
+.cont-pyg__resultado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-radius: 12px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.cont-pyg__resultado--pos {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.cont-pyg__resultado--neg {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.cont-pyg__resultado-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.cont-pyg__resultado-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.cont-pyg__resultado--pos .cont-pyg__resultado-value {
+    color: #4ade80;
+}
+
+.cont-pyg__resultado--neg .cont-pyg__resultado-value {
+    color: #fca5a5;
+}
+
+/* ── Loading & Empty ─────────────────────────────────────────────────────── */
+
+.cont-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 32px 16px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.875rem;
+}
+
+.cont-spinner {
+    color: var(--color-accent, #06b6d4);
+    animation: cont-spin 1s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes cont-spin {
+    to { transform: rotate(360deg); }
+}
+
+.cont-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 48px 20px;
+    color: rgba(255, 255, 255, 0.25);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.cont-empty p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* ── Disclaimer ──────────────────────────────────────────────────────────── */
+
+.cont-disclaimer {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.28);
+    text-align: center;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tablet — 768px+
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 768px) {
+    .cont-page {
+        padding: 90px 24px 48px;
+    }
+
+    .cont-page-header__title {
+        font-size: 1.875rem;
+    }
+
+    .cont-tab {
+        padding: 12px 20px;
+        font-size: 0.9rem;
+    }
+
+    .cont-export__label {
+        display: inline;
+    }
+
+    .cont-filters {
+        flex-wrap: nowrap;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Desktop — 1024px+
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1024px) {
+    .cont-page {
+        padding: 90px 40px 60px;
+    }
+
+    .cont-table-wrap--desktop {
+        display: block;
+    }
+
+    .cont-mobile-cards {
+        display: none;
+    }
+
+    .cont-pyg {
+        gap: 24px;
+    }
+
+    .cont-pyg__resultado {
+        padding: 24px 32px;
+    }
+
+    .cont-pyg__resultado-value {
+        font-size: 2rem;
+    }
+}
