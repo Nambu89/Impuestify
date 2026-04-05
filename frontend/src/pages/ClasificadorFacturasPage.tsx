@@ -293,6 +293,19 @@ function ClassificationCard({ data, invoiceId, onReclassify, onConfirm }: Classi
         setEditing(false)
     }
 
+    const handleManualSave = async () => {
+        const trimmed = searchVal.trim()
+        if (!trimmed) return
+        // Parse "629 Otros servicios" or just "629"
+        const match = trimmed.match(/^(\d{3,4})\s*(.*)$/)
+        if (match) {
+            await handleAlternative(match[1], match[2] || `Cuenta ${match[1]}`)
+        } else {
+            await handleAlternative(trimmed, trimmed)
+        }
+        setSearchVal('')
+    }
+
     const handleConfirm = () => {
         setConfirmed(true)
         onConfirm()
@@ -342,8 +355,15 @@ function ClassificationCard({ data, invoiceId, onReclassify, onConfirm }: Classi
                             autoFocus
                         />
                     </div>
-                    <p className="cf-pgc-search__hint">Introduce el código y nombre de cuenta PGC manualmente.</p>
+                    <p className="cf-pgc-search__hint">Formato: código + nombre (ej: "629 Otros servicios")</p>
                     <div className="cf-pgc-search__actions">
+                        <button
+                            className="cf-btn cf-btn--primary"
+                            onClick={handleManualSave}
+                            disabled={saving || !searchVal.trim()}
+                        >
+                            <CheckCircle size={16} /> Aplicar
+                        </button>
                         <button className="cf-btn cf-btn--ghost" onClick={() => setEditing(false)}>Cancelar</button>
                     </div>
                 </div>
