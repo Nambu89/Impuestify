@@ -3,7 +3,7 @@ import { useSEO } from '../hooks/useSEO'
 import {
     MessageSquare, Shield, FileText, ArrowRight, Calculator, CreditCard,
     CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink, CalendarDays, Video,
-    Globe, AlertTriangle, BookOpen, Building2
+    Globe, AlertTriangle, BookOpen, Building2, Heart, Briefcase
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
@@ -384,6 +384,17 @@ export default function Home() {
                                 </SpotlightCard>
                             </a>
                         </FadeContent>
+                        <FadeContent delay={800} duration={400}>
+                            <a href="/farmacias" style={{ textDecoration: 'none' }}>
+                                <SpotlightCard className="feature-card" spotlightColor="rgba(5, 150, 105, 0.1)">
+                                    <div className="feature-icon">
+                                        <Heart size={28} />
+                                    </div>
+                                    <h3>Farmacias</h3>
+                                    <p>Recargo de Equivalencia automático, fondo de comercio, deducciones específicas para farmacéuticos titulares.</p>
+                                </SpotlightCard>
+                            </a>
+                        </FadeContent>
                     </div>
                 </div>
             </section>
@@ -534,11 +545,37 @@ export default function Home() {
                                     Empezar como Creator
                                 </Link>
                             </div>
+
+                            {/* Autónomo */}
+                            <div className="pricing-card pricing-card--autonomo">
+                                <div className="pricing-header">
+                                    <div className="pricing-icon pricing-icon--autonomo">
+                                        <Briefcase size={32} />
+                                    </div>
+                                    <div>
+                                        <h3 className="pricing-plan-name">Autónomo</h3>
+                                        <p className="pricing-plan-desc">Para profesionales por cuenta propia</p>
+                                    </div>
+                                </div>
+                                <div className="pricing-amount">
+                                    <span className="pricing-currency">EUR</span>
+                                    <span className="pricing-value pricing-value--autonomo">39</span>
+                                    <span className="pricing-period">/mes <small>IVA incl.</small></span>
+                                </div>
+                                <ul className="pricing-features">
+                                    <li><CheckCircle size={18} className="pricing-check--autonomo" /><span>Todo lo del plan Particular</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--autonomo" /><span>Modelos 303, 130, 131, 390</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--autonomo" /><span>Clasificador de facturas con IA</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--autonomo" /><span>Contabilidad PGC y libros oficiales</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--autonomo" /><span>Calculadora sueldo neto autónomo</span></li>
+                                    <li><CheckCircle size={18} className="pricing-check--autonomo" /><span>Gastos deducibles por actividad</span></li>
+                                </ul>
+                                <Link to="/subscribe" className="btn btn-lg pricing-cta pricing-cta--autonomo">
+                                    <CreditCard size={20} />
+                                    Empezar como Autónomo
+                                </Link>
+                            </div>
                         </div>
-                        <p className="pricing-autonomos">
-                            ¿Eres autónomo o profesional por cuenta propia?{' '}
-                            <Link to="/subscribe">Ver plan Autónomo — 39 €/mes</Link>
-                        </p>
                         <p className="pricing-note pricing-note--center">
                             Pago seguro con Stripe. Sin permanencia, cancela cuando quieras.
                         </p>

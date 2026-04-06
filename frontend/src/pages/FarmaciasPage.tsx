@@ -16,19 +16,19 @@ const PAIN_POINTS = [
         icon: FileText,
         title: 'Recargo de Equivalencia confuso',
         description:
-            'No necesitas presentar el Modelo 303. Nuestro sistema lo sabe autom\u00e1ticamente y te evita errores con la AEAT.',
+            'No necesitas presentar el Modelo 303. Nuestro sistema lo sabe automáticamente y te evita errores con la AEAT.',
     },
     {
         icon: Building2,
         title: 'Fondo de comercio',
         description:
-            'Amortiza la compra de tu farmacia al 5% anual durante 20 a\u00f1os. Te lo calculamos con las reglas del IRPF.',
+            'Amortiza la compra de tu farmacia al 5% anual durante 20 años. Te lo calculamos con las reglas del IRPF.',
     },
     {
         icon: Award,
         title: 'Cuotas colegiales y RC profesional',
         description:
-            'Deducciones espec\u00edficas que tu asesor general puede pasar por alto. El colegio de farmac\u00e9uticos y el seguro de responsabilidad civil son 100% deducibles.',
+            'Deducciones específicas que tu asesor general puede pasar por alto. El colegio de farmacéuticos y el seguro de responsabilidad civil son 100% deducibles.',
     },
 ]
 
@@ -37,48 +37,48 @@ const FEATURES = [
         icon: Calculator,
         title: 'Simulador IRPF adaptado a farmacias',
         description:
-            'Motor de c\u00e1lculo que conoce las particularidades fiscales de las oficinas de farmacia: amortizaciones, gastos de personal, suministros y formaci\u00f3n continua.',
+            'Motor de cálculo que conoce las particularidades fiscales de las oficinas de farmacia: amortizaciones, gastos de personal, suministros y formación continua.',
     },
     {
         icon: FileText,
-        title: 'Recargo de Equivalencia autom\u00e1tico',
+        title: 'Recargo de Equivalencia automático',
         description:
-            'Sin Modelo 303. El sistema detecta tu actividad farmac\u00e9utica (IAE 652.1 / CNAE 47.73) y aplica el r\u00e9gimen especial de Recargo de Equivalencia autom\u00e1ticamente.',
+            'Sin Modelo 303. El sistema detecta tu actividad farmacéutica (IAE 652.1 / CNAE 47.73) y aplica el régimen especial de Recargo de Equivalencia automáticamente.',
     },
     {
         icon: Award,
-        title: 'Deducciones espec\u00edficas',
+        title: 'Deducciones específicas',
         description:
-            'Colegio de farmac\u00e9uticos, seguro RC profesional, formaci\u00f3n continua, congresos y fondo de comercio. Todas las deducciones que te corresponden como farmac\u00e9utico.',
+            'Colegio de farmacéuticos, seguro RC profesional, formación continua, congresos y fondo de comercio. Todas las deducciones que te corresponden como farmacéutico.',
     },
     {
         icon: Calendar,
         title: 'Calendario fiscal personalizado',
         description:
-            'Alertas para el Modelo 130/131, Renta y pagos fraccionados. Nunca m\u00e1s una multa por presentaci\u00f3n fuera de plazo.',
+            'Alertas para el Modelo 130/131, Renta y pagos fraccionados. Nunca más una multa por presentación fuera de plazo.',
     },
 ]
 
 const FAQS = [
     {
-        q: '\u00bfPuedo constituir mi farmacia como Sociedad Limitada?',
-        a: 'No. La Ley 16/1997 de Regulaci\u00f3n de Servicios de las Oficinas de Farmacia establece que la propiedad y titularidad de las oficinas de farmacia est\u00e1 reservada exclusivamente a farmac\u00e9uticos licenciados. No es posible constituir la farmacia como SL, SA ni ninguna otra forma societaria. Siempre tributa como actividad econ\u00f3mica en el IRPF del farmac\u00e9utico titular.',
+        q: '¿Puedo constituir mi farmacia como Sociedad Limitada?',
+        a: 'No. La Ley 16/1997 de Regulación de Servicios de las Oficinas de Farmacia establece que la propiedad y titularidad de las oficinas de farmacia está reservada exclusivamente a farmacéuticos licenciados. No es posible constituir la farmacia como SL, SA ni ninguna otra forma societaria. Siempre tributa como actividad económica en el IRPF del farmacéutico titular.',
     },
     {
-        q: '\u00bfTengo que presentar el Modelo 303 de IVA?',
-        a: 'No, si eres farmac\u00e9utico titular y vendes exclusivamente a consumidores finales. Las farmacias est\u00e1n sujetas al R\u00e9gimen Especial de Recargo de Equivalencia (art\u00edculos 154-163 LIVA). Tus proveedores te cobran el IVA m\u00e1s el recargo correspondiente (0,5% para medicamentos al 4%, 1,4% para productos sanitarios al 10%, 5,2% para parafarmacia al 21%), y t\u00fa no presentas liquidaci\u00f3n de IVA trimestral.',
+        q: '¿Tengo que presentar el Modelo 303 de IVA?',
+        a: 'No, si eres farmacéutico titular y vendes exclusivamente a consumidores finales. Las farmacias están sujetas al Régimen Especial de Recargo de Equivalencia (artículos 154-163 LIVA). Tus proveedores te cobran el IVA más el recargo correspondiente (0,5% para medicamentos al 4%, 1,4% para productos sanitarios al 10%, 5,2% para parafarmacia al 21%), y tú no presentas liquidación de IVA trimestral.',
     },
     {
-        q: '\u00bfPuedo deducir el fondo de comercio de la farmacia?',
-        a: 'S\u00ed. El fondo de comercio de la farmacia (la diferencia entre el precio de compra y el valor contable de los activos) es amortizable al 5% anual durante un m\u00e1ximo de 20 a\u00f1os, seg\u00fan el art\u00edculo 12.6 de la Ley del Impuesto sobre Sociedades, aplicable por remisi\u00f3n a actividades econ\u00f3micas en IRPF. Es una deducci\u00f3n relevante: una farmacia comprada por 600.000 EUR con activos por 200.000 EUR permite deducir 20.000 EUR anuales.',
+        q: '¿Puedo deducir el fondo de comercio de la farmacia?',
+        a: 'Sí. El fondo de comercio de la farmacia (la diferencia entre el precio de compra y el valor contable de los activos) es amortizable al 5% anual durante un máximo de 20 años, según el artículo 12.6 de la Ley del Impuesto sobre Sociedades, aplicable por remisión a actividades económicas en IRPF. Es una deducción relevante: una farmacia comprada por 600.000 EUR con activos por 200.000 EUR permite deducir 20.000 EUR anuales.',
     },
     {
-        q: '\u00bfQu\u00e9 IVA aplica a los productos de mi farmacia?',
-        a: 'Los medicamentos de uso humano tributan al tipo superreducido del 4% de IVA. Los productos sanitarios, compresas, tampones y pa\u00f1ales tributan al tipo reducido del 10%. Los productos de parafarmacia (cosm\u00e9ticos, diet\u00e9ticos, higiene no sanitaria) tributan al tipo general del 21%. Recuerda que con el Recargo de Equivalencia, t\u00fa no repercutes IVA al consumidor: lo absorbe el precio final.',
+        q: '¿Qué IVA aplica a los productos de mi farmacia?',
+        a: 'Los medicamentos de uso humano tributan al tipo superreducido del 4% de IVA. Los productos sanitarios, compresas, tampones y pañales tributan al tipo reducido del 10%. Los productos de parafarmacia (cosméticos, dietéticos, higiene no sanitaria) tributan al tipo general del 21%. Recuerda que con el Recargo de Equivalencia, tú no repercutes IVA al consumidor: lo absorbe el precio final.',
     },
     {
-        q: '\u00bfQu\u00e9 gastos puedo deducir como farmac\u00e9utico?',
-        a: 'Adem\u00e1s de los gastos generales de actividad econ\u00f3mica (suministros, alquiler, personal), puedes deducir: cuota del Colegio Oficial de Farmac\u00e9uticos (obligatoria), seguro de responsabilidad civil profesional, formaci\u00f3n continua y congresos farmac\u00e9uticos relacionados con tu actividad, amortizaci\u00f3n del fondo de comercio (5% anual) y amortizaci\u00f3n del local comercial si es de tu propiedad.',
+        q: '¿Qué gastos puedo deducir como farmacéutico?',
+        a: 'Además de los gastos generales de actividad económica (suministros, alquiler, personal), puedes deducir: cuota del Colegio Oficial de Farmacéuticos (obligatoria), seguro de responsabilidad civil profesional, formación continua y congresos farmacéuticos relacionados con tu actividad, amortización del fondo de comercio (5% anual) y amortización del local comercial si es de tu propiedad.',
     },
 ]
 
@@ -124,7 +124,7 @@ export default function FarmaciasPage() {
                             </span>
                             <span className="farmacias-hero__badge farmacias-hero__badge--sector">
                                 <Heart size={14} />
-                                Sector Farmac\u00e9utico
+                                Sector Farmacéutico
                             </span>
                         </div>
                     </FadeContent>
@@ -140,8 +140,8 @@ export default function FarmaciasPage() {
                             </GradientText>
                         </h1>
                         <p className="farmacias-hero__subtitle">
-                            Recargo de Equivalencia, IRPF, deducciones espec\u00edficas y m\u00e1s.
-                            Todo en una herramienta pensada para farmac\u00e9uticos.
+                            Recargo de Equivalencia, IRPF, deducciones específicas y más.
+                            Todo en una herramienta pensada para farmacéuticos.
                         </p>
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
@@ -151,7 +151,7 @@ export default function FarmaciasPage() {
                                 <ArrowRight size={20} />
                             </Link>
                             <a href="#features" className="btn btn-secondary btn-lg">
-                                Ver qu\u00e9 incluye
+                                Ver qué incluye
                             </a>
                         </div>
                     </FadeContent>
@@ -164,7 +164,7 @@ export default function FarmaciasPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Problemas que resolvemos</h2>
                         <p className="section-subtitle">
-                            La fiscalidad farmac\u00e9utica tiene particularidades que los asesores generalistas suelen desconocer
+                            La fiscalidad farmacéutica tiene particularidades que los asesores generalistas suelen desconocer
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -192,9 +192,9 @@ export default function FarmaciasPage() {
             <section className="farmacias-features" id="features">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">Qu\u00e9 incluye Impuestify para farmacias</h2>
+                        <h2 className="section-title">Qué incluye Impuestify para farmacias</h2>
                         <p className="section-subtitle">
-                            Plan Aut\u00f3nomo \u2014 39 EUR/mes IVA incluido. Todas las herramientas que necesitas como farmac\u00e9utico titular.
+                            Plan Autónomo — 39 EUR/mes IVA incluido. Todas las herramientas que necesitas como farmacéutico titular.
                         </p>
                     </FadeContent>
                     <div className="farmacias-features__grid">
@@ -223,28 +223,28 @@ export default function FarmaciasPage() {
             <section className="farmacias-pricing">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">Ahorra con respecto a una asesor\u00eda especializada</h2>
+                        <h2 className="section-title">Ahorra con respecto a una asesoría especializada</h2>
                         <p className="section-subtitle">
-                            Las asesor\u00edas especializadas en farmacias cobran entre 200 y 400 EUR/mes
+                            Las asesorías especializadas en farmacias cobran entre 200 y 400 EUR/mes
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
                         <div className="farmacias-pricing__grid">
-                            {/* Asesor\u00eda tradicional */}
+                            {/* Asesoría tradicional */}
                             <div className="farmacias-pricing__card farmacias-pricing__card--traditional">
                                 <div className="farmacias-pricing__card-header">
                                     <Building2 size={24} />
-                                    <h3>Asesor\u00eda especializada</h3>
+                                    <h3>Asesoría especializada</h3>
                                 </div>
                                 <div className="farmacias-pricing__amount">
-                                    <span className="farmacias-pricing__range">200 \u2013 400</span>
+                                    <span className="farmacias-pricing__range">200 – 400</span>
                                     <span className="farmacias-pricing__currency">EUR/mes</span>
                                 </div>
                                 <ul className="farmacias-pricing__list">
                                     <li><X size={16} className="farmacias-pricing__icon-no" /><span>Horario de oficina</span></li>
                                     <li><X size={16} className="farmacias-pricing__icon-no" /><span>Sin IA ni respuestas inmediatas</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-yes" /><span>Conocimiento fiscal farmac\u00e9utico</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-yes" /><span>Presentaci\u00f3n de modelos</span></li>
+                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-yes" /><span>Conocimiento fiscal farmacéutico</span></li>
+                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-yes" /><span>Presentación de modelos</span></li>
                                 </ul>
                             </div>
 
@@ -256,7 +256,7 @@ export default function FarmaciasPage() {
                                 </div>
                                 <div className="farmacias-pricing__card-header">
                                     <Shield size={24} />
-                                    <h3>Impuestify Plan Aut\u00f3nomo</h3>
+                                    <h3>Impuestify Plan Autónomo</h3>
                                 </div>
                                 <div className="farmacias-pricing__amount">
                                     <span className="farmacias-pricing__value">39</span>
@@ -265,8 +265,8 @@ export default function FarmaciasPage() {
                                 <ul className="farmacias-pricing__list">
                                     <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Disponible 24/7</span></li>
                                     <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>IA especializada en farmacias</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Recargo de Equivalencia autom\u00e1tico</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Deducciones espec\u00edficas farmac\u00e9uticas</span></li>
+                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Recargo de Equivalencia automático</span></li>
+                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Deducciones específicas farmacéuticas</span></li>
                                     <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Simulador IRPF con fondo de comercio</span></li>
                                     <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Calendario fiscal personalizado</span></li>
                                 </ul>
@@ -277,7 +277,7 @@ export default function FarmaciasPage() {
                             </SpotlightCard>
                         </div>
                         <p className="farmacias-pricing__savings">
-                            <strong>Ahorra hasta 4.300 EUR al a\u00f1o</strong> con respecto a una asesor\u00eda especializada en farmacias.
+                            <strong>Ahorra hasta 4.300 EUR al año</strong> con respecto a una asesoría especializada en farmacias.
                         </p>
                         <p className="farmacias-pricing__note">
                             Sin permanencia. Cancela cuando quieras. Pago seguro con Stripe.
@@ -292,7 +292,7 @@ export default function FarmaciasPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Preguntas frecuentes</h2>
                         <p className="section-subtitle">
-                            Las dudas m\u00e1s habituales sobre la fiscalidad de las oficinas de farmacia
+                            Las dudas más habituales sobre la fiscalidad de las oficinas de farmacia
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -336,8 +336,8 @@ export default function FarmaciasPage() {
                             <div className="farmacias-re-info__content">
                                 <h3 className="farmacias-re-info__title">Recargo de Equivalencia: lo que debes saber</h3>
                                 <p className="farmacias-re-info__desc">
-                                    Art\u00edculos 154-163 LIVA. Tu proveedor te cobra IVA + RE (0,5% al 4%, 1,4% al 10%, 5,2% al 21%).
-                                    T\u00fa no presentas el 303 ni llevas libros registro de IVA. S\u00ed presentas el Modelo 130/131 de IRPF.
+                                    Artículos 154-163 LIVA. Tu proveedor te cobra IVA + RE (0,5% al 4%, 1,4% al 10%, 5,2% al 21%).
+                                    Tú no presentas el 303 ni llevas libros registro de IVA. Sí presentas el Modelo 130/131 de IRPF.
                                 </p>
                             </div>
                         </div>
@@ -356,7 +356,7 @@ export default function FarmaciasPage() {
                             <h2>Prueba Impuestify para tu farmacia</h2>
                             <p>
                                 El asistente fiscal con IA que entiende el Recargo de Equivalencia,
-                                el fondo de comercio y todas las deducciones espec\u00edficas de tu profesi\u00f3n.
+                                el fondo de comercio y todas las deducciones específicas de tu profesión.
                             </p>
                             <Link to="/register" className="btn btn-lg farmacias-cta__btn">
                                 Empieza gratis

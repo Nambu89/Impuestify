@@ -643,6 +643,49 @@
     opacity: 0.95;
 }
 
+/* Tarjeta Autónomo — variante verde */
+.pricing-card--autonomo {
+    border-color: rgba(5, 150, 105, 0.5);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(5, 150, 105, 0.1),
+        0 0 32px rgba(5, 150, 105, 0.12);
+}
+
+.pricing-card--autonomo::before {
+    background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+}
+
+.pricing-icon--autonomo {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}
+
+.pricing-value--autonomo {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.pricing-check--autonomo {
+    color: #34d399;
+}
+
+.pricing-cta--autonomo {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    border: none;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(5, 150, 105, 0.38);
+    transition: box-shadow var(--transition-base), transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.pricing-cta--autonomo:hover {
+    box-shadow: 0 6px 30px rgba(5, 150, 105, 0.55);
+    transform: translateY(-1px);
+    opacity: 0.95;
+}
+
 /* Note centrada debajo del grid */
 .pricing-note--center {
     text-align: center;
