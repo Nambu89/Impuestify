@@ -1115,7 +1115,7 @@
 
     .pricing-grid {
         grid-template-columns: 1fr 1fr;
-        gap: var(--spacing-8);
+        gap: var(--spacing-6);
     }
 
     /* Creators Promo */
@@ -1181,6 +1181,12 @@
     .territory-chip {
         font-size: var(--font-size-sm);
         padding: var(--spacing-2) var(--spacing-4);
+    }
+
+    /* Pricing 3 columnas en desktop */
+    .pricing-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-6);
     }
 
     /* Features */
