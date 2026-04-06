@@ -3,6 +3,7 @@ import { ClipboardList, Calendar, ExternalLink, AlertTriangle, FileText } from '
 import Header from '../components/Header'
 import { CCAA_OPTIONS_WITH_PLACEHOLDER } from '../constants/ccaa'
 import './ModelObligationsPage.css'
+import { useSEO } from '../hooks/useSEO'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -55,6 +56,23 @@ function formatDate(dateStr: string): string {
 }
 
 export default function ModelObligationsPage() {
+    useSEO({
+        title: 'Modelos Fiscales Obligatorios por Actividad — Impuestify',
+        description: 'Descubre qué modelos de la AEAT debes presentar según tu actividad, régimen y territorio. Modelos 303, 130, 131, 390 y más.',
+        canonical: '/modelos-obligatorios',
+        keywords: 'modelos fiscales obligatorios, modelo 303, modelo 130, modelo 390, AEAT modelos, declaraciones trimestrales',
+        schema: {
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: 'Modelos Fiscales Obligatorios',
+            url: 'https://impuestify.com/modelos-obligatorios',
+            applicationCategory: 'FinanceApplication',
+            operatingSystem: 'Web',
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+            author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' },
+        },
+    })
+
     const [ccaa, setCcaa] = useState('')
     const [situacion, setSituacion] = useState('autonomo')
     const [empleados, setEmpleados] = useState(false)

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { ChevronDown, ChevronUp, TrendingDown, Info, Euro, Percent, Minus, CheckCircle2, AlertTriangle } from 'lucide-react'
 import Header from '../components/Header'
 import { useNetSalary, type NetSalaryInput } from '../hooks/useNetSalary'
+import { useSEO } from '../hooks/useSEO'
 import './NetSalaryPage.css'
 
 const IVA_OPTIONS = [
@@ -59,6 +60,33 @@ function BreakdownBar({ label, amount, pct, colorClass, isBase }: BreakdownBarPr
 }
 
 export default function NetSalaryPage() {
+    useSEO({
+        title: 'Calculadora Sueldo Neto Autónomo 2026 — Impuestify',
+        description: 'Calcula cuánto te queda neto como autónomo en 2026. IRPF, IVA, cuota Seguridad Social según tu régimen fiscal. 5 regímenes. Gratis.',
+        canonical: '/calculadora-neto',
+        keywords: 'calculadora neto autónomo 2026, sueldo neto autónomo, cuota autónomo, IRPF autónomo, IVA autónomo',
+        schema: [
+            {
+                '@context': 'https://schema.org',
+                '@type': 'WebApplication',
+                name: 'Calculadora Sueldo Neto Autónomo 2026',
+                url: 'https://impuestify.com/calculadora-neto',
+                applicationCategory: 'FinanceApplication',
+                operatingSystem: 'Web',
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+                author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' }
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
+                    { '@type': 'ListItem', position: 2, name: 'Calculadora Sueldo Neto Autónomo', item: 'https://impuestify.com/calculadora-neto' }
+                ]
+            }
+        ]
+    })
+
     const [input, setInput] = useState<NetSalaryInput>(DEFAULT_INPUT)
     const [advancedOpen, setAdvancedOpen] = useState(false)
     const { result, loading, error, calculate } = useNetSalary()

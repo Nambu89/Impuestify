@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
     CheckCircle2, Circle, ArrowRight, AlertTriangle, User, Users,
     MapPin, Briefcase, Home, Gift, Heart, Baby, Star, School,
-    Building2, TrendingUp, FileText, Leaf, History,
+    Building2, TrendingUp, FileText, Leaf,
     ChevronDown, ChevronUp
 } from 'lucide-react'
 import Header from '../components/Header'
 import FadeContent from '../components/reactbits/FadeContent'
+import { useSEO } from '../hooks/useSEO'
 import './ChecklistBorradorPage.css'
 
 interface ChecklistItem {
@@ -143,39 +144,121 @@ export default function ChecklistBorradorPage() {
     const [checked, setChecked] = useState<Set<number>>(new Set())
     const [expandedId, setExpandedId] = useState<number | null>(null)
 
-    useEffect(() => {
-        document.title = 'Checklist borrador renta 2026: 15 puntos antes de confirmar — Impuestify'
-
-        const setMeta = (name: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('name', name)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        const setOg = (property: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(`meta[property="${property}"]`)
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('property', property)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        setMeta('description', '15 puntos que debes revisar antes de confirmar tu borrador de la renta 2025/2026. 1 de cada 3 borradores tiene errores. No pierdas dinero por no revisar.')
-        setMeta('keywords', 'checklist borrador renta, revisar borrador IRPF, borrador renta 2026, errores borrador renta, deducciones IRPF borrador')
-        setOg('og:title', 'Checklist borrador renta 2026: 15 puntos antes de confirmar — Impuestify')
-        setOg('og:description', '1 de cada 3 borradores tiene errores. Comprueba los 15 puntos clave antes de confirmar tu declaración de la renta 2025/2026.')
-        setOg('og:type', 'article')
-
-        return () => {
-            document.title = 'Impuestify — Asistente Fiscal IA para España'
-        }
-    }, [])
+    useSEO({
+        title: 'Checklist Borrador Renta 2026: 15 Puntos antes de Confirmar — Impuestify',
+        description: '1 de cada 3 borradores tiene errores. Comprueba los 15 puntos clave antes de confirmar tu declaración de la renta 2026.',
+        canonical: '/checklist-borrador',
+        keywords: 'checklist borrador renta 2026, revisar borrador AEAT, errores declaración renta, confirmar borrador',
+        og: { type: 'article' },
+        schema: [
+            {
+                '@context': 'https://schema.org',
+                '@type': 'HowTo',
+                name: 'Cómo revisar tu borrador de la renta 2026',
+                description: '15 puntos que debes comprobar antes de confirmar tu declaración de la renta',
+                step: [
+                    {
+                        '@type': 'HowToStep',
+                        position: 1,
+                        name: 'Datos personales actualizados',
+                        text: 'Verifica domicilio fiscal, estado civil y fecha de nacimiento. Si te mudaste de comunidad autónoma en 2025, la CCAA correcta es la de tu residencia el 31 de diciembre.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 2,
+                        name: 'Situación familiar correcta',
+                        text: 'Comprueba que aparecen todos los hijos, ascendientes a cargo y situaciones de discapacidad. Los nacimientos y adopciones de 2025 deben estar incluidos.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 3,
+                        name: 'Comunidad autónoma correcta',
+                        text: 'Si te mudaste en 2025, asegúrate de que el borrador refleja la comunidad autónoma donde residías el 31 de diciembre de 2025, no donde vives ahora.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 4,
+                        name: 'Rendimientos del trabajo completos',
+                        text: 'Verifica que aparecen todos tus pagadores: empresa principal, segunda empresa, SEPE (desempleo), mutualidades, prestaciones por maternidad o paternidad.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 5,
+                        name: 'Deducciones autonómicas por alquiler y vivienda',
+                        text: 'Además de la deducción estatal transitoria (contratos anteriores al 1 de enero de 2015, hasta el 15% de lo pagado con límite de 9.040 EUR), comprueba si tu comunidad tiene deducción autonómica por alquiler de vivienda habitual.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 6,
+                        name: 'Donativos y donaciones a ONG y fundaciones',
+                        text: 'Incluye donativos a fundaciones, ONG, partidos políticos y sindicatos. Los primeros 250 EUR deducen al 80% y el resto al 40% (o 45% si llevas tres años donando al mismo organismo).',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 7,
+                        name: 'Aportaciones a planes de pensiones',
+                        text: 'Comprueba que constan tus aportaciones a planes de pensiones individuales o de empleo. El límite general es 1.500 EUR, ampliable hasta 8.500 EUR si el plan es de empresa.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 8,
+                        name: 'Deducción por maternidad',
+                        text: 'Las madres trabajadoras con hijos menores de tres años tienen derecho a hasta 1.200 EUR por cada hijo. Si el niño estuvo en guardería, puedes añadir hasta 1.000 EUR adicionales por gastos de custodia.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 9,
+                        name: 'Familia numerosa',
+                        text: 'Las familias numerosas generales tienen derecho a 1.200 EUR de deducción y las de categoría especial a 2.400 EUR. Verifica también si corresponde la deducción por cónyuge con discapacidad.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 10,
+                        name: 'Cuotas sindicales y colegios profesionales',
+                        text: 'Las cuotas sindicales y las cuotas de colegiación obligatoria son gasto deducible de los rendimientos del trabajo. El límite para cuotas de colegios es de 500 EUR anuales.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 11,
+                        name: 'Gastos de guardería',
+                        text: 'Además de la deducción por maternidad, muchas comunidades autónomas tienen deducciones propias por gastos de escuela infantil (0-3 años). Consulta la tabla de tu CCAA.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 12,
+                        name: 'Hipoteca anterior a 2013',
+                        text: 'Si compraste tu vivienda habitual antes del 1 de enero de 2013 y venías aplicando la deducción, puedes seguir haciéndolo con carácter transitorio. El límite es el 15% de lo pagado hasta 9.040 EUR anuales.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 13,
+                        name: 'Inversiones en eficiencia energética y vehículo eléctrico',
+                        text: 'Las obras de mejora de la eficiencia energética del hogar tienen deducciones del 20%, 40% o 60% según el tipo de reforma. La compra de vehículo eléctrico también puede tener deducción autonómica.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 14,
+                        name: 'Ganancias y pérdidas patrimoniales',
+                        text: 'Verifica que constan todas las ventas de fondos de inversión, acciones, criptomonedas, inmuebles o cualquier otro activo. Las pérdidas patrimoniales compensan ganancias y reducen el impuesto.',
+                    },
+                    {
+                        '@type': 'HowToStep',
+                        position: 15,
+                        name: 'Rentas imputadas de segundas viviendas',
+                        text: 'Si tienes una segunda vivienda que no es tu residencia habitual y no está arrendada, debes imputar una renta del 1,1% o 2% del valor catastral. Verifica que la referencia catastral y el importe son correctos.',
+                    },
+                ],
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
+                    { '@type': 'ListItem', position: 2, name: 'Checklist Borrador Renta', item: 'https://impuestify.com/checklist-borrador' },
+                ],
+            },
+        ],
+    })
 
     const toggleItem = (id: number) => {
         setChecked(prev => {

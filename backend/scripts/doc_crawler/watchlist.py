@@ -31,16 +31,16 @@ AEAT_ITEMS = [
         url=f"{AEAT_BASE}/Manual/Practicos/Renta/IRPF/IRPF-2025/ManualRenta2025Tomo1_es_es.pdf",
         dest="AEAT/IRPF/AEAT-Manual_Practico_IRPF_2025_Tomo1.pdf",
         territory="AEAT",
-        description="Manual Practico Renta 2025 Tomo 1 (previsto ~marzo 2026)",
-        status="future",
+        description="Manual Practico Renta 2025 Tomo 1 (campana renta abril 2026)",
+        status="active",
         pattern="{BASE}/Manual/Practicos/Renta/IRPF/IRPF-{year}/ManualRenta{year}Tomo1_es_es.pdf",
     ),
     WatchItem(
         url=f"{AEAT_BASE}/Manual/Practicos/Renta/IRPF/IRPF-2025/ManualRenta2025Tomo2_es_es.pdf",
         dest="AEAT/IRPF/AEAT-Manual_Practico_IRPF_2025_Tomo2.pdf",
         territory="AEAT",
-        description="Manual Practico Renta 2025 Tomo 2 Ded. Autonomicas",
-        status="future",
+        description="Manual Practico Renta 2025 Tomo 2 Ded. Autonomicas (campana renta abril 2026)",
+        status="active",
     ),
     WatchItem(
         url=f"{AEAT_BASE}/Manual/Practicos/IVA/Manual_IVA.pdf",
@@ -67,7 +67,7 @@ AEAT_ITEMS = [
         dest="AEAT/IRPF/AEAT-Cuadro_tipos_retenciones_IRPF_2025.pdf",
         territory="AEAT",
         description="Cuadro tipos retenciones IRPF 2025",
-        status="future",
+        status="active",
         notes="Pendiente publicacion AEAT en sede.agenciatributaria.gob.es",
     ),
     WatchItem(
@@ -85,7 +85,7 @@ AEAT_ITEMS = [
         dest="AEAT/IRPF/AEAT-Algoritmo_2025.pdf",
         territory="AEAT",
         description="Algoritmo retenciones IRPF 2025",
-        status="future",
+        status="active",
         notes="Pendiente publicacion AEAT",
     ),
     WatchItem(
@@ -103,7 +103,7 @@ AEAT_ITEMS = [
         dest="AEAT/Modelos/AEAT-Modelo303_IVA_Instrucciones_2025.pdf",
         territory="AEAT",
         description="Instrucciones Modelo 303 IVA 2025",
-        status="future",
+        status="active",
         notes="Pendiente publicacion AEAT",
     ),
     WatchItem(
@@ -111,7 +111,7 @@ AEAT_ITEMS = [
         dest="AEAT/Modelos/AEAT-Modelo390_IVA_Instrucciones_2025.pdf",
         territory="AEAT",
         description="Instrucciones Modelo 390 IVA 2025",
-        status="future",
+        status="active",
         notes="Pendiente publicacion AEAT",
     ),
     WatchItem(
@@ -119,7 +119,7 @@ AEAT_ITEMS = [
         dest="AEAT/Modelos/AEAT-Modelo190_Retenciones_Instrucciones.pdf",
         territory="AEAT",
         description="Instrucciones Modelo 190 retenciones",
-        status="future",
+        status="active",
         notes="Pendiente publicacion AEAT en pagina actualizada",
     ),
 ]
@@ -574,7 +574,7 @@ CREATORS_ITEMS = [
         territory="AEAT",
         description="Instrucciones Modelo 720 bienes en el extranjero",
         priority="high",
-        status="future",
+        status="active",
         notes="TIPO A: Pendiente publicacion AEAT en pagina actualizada",
     ),
 
@@ -585,7 +585,7 @@ CREATORS_ITEMS = [
         territory="AEAT",
         description="Instrucciones Modelo 349 operaciones intracomunitarias",
         priority="high",
-        status="future",
+        status="active",
         notes="TIPO A: Pendiente publicacion AEAT en pagina actualizada",
     ),
 
@@ -596,7 +596,7 @@ CREATORS_ITEMS = [
         territory="AEAT",
         description="Instrucciones Modelo 036 alta censal / IAE",
         priority="high",
-        status="future",
+        status="active",
         notes="TIPO A: Pendiente publicacion AEAT en pagina actualizada",
     ),
 
@@ -707,7 +707,7 @@ INFLUENCERS_ITEMS = [
         territory="Estatal",
         description="Plan Tributario AEAT 2026 (influencers objetivo prioritario)",
         priority="high",
-        status="future",
+        status="active",
         notes="TIPO A: PDF para ano futuro (2026) puede no estar publicado aun",
     ),
     # ── DAC7 / Modelo 238 (plataformas reportan ingresos creadores) ──

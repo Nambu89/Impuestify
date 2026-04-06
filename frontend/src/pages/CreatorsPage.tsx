@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useSEO } from '../hooks/useSEO'
 import {
     ArrowRight, CheckCircle, X, Video, ChevronLeft, Zap,
     FileText, Globe, Calculator, Bell, Shield, ChevronDown, Map, MapPin
@@ -126,103 +127,32 @@ const FAQS = [
 export default function CreatorsPage() {
     const [openFaq, setOpenFaq] = useState<number | null>(null)
 
-    useEffect(() => {
-        document.title = 'Impuestos para Creadores de Contenido | YouTubers, TikTokers, Streamers | Impuestify'
-
-        const setMeta = (name: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('name', name)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        const setOg = (property: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(`meta[property="${property}"]`)
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('property', property)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        setMeta(
-            'description',
-            'Calculadora fiscal para creadores de contenido en España. IRPF, IVA por plataforma (YouTube, TikTok, Twitch), IAE 8690, Modelo 349, DAC7. Canarias IGIC 7%, Ceuta/Melilla IPSI, País Vasco foral. Desde 49 EUR/mes.'
-        )
-        setMeta(
-            'keywords',
-            'impuestos youtuber España, IRPF influencer Madrid, IVA streamer Canarias, fiscal creador contenido autónomo, fiscalidad TikTok España, Modelo 349 creadores, epígrafe IAE influencer, DAC7 España, tributación streamer, royalties creadores, impuestos twitch, hacienda influencer, IVA YouTube España'
-        )
-        setMeta('geo.region', 'ES')
-        setMeta('geo.placename', 'España')
-        setOg('og:title', 'Impuestos para Creadores de Contenido | YouTubers, TikTokers, Streamers | Impuestify')
-        setOg(
-            'og:description',
-            'El único asistente fiscal con IA que entiende YouTube, TikTok, Twitch e Instagram. IRPF, IVA intracomunitario, Modelo 349, epígrafe IAE y cobertura foral completa. 49 EUR/mes.'
-        )
-        setOg('og:type', 'website')
-        setOg('og:url', 'https://impuestify.com/creadores-de-contenido')
-
-        // Schema.org para CreatorsPage
-        const existingScript = document.querySelector('#creators-schema-org')
-        if (!existingScript) {
-            const script = document.createElement('script')
-            script.id = 'creators-schema-org'
-            script.type = 'application/ld+json'
-            script.text = JSON.stringify({
+    useSEO({
+        title: 'Impuestos para Creadores de Contenido | YouTubers, TikTokers, Streamers | Impuestify',
+        description: 'Calculadora fiscal para creadores de contenido en España. IVA por plataforma, Modelo 349, DAC7, CNAE 60.39. Desde 49 EUR/mes.',
+        canonical: '/creadores-de-contenido',
+        keywords: 'impuestos creadores contenido, YouTubers impuestos, TikTok fiscal, streamers IVA, influencer autónomo',
+        schema: [
+            {
                 '@context': 'https://schema.org',
                 '@type': 'WebApplication',
-                name: 'Impuestify para Creadores de Contenido',
-                description:
-                    'Asistente fiscal con IA especializado en creadores de contenido digitales en España. IRPF, IVA por plataforma (YouTube, TikTok, Twitch), IAE 8690, Modelo 349, DAC7.',
+                name: 'Impuestify para Creadores',
+                url: 'https://impuestify.com/creadores-de-contenido',
                 applicationCategory: 'FinanceApplication',
                 operatingSystem: 'Web',
-                url: 'https://impuestify.com/creadores-de-contenido',
-                offers: {
-                    '@type': 'Offer',
-                    price: '49',
-                    priceCurrency: 'EUR',
-                    priceSpecification: {
-                        '@type': 'UnitPriceSpecification',
-                        price: '49',
-                        priceCurrency: 'EUR',
-                        unitCode: 'MON',
-                    },
-                },
-                breadcrumb: {
-                    '@type': 'BreadcrumbList',
-                    itemListElement: [
-                        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
-                        {
-                            '@type': 'ListItem',
-                            position: 2,
-                            name: 'Creadores de Contenido',
-                            item: 'https://impuestify.com/creadores-de-contenido',
-                        },
-                    ],
-                },
-                mainEntity: {
-                    '@type': 'FAQPage',
-                    mainEntity: FAQS.map((f) => ({
-                        '@type': 'Question',
-                        name: f.q,
-                        acceptedAnswer: { '@type': 'Answer', text: f.a },
-                    })),
-                },
-            })
-            document.head.appendChild(script)
-        }
-
-        return () => {
-            document.title = 'Impuestify — Asistente Fiscal con IA'
-            const schema = document.querySelector('#creators-schema-org')
-            if (schema) schema.remove()
-        }
-    }, [])
+                offers: { '@type': 'Offer', price: '49', priceCurrency: 'EUR' },
+                author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' }
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
+                    { '@type': 'ListItem', position: 2, name: 'Creadores de Contenido', item: 'https://impuestify.com/creadores-de-contenido' }
+                ]
+            }
+        ]
+    })
 
     return (
         <div className="creators-page">

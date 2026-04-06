@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useSEO } from '../hooks/useSEO'
 import {
     ArrowRight, CheckCircle, Calculator, Shield,
     FileText, TrendingDown, Users, ChevronLeft, Info
@@ -50,53 +50,60 @@ const VENTAJAS = [
 ]
 
 export default function CeutaMelillaPage() {
-    useEffect(() => {
-        document.title =
-            'Ventajas Fiscales en Ceuta y Melilla | Impuestify'
-
-        const setMeta = (name: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(
-                `meta[name="${name}"]`
-            )
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('name', name)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        const setOg = (property: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(
-                `meta[property="${property}"]`
-            )
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('property', property)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        setMeta(
-            'description',
-            'Descubre las ventajas fiscales exclusivas de Ceuta y Melilla: deducción 60% cuota IRPF (Art. 68.4 LIRPF), IPSI en lugar de IVA y 50% de bonificación en cuotas SS para autónomos. Calcula tu ahorro con IA.'
-        )
-        setMeta(
-            'keywords',
-            'ventajas fiscales Ceuta, ventajas fiscales Melilla, IRPF Ceuta, deducción 60% LIRPF, IPSI, autónomos Ceuta Melilla, bonificación Seguridad Social'
-        )
-        setOg('og:title', 'Ventajas Fiscales en Ceuta y Melilla | Impuestify')
-        setOg(
-            'og:description',
-            'Deducción 60% cuota íntegra IRPF (Art. 68.4), IPSI en lugar de IVA y 50% bonificación SS autónomos. La IA que calcula tu ahorro fiscal en Ceuta y Melilla.'
-        )
-        setOg('og:type', 'website')
-
-        return () => {
-            document.title = 'Impuestify — Asistente Fiscal con IA'
-        }
-    }, [])
+    useSEO({
+        title: 'Ventajas Fiscales en Ceuta y Melilla | Impuestify',
+        description: 'Descubre las ventajas fiscales exclusivas de Ceuta y Melilla: deducción 60% cuota IRPF, IPSI en lugar de IVA, bonificaciones IS.',
+        canonical: '/ceuta-melilla',
+        keywords: 'fiscalidad Ceuta Melilla, IPSI, deducción 60% IRPF, ventajas fiscales Ceuta, impuestos Melilla',
+        schema: [
+            {
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: [
+                    {
+                        '@type': 'Question',
+                        name: '¿Me afecta la deducción si trabajo en Ceuta pero vivo en la Península?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'La deducción del 60% aplica a residentes fiscales en Ceuta o Melilla. Si resides en la Península pero obtienes rentas en Ceuta, el tratamiento puede variar según tu situación concreta.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿El IPSI equivale exactamente al IVA?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'No son exactamente equivalentes. El IPSI tiene sus propios tipos y reglas. No hay derecho a deducción del IVA soportado como en el régimen general. Es un impuesto local con lógica propia.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿La bonificación del 50% en la Seguridad Social aplica a todos los autónomos en Ceuta?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'Aplica a autónomos que residan y ejerzan su actividad principalmente en Ceuta o Melilla. Existen restricciones para actividades de comercio exterior o cuya clientela esté principalmente fuera de estas ciudades.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Cómo puede ayudarme Impuestify con Ceuta y Melilla?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'El motor de IA de Impuestify tiene acceso a la normativa específica de Ceuta y Melilla: el Art. 68.4 LIRPF, la Ley del IPSI y la normativa de Seguridad Social para autónomos. Puede calcular tu IRPF aplicando la deducción correcta y descubrir todas las ventajas aplicables a tu caso.',
+                        },
+                    },
+                ],
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
+                    { '@type': 'ListItem', position: 2, name: 'Ceuta y Melilla', item: 'https://impuestify.com/ceuta-melilla' },
+                ],
+            },
+        ],
+    })
 
     return (
         <div className="ceuta-page">

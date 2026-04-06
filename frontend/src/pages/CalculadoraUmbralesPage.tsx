@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Building2, AlertCircle, Info, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import '../styles/CalculadoraUmbrales.css';
+import { useSEO } from '../hooks/useSEO';
 
 interface ThresholdDetail {
   valor: number;
@@ -44,6 +45,23 @@ function getBarClass(pct: number): string {
 }
 
 export default function CalculadoraUmbralesPage() {
+  useSEO({
+    title: 'Calculadora Umbrales Contables PGC — Impuestify',
+    description: '¿Normal o abreviado? Comprueba qué plan contable aplica a tu empresa según activo, cifra de negocios y número de empleados.',
+    canonical: '/calculadora-umbrales',
+    keywords: 'umbrales contables, PGC normal abreviado, plan general contabilidad, balance abreviado, PYMES contabilidad',
+    schema: {
+      '@context': 'https://schema.org',
+      '@type': 'WebApplication',
+      name: 'Calculadora Umbrales Contables',
+      url: 'https://impuestify.com/calculadora-umbrales',
+      applicationCategory: 'FinanceApplication',
+      operatingSystem: 'Web',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+      author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' },
+    },
+  })
+
   const [y1Activo, setY1Activo] = useState('');
   const [y1Negocios, setY1Negocios] = useState('');
   const [y1Empleados, setY1Empleados] = useState('');
@@ -54,18 +72,6 @@ export default function CalculadoraUmbralesPage() {
   const [result, setResult] = useState<CompanySizeResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // SEO meta tags
-  useEffect(() => {
-    document.title = 'Calculadora de umbrales contables | Normal vs Abreviado | Impuestify';
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) {
-      meta.setAttribute(
-        'content',
-        'Descubre si tu empresa puede usar el PGC PYMES, balance abreviado o si necesita auditoría. Basado en LSC Art. 257-258 y Directiva UE 2023/2775.'
-      );
-    }
-  }, []);
 
   const calcular = async () => {
     if (!y1Activo || !y1Negocios || !y1Empleados || !y2Activo || !y2Negocios || !y2Empleados) {

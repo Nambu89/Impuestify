@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useSEO } from '../hooks/useSEO'
 import {
     MessageSquare, Shield, FileText, ArrowRight, Calculator, CreditCard,
     CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink, CalendarDays, Video,
@@ -66,81 +66,27 @@ const CREATOR_CARDS = [
 export default function Home() {
     const { isAuthenticated } = useAuth()
 
-    useEffect(() => {
-        // SEO: title + meta tags
-        document.title = 'Impuestify — Asistente Fiscal IA para España | IRPF, Autónomos, Creadores'
-
-        const setMeta = (name: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('name', name)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
+    useSEO({
+        title: 'Impuestify — Asistente Fiscal IA para España | IRPF, Autónomos, Creadores',
+        description: 'Asistente fiscal con IA para particulares, autónomos y creadores de contenido en España. Simulador IRPF, +1000 deducciones, 21 territorios.',
+        canonical: '/',
+        keywords: 'asistente fiscal IA, impuestos España, IRPF, declaración renta, deducciones autónomo, creadores contenido',
+        schema: {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Impuestify',
+            url: 'https://impuestify.com',
+            applicationCategory: 'FinanceApplication',
+            operatingSystem: 'Web',
+            offers: [
+                { '@type': 'Offer', name: 'Particular', price: '5', priceCurrency: 'EUR', description: 'Para asalariados y pensionistas' },
+                { '@type': 'Offer', name: 'Creador', price: '49', priceCurrency: 'EUR', description: 'Para YouTubers, TikTokers, streamers' },
+                { '@type': 'Offer', name: 'Autónomo', price: '39', priceCurrency: 'EUR', description: 'Para trabajadores por cuenta propia' }
+            ],
+            aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '150', bestRating: '5' },
+            author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' }
         }
-
-        const setOg = (property: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(`meta[property="${property}"]`)
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('property', property)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        setMeta(
-            'description',
-            'Asistente fiscal con IA para particulares, autónomos y creadores de contenido en España. IRPF, IVA, deducciones, Modelo 303, 349. Cubre las 17 CCAA + País Vasco + Navarra + Canarias + Ceuta y Melilla. Desde 5 EUR/mes.'
-        )
-        setMeta(
-            'keywords',
-            'impuestos españa, irpf, declaracion renta, autonomos, creadores de contenido, influencers, iva, modelo 303, modelo 349, deducciones, pais vasco, navarra, canarias, ceuta, melilla, asistente fiscal, inteligencia artificial'
-        )
-        setOg('og:title', 'Impuestify — Asistente Fiscal IA')
-        setOg(
-            'og:description',
-            'El único asistente fiscal con IA que cubre los 21 territorios de España. Para particulares, autónomos y creadores de contenido.'
-        )
-        setOg('og:type', 'website')
-        setOg('og:url', 'https://impuestify.com')
-
-        // Schema.org structured data
-        const existingScript = document.querySelector('#home-schema-org')
-        if (!existingScript) {
-            const script = document.createElement('script')
-            script.id = 'home-schema-org'
-            script.type = 'application/ld+json'
-            script.text = JSON.stringify({
-                '@context': 'https://schema.org',
-                '@type': 'SoftwareApplication',
-                name: 'Impuestify',
-                applicationCategory: 'FinanceApplication',
-                operatingSystem: 'Web',
-                url: 'https://impuestify.com',
-                offers: [
-                    { '@type': 'Offer', price: '5', priceCurrency: 'EUR', name: 'Plan Particular' },
-                    { '@type': 'Offer', price: '49', priceCurrency: 'EUR', name: 'Plan Creator' },
-                    { '@type': 'Offer', price: '39', priceCurrency: 'EUR', name: 'Plan Autónomo' },
-                ],
-                aggregateRating: {
-                    '@type': 'AggregateRating',
-                    ratingValue: '4.8',
-                    ratingCount: '150',
-                },
-                description:
-                    'Asistente fiscal IA para España. IRPF, IVA, deducciones para particulares, autónomos y creadores de contenido.',
-            })
-            document.head.appendChild(script)
-        }
-
-        return () => {
-            document.title = 'Impuestify — Asistente Fiscal con IA'
-            const schema = document.querySelector('#home-schema-org')
-            if (schema) schema.remove()
-        }
-    }, [])
+    })
 
     return (
         <div className="home">

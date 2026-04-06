@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Calculator, ChevronDown, ChevronUp, Plus, Trash2, AlertCircle, Info, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import '../styles/CalculadoraRetenciones.css';
+import { useSEO } from '../hooks/useSEO';
 
 interface Descendiente {
   ano_nacimiento: number;
@@ -29,6 +30,33 @@ interface WithholdingResult {
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function CalculadoraRetencionesPage() {
+  useSEO({
+    title: 'Calculadora Retenciones IRPF 2026 Gratis — Impuestify',
+    description: 'Calcula tu retención de IRPF 2026 según el algoritmo oficial de la AEAT. Resultado inmediato, gratis, sin registro. Para asalariados y autónomos.',
+    canonical: '/calculadora-retenciones',
+    keywords: 'calculadora retenciones IRPF 2026, retención nómina, tipo retención, algoritmo AEAT, calcular IRPF',
+    schema: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: 'Calculadora Retenciones IRPF 2026',
+        url: 'https://impuestify.com/calculadora-retenciones',
+        applicationCategory: 'FinanceApplication',
+        operatingSystem: 'Web',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+        author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
+          { '@type': 'ListItem', position: 2, name: 'Calculadora Retenciones IRPF', item: 'https://impuestify.com/calculadora-retenciones' },
+        ],
+      },
+    ],
+  })
+
   const [salarioBruto, setSalarioBruto] = useState('');
   const [numPagas, setNumPagas] = useState('14');
   const [situacionFamiliar, setSituacionFamiliar] = useState('3');

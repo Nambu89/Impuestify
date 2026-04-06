@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useSEO } from '../hooks/useSEO'
 import {
     ArrowRight, CheckCircle, X, ChevronLeft, Zap,
     FileText, Calculator, Shield, ChevronDown, Heart,
@@ -84,103 +85,22 @@ const FAQS = [
 export default function FarmaciasPage() {
     const [openFaq, setOpenFaq] = useState<number | null>(null)
 
-    useEffect(() => {
-        document.title = 'Impuestos Farmacia | Recargo Equivalencia | IRPF Farmac\u00e9uticos | Impuestify'
-
-        const setMeta = (name: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('name', name)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
+    useSEO({
+        title: 'Impuestos Farmacia | Recargo Equivalencia | IRPF Farmacéuticos | Impuestify',
+        description: 'Herramienta fiscal con IA para farmacéuticos. Recargo de Equivalencia automático, IRPF, deducciones específicas farmacia.',
+        canonical: '/farmacias',
+        keywords: 'impuestos farmacia, recargo equivalencia farmacia, IRPF farmacéutico, deducciones farmacia, IVA medicamentos',
+        schema: {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Impuestify para Farmacias',
+            url: 'https://impuestify.com/farmacias',
+            applicationCategory: 'FinanceApplication',
+            operatingSystem: 'Web',
+            offers: { '@type': 'Offer', price: '39', priceCurrency: 'EUR' },
+            author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' }
         }
-
-        const setOg = (property: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(`meta[property="${property}"]`)
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('property', property)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        setMeta(
-            'description',
-            'Herramienta fiscal con IA para farmac\u00e9uticos. Recargo de Equivalencia autom\u00e1tico, deducciones espec\u00edficas, simulador IRPF. Plan Aut\u00f3nomo desde 39 EUR/mes.'
-        )
-        setMeta(
-            'keywords',
-            'impuestos farmacia, IRPF farmac\u00e9utico, recargo equivalencia farmacia, deducciones farmacia, fondo comercio farmacia, IVA medicamentos, IAE 652.1, fiscal farmac\u00e9utico, asesor fiscal farmacia, modelo 130 farmacia'
-        )
-        setMeta('geo.region', 'ES')
-        setMeta('geo.placename', 'Espa\u00f1a')
-        setOg('og:title', 'Impuestos Farmacia | Recargo Equivalencia | IRPF Farmac\u00e9uticos | Impuestify')
-        setOg(
-            'og:description',
-            'Herramienta fiscal con IA para farmac\u00e9uticos. Recargo de Equivalencia autom\u00e1tico, deducciones espec\u00edficas, simulador IRPF adaptado a farmacias. 39 EUR/mes.'
-        )
-        setOg('og:type', 'website')
-        setOg('og:url', 'https://impuestify.com/farmacias')
-
-        // Schema.org structured data
-        const existingScript = document.querySelector('#farmacias-schema-org')
-        if (!existingScript) {
-            const script = document.createElement('script')
-            script.id = 'farmacias-schema-org'
-            script.type = 'application/ld+json'
-            script.text = JSON.stringify({
-                '@context': 'https://schema.org',
-                '@type': 'SoftwareApplication',
-                name: 'Impuestify para Farmacias',
-                description:
-                    'Herramienta fiscal con IA para farmac\u00e9uticos en Espa\u00f1a. Recargo de Equivalencia, deducciones espec\u00edficas, simulador IRPF adaptado a oficinas de farmacia.',
-                applicationCategory: 'FinanceApplication',
-                operatingSystem: 'Web',
-                url: 'https://impuestify.com/farmacias',
-                offers: {
-                    '@type': 'Offer',
-                    price: '39',
-                    priceCurrency: 'EUR',
-                    priceSpecification: {
-                        '@type': 'UnitPriceSpecification',
-                        price: '39',
-                        priceCurrency: 'EUR',
-                        unitCode: 'MON',
-                    },
-                },
-                breadcrumb: {
-                    '@type': 'BreadcrumbList',
-                    itemListElement: [
-                        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
-                        {
-                            '@type': 'ListItem',
-                            position: 2,
-                            name: 'Farmacias',
-                            item: 'https://impuestify.com/farmacias',
-                        },
-                    ],
-                },
-                mainEntity: {
-                    '@type': 'FAQPage',
-                    mainEntity: FAQS.map((f) => ({
-                        '@type': 'Question',
-                        name: f.q,
-                        acceptedAnswer: { '@type': 'Answer', text: f.a },
-                    })),
-                },
-            })
-            document.head.appendChild(script)
-        }
-
-        return () => {
-            document.title = 'Impuestify \u2014 Asistente Fiscal con IA'
-            const schema = document.querySelector('#farmacias-schema-org')
-            if (schema) schema.remove()
-        }
-    }, [])
+    })
 
     return (
         <div className="farmacias-page">

@@ -18,6 +18,11 @@ Allow: /canarias
 Allow: /creadores-de-contenido
 Allow: /checklist-borrador
 Allow: /obligado-declarar
+Allow: /calculadora-neto
+Allow: /calculadora-retenciones
+Allow: /calculadora-umbrales
+Allow: /modelos-obligatorios
+Allow: /farmacias
 
 # Protected pages (disallow — require auth, redirect to /login)
 Disallow: /chat
@@ -27,7 +32,6 @@ Disallow: /dashboard
 Disallow: /guia-fiscal
 Disallow: /modelos-trimestrales
 Disallow: /calendario
-Disallow: /calculadora-neto
 Disallow: /calculadora-iva-creadores
 Disallow: /calculadora-m130
 Disallow: /gastos-deducibles

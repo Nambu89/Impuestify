@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-    CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp,
+    CheckCircle, AlertCircle, ChevronDown, ChevronUp,
     ArrowRight, Calculator, Users, Briefcase, Info
 } from 'lucide-react'
 import Header from '../components/Header'
 import FadeContent from '../components/reactbits/FadeContent'
+import { useSEO } from '../hooks/useSEO'
 import './ObligadoDeclararPage.css'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -187,33 +188,60 @@ export default function ObligadoDeclararPage() {
     const [resultado, setResultado] = useState<CheckerResult>(null)
     const [checked, setChecked] = useState(false)
 
-    // SEO meta tags
-    useEffect(() => {
-        document.title = '¿Estoy obligado a declarar la renta 2026? — Impuestify'
-
-        const setMeta = (name: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('name', name)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        setMeta(
-            'description',
-            'Comprueba en 30 segundos si estás obligado a presentar la declaración de la renta 2025/2026. Límites actualizados: 22.000 EUR un pagador, 15.876 EUR dos pagadores. Novedades 2025 incluidas.'
-        )
-        setMeta(
-            'keywords',
-            'obligado declarar renta 2026, limites renta 2026, dos pagadores renta 2026, autonomos declaracion renta, estoy obligado hacer declaracion renta, minimo para declarar renta'
-        )
-
-        return () => {
-            document.title = 'Impuestify — Asistente Fiscal IA para España'
-        }
-    }, [])
+    useSEO({
+        title: '¿Estoy Obligado a Declarar la Renta 2026? — Impuestify',
+        description: 'Comprueba en 30 segundos si estás obligado a presentar la declaración de la renta 2026. Umbrales actualizados, un pagador o varios.',
+        canonical: '/obligado-declarar',
+        keywords: 'obligado declarar renta 2026, umbrales declaración, límite rentas IRPF, dos pagadores renta, exento declaración',
+        schema: [
+            {
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: [
+                    {
+                        '@type': 'Question',
+                        name: '¿Qué pasa si no declaro estando obligado?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'Hacienda puede imponerte una sanción mínima de 200 EUR por presentación voluntaria fuera de plazo (sin requerimiento previo). Si hay requerimiento de la AEAT, la sanción va del 50 % al 150 % de la cuota no ingresada, más recargos e intereses de demora. En casos graves puede derivar en delito fiscal si supera los 120.000 EUR defraudados.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Puedo declarar si no estoy obligado?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'Sí, siempre puedes declarar voluntariamente aunque no estés obligado. De hecho, en muchos casos te conviene porque puede salirte a devolver: si te practicaron retenciones en exceso, si tienes deducciones por maternidad, donativos o alquiler de vivienda habitual.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Los autónomos siempre están obligados a hacer la renta?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'Sí. Desde la reforma fiscal de 2023, cualquier autónomo dado de alta en el Régimen Especial de Trabajadores Autónomos (RETA) está obligado a presentar la declaración de la renta, sin importar cuánto haya facturado. Aunque hayas ganado 0 EUR, debes declarar.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Cómo afecta tener dos pagadores al límite?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'Si has tenido dos o más pagadores y el segundo (o los siguientes) te pagaron más de 1.500 EUR en total, tu límite baja de 22.000 EUR a 15.876 EUR. Casos habituales: cambio de empresa durante el año, ERTE con prestación del SEPE, pluriempleo o percibir pensión de jubilación y seguir trabajando.',
+                        },
+                    },
+                ],
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
+                    { '@type': 'ListItem', position: 2, name: '¿Obligado a declarar?', item: 'https://impuestify.com/obligado-declarar' },
+                ],
+            },
+        ],
+    })
 
     const handleComprobar = () => {
         const res = calcularResultado(checker)
@@ -572,24 +600,6 @@ export default function ObligadoDeclararPage() {
                 </div>
             </section>
 
-            {/* ── Schema markup FAQ (SEO) ───────────────────────────────── */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
-                        '@context': 'https://schema.org',
-                        '@type': 'FAQPage',
-                        mainEntity: FAQS.map(faq => ({
-                            '@type': 'Question',
-                            name: faq.pregunta,
-                            acceptedAnswer: {
-                                '@type': 'Answer',
-                                text: faq.respuesta,
-                            },
-                        })),
-                    }),
-                }}
-            />
         </div>
     )
 }

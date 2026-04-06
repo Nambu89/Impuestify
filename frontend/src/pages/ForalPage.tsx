@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useSEO } from '../hooks/useSEO'
 import {
     ArrowRight, CheckCircle, X, Map, Calculator,
     FileText, Shield, Zap, ChevronLeft
@@ -74,56 +74,60 @@ const IRPF_TRAMOS = [
 ]
 
 export default function ForalPage() {
-    useEffect(() => {
-        document.title =
-            'Declaración de la Renta en Territorios Forales | Impuestify'
-
-        const setMeta = (name: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(
-                `meta[name="${name}"]`
-            )
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('name', name)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        const setOg = (property: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(
-                `meta[property="${property}"]`
-            )
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('property', property)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        setMeta(
-            'description',
-            'Calcula tu IRPF foral en Araba, Bizkaia, Gipuzkoa y Navarra. La única herramienta fiscal con IA que cubre todos los territorios forales de España. Deducciones propias, tramos específicos y haciendas forales.'
-        )
-        setMeta(
-            'keywords',
-            'IRPF foral, declaración renta País Vasco, IRPF Navarra, Hacienda Foral, Araba, Bizkaia, Gipuzkoa, deducciones forales, régimen foral'
-        )
-        setOg(
-            'og:title',
-            'Declaración de la Renta en Territorios Forales | Impuestify'
-        )
-        setOg(
-            'og:description',
-            'La única IA fiscal que cubre el IRPF foral del País Vasco (Araba, Bizkaia, Gipuzkoa) y Navarra con sus normativas propias.'
-        )
-        setOg('og:type', 'website')
-
-        return () => {
-            document.title = 'Impuestify — Asistente Fiscal con IA'
-        }
-    }, [])
+    useSEO({
+        title: 'Declaración de la Renta en Territorios Forales | Impuestify',
+        description: 'Calcula tu IRPF foral en Araba, Bizkaia, Gipuzkoa y Navarra. Tramos, deducciones y modelos específicos del País Vasco y Navarra.',
+        canonical: '/territorios-forales',
+        keywords: 'IRPF foral, País Vasco impuestos, Navarra IRPF, Bizkaia declaración renta, Gipuzkoa fiscal, Araba hacienda foral',
+        schema: [
+            {
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: [
+                    {
+                        '@type': 'Question',
+                        name: '¿Los residentes en el País Vasco hacen la declaración en la AEAT?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'No. Los contribuyentes del País Vasco presentan su declaración ante la Diputación Foral correspondiente (Araba, Bizkaia o Gipuzkoa), no ante la AEAT. La normativa aplicable es la foral, no la LIRPF estatal.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Puedo aplicar las deducciones estatales si soy residente foral?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'No directamente. Los territorios forales tienen su propio catálogo de deducciones. Algunas son similares a las estatales, pero otras son exclusivas del régimen foral y no existen en el régimen común.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Qué es el Concierto Económico?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'El Concierto Económico es el acuerdo que permite al País Vasco recaudar y gestionar sus propios impuestos. En Navarra existe el Convenio Económico. Ambos son derechos históricos reconocidos por la Constitución.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Cómo me ayuda Impuestify con el IRPF foral?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'El motor de IA de Impuestify tiene acceso a más de 37 documentos de las diputaciones forales, incluyendo normas forales, instrucciones oficiales y modelos de declaración. Puede calcular tu IRPF aplicando las deducciones y tramos correctos de tu territorio.',
+                        },
+                    },
+                ],
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
+                    { '@type': 'ListItem', position: 2, name: 'Territorios Forales', item: 'https://impuestify.com/territorios-forales' },
+                ],
+            },
+        ],
+    })
 
     return (
         <div className="foral-page">

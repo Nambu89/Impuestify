@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useSEO } from '../hooks/useSEO'
 import {
     ArrowRight, CheckCircle, X, Sun, Receipt,
     Building2, PiggyBank, Calculator, ChevronLeft, Info, Zap
@@ -58,56 +58,60 @@ const IGIC_TIPOS = [
 ]
 
 export default function CanariasPage() {
-    useEffect(() => {
-        document.title =
-            'Fiscalidad en Canarias — IGIC, ZEC y Deducciones | Impuestify'
-
-        const setMeta = (name: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(
-                `meta[name="${name}"]`
-            )
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('name', name)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        const setOg = (property: string, content: string) => {
-            let el = document.querySelector<HTMLMetaElement>(
-                `meta[property="${property}"]`
-            )
-            if (!el) {
-                el = document.createElement('meta')
-                el.setAttribute('property', property)
-                document.head.appendChild(el)
-            }
-            el.setAttribute('content', content)
-        }
-
-        setMeta(
-            'description',
-            'Descubre las ventajas fiscales de Canarias: IGIC en lugar de IVA (7% vs 21%), Zona Especial Canaria (ZEC) al 4% IS, y 6 deducciones propias. Calcula tu ahorro con IA.'
-        )
-        setMeta(
-            'keywords',
-            'IGIC Canarias, fiscalidad Canarias, ZEC Zona Especial Canaria, IVA Canarias, deducciones Canarias, IRPF Canarias, RIC Reserva Inversiones'
-        )
-        setOg(
-            'og:title',
-            'Fiscalidad en Canarias — IGIC, ZEC y Deducciones | Impuestify'
-        )
-        setOg(
-            'og:description',
-            'IGIC al 7% en lugar de IVA al 21%, ZEC al 4% en Sociedades, RIC hasta el 90% de reducción y 6 deducciones IRPF propias. La IA fiscal que entiende el régimen canario.'
-        )
-        setOg('og:type', 'website')
-
-        return () => {
-            document.title = 'Impuestify — Asistente Fiscal con IA'
-        }
-    }, [])
+    useSEO({
+        title: 'Fiscalidad en Canarias — IGIC, ZEC y Deducciones | Impuestify',
+        description: 'Descubre las ventajas fiscales de Canarias: IGIC al 7% en lugar de IVA 21%, ZEC al 4% para sociedades, RIC, deducciones específicas.',
+        canonical: '/canarias',
+        keywords: 'fiscalidad Canarias, IGIC, ZEC Canarias, RIC, deducciones Canarias, impuestos Canarias',
+        schema: [
+            {
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: [
+                    {
+                        '@type': 'Question',
+                        name: '¿Los residentes en Canarias pagan IVA?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'No. Canarias no forma parte del territorio aduanero de la Unión Europea a efectos del IVA. En su lugar aplica el Impuesto General Indirecto Canario (IGIC), con tipos significativamente inferiores al IVA peninsular.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Qué es la Zona Especial Canaria?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'La ZEC es un régimen especial aprobado por la Unión Europea que permite a empresas radicadas en Canarias tributar al 4% en el Impuesto de Sociedades, frente al 25% general, siempre que cumplan requisitos de creación de empleo e inversión en el archipiélago.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Puedo aplicar la RIC como autónomo?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'Sí. Los autónomos con actividad económica en Canarias pueden aplicar la Reserva para Inversiones en Canarias (RIC) y reducir hasta el 90% de su base imponible en IRPF, destinando beneficios a inversiones productivas en el archipiélago dentro de los plazos establecidos.',
+                        },
+                    },
+                    {
+                        '@type': 'Question',
+                        name: '¿Cómo ayuda Impuestify con el régimen canario?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'El motor de IA de Impuestify tiene acceso a la normativa específica de Canarias: Ley 20/1991 del IGIC, Ley 19/1994 del REF Canario (RIC y ZEC), y el Decreto Legislativo 1/2009 de deducciones IRPF. Puede calcular tu IGIC, estimar el ahorro con la RIC y descubrir todas las deducciones aplicables a tu situación.',
+                        },
+                    },
+                ],
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
+                    { '@type': 'ListItem', position: 2, name: 'Canarias', item: 'https://impuestify.com/canarias' },
+                ],
+            },
+        ],
+    })
 
     return (
         <div className="canarias-page">
