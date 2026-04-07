@@ -886,6 +886,64 @@ CREATOR_MODELS_ITEMS = [
 
 
 # ═══════════════════════════════════════════════════════════════
+# FARMACIAS — Recargo de Equivalencia + Fiscalidad
+# ═══════════════════════════════════════════════════════════════
+
+FARMACIA_ITEMS = [
+    # AEAT — Recargo de Equivalencia (RE)
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/Sede/iva/regimenes-tributacion-iva/regimen-especial-recargo-equivalencia.html",
+        dest="AEAT/Farmacias/AEAT-RE_Indice.html",
+        file_type="html", priority="high", territory="AEAT", status="active",
+        description="Regimen especial recargo de equivalencia - indice",
+    ),
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/Sede/iva/regimenes-tributacion-iva/regimen-especial-recargo-equivalencia/que-consiste-regimen-especial-recargo-equivalencia.html",
+        dest="AEAT/Farmacias/AEAT-RE_En_Que_Consiste.html",
+        file_type="html", priority="high", territory="AEAT", status="active",
+        description="En que consiste el RE - explicacion detallada",
+    ),
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/Sede/ayuda/manuales-videos-folletos/manuales-practicos/manual-iva-2025/capitulo-06-regimenes-especiales-iva/regimen-especial-recargo-equivalencia/tipos-recargo-equivalencia.html",
+        dest="AEAT/Farmacias/AEAT-RE_Tipos_2025.html",
+        file_type="html", priority="high", territory="AEAT", status="active",
+        description="Tipos RE 2025: 5.2% (21%), 1.4% (10%), 0.5% (4%)",
+    ),
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/Sede/iva/regimenes-tributacion-iva/regimen-especial-recargo-equivalencia/obligaciones-facturacion.html",
+        dest="AEAT/Farmacias/AEAT-RE_Obligaciones_Facturacion.html",
+        file_type="html", priority="high", territory="AEAT", status="active",
+        description="Obligaciones facturacion bajo RE",
+    ),
+    WatchItem(
+        url="https://sede.agenciatributaria.gob.es/static_files/Sede/Procedimiento_ayuda/G403/instr_mod308.pdf",
+        dest="AEAT/Farmacias/AEAT-Modelo_308_Instrucciones.pdf",
+        file_type="pdf", priority="high", territory="AEAT", status="active",
+        description="Modelo 308 instrucciones - solicitud devolucion RE",
+    ),
+    # Guias fiscales farmacia (terceros institucionales)
+    WatchItem(
+        url="https://www.arquia.com/media/11090/guiairpfq2023digital.pdf",
+        dest="Farmacias/TAXFARMA-Guia_IRPF_Farmacia_2023.pdf",
+        file_type="pdf", priority="high", territory="AEAT", status="active",
+        description="Guia IRPF farmaceuticos 2023 - TAXFARMA/Arquia (fondo comercio, RE, deducciones)",
+    ),
+    WatchItem(
+        url="https://cofalicante.com/rep/9be0/pdf/343502/21/fiscalidad-de-farmacias?d=1",
+        dest="Farmacias/COF_Alicante-Fiscalidad_Farmacias.pdf",
+        file_type="pdf", priority="high", territory="AEAT", status="active",
+        description="Fiscalidad farmacias - COF Alicante (IRPF, IVA, RE, amortizaciones)",
+    ),
+    WatchItem(
+        url="https://www2.agenciatributaria.gob.es/ADUA/internet/es/aeat/dit/adu/adws/certificados/Tabla_de_epigrafes_IAE.pdf",
+        dest="AEAT/Farmacias/AEAT-Tarifas_IAE_Completas.pdf",
+        file_type="pdf", priority="high", territory="AEAT", status="active",
+        description="Tarifas IAE completas - epigrafe 652.1 Farmacias",
+    ),
+]
+
+
+# ═══════════════════════════════════════════════════════════════
 # All items combined
 # ═══════════════════════════════════════════════════════════════
 
@@ -904,6 +962,7 @@ ALL_ITEMS: list[WatchItem] = (
     + CREATORS_ITEMS
     + INFLUENCERS_ITEMS
     + CREATOR_MODELS_ITEMS
+    + FARMACIA_ITEMS
 )
 
 

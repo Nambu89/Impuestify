@@ -1,7 +1,7 @@
 """
 Seed pharmacy-specific IRPF deductions into the deductions table.
 
-6 deductions with scope='sectorial', territory='Estatal'.
+6 deductions for IAE 652.1 (Farmacias), territory='Estatal'.
 Idempotent: DELETE existing pharmacy deductions (code LIKE 'FARM-%'), then INSERT all 6.
 
 Usage:
@@ -25,104 +25,126 @@ load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 TAX_YEAR = 2025
 
+# Schema matches production: id, code, tax_year, territory, name, type, category,
+# percentage, max_amount, fixed_amount, legal_reference, description,
+# requirements_json, questions_json, is_active
 PHARMACY_DEDUCTIONS = [
     {
         "code": "FARM-01",
         "name": "Cuota Colegio de Farmaceuticos",
+        "type": "deduccion",
         "category": "profesional",
-        "scope": "sectorial",
-        "ccaa": None,
+        "territory": "Estatal",
         "max_amount": None,
+        "fixed_amount": None,
         "percentage": 100.0,
-        "requirements": json.dumps({
+        "description": "Cuota colegial obligatoria para el ejercicio de la profesion farmaceutica (IAE 652.1)",
+        "requirements_json": json.dumps({
             "situacion_laboral": "farmaceutico",
-            "description": "Cuota colegial obligatoria para el ejercicio de la profesion farmaceutica",
+            "iae": "652.1",
         }),
-        "tax_year": TAX_YEAR,
-        "is_active": True,
-        "legal_reference": "Art. 28.1 LIRPF — gastos deducibles de rendimientos de actividades economicas",
+        "questions_json": json.dumps([
+            {"key": "es_farmaceutico_colegiado", "text": "Estas colegiado en un Colegio Oficial de Farmaceuticos?", "type": "boolean"},
+        ]),
+        "legal_reference": "Art. 28.1 LIRPF - gastos deducibles de rendimientos de actividades economicas",
     },
     {
         "code": "FARM-02",
         "name": "Seguro de Responsabilidad Civil profesional",
+        "type": "deduccion",
         "category": "profesional",
-        "scope": "sectorial",
-        "ccaa": None,
+        "territory": "Estatal",
         "max_amount": None,
+        "fixed_amount": None,
         "percentage": 100.0,
-        "requirements": json.dumps({
+        "description": "Seguro RC obligatorio para el ejercicio de la actividad farmaceutica",
+        "requirements_json": json.dumps({
             "situacion_laboral": "farmaceutico",
-            "description": "Seguro RC obligatorio para farmacias",
+            "iae": "652.1",
         }),
-        "tax_year": TAX_YEAR,
-        "is_active": True,
-        "legal_reference": "Art. 28.1 LIRPF — gastos deducibles de rendimientos de actividades economicas",
+        "questions_json": json.dumps([
+            {"key": "tiene_seguro_rc", "text": "Tienes contratado un seguro de responsabilidad civil profesional?", "type": "boolean"},
+        ]),
+        "legal_reference": "Art. 28.1 LIRPF - gastos deducibles de rendimientos de actividades economicas",
     },
     {
         "code": "FARM-03",
         "name": "Formacion continua farmaceutica",
+        "type": "deduccion",
         "category": "formacion",
-        "scope": "sectorial",
-        "ccaa": None,
+        "territory": "Estatal",
         "max_amount": None,
+        "fixed_amount": None,
         "percentage": 100.0,
-        "requirements": json.dumps({
+        "description": "Cursos, congresos y formacion continua relacionada con la actividad farmaceutica",
+        "requirements_json": json.dumps({
             "situacion_laboral": "farmaceutico",
-            "description": "Cursos, congresos y formacion continua relacionada con la actividad farmaceutica",
+            "iae": "652.1",
         }),
-        "tax_year": TAX_YEAR,
-        "is_active": True,
-        "legal_reference": "Art. 28.1 LIRPF — gastos deducibles de rendimientos de actividades economicas",
+        "questions_json": json.dumps([
+            {"key": "gastos_formacion", "text": "Has realizado gastos en formacion continua relacionada con la farmacia?", "type": "boolean"},
+        ]),
+        "legal_reference": "Art. 28.1 LIRPF - gastos deducibles de rendimientos de actividades economicas",
     },
     {
         "code": "FARM-04",
         "name": "Amortizacion fondo de comercio (compra farmacia)",
+        "type": "deduccion",
         "category": "amortizacion",
-        "scope": "sectorial",
-        "ccaa": None,
+        "territory": "Estatal",
         "max_amount": None,
+        "fixed_amount": None,
         "percentage": 5.0,
-        "requirements": json.dumps({
+        "description": "Amortizacion del fondo de comercio adquirido en la compra de la farmacia. Maximo 5% anual (20 anos)",
+        "requirements_json": json.dumps({
             "situacion_laboral": "farmaceutico",
-            "description": "Amortizacion del fondo de comercio adquirido en la compra de la farmacia. "
-                           "Maximo 5% anual (20 anos)",
+            "iae": "652.1",
+            "tiene_fondo_comercio": True,
         }),
-        "tax_year": TAX_YEAR,
-        "is_active": True,
-        "legal_reference": "Art. 12.6 LIS (aplicable via art. 28 LIRPF) — amortizacion fondo de comercio",
+        "questions_json": json.dumps([
+            {"key": "compro_farmacia", "text": "Adquiriste la farmacia mediante compra (con fondo de comercio)?", "type": "boolean"},
+            {"key": "importe_fondo_comercio", "text": "Importe del fondo de comercio de la compra", "type": "number"},
+        ]),
+        "legal_reference": "Art. 12.6 LIS (aplicable via art. 28 LIRPF) - amortizacion fondo de comercio",
     },
     {
         "code": "FARM-05",
         "name": "Local comercial (alquiler o amortizacion)",
+        "type": "deduccion",
         "category": "local",
-        "scope": "sectorial",
-        "ccaa": None,
+        "territory": "Estatal",
         "max_amount": None,
+        "fixed_amount": None,
         "percentage": 100.0,
-        "requirements": json.dumps({
+        "description": "Alquiler del local o amortizacion si es en propiedad. Proporcional al uso afecto a la actividad",
+        "requirements_json": json.dumps({
             "situacion_laboral": "farmaceutico",
-            "description": "Alquiler del local o amortizacion si es en propiedad. Proporcional al uso afecto",
+            "iae": "652.1",
         }),
-        "tax_year": TAX_YEAR,
-        "is_active": True,
-        "legal_reference": "Art. 28.1 LIRPF — gastos deducibles de rendimientos de actividades economicas",
+        "questions_json": json.dumps([
+            {"key": "tipo_local", "text": "El local de la farmacia es alquilado o en propiedad?", "type": "select", "options": ["alquilado", "propiedad"]},
+        ]),
+        "legal_reference": "Art. 28.1 LIRPF - gastos deducibles de rendimientos de actividades economicas",
     },
     {
         "code": "FARM-06",
         "name": "Vehiculo (reparto domiciliario)",
+        "type": "deduccion",
         "category": "vehiculo",
-        "scope": "sectorial",
-        "ccaa": None,
+        "territory": "Estatal",
         "max_amount": None,
+        "fixed_amount": None,
         "percentage": 50.0,
-        "requirements": json.dumps({
+        "description": "Gastos de vehiculo utilizado para reparto domiciliario. Presuncion del 50% de afectacion a la actividad",
+        "requirements_json": json.dumps({
             "situacion_laboral": "farmaceutico",
-            "description": "Gastos de vehiculo utilizado para reparto domiciliario. "
-                           "Presuncion del 50% de afectacion a la actividad",
+            "iae": "652.1",
+            "reparto_domiciliario": True,
         }),
-        "tax_year": TAX_YEAR,
-        "is_active": True,
-        "legal_reference": "Art. 22.4 RIRPF — presuncion de afectacion parcial de vehiculos",
+        "questions_json": json.dumps([
+            {"key": "hace_reparto", "text": "Realizas reparto domiciliario de medicamentos?", "type": "boolean"},
+        ]),
+        "legal_reference": "Art. 22.4 RIRPF - presuncion de afectacion parcial de vehiculos",
     },
 ]
 
@@ -131,46 +153,53 @@ async def seed(dry_run: bool = False):
     from app.database.turso_client import TursoClient
 
     db = TursoClient()
-    await db.initialize()
+    await db.connect()
+    await db.init_schema()
 
-    # Delete existing pharmacy deductions
+    # Delete existing pharmacy deductions (idempotent)
     if not dry_run:
         await db.execute(
             "DELETE FROM deductions WHERE code LIKE 'FARM-%'",
             [],
         )
-        print(f"Deleted existing FARM-% deductions")
+        print("Deleted existing FARM-% deductions")
 
     inserted = 0
     for d in PHARMACY_DEDUCTIONS:
         row_id = str(uuid.uuid4())
         if dry_run:
-            print(f"  [DRY-RUN] Would insert: {d['code']} — {d['name']}")
+            print(f"  [DRY-RUN] Would insert: {d['code']} - {d['name']}")
         else:
             await db.execute(
                 """INSERT INTO deductions
-                   (id, code, name, category, scope, ccaa, max_amount, percentage,
-                    requirements, tax_year, is_active, legal_reference)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (id, code, tax_year, territory, name, type, category,
+                    percentage, max_amount, fixed_amount, legal_reference,
+                    description, requirements_json, questions_json, is_active)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 [
                     row_id,
                     d["code"],
+                    TAX_YEAR,
+                    d["territory"],
                     d["name"],
+                    d["type"],
                     d["category"],
-                    d["scope"],
-                    d["ccaa"],
-                    d["max_amount"],
                     d["percentage"],
-                    d["requirements"],
-                    d["tax_year"],
-                    1 if d["is_active"] else 0,
+                    d["max_amount"],
+                    d["fixed_amount"],
                     d["legal_reference"],
+                    d["description"],
+                    d["requirements_json"],
+                    d["questions_json"],
+                    1,
                 ],
             )
-            print(f"  Inserted: {d['code']} — {d['name']}")
+            print(f"  Inserted: {d['code']} - {d['name']}")
         inserted += 1
 
     print(f"\nTotal: {inserted} pharmacy deductions {'would be ' if dry_run else ''}seeded.")
+
+    await db.disconnect()
 
 
 if __name__ == "__main__":
