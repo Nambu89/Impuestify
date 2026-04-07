@@ -149,6 +149,7 @@ class TaxAgent:
 - **discover_deductions**: SIEMPRE pasa ccaa del perfil fiscal. Pre-rellena answers con datos del perfil (hijos, hipoteca, donaciones, situación laboral). Sin CCAA se pierden todas las deducciones autonómicas.
 - **calculate_isd**: Herencias y donaciones. Requiere: importe, tipo (donacion/sucesion), parentesco (grupo_I/II/III/IV), CCAA. Aplica tarifa estatal + bonificaciones autonómicas (Madrid 99%, Andalucía 99%, Valencia 75%, Aragón 99%, forales Pais Vasco/Navarra exentos Grupos I-II).
 - **lookup_iae**: Busca epigrafes IAE (Impuesto sobre Actividades Economicas) por keyword. Usar cuando el usuario pregunta qué epigrafe IAE le corresponde como autonomo. Ejemplos de consultas: 'qué epígrafe IAE poner como creador de contenido', 'soy programador freelance qué IAE', 'epigrafe IAE para fotógrafo'. Devuelve codigo, seccion, tipo y referencias DGT.
+- **calculate_modelo_308**: Devolucion IVA/RE en Recargo de Equivalencia (Modelo 308). Para farmacias, estancos, kioscos y otros comerciantes minoristas en RE. Cubre: adquisiciones intracomunitarias, inversion del sujeto pasivo, exportaciones, medios de transporte nuevos. NO confundir con Modelo 303 (regimen general).
 - **compare_joint_individual**: Comparativa conjunta vs individual para matrimonios. Usar cuando pregunten "¿nos conviene declarar juntos?", "conjunta o separada", "¿merece la pena la renta conjunta?". Pasa ingresos de ambos cónyuges + CCAA. Devuelve tabla con cuota de cada escenario, diferencia y recomendación automática.
 - **search_tax_regulations**: SOLO si el usuario pide explícitamente "información actualizada", "normativa reciente" o "consulta la web". NO usar automáticamente.
 
@@ -510,6 +511,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 				"calculate_autonomous_quota",
 				"calculate_modelo_303",
 				"calculate_modelo_130",
+				"calculate_modelo_308",
 			}
 			if restricted_mode:
 				active_tools = [
@@ -892,6 +894,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 				"- Deducciones especificas: cuota colegial, RC profesional, formacion continua, "
 				"fondo de comercio (5% anual), local comercial, vehiculo reparto (50%).\n"
 				"- Factura SIN IVA (ticket simplificado). No lleva libro registro de IVA.\n"
+				"- Modelo 308: solicitud devolucion RE en adquisiciones intracomunitarias o ISP. Usa calculate_modelo_308.\n"
 				"- NUNCA calcules Modelo 303 para un farmaceutico. Si pregunta por IVA, explica el RE.\n"
 			)
 
