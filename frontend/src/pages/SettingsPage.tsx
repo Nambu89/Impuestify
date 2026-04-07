@@ -30,6 +30,7 @@ const SITUACION_OPTIONS = [
     { value: '', label: 'Selecciona...' },
     { value: 'asalariado', label: 'Asalariado/a' },
     { value: 'autonomo', label: 'Autónomo/a' },
+    { value: 'farmaceutico', label: 'Farmacéutico/a' },
     { value: 'pensionista', label: 'Pensionista' },
     { value: 'desempleado', label: 'Desempleado/a' },
 ]
@@ -819,7 +820,7 @@ export default function SettingsPage() {
                                             value={fiscalForm.discapacidad_contribuyente ?? ''}
                                             onChange={e => updateFiscal('discapacidad_contribuyente', e.target.value ? Number(e.target.value) : null)}>
                                             <option value="">Sin discapacidad</option>
-                                            <option value="33">33% o más</option>
+                                            <option value="33">33% - 64%</option>
                                             <option value="65">65% o más</option>
                                         </select>
                                     </div>
@@ -1347,6 +1348,7 @@ export default function SettingsPage() {
                                                             <option value="simplificado">Simplificado</option>
                                                             <option value="recargo_equivalencia">Recargo de equivalencia</option>
                                                             <option value="exento">Exento</option>
+                                                            <option value="igic">IGIC (Canarias)</option>
                                                             <option value="ipsi">IPSI (Ceuta/Melilla)</option>
                                                         </select>
                                                     </div>

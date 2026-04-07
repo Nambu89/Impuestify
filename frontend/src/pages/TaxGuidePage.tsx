@@ -716,7 +716,7 @@ function StepCreadorActividad({ data, update }: StepProps) {
                     <option value="8690">8690 — Otros servicios profesionales (recomendado)</option>
                     <option value="9020">9020 — Servicios de publicidad y relaciones públicas</option>
                     <option value="6010.1">6010.1 — Comercio al por menor</option>
-                    <option value="9611">961.1 — Producción y distribución cinematográfica</option>
+                    <option value="961.1">961.1 — Producción y distribución cinematográfica</option>
                     <option value="otro">Otro epígrafe</option>
                 </select>
             </div>
