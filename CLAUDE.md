@@ -127,12 +127,24 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 | Creator | 49 EUR/mes | Influencers, YouTubers, streamers, bloggers | + IVA by platform, Modelo 349, DAC7, CNAE 60.39, multi-role profiles |
 | Autonomo | 39 EUR/mes IVA incl. | Self-employed | + All models (303/130/131), crypto, workspace, calendar |
 
-## Key Updates (2026-04-06)
+## Key Updates (2026-04-07)
 
+- **Session 28 QA + Security** (sesion 28): 12 bugs clasificador/contabilidad arreglados, auditoria seguridad 20/21 issues (4 CRITICAL), PageSpeed 69→85+, chat.py TaxIAResponse crash fix, rate limiting /ask, deploy fix
+- **Clasificador Facturas QA**: upload FormData fix, timeout 120s, mapping backend→frontend, column names alineados con DB
+- **Contabilidad 4 tabs**: Diario/Mayor/Balance/PyG mapping arreglado (cuenta_code→cuenta, etc.)
+- **Security hardening**: shared owner_guard.py, JWT startup validation, CORS prod hardening, SQL injection scripts parametrizados, security test endpoints gated por ENV
+- **Code quality**: 55x datetime.utcnow→datetime.now(timezone.utc), gpt-4o-mini→gpt-5-mini en todo backend, dead code eliminado
+- **PageSpeed**: hero image 234KB→27KB (88%), lazy load Home/Chat/Dashboard, cache headers, font non-blocking
+- **Test users**: 3 usuarios (particular + autonomo + creator) con suscripciones hasta 2026-12-31
+- **Model**: SIEMPRE gpt-5-mini, NUNCA gpt-4o-mini
+- **Git**: NUNCA incluir ruvnet, claude-flow, Claude, Co-Authored-By en commits
+
+- **SEO Overhaul** (sesion 27): Hook `useSEO()`, 12 paginas con schema JSON-LD (WebApplication, FAQPage, HowTo, BreadcrumbList), sitemap 21 URLs, OG image, Twitter cards, canonical URLs. Home: 3 pricing cards inline (Particular/Creator/Autonomo verde) + card Farmacias en Tecnologia
+- **Crawler Watchlist** (sesion 27): 59 URLs activas (antes 48). 11 URLs activadas para campana renta: Manual Renta 2025, retenciones, modelos 303/390/190/720/349/036, Plan Tributario 2026
 - **Phase 3: Clasificador Facturas + Contabilidad PGC** (sesion 26): Gemini 3 Flash Vision OCR ($0.0003/factura), clasificacion PGC automatica, asientos partida doble, Libro Diario/Mayor/Balance/PyG, export CSV/Excel para Registro Mercantil. 56 tests, 10 endpoints, 66 cuentas PGC. Frontend responsive mobile-first.
 - **Google Gemini API**: `google-genai` SDK integrado. Env var: `GOOGLE_GEMINI_API_KEY`. Modelo: `gemini-3-flash-preview`
 - **ADR-009**: Gemini 3 Flash para OCR facturas (33x mas barato que Azure DI). ADR-010: Contabilidad completa
-- **Tests**: 1758 backend PASS + frontend build OK
+- **Tests**: ~1758 backend PASS + frontend build OK (sesion 28 verified)
 - **Repo**: Migrado a `Nambu89/Impuestify` (antes TaxIA). Railway auto-deploy conectado
 - **RAG Pipeline** (FIXED sesion 22): 454 docs, 89,174 chunks, 82,098 embeddings, FTS5 sync. Territory filter normalizado, FTS5 OR query, semantic cache poisoning prevention, auto-rebuild FTS5 en ingesta
 - **System Prompt** (REWRITE sesion 22): Tecnicas GPT-5/Claude/NotebookLM — etiquetas `<contexto_fiscal>`, nivel 3/10, show dont tell, zero process narration
