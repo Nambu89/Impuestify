@@ -15,13 +15,13 @@ import logging
 from app.database.turso_client import TursoClient
 from app.agents.tax_agent import TaxAgent
 from app.config import settings
-from app.utils.irpf_calculator import IRPFCalculator
 from app.utils.region_detector import RegionDetector
 from app.services.conversation_service import ConversationService
 from app.services.conversation_cache import ConversationCache
 from app.auth.jwt_handler import get_current_user, TokenData
 from app.auth.subscription_guard import require_active_subscription
-from app.security import sql_validator, guardrails_system, rate_limit_ask
+from app.security import sql_validator, guardrails_system
+from app.security.rate_limiter import limiter
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
 from app.services.subscription_service import SubscriptionAccess
 from app.services.cost_tracker import CostTracker
@@ -97,7 +97,6 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
 			return []
 		
 		# === Detect user's region from query ===
-		from app.utils.region_detector import RegionDetector
 		detector = RegionDetector()
 		region_info = detector.detect_from_text(query)
 		
@@ -349,6 +348,7 @@ async def warmup_chat(request: Request, current_user: TokenData = Depends(get_cu
 
 
 @router.post("/ask", response_model=ImpuestifyResponse)
+@limiter.limit("60/hour;10/minute")
 async def ask_question(
 	req: Request,
 	request: QuestionRequest,
@@ -580,7 +580,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 				"recent_messages": updated_history
 			})
 			
-			return TaxIAResponse(
+			return ImpuestifyResponse(
 				answer=no_context_answer,
 				sources=[],
 				processing_time=time.time() - start_time,
@@ -780,5 +780,5 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 		logger.error(f"Error processing question: {e}", exc_info=True)
 		raise HTTPException(
 			status_code=500,
-			detail=f"Error processing question: {str(e)}"
+			detail="Error interno al procesar la pregunta. Inténtalo de nuevo."
 		)
