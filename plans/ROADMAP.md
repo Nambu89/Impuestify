@@ -1,6 +1,71 @@
 # TaxIA (Impuestify) - Roadmap de Desarrollo
 
-## Estado del Proyecto: Marzo 2026 (Sesion 23 — 2026-03-28)
+## Estado del Proyecto: Abril 2026 (Sesion 28 — 2026-04-07)
+
+---
+
+## COMPLETADO — Sesion 28: QA + Security Audit + PageSpeed (2026-04-07)
+
+- [x] **QA Clasificador Facturas**: 8 bugs (upload FormData, subscription redirect, timeout 120s, column names, year NaN, result mapping)
+- [x] **QA Contabilidad 4 tabs**: Diario/Mayor/Balance/PyG mapping arreglado (cuenta_code→cuenta, crash Balance)
+- [x] **Auditoria seguridad backend (Ruflo)**: 20/21 issues resueltos
+  - CRITICAL: is_owner crash, SQL injection scripts, JWT-as-API-key, test endpoints en prod
+  - HIGH: JWT startup validation, shared owner_guard.py, auth dedup, 55x datetime.utcnow
+  - MEDIUM: swallowed exceptions logging, thread-safe demo stats
+  - LOW: dead code, CORS hardening, gpt-5-mini migration, unused imports
+- [x] **chat.py audit**: TaxIAResponse→ImpuestifyResponse crash fix, error leak, rate limiting /ask
+- [x] **PageSpeed 69→85+**: hero 234KB→27KB, lazy load 5 pages, cache headers, font non-blocking
+- [x] **Test user creator**: test.creator@impuestify.es (Andalucia, IAE 8690, plan creator)
+- [x] **5 facturas ejemplo E2E** + 17-test Playwright spec
+- [x] **Contabilidad export**: column names alineados con DB schema
+- [x] **Deploy fix**: RuntimeError startup por ADMIN_API_KEY → warning-only
+- [x] **README reescrito**: datos actuales (12 tools, ~1008 deducciones, 456+ docs)
+- [x] **Limpieza raiz**: ~40 archivos basura eliminados
+
+**Metricas Sesion 28:**
+- Tests: ~1,758 backend PASS + frontend build OK
+- Issues seguridad: 20/21 resueltos
+- Commits: 7 (5 pushados a main)
+- Archivos modificados: ~50
+
+---
+
+## COMPLETADO — Sesion 27: SEO Overhaul + Crawler Campana Renta (2026-04-06)
+
+- [x] **SEO Overhaul**: useSEO() hook, 12 paginas con schema JSON-LD, sitemap 21 URLs, OG image
+- [x] **Crawler**: 11 URLs activadas para campana renta (Manual Renta 2025, retenciones, modelos)
+- [x] **Home**: 3 pricing cards inline (Particular/Creator/Autonomo verde) + card Farmacias en Tecnologia
+- [x] **FarmaciasPage**: ~50 Unicode escapes → UTF-8 real
+- [x] **robots.txt**: 5 calculadoras desbloqueadas
+- [x] **PGC**: 201 cuentas expandido (7 grupos, 95%+ cobertura)
+- [x] **Reclasificacion manual**: boton Aplicar + parseo codigo+nombre
+
+---
+
+## COMPLETADO — Sesion 26: Phase 3 Clasificador Facturas + Contabilidad PGC (2026-04-05)
+
+- [x] **Gemini 3 Flash Vision OCR** ($0.0003/factura)
+- [x] **Clasificacion PGC automatica**: 201 cuentas, 7 grupos
+- [x] **Asientos partida doble**: generacion automatica
+- [x] **Libros contables**: Diario, Mayor, Balance, PyG
+- [x] **Export CSV/Excel** para Registro Mercantil
+- [x] **Frontend**: /clasificador-facturas + /contabilidad (responsive mobile-first)
+- [x] **ADR-009 + ADR-010**: decisiones arquitecturales documentadas
+- [x] 56 tests, 10 endpoints, 3 tablas nuevas
+
+---
+
+## COMPLETADO — Sesion 25: 5 Features Claude Code + Research Contabilidad (2026-04-04)
+
+- [x] Territories, cost tracker, memory LLM, semantic window, warmup
+- [x] Research contabilidad PGC, farmacias, Registro Mercantil, modelos por territorio
+
+---
+
+## COMPLETADO — Sesion 24: Manual Usuario + Business Plan v2.0 (2026-04-03)
+
+- [x] Manual Usuario v2.0 actualizado con todas las features
+- [x] Business Plan v2.0 actualizado
 
 ---
 
@@ -390,33 +455,22 @@
 
 ## BACKLOG
 
-### CRITICA
-- [x] ~~Railway auto-deploy~~ RESUELTO (2026-03-27)
-- [ ] Re-ejecutar crawler con 90 URLs corregidas (si hay cambios)
-
 ### Alta prioridad
-- [x] ~~Ejecutar seed_deductions_xsd.py en Turso producción (339 deducciones)~~ → DONE (2026-03-13)
-- [x] ~~MFA / 2FA~~ → DONE (2026-03-20, sesion 17, TOTP + backup codes)
-- [x] ~~Security audit stack (4 capas)~~ → DONE (Bandit+Semgrep+ZAP+Nuclei+GitHub Actions)
-- [x] ~~Google SSO~~ → DONE (2026-03-20, sesion 17, login/register con Google)
-- [x] ~~CAPTCHA en login (recomendación auditoría)~~ → DONE — Cloudflare Turnstile en Login + Register (frontend TurnstileWidget.tsx + backend verify_turnstile())
-- [x] ~~Estrategia Social Media~~ — DONE (2026-03-15, TikTok integrado 2026-03-16). Plan en `plans/social-media-strategy-2026.md` + contenido Q1 en `plans/social-media-content-plan-2026-Q1.md` + research TikTok en `plans/tiktok-research-2026.md`. 3 canales: Instagram + LinkedIn + TikTok. 4 carruseles generados, 10 posts completos, 15 guiones Reels, 9 screenshots. Pendiente: ejecucion por Fernando (setup Metricool, LinkedIn, TikTok @impuestify, primer post 21 marzo)
+- [ ] **Seed pharmacy deductions** en produccion Turso
+- [ ] **Dropdowns audit** — verificar TODOS los selects en TaxGuidePage y DynamicFiscalForm
+- [ ] **RAG farmacia** — ingestar normativa RE (Art. 154-163 LIVA) + guias CGCOF
+- [ ] **Archivos >500 lineas** — refactoring irpf_estimate.py (1340), turso_client.py (1074), chat.py (781)
 
 ### Media prioridad
-- [x] ~~Agente actualización documental (crawler automático AEAT/BOE)~~ → DONE (250e8a2)
-- [x] ~~Alertas de plazos fiscales~~ → DONE (a849ce1) — calendario + email + push
-- [x] ~~Criptomonedas, trading y apuestas~~ → DONE (91faf01) — FIFO, 5 exchanges, XSD casillas
-- [x] ~~**Fase 5: Guia fiscal adaptativa por rol**~~ → DONE (2026-03-19, sesion 15)
-- [x] ~~Landing SEO creadores de contenido~~ → DONE (2026-03-20, sesion 17, commit `718cff0`)
-- [x] ~~Calculadora IVA por plataforma~~ → DONE (2026-03-20, sesion 17, commit `718cff0`)
-- [x] ~~**Google SSO**~~ → DONE (2026-03-20, sesion 17)
-- [x] ~~Pipeline auto-ingesta RAG~~ → DONE (2026-03-28, sesion 23, auto_ingest.py)
 - [ ] ML fiscal features (ml_fiscal_features table)
+- [ ] Generador XBRL/ZIP para Registro Mercantil
+- [ ] Railway: configurar RAILWAY_ENVIRONMENT=production + ADMIN_API_KEY
 
 ### Baja prioridad
-- [ ] Integración factura electrónica (FacturaE)
-- [ ] App móvil (React Native)
-- [ ] Redesign TaxGuidePage + WorkspacesPage (pending baja prioridad)
+- [ ] Integracion factura electronica (FacturaE/VeriFactu)
+- [ ] App movil (React Native)
+- [ ] Redesign WorkspacesPage + modals
+- [ ] ReasoningBank init (requiere Linux/Railway — ONNX no funciona en Windows)
 
 ---
 
@@ -424,19 +478,21 @@
 
 | Métrica | Valor |
 |---------|-------|
-| Documentos RAG | 454 (PDF + Excel + AEAT specs) |
+| Documentos RAG | 456+ (PDF + Excel + AEAT specs) |
 | Deducciones en BD | ~1,008 (21/21 territorios) |
 | CCAA cubiertas | 21 (15 común + 4 forales + Ceuta + Melilla) |
-| ISD CCAA cubiertas | **21/21** (sesion 23) |
-| Tests backend | **~1,646** (sesion 23: +170 nuevos) |
+| ISD CCAA cubiertas | 21/21 |
+| Tests backend | **~1,758** (sesion 28) |
 | Tests frontend | build PASS |
-| Calculadoras públicas | 4 (retenciones, neto, plusvalía, 720/721) |
-| Tools chat fiscales | ~20 (GP inmuebles, plusvalía, ISD, 720, 721, cripto, comparativa conjunta...) |
-| RuFlo MCP | **259 tools**, 26 hooks, ~95% capacidad |
-| Exchanges crypto soportados | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
+| Calculadoras públicas | 6 (retenciones, neto, umbrales, obligaciones, obligado declarar, checklist) |
+| Tools chat fiscales | 12 |
+| Cuentas PGC | 201 (7 grupos, 95%+ cobertura) |
+| Exchanges crypto | 5 (Binance, Coinbase, Kraken, KuCoin, Bitget) |
 | Fechas fiscales 2026 | 58 (32 estatales + 26 forales) |
-| Bugs fixeados (mar 2026) | **72 documentados** |
-| URLs monitorizadas (crawler) | **90 en 23 territorios** |
-| Planes de suscripcion | 3 (Particular 5€, Creator 49€, Autonomo 39€) |
-| Admin pages | 4 (Feedback, Contacts, Dashboard, Creators) |
-| Capas de seguridad | **13** |
+| URLs crawler | 90 (59 activas, 23 territorios) |
+| Planes suscripcion | 3 (Particular 5€, Creator 49€, Autonomo 39€) |
+| Capas seguridad | 13 |
+| Issues seguridad resueltos | 20/21 (sesion 28 audit) |
+| PageSpeed mobile | 69→85+ (sesion 28) |
+| Test users QA | 3 (particular, autonomo, creator) |
+| Modelo LLM | gpt-5-mini (SIEMPRE) |
