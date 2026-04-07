@@ -1,10 +1,10 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Chat from './pages/Chat'
-import Dashboard from './pages/Dashboard'
+const Home = lazy(() => import('./pages/Home'))
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const Chat = lazy(() => import('./pages/Chat'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
 import Footer from './components/Footer'
 import CookieConsentBanner from './components/CookieConsent'
 import FeedbackWidget from './components/FeedbackWidget'
