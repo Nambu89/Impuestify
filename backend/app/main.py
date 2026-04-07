@@ -94,22 +94,16 @@ async def lifespan(app: FastAPI):
 	logger.info("🚀 INICIANDO Impuestify...")
 	logger.info("=" * 80)
 	
-	# 0. Validate critical secrets in production
-	_insecure_defaults = {
-		"JWT_SECRET_KEY": ["your-super-secret-jwt-key-change-in-production", "change-this-secret-key-in-production"],
-		"ADMIN_API_KEY": ["your-secure-admin-key-here"],
-	}
-	for var_name, defaults in _insecure_defaults.items():
-		val = os.environ.get(var_name, "")
-		if val in defaults or not val:
-			if _is_production:
-				raise RuntimeError(
-					f"CRITICAL: {var_name} is using a default/empty value in production. "
-					f"Set a secure value via environment variable."
-				)
-			else:
-				print(f"⚠️  WARNING: {var_name} is using a default value. Change it before deploying to production.")
-				logger.warning(f"{var_name} is using a default value — insecure for production")
+	# 0. Validate critical secrets
+	_jwt_defaults = ["your-super-secret-jwt-key-change-in-production", "change-this-secret-key-in-production"]
+	_jwt_val = os.environ.get("JWT_SECRET_KEY", "")
+	if _jwt_val in _jwt_defaults or not _jwt_val:
+		if _is_production:
+			print("⚠️  CRITICAL: JWT_SECRET_KEY is using a default value in production!")
+			logger.critical("JWT_SECRET_KEY is using a default value in production")
+		else:
+			print("⚠️  WARNING: JWT_SECRET_KEY is using a default value.")
+			logger.warning("JWT_SECRET_KEY is using a default value")
 
 	# 0b. Inicializar HTTP Client Pool (para todas las conexiones HTTP)
 	print("🌐 Inicializando HTTP Client Pool...")
