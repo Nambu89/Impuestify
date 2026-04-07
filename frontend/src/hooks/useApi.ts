@@ -136,10 +136,11 @@ export function useApi() {
         try {
             const token = localStorage.getItem(TOKEN_KEY)
 
-            const headers = {
-                'Content-Type': 'application/json',
+            const isFormData = options?.body instanceof FormData
+            const headers: Record<string, string> = {
+                ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
                 ...(token && { Authorization: `Bearer ${token}` }),
-                ...options?.headers
+                ...(options?.headers as Record<string, string>)
             }
 
             const response = await fetch(`${API_URL}${url}`, {  // ✅ Prefijo con API_URL
@@ -162,7 +163,11 @@ export function useApi() {
                 const contentType = response.headers.get('content-type')
                 if (contentType && contentType.includes('application/json')) {
                     const error = await response.json()
-                    throw new Error(error.detail || 'Request failed')
+                    const detail = error.detail
+                    const msg = typeof detail === 'string' ? detail
+                        : Array.isArray(detail) ? detail.map((d: any) => d.msg || d).join(', ')
+                        : 'Request failed'
+                    throw new Error(msg)
                 } else {
                     // HTML error page (probably)
                     const text = await response.text()

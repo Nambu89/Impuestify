@@ -45,8 +45,9 @@ export function useSubscription(): UseSubscriptionReturn {
             const result = await apiRequest('/subscription/status')
             setData(result)
         } catch (err: any) {
-            // Ignore abort errors (page navigation)
+            // Ignore abort errors (page navigation / React Strict Mode double-invoke)
             if (err.message?.includes('abort') || err.name === 'AbortError') return
+            if (err.message?.includes('Failed to fetch')) return
             setError(err.message || 'Error al obtener estado de suscripción')
         } finally {
             setLoading(false)
@@ -101,7 +102,9 @@ export function useSubscription(): UseSubscriptionReturn {
 
     // Owner has full access regardless
     const isOwner = data?.is_owner || user?.is_owner || false
-    const hasAccess = data?.has_access || isOwner
+    // Fallback: if /subscription/status failed, trust auth response subscription_status
+    const hasAccessFromAuth = user?.subscription_status === 'active'
+    const hasAccess = data?.has_access || isOwner || (!data && hasAccessFromAuth)
 
     return {
         hasAccess,

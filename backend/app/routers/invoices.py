@@ -12,7 +12,7 @@ Endpoints:
 import json
 import uuid
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Query, Request
@@ -173,8 +173,8 @@ async def upload_invoice(
         INSERT INTO libro_registro
             (id, user_id, tipo, numero_factura, fecha_factura, fecha_operacion,
              emisor_nif, emisor_nombre, receptor_nif, receptor_nombre,
-             base_imponible, tipo_iva_pct, cuota_iva,
-             tipo_re_pct, cuota_re, retencion_irpf_pct, retencion_irpf,
+             base_imponible, tipo_iva, cuota_iva,
+             tipo_re, cuota_re, retencion_irpf_pct, retencion_irpf,
              total, cuenta_pgc, cuenta_pgc_nombre,
              clasificacion_confianza, raw_extraction,
              year, trimestre, created_at)
@@ -205,7 +205,7 @@ async def upload_invoice(
             raw_extraction_json,
             year,
             trimestre,
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
         ],
     )
 

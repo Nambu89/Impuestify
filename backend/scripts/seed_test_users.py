@@ -1,12 +1,13 @@
 """
 Seed script for QA test users.
 
-Creates 2 test users with complete fiscal profiles for E2E testing:
+Creates 3 test users with complete fiscal profiles for E2E testing:
   1. test.particular@impuestify.es — Asalariada en Madrid
   2. test.autonomo@impuestify.es  — Autonomo disenador en Cataluna
+  3. test.creator@impuestify.es   — Creador de contenido en Andalucia
 
-Both users: password = Test2026!
-Both users: subscription active (fake Stripe IDs)
+All users: password = Test2026!
+All users: subscription active (fake Stripe IDs)
 
 Idempotent: deletes existing test users first, then re-inserts.
 
@@ -74,8 +75,8 @@ SUB_PARTICULAR = {
     "stripe_subscription_id": "sub_test_particular_001",
     "plan_type": "particular",
     "status": "active",
-    "current_period_start": "2026-03-01T00:00:00",
-    "current_period_end": "2026-04-01T00:00:00",
+    "current_period_start": "2026-04-01T00:00:00",
+    "current_period_end": "2026-12-31T23:59:59",
 }
 
 USER_AUTONOMO = {
@@ -128,8 +129,64 @@ SUB_AUTONOMO = {
     "stripe_subscription_id": "sub_test_autonomo_002",
     "plan_type": "autonomo",
     "status": "active",
-    "current_period_start": "2026-03-01T00:00:00",
-    "current_period_end": "2026-04-01T00:00:00",
+    "current_period_start": "2026-04-01T00:00:00",
+    "current_period_end": "2026-12-31T23:59:59",
+}
+
+USER_CREATOR = {
+    "id": "test-creator-00000003",
+    "email": "test.creator@impuestify.es",
+    "name": "Laura Sanchez Torres",
+    "is_active": 1,
+    "is_admin": 0,
+    "is_owner": 0,
+}
+
+PROFILE_CREATOR = {
+    "ccaa_residencia": "Andalucia",
+    "situacion_laboral": "autonomo",
+    "tiene_vivienda": 0,
+    "primera_vivienda": 0,
+    "fecha_nacimiento": "1996-04-22",
+    "datos_fiscales": json.dumps({
+        "ingresos_trabajo": 0.0,
+        "ss_empleado": 0.0,
+        "num_descendientes": 0,
+        "anios_nacimiento_desc": [],
+        "custodia_compartida": False,
+        "num_ascendientes_65": 0,
+        "num_ascendientes_75": 0,
+        "discapacidad_contribuyente": None,
+        "intereses": 0.0,
+        "dividendos": 0.0,
+        "ganancias_fondos": 0.0,
+        "ingresos_alquiler": 0.0,
+        "valor_adquisicion_inmueble": 0.0,
+        "epigrafe_iae": "8690",
+        "tipo_actividad": "profesional",
+        "fecha_alta_autonomo": "2025-06-01",
+        "metodo_estimacion_irpf": "directa_simplificada",
+        "regimen_iva": "general",
+        "rendimientos_netos_mensuales": 4200.0,
+        "base_cotizacion_reta": 960.0,
+        "territorio_foral": False,
+        "territorio_historico": None,
+        "tipo_retencion_facturas": 7.0,
+        "tarifa_plana": True,
+        "pluriactividad": False,
+        "ceuta_melilla": False,
+        "plataformas": ["instagram", "youtube", "tiktok"],
+        "cnae": "6039",
+    }),
+}
+
+SUB_CREATOR = {
+    "stripe_customer_id": "cus_test_creator_003",
+    "stripe_subscription_id": "sub_test_creator_003",
+    "plan_type": "creator",
+    "status": "active",
+    "current_period_start": "2026-04-01T00:00:00",
+    "current_period_end": "2026-12-31T23:59:59",
 }
 
 
@@ -138,7 +195,7 @@ async def seed_test_users():
     await db.connect()
     await db.init_schema()
 
-    test_emails = [USER_PARTICULAR["email"], USER_AUTONOMO["email"]]
+    test_emails = [USER_PARTICULAR["email"], USER_AUTONOMO["email"], USER_CREATOR["email"]]
 
     # Clean up existing test users (cascade deletes profiles, subscriptions, etc.)
     for email in test_emails:
@@ -160,7 +217,7 @@ async def seed_test_users():
             print(f"  Cleaned up existing user: {email}")
 
     # Insert users
-    for user_data in [USER_PARTICULAR, USER_AUTONOMO]:
+    for user_data in [USER_PARTICULAR, USER_AUTONOMO, USER_CREATOR]:
         await db.execute(
             """INSERT INTO users (id, email, password_hash, name, is_active, is_admin, is_owner)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
@@ -180,6 +237,7 @@ async def seed_test_users():
     for user_data, profile in [
         (USER_PARTICULAR, PROFILE_PARTICULAR),
         (USER_AUTONOMO, PROFILE_AUTONOMO),
+        (USER_CREATOR, PROFILE_CREATOR),
     ]:
         await db.execute(
             """INSERT INTO user_profiles
@@ -203,6 +261,7 @@ async def seed_test_users():
     for user_data, sub in [
         (USER_PARTICULAR, SUB_PARTICULAR),
         (USER_AUTONOMO, SUB_AUTONOMO),
+        (USER_CREATOR, SUB_CREATOR),
     ]:
         await db.execute(
             """INSERT INTO subscriptions
@@ -226,6 +285,7 @@ async def seed_test_users():
     print("\nDone! Test users ready for QA.")
     print(f"\n  Particular: {USER_PARTICULAR['email']} / {PASSWORD}")
     print(f"  Autonomo:   {USER_AUTONOMO['email']} / {PASSWORD}")
+    print(f"  Creator:    {USER_CREATOR['email']} / {PASSWORD}")
 
 
 if __name__ == "__main__":

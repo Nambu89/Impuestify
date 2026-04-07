@@ -6,8 +6,6 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 env_path = os.path.join(PROJECT_ROOT, ".env")
 load_dotenv(env_path)
 
-sys.path.append(os.path.abspath("src"))
-
 import time
 import logging
 from contextlib import asynccontextmanager
@@ -29,7 +27,9 @@ from app.routers.auth import router as auth_router
 from app.routers.chat import router as chat_router
 from app.routers.notifications import router as notifications_router
 from app.routers.conversations import router as conversations_router
-from app.routers.security_tests import router as security_tests_router
+# Security test endpoints — only in dev/staging, never in production
+import os as _os
+_is_production = _os.getenv("RAILWAY_ENVIRONMENT") == "production" or _os.getenv("ENV") == "production"
 from app.routers.payslips import router as payslips_router
 from app.database.turso_client import get_db_client
 
@@ -56,32 +56,6 @@ logger = structlog.get_logger()
 
 
 # === Modelos de datos ===
-
-class QuestionRequest(BaseModel):
-	"""Modelo para la pregunta del usuario"""
-	question: str = Field(..., min_length=3, max_length=1000, description="Pregunta sobre fiscalidad española")
-	k: Optional[int] = Field(default=None, ge=1, le=10, description="Número de documentos a recuperar")
-	enable_cache: bool = Field(default=True, description="Usar caché de respuestas")
-
-
-class Source(BaseModel):
-	"""Modelo para las fuentes de información"""
-	id: str
-	source: str
-	page: int
-	title: str
-	text_preview: str
-
-
-class ImpuestifyResponse(BaseModel):
-	"""Modelo de respuesta de Impuestify"""
-	answer: str
-	sources: List[Source]
-	metadata: Dict[str, Any] = Field(default_factory=dict)
-	processing_time: float
-	cached: bool = False
-	guardrails_violations: List[str] = Field(default_factory=list)
-
 
 class HealthResponse(BaseModel):
 	"""Modelo de respuesta de salud"""
@@ -120,7 +94,24 @@ async def lifespan(app: FastAPI):
 	logger.info("🚀 INICIANDO Impuestify...")
 	logger.info("=" * 80)
 	
-	# 0. Inicializar HTTP Client Pool (para todas las conexiones HTTP)
+	# 0. Validate critical secrets in production
+	_insecure_defaults = {
+		"JWT_SECRET_KEY": ["your-super-secret-jwt-key-change-in-production", "change-this-secret-key-in-production"],
+		"ADMIN_API_KEY": ["your-secure-admin-key-here"],
+	}
+	for var_name, defaults in _insecure_defaults.items():
+		val = os.environ.get(var_name, "")
+		if val in defaults or not val:
+			if _is_production:
+				raise RuntimeError(
+					f"CRITICAL: {var_name} is using a default/empty value in production. "
+					f"Set a secure value via environment variable."
+				)
+			else:
+				print(f"⚠️  WARNING: {var_name} is using a default value. Change it before deploying to production.")
+				logger.warning(f"{var_name} is using a default value — insecure for production")
+
+	# 0b. Inicializar HTTP Client Pool (para todas las conexiones HTTP)
 	print("🌐 Inicializando HTTP Client Pool...")
 	logger.info("🌐 Inicializando HTTP Client Pool...")
 	try:
@@ -399,8 +390,11 @@ allowed_origins_str = os.environ.get("ALLOWED_ORIGINS", "*")
 print(f"🌐 CORS Origins Raw: {repr(allowed_origins_str)}")
 
 if allowed_origins_str == "*":
-    # Allow all in development
-    allowed_origins = ["*"]
+    if _is_production:
+        print("⚠️  WARNING: ALLOWED_ORIGINS='*' in production — restricting to impuestify.com")
+        allowed_origins = ["https://impuestify.com", "https://www.impuestify.com"]
+    else:
+        allowed_origins = ["*"]
 else:
     # Parse comma-separated list and strip quotes if present
     allowed_origins_str = allowed_origins_str.strip('"').strip("'")
@@ -429,7 +423,9 @@ app.include_router(chat_router)
 app.include_router(notifications_router)
 app.include_router(conversations_router)
 app.include_router(payslips_router)  # Payslips management
-app.include_router(security_tests_router)  # Security testing endpoints
+if not _is_production:
+    from app.routers.security_tests import router as security_tests_router
+    app.include_router(security_tests_router)  # Security testing endpoints (dev only)
 
 # Workspaces management
 from app.routers.workspaces import router as workspaces_router

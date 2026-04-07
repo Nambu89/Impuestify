@@ -120,29 +120,23 @@ async def reingest():
                         })
                         total_chunks += 1
                         
-                    # Insert in batches of 50 to avoid huge queries
+                    # Insert in batches of 50 (parameterized)
                     if len(batch_chunks) >= 50:
-                        values_list = []
                         for c in batch_chunks:
-                            escaped_content = c['content'].replace("'", "''")
-                            values_list.append(f"({c['document_id']}, '{escaped_content}', {c['page_number']}, {c['chunk_index']})")
-                        
-                        values = ", ".join(values_list)
-                        sql = f"INSERT INTO document_chunks (document_id, content, page_number, chunk_index) VALUES {values}"
-                        await db.execute(sql)
+                            await db.execute(
+                                "INSERT INTO document_chunks (document_id, content, page_number, chunk_index) VALUES (?, ?, ?, ?)",
+                                [c['document_id'], c['content'], c['page_number'], c['chunk_index']]
+                            )
                         batch_chunks = []
                         print(f"   ...processed page {i+1}/{total_pages}", end='\r')
 
-                # Insert remaining
+                # Insert remaining (parameterized)
                 if batch_chunks:
-                     values_list = []
-                     for c in batch_chunks:
-                        escaped_content = c['content'].replace("'", "''")
-                        values_list.append(f"({c['document_id']}, '{escaped_content}', {c['page_number']}, {c['chunk_index']})")
-                     
-                     values = ", ".join(values_list)
-                     sql = f"INSERT INTO document_chunks (document_id, content, page_number, chunk_index) VALUES {values}"
-                     await db.execute(sql)
+                    for c in batch_chunks:
+                        await db.execute(
+                            "INSERT INTO document_chunks (document_id, content, page_number, chunk_index) VALUES (?, ?, ?, ?)",
+                            [c['document_id'], c['content'], c['page_number'], c['chunk_index']]
+                        )
                      
                 print(f"\n   ✅ Ingested {total_chunks} chunks.")
                 

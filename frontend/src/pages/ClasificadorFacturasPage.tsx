@@ -46,6 +46,7 @@ interface InvoiceResult {
 interface InvoiceListItem {
     id: string
     fecha: string
+    fecha_factura?: string
     numero_factura: string
     emisor_nombre: string
     receptor_nombre: string
@@ -54,15 +55,17 @@ interface InvoiceListItem {
     total: number
     cuenta_pgc: string
     cuenta_pgc_nombre: string
-    confianza: 'alta' | 'media' | 'baja'
+    confianza: 'alta' | 'media' | 'baja' | 'manual'
+    clasificacion_confianza?: 'alta' | 'media' | 'baja' | 'manual'
     confirmada: boolean
+    tipo?: string
 }
 
 type UploadStep = 'idle' | 'extracting' | 'classifying' | 'done' | 'error'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function ConfianzaBadge({ nivel }: { nivel: 'alta' | 'media' | 'baja' }) {
+function ConfianzaBadge({ nivel }: { nivel: 'alta' | 'media' | 'baja' | 'manual' }) {
     const map = {
         alta:  { label: 'Alta confianza',  cls: 'badge--green'  },
         media: { label: 'Media confianza', cls: 'badge--yellow' },
@@ -590,7 +593,12 @@ export default function ClasificadorFacturasPage() {
         try {
             const year = new Date().getFullYear()
             const data = await apiRequest(`/api/invoices?year=${year}`)
-            setInvoices(data?.invoices ?? [])
+            const list = (data?.invoices ?? []).map((inv: any) => ({
+                ...inv,
+                fecha: inv.fecha || inv.fecha_factura || '',
+                confianza: inv.confianza || inv.clasificacion_confianza || 'media',
+            }))
+            setInvoices(list)
         } catch {
             // Silently fail — backend may not be implemented yet
             setInvoices([])
@@ -614,17 +622,55 @@ export default function ClasificadorFacturasPage() {
             const formData = new FormData()
             formData.append('file', file)
 
-            // Step 1: Upload + extract
+            // Step 1: Upload + extract (Gemini OCR can take 30-60s)
             const uploadResult = await apiRequest('/api/invoices/upload', {
                 method: 'POST',
                 body: formData,
+                timeout: 120000,
             })
 
             setUploadStep('classifying')
 
-            // The backend returns extraction + classification together
+            // Map backend response to frontend InvoiceResult shape
+            const factura = uploadResult.factura
+            const clasificacion = uploadResult.clasificacion
+            const mapped: InvoiceResult = {
+                id: uploadResult.id,
+                extraccion: {
+                    emisor_nombre: factura?.emisor?.nombre || '',
+                    emisor_nif: factura?.emisor?.nif_cif || '',
+                    receptor_nombre: factura?.receptor?.nombre || '',
+                    receptor_nif: factura?.receptor?.nif_cif || '',
+                    fecha: factura?.fecha_factura || '',
+                    numero_factura: factura?.numero_factura || '',
+                    lineas: (factura?.lineas || []).map((l: any) => ({
+                        concepto: l.concepto || '',
+                        cantidad: l.cantidad || 0,
+                        precio_unitario: l.precio_unitario || 0,
+                        base_imponible: l.base_imponible || 0,
+                    })),
+                    base_imponible: factura?.base_imponible_total || 0,
+                    tipo_iva: factura?.tipo_iva_pct || 0,
+                    cuota_iva: factura?.cuota_iva || 0,
+                    retenciones: factura?.retencion_irpf || 0,
+                    total: factura?.total || 0,
+                    confianza: uploadResult.validacion?.confianza_extraccion || 'media',
+                    errores_validacion: uploadResult.validacion?.errores_validacion || [],
+                },
+                clasificacion: {
+                    cuenta_pgc: clasificacion?.cuenta_code || '',
+                    cuenta_pgc_nombre: clasificacion?.cuenta_nombre || '',
+                    confianza: clasificacion?.confianza || 'media',
+                    alternativas: (clasificacion?.alternativas || []).map((a: any) => ({
+                        cuenta_pgc: a.code || '',
+                        cuenta_pgc_nombre: a.nombre || '',
+                    })),
+                },
+                confirmada: false,
+            }
+
             setUploadStep('done')
-            setResult(uploadResult)
+            setResult(mapped)
 
             // Refresh list
             await loadInvoices()

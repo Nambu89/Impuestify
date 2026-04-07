@@ -12,7 +12,7 @@ import logging
 import os
 import uuid
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
 from fastapi import UploadFile
@@ -197,7 +197,7 @@ class FileProcessingService:
 
         # Save to Database
         db = await get_db_client()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         await db.execute(
             """

@@ -6,7 +6,7 @@ Replaces Prometheus with simple DB-based tracking for admin dashboard.
 """
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ class CostTracker:
                 [
                     str(uuid.uuid4()), user_id, endpoint, total_tokens,
                     processing_time, int(cached), model, input_tokens,
-                    output_tokens, cost_usd, datetime.utcnow().isoformat(),
+                    output_tokens, cost_usd, datetime.now(timezone.utc).isoformat(),
                 ],
             )
         except Exception as e:
@@ -191,7 +191,7 @@ class CostTracker:
 
     def _period_start(self, period: str) -> str:
         """Return ISO date string for the start of the period."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if period == "week":
             start = now - timedelta(days=7)
         elif period == "month":

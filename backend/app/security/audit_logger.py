@@ -12,7 +12,7 @@ Events logged:
 """
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from enum import Enum
 from dataclasses import dataclass, asdict
@@ -118,7 +118,7 @@ class AuditLogger:
         """
         event = AuditEvent(
             event_type=event_type.value,
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(timezone.utc).isoformat() + "Z",
             user_id=user_id,
             ip_address=ip_address,
             details=details,

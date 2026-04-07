@@ -180,7 +180,18 @@ function LibroDiario({ year, trimestre }: { year: string; trimestre: string }) {
         const qs = new URLSearchParams({ year })
         if (trimestre && trimestre !== 'todos') qs.set('trimestre', trimestre)
         apiRequest(`/api/contabilidad/libro-diario?${qs}`)
-            .then(data => setEntries(data?.entries ?? []))
+            .then((data: any) => {
+                const raw = data?.entries || data?.asientos || []
+                setEntries(raw.map((e: any) => ({
+                    fecha: e.fecha || '',
+                    n_asiento: e.n_asiento ?? e.numero_asiento ?? 0,
+                    cuenta: e.cuenta || e.cuenta_code || '',
+                    nombre_cuenta: e.nombre_cuenta || e.cuenta_nombre || '',
+                    debe: e.debe || 0,
+                    haber: e.haber || 0,
+                    concepto: e.concepto || '',
+                })))
+            })
             .catch(() => setEntries([]))
             .finally(() => setLoading(false))
     }, [year, trimestre])
@@ -281,7 +292,16 @@ function LibroMayor({ year }: { year: string }) {
     useEffect(() => {
         setLoading(true)
         apiRequest(`/api/contabilidad/libro-mayor?year=${year}`)
-            .then(data => setAccounts(data?.accounts ?? []))
+            .then((data: any) => {
+                const raw = data?.accounts || data?.cuentas || []
+                setAccounts(raw.map((acc: any) => ({
+                    cuenta: acc.cuenta || acc.cuenta_code || '',
+                    nombre: acc.nombre || acc.cuenta_nombre || '',
+                    total_debe: acc.total_debe || 0,
+                    total_haber: acc.total_haber || 0,
+                    saldo: acc.saldo || 0,
+                })))
+            })
             .catch(() => setAccounts([]))
             .finally(() => setLoading(false))
     }, [year])
@@ -360,13 +380,31 @@ function Balance({ year }: { year: string }) {
     useEffect(() => {
         setLoading(true)
         apiRequest(`/api/contabilidad/balance?year=${year}`)
-            .then(d => setData(d))
+            .then((d: any) => {
+                // Map backend response (cuentas/cuenta_code/cuenta_nombre) to frontend shape
+                const raw = d?.cuentas || d?.accounts || []
+                const accounts = raw.map((acc: any) => ({
+                    cuenta: acc.cuenta || acc.cuenta_code || '',
+                    nombre: acc.nombre || acc.cuenta_nombre || '',
+                    total_debe: acc.total_debe || 0,
+                    total_haber: acc.total_haber || 0,
+                    saldo: acc.saldo || 0,
+                }))
+                const total_debe = d.total_debe ?? accounts.reduce((s: number, a: any) => s + a.total_debe, 0)
+                const total_haber = d.total_haber ?? accounts.reduce((s: number, a: any) => s + a.total_haber, 0)
+                setData({
+                    accounts,
+                    total_debe,
+                    total_haber,
+                    diferencia: d.diferencia ?? (total_debe - total_haber),
+                })
+            })
             .catch(() => setData(null))
             .finally(() => setLoading(false))
     }, [year])
 
     if (loading) return <LoadingRow />
-    if (!data) return <EmptyState mensaje="No hay datos de balance para el año seleccionado." />
+    if (!data || data.accounts.length === 0) return <EmptyState mensaje="No hay datos de balance para el año seleccionado." />
 
     const cuadra = Math.abs(data.diferencia) < 0.01
 
@@ -449,7 +487,20 @@ function PyG({ year }: { year: string }) {
     useEffect(() => {
         setLoading(true)
         apiRequest(`/api/contabilidad/pyg?year=${year}`)
-            .then(d => setData(d))
+            .then((d: any) => {
+                const mapItems = (items: any[]) => (items || []).map((item: any) => ({
+                    cuenta: item.cuenta || item.cuenta_code || '',
+                    nombre: item.nombre || item.cuenta_nombre || '',
+                    importe: item.importe ?? Math.abs(item.saldo ?? item.total_haber ?? item.total_debe ?? 0),
+                }))
+                setData({
+                    ingresos: mapItems(d?.ingresos),
+                    gastos: mapItems(d?.gastos),
+                    total_ingresos: d?.total_ingresos ?? 0,
+                    total_gastos: d?.total_gastos ?? 0,
+                    resultado: d?.resultado ?? 0,
+                })
+            })
             .catch(() => setData(null))
             .finally(() => setLoading(false))
     }, [year])

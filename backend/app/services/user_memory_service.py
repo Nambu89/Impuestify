@@ -18,7 +18,7 @@ import hashlib
 import re
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 
 from app.config import settings
@@ -42,8 +42,8 @@ class UserFact:
     content: str
     confidence: float = 1.0
     source: str = "user_statement"  # 'user_statement', 'inferred', 'workspace'
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    last_accessed: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    last_accessed: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 @dataclass
@@ -62,8 +62,8 @@ class UserProfile:
     donation_type: Optional[str] = None  # 'money', 'property', 'inheritance'
     donation_from: Optional[str] = None  # 'mother', 'father', 'other'
     datos_fiscales: Optional[Dict[str, Any]] = None
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class UserMemoryService:
@@ -553,7 +553,7 @@ class UserMemoryService:
                     confidence=result.score,
                     source=result.metadata.get('source', 'unknown'),
                     created_at=result.metadata.get('created_at', ''),
-                    last_accessed=datetime.utcnow().isoformat()
+                    last_accessed=datetime.now(timezone.utc).isoformat()
                 )
                 facts.append(fact)
             
@@ -743,7 +743,7 @@ class UserMemoryService:
                 return False
 
             # Update the field with source metadata
-            now = datetime.utcnow().isoformat()
+            now = datetime.now(timezone.utc).isoformat()
             datos_fiscales[key] = {
                 "value": value,
                 "_source": source,
@@ -799,7 +799,7 @@ class UserMemoryService:
             return False
         
         try:
-            now = datetime.utcnow().isoformat()
+            now = datetime.now(timezone.utc).isoformat()
             
             # Check if profile exists
             existing = await self._get_profile_from_db(user_id)

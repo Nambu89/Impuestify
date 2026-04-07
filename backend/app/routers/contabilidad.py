@@ -165,9 +165,9 @@ async def export_libro(
         # Query libro_registro table directly
         db = await get_db_client()
         sql = """
-            SELECT fecha, num_factura, tipo, nif_emisor, emisor,
-                   nif_receptor, receptor, base_imponible, tipo_iva,
-                   cuota_iva, retencion_irpf, total, cuenta_pgc, descripcion
+            SELECT fecha_factura, numero_factura, tipo, emisor_nif, emisor_nombre,
+                   receptor_nif, receptor_nombre, base_imponible, tipo_iva,
+                   cuota_iva, retencion_irpf, total, cuenta_pgc, concepto
             FROM libro_registro
             WHERE user_id = ? AND year = ?
         """

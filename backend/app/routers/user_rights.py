@@ -13,7 +13,7 @@ Also provides:
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import uuid
 import logging
@@ -290,7 +290,7 @@ async def export_user_data(
 
     # 3. Build export
     export = UserDataExport(
-        export_date=datetime.utcnow().isoformat() + "Z",
+        export_date=datetime.now(timezone.utc).isoformat() + "Z",
         user={
             "id": user_data["id"],
             "email": user_data["email"],
@@ -611,7 +611,7 @@ async def update_fiscal_profile(
     conversation-extracted data.
     """
     user_id = current_user.user_id
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     # Check if profile exists
     existing = await db.execute(
@@ -827,7 +827,7 @@ async def delete_user_account(
     return DeleteAccountResponse(
         message="Account deleted successfully. All data has been permanently removed.",
         user_id=user_id,
-        deleted_at=datetime.utcnow().isoformat() + "Z",
+        deleted_at=datetime.now(timezone.utc).isoformat() + "Z",
         data_purged={
             "conversations": conversations_count,
             "messages": messages_count,

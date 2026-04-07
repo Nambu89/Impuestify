@@ -8,7 +8,7 @@ import uuid
 import json
 import logging
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database.turso_client import TursoClient
 
@@ -37,7 +37,7 @@ class ConversationService:
             Created conversation dict
         """
         conversation_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         if not title:
             title = f"Nueva conversación"
@@ -180,7 +180,7 @@ class ConversationService:
             Created message dict
         """
         message_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         # Serialize metadata to JSON
         metadata_json = json.dumps(metadata) if metadata else None
@@ -297,7 +297,7 @@ class ConversationService:
         Returns:
             True if updated, False if not found
         """
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         if user_id:
             sql = """

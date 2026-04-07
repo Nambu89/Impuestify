@@ -62,20 +62,20 @@ def mayor_entries() -> list[dict]:
 def factura_registro() -> list[dict]:
     return [
         {
-            "fecha": "2026-02-10",
-            "num_factura": "FRA-2026-0042",
+            "fecha_factura": "2026-02-10",
+            "numero_factura": "FRA-2026-0042",
             "tipo": "recibida",
-            "nif_emisor": "B12345678",
-            "emisor": "Distribuciones Lopez SL",
-            "nif_receptor": "12345678Z",
-            "receptor": "Mi Farmacia CB",
+            "emisor_nif": "B12345678",
+            "emisor_nombre": "Distribuciones Lopez SL",
+            "receptor_nif": "12345678Z",
+            "receptor_nombre": "Mi Farmacia CB",
             "base_imponible": 500.00,
             "tipo_iva": 21.0,
             "cuota_iva": 105.00,
             "retencion_irpf": 0.00,
             "total": 605.00,
             "cuenta_pgc": "6000000",
-            "descripcion": "Material de oficina",
+            "concepto": "Material de oficina",
         },
     ]
 

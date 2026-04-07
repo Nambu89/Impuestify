@@ -14,7 +14,7 @@ Cached context fields:
 import json
 import logging
 from typing import Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class ConversationCache:
             key = self._get_key(conversation_id)
             
             # Add timestamp
-            context["cached_at"] = datetime.utcnow().isoformat()
+            context["cached_at"] = datetime.now(timezone.utc).isoformat()
             
             # Serialize to JSON
             context_json = json.dumps(context, ensure_ascii=False)

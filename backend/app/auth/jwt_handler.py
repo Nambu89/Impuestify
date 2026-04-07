@@ -5,7 +5,7 @@ Implements JWT-based authentication with access and refresh tokens.
 """
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 
 from fastapi import Depends, HTTPException, status
@@ -20,10 +20,6 @@ SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "your-super-secret-jwt-key-change-
 ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = 7
-
-# Security scheme
-security = HTTPBearer(auto_error=False)
-
 
 class TokenData(BaseModel):
     """Token payload data"""
@@ -54,13 +50,13 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     to_encode = data.copy()
     
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({
         "exp": expire,
-        "iat": datetime.utcnow(),
+        "iat": datetime.now(timezone.utc),
         "type": "access"
     })
     
@@ -81,11 +77,11 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
         Encoded JWT refresh token string
     """
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     
     to_encode.update({
         "exp": expire,
-        "iat": datetime.utcnow(),
+        "iat": datetime.now(timezone.utc),
         "type": "refresh"
     })
     
@@ -156,25 +152,8 @@ async def get_current_user(
     return token_data
 
 
-async def get_current_user_required(
-    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())
-) -> TokenData:
-    """
-    FastAPI dependency that requires authentication.
-    
-    Raises HTTPException if not authenticated.
-    """
-    token = credentials.credentials
-    token_data = verify_token(token, token_type="access")
-    
-    if token_data is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    return token_data
+# Alias kept for backward compatibility — identical to get_current_user.
+get_current_user_required = get_current_user
 
 
 def create_mfa_token(user_id: str, email: str) -> str:
@@ -197,8 +176,8 @@ def create_mfa_token(user_id: str, email: str) -> str:
             "sub": user_id,
             "email": email,
             "type": "mfa_pending",
-            "exp": datetime.utcnow() + timedelta(minutes=5),
-            "iat": datetime.utcnow(),
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+            "iat": datetime.now(timezone.utc),
         },
         SECRET_KEY,
         algorithm=ALGORITHM,
@@ -224,8 +203,8 @@ def create_reset_token(user_id: str, email: str) -> str:
             "sub": user_id,
             "email": email,
             "type": "reset",
-            "exp": datetime.utcnow() + timedelta(hours=1),
-            "iat": datetime.utcnow(),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "iat": datetime.now(timezone.utc),
         },
         SECRET_KEY,
         algorithm=ALGORITHM,

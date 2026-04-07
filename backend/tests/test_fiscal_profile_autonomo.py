@@ -170,7 +170,7 @@ class TestFiscalProfileSaveLogic:
 
     def test_datos_fiscales_json_structure(self):
         """Simulate the save logic: fields get {value, _source, _updated} wrapper."""
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         req = FiscalProfileRequest(
             epigrafe_iae="861",
@@ -178,7 +178,7 @@ class TestFiscalProfileSaveLogic:
             tarifa_plana=True,
         )
         request_data = req.model_dump(exclude_none=True)
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         datos_fiscales = {}
         for key in _DATOS_FISCALES_KEYS:

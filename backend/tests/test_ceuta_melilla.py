@@ -306,7 +306,7 @@ class TestDatosFiscalesRoundTrip:
 
     def test_save_ceuta_melilla_to_json(self):
         """ceuta_melilla=True should be saved in datos_fiscales JSON."""
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         req = FiscalProfileRequest(
             ccaa_residencia="Ceuta",
@@ -314,7 +314,7 @@ class TestDatosFiscalesRoundTrip:
             regimen_iva="ipsi",
         )
         request_data = req.model_dump(exclude_none=True)
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         datos_fiscales = {}
         for key in _DATOS_FISCALES_KEYS:

@@ -19,13 +19,14 @@ Provides:
 import logging
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
 
 from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.owner_guard import require_owner as _require_owner
 from app.database.turso_client import get_db_client, TursoClient
 from app.services.subscription_service import get_subscription_service
 from app.services.cost_tracker import CostTracker
@@ -51,25 +52,6 @@ class UserListItem(BaseModel):
     plan_type: Optional[str] = None
     subscription_status: Optional[str] = None
     created_at: Optional[str] = None
-
-
-# ---- Helpers ----
-
-async def _require_owner(
-    current_user: TokenData = Depends(get_current_user),
-) -> TokenData:
-    """Dependency that ensures the caller is the platform owner."""
-    sub_service = await get_subscription_service()
-    access = await sub_service.check_access(
-        user_id=current_user.user_id,
-        email=current_user.email,
-    )
-    if not access.is_owner:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo el propietario puede acceder a esta función.",
-        )
-    return current_user
 
 
 # ---- Endpoints ----
@@ -130,7 +112,7 @@ async def change_user_plan(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     user_email = user_result.rows[0]["email"]
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     # Update or create subscription row
     sub_result = await db.execute(
@@ -203,7 +185,7 @@ async def grant_beta_access(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     user_email = user_result.rows[0]["email"]
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     beta_end = "2026-12-31T23:59:59"
 
     sub_result = await db.execute(
@@ -252,7 +234,7 @@ async def revoke_beta_access(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     user_email = user_result.rows[0]["email"]
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     await db.execute(
         "UPDATE subscriptions SET status = 'inactive', updated_at = ? WHERE user_id = ?",
@@ -601,7 +583,7 @@ async def update_feedback(
     if not update_fields:
         raise HTTPException(status_code=400, detail="No se proporcionaron campos a actualizar")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     update_fields.append("updated_at = ?")
     params.append(now)
     params.append(feedback_id)
@@ -812,23 +794,17 @@ async def list_chat_ratings(
 
 @router.post("/purge-semantic-cache")
 async def purge_semantic_cache(
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(_require_owner),
 ):
     """Purge semantic cache to force fresh LLM responses. Owner-only."""
-    if not current_user.is_owner:
-        raise HTTPException(status_code=403, detail="Owner only")
     return await _do_purge_cache()
 
 
 @router.delete("/semantic-cache")
 async def purge_semantic_cache_by_key(
-    key: str = Query(..., description="Admin secret key"),
+    current_user: TokenData = Depends(_require_owner),
 ):
-    """Purge semantic cache with secret key (no JWT needed, bypasses CAPTCHA)."""
-    import os
-    expected = os.getenv("JWT_SECRET_KEY", "")
-    if not expected or key != expected:
-        raise HTTPException(status_code=403, detail="Invalid key")
+    """Purge semantic cache. Owner-only (JWT required)."""
     return await _do_purge_cache()
 
 

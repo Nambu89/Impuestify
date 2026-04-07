@@ -73,13 +73,13 @@ class ConversationAnalyzer:
         return [dict(row) for row in result.rows or []]
 
     async def _call_llm(self, messages: List[Dict[str, str]]) -> str:
-        """Call gpt-4o-mini with the extraction prompt."""
+        """Call gpt-5-mini with the extraction prompt."""
         client = self._get_client()
         conversation_text = "\n".join(
             f"{m['role']}: {m['content']}" for m in messages
         )
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             messages=[
                 {"role": "system", "content": EXTRACTION_PROMPT},
                 {"role": "user", "content": conversation_text},

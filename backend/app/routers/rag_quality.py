@@ -12,32 +12,13 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData
+from app.auth.owner_guard import require_owner as _require_owner
 from app.database.turso_client import get_db_client, TursoClient
-from app.services.subscription_service import get_subscription_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin/rag-quality", tags=["rag-quality"])
-
-
-# ---- Owner guard (reuse pattern from admin.py) ----
-
-async def _require_owner(
-    current_user: TokenData = Depends(get_current_user),
-) -> TokenData:
-    """Dependency that ensures the caller is the platform owner."""
-    sub_service = await get_subscription_service()
-    access = await sub_service.check_access(
-        user_id=current_user.user_id,
-        email=current_user.email,
-    )
-    if not access.is_owner:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo el propietario puede acceder a esta función.",
-        )
-    return current_user
 
 
 # ---- Schema init ----

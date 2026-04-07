@@ -87,20 +87,17 @@ async def ingest_markdown(db: TursoClient, md_path: Path) -> int:
     chunks = chunk_text(text)
     print(f"  📦 Created {len(chunks)} chunks")
     
-    # Insert chunks in batches
+    # Insert chunks in batches (parameterized)
     batch_size = 50
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i:i+batch_size]
-        
-        values_list = []
+
         for chunk_idx, chunk_content in enumerate(batch):
             chunk_id = str(uuid.uuid4())
-            escaped_content = chunk_content.replace("'", "''")
-            values_list.append(f"('{chunk_id}', '{doc_id}', '{escaped_content}', 0, {i + chunk_idx})")
-        
-        values = ", ".join(values_list)
-        sql = f"INSERT INTO document_chunks (id, document_id, content, page_number, chunk_index) VALUES {values}"
-        await db.execute(sql)
+            await db.execute(
+                "INSERT INTO document_chunks (id, document_id, content, page_number, chunk_index) VALUES (?, ?, ?, 0, ?)",
+                [chunk_id, doc_id, chunk_content, i + chunk_idx]
+            )
     
     print(f"  ✅ Inserted {len(chunks)} chunks")
     return doc_id

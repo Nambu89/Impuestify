@@ -6,7 +6,7 @@ Handles Stripe integration, subscription lifecycle, and access control.
 import uuid
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from app.config import settings
@@ -413,7 +413,7 @@ class SubscriptionService:
         if sub_status == "grace_period" and period_end:
             try:
                 end_date = datetime.fromisoformat(period_end)
-                if end_date >= datetime.utcnow():
+                if end_date >= datetime.now(timezone.utc):
                     return SubscriptionAccess(
                         has_access=True,
                         is_owner=False,

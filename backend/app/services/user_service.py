@@ -6,7 +6,7 @@ Handles user CRUD operations with Turso database.
 import uuid
 import logging
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database.turso_client import get_db_client
 from app.database.models import User, UserCreate, UserInDB
@@ -40,7 +40,7 @@ class UserService:
         
         user_id = str(uuid.uuid4())
         password_hash = hash_password(user_data.password)
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         await db.execute(
             """
@@ -188,7 +188,7 @@ class UserService:
             return await self.get_user_by_id(user_id)
         
         updates.append("updated_at = ?")
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(timezone.utc).isoformat())
         values.append(user_id)
         
         await db.execute(
@@ -210,7 +210,7 @@ class UserService:
             True on success
         """
         db = await get_db_client()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         await db.execute(
             "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
             [new_password_hash, now, user_id],

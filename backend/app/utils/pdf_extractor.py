@@ -401,7 +401,7 @@ async def extract_with_vision_ocr(
             b64_image = base64.b64encode(png_bytes).decode("utf-8")
 
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-5-mini",
                 messages=[{
                     "role": "user",
                     "content": [
@@ -482,7 +482,7 @@ async def extract_image_text(image_bytes: bytes, filename: str = "image.jpg") ->
         client = AsyncOpenAI(api_key=api_key)
 
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             messages=[{
                 "role": "user",
                 "content": [

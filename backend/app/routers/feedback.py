@@ -12,7 +12,7 @@ Screenshot validation: max 2 MB, must be PNG or JPEG (magic bytes check).
 import base64
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -146,7 +146,7 @@ async def create_feedback(
     await _check_feedback_rate_limit(current_user.user_id, db)
 
     feedback_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     await db.execute(
         """
@@ -246,7 +246,7 @@ async def create_chat_rating(
         )
 
     rating_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     await db.execute(
         """

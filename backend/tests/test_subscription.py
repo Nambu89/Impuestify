@@ -9,7 +9,7 @@ Tests cover:
 import sys
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import asdict
 
 
@@ -151,7 +151,7 @@ class TestCheckAccess:
     @pytest.mark.asyncio
     async def test_grace_period_valid(self, service, mock_db):
         """User in grace period with future end date has access."""
-        future_date = (datetime.utcnow() + timedelta(days=365)).isoformat()
+        future_date = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
 
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"
@@ -176,7 +176,7 @@ class TestCheckAccess:
     @pytest.mark.asyncio
     async def test_grace_period_expired(self, service, mock_db):
         """User in grace period with past end date has NO access."""
-        past_date = (datetime.utcnow() - timedelta(days=1)).isoformat()
+        past_date = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
 
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"

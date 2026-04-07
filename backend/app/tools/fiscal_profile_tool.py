@@ -6,7 +6,7 @@ extracted from documents (payslips, invoices) or conversation context.
 """
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
@@ -94,7 +94,7 @@ async def update_fiscal_profile_tool(user_id: str, db_client: Any, **kwargs) -> 
     if not kwargs:
         return {"success": False, "error": "No se proporcionaron campos para actualizar"}
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     try:
         # Load existing profile

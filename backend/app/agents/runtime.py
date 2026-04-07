@@ -14,7 +14,7 @@ try:
     from agent_framework import Runtime, AgentGroup
     from agent_framework.patterns import Sequential, Concurrent, GroupChat
     RUNTIME_AVAILABLE = True
-except Exception:
+except ImportError:
     RUNTIME_AVAILABLE = False
     Runtime = None
     AgentGroup = None

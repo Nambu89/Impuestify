@@ -7,7 +7,7 @@ Cloudflare Turnstile verification on login/register.
 import logging
 import uuid
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 import httpx
 from fastapi import APIRouter, HTTPException, status, Depends, Request
@@ -364,14 +364,14 @@ async def google_login(request: Request, body: GoogleAuthRequest):
             # Link google_id to existing account
             await db.execute(
                 "UPDATE users SET google_id = ?, updated_at = ? WHERE id = ?",
-                [google_id, datetime.utcnow().isoformat(), user_row["id"]]
+                [google_id, datetime.now(timezone.utc).isoformat(), user_row["id"]]
             )
             logger.info(f"Linked Google account to existing user: {email}")
 
     # 3. If user still not found, create new account
     if not user_row:
         user_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         await db.execute(
             """
             INSERT INTO users (id, email, password_hash, name, google_id, is_active, is_admin, created_at, updated_at)

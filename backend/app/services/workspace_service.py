@@ -6,7 +6,7 @@ Handles workspace management operations with Turso database.
 import uuid
 import logging
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database.turso_client import get_db_client
 from pydantic import BaseModel
@@ -48,7 +48,7 @@ class WorkspaceService:
         db = await get_db_client()
         
         workspace_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         # Check if this is the first workspace for the user (to make it default)
         workspaces = await self.get_user_workspaces(user_id)

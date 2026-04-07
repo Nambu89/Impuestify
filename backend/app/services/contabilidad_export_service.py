@@ -56,9 +56,9 @@ _MAYOR_KEYS = [
 ]
 
 _REGISTRO_KEYS = [
-    "fecha", "num_factura", "tipo", "nif_emisor", "emisor",
-    "nif_receptor", "receptor", "base_imponible", "tipo_iva",
-    "cuota_iva", "retencion_irpf", "total", "cuenta_pgc", "descripcion",
+    "fecha_factura", "numero_factura", "tipo", "emisor_nif", "emisor_nombre",
+    "receptor_nif", "receptor_nombre", "base_imponible", "tipo_iva",
+    "cuota_iva", "retencion_irpf", "total", "cuenta_pgc", "concepto",
 ]
 
 
