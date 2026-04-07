@@ -15,6 +15,7 @@ from typing import List, Optional
 import time
 import logging
 import asyncio
+import threading
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -86,12 +87,17 @@ class RateLimiter:
 # Global rate limiter instance
 demo_rate_limiter = RateLimiter(max_requests=10, window_seconds=60)
 
-# Demo usage counter (simple analytics without PII)
+# Demo usage counter (thread-safe, simple analytics without PII)
+_stats_lock = threading.Lock()
 demo_stats = {
     "total_requests": 0,
     "total_errors": 0,
     "started_at": datetime.now().isoformat()
 }
+
+def _increment_stat(key: str):
+    with _stats_lock:
+        demo_stats[key] += 1
 
 
 # === Models ===
@@ -317,7 +323,7 @@ async def demo_chat(
     ```
     """
     start_time = time.time()
-    demo_stats["total_requests"] += 1
+    _increment_stat("total_requests")
     
     # === Rate Limiting ===
     client_ip = get_client_ip(request)
@@ -341,7 +347,7 @@ async def demo_chat(
     sql_check = sql_validator.validate_user_input(body.question)
     if not sql_check.is_safe:
         logger.warning(f"🚨 Demo SQL injection attempt blocked: {sql_check.violations}")
-        demo_stats["total_errors"] += 1
+        _increment_stat("total_errors")
         audit_logger.log_security_event(
             event_type=AuditEventType.SECURITY_VIOLATION,
             details={"type": "sql_injection", "ip": client_ip[:10]},
@@ -353,7 +359,7 @@ async def demo_chat(
     injection_check = prompt_injection_filter.check(body.question)
     if not injection_check.is_safe:
         logger.warning(f"🚨 Demo prompt injection attempt blocked: {injection_check.detected_patterns}")
-        demo_stats["total_errors"] += 1
+        _increment_stat("total_errors")
         audit_logger.log_security_event(
             event_type=AuditEventType.SECURITY_VIOLATION,
             details={"type": "prompt_injection", "ip": client_ip[:10]},
@@ -365,7 +371,7 @@ async def demo_chat(
     guardrails_check = guardrails_system.validate_input(body.question)
     if not guardrails_check.is_safe and guardrails_check.risk_level == "critical":
         logger.warning(f"⚠️ Demo guardrails violation: {guardrails_check.violations}")
-        demo_stats["total_errors"] += 1
+        _increment_stat("total_errors")
         raise HTTPException(status_code=400, detail="Question violates guidelines")
     
     # === SECURITY LAYER 4: PII Detection (redact but don't block) ===
@@ -382,7 +388,7 @@ async def demo_chat(
             moderation = await llama_guard.moderate(body.question)
             if not moderation.is_safe:
                 logger.warning(f"🛡️ Demo Llama Guard blocked: {moderation.blocked_categories}")
-                demo_stats["total_errors"] += 1
+                _increment_stat("total_errors")
                 audit_logger.log_security_event(
                     event_type=AuditEventType.SECURITY_VIOLATION,
                     details={"type": "llama_guard", "categories": moderation.blocked_categories, "ip": client_ip[:10]},
@@ -440,7 +446,7 @@ async def demo_chat(
             timeout=30.0
         )
     except asyncio.TimeoutError:
-        demo_stats["total_errors"] += 1
+        _increment_stat("total_errors")
         raise HTTPException(
             status_code=504,
             detail="Tiempo de respuesta agotado. Intenta con una pregunta más simple."

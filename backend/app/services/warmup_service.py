@@ -105,8 +105,8 @@ class WarmupService:
             upcoming = territory.get_upcoming_deadlines()
             if upcoming:
                 deadlines = "\n".join(f"- {d.modelo}: {d.description} ({d.date})" for d in upcoming)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Territory deadlines unavailable for warmup: %s", e)
 
         prompt = GREETING_PROMPT.format(
             profile_summary=profile_summary,

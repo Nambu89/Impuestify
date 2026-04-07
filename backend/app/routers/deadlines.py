@@ -134,8 +134,8 @@ async def _get_user_territory(user_id: str, db: TursoClient) -> tuple[str, list[
             if any(r in roles for r in ("creador_contenido", "pluriactividad", "autonomo")):
                 if "autonomos" not in applies_to:
                     applies_to = list(set(applies_to + ["autonomos"]))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to parse fiscal profile roles: %s", e)
 
     return territory, applies_to
 
