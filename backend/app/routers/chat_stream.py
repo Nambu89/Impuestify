@@ -312,7 +312,9 @@ async def ask_question_stream(
 
                 from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
                 retriever = HybridRetriever(db_client=db)
+                print("🧮 Generating query embedding...", flush=True)
                 query_embedding = await get_query_embedding(rag_query_used)
+                print(f"🧮 Embedding done: {'OK' if query_embedding else 'NONE'}", flush=True)
 
                 # Territory filter: detect CCAA from question first, fallback to profile
                 # Mapping: RegionDetector names → documents.source values in DB
@@ -369,13 +371,18 @@ async def ask_question_stream(
 
                 # First search WITH territory filter
                 print(f"🔍 RAG search: query='{rag_query_used[:60]}', territory={ccaa_for_rag}", flush=True)
-                relevant_chunks = await retriever.search(
-                    query=rag_query_used,
-                    query_embedding=query_embedding,
-                    k=request.k or 5,
-                    territory_filter=ccaa_for_rag,
-                )
-                print(f"📊 RAG results with filter: {len(relevant_chunks)} chunks", flush=True)
+                try:
+                    relevant_chunks = await retriever.search(
+                        query=rag_query_used,
+                        query_embedding=query_embedding,
+                        k=request.k or 5,
+                        territory_filter=ccaa_for_rag,
+                    )
+                    print(f"📊 RAG results with filter: {len(relevant_chunks)} chunks", flush=True)
+                except Exception as rag_err:
+                    print(f"❌ RAG search CRASHED: {type(rag_err).__name__}: {rag_err}", flush=True)
+                    logger.error(f"RAG search failed", exc_info=True)
+                    relevant_chunks = []
 
                 # If no results with filter, retry WITHOUT filter (broader search)
                 if not relevant_chunks:
@@ -455,6 +462,8 @@ async def ask_question_stream(
                         fiscal_profile["situacion_laboral"] = row["situacion_laboral"]
             except Exception as e:
                 logger.warning(f"Error loading fiscal profile: {e}")
+
+            print("🤖 Starting agent execution...", flush=True)
 
             # Create async task for agent execution
             async def run_agent():
