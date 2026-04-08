@@ -19,6 +19,22 @@
     gap: 32px;
 }
 
+/* ── Back link ──────────────────────────────────────────────────────────── */
+
+.cf-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-primary-light, #3b82f6);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: transform 0.2s ease;
+}
+
+.cf-back-link:hover {
+    transform: translateX(-4px);
+}
+
 /* ── Page header ─────────────────────────────────────────────────────────── */
 
 .cf-page-header {

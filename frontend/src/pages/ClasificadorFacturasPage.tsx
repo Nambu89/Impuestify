@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
+import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Search, ArrowLeft } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useApi } from '../hooks/useApi'
 import './ClasificadorFacturasPage.css'
 
@@ -754,6 +755,10 @@ export default function ClasificadorFacturasPage() {
     return (
         <div className="cf-page">
             <div className="cf-page__inner">
+                <Link to="/" className="cf-back-link">
+                    <ArrowLeft size={16} /> Volver a inicio
+                </Link>
+
                 {/* Page header */}
                 <div className="cf-page-header">
                     <div className="cf-page-header__icon">
