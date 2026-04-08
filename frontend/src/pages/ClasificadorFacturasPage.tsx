@@ -75,8 +75,8 @@ function ConfianzaBadge({ nivel }: { nivel: 'alta' | 'media' | 'baja' | 'manual'
     return <span className={`cf-badge ${cls}`}>{label}</span>
 }
 
-function formatEUR(n: number) {
-    return n.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
+function formatEUR(n: number | null | undefined) {
+    return (n ?? 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
 }
 
 function formatDate(dateStr: string) {
