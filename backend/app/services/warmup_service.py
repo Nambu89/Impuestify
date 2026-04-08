@@ -118,8 +118,8 @@ class WarmupService:
             response = await client.chat.completions.create(
                 model="gpt-5-mini",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-                max_tokens=100,
+                temperature=1,
+                max_completion_tokens=100,
             )
             return response.choices[0].message.content.strip()
         except Exception as e:

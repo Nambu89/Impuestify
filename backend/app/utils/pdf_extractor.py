@@ -419,7 +419,7 @@ async def extract_with_vision_ocr(
                         },
                     ],
                 }],
-                max_tokens=4096,
+                max_completion_tokens=4096,
             )
 
             text = response.choices[0].message.content or ""
@@ -500,7 +500,7 @@ async def extract_image_text(image_bytes: bytes, filename: str = "image.jpg") ->
                     },
                 ],
             }],
-            max_tokens=4096,
+            max_completion_tokens=4096,
         )
 
         text = response.choices[0].message.content or ""

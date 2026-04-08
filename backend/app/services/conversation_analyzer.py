@@ -84,8 +84,8 @@ class ConversationAnalyzer:
                 {"role": "system", "content": EXTRACTION_PROMPT},
                 {"role": "user", "content": conversation_text},
             ],
-            temperature=0,
-            max_tokens=500,
+            temperature=1,
+            max_completion_tokens=500,
         )
         return response.choices[0].message.content.strip()
 
