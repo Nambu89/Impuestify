@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
 import { useApi } from '../hooks/useApi'
 import './ClasificadorFacturasPage.css'
@@ -92,7 +92,7 @@ function formatDate(dateStr: string) {
 
 function UploadZone({ onFile }: { onFile: (f: File) => void }) {
     const [dragging, setDragging] = useState(false)
-    const inputRef = useRef<HTMLInputElement>(null)
+    const inputId = 'cf-file-upload'
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault()
@@ -108,36 +108,30 @@ function UploadZone({ onFile }: { onFile: (f: File) => void }) {
     }
 
     return (
-        <div
+        <label
+            htmlFor={inputId}
             className={`cf-upload-zone${dragging ? ' cf-upload-zone--dragging' : ''}`}
             onDragOver={e => { e.preventDefault(); setDragging(true) }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
-            onClick={() => inputRef.current?.click()}
-            role="button"
             tabIndex={0}
-            onKeyDown={e => e.key === 'Enter' && inputRef.current?.click()}
+            onKeyDown={e => { if (e.key === 'Enter') (e.currentTarget.querySelector('input') as HTMLInputElement)?.click() }}
             aria-label="Zona de carga de facturas"
         >
             <input
-                ref={inputRef}
+                id={inputId}
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept=".pdf,.jpg,.jpeg,.png,image/*"
                 onChange={handleChange}
                 className="cf-upload-input"
-                aria-hidden="true"
             />
             <Upload size={40} className="cf-upload-icon" />
             <p className="cf-upload-title">Arrastra tu factura aquí</p>
             <p className="cf-upload-subtitle">PDF, JPG o PNG · máximo 10 MB</p>
-            <button
-                type="button"
-                className="cf-upload-btn"
-                onClick={e => { e.stopPropagation(); inputRef.current?.click() }}
-            >
+            <span className="cf-upload-btn" role="button">
                 Subir factura
-            </button>
-        </div>
+            </span>
+        </label>
     )
 }
 
@@ -699,10 +693,60 @@ export default function ClasificadorFacturasPage() {
         }
     }
 
-    function handleView(id: string) {
-        // Navigate to detail — for now scroll to result if same invoice
-        const inv = invoices.find(i => i.id === id)
-        if (inv) window.scrollTo({ top: 0, behavior: 'smooth' })
+    async function handleView(id: string) {
+        try {
+            const data = await apiRequest(`/api/invoices/${id}`)
+            const inv = data?.invoice
+            if (!inv) return
+
+            // Parse raw_extraction if available
+            let rawExtraction: any = null
+            if (inv.raw_extraction) {
+                try {
+                    rawExtraction = typeof inv.raw_extraction === 'string'
+                        ? JSON.parse(inv.raw_extraction)
+                        : inv.raw_extraction
+                } catch { /* ignore parse errors */ }
+            }
+
+            const mapped: InvoiceResult = {
+                id: inv.id,
+                extraccion: {
+                    emisor_nombre: rawExtraction?.emisor?.nombre || inv.emisor_nombre || '',
+                    emisor_nif: rawExtraction?.emisor?.nif_cif || inv.emisor_nif || '',
+                    receptor_nombre: rawExtraction?.receptor?.nombre || inv.receptor_nombre || '',
+                    receptor_nif: rawExtraction?.receptor?.nif_cif || inv.receptor_nif || '',
+                    fecha: inv.fecha_factura || '',
+                    numero_factura: inv.numero_factura || '',
+                    lineas: (rawExtraction?.lineas || []).map((l: any) => ({
+                        concepto: l.concepto || '',
+                        cantidad: l.cantidad || 0,
+                        precio_unitario: l.precio_unitario || 0,
+                        base: l.base_imponible || l.base || 0,
+                    })),
+                    base_imponible: inv.base_imponible || 0,
+                    tipo_iva: inv.tipo_iva || 0,
+                    cuota_iva: inv.cuota_iva || 0,
+                    retenciones: inv.retencion_irpf || 0,
+                    total: inv.total || 0,
+                    confianza: inv.clasificacion_confianza || 'media',
+                    errores_validacion: [],
+                },
+                clasificacion: {
+                    cuenta_pgc: inv.cuenta_pgc || '',
+                    cuenta_pgc_nombre: inv.cuenta_pgc_nombre || '',
+                    confianza: inv.clasificacion_confianza || 'media',
+                    alternativas: [],
+                },
+                confirmada: inv.clasificacion_confianza === 'manual',
+            }
+
+            setResult(mapped)
+            setUploadStep('done')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+        } catch {
+            alert('No se pudieron cargar los detalles de la factura.')
+        }
     }
 
     const isProcessing = uploadStep === 'extracting' || uploadStep === 'classifying'

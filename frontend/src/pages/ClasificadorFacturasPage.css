@@ -111,7 +111,13 @@
 }
 
 .cf-upload-input {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
 }
 
 .cf-upload-title {
