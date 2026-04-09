@@ -151,12 +151,16 @@ class HybridRetriever:
             if territory:
                 filter_str = f"territory = '{territory}'"
 
-            results = self._vector_index.query(
+            print(f"🔎 Vector query: top_k={k}, filter={filter_str}", flush=True)
+            # Run sync Upstash query in thread to avoid blocking the event loop
+            results = await asyncio.to_thread(
+                self._vector_index.query,
                 vector=embedding,
                 top_k=k,
                 include_metadata=True,
                 filter=filter_str,
             )
+            print(f"🔎 Vector query done: {len(results)} results", flush=True)
 
             chunks = []
             for r in results:
@@ -405,11 +409,14 @@ class HybridRetriever:
         if not results:
             return results
 
-        # Fetch trust scores in parallel for all chunks
-        trust_scores = await asyncio.gather(
-            *[self._get_doc_trust(r.get("id", "")) for r in results],
-            return_exceptions=True,
-        )
+        # Fetch trust scores sequentially to avoid flooding Turso with connections
+        trust_scores = []
+        for r in results:
+            try:
+                score = await self._get_doc_trust(r.get("id", ""))
+                trust_scores.append(score)
+            except Exception as e:
+                trust_scores.append(e)
 
         kept: List[Dict[str, Any]] = []
         blocked = 0

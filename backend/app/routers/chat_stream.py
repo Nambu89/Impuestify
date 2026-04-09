@@ -370,6 +370,12 @@ async def ask_question_stream(
                         logger.debug(f"Could not pre-fetch CCAA for RAG filter: {_rag_ccaa_err}")
 
                 # First search WITH territory filter
+                import resource, os
+                try:
+                    mem_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+                    print(f"💾 Memory before RAG: {mem_mb:.0f} MB (PID {os.getpid()})", flush=True)
+                except Exception:
+                    print(f"💾 Memory check unavailable (PID {os.getpid()})", flush=True)
                 print(f"🔍 RAG search: query='{rag_query_used[:60]}', territory={ccaa_for_rag}", flush=True)
                 try:
                     relevant_chunks = await retriever.search(
@@ -381,6 +387,8 @@ async def ask_question_stream(
                     print(f"📊 RAG results with filter: {len(relevant_chunks)} chunks", flush=True)
                 except Exception as rag_err:
                     print(f"❌ RAG search CRASHED: {type(rag_err).__name__}: {rag_err}", flush=True)
+                    import traceback
+                    traceback.print_exc()
                     logger.error(f"RAG search failed", exc_info=True)
                     relevant_chunks = []
 
