@@ -407,6 +407,30 @@ async def ask_question_stream(
                     )
                     print(f"📊 RAG results without filter: {len(relevant_chunks)} chunks", flush=True)
 
+            # === Workspace semantic search (user's own documents) ===
+            workspace_rag_context = ""
+            if request.workspace_id and followup_type != "clarification":
+                try:
+                    from app.services.workspace_embedding_service import WorkspaceEmbeddingService
+                    ws_search = WorkspaceEmbeddingService()
+                    ws_results = await ws_search.search_workspace(
+                        db=db,
+                        workspace_id=request.workspace_id,
+                        query=rag_query_used,
+                        top_k=5,
+                        similarity_threshold=0.5,
+                    )
+                    if ws_results:
+                        workspace_rag_context = "\n\n".join([
+                            f"📄 Tu documento: {r.filename}\n{r.chunk_text}"
+                            for r in ws_results
+                        ])
+                        print(f"📂 Workspace RAG: {len(ws_results)} chunks from user docs", flush=True)
+                    else:
+                        print("📂 Workspace RAG: 0 results from user docs", flush=True)
+                except Exception as e:
+                    print(f"⚠️ Workspace RAG search failed: {e}", flush=True)
+
             # Prepare context - ALLOW empty RAG if we have conversation history or user memory
             if relevant_chunks:
                 # Use all chunks but format sources gracefully
@@ -437,7 +461,13 @@ async def ask_question_stream(
                 rag_context = ""
                 sources_data = []
 
-            combined_context = notification_context + rag_context if notification_context else rag_context
+            # Combine: workspace docs (user's) + global RAG (legislation) + session docs + notifications
+            combined_context = ""
+            if workspace_rag_context:
+                combined_context = f"=== DOCUMENTOS DEL USUARIO ===\n{workspace_rag_context}\n\n"
+            if notification_context:
+                combined_context += notification_context
+            combined_context += f"=== NORMATIVA FISCAL ===\n{rag_context}" if rag_context else ""
             if session_docs_context:
                 combined_context = session_docs_context + "\n\n" + combined_context
 
