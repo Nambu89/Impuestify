@@ -10,9 +10,9 @@ from app.territories.base import (
 # Note: Canarias uses common IRPF but IGIC instead of IVA.
 # CanariasTerritory plugin overrides it in the registry for indirect tax handling.
 COMUN_TERRITORIES = [
-    "Andalucia", "Aragon", "Asturias", "Baleares", "Cantabria",
-    "Castilla-La Mancha", "Castilla y Leon", "Cataluna", "Extremadura",
-    "Galicia", "La Rioja", "Madrid", "Murcia", "Comunidad Valenciana",
+    "Andalucía", "Aragón", "Asturias", "Baleares", "Cantabria",
+    "Castilla-La Mancha", "Castilla y León", "Cataluña", "Extremadura",
+    "Galicia", "La Rioja", "Madrid", "Murcia", "Valencia",
     "Canarias",
 ]
 

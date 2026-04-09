@@ -6,8 +6,8 @@ def test_common_territory_covers_15_ccaa():
     plugin = CommonTerritory()
     assert len(plugin.territories) == 15
     assert "Madrid" in plugin.territories
-    assert "Andalucia" in plugin.territories
-    assert "Cataluna" in plugin.territories
+    assert "Andalucía" in plugin.territories
+    assert "Cataluña" in plugin.territories
 
 
 def test_common_territory_regime():
