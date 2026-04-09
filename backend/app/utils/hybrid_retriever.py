@@ -136,6 +136,13 @@ class HybridRetriever:
     # VECTOR SEARCH (Upstash)
     # ============================================================
 
+    @staticmethod
+    def _strip_accents(text: str) -> str:
+        """Remove accents for metadata filter matching (Aragón → Aragon)."""
+        import unicodedata
+        nfkd = unicodedata.normalize('NFKD', text)
+        return ''.join(c for c in nfkd if not unicodedata.combining(c))
+
     async def _vector_search(
         self,
         embedding: List[float],
@@ -147,21 +154,34 @@ class HybridRetriever:
             return []
 
         try:
-            # Build filter string for metadata
-            filter_str = None
+            # Build filter variants: with and without accents
+            # Upstash metadata may have been ingested without tildes
+            filter_variants = [None]
             if territory:
-                filter_str = f"territory = '{territory}'"
+                stripped = self._strip_accents(territory)
+                if stripped != territory:
+                    # Try both: with accent first, then without
+                    filter_variants = [
+                        f"territory = '{territory}'",
+                        f"territory = '{stripped}'",
+                    ]
+                else:
+                    filter_variants = [f"territory = '{territory}'"]
 
-            print(f"🔎 Vector query: top_k={k}, filter={filter_str}", flush=True)
-            # Run sync Upstash query in thread to avoid blocking the event loop
-            results = await asyncio.to_thread(
-                self._vector_index.query,
-                vector=embedding,
-                top_k=k,
-                include_metadata=True,
-                filter=filter_str,
-            )
-            print(f"🔎 Vector query done: {len(results)} results", flush=True)
+            results = []
+            for filter_str in filter_variants:
+                print(f"🔎 Vector query: top_k={k}, filter={filter_str}", flush=True)
+                # Run sync Upstash query in thread to avoid blocking the event loop
+                results = await asyncio.to_thread(
+                    self._vector_index.query,
+                    vector=embedding,
+                    top_k=k,
+                    include_metadata=True,
+                    filter=filter_str,
+                )
+                print(f"🔎 Vector query done: {len(results)} results", flush=True)
+                if results:
+                    break  # Found results, no need to try next variant
 
             chunks = []
             for r in results:
@@ -203,6 +223,8 @@ class HybridRetriever:
             fts_query = self._clean_fts_query(query)
 
             if territory:
+                # Try with accent first, fallback to stripped accent
+                stripped_territory = self._strip_accents(territory)
                 result = await self.db.execute(
                     """
                     SELECT
@@ -213,11 +235,11 @@ class HybridRetriever:
                     JOIN document_chunks dc ON dc.id = fts.chunk_id
                     JOIN documents d ON d.id = dc.document_id
                     WHERE document_chunks_fts MATCH ?
-                      AND d.source = ?
+                      AND (d.source = ? OR d.source = ?)
                     ORDER BY rank
                     LIMIT ?
                     """,
-                    [fts_query, territory, k],
+                    [fts_query, territory, stripped_territory, k],
                 )
             else:
                 result = await self.db.execute(
