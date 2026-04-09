@@ -91,6 +91,7 @@ class HybridRetriever:
             List of dicts with: id, text, page, source, title, similarity, territory
         """
         candidates_k = k * self.CANDIDATE_MULTIPLIER
+        print(f"🔍 HybridRetriever.search() ENTERED: k={k}, candidates_k={candidates_k}, has_vector={self.has_vector_search}, territory={territory_filter}", flush=True)
 
         # Run both searches in parallel
         if self.has_vector_search and query_embedding:
