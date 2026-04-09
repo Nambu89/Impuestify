@@ -221,10 +221,10 @@ async def ask_question_stream(
                         [request.workspace_id, current_user.user_id]
                     )
                     if ws_result.rows:
-                        # Load workspace files with extracted text
+                        # Load workspace files — prefer structured data over raw text
                         files_result = await db.execute(
                             """
-                            SELECT filename, file_type, extracted_text
+                            SELECT filename, file_type, extracted_text, extracted_data
                             FROM workspace_files
                             WHERE workspace_id = ? AND processing_status = 'completed'
                             """,
@@ -235,17 +235,35 @@ async def ask_question_stream(
                             from app.services.payslip_extractor import PayslipExtractor
                             docs_context = []
                             for f in files_result.rows:
-                                if f.get("extracted_text"):
-                                    raw_text = f['extracted_text'][:5000]
-                                    # SECURITY: Anonymize PII before passing to LLM
+                                workspace_files_info.append({
+                                    "filename": f["filename"],
+                                    "file_type": f["file_type"]
+                                })
+
+                                # Prefer structured extracted_data (already parsed)
+                                extracted = f.get("extracted_data")
+                                if extracted:
+                                    if isinstance(extracted, str):
+                                        try:
+                                            extracted = json.loads(extracted)
+                                        except (json.JSONDecodeError, TypeError):
+                                            extracted = None
+
+                                if extracted and isinstance(extracted, dict):
+                                    # Use structured data — much more efficient for the LLM
+                                    lines = [f"--- {f['filename']} ({f['file_type']}) ---"]
+                                    for key, val in extracted.items():
+                                        if key in ("full_text", "file_hash", "extraction_status", "raw_text"):
+                                            continue
+                                        label = key.replace("_", " ").capitalize()
+                                        lines.append(f"  {label}: {val}")
+                                    docs_context.append("\n".join(lines))
+                                elif f.get("extracted_text"):
+                                    # Fallback to raw text (truncated)
+                                    raw_text = f['extracted_text'][:3000]
                                     if f.get('file_type') in ('nomina', 'payslip', 'factura', 'declaracion'):
                                         raw_text = PayslipExtractor.anonymize_text(raw_text)
-                                    doc_info = f"--- {f['filename']} ({f['file_type']}) ---\n{raw_text}"
-                                    docs_context.append(doc_info)
-                                    workspace_files_info.append({
-                                        "filename": f["filename"],
-                                        "file_type": f["file_type"]
-                                    })
+                                    docs_context.append(f"--- {f['filename']} ({f['file_type']}) ---\n{raw_text}")
 
                             if docs_context:
                                 workspace_context = "\n\n".join(docs_context)
