@@ -171,14 +171,21 @@ class HybridRetriever:
             results = []
             for filter_str in filter_variants:
                 print(f"🔎 Vector query: top_k={k}, filter={filter_str}", flush=True)
-                # Run sync Upstash query in thread to avoid blocking the event loop
-                results = await asyncio.to_thread(
-                    self._vector_index.query,
-                    vector=embedding,
-                    top_k=k,
-                    include_metadata=True,
-                    filter=filter_str,
-                )
+                try:
+                    # Run sync Upstash query in thread with 10s timeout
+                    results = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            self._vector_index.query,
+                            vector=embedding,
+                            top_k=k,
+                            include_metadata=True,
+                            filter=filter_str,
+                        ),
+                        timeout=10.0,
+                    )
+                except asyncio.TimeoutError:
+                    print(f"⏱️ Vector query TIMEOUT (10s) for filter={filter_str}", flush=True)
+                    results = []
                 print(f"🔎 Vector query done: {len(results)} results", flush=True)
                 if results:
                     break  # Found results, no need to try next variant

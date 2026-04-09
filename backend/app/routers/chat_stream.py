@@ -312,6 +312,10 @@ async def ask_question_stream(
 
                 from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
                 retriever = HybridRetriever(db_client=db)
+
+                # Send early SSE event to keep connection alive during RAG search
+                yield {"event": "thinking", "data": "Buscando información relevante..."}
+
                 print("🧮 Generating query embedding...", flush=True)
                 query_embedding = await get_query_embedding(rag_query_used)
                 print(f"🧮 Embedding done: {'OK' if query_embedding else 'NONE'}", flush=True)
