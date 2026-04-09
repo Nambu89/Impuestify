@@ -154,37 +154,36 @@ class HybridRetriever:
             return []
 
         try:
-            # Build filter variants: with and without accents
-            # Upstash metadata may have been ingested without tildes
-            filter_variants = [None]
+            # Build filter variants: canonical (with accents) + stripped (without)
+            # Covers both directions: "Cataluna"→"Cataluña" and "Aragón"→"Aragon"
+            filter_variants = []
             if territory:
-                stripped = self._strip_accents(territory)
-                if stripped != territory:
-                    # Try both: with accent first, then without
-                    filter_variants = [
-                        f"territory = '{territory}'",
-                        f"territory = '{stripped}'",
-                    ]
-                else:
-                    filter_variants = [f"territory = '{territory}'"]
+                from app.utils.ccaa_constants import normalize_ccaa
+                canonical = normalize_ccaa(territory)
+                stripped = self._strip_accents(canonical)
+                # Always try canonical first, then stripped, deduplicated
+                seen = set()
+                for variant in [canonical, stripped, territory]:
+                    if variant not in seen:
+                        filter_variants.append(f"territory = '{variant}'")
+                        seen.add(variant)
+            else:
+                filter_variants = [None]
 
             results = []
             for filter_str in filter_variants:
                 print(f"🔎 Vector query: top_k={k}, filter={filter_str}", flush=True)
                 try:
-                    # Run sync Upstash query in thread with 10s timeout
-                    results = await asyncio.wait_for(
-                        asyncio.to_thread(
-                            self._vector_index.query,
-                            vector=embedding,
-                            top_k=k,
-                            include_metadata=True,
-                            filter=filter_str,
-                        ),
-                        timeout=10.0,
+                    # Sync Upstash query with httpx timeout (not asyncio.wait_for which can't cancel threads)
+                    results = await asyncio.to_thread(
+                        self._vector_index.query,
+                        vector=embedding,
+                        top_k=k,
+                        include_metadata=True,
+                        filter=filter_str,
                     )
-                except asyncio.TimeoutError:
-                    print(f"⏱️ Vector query TIMEOUT (10s) for filter={filter_str}", flush=True)
+                except Exception as ve:
+                    print(f"⚠️ Vector query error for filter={filter_str}: {ve}", flush=True)
                     results = []
                 print(f"🔎 Vector query done: {len(results)} results", flush=True)
                 if results:
@@ -230,8 +229,10 @@ class HybridRetriever:
             fts_query = self._clean_fts_query(query)
 
             if territory:
-                # Try with accent first, fallback to stripped accent
-                stripped_territory = self._strip_accents(territory)
+                # Normalize territory: "Cataluna" → "Cataluña", "Aragón" → also "Aragon"
+                from app.utils.ccaa_constants import normalize_ccaa
+                canonical_territory = normalize_ccaa(territory)
+                stripped_territory = self._strip_accents(canonical_territory)
                 result = await self.db.execute(
                     """
                     SELECT
@@ -246,7 +247,7 @@ class HybridRetriever:
                     ORDER BY rank
                     LIMIT ?
                     """,
-                    [fts_query, territory, stripped_territory, k],
+                    [fts_query, canonical_territory, stripped_territory, k],
                 )
             else:
                 result = await self.db.execute(
