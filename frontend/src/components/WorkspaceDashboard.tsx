@@ -110,7 +110,7 @@ function IVATrimestralChart({ data }: { data: Array<{ trimestre: string; iva_rep
     return (
         <div className="ws-chart-card">
             <div className="ws-chart-title">IVA por trimestre</div>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={data} barGap={4}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                     <XAxis dataKey="trimestre" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} />
@@ -124,8 +124,8 @@ function IVATrimestralChart({ data }: { data: Array<{ trimestre: string; iva_rep
                     <Legend
                         formatter={(value: string) => value === 'iva_repercutido' ? 'Repercutido' : 'Soportado'}
                     />
-                    <Bar dataKey="iva_repercutido" fill="#06b6d4" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="iva_soportado" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="iva_repercutido" fill="#06b6d4" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                    <Bar dataKey="iva_soportado" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={60} />
                 </BarChart>
             </ResponsiveContainer>
         </div>
@@ -140,7 +140,7 @@ function IngresosGastosChart({ data }: { data: Array<{ mes: string; ingresos: nu
     return (
         <div className="ws-chart-card">
             <div className="ws-chart-title">Ingresos vs Gastos mensual</div>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={data}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                     <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} />
