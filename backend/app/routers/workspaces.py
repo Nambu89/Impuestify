@@ -910,13 +910,13 @@ async def classify_pending_invoices(
             return {"classified": 0, "message": "No hay facturas pendientes de clasificar"}
 
         from app.services.file_processing_service import FileProcessingService
-        fps = FileProcessingService(db)
+        fps = FileProcessingService()
 
         classified_count = 0
         errors = []
         for row in rows:
-            file_id = row.get("id") or (row[0] if isinstance(row, (list, tuple)) else None)
-            extracted_data_raw = row.get("extracted_data") or (row[1] if isinstance(row, (list, tuple)) else None)
+            file_id = row.get("id") if hasattr(row, "get") else (row[0] if row else None)
+            extracted_data_raw = row.get("extracted_data") if hasattr(row, "get") else (row[1] if len(row) > 1 else None)
             if not file_id or not extracted_data_raw:
                 continue
             try:
@@ -925,7 +925,7 @@ async def classify_pending_invoices(
                 await fps._auto_classify_invoice(file_id, user_id, extracted_data, db)
                 classified_count += 1
             except Exception as e:
-                logger.warning(f"Failed to classify file {file_id}: {e}")
+                logger.warning(f"Failed to classify file {file_id}: {e}", exc_info=True)
                 errors.append(str(file_id))
 
         return {
