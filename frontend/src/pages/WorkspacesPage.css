@@ -998,3 +998,38 @@
     min-height: 36px;
     border-radius: 4px;
 }
+
+/* ====== View Tabs (Dashboard / Archivos) ====== */
+
+.ws-view-tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0 1rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ws-view-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    font-size: var(--font-size-sm, 0.875rem);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -1px;
+}
+
+.ws-view-tab:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.ws-view-tab--active {
+    color: var(--color-accent, #06b6d4);
+    border-bottom-color: var(--color-accent, #06b6d4);
+}

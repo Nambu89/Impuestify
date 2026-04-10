@@ -623,6 +623,258 @@ async def delete_file(
 
 # === Classification Confirmation ===
 
+@router.get("/{workspace_id}/dashboard")
+async def get_workspace_dashboard(
+    request: Request,
+    workspace_id: str,
+    year: int = 2026,
+    current_user: TokenData = Depends(get_current_user),
+    service: WorkspaceService = Depends(get_workspace_service),
+    db: TursoClient = Depends(get_db),
+):
+    """
+    Aggregate financial dashboard for a workspace.
+
+    Returns KPIs, quarterly/monthly breakdowns, top PGC accounts,
+    top suppliers, and recent invoices for the given year.
+
+    - **workspace_id**: Workspace ID
+    - **year**: Fiscal year (default 2026)
+    """
+    try:
+        # Verify workspace ownership
+        workspace = await service.get_workspace(workspace_id, current_user.user_id)
+        if not workspace:
+            raise HTTPException(status_code=404, detail="Workspace not found")
+
+        user_id = current_user.user_id
+
+        # Subquery for workspace file IDs (used across all queries)
+        ws_files_subquery = (
+            "SELECT id FROM workspace_files WHERE workspace_id = ?"
+        )
+
+        # --- KPIs ---
+        kpi_result = await db.execute(
+            f"""
+            SELECT
+                COALESCE(SUM(CASE WHEN tipo='emitida' THEN total ELSE 0 END), 0) AS ingresos_total,
+                COALESCE(SUM(CASE WHEN tipo='recibida' THEN total ELSE 0 END), 0) AS gastos_total,
+                COALESCE(SUM(CASE WHEN tipo='emitida' THEN cuota_iva ELSE 0 END), 0) AS iva_repercutido,
+                COALESCE(SUM(CASE WHEN tipo='recibida' THEN cuota_iva ELSE 0 END), 0) AS iva_soportado,
+                COALESCE(SUM(CASE WHEN tipo='emitida' THEN retencion_irpf ELSE 0 END), 0) AS retencion_irpf_total,
+                COUNT(*) AS facturas_count,
+                COALESCE(SUM(CASE WHEN clasificacion_confianza='pendiente_confirmacion' THEN 1 ELSE 0 END), 0) AS facturas_pendientes
+            FROM libro_registro
+            WHERE workspace_file_id IN ({ws_files_subquery})
+              AND year = ?
+              AND user_id = ?
+            """,
+            [workspace_id, year, user_id],
+        )
+
+        kpi_row = kpi_result.rows[0] if kpi_result.rows else {}
+        ingresos = round(float(kpi_row.get("ingresos_total", 0) or 0), 2)
+        gastos = round(float(kpi_row.get("gastos_total", 0) or 0), 2)
+        iva_rep = round(float(kpi_row.get("iva_repercutido", 0) or 0), 2)
+        iva_sop = round(float(kpi_row.get("iva_soportado", 0) or 0), 2)
+        retencion = round(float(kpi_row.get("retencion_irpf_total", 0) or 0), 2)
+        facturas_count = int(kpi_row.get("facturas_count", 0) or 0)
+        facturas_pendientes = int(kpi_row.get("facturas_pendientes", 0) or 0)
+
+        kpis = {
+            "ingresos_total": ingresos,
+            "gastos_total": gastos,
+            "iva_repercutido": iva_rep,
+            "iva_soportado": iva_sop,
+            "balance_iva": round(iva_rep - iva_sop, 2),
+            "retencion_irpf_total": retencion,
+            "resultado_neto": round(ingresos - gastos, 2),
+            "facturas_count": facturas_count,
+            "facturas_pendientes": facturas_pendientes,
+        }
+
+        # --- Por trimestre ---
+        trim_result = await db.execute(
+            f"""
+            SELECT
+                trimestre,
+                COALESCE(SUM(CASE WHEN tipo='emitida' THEN total ELSE 0 END), 0) AS ingresos,
+                COALESCE(SUM(CASE WHEN tipo='recibida' THEN total ELSE 0 END), 0) AS gastos,
+                COALESCE(SUM(CASE WHEN tipo='emitida' THEN cuota_iva ELSE 0 END), 0) AS iva_repercutido,
+                COALESCE(SUM(CASE WHEN tipo='recibida' THEN cuota_iva ELSE 0 END), 0) AS iva_soportado
+            FROM libro_registro
+            WHERE workspace_file_id IN ({ws_files_subquery})
+              AND year = ?
+              AND user_id = ?
+            GROUP BY trimestre
+            ORDER BY trimestre
+            """,
+            [workspace_id, year, user_id],
+        )
+
+        trim_map: Dict[int, Dict[str, Any]] = {}
+        for row in trim_result.rows:
+            t = int(row.get("trimestre", 0) or 0)
+            if 1 <= t <= 4:
+                trim_map[t] = {
+                    "trimestre": f"{t}T",
+                    "ingresos": round(float(row.get("ingresos", 0) or 0), 2),
+                    "gastos": round(float(row.get("gastos", 0) or 0), 2),
+                    "iva_repercutido": round(float(row.get("iva_repercutido", 0) or 0), 2),
+                    "iva_soportado": round(float(row.get("iva_soportado", 0) or 0), 2),
+                }
+
+        por_trimestre = []
+        for q in range(1, 5):
+            por_trimestre.append(
+                trim_map.get(q, {
+                    "trimestre": f"{q}T",
+                    "ingresos": 0.0,
+                    "gastos": 0.0,
+                    "iva_repercutido": 0.0,
+                    "iva_soportado": 0.0,
+                })
+            )
+
+        # --- Por mes ---
+        mes_result = await db.execute(
+            f"""
+            SELECT
+                SUBSTR(fecha_factura, 1, 7) AS mes,
+                COALESCE(SUM(CASE WHEN tipo='emitida' THEN total ELSE 0 END), 0) AS ingresos,
+                COALESCE(SUM(CASE WHEN tipo='recibida' THEN total ELSE 0 END), 0) AS gastos
+            FROM libro_registro
+            WHERE workspace_file_id IN ({ws_files_subquery})
+              AND year = ?
+              AND user_id = ?
+              AND fecha_factura IS NOT NULL
+            GROUP BY SUBSTR(fecha_factura, 1, 7)
+            ORDER BY mes
+            """,
+            [workspace_id, year, user_id],
+        )
+
+        por_mes = [
+            {
+                "mes": row.get("mes", ""),
+                "ingresos": round(float(row.get("ingresos", 0) or 0), 2),
+                "gastos": round(float(row.get("gastos", 0) or 0), 2),
+            }
+            for row in mes_result.rows
+            if row.get("mes")
+        ]
+
+        # --- Por cuenta PGC (top 15) ---
+        cuenta_result = await db.execute(
+            f"""
+            SELECT
+                cuenta_pgc AS cuenta,
+                cuenta_pgc_nombre AS nombre,
+                COALESCE(SUM(ABS(total)), 0) AS total,
+                CASE
+                    WHEN tipo = 'recibida' THEN 'gasto'
+                    ELSE 'ingreso'
+                END AS tipo_cuenta
+            FROM libro_registro
+            WHERE workspace_file_id IN ({ws_files_subquery})
+              AND year = ?
+              AND user_id = ?
+              AND cuenta_pgc IS NOT NULL
+            GROUP BY cuenta_pgc, cuenta_pgc_nombre, tipo_cuenta
+            ORDER BY total DESC
+            LIMIT 15
+            """,
+            [workspace_id, year, user_id],
+        )
+
+        por_cuenta_pgc = [
+            {
+                "cuenta": row.get("cuenta", ""),
+                "nombre": row.get("nombre", ""),
+                "total": round(float(row.get("total", 0) or 0), 2),
+                "tipo": row.get("tipo_cuenta", ""),
+            }
+            for row in cuenta_result.rows
+        ]
+
+        # --- Top proveedores (top 10 by total, recibida only) ---
+        prov_result = await db.execute(
+            f"""
+            SELECT
+                emisor_nombre AS nombre,
+                emisor_nif AS nif,
+                COALESCE(SUM(total), 0) AS total,
+                COUNT(*) AS facturas
+            FROM libro_registro
+            WHERE workspace_file_id IN ({ws_files_subquery})
+              AND year = ?
+              AND user_id = ?
+              AND tipo = 'recibida'
+              AND emisor_nombre IS NOT NULL
+            GROUP BY emisor_nombre, emisor_nif
+            ORDER BY total DESC
+            LIMIT 10
+            """,
+            [workspace_id, year, user_id],
+        )
+
+        top_proveedores = [
+            {
+                "nombre": row.get("nombre", ""),
+                "nif": row.get("nif", ""),
+                "total": round(float(row.get("total", 0) or 0), 2),
+                "facturas": int(row.get("facturas", 0) or 0),
+            }
+            for row in prov_result.rows
+        ]
+
+        # --- Facturas recientes (last 10) ---
+        recientes_result = await db.execute(
+            f"""
+            SELECT
+                id, fecha_factura, emisor_nombre, concepto,
+                total, tipo, cuenta_pgc, clasificacion_confianza
+            FROM libro_registro
+            WHERE workspace_file_id IN ({ws_files_subquery})
+              AND year = ?
+              AND user_id = ?
+            ORDER BY fecha_factura DESC
+            LIMIT 10
+            """,
+            [workspace_id, year, user_id],
+        )
+
+        facturas_recientes = [
+            {
+                "id": row.get("id", ""),
+                "fecha": row.get("fecha_factura", ""),
+                "emisor": row.get("emisor_nombre", ""),
+                "concepto": row.get("concepto", ""),
+                "total": round(float(row.get("total", 0) or 0), 2),
+                "tipo": row.get("tipo", ""),
+                "cuenta_pgc": row.get("cuenta_pgc", ""),
+                "clasificacion_confianza": row.get("clasificacion_confianza", ""),
+            }
+            for row in recientes_result.rows
+        ]
+
+        return {
+            "kpis": kpis,
+            "por_trimestre": por_trimestre,
+            "por_mes": por_mes,
+            "por_cuenta_pgc": por_cuenta_pgc,
+            "top_proveedores": top_proveedores,
+            "facturas_recientes": facturas_recientes,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting workspace dashboard: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+
 @router.post("/{workspace_id}/files/{file_id}/confirm-classification")
 async def confirm_classification(
     request: Request,

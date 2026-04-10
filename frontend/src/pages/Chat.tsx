@@ -8,6 +8,7 @@ import { NotificationUpload } from '../components/NotificationUpload'
 import { NotificationAnalysisDisplay } from '../components/NotificationAnalysisDisplay'
 import { ConversationSidebar } from '../components/ConversationSidebar'
 import { WorkspaceSelector } from '../components/WorkspaceSelector'
+import { WorkspaceCards } from '../components/WorkspaceCards'
 import { WorkspaceContextIndicator } from '../components/WorkspaceContextIndicator'
 import { ReportActions, isIRPFSimulation } from '../components/ReportActions'
 import { DeductionCards, hasDeductions } from '../components/DeductionCards'
@@ -328,6 +329,14 @@ export default function Chat() {
                             </div>
                         )}
                     </div>
+                )}
+
+                {/* Workspace quick-access cards: shown when user has workspaces but none selected */}
+                {workspaces && workspaces.length > 0 && !activeWorkspace && messages.length <= 1 && (
+                    <WorkspaceCards
+                        workspaces={workspaces}
+                        onSelectWorkspace={(ws) => selectWorkspace(ws)}
+                    />
                 )}
 
                 <div className="chat-container">

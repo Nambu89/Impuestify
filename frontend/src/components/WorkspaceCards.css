@@ -1,0 +1,85 @@
+.workspace-cards-strip {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.workspace-cards-header {
+  margin-bottom: 0.5rem;
+}
+
+.workspace-cards-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-gray-400, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.workspace-cards-scroll {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.workspace-cards-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.workspace-cards-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.workspace-cards-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.workspace-card-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  min-width: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: inherit;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.workspace-card-mini:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-accent, #06b6d4);
+  transform: translateY(-1px);
+}
+
+.workspace-card-mini:active {
+  transform: translateY(0);
+}
+
+.workspace-card-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.workspace-card-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workspace-card-count {
+  font-size: 0.7rem;
+  color: var(--color-gray-500, #6b7280);
+}

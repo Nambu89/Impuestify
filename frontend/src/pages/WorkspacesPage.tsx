@@ -14,10 +14,12 @@ import {
     Receipt,
     Pencil,
     Check,
-    RefreshCw
+    RefreshCw,
+    BarChart3
 } from 'lucide-react'
 import Header from '../components/Header'
 import IntegrityBadge from '../components/IntegrityBadge'
+import WorkspaceDashboard from '../components/WorkspaceDashboard'
 import { useApi } from '../hooks/useApi'
 import './WorkspacesPage.css'
 
@@ -96,6 +98,7 @@ export default function WorkspacesPage() {
     const [confirmingFileId, setConfirmingFileId] = useState<string | null>(null)
     const [reclassifyFileId, setReclassifyFileId] = useState<string | null>(null)
     const [reclassifyValue, setReclassifyValue] = useState('')
+    const [viewMode, setViewMode] = useState<'dashboard' | 'files'>('dashboard')
 
     // Refs
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -655,7 +658,26 @@ export default function WorkspacesPage() {
                                             </label>
                                         </div>
 
-                                        {filesLoading ? (
+                                        <div className="ws-view-tabs">
+                                            <button
+                                                className={`ws-view-tab ${viewMode === 'dashboard' ? 'ws-view-tab--active' : ''}`}
+                                                onClick={() => setViewMode('dashboard')}
+                                            >
+                                                <BarChart3 size={16} />
+                                                Dashboard
+                                            </button>
+                                            <button
+                                                className={`ws-view-tab ${viewMode === 'files' ? 'ws-view-tab--active' : ''}`}
+                                                onClick={() => setViewMode('files')}
+                                            >
+                                                <FileText size={16} />
+                                                Archivos ({workspaceFiles.length})
+                                            </button>
+                                        </div>
+
+                                        {viewMode === 'dashboard' ? (
+                                            <WorkspaceDashboard workspaceId={selectedWorkspace.id} />
+                                        ) : filesLoading ? (
                                             <div className="files-loading">
                                                 <div className="loading-spinner"></div>
                                                 <p>Cargando archivos...</p>
