@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Loader2, FileText, Upload, Zap, Calculator, Search, Shield, Share2, X } from 'lucide-react'
+import { Send, Loader2, FileText, Upload, Zap, Calculator, Search, Shield, Share2, X, BarChart3 } from 'lucide-react'
 import ShareModal from '../components/ShareModal'
 import Header from '../components/Header'
 import AITransparencyModal from '../components/AITransparencyModal'
@@ -325,7 +325,14 @@ export default function Chat() {
                         </div>
                         {activeWorkspace && (
                             <div className="chat-workspace-bar__indicator">
-                                {activeWorkspace.icon} Conversando sobre: <strong>{activeWorkspace.name}</strong>
+                                <span>{activeWorkspace.icon} Conversando sobre: <strong>{activeWorkspace.name}</strong></span>
+                                <a
+                                    href="/workspaces"
+                                    className="chat-workspace-bar__dashboard-link"
+                                    title="Ver dashboard del workspace"
+                                >
+                                    <BarChart3 size={14} /> Dashboard
+                                </a>
                             </div>
                         )}
                     </div>
