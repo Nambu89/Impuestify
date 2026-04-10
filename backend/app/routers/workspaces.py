@@ -709,7 +709,7 @@ async def get_workspace_dashboard(
                 COALESCE(SUM(CASE WHEN tipo='recibida' THEN cuota_iva ELSE 0 END), 0) AS iva_soportado
             FROM libro_registro
             WHERE workspace_file_id IN ({ws_files_subquery})
-              AND year = ?
+              {year_filter}
               AND user_id = ?
             GROUP BY trimestre
             ORDER BY trimestre
@@ -750,7 +750,7 @@ async def get_workspace_dashboard(
                 COALESCE(SUM(CASE WHEN tipo='recibida' THEN total ELSE 0 END), 0) AS gastos
             FROM libro_registro
             WHERE workspace_file_id IN ({ws_files_subquery})
-              AND year = ?
+              {year_filter}
               AND user_id = ?
               AND fecha_factura IS NOT NULL
             GROUP BY SUBSTR(fecha_factura, 1, 7)
@@ -782,7 +782,7 @@ async def get_workspace_dashboard(
                 END AS tipo_cuenta
             FROM libro_registro
             WHERE workspace_file_id IN ({ws_files_subquery})
-              AND year = ?
+              {year_filter}
               AND user_id = ?
               AND cuenta_pgc IS NOT NULL
             GROUP BY cuenta_pgc, cuenta_pgc_nombre, tipo_cuenta
@@ -812,7 +812,7 @@ async def get_workspace_dashboard(
                 COUNT(*) AS facturas
             FROM libro_registro
             WHERE workspace_file_id IN ({ws_files_subquery})
-              AND year = ?
+              {year_filter}
               AND user_id = ?
               AND tipo = 'recibida'
               AND emisor_nombre IS NOT NULL
@@ -841,7 +841,7 @@ async def get_workspace_dashboard(
                 total, tipo, cuenta_pgc, clasificacion_confianza
             FROM libro_registro
             WHERE workspace_file_id IN ({ws_files_subquery})
-              AND year = ?
+              {year_filter}
               AND user_id = ?
             ORDER BY fecha_factura DESC
             LIMIT 10
