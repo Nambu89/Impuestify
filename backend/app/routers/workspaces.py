@@ -714,7 +714,7 @@ async def get_workspace_dashboard(
             GROUP BY trimestre
             ORDER BY trimestre
             """,
-            [workspace_id, year, user_id],
+            base_params,
         )
 
         trim_map: Dict[int, Dict[str, Any]] = {}
@@ -756,7 +756,7 @@ async def get_workspace_dashboard(
             GROUP BY SUBSTR(fecha_factura, 1, 7)
             ORDER BY mes
             """,
-            [workspace_id, year, user_id],
+            base_params,
         )
 
         por_mes = [
@@ -789,7 +789,7 @@ async def get_workspace_dashboard(
             ORDER BY total DESC
             LIMIT 15
             """,
-            [workspace_id, year, user_id],
+            base_params,
         )
 
         por_cuenta_pgc = [
@@ -820,7 +820,7 @@ async def get_workspace_dashboard(
             ORDER BY total DESC
             LIMIT 10
             """,
-            [workspace_id, year, user_id],
+            base_params,
         )
 
         top_proveedores = [
@@ -846,7 +846,7 @@ async def get_workspace_dashboard(
             ORDER BY fecha_factura DESC
             LIMIT 10
             """,
-            [workspace_id, year, user_id],
+            base_params,
         )
 
         facturas_recientes = [
