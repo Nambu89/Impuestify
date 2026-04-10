@@ -451,18 +451,53 @@ class FileProcessingService:
             return
 
         # Extract fields from the structured extracted_data
+        # Support both Gemini OCR format AND old regex extractor format
         concepto = extracted_data.get("summary") or extracted_data.get("concepto") or ""
-        emisor_nombre = extracted_data.get("emisor_nombre") or extracted_data.get("emisor", {}).get("nombre", "")
-        base_imponible = float(extracted_data.get("base_imponible") or extracted_data.get("base_imponible_total") or 0)
-        tipo_iva = float(extracted_data.get("tipo_iva") or extracted_data.get("tipo_iva_pct") or 0)
-        cuota_iva = float(extracted_data.get("cuota_iva") or 0)
-        total = float(extracted_data.get("total") or base_imponible)
-        numero_factura = extracted_data.get("numero_factura") or ""
-        fecha_factura = extracted_data.get("fecha_factura") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        emisor_nif = extracted_data.get("emisor_nif") or extracted_data.get("emisor", {}).get("nif_cif", "")
-        receptor_nif = extracted_data.get("receptor_nif") or extracted_data.get("receptor", {}).get("nif_cif", "")
-        receptor_nombre = extracted_data.get("receptor_nombre") or extracted_data.get("receptor", {}).get("nombre", "")
-        retencion_irpf = float(extracted_data.get("retencion_irpf") or 0)
+        emisor_nombre = (
+            extracted_data.get("emisor_nombre")
+            or extracted_data.get("emisor", {}).get("nombre", "")
+            or extracted_data.get("empresa_emisora", "")
+            or ""
+        )
+        base_imponible = float(
+            extracted_data.get("base_imponible")
+            or extracted_data.get("base_imponible_total")
+            or extracted_data.get("total_base_imponible")  # old regex extractor
+            or extracted_data.get("base_imponible_21")  # fallback to 21% base
+            or 0
+        )
+        tipo_iva = float(extracted_data.get("tipo_iva") or extracted_data.get("tipo_iva_pct") or 21)
+        cuota_iva = float(
+            extracted_data.get("cuota_iva")
+            or extracted_data.get("total_iva")  # old regex extractor
+            or 0
+        )
+        total = float(
+            extracted_data.get("total")
+            or extracted_data.get("total_factura")  # old regex extractor
+            or base_imponible + cuota_iva
+        )
+        numero_factura = extracted_data.get("numero_factura") or extracted_data.get("numero") or ""
+        fecha_factura = extracted_data.get("fecha_factura") or extracted_data.get("fecha") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        emisor_nif = (
+            extracted_data.get("emisor_nif")
+            or extracted_data.get("emisor", {}).get("nif_cif", "")
+            or extracted_data.get("nif_emisor", "")
+            or ""
+        )
+        receptor_nif = (
+            extracted_data.get("receptor_nif")
+            or extracted_data.get("receptor", {}).get("nif_cif", "")
+            or extracted_data.get("nif_receptor", "")
+            or ""
+        )
+        receptor_nombre = (
+            extracted_data.get("receptor_nombre")
+            or extracted_data.get("receptor", {}).get("nombre", "")
+            or extracted_data.get("empresa_receptora", "")
+            or ""
+        )
+        retencion_irpf = float(extracted_data.get("retencion_irpf") or extracted_data.get("irpf_retenido") or 0)
         retencion_irpf_pct = float(extracted_data.get("retencion_irpf_pct") or 0)
         tipo_re = float(extracted_data.get("tipo_re_pct") or extracted_data.get("tipo_re") or 0)
         cuota_re = float(extracted_data.get("cuota_re") or 0)
