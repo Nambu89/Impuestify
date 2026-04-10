@@ -7,8 +7,9 @@ import {
 } from 'recharts'
 import {
     TrendingUp, TrendingDown, Receipt, Banknote,
-    AlertCircle, BarChart3, RefreshCw
+    AlertCircle, BarChart3, RefreshCw, Loader2, Zap
 } from 'lucide-react'
+import { useState, useCallback } from 'react'
 import './WorkspaceDashboard.css'
 
 const PIE_COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#22c55e', '#ef4444', '#64748b']
@@ -311,6 +312,31 @@ interface WorkspaceDashboardProps {
 
 export default function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardProps) {
     const { data, loading, error, refresh } = useWorkspaceDashboard(workspaceId)
+    const [classifying, setClassifying] = useState(false)
+    const [classifyResult, setClassifyResult] = useState<string | null>(null)
+
+    const API_URL = import.meta.env.VITE_API_URL || '/api'
+    const TOKEN_KEY = 'access_token'
+
+    const handleClassifyPending = useCallback(async () => {
+        setClassifying(true)
+        setClassifyResult(null)
+        try {
+            const token = localStorage.getItem(TOKEN_KEY)
+            const res = await fetch(`${API_URL}/workspaces/${workspaceId}/classify-pending`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            })
+            if (!res.ok) throw new Error('Error clasificando facturas')
+            const result = await res.json()
+            setClassifyResult(result.message)
+            refresh()
+        } catch (e: any) {
+            setClassifyResult(e.message || 'Error desconocido')
+        } finally {
+            setClassifying(false)
+        }
+    }, [workspaceId, refresh])
 
     if (loading) {
         return (
@@ -344,8 +370,29 @@ export default function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardPr
         )
     }
 
+    const allZero = data.kpis.facturas_count === 0 && data.kpis.ingresos_total === 0 && data.kpis.gastos_total === 0
+
     return (
         <div className="ws-dashboard">
+            {allZero && (
+                <div className="ws-dashboard-classify-banner">
+                    <div className="ws-classify-banner-content">
+                        <Zap size={20} />
+                        <div>
+                            <strong>Facturas sin clasificar</strong>
+                            <p>Hay facturas procesadas que aún no están clasificadas contablemente. Clasifícalas para ver el dashboard financiero.</p>
+                        </div>
+                    </div>
+                    <button
+                        className="btn btn-accent ws-classify-btn"
+                        onClick={handleClassifyPending}
+                        disabled={classifying}
+                    >
+                        {classifying ? <><Loader2 size={14} className="spin" /> Clasificando...</> : <><Zap size={14} /> Clasificar facturas</>}
+                    </button>
+                    {classifyResult && <p className="ws-classify-result">{classifyResult}</p>}
+                </div>
+            )}
             <KPICards kpis={data.kpis} />
 
             <div className="ws-dashboard-charts">

@@ -6,6 +6,81 @@
     margin: 0 auto;
 }
 
+/* ============ Classify Banner ============ */
+
+.ws-dashboard-classify-banner {
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ws-classify-banner-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 200px;
+    color: var(--color-gray-300);
+}
+
+.ws-classify-banner-content strong {
+    color: var(--color-accent);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.ws-classify-banner-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-gray-400);
+}
+
+.ws-classify-btn {
+    padding: 0.5rem 1.25rem;
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.ws-classify-btn:hover:not(:disabled) {
+    background: #22d3ee;
+}
+
+.ws-classify-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.ws-classify-result {
+    width: 100%;
+    font-size: 0.85rem;
+    color: var(--color-accent);
+    margin: 0;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* ============ KPI Cards ============ */
 
 .ws-dashboard-kpis {

@@ -875,6 +875,72 @@ async def get_workspace_dashboard(
         raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
+@router.post("/{workspace_id}/classify-pending")
+async def classify_pending_invoices(
+    request: Request,
+    workspace_id: str,
+    current_user: TokenData = Depends(get_current_user),
+    workspace_service: WorkspaceService = Depends(get_workspace_service),
+    db: TursoClient = Depends(get_db),
+):
+    """Retroactively classify workspace invoice files that have no libro_registro entry."""
+    try:
+        user_id = current_user.user_id
+        workspace = await workspace_service.get_workspace(workspace_id, user_id)
+        if not workspace:
+            raise HTTPException(status_code=404, detail="Workspace no encontrado")
+
+        # Find invoice files with extracted_data but no libro_registro entry
+        unclassified = await db.execute(
+            """
+            SELECT wf.id, wf.extracted_data
+            FROM workspace_files wf
+            LEFT JOIN libro_registro lr ON lr.workspace_file_id = wf.id
+            WHERE wf.workspace_id = ?
+              AND wf.file_type = 'factura'
+              AND wf.processing_status = 'completed'
+              AND wf.extracted_data IS NOT NULL
+              AND lr.id IS NULL
+            """,
+            [workspace_id],
+        )
+
+        rows = unclassified.rows if hasattr(unclassified, "rows") else unclassified
+        if not rows:
+            return {"classified": 0, "message": "No hay facturas pendientes de clasificar"}
+
+        from app.services.file_processing_service import FileProcessingService
+        fps = FileProcessingService(db)
+
+        classified_count = 0
+        errors = []
+        for row in rows:
+            file_id = row.get("id") or (row[0] if isinstance(row, (list, tuple)) else None)
+            extracted_data_raw = row.get("extracted_data") or (row[1] if isinstance(row, (list, tuple)) else None)
+            if not file_id or not extracted_data_raw:
+                continue
+            try:
+                import json
+                extracted_data = json.loads(extracted_data_raw) if isinstance(extracted_data_raw, str) else extracted_data_raw
+                await fps._auto_classify_invoice(file_id, user_id, extracted_data, db)
+                classified_count += 1
+            except Exception as e:
+                logger.warning(f"Failed to classify file {file_id}: {e}")
+                errors.append(str(file_id))
+
+        return {
+            "classified": classified_count,
+            "errors": len(errors),
+            "message": f"{classified_count} facturas clasificadas correctamente",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error classifying pending invoices: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+
 @router.post("/{workspace_id}/files/{file_id}/confirm-classification")
 async def confirm_classification(
     request: Request,
