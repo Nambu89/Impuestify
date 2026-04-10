@@ -510,13 +510,13 @@ class FileProcessingService:
             INSERT INTO libro_registro
                 (id, user_id, workspace_file_id, tipo, numero_factura,
                  fecha_factura, emisor_nif, emisor_nombre,
-                 receptor_nif, receptor_nombre,
+                 receptor_nif, receptor_nombre, concepto,
                  base_imponible, tipo_iva, cuota_iva,
                  tipo_re, cuota_re, retencion_irpf_pct, retencion_irpf,
                  total, cuenta_pgc, cuenta_pgc_nombre,
                  clasificacion_confianza, raw_extraction,
                  year, trimestre, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 invoice_id,
@@ -529,6 +529,7 @@ class FileProcessingService:
                 emisor_nombre,
                 receptor_nif,
                 receptor_nombre,
+                concepto[:200] if concepto else "",
                 base_imponible,
                 tipo_iva,
                 cuota_iva,

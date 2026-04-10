@@ -38,7 +38,7 @@ export function useModeloPDF(): UseModeloPDFReturn {
                 return
             }
 
-            const response = await fetch(`${API_URL}/api/export/modelo-pdf`, {
+            const response = await fetch(`${API_URL}/export/modelo-pdf`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

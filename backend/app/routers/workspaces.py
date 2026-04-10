@@ -913,7 +913,7 @@ async def confirm_classification(
         if not lr_result.rows:
             raise HTTPException(
                 status_code=404,
-                detail="No hay clasificacion contable asociada a este archivo",
+                detail="No hay clasificación contable asociada a este archivo",
             )
 
         invoice = dict(lr_result.rows[0])
@@ -985,7 +985,7 @@ async def confirm_classification(
                 "cuenta_pgc": invoice["cuenta_pgc"],
                 "cuenta_pgc_nombre": invoice["cuenta_pgc_nombre"],
                 "clasificacion_confianza": "confirmada",
-                "message": "Clasificacion confirmada.",
+                "message": "Clasificación confirmada.",
             }
 
     except HTTPException:
