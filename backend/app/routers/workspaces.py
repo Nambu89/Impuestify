@@ -156,7 +156,7 @@ async def create_workspace(
         )
     except Exception as e:
         logger.error(f"Error creating workspace: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to create workspace: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.get("", response_model=List[WorkspaceResponse])
@@ -190,7 +190,7 @@ async def list_workspaces(
         ]
     except Exception as e:
         logger.error(f"Error listing workspaces: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to list workspaces: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.get("/{workspace_id}", response_model=WorkspaceDetailResponse)
@@ -265,7 +265,7 @@ async def get_workspace(
         raise
     except Exception as e:
         logger.error(f"Error getting workspace: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get workspace: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.patch("/{workspace_id}", response_model=WorkspaceResponse)
@@ -337,7 +337,7 @@ async def update_workspace(
         raise
     except Exception as e:
         logger.error(f"Error updating workspace: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to update workspace: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.delete("/{workspace_id}", status_code=204)
@@ -366,7 +366,7 @@ async def delete_workspace(
         raise
     except Exception as e:
         logger.error(f"Error deleting workspace: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to delete workspace: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 # === File Management Routes ===
@@ -419,7 +419,7 @@ async def upload_file(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error uploading file: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.post("/{workspace_id}/files/batch", response_model=List[FileUploadResponse], status_code=201)
@@ -579,7 +579,7 @@ async def list_files(
         raise
     except Exception as e:
         logger.error(f"Error listing files: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to list files: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.delete("/{workspace_id}/files/{file_id}", status_code=204)
@@ -618,7 +618,7 @@ async def delete_file(
         raise
     except Exception as e:
         logger.error(f"Error deleting file: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 # === Classification Confirmation ===
@@ -740,4 +740,4 @@ async def confirm_classification(
         raise
     except Exception as e:
         logger.error(f"Error confirming classification: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error al confirmar clasificacion: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")

@@ -675,15 +675,21 @@ async def http_exception_handler(request: Request, exc):
 	)
 
 
+_is_production = os.getenv("RAILWAY_ENVIRONMENT") == "production"
+
+
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc):
 	logger.error("Excepción no controlada",
 					path=request.url.path,
 					error=str(exc),
 					type=type(exc).__name__)
+	response_body = {"error": "Error interno del servidor"}
+	if not _is_production:
+		response_body["details"] = str(exc)
 	return JSONResponse(
 		status_code=500,
-		content={"error": "Error interno del servidor", "details": str(exc)}
+		content=response_body
 	)
 
 

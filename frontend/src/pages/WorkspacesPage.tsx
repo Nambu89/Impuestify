@@ -621,12 +621,13 @@ export default function WorkspacesPage() {
                             >
                                 {/* Hidden file input */}
                                 <input
+                                    id="workspace-file-upload"
                                     type="file"
                                     ref={fileInputRef}
                                     onChange={handleFileUpload}
-                                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.csv"
+                                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.csv,image/*"
                                     multiple
-                                    style={{ display: 'none' }}
+                                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden' }}
                                 />
 
                                 {/* Drag overlay */}
@@ -644,14 +645,14 @@ export default function WorkspacesPage() {
                                                 <span className="files-workspace-icon">{selectedWorkspace.icon}</span>
                                                 <h2>{selectedWorkspace.name}</h2>
                                             </div>
-                                            <button
+                                            <label
+                                                htmlFor="workspace-file-upload"
                                                 className="btn btn-primary btn-sm"
-                                                onClick={() => fileInputRef.current?.click()}
-                                                disabled={uploading}
+                                                style={{ cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.4 : 1 }}
                                             >
                                                 <Upload size={16} />
                                                 <span>{uploadProgress || (uploading ? 'Subiendo...' : 'Subir archivos')}</span>
-                                            </button>
+                                            </label>
                                         </div>
 
                                         {filesLoading ? (

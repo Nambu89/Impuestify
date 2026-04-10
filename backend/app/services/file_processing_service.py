@@ -601,17 +601,31 @@ class FileProcessingService:
             logger.error(f"Embedding generation failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def reprocess_file(self, file_id: str) -> Dict[str, Any]:
+    async def reprocess_file(self, file_id: str, user_id: str = None) -> Dict[str, Any]:
         """
         Reprocess an existing file (re-extract and re-embed).
 
         Args:
             file_id: ID of the file to reprocess
+            user_id: ID of the requesting user (ownership verification)
 
         Returns:
             Updated file metadata
         """
         db = await get_db_client()
+
+        if user_id:
+            # Verify ownership: file must belong to a workspace owned by this user
+            ownership_result = await db.execute(
+                """
+                SELECT wf.id FROM workspace_files wf
+                JOIN workspaces w ON wf.workspace_id = w.id
+                WHERE wf.id = ? AND w.user_id = ?
+                """,
+                [file_id, user_id]
+            )
+            if not ownership_result.rows:
+                raise ValueError("File not found or access denied")
 
         # Get file info
         result = await db.execute(
@@ -620,7 +634,7 @@ class FileProcessingService:
         )
 
         if not result.rows:
-            raise ValueError(f"File {file_id} not found")
+            raise ValueError("File not found or access denied")
 
         file_info = result.rows[0]
 

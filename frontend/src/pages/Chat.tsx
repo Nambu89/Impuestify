@@ -302,6 +302,7 @@ export default function Chat() {
                                     selectWorkspace(ws || null)
                                 }}
                                 className="chat-workspace-select"
+                                aria-label="Seleccionar workspace"
                             >
                                 <option value="">Sin workspace (chat general)</option>
                                 {workspaces.map(ws => (

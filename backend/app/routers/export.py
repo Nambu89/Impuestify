@@ -15,6 +15,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field, EmailStr
 
 from app.auth.jwt_handler import get_current_user
+from app.security.rate_limiter import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,7 @@ class ReportResponse(BaseModel):
 # === Endpoints ===
 
 @router.post("/irpf-report", response_class=Response)
+@limiter.limit("5/minute")
 async def generate_irpf_report(
     request: Request,
     body: IRPFReportRequest,
@@ -243,6 +245,7 @@ async def generate_irpf_report(
 
 
 @router.post("/share-with-advisor")
+@limiter.limit("5/minute")
 async def share_with_advisor(
     request: Request,
     body: ShareWithAdvisorRequest,
@@ -315,6 +318,7 @@ async def share_with_advisor(
 
 
 @router.post("/modelo-pdf", response_class=Response)
+@limiter.limit("5/minute")
 async def export_modelo_pdf(
     request: Request,
     body: ModeloPDFRequest,

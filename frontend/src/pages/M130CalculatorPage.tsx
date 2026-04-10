@@ -261,15 +261,15 @@ export default function M130CalculatorPage() {
                 <div className="m130-hero">
                     <div className="m130-hero-badge">
                         <Calculator size={14} />
-                        <span>Estimacion directa normal y simplificada</span>
+                        <span>Estimación directa normal y simplificada</span>
                     </div>
                     <h1 className="m130-title">
                         Calculadora{' '}
                         <span className="m130-title-highlight">Modelo 130</span>
                     </h1>
                     <p className="m130-subtitle">
-                        Calcula tu pago fraccionado de IRPF trimestral como autonomo.
-                        Formula oficial Art. 101 LIRPF — calculo 100% en tu dispositivo.
+                        Calcula tu pago fraccionado de IRPF trimestral como autónomo.
+                        Fórmula oficial Art. 101 LIRPF — cálculo 100% en tu dispositivo.
                     </p>
                 </div>
 
@@ -278,7 +278,7 @@ export default function M130CalculatorPage() {
                     <AlertTriangle size={16} />
                     <div>
                         <strong>Importante:</strong> todos los importes son <strong>acumulados desde el 1 de enero</strong>,
-                        no solo del trimestre. Si pones solo los datos del trimestre, el resultado sera incorrecto.
+                        no solo del trimestre. Si pones solo los datos del trimestre, el resultado será incorrecto.
                     </div>
                 </div>
 
@@ -308,7 +308,7 @@ export default function M130CalculatorPage() {
                             </div>
                             <p className="m130-trim-deadline">
                                 <Calendar size={12} />
-                                Fecha limite: <strong>{trimestreInfo.fechaLimite}</strong>
+                                Fecha límite: <strong>{trimestreInfo.fechaLimite}</strong>
                             </p>
                         </div>
 
@@ -346,7 +346,7 @@ export default function M130CalculatorPage() {
                             <NumberInput
                                 id="gastos"
                                 label="Casilla 02 — Gastos deducibles acumulados"
-                                hint="Cuota de autonomos, suministros, material, formacion, alquiler local, vehiculo... sin IVA."
+                                hint="Cuota de autónomos, suministros, material, formación, alquiler local, vehículo... sin IVA."
                                 value={input.gastos}
                                 onChange={v => setField('gastos', v)}
                             />
@@ -354,7 +354,7 @@ export default function M130CalculatorPage() {
                             <NumberInput
                                 id="retenciones"
                                 label="Casilla 06 — Retenciones soportadas acumuladas"
-                                hint="Retenciones de IRPF que tus clientes te han practicado en facturas este ano."
+                                hint="Retenciones de IRPF que tus clientes te han practicado en facturas este año."
                                 value={input.retenciones}
                                 onChange={v => setField('retenciones', v)}
                             />
@@ -362,7 +362,7 @@ export default function M130CalculatorPage() {
                             <NumberInput
                                 id="pagos"
                                 label="Casilla 05 — Pagos fraccionados anteriores"
-                                hint="Suma de los importes positivos pagados en los M130 anteriores de este ano."
+                                hint="Suma de los importes positivos pagados en los M130 anteriores de este año."
                                 value={input.pagosAnteriores}
                                 onChange={v => setField('pagosAnteriores', v)}
                                 disabled={trimestre === 'Q1'}
@@ -406,7 +406,7 @@ export default function M130CalculatorPage() {
                                         {input.minoraRentas && result.casilla13 > 0 && (
                                             <p className="m130-advanced-calc">
                                                 Minoración aplicada: {formatEur(result.casilla13)} EUR
-                                                (estimacion anual {formatEur(result.casilla03 * { Q1: 4, Q2: 2, Q3: 4 / 3, Q4: 1 }[trimestre])} EUR)
+                                                (estimación anual {formatEur(result.casilla03 * { Q1: 4, Q2: 2, Q3: 4 / 3, Q4: 1 }[trimestre])} EUR)
                                             </p>
                                         )}
                                         {input.minoraRentas && result.casilla13 === 0 && (
@@ -420,7 +420,7 @@ export default function M130CalculatorPage() {
                                     <NumberInput
                                         id="negativos"
                                         label="Casilla 15 — Resultados negativos de trimestres anteriores"
-                                        hint="Si en un trimestre anterior el resultado fue negativo (Casilla 07 < 0), puedes compensarlo aqui."
+                                        hint="Si en un trimestre anterior el resultado fue negativo (Casilla 07 < 0), puedes compensarlo aquí."
                                         value={input.resultadosNegativos}
                                         onChange={v => setField('resultadosNegativos', v)}
                                         step={10}
@@ -429,15 +429,15 @@ export default function M130CalculatorPage() {
                                     {/* Casilla 16 — Deducción vivienda */}
                                     <NumberInput
                                         id="vivienda"
-                                        label="Casilla 16 — Deduccion vivienda habitual (pre-2013)"
-                                        hint="Solo si compraste la vivienda habitual antes del 1 de enero de 2013. Maximo 660,14 EUR por trimestre."
+                                        label="Casilla 16 — Deducción vivienda habitual (pre-2013)"
+                                        hint="Solo si compraste la vivienda habitual antes del 1 de enero de 2013. Máximo 660,14 EUR por trimestre."
                                         value={input.deduccionVivienda}
                                         onChange={v => setField('deduccionVivienda', v)}
                                         step={10}
                                     />
                                     {input.deduccionVivienda > 660.14 && (
                                         <p className="m130-advanced-calc m130-advanced-calc--warn">
-                                            Limitado al maximo legal: 660,14 EUR por trimestre.
+                                            Limitado al máximo legal: 660,14 EUR por trimestre.
                                         </p>
                                     )}
 
@@ -449,9 +449,9 @@ export default function M130CalculatorPage() {
                         <div className="m130-disclaimer">
                             <Info size={14} />
                             <span>
-                                Calculo orientativo. Para declaraciones reales usa el formulario oficial de
+                                Cálculo orientativo. Para declaraciones reales usa el formulario oficial de
                                 la <a className="m130-link" href="https://sede.agenciatributaria.gob.es" target="_blank" rel="noopener noreferrer">AEAT</a>.
-                                No incluye actividades agricolas (casillas 08-11).
+                                No incluye actividades agrícolas (casillas 08-11).
                             </span>
                         </div>
                     </section>
@@ -496,7 +496,7 @@ export default function M130CalculatorPage() {
                                     </thead>
                                     <tbody>
                                         <tr className="m130-section-header">
-                                            <td colSpan={3}>Seccion I — Estimacion Directa</td>
+                                            <td colSpan={3}>Sección I — Estimación Directa</td>
                                         </tr>
                                         <CasillaRow numero="01" label="Ingresos acumulados (sin IVA)" value={result.casilla01} />
                                         <CasillaRow numero="02" label="Gastos deducibles acumulados" value={result.casilla02} highlight="deduction" />
@@ -507,17 +507,17 @@ export default function M130CalculatorPage() {
                                         <CasillaRow numero="07" label="Resultado (04 - 05 - 06)" value={result.casilla07} highlight="primary" />
 
                                         <tr className="m130-section-header">
-                                            <td colSpan={3}>Seccion III — Liquidacion</td>
+                                            <td colSpan={3}>Sección III — Liquidación</td>
                                         </tr>
                                         <CasillaRow numero="12" label="Base liquidacion (= casilla 07)" value={result.casilla07} />
                                         {result.casilla13 > 0 && (
-                                            <CasillaRow numero="13" label="Minoracion rentas bajas" value={result.casilla13} highlight="deduction" />
+                                            <CasillaRow numero="13" label="Minoración rentas bajas" value={result.casilla13} highlight="deduction" />
                                         )}
                                         {result.casilla15 > 0 && (
                                             <CasillaRow numero="15" label="Resultados negativos anteriores" value={result.casilla15} highlight="deduction" />
                                         )}
                                         {result.casilla16 > 0 && (
-                                            <CasillaRow numero="16" label="Deduccion vivienda pre-2013" value={result.casilla16} highlight="deduction" />
+                                            <CasillaRow numero="16" label="Deducción vivienda pre-2013" value={result.casilla16} highlight="deduction" />
                                         )}
                                         <CasillaRow
                                             numero="19"
@@ -556,7 +556,7 @@ export default function M130CalculatorPage() {
                                             un <strong>{((result.casilla19 / result.casilla01) * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 })}%</strong> de tus ingresos brutos acumulados.
                                         </p>
                                         <p>
-                                            Este pago reduce tu deuda de IRPF en la declaracion anual de la renta.
+                                            Este pago reduce tu deuda de IRPF en la declaración anual de la renta.
                                         </p>
                                     </div>
                                 </div>
@@ -583,10 +583,10 @@ export default function M130CalculatorPage() {
                             {/* CTA */}
                             <div className="m130-cta-card">
                                 <p className="m130-cta-text">
-                                    ¿Quieres un calculo mas completo con todas tus deducciones autonomicas?
+                                    ¿Quieres un cálculo más completo con todas tus deducciones autonómicas?
                                 </p>
                                 <a href="/guia-fiscal" className="m130-cta-btn">
-                                    Ir a la Guia Fiscal
+                                    Ir a la Guía Fiscal
                                     <ArrowRight size={16} />
                                 </a>
                             </div>
@@ -604,7 +604,7 @@ export default function M130CalculatorPage() {
                                 {
                                     icon: '01',
                                     titulo: 'Importes no acumulados',
-                                    desc: 'Los importes son desde el 1 de enero, no solo del trimestre actual. Es el error mas comun.',
+                                    desc: 'Los importes son desde el 1 de enero, no solo del trimestre actual. Es el error más común.',
                                 },
                                 {
                                     icon: '02',

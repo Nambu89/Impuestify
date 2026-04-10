@@ -250,12 +250,13 @@ class ModeloPDFGenerator:
         """Render contributor data section."""
         from reportlab.lib.units import mm
         from reportlab.platypus import Paragraph, Table, TableStyle, Spacer
+        from xml.sax.saxutils import escape
 
         if not user_info:
             return
 
-        nombre = user_info.get("nombre", "")
-        nif = user_info.get("nif", "")
+        nombre = escape(user_info.get("nombre", ""))
+        nif = escape(user_info.get("nif", ""))
         if not nombre and not nif:
             return
 
