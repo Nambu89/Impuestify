@@ -9,8 +9,11 @@ import {
     Euro,
     ArrowRight,
     Calendar,
+    Download,
+    Loader2,
 } from 'lucide-react'
 import Header from '../components/Header'
+import { useModeloPDF } from '../hooks/useModeloPDF'
 import './M130CalculatorPage.css'
 
 // -------------------------------------------------------
@@ -227,6 +230,7 @@ export default function M130CalculatorPage() {
     const [trimestre, setTrimestre] = useState<Trimestre>('Q1')
     const [input, setInput] = useState<M130Input>(DEFAULT_INPUT)
     const [advancedOpen, setAdvancedOpen] = useState(false)
+    const { downloadPDF, isLoading: pdfLoading, error: pdfError } = useModeloPDF()
 
     const trimestreInfo = TRIMESTRES.find(t => t.key === trimestre)!
 
@@ -557,6 +561,24 @@ export default function M130CalculatorPage() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Descargar PDF */}
+                            <div className="m130-cta-card">
+                                <button
+                                    className="m130-cta-btn"
+                                    style={{ width: '100%', justifyContent: 'center', border: 'none', cursor: pdfLoading ? 'wait' : 'pointer' }}
+                                    onClick={() => {
+                                        const trimestreLabel = trimestre.replace('Q', '') + 'T'
+                                        const ejercicio = new Date().getFullYear()
+                                        downloadPDF('130', { ...input, ...result }, trimestreLabel, ejercicio)
+                                    }}
+                                    disabled={pdfLoading}
+                                >
+                                    {pdfLoading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
+                                    {pdfLoading ? 'Generando...' : 'Descargar PDF'}
+                                </button>
+                                {pdfError && <p className="m130-advanced-calc m130-advanced-calc--warn">{pdfError}</p>}
+                            </div>
 
                             {/* CTA */}
                             <div className="m130-cta-card">

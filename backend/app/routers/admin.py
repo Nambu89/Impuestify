@@ -816,7 +816,7 @@ async def _do_purge_cache():
             return {"status": "disabled", "message": "Semantic cache is not enabled"}
         stats_before = cache.get_stats()
         cache._index.reset()
-        print(f"🗑️ Semantic cache PURGED ({stats_before.get('vector_count', 0)} vectors)", flush=True)
+        logger.info("Semantic cache purged (%d vectors)", stats_before.get("vector_count", 0))
         return {
             "status": "purged",
             "vectors_before": stats_before.get("vector_count", 0),

@@ -247,7 +247,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 		is_too_short_question = len(content.strip()) < 200 and "?" in content
 
 		if is_permission_asking or (is_too_short_question and not any(c.isdigit() for c in content)):
-			print(f"🚫 Filtered permission-asking response for: {original_query[:60]}", flush=True)
+			logger.warning("Filtered permission-asking response for: %s", original_query[:60])
 			# Return a helpful redirect instead of a dead-end
 			return (
 				f"No tengo una respuesta exacta para esta consulta en este momento. "
@@ -450,11 +450,11 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 				_bad = ["no he encontrado datos", "te recomiendo consultar directamente", "no dispongo de informaci"]
 				cached_text = cache_result.response or ""
 				is_stale = any(p in cached_text.lower() for p in _bad)
-				print(f"💾 Cache check: stale={is_stale}, len={len(cached_text)}, preview='{cached_text[:80]}'", flush=True)
+				logger.debug("Cache check: stale=%s, len=%d, preview='%s'", is_stale, len(cached_text), cached_text[:80])
 				if is_stale:
-					print(f"🗑️ REJECTED stale cached response", flush=True)
+					logger.debug("REJECTED stale cached response")
 				else:
-					print(f"💾 Semantic Cache HIT (similarity={cache_result.similarity:.3f})", flush=True)
+					logger.info("Semantic Cache HIT (similarity=%.3f)", cache_result.similarity)
 					return AgentResponse(
 						content=cache_result.response,
 						sources=sources or [],
@@ -702,7 +702,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 				except Exception as e:
 					logger.debug(f"Failed to cache response: {e}")
 			else:
-				print(f"🚫 NOT caching RAG-failure response (contains bad pattern)", flush=True)
+				logger.debug("NOT caching RAG-failure response (contains bad pattern)")
 			
 			# Post-LLM filter: detect and block permission-asking or empty responses
 			content = self._filter_bad_responses(content, query)

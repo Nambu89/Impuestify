@@ -55,18 +55,16 @@ class ConversationCache:
             cached_data = await self.redis.get(key)
             
             if cached_data:
-                print(f"💾 Cache HIT for conversation {conversation_id}")
-                logger.info(f"💾 Cache HIT for conversation {conversation_id}")
+                logger.info("Cache HIT for conversation %s", conversation_id)
                 # Parse JSON string to dict
                 context = json.loads(cached_data)
                 return context
             else:
-                print(f"🔍 Cache MISS for conversation {conversation_id}")
-                logger.info(f"🔍 Cache MISS for conversation {conversation_id}")
+                logger.info("Cache MISS for conversation %s", conversation_id)
                 return None
                 
         except Exception as e:
-            logger.warning(f"⚠️  Cache get error for {conversation_id}: {e}")
+            logger.warning("Cache get error for %s: %s", conversation_id, e)
             return None
     
     async def set_context(
@@ -99,12 +97,11 @@ class ConversationCache:
             # Save with TTL (EX = seconds)
             await self.redis.set(key, context_json, ex=self.ttl)
             
-            print(f"💾 Cache SET for conversation {conversation_id} (TTL: {self.ttl}s)")
-            logger.info(f"💾 Cache SET for conversation {conversation_id} (TTL: {self.ttl}s)")
+            logger.info("Cache SET for conversation %s (TTL: %ds)", conversation_id, self.ttl)
             return True
             
         except Exception as e:
-            logger.warning(f"⚠️  Cache set error for {conversation_id}: {e}")
+            logger.warning("Cache set error for %s: %s", conversation_id, e)
             return False
     
     async def refresh_ttl(self, conversation_id: str) -> bool:
@@ -127,15 +124,14 @@ class ConversationCache:
             result = await self.redis.expire(key, self.ttl)
             
             if result:
-                print(f"♻️  Cache TTL renewed for conversation {conversation_id}")
-                logger.info(f"♻️  Cache TTL renewed for conversation {conversation_id}")
+                logger.info("Cache TTL renewed for conversation %s", conversation_id)
                 return True
             else:
                 logger.debug(f"Cache key not found for TTL refresh: {conversation_id}")
                 return False
                 
         except Exception as e:
-            logger.warning(f"⚠️  Cache TTL refresh error for {conversation_id}: {e}")
+            logger.warning("Cache TTL refresh error for %s: %s", conversation_id, e)
             return False
     
     async def invalidate(self, conversation_id: str) -> bool:
@@ -158,13 +154,12 @@ class ConversationCache:
             result = await self.redis.delete(key)
             
             if result:
-                print(f"🗑️  Cache invalidated for conversation {conversation_id}")
-                logger.info(f"🗑️  Cache invalidated for conversation {conversation_id}")
+                logger.info("Cache invalidated for conversation %s", conversation_id)
                 return True
             else:
                 logger.debug(f"Cache key not found for invalidation: {conversation_id}")
                 return False
                 
         except Exception as e:
-            logger.warning(f"⚠️  Cache invalidation error for {conversation_id}: {e}")
+            logger.warning("Cache invalidation error for %s: %s", conversation_id, e)
             return False

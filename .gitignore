@@ -93,5 +93,19 @@ organize_*.py
 claude-progress.txt
 agent-comms.md
 
+# RuFlo / Claude Flow (local agent state)
+.claude-flow/
+.swarm/
+
+# Backups y archivos locales
+backups/
+TaxDown/
+social_media/
+publish-content-v3.sh
+Impuestify_Plan_Marketing_Respuestas.docx
+
+# Playwright config (local)
+playwright.config.ts
+
 # Windows reserved filename
 nul

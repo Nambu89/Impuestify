@@ -54,6 +54,12 @@ class WorkspaceResponse(BaseModel):
     file_count: int = 0
 
 
+class ConfirmClassificationRequest(BaseModel):
+    """Request to confirm or reclassify a workspace invoice"""
+    nueva_cuenta_code: Optional[str] = None
+    nueva_cuenta_nombre: Optional[str] = None
+
+
 class WorkspaceFileResponse(BaseModel):
     """Workspace file metadata"""
     id: str
@@ -64,6 +70,9 @@ class WorkspaceFileResponse(BaseModel):
     file_size: int
     processing_status: str
     created_at: str
+    cuenta_pgc: Optional[str] = None
+    cuenta_pgc_nombre: Optional[str] = None
+    clasificacion_confianza: Optional[str] = None
 
 
 class WorkspaceDetailResponse(BaseModel):
@@ -205,14 +214,16 @@ async def get_workspace(
         if not workspace:
             raise HTTPException(status_code=404, detail="Workspace not found")
 
-        # Get files for this workspace
+        # Get files for this workspace, with PGC classification for facturas
         result = await db.execute(
             """
-            SELECT id, workspace_id, filename, file_type, mime_type,
-                   file_size, processing_status, created_at
-            FROM workspace_files
-            WHERE workspace_id = ?
-            ORDER BY created_at DESC
+            SELECT wf.id, wf.workspace_id, wf.filename, wf.file_type, wf.mime_type,
+                   wf.file_size, wf.processing_status, wf.created_at,
+                   lr.cuenta_pgc, lr.cuenta_pgc_nombre, lr.clasificacion_confianza
+            FROM workspace_files wf
+            LEFT JOIN libro_registro lr ON lr.workspace_file_id = wf.id
+            WHERE wf.workspace_id = ?
+            ORDER BY wf.created_at DESC
             """,
             [workspace_id]
         )
@@ -226,7 +237,10 @@ async def get_workspace(
                 mime_type=row["mime_type"],
                 file_size=row["file_size"] or 0,
                 processing_status=row["processing_status"],
-                created_at=row["created_at"]
+                created_at=row["created_at"],
+                cuenta_pgc=row.get("cuenta_pgc"),
+                cuenta_pgc_nombre=row.get("cuenta_pgc_nombre"),
+                clasificacion_confianza=row.get("clasificacion_confianza"),
             )
             for row in result.rows
         ]
@@ -390,8 +404,10 @@ async def upload_file(
                 detail=f"Workspace has reached maximum file limit ({workspace.max_files})"
             )
 
-        # Process the file
-        result = await file_service.process_file_upload(workspace_id, file)
+        # Process the file (pass user_id for auto-classification of invoices)
+        result = await file_service.process_file_upload(
+            workspace_id, file, user_id=current_user.user_id
+        )
 
         logger.info(f"File uploaded: {file.filename} to workspace {workspace_id}")
 
@@ -478,7 +494,9 @@ async def upload_files_batch(
             break
 
         try:
-            result = await file_service.process_file_upload(workspace_id, file)
+            result = await file_service.process_file_upload(
+                workspace_id, file, user_id=current_user.user_id
+            )
             results.append(FileUploadResponse(**result))
             logger.info(f"Batch upload — file {file.filename} added to workspace {workspace_id}")
         except ValueError as exc:
@@ -530,11 +548,13 @@ async def list_files(
 
         result = await db.execute(
             """
-            SELECT id, workspace_id, filename, file_type, mime_type,
-                   file_size, processing_status, created_at
-            FROM workspace_files
-            WHERE workspace_id = ?
-            ORDER BY created_at DESC
+            SELECT wf.id, wf.workspace_id, wf.filename, wf.file_type, wf.mime_type,
+                   wf.file_size, wf.processing_status, wf.created_at,
+                   lr.cuenta_pgc, lr.cuenta_pgc_nombre, lr.clasificacion_confianza
+            FROM workspace_files wf
+            LEFT JOIN libro_registro lr ON lr.workspace_file_id = wf.id
+            WHERE wf.workspace_id = ?
+            ORDER BY wf.created_at DESC
             """,
             [workspace_id]
         )
@@ -548,7 +568,10 @@ async def list_files(
                 mime_type=row["mime_type"],
                 file_size=row["file_size"] or 0,
                 processing_status=row["processing_status"],
-                created_at=row["created_at"]
+                created_at=row["created_at"],
+                cuenta_pgc=row.get("cuenta_pgc"),
+                cuenta_pgc_nombre=row.get("cuenta_pgc_nombre"),
+                clasificacion_confianza=row.get("clasificacion_confianza"),
             )
             for row in result.rows
         ]
@@ -596,3 +619,125 @@ async def delete_file(
     except Exception as e:
         logger.error(f"Error deleting file: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+
+
+# === Classification Confirmation ===
+
+@router.post("/{workspace_id}/files/{file_id}/confirm-classification")
+async def confirm_classification(
+    request: Request,
+    workspace_id: str,
+    file_id: str,
+    body: Optional[ConfirmClassificationRequest] = None,
+    current_user: TokenData = Depends(get_current_user),
+    workspace_service: WorkspaceService = Depends(get_workspace_service),
+    db: TursoClient = Depends(get_db),
+):
+    """
+    Confirmar o reclasificar la cuenta PGC asignada a una factura del workspace.
+
+    - Sin body o body vacio: confirma la clasificacion actual.
+    - Con nueva_cuenta_code + nueva_cuenta_nombre: reclasifica y regenera asiento.
+    """
+    try:
+        # Verify workspace ownership
+        workspace = await workspace_service.get_workspace(workspace_id, current_user.user_id)
+        if not workspace:
+            raise HTTPException(status_code=404, detail="Workspace no encontrado")
+
+        # Verify file belongs to workspace
+        file_result = await db.execute(
+            "SELECT id FROM workspace_files WHERE id = ? AND workspace_id = ?",
+            [file_id, workspace_id],
+        )
+        if not file_result.rows:
+            raise HTTPException(status_code=404, detail="Archivo no encontrado en este workspace")
+
+        # Find the libro_registro entry linked to this workspace file
+        lr_result = await db.execute(
+            "SELECT * FROM libro_registro WHERE workspace_file_id = ? AND user_id = ?",
+            [file_id, current_user.user_id],
+        )
+        if not lr_result.rows:
+            raise HTTPException(
+                status_code=404,
+                detail="No hay clasificacion contable asociada a este archivo",
+            )
+
+        invoice = dict(lr_result.rows[0])
+        invoice_id = invoice["id"]
+
+        if body and body.nueva_cuenta_code and body.nueva_cuenta_nombre:
+            # Reclassify: update libro_registro + regenerate asiento
+            from app.services.contabilidad_service import ContabilidadService
+
+            await db.execute(
+                """
+                UPDATE libro_registro
+                SET cuenta_pgc = ?, cuenta_pgc_nombre = ?, clasificacion_confianza = 'manual'
+                WHERE id = ? AND user_id = ?
+                """,
+                [body.nueva_cuenta_code, body.nueva_cuenta_nombre, invoice_id, current_user.user_id],
+            )
+
+            # Delete old asientos and regenerate
+            await db.execute(
+                "DELETE FROM asientos_contables WHERE libro_registro_id = ?",
+                [invoice_id],
+            )
+
+            concepto = f"Factura {invoice['numero_factura']}" if invoice.get("numero_factura") else "Factura workspace"
+            asiento_lines = ContabilidadService.generate_asiento_lines(
+                tipo=invoice["tipo"],
+                cuenta_pgc_code=body.nueva_cuenta_code,
+                cuenta_pgc_nombre=body.nueva_cuenta_nombre,
+                base_imponible=invoice["base_imponible"],
+                cuota_iva=invoice.get("cuota_iva") or 0.0,
+                total=invoice["total"],
+                retencion_irpf=invoice.get("retencion_irpf") or 0.0,
+                concepto=concepto,
+            )
+
+            contabilidad = ContabilidadService(db=db)
+            await contabilidad.save_asiento(
+                user_id=current_user.user_id,
+                libro_registro_id=invoice_id,
+                fecha=invoice.get("fecha_factura") or "",
+                lines=asiento_lines,
+                year=invoice["year"],
+                trimestre=invoice.get("trimestre") or 1,
+            )
+
+            return {
+                "id": invoice_id,
+                "file_id": file_id,
+                "cuenta_pgc": body.nueva_cuenta_code,
+                "cuenta_pgc_nombre": body.nueva_cuenta_nombre,
+                "clasificacion_confianza": "manual",
+                "message": "Factura reclasificada correctamente.",
+            }
+        else:
+            # Just confirm the existing classification
+            await db.execute(
+                """
+                UPDATE libro_registro
+                SET clasificacion_confianza = 'confirmada'
+                WHERE id = ? AND user_id = ?
+                """,
+                [invoice_id, current_user.user_id],
+            )
+
+            return {
+                "id": invoice_id,
+                "file_id": file_id,
+                "cuenta_pgc": invoice["cuenta_pgc"],
+                "cuenta_pgc_nombre": invoice["cuenta_pgc_nombre"],
+                "clasificacion_confianza": "confirmada",
+                "message": "Clasificacion confirmada.",
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error confirming classification: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error al confirmar clasificacion: {str(e)}")

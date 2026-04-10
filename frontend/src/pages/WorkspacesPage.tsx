@@ -12,7 +12,9 @@ import {
     File,
     FileSpreadsheet,
     Receipt,
-    Pencil
+    Pencil,
+    Check,
+    RefreshCw
 } from 'lucide-react'
 import Header from '../components/Header'
 import IntegrityBadge from '../components/IntegrityBadge'
@@ -41,6 +43,9 @@ interface WorkspaceFile {
     created_at: string
     integrity_score: number | null
     integrity_findings: string | null
+    cuenta_pgc: string | null
+    cuenta_pgc_nombre: string | null
+    clasificacion_confianza: string | null
 }
 
 interface CreateWorkspaceData {
@@ -88,6 +93,9 @@ export default function WorkspacesPage() {
     const [isDragOver, setIsDragOver] = useState(false)
     const [renamingId, setRenamingId] = useState<string | null>(null)
     const [renamingValue, setRenamingValue] = useState('')
+    const [confirmingFileId, setConfirmingFileId] = useState<string | null>(null)
+    const [reclassifyFileId, setReclassifyFileId] = useState<string | null>(null)
+    const [reclassifyValue, setReclassifyValue] = useState('')
 
     // Refs
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -246,6 +254,79 @@ export default function WorkspacesPage() {
         } else if (e.key === 'Escape') {
             setRenamingId(null)
             setRenamingValue('')
+        }
+    }
+
+    const handleConfirmClassification = async (fileId: string) => {
+        if (!selectedWorkspace) return
+        try {
+            setConfirmingFileId(fileId)
+            const token = localStorage.getItem('access_token')
+            const API_URL = import.meta.env.VITE_API_URL || '/api'
+            const response = await fetch(
+                `${API_URL}/api/workspaces/${selectedWorkspace.id}/files/${fileId}/confirm-classification`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && { Authorization: `Bearer ${token}` }),
+                    },
+                    body: JSON.stringify({}),
+                }
+            )
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}))
+                throw new Error(errData.detail || 'Error al confirmar')
+            }
+            fetchWorkspaceFiles(selectedWorkspace.id)
+        } catch (err: any) {
+            setError(err.message || 'Error al confirmar clasificacion')
+        } finally {
+            setConfirmingFileId(null)
+        }
+    }
+
+    const handleReclassify = async (fileId: string) => {
+        if (!selectedWorkspace || !reclassifyValue.trim()) return
+        // Parse "600 — Compras" or "600 Compras" format
+        const raw = reclassifyValue.trim()
+        const match = raw.match(/^(\d{3,4})\s*[—\-–]?\s*(.+)$/)
+        if (!match) {
+            setError('Formato: "600 — Compras" (codigo + nombre)')
+            return
+        }
+        const code = match[1]
+        const nombre = match[2].trim()
+
+        try {
+            setConfirmingFileId(fileId)
+            const token = localStorage.getItem('access_token')
+            const API_URL = import.meta.env.VITE_API_URL || '/api'
+            const response = await fetch(
+                `${API_URL}/api/workspaces/${selectedWorkspace.id}/files/${fileId}/confirm-classification`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && { Authorization: `Bearer ${token}` }),
+                    },
+                    body: JSON.stringify({
+                        nueva_cuenta_code: code,
+                        nueva_cuenta_nombre: nombre,
+                    }),
+                }
+            )
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}))
+                throw new Error(errData.detail || 'Error al reclasificar')
+            }
+            setReclassifyFileId(null)
+            setReclassifyValue('')
+            fetchWorkspaceFiles(selectedWorkspace.id)
+        } catch (err: any) {
+            setError(err.message || 'Error al reclasificar')
+        } finally {
+            setConfirmingFileId(null)
         }
     }
 
@@ -603,6 +684,74 @@ export default function WorkspacesPage() {
                                                             <span className="file-meta">
                                                                 {formatFileSize(file.file_size)} • {formatDate(file.created_at)}
                                                             </span>
+                                                            {/* PGC Classification badge for invoices */}
+                                                            {file.file_type === 'factura' && file.cuenta_pgc && (
+                                                                <div className="file-classification">
+                                                                    <span className={`classification-badge ${
+                                                                        file.clasificacion_confianza === 'confirmada' || file.clasificacion_confianza === 'manual'
+                                                                            ? 'classification-confirmed'
+                                                                            : 'classification-pending'
+                                                                    }`}>
+                                                                        {file.cuenta_pgc} — {file.cuenta_pgc_nombre}
+                                                                    </span>
+                                                                    {file.clasificacion_confianza === 'pendiente_confirmacion' && (
+                                                                        <span className="classification-status classification-status--pending">
+                                                                            Por confirmar
+                                                                        </span>
+                                                                    )}
+                                                                    {(file.clasificacion_confianza === 'confirmada' || file.clasificacion_confianza === 'manual') && (
+                                                                        <span className="classification-status classification-status--confirmed">
+                                                                            {file.clasificacion_confianza === 'manual' ? 'Manual' : 'Confirmada'}
+                                                                        </span>
+                                                                    )}
+                                                                    {file.clasificacion_confianza === 'pendiente_confirmacion' && (
+                                                                        <div className="classification-actions">
+                                                                            <button
+                                                                                className="btn btn-ghost classification-action-btn classification-confirm-btn"
+                                                                                onClick={(e) => { e.stopPropagation(); handleConfirmClassification(file.id) }}
+                                                                                disabled={confirmingFileId === file.id}
+                                                                                title="Confirmar clasificacion"
+                                                                            >
+                                                                                <Check size={14} />
+                                                                            </button>
+                                                                            <button
+                                                                                className="btn btn-ghost classification-action-btn classification-reclassify-btn"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation()
+                                                                                    setReclassifyFileId(reclassifyFileId === file.id ? null : file.id)
+                                                                                    setReclassifyValue('')
+                                                                                }}
+                                                                                title="Reclasificar"
+                                                                            >
+                                                                                <RefreshCw size={14} />
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                    {reclassifyFileId === file.id && (
+                                                                        <div className="reclassify-input-row">
+                                                                            <input
+                                                                                className="reclassify-input"
+                                                                                type="text"
+                                                                                placeholder="600 — Compras"
+                                                                                value={reclassifyValue}
+                                                                                onChange={(e) => setReclassifyValue(e.target.value)}
+                                                                                onKeyDown={(e) => {
+                                                                                    if (e.key === 'Enter') { e.preventDefault(); handleReclassify(file.id) }
+                                                                                    if (e.key === 'Escape') { setReclassifyFileId(null); setReclassifyValue('') }
+                                                                                }}
+                                                                                autoFocus
+                                                                            />
+                                                                            <button
+                                                                                className="btn btn-primary btn-xs"
+                                                                                onClick={() => handleReclassify(file.id)}
+                                                                                disabled={!reclassifyValue.trim() || confirmingFileId === file.id}
+                                                                            >
+                                                                                Aplicar
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <div className="file-status">
                                                             {getStatusBadge(file.processing_status)}

@@ -63,9 +63,7 @@ class ProgressCallback:
             data_str = json.dumps(data) if not isinstance(data, str) else data
             event_dict = {"event": event, "data": data_str}
             await self.events.put(event_dict)
-            # Use print for Railway visibility (logger may not flush in async context)
-            print(f"📤 SSE Event queued: {event}", flush=True)
-            logger.info(f"📤 SSE Event queued: {event}")
+            logger.info("SSE Event queued: %s", event)
 
     async def thinking(self, message: str):
         """AI is thinking/reasoning"""
@@ -132,16 +130,14 @@ async def sse_generator(
     start_time = time.time()
     last_heartbeat = time.time()
     
-    print("🚀 SSE generator started", flush=True)
-    logger.info("🚀 SSE generator started")
+    logger.info("SSE generator started")
     
     try:
         while True:
             # Check timeout
             elapsed = time.time() - start_time
             if elapsed > timeout:
-                print(f"⏱️ Stream timeout after {elapsed:.1f}s", flush=True)
-                logger.warning(f"Stream timeout after {elapsed:.1f}s")
+                logger.warning("Stream timeout after %.1fs", elapsed)
                 yield {"event": "error", "data": "Stream timeout - processing took too long"}
                 yield {"event": "done", "data": ""}
                 break
@@ -152,7 +148,6 @@ async def sse_generator(
                 # sse-starlette uses 'comment' key for SSE comments
                 yield {"comment": "heartbeat"}
                 last_heartbeat = current_time
-                print("💓 Sent heartbeat", flush=True)
             
             # Get next event (with timeout)
             try:
@@ -161,8 +156,7 @@ async def sse_generator(
                     timeout=1.0  # Check heartbeat every second
                 )
                 
-                print(f"📤 SSE yielding: {event_dict.get('event', 'unknown')}", flush=True)
-                logger.info(f"📤 SSE yielding: {event_dict.get('event', 'unknown')}")
+                logger.info("SSE yielding: %s", event_dict.get('event', 'unknown'))
                 
                 # Yield event dict (sse-starlette handles formatting)
                 yield event_dict
@@ -177,8 +171,7 @@ async def sse_generator(
                                 yield remaining
                         except asyncio.QueueEmpty:
                             break
-                    print(f"✅ Stream completed in {elapsed:.1f}s", flush=True)
-                    logger.info(f"✅ Stream completed in {elapsed:.1f}s")
+                    logger.info("Stream completed in %.1fs", elapsed)
                     break
                     
             except asyncio.TimeoutError:
@@ -187,16 +180,16 @@ async def sse_generator(
                 
     except asyncio.CancelledError:
         # Client disconnected
-        logger.info("🔌 Client disconnected from stream")
+        logger.info("Client disconnected from stream")
         callback.close()
         raise
     except Exception as e:
-        logger.error(f"❌ Stream error: {e}", exc_info=True)
+        logger.error("Stream error: %s", e, exc_info=True)
         yield {"event": "error", "data": str(e)}
         yield {"event": "done", "data": ""}
     finally:
         callback.close()
-        logger.info("🏁 SSE generator finished")
+        logger.info("SSE generator finished")
 
 
 import re

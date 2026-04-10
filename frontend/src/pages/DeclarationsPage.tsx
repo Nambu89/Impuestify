@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { FileText, Calculator, TrendingUp, TrendingDown, Save, Loader2, ChevronDown, Trash2, BarChart3 } from 'lucide-react'
+import { FileText, Calculator, TrendingUp, TrendingDown, Save, Loader2, ChevronDown, Trash2, BarChart3, Download } from 'lucide-react'
 import Header from '../components/Header'
 import { useDeclarations, type ModeloType, type Calculate303Input, type Calculate130Input, type Calculate420Input, type CalculateIpsiInput } from '../hooks/useDeclarations'
+import { useModeloPDF } from '../hooks/useModeloPDF'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
 import CountUp from '../components/reactbits/CountUp'
 import './DeclarationsPage.css'
@@ -391,6 +392,7 @@ export default function DeclarationsPage() {
         calcResult, declarations, loading, saving, error,
         calculate, save, loadYear, reset,
     } = useDeclarations()
+    const { downloadPDF, isLoading: pdfLoading, error: pdfError } = useModeloPDF()
 
     const [modelo, setModelo] = useState<ModeloType>('303')
     const [quarter, setQuarter] = useState(1)
@@ -587,9 +589,22 @@ export default function DeclarationsPage() {
                                 {saving ? <Loader2 size={16} className="spin" /> : <Save size={16} />}
                                 {saved ? 'Guardado' : 'Guardar declaración'}
                             </button>
+                            <button
+                                className="decl-btn decl-btn--secondary"
+                                onClick={() => {
+                                    const formData = modelo === '303' ? form303 : modelo === '130' ? form130 : modelo === '420' ? form420 : formIpsi
+                                    const trimestreLabel = `${quarter}T`
+                                    downloadPDF(modelo, { ...formData, ...(calcResult?.result || {}) }, trimestreLabel, year)
+                                }}
+                                disabled={!calcResult?.success || pdfLoading}
+                            >
+                                {pdfLoading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
+                                {pdfLoading ? 'Generando...' : 'Descargar PDF'}
+                            </button>
                         </div>
 
                         {error && <div className="decl-error">{error}</div>}
+                        {pdfError && <div className="decl-error">{pdfError}</div>}
                     </div>
 
                     {/* Right: Result + History */}

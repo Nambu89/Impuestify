@@ -90,145 +90,118 @@ async def lifespan(app: FastAPI):
 	print("🚀 INICIANDO Impuestify...")
 	print("=" * 80)
 	
-	logger.info("=" * 80)
-	logger.info("🚀 INICIANDO Impuestify...")
-	logger.info("=" * 80)
-	
 	# 0. Validate critical secrets
 	_jwt_defaults = ["your-super-secret-jwt-key-change-in-production", "change-this-secret-key-in-production"]
 	_jwt_val = os.environ.get("JWT_SECRET_KEY", "")
 	if _jwt_val in _jwt_defaults or not _jwt_val:
 		if _is_production:
-			print("⚠️  CRITICAL: JWT_SECRET_KEY is using a default value in production!")
+			print("CRITICAL: JWT_SECRET_KEY is using a default value in production!")
 			logger.critical("JWT_SECRET_KEY is using a default value in production")
 		else:
-			print("⚠️  WARNING: JWT_SECRET_KEY is using a default value.")
+			print("WARNING: JWT_SECRET_KEY is using a default value.")
 			logger.warning("JWT_SECRET_KEY is using a default value")
 
 	# 0b. Inicializar HTTP Client Pool (para todas las conexiones HTTP)
-	print("🌐 Inicializando HTTP Client Pool...")
-	logger.info("🌐 Inicializando HTTP Client Pool...")
+	logger.info("Inicializando HTTP Client Pool...")
 	try:
 		from app.core.http_client import HTTPClientManager
 		http_client_manager = HTTPClientManager()
 		await http_client_manager.initialize()
-		
+
 		# Log pool stats
 		stats = http_client_manager.get_pool_stats()
-		print(f"✅ HTTP Pool: max={stats.get('max_connections')}, keepalive={stats.get('max_keepalive_connections')}, timeout={stats.get('timeout')}")
 		logger.info(
-			"✅ HTTP Pool configurado",
+			"HTTP Pool configurado",
 			max_connections=stats.get("max_connections"),
 			max_keepalive=stats.get("max_keepalive_connections"),
 			timeout=stats.get("timeout")
 		)
 	except Exception as e:
-		print(f"❌ Error HTTP Pool: {e}")
-		logger.error("❌ Error inicializando HTTP Pool", error=str(e))
+		logger.error("Error inicializando HTTP Pool", error=str(e))
 	
-	# 1. Conexión a Turso Database
-	print("📡 Conectando a Turso Database...")
-	logger.info("📡 Conectando a Turso Database...")
+	# 1. Conexion a Turso Database
+	logger.info("Conectando a Turso Database...")
 	try:
 		from app.database.turso_client import TursoClient
 		db_client = TursoClient()
 		await db_client.connect()
-		
+
 		# Initialize schema (creates tables if they don't exist, including new workspaces tables)
 		await db_client.init_schema()
-		print("✅ Schema de base de datos verificado/actualizado")
-		
-		# Verificar conexión contando documentos
+		logger.info("Schema de base de datos verificado/actualizado")
+
+		# Verificar conexion contando documentos
 		result = await db_client.execute("SELECT COUNT(*) as cnt FROM documents")
 		doc_count = result.rows[0]['cnt'] if result.rows else 0
-		
+
 		result = await db_client.execute("SELECT COUNT(*) as cnt FROM document_chunks")
 		chunk_count = result.rows[0]['cnt'] if result.rows else 0
-		
+
 		result = await db_client.execute("SELECT COUNT(*) as cnt FROM embeddings")
 		embedding_count = result.rows[0]['cnt'] if result.rows else 0
-		
-		print(f"✅ Turso Database conectada: docs={doc_count}, chunks={chunk_count}, embeddings={embedding_count}")
+
 		logger.info(
-			"✅ Turso Database conectada", 
-			documents=doc_count, 
-			chunks=chunk_count, 
+			"Turso Database conectada",
+			documents=doc_count,
+			chunks=chunk_count,
 			embeddings=embedding_count
 		)
-		
+
 	except Exception as e:
-		print(f"❌ Error conectando a Turso: {str(e)}")
-		logger.error("❌ Error conectando a Turso", error=str(e))
-		print("⚠️  Impuestify funcionará sin base de datos RAG")
-		logger.warning("⚠️  Impuestify funcionará sin base de datos RAG")
+		logger.error("Error conectando a Turso", error=str(e))
+		logger.warning("Impuestify funcionara sin base de datos RAG")
 		db_client = None
 	
-	# 2. Conexión a Upstash Redis (caché)
-	print("📦 Conectando a Upstash Redis (caché)...")
-	logger.info("📦 Conectando a Upstash Redis (caché)...")
+	# 2. Conexion a Upstash Redis (cache)
+	logger.info("Conectando a Upstash Redis (cache)...")
 	try:
 		upstash_url = os.environ.get("UPSTASH_REDIS_REST_URL")
 		upstash_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
-		
+
 		if upstash_url and upstash_token:
 			# Use async client from upstash_redis.asyncio
 			from upstash_redis.asyncio import Redis as AsyncRedis
 			upstash_client = AsyncRedis(url=upstash_url, token=upstash_token)
-			# Verificar conexión
+			# Verificar conexion
 			pong = await upstash_client.ping()
-			print(f"✅ Upstash Redis conectado: {pong}")
-			logger.info("✅ Upstash Redis conectado", response=pong)
+			logger.info("Upstash Redis conectado", response=pong)
 		else:
-			print("⚠️  Upstash Redis no configurado - caché deshabilitada")
-			logger.warning("⚠️  Upstash Redis no configurado - caché deshabilitada")
+			logger.warning("Upstash Redis no configurado - cache deshabilitada")
 			upstash_client = None
-			
+
 	except ImportError as ie:
-		print(f"⚠️  upstash-redis no instalado: {ie}")
-		logger.warning("⚠️  upstash-redis no instalado - pip install upstash-redis")
+		logger.warning("upstash-redis no instalado: %s", ie)
 		upstash_client = None
 	except Exception as e:
-		print(f"⚠️  Error conectando a Upstash: {e}")
-		logger.warning("⚠️  Error conectando a Upstash", error=str(e))
+		logger.warning("Error conectando a Upstash", error=str(e))
 		upstash_client = None
 	
 	# 3. Verificar OpenAI API
-	print("🤖 Verificando OpenAI API...")
-	logger.info("🤖 Verificando OpenAI API...")
+	logger.info("Verificando OpenAI API...")
 	openai_key = os.environ.get("OPENAI_API_KEY")
 	openai_model = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
-	
+
 	if openai_key:
-		print(f"✅ OpenAI configurado: model={openai_model}")
-		logger.info("✅ OpenAI configurado", model=openai_model)
+		logger.info("OpenAI configurado", model=openai_model)
 	else:
-		print("❌ OpenAI no configurado: falta OPENAI_API_KEY")
-		logger.error("❌ OpenAI no configurado - falta OPENAI_API_KEY")
-		logger.warning("⚠️ Algunos servicios no estarán disponibles sin OpenAI")
+		logger.error("OpenAI no configurado - falta OPENAI_API_KEY")
+		logger.warning("Algunos servicios no estaran disponibles sin OpenAI")
 	
 	# 4. Verificar GROQ API (Security)
-	print("🛡️ Verificando GROQ API (Seguridad)...")
-	logger.info("🛡️ Verificando GROQ API (Seguridad)...")
+	logger.info("Verificando GROQ API (Seguridad)...")
 	groq_key = os.environ.get("GROQ_API_KEY")
-	
+
 	if groq_key:
 		try:
 			from groq import Groq
 			# Quick validation (doesn't count against request quota)
 			groq_client = Groq(api_key=groq_key)
-			print("✅ GROQ configurado correctamente")
-			logger.info("✅ GROQ configurado para seguridad")
-			logger.info("  → Llama Guard 4: Content Moderation")
-			logger.info("  → Llama Prompt Guard: Injection Detection")
-			logger.info("  → Complexity Router: Query Classification")
+			logger.info("GROQ configurado para seguridad (LlamaGuard4, PromptGuard, ComplexityRouter)")
 		except Exception as e:
-			print(f"⚠️ Error inicializando GROQ: {e}")
-			logger.warning("⚠️ Error inicializando GROQ", error=str(e))
-			logger.warning("⚠️ Funciones de seguridad limitadas")
+			logger.warning("Error inicializando GROQ", error=str(e))
+			logger.warning("Funciones de seguridad limitadas")
 	else:
-		print("⚠️ GROQ_API_KEY no configurada")
-		logger.warning("⚠️ GROQ_API_KEY no configurada")
-		logger.warning("⚠️ Seguridad AI deshabilitada (Llama Guard, Prompt Guard, etc.)")
+		logger.warning("GROQ_API_KEY no configurada - Seguridad AI deshabilitada")
 
 	
 	# Register territory plugins (21 CCAA across 5 fiscal regimes)
@@ -237,15 +210,11 @@ async def lifespan(app: FastAPI):
 		register_all_territories()
 		from app.territories.registry import list_territories
 		territory_count = len(list_territories())
-		print(f"✅ Territory plugins registrados: {territory_count} CCAA")
-		logger.info("✅ Territory plugins registrados", count=territory_count)
+		logger.info("Territory plugins registrados", count=territory_count)
 	except Exception as e:
-		print(f"⚠️  Error registrando territory plugins: {e}")
-		logger.warning("⚠️  Error registrando territory plugins", error=str(e))
+		logger.warning("Error registrando territory plugins", error=str(e))
 
-	logger.info("=" * 80)
-	logger.info("✅ Impuestify INICIADO CORRECTAMENTE")
-	logger.info("=" * 80)
+	logger.info("Impuestify INICIADO CORRECTAMENTE")
 	
 	# Store in app state for access in routes
 	app.state.db_client = db_client
@@ -259,38 +228,27 @@ async def lifespan(app: FastAPI):
 	print("🛑 CERRANDO Impuestify...")
 	print("=" * 80)
 	
-	logger.info("=" * 80)
-	logger.info("🛑 CERRANDO Impuestify...")
-	logger.info("=" * 80)
-	
 	try:
 		# Close Turso connection
 		if db_client:
 			await db_client.disconnect()
-			print("🔌 Turso Database desconectada")
-			logger.info("🔌 Turso Database desconectada")
-		
+			logger.info("Turso Database desconectada")
+
 		# Close Upstash connection (if needed)
 		if upstash_client:
 			# Upstash REST client doesn't need explicit close
-			print("🔌 Upstash Redis cerrado")
-			logger.info("🔌 Upstash Redis cerrado")
-		
+			logger.info("Upstash Redis cerrado")
+
 		# Close HTTP client pool
 		if http_client_manager:
 			await http_client_manager.close()
-			
+
 	except Exception as e:
-		print(f"❌ Error durante el cierre: {e}")
-		logger.error("❌ Error durante el cierre", error=str(e))
+		logger.error("Error durante el cierre", error=str(e))
 	
 	print("=" * 80)
-	print("👋 Impuestify CERRADO CORRECTAMENTE")
+	print("Impuestify CERRADO CORRECTAMENTE")
 	print("=" * 80)
-	
-	logger.info("=" * 80)
-	logger.info("👋 Impuestify CERRADO CORRECTAMENTE")
-	logger.info("=" * 80)
 
 
 # === Crear aplicación FastAPI ===
@@ -380,12 +338,9 @@ async def add_security_headers(request: Request, call_next):
 # So we add it here (which is last in code = first in execution)
 allowed_origins_str = os.environ.get("ALLOWED_ORIGINS", "*")
 
-# Debug: Log the origins being loaded
-print(f"🌐 CORS Origins Raw: {repr(allowed_origins_str)}")
-
 if allowed_origins_str == "*":
     if _is_production:
-        print("⚠️  WARNING: ALLOWED_ORIGINS='*' in production — restricting to impuestify.com")
+        logger.warning("ALLOWED_ORIGINS='*' in production — restricting to impuestify.com")
         allowed_origins = ["https://impuestify.com", "https://www.impuestify.com"]
     else:
         allowed_origins = ["*"]
@@ -393,8 +348,6 @@ else:
     # Parse comma-separated list and strip quotes if present
     allowed_origins_str = allowed_origins_str.strip('"').strip("'")
     allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
-
-print(f"🌐 CORS Origins Parsed: {allowed_origins}")
 
 app.add_middleware(
 	CORSMiddleware,

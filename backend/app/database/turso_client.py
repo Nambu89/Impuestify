@@ -1000,6 +1000,18 @@ class TursoClient:
                     except Exception:
                         pass  # column already exists
 
+            # Add workspace_id column to conversations if it doesn't exist
+            result = await self.execute("PRAGMA table_info(conversations)")
+            conv_columns = {row["name"] for row in result.rows}
+            if "workspace_id" not in conv_columns:
+                try:
+                    await self.execute(
+                        "ALTER TABLE conversations ADD COLUMN workspace_id TEXT"
+                    )
+                    logger.info("Added workspace_id column to conversations table")
+                except Exception:
+                    pass  # column already exists
+
             logger.info("Database schema initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize schema: {e}")

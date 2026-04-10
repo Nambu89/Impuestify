@@ -136,10 +136,20 @@ async def ask_question_stream(
     conv_service = ConversationService(db)
     conversation_id = request.conversation_id
     
+    # === Restore workspace_id from stored conversation on follow-ups ===
+    if request.conversation_id and not request.workspace_id:
+        stored_ws = await conv_service.get_conversation_workspace(
+            request.conversation_id, current_user.user_id
+        )
+        if stored_ws:
+            request.workspace_id = stored_ws
+            logger.info(f"Restored workspace_id {stored_ws} from conversation {request.conversation_id}")
+
     if not conversation_id:
         logger.info("Creating new conversation (no ID provided)")
         conversation = await conv_service.create_conversation(
             user_id=current_user.user_id,
+            workspace_id=request.workspace_id,
             title=request.question[:50] + "..." if len(request.question) > 50 else request.question
         )
         conversation_id = conversation["id"]
@@ -151,6 +161,7 @@ async def ask_question_stream(
             # Create a new conversation (can't use specific ID)
             conversation = await conv_service.create_conversation(
                 user_id=current_user.user_id,
+                workspace_id=request.workspace_id,
                 title=request.question[:50] + "..." if len(request.question) > 50 else request.question
             )
             # Update the conversation_id to the newly created one
@@ -171,7 +182,7 @@ async def ask_question_stream(
     
     # === Main streaming logic ===
     async def event_stream():
-        print("🎬 event_stream() STARTED", flush=True)
+        logger.debug("event_stream() started")
         callback = ProgressCallback()
         
         try:
@@ -317,16 +328,14 @@ async def ask_question_stream(
                 # SKIP RAG — reuse cached chunks from previous turn
                 relevant_chunks = cached_rag_chunks
                 rag_query_used = cached_rag_query
-                print(f"⚡ RAG SKIP (clarification) — reusing {len(relevant_chunks)} cached chunks", flush=True)
-                logger.info(f"⚡ RAG SKIP (clarification) — reusing {len(relevant_chunks)} cached chunks")
+                logger.info("RAG SKIP (clarification) — reusing %d cached chunks", len(relevant_chunks))
             else:
                 # Run RAG (normal or with expanded query)
                 if followup_type == "modification":
                     rag_query_used = contextualize_query(
                         request.question, conversation_history, cached_rag_query
                     )
-                    print(f"🔀 RAG CONTEXTUALIZED: '{request.question}' → '{rag_query_used}'", flush=True)
-                    logger.info(f"🔀 RAG CONTEXTUALIZED: '{request.question}' → '{rag_query_used}'")
+                    logger.info("RAG CONTEXTUALIZED: '%s' -> '%s'", request.question, rag_query_used)
 
                 from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
                 retriever = HybridRetriever(db_client=db)
@@ -334,9 +343,9 @@ async def ask_question_stream(
                 # Send early SSE event to keep connection alive during RAG search
                 yield {"event": "thinking", "data": "Buscando información relevante..."}
 
-                print("🧮 Generating query embedding...", flush=True)
+                logger.debug("Generating query embedding...")
                 query_embedding = await get_query_embedding(rag_query_used)
-                print(f"🧮 Embedding done: {'OK' if query_embedding else 'NONE'}", flush=True)
+                logger.debug("Embedding done: %s", "OK" if query_embedding else "NONE")
 
                 # Territory filter: detect CCAA from question first, fallback to profile
                 # Mapping: RegionDetector names → documents.source values in DB
@@ -375,9 +384,9 @@ async def ask_question_stream(
                         else:
                             # Normalize long CCAA names to DB source values
                             ccaa_for_rag = _REGION_TO_DB_SOURCE.get(detected_region, detected_region)
-                        print(f"📍 RAG territory from question: {detected_region} → DB filter: {ccaa_for_rag}", flush=True)
+                        logger.debug("RAG territory from question: %s -> DB filter: %s", detected_region, ccaa_for_rag)
                 except Exception as e:
-                    print(f"⚠️ RegionDetector error: {e}", flush=True)
+                    logger.warning("RegionDetector error: %s", e)
 
                 if not ccaa_for_rag:
                     try:
@@ -392,13 +401,7 @@ async def ask_question_stream(
                         logger.debug(f"Could not pre-fetch CCAA for RAG filter: {_rag_ccaa_err}")
 
                 # First search WITH territory filter
-                import resource, os
-                try:
-                    mem_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-                    print(f"💾 Memory before RAG: {mem_mb:.0f} MB (PID {os.getpid()})", flush=True)
-                except Exception:
-                    print(f"💾 Memory check unavailable (PID {os.getpid()})", flush=True)
-                print(f"🔍 RAG search: query='{rag_query_used[:60]}', territory={ccaa_for_rag}", flush=True)
+                logger.debug("RAG search: query='%s', territory=%s", rag_query_used[:60], ccaa_for_rag)
                 try:
                     relevant_chunks = await retriever.search(
                         query=rag_query_used,
@@ -406,24 +409,21 @@ async def ask_question_stream(
                         k=request.k or 5,
                         territory_filter=ccaa_for_rag,
                     )
-                    print(f"📊 RAG results with filter: {len(relevant_chunks)} chunks", flush=True)
+                    logger.debug("RAG results with filter: %d chunks", len(relevant_chunks))
                 except Exception as rag_err:
-                    print(f"❌ RAG search CRASHED: {type(rag_err).__name__}: {rag_err}", flush=True)
-                    import traceback
-                    traceback.print_exc()
-                    logger.error(f"RAG search failed", exc_info=True)
+                    logger.error("RAG search failed: %s: %s", type(rag_err).__name__, rag_err, exc_info=True)
                     relevant_chunks = []
 
                 # If no results with filter, retry WITHOUT filter (broader search)
                 if not relevant_chunks:
-                    print("🔄 No RAG chunks with territory filter, retrying without filter", flush=True)
+                    logger.debug("No RAG chunks with territory filter, retrying without filter")
                     relevant_chunks = await retriever.search(
                         query=rag_query_used,
                         query_embedding=query_embedding,
                         k=request.k or 5,
                         territory_filter=None,
                     )
-                    print(f"📊 RAG results without filter: {len(relevant_chunks)} chunks", flush=True)
+                    logger.debug("RAG results without filter: %d chunks", len(relevant_chunks))
 
             # === Workspace semantic search (user's own documents) ===
             workspace_rag_context = ""
@@ -443,11 +443,11 @@ async def ask_question_stream(
                             f"📄 Tu documento: {r.filename}\n{r.chunk_text}"
                             for r in ws_results
                         ])
-                        print(f"📂 Workspace RAG: {len(ws_results)} chunks from user docs", flush=True)
+                        logger.debug("Workspace RAG: %d chunks from user docs", len(ws_results))
                     else:
-                        print("📂 Workspace RAG: 0 results from user docs", flush=True)
+                        logger.debug("Workspace RAG: 0 results from user docs")
                 except Exception as e:
-                    print(f"⚠️ Workspace RAG search failed: {e}", flush=True)
+                    logger.warning("Workspace RAG search failed: %s", e)
 
             # Prepare context - ALLOW empty RAG if we have conversation history or user memory
             if relevant_chunks:
@@ -523,7 +523,7 @@ async def ask_question_stream(
             except Exception as e:
                 logger.warning(f"Error loading fiscal profile: {e}")
 
-            print("🤖 Starting agent execution...", flush=True)
+            logger.debug("Starting agent execution")
 
             # Create async task for agent execution
             async def run_agent():

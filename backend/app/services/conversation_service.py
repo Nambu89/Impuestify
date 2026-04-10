@@ -24,37 +24,41 @@ class ConversationService:
     async def create_conversation(
         self,
         user_id: str,
-        title: Optional[str] = None
+        title: Optional[str] = None,
+        workspace_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Create a new conversation for a user.
-        
+
         Args:
             user_id: User ID
             title: Optional conversation title (auto-generated if None)
-            
+            workspace_id: Optional workspace ID to associate with this conversation
+
         Returns:
             Created conversation dict
         """
         conversation_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
-        
+
         if not title:
             title = f"Nueva conversación"
-        
+
         sql = """
-        INSERT INTO conversations (id, user_id, title, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO conversations (id, user_id, title, workspace_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
         """
-        
-        await self.db.execute(sql, [conversation_id, user_id, title, now, now])
-        
-        logger.info(f"Created conversation {conversation_id} for user {user_id}")
-        
+
+        await self.db.execute(sql, [conversation_id, user_id, title, workspace_id, now, now])
+
+        logger.info(f"Created conversation {conversation_id} for user {user_id}" +
+                     (f" (workspace: {workspace_id})" if workspace_id else ""))
+
         return {
             "id": conversation_id,
             "user_id": user_id,
             "title": title,
+            "workspace_id": workspace_id,
             "created_at": now,
             "updated_at": now
         }
@@ -119,7 +123,22 @@ class ConversationService:
         if result.rows:
             return dict(result.rows[0])
         return None
-    
+
+    async def get_conversation_workspace(
+        self,
+        conversation_id: str,
+        user_id: str
+    ) -> Optional[str]:
+        """Get the workspace_id associated with a conversation."""
+        result = await self.db.execute(
+            "SELECT workspace_id FROM conversations WHERE id = ? AND user_id = ?",
+            [conversation_id, user_id]
+        )
+        rows = result.rows if hasattr(result, 'rows') else result
+        if rows and rows[0]:
+            return rows[0].get("workspace_id") if isinstance(rows[0], dict) else rows[0][0]
+        return None
+
     async def get_conversation_messages(
         self,
         conversation_id: str,

@@ -85,7 +85,7 @@ class IRPFCalculator:
                 )
             except ValueError:
                 # Estatal scale not found, skip it for now
-                print("⚠️  Advertencia: Escala estatal no encontrada, solo calculando cuota autonómica")
+                logger.warning("Escala estatal no encontrada, solo calculando cuota autonomica")
         
         # Calculate CCAA quota
         # Ceuta/Melilla use the Estatal scale (they have no autonomous scale).
@@ -305,19 +305,14 @@ class IRPFCalculator:
 async def test_calculator():
     """Test IRPF calculator with example."""
     calc = IRPFCalculator()
-    
+
     try:
-        # Test case: Zaragoza (Aragón), 35,000€
-        print("\n🧪 TEST: Zaragoza, 35,000€ brutos\n")
-        
         result = await calc.calculate_irpf(
             base_liquidable=35000,
-            jurisdiction='Aragón',
+            jurisdiction='Aragon',
             year=2024
         )
-        
-        print(calc.format_result(result))
-        
+        logger.info("Test result:\n%s", calc.format_result(result))
     finally:
         await calc.disconnect()
 

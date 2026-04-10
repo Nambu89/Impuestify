@@ -456,9 +456,12 @@
 ## BACKLOG
 
 ### Alta prioridad
-- [ ] **Seed pharmacy deductions** en produccion Turso
-- [ ] **Dropdowns audit** — verificar TODOS los selects en TaxGuidePage y DynamicFiscalForm
-- [ ] **RAG farmacia** — ingestar normativa RE (Art. 154-163 LIVA) + guias CGCOF
+- [x] **Seed pharmacy deductions** en produccion Turso — DONE (sesion 30+)
+- [x] **Dropdowns audit** — verificar TODOS los selects en TaxGuidePage y DynamicFiscalForm — DONE (sesion 30+)
+- [x] **RAG farmacia** — ingestar normativa RE (Art. 154-163 LIVA) + guias CGCOF — DONE (sesion 30+)
+- [x] **Generador PDF Modelos Tributarios** — 7 modelos + forales, ModeloPDFGenerator + endpoint + frontend hook + 8 tests — DONE (sesion 31)
+- [x] **Workspace Fase 2** — Auto-clasificacion PGC al subir factura + confirmacion/reclasificacion + badges — DONE (sesion 31)
+- [x] **Workspace Fase 3** — Chat scoped por workspace + selector dropdown + indicador visual — DONE (sesion 31)
 - [ ] **Archivos >500 lineas** — refactoring irpf_estimate.py (1340), turso_client.py (1074), chat.py (781)
 
 ### Media prioridad

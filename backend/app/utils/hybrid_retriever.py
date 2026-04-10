@@ -57,11 +57,11 @@ class HybridRetriever:
         if UPSTASH_VECTOR_AVAILABLE and url and token:
             try:
                 self._vector_index = Index(url=url, token=token)
-                logger.info("🔍 HybridRetriever initialized (FTS5 + Upstash Vector)")
+                logger.info("HybridRetriever initialized (FTS5 + Upstash Vector)")
             except Exception as e:
-                logger.error(f"❌ Failed to init Upstash Vector: {e}")
+                logger.error("Failed to init Upstash Vector: %s", e)
         else:
-            logger.info("🔍 HybridRetriever initialized (FTS5-only mode)")
+            logger.info("HybridRetriever initialized (FTS5-only mode)")
 
     @property
     def has_vector_search(self) -> bool:
@@ -91,7 +91,7 @@ class HybridRetriever:
             List of dicts with: id, text, page, source, title, similarity, territory
         """
         candidates_k = k * self.CANDIDATE_MULTIPLIER
-        print(f"🔍 HybridRetriever.search() ENTERED: k={k}, candidates_k={candidates_k}, has_vector={self.has_vector_search}, territory={territory_filter}", flush=True)
+        logger.debug("HybridRetriever.search() entered: k=%d, candidates_k=%d, has_vector=%s, territory=%s", k, candidates_k, self.has_vector_search, territory_filter)
 
         # Run both searches in parallel
         if self.has_vector_search and query_embedding:
@@ -104,29 +104,29 @@ class HybridRetriever:
 
             # Handle exceptions gracefully
             if isinstance(fts_results, Exception):
-                logger.warning(f"⚠️ FTS5 search failed: {fts_results}")
+                logger.warning("FTS5 search failed: %s", fts_results)
                 fts_results = []
             if isinstance(vector_results, Exception):
-                logger.warning(f"⚠️ Vector search failed: {vector_results}")
+                logger.warning("Vector search failed: %s", vector_results)
                 vector_results = []
 
             # Fuse with RRF
-            print(f"🔀 Hybrid search: FTS5={len(fts_results) if not isinstance(fts_results, Exception) else 'ERR'}, Vector={len(vector_results) if not isinstance(vector_results, Exception) else 'ERR'}", flush=True)
+            logger.debug("Hybrid search: FTS5=%s, Vector=%s", len(fts_results) if not isinstance(fts_results, Exception) else 'ERR', len(vector_results) if not isinstance(vector_results, Exception) else 'ERR')
             if fts_results and vector_results:
                 fused = self._rrf_fusion(fts_results, vector_results, k=k)
-                print(f"🔀 RRF fused: {len(fused)} results", flush=True)
+                logger.debug("RRF fused: %d results", len(fused))
                 results = fused
             elif vector_results:
                 results = vector_results[:k]
             elif fts_results:
                 results = fts_results[:k]
             else:
-                print("⚠️ Both FTS5 and Vector returned 0 results", flush=True)
+                logger.warning("Both FTS5 and Vector returned 0 results")
                 return []
         else:
             # Fallback: FTS5 only
             results = await self._fts_search(query, k=k, territory=territory_filter)
-            print(f"🔍 FTS5-only: {len(results)} results", flush=True)
+            logger.debug("FTS5-only: %d results", len(results))
 
         # Apply document integrity trust scoring (Capa 13 — Document Integrity)
         results = await self._apply_trust_scoring(results)
@@ -172,7 +172,7 @@ class HybridRetriever:
 
             results = []
             for filter_str in filter_variants:
-                print(f"🔎 Vector query: top_k={k}, filter={filter_str}", flush=True)
+                logger.debug("Vector query: top_k=%d, filter=%s", k, filter_str)
                 try:
                     # Sync Upstash query with httpx timeout (not asyncio.wait_for which can't cancel threads)
                     results = await asyncio.to_thread(
@@ -183,9 +183,9 @@ class HybridRetriever:
                         filter=filter_str,
                     )
                 except Exception as ve:
-                    print(f"⚠️ Vector query error for filter={filter_str}: {ve}", flush=True)
+                    logger.warning("Vector query error for filter=%s: %s", filter_str, ve)
                     results = []
-                print(f"🔎 Vector query done: {len(results)} results", flush=True)
+                logger.debug("Vector query done: %d results", len(results))
                 if results:
                     break  # Found results, no need to try next variant
 
@@ -207,7 +207,7 @@ class HybridRetriever:
             return chunks
 
         except Exception as e:
-            logger.error(f"❌ Upstash Vector search error: {e}")
+            logger.error("Upstash Vector search error: %s", e)
             return []
 
     # ============================================================
@@ -283,7 +283,7 @@ class HybridRetriever:
             return chunks
 
         except Exception as e:
-            logger.error(f"❌ FTS5 search error: {e}")
+            logger.error("FTS5 search error: %s", e)
             # Try LIKE fallback
             return await self._like_fallback(query, k, territory)
 
@@ -336,7 +336,7 @@ class HybridRetriever:
                 for row in result.rows
             ]
         except Exception as e:
-            logger.error(f"❌ LIKE fallback also failed: {e}")
+            logger.error("LIKE fallback also failed: %s", e)
             return []
 
     # ============================================================
@@ -533,5 +533,5 @@ async def get_query_embedding(query: str) -> Optional[List[float]]:
         )
         return response.data[0].embedding
     except Exception as e:
-        logger.error(f"⚠️ Failed to generate query embedding: {e}")
+        logger.error("Failed to generate query embedding: %s", e)
         return None

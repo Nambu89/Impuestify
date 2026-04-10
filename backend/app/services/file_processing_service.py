@@ -50,7 +50,8 @@ class FileProcessingService:
         self,
         workspace_id: str,
         file: UploadFile,
-        file_type_hint: Optional[str] = None
+        file_type_hint: Optional[str] = None,
+        user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Process an uploaded file: save metadata, extract content, and generate embeddings.
@@ -237,6 +238,20 @@ class FileProcessingService:
                 logger.error(f"Embedding generation failed for {file.filename}: {e}")
                 embedding_status = "error"
 
+        # Auto-classify invoice into PGC after processing
+        if (
+            file_category == "factura"
+            and extracted_data
+            and not extracted_data.get("error")
+            and user_id
+            and processing_status == "completed"
+        ):
+            try:
+                await self._auto_classify_invoice(file_id, user_id, extracted_data, db)
+            except Exception as e:
+                logger.warning(f"Auto-classification failed for file {file_id}: {e}")
+                # Don't fail the upload — classification is best-effort
+
         return {
             "id": file_id,
             "filename": file.filename,
@@ -415,6 +430,150 @@ class FileProcessingService:
         except Exception as e:
             logger.error(f"Declaration extraction failed: {e}")
             return {"error": str(e), "type": "declaracion"}
+
+    async def _auto_classify_invoice(
+        self,
+        workspace_file_id: str,
+        user_id: str,
+        extracted_data: Dict[str, Any],
+        db,
+    ) -> None:
+        """
+        Auto-classify a workspace invoice into a PGC account and create
+        a libro_registro entry with clasificacion_confianza='pendiente_confirmacion'.
+        """
+        from app.config import settings
+        from app.services.invoice_classifier_service import InvoiceClassifierService
+        from app.services.contabilidad_service import ContabilidadService
+
+        if not settings.GOOGLE_GEMINI_API_KEY:
+            logger.warning("Gemini API key not configured — skipping auto-classification")
+            return
+
+        # Extract fields from the structured extracted_data
+        concepto = extracted_data.get("summary") or extracted_data.get("concepto") or ""
+        emisor_nombre = extracted_data.get("emisor_nombre") or extracted_data.get("emisor", {}).get("nombre", "")
+        base_imponible = float(extracted_data.get("base_imponible") or extracted_data.get("base_imponible_total") or 0)
+        tipo_iva = float(extracted_data.get("tipo_iva") or extracted_data.get("tipo_iva_pct") or 0)
+        cuota_iva = float(extracted_data.get("cuota_iva") or 0)
+        total = float(extracted_data.get("total") or base_imponible)
+        numero_factura = extracted_data.get("numero_factura") or ""
+        fecha_factura = extracted_data.get("fecha_factura") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        emisor_nif = extracted_data.get("emisor_nif") or extracted_data.get("emisor", {}).get("nif_cif", "")
+        receptor_nif = extracted_data.get("receptor_nif") or extracted_data.get("receptor", {}).get("nif_cif", "")
+        receptor_nombre = extracted_data.get("receptor_nombre") or extracted_data.get("receptor", {}).get("nombre", "")
+        retencion_irpf = float(extracted_data.get("retencion_irpf") or 0)
+        retencion_irpf_pct = float(extracted_data.get("retencion_irpf_pct") or 0)
+        tipo_re = float(extracted_data.get("tipo_re_pct") or extracted_data.get("tipo_re") or 0)
+        cuota_re = float(extracted_data.get("cuota_re") or 0)
+
+        if base_imponible <= 0:
+            logger.info("Skipping auto-classification: base_imponible is 0 for file %s", workspace_file_id)
+            return
+
+        # Default tipo: recibida (expense) — most common for uploaded invoices
+        tipo = extracted_data.get("tipo") or "recibida"
+
+        # PGC classification via Gemini
+        classifier = InvoiceClassifierService(
+            api_key=settings.GOOGLE_GEMINI_API_KEY,
+            db=db,
+            model=settings.GEMINI_MODEL,
+        )
+
+        clasificacion = await classifier.classify(
+            concepto=concepto,
+            emisor_nombre=emisor_nombre,
+            tipo=tipo,
+            base_imponible=base_imponible,
+        )
+
+        # Parse date for year / trimestre
+        try:
+            fecha_dt = datetime.strptime(fecha_factura, "%Y-%m-%d")
+        except ValueError:
+            try:
+                fecha_dt = datetime.strptime(fecha_factura, "%d/%m/%Y")
+            except ValueError:
+                fecha_dt = datetime.now(timezone.utc)
+
+        year = fecha_dt.year
+        trimestre = (fecha_dt.month - 1) // 3 + 1
+
+        # Insert into libro_registro with pendiente_confirmacion
+        invoice_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        raw_extraction_json = json.dumps(extracted_data, default=str)
+
+        await db.execute(
+            """
+            INSERT INTO libro_registro
+                (id, user_id, workspace_file_id, tipo, numero_factura,
+                 fecha_factura, emisor_nif, emisor_nombre,
+                 receptor_nif, receptor_nombre,
+                 base_imponible, tipo_iva, cuota_iva,
+                 tipo_re, cuota_re, retencion_irpf_pct, retencion_irpf,
+                 total, cuenta_pgc, cuenta_pgc_nombre,
+                 clasificacion_confianza, raw_extraction,
+                 year, trimestre, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                invoice_id,
+                user_id,
+                workspace_file_id,
+                tipo,
+                numero_factura,
+                fecha_factura,
+                emisor_nif,
+                emisor_nombre,
+                receptor_nif,
+                receptor_nombre,
+                base_imponible,
+                tipo_iva,
+                cuota_iva,
+                tipo_re,
+                cuota_re,
+                retencion_irpf_pct,
+                retencion_irpf,
+                total,
+                clasificacion.cuenta_code,
+                clasificacion.cuenta_nombre,
+                "pendiente_confirmacion",
+                raw_extraction_json,
+                year,
+                trimestre,
+                now,
+            ],
+        )
+
+        # Generate + save asiento contable
+        concepto_asiento = f"Factura {numero_factura}" if numero_factura else concepto[:80]
+        asiento_lines = ContabilidadService.generate_asiento_lines(
+            tipo=tipo,
+            cuenta_pgc_code=clasificacion.cuenta_code,
+            cuenta_pgc_nombre=clasificacion.cuenta_nombre,
+            base_imponible=base_imponible,
+            cuota_iva=cuota_iva,
+            total=total,
+            retencion_irpf=retencion_irpf,
+            concepto=concepto_asiento,
+        )
+
+        contabilidad = ContabilidadService(db=db)
+        await contabilidad.save_asiento(
+            user_id=user_id,
+            libro_registro_id=invoice_id,
+            fecha=fecha_factura,
+            lines=asiento_lines,
+            year=year,
+            trimestre=trimestre,
+        )
+
+        logger.info(
+            "Auto-classified workspace file %s → cuenta %s (%s) for user %s",
+            workspace_file_id, clasificacion.cuenta_code, clasificacion.cuenta_nombre, user_id,
+        )
 
     async def _generate_file_embeddings(
         self,

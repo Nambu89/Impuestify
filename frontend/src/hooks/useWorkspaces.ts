@@ -26,6 +26,9 @@ export interface WorkspaceFile {
     error_message: string | null
     extracted_data: Record<string, any> | null
     created_at: string
+    cuenta_pgc?: string | null
+    cuenta_pgc_nombre?: string | null
+    clasificacion_confianza?: 'pendiente_confirmacion' | 'confirmada' | 'manual' | null
 }
 
 export interface CreateWorkspaceData {
@@ -197,6 +200,34 @@ export function useWorkspaces() {
         return updated
     }, [apiRequest])
 
+    const confirmClassification = useCallback(async (
+        workspaceId: string,
+        fileId: string,
+        nuevaCuenta?: { code: string; nombre: string }
+    ) => {
+        setLoading(true)
+        setError(null)
+        try {
+            const body = nuevaCuenta
+                ? { nueva_cuenta_code: nuevaCuenta.code, nueva_cuenta_nombre: nuevaCuenta.nombre }
+                : {}
+            await apiRequest(
+                `/api/workspaces/${workspaceId}/files/${fileId}/confirm-classification`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(body),
+                }
+            )
+            // Refresh files to get updated classification
+            await fetchWorkspaceFiles(workspaceId)
+        } catch (err: any) {
+            setError(err.message || 'Error al confirmar clasificacion')
+            throw err
+        } finally {
+            setLoading(false)
+        }
+    }, [apiRequest, fetchWorkspaceFiles])
+
     const deleteFile = useCallback(async (workspaceId: string, fileId: string) => {
         setLoading(true)
         setError(null)
@@ -233,6 +264,7 @@ export function useWorkspaces() {
         selectWorkspace,
         fetchWorkspaceFiles,
         uploadFile,
+        confirmClassification,
         deleteFile
     }
 }

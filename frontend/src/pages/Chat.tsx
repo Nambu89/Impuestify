@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Loader2, FileText, Upload, Zap, Calculator, Search, Shield, Share2 } from 'lucide-react'
+import { Send, Loader2, FileText, Upload, Zap, Calculator, Search, Shield, Share2, X } from 'lucide-react'
 import ShareModal from '../components/ShareModal'
 import Header from '../components/Header'
 import AITransparencyModal from '../components/AITransparencyModal'
@@ -127,6 +127,7 @@ export default function Chat() {
             setMessages(formattedMessages)
             setActiveConversationId(conversationId)
             setNotificationAnalysis(null)
+            selectWorkspace(null)  // Clear stale workspace context on conversation switch
             setSidebarOpen(false) // ✅ NUEVO: Cerrar sidebar al seleccionar
         } catch (error) {
             logger.error('Error loading conversation:', error)
@@ -137,6 +138,7 @@ export default function Chat() {
         setMessages([])
         setActiveConversationId(null)
         setNotificationAnalysis(null)
+        selectWorkspace(null)  // Clear workspace context on new conversation
         setSidebarOpen(false) // ✅ NUEVO: Cerrar sidebar al crear nuevo
         // Reset warmup flag so the useEffect triggers for the new conversation
         warmupAttemptedRef.current = false
@@ -289,6 +291,44 @@ export default function Chat() {
             )}
 
             <main className="chat-main">
+                {/* Workspace selector bar at top of chat area */}
+                {workspaces && workspaces.length > 0 && (
+                    <div className="chat-workspace-bar">
+                        <div className="chat-workspace-bar__inner">
+                            <select
+                                value={activeWorkspace?.id || ''}
+                                onChange={(e) => {
+                                    const ws = workspaces.find(w => w.id === e.target.value)
+                                    selectWorkspace(ws || null)
+                                }}
+                                className="chat-workspace-select"
+                            >
+                                <option value="">Sin workspace (chat general)</option>
+                                {workspaces.map(ws => (
+                                    <option key={ws.id} value={ws.id}>
+                                        {ws.icon} {ws.name} ({ws.file_count} {ws.file_count === 1 ? 'archivo' : 'archivos'})
+                                    </option>
+                                ))}
+                            </select>
+                            {activeWorkspace && (
+                                <button
+                                    type="button"
+                                    onClick={() => selectWorkspace(null)}
+                                    className="chat-workspace-bar__clear"
+                                    title="Quitar workspace"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+                        {activeWorkspace && (
+                            <div className="chat-workspace-bar__indicator">
+                                {activeWorkspace.icon} Conversando sobre: <strong>{activeWorkspace.name}</strong>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <div className="chat-container">
                     {messages.length === 0 ? (
                         <div className="chat-empty-state">

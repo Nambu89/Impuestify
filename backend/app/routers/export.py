@@ -1,7 +1,8 @@
 """
 Export Router for TaxIA.
 
-Provides endpoints for generating IRPF reports and sharing them with advisors.
+Provides endpoints for generating IRPF reports, modelo PDFs,
+and sharing them with advisors.
 """
 import json
 import logging
@@ -61,6 +62,18 @@ class IRPFReportRequest(BaseModel):
     ganancias_fondos: float = Field(0, description="Ganancias fondos")
     # Chat content for personalized analysis
     chat_content: Optional[str] = Field(default=None, description="Contenido markdown del análisis del asistente")
+
+
+class ModeloPDFRequest(BaseModel):
+    """Request for Modelo Tributario PDF generation."""
+    modelo: str = Field(..., description="Tipo de modelo: 303, 130, 308, 720, 721, ipsi")
+    data: dict = Field(..., description="Datos calculados del modelo (casillas, resultados)")
+    trimestre: str = Field("1T", description="Periodo: 1T, 2T, 3T, 4T, anual")
+    ejercicio: int = Field(2026, description="Año fiscal")
+    contribuyente: Optional[dict] = Field(
+        default=None,
+        description="Datos del contribuyente: {nombre, nif, variante_foral}",
+    )
 
 
 class ShareWithAdvisorRequest(BaseModel):
@@ -299,3 +312,60 @@ async def share_with_advisor(
         "message": f"Informe enviado a {body.advisor_email}",
         "email_id": send_result.get("id"),
     }
+
+
+@router.post("/modelo-pdf", response_class=Response)
+async def export_modelo_pdf(
+    request: Request,
+    body: ModeloPDFRequest,
+    current_user=Depends(get_current_user),
+):
+    """
+    Generate a PDF for a Spanish tax form model (Modelo Tributario).
+
+    Supported modelos: 303, 130, 308, 720, 721, ipsi.
+    Returns PDF as download.
+    """
+    from app.services.modelo_pdf_generator import ModeloPDFGenerator, VALID_MODELOS
+
+    if body.modelo not in VALID_MODELOS:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Modelo '{body.modelo}' no soportado. "
+                f"Valores válidos: {', '.join(sorted(VALID_MODELOS))}"
+            ),
+        )
+
+    user_info = body.contribuyente or {}
+    # Fallback: use email from token if no name provided
+    if not user_info.get("nombre"):
+        user_info["nombre"] = current_user.email or ""
+
+    try:
+        generator = ModeloPDFGenerator()
+        pdf_bytes = generator.generate(
+            modelo_type=body.modelo,
+            data=body.data,
+            user_info=user_info,
+            trimestre=body.trimestre,
+            ejercicio=body.ejercicio,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Error generating modelo PDF: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Error al generar el PDF del modelo tributario.",
+        )
+
+    filename = f"Modelo_{body.modelo.upper()}_{body.trimestre}_{body.ejercicio}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )

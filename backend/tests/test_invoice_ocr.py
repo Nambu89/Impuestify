@@ -10,6 +10,7 @@ from app.services.invoice_ocr_service import (
     FacturaExtraida,
     InvoiceOCRService,
     LineaFactura,
+    validate_amount_magnitude,
     validate_iva_math,
     validate_nif,
 )
@@ -142,6 +143,130 @@ class TestValidateIvaMath:
         f = self._make_factura(cuota_iva=21.10)
         errors = validate_iva_math(f)
         assert len(errors) > 0
+
+
+# ---------------------------------------------------------------------------
+# validate_amount_magnitude
+# ---------------------------------------------------------------------------
+
+class TestValidateAmountMagnitude:
+    """Thousand-separator misread detection tests."""
+
+    def _make_factura(self, **overrides) -> FacturaExtraida:
+        defaults = dict(
+            emisor=EmisorReceptor(nif_cif="B12345678", nombre="Acme SL"),
+            receptor=EmisorReceptor(nif_cif="12345678Z", nombre="Juan"),
+            numero_factura="F-001",
+            fecha_factura="2026-01-15",
+            lineas=[
+                LineaFactura(
+                    concepto="Servicio",
+                    cantidad=1,
+                    precio_unitario=4000.0,
+                    base_imponible=4000.0,
+                )
+            ],
+            base_imponible_total=4000.0,
+            tipo_iva_pct=21.0,
+            cuota_iva=840.0,
+            total=4840.0,
+            tipo="recibida",
+        )
+        defaults.update(overrides)
+        return FacturaExtraida(**defaults)
+
+    def test_consistent_amounts_no_warnings(self):
+        """Line items match total — no warnings."""
+        f = self._make_factura()
+        warnings = validate_amount_magnitude(f)
+        assert warnings == []
+
+    def test_base_vs_lines_10x_mismatch(self):
+        """4.000 misread as 400 in total but lines say 4000 — flagged."""
+        f = self._make_factura(
+            base_imponible_total=400.0,  # Misread: 4.000 -> 400
+            tipo_iva_pct=21.0,
+            cuota_iva=84.0,
+            total=484.0,
+        )
+        warnings = validate_amount_magnitude(f)
+        assert len(warnings) >= 1
+        assert "separadores de miles" in warnings[0]
+
+    def test_lines_vs_base_10x_mismatch_inverted(self):
+        """Lines misread low, total correct — also flagged."""
+        f = self._make_factura(
+            lineas=[
+                LineaFactura(
+                    concepto="Servicio",
+                    cantidad=1,
+                    precio_unitario=400.0,
+                    base_imponible=400.0,  # Misread line
+                )
+            ],
+            base_imponible_total=4000.0,
+        )
+        warnings = validate_amount_magnitude(f)
+        assert len(warnings) >= 1
+        assert "separadores de miles" in warnings[0]
+
+    def test_suspiciously_low_total_with_iva(self):
+        """Total < 10 EUR with IVA is suspicious."""
+        f = self._make_factura(
+            lineas=[
+                LineaFactura(
+                    concepto="Articulo",
+                    cantidad=1,
+                    precio_unitario=4.0,
+                    base_imponible=4.0,
+                )
+            ],
+            base_imponible_total=4.0,
+            tipo_iva_pct=21.0,
+            cuota_iva=0.84,
+            total=4.84,
+        )
+        warnings = validate_amount_magnitude(f)
+        assert any("sospechosamente bajo" in w for w in warnings)
+
+    def test_low_total_without_iva_no_warning(self):
+        """Total < 10 EUR but no IVA — not flagged (could be legit)."""
+        f = self._make_factura(
+            lineas=[
+                LineaFactura(
+                    concepto="Articulo",
+                    cantidad=1,
+                    precio_unitario=5.0,
+                    base_imponible=5.0,
+                )
+            ],
+            base_imponible_total=5.0,
+            tipo_iva_pct=0.0,
+            cuota_iva=0.0,
+            total=5.0,
+        )
+        warnings = validate_amount_magnitude(f)
+        assert warnings == []
+
+    def test_small_ratio_within_bounds(self):
+        """Ratio of 2x (within 0.09-11 range) — not flagged."""
+        f = self._make_factura(
+            lineas=[
+                LineaFactura(
+                    concepto="Servicio",
+                    cantidad=1,
+                    precio_unitario=500.0,
+                    base_imponible=500.0,
+                )
+            ],
+            base_imponible_total=1000.0,
+            tipo_iva_pct=21.0,
+            cuota_iva=210.0,
+            total=1210.0,
+        )
+        warnings = validate_amount_magnitude(f)
+        # Ratio is 2.0 — within bounds, only the magnitude check applies
+        assert not any("separadores de miles" in w for w in warnings)
 
 
 # ---------------------------------------------------------------------------

@@ -885,3 +885,112 @@
         transform: translateY(0);
     }
 }
+
+/* ========== PGC Classification ========== */
+
+.file-classification {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.classification-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    line-height: 1.4;
+}
+
+.classification-pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.classification-confirmed {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.classification-status {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 1px 6px;
+    border-radius: 3px;
+}
+
+.classification-status--pending {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.classification-status--confirmed {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.classification-actions {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 4px;
+}
+
+.classification-action-btn {
+    padding: 2px 6px !important;
+    min-width: unset !important;
+    border-radius: 4px !important;
+}
+
+.classification-confirm-btn {
+    color: #22c55e !important;
+}
+
+.classification-confirm-btn:hover {
+    background: rgba(34, 197, 94, 0.15) !important;
+}
+
+.classification-reclassify-btn {
+    color: #f59e0b !important;
+}
+
+.classification-reclassify-btn:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+}
+
+.reclassify-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.reclassify-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    color: #e2e8f0;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    min-width: 0;
+}
+
+.reclassify-input:focus {
+    outline: none;
+    border-color: var(--color-accent, #06b6d4);
+}
+
+.btn-xs {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 4px;
+}

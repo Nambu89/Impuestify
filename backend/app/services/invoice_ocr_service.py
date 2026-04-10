@@ -143,15 +143,41 @@ def validate_iva_math(f: FacturaExtraida) -> list[str]:
     return errors
 
 
+def validate_amount_magnitude(f: FacturaExtraida) -> list[str]:
+    """Detect if thousand separators were lost (e.g., 4.000 read as 400)."""
+    warnings: list[str] = []
+    # Check if line items vs totals are inconsistent
+    if f.lineas and f.base_imponible_total and f.base_imponible_total > 0:
+        sum_lineas = sum(l.base_imponible for l in f.lineas if l.base_imponible)
+        if sum_lineas > 0:
+            ratio = f.base_imponible_total / sum_lineas
+            if ratio < 0.11 or ratio > 9:  # Roughly 10x off
+                warnings.append(
+                    f"Base imponible ({f.base_imponible_total}) difiere >10x "
+                    f"de la suma de líneas ({sum_lineas:.2f}). "
+                    f"Posible error en separadores de miles."
+                )
+    # If total < 10 EUR but has IVA, suspicious for a business invoice
+    if f.total and f.total < 10 and f.cuota_iva and f.cuota_iva > 0:
+        warnings.append(
+            f"Total sospechosamente bajo ({f.total} EUR) para una factura "
+            f"con IVA. Verificar separadores de miles."
+        )
+    return warnings
+
+
 # ---------------------------------------------------------------------------
 # Service
 # ---------------------------------------------------------------------------
 
 EXTRACTION_PROMPT = (
-    "Extrae todos los datos de esta factura espanola. "
-    "Devuelve JSON estricto segun el schema proporcionado. "
+    "Extrae todos los datos de esta factura española. "
+    "Devuelve JSON estricto según el schema proporcionado. "
+    "IMPORTANTE: Todos los importes deben ser números decimales puros "
+    "(ej: 4000.50, NO 4.000,50). NO uses separadores de miles. "
+    "Usa punto (.) como separador decimal. "
     "Si un campo no aparece, usa null. "
-    "Fechas YYYY-MM-DD. Importes EUR 2 decimales."
+    "Fechas YYYY-MM-DD. Importes en EUR con máximo 2 decimales."
 )
 
 
@@ -207,15 +233,24 @@ class InvoiceOCRService:
         # Validate IVA math
         math_errors = validate_iva_math(factura)
 
+        # Validate amount magnitude (thousand separator misreads)
+        magnitude_warnings = validate_amount_magnitude(factura)
+
+        all_errors = math_errors + magnitude_warnings
+
         # Determine confidence
         confianza = self._compute_confidence(
-            nif_emisor_ok, nif_receptor_ok, math_errors
+            nif_emisor_ok, nif_receptor_ok, all_errors
         )
+
+        # Force "baja" if magnitude warnings exist
+        if magnitude_warnings and confianza != "baja":
+            confianza = "baja"
 
         return ExtractionResult(
             factura=factura,
             confianza=confianza,
-            errores_validacion=math_errors,
+            errores_validacion=all_errors,
             nif_emisor_valido=nif_emisor_ok,
             nif_receptor_valido=nif_receptor_ok,
         )
