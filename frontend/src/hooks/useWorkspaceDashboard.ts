@@ -73,9 +73,9 @@ export function useWorkspaceDashboard(workspaceId: string | null, year?: number)
         setLoading(true)
         setError(null)
         try {
-            const yearParam = year || new Date().getFullYear()
+            const yearQuery = year ? `?year=${year}` : ''
             const result = await apiRequest<WorkspaceDashboardData>(
-                `/api/workspaces/${wsId}/dashboard?year=${yearParam}`
+                `/api/workspaces/${wsId}/dashboard${yearQuery}`
             )
             if (requestId === requestIdRef.current) {
                 setData(result)

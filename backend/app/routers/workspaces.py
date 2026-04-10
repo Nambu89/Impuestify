@@ -627,7 +627,7 @@ async def delete_file(
 async def get_workspace_dashboard(
     request: Request,
     workspace_id: str,
-    year: int = 2026,
+    year: Optional[int] = None,
     current_user: TokenData = Depends(get_current_user),
     service: WorkspaceService = Depends(get_workspace_service),
     db: TursoClient = Depends(get_db),
@@ -654,6 +654,10 @@ async def get_workspace_dashboard(
             "SELECT id FROM workspace_files WHERE workspace_id = ?"
         )
 
+        # Year filter: optional — if not provided, show all years
+        year_filter = "AND year = ?" if year else ""
+        base_params = [workspace_id, year, user_id] if year else [workspace_id, user_id]
+
         # --- KPIs ---
         kpi_result = await db.execute(
             f"""
@@ -667,10 +671,10 @@ async def get_workspace_dashboard(
                 COALESCE(SUM(CASE WHEN clasificacion_confianza='pendiente_confirmacion' THEN 1 ELSE 0 END), 0) AS facturas_pendientes
             FROM libro_registro
             WHERE workspace_file_id IN ({ws_files_subquery})
-              AND year = ?
+              {year_filter}
               AND user_id = ?
             """,
-            [workspace_id, year, user_id],
+            base_params,
         )
 
         kpi_row = kpi_result.rows[0] if kpi_result.rows else {}
