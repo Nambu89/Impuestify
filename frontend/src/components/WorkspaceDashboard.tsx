@@ -323,7 +323,7 @@ export default function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardPr
         setClassifyResult(null)
         try {
             const token = localStorage.getItem(TOKEN_KEY)
-            const res = await fetch(`${API_URL}/workspaces/${workspaceId}/classify-pending`, {
+            const res = await fetch(`${API_URL}/api/workspaces/${workspaceId}/classify-pending`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             })
