@@ -506,8 +506,36 @@ class FileProcessingService:
             logger.info("Skipping auto-classification: base_imponible is 0 for file %s", workspace_file_id)
             return
 
-        # Default tipo: recibida (expense) — most common for uploaded invoices
-        tipo = extracted_data.get("tipo") or "recibida"
+        # Auto-detect tipo: compare emisor NIF with user's NIF from fiscal profile
+        tipo = extracted_data.get("tipo") or ""
+        if not tipo:
+            # Try to detect: if user is the emisor → emitida (income), otherwise → recibida (expense)
+            try:
+                user_profile = await db.execute(
+                    "SELECT datos_fiscales FROM user_profiles WHERE user_id = ?",
+                    [user_id],
+                )
+                user_rows = user_profile.rows if hasattr(user_profile, "rows") else user_profile
+                user_nif = ""
+                if user_rows and user_rows[0]:
+                    profile_data = user_rows[0].get("datos_fiscales") if hasattr(user_rows[0], "get") else user_rows[0][0]
+                    if profile_data:
+                        import json as _json
+                        pdata = _json.loads(profile_data) if isinstance(profile_data, str) else profile_data
+                        user_nif = (pdata.get("nif") or pdata.get("dni") or "").strip().upper()
+
+                if user_nif and emisor_nif:
+                    emisor_nif_clean = emisor_nif.strip().upper().replace("-", "").replace(" ", "")
+                    user_nif_clean = user_nif.replace("-", "").replace(" ", "")
+                    if emisor_nif_clean == user_nif_clean:
+                        tipo = "emitida"  # User is the emisor → income
+                    else:
+                        tipo = "recibida"  # Someone else is the emisor → expense
+                else:
+                    tipo = "recibida"  # Default: assume expense if can't determine
+            except Exception as det_err:
+                logger.debug(f"Could not auto-detect invoice tipo: {det_err}")
+                tipo = "recibida"
 
         # PGC classification via Gemini
         classifier = InvoiceClassifierService(

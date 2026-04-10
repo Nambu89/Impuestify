@@ -164,47 +164,43 @@ function IngresosGastosChart({ data }: { data: Array<{ mes: string; ingresos: nu
 
 // -- PGC Pie Chart --
 
-function PGCPieChart({ data }: { data: CuentaPGCData[] }) {
+function PGCAccountsTable({ data }: { data: CuentaPGCData[] }) {
     if (!data || data.length === 0) return null
 
     const total = data.reduce((sum, d) => sum + Math.abs(d.total), 0)
-
-    const renderLabel = ({ nombre, percent }: { nombre: string; percent: number }) => {
-        if (percent < 0.05) return ''
-        const shortName = nombre.length > 15 ? nombre.substring(0, 15) + '...' : nombre
-        return `${shortName} (${(percent * 100).toFixed(0)}%)`
-    }
+    const maxVal = Math.max(...data.map(d => Math.abs(d.total)))
 
     return (
         <div className="ws-chart-card">
             <div className="ws-chart-title">Desglose por cuenta PGC</div>
-            <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                    <Pie
-                        data={data.map(d => ({ ...d, value: Math.abs(d.total) }))}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={90}
-                        dataKey="value"
-                        nameKey="nombre"
-                        label={({ nombre, percent }) => renderLabel({ nombre, percent })}
-                        labelLine={{ stroke: 'rgba(255,255,255,0.2)' }}
-                    >
-                        {data.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                        ))}
-                    </Pie>
-                    <Tooltip
-                        formatter={(value: number) => [
-                            `${formatEUR(value)} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`,
-                            'Total'
-                        ]}
-                        contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
-                        labelStyle={{ color: 'rgba(255,255,255,0.8)' }}
-                        itemStyle={{ color: 'rgba(255,255,255,0.7)' }}
-                    />
-                </PieChart>
-            </ResponsiveContainer>
+            <div className="ws-pgc-list">
+                {data.map((item, i) => {
+                    const absTotal = Math.abs(item.total)
+                    const pct = total > 0 ? (absTotal / total * 100) : 0
+                    const barWidth = maxVal > 0 ? (absTotal / maxVal * 100) : 0
+                    const isIngreso = item.tipo === 'ingreso'
+
+                    return (
+                        <div key={i} className="ws-pgc-item">
+                            <div className="ws-pgc-header">
+                                <span className="ws-pgc-code">{item.cuenta}</span>
+                                <span className="ws-pgc-name">{item.nombre}</span>
+                                <span className={`ws-pgc-badge ${isIngreso ? 'ingreso' : 'gasto'}`}>
+                                    {isIngreso ? 'Ingreso' : 'Gasto'}
+                                </span>
+                                <span className="ws-pgc-amount">{formatEUR(absTotal)}</span>
+                                <span className="ws-pgc-pct">{pct.toFixed(0)}%</span>
+                            </div>
+                            <div className="ws-pgc-bar-bg">
+                                <div
+                                    className={`ws-pgc-bar-fill ${isIngreso ? 'ingreso' : 'gasto'}`}
+                                    style={{ width: `${barWidth}%` }}
+                                />
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
         </div>
     )
 }
@@ -401,7 +397,7 @@ export default function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardPr
             </div>
 
             <div className="ws-dashboard-bottom">
-                <PGCPieChart data={data.por_cuenta_pgc} />
+                <PGCAccountsTable data={data.por_cuenta_pgc} />
                 <TopProveedores data={data.top_proveedores} />
             </div>
 
