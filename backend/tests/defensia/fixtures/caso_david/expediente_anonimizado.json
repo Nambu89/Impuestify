@@ -1,0 +1,117 @@
+{
+  "tributo": "IRPF",
+  "ccaa": "Madrid",
+  "documentos": [
+    {
+      "id": "d01",
+      "nombre_original": "Requerimiento_2025-11-03.pdf",
+      "tipo_documento": "REQUERIMIENTO",
+      "fecha_acto": "2025-11-03",
+      "datos": {
+        "referencia": "REF-REQ-ANON",
+        "plazo_aportar_docs_dias": 10,
+        "ejercicio": 2024,
+        "tipo_procedimiento": "comprobacion_limitada",
+        "alcance": "ganancia patrimonial transmision inmueble"
+      }
+    },
+    {
+      "id": "d02",
+      "nombre_original": "Propuesta_liquidacion_2025-12-10.pdf",
+      "tipo_documento": "PROPUESTA_LIQUIDACION",
+      "fecha_acto": "2025-12-10",
+      "datos": {
+        "referencia": "REF-PROP-ANON",
+        "plazo_alegaciones_dias": 10,
+        "cuota_propuesta": 6183.05,
+        "ejercicio": 2024,
+        "tipo_tributo": "IRPF"
+      }
+    },
+    {
+      "id": "d03",
+      "nombre_original": "Alegaciones_2025-12-22.pdf",
+      "tipo_documento": "ESCRITO_ALEGACIONES_USUARIO",
+      "fecha_acto": "2025-12-22",
+      "datos": {
+        "tipo_escrito": "alegaciones",
+        "argumentos_invocados": ["circunstancia familiar sobrevenida", "gastos inherentes"]
+      }
+    },
+    {
+      "id": "d04",
+      "nombre_original": "Liquidacion_provisional_2026-01-30.pdf",
+      "tipo_documento": "LIQUIDACION_PROVISIONAL",
+      "fecha_acto": "2026-01-30",
+      "datos": {
+        "referencia": "REF-LIQ-ANON",
+        "cuota": 6183.05,
+        "intereses_demora": 147.27,
+        "total_a_ingresar": 6330.32,
+        "ejercicio": 2024,
+        "ccaa": "Madrid",
+        "tipo_tributo": "IRPF",
+        "plazo_recurso_dias": 30,
+        "ganancia_patrimonial": 39561.80,
+        "gastos_adquisicion_declarados": 12108.80,
+        "gastos_adquisicion_admitidos": 11349.55,
+        "diff_gastos_adquisicion_no_admitidos": 759.25,
+        "gastos_transmision_admitidos": 9988.65,
+        "motivacion_articulos_citados": ["Art. 38.1 LIRPF", "Art. 41 bis RIRPF", "Art. 105 LGT"]
+      }
+    },
+    {
+      "id": "d05",
+      "nombre_original": "Reclamacion_TEAR_liquidacion_2026-02-01.pdf",
+      "tipo_documento": "ESCRITO_RECLAMACION_TEAR_USUARIO",
+      "fecha_acto": "2026-02-01",
+      "datos": {
+        "tipo_escrito": "reclamacion_tear",
+        "referencia_acto_impugnado": "REF-LIQ-ANON",
+        "organo_destinatario": "TEAR Madrid",
+        "pretension_principal": "anulacion liquidacion"
+      }
+    },
+    {
+      "id": "d06",
+      "nombre_original": "Acuerdo_inicio_sancionador_2026-02-02.pdf",
+      "tipo_documento": "ACUERDO_INICIO_SANCIONADOR",
+      "fecha_acto": "2026-02-02",
+      "datos": {
+        "referencia": "REF-INIC-SANC-ANON",
+        "plazo_alegaciones_dias": 15
+      }
+    },
+    {
+      "id": "d07",
+      "nombre_original": "Acuerdo_sancion_2026-04-07.pdf",
+      "tipo_documento": "ACUERDO_IMPOSICION_SANCION",
+      "fecha_acto": "2026-04-07",
+      "datos": {
+        "referencia": "REF-SANC-ANON",
+        "importe_sancion": 3393.52,
+        "base_sancion_191": 6183.05,
+        "porcentaje_191": 50.0,
+        "calificacion_191": "leve",
+        "base_sancion_194": 2013.39,
+        "porcentaje_194": 15.0,
+        "calificacion_194": "grave",
+        "articulos_tipicos": ["Art. 191 LGT", "Art. 194.1 LGT"],
+        "tiene_doble_tipicidad_191_194": true,
+        "plazo_recurso_dias": 30
+      }
+    },
+    {
+      "id": "d08",
+      "nombre_original": "Reclamacion_TEAR_sancion_2026-04-09.pdf",
+      "tipo_documento": "ESCRITO_RECLAMACION_TEAR_USUARIO",
+      "fecha_acto": "2026-04-09",
+      "datos": {
+        "tipo_escrito": "reclamacion_tear",
+        "referencia_acto_impugnado": "REF-SANC-ANON",
+        "organo_destinatario": "TEAR Madrid",
+        "pretension_principal": "anulacion sancion"
+      }
+    }
+  ]
+}
