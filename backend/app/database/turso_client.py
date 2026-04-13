@@ -1012,6 +1012,19 @@ class TursoClient:
                 except Exception:
                     pass  # column already exists
 
+            # --- DefensIA tables (spec plans/2026-04-13-defensia-design.md §7.4) ---
+            from pathlib import Path as _Path
+            _migration_path = _Path(__file__).parent / "migrations" / "20260413_defensia_tables.sql"
+            if _migration_path.exists():
+                _sql = _migration_path.read_text(encoding="utf-8")
+                for _stmt in _sql.split(";"):
+                    _stmt = _stmt.strip()
+                    if _stmt:
+                        await self.execute(_stmt)
+                logger.info("DefensIA tables migration applied")
+            else:
+                logger.warning("DefensIA migration file not found: %s", _migration_path)
+
             logger.info("Database schema initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize schema: {e}")
