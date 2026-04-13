@@ -237,3 +237,51 @@ def extract_requerimiento(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     except Exception as exc:
         logger.error("Extracción requerimiento falló para %s: %s", nombre, exc)
         return {"error": str(exc), "nombre": nombre}
+
+
+_PROMPT_ESCRITO_USUARIO = """Extractor de escritos presentados por el contribuyente
+(alegaciones, recurso de reposición, reclamación TEAR, ampliación de alegaciones).
+Devuelve JSON EXACTO (null si no aparecen):
+{
+  "tipo_escrito": "alegaciones"|"reposicion"|"reclamacion_tear"|"ampliacion_alegaciones"|"otros",
+  "referencia_acto_impugnado": string,
+  "fecha_presentacion": "YYYY-MM-DD",
+  "organo_destinatario": string,
+  "pretension_principal": string,
+  "argumentos_invocados": [string],
+  "tributo": "IRPF"|"IVA"|"ISD"|"ITP"|"PLUSVALIA"|null,
+  "ejercicio": integer | null
+}
+No inventes valores. Solo JSON.
+
+DOCUMENTO:
+"""
+
+
+def _gemini_extract_escrito_usuario(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
+    from google import genai
+    from app.config import settings
+
+    client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents=[
+            _PROMPT_ESCRITO_USUARIO,
+            {"inline_data": {"mime_type": "application/pdf", "data": pdf_bytes}},
+        ],
+    )
+    return _parse_gemini_json(response.text)
+
+
+def extract_escrito_usuario(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
+    """Extrae datos de un escrito ya presentado por el usuario.
+
+    Los escritos previos del usuario son clave para la detección de fase
+    procesal: si existe un escrito de reclamación TEAR posterior a una
+    liquidación, la fase ya no es 'plazo de recurso' sino 'TEAR interpuesta'.
+    """
+    try:
+        return _gemini_extract_escrito_usuario(pdf_bytes, nombre)
+    except Exception as exc:
+        logger.error("Extracción escrito usuario falló para %s: %s", nombre, exc)
+        return {"error": str(exc), "nombre": nombre}
