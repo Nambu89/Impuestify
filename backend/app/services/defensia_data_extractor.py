@@ -196,3 +196,44 @@ def extract_propuesta_liquidacion(pdf_bytes: bytes, nombre: str) -> dict[str, An
     except Exception as exc:
         logger.error("Extracción propuesta falló para %s: %s", nombre, exc)
         return {"error": str(exc), "nombre": nombre}
+
+
+_PROMPT_REQUERIMIENTO = """Extractor de requerimientos tributarios AEAT.
+Devuelve JSON EXACTO (null si no aparecen):
+{
+  "referencia": string,
+  "fecha_acto": "YYYY-MM-DD",
+  "plazo_aportar_docs_dias": integer,
+  "documentacion_solicitada": [string],
+  "ejercicio": integer,
+  "tipo_procedimiento": "verificacion_datos"|"comprobacion_limitada"|"otros",
+  "alcance": string
+}
+No inventes valores. Solo JSON.
+
+DOCUMENTO:
+"""
+
+
+def _gemini_extract_requerimiento(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
+    from google import genai
+    from app.config import settings
+
+    client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents=[
+            _PROMPT_REQUERIMIENTO,
+            {"inline_data": {"mime_type": "application/pdf", "data": pdf_bytes}},
+        ],
+    )
+    return _parse_gemini_json(response.text)
+
+
+def extract_requerimiento(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
+    """Extrae datos de un requerimiento AEAT (fase inicial del procedimiento)."""
+    try:
+        return _gemini_extract_requerimiento(pdf_bytes, nombre)
+    except Exception as exc:
+        logger.error("Extracción requerimiento falló para %s: %s", nombre, exc)
+        return {"error": str(exc), "nombre": nombre}
