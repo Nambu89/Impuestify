@@ -95,3 +95,63 @@ def extract_liquidacion_provisional(pdf_bytes: bytes, nombre: str) -> dict[str, 
         )
 
     return datos
+
+
+_PROMPT_SANCION = """Eres un extractor de datos de acuerdos de imposición de
+sanción tributaria de la AEAT española. Devuelve JSON EXACTO (null si no aparece):
+
+{
+  "referencia": string,
+  "fecha_acto": "YYYY-MM-DD",
+  "importe_sancion": number,
+  "base_sancion_191": number | null,
+  "porcentaje_191": number | null,
+  "calificacion_191": "leve"|"grave"|"muy grave"|null,
+  "base_sancion_194": number | null,
+  "porcentaje_194": number | null,
+  "calificacion_194": "leve"|"grave"|"muy grave"|null,
+  "articulos_tipicos": [string],
+  "reducciones_aplicadas": number,
+  "motivacion_culpabilidad": string,
+  "plazo_recurso_dias": integer
+}
+
+No inventes valores. Responde solo con el JSON.
+
+DOCUMENTO:
+"""
+
+
+def _gemini_extract_sancion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
+    """Llama a Gemini para extraer datos de sanción. Aislado para mock."""
+    from google import genai
+    from app.config import settings
+
+    client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents=[
+            _PROMPT_SANCION,
+            {"inline_data": {"mime_type": "application/pdf", "data": pdf_bytes}},
+        ],
+    )
+    return _parse_gemini_json(response.text)
+
+
+def extract_acuerdo_sancion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
+    """Extrae datos de un acuerdo de imposición de sanción tributaria.
+
+    Añade el derivado `tiene_doble_tipicidad_191_194` que alimenta la regla
+    R006 (non bis in idem parcial entre Art. 191 y Art. 194.1 LGT).
+    """
+    try:
+        datos = _gemini_extract_sancion(pdf_bytes, nombre)
+    except Exception as exc:
+        logger.error("Extracción sanción falló para %s: %s", nombre, exc)
+        return {"error": str(exc), "nombre": nombre}
+
+    tiene_191 = datos.get("base_sancion_191") is not None
+    tiene_194 = datos.get("base_sancion_194") is not None
+    datos["tiene_doble_tipicidad_191_194"] = tiene_191 and tiene_194
+
+    return datos
