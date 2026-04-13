@@ -459,8 +459,8 @@ from app.routers.invoices import router as invoices_router
 app.include_router(invoices_router)
 
 # DefensIA
-from app.routers import defensia as defensia_router
-app.include_router(defensia_router.router)
+from app.routers import defensia
+app.include_router(defensia.router)
 
 # === Dependencias ===
 
