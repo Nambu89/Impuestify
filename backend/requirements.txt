@@ -81,4 +81,5 @@ google-genai>=1.0.0
 # cache-bust 1774479781
 
 # DefensIA — generación y parseo de documentos
-# lxml and Jinja2 are transitive dependencies of beautifulsoup4, reportlab, python-docx
+lxml>=5.3.0
+Jinja2>=3.1.4
