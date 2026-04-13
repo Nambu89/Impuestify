@@ -14,6 +14,7 @@ import logging
 from io import BytesIO
 from typing import Any
 
+from lxml import etree
 from openpyxl import load_workbook
 
 logger = logging.getLogger(__name__)
@@ -340,3 +341,27 @@ def extract_libro_registro_xlsx(xlsx_bytes: bytes, nombre: str) -> dict[str, Any
         "total_importe_bases": round(total_bases, 2),
         "total_importe_iva": round(total_iva, 2),
     }
+
+
+def extract_notificacion_xml(xml_bytes: bytes, nombre: str) -> dict[str, Any]:
+    """Extrae campos básicos de un XML/XSIG de notificación AEAT.
+
+    Parsing determinista con lxml. Para XSIG (firmado) se extrae el XML base
+    y se ignora la firma digital en esta fase (no verificamos la firma en v1).
+    """
+    try:
+        root = etree.fromstring(xml_bytes)
+    except etree.XMLSyntaxError as exc:
+        logger.error("XML inválido %s: %s", nombre, exc)
+        return {"error": str(exc), "nombre": nombre}
+
+    datos: dict[str, Any] = {}
+    for elem in root.iter():
+        tag = etree.QName(elem).localname
+        if elem.text and elem.text.strip():
+            val = elem.text.strip()
+            try:
+                datos[tag] = float(val)
+            except ValueError:
+                datos[tag] = val
+    return datos
