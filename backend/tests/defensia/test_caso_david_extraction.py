@@ -43,10 +43,26 @@ def _cargar_expediente() -> ExpedienteEstructurado:
     )
 
 
-def test_caso_david_fase_detectada_es_tear_ampliacion_posible():
-    """Criterio de aceptación v1: detecta fase TEAR correctamente en David."""
+def test_caso_david_fase_detectada_tear_interpuesta_reciente():
+    """David presentó la reclamación TEAR sanción el 2026-04-09.
+
+    Con `hoy` dentro de la ventana de 30 días posteriores a esa fecha,
+    la fase activa es TEAR_INTERPUESTA (ampliación urgente).
+    """
     exp = _cargar_expediente()
-    fase, confianza = detect_fase(exp)
+    hoy = datetime(2026, 4, 13, tzinfo=timezone.utc)  # 4 días después
+    fase, confianza = detect_fase(exp, hoy=hoy)
+    assert fase == Fase.TEAR_INTERPUESTA
+    assert confianza >= 0.85
+
+
+def test_caso_david_fase_detectada_tear_ampliacion_posible_pasados_30d():
+    """Con `hoy` pasados más de 30 días del último escrito TEAR, la fase
+    transiciona a TEAR_AMPLIACION_POSIBLE.
+    """
+    exp = _cargar_expediente()
+    hoy = datetime(2026, 6, 1, tzinfo=timezone.utc)  # 53 días después
+    fase, confianza = detect_fase(exp, hoy=hoy)
     assert fase == Fase.TEAR_AMPLIACION_POSIBLE
     assert confianza >= 0.85
 

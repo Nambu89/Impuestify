@@ -48,12 +48,27 @@ def test_liquidacion_dictada_fase_liquidacion_firme():
     assert fase == Fase.LIQUIDACION_FIRME_PLAZO_RECURSO
 
 
-def test_reclamacion_tear_presentada_fase_tear_ampliacion_posible():
+def test_reclamacion_tear_reciente_fase_tear_interpuesta():
+    """TEAR interpuesto hace <30 días = fase activa TEAR_INTERPUESTA."""
     exp = _exp([
         _doc(TipoDocumento.LIQUIDACION_PROVISIONAL, "2026-01-30", "d1"),
         _doc(TipoDocumento.ESCRITO_RECLAMACION_TEAR_USUARIO, "2026-02-01", "d2"),
     ])
-    fase, _ = detect_fase(exp)
+    # hoy = 10 días después → dentro de la ventana reciente
+    hoy = datetime(2026, 2, 11, tzinfo=timezone.utc)
+    fase, _ = detect_fase(exp, hoy=hoy)
+    assert fase == Fase.TEAR_INTERPUESTA
+
+
+def test_reclamacion_tear_antigua_fase_tear_ampliacion_posible():
+    """TEAR interpuesto hace >30 días = fase TEAR_AMPLIACION_POSIBLE."""
+    exp = _exp([
+        _doc(TipoDocumento.LIQUIDACION_PROVISIONAL, "2026-01-30", "d1"),
+        _doc(TipoDocumento.ESCRITO_RECLAMACION_TEAR_USUARIO, "2026-02-01", "d2"),
+    ])
+    # hoy = 60 días después → fuera de la ventana reciente
+    hoy = datetime(2026, 4, 2, tzinfo=timezone.utc)
+    fase, _ = detect_fase(exp, hoy=hoy)
     assert fase == Fase.TEAR_AMPLIACION_POSIBLE
 
 
@@ -74,6 +89,13 @@ def test_acta_inspeccion_fuera_de_alcance():
 
 def test_providencia_apremio_fuera_de_alcance():
     exp = _exp([_doc(TipoDocumento.PROVIDENCIA_APREMIO, "2026-03-01")])
+    fase, _ = detect_fase(exp)
+    assert fase == Fase.FUERA_DE_ALCANCE
+
+
+def test_sentencia_judicial_fuera_de_alcance():
+    """Una sentencia judicial sobre la deuda fiscal queda fuera del alcance v1."""
+    exp = _exp([_doc(TipoDocumento.SENTENCIA_JUDICIAL, "2026-03-01")])
     fase, _ = detect_fase(exp)
     assert fase == Fase.FUERA_DE_ALCANCE
 

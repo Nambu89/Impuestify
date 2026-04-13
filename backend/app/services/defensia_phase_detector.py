@@ -9,19 +9,30 @@ Fases soportadas (12 valores del enum Fase, spec §5.2):
 - LIQUIDACION_FIRME_PLAZO_RECURSO
 - SANCIONADOR_INICIADO, SANCIONADOR_PROPUESTA, SANCIONADOR_IMPUESTA
 - REPOSICION_INTERPUESTA, TEAR_INTERPUESTA, TEAR_AMPLIACION_POSIBLE
-- FUERA_DE_ALCANCE (inspección, apremio, alzada TEAC — no cubierto por v1)
+- FUERA_DE_ALCANCE (inspección, apremio, alzada TEAC, sentencias — no cubierto por v1)
 - INDETERMINADA (sin documentos o cadena incoherente)
+
+Diferenciación TEAR_INTERPUESTA vs TEAR_AMPLIACION_POSIBLE: tras interponer
+una reclamación TEAR, durante los primeros 30 días el expediente está en
+TEAR_INTERPUESTA (fase activa, ampliación urgente). Pasados 30 días entra en
+TEAR_AMPLIACION_POSIBLE (ampliación todavía posible pero menos urgente,
+siempre que el TEAR no haya resuelto).
 """
 from __future__ import annotations
+from datetime import datetime, timedelta, timezone
 from app.models.defensia import (
     ExpedienteEstructurado, TipoDocumento, Fase, DocumentoEstructurado,
 )
+
+
+_TEAR_VENTANA_RECIENTE = timedelta(days=30)
 
 
 _FUERA_ALCANCE_TIPOS = {
     TipoDocumento.ACTA_INSPECCION,
     TipoDocumento.PROVIDENCIA_APREMIO,
     TipoDocumento.RESOLUCION_TEAC,
+    TipoDocumento.SENTENCIA_JUDICIAL,
 }
 
 _ACTOS_AEAT = {
@@ -41,8 +52,21 @@ _ESCRITOS_USUARIO = {
 }
 
 
-def detect_fase(expediente: ExpedienteEstructurado) -> tuple[Fase, float]:
-    """Detecta la fase procesal del expediente y la confianza [0, 1]."""
+def detect_fase(
+    expediente: ExpedienteEstructurado,
+    hoy: datetime | None = None,
+) -> tuple[Fase, float]:
+    """Detecta la fase procesal del expediente y la confianza [0, 1].
+
+    Args:
+        expediente: el expediente con documentos ya clasificados y fechados.
+        hoy: fecha de referencia para calcular ventanas temporales (TEAR
+            reciente vs ampliación posible). Por defecto usa la hora actual UTC.
+            Parámetro expuesto para testabilidad determinista.
+    """
+    if hoy is None:
+        hoy = datetime.now(timezone.utc)
+
     if not expediente.documentos:
         return Fase.INDETERMINADA, 0.0
 
@@ -63,12 +87,37 @@ def detect_fase(expediente: ExpedienteEstructurado) -> tuple[Fase, float]:
     if ultimo_acto_aeat is None:
         return Fase.INDETERMINADA, 0.3
 
-    return _mapear_acto_a_fase(ultimo_acto_aeat, ultimo_escrito_usuario)
+    return _mapear_acto_a_fase(ultimo_acto_aeat, ultimo_escrito_usuario, hoy)
+
+
+def _es_tear_reciente(
+    escrito_tear: DocumentoEstructurado, hoy: datetime
+) -> bool:
+    """True si el escrito TEAR se presentó hace menos de 30 días.
+
+    Durante esa ventana el expediente está en fase activa TEAR_INTERPUESTA
+    (ampliación urgente). Después pasa a TEAR_AMPLIACION_POSIBLE (todavía
+    cabe ampliar alegaciones pero el TEAR ya puede estar instruyendo).
+    """
+    if escrito_tear.fecha_acto is None:
+        return False
+    return (hoy - escrito_tear.fecha_acto) < _TEAR_VENTANA_RECIENTE
+
+
+def _fase_tras_tear(
+    escrito_tear: DocumentoEstructurado, hoy: datetime
+) -> Fase:
+    return (
+        Fase.TEAR_INTERPUESTA
+        if _es_tear_reciente(escrito_tear, hoy)
+        else Fase.TEAR_AMPLIACION_POSIBLE
+    )
 
 
 def _mapear_acto_a_fase(
     ultimo_acto: DocumentoEstructurado,
     ultimo_escrito_usuario: DocumentoEstructurado | None,
+    hoy: datetime,
 ) -> tuple[Fase, float]:
     tipo = ultimo_acto.tipo_documento
 
@@ -93,7 +142,7 @@ def _mapear_acto_a_fase(
             if subtipo == TipoDocumento.ESCRITO_REPOSICION_USUARIO:
                 return Fase.REPOSICION_INTERPUESTA, 0.95
             if subtipo == TipoDocumento.ESCRITO_RECLAMACION_TEAR_USUARIO:
-                return Fase.TEAR_AMPLIACION_POSIBLE, 0.95
+                return _fase_tras_tear(ultimo_escrito_usuario, hoy), 0.95
         return Fase.LIQUIDACION_FIRME_PLAZO_RECURSO, 0.9
 
     if tipo == TipoDocumento.ACUERDO_INICIO_SANCIONADOR:
@@ -110,7 +159,7 @@ def _mapear_acto_a_fase(
             if subtipo == TipoDocumento.ESCRITO_REPOSICION_USUARIO:
                 return Fase.REPOSICION_INTERPUESTA, 0.95
             if subtipo == TipoDocumento.ESCRITO_RECLAMACION_TEAR_USUARIO:
-                return Fase.TEAR_AMPLIACION_POSIBLE, 0.95
+                return _fase_tras_tear(ultimo_escrito_usuario, hoy), 0.95
         return Fase.SANCIONADOR_IMPUESTA, 0.9
 
     if tipo == TipoDocumento.RESOLUCION_TEAR:
