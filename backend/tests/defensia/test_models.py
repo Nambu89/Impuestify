@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import pytest
+from pydantic import ValidationError
 from app.models.defensia import (
     Tributo, Fase, TipoDocumento, EstadoExpediente,
     ExpedienteEstructurado, DocumentoEstructurado, Brief,
@@ -24,6 +25,7 @@ def test_fase_enum_all_cases():
     assert "TEAR_AMPLIACION_POSIBLE" in fases
     assert "FUERA_DE_ALCANCE" in fases
     assert "INDETERMINADA" in fases
+    assert len(Fase) == 12
 
 
 def test_documento_estructurado_requires_tipo_y_fecha():
@@ -88,3 +90,14 @@ def test_argumento_verificado_requiere_cita_exacta():
         datos_disparo={"campo": "motivacion"},
     )
     assert arg.confianza >= 0.7
+
+    # Validate upper bound enforcement
+    with pytest.raises(ValidationError):
+        ArgumentoVerificado(
+            regla_id="R001",
+            descripcion="x",
+            cita_verificada="x",
+            referencia_normativa_canonica="x",
+            confianza=1.5,
+            datos_disparo={},
+        )
