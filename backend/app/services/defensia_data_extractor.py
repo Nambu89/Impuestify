@@ -11,7 +11,10 @@ para trazabilidad.
 from __future__ import annotations
 import json
 import logging
+from io import BytesIO
 from typing import Any
+
+from openpyxl import load_workbook
 
 logger = logging.getLogger(__name__)
 
@@ -285,3 +288,55 @@ def extract_escrito_usuario(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     except Exception as exc:
         logger.error("Extracción escrito usuario falló para %s: %s", nombre, exc)
         return {"error": str(exc), "nombre": nombre}
+
+
+def extract_libro_registro_xlsx(xlsx_bytes: bytes, nombre: str) -> dict[str, Any]:
+    """Extrae datos de un libro registro de facturas en Excel.
+
+    Detecta heurísticamente columnas 'Base', 'IVA' y 'Total' por su nombre y
+    calcula agregados. No usa LLM — todo determinista.
+
+    Esto es una de las ventajas de precisión frente a ChatGPT: los datos
+    estructurados del libro registro entran al motor de reglas sin pasar por
+    extracción estadística de un LLM.
+    """
+    try:
+        wb = load_workbook(BytesIO(xlsx_bytes), data_only=True)
+    except Exception as exc:
+        logger.error("No se pudo abrir %s: %s", nombre, exc)
+        return {"error": str(exc), "nombre": nombre}
+
+    hojas = []
+    total_bases = 0.0
+    total_iva = 0.0
+
+    for ws in wb.worksheets:
+        filas_raw = list(ws.iter_rows(values_only=True))
+        if not filas_raw:
+            continue
+        columnas = [str(c) if c is not None else "" for c in filas_raw[0]]
+        filas = []
+        for fila in filas_raw[1:]:
+            if all(v is None for v in fila):
+                continue
+            registro = {columnas[i]: fila[i] for i in range(len(columnas))}
+            filas.append(registro)
+            for key, val in registro.items():
+                if isinstance(val, (int, float)):
+                    kl = key.lower()
+                    if "base" in kl:
+                        total_bases += float(val)
+                    elif "iva" in kl:
+                        total_iva += float(val)
+        hojas.append({
+            "nombre": ws.title,
+            "columnas": columnas,
+            "num_filas": len(filas),
+            "filas": filas,
+        })
+
+    return {
+        "hojas": hojas,
+        "total_importe_bases": round(total_bases, 2),
+        "total_importe_iva": round(total_iva, 2),
+    }
