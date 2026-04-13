@@ -155,3 +155,44 @@ def extract_acuerdo_sancion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     datos["tiene_doble_tipicidad_191_194"] = tiene_191 and tiene_194
 
     return datos
+
+
+_PROMPT_PROPUESTA = """Extractor de propuestas de liquidación provisional IRPF/IVA/ISD/ITP/PLUSVALIA.
+Devuelve JSON EXACTO (null si no aparecen):
+{
+  "referencia": string,
+  "fecha_acto": "YYYY-MM-DD",
+  "plazo_alegaciones_dias": integer,
+  "cuota_propuesta": number,
+  "ejercicio": integer,
+  "tipo_tributo": "IRPF"|"IVA"|"ISD"|"ITP"|"PLUSVALIA",
+  "ajustes_propuestos": [{"concepto": string, "ajuste": string}]
+}
+No inventes valores. Solo el JSON.
+
+DOCUMENTO:
+"""
+
+
+def _gemini_extract_propuesta(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
+    from google import genai
+    from app.config import settings
+
+    client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents=[
+            _PROMPT_PROPUESTA,
+            {"inline_data": {"mime_type": "application/pdf", "data": pdf_bytes}},
+        ],
+    )
+    return _parse_gemini_json(response.text)
+
+
+def extract_propuesta_liquidacion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
+    """Extrae datos de una propuesta de liquidación (fase previa al acuerdo)."""
+    try:
+        return _gemini_extract_propuesta(pdf_bytes, nombre)
+    except Exception as exc:
+        logger.error("Extracción propuesta falló para %s: %s", nombre, exc)
+        return {"error": str(exc), "nombre": nombre}
