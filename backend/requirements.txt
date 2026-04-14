@@ -79,3 +79,9 @@ google-auth>=2.0.0
 # --- Google Gemini (Invoice OCR — Phase 3) ---
 google-genai>=1.0.0
 # cache-bust 1774479781
+
+# --- Doc crawler (Scrapling + Playwright for AEAT/BOE/CCAA scraping) ---
+scrapling==0.4.6
+curl_cffi==0.15.0
+playwright==1.58.0
+browserforge==1.2.4
