@@ -1,8 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { DefensiaExpedientePage } from "./DefensiaExpedientePage";
 import type { ExpedienteDetalle } from "../types/defensia";
+
+vi.mock("../hooks/useDefensiaExport", () => ({
+  useDefensiaExport: () => ({
+    exportar: vi.fn(),
+    exporting: false,
+    error: null,
+    needsDisclaimer: false,
+    resetDisclaimer: vi.fn(),
+  }),
+}));
+
+vi.mock("../hooks/useDefensiaChat", () => ({
+  useDefensiaChat: () => ({
+    messages: [],
+    streaming: false,
+    error: null,
+    send: vi.fn(),
+    reset: vi.fn(),
+  }),
+}));
 
 const hookState = {
   expediente: null as ExpedienteDetalle | null,
@@ -86,30 +107,45 @@ describe("DefensiaExpedientePage", () => {
     expect(screen.getByText(/no se encontró el expediente/i)).toBeInTheDocument();
   });
 
-  it("renderiza título, fase, argumentos verificados y disclaimer", () => {
+  it("renderiza título, fase, argumentos verificados (tras click en tab) y disclaimer", async () => {
     hookState.expediente = expedienteMock;
     renderAt("exp-1");
     expect(screen.getByText("IRPF 2023")).toBeInTheDocument();
     expect(screen.getByLabelText(/propuesta de liquidación/i)).toBeInTheDocument();
-    expect(screen.getByText("Motivación insuficiente")).toBeInTheDocument();
     expect(
       screen.getAllByText(/no sustituye asesoramiento profesional/i).length,
     ).toBeGreaterThanOrEqual(1);
+
+    // Click tab argumentos
+    await userEvent.click(screen.getByRole("tab", { name: /argumentos/i }));
+    expect(screen.getByText("Motivación insuficiente")).toBeInTheDocument();
   });
 
-  it("muestra botón exportar si hay dictamen", () => {
-    hookState.expediente = expedienteMock;
+  it("muestra botones DOCX/PDF en la tab escrito si hay escrito generado", async () => {
+    hookState.expediente = {
+      ...expedienteMock,
+      escritos: [
+        {
+          id: "esc-1",
+          expediente_id: "exp-1",
+          plantilla: "alegaciones_verificacion",
+          contenido_markdown: "<p>texto</p>",
+          exportado: false,
+          creado_en: "2026-04-10T00:00:00Z",
+          actualizado_en: "2026-04-10T00:00:00Z",
+        },
+      ],
+    };
     renderAt("exp-1");
-    expect(
-      screen.getByRole("button", { name: /exportar/i }),
-    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: /escrito/i }));
+    expect(screen.getByRole("button", { name: /docx/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /pdf/i })).toBeInTheDocument();
   });
 
-  it("muestra mensaje si aún no hay dictamen", () => {
+  it("muestra placeholder dictamen pendiente en tab argumentos si no hay dictamen", async () => {
     hookState.expediente = { ...expedienteMock, dictamen: null };
     renderAt("exp-1");
-    expect(
-      screen.getByText(/dictamen pendiente|aún no hay dictamen/i),
-    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: /argumentos/i }));
+    expect(screen.getByText(/dictamen pendiente/i)).toBeInTheDocument();
   });
 });

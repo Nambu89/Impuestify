@@ -95,8 +95,50 @@
   min-height: 40px;
 }
 
-.defensia-expediente-export-btn:hover {
+.defensia-expediente-export-btn:hover:not(:disabled) {
   background: var(--color-primary-dark, #1e40af);
+}
+
+.defensia-expediente-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.defensia-expediente-export-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.defensia-expediente-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.defensia-tab {
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: -2px;
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.defensia-tab:hover {
+  color: #334155;
+}
+
+.defensia-tab.active {
+  color: var(--color-primary-dark, #1e40af);
+  border-bottom-color: var(--color-primary, #1a56db);
 }
 
 .defensia-expediente-argumentos {
