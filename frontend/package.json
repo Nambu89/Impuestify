@@ -13,6 +13,9 @@
     },
     "dependencies": {
         "@react-oauth/google": "^0.13.4",
+        "@tiptap/pm": "^3.22.3",
+        "@tiptap/react": "^3.22.3",
+        "@tiptap/starter-kit": "^3.22.3",
         "@vitejs/plugin-react": "^4.2.1",
         "axios": "^1.6.2",
         "eventsource-parser": "^3.0.6",
