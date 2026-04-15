@@ -1,10 +1,32 @@
 import { useCallback, useState } from "react";
+import type { Fase, TipoDocumento } from "../types/defensia";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export interface UploadError extends Error {
   code: "FILE_TOO_LARGE" | "UNAUTHORIZED" | "NETWORK" | "UNKNOWN";
   status?: number;
+}
+
+/**
+ * Respuesta enriquecida de POST /api/defensia/expedientes/:id/documentos.
+ *
+ * El backend ejecuta la Fase 1 automatica (classifier + extractor + phase
+ * detector) al subir el documento. Los campos auto-detectados se devuelven
+ * para que la UI los muestre sin necesidad de otro round-trip.
+ *
+ * Cualquiera de los campos opcionales puede venir `null` si el classifier
+ * o el extractor fallaron (best-effort).
+ */
+export interface UploadResponse {
+  id: string;
+  nombre_original: string;
+  tipo_documento: TipoDocumento | null;
+  clasificacion_confianza: number | null;
+  fecha_acto: string | null;
+  fase_detectada: Fase | null;
+  fase_confianza: number | null;
+  created_at: string;
 }
 
 function makeError(code: UploadError["code"], message: string, status?: number): UploadError {
@@ -23,7 +45,7 @@ export function useDefensiaUpload(expedienteId: string) {
       setUploading(true);
       setProgress(0);
 
-      return new Promise<{ id: string }>((resolve, reject) => {
+      return new Promise<UploadResponse>((resolve, reject) => {
         const form = new FormData();
         form.append("file", file);
         form.append("tipo_documento", tipo);

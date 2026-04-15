@@ -1,10 +1,11 @@
 # TaxIA (Impuestify) — Memoria del Agente
 
-> Ultima actualizacion: 2026-04-09 (sesion 30)
-> Sesion 30: RAG fix completo — OOM (workers 4→1), territory tildes, SSE keepalive, Upstash Vector sync 84K
-> Railway: 1 worker, ~344 MB. Chat funciona con RAG hibrido (FTS5 + Vector)
-> Upstash Vector: 84,036 embeddings sincronizados (100%). Vector search funcional para todas las CCAA
-> Acercamiento comercial: Laborai.es investigado (B2C fiscal, WordPress, posible licencia tech)
+> Ultima actualizacion: 2026-04-13 (sesion 32)
+> Sesion 32: DefensIA Parte 1 COMPLETA — nuevo modulo defensor fiscal anti-alucinacion
+> Brainstorming + spec + plan + 16 tasks TDD ejecutadas en rama `claude/defensia-v1`
+> 58 tests verdes, caso David (141 archivos, 4 reclamaciones) como ground truth
+> Motor hibrido 4 fases: Gemini extraccion → reglas deterministas → RAG verificador → LLM redactor
+> Pendiente Parte 2: 30 reglas R001-R030, RAG verificador, writer, frontend, beta
 
 ## Indice de archivos de memoria
 
@@ -55,6 +56,8 @@
 | `memory/project_session28_qa_security.md` | Sesion 28: QA 12 bugs, audit 21 issues, PageSpeed, deploy fix |
 | `memory/project_session30_rag_workspaces.md` | Sesion 30: RAG fix (OOM, tildes, SSE, 84K sync), workspace RAG hibrido, facturas test |
 | `memory/project_workspace_vision.md` | Vision workspace = centro operaciones autonomo. RAG hibrido (global + docs usuario) |
+| `memory/project_session32_defensia_part1.md` | Sesion 32 (2026-04-13): DefensIA Parte 1. Motor hibrido 4 fases anti-alucinacion. 58 tests, caso David ground truth |
+| `memory/project_session33_defensia_part2.md` | **Sesion 33 (2026-04-15): DefensIA Parte 2 COMPLETA. Wave 2B Back (9 servicios + 13 endpoints) + Wave 1F/2F Front (Vitest + 15+6 tasks) + Wave 3 parcial (GDPR + audits). 62 commits, 375 backend tests + 92 frontend. Copilot 16/16 resuelto. Pipeline end-to-end funcional: upload Fase 1 auto, brief POST, analyze SSE** |
 
 ## Datos clave del proyecto
 
@@ -80,23 +83,39 @@
 
 ## BACKLOG — Pendiente
 
-### CRITICO — proxima sesion
-- [x] ~~Generador PDF Modelos Tributarios~~ DONE (sesion 31: 7 modelos + forales, endpoint + hook + botones DeclarationsPage/M130, 8 tests)
-- [x] ~~Bug: importes incorrectos en extraccion~~ DONE (sesion 31: prompt explicito + validacion magnitud + 6 tests)
-- [x] ~~Bug: perdida contexto workspace en follow-ups~~ DONE (sesion 31: columna workspace_id en conversations + restauracion backend + frontend clear)
-
-### Alta prioridad
-- [x] ~~Workspace Fase 2: auto-clasificar facturas → PGC~~ DONE (sesion 31: auto-classify on upload + confirm/reclassify endpoint + badges WorkspacesPage, 34 tests)
-- [x] ~~Workspace Fase 3: chat integrado por workspace~~ DONE (sesion 31: selector dropdown en Chat + indicador visual + CSS)
-- [x] ~~Dropdowns: audit completo~~ DONE
-- [x] ~~Limpiar prints diagnostico~~ DONE (sesion 31: 58 prints → logger en 8 archivos)
+### Alta prioridad (proxima sesion)
+- [ ] **DefensIA merge a main** — Rama `claude/defensia-v1` con 62 commits, 375 backend tests + 92 frontend tests, Copilot 16/16 resuelto, pipeline end-to-end funcional. Bloqueadores para merge: (1) T3-001 E2E Playwright caso David 4 viewports con fixtures anonimizados, (2) T3-001b script anonimize_caso_david.py, (3) T3-006 verifier final, (4) beta test con David Oliva primero, (5) deploy prod: seed DEFENSIA_STORAGE_KEY env var en Railway. Ver `memory/project_session33_defensia_part2.md`
+- [ ] **Ingestar al RAG los 3 Manuales AEAT 2025 descargados en sesion 32** — `docs/AEAT/IRPF/AEAT-Manual_Practico_IRPF_2025_Parte1.pdf` (7.54 MB), `_Parte2.pdf` (3.80 MB), `docs/AEAT/IVA/AEAT-Manual_Practico_IVA_2025.pdf` (6.30 MB). Total: 17.64 MB nuevos, criticos para el chat fiscal (campana renta 2025 ya activa desde 8-abr-2026). Accion: `backend/scripts/reingest_aeat.py` o ingesta selectiva de los 3 ficheros → Turso + Upstash Vector. Verificar con `python -m backend.scripts.doc_crawler --stats` que inventario refleja docs nuevos. Ver `memory/crawler-state.md`.
+- [ ] **Investigar DR130 diseno de registro actualizado** — El historico `DR130_e2019.xls` (ejercicio 2015 version 11) ya no esta en sede. AEAT tiene ahora los disenos en `sede.agenciatributaria.gob.es/Sede/iva/pre-303/nuevo-servicio-pre303-importacion-libros-electronico/formatos-electronicos-libros-registro.html` actualizados a 01-01-2026. Accion: WebFetch esa pagina, localizar link al DR del Modelo 130 actual, actualizar watchlist. Estimado: 10 min.
+- [ ] **Investigar Scrapling anti-bot fail en AEAT downloads** — En sesion 32 detectado que `check_url_exists` devuelve 200 pero `download_document` devuelve 404 para los mismos URLs tras volumen de requests. `curl` directo descarga sin problema. Probable rate limiting / fingerprint detection de Cloudflare en AEAT. Accion: reviewar Scrapling fetcher config, considerar fallback a urllib/httpx para dominio `sede.agenciatributaria.gob.es`, o pasar User-Agent manual. Estimado: 30-45 min.
+- [ ] **PDFs prerrellenados desde chat** — Tool `generate_modelo_pdf` en WorkspaceAgent. El RAG calcula modelo (303/130) con datos workspace + CCAA usuario → genera PDF descargable desde el chat
+- [ ] **CCAA-aware en workspace RAG** — WorkspaceAgent debe considerar CCAA del usuario (Cataluna vs PV vs Canarias vs Melilla) para modelos correctos (303/300/F69/420/IPSI)
+- [ ] **Dashboard: selector de ano** — Agregar dropdown para filtrar por 2025/2026/todos en el dashboard
 
 ### Media prioridad
-- [x] ~~RAG farmacia — normativa RE (Art. 154-163 LIVA) + guias CGCOF~~ DONE
+- [ ] **Refactoring archivos >500 lineas** — irpf_estimate.py (1340), turso_client.py (1074), chat.py (781)
 - [ ] **Laborai acercamiento** — mensaje de partnership tech (licencia motor IA fiscal)
+- [ ] **ML fiscal features** — ml_fiscal_features table
 - [ ] Generador XBRL/ZIP para Registro Mercantil (largo plazo)
 
 ### Baja prioridad
 - [ ] Integracion factura electronica (FacturaE/VeriFactu)
 - [ ] App movil (React Native)
-- [ ] Redesign WorkspacesPage + modals
+
+## DefensIA — Estado actual (sesion 33)
+
+- **Rama**: `claude/defensia-v1` (62 commits, NO mergeada a main)
+- **Tests**: 375 backend + 92 frontend verdes
+- **Wave 2B Backend COMPLETO**: rate_limits, storage AES-GCM+zstd, quota reserve-commit-release atomico, RAG verifier 0.7, writer + 9 plantillas Jinja2, export DOCX/PDF, service fachada, agent con guardrails, router 13 endpoints
+- **Wave 1F+2F Frontend COMPLETO**: Vitest + RTL + jsdom, types, 11 componentes, 6 hooks SSE/blob, 3 pages con dark theme, Header dropdown entry, App.tsx lazy routes
+- **Wave 3 PARCIAL**: GDPR cascade 7 tablas, ortografia audit (87 tildes fixed), anti-hallucination audit (invariante #2), dead code removal. Pendiente T3-001 E2E Playwright + T3-006 verifier final
+- **Pipeline end-to-end funcional**: upload PDF -> Fase 1 auto (classifier + extractor Gemini + phase detector) -> POST brief -> analyze SSE (reglas + RAG verifier + writer con TEAR abreviada/general segun cuota) -> dictamen + escrito persistidos -> ExpedientePage con tabs
+- **Copilot resuelto 16/16**: 2 rondas, 10 bugs CRITICAL fixeados (rules engine enums, phase detector SANCIONADOR + naive datetime, writer REPOSICION, migrations fail-fast, quota user-binding + atomic multi-worker)
+- **Security**: Bandit B701 silenciado (writer markdown no HTML), axios CVE SSRF parcheado
+- **Motor hibrido 4 fases OPERATIVO**: Fase 1 extraccion automatica tras upload + Fases 2-4 tras brief explicito (regla #1 preservada)
+- **Regla #1 del producto**: NO arranca analisis juridico hasta que user escribe brief. Fase 1 (extraccion tecnica) SI auto-dispara al upload
+- **Invariante #2 anti-alucinacion**: 0 citas normativas hardcoded en plantillas Jinja2 (script auditor verifica)
+- **Invariante multi-worker**: quota reserve usa UPDATE condicional atomico con rowcount check (no TOCTOU)
+- **Alcance v1**: 5 tributos (IRPF+IVA+ISD+ITP+Plusvalia) + verificacion/comprobacion limitada + sancionador + reposicion/TEAR abreviada/general
+- **Monetizacion**: 1/3/5 expedientes/mes por plan Particular/Autonomo/Creator + 15/12/10 EUR extra
+- **Docs**: `plans/2026-04-13-defensia-{design,implementation-plan,implementation-plan-part2}.md` + `memory/project_session32_defensia_part1.md` + `memory/project_session33_defensia_part2.md`

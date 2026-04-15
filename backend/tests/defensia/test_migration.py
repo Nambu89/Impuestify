@@ -91,3 +91,75 @@ def test_migration_cascade_user_delete(tmp_path):
         "SELECT COUNT(*) FROM defensia_expedientes WHERE id='e1'"
     ).fetchone()[0]
     assert count == 0, "cascade delete must remove expediente when user deleted"
+
+
+# ============================================================================
+# Copilot round 2 #4-#7: fail-fast en migraciones no idempotentes
+# ============================================================================
+
+import pytest
+
+
+class _FailingFakeDB:
+    """Fake DB que lanza una excepcion especifica en el primer UPDATE."""
+
+    def __init__(self, error_msg: str):
+        self._error_msg = error_msg
+        self.calls: list[str] = []
+
+    async def execute(self, sql: str, params=None):
+        self.calls.append(sql)
+        raise RuntimeError(self._error_msg)
+
+
+class _IdempotentFakeDB:
+    """Fake DB que simula errores benignos de duplicate column."""
+
+    def __init__(self):
+        self.calls: list[str] = []
+
+    async def execute(self, sql: str, params=None):
+        self.calls.append(sql)
+        raise RuntimeError("SQLite error: duplicate column name")
+
+
+@pytest.mark.asyncio
+async def test_migration_raises_on_non_idempotent_error(tmp_path):
+    """Copilot round 2 #4: un SQL invalido debe abortar init_schema."""
+    from app.database.turso_client import TursoClient
+
+    migration_file = tmp_path / "test_migration.sql"
+    migration_file.write_text("ALTER TABLE inexistente ADD COLUMN foo TEXT;", encoding="utf-8")
+
+    client = TursoClient.__new__(TursoClient)  # bypass __init__
+    client.execute = _FailingFakeDB("no such table: inexistente").execute  # type: ignore
+
+    with pytest.raises(RuntimeError, match="no such table"):
+        await client._apply_defensia_migration(migration_file, label="test")
+
+
+@pytest.mark.asyncio
+async def test_migration_swallows_duplicate_column(tmp_path):
+    """Copilot round 2 #4: duplicate column sigue siendo idempotente."""
+    from app.database.turso_client import TursoClient
+
+    migration_file = tmp_path / "test_migration.sql"
+    migration_file.write_text("ALTER TABLE foo ADD COLUMN bar TEXT;", encoding="utf-8")
+
+    client = TursoClient.__new__(TursoClient)
+    fake = _IdempotentFakeDB()
+    client.execute = fake.execute  # type: ignore
+
+    # No debe levantar: error duplicate column es benigno
+    await client._apply_defensia_migration(migration_file, label="test")
+    assert len(fake.calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_migration_noop_if_file_missing(tmp_path):
+    """Si el fichero no existe, solo warning, no crash."""
+    from app.database.turso_client import TursoClient
+
+    client = TursoClient.__new__(TursoClient)
+    missing = tmp_path / "no_existe.sql"
+    await client._apply_defensia_migration(missing, label="missing")  # sin excepcion

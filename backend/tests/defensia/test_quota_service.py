@@ -53,7 +53,6 @@ class FakeQuotaDB:
 
     def __init__(self, creados: int = 0, en_curso: int = 0):
         self._estado = {"expedientes_creados": creados, "en_curso": en_curso}
-        self._row_exists = True  # despues del primer INSERT OR IGNORE
         self._lock = asyncio.Lock()
         self.calls: list[tuple[str, list]] = []  # log para asserts
 
@@ -315,3 +314,49 @@ async def test_commit_tras_release_no_mueve_contador():
 
     assert db._estado["expedientes_creados"] == 0
     assert db._estado["en_curso"] == 0
+
+
+async def test_commit_con_user_id_distinto_es_noop_y_preserva_token():
+    """Copilot round 2 #2: un commit con user_id distinto del que creo la
+    reserva no debe consumir el token ni mover contadores. Evita que un
+    usuario consuma reservas de otro.
+    """
+    db = FakeQuotaDB(creados=0, en_curso=0)
+    svc = DefensiaQuotaService(db)
+
+    reserva_id = await svc.reserve("user_a", "autonomo")
+    assert db._estado["en_curso"] == 1
+
+    # Intento de consumir con user distinto
+    await svc.commit("user_b", reserva_id)
+
+    # Contadores intactos, token aun activo
+    assert db._estado["expedientes_creados"] == 0
+    assert db._estado["en_curso"] == 1
+    assert reserva_id in svc._reservas_activas
+
+    # user_a puede commit correctamente
+    await svc.commit("user_a", reserva_id)
+    assert db._estado["expedientes_creados"] == 1
+    assert db._estado["en_curso"] == 0
+    assert reserva_id not in svc._reservas_activas
+
+
+async def test_release_con_user_id_distinto_es_noop_y_preserva_token():
+    """Copilot round 2 #3: mismo que commit pero para release()."""
+    db = FakeQuotaDB(creados=0, en_curso=0)
+    svc = DefensiaQuotaService(db)
+
+    reserva_id = await svc.reserve("user_a", "creator")
+    assert db._estado["en_curso"] == 1
+
+    await svc.release("user_b", reserva_id)
+
+    # Token intacto
+    assert db._estado["en_curso"] == 1
+    assert reserva_id in svc._reservas_activas
+
+    # user_a puede release correctamente
+    await svc.release("user_a", reserva_id)
+    assert db._estado["en_curso"] == 0
+    assert reserva_id not in svc._reservas_activas

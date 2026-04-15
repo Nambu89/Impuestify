@@ -1,8 +1,9 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Loader2, Scale } from "lucide-react";
 import { useApi } from "../hooks/useApi";
 import { useDefensiaUpload } from "../hooks/useDefensiaUpload";
+import { useDefensiaAnalyze } from "../hooks/useDefensiaAnalyze";
 import { useSEO } from "../hooks/useSEO";
 import { DisclaimerBanner } from "../components/defensia/DisclaimerBanner";
 import { TributoSelect } from "../components/defensia/TributoSelect";
@@ -91,6 +92,8 @@ export function DefensiaWizardPage() {
   const navigate = useNavigate();
   const { apiRequest } = useApi();
   const [state, dispatch] = useReducer(reducer, initialState);
+  const { analyze, analyzing, error: analyzeError } = useDefensiaAnalyze();
+  const [analyzeStatus, setAnalyzeStatus] = useState<string | null>(null);
 
   useSEO({
     title: "DefensIA — Nuevo expediente",
@@ -140,11 +143,47 @@ export function DefensiaWizardPage() {
       return;
     }
 
-    if (state.paso === 5) {
-      dispatch({ type: "NEXT" });
-      if (state.expedienteId) {
-        navigate(`/defensia/${state.expedienteId}`);
+    // Paso 4 -> 5: persistir el brief antes de avanzar a la confirmacion.
+    // Sin este POST, el analyze del paso 5 fallaria con 400 (brief vacio).
+    if (state.paso === 4 && state.expedienteId) {
+      try {
+        await apiRequest(
+          `/api/defensia/expedientes/${state.expedienteId}/brief`,
+          {
+            method: "POST",
+            body: JSON.stringify({ texto: state.brief }),
+          },
+        );
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "Error al guardar el brief";
+        dispatch({ type: "CREAR_ERROR", error: msg });
+        return;
       }
+      dispatch({ type: "NEXT" });
+      return;
+    }
+
+    // Paso 5 -> dispara el analyze SSE. Mientras corre mostramos progreso
+    // textual. onDone navega al expediente, donde ExpedientePage muestra
+    // el dictamen + escrito ya persistidos por el backend.
+    if (state.paso === 5 && state.expedienteId) {
+      setAnalyzeStatus("Iniciando análisis…");
+      await analyze(state.expedienteId, {
+        onPhase: () => setAnalyzeStatus("Detectando fase procesal…"),
+        onCandidatos: (d) =>
+          setAnalyzeStatus(
+            `Aplicando reglas deterministas (${d.count} candidatos)…`,
+          ),
+        onVerificando: () =>
+          setAnalyzeStatus("Verificando argumentos contra el corpus RAG…"),
+        onDictamen: () => setAnalyzeStatus("Redactando dictamen…"),
+        onEscrito: () => setAnalyzeStatus("Redactando escrito de alegaciones…"),
+        onDone: () => {
+          setAnalyzeStatus(null);
+          navigate(`/defensia/${state.expedienteId}`);
+        },
+      });
       return;
     }
 
@@ -175,6 +214,14 @@ export function DefensiaWizardPage() {
           estado: "completado",
         },
       });
+      // El backend ejecuta Fase 1 auto (classifier + extractor + phase
+      // detector) durante el upload y devuelve fase_detectada en la
+      // response. Si viene y es una fase real (no null ni INDETERMINADA),
+      // la propagamos al reducer para que el paso 3 del wizard la muestre
+      // sin necesidad de un nuevo round-trip.
+      if (res.fase_detectada && res.fase_detectada !== "INDETERMINADA") {
+        dispatch({ type: "SET_FASE", fase: res.fase_detectada });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error al subir";
       dispatch({ type: "REMOVE_DOC", id: tempId });
@@ -274,12 +321,28 @@ export function DefensiaWizardPage() {
         {state.paso === 5 && (
           <section aria-labelledby="paso5-title">
             <h2 id="paso5-title">Confirmación</h2>
-            <p>Todo listo. Al pulsar "Analizar expediente" DefensIA comenzará:</p>
-            <ol>
-              <li>Aplicar las 30 reglas deterministas</li>
-              <li>Verificar cada argumento contra el corpus RAG</li>
-              <li>Redactar un dictamen con citas verificadas</li>
-            </ol>
+            {!analyzing && !analyzeStatus && (
+              <>
+                <p>
+                  Todo listo. Al pulsar "Analizar expediente" DefensIA
+                  comenzará:
+                </p>
+                <ol>
+                  <li>Aplicar las 30 reglas deterministas</li>
+                  <li>Verificar cada argumento contra el corpus RAG</li>
+                  <li>Redactar un dictamen con citas verificadas</li>
+                </ol>
+              </>
+            )}
+            {(analyzing || analyzeStatus) && (
+              <div className="defensia-wizard-analyzing" role="status">
+                <Loader2 size={20} className="spin" aria-hidden="true" />
+                <span>{analyzeStatus || "Analizando expediente…"}</span>
+              </div>
+            )}
+            {analyzeError && !analyzing && (
+              <div className="defensia-wizard-error">{analyzeError}</div>
+            )}
           </section>
         )}
       </div>
@@ -293,7 +356,7 @@ export function DefensiaWizardPage() {
           type="button"
           className="defensia-wizard-prev"
           onClick={() => dispatch({ type: "PREV" })}
-          disabled={state.paso === 1}
+          disabled={state.paso === 1 || analyzing}
         >
           <ArrowLeft size={18} aria-hidden="true" />
           Atrás
@@ -302,11 +365,15 @@ export function DefensiaWizardPage() {
           type="button"
           className="defensia-wizard-next"
           onClick={() => void handleSiguiente()}
-          disabled={!puedeAvanzar()}
+          disabled={!puedeAvanzar() || analyzing}
         >
-          {state.creandoExpediente && <Loader2 size={18} className="spin" />}
+          {(state.creandoExpediente || analyzing) && (
+            <Loader2 size={18} className="spin" />
+          )}
           {state.paso === 5 ? "Analizar expediente" : "Siguiente"}
-          {!state.creandoExpediente && <ArrowRight size={18} aria-hidden="true" />}
+          {!state.creandoExpediente && !analyzing && (
+            <ArrowRight size={18} aria-hidden="true" />
+          )}
         </button>
       </footer>
     </div>

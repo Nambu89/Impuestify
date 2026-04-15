@@ -77,6 +77,45 @@ logger = logging.getLogger(__name__)
 
 # Mapping fase -> tipo_escrito persistido. El writer ya hace una seleccion
 # analoga para elegir plantilla, pero aqui queremos un valor estable y
+# Campos que pueden contener el importe economico relevante para decidir
+# entre TEAR abreviada (<6000 EUR) y general (>=6000 EUR) segun art. 245 LGT.
+# Revisamos estos campos en los documentos estructurados y tomamos el maximo.
+_CAMPOS_CUOTA_CANDIDATOS: tuple[str, ...] = (
+    "cuota",
+    "cuota_propuesta",
+    "cuota_tributaria",
+    "importe_sancion",
+    "importe_total",
+    "total_a_ingresar",
+)
+
+
+def _extraer_cuota_maxima(expediente: ExpedienteEstructurado) -> float:
+    """Recorre los documentos estructurados y devuelve el importe maximo
+    encontrado en los campos canonicos de cuota tributaria / sancion.
+
+    Se usa para que el writer seleccione la plantilla TEAR correcta. Si no
+    hay ningun importe encontrado devuelve 0.0 — el writer cae al fallback
+    abreviada (que es el caso mas comun y mas favorable al usuario).
+    """
+    maximo = 0.0
+    for doc in expediente.documentos:
+        datos = getattr(doc, "datos", None) or {}
+        if not isinstance(datos, dict):
+            continue
+        for campo in _CAMPOS_CUOTA_CANDIDATOS:
+            val = datos.get(campo)
+            if val is None:
+                continue
+            try:
+                val_f = float(val)
+            except (TypeError, ValueError):
+                continue
+            if val_f > maximo:
+                maximo = val_f
+    return maximo
+
+
 # compacto para la columna `tipo_escrito` de `defensia_escritos` sin
 # acoplarnos al nombre del fichero Jinja.
 _TIPO_ESCRITO_POR_FASE: dict[Fase, str] = {
@@ -206,11 +245,17 @@ class DefensiaService:
 
             # 5. Writer: render escrito + dictamen. El writer es sincrono;
             #    la lentitud aqui viene de Jinja que es CPU-bound, no I/O.
+            #    `cuota_estimada_eur` se extrae del maximo importe encontrado
+            #    en los documentos estructurados del expediente (propuesta de
+            #    liquidacion, liquidacion provisional, acuerdo de sancion).
+            #    El writer usa ese valor para decidir entre TEAR abreviada
+            #    (<6000 EUR) o general (>=6000 EUR) segun art. 245 LGT.
+            cuota_estimada = _extraer_cuota_maxima(expediente)
             escrito_md: str = self.writer.render_escrito(
                 expediente,
                 verificados,
                 brief,
-                cuota_estimada_eur=0.0,  # TODO wave 3: extraer de liquidacion
+                cuota_estimada_eur=cuota_estimada,
             )
             dictamen_md: str = self.writer.render_dictamen(
                 expediente, verificados, brief

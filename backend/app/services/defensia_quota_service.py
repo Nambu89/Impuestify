@@ -199,9 +199,14 @@ class DefensiaQuotaService:
 
         Idempotente: si ``reserva_id`` ya fue consumida (por un commit o
         release previo, o por reinicio del worker), es un no-op silencioso.
+
+        Validacion user-binding (Copilot review round 2 #2): el ``user_id``
+        argumento DEBE coincidir con el usuario que creo la reserva. Si no
+        coincide, es un no-op sin consumir el token — no queremos que un
+        usuario pueda consumir reservas de otro.
         """
         async with self._lock:
-            entry = self._reservas_activas.pop(reserva_id, None)
+            entry = self._reservas_activas.get(reserva_id)
             if entry is None:
                 logger.warning(
                     "defensia quota commit no-op: reserva desconocida user=%s reserva=%s",
@@ -209,16 +214,27 @@ class DefensiaQuotaService:
                     reserva_id,
                 )
                 return
-            _stored_user, ano_mes = entry
+            stored_user, ano_mes = entry
+            if stored_user != user_id:
+                logger.warning(
+                    "defensia quota commit no-op: user mismatch esperado=%s recibido=%s reserva=%s",
+                    stored_user,
+                    user_id,
+                    reserva_id,
+                )
+                return
+            # Solo ahora consumimos el token (pop) y aplicamos el UPDATE
+            # usando el user_id almacenado (que es el mismo).
+            self._reservas_activas.pop(reserva_id, None)
             await self.db.execute(
                 "UPDATE defensia_cuotas_mensuales "
                 "SET expedientes_creados = expedientes_creados + 1, "
                 "    en_curso = MAX(0, en_curso - 1) "
                 "WHERE user_id = ? AND ano_mes = ?",
-                [user_id, ano_mes],
+                [stored_user, ano_mes],
             )
         logger.info(
-            "defensia quota commit user=%s reserva=%s", user_id, reserva_id
+            "defensia quota commit user=%s reserva=%s", stored_user, reserva_id
         )
 
     async def release(self, user_id: str, reserva_id: str) -> None:
@@ -226,10 +242,11 @@ class DefensiaQuotaService:
 
         Efecto: ``en_curso -= 1``. No toca ``expedientes_creados``.
 
-        Idempotente: si ``reserva_id`` ya fue consumida, es un no-op.
+        Idempotente + user-binding identico a ``commit()``. Un release con
+        ``user_id`` distinto del original es un no-op sin consumir el token.
         """
         async with self._lock:
-            entry = self._reservas_activas.pop(reserva_id, None)
+            entry = self._reservas_activas.get(reserva_id)
             if entry is None:
                 logger.warning(
                     "defensia quota release no-op: reserva desconocida user=%s reserva=%s",
@@ -237,13 +254,22 @@ class DefensiaQuotaService:
                     reserva_id,
                 )
                 return
-            _stored_user, ano_mes = entry
+            stored_user, ano_mes = entry
+            if stored_user != user_id:
+                logger.warning(
+                    "defensia quota release no-op: user mismatch esperado=%s recibido=%s reserva=%s",
+                    stored_user,
+                    user_id,
+                    reserva_id,
+                )
+                return
+            self._reservas_activas.pop(reserva_id, None)
             await self.db.execute(
                 "UPDATE defensia_cuotas_mensuales "
                 "SET en_curso = MAX(0, en_curso - 1) "
                 "WHERE user_id = ? AND ano_mes = ?",
-                [user_id, ano_mes],
+                [stored_user, ano_mes],
             )
         logger.info(
-            "defensia quota release user=%s reserva=%s", user_id, reserva_id
+            "defensia quota release user=%s reserva=%s", stored_user, reserva_id
         )

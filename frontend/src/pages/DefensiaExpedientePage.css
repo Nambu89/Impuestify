@@ -1,9 +1,22 @@
+/* ============================================================
+   DefensiaExpedientePage.css — Detalle de expediente DefensIA
+   Dark theme
+   ============================================================ */
+
 .defensia-expediente-page {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
+  min-height: 100vh;
+  background: var(--color-secondary, #0f172a);
+  color: #f1f5f9;
+  padding: 2rem 1.5rem 4rem;
 }
 
+.defensia-expediente-page > * {
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---- Header ---- */
 .defensia-expediente-header {
   display: flex;
   justify-content: space-between;
@@ -17,20 +30,27 @@
   display: flex;
   align-items: center;
   gap: 0.875rem;
-  color: var(--color-primary-dark, #1e40af);
+  color: var(--color-accent, #06b6d4);
 }
 
 .defensia-expediente-title-block h1 {
   margin: 0;
-  font-size: 1.5rem;
-  color: #0f172a;
-  font-weight: 700;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 800;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-light, #3b82f6),
+    var(--color-accent, #06b6d4)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .defensia-expediente-title-block p {
   margin: 0;
   font-size: 0.85rem;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .defensia-expediente-badges {
@@ -39,11 +59,45 @@
   flex-wrap: wrap;
 }
 
+/* ---- Tabs ---- */
+.defensia-expediente-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.defensia-tab {
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: -1px;
+  min-height: 44px;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.defensia-tab:hover {
+  color: #f1f5f9;
+}
+
+.defensia-tab.active {
+  color: var(--color-accent, #06b6d4);
+  border-bottom-color: var(--color-accent, #06b6d4);
+}
+
+/* ---- Section cards ---- */
 .defensia-expediente-section {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.5rem 1.75rem;
   margin-bottom: 1rem;
 }
 
@@ -58,8 +112,11 @@
 
 .defensia-expediente-section h2 {
   margin: 0 0 0.75rem 0;
-  font-size: 1.1rem;
-  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-accent, #06b6d4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .defensia-expediente-section-header h2 {
@@ -68,7 +125,7 @@
 
 .defensia-expediente-brief {
   margin: 0;
-  color: #334155;
+  color: rgba(255, 255, 255, 0.85);
   line-height: 1.6;
   font-size: 0.95rem;
   white-space: pre-wrap;
@@ -76,7 +133,7 @@
 
 .defensia-expediente-placeholder {
   margin: 0;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.35);
   font-style: italic;
 }
 
@@ -84,19 +141,25 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: var(--color-primary, #1a56db);
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary, #1a56db),
+    var(--color-accent, #06b6d4)
+  );
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   min-height: 40px;
+  transition: transform 0.15s, box-shadow 0.2s;
 }
 
 .defensia-expediente-export-btn:hover:not(:disabled) {
-  background: var(--color-primary-dark, #1e40af);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.25);
 }
 
 .defensia-expediente-export-btn:disabled {
@@ -108,37 +171,6 @@
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-}
-
-.defensia-expediente-tabs {
-  display: flex;
-  gap: 0.25rem;
-  border-bottom: 2px solid #e2e8f0;
-  margin-bottom: 1rem;
-  overflow-x: auto;
-}
-
-.defensia-tab {
-  padding: 0.75rem 1.25rem;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: #64748b;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-bottom: -2px;
-  min-height: 44px;
-  white-space: nowrap;
-}
-
-.defensia-tab:hover {
-  color: #334155;
-}
-
-.defensia-tab.active {
-  color: var(--color-primary-dark, #1e40af);
-  border-bottom-color: var(--color-primary, #1a56db);
 }
 
 .defensia-expediente-argumentos {
@@ -153,10 +185,16 @@
   align-items: center;
   gap: 0.75rem;
   padding: 2rem 1rem;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.55);
   text-align: center;
 }
 
+.defensia-expediente-empty svg {
+  color: var(--color-accent, #06b6d4);
+  opacity: 0.5;
+}
+
+/* ---- Skeleton ---- */
 .defensia-expediente-skeleton {
   display: flex;
   flex-direction: column;
@@ -165,8 +203,13 @@
 
 .skeleton-block {
   height: 80px;
-  border-radius: 10px;
-  background: linear-gradient(90deg, #f1f5f9, #e2e8f0, #f1f5f9);
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.04)
+  );
   background-size: 200% 100%;
   animation: skeleton-shine 1.4s ease-in-out infinite;
 }
@@ -180,6 +223,7 @@
   }
 }
 
+/* ---- 404 ---- */
 .defensia-expediente-404 {
   display: flex;
   flex-direction: column;
@@ -187,10 +231,29 @@
   gap: 0.75rem;
   padding: 3rem 1.5rem;
   text-align: center;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.defensia-expediente-404 svg {
+  color: var(--color-accent, #06b6d4);
+  opacity: 0.5;
 }
 
 .defensia-expediente-404 h2 {
   margin: 0;
-  color: #0f172a;
+  font-size: 1.25rem;
+  color: #f1f5f9;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+@media (max-width: 640px) {
+  .defensia-expediente-page {
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  .defensia-expediente-section {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
 }

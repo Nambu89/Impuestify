@@ -810,6 +810,46 @@ async def delete_user_account(
         [user_id]
     )
 
+    # DefensIA (T3-003 GDPR cascade): eliminamos explicitamente las 7 tablas
+    # defensia_* aunque la migracion declara FK con ON DELETE CASCADE. Es
+    # defensa en profundidad por si el pragma foreign_keys no esta activo o
+    # si Turso libSQL no aplica el cascade en todos los caminos. El orden
+    # respeta las FK internas: rag_log -> escritos -> dictamenes -> briefs
+    # -> documentos -> expedientes -> cuotas.
+    await db.execute(
+        """DELETE FROM defensia_rag_log WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        [user_id]
+    )
+    await db.execute(
+        """DELETE FROM defensia_escritos WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        [user_id]
+    )
+    await db.execute(
+        """DELETE FROM defensia_dictamenes WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        [user_id]
+    )
+    await db.execute(
+        """DELETE FROM defensia_briefs WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        [user_id]
+    )
+    await db.execute(
+        """DELETE FROM defensia_documentos WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        [user_id]
+    )
+    await db.execute(
+        "DELETE FROM defensia_expedientes WHERE user_id = ?",
+        [user_id]
+    )
+    await db.execute(
+        "DELETE FROM defensia_cuotas_mensuales WHERE user_id = ?",
+        [user_id]
+    )
+
     # Sessions
     await db.execute(
         "DELETE FROM sessions WHERE user_id = ?",

@@ -10,7 +10,7 @@ Fases aplicables: COMPROBACION_PROPUESTA en su variante breve (verificacion de d
 
 ---
 
-**A LA ATENCION DE:** Agencia Estatal de Administracion Tributaria — {{ expediente.ccaa }}
+**A LA ATENCION DE:** Agencia Estatal de Administración Tributaria — {{ expediente.ccaa }}
 
 **Referencia:** Procedimiento de verificacion de datos. Tributo: {{ expediente.tributo.value }}.
 
@@ -25,7 +25,7 @@ Fases aplicables: COMPROBACION_PROPUESTA en su variante breve (verificacion de d
 {% set docs_relevantes = [] %}
 {% for doc in expediente.timeline_ordenado() %}
 {% if doc.tipo_documento.value in ["REQUERIMIENTO", "PROPUESTA_LIQUIDACION", "LIQUIDACION_PROVISIONAL"] %}
-{{ loop.index }}.- Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada en el documento]" }}, esta parte recibio notificacion del acto identificado como "{{ doc.nombre_original }}".
+{{ loop.index }}.- Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada en el documento]" }}, esta parte recibio notificación del acto identificado como "{{ doc.nombre_original }}".
 {% endif %}
 {% endfor %}
 
@@ -34,7 +34,7 @@ Esta parte manifiesta su disconformidad con el acto antes citado y, dentro del p
 ## II. Alegaciones
 
 {% if argumentos|length == 0 %}
-Se formula oposicion generica al acto notificado, sin perjuicio de los motivos adicionales que puedan desarrollarse en fases ulteriores del procedimiento.
+Se formula oposición generica al acto notificado, sin perjuicio de los motivos adicionales que puedan desarrollarse en fases ulteriores del procedimiento.
 {% else %}
 {% for arg in argumentos %}
 ### {{ loop.index }}.- {{ arg.descripcion }}
@@ -48,7 +48,7 @@ Se formula oposicion generica al acto notificado, sin perjuicio de los motivos a
 
 ## III. Suplico
 
-Que, teniendo por presentado este escrito en tiempo y forma, se sirva admitirlo, tenga por formuladas las anteriores alegaciones, y acuerde dejar sin efecto el acto impugnado o, subsidiariamente, dictar nueva resolucion conforme a derecho que acoja los motivos aqui expuestos.
+Que, teniendo por presentado este escrito en tiempo y forma, se sirva admitirlo, tenga por formuladas las anteriores alegaciones, y acuerde dejar sin efecto el acto impugnado o, subsidiariamente, dictar nueva resolución conforme a derecho que acoja los motivos aquí expuestos.
 
 ---
 

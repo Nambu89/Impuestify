@@ -1,19 +1,19 @@
 {#
-DefensIA - Plantilla: Reclamacion economico-administrativa, procedimiento abreviado.
+DefensIA - Plantilla: Reclamación económico-administrativa, procedimiento abreviado.
 Wave 2B T2B-005. Autoescape OFF (markdown legal, inputs trusted del RAG verifier).
 Invariante #2: cero citas normativas hardcodeadas. Todas vienen de argumentos verificados.
 Fases aplicables: TEAR_INTERPUESTA cuando la deuda es inferior al umbral del procedimiento general.
 Tono breve, estructura minima.
 #}
-# Reclamacion Economico-Administrativa en Procedimiento Abreviado
+# Reclamación Económico-Administrativa en Procedimiento Abreviado
 
 **{{ disclaimer }}**
 
 ---
 
-**AL TRIBUNAL ECONOMICO-ADMINISTRATIVO REGIONAL DE {{ expediente.ccaa | upper }}**
+**AL TRIBUNAL ECONÓMICO-ADMINISTRATIVO REGIONAL DE {{ expediente.ccaa | upper }}**
 
-**Referencia:** Tributo objeto de reclamacion: {{ expediente.tributo.value }}.
+**Referencia:** Tributo objeto de reclamación: {{ expediente.tributo.value }}.
 
 **Expediente interno DefensIA:** {{ expediente.id }}
 
@@ -21,23 +21,23 @@ Tono breve, estructura minima.
 
 ---
 
-**SE INTERPONE RECLAMACION ECONOMICO-ADMINISTRATIVA EN PROCEDIMIENTO ABREVIADO** contra el acto que a continuacion se identifica, con base en los siguientes
+**SE INTERPONE RECLAMACIÓN ECONÓMICO-ADMINISTRATIVA EN PROCEDIMIENTO ABREVIADO** contra el acto que a continuación se identifica, con base en los siguientes
 
 ## I. Hechos
 
 {% for doc in expediente.timeline_ordenado() %}
 {% if doc.tipo_documento.value in ["LIQUIDACION_PROVISIONAL", "ACUERDO_IMPOSICION_SANCION"] %}
-**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, la Administracion notifico a esta parte el acto "{{ doc.nombre_original }}", que constituye el acto impugnado.
+**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, la Administración notificó a esta parte el acto "{{ doc.nombre_original }}", que constituye el acto impugnado.
 
 {% endif %}
 {% endfor %}
 
-Esta parte manifiesta su disconformidad con el citado acto por los motivos que a continuacion se sintetizan.
+Esta parte manifiesta su disconformidad con el citado acto por los motivos que a continuación se sintetizan.
 
 ## II. Alegaciones
 
 {% if argumentos|length == 0 %}
-Se formula oposicion general al acto impugnado, dandose aqui por reproducidas las alegaciones que en su caso pudieran haberse formulado en fase previa.
+Se formula oposición general al acto impugnado, dandose aquí por reproducidas las alegaciones que en su caso pudieran haberse formulado en fase previa.
 {% else %}
 {% for arg in argumentos %}
 **{{ loop.index }}.- {{ arg.descripcion }}**
@@ -51,11 +51,11 @@ Se formula oposicion general al acto impugnado, dandose aqui por reproducidas la
 
 ## III. Suplico
 
-Al Tribunal, que teniendo por presentado este escrito con los documentos que lo acompanan, se sirva admitirlo, tener por interpuesta en tiempo y forma **RECLAMACION ECONOMICO-ADMINISTRATIVA EN PROCEDIMIENTO ABREVIADO** contra el acto identificado, y, previos los tramites legales, dicte resolucion por la que acuerde:
+Al Tribunal, que teniendo por presentado este escrito con los documentos que lo acompañan, se sirva admitirlo, tener por interpuesta en tiempo y forma **RECLAMACIÓN ECONÓMICO-ADMINISTRATIVA EN PROCEDIMIENTO ABREVIADO** contra el acto identificado, y, previos los trámites legales, dicte resolución por la que acuerde:
 
-1. La admision a tramite de la presente reclamacion.
-2. La estimacion integra de la misma, anulando el acto impugnado.
-3. El reconocimiento del derecho de esta parte a la devolucion, en su caso, de las cantidades indebidamente ingresadas con los intereses legales.
+1. La admision a tramite de la presente reclamación.
+2. La estimacion íntegra de la misma, anulando el acto impugnado.
+3. El reconocimiento del derecho de esta parte a la devolución, en su caso, de las cantidades indebidamente ingresadas con los intereses legales.
 
 ---
 
