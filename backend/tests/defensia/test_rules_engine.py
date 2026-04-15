@@ -132,3 +132,49 @@ def test_regla_que_falla_con_excepcion_no_tumba_pipeline():
     candidatos = evaluar(_exp_basico(), Brief(texto="test"))
     assert len(candidatos) == 1
     assert candidatos[0].regla_id == "R_OK"
+
+
+def test_decorador_normaliza_enums_a_strings():
+    """Regresion Copilot #1: pasar Tributo.IRPF y Fase.XXX (enums) al decorador
+    debe disparar la regla exactamente igual que pasar strings.
+    """
+    reset_registry()
+
+    @regla(
+        id="R_ENUM",
+        tributos=[Tributo.IRPF, Tributo.IVA],
+        fases=[Fase.LIQUIDACION_FIRME_PLAZO_RECURSO],
+        descripcion="acepta enums",
+    )
+    def _r(expediente, brief):
+        return ArgumentoCandidato(
+            regla_id="R_ENUM",
+            descripcion="x",
+            cita_normativa_propuesta="x",
+            datos_disparo={},
+        )
+
+    info = REGISTRY["R_ENUM"]
+    assert info["tributos"] == {"IRPF", "IVA"}
+    assert info["fases"] == {"LIQUIDACION_FIRME_PLAZO_RECURSO"}
+
+    candidatos = evaluar(_exp_basico(), Brief(texto="test"))
+    assert len(candidatos) == 1
+    assert candidatos[0].regla_id == "R_ENUM"
+
+
+def test_decorador_acepta_mezcla_enums_y_strings():
+    reset_registry()
+
+    @regla(
+        id="R_MIX",
+        tributos=[Tributo.IRPF, "IVA"],
+        fases=[Fase.LIQUIDACION_FIRME_PLAZO_RECURSO, "COMPROBACION_PROPUESTA"],
+        descripcion="mezcla",
+    )
+    def _r(expediente, brief):
+        return None
+
+    info = REGISTRY["R_MIX"]
+    assert info["tributos"] == {"IRPF", "IVA"}
+    assert info["fases"] == {"LIQUIDACION_FIRME_PLAZO_RECURSO", "COMPROBACION_PROPUESTA"}
