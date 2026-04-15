@@ -1,0 +1,106 @@
+.argumento-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--color-primary, #1a56db);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.argumento-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.argumento-card-id {
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #eff6ff;
+  color: var(--color-primary-dark, #1e40af);
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+}
+
+.argumento-card-confianza {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.argumento-card-desc {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  color: #0f172a;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.argumento-card-cita {
+  margin: 0 0 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-left: 3px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.argumento-card-cita p {
+  margin: 0 0 0.375rem 0;
+  font-style: italic;
+}
+
+.argumento-card-cita cite {
+  font-style: normal;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.argumento-card-impacto {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.argumento-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.argumento-card-fuente-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: var(--color-primary-dark, #1e40af);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.argumento-card-fuente-btn:hover {
+  background: #dbeafe;
+}
+
+.argumento-card-disclaimer {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-style: italic;
+}

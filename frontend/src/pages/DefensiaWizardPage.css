@@ -1,0 +1,146 @@
+.defensia-wizard-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.defensia-wizard-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--color-primary-dark, #1e40af);
+}
+
+.defensia-wizard-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+
+.defensia-wizard-steps {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.defensia-wizard-body {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  min-height: 240px;
+}
+
+.defensia-wizard-body h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.15rem;
+  color: #0f172a;
+}
+
+.defensia-wizard-hint {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.defensia-wizard-uploads {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.defensia-wizard-textarea {
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 180px;
+}
+
+.defensia-wizard-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #1a56db);
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+}
+
+.defensia-wizard-count {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.defensia-wizard-error {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 0.875rem;
+}
+
+.defensia-wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.defensia-wizard-prev,
+.defensia-wizard-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.defensia-wizard-prev {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.defensia-wizard-prev:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.defensia-wizard-next {
+  background: var(--color-primary, #1a56db);
+  color: #fff;
+}
+
+.defensia-wizard-next:hover:not(:disabled) {
+  background: var(--color-primary-dark, #1e40af);
+}
+
+.defensia-wizard-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

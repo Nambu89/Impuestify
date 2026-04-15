@@ -7,10 +7,15 @@
         "dev": "vite",
         "build": "npx vite build",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "test": "vitest run",
+        "test:watch": "vitest"
     },
     "dependencies": {
         "@react-oauth/google": "^0.13.4",
+        "@tiptap/pm": "^3.22.3",
+        "@tiptap/react": "^3.22.3",
+        "@tiptap/starter-kit": "^3.22.3",
         "@vitejs/plugin-react": "^4.2.1",
         "axios": "^1.6.2",
         "eventsource-parser": "^3.0.6",
@@ -27,8 +32,14 @@
         "vite": "^5.0.8"
     },
     "devDependencies": {
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.2",
+        "@testing-library/user-event": "^14.6.1",
         "@types/node": "^24.10.1",
         "@types/react": "^18.2.43",
-        "@types/react-dom": "^18.2.17"
+        "@types/react-dom": "^18.2.17",
+        "@vitest/ui": "^4.1.4",
+        "jsdom": "^29.0.2",
+        "vitest": "^4.1.4"
     }
 }

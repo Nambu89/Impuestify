@@ -1,0 +1,100 @@
+{#
+DefensIA - Plantilla: Dictamen tecnico interno (resumen que ve el usuario).
+Wave 2B T2B-005. Autoescape OFF (markdown legal, inputs trusted del RAG verifier).
+NO es un escrito oficial. Es el analisis que DefensIA muestra al usuario antes de que
+decida si exportar un escrito formal.
+Invariante #2: cero citas normativas hardcodeadas. Todas vienen de argumentos verificados.
+A diferencia del resto de plantillas, NO lleva disclaimer oficial en header + footer,
+pero si una nota final recordando el caracter orientativo.
+#}
+# Dictamen Tecnico DefensIA
+
+> Analisis orientativo elaborado por el motor hibrido de DefensIA. Revise el detalle
+> tecnico y la lista de argumentos antes de generar cualquier escrito formal.
+
+---
+
+## 1. Estado del expediente
+
+- **Tributo:** {{ expediente.tributo.value }}
+- **Territorio:** {{ expediente.ccaa }}
+- **Fase detectada:** {{ expediente.fase_detectada.value }}
+- **Confianza en la deteccion de fase:** {{ "%.0f" | format(expediente.fase_confianza * 100) }}%
+- **Documentos cargados:** {{ expediente.documentos | length }}
+- **Fecha del analisis:** {{ fecha_hoy.strftime("%d/%m/%Y") }}
+
+### Documentos presentes en el expediente
+
+{% if expediente.documentos | length == 0 %}
+No se ha aportado documentacion al expediente.
+{% else %}
+{% for doc in expediente.timeline_ordenado() %}
+- **{{ doc.tipo_documento.value }}** — {{ doc.nombre_original }}{% if doc.fecha_acto %} ({{ doc.fecha_acto.strftime("%d/%m/%Y") }}){% endif %}
+{% endfor %}
+{% endif %}
+
+## 2. Argumentos identificados
+
+{% if argumentos | length == 0 %}
+El motor de reglas no ha encontrado argumentos verificados para el expediente tal y como
+esta actualmente configurado. Esto puede deberse a una fase que aun no permite defensa,
+a documentacion insuficiente, o a que las reglas aplicables requieren datos adicionales
+para activarse. Le recomendamos revisar el brief y adjuntar documentacion complementaria.
+{% else %}
+Se han identificado **{{ argumentos | length }}** argumentos que han superado el umbral
+de verificacion del motor documental. A continuacion se detallan agrupados por regla:
+
+{% for arg in argumentos %}
+### Argumento {{ loop.index }} — Regla {{ arg.regla_id }}
+
+- **Descripcion:** {{ arg.descripcion }}
+- **Referencia normativa canonica:** {{ arg.referencia_normativa_canonica }}
+- **Confianza del motor verificador:** {{ "%.0f" | format(arg.confianza * 100) }}%
+{% if arg.impacto_estimado %}
+- **Impacto estimado:** {{ arg.impacto_estimado }}
+{% endif %}
+
+**Cita verificada:**
+
+> {{ arg.cita_verificada }}
+
+{% endfor %}
+{% endif %}
+
+## 3. Brief aportado por el usuario
+
+{% if brief.texto %}
+{{ brief.texto }}
+{% else %}
+El usuario no ha aportado un brief explicito. El analisis se ha realizado unicamente
+a partir de la documentacion adjuntada.
+{% endif %}
+
+## 4. Recomendacion
+
+{% if argumentos | length == 0 %}
+**No se recomienda** generar un escrito automatico hasta revisar el expediente y
+completar la documentacion. Considere contactar con un asesor fiscal para una
+valoracion manual del caso.
+{% elif argumentos | length < 2 %}
+Se dispone de un numero limitado de argumentos verificados. **Se recomienda** revisar
+el expediente con un asesor fiscal antes de generar cualquier escrito, para valorar si
+procede aportar documentacion complementaria que permita activar reglas adicionales.
+{% else %}
+El expediente cuenta con varios argumentos verificados y una fase que permite
+actuacion defensiva. **Se recomienda** revisar cada argumento, confirmar que encaja
+con la realidad del caso, y generar el escrito correspondiente a la fase detectada.
+{% endif %}
+
+## 5. Siguientes pasos
+
+1. Revisar uno a uno los argumentos verificados y descartar aquellos que no encajen con la realidad del caso.
+2. Si procede, aportar documentacion adicional para activar reglas complementarias.
+3. Generar el escrito correspondiente a la fase del expediente y revisarlo antes de firmar.
+4. Valorar, en funcion de la cuantia y complejidad, la conveniencia de contrastar el contenido con un asesor fiscal.
+
+---
+
+*Nota: DefensIA es una herramienta de apoyo tecnico. El presente dictamen es orientativo
+y no sustituye al asesoramiento profesional individualizado. La decision final sobre
+la presentacion de cualquier escrito corresponde exclusivamente al usuario.*

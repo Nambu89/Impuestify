@@ -1,0 +1,55 @@
+{#
+DefensIA - Plantilla: Alegaciones en procedimiento de verificacion de datos.
+Wave 2B T2B-005. Autoescape OFF (markdown legal, inputs trusted del RAG verifier).
+Invariante #2: cero citas normativas hardcodeadas. Todas vienen de argumentos verificados.
+Fases aplicables: COMPROBACION_PROPUESTA en su variante breve (verificacion de datos).
+#}
+# Escrito de Alegaciones en Procedimiento de Verificacion de Datos
+
+**{{ disclaimer }}**
+
+---
+
+**A LA ATENCION DE:** Agencia Estatal de Administracion Tributaria — {{ expediente.ccaa }}
+
+**Referencia:** Procedimiento de verificacion de datos. Tributo: {{ expediente.tributo.value }}.
+
+**Expediente interno DefensIA:** {{ expediente.id }}
+
+**Fecha:** {{ fecha_hoy.strftime("%d/%m/%Y") }}
+
+---
+
+## I. Hechos
+
+{% set docs_relevantes = [] %}
+{% for doc in expediente.timeline_ordenado() %}
+{% if doc.tipo_documento.value in ["REQUERIMIENTO", "PROPUESTA_LIQUIDACION", "LIQUIDACION_PROVISIONAL"] %}
+{{ loop.index }}.- Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada en el documento]" }}, esta parte recibio notificacion del acto identificado como "{{ doc.nombre_original }}".
+{% endif %}
+{% endfor %}
+
+Esta parte manifiesta su disconformidad con el acto antes citado y, dentro del plazo legalmente conferido, formula las siguientes alegaciones.
+
+## II. Alegaciones
+
+{% if argumentos|length == 0 %}
+Se formula oposicion generica al acto notificado, sin perjuicio de los motivos adicionales que puedan desarrollarse en fases ulteriores del procedimiento.
+{% else %}
+{% for arg in argumentos %}
+### {{ loop.index }}.- {{ arg.descripcion }}
+
+{{ arg.cita_verificada }}
+
+*Referencia normativa: {{ arg.referencia_normativa_canonica }}*
+
+{% endfor %}
+{% endif %}
+
+## III. Suplico
+
+Que, teniendo por presentado este escrito en tiempo y forma, se sirva admitirlo, tenga por formuladas las anteriores alegaciones, y acuerde dejar sin efecto el acto impugnado o, subsidiariamente, dictar nueva resolucion conforme a derecho que acoja los motivos aqui expuestos.
+
+---
+
+**{{ disclaimer }}**

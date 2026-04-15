@@ -1,0 +1,89 @@
+{#
+DefensIA - Plantilla: Alegaciones en procedimiento sancionador tributario.
+Wave 2B T2B-005. Autoescape OFF (markdown legal, inputs trusted del RAG verifier).
+Invariante #2: cero citas normativas hardcodeadas. Todas vienen de argumentos verificados.
+Fases aplicables: SANCIONADOR_INICIADO, SANCIONADOR_PROPUESTA.
+Estructura obligatoria: ausencia de culpabilidad, interpretacion razonable, otros motivos.
+El filtrado por regla_id (R007) decide que argumentos van en cada apartado, pero el
+contenido textual es 100% dinamico desde cita_verificada del RAG verifier.
+#}
+# Escrito de Alegaciones en Procedimiento Sancionador Tributario
+
+**{{ disclaimer }}**
+
+---
+
+**A LA ATENCION DE:** Agencia Estatal de Administracion Tributaria — {{ expediente.ccaa }}
+
+**Referencia:** Procedimiento sancionador tributario. Tributo objeto de regularizacion: {{ expediente.tributo.value }}.
+
+**Expediente interno DefensIA:** {{ expediente.id }}
+
+**Fecha:** {{ fecha_hoy.strftime("%d/%m/%Y") }}
+
+---
+
+## I. Antecedentes
+
+{% for doc in expediente.timeline_ordenado() %}
+{% if doc.tipo_documento.value in ["ACUERDO_INICIO_SANCIONADOR", "PROPUESTA_SANCION", "ACUERDO_IMPOSICION_SANCION"] %}
+**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte recibio notificacion del acto "{{ doc.nombre_original }}", por el que se le imputa la comision de una supuesta infraccion tributaria.
+
+{% endif %}
+{% endfor %}
+
+Dentro del plazo legalmente conferido, esta parte formula las siguientes alegaciones, solicitando el archivo del expediente sancionador por los motivos que se exponen a continuacion.
+
+## II. Ausencia de culpabilidad
+
+{% set args_culpabilidad = argumentos | selectattr("regla_id", "equalto", "R007") | list %}
+{% if args_culpabilidad|length > 0 %}
+La imposicion de cualquier sancion tributaria exige la concurrencia del elemento subjetivo de culpabilidad. En el presente caso, dicho elemento no concurre por las siguientes razones:
+
+{% for arg in args_culpabilidad %}
+### {{ loop.index }}.- {{ arg.descripcion }}
+
+{{ arg.cita_verificada }}
+
+*Referencia: {{ arg.referencia_normativa_canonica }}*
+
+{% endfor %}
+{% else %}
+Esta parte nego expresamente la concurrencia del elemento subjetivo de culpabilidad, entendiendo que su conducta obedecio a una interpretacion razonable y diligente de la normativa aplicable, sin intencion defraudatoria alguna.
+{% endif %}
+
+## III. Interpretacion razonable de la norma
+
+{% set args_interpretacion = argumentos | selectattr("regla_id", "equalto", "R007") | list %}
+{% if args_interpretacion|length == 0 %}
+La actuacion de esta parte obedecio en todo momento a una interpretacion razonable del marco normativo aplicable al tributo {{ expediente.tributo.value }}, lo que, conforme a la doctrina consolidada en materia de responsabilidad tributaria, excluye la imposicion de cualquier sancion.
+{% else %}
+La conducta de esta parte se apoya en una interpretacion razonable de la norma, conforme a los motivos ya expuestos en el apartado anterior y desarrollados en los argumentos verificados de referencia.
+{% endif %}
+
+## IV. Otros motivos de nulidad o anulabilidad
+
+{% set args_otros = argumentos | rejectattr("regla_id", "equalto", "R007") | list %}
+{% if args_otros|length == 0 %}
+Sin perjuicio de lo anterior, esta parte se reserva el derecho a invocar cualesquiera otros motivos de nulidad o anulabilidad que puedan resultar aplicables.
+{% else %}
+{% for arg in args_otros %}
+### {{ loop.index }}.- {{ arg.descripcion }}
+
+{{ arg.cita_verificada }}
+
+*Referencia: {{ arg.referencia_normativa_canonica }}*
+
+{% endfor %}
+{% endif %}
+
+## V. Suplico
+
+Que, teniendo por presentado este escrito, se sirva admitirlo, tenga por formuladas las anteriores alegaciones dentro del procedimiento sancionador de referencia, y acuerde:
+
+1. El archivo del expediente sancionador por ausencia de culpabilidad y concurrencia de interpretacion razonable de la norma.
+2. Subsidiariamente, la anulacion de la propuesta de sancion y la declaracion de inexistencia de infraccion tributaria.
+
+---
+
+**{{ disclaimer }}**

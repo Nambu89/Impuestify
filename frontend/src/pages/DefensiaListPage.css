@@ -1,0 +1,146 @@
+.defensia-list-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.defensia-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.defensia-list-title-block {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  color: var(--color-primary-dark, #1e40af);
+}
+
+.defensia-list-title-block h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.defensia-list-title-block p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.defensia-list-crear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--color-primary, #1a56db);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.defensia-list-crear-btn:hover {
+  background: var(--color-primary-dark, #1e40af);
+}
+
+.defensia-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.defensia-list-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.skeleton-card {
+  height: 140px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f1f5f9, #e2e8f0, #f1f5f9);
+  background-size: 200% 100%;
+  animation: skeleton-shine 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shine {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.defensia-list-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #991b1b;
+  text-align: center;
+}
+
+.defensia-list-error button {
+  padding: 0.5rem 1rem;
+  background: #991b1b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.defensia-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 3rem 2rem;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  color: #475569;
+  text-align: center;
+}
+
+.defensia-list-empty h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.defensia-list-empty p {
+  margin: 0;
+  max-width: 42ch;
+  color: #64748b;
+}
+
+@media (max-width: 640px) {
+  .defensia-list-page {
+    padding: 1.25rem 1rem;
+  }
+
+  .defensia-list-header {
+    flex-direction: column;
+  }
+
+  .defensia-list-crear-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

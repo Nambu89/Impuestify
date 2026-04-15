@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt, Building2, FileText, BookOpen, ChevronDown } from 'lucide-react'
+import { LogOut, Menu, MessageSquare, Settings, Shield, Calculator, History, ClipboardList, CalendarDays, Bitcoin, Wallet, Receipt, Building2, FileText, BookOpen, ChevronDown, Scale } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
@@ -114,6 +114,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             <Link to="/contabilidad" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
                                 <BookOpen size={15} /> Contabilidad
                             </Link>
+                            <Link to="/defensia" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <Scale size={15} /> DefensIA
+                            </Link>
                         </div>
                     </div>
 
@@ -214,6 +217,9 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             </Link>
                             <Link to="/contabilidad" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
                                 <BookOpen size={18} /> Contabilidad
+                            </Link>
+                            <Link to="/defensia" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <Scale size={18} /> DefensIA
                             </Link>
                         </div>
                     )}
