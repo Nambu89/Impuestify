@@ -87,10 +87,12 @@ class DefensiaWriterService:
 
         # autoescape=False: el output es markdown legal, los inputs provienen
         # del RAG verifier (trusted pipeline) y no se renderiza HTML. Escapar
-        # rompería tildes, símbolos (<, >, &) y el propio markdown.
-        self._env = Environment(
+        # rompería tildes, símbolos (<, >, &) y el propio markdown. Bandit
+        # B701 reporta falso positivo porque asume target HTML — aquí el
+        # target es markdown parseado por python-docx/reportlab.
+        self._env = Environment(  # nosec B701 — markdown output, not HTML
             loader=FileSystemLoader(str(templates_dir)),
-            autoescape=False,
+            autoescape=False,  # nosec B701
             trim_blocks=True,
             lstrip_blocks=True,
         )
