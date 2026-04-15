@@ -1025,6 +1025,83 @@ class TursoClient:
             else:
                 logger.warning("DefensIA migration file not found: %s", _migration_path)
 
+            # --- DefensIA storage cifrado (Wave 2B T2B-013a) ---
+            # Anade columnas BLOB cifrado a `defensia_documentos`. SQLite no
+            # soporta `ADD COLUMN IF NOT EXISTS`, asi que envolvemos cada
+            # statement en try/except que ignora "duplicate column name" para
+            # mantener la migracion idempotente entre re-arranques.
+            _storage_migration_path = (
+                _Path(__file__).parent / "migrations" / "20260414_defensia_storage.sql"
+            )
+            if _storage_migration_path.exists():
+                _sql_storage = _storage_migration_path.read_text(encoding="utf-8")
+                for _raw_stmt in _sql_storage.split(";"):
+                    # Limpieza por lineas: descartamos comentarios SQL (--)
+                    # antes de verificar si queda contenido ejecutable. Sin
+                    # esto, un bloque de comentarios pegado a la primera
+                    # sentencia haria que `startswith("--")` la saltase
+                    # silenciosamente.
+                    _exec_lines = [
+                        _line
+                        for _line in _raw_stmt.splitlines()
+                        if _line.strip() and not _line.strip().startswith("--")
+                    ]
+                    _stmt = "\n".join(_exec_lines).strip()
+                    if not _stmt:
+                        continue
+                    try:
+                        await self.execute(_stmt)
+                    except Exception as _e:
+                        _msg = str(_e).lower()
+                        # Idempotencia: ignoramos "columna ya existe".
+                        if "duplicate column" in _msg or "already exists" in _msg:
+                            pass
+                        else:
+                            logger.warning(
+                                "DefensIA storage migration stmt failed: %s", _e
+                            )
+                logger.info("DefensIA storage migration applied (idempotent)")
+            else:
+                logger.warning(
+                    "DefensIA storage migration file not found: %s",
+                    _storage_migration_path,
+                )
+
+            # --- DefensIA quota en_curso column (Wave 2B T2B-010) ---
+            # Anade `en_curso INTEGER DEFAULT 0` a `defensia_cuotas_mensuales`
+            # para habilitar el patron reserve-commit-release (H8). Idempotente
+            # igual que la migracion de storage: ignoramos "duplicate column".
+            _quota_migration_path = (
+                _Path(__file__).parent / "migrations" / "20260414_defensia_quota_encurso.sql"
+            )
+            if _quota_migration_path.exists():
+                _sql_quota = _quota_migration_path.read_text(encoding="utf-8")
+                for _raw_stmt in _sql_quota.split(";"):
+                    _exec_lines = [
+                        _line
+                        for _line in _raw_stmt.splitlines()
+                        if _line.strip() and not _line.strip().startswith("--")
+                    ]
+                    _stmt = "\n".join(_exec_lines).strip()
+                    if not _stmt:
+                        continue
+                    try:
+                        await self.execute(_stmt)
+                    except Exception as _e:
+                        _msg = str(_e).lower()
+                        if "duplicate column" in _msg or "already exists" in _msg:
+                            pass
+                        else:
+                            logger.warning(
+                                "DefensIA quota migration stmt failed: %s", _e
+                            )
+                logger.info("DefensIA quota migration applied (idempotent)")
+            else:
+                logger.warning(
+                    "DefensIA quota migration file not found: %s",
+                    _quota_migration_path,
+                )
+
             logger.info("Database schema initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize schema: {e}")

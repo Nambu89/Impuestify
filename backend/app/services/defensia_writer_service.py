@@ -60,7 +60,11 @@ _PLANTILLA_POR_FASE: dict[str, str] = {
     Fase.SANCIONADOR_INICIADO.value: "alegaciones_sancionador.j2",
     Fase.SANCIONADOR_PROPUESTA.value: "alegaciones_sancionador.j2",
     Fase.SANCIONADOR_IMPUESTA.value: "alegaciones_sancionador.j2",
-    Fase.REPOSICION_INTERPUESTA.value: "reclamacion_tear_abreviada.j2",
+    # Copilot review #4: REPOSICION_INTERPUESTA es una reposicion YA
+    # interpuesta, NO un escrito TEAR. Mapeamos al recurso_reposicion como
+    # fallback coherente; las plantillas reclamacion_tear_* quedan reservadas
+    # a TEAR_INTERPUESTA / TEAR_AMPLIACION_POSIBLE (resueltas por heurística).
+    Fase.REPOSICION_INTERPUESTA.value: "recurso_reposicion.j2",
     # TEAR_INTERPUESTA / TEAR_AMPLIACION_POSIBLE resuelven vía heurística.
 }
 
@@ -83,10 +87,12 @@ class DefensiaWriterService:
 
         # autoescape=False: el output es markdown legal, los inputs provienen
         # del RAG verifier (trusted pipeline) y no se renderiza HTML. Escapar
-        # rompería tildes, símbolos (<, >, &) y el propio markdown.
-        self._env = Environment(
+        # rompería tildes, símbolos (<, >, &) y el propio markdown. Bandit
+        # B701 reporta falso positivo porque asume target HTML — aquí el
+        # target es markdown parseado por python-docx/reportlab.
+        self._env = Environment(  # nosec B701 — markdown output, not HTML
             loader=FileSystemLoader(str(templates_dir)),
-            autoescape=False,
+            autoescape=False,  # nosec B701
             trim_blocks=True,
             lstrip_blocks=True,
         )
