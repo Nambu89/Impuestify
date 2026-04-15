@@ -22,13 +22,24 @@ Estado persistente en tabla `defensia_cuotas_mensuales` con columnas
 `(user_id, ano_mes, expedientes_creados, en_curso)`. La columna `en_curso`
 la anade la migracion `20260414_defensia_quota_encurso.sql`.
 
-NOTA sobre atomicidad: SQLite/libsql ejecutan las sentencias de forma
-secuencial, pero el check de capacidad (SELECT) y la mutacion (INSERT/UPSERT)
-son dos round-trips. Para cerrar la ventana de carrera usamos un `asyncio.Lock`
-a nivel de servicio, que fuerza serializacion incluso cuando hay varios
-`analyze` paralelos en el mismo worker. En multi-worker la serializacion
-final la da el UNIQUE(user_id, ano_mes) de la tabla + el decremento
-defensivo a cero en `release`/`commit`.
+NOTA sobre atomicidad (Copilot review #9):
+
+- **Intra-worker**: un `asyncio.Lock` cierra la ventana de carrera entre el
+  check de capacidad y la reserva.
+- **Multi-worker / multi-proceso**: ``reserve()`` usa un UPDATE condicional
+  atomico en una sola sentencia (``WHERE ... AND (creados + en_curso) <
+  limite``) que se apoya en ``rowcount`` para detectar capacidad agotada
+  sin TOCTOU. El ``UNIQUE(user_id, ano_mes)`` de la tabla solo evita filas
+  duplicadas; es el UPDATE condicional el que garantiza el limite real.
+
+NOTA sobre idempotencia (Copilot review #8): ``reserva_id`` es un token
+opaco registrado en memoria en `_reservas_activas`. ``commit()`` y
+``release()`` solo mutan el contador si el token esta activo, y lo
+desregistran en la misma operacion. Un segundo ``commit()`` o
+``release()`` con el mismo token es un no-op. Limitacion: las reservas
+no sobreviven a un reinicio del worker (caso raro, porque analyze dura
+~60s). Una version Parte 3 puede persistir reservas en tabla para
+supervivencia cross-restart — marcado como TODO en el plan.
 
 Reservas huerfanas (reserva sin commit/release tras >10 min) se limpian
 via cron fuera del scope v1 — marcado como TODO en el plan.
@@ -71,10 +82,14 @@ class DefensiaQuotaService:
 
     def __init__(self, db_client):
         self.db = db_client
-        # Lock de proceso: cierra la ventana de carrera entre SELECT y UPSERT
-        # dentro del mismo worker. Para serializacion entre workers Railway
-        # ejecuta con --workers 1, asi que este lock es suficiente.
+        # Lock de proceso: cierra la ventana de carrera intra-worker.
+        # Cross-worker la atomicidad la da el UPDATE condicional en reserve().
         self._lock = asyncio.Lock()
+        # Registro en memoria de reservas activas (Copilot review #8):
+        # garantiza idempotencia de commit/release frente a llamadas
+        # repetidas con el mismo token.
+        #   {reserva_id: (user_id, ano_mes)}
+        self._reservas_activas: dict[str, tuple[str, str]] = {}
 
     # ------------------------------------------------------------------ #
     # Helpers
@@ -122,6 +137,11 @@ class DefensiaQuotaService:
     async def reserve(self, user_id: str, plan: str) -> str:
         """Reserva atomica de una plaza mensual.
 
+        Usa un UPDATE condicional en una sola sentencia para evitar el
+        TOCTOU cross-worker: solo incrementa ``en_curso`` si
+        ``(expedientes_creados + en_curso) < limite``. El ``rowcount``
+        del UPDATE distingue exito (1) de capacidad agotada (0).
+
         Returns:
             reserva_id (str): token opaco para usar en `commit`/`release`.
 
@@ -134,28 +154,36 @@ class DefensiaQuotaService:
         if limite is None:
             raise QuotaExcedida(f"Plan desconocido: {plan}")
 
-        # Serializamos SELECT + UPSERT con el lock del servicio para
-        # cerrar la ventana de carrera intra-worker.
+        ano_mes = self._ano_mes_actual()
+
         async with self._lock:
-            estado = await self._get_estado(user_id)
-            usado = estado["expedientes_creados"] + estado["en_curso"]
-            if usado >= limite:
+            # Paso 1: asegura que la fila del mes existe (idempotente).
+            # INSERT OR IGNORE es atomico por la restriccion UNIQUE de tabla.
+            await self.db.execute(
+                "INSERT OR IGNORE INTO defensia_cuotas_mensuales "
+                "(user_id, ano_mes, expedientes_creados, en_curso) "
+                "VALUES (?, ?, 0, 0)",
+                [user_id, ano_mes],
+            )
+            # Paso 2: check-and-increment atomico cross-worker via WHERE.
+            # Si la capacidad esta agotada, rowcount = 0 y abortamos.
+            result = await self.db.execute(
+                "UPDATE defensia_cuotas_mensuales "
+                "SET en_curso = en_curso + 1 "
+                "WHERE user_id = ? AND ano_mes = ? "
+                "  AND (expedientes_creados + en_curso) < ?",
+                [user_id, ano_mes, limite],
+            )
+            rowcount = getattr(result, "rowcount", None)
+            if rowcount == 0:
                 raise QuotaExcedida(
                     f"Cuota mensual agotada para plan {plan_key}: "
                     f"{limite} expediente(s)/mes"
                 )
 
-            ano_mes = self._ano_mes_actual()
-            await self.db.execute(
-                "INSERT INTO defensia_cuotas_mensuales "
-                "(user_id, ano_mes, expedientes_creados, en_curso) "
-                "VALUES (?, ?, 0, 1) "
-                "ON CONFLICT(user_id, ano_mes) DO UPDATE SET "
-                "en_curso = en_curso + 1",
-                [user_id, ano_mes],
-            )
+            reserva_id = f"res_{secrets.token_urlsafe(12)}"
+            self._reservas_activas[reserva_id] = (user_id, ano_mes)
 
-        reserva_id = f"res_{secrets.token_urlsafe(12)}"
         logger.info(
             "defensia quota reserve user=%s plan=%s reserva=%s",
             user_id,
@@ -167,10 +195,21 @@ class DefensiaQuotaService:
     async def commit(self, user_id: str, reserva_id: str) -> None:
         """Confirma la reserva al terminar el analisis con exito.
 
-        Efecto: `expedientes_creados += 1`, `en_curso -= 1`.
+        Efecto: ``expedientes_creados += 1``, ``en_curso -= 1``.
+
+        Idempotente: si ``reserva_id`` ya fue consumida (por un commit o
+        release previo, o por reinicio del worker), es un no-op silencioso.
         """
-        ano_mes = self._ano_mes_actual()
         async with self._lock:
+            entry = self._reservas_activas.pop(reserva_id, None)
+            if entry is None:
+                logger.warning(
+                    "defensia quota commit no-op: reserva desconocida user=%s reserva=%s",
+                    user_id,
+                    reserva_id,
+                )
+                return
+            _stored_user, ano_mes = entry
             await self.db.execute(
                 "UPDATE defensia_cuotas_mensuales "
                 "SET expedientes_creados = expedientes_creados + 1, "
@@ -185,10 +224,20 @@ class DefensiaQuotaService:
     async def release(self, user_id: str, reserva_id: str) -> None:
         """Libera la reserva sin confirmarla (analyze fallo antes de dictar).
 
-        Efecto: `en_curso -= 1`. No toca `expedientes_creados`.
+        Efecto: ``en_curso -= 1``. No toca ``expedientes_creados``.
+
+        Idempotente: si ``reserva_id`` ya fue consumida, es un no-op.
         """
-        ano_mes = self._ano_mes_actual()
         async with self._lock:
+            entry = self._reservas_activas.pop(reserva_id, None)
+            if entry is None:
+                logger.warning(
+                    "defensia quota release no-op: reserva desconocida user=%s reserva=%s",
+                    user_id,
+                    reserva_id,
+                )
+                return
+            _stored_user, ano_mes = entry
             await self.db.execute(
                 "UPDATE defensia_cuotas_mensuales "
                 "SET en_curso = MAX(0, en_curso - 1) "
