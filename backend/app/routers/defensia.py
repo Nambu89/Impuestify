@@ -50,7 +50,6 @@ from app.auth.jwt_handler import TokenData, get_current_user
 from app.database.turso_client import TursoClient
 from app.models.defensia import (
     Brief,
-    DocumentoEstructurado,
     ExpedienteEstructurado,
     Fase,
     TipoDocumento,
