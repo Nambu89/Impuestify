@@ -1,0 +1,88 @@
+.escrito-editor {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.escrito-editor-content {
+  padding: 1.25rem 1.5rem;
+  min-height: 260px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #0f172a;
+}
+
+.escrito-editor-content .tiptap {
+  outline: none;
+}
+
+.escrito-editor-content .tiptap p {
+  margin: 0 0 0.75rem 0;
+}
+
+.escrito-editor-content .tiptap h1,
+.escrito-editor-content .tiptap h2,
+.escrito-editor-content .tiptap h3 {
+  color: #1e293b;
+  margin: 1.25rem 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.escrito-editor-content .tiptap h1 {
+  font-size: 1.35rem;
+}
+
+.escrito-editor-content .tiptap h2 {
+  font-size: 1.15rem;
+}
+
+.escrito-editor-content .tiptap blockquote {
+  border-left: 3px solid #cbd5e1;
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: #475569;
+  font-style: italic;
+}
+
+.escrito-editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.escrito-editor-error {
+  color: #991b1b;
+  font-size: 0.8rem;
+}
+
+.escrito-editor-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary, #1a56db);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+  min-height: 40px;
+}
+
+.escrito-editor-save:hover:not(:disabled) {
+  background: var(--color-primary-dark, #1e40af);
+}
+
+.escrito-editor-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

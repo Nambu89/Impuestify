@@ -1,0 +1,118 @@
+.defensia-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 1rem;
+  max-height: 560px;
+  min-height: 420px;
+}
+
+.defensia-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-right: 0.25rem;
+}
+
+.defensia-chat-empty {
+  margin: 0;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.defensia-chat-msg {
+  display: flex;
+}
+
+.defensia-chat-msg--user {
+  justify-content: flex-end;
+}
+
+.defensia-chat-msg--assistant {
+  justify-content: flex-start;
+}
+
+.defensia-chat-bubble {
+  max-width: 78%;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.defensia-chat-msg--user .defensia-chat-bubble {
+  background: var(--color-primary, #1a56db);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.defensia-chat-msg--assistant .defensia-chat-bubble {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-bottom-left-radius: 4px;
+}
+
+.defensia-chat-error {
+  padding: 0.625rem 0.875rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 0.85rem;
+}
+
+.defensia-chat-input-row {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-end;
+}
+
+.defensia-chat-input {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: none;
+}
+
+.defensia-chat-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #1a56db);
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+}
+
+.defensia-chat-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem 1.125rem;
+  background: var(--color-primary, #1a56db);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.defensia-chat-send:hover:not(:disabled) {
+  background: var(--color-primary-dark, #1e40af);
+}
+
+.defensia-chat-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
