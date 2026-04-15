@@ -12,11 +12,13 @@ const TRIBUTOS: Tributo[] = ["IRPF", "IVA", "ISD", "ITP", "PLUSVALIA"];
 
 export function TributoSelect({ value, onChange, disabled }: Props) {
   return (
-    <label className="tributo-select-wrap">
-      <span className="tributo-select-label">Tributo</span>
+    <div className="tributo-select-wrap">
+      <label htmlFor="tributo-select" className="tributo-select-label">
+        Tributo
+      </label>
       <select
+        id="tributo-select"
         className="tributo-select"
-        aria-label="Tributo"
         value={value ?? ""}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value as Tributo)}
@@ -30,6 +32,6 @@ export function TributoSelect({ value, onChange, disabled }: Props) {
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }
