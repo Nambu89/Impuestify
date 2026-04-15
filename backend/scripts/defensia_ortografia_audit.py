@@ -54,6 +54,7 @@ PALABRAS_CON_TILDE: dict[str, str] = {
     r"\bdireccion\b": "dirección",
     r"\bautorizacion\b": "autorización",
     r"\bautenticacion\b": "autenticación",
+    r"\batencion\b": "atención",
     r"\bcodigo\b": "código",
     r"\banalisis\b": "análisis",
     r"\bbasico\b": "básico",
@@ -129,10 +130,25 @@ IGNORAR_SI_CONTIENE: list[str] = [
 # plantillas cubre el backend user-facing de forma indirecta. Para el
 # frontend TS no .tsx (hooks) tampoco aplica — no renderizan texto.
 ROOT = Path(__file__).parent.parent.parent  # TaxIA/
+
+
+def _exclude_tests(paths: list[Path]) -> list[Path]:
+    """Omitir ficheros de test — sus strings no son user-facing.
+
+    Cubre Vitest/Jest (``*.test.tsx``, ``*.test.ts``) y specs de Playwright
+    (``*.spec.tsx``, ``*.spec.ts``).
+    """
+    return [
+        p
+        for p in paths
+        if not p.name.endswith((".test.tsx", ".test.ts", ".spec.tsx", ".spec.ts"))
+    ]
+
+
 TARGETS: list[Path] = [
     *ROOT.glob("backend/app/templates/defensia/*.j2"),
-    *ROOT.glob("frontend/src/pages/Defensia*.tsx"),
-    *ROOT.glob("frontend/src/components/defensia/*.tsx"),
+    *_exclude_tests(list(ROOT.glob("frontend/src/pages/Defensia*.tsx"))),
+    *_exclude_tests(list(ROOT.glob("frontend/src/components/defensia/*.tsx"))),
     *ROOT.glob("frontend/src/types/defensia.ts"),
 ]
 

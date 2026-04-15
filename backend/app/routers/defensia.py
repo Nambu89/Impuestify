@@ -635,8 +635,13 @@ async def _recompute_fase_expediente(
 ) -> tuple[str, float]:
     """Relee los documentos del expediente y ejecuta phase_detector.
 
-    Devuelve ``(fase_value, confianza)``. Los documentos sin tipo o sin
-    fecha se incluyen igualmente — el phase detector decide como ponderarlos.
+    Devuelve ``(fase_value, confianza)``. Los documentos cuyo
+    ``tipo_documento`` no es un miembro valido del enum ``TipoDocumento``
+    se omiten: sin tipo no podemos determinar su rol procesal y el
+    detector los descartaria de todas formas. La fecha, en cambio, se
+    parsea best-effort (null si no es una ISO valida) y no filtra.
+    Best-effort: cualquier fallo parcial solo reduce la confianza del
+    resultado pero nunca tumba el analisis completo.
     """
     import json as _json
     from datetime import datetime as _dt
