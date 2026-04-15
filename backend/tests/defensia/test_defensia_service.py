@@ -680,3 +680,96 @@ async def test_facade_persiste_escrito_con_version_1(
     assert 1 in params
     # editado_por_usuario=0 presente
     assert 0 in params
+
+
+# ============================================================================
+# Regresion: _extraer_cuota_maxima — elige la plantilla TEAR correcta
+# ============================================================================
+
+
+def test_extraer_cuota_maxima_vacio():
+    """Expediente sin documentos o sin datos_estructurados -> 0.0 (fallback)."""
+    from app.services.defensia_service import _extraer_cuota_maxima
+    from app.models.defensia import ExpedienteEstructurado, Tributo
+
+    exp = ExpedienteEstructurado(
+        id="e1", tributo=Tributo.IRPF, ccaa="Madrid", documentos=[]
+    )
+    assert _extraer_cuota_maxima(exp) == 0.0
+
+
+def test_extraer_cuota_maxima_varios_campos_y_docs():
+    """Recorre varios docs y campos canonicos y devuelve el maximo."""
+    from app.services.defensia_service import _extraer_cuota_maxima
+    from app.models.defensia import (
+        DocumentoEstructurado, ExpedienteEstructurado, Tributo, TipoDocumento,
+    )
+
+    doc1 = DocumentoEstructurado(
+        id="d1",
+        nombre_original="prop.pdf",
+        tipo_documento=TipoDocumento.PROPUESTA_LIQUIDACION,
+        datos={"cuota_propuesta": 3500.0},
+    )
+    doc2 = DocumentoEstructurado(
+        id="d2",
+        nombre_original="liq.pdf",
+        tipo_documento=TipoDocumento.LIQUIDACION_PROVISIONAL,
+        datos={"cuota": 8200.0, "total_a_ingresar": 8500.0},
+    )
+    doc3 = DocumentoEstructurado(
+        id="d3",
+        nombre_original="sanc.pdf",
+        tipo_documento=TipoDocumento.ACUERDO_IMPOSICION_SANCION,
+        datos={"importe_sancion": 4100.0},
+    )
+    exp = ExpedienteEstructurado(
+        id="e1",
+        tributo=Tributo.IRPF,
+        ccaa="Madrid",
+        documentos=[doc1, doc2, doc3],
+    )
+    # maximo esperado: 8500 (total_a_ingresar en doc2)
+    assert _extraer_cuota_maxima(exp) == 8500.0
+
+
+def test_extraer_cuota_maxima_ignora_tipos_invalidos():
+    """Strings o None en campos no deben crashear."""
+    from app.services.defensia_service import _extraer_cuota_maxima
+    from app.models.defensia import (
+        DocumentoEstructurado, ExpedienteEstructurado, Tributo, TipoDocumento,
+    )
+
+    doc = DocumentoEstructurado(
+        id="d1",
+        nombre_original="x.pdf",
+        tipo_documento=TipoDocumento.LIQUIDACION_PROVISIONAL,
+        datos={"cuota": "no es un numero", "importe_total": None, "importe_sancion": 1234.56},
+    )
+    exp = ExpedienteEstructurado(
+        id="e1", tributo=Tributo.IRPF, ccaa="Madrid", documentos=[doc]
+    )
+    assert _extraer_cuota_maxima(exp) == 1234.56
+
+
+def test_extraer_cuota_maxima_umbral_tear_decidible():
+    """Comprueba que distinguimos <6000 EUR (abreviada) vs >=6000 EUR (general)."""
+    from app.services.defensia_service import _extraer_cuota_maxima
+    from app.models.defensia import (
+        DocumentoEstructurado, ExpedienteEstructurado, Tributo, TipoDocumento,
+    )
+
+    def _build(cuota: float) -> ExpedienteEstructurado:
+        doc = DocumentoEstructurado(
+            id="d1",
+            nombre_original="liq.pdf",
+            tipo_documento=TipoDocumento.LIQUIDACION_PROVISIONAL,
+            datos={"cuota": cuota},
+        )
+        return ExpedienteEstructurado(
+            id="e1", tributo=Tributo.IRPF, ccaa="Madrid", documentos=[doc]
+        )
+
+    assert _extraer_cuota_maxima(_build(5999.99)) == 5999.99
+    assert _extraer_cuota_maxima(_build(6000.0)) == 6000.0
+    assert _extraer_cuota_maxima(_build(12345.0)) == 12345.0
