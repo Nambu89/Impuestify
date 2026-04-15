@@ -144,10 +144,12 @@ def test_seleccionar_plantilla_tear_ampliacion(writer):
 
 
 def test_seleccionar_plantilla_reposicion(writer):
+    """Copilot review #4: REPOSICION_INTERPUESTA (reposicion ya interpuesta)
+    mapea a recurso_reposicion.j2. Las plantillas reclamacion_tear_* quedan
+    reservadas a TEAR_INTERPUESTA / TEAR_AMPLIACION_POSIBLE.
+    """
     expediente = _build_expediente(Fase.REPOSICION_INTERPUESTA)
-    assert (
-        writer.seleccionar_plantilla(expediente) == "reclamacion_tear_abreviada.j2"
-    )
+    assert writer.seleccionar_plantilla(expediente) == "recurso_reposicion.j2"
 
 
 def test_seleccionar_plantilla_fuera_de_alcance_fallback(writer):

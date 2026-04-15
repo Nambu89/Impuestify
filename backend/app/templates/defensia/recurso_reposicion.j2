@@ -33,7 +33,7 @@ Fases aplicables: REPOSICION_INTERPUESTA.
 
 {% for doc in expediente.timeline_ordenado() %}
 {% if doc.tipo_documento.value == "ESCRITO_ALEGACIONES_USUARIO" %}
-**{{ loop.index0 }} bis.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte presento escrito de alegaciones dentro del procedimiento de origen, cuyo contenido se da aqui por reproducido en lo que resulte pertinente.
+**{{ loop.index }} bis.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte presento escrito de alegaciones dentro del procedimiento de origen, cuyo contenido se da aqui por reproducido en lo que resulte pertinente.
 
 {% endif %}
 {% endfor %}

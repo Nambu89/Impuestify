@@ -60,7 +60,11 @@ _PLANTILLA_POR_FASE: dict[str, str] = {
     Fase.SANCIONADOR_INICIADO.value: "alegaciones_sancionador.j2",
     Fase.SANCIONADOR_PROPUESTA.value: "alegaciones_sancionador.j2",
     Fase.SANCIONADOR_IMPUESTA.value: "alegaciones_sancionador.j2",
-    Fase.REPOSICION_INTERPUESTA.value: "reclamacion_tear_abreviada.j2",
+    # Copilot review #4: REPOSICION_INTERPUESTA es una reposicion YA
+    # interpuesta, NO un escrito TEAR. Mapeamos al recurso_reposicion como
+    # fallback coherente; las plantillas reclamacion_tear_* quedan reservadas
+    # a TEAR_INTERPUESTA / TEAR_AMPLIACION_POSIBLE (resueltas por heurística).
+    Fase.REPOSICION_INTERPUESTA.value: "recurso_reposicion.j2",
     # TEAR_INTERPUESTA / TEAR_AMPLIACION_POSIBLE resuelven vía heurística.
 }
 
