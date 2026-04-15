@@ -61,6 +61,9 @@ class DefensiaStorage:
 
         raw_key = self._resolve_key(key)
         if raw_key is None:
+            # Copilot review #7: alinear comportamiento con el docstring.
+            # Sin clave valida el servicio queda explicitamente deshabilitado.
+            self._disabled = True
             return
 
         # Clave valida — lazy import de libs pesadas para mantener el import
