@@ -1,0 +1,65 @@
+{#
+DefensIA - Plantilla: Escrito de ampliacion de alegaciones ante el TEAR.
+Wave 2B T2B-005. Autoescape OFF (markdown legal, inputs trusted del RAG verifier).
+Invariante #2: cero citas normativas hardcodeadas. Todas vienen de argumentos verificados.
+Fases aplicables: TEAR_AMPLIACION_POSIBLE (tras interposicion, antes de la puesta de manifiesto).
+#}
+# Escrito de Ampliacion de Alegaciones
+
+**{{ disclaimer }}**
+
+---
+
+**AL TRIBUNAL ECONOMICO-ADMINISTRATIVO REGIONAL DE {{ expediente.ccaa | upper }}**
+
+**Referencia:** Ampliacion de alegaciones en reclamacion economico-administrativa. Tributo: {{ expediente.tributo.value }}.
+
+**Expediente interno DefensIA:** {{ expediente.id }}
+
+**Fecha:** {{ fecha_hoy.strftime("%d/%m/%Y") }}
+
+---
+
+**SE PRESENTA ESCRITO DE AMPLIACION DE ALEGACIONES** en la reclamacion economico-administrativa previamente interpuesta por esta parte, cuyos datos identificativos constan ya en el expediente del Tribunal.
+
+## I. Antecedentes
+
+{% for doc in expediente.timeline_ordenado() %}
+{% if doc.tipo_documento.value == "ESCRITO_RECLAMACION_TEAR_USUARIO" %}
+**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte interpuso reclamacion economico-administrativa contra el acto que alli se identifico, dandose por reproducido su contenido integro.
+
+{% endif %}
+{% endfor %}
+
+Con posterioridad a la interposicion inicial, esta parte ha identificado motivos adicionales de oposicion al acto impugnado, que amplian y refuerzan los ya formulados, y que se exponen a continuacion mediante el presente escrito de ampliacion, dentro del plazo legalmente conferido al efecto.
+
+## II. Motivos de ampliacion
+
+{% if argumentos|length == 0 %}
+Esta parte se reitera en los motivos ya formulados en el escrito inicial de interposicion, reforzando su invocacion a la luz del conjunto del expediente administrativo.
+{% else %}
+{% for arg in argumentos %}
+### {{ loop.index }}.- {{ arg.descripcion }}
+
+{{ arg.cita_verificada }}
+
+*Referencia normativa: {{ arg.referencia_normativa_canonica }}*
+
+{% if arg.impacto_estimado %}
+*Impacto estimado:* {{ arg.impacto_estimado }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+## III. Suplico
+
+Al Tribunal, que teniendo por presentado este escrito de **AMPLIACION DE ALEGACIONES**, se sirva admitirlo, lo una al expediente de la reclamacion ya interpuesta, tenga por incorporados los motivos aqui expuestos como parte integrante de dicha reclamacion y, en consecuencia, los valore conjuntamente con los ya formulados al tiempo de resolver, acordando:
+
+1. La estimacion integra de la reclamacion, incluidos los motivos originalmente invocados y los ampliados mediante el presente escrito.
+2. La anulacion del acto impugnado por los motivos expuestos.
+3. Subsidiariamente, la estimacion parcial en los extremos que el Tribunal considere procedentes.
+
+---
+
+**{{ disclaimer }}**

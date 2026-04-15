@@ -1,0 +1,75 @@
+{#
+DefensIA - Plantilla: Recurso de reposicion previo al TEAR.
+Wave 2B T2B-005. Autoescape OFF (markdown legal, inputs trusted del RAG verifier).
+Invariante #2: cero citas normativas hardcodeadas. Todas vienen de argumentos verificados.
+Fases aplicables: REPOSICION_INTERPUESTA.
+#}
+# Recurso de Reposicion
+
+**{{ disclaimer }}**
+
+---
+
+**A LA ATENCION DE:** Agencia Estatal de Administracion Tributaria — {{ expediente.ccaa }}
+
+**Referencia:** Recurso de reposicion contra acto administrativo en materia tributaria. Tributo: {{ expediente.tributo.value }}.
+
+**Expediente interno DefensIA:** {{ expediente.id }}
+
+**Fecha:** {{ fecha_hoy.strftime("%d/%m/%Y") }}
+
+---
+
+**SE INTERPONE RECURSO DE REPOSICION** contra el acto administrativo que mas abajo se identifica, con fundamento en los hechos y fundamentos de derecho que a continuacion se exponen.
+
+## I. Hechos
+
+{% for doc in expediente.timeline_ordenado() %}
+{% if doc.tipo_documento.value in ["LIQUIDACION_PROVISIONAL", "PROPUESTA_LIQUIDACION", "ACUERDO_IMPOSICION_SANCION"] %}
+**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, se notifico a esta parte el acto "{{ doc.nombre_original }}", que es el acto ahora impugnado.
+
+{% endif %}
+{% endfor %}
+
+{% for doc in expediente.timeline_ordenado() %}
+{% if doc.tipo_documento.value == "ESCRITO_ALEGACIONES_USUARIO" %}
+**{{ loop.index0 }} bis.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte presento escrito de alegaciones dentro del procedimiento de origen, cuyo contenido se da aqui por reproducido en lo que resulte pertinente.
+
+{% endif %}
+{% endfor %}
+
+El presente recurso se interpone dentro del plazo legal conferido al efecto, al considerar que el acto impugnado adolece de los defectos que a continuacion se exponen.
+
+## II. Fundamentos de derecho
+
+{% if argumentos|length == 0 %}
+Se reitera la oposicion al acto impugnado en los mismos terminos expuestos en las alegaciones previas, considerando esta parte que la Administracion no ha valorado adecuadamente los argumentos entonces formulados.
+{% else %}
+{% for arg in argumentos %}
+### {{ loop.index }}.- {{ arg.descripcion }}
+
+{{ arg.cita_verificada }}
+
+*Referencia normativa: {{ arg.referencia_normativa_canonica }}*
+
+{% if arg.impacto_estimado %}
+*Impacto estimado:* {{ arg.impacto_estimado }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+## III. Suplico
+
+Que, teniendo por presentado este escrito con los documentos que lo acompanan, se sirva admitirlo, tenga por interpuesto en tiempo y forma **RECURSO DE REPOSICION** contra el acto identificado en el apartado I, y, previos los tramites legales oportunos, dicte resolucion por la que:
+
+1. Estime integramente el presente recurso.
+2. Anule el acto impugnado por los motivos expuestos en los fundamentos de derecho.
+3. Reconozca el derecho de esta parte a la devolucion, en su caso, de las cantidades indebidamente ingresadas con los intereses legales que correspondan.
+4. Subsidiariamente, dicte nueva resolucion conforme a derecho que acoja los motivos aqui expuestos.
+
+**OTROSI DIGO:** Que, de conformidad con el ordenamiento tributario vigente, esta parte se reserva el derecho de acudir ante el Tribunal Economico-Administrativo Regional competente en caso de desestimacion del presente recurso.
+
+---
+
+**{{ disclaimer }}**
