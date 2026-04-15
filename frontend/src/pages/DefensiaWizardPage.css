@@ -1,7 +1,19 @@
+/* ============================================================
+   DefensiaWizardPage.css — Wizard 5 pasos DefensIA
+   Dark theme
+   ============================================================ */
+
 .defensia-wizard-page {
+  min-height: 100vh;
+  background: var(--color-secondary, #0f172a);
+  color: #f1f5f9;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.defensia-wizard-page > * {
   max-width: 760px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .defensia-wizard-header {
@@ -9,40 +21,51 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 1rem;
-  color: var(--color-primary-dark, #1e40af);
+  color: var(--color-accent, #06b6d4);
 }
 
 .defensia-wizard-header h1 {
   margin: 0;
-  font-size: 1.5rem;
-  color: #0f172a;
+  font-size: clamp(1.4rem, 3vw, 1.75rem);
+  font-weight: 800;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-light, #3b82f6),
+    var(--color-accent, #06b6d4)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .defensia-wizard-steps {
-  font-size: 0.85rem;
-  color: #64748b;
+  font-size: 0.8rem;
+  color: var(--color-accent, #06b6d4);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   margin-bottom: 1rem;
 }
 
 .defensia-wizard-body {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
-  min-height: 240px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.75rem;
+  min-height: 260px;
 }
 
 .defensia-wizard-body h2 {
   margin: 0 0 1rem 0;
-  font-size: 1.15rem;
-  color: #0f172a;
+  font-size: 1.1rem;
+  color: #f1f5f9;
+  font-weight: 700;
 }
 
 .defensia-wizard-hint {
   margin: 0 0 1rem 0;
   font-size: 0.9rem;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .defensia-wizard-uploads {
@@ -54,35 +77,42 @@
 .defensia-wizard-textarea {
   width: 100%;
   padding: 0.75rem 0.875rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: #1e293b;
+  color: #f1f5f9;
   font-family: inherit;
   font-size: 0.95rem;
   line-height: 1.5;
   resize: vertical;
   min-height: 180px;
+  box-sizing: border-box;
+}
+
+.defensia-wizard-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .defensia-wizard-textarea:focus {
   outline: none;
-  border-color: var(--color-primary, #1a56db);
-  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+  border-color: var(--color-accent, #06b6d4);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
 }
 
 .defensia-wizard-count {
   display: block;
   margin-top: 0.5rem;
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .defensia-wizard-error {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  color: #fca5a5;
   font-size: 0.875rem;
 }
 
@@ -98,38 +128,50 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
   border: 1px solid transparent;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   min-height: 44px;
+  transition: transform 0.15s, box-shadow 0.2s;
 }
 
 .defensia-wizard-prev {
-  background: #fff;
-  border-color: #cbd5e1;
-  color: #334155;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.defensia-wizard-prev:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .defensia-wizard-prev:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .defensia-wizard-next {
-  background: var(--color-primary, #1a56db);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary, #1a56db),
+    var(--color-accent, #06b6d4)
+  );
   color: #fff;
 }
 
 .defensia-wizard-next:hover:not(:disabled) {
-  background: var(--color-primary-dark, #1e40af);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.25);
 }
 
 .defensia-wizard-next:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .spin {
@@ -142,5 +184,26 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .defensia-wizard-page {
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  .defensia-wizard-body {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .defensia-wizard-footer {
+    flex-direction: column-reverse;
+  }
+
+  .defensia-wizard-prev,
+  .defensia-wizard-next {
+    width: 100%;
+    justify-content: center;
   }
 }
