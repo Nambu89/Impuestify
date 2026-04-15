@@ -13,9 +13,9 @@ contenido textual es 100% dinamico desde cita_verificada del RAG verifier.
 
 ---
 
-**A LA ATENCION DE:** Agencia Estatal de Administracion Tributaria — {{ expediente.ccaa }}
+**A LA ATENCION DE:** Agencia Estatal de Administración Tributaria — {{ expediente.ccaa }}
 
-**Referencia:** Procedimiento sancionador tributario. Tributo objeto de regularizacion: {{ expediente.tributo.value }}.
+**Referencia:** Procedimiento sancionador tributario. Tributo objeto de regularización: {{ expediente.tributo.value }}.
 
 **Expediente interno DefensIA:** {{ expediente.id }}
 
@@ -27,18 +27,18 @@ contenido textual es 100% dinamico desde cita_verificada del RAG verifier.
 
 {% for doc in expediente.timeline_ordenado() %}
 {% if doc.tipo_documento.value in ["ACUERDO_INICIO_SANCIONADOR", "PROPUESTA_SANCION", "ACUERDO_IMPOSICION_SANCION"] %}
-**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte recibio notificacion del acto "{{ doc.nombre_original }}", por el que se le imputa la comision de una supuesta infraccion tributaria.
+**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte recibio notificación del acto "{{ doc.nombre_original }}", por el que se le imputa la comision de una supuesta infraccion tributaria.
 
 {% endif %}
 {% endfor %}
 
-Dentro del plazo legalmente conferido, esta parte formula las siguientes alegaciones, solicitando el archivo del expediente sancionador por los motivos que se exponen a continuacion.
+Dentro del plazo legalmente conferido, esta parte formula las siguientes alegaciones, solicitando el archivo del expediente sancionador por los motivos que se exponen a continuación.
 
 ## II. Ausencia de culpabilidad
 
 {% set args_culpabilidad = argumentos | selectattr("regla_id", "equalto", "R007") | list %}
 {% if args_culpabilidad|length > 0 %}
-La imposicion de cualquier sancion tributaria exige la concurrencia del elemento subjetivo de culpabilidad. En el presente caso, dicho elemento no concurre por las siguientes razones:
+La imposición de cualquier sanción tributaria exige la concurrencia del elemento subjetivo de culpabilidad. En el presente caso, dicho elemento no concurre por las siguientes razones:
 
 {% for arg in args_culpabilidad %}
 ### {{ loop.index }}.- {{ arg.descripcion }}
@@ -56,7 +56,7 @@ Esta parte nego expresamente la concurrencia del elemento subjetivo de culpabili
 
 {% set args_interpretacion = argumentos | selectattr("regla_id", "equalto", "R007") | list %}
 {% if args_interpretacion|length == 0 %}
-La actuacion de esta parte obedecio en todo momento a una interpretacion razonable del marco normativo aplicable al tributo {{ expediente.tributo.value }}, lo que, conforme a la doctrina consolidada en materia de responsabilidad tributaria, excluye la imposicion de cualquier sancion.
+La actuacion de esta parte obedecio en todo momento a una interpretacion razonable del marco normativo aplicable al tributo {{ expediente.tributo.value }}, lo que, conforme a la doctrina consolidada en materia de responsabilidad tributaria, excluye la imposición de cualquier sanción.
 {% else %}
 La conducta de esta parte se apoya en una interpretacion razonable de la norma, conforme a los motivos ya expuestos en el apartado anterior y desarrollados en los argumentos verificados de referencia.
 {% endif %}
@@ -82,7 +82,7 @@ Sin perjuicio de lo anterior, esta parte se reserva el derecho a invocar cualesq
 Que, teniendo por presentado este escrito, se sirva admitirlo, tenga por formuladas las anteriores alegaciones dentro del procedimiento sancionador de referencia, y acuerde:
 
 1. El archivo del expediente sancionador por ausencia de culpabilidad y concurrencia de interpretacion razonable de la norma.
-2. Subsidiariamente, la anulacion de la propuesta de sancion y la declaracion de inexistencia de infraccion tributaria.
+2. Subsidiariamente, la anulacion de la propuesta de sanción y la declaración de inexistencia de infraccion tributaria.
 
 ---
 

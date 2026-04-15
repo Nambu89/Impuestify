@@ -2,7 +2,7 @@
 DefensIA - Plantilla: Alegaciones en procedimiento de comprobacion limitada.
 Wave 2B T2B-005. Autoescape OFF (markdown legal, inputs trusted del RAG verifier).
 Invariante #2: cero citas normativas hardcodeadas. Todas vienen de argumentos verificados.
-Fases aplicables: COMPROBACION_POST_ALEGACIONES con propuesta de liquidacion formal.
+Fases aplicables: COMPROBACION_POST_ALEGACIONES con propuesta de liquidación formal.
 Tono mas extenso que verificacion. Incluye apartado "Normativa y doctrina aplicable"
 generado dinamicamente a partir de los argumentos verificados.
 #}
@@ -12,7 +12,7 @@ generado dinamicamente a partir de los argumentos verificados.
 
 ---
 
-**A LA ATENCION DE:** Agencia Estatal de Administracion Tributaria — {{ expediente.ccaa }}
+**A LA ATENCION DE:** Agencia Estatal de Administración Tributaria — {{ expediente.ccaa }}
 
 **Referencia:** Procedimiento de comprobacion limitada. Tributo: {{ expediente.tributo.value }}.
 
@@ -26,17 +26,17 @@ generado dinamicamente a partir de los argumentos verificados.
 
 {% for doc in expediente.timeline_ordenado() %}
 {% if doc.tipo_documento.value in ["REQUERIMIENTO", "PROPUESTA_LIQUIDACION", "LIQUIDACION_PROVISIONAL"] %}
-**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, la Administracion notifico a esta parte el documento "{{ doc.nombre_original }}", tramitado dentro del procedimiento de comprobacion limitada que ahora nos ocupa.
+**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, la Administración notificó a esta parte el documento "{{ doc.nombre_original }}", tramitado dentro del procedimiento de comprobacion limitada que ahora nos ocupa.
 
 {% endif %}
 {% endfor %}
 
-Frente a la propuesta de regularizacion contenida en dicho acto, y dentro del plazo legalmente establecido para la puesta de manifiesto del expediente, esta parte formula las siguientes alegaciones.
+Frente a la propuesta de regularización contenida en dicho acto, y dentro del plazo legalmente establecido para la puesta de manifiesto del expediente, esta parte formula las siguientes alegaciones.
 
 ## II. Alegaciones de fondo
 
 {% if argumentos|length == 0 %}
-Se formula oposicion general a la propuesta, reservando esta parte el derecho a ampliar los motivos en fase de recurso.
+Se formula oposición general a la propuesta, reservando esta parte el derecho a ampliar los motivos en fase de recurso.
 {% else %}
 {% for arg in argumentos %}
 ### {{ loop.index }}.- {{ arg.descripcion }}
@@ -44,7 +44,7 @@ Se formula oposicion general a la propuesta, reservando esta parte el derecho a 
 {{ arg.cita_verificada }}
 
 {% if arg.impacto_estimado %}
-*Impacto estimado sobre la propuesta de liquidacion:* {{ arg.impacto_estimado }}
+*Impacto estimado sobre la propuesta de liquidación:* {{ arg.impacto_estimado }}
 {% endif %}
 
 {% endfor %}
@@ -55,7 +55,7 @@ Se formula oposicion general a la propuesta, reservando esta parte el derecho a 
 {% if argumentos|length == 0 %}
 Sin perjuicio del desarrollo de los motivos anteriores, esta parte invoca la integridad del marco normativo aplicable al tributo {{ expediente.tributo.value }} en el ambito territorial de {{ expediente.ccaa }}.
 {% else %}
-Los motivos de oposicion aqui expuestos se sustentan, en sintesis, en las siguientes fuentes normativas y doctrinales:
+Los motivos de oposición aquí expuestos se sustentan, en sintesis, en las siguientes fuentes normativas y doctrinales:
 
 {% for arg in argumentos %}
 - **{{ arg.descripcion }}** — {{ arg.referencia_normativa_canonica }}
@@ -66,9 +66,9 @@ Los motivos de oposicion aqui expuestos se sustentan, en sintesis, en las siguie
 
 Que, teniendo por presentado este escrito, acompanado de los documentos que se citan, se sirva admitirlo, tenga por formuladas las anteriores alegaciones dentro del procedimiento de comprobacion limitada de referencia, y acuerde:
 
-1. Dejar sin efecto la propuesta de liquidacion notificada.
-2. Subsidiariamente, dictar nueva resolucion conforme a derecho que acoja integramente los motivos expuestos en el apartado II de este escrito.
-3. Reconocer el derecho de esta parte a la devolucion, en su caso, de las cantidades indebidamente ingresadas con los intereses que correspondan.
+1. Dejar sin efecto la propuesta de liquidación notificada.
+2. Subsidiariamente, dictar nueva resolución conforme a derecho que acoja íntegramente los motivos expuestos en el apartado II de este escrito.
+3. Reconocer el derecho de esta parte a la devolución, en su caso, de las cantidades indebidamente ingresadas con los intereses que correspondan.
 
 ---
 

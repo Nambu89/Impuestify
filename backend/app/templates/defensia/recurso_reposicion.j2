@@ -1,18 +1,18 @@
 {#
-DefensIA - Plantilla: Recurso de reposicion previo al TEAR.
+DefensIA - Plantilla: Recurso de reposición previo al TEAR.
 Wave 2B T2B-005. Autoescape OFF (markdown legal, inputs trusted del RAG verifier).
 Invariante #2: cero citas normativas hardcodeadas. Todas vienen de argumentos verificados.
 Fases aplicables: REPOSICION_INTERPUESTA.
 #}
-# Recurso de Reposicion
+# Recurso de Reposición
 
 **{{ disclaimer }}**
 
 ---
 
-**A LA ATENCION DE:** Agencia Estatal de Administracion Tributaria — {{ expediente.ccaa }}
+**A LA ATENCION DE:** Agencia Estatal de Administración Tributaria — {{ expediente.ccaa }}
 
-**Referencia:** Recurso de reposicion contra acto administrativo en materia tributaria. Tributo: {{ expediente.tributo.value }}.
+**Referencia:** Recurso de reposición contra acto administrativo en materia tributaria. Tributo: {{ expediente.tributo.value }}.
 
 **Expediente interno DefensIA:** {{ expediente.id }}
 
@@ -20,30 +20,30 @@ Fases aplicables: REPOSICION_INTERPUESTA.
 
 ---
 
-**SE INTERPONE RECURSO DE REPOSICION** contra el acto administrativo que mas abajo se identifica, con fundamento en los hechos y fundamentos de derecho que a continuacion se exponen.
+**SE INTERPONE RECURSO DE REPOSICIÓN** contra el acto administrativo que más abajo se identifica, con fundamento en los hechos y fundamentos de derecho que a continuación se exponen.
 
 ## I. Hechos
 
 {% for doc in expediente.timeline_ordenado() %}
 {% if doc.tipo_documento.value in ["LIQUIDACION_PROVISIONAL", "PROPUESTA_LIQUIDACION", "ACUERDO_IMPOSICION_SANCION"] %}
-**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, se notifico a esta parte el acto "{{ doc.nombre_original }}", que es el acto ahora impugnado.
+**{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, se notificó a esta parte el acto "{{ doc.nombre_original }}", que es el acto ahora impugnado.
 
 {% endif %}
 {% endfor %}
 
 {% for doc in expediente.timeline_ordenado() %}
 {% if doc.tipo_documento.value == "ESCRITO_ALEGACIONES_USUARIO" %}
-**{{ loop.index }} bis.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte presento escrito de alegaciones dentro del procedimiento de origen, cuyo contenido se da aqui por reproducido en lo que resulte pertinente.
+**{{ loop.index }} bis.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte presentó escrito de alegaciones dentro del procedimiento de origen, cuyo contenido se da aquí por reproducido en lo que resulte pertinente.
 
 {% endif %}
 {% endfor %}
 
-El presente recurso se interpone dentro del plazo legal conferido al efecto, al considerar que el acto impugnado adolece de los defectos que a continuacion se exponen.
+El presente recurso se interpone dentro del plazo legal conferido al efecto, al considerar que el acto impugnado adolece de los defectos que a continuación se exponen.
 
 ## II. Fundamentos de derecho
 
 {% if argumentos|length == 0 %}
-Se reitera la oposicion al acto impugnado en los mismos terminos expuestos en las alegaciones previas, considerando esta parte que la Administracion no ha valorado adecuadamente los argumentos entonces formulados.
+Se reitera la oposición al acto impugnado en los mismos términos expuestos en las alegaciones previas, considerando esta parte que la Administración no ha valorado adecuadamente los argumentos entonces formulados.
 {% else %}
 {% for arg in argumentos %}
 ### {{ loop.index }}.- {{ arg.descripcion }}
@@ -61,14 +61,14 @@ Se reitera la oposicion al acto impugnado en los mismos terminos expuestos en la
 
 ## III. Suplico
 
-Que, teniendo por presentado este escrito con los documentos que lo acompanan, se sirva admitirlo, tenga por interpuesto en tiempo y forma **RECURSO DE REPOSICION** contra el acto identificado en el apartado I, y, previos los tramites legales oportunos, dicte resolucion por la que:
+Que, teniendo por presentado este escrito con los documentos que lo acompañan, se sirva admitirlo, tenga por interpuesto en tiempo y forma **RECURSO DE REPOSICIÓN** contra el acto identificado en el apartado I, y, previos los trámites legales oportunos, dicte resolución por la que:
 
-1. Estime integramente el presente recurso.
+1. Estime íntegramente el presente recurso.
 2. Anule el acto impugnado por los motivos expuestos en los fundamentos de derecho.
-3. Reconozca el derecho de esta parte a la devolucion, en su caso, de las cantidades indebidamente ingresadas con los intereses legales que correspondan.
-4. Subsidiariamente, dicte nueva resolucion conforme a derecho que acoja los motivos aqui expuestos.
+3. Reconozca el derecho de esta parte a la devolución, en su caso, de las cantidades indebidamente ingresadas con los intereses legales que correspondan.
+4. Subsidiariamente, dicte nueva resolución conforme a derecho que acoja los motivos aquí expuestos.
 
-**OTROSI DIGO:** Que, de conformidad con el ordenamiento tributario vigente, esta parte se reserva el derecho de acudir ante el Tribunal Economico-Administrativo Regional competente en caso de desestimacion del presente recurso.
+**OTROSI DIGO:** Que, de conformidad con el ordenamiento tributario vigente, esta parte se reserva el derecho de acudir ante el Tribunal Económico-Administrativo Regional competente en caso de desestimación del presente recurso.
 
 ---
 

@@ -4,13 +4,13 @@ Wave 2B T2B-005. Autoescape OFF (markdown legal, inputs trusted del RAG verifier
 Invariante #2: cero citas normativas hardcodeadas. Todas vienen de argumentos verificados.
 Fases aplicables: cualquier fase no cubierta por plantillas especificas. Estructura minima.
 #}
-# Escrito de Oposicion
+# Escrito de Oposición
 
 **{{ disclaimer }}**
 
 ---
 
-**A LA ATENCION DE:** Agencia Estatal de Administracion Tributaria — {{ expediente.ccaa }}
+**A LA ATENCION DE:** Agencia Estatal de Administración Tributaria — {{ expediente.ccaa }}
 
 **Referencia:** Procedimiento en fase {{ expediente.fase_detectada.value }}. Tributo: {{ expediente.tributo.value }}.
 
@@ -23,7 +23,7 @@ Fases aplicables: cualquier fase no cubierta por plantillas especificas. Estruct
 ## I. Hechos
 
 {% if expediente.documentos | length == 0 %}
-Esta parte formula oposicion al acto administrativo que motiva el presente escrito, reservando la identificacion precisa del mismo al expediente administrativo correspondiente.
+Esta parte formula oposición al acto administrativo que motiva el presente escrito, reservando la identificacion precisa del mismo al expediente administrativo correspondiente.
 {% else %}
 {% for doc in expediente.timeline_ordenado() %}
 **{{ loop.index }}.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte tuvo conocimiento del documento "{{ doc.nombre_original }}" ({{ doc.tipo_documento.value }}), obrante en el expediente de referencia.
@@ -31,7 +31,7 @@ Esta parte formula oposicion al acto administrativo que motiva el presente escri
 {% endfor %}
 {% endif %}
 
-Dentro del plazo legalmente conferido, esta parte formula el presente escrito en los siguientes terminos.
+Dentro del plazo legalmente conferido, esta parte formula el presente escrito en los siguientes términos.
 
 ## II. Alegaciones
 
@@ -50,7 +50,7 @@ Esta parte manifiesta su disconformidad con el acto administrativo al que se ref
 
 ## III. Suplico
 
-Que, teniendo por presentado este escrito, se sirva admitirlo, tenga por formuladas las anteriores manifestaciones y, previos los tramites legales oportunos, dicte resolucion conforme a derecho que acoja los motivos aqui expuestos o, subsidiariamente, los que el organo competente estime procedentes.
+Que, teniendo por presentado este escrito, se sirva admitirlo, tenga por formuladas las anteriores manifestaciones y, previos los trámites legales oportunos, dicte resolución conforme a derecho que acoja los motivos aquí expuestos o, subsidiariamente, los que el organo competente estime procedentes.
 
 ---
 
