@@ -83,3 +83,10 @@ google-genai>=1.0.0
 # DefensIA — generación y parseo de documentos
 lxml>=5.3.0
 Jinja2>=3.1.4
+
+# DefensIA — storage cifrado (Wave 2B T2B-013a)
+# cryptography ya viene transitivo via python-jose[cryptography] pero lo
+# pinnamos explicito para garantizar AESGCM disponible. zstandard para
+# compresion previa al cifrado (reduce tamano del BLOB en Turso).
+cryptography>=42.0
+zstandard>=0.22
