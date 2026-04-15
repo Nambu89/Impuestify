@@ -175,6 +175,14 @@ export function DefensiaWizardPage() {
           estado: "completado",
         },
       });
+      // El backend ejecuta Fase 1 auto (classifier + extractor + phase
+      // detector) durante el upload y devuelve fase_detectada en la
+      // response. Si viene y es una fase real (no null ni INDETERMINADA),
+      // la propagamos al reducer para que el paso 3 del wizard la muestre
+      // sin necesidad de un nuevo round-trip.
+      if (res.fase_detectada && res.fase_detectada !== "INDETERMINADA") {
+        dispatch({ type: "SET_FASE", fase: res.fase_detectada });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error al subir";
       dispatch({ type: "REMOVE_DOC", id: tempId });

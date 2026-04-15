@@ -91,4 +91,51 @@ describe("DefensiaWizardPage", () => {
       screen.getByText(/no sustituye asesoramiento profesional/i),
     ).toBeInTheDocument();
   });
+
+  it("tras upload exitoso con fase_detectada, el paso 3 muestra la fase real", async () => {
+    // 1. Create expediente
+    apiRequestMock.mockResolvedValueOnce({ id: "exp-new-1" });
+    // 2. Upload returns Fase 1 auto-extraction result
+    uploadMock.mockResolvedValueOnce({
+      id: "doc-1",
+      nombre_original: "liquidacion.pdf",
+      tipo_documento: "LIQUIDACION_PROVISIONAL",
+      clasificacion_confianza: 0.92,
+      fecha_acto: "2026-01-15",
+      fase_detectada: "LIQUIDACION_FIRME_PLAZO_RECURSO",
+      fase_confianza: 0.9,
+      created_at: "2026-04-15T00:00:00Z",
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    // Paso 1 -> 2
+    await user.selectOptions(screen.getByRole("combobox"), "IRPF");
+    await user.click(screen.getByRole("button", { name: /siguiente/i }));
+    await screen.findByText(/paso 2/i);
+
+    // Subir fichero
+    const file = new File(["%PDF"], "liquidacion.pdf", {
+      type: "application/pdf",
+    });
+    const input = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    expect(input).toBeTruthy();
+    await user.upload(input, file);
+
+    // Avanzar paso 2 -> 3
+    await user.click(screen.getByRole("button", { name: /siguiente/i }));
+    await screen.findByText(/paso 3/i);
+
+    // El paso 3 ahora muestra la FaseBadge con la fase real (NO el
+    // placeholder "Analizando los documentos...")
+    expect(
+      screen.getByLabelText(/plazo de recurso/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/analizando los documentos/i),
+    ).not.toBeInTheDocument();
+  });
 });
