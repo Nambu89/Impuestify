@@ -28,6 +28,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.auth.jwt_handler import TokenData, get_current_user
+from app.models.defensia import TipoDocumento
 from app.services.defensia_quota_service import (
     DefensiaQuotaService,
     QuotaExcedida,
@@ -518,6 +519,203 @@ def test_upload_documento_storage_disabled_503(
         "/api/defensia/expedientes/exp-1/documentos", files=files
     )
     assert response.status_code == 503
+
+
+def test_upload_dispara_fase1_auto_extraccion(
+    client: TestClient,
+    fake_db: MagicMock,
+    fake_storage: MagicMock,
+    monkeypatch,
+):
+    """Regresion: tras subir un documento, el endpoint debe ejecutar Fase 1
+    (classifier + extractor + phase detector) y devolver en la response los
+    campos auto-detectados (tipo_documento, clasificacion_confianza,
+    fase_detectada). Antes del wire-up, el endpoint solo persistia bytes
+    cifrados y el wizard llegaba al paso 3 con fase=None.
+
+    Mockeamos classifier, extractor y phase_detector para no golpear Gemini.
+    """
+    _require_deps()
+
+    # ---- Mock classifier ----
+    from app.services import defensia_document_classifier as _dc
+
+    class _FakeClassification:
+        tipo = TipoDocumento.LIQUIDACION_PROVISIONAL
+        confianza = 0.92
+        fuente = "regex"
+
+    class _FakeClassifier:
+        def classify_text(self, texto: str):
+            return _FakeClassification()
+
+    monkeypatch.setattr(_dc, "DocumentClassifier", _FakeClassifier)
+
+    # ---- Mock extractor ----
+    from app.services import defensia_data_extractor as _ext
+
+    def _fake_extract_liquidacion(pdf_bytes, nombre):
+        return {
+            "referencia": "1234567890",
+            "fecha_acto": "2026-01-15",
+            "importe_total": 3200.50,
+            "gastos_adquisicion_declarados": 15000.0,
+            "gastos_adquisicion_admitidos": 8000.0,
+            "diff_gastos_adquisicion_no_admitidos": 7000.0,
+        }
+
+    monkeypatch.setattr(
+        _ext,
+        "extract_liquidacion_provisional",
+        _fake_extract_liquidacion,
+    )
+
+    # ---- Mock PDF text extractor (for classifier input) ----
+    async def _fake_extract_pdf(pdf_bytes, nombre):
+        class _R:
+            full_text = "Liquidacion provisional IRPF fake text"
+            success = True
+        return _R()
+
+    import app.utils.pdf_extractor as _pdf_mod
+
+    monkeypatch.setattr(
+        _pdf_mod,
+        "extract_pdf_text_plain",
+        _fake_extract_pdf,
+    )
+
+    # ---- Mock phase detector ----
+    from app.services import defensia_phase_detector as _pd
+    from app.models.defensia import Fase
+
+    def _fake_detect_fase(expediente, hoy=None):
+        return Fase.LIQUIDACION_FIRME_PLAZO_RECURSO, 0.9
+
+    monkeypatch.setattr(_pd, "detect_fase", _fake_detect_fase)
+
+    # ---- Fake DB con ownership + post-insert selects ----
+    ownership_row = {
+        "id": "exp-1",
+        "user_id": "u-test",
+        "nombre": "exp",
+        "tributo": "IRPF",
+        "ccaa": "Madrid",
+        "tipo_procedimiento_declarado": "LIQUIDACION",
+        "estado": "borrador",
+        "fase_detectada": None,
+        "fase_confianza": None,
+        "created_at": "2026-04-14T00:00:00Z",
+        "updated_at": "2026-04-14T00:00:00Z",
+    }
+    doc_row_after_update = {
+        "id": "doc-1",
+        "nombre_original": "liquidacion.pdf",
+        "tipo_documento": "LIQUIDACION_PROVISIONAL",
+        "fecha_acto": "2026-01-15",
+        "datos_estructurados_json": '{"referencia":"1234567890"}',
+    }
+    exp_for_recompute = {"tributo": "IRPF", "ccaa": "Madrid"}
+
+    batches = [
+        [ownership_row],  # SELECT ownership
+        [],  # INSERT defensia_documentos
+        [],  # UPDATE defensia_expedientes (touch updated_at)
+        [],  # UPDATE defensia_documentos fase1 metadata
+        [exp_for_recompute],  # SELECT expediente (recompute fase)
+        [doc_row_after_update],  # SELECT documentos (recompute fase)
+        [],  # UPDATE defensia_expedientes fase_detectada
+    ]
+    fake_db.execute.side_effect = _side_effect_rows(*batches)
+
+    files = {
+        "file": (
+            "liquidacion.pdf",
+            b"%PDF-1.4 fake content",
+            "application/pdf",
+        )
+    }
+    response = client.post(
+        "/api/defensia/expedientes/exp-1/documentos", files=files
+    )
+    assert response.status_code == 201, response.text
+
+    body = response.json()
+    # La respuesta debe incluir los campos auto-detectados
+    assert body["tipo_documento"] == "LIQUIDACION_PROVISIONAL"
+    assert body["clasificacion_confianza"] == pytest.approx(0.92)
+    assert body["fecha_acto"] == "2026-01-15"
+    assert body["fase_detectada"] == "LIQUIDACION_FIRME_PLAZO_RECURSO"
+    assert body["fase_confianza"] == pytest.approx(0.9)
+
+    # Se hizo al menos un UPDATE a defensia_documentos con tipo_documento
+    all_sql = " ".join(
+        str(call.args[0]) if call.args else ""
+        for call in fake_db.execute.await_args_list
+    ).lower()
+    assert "update defensia_documentos" in all_sql
+    assert "tipo_documento" in all_sql
+    # Y un UPDATE a defensia_expedientes con fase_detectada
+    assert "fase_detectada" in all_sql
+
+
+def test_upload_fase1_resiliente_si_gemini_falla(
+    client: TestClient,
+    fake_db: MagicMock,
+    fake_storage: MagicMock,
+    monkeypatch,
+):
+    """Regresion: si el classifier o extractor lanzan (Gemini down), el
+    upload DEBE seguir devolviendo 201 — best-effort. El usuario ve el
+    documento subido sin campos auto-detectados pero la feature sigue
+    funcional."""
+    _require_deps()
+
+    # Classifier explota
+    from app.services import defensia_document_classifier as _dc
+
+    class _BoomClassifier:
+        def classify_text(self, texto):
+            raise RuntimeError("Gemini rate limit")
+
+    monkeypatch.setattr(_dc, "DocumentClassifier", _BoomClassifier)
+
+    async def _fake_extract_pdf(pdf_bytes, nombre):
+        class _R:
+            full_text = "Algun texto"
+            success = True
+        return _R()
+
+    import app.utils.pdf_extractor as _pdf_mod
+    monkeypatch.setattr(_pdf_mod, "extract_pdf_text_plain", _fake_extract_pdf)
+
+    fake_db.execute.side_effect = _side_effect_rows(
+        [{
+            "id": "exp-1",
+            "user_id": "u-test",
+            "nombre": "exp",
+            "tributo": "IRPF",
+            "ccaa": "Madrid",
+            "tipo_procedimiento_declarado": "LIQUIDACION",
+            "estado": "borrador",
+            "fase_detectada": None,
+            "created_at": "2026-04-14T00:00:00Z",
+            "updated_at": "2026-04-14T00:00:00Z",
+        }],
+        [], [], [],  # INSERT + 2 UPDATEs
+        [{"tributo": "IRPF", "ccaa": "Madrid"}],  # SELECT recompute
+        [],  # SELECT docs (empty, ningun doc clasificado)
+        [],  # UPDATE fase
+    )
+
+    files = {"file": ("x.pdf", b"%PDF", "application/pdf")}
+    response = client.post(
+        "/api/defensia/expedientes/exp-1/documentos", files=files
+    )
+    assert response.status_code == 201
+    body = response.json()
+    # Sin classifier funcional, tipo queda None/null
+    assert body["tipo_documento"] is None
 
 
 def test_upload_documento_no_crea_dictamen_ni_escrito(

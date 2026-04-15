@@ -462,12 +462,257 @@ async def subir_documento(
         exp_id,
         len(contenido),
     )
+
+    # Fase 1 auto-extraccion (Regla #1 del producto: solo fase tecnica,
+    # NO analisis juridico). Best-effort: cualquier fallo se loggea pero
+    # no tumba la respuesta — el usuario ve el documento subido aunque
+    # la clasificacion/extraccion haya fallado (p.ej. Gemini down).
+    fase1 = await _run_fase1_auto(
+        db,
+        exp_id=exp_id,
+        doc_id=doc_id,
+        pdf_bytes=contenido,
+        nombre=file.filename or "documento",
+        tipo_manual=tipo_doc_valor,
+    )
+
     return {
         "id": doc_id,
         "nombre_original": file.filename or "documento",
-        "tipo_documento": tipo_doc_valor,
+        "tipo_documento": fase1.get("tipo") or tipo_doc_valor,
+        "clasificacion_confianza": fase1.get("confianza"),
+        "fecha_acto": fase1.get("fecha_acto"),
+        "fase_detectada": fase1.get("fase_nueva"),
+        "fase_confianza": fase1.get("fase_confianza"),
         "created_at": now,
     }
+
+
+# ============================================================================
+# Fase 1 auto-extraccion helper (T2B-013 + wire Fase 1)
+# ============================================================================
+
+
+_EXTRACTOR_POR_TIPO = {
+    TipoDocumento.LIQUIDACION_PROVISIONAL: "extract_liquidacion_provisional",
+    TipoDocumento.ACUERDO_IMPOSICION_SANCION: "extract_acuerdo_sancion",
+    TipoDocumento.PROPUESTA_LIQUIDACION: "extract_propuesta_liquidacion",
+    TipoDocumento.REQUERIMIENTO: "extract_requerimiento",
+    TipoDocumento.ESCRITO_ALEGACIONES_USUARIO: "extract_escrito_usuario",
+    TipoDocumento.ESCRITO_REPOSICION_USUARIO: "extract_escrito_usuario",
+    TipoDocumento.ESCRITO_RECLAMACION_TEAR_USUARIO: "extract_escrito_usuario",
+}
+
+
+async def _run_fase1_auto(
+    db: TursoClient,
+    *,
+    exp_id: str,
+    doc_id: str,
+    pdf_bytes: bytes,
+    nombre: str,
+    tipo_manual: Optional[str],
+) -> dict[str, Any]:
+    """Ejecuta Fase 1 (tecnica) tras subir un documento.
+
+    Pipeline:
+        1. Classifier — determina el tipo si el usuario no lo especifico.
+        2. Extractor — parsea datos estructurados segun el tipo detectado.
+        3. Persiste en ``defensia_documentos`` el tipo, confianza, fecha_acto
+           y datos_estructurados_json.
+        4. Phase detector — recarga todos los documentos del expediente y
+           recalcula la fase procesal. Persiste en ``defensia_expedientes``.
+
+    Best-effort: un error en cualquiera de los pasos se loggea pero no tumba
+    la request. El documento ya esta persistido y el usuario ve el upload
+    como exitoso; la UI puede pedir re-clasificacion manual si hace falta.
+
+    Regla #1 del producto: NO se invocan reglas juridicas, RAG verifier ni
+    writer aqui. Las fases 2-4 solo arrancan con POST /analyze + brief.
+    """
+    import asyncio
+    import json as _json
+
+    resultado: dict[str, Any] = {
+        "tipo": tipo_manual,
+        "confianza": 1.0 if tipo_manual else None,
+        "fecha_acto": None,
+        "fase_nueva": None,
+        "fase_confianza": None,
+    }
+
+    # ---- 1. Clasificacion ----
+    tipo_final: Optional[TipoDocumento] = None
+    if tipo_manual:
+        try:
+            tipo_final = TipoDocumento(tipo_manual)
+        except ValueError:
+            tipo_final = None
+
+    if tipo_final is None:
+        try:
+            from app.utils.pdf_extractor import extract_pdf_text_plain
+
+            pdf_res = await extract_pdf_text_plain(pdf_bytes, nombre)
+            texto = getattr(pdf_res, "full_text", "") or ""
+        except Exception as exc:
+            logger.warning("DefensIA fase1: extract text fallo: %s", exc)
+            texto = ""
+
+        if texto:
+            try:
+                from app.services.defensia_document_classifier import (
+                    DocumentClassifier,
+                )
+
+                classifier = DocumentClassifier()
+                clas = await asyncio.to_thread(classifier.classify_text, texto)
+                tipo_final = clas.tipo
+                resultado["tipo"] = tipo_final.value
+                resultado["confianza"] = float(clas.confianza)
+            except Exception as exc:
+                logger.warning("DefensIA fase1: classify fallo: %s", exc)
+
+    # ---- 2. Extraccion de datos ----
+    datos_json: Optional[str] = None
+    if tipo_final is not None:
+        extractor_name = _EXTRACTOR_POR_TIPO.get(tipo_final)
+        if extractor_name:
+            try:
+                from app.services import defensia_data_extractor as _ext
+
+                extractor = getattr(_ext, extractor_name)
+                datos = await asyncio.to_thread(extractor, pdf_bytes, nombre)
+                if isinstance(datos, dict) and "error" not in datos:
+                    datos_json = _json.dumps(datos, ensure_ascii=False)
+                    fecha = datos.get("fecha_acto")
+                    if isinstance(fecha, str) and fecha:
+                        resultado["fecha_acto"] = fecha
+            except Exception as exc:
+                logger.warning(
+                    "DefensIA fase1: extractor %s fallo: %s",
+                    extractor_name,
+                    exc,
+                )
+
+    # ---- 3. Persistir metadatos del documento ----
+    try:
+        await db.execute(
+            "UPDATE defensia_documentos SET "
+            "tipo_documento = ?, clasificacion_confianza = ?, "
+            "fecha_acto = ?, datos_estructurados_json = ? "
+            "WHERE id = ?",
+            [
+                resultado["tipo"],
+                resultado["confianza"],
+                resultado["fecha_acto"],
+                datos_json,
+                doc_id,
+            ],
+        )
+    except Exception as exc:
+        logger.warning("DefensIA fase1: persist doc metadata fallo: %s", exc)
+
+    # ---- 4. Recalcular fase del expediente ----
+    try:
+        fase_nueva, fase_conf = await _recompute_fase_expediente(db, exp_id)
+        resultado["fase_nueva"] = fase_nueva
+        resultado["fase_confianza"] = fase_conf
+        await db.execute(
+            "UPDATE defensia_expedientes "
+            "SET fase_detectada = ?, fase_confianza = ?, updated_at = ? "
+            "WHERE id = ?",
+            [fase_nueva, fase_conf, _now_iso(), exp_id],
+        )
+    except Exception as exc:
+        logger.warning("DefensIA fase1: recompute fase fallo: %s", exc)
+
+    return resultado
+
+
+async def _recompute_fase_expediente(
+    db: TursoClient, exp_id: str
+) -> tuple[str, float]:
+    """Relee los documentos del expediente y ejecuta phase_detector.
+
+    Devuelve ``(fase_value, confianza)``. Los documentos sin tipo o sin
+    fecha se incluyen igualmente — el phase detector decide como ponderarlos.
+    """
+    import json as _json
+    from datetime import datetime as _dt
+
+    from app.models.defensia import (
+        DocumentoEstructurado,
+        ExpedienteEstructurado,
+        Tributo,
+    )
+    from app.services.defensia_phase_detector import detect_fase
+
+    exp_res = await db.execute(
+        "SELECT tributo, ccaa FROM defensia_expedientes WHERE id = ?",
+        [exp_id],
+    )
+    if not exp_res or not getattr(exp_res, "rows", None):
+        raise RuntimeError(f"Expediente {exp_id} desaparecio durante fase1")
+    exp_row = dict(exp_res.rows[0])
+
+    docs_res = await db.execute(
+        "SELECT id, nombre_original, tipo_documento, fecha_acto, "
+        "datos_estructurados_json "
+        "FROM defensia_documentos WHERE expediente_id = ?",
+        [exp_id],
+    )
+    documentos: list[DocumentoEstructurado] = []
+    for row in docs_res.rows or []:
+        d = dict(row)
+        tipo_str = d.get("tipo_documento")
+        if not tipo_str:
+            continue
+        try:
+            tipo = TipoDocumento(tipo_str)
+        except ValueError:
+            continue
+
+        fecha = None
+        fecha_raw = d.get("fecha_acto")
+        if fecha_raw:
+            try:
+                fecha = _dt.fromisoformat(str(fecha_raw).replace("Z", "+00:00"))
+            except Exception:
+                fecha = None
+
+        datos: dict[str, Any] = {}
+        datos_raw = d.get("datos_estructurados_json")
+        if datos_raw:
+            try:
+                datos = _json.loads(datos_raw) if isinstance(datos_raw, str) else datos_raw
+            except Exception:
+                datos = {}
+
+        documentos.append(
+            DocumentoEstructurado(
+                id=d["id"],
+                nombre_original=d.get("nombre_original") or "",
+                tipo_documento=tipo,
+                fecha_acto=fecha,
+                datos=datos,
+                clasificacion_confianza=1.0,
+            )
+        )
+
+    try:
+        tributo = Tributo(exp_row.get("tributo") or "IRPF")
+    except ValueError:
+        tributo = Tributo.IRPF
+
+    expediente = ExpedienteEstructurado(
+        id=exp_id,
+        tributo=tributo,
+        ccaa=exp_row.get("ccaa") or "",
+        documentos=documentos,
+    )
+    fase, confianza = detect_fase(expediente)
+    return fase.value, float(confianza)
 
 
 # ============================================================================
