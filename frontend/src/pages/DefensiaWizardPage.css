@@ -116,6 +116,23 @@
   font-size: 0.875rem;
 }
 
+.defensia-wizard-analyzing {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 12px;
+  color: var(--color-accent, #06b6d4);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.defensia-wizard-analyzing svg {
+  color: var(--color-accent, #06b6d4);
+}
+
 .defensia-wizard-footer {
   display: flex;
   justify-content: space-between;
