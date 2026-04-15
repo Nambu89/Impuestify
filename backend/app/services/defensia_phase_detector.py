@@ -74,6 +74,13 @@ def detect_fase(
         if doc.tipo_documento in _FUERA_ALCANCE_TIPOS:
             return Fase.FUERA_DE_ALCANCE, 0.99
 
+    # Normaliza fechas naive a UTC antes de ordenar para evitar
+    # TypeError 'offset-naive vs offset-aware' en documentos heterogeneos
+    # (Gemini/parseo PDF puede devolver ambos). Copilot review #3.
+    for doc in expediente.documentos:
+        if doc.fecha_acto is not None and doc.fecha_acto.tzinfo is None:
+            doc.fecha_acto = doc.fecha_acto.replace(tzinfo=timezone.utc)
+
     timeline = expediente.timeline_ordenado()
 
     escritos_usuario = [
@@ -90,6 +97,20 @@ def detect_fase(
     return _mapear_acto_a_fase(ultimo_acto_aeat, ultimo_escrito_usuario, hoy)
 
 
+def _as_aware_utc(dt: datetime) -> datetime:
+    """Devuelve ``dt`` normalizado a timezone-aware UTC.
+
+    Si ``dt`` es naive (tzinfo=None), asume UTC y le adjunta el tz. Si ya es
+    aware pero en otra zona, lo convierte a UTC. Previene el
+    ``TypeError: can't subtract offset-naive and offset-aware datetimes``
+    reportado por Copilot review #3, que rompía ``_es_tear_reciente`` cuando
+    llegaban documentos con fecha_acto naive desde Gemini/parseo de PDF.
+    """
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def _es_tear_reciente(
     escrito_tear: DocumentoEstructurado, hoy: datetime
 ) -> bool:
@@ -101,7 +122,7 @@ def _es_tear_reciente(
     """
     if escrito_tear.fecha_acto is None:
         return False
-    return (hoy - escrito_tear.fecha_acto) < _TEAR_VENTANA_RECIENTE
+    return (_as_aware_utc(hoy) - _as_aware_utc(escrito_tear.fecha_acto)) < _TEAR_VENTANA_RECIENTE
 
 
 def _fase_tras_tear(
@@ -149,8 +170,11 @@ def _mapear_acto_a_fase(
         return Fase.SANCIONADOR_INICIADO, 0.9
 
     if tipo == TipoDocumento.PROPUESTA_SANCION:
-        if usuario_respondio:
-            return Fase.SANCIONADOR_IMPUESTA, 0.7
+        # NO saltamos a SANCIONADOR_IMPUESTA aunque el usuario haya respondido:
+        # exigiría un ACUERDO_IMPOSICION_SANCION notificado (Copilot review #2).
+        # Mientras el último acto administrativo siga siendo una propuesta, la
+        # fase correcta es SANCIONADOR_PROPUESTA, independientemente de que el
+        # usuario haya presentado alegaciones.
         return Fase.SANCIONADOR_PROPUESTA, 0.9
 
     if tipo == TipoDocumento.ACUERDO_IMPOSICION_SANCION:
