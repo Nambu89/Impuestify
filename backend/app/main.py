@@ -458,6 +458,10 @@ app.include_router(contabilidad_router)
 from app.routers.invoices import router as invoices_router
 app.include_router(invoices_router)
 
+# DefensIA
+from app.routers import defensia
+app.include_router(defensia.router)
+
 # === Dependencias ===
 
 async def get_rag_engine():

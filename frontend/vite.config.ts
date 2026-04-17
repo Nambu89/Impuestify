@@ -13,6 +13,13 @@ export default defineConfig({
     server: {
         port: 3000,
         proxy: {
+            // DefensIA router uses /api/defensia prefix — pass through as-is
+            '/api/defensia': {
+                target: 'http://localhost:8000',
+                changeOrigin: true,
+            },
+            // Legacy routers (auth, ask, workspaces, etc.) use prefix
+            // without /api — strip it to match backend routes
             '/api': {
                 target: 'http://localhost:8000',
                 changeOrigin: true,

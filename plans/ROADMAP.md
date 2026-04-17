@@ -1,6 +1,202 @@
 # TaxIA (Impuestify) - Roadmap de Desarrollo
 
-## Estado del Proyecto: Abril 2026 (Sesion 28 — 2026-04-07)
+## Estado del Proyecto: Abril 2026 (Sesion 34 — 2026-04-15)
+
+**Rama activa:** `claude/defensia-v1` (64 commits ahead de main, sin mergear).
+DefensIA Parte 1 + Parte 2 completas. T3-001b (fixtures PDF anonimizados)
+DONE. Pendiente T3-001 E2E Playwright caso David + T3-006 verifier final
+antes de merge a main.
+
+## EN CURSO — Sesion 34: Copilot round 3 + T3-001b fixtures (2026-04-15)
+
+- [x] **Limpieza workspace**: 58 archivos basura borrados (0 bytes, nombres corruptos de pastes)
+- [x] **T3-001b Fixtures PDF anonimizados caso David**: generador reportlab
+      deterministico (`backend/scripts/generate_defensia_fixtures.py`) a partir
+      de `expediente_anonimizado.json`. 3 PDFs en
+      `tests/e2e/fixtures/defensia/caso_david/`:
+      liquidacion (6183.05 EUR, arts 38.1 LIRPF + 105 LGT),
+      sancion (arts 191 + 194 LGT, 3393.52 EUR),
+      sentencia_medidas (art 103 CC). 0 PII hits.
+- [x] **.gitattributes**: PDFs + imagenes marcados como binary (evita CRLF)
+- [x] **Copilot round 3 (11/11 comentarios resueltos)**:
+  1. `test_migration.py`: `import pytest` a top (E402)
+  2. `useDefensiaUpload.ts`: fallback `UploadResponse` type-safe con defaults
+  3. `DefensiaWizardPage.tsx`: try/finally limpia `analyzeStatus` si analyze() falla sin onDone
+  4. `DefensiaWizardPage.tsx`: `INDETERMINADA` ya no bloquea paso 3 — UI muestra hint
+  5. `defensia.py`: docstring de `_recompute_fase_expediente` alineado con comportamiento real
+  6. `reclamacion_tear_general.j2`: `loop.index0` → `loop.index` (numeracion bis 1-based)
+  7-11. 5 plantillas j2: `ATENCION` → `ATENCIÓN` (alegaciones_{comp_lim,sanc,verif}, escrito_generico, recurso_reposicion)
+- [x] **Extras preventivos**:
+  - `defensia_ortografia_audit.py`: anadido `atencion→atención` al dict + excluidos `.test.tsx/.spec.tsx` del scan
+- [ ] **T3-001** E2E Playwright caso David 4 viewports (PENDIENTE — ya tiene fixtures)
+- [ ] **T3-006** Verifier final + merge a main (depende de T3-001)
+
+### Metricas Sesion 34
+
+- **Commits**: 2 (T3-001b fixtures + Copilot round 3) pusheados a `claude/defensia-v1`
+- **Backend defensia tests**: 379 verdes (+4 vs sesion 33: tests de migration fail-fast)
+- **Frontend tests**: 92 verdes, build 7.3s
+- **Ortografia audit**: 0 hits post-fix
+- **Anti-hallucination audit**: 0 hits
+- **Copilot rounds resueltos**: 3 (total acumulado 27/27 comentarios)
+
+---
+
+---
+
+## EN PROGRESO — Sesion 33: DefensIA Parte 2 COMPLETA (2026-04-15)
+
+### Wave 2B Backend (10 commits Wave 2B + 5 gap fixes)
+
+- [x] **T2B-001/002/003** RAG verifier con CONFIANZA_MIN 0.7 silent discard. Reutiliza HybridRetriever existente (FTS5 + Vector Upstash). Cada argumento verificado contra corpus.
+- [x] **T2B-004/005/006** Writer service + 9 plantillas Jinja2 (alegaciones_verificacion/comprobacion_limitada/sancionador, reclamacion_tear_{abreviada,general}, ampliacion_tear, recurso_reposicion, escrito_generico, dictamen_resumen). `autoescape=False` (markdown legal) + tildes preservadas.
+- [x] **T2B-007/008** Export DOCX (python-docx) + PDF (reportlab con DejaVuSans TTFont para tildes). Disclaimer bold en ambos formatos.
+- [x] **T2B-009** `defensia_service.py` fachada orquestadora con pipeline completo reserve -> rules -> RAG -> writer -> persist -> commit.
+- [x] **T2B-010** `defensia_quota_service.py` con patron reserve-commit-release. Check-and-increment atomico multi-worker via UPDATE condicional. Idempotency por token con validacion user_id (Copilot round 2).
+- [x] **T2B-011** Rate limits defensia (`defensia_rate_limits.py`) + `defensia_dependencies.py` DI factories.
+- [x] **T2B-012** `defensia_agent.py` chat del brief con guardrails (prompt injection + PII + llama guard).
+- [x] **T2B-013a** `defensia_storage.py` cifrado AES-256-GCM + zstandard. Migration `20260414_defensia_storage.sql` con columnas ciphertext_blob + nonce.
+- [x] **T2B-013..018** Router `defensia.py` 13 endpoints REST (crear/listar/detalle expedientes, upload, brief CRUD, analyze SSE, dictamen, export, patch escrito, delete, chat, cuotas). Ownership check, SQL parametrizado, tildes, UTC, rate limits slowapi.
+- [x] **Fase 1 auto-extraccion wired en upload**: helper `_run_fase1_auto()` ejecuta classifier + extractor (Gemini Vision) + phase detector tras cada upload. Persiste tipo, confianza, fecha_acto, datos_json en `defensia_documentos` y recalcula `fase_detectada` del expediente. Best-effort — fallo Gemini no tumba la request.
+- [x] **Cuota maxima para plantilla TEAR**: `_extraer_cuota_maxima()` recorre documentos estructurados para elegir TEAR abreviada (<6000 EUR) vs general. Antes `cuota_estimada_eur=0.0` hardcoded.
+
+### Wave 1F Frontend (15 tasks T1F)
+
+- [x] **Infra**: Vitest 4 + @testing-library/react + jest-dom + user-event + jsdom instalados. `vitest.config.ts`, `src/test-setup.ts` con polyfills Range/Element.getClientRects + scrollIntoView para Tiptap/ProseMirror.
+- [x] **T1F-012** `types/defensia.ts` espejo backend (Tributo, Fase con 12 estados, TipoDocumento, EstadoExpediente, Expediente, ExpedienteDetalle, DocumentoEstructurado, Brief, ArgumentoVerificado, Dictamen, Escrito, CuotaMensual).
+- [x] **T1F-004** DisclaimerBanner persistente role=alert.
+- [x] **T1F-005b** PlazoBadge verde >15d, ambar 5-15d, rojo <5d, gris vencido, null-safe.
+- [x] **T1F-008** FaseBadge parametrizado 12 fases con colores dedicados.
+- [x] **T1F-009** TributoSelect nativo 5 opciones (IRPF/IVA/ISD/ITP/PLUSVALIA).
+- [x] **T1F-007** DocumentoUploadCard con patron iOS-safe input absolute + label htmlFor.
+- [x] **T1F-005** ExpedienteTimelineCard.
+- [x] **T1F-006** ArgumentoCard con disclaimer corto.
+- [x] **T1F-010/011/011b** Hooks useDefensiaExpedientes, useDefensiaExpediente, useDefensiaUpload (XHR progress).
+- [x] **T1F-001** DefensiaListPage con skeleton, empty state, error + retry.
+- [x] **T1F-002** DefensiaWizardPage 5 pasos con state machine useReducer. Paso 4 POSTea brief, paso 5 dispara useDefensiaAnalyze SSE con callbacks progreso. **Pipeline end-to-end completo**.
+- [x] **T1F-003** DefensiaExpedientePage con tabs Resumen/Argumentos/Escrito/Chat.
+- [x] **T1F-013** Header dropdown entry DefensIA (desktop + mobile).
+- [x] **T1F-014** App.tsx rutas lazy protegidas /defensia, /defensia/nuevo, /defensia/:id.
+- [x] **T1F-015** useSEO noindex en pages defensia (auth-only).
+
+### Wave 2F Frontend (6 tasks T2F)
+
+- [x] **T2F-004** `useDefensiaAnalyze` hook SSE con eventsource-parser. Callbacks onPhase/onCandidatos/onVerificando/onDictamen/onEscrito/onDone. AbortController para cancel.
+- [x] **T2F-005** `useDefensiaExport` blob download con HTMLAnchorElement. 428 needsDisclaimer, 402 cuota agotada.
+- [x] **T2F-006** `useDefensiaChat` hook SSE con messages acumulados.
+- [x] **T2F-001** `EscritoEditor` con Tiptap + StarterKit. PATCH al guardar. readOnly cuando exportado.
+- [x] **T2F-002** `PreExportModal` con checkbox aviso legal obligatorio.
+- [x] **T2F-003** `DefensiaChat` component con DisclaimerBanner persistente.
+
+### Wave 3 parcial
+
+- [x] **T3-002** `defensia_ortografia_audit.py` script Jinja-aware + 87 tildes corregidas en 9 plantillas. 0 hits post-fix.
+- [x] **T3-003** GDPR cascade delete 7 tablas defensia en `user_rights.py`. 4 tests (sanity, cascade PRAGMA, delete manual, anti-drift guard).
+- [x] **T3-004** Dead code removal (ruff F401 → 2 imports unused eliminados).
+- [x] **T3-005** `defensia_anti_hallucination_audit.py` script. Detecta citas normativas literales (Art. N, STS N/YYYY, Ley N/YYYY, RD N/YYYY) en plantillas. 0 hits → invariante #2 preservado.
+- [ ] **T3-001** E2E Playwright caso David 4 viewports (DESBLOQUEADO por T3-001b sesion 34)
+- [x] **T3-001b** Fixtures anonimizados caso David — DONE sesion 34 (generador reportlab deterministico)
+- [ ] **T3-006** Verifier final + memoria + commit del plan
+
+### Copilot review 16/16 resueltos
+
+**Round 1 (9 comentarios, 7 CRITICAL):**
+1. rules_engine normalize enums (R001/R002/R009 no se disparaban)
+2. phase_detector PROPUESTA_SANCION no salta a IMPUESTA
+3. phase_detector naive datetime tolerance
+4. writer REPOSICION → recurso_reposicion.j2 (no TEAR)
+5. recurso_reposicion.j2 loop.index (no loop.index0)
+6. turso_client wire las 3 migraciones defensia
+7. storage._disabled alineado con docstring
+8. quota reserva_id idempotency
+9. quota race multi-worker check-and-increment
+
+**Round 2 (7 comentarios, 3 CRITICAL):**
+1. FakeQuotaDB `_row_exists` cleanup
+2-3. quota commit/release user mismatch (podia consumir tokens ajenos)
+4-7. migrations fail-fast con helper `_apply_defensia_migration()`
+
+### Security GitHub Actions
+
+- [x] Bandit B701 false positive silenciado (writer markdown, no HTML) con `# nosec B701`
+- [x] axios CVE CRITICAL (SSRF + Cloud Metadata Exfiltration) parcheado via `npm audit fix` — 0 CRIT/HIGH restantes
+
+### Dark theme CSS refactor
+
+- [x] 11 archivos CSS DefensIA alineados al design system del proyecto (bg `var(--color-secondary)`, text `#f1f5f9`, cards `rgba(255,255,255,0.04)`, inputs `#1e293b`, accent cyan). Referencia: `CalculadoraUmbrales.css`.
+
+### Metricas Sesion 33
+
+- **Commits**: 62 desde main (incluye sesion 32 + 33)
+- **Backend defensia tests**: 375 verdes
+- **Frontend tests**: 92 verdes, build 7s limpio
+- **Ficheros backend nuevos**: 13 servicios + 9 plantillas + 4 migrations
+- **Ficheros frontend nuevos**: 11 componentes + 6 hooks + 3 pages + types + test-setup
+- **Gap fixes funcionales end-to-end**: 5 (Fase 1 auto, cuota TEAR, SET_FASE, brief POST, analyze SSE)
+- **Copilot rounds resueltos**: 2
+- **Security scans**: Bandit 0 HIGH, npm audit 0 CRIT/HIGH
+
+---
+
+## COMPLETADO — Sesion 32: DefensIA Parte 1 (2026-04-13)
+
+- [x] Brainstorming + spec (`plans/2026-04-13-defensia-design.md`) + plan Parte 1
+- [x] 23 commits, 58 tests verdes en rama `claude/defensia-v1`
+- [x] Migracion DB 7 tablas (`20260413_defensia_tables.sql`) con ON DELETE CASCADE
+- [x] Models Pydantic + enums (Tributo, Fase 12 estados, TipoDocumento, EstadoExpediente)
+- [x] Router stub con health check
+- [x] `defensia_document_taxonomy.py` regex fast-path classifier 18 patrones
+- [x] `defensia_document_classifier.py` 2-tier regex + Gemini fallback
+- [x] `defensia_data_extractor.py` 7 extractores (5 Gemini + 2 deterministas)
+- [x] `defensia_phase_detector.py` automaton 12 estados
+- [x] `defensia_rules_engine.py` @regla decorator + REGISTRY + evaluar()
+- [x] Fixture caso David ground truth anonimizado
+- [x] 30 reglas deterministas R001-R030 (procedimentales + IRPF + IVA/ISD/ITP/Plusvalia)
+- [x] 4 bugs detectados y fixeados (Bug 78-81)
+
+---
+
+## COMPLETADO — Sesion 31: PDF Modelos + Workspace Dashboard + Bugfixes + Security (2026-04-10)
+
+### Features
+- [x] **Generador PDF Modelos Tributarios**: 7 modelos (303/130/308/720/721/IPSI) + forales (300/F69/420), endpoint + hook useModeloPDF + botones DeclarationsPage/M130, 8 tests
+- [x] **Workspace Fase 2**: auto-clasificacion PGC al subir factura + endpoint confirm-classification + badges WorkspacesPage, 34 tests
+- [x] **Workspace Fase 3**: selector dropdown workspace en Chat + indicador visual "Conversando sobre: X"
+- [x] **Workspace Visual Dashboard**: KPIs con SpotlightCard+CountUp, graficos Recharts (barras IVA, linea mensual), tabla cuentas PGC, top proveedores, facturas recientes. Recharts v3.8.1
+- [x] **WorkspaceCards en Chat**: acceso rapido a workspaces desde pagina principal
+- [x] **Classify-pending endpoint**: clasificacion retroactiva de facturas existentes sin libro_registro
+- [x] **Auto-detect tipo factura**: compara NIF emisor con NIF perfil fiscal → emitida/recibida
+
+### Bugfixes
+- [x] **Bug importes OCR**: prompt Gemini explicito + validacion magnitud + 6 tests
+- [x] **Bug workspace context**: columna workspace_id en conversations + restauracion follow-ups
+- [x] **Cleanup prints**: 58 print() → logger en 8 archivos backend
+- [x] **Fix field names**: auto-classify soporta formato regex antiguo + Gemini OCR
+- [x] **Fix concepto NULL**: auto-classify ahora popula concepto en libro_registro
+- [x] **Fix API prefix**: useModeloPDF y classify-pending corregidos (/api/ prefix)
+- [x] **Fix year filter**: dashboard queries pasaban year=None como parametro
+- [x] **Fix railway.toml**: workers 4→1 en archivo raiz (OOM en deploy)
+
+### Security + Responsive (12 fixes)
+- [x] Rate limiting 3 export endpoints (5/min)
+- [x] 9 error detail leaks → mensaje generico
+- [x] 500 handler oculta detalles en produccion
+- [x] XML escape en PDF (ReportLab injection)
+- [x] reprocess_file ownership check (IDOR)
+- [x] iOS Safari upload (display:none → visually-hidden + label)
+- [x] Touch targets 44px (clear button + classification buttons)
+- [x] aria-label workspace select
+- [x] 20+ tildes M130CalculatorPage
+- [x] reclassify-input overflow 320px
+- [x] Streaming badge contrast fix
+- [x] Tildes clasificacion en workspaces.py
+
+**Metricas Sesion 31:**
+- Tests nuevos: ~17
+- Commits: 12 (3f997a3 → d41c956)
+- Archivos creados: 8
+- Archivos modificados: ~35
+- Dependencias: +recharts v3.8.1
 
 ---
 

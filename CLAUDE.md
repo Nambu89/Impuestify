@@ -127,8 +127,23 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 | Creator | 49 EUR/mes | Influencers, YouTubers, streamers, bloggers | + IVA by platform, Modelo 349, DAC7, CNAE 60.39, multi-role profiles |
 | Autonomo | 39 EUR/mes IVA incl. | Self-employed | + All models (303/130/131), crypto, workspace, calendar |
 
-## Key Updates (2026-04-07)
+## Key Updates (2026-04-13)
 
+- **Session 32 — DefensIA Parte 1** (sesion 32): Nuevo modulo defensor fiscal con motor hibrido anti-alucinacion (Gemini extraccion → reglas deterministas → RAG verificador → LLM redactor controlado). Brainstorming + spec + plan + Wave 1 Back ejecutada en rama `claude/defensia-v1`. **58 tests verdes** (migracion, models, taxonomy, classifier, 7 extractores, phase detector 12-estados, caso David ground truth, rules engine scaffold). Caso David Oliva (141 archivos, 4 reclamaciones encadenadas) como ground truth del producto. 4 bugs detectados y fixeados (ver bugfixes-2026-04.md Bug 78-81). Parte 2 pendiente (~58 tasks: 30 reglas R001-R030, RAG verificador, writer service, frontend completo, E2E, beta). Spec en `plans/2026-04-13-defensia-design.md`, plan en `plans/2026-04-13-defensia-implementation-plan.md`, memoria sesion en `memory/project_session32_defensia_part1.md`. 23 commits.
+- **DefensIA scope v1**: 5 tributos (IRPF + IVA + ISD + ITP + Plusvalia Municipal) + procedimientos verificacion/comprobacion limitada/sancionador + vias reposicion/TEAR (abreviado y general). FUERA: inspeccion, apremio, TEAC, contencioso, IS. Monetizacion: 1/3/5 expedientes/mes por plan Particular/Autonomo/Creator + 15/12/10 EUR por expediente extra. Disclaimer obligatorio en 4 superficies (banner, argumentos, escrito exportado, checkbox pre-export). Entrada en dropdown "Herramientas" del Header.tsx (en Parte 2).
+- **Regla #1 de producto DefensIA**: el sistema NO arranca analisis juridico hasta que el usuario escriba su brief. Fase 1 (extraccion tecnica) SI puede auto-dispararse al subir documentos. Fases 2-4 (reglas + RAG verificador + redactor) requieren accion explicita del usuario.
+- **Session 31** (sesion 31): 9 features + 12 security + 8 bugfixes. PDF modelos, workspace dashboard visual (Recharts), auto-classify, chat workspace selector. 12 commits
+- **Generador PDF Modelos**: POST `/api/export/modelo-pdf` — 303/130/308/720/721/IPSI + forales (300/F69/420). Hook `useModeloPDF`, botones en DeclarationsPage y M130CalculatorPage
+- **Workspace Dashboard Visual**: KPIs (SpotlightCard+CountUp), barras IVA trimestral, linea ingresos/gastos mensual, tabla PGC, top proveedores, facturas recientes. Recharts v3.8.1. Endpoint `GET /api/workspaces/{id}/dashboard`
+- **Workspace Fase 2**: Auto-clasificacion PGC al subir factura + confirm-classification + classify-pending retroactivo + auto-detect tipo (emitida/recibida por NIF)
+- **Workspace Fase 3**: Selector dropdown workspace en Chat + indicador visual + workspace_id persistido en conversations + WorkspaceCards acceso rapido
+- **Session 30 RAG fix completo** (sesion 30): 4 bugs encadenados arreglados — territory tildes, OOM (workers 4→1), SSE keepalive, Upstash Vector sync 84K. RAG hibrido (FTS5+Vector) ahora funcional. Vector search con accent fallback + 10s timeout
+- **Railway**: 1 worker obligatorio (~344 MB por worker). `railway.toml` con `--workers 1 --timeout-keep-alive 120`
+- **Upstash Vector**: 84,036 embeddings sincronizados (100%). Sync script: `scripts/sync_to_upstash.py`. Verificar count periodicamente
+- **Territory names**: SIEMPRE canonical de `ccaa_constants.py` (con tildes). `get_territory()` tiene fallback `normalize_ccaa()`
+- **SSE keepalive**: Enviar `thinking` event ANTES de RAG search para evitar connection drop por inactividad
+- **Session 29 Clasificador Facturas mobile fix** (sesion 29): 5 bugs arreglados — "Ver detalles" implementado (GET /api/invoices/{id}), upload movil iOS Safari (label htmlFor + visually-hidden), formatEUR null-safe, back link, preconnect URL fix
+- **iOS file upload pattern**: NUNCA `display:none` en `<input type="file">`. Usar `position:absolute; opacity:0; clip:rect(0,0,0,0)` + `<label htmlFor>` en vez de `.click()` programatico
 - **Session 28 QA + Security** (sesion 28): 12 bugs clasificador/contabilidad arreglados, auditoria seguridad 20/21 issues (4 CRITICAL), PageSpeed 69→85+, chat.py TaxIAResponse crash fix, rate limiting /ask, deploy fix
 - **Clasificador Facturas QA**: upload FormData fix, timeout 120s, mapping backend→frontend, column names alineados con DB
 - **Contabilidad 4 tabs**: Diario/Mayor/Balance/PyG mapping arreglado (cuenta_code→cuenta, etc.)
@@ -136,7 +151,7 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 - **Code quality**: 55x datetime.utcnow→datetime.now(timezone.utc), gpt-4o-mini→gpt-5-mini en todo backend, dead code eliminado
 - **PageSpeed**: hero image 234KB→27KB (88%), lazy load Home/Chat/Dashboard, cache headers, font non-blocking
 - **Test users**: 3 usuarios (particular + autonomo + creator) con suscripciones hasta 2026-12-31
-- **Model**: SIEMPRE gpt-5-mini, NUNCA gpt-4o-mini
+- **Model**: SIEMPRE gpt-5-mini, NUNCA gpt-4o-mini. Params OpenAI: `temperature=1` (unico valor soportado), `max_completion_tokens` (NUNCA `max_tokens`). Groq puede usar `temperature=0` y `max_tokens`
 - **Git**: NUNCA incluir ruvnet, claude-flow, Claude, Co-Authored-By en commits
 
 - **SEO Overhaul** (sesion 27): Hook `useSEO()`, 12 paginas con schema JSON-LD (WebApplication, FAQPage, HowTo, BreadcrumbList), sitemap 21 URLs, OG image, Twitter cards, canonical URLs. Home: 3 pricing cards inline (Particular/Creator/Autonomo verde) + card Farmacias en Tecnologia
@@ -178,6 +193,6 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 
 When context reaches ~50%, Claude Code compresses history. To preserve critical info:
 - Re-read `CLAUDE.md` + relevant descendant CLAUDE.md after compaction
-- Check `memory/MEMORY.md` for project state (updated 2026-03-20, session 16)
+- Check `memory/MEMORY.md` for project state (updated 2026-04-10, session 31)
 - Check `agent-comms.md` for pending inter-agent tasks
 - Check `claude-progress.txt` for session history

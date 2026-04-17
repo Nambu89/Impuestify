@@ -1,0 +1,115 @@
+.escrito-editor {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: #1e293b;
+  overflow: hidden;
+}
+
+.escrito-editor-content {
+  padding: 1.5rem 1.75rem;
+  min-height: 280px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #f1f5f9;
+}
+
+.escrito-editor-content .tiptap {
+  outline: none;
+}
+
+.escrito-editor-content .tiptap p {
+  margin: 0 0 0.75rem 0;
+}
+
+.escrito-editor-content .tiptap h1,
+.escrito-editor-content .tiptap h2,
+.escrito-editor-content .tiptap h3 {
+  color: #f1f5f9;
+  margin: 1.25rem 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.escrito-editor-content .tiptap h1 {
+  font-size: 1.35rem;
+  color: var(--color-accent, #06b6d4);
+}
+
+.escrito-editor-content .tiptap h2 {
+  font-size: 1.15rem;
+}
+
+.escrito-editor-content .tiptap h3 {
+  font-size: 1.05rem;
+}
+
+.escrito-editor-content .tiptap blockquote {
+  border-left: 3px solid rgba(255, 255, 255, 0.2);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+
+.escrito-editor-content .tiptap strong {
+  color: #f1f5f9;
+  font-weight: 700;
+}
+
+.escrito-editor-content .tiptap a {
+  color: var(--color-accent, #06b6d4);
+  text-decoration: underline;
+}
+
+.escrito-editor-content .tiptap ul,
+.escrito-editor-content .tiptap ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.escrito-editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.escrito-editor-error {
+  color: #fca5a5;
+  font-size: 0.8rem;
+}
+
+.escrito-editor-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary, #1a56db),
+    var(--color-accent, #06b6d4)
+  );
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+  min-height: 40px;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.escrito-editor-save:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.25);
+}
+
+.escrito-editor-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

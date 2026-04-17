@@ -66,7 +66,7 @@ icalendar>=6.0.0
 pywebpush>=2.0.0
 
 # --- Document Extraction (multi-format) ---
-python-docx>=1.1.0
+python-docx>=1.1.2
 openpyxl>=3.1.0
 
 # --- MFA/2FA (TOTP) ---
@@ -85,3 +85,11 @@ scrapling==0.4.6
 curl_cffi==0.15.0
 playwright==1.58.0
 browserforge==1.2.4
+
+# DefensIA — generacion y parseo de documentos
+lxml>=5.3.0
+Jinja2>=3.1.4
+
+# DefensIA — storage cifrado (Wave 2B T2B-013a)
+cryptography>=42.0
+zstandard>=0.22

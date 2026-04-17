@@ -1012,10 +1012,89 @@ class TursoClient:
                 except Exception:
                     pass  # column already exists
 
+            # --- DefensIA tables (spec plans/2026-04-13-defensia-design.md §7.4) ---
+            from pathlib import Path as _Path
+            _migration_path = _Path(__file__).parent / "migrations" / "20260413_defensia_tables.sql"
+            if _migration_path.exists():
+                _sql = _migration_path.read_text(encoding="utf-8")
+                for _stmt in _sql.split(";"):
+                    _stmt = _stmt.strip()
+                    if _stmt:
+                        await self.execute(_stmt)
+                logger.info("DefensIA tables migration applied")
+            else:
+                logger.warning("DefensIA migration file not found: %s", _migration_path)
+
+            # --- DefensIA storage cifrado (Wave 2B T2B-013a) ---
+            # Anade columnas BLOB cifrado a `defensia_documentos`. SQLite no
+            # soporta `ADD COLUMN IF NOT EXISTS`, asi que envolvemos cada
+            # statement en try/except que ignora "duplicate column name" para
+            # mantener la migracion idempotente entre re-arranques. Copilot
+            # round 2 #4-#7: cualquier error que NO sea "duplicate/already
+            # exists" se re-lanza para abortar el init_schema y evitar que
+            # el servicio arranque con un schema incompleto que romperia en
+            # runtime.
+            await self._apply_defensia_migration(
+                _Path(__file__).parent / "migrations" / "20260414_defensia_storage.sql",
+                label="storage",
+            )
+
+            # --- DefensIA quota en_curso column (Wave 2B T2B-010) ---
+            # Anade `en_curso INTEGER DEFAULT 0` a `defensia_cuotas_mensuales`
+            # para habilitar el patron reserve-commit-release (H8). Idempotente
+            # igual que la migracion de storage: ignoramos "duplicate column"
+            # y re-lanzamos cualquier otro error.
+            await self._apply_defensia_migration(
+                _Path(__file__).parent / "migrations" / "20260414_defensia_quota_encurso.sql",
+                label="quota",
+            )
+
             logger.info("Database schema initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize schema: {e}")
             raise
+
+    async def _apply_defensia_migration(self, migration_path, label: str) -> None:
+        """Aplica un .sql DefensIA con idempotencia + fail-fast.
+
+        Copilot round 2 #4-#7: cualquier error que NO sea "duplicate column" o
+        "already exists" se re-lanza inmediatamente para abortar el arranque.
+        Asi evitamos que el servicio inicie con un schema incompleto y el
+        log ``migration applied`` solo se emite si no hubo errores. La
+        idempotencia cubre re-deploys sin tabla ``schema_migrations``.
+        """
+        if not migration_path.exists():
+            logger.warning(
+                "DefensIA %s migration file not found: %s", label, migration_path
+            )
+            return
+
+        sql_text = migration_path.read_text(encoding="utf-8")
+        for raw_stmt in sql_text.split(";"):
+            # Limpia comentarios SQL linea a linea para evitar que un bloque
+            # de comentarios pegado a la primera sentencia anule el statement.
+            exec_lines = [
+                line
+                for line in raw_stmt.splitlines()
+                if line.strip() and not line.strip().startswith("--")
+            ]
+            stmt = "\n".join(exec_lines).strip()
+            if not stmt:
+                continue
+            try:
+                await self.execute(stmt)
+            except Exception as exc:
+                msg = str(exc).lower()
+                if "duplicate column" in msg or "already exists" in msg:
+                    # Idempotente: el schema ya estaba al dia para este stmt.
+                    continue
+                logger.exception(
+                    "DefensIA %s migration stmt failed; aborting init_schema: %s",
+                    label,
+                    exc,
+                )
+                raise
+        logger.info("DefensIA %s migration applied", label)
 
 
 class QueryResult:
