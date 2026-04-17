@@ -10,7 +10,7 @@ interface Props {
 export function ArgumentoCard({ argumento, onVerFuente }: Props) {
   const confianzaPct = Math.round(argumento.confianza * 100);
   return (
-    <article className="argumento-card">
+    <article className="argumento-card" data-regla-id={argumento.regla_id}>
       <header className="argumento-card-header">
         <span className="argumento-card-id">{argumento.regla_id}</span>
         <span className="argumento-card-confianza" aria-label={`Confianza ${confianzaPct}%`}>
