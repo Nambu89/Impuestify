@@ -817,45 +817,35 @@ async def delete_user_account(
     # respeta las FK internas: rag_log -> escritos -> dictamenes -> briefs
     # -> documentos -> expedientes -> cuotas.
     #
-    # Nota Copilot round 6: idealmente esto iria en una transaccion atomica,
-    # pero el Turso HTTP client (libsql-client) no soporta BEGIN/COMMIT
-    # explicito. El ON DELETE CASCADE en las migraciones es la primera linea
-    # de defensa; estos deletes son la segunda. Si uno falla, el user queda
-    # eliminado pero pueden quedar huerfanos defensia — aceptable como
-    # estado intermedio porque el usuario ya no puede acceder a ellos.
-    await db.execute(
-        """DELETE FROM defensia_rag_log WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
-        [user_id]
-    )
-    await db.execute(
-        """DELETE FROM defensia_escritos WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
-        [user_id]
-    )
-    await db.execute(
-        """DELETE FROM defensia_dictamenes WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
-        [user_id]
-    )
-    await db.execute(
-        """DELETE FROM defensia_briefs WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
-        [user_id]
-    )
-    await db.execute(
-        """DELETE FROM defensia_documentos WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
-        [user_id]
-    )
-    await db.execute(
-        "DELETE FROM defensia_expedientes WHERE user_id = ?",
-        [user_id]
-    )
-    await db.execute(
-        "DELETE FROM defensia_cuotas_mensuales WHERE user_id = ?",
-        [user_id]
-    )
+    # Nota Copilot round 6+7: sin transaccion (Turso HTTP client no soporta
+    # BEGIN/COMMIT explicito). Cada DELETE se ejecuta best-effort con
+    # try/except para que un fallo en una tabla no impida borrar las demas
+    # ni aborte el DELETE final sobre users. ON DELETE CASCADE en las
+    # migraciones es la primera linea de defensa; estos deletes son la
+    # segunda. Si alguno falla, se loggea warning y se continua.
+    _defensia_deletes = [
+        ("defensia_rag_log", """DELETE FROM defensia_rag_log WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
+        ("defensia_escritos", """DELETE FROM defensia_escritos WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
+        ("defensia_dictamenes", """DELETE FROM defensia_dictamenes WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
+        ("defensia_briefs", """DELETE FROM defensia_briefs WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
+        ("defensia_documentos", """DELETE FROM defensia_documentos WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
+        ("defensia_expedientes", "DELETE FROM defensia_expedientes WHERE user_id = ?"),
+        ("defensia_cuotas_mensuales", "DELETE FROM defensia_cuotas_mensuales WHERE user_id = ?"),
+    ]
+    for table_name, sql in _defensia_deletes:
+        try:
+            await db.execute(sql, [user_id])
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                "GDPR cascade: fallo DELETE %s para user %s: %s",
+                table_name, user_id, exc,
+            )
 
     # Sessions
     await db.execute(
