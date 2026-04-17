@@ -816,6 +816,13 @@ async def delete_user_account(
     # si Turso libSQL no aplica el cascade en todos los caminos. El orden
     # respeta las FK internas: rag_log -> escritos -> dictamenes -> briefs
     # -> documentos -> expedientes -> cuotas.
+    #
+    # Nota Copilot round 6: idealmente esto iria en una transaccion atomica,
+    # pero el Turso HTTP client (libsql-client) no soporta BEGIN/COMMIT
+    # explicito. El ON DELETE CASCADE en las migraciones es la primera linea
+    # de defensa; estos deletes son la segunda. Si uno falla, el user queda
+    # eliminado pero pueden quedar huerfanos defensia — aceptable como
+    # estado intermedio porque el usuario ya no puede acceder a ellos.
     await db.execute(
         """DELETE FROM defensia_rag_log WHERE expediente_id IN
            (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",

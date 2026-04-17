@@ -11,11 +11,13 @@ inventando citas fuera del pipeline verificado -> riesgo de alucinación
 legal frente al cliente.
 
 Scope:
-- backend/app/templates/defensia/*.j2
-- backend/app/services/defensia_rules/**/*.py  (las reglas deterministas
-  SÍ pueden y DEBEN citar artículos concretos, pero solo en los campos
-  ``cita_normativa_propuesta`` del ArgumentoCandidato — nunca en texto
-  que se escriba directamente al escrito)
+- backend/app/templates/defensia/*.j2  (ESCANEADO — las plantillas NO deben
+  hardcodear citas; todas vienen vía variables Jinja del RAG verifier)
+
+Nota: las reglas deterministas (defensia_rules/**/*.py) SÍ hardcodean
+artículos en ``cita_normativa_propuesta`` del ArgumentoCandidato, lo cual
+es correcto por diseño — esas citas pasan por el RAG verifier antes de
+llegar a la plantilla. NO se escanean aquí.
 
 El script detecta patrones de citas normativas fuera de contextos Jinja
 permitidos (``{{ arg.cita_verificada }}``, ``{{ arg.referencia_normativa_canonica }}``).
@@ -42,8 +44,8 @@ ROOT = Path(__file__).parent.parent.parent  # TaxIA/
 PATRONES_CITA = [
     # Art. 102.2.c, Art. 41 bis, art. 16, Articulo 9.3
     re.compile(r"\b[Aa]rt(?:[íi]culo|\.)?\s+\d+(?:[.,]\d+)*(?:\s*(?:bis|ter|quater))?", re.IGNORECASE),
-    # STS 1234/2023, SAN 56/2022 (sentencias)
-    re.compile(r"\bST[SJCAN]{1,3}\s+\d+/\d{4}\b"),
+    # STS 1234/2023, SAN 56/2022, STJUE C-146/05, STSJ ... (sentencias)
+    re.compile(r"\b(?:STS|SAN|STJUE|STSJ|STC)\s+(?:C-)?\d+/\d{2,4}\b"),
     # Ley 58/2003, Ley 35/2006 (leyes con numero/año)
     re.compile(r"\bLey\s+\d+/\d{4}\b"),
     # RD 439/2007, Real Decreto 1065/2007
@@ -56,7 +58,6 @@ LINEA_PERMITIDA_SI_CONTIENE = [
     "arg.cita_verificada",
     "arg.referencia_normativa_canonica",
     "arg.cita_propuesta",  # fase intermedia en dictamen
-    "{{ arg.",
     "|escape",
 ]
 

@@ -74,14 +74,18 @@ def detect_fase(
         if doc.tipo_documento in _FUERA_ALCANCE_TIPOS:
             return Fase.FUERA_DE_ALCANCE, 0.99
 
-    # Normaliza fechas naive a UTC antes de ordenar para evitar
-    # TypeError 'offset-naive vs offset-aware' en documentos heterogeneos
-    # (Gemini/parseo PDF puede devolver ambos). Copilot review #3.
-    for doc in expediente.documentos:
-        if doc.fecha_acto is not None and doc.fecha_acto.tzinfo is None:
-            doc.fecha_acto = doc.fecha_acto.replace(tzinfo=timezone.utc)
+    # Normaliza fechas naive a UTC para evitar TypeError 'offset-naive
+    # vs offset-aware' (Gemini/parseo PDF puede devolver ambos). Copilot
+    # review #3 + round 6: NO mutar el expediente recibido — computar
+    # sort key con copia normalizada para no crear side effects.
+    def _sort_key(doc: DocumentoEstructurado) -> datetime:
+        if doc.fecha_acto is None:
+            return datetime.max.replace(tzinfo=timezone.utc)
+        if doc.fecha_acto.tzinfo is None:
+            return doc.fecha_acto.replace(tzinfo=timezone.utc)
+        return doc.fecha_acto
 
-    timeline = expediente.timeline_ordenado()
+    timeline = sorted(expediente.documentos, key=_sort_key)
 
     escritos_usuario = [
         d for d in timeline if d.tipo_documento in _ESCRITOS_USUARIO
@@ -146,7 +150,8 @@ def _mapear_acto_a_fase(
         ultimo_escrito_usuario is not None
         and ultimo_escrito_usuario.fecha_acto is not None
         and ultimo_acto.fecha_acto is not None
-        and ultimo_escrito_usuario.fecha_acto > ultimo_acto.fecha_acto
+        and _as_aware_utc(ultimo_escrito_usuario.fecha_acto)
+        > _as_aware_utc(ultimo_acto.fecha_acto)
     )
 
     if tipo == TipoDocumento.REQUERIMIENTO:
