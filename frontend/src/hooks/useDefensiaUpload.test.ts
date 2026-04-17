@@ -78,6 +78,39 @@ describe("useDefensiaUpload", () => {
     expect(onProgress).toHaveBeenCalledWith(1);
   });
 
+  it("rechaza con UNKNOWN si la respuesta 2xx no incluye id", async () => {
+    mockXhr.status = 201;
+    mockXhr.responseText = JSON.stringify({ nombre_original: "test.pdf" });
+    const { result } = renderHook(() => useDefensiaUpload("exp-1"));
+    const file = new File(["hi"], "test.pdf");
+    await expect(
+      act(async () => {
+        const p = result.current.upload(file, "OTROS");
+        mockXhr._simulateLoad();
+        await p;
+      }),
+    ).rejects.toMatchObject({
+      code: "UNKNOWN",
+      message: "Respuesta sin id de documento",
+    });
+  });
+
+  it("rechaza con UNKNOWN si la respuesta 2xx tiene id vacio", async () => {
+    mockXhr.status = 201;
+    mockXhr.responseText = JSON.stringify({ id: "" });
+    const { result } = renderHook(() => useDefensiaUpload("exp-1"));
+    const file = new File(["hi"], "test.pdf");
+    await expect(
+      act(async () => {
+        const p = result.current.upload(file, "OTROS");
+        mockXhr._simulateLoad();
+        await p;
+      }),
+    ).rejects.toMatchObject({
+      code: "UNKNOWN",
+    });
+  });
+
   it("rechaza con FILE_TOO_LARGE si el backend devuelve 413", async () => {
     mockXhr.status = 413;
     mockXhr.responseText = JSON.stringify({ detail: "archivo excede 20MB" });
