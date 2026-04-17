@@ -458,6 +458,10 @@ app.include_router(contabilidad_router)
 from app.routers.invoices import router as invoices_router
 app.include_router(invoices_router)
 
+# Impuesto sobre Sociedades (IS) — Modelo 200 + 202
+from app.routers.is_estimate import router as is_estimate_is_router
+app.include_router(is_estimate_is_router)
+
 # DefensIA
 from app.routers import defensia
 app.include_router(defensia.router)
