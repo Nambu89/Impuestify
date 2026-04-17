@@ -65,8 +65,12 @@ export function useDefensiaUpload(expedienteId: string) {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const data = JSON.parse(xhr.responseText) as Partial<UploadResponse>;
+              if (!data.id) {
+                reject(makeError("UNKNOWN", "Respuesta sin id de documento"));
+                return;
+              }
               resolve({
-                id: data.id ?? "",
+                id: data.id,
                 nombre_original: data.nombre_original ?? file.name,
                 tipo_documento: data.tipo_documento ?? null,
                 clasificacion_confianza: data.clasificacion_confianza ?? null,
