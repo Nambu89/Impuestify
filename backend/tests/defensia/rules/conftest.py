@@ -189,7 +189,18 @@ def patch_hoy():
             wraps=datetime,
         ).now.return_value = fecha_congelada
     """
-    def _patch(mocker, fecha: datetime):
+    def _patch(mocker, fecha: datetime, target: str = "datetime.datetime"):
+        """Congela datetime.now() en el modulo especificado.
+
+        Args:
+            mocker: fixture pytest-mock.
+            fecha: datetime aware (se fuerza UTC si naive).
+            target: ruta del modulo a parchear. Default ``"datetime.datetime"``
+                (global, solo efectivo si el modulo usa ``import datetime``).
+                Para modulos que hacen ``from datetime import datetime``,
+                usar la ruta completa, ej:
+                ``"app.services.defensia_rules.reglas_procedimentales.R003_prescripcion.datetime"``
+        """
         if fecha.tzinfo is None:
             fecha = fecha.replace(tzinfo=timezone.utc)
 
@@ -198,7 +209,7 @@ def patch_hoy():
             def now(cls, tz=None):  # noqa: ARG003
                 return fecha
 
-        mocker.patch("datetime.datetime", _FrozenDatetime)
+        mocker.patch(target, _FrozenDatetime)
         return fecha
 
     return _patch

@@ -92,12 +92,21 @@ class ExpedienteEstructurado(BaseModel):
         """Devuelve documentos ordenados ASC por fecha_acto.
 
         Los documentos sin fecha_acto se colocan al final preservando el orden
-        relativo de entrada (sort estable).
+        relativo de entrada (sort estable). Normaliza naive→UTC para evitar
+        TypeError al mezclar fechas naive/aware (Gemini/parseo PDF puede
+        devolver ambos). NO muta los documentos originales.
         """
-        con_fecha = [d for d in self.documentos if d.fecha_acto is not None]
-        sin_fecha = [d for d in self.documentos if d.fecha_acto is None]
-        con_fecha.sort(key=lambda d: d.fecha_acto)
-        return con_fecha + sin_fecha
+        from datetime import timezone as _tz
+
+        def _aware_key(d: DocumentoEstructurado):
+            f = d.fecha_acto
+            if f is None:
+                return datetime.max.replace(tzinfo=_tz.utc)
+            if f.tzinfo is None:
+                return f.replace(tzinfo=_tz.utc)
+            return f
+
+        return sorted(self.documentos, key=_aware_key)
 
 
 class ArgumentoCandidato(BaseModel):

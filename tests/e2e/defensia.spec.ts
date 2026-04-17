@@ -95,25 +95,35 @@ async function dismissModals(page: Page): Promise<void> {
   }
 }
 
+// ── Healthcheck (cached, runs once for all viewports) ───────────────────────
+
+let _backendAvailable: boolean | null = null;
+
+async function checkBackendOnce(browser: import("@playwright/test").Browser) {
+  if (_backendAvailable !== null) return _backendAvailable;
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  try {
+    const res = await page.request.get(`${BASE}/api/defensia/_health`, {
+      timeout: 5_000,
+    });
+    _backendAvailable = res.ok();
+  } catch {
+    _backendAvailable = false;
+  } finally {
+    await ctx.close();
+  }
+  return _backendAvailable;
+}
+
 // ── Tests ───────────────────────────────────────────────────────────────────
 
 for (const vp of VIEWPORTS) {
   test.describe(`DefensIA E2E — ${vp.name} (${vp.width}x${vp.height})`, () => {
     test.beforeAll(async ({ browser }) => {
-      // Skip entire suite if backend is not reachable
-      const ctx = await browser.newContext();
-      const page = await ctx.newPage();
-      try {
-        const res = await page.request.get(`${BASE}/api/defensia/_health`, {
-          timeout: 5_000,
-        });
-        if (!res.ok()) {
-          test.skip(true, "DefensIA backend not available");
-        }
-      } catch {
+      const available = await checkBackendOnce(browser);
+      if (!available) {
         test.skip(true, "DefensIA backend not reachable");
-      } finally {
-        await ctx.close();
       }
     });
 
