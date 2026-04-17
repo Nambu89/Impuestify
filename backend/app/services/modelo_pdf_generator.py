@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 MODELO_NAMES: Dict[str, str] = {
     "303": "Autoliquidación IVA",
     "130": "IRPF Pago Fraccionado — Estimación Directa",
+    "200": "Impuesto sobre Sociedades",
     "308": "IVA — Régimen Especial (Recargo de Equivalencia)",
     "720": "Declaración de Bienes y Derechos en el Extranjero",
     "721": "Declaración de Monedas Virtuales en el Extranjero",
@@ -28,7 +29,7 @@ FORAL_NAMES: Dict[str, str] = {
     "420": "Modelo 420 — Autoliquidación IGIC (Canarias)",
 }
 
-VALID_MODELOS = {"303", "130", "308", "720", "721", "ipsi"}
+VALID_MODELOS = {"303", "130", "200", "308", "720", "721", "ipsi"}
 
 
 def _format_eur(amount: float) -> str:
@@ -108,6 +109,7 @@ class ModeloPDFGenerator:
         render_method = {
             "303": self._render_303,
             "130": self._render_130,
+            "200": self._render_200,
             "308": self._render_308,
             "720": self._render_720,
             "721": self._render_721,
@@ -718,3 +720,94 @@ class ModeloPDFGenerator:
         # Resultado
         resultado = data.get("resultado_liquidacion", 0)
         self._render_resultado(story, "Resultado liquidación IPSI", resultado)
+
+    # ------------------------------------------------------------------ #
+    # Modelo 200 — Impuesto sobre Sociedades
+    # ------------------------------------------------------------------ #
+
+    def _render_200(self, story: list, data: dict):
+        """Render Modelo 200 layout: IS liquidación completa."""
+
+        # Base imponible section
+        bi_rows: List[Tuple[str, str, float]] = [
+            ("552", "Base imponible", data.get("base_imponible", 0)),
+        ]
+
+        # Add detail rows if available
+        resultado_contable = data.get("resultado_contable", 0)
+        ajustes_positivos = data.get("ajustes_positivos", 0)
+        ajustes_negativos = data.get("ajustes_negativos", 0)
+        reserva_cap = data.get("reserva_capitalizacion", 0)
+        compensacion_bins = data.get("compensacion_bins", 0)
+
+        detail_rows: List[Tuple[str, str, float]] = []
+        if resultado_contable:
+            detail_rows.append(("500", "Resultado contable", resultado_contable))
+        if ajustes_positivos:
+            detail_rows.append(("517", "Ajustes positivos", ajustes_positivos))
+        if ajustes_negativos:
+            detail_rows.append(("518", "Ajustes negativos", -ajustes_negativos))
+        if reserva_cap:
+            detail_rows.append(("547", "Reserva de capitalización", -reserva_cap))
+        if compensacion_bins:
+            detail_rows.append(("550", "Compensación BINs", -compensacion_bins))
+
+        if detail_rows:
+            self._render_casillas_table(
+                story, detail_rows, "Determinación de la base imponible"
+            )
+
+        # Cuota section
+        tipo_gravamen = data.get("tipo_gravamen_aplicado", "25%")
+        cuota_integra = data.get("cuota_integra", 0)
+        deducciones_total = data.get("deducciones_total", 0)
+        bonificaciones_total = data.get("bonificaciones_total", 0)
+        cuota_liquida = data.get("cuota_liquida", 0)
+        retenciones = data.get("retenciones", 0)
+        resultado_liquidacion = data.get("resultado_liquidacion", 0)
+
+        cuota_rows: List[Tuple[str, str, float]] = [
+            ("552", "Base imponible", data.get("base_imponible", 0)),
+            ("558", f"Tipo gravamen ({tipo_gravamen})", cuota_integra),
+            ("560", "Cuota íntegra", cuota_integra),
+        ]
+
+        if deducciones_total:
+            cuota_rows.append(("582", "Deducciones", -deducciones_total))
+        if bonificaciones_total:
+            cuota_rows.append(("584", "Bonificaciones", -bonificaciones_total))
+
+        cuota_rows.append(("592", "Cuota líquida", cuota_liquida))
+
+        if retenciones:
+            cuota_rows.append(("595", "Retenciones e ingresos a cuenta", -retenciones))
+
+        pagos_fraccionados = data.get("pagos_fraccionados", 0)
+        if pagos_fraccionados:
+            cuota_rows.append(("596", "Pagos fraccionados (Modelo 202)", -pagos_fraccionados))
+
+        cuota_rows.append(("599", "Resultado de la liquidación", resultado_liquidacion))
+
+        self._render_casillas_table(story, cuota_rows, "Liquidación")
+
+        # Resultado highlight
+        tipo = data.get("tipo", "a_ingresar")
+        if tipo == "a_devolver":
+            self._render_resultado(story, "A devolver (casilla 601)", abs(resultado_liquidacion))
+        else:
+            self._render_resultado(story, "A ingresar (casilla 600)", resultado_liquidacion)
+
+        # Tipo efectivo
+        tipo_efectivo = data.get("tipo_efectivo", 0)
+        regimen = data.get("regimen", "")
+        if tipo_efectivo or regimen:
+            from reportlab.platypus import Paragraph, Spacer
+            from reportlab.lib.units import mm
+
+            info_parts = []
+            if regimen:
+                info_parts.append(f"Régimen: {regimen}")
+            if tipo_efectivo:
+                info_parts.append(f"Tipo efectivo: {tipo_efectivo}%")
+            story.append(Spacer(1, 4 * mm))
+            story.append(Paragraph(" | ".join(info_parts), self._body_style))
