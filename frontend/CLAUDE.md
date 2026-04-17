@@ -18,7 +18,7 @@ cd frontend && npm run build # Must pass before any commit
 | Hook | File | Purpose |
 |------|------|---------|
 | `useAuth` | hooks/useAuth.tsx | Auth context (login, logout, token management). User includes `is_owner`, `subscription_status`, `subscription_plan` |
-| `useApi` | hooks/useApi.ts | Axios instance with automatic token refresh (401 → refresh → retry) |
+| `useApi` | hooks/useApi.ts | Returns `{ askQuestion, getHealth, apiRequest }`. Use `apiRequest(url)` for GET, `apiRequest(url, {method:'POST'})` for POST. **NOT an axios instance** — never call `.get()/.post()` on it |
 | `useConversations` | hooks/useConversations.ts | Conversation CRUD operations |
 | `useStreamingChat` | hooks/useStreamingChat.ts | SSE v3.0: `content_chunk` append + `content` replace. `responseAccRef` (useRef) avoids stale closures. `TimelineStep[]` for StreamingTimeline |
 | `useWorkspaces` | hooks/useWorkspaces.ts | Workspace CRUD, file upload, active workspace state |
@@ -119,6 +119,29 @@ Todo texto visible al usuario DEBE llevar tildes correctas. **ANTES DE HACER PUS
 grep -r "regimen" frontend/src --include="*.tsx" --include="*.ts" | grep -v "data\." | grep -v "_" # Check for "régimen"
 grep -r "contrasena" frontend/src --include="*.tsx" --include="*.ts" | grep -v "data\." # Check for "contraseña"
 ```
+
+## File Upload en Movil (OBLIGATORIO)
+
+NUNCA usar `display: none` en `<input type="file">`. iOS Safari no abre el file picker cuando se llama `.click()` programaticamente sobre un input oculto con `display:none`.
+
+**Patron correcto:**
+```css
+.upload-input {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden; opacity: 0;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+```
+```tsx
+<label htmlFor="my-file-input" className="upload-zone">
+    <input id="my-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,image/*" className="upload-input" />
+    <span className="upload-btn">Subir archivo</span>
+</label>
+```
+
+Usar `<label htmlFor>` en vez de `div + onClick + useRef + .click()`. Incluir `image/*` en `accept` para fotos HEIC de camara iOS.
 
 ## DynamicFiscalForm: Modo Compact (OBLIGATORIO)
 

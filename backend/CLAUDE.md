@@ -388,3 +388,7 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | `menor_XX_anos` nunca True en deducciones | `build_answers_from_profile()` no derivaba age keys. Asegurar que `edad_contribuyente` se pasa en el profile dict y que el bloque de derivación edad→`menor_35/36/40_anos` existe en `deduction_service.py`. |
 | DynamicFiscalForm valores no llegan al estimate | DynamicFiscalForm guarda en `dynamicFormValues` (state separado), no en `data` del wizard. Al construir el payload del estimate, añadir fallbacks: `data.campo || dynamicFormValues.campo_ccaa || 0`. |
 | `No scale found for Cataluna` | Falta `"cataluna"` (sin tilde ñ) en `CCAA_NORMALIZATION` de `web_scraper_tool.py`. Frontend envía nombres sin acentos. Siempre incluir variantes sin tilde de TODAS las CCAA. |
+| `No territory plugin registered for 'Aragón'` | `COMUN_TERRITORIES` usaba nombres sin tildes. SIEMPRE usar canonical de `ccaa_constants.py` (con tildes). `get_territory()` tiene fallback `normalize_ccaa()` como safety net. |
+| `Child process died` sin traceback (RAG) | OOM killer de Railway. Cada worker usa ~344 MB. Con workers > 1 se supera el limite. Solucion: `--workers 1` en `railway.toml`. Diagnosticar con `resource.getrusage()`. |
+| Upstash Vector bloquea event loop | `Index.query()` es sincrono. Usar `asyncio.to_thread(self._vector_index.query, ...)` en funciones async. |
+| Trust scoring OOM con muchos chunks | No usar `asyncio.gather` para N queries a Turso — hacerlas secuenciales en `_apply_trust_scoring()`. |
