@@ -1,10 +1,46 @@
 # TaxIA (Impuestify) - Roadmap de Desarrollo
 
-## Estado del Proyecto: Abril 2026 (Sesion 33 — 2026-04-15)
+## Estado del Proyecto: Abril 2026 (Sesion 34 — 2026-04-15)
 
-**Rama activa:** `claude/defensia-v1` (62 commits ahead de main, sin mergear).
-DefensIA Parte 1 + Parte 2 completas. Pendiente E2E Playwright caso David
-(T3-001) + verifier final (T3-006) antes de merge a main.
+**Rama activa:** `claude/defensia-v1` (64 commits ahead de main, sin mergear).
+DefensIA Parte 1 + Parte 2 completas. T3-001b (fixtures PDF anonimizados)
+DONE. Pendiente T3-001 E2E Playwright caso David + T3-006 verifier final
+antes de merge a main.
+
+## EN CURSO — Sesion 34: Copilot round 3 + T3-001b fixtures (2026-04-15)
+
+- [x] **Limpieza workspace**: 58 archivos basura borrados (0 bytes, nombres corruptos de pastes)
+- [x] **T3-001b Fixtures PDF anonimizados caso David**: generador reportlab
+      deterministico (`backend/scripts/generate_defensia_fixtures.py`) a partir
+      de `expediente_anonimizado.json`. 3 PDFs en
+      `tests/e2e/fixtures/defensia/caso_david/`:
+      liquidacion (6183.05 EUR, arts 38.1 LIRPF + 105 LGT),
+      sancion (arts 191 + 194 LGT, 3393.52 EUR),
+      sentencia_medidas (art 103 CC). 0 PII hits.
+- [x] **.gitattributes**: PDFs + imagenes marcados como binary (evita CRLF)
+- [x] **Copilot round 3 (11/11 comentarios resueltos)**:
+  1. `test_migration.py`: `import pytest` a top (E402)
+  2. `useDefensiaUpload.ts`: fallback `UploadResponse` type-safe con defaults
+  3. `DefensiaWizardPage.tsx`: try/finally limpia `analyzeStatus` si analyze() falla sin onDone
+  4. `DefensiaWizardPage.tsx`: `INDETERMINADA` ya no bloquea paso 3 — UI muestra hint
+  5. `defensia.py`: docstring de `_recompute_fase_expediente` alineado con comportamiento real
+  6. `reclamacion_tear_general.j2`: `loop.index0` → `loop.index` (numeracion bis 1-based)
+  7-11. 5 plantillas j2: `ATENCION` → `ATENCIÓN` (alegaciones_{comp_lim,sanc,verif}, escrito_generico, recurso_reposicion)
+- [x] **Extras preventivos**:
+  - `defensia_ortografia_audit.py`: anadido `atencion→atención` al dict + excluidos `.test.tsx/.spec.tsx` del scan
+- [ ] **T3-001** E2E Playwright caso David 4 viewports (PENDIENTE — ya tiene fixtures)
+- [ ] **T3-006** Verifier final + merge a main (depende de T3-001)
+
+### Metricas Sesion 34
+
+- **Commits**: 2 (T3-001b fixtures + Copilot round 3) pusheados a `claude/defensia-v1`
+- **Backend defensia tests**: 379 verdes (+4 vs sesion 33: tests de migration fail-fast)
+- **Frontend tests**: 92 verdes, build 7.3s
+- **Ortografia audit**: 0 hits post-fix
+- **Anti-hallucination audit**: 0 hits
+- **Copilot rounds resueltos**: 3 (total acumulado 27/27 comentarios)
+
+---
 
 ---
 
@@ -58,8 +94,8 @@ DefensIA Parte 1 + Parte 2 completas. Pendiente E2E Playwright caso David
 - [x] **T3-003** GDPR cascade delete 7 tablas defensia en `user_rights.py`. 4 tests (sanity, cascade PRAGMA, delete manual, anti-drift guard).
 - [x] **T3-004** Dead code removal (ruff F401 → 2 imports unused eliminados).
 - [x] **T3-005** `defensia_anti_hallucination_audit.py` script. Detecta citas normativas literales (Art. N, STS N/YYYY, Ley N/YYYY, RD N/YYYY) en plantillas. 0 hits → invariante #2 preservado.
-- [ ] **T3-001** E2E Playwright caso David 4 viewports (requiere fixtures anonimizados)
-- [ ] **T3-001b** Fixtures anonimizados caso David (script anonimize_caso_david.py)
+- [ ] **T3-001** E2E Playwright caso David 4 viewports (DESBLOQUEADO por T3-001b sesion 34)
+- [x] **T3-001b** Fixtures anonimizados caso David — DONE sesion 34 (generador reportlab deterministico)
 - [ ] **T3-006** Verifier final + memoria + commit del plan
 
 ### Copilot review 16/16 resueltos
