@@ -1063,3 +1063,122 @@ async def confirm_classification(
     except Exception as e:
         logger.error(f"Error confirming classification: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+
+# === IS Prefill (Modelo 200 data from workspace invoices) ===
+
+
+class ISPrefillCuenta(BaseModel):
+    cuenta_pgc: str = ""
+    nombre_cuenta: str = ""
+    total: float = 0.0
+    count: int = 0
+
+
+class ISPrefillResponse(BaseModel):
+    workspace_name: str = ""
+    ejercicio: int = 2025
+    ingresos: float = 0.0
+    gastos: float = 0.0
+    resultado: float = 0.0
+    amortizacion: float = 0.0
+    num_facturas: int = 0
+    periodo_cubierto: str = ""
+    cuentas_desglose: List[ISPrefillCuenta] = Field(default_factory=list)
+
+
+@router.get("/{workspace_id}/is-prefill", response_model=ISPrefillResponse)
+async def get_workspace_is_prefill(
+    request: Request,
+    workspace_id: str,
+    ejercicio: int = 2025,
+    current_user: TokenData = Depends(get_current_user),
+    service: WorkspaceService = Depends(get_workspace_service),
+    db: TursoClient = Depends(get_db),
+):
+    """Pre-fill IS (Modelo 200) data from workspace invoices.
+
+    Aggregates ingresos (emitidas) and gastos (recibidas) from libro_registro
+    for the specified ejercicio.
+    """
+    try:
+        # Verify workspace ownership
+        workspace = await service.get_workspace(workspace_id, current_user.user_id)
+        if not workspace:
+            raise HTTPException(status_code=404, detail="Workspace not found")
+
+        user_id = current_user.user_id
+        ws_files_subquery = "SELECT id FROM workspace_files WHERE workspace_id = ?"
+
+        # Aggregate query
+        agg_result = await db.execute(
+            f"""
+            SELECT
+                COALESCE(SUM(CASE WHEN tipo='emitida' THEN total ELSE 0 END), 0) AS ingresos,
+                COALESCE(SUM(CASE WHEN tipo='recibida' THEN total ELSE 0 END), 0) AS gastos,
+                COUNT(*) AS num_facturas,
+                MIN(fecha) AS fecha_min,
+                MAX(fecha) AS fecha_max
+            FROM libro_registro
+            WHERE workspace_file_id IN ({ws_files_subquery})
+              AND year = ?
+              AND user_id = ?
+            """,
+            [workspace_id, ejercicio, user_id],
+        )
+
+        row = agg_result.rows[0] if agg_result.rows else {}
+        ingresos = round(float(row.get("ingresos", 0) or 0), 2)
+        gastos = round(float(row.get("gastos", 0) or 0), 2)
+        num_facturas = int(row.get("num_facturas", 0) or 0)
+        fecha_min = row.get("fecha_min", "")
+        fecha_max = row.get("fecha_max", "")
+        periodo = f"{fecha_min} — {fecha_max}" if fecha_min and fecha_max else ""
+
+        # PGC account breakdown
+        cuentas_result = await db.execute(
+            f"""
+            SELECT
+                cuenta_pgc,
+                cuenta_pgc_nombre AS nombre_cuenta,
+                COALESCE(SUM(total), 0) AS total,
+                COUNT(*) AS count
+            FROM libro_registro
+            WHERE workspace_file_id IN ({ws_files_subquery})
+              AND year = ?
+              AND user_id = ?
+            GROUP BY cuenta_pgc, cuenta_pgc_nombre
+            ORDER BY total DESC
+            """,
+            [workspace_id, ejercicio, user_id],
+        )
+
+        cuentas = [
+            ISPrefillCuenta(
+                cuenta_pgc=r.get("cuenta_pgc", "") or "",
+                nombre_cuenta=r.get("nombre_cuenta", "") or "",
+                total=round(float(r.get("total", 0) or 0), 2),
+                count=int(r.get("count", 0) or 0),
+            )
+            for r in (cuentas_result.rows or [])
+        ]
+
+        workspace_name = workspace.get("name", "") if isinstance(workspace, dict) else getattr(workspace, "name", "")
+
+        return ISPrefillResponse(
+            workspace_name=workspace_name,
+            ejercicio=ejercicio,
+            ingresos=ingresos,
+            gastos=gastos,
+            resultado=round(ingresos - gastos, 2),
+            amortizacion=0.0,
+            num_facturas=num_facturas,
+            periodo_cubierto=periodo,
+            cuentas_desglose=cuentas,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in IS prefill: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
