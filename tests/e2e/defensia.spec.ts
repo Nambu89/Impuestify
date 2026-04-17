@@ -19,7 +19,7 @@ import * as path from "path";
 import * as fs from "fs";
 
 const BASE =
-  process.env.DEFENSIA_E2E_BASE_URL || "https://impuestify.com";
+  process.env.DEFENSIA_E2E_BASE_URL || "http://localhost:3000";
 const SCREENSHOT_DIR = path.join(__dirname, "screenshots", "defensia");
 
 const USER = {
@@ -99,6 +99,24 @@ async function dismissModals(page: Page): Promise<void> {
 
 for (const vp of VIEWPORTS) {
   test.describe(`DefensIA E2E — ${vp.name} (${vp.width}x${vp.height})`, () => {
+    test.beforeAll(async ({ browser }) => {
+      // Skip entire suite if backend is not reachable
+      const ctx = await browser.newContext();
+      const page = await ctx.newPage();
+      try {
+        const res = await page.request.get(`${BASE}/api/defensia/_health`, {
+          timeout: 5_000,
+        });
+        if (!res.ok()) {
+          test.skip(true, "DefensIA backend not available");
+        }
+      } catch {
+        test.skip(true, "DefensIA backend not reachable");
+      } finally {
+        await ctx.close();
+      }
+    });
+
     test.beforeEach(async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
     });

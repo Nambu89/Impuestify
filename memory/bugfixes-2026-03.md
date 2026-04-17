@@ -37,8 +37,7 @@
 **Fix:** `sed -i 's/update_status/mark_status/g'`
 **Lección:** Verificar nombres de funciones existentes antes de referenciarlas.
 
-**Archivos afectados:** `publish-content.sh`, `~/.openclaw/.env`
-**VPS:** 185.192.96.178
+**Archivos afectados:** `publish-content.sh`, OpenClaw `.env`
 
 ---
 
