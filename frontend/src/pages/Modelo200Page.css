@@ -1,0 +1,474 @@
+/* ============================================================
+   Modelo200Page.css — Simulador Impuesto sobre Sociedades
+   Dark theme — consistent with CalculadoraUmbrales
+   ============================================================ */
+
+.m200-page {
+  min-height: 100vh;
+  background: var(--color-secondary, #0f172a);
+  color: #f1f5f9;
+  padding: 0;
+}
+
+.m200-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ---- Header ---- */
+.m200-header {
+  text-align: center;
+  padding: 2.5rem 1rem 2rem;
+}
+
+.m200-header svg {
+  color: var(--color-accent, #06b6d4);
+  margin-bottom: 0.75rem;
+}
+
+.m200-header h1 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+  background: linear-gradient(135deg, var(--color-primary-light, #3b82f6), var(--color-accent, #06b6d4));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.m200-header p {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ---- Stepper ---- */
+.m200-stepper {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.m200-step-dot {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.35);
+  transition: all 0.25s;
+  cursor: default;
+}
+
+.m200-step-dot--active {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.35);
+  color: var(--color-accent, #06b6d4);
+}
+
+.m200-step-dot--done {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+/* ---- Card container ---- */
+.m200-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.m200-card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.m200-card h2 svg {
+  color: var(--color-accent, #06b6d4);
+}
+
+/* ---- Fields ---- */
+.m200-field {
+  margin-bottom: 1rem;
+}
+
+.m200-field__label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 0.3rem;
+}
+
+.m200-field__input,
+.m200-field__select {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: #1e293b;
+  color: #f1f5f9;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.m200-field__input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.m200-field__input:focus,
+.m200-field__select:focus {
+  outline: none;
+  border-color: var(--color-accent, #06b6d4);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+.m200-field__select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-color: #1e293b;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.m200-field__select option {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.m200-field__help {
+  display: block;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 0.25rem;
+  line-height: 1.35;
+}
+
+.m200-field__suffix {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.m200-field__input-wrap {
+  position: relative;
+}
+
+.m200-field__input-wrap .m200-field__input {
+  padding-right: 3rem;
+}
+
+/* Checkbox */
+.m200-field__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.m200-field__checkbox input[type="checkbox"] {
+  accent-color: var(--color-accent, #06b6d4);
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- Prefill table ---- */
+.m200-prefill-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+}
+
+.m200-prefill-table th {
+  text-align: left;
+  padding: 0.5rem 0.5rem;
+  color: var(--color-accent, #06b6d4);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.m200-prefill-table td {
+  padding: 0.4rem 0.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.m200-prefill-table td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #f1f5f9;
+}
+
+.m200-prefill-info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.15);
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 1rem;
+}
+
+.m200-prefill-info svg {
+  flex-shrink: 0;
+  color: var(--color-accent, #06b6d4);
+}
+
+/* ---- Calculated inline ---- */
+.m200-calculated {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  margin: 0.75rem 0;
+}
+
+.m200-calculated__label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.m200-calculated__value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Tooltip ---- */
+.m200-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.3rem;
+  cursor: help;
+}
+
+.m200-tooltip svg {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.m200-tooltip__content {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.45;
+  width: 280px;
+  z-index: 20;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.m200-tooltip:hover .m200-tooltip__content {
+  display: block;
+}
+
+/* ---- Navigation buttons ---- */
+.m200-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.m200-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  border: none;
+}
+
+.m200-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.m200-btn:active {
+  transform: translateY(0);
+}
+
+.m200-btn--primary {
+  background: linear-gradient(135deg, var(--color-primary, #1a56db), var(--color-accent, #06b6d4));
+  color: white;
+}
+
+.m200-btn--secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.m200-btn--outline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.m200-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---- Error ---- */
+.m200-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin: 0.75rem 0;
+}
+
+/* ---- Loading ---- */
+.m200-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+}
+
+/* ---- Result layout ---- */
+.m200-result-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* ---- Estimator bar sticky ---- */
+.m200-estimator-sticky {
+  position: sticky;
+  top: 1rem;
+  z-index: 10;
+  margin-bottom: 1.5rem;
+}
+
+/* ---- Back link ---- */
+.m200-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+
+.m200-back:hover {
+  color: var(--color-accent, #06b6d4);
+}
+
+/* ---- Actions row ---- */
+.m200-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+/* ============================================================
+   Mobile responsive
+   ============================================================ */
+@media (max-width: 768px) {
+  .m200-container {
+    padding: 1rem 0.75rem 6rem;
+  }
+
+  .m200-header {
+    padding: 1.5rem 0.5rem;
+  }
+
+  .m200-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .m200-stepper {
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+
+  .m200-step-dot {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .m200-card {
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+
+  .m200-nav {
+    flex-direction: column;
+  }
+
+  .m200-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .m200-tooltip__content {
+    width: 220px;
+    left: 0;
+    transform: none;
+  }
+
+  .m200-prefill-table {
+    font-size: 0.78rem;
+  }
+}
