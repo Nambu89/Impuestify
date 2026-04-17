@@ -118,6 +118,8 @@ function App() {
                     <Route path="/obligado-declarar" element={<ObligadoDeclararPage />} />
                     <Route path="/modelos-obligatorios" element={<ModelObligationsPage />} />
                     <Route path="/farmacias" element={<FarmaciasPage />} />
+                    <Route path="/modelo-200" element={<Modelo200Page />} />
+                    <Route path="/modelo-202" element={<Modelo202Page />} />
 
                     {/* Protected Routes (require auth + subscription) */}
                     <Route

@@ -1,0 +1,211 @@
+/* ============================================================
+   ISResultCard.css — Resultado Impuesto sobre Sociedades
+   Dark theme — consistent with CalculadoraUmbrales
+   ============================================================ */
+
+.is-result {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.5rem;
+}
+
+.is-result__header {
+  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 1.25rem;
+}
+
+.is-result__header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 0.25rem;
+}
+
+.is-result__regime {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.is-result__regime-badge {
+  display: inline-block;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  color: var(--color-accent, #06b6d4);
+  padding: 0.2rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.4rem;
+}
+
+/* ---- Breakdown lines ---- */
+.is-result__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.is-result__line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 0.88rem;
+}
+
+.is-result__line:last-child {
+  border-bottom: none;
+}
+
+.is-result__line-label {
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.is-result__line-label svg {
+  flex-shrink: 0;
+}
+
+.is-result__line-amount {
+  font-weight: 600;
+  color: #f1f5f9;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Indented sub-items */
+.is-result__line--sub {
+  padding-left: 1rem;
+}
+
+.is-result__line--sub .is-result__line-label {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.82rem;
+}
+
+.is-result__line--sub .is-result__line-amount {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.82rem;
+}
+
+/* Separator line */
+.is-result__line--separator {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 0.25rem;
+  padding-top: 0.65rem;
+}
+
+/* Final result */
+.is-result__line--final {
+  border-top: 2px solid rgba(255, 255, 255, 0.12);
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.is-result__line--final .is-result__line-label {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #f1f5f9;
+}
+
+.is-result__line--final .is-result__line-amount {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.is-result__amount--positive {
+  color: #f87171 !important;
+}
+
+.is-result__amount--negative {
+  color: #34d399 !important;
+}
+
+/* Tipo efectivo badge */
+.is-result__tipo-efectivo {
+  text-align: center;
+  margin: 0.75rem 0;
+}
+
+.is-result__tipo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  color: var(--color-accent, #06b6d4);
+  padding: 0.35rem 1rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Pagos fraccionados 202 */
+.is-result__pagos202 {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.is-result__pagos202 h4 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-accent, #06b6d4);
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.is-result__pagos202-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+}
+
+.is-result__pagos202-label {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.is-result__pagos202-amount {
+  color: #f1f5f9;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Disclaimer */
+.is-result__disclaimer {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.28);
+  text-align: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .is-result {
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+
+  .is-result__line {
+    font-size: 0.82rem;
+  }
+
+  .is-result__line--final .is-result__line-amount {
+    font-size: 1.05rem;
+  }
+}
