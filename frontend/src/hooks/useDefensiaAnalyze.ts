@@ -27,7 +27,7 @@ export function useDefensiaAnalyze() {
     try {
       const token = localStorage.getItem("access_token");
       const res = await fetch(
-        `${API_URL}/api/defensia/expedientes/${expedienteId}/analyze`,
+        `${API_URL}/defensia/expedientes/${expedienteId}/analyze`,
         {
           method: "POST",
           headers: {

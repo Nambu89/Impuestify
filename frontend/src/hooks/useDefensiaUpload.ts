@@ -98,7 +98,7 @@ export function useDefensiaUpload(expedienteId: string) {
 
         xhr.open(
           "POST",
-          `${API_URL}/api/defensia/expedientes/${expedienteId}/documentos`,
+          `${API_URL}/defensia/expedientes/${expedienteId}/documentos`,
         );
 
         const token = localStorage.getItem("access_token");

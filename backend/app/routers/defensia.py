@@ -627,6 +627,13 @@ async def _run_fase1_auto(
     except Exception as exc:
         logger.warning("DefensIA fase1: recompute fase fallo: %s", exc)
 
+    # Si tras todo el pipeline best-effort no se pudo determinar la fase,
+    # devolvemos INDETERMINADA en vez de None para que el wizard frontend
+    # no quede bloqueado esperando un badge que nunca llega.
+    if resultado["fase_nueva"] is None:
+        resultado["fase_nueva"] = "INDETERMINADA"
+        resultado["fase_confianza"] = 0.0
+
     return resultado
 
 

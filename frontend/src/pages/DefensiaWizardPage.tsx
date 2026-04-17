@@ -125,13 +125,14 @@ export function DefensiaWizardPage() {
       dispatch({ type: "CREAR_START" });
       try {
         const res = await apiRequest<{ id: string }>(
-          "/api/defensia/expedientes",
+          "/defensia/expedientes",
           {
             method: "POST",
             body: JSON.stringify({
+              nombre: `${state.tributo} — ${new Date().toLocaleDateString("es-ES")}`,
               tributo: state.tributo,
               ccaa: state.ccaa,
-              titulo: `${state.tributo} — ${new Date().toLocaleDateString("es-ES")}`,
+              tipo_procedimiento_declarado: "comprobacion_limitada",
             }),
           },
         );
@@ -148,7 +149,7 @@ export function DefensiaWizardPage() {
     if (state.paso === 4 && state.expedienteId) {
       try {
         await apiRequest(
-          `/api/defensia/expedientes/${state.expedienteId}/brief`,
+          `/defensia/expedientes/${state.expedienteId}/brief`,
           {
             method: "POST",
             body: JSON.stringify({ texto: state.brief }),

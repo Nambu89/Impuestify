@@ -54,7 +54,7 @@ describe("useDefensiaUpload", () => {
     await promise;
     expect(mockXhr.open).toHaveBeenCalledWith(
       "POST",
-      expect.stringContaining("/api/defensia/expedientes/exp-1/documentos"),
+      expect.stringContaining("/defensia/expedientes/exp-1/documentos"),
     );
     expect(mockXhr.setRequestHeader).toHaveBeenCalledWith(
       "Authorization",

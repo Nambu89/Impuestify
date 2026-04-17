@@ -26,7 +26,7 @@ afterEach(() => {
 });
 
 describe("useDefensiaChat", () => {
-  it("send() agrega mensaje usuario + POST SSE /api/defensia/chat", async () => {
+  it("send() agrega mensaje usuario + POST SSE /defensia/chat", async () => {
     // @ts-expect-error - mocked
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -42,7 +42,7 @@ describe("useDefensiaChat", () => {
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/defensia/chat"),
+      expect.stringContaining("/defensia/chat"),
       expect.objectContaining({ method: "POST" }),
     );
     expect(result.current.messages[0]?.role).toBe("user");

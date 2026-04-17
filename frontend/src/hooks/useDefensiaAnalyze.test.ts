@@ -40,7 +40,7 @@ describe("useDefensiaAnalyze", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/defensia/expedientes/exp-1/analyze"),
+      expect.stringContaining("/defensia/expedientes/exp-1/analyze"),
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
