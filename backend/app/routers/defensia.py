@@ -627,6 +627,13 @@ async def _run_fase1_auto(
     except Exception as exc:
         logger.warning("DefensIA fase1: recompute fase fallo: %s", exc)
 
+    # Si tras todo el pipeline best-effort no se pudo determinar la fase,
+    # devolvemos INDETERMINADA en vez de None para que el wizard frontend
+    # no quede bloqueado esperando un badge que nunca llega.
+    if resultado["fase_nueva"] is None:
+        resultado["fase_nueva"] = "INDETERMINADA"
+        resultado["fase_confianza"] = 0.0
+
     return resultado
 
 
@@ -635,8 +642,13 @@ async def _recompute_fase_expediente(
 ) -> tuple[str, float]:
     """Relee los documentos del expediente y ejecuta phase_detector.
 
-    Devuelve ``(fase_value, confianza)``. Los documentos sin tipo o sin
-    fecha se incluyen igualmente — el phase detector decide como ponderarlos.
+    Devuelve ``(fase_value, confianza)``. Los documentos cuyo
+    ``tipo_documento`` no es un miembro valido del enum ``TipoDocumento``
+    se omiten: sin tipo no podemos determinar su rol procesal y el
+    detector los descartaria de todas formas. La fecha, en cambio, se
+    parsea best-effort (null si no es una ISO valida) y no filtra.
+    Best-effort: cualquier fallo parcial solo reduce la confianza del
+    resultado pero nunca tumba el analisis completo.
     """
     import json as _json
     from datetime import datetime as _dt

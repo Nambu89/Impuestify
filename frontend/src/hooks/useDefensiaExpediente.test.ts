@@ -21,7 +21,7 @@ describe("useDefensiaExpediente", () => {
     });
     const { result } = renderHook(() => useDefensiaExpediente("exp-1"));
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(apiRequestMock).toHaveBeenCalledWith("/api/defensia/expedientes/exp-1");
+    expect(apiRequestMock).toHaveBeenCalledWith("/defensia/expedientes/exp-1");
     expect(result.current.expediente?.id).toBe("exp-1");
   });
 

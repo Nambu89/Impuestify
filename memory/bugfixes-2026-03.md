@@ -1,5 +1,57 @@
 # Bugfixes Marzo 2026
 
+## [2026-03-28] OpenClaw publish-content.sh — Múltiples bugs en pipeline de publicación
+
+### Bug: GEMINI_API_KEY no exportada
+**Causa raíz:** El `.env` de OpenClaw (`~/.openclaw/.env`) define variables sin `export`. Cuando `publish-content.sh` hace `source .env`, las variables se cargan en el shell actual pero NO se propagan a subshells (como `generate-slides.sh`).
+**Fix:** Cambiar `GEMINI_API_KEY=...` a `export GEMINI_API_KEY=...` en el `.env`.
+**Lección:** Siempre usar `export` en archivos `.env` si scripts hijos necesitan las variables.
+
+### Bug: Glob pattern slide_*.png no coincide con slide-*.jpg
+**Causa raíz:** Viraloop genera archivos como `slide-1.jpg` (guión + jpg) pero `publish-content.sh` buscaba `slide_*.png` (guión bajo + png). Afectaba al conteo de slides y a la publicación.
+**Fix:** Cambiar todos los patrones a `slide-*.jpg` con fallback a `slide_*.png` en 5 ubicaciones del script.
+**Lección:** SIEMPRE verificar el formato de salida real de las herramientas antes de escribir globs.
+
+### Bug: 413 Request Entity Too Large en Upload-Post
+**Causa raíz:** Las 6 imágenes generadas por Gemini pesaban ~200KB cada una (~1.2MB total). El nginx de Upload-Post tiene un `client_max_body_size` limitado.
+**Fix:** Añadir paso de compresión con `jpegoptim --max=60 --strip-all` antes de publicar. Reduce cada imagen a ~80-100KB.
+**Lección:** SIEMPRE comprimir imágenes antes de subir a APIs externas.
+
+### Bug: 405 Not Allowed en Upload-Post API
+**Causa raíz:** El script usaba curl contra `https://app.upload-post.com/api/v2/uploads` pero la URL correcta del SDK es `https://api.upload-post.com/api`. Se reescribió la función publish para usar el SDK de Python (`upload_post.UploadPostClient`) en vez de curl.
+**Fix:** Reescribir función `publish()` usando `client.upload_photos()` y `client.upload_text()` del SDK.
+**Lección CRÍTICA:** NUNCA asumir endpoints de API. SIEMPRE consultar la documentación oficial o inspeccionar el código fuente del SDK ANTES de implementar.
+
+### Bug: upload_photos() parámetros incorrectos
+**Causa raíz:** Se asumió que `upload_photos()` aceptaba `user=, platform=, photos=, caption=` pero la firma real es `upload_photos(files, title=, user=, platforms=[])`. `platforms` es una lista, `title` es el caption, y `files` es posicional.
+**Fix:** Consultar documentación real en PyPI y reescribir con parámetros correctos.
+**Lección CRÍTICA:** SIEMPRE leer la documentación de PyPI/GitHub del SDK ANTES de usarlo. NUNCA asumir firmas de funciones.
+
+### Bug: heredoc sobreescribe stdin en bash
+**Causa raíz:** `echo "$item" | python3 << 'HEREDOC'` no funciona — el heredoc toma precedencia sobre el pipe como stdin. `json.load(sys.stdin)` leía el código Python en vez del JSON.
+**Fix:** Escribir el item a archivo temporal (`/tmp/openclaw-publish-item.json`) y leerlo desde Python con `open()`.
+**Lección:** En bash, no se puede combinar pipe + heredoc en el mismo comando. Usar archivos temporales.
+
+### Bug: mark_status vs update_status
+**Causa raíz:** Al reescribir la función `publish()`, se usó `update_status()` pero la función real del script se llama `mark_status()`.
+**Fix:** `sed -i 's/update_status/mark_status/g'`
+**Lección:** Verificar nombres de funciones existentes antes de referenciarlas.
+
+**Archivos afectados:** `publish-content.sh`, `~/.openclaw/.env`
+**VPS:** 185.192.96.178
+
+---
+
+## REGLA OBLIGATORIA (derivada de esta sesión)
+
+> **ANTES de ofrecer cualquier solución que involucre APIs externas, SDKs, o herramientas de terceros:**
+> 1. Consultar la documentación oficial (PyPI, GitHub, docs del servicio)
+> 2. Verificar firmas de funciones, URLs de endpoints, parámetros requeridos
+> 3. NO ASUMIR NADA — si no tienes la info, búscala o pregunta al usuario
+> 4. Esta regla aplica a TODA librería, API o servicio, sin excepción
+
+---
+
 ## [2026-03-13] Bugs 53-55: Groq model 404, guardrails false positive, demo router (Commit fdfd0c0)
 
 ### Bug 53: Groq model meta-llama/llama-guard-4-12b devuelve 404

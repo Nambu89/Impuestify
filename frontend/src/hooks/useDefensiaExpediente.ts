@@ -17,7 +17,7 @@ export function useDefensiaExpediente(id: string | null) {
     setError(null);
     try {
       const res = await apiRequest<ExpedienteDetalle>(
-        `/api/defensia/expedientes/${id}`,
+        `/defensia/expedientes/${id}`,
       );
       setExpediente(res);
     } catch (err) {

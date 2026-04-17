@@ -1,6 +1,8 @@
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 # Resolve relative to this file: tests/defensia/ -> backend/ -> app/database/migrations/
 MIGRATION = Path(__file__).parent.parent.parent / "app" / "database" / "migrations" / "20260413_defensia_tables.sql"
 
@@ -96,8 +98,6 @@ def test_migration_cascade_user_delete(tmp_path):
 # ============================================================================
 # Copilot round 2 #4-#7: fail-fast en migraciones no idempotentes
 # ============================================================================
-
-import pytest
 
 
 class _FailingFakeDB:

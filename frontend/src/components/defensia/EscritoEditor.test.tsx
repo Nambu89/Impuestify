@@ -63,7 +63,7 @@ describe("EscritoEditor", () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/defensia/expedientes/exp-1/escrito/esc-1"),
+        expect.stringContaining("/defensia/expedientes/exp-1/escrito/esc-1"),
         expect.objectContaining({ method: "PATCH" }),
       );
       expect(onSaved).toHaveBeenCalled();

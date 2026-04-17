@@ -64,10 +64,19 @@ export function useDefensiaUpload(expedienteId: string) {
           setUploading(false);
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
-              const data = JSON.parse(xhr.responseText);
-              resolve(data);
+              const data = JSON.parse(xhr.responseText) as Partial<UploadResponse>;
+              resolve({
+                id: data.id ?? "",
+                nombre_original: data.nombre_original ?? file.name,
+                tipo_documento: data.tipo_documento ?? null,
+                clasificacion_confianza: data.clasificacion_confianza ?? null,
+                fecha_acto: data.fecha_acto ?? null,
+                fase_detectada: data.fase_detectada ?? null,
+                fase_confianza: data.fase_confianza ?? null,
+                created_at: data.created_at ?? new Date().toISOString(),
+              });
             } catch {
-              resolve({ id: "" });
+              reject(makeError("UNKNOWN", "Respuesta del servidor no válida"));
             }
             return;
           }
@@ -89,7 +98,7 @@ export function useDefensiaUpload(expedienteId: string) {
 
         xhr.open(
           "POST",
-          `${API_URL}/api/defensia/expedientes/${expedienteId}/documentos`,
+          `${API_URL}/defensia/expedientes/${expedienteId}/documentos`,
         );
 
         const token = localStorage.getItem("access_token");

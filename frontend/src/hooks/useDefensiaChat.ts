@@ -31,7 +31,7 @@ export function useDefensiaChat(expedienteId: string) {
 
       try {
         const token = localStorage.getItem("access_token");
-        const res = await fetch(`${API_URL}/api/defensia/chat`, {
+        const res = await fetch(`${API_URL}/defensia/chat`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

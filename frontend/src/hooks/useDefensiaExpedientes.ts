@@ -16,7 +16,7 @@ export function useDefensiaExpedientes() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest<ExpedientesResponse>("/api/defensia/expedientes");
+      const res = await apiRequest<ExpedientesResponse>("/defensia/expedientes");
       setExpedientes(res.expedientes ?? []);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error al cargar expedientes";

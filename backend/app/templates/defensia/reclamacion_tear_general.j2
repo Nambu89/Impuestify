@@ -34,7 +34,7 @@ Tono extenso, incluye peticion de pruebas y reserva de alegaciones ulteriores.
 
 {% for doc in expediente.timeline_ordenado() %}
 {% if doc.tipo_documento.value in ["ESCRITO_ALEGACIONES_USUARIO", "ESCRITO_REPOSICION_USUARIO"] %}
-**{{ loop.index0 }} bis.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte presentó "{{ doc.nombre_original }}" en fase previa. Su contenido se da aquí por reproducido en cuanto resulte aplicable.
+**{{ loop.index }} bis.-** Con fecha {{ doc.fecha_acto.strftime("%d/%m/%Y") if doc.fecha_acto else "[fecha no consignada]" }}, esta parte presentó "{{ doc.nombre_original }}" en fase previa. Su contenido se da aquí por reproducido en cuanto resulte aplicable.
 
 {% endif %}
 {% endfor %}

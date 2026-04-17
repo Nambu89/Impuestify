@@ -22,7 +22,7 @@ export function useDefensiaExport() {
 
       try {
         const token = localStorage.getItem("access_token");
-        const url = `${API_URL}/api/defensia/expedientes/${expedienteId}/escrito/${escritoId}/export?formato=${formato}`;
+        const url = `${API_URL}/defensia/expedientes/${expedienteId}/escrito/${escritoId}/export?formato=${formato}`;
         const res = await fetch(url, {
           method: "POST",
           headers: {

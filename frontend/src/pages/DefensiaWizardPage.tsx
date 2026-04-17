@@ -125,13 +125,14 @@ export function DefensiaWizardPage() {
       dispatch({ type: "CREAR_START" });
       try {
         const res = await apiRequest<{ id: string }>(
-          "/api/defensia/expedientes",
+          "/defensia/expedientes",
           {
             method: "POST",
             body: JSON.stringify({
+              nombre: `${state.tributo} — ${new Date().toLocaleDateString("es-ES")}`,
               tributo: state.tributo,
               ccaa: state.ccaa,
-              titulo: `${state.tributo} — ${new Date().toLocaleDateString("es-ES")}`,
+              tipo_procedimiento_declarado: "comprobacion_limitada",
             }),
           },
         );
@@ -148,7 +149,7 @@ export function DefensiaWizardPage() {
     if (state.paso === 4 && state.expedienteId) {
       try {
         await apiRequest(
-          `/api/defensia/expedientes/${state.expedienteId}/brief`,
+          `/defensia/expedientes/${state.expedienteId}/brief`,
           {
             method: "POST",
             body: JSON.stringify({ texto: state.brief }),
@@ -169,21 +170,33 @@ export function DefensiaWizardPage() {
     // el dictamen + escrito ya persistidos por el backend.
     if (state.paso === 5 && state.expedienteId) {
       setAnalyzeStatus("Iniciando análisis…");
-      await analyze(state.expedienteId, {
-        onPhase: () => setAnalyzeStatus("Detectando fase procesal…"),
-        onCandidatos: (d) =>
-          setAnalyzeStatus(
-            `Aplicando reglas deterministas (${d.count} candidatos)…`,
-          ),
-        onVerificando: () =>
-          setAnalyzeStatus("Verificando argumentos contra el corpus RAG…"),
-        onDictamen: () => setAnalyzeStatus("Redactando dictamen…"),
-        onEscrito: () => setAnalyzeStatus("Redactando escrito de alegaciones…"),
-        onDone: () => {
+      let doneFired = false;
+      try {
+        await analyze(state.expedienteId, {
+          onPhase: () => setAnalyzeStatus("Detectando fase procesal…"),
+          onCandidatos: (d) =>
+            setAnalyzeStatus(
+              `Aplicando reglas deterministas (${d.count} candidatos)…`,
+            ),
+          onVerificando: () =>
+            setAnalyzeStatus("Verificando argumentos contra el corpus RAG…"),
+          onDictamen: () => setAnalyzeStatus("Redactando dictamen…"),
+          onEscrito: () => setAnalyzeStatus("Redactando escrito de alegaciones…"),
+          onDone: () => {
+            doneFired = true;
+            setAnalyzeStatus(null);
+            navigate(`/defensia/${state.expedienteId}`);
+          },
+        });
+      } finally {
+        // Si analyze() termino sin disparar onDone (error HTTP, abort, stream
+        // cortado), limpiamos el status para que la UI no quede mostrando
+        // el bloque de "Analizando..." con analyzing=false. El error visible
+        // sigue viniendo de analyzeError.
+        if (!doneFired) {
           setAnalyzeStatus(null);
-          navigate(`/defensia/${state.expedienteId}`);
-        },
-      });
+        }
+      }
       return;
     }
 
@@ -216,10 +229,12 @@ export function DefensiaWizardPage() {
       });
       // El backend ejecuta Fase 1 auto (classifier + extractor + phase
       // detector) durante el upload y devuelve fase_detectada en la
-      // response. Si viene y es una fase real (no null ni INDETERMINADA),
-      // la propagamos al reducer para que el paso 3 del wizard la muestre
-      // sin necesidad de un nuevo round-trip.
-      if (res.fase_detectada && res.fase_detectada !== "INDETERMINADA") {
+      // response. Siempre propagamos el valor (incluido INDETERMINADA)
+      // para no bloquear el paso 3 del wizard cuando la extraccion
+      // best-effort falla o los documentos subidos no permiten decidir
+      // la fase con confianza — la UI mostrara el badge gris y el usuario
+      // podra seguir a paso 4.
+      if (res.fase_detectada) {
         dispatch({ type: "SET_FASE", fase: res.fase_detectada });
       }
     } catch (err) {
@@ -289,7 +304,16 @@ export function DefensiaWizardPage() {
           <section aria-labelledby="paso3-title">
             <h2 id="paso3-title">Fase procesal detectada</h2>
             {state.faseDetectada ? (
-              <FaseBadge fase={state.faseDetectada} />
+              <>
+                <FaseBadge fase={state.faseDetectada} />
+                {state.faseDetectada === "INDETERMINADA" && (
+                  <p className="defensia-wizard-hint">
+                    No hemos podido determinar la fase con los documentos
+                    subidos. Puedes continuar y describir el caso en el
+                    siguiente paso — el motor intentará deducirla del brief.
+                  </p>
+                )}
+              </>
             ) : (
               <p className="defensia-wizard-hint">
                 Analizando los documentos para detectar la fase procesal…
