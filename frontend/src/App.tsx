@@ -51,8 +51,6 @@ const ContabilidadPage = lazy(() => import('./pages/ContabilidadPage'))
 const DefensiaListPage = lazy(() => import('./pages/DefensiaListPage'))
 const DefensiaWizardPage = lazy(() => import('./pages/DefensiaWizardPage'))
 const DefensiaExpedientePage = lazy(() => import('./pages/DefensiaExpedientePage'))
-const Modelo200Page = lazy(() => import('./pages/Modelo200Page'))
-const Modelo202Page = lazy(() => import('./pages/Modelo202Page'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()

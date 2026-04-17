@@ -117,9 +117,6 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             <Link to="/defensia" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
                                 <Scale size={15} /> DefensIA
                             </Link>
-                            <Link to="/modelo-200" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
-                                <Building2 size={15} /> Modelo 200 (IS)
-                            </Link>
                         </div>
                     </div>
 
@@ -223,9 +220,6 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             </Link>
                             <Link to="/defensia" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
                                 <Scale size={18} /> DefensIA
-                            </Link>
-                            <Link to="/modelo-200" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
-                                <Building2 size={18} /> Modelo 200 (IS)
                             </Link>
                         </div>
                     )}
