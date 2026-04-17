@@ -74,18 +74,9 @@ def detect_fase(
         if doc.tipo_documento in _FUERA_ALCANCE_TIPOS:
             return Fase.FUERA_DE_ALCANCE, 0.99
 
-    # Normaliza fechas naive a UTC para evitar TypeError 'offset-naive
-    # vs offset-aware' (Gemini/parseo PDF puede devolver ambos). Copilot
-    # review #3 + round 6: NO mutar el expediente recibido — computar
-    # sort key con copia normalizada para no crear side effects.
-    def _sort_key(doc: DocumentoEstructurado) -> datetime:
-        if doc.fecha_acto is None:
-            return datetime.max.replace(tzinfo=timezone.utc)
-        if doc.fecha_acto.tzinfo is None:
-            return doc.fecha_acto.replace(tzinfo=timezone.utc)
-        return doc.fecha_acto
-
-    timeline = sorted(expediente.documentos, key=_sort_key)
+    # Reutiliza timeline_ordenado() del modelo, que ya normaliza fechas
+    # naive→UTC sin mutar los documentos (Copilot round 6 + 7).
+    timeline = expediente.timeline_ordenado()
 
     escritos_usuario = [
         d for d in timeline if d.tipo_documento in _ESCRITOS_USUARIO
