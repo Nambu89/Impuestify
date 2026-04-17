@@ -1,0 +1,313 @@
+/* ============================================================
+   Modelo202Page.css — Pagos fraccionados IS
+   Dark theme — consistent with CalculadoraUmbrales
+   ============================================================ */
+
+.m202-page {
+  min-height: 100vh;
+  background: var(--color-secondary, #0f172a);
+  color: #f1f5f9;
+  padding: 0;
+}
+
+.m202-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ---- Header ---- */
+.m202-header {
+  text-align: center;
+  padding: 2.5rem 1rem 2rem;
+}
+
+.m202-header svg {
+  color: var(--color-accent, #06b6d4);
+  margin-bottom: 0.75rem;
+}
+
+.m202-header h1 {
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+  background: linear-gradient(135deg, var(--color-primary-light, #3b82f6), var(--color-accent, #06b6d4));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.m202-header p {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ---- Card ---- */
+.m202-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.m202-card h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.m202-card h2 svg {
+  color: var(--color-accent, #06b6d4);
+}
+
+/* ---- Fields ---- */
+.m202-field {
+  margin-bottom: 1rem;
+}
+
+.m202-field__label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 0.3rem;
+}
+
+.m202-field__input,
+.m202-field__select {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: #1e293b;
+  color: #f1f5f9;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.m202-field__input:focus,
+.m202-field__select:focus {
+  outline: none;
+  border-color: var(--color-accent, #06b6d4);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+.m202-field__select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-color: #1e293b;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.m202-field__select option {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.m202-field__input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.m202-field__input-wrap {
+  position: relative;
+}
+
+.m202-field__input-wrap .m202-field__input {
+  padding-right: 3rem;
+}
+
+.m202-field__suffix {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.m202-field__help {
+  display: block;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 0.25rem;
+  line-height: 1.35;
+}
+
+/* ---- Modalidad tabs ---- */
+.m202-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.m202-tab {
+  flex: 1;
+  padding: 0.65rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.2s;
+}
+
+.m202-tab:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.m202-tab--active {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.35);
+  color: var(--color-accent, #06b6d4);
+}
+
+/* ---- Submit ---- */
+.m202-submit {
+  width: 100%;
+  padding: 0.85rem;
+  background: linear-gradient(135deg, var(--color-primary, #1a56db), var(--color-accent, #06b6d4));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  margin-top: 0.5rem;
+}
+
+.m202-submit:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.m202-submit:active {
+  transform: translateY(0);
+}
+
+.m202-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---- Result ---- */
+.m202-result {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.5rem;
+}
+
+.m202-result h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+.m202-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.9rem;
+}
+
+.m202-result-row:last-child {
+  border-bottom: none;
+}
+
+.m202-result-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.m202-result-amount {
+  font-weight: 700;
+  color: #f1f5f9;
+  font-variant-numeric: tabular-nums;
+}
+
+.m202-result-total {
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.m202-result-total .m202-result-label {
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.m202-result-total .m202-result-amount {
+  font-size: 1.1rem;
+  color: var(--color-accent, #06b6d4);
+}
+
+/* ---- Disclaimer ---- */
+.m202-disclaimer {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.28);
+  text-align: center;
+  margin-top: 1rem;
+  font-style: italic;
+}
+
+/* ---- Back link ---- */
+.m202-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+
+.m202-back:hover {
+  color: var(--color-accent, #06b6d4);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .m202-container {
+    padding: 1rem 0.75rem 3rem;
+  }
+
+  .m202-header {
+    padding: 1.5rem 0.5rem;
+  }
+
+  .m202-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .m202-card,
+  .m202-result {
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+
+  .m202-tabs {
+    flex-direction: column;
+  }
+}

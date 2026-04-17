@@ -51,6 +51,8 @@ const ContabilidadPage = lazy(() => import('./pages/ContabilidadPage'))
 const DefensiaListPage = lazy(() => import('./pages/DefensiaListPage'))
 const DefensiaWizardPage = lazy(() => import('./pages/DefensiaWizardPage'))
 const DefensiaExpedientePage = lazy(() => import('./pages/DefensiaExpedientePage'))
+const Modelo200Page = lazy(() => import('./pages/Modelo200Page'))
+const Modelo202Page = lazy(() => import('./pages/Modelo202Page'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -118,6 +120,8 @@ function App() {
                     <Route path="/obligado-declarar" element={<ObligadoDeclararPage />} />
                     <Route path="/modelos-obligatorios" element={<ModelObligationsPage />} />
                     <Route path="/farmacias" element={<FarmaciasPage />} />
+                    <Route path="/modelo-200" element={<Modelo200Page />} />
+                    <Route path="/modelo-202" element={<Modelo202Page />} />
 
                     {/* Protected Routes (require auth + subscription) */}
                     <Route
