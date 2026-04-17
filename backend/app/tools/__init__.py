@@ -23,6 +23,7 @@ from app.tools.modelo_720_tool import MODELO_720_TOOL, check_modelo_720_tool
 from app.tools.modelo_721_tool import MODELO_721_TOOL, check_modelo_721_tool
 from app.tools.plusvalia_municipal_tool import PLUSVALIA_MUNICIPAL_TOOL, calculate_plusvalia_municipal_tool
 from app.tools.modelo_308_tool import MODELO_308_TOOL, calculate_modelo_308_tool
+from app.tools.is_simulator_tool import IS_SIMULATOR_TOOL, simulate_is_tool
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
@@ -48,6 +49,7 @@ ALL_TOOLS = [
 	MODELO_721_TOOL,
 	PLUSVALIA_MUNICIPAL_TOOL,
 	MODELO_308_TOOL,
+	IS_SIMULATOR_TOOL,
 ]
 
 # Registry of tool execution functions
@@ -72,6 +74,7 @@ TOOL_EXECUTORS = {
 	"check_modelo_721": check_modelo_721_tool,
 	"calculate_plusvalia_municipal": calculate_plusvalia_municipal_tool,
 	"calculate_modelo_308": calculate_modelo_308_tool,
+	"simulate_is": simulate_is_tool,
 }
 
 __all__ = [
@@ -117,4 +120,6 @@ __all__ = [
 	"calculate_plusvalia_municipal_tool",
 	"MODELO_308_TOOL",
 	"calculate_modelo_308_tool",
+	"IS_SIMULATOR_TOOL",
+	"simulate_is_tool",
 ]

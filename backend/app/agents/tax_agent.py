@@ -873,6 +873,9 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 				else:
 					requires_tool_hint = "\nUSA simulate_irpf. Si no conoces la CCAA, pregúntala antes de calcular.\n"
 
+		if any(kw in query_lower for kw in ["mi empresa", "mi sl", "mi sociedad", "modelo 200", "impuesto de sociedades", "impuesto sobre sociedades", "liquidación is", "liquidacion is"]):
+			requires_tool_hint = "\nUSA simulate_is. El usuario habla de una sociedad (SL/SA). NO uses simulate_irpf para sociedades.\n"
+
 		if any(kw in query_lower for kw in ["deduccion", "deducción", "desgravacion", "desgravación", "deducir", "desgravar", "ahorrar en la renta", "ahorro fiscal", "deducciones"]):
 			ccaa_hint = (fiscal_profile or {}).get("ccaa_residencia", "")
 			if ccaa_hint:
