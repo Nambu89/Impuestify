@@ -118,7 +118,7 @@ async def export_libro(
     libro: str,
     year: int = Query(default=2026, ge=2020, le=2099),
     trimestre: Optional[int] = Query(default=None, ge=1, le=4),
-    format: str = Query(default="csv", regex="^(csv|excel)$"),
+    format: str = Query(default="csv", pattern="^(csv|excel)$"),
     current_user: TokenData = Depends(get_current_user),
     _sub=Depends(require_active_subscription),
 ):
