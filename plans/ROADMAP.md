@@ -1,13 +1,14 @@
 # TaxIA (Impuestify) - Roadmap de Desarrollo
 
-## Estado del Proyecto: Abril 2026 (Sesion 34 — 2026-04-15)
+## Estado del Proyecto: Abril 2026 (Sesión 34 — 2026-04-20)
 
-**Rama activa:** `claude/defensia-v1` (64 commits ahead de main, sin mergear).
-DefensIA Parte 1 + Parte 2 completas. T3-001b (fixtures PDF anonimizados)
-DONE. Pendiente T3-001 E2E Playwright caso David + T3-006 verifier final
-antes de merge a main.
+**Todo mergeado a main y en producción.** DefensIA + Modelo 200 IS + docs actualizados.
+Hotfix prod aplicado (lazy imports). 48 comentarios Copilot resueltos.
+RAG: 463 docs, 92K chunks, 85K embeddings. Caveman plugin activo.
 
-## EN CURSO — Sesion 34: Copilot round 3 + T3-001b fixtures (2026-04-15)
+**Pendiente**: `DEFENSIA_STORAGE_KEY` en Railway para uploads DefensIA.
+
+## COMPLETADO — Sesión 34: DefensIA E2E + Modelo 200 IS + Docs (2026-04-15 a 2026-04-20)
 
 - [x] **Limpieza workspace**: 58 archivos basura borrados (0 bytes, nombres corruptos de pastes)
 - [x] **T3-001b Fixtures PDF anonimizados caso David**: generador reportlab
@@ -28,23 +29,28 @@ antes de merge a main.
   7-11. 5 plantillas j2: `ATENCION` → `ATENCIÓN` (alegaciones_{comp_lim,sanc,verif}, escrito_generico, recurso_reposicion)
 - [x] **Extras preventivos**:
   - `defensia_ortografia_audit.py`: anadido `atencion→atención` al dict + excluidos `.test.tsx/.spec.tsx` del scan
-- [ ] **T3-001** E2E Playwright caso David 4 viewports (PENDIENTE — ya tiene fixtures)
-- [ ] **T3-006** Verifier final + merge a main (depende de T3-001)
+- [x] **T3-001** E2E Playwright spec + test local verificado (upload → fase → brief → analyze → expediente)
+- [x] **5 bugs descubiertos en test local**: doble /api/api/, schema mismatch, proxy Vite, INDETERMINADA fallback, proceso zombie
+- [x] **Copilot rounds 4-9**: 21 comentarios adicionales resueltos (upload id reject, healthcheck cache, phase detector no-mutate, GDPR best-effort, tildes docs, CancelledError, logger reuse)
+- [x] **Modelo 200 IS completo** (11 commits): simulador 7 territorios, 47 tests, endpoints, workspace prefill, tool TaxAgent, PDF 16 casillas, frontend wizard 4 pasos, Modelo 202
+- [x] **Ingesta RAG**: 463 docs, 92,393 chunks, 85,587 embeddings (+4 nuevos)
+- [x] **Docs reescritos**: README visual, Manual Usuario v3 (540 líneas), Business Plan actualizado
+- [x] **Hotfix prod**: lazy imports Modelo200Page faltantes (app rota → arreglada)
+- [x] **Infra**: Caveman plugin, copilot-instructions.md, proxy Vite DefensIA
+- [x] **Mergeado todo a main** y desplegado en producción
 
-### Metricas Sesion 34
+### Métricas Sesión 34
 
-- **Commits**: 2 (T3-001b fixtures + Copilot round 3) pusheados a `claude/defensia-v1`
-- **Backend defensia tests**: 379 verdes (+4 vs sesion 33: tests de migration fail-fast)
-- **Frontend tests**: 92 verdes, build 7.3s
-- **Ortografia audit**: 0 hits post-fix
-- **Anti-hallucination audit**: 0 hits
-- **Copilot rounds resueltos**: 3 (total acumulado 27/27 comentarios)
+- **Commits**: ~25 (DefensIA branch) + 11 (Modelo 200 branch) + ~5 (main hotfixes/docs)
+- **Backend tests**: ~1,800+ (379 DefensIA + 47 IS + existentes)
+- **Frontend**: build OK, 92+ tests Vitest
+- **Copilot rounds**: 9 (48 comentarios totales resueltos)
+- **Tildes corregidas**: ~205 en 3 docs
+- **RAG**: 463 docs, 92K chunks, 85K embeddings
 
 ---
 
----
-
-## EN PROGRESO — Sesion 33: DefensIA Parte 2 COMPLETA (2026-04-15)
+## COMPLETADO — Sesión 33: DefensIA Parte 2 COMPLETA (2026-04-15)
 
 ### Wave 2B Backend (10 commits Wave 2B + 5 gap fixes)
 
