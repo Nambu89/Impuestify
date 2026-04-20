@@ -1,5 +1,5 @@
 import { useReducer, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Loader2, Scale } from "lucide-react";
 import { useApi } from "../hooks/useApi";
 import { useDefensiaUpload } from "../hooks/useDefensiaUpload";
@@ -255,6 +255,9 @@ export function DefensiaWizardPage() {
 
   return (
     <div className="defensia-wizard-page">
+      <Link to="/" className="defensia-back-link">
+        <ArrowLeft size={16} aria-hidden="true" /> Volver a inicio
+      </Link>
       <header className="defensia-wizard-header">
         <Scale size={24} aria-hidden="true" />
         <h1>Nuevo expediente DefensIA</h1>

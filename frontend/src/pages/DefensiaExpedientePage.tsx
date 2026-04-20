@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { Download, FileText, AlertCircle, Scale } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import { Download, FileText, AlertCircle, ArrowLeft, Scale } from "lucide-react";
 import { useDefensiaExpediente } from "../hooks/useDefensiaExpediente";
 import { useDefensiaExport } from "../hooks/useDefensiaExport";
 import { useSEO } from "../hooks/useSEO";
@@ -58,6 +58,9 @@ export function DefensiaExpedientePage() {
   if (error || !expediente) {
     return (
       <div className="defensia-expediente-page">
+        <Link to="/defensia" className="defensia-back-link">
+          <ArrowLeft size={16} aria-hidden="true" /> Volver a expedientes
+        </Link>
         <div className="defensia-expediente-404">
           <AlertCircle size={48} aria-hidden="true" />
           <h2>No se encontró el expediente</h2>
@@ -72,6 +75,9 @@ export function DefensiaExpedientePage() {
 
   return (
     <div className="defensia-expediente-page">
+      <Link to="/defensia" className="defensia-back-link">
+        <ArrowLeft size={16} aria-hidden="true" /> Volver a expedientes
+      </Link>
       <header className="defensia-expediente-header">
         <div className="defensia-expediente-title-block">
           <Scale size={24} aria-hidden="true" />

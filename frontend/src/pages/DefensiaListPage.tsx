@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { Plus, AlertCircle, Scale } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Plus, AlertCircle, ArrowLeft, Scale } from "lucide-react";
 import { useDefensiaExpedientes } from "../hooks/useDefensiaExpedientes";
 import { useSEO } from "../hooks/useSEO";
 import { DisclaimerBanner } from "../components/defensia/DisclaimerBanner";
@@ -20,6 +20,9 @@ export function DefensiaListPage() {
 
   return (
     <div className="defensia-list-page">
+      <Link to="/" className="defensia-back-link">
+        <ArrowLeft size={16} aria-hidden="true" /> Volver a inicio
+      </Link>
       <header className="defensia-list-header">
         <div className="defensia-list-title-block">
           <Scale size={28} aria-hidden="true" />
