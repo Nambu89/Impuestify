@@ -2,7 +2,7 @@
 
 # Impuestify
 
-### Tu copiloto fiscal con IA para Espana
+### Tu copiloto fiscal con IA para España
 
 [![Tests](https://img.shields.io/badge/tests-1800%2B%20passing-brightgreen)](https://impuestify.com)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue?logo=python&logoColor=white)](https://python.org)
@@ -11,24 +11,24 @@
 [![Deploy](https://img.shields.io/badge/railway-deployed-blueviolet?logo=railway)](https://railway.app)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-**Asistente fiscal inteligente** con RAG, multi-agente y motor anti-alucinacion.
-Cubre los **21 territorios fiscales** de Espana: 15 CCAA + 4 forales + Ceuta + Melilla.
+**Asistente fiscal inteligente** con RAG, multi-agente y motor anti-alucinación.
+Cubre los **21 territorios fiscales** de España: 15 CCAA + 4 forales + Ceuta + Melilla.
 
-[Probar ahora](https://impuestify.com) &nbsp;&bull;&nbsp; [Documentacion](#quick-start) &nbsp;&bull;&nbsp; [Arquitectura](#arquitectura)
+[Probar ahora](https://impuestify.com) &nbsp;&bull;&nbsp; [Documentación](#quick-start) &nbsp;&bull;&nbsp; [Arquitectura](#arquitectura)
 
 </div>
 
 ---
 
-## Que hace Impuestify
+## Qué hace Impuestify
 
 - **Asistente fiscal conversacional** con GPT-5-mini + RAG sobre 463 documentos oficiales (AEAT, BOE, Diputaciones Forales)
-- **Simulador IRPF** completo: 8 sub-calculadoras, tributacion conjunta, regimenes forales, ~1.008 deducciones
-- **DefensIA** — defensor fiscal automatizado con motor hibrido anti-alucinacion
+- **Simulador IRPF** completo: 8 sub-calculadoras, tributación conjunta, regímenes forales, ~1.008 deducciones
+- **DefensIA** — defensor fiscal automatizado con motor híbrido anti-alucinación
 - **Clasificador de facturas** con Gemini 3 Flash Vision OCR ($0,0003/factura)
-- **Contabilidad PGC** automatica: asientos, Libro Diario, Mayor, Balance, PyG
+- **Contabilidad PGC** automática: asientos, Libro Diario, Mayor, Balance, PyG
 - **Modelo 200 IS** — simulador Impuesto sobre Sociedades para SL/SA
-- **6 calculadoras publicas** sin registro: sueldo neto, retenciones, umbrales, obligaciones, borrador
+- **6 calculadoras públicas** sin registro: sueldo neto, retenciones, umbrales, obligaciones, borrador
 - **13 capas de seguridad**: desde rate limiting hasta LlamaGuard4
 
 ---
@@ -37,55 +37,55 @@ Cubre los **21 territorios fiscales** de Espana: 15 CCAA + 4 forales + Ceuta + M
 
 ### Sistema Multi-Agente
 
-- **CoordinatorAgent** — Router inteligente que decide que agente usar
-- **TaxAgent** — IRPF, IVA, IS, cuotas autonomos, deducciones, Modelo 200
-- **PayslipAgent** — Analisis de nominas (13 patrones regex)
-- **NotificationAgent** — Analisis de notificaciones PDF de la AEAT
-- **WorkspaceAgent** — Gestion de documentos fiscales del usuario
+- **CoordinatorAgent** — Router inteligente que decide qué agente usar
+- **TaxAgent** — IRPF, IVA, IS, cuotas autónomos, deducciones, Modelo 200
+- **PayslipAgent** — Análisis de nóminas (13 patrones regex)
+- **NotificationAgent** — Análisis de notificaciones PDF de la AEAT
+- **WorkspaceAgent** — Gestión de documentos fiscales del usuario
 
 ### 13 Herramientas Fiscales (Tools)
 
-- `simulate_irpf` — Simulacion completa con auto-descubrimiento de deducciones
-- `simulate_is` — Simulacion Impuesto sobre Sociedades (7 territorios)
-- `calculate_irpf` — Calculo por tramos y CCAA
-- `calculate_autonomous_quota` — Cuotas autonomos 2025 (15 tramos RDL 13/2022)
-- `search_tax_regulations` — Busqueda FTS5 + BM25 en 463+ documentos oficiales
+- `simulate_irpf` — Simulación completa con auto-descubrimiento de deducciones
+- `simulate_is` — Simulación Impuesto sobre Sociedades (7 territorios)
+- `calculate_irpf` — Cálculo por tramos y CCAA
+- `calculate_autonomous_quota` — Cuotas autónomos 2025 (15 tramos RDL 13/2022)
+- `search_tax_regulations` — Búsqueda FTS5 + BM25 en 463+ documentos oficiales
 - `discover_deductions` — ~1.008 deducciones (21 territorios al 100%)
-- `compare_joint_individual` — Comparativa tributacion conjunta vs individual
-- `iae_lookup` — Busqueda epigrafe IAE para creadores
-- `lookup_casilla` — Busqueda casillas Modelo 100 (2.064 casillas)
+- `compare_joint_individual` — Comparativa tributación conjunta vs individual
+- `iae_lookup` — Búsqueda epígrafe IAE para creadores
+- `lookup_casilla` — Búsqueda casillas Modelo 100 (2.064 casillas)
 - `calculate_modelo_303` — IVA trimestral
-- `calculate_modelo_130` — Pago fraccionado IRPF autonomos
+- `calculate_modelo_130` — Pago fraccionado IRPF autónomos
 - `calculate_modelo_ipsi` — IPSI Ceuta/Melilla (6 tipos)
 - `calculate_isd` — Impuesto sobre Sucesiones y Donaciones (21 CCAA)
 
 ### DefensIA — Defensor Fiscal Automatizado
 
-Motor hibrido anti-alucinacion para reclamaciones tributarias:
+Motor híbrido anti-alucinación para reclamaciones tributarias:
 
-- **Extraccion** con Gemini (9 extractores especializados) + detector de fase procesal (12 estados)
+- **Extracción** con Gemini (9 extractores especializados) + detector de fase procesal (12 estados)
 - **30 reglas deterministas** (R001-R030) validadas contra jurisprudencia
-- **RAG verificador** con legislacion y doctrina fiscal
+- **RAG verificador** con legislación y doctrina fiscal
 - **Redactor LLM controlado** con 9 plantillas Jinja2 (reposicion, TEAR abreviado/general, alegaciones...)
 - **Export** a DOCX y PDF con disclaimer legal obligatorio
-- **Tributos**: IRPF, IVA, ISD, ITP, Plusvalia Municipal
-- **Procedimientos**: verificacion, comprobacion limitada, sancionador
-- **Vias**: reposicion, TEAR abreviado, TEAR general
+- **Tributos**: IRPF, IVA, ISD, ITP, Plusvalía Municipal
+- **Procedimientos**: verificación, comprobación limitada, sancionador
+- **Vías**: reposición, TEAR abreviado, TEAR general
 - **379 tests** en la suite DefensIA
 
 ### Modelo 200 — Impuesto sobre Sociedades
 
-- Simulador IS para SL, SA y empresas de nueva creacion
-- **7 territorios**: regimen comun + 4 forales + ZEC + Ceuta/Melilla
+- Simulador IS para SL, SA y empresas de nueva creación
+- **7 territorios**: régimen común + 4 forales + ZEC + Ceuta/Melilla
 - Pagos fraccionados Modelo 202 (Art. 40 LIS)
-- Integracion con workspace: auto-fill desde PyG contable
+- Integración con workspace: auto-fill desde PyG contable
 - PDF borrador con 16 casillas principales
 - **47 tests** en la suite IS
 
 ### Simulador IRPF
 
-- 8 sub-calculadoras: trabajo, ahorro, inmuebles, MPYF, actividades, renta imputada, perdidas, crypto FIFO
-- Tributacion conjunta, foral (vasco 7 + navarra 11 tramos), Ceuta/Melilla 60%
+- 8 sub-calculadoras: trabajo, ahorro, inmuebles, MPYF, actividades, renta imputada, pérdidas, crypto FIFO
+- Tributación conjunta, foral (vasco 7 + navarra 11 tramos), Ceuta/Melilla 60%
 - Endpoint REST: `POST /api/irpf/estimate` — sin LLM, ~50-100ms
 - XSD Modelo 100: ~100% cobertura
 
@@ -93,31 +93,31 @@ Motor hibrido anti-alucinacion para reclamaciones tributarias:
 
 - 16 estatales + 195 territoriales + 339 XSD + 408 CCAA 2025 + 50 forales
 - 21/21 territorios cubiertos al 100%
-- `simulate_irpf` encadena automaticamente `discover_deductions`
+- `simulate_irpf` encadena automáticamente `discover_deductions`
 
 ### Clasificador de Facturas
 
 - OCR con Gemini 3 Flash Vision ($0,0003/factura)
-- Clasificacion automatica PGC (201 cuentas, 7 grupos)
+- Clasificación automática PGC (201 cuentas, 7 grupos)
 - Asientos contables en partida doble
-- Libros: Diario, Mayor, Balance, Perdidas y Ganancias
+- Libros: Diario, Mayor, Balance, Pérdidas y Ganancias
 - Export CSV/Excel para Registro Mercantil
-- 5 tipos: autonomo, creador, farmacia (multi-IVA + RE), simplificada, intracomunitaria
+- 5 tipos: autónomo, creador, farmacia (multi-IVA + RE), simplificada, intracomunitaria
 
-### Calculadoras Publicas
+### Calculadoras Públicas
 
-- **Sueldo Neto** (`/calculadora-neto`) — 5 regimenes fiscales
+- **Sueldo Neto** (`/calculadora-neto`) — 5 regímenes fiscales
 - **Retenciones IRPF** (`/calculadora-retenciones`) — Algoritmo oficial AEAT 2026
 - **Umbrales Contables** (`/calculadora-umbrales`) — PGC Normal vs PYMES
 - **Obligaciones Fiscales** (`/modelos-obligatorios`) — Modelos por perfil y CCAA
 - **Obligado a Declarar** (`/obligado-declarar`) — Art. 96 LIRPF
-- **Checklist Borrador** (`/checklist-borrador`) — Verificacion pre-declaracion
+- **Checklist Borrador** (`/checklist-borrador`) — Verificación pre-declaración
 
-### Guia Fiscal Adaptativa
+### Guía Fiscal Adaptativa
 
 - **Particular** (7 pasos) — Personal, Trabajo, Ahorro, Inmuebles, Familia, Deducciones, Resultado
 - **Creator** (8 pasos) — + Plataformas, IAE, IVA intracomunitario, M349, DAC7
-- **Autonomo** (8 pasos) — + Actividad economica, cuota SS, retenciones, M130
+- **Autónomo** (8 pasos) — + Actividad económica, cuota SS, retenciones, M130
 
 ---
 
@@ -125,8 +125,8 @@ Motor hibrido anti-alucinacion para reclamaciones tributarias:
 
 | Plan | Precio | Audiencia | Destacado |
 |:-----|:-------|:----------|:----------|
-| **Particular** | 5 EUR/mes | Asalariados, pensionistas | IRPF, nominas, deducciones basicas |
-| **Autonomo** | 39 EUR/mes IVA incl. | Trabajadores por cuenta propia | + Todos los modelos (303/130/131), crypto, workspace, calendario |
+| **Particular** | 5 EUR/mes | Asalariados, pensionistas | IRPF, nóminas, deducciones básicas |
+| **Autónomo** | 39 EUR/mes IVA incl. | Trabajadores por cuenta propia | + Todos los modelos (303/130/131), crypto, workspace, calendario |
 | **Creator** | 49 EUR/mes | Influencers, YouTubers, streamers | + IVA por plataforma, M349, DAC7, CNAE 60.39, perfiles multi-rol |
 
 Stripe Checkout + Customer Portal. Sin permanencia.
@@ -187,7 +187,7 @@ Stripe Checkout + Customer Portal. Sin permanencia.
 
 </details>
 
-### Stack Tecnologico
+### Stack Tecnológico
 
 **Backend:** FastAPI, Python 3.12+, Turso (SQLite), Upstash Redis/Vector, OpenAI GPT-5-mini, Google Gemini 3 Flash, Groq (LlamaGuard4), Stripe, Resend
 
@@ -199,7 +199,7 @@ Stripe Checkout + Customer Portal. Sin permanencia.
 
 - **463 documentos** oficiales (AEAT, BOE, Diputaciones Forales)
 - **92.393 chunks**, **85.587 embeddings** (text-embedding-3-large)
-- FTS5 + busqueda semantica hibrida
+- FTS5 + búsqueda semántica híbrida
 - Crawler automatizado: 90 URLs, 23 territorios, Scrapling anti-bot
 
 ---
@@ -218,9 +218,9 @@ Stripe Checkout + Customer Portal. Sin permanencia.
 7. **PII Detection** — DNI/NIE, telefonos, emails, cuentas bancarias
 8. **SQL Injection** — Consultas parametrizadas + deteccion OWASP
 9. **Content Moderation** — Llama Guard 4, 14 categorias
-10. **Content Restriction** — Contenido autonomo bloqueado para plan Particular
+10. **Content Restriction** — Contenido autónomo bloqueado para plan Particular
 11. **Semantic Cache** — Upstash Vector, umbral 0,93, TTL 24h
-12. **Guardrails** — Validacion input/output
+12. **Guardrails** — Validación input/output
 13. **Audit Logger** — Registro inmutable
 
 </details>
@@ -303,7 +303,7 @@ Seed: `cd backend && python scripts/seed_test_users.py`
 
 ## Screenshots
 
-> *Proximamente: capturas de la interfaz principal, DefensIA wizard, clasificador de facturas y dashboard contable.*
+> *Próximamente: capturas de la interfaz principal, DefensIA wizard, clasificador de facturas y dashboard contable.*
 
 ---
 
@@ -317,12 +317,12 @@ Railway auto-deploy en cada push a `main`. Dos servicios:
 <details>
 <summary>Troubleshooting</summary>
 
-| Problema | Solucion |
+| Problema | Solución |
 |:---------|:---------|
 | Backend no conecta a Turso | Verificar `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` |
 | Escala IRPF no encontrada | `python scripts/seed_estatal_scale.py` |
-| Deducciones vacias | `python scripts/seed_deductions.py` + `seed_deductions_territorial.py` |
-| PGC cuentas vacias | `python scripts/seed_pgc_accounts.py` |
+| Deducciones vacías | `python scripts/seed_deductions.py` + `seed_deductions_territorial.py` |
+| PGC cuentas vacías | `python scripts/seed_pgc_accounts.py` |
 | Clasificador facturas 503 | Verificar `GOOGLE_GEMINI_API_KEY` |
 | Upload timeout | El OCR Gemini tarda 30-60s, timeout configurado a 120s |
 | CORS errors | Verificar `ALLOWED_ORIGINS` incluye URL del frontend |

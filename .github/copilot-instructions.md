@@ -6,7 +6,7 @@ Spanish tax assistant: FastAPI backend + React 18 frontend. Multi-agent RAG arch
 
 - Backend: Python 3.12+, FastAPI, Turso (SQLite via libsql). Agents use Microsoft Agent Framework.
 - Frontend: React 18 + Vite + TypeScript. Custom CSS (NO Tailwind). Icons: Lucide React.
-- `useApi()` hook returns `apiRequest(path)` with baseURL `/api`. Paths must NOT include `/api/` prefix (causes double `/api/api/`). Exception: hooks using raw `fetch`/`XHR` use `API_URL` which is already `/api`.
+- `apiRequest(path)` has baseURL `/api` — pass paths WITHOUT `/api/` prefix (e.g. `/ask`, `/defensia/expedientes`). Raw `fetch`/`XHR` using `API_URL` (= `/api`) need full paths (e.g. `${API_URL}/defensia/...`).
 - DefensIA router uses prefix `/api/defensia`. Vite proxy has specific pass-through rule for it.
 
 ## Security (Critical — flag violations)
@@ -50,4 +50,4 @@ Variables/keys (data.regimen, contrasena) are exempt — only strings between qu
 - `loop.index0` in Jinja2 templates (renders "0 bis.—"). Use `loop.index` for 1-based numbering.
 - Turso client: `dict(row)['field']` not `row[0]` (rows are Row objects, not tuples).
 - `datetime.utcnow()` deprecated — use `datetime.now(timezone.utc)`.
-- LLM model: ALWAYS `gpt-5-mini`, NEVER `gpt-4o-mini`.
+- Default LLM: `gpt-5-mini`. Never use `gpt-4o-mini` in production. `gpt-5`/`gpt-5.1` allowed for complex queries via complexity_router.

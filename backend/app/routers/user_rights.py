@@ -10,6 +10,8 @@ Also provides:
 - Password change
 - Fiscal profile management (voluntary IRPF data)
 """
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict, Any
@@ -817,10 +819,10 @@ async def delete_user_account(
     # respeta las FK internas: rag_log -> escritos -> dictamenes -> briefs
     # -> documentos -> expedientes -> cuotas.
     #
-    # Nota Copilot round 6+7: sin transaccion (Turso HTTP client no soporta
-    # BEGIN/COMMIT explicito). Cada DELETE se ejecuta best-effort con
-    # try/except para que un fallo en una tabla no impida borrar las demas
-    # ni aborte el DELETE final sobre users. ON DELETE CASCADE en las
+    # Este cliente/wrapper ejecuta cada DELETE de forma independiente
+    # (autocommit). Sin API transaccional expuesta, cada DELETE es
+    # best-effort: un fallo en una tabla no impide borrar las demas ni
+    # aborta el DELETE final sobre users. ON DELETE CASCADE en las
     # migraciones es la primera linea de defensa; estos deletes son la
     # segunda. Si alguno falla, se loggea warning y se continua.
     _defensia_deletes = [
@@ -840,9 +842,10 @@ async def delete_user_account(
     for table_name, sql in _defensia_deletes:
         try:
             await db.execute(sql, [user_id])
+        except asyncio.CancelledError:
+            raise
         except Exception as exc:
-            import logging
-            logging.getLogger(__name__).warning(
+            logger.warning(
                 "GDPR cascade: fallo DELETE %s para user %s: %s",
                 table_name, user_id, exc,
             )

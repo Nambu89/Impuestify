@@ -138,7 +138,7 @@ def _buscar_documento_sancion(
     ],
     descripcion=(
         "Caducidad del procedimiento sancionador por exceso del plazo "
-        "maximo legal de seis meses de tramitacion, con computo de fecha "
+        "máximo legal de seis meses de tramitación, con cómputo de fecha "
         "a fecha"
     ),
 )
