@@ -1,241 +1,297 @@
 <div align="center">
 
+<img src="frontend/public/images/logo-impuestify.png" alt="Impuestify" width="180"/>
+
 # Impuestify
 
-### Tu copiloto fiscal con IA para España
+### El copiloto fiscal con IA para toda España
+
+*Declara, defiende y digitaliza tu fiscalidad sin pelearte con Hacienda.*
+
+[![Probar ahora](https://img.shields.io/badge/Probar_ahora-impuestify.com-1a56db?style=for-the-badge)](https://impuestify.com)
+[![Plan desde 5 €](https://img.shields.io/badge/Desde-5_€/mes-06b6d4?style=for-the-badge)](https://impuestify.com#pricing)
+[![21 territorios](https://img.shields.io/badge/21_territorios-100%25-10b981?style=for-the-badge)](#-cobertura-fiscal-completa)
+
+<br/>
 
 [![Tests](https://img.shields.io/badge/tests-1800%2B%20passing-brightgreen)](https://impuestify.com)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue?logo=python&logoColor=white)](https://python.org)
 [![React](https://img.shields.io/badge/react-18-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/typescript-5-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![Deploy](https://img.shields.io/badge/railway-deployed-blueviolet?logo=railway)](https://railway.app)
+[![Railway](https://img.shields.io/badge/railway-deployed-blueviolet?logo=railway)](https://railway.app)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-
-**Asistente fiscal inteligente** con RAG, multi-agente y motor anti-alucinación.
-Cubre los **21 territorios fiscales** de España: 15 CCAA + 4 forales + Ceuta + Melilla.
-
-[Probar ahora](https://impuestify.com) &nbsp;&bull;&nbsp; [Documentación](#quick-start) &nbsp;&bull;&nbsp; [Arquitectura](#arquitectura)
 
 </div>
 
 ---
 
-## Qué hace Impuestify
+## 🚀 Por qué Impuestify
 
-- **Asistente fiscal conversacional** con GPT-5-mini + RAG sobre 463 documentos oficiales (AEAT, BOE, Diputaciones Forales)
-- **Simulador IRPF** completo: 8 sub-calculadoras, tributación conjunta, regímenes forales, ~1.008 deducciones
-- **DefensIA** — defensor fiscal automatizado con motor híbrido anti-alucinación
-- **Clasificador de facturas** con Gemini 3 Flash Vision OCR ($0,0003/factura)
-- **Contabilidad PGC** automática: asientos, Libro Diario, Mayor, Balance, PyG
-- **Modelo 200 IS** — simulador Impuesto sobre Sociedades para SL/SA
-- **6 calculadoras públicas** sin registro: sueldo neto, retenciones, umbrales, obligaciones, borrador
-- **13 capas de seguridad**: desde rate limiting hasta LlamaGuard4
+> Hacienda habla en 21 lenguas fiscales distintas. Impuestify las habla todas.
 
----
+- 🧠 **GPT-5-mini + RAG sobre 463 documentos oficiales** (AEAT, BOE, 4 Diputaciones Forales).
+- 🗺️ **21 territorios cubiertos al 100 %** — 15 CCAA + 4 forales + Ceuta y Melilla.
+- 🛡️ **DefensIA** — defensor fiscal automatizado con motor anti-alucinación (30 reglas + RAG verificador).
+- 🧾 **Clasificador de facturas con OCR Gemini** — 0,0003 € por factura, contabilidad PGC automática.
+- 📊 **Simulador IRPF completo** — 8 sub-calculadoras, tributación conjunta, ~1.008 deducciones.
+- 🏢 **Modelo 200 IS** — simulador Impuesto sobre Sociedades para SL/SA (7 territorios).
+- 🔒 **13 capas de seguridad** — LlamaGuard4, prompt injection, PII, MFA, CAPTCHA.
 
-## Funcionalidades
+<div align="center">
 
-### Sistema Multi-Agente
+**[👉 Probar gratis en impuestify.com](https://impuestify.com)**
 
-- **CoordinatorAgent** — Router inteligente que decide qué agente usar
-- **TaxAgent** — IRPF, IVA, IS, cuotas autónomos, deducciones, Modelo 200
-- **PayslipAgent** — Análisis de nóminas (13 patrones regex)
-- **NotificationAgent** — Análisis de notificaciones PDF de la AEAT
-- **WorkspaceAgent** — Gestión de documentos fiscales del usuario
-
-### 13 Herramientas Fiscales (Tools)
-
-- `simulate_irpf` — Simulación completa con auto-descubrimiento de deducciones
-- `simulate_is` — Simulación Impuesto sobre Sociedades (7 territorios)
-- `calculate_irpf` — Cálculo por tramos y CCAA
-- `calculate_autonomous_quota` — Cuotas autónomos 2025 (15 tramos RDL 13/2022)
-- `search_tax_regulations` — Búsqueda FTS5 + BM25 en 463+ documentos oficiales
-- `discover_deductions` — ~1.008 deducciones (21 territorios al 100%)
-- `compare_joint_individual` — Comparativa tributación conjunta vs individual
-- `iae_lookup` — Búsqueda epígrafe IAE para creadores
-- `lookup_casilla` — Búsqueda casillas Modelo 100 (2.064 casillas)
-- `calculate_modelo_303` — IVA trimestral
-- `calculate_modelo_130` — Pago fraccionado IRPF autónomos
-- `calculate_modelo_ipsi` — IPSI Ceuta/Melilla (6 tipos)
-- `calculate_isd` — Impuesto sobre Sucesiones y Donaciones (21 CCAA)
-
-### DefensIA — Defensor Fiscal Automatizado
-
-Motor híbrido anti-alucinación para reclamaciones tributarias:
-
-- **Extracción** con Gemini (9 extractores especializados) + detector de fase procesal (12 estados)
-- **30 reglas deterministas** (R001-R030) validadas contra jurisprudencia
-- **RAG verificador** con legislación y doctrina fiscal
-- **Redactor LLM controlado** con 9 plantillas Jinja2 (reposicion, TEAR abreviado/general, alegaciones...)
-- **Export** a DOCX y PDF con disclaimer legal obligatorio
-- **Tributos**: IRPF, IVA, ISD, ITP, Plusvalía Municipal
-- **Procedimientos**: verificación, comprobación limitada, sancionador
-- **Vías**: reposición, TEAR abreviado, TEAR general
-- **379 tests** en la suite DefensIA
-
-### Modelo 200 — Impuesto sobre Sociedades
-
-- Simulador IS para SL, SA y empresas de nueva creación
-- **7 territorios**: régimen común + 4 forales + ZEC + Ceuta/Melilla
-- Pagos fraccionados Modelo 202 (Art. 40 LIS)
-- Integración con workspace: auto-fill desde PyG contable
-- PDF borrador con 16 casillas principales
-- **47 tests** en la suite IS
-
-### Simulador IRPF
-
-- 8 sub-calculadoras: trabajo, ahorro, inmuebles, MPYF, actividades, renta imputada, pérdidas, crypto FIFO
-- Tributación conjunta, foral (vasco 7 + navarra 11 tramos), Ceuta/Melilla 60%
-- Endpoint REST: `POST /api/irpf/estimate` — sin LLM, ~50-100ms
-- XSD Modelo 100: ~100% cobertura
-
-### Motor de Deducciones (~1.008)
-
-- 16 estatales + 195 territoriales + 339 XSD + 408 CCAA 2025 + 50 forales
-- 21/21 territorios cubiertos al 100%
-- `simulate_irpf` encadena automáticamente `discover_deductions`
-
-### Clasificador de Facturas
-
-- OCR con Gemini 3 Flash Vision ($0,0003/factura)
-- Clasificación automática PGC (201 cuentas, 7 grupos)
-- Asientos contables en partida doble
-- Libros: Diario, Mayor, Balance, Pérdidas y Ganancias
-- Export CSV/Excel para Registro Mercantil
-- 5 tipos: autónomo, creador, farmacia (multi-IVA + RE), simplificada, intracomunitaria
-
-### Calculadoras Públicas
-
-- **Sueldo Neto** (`/calculadora-neto`) — 5 regímenes fiscales
-- **Retenciones IRPF** (`/calculadora-retenciones`) — Algoritmo oficial AEAT 2026
-- **Umbrales Contables** (`/calculadora-umbrales`) — PGC Normal vs PYMES
-- **Obligaciones Fiscales** (`/modelos-obligatorios`) — Modelos por perfil y CCAA
-- **Obligado a Declarar** (`/obligado-declarar`) — Art. 96 LIRPF
-- **Checklist Borrador** (`/checklist-borrador`) — Verificación pre-declaración
-
-### Guía Fiscal Adaptativa
-
-- **Particular** (7 pasos) — Personal, Trabajo, Ahorro, Inmuebles, Familia, Deducciones, Resultado
-- **Creator** (8 pasos) — + Plataformas, IAE, IVA intracomunitario, M349, DAC7
-- **Autónomo** (8 pasos) — + Actividad económica, cuota SS, retenciones, M130
+</div>
 
 ---
 
-## Planes y Precios
+## 🧩 Todo lo que hace Impuestify
 
-| Plan | Precio | Audiencia | Destacado |
-|:-----|:-------|:----------|:----------|
-| **Particular** | 5 EUR/mes | Asalariados, pensionistas | IRPF, nóminas, deducciones básicas |
-| **Autónomo** | 39 EUR/mes IVA incl. | Trabajadores por cuenta propia | + Todos los modelos (303/130/131), crypto, workspace, calendario |
-| **Creator** | 49 EUR/mes | Influencers, YouTubers, streamers | + IVA por plataforma, M349, DAC7, CNAE 60.39, perfiles multi-rol |
+<table>
+<tr>
+<td width="50%" valign="top">
 
-Stripe Checkout + Customer Portal. Sin permanencia.
+### 💬 Chat fiscal inteligente
+Pregunta en lenguaje natural y recibe respuestas con citas a la legislación oficial. Streaming SSE en tiempo real, persistencia de conversaciones, detección automática de perfil fiscal.
+
+### 🧮 Simulador IRPF
+8 sub-calculadoras: trabajo, ahorro, inmuebles, MPYF, actividades, renta imputada, pérdidas y cripto FIFO. Tributación conjunta, forales (vasco 7 tramos, navarra 11) y Ceuta/Melilla 60 %.
+
+### 🏢 Modelo 200 — Impuesto sobre Sociedades
+Simulador IS para SL, SA y empresas de nueva creación. Régimen común + 4 forales + ZEC + Ceuta/Melilla. Pagos fraccionados Modelo 202 y PDF borrador con 16 casillas.
+
+### 🛡️ DefensIA — Defensor fiscal
+Sube la liquidación o el requerimiento, DefensIA extrae los datos con Gemini, aplica 30 reglas deterministas validadas contra jurisprudencia, verifica con RAG y redacta el escrito. Export DOCX/PDF con disclaimer legal.
+
+</td>
+<td width="50%" valign="top">
+
+### 📸 Clasificador de facturas
+OCR con Gemini 3 Flash Vision, clasificación PGC (201 cuentas), asientos en partida doble, libros Diario/Mayor/Balance/PyG, export CSV/Excel para Registro Mercantil.
+
+### 🔭 Guía Fiscal Adaptativa
+Wizard 7–8 pasos que se adapta al perfil (Particular, Autónomo, Creator) y a tu CCAA. Estimador en vivo de cuota IRPF (~50 ms, sin LLM).
+
+### 🧰 6 calculadoras públicas
+Sueldo neto, retenciones IRPF, umbrales contables, obligaciones fiscales, obligado a declarar, checklist borrador — gratis, sin registro.
+
+### 🗂️ Workspaces contables
+Dashboard visual con KPIs, barras IVA trimestral, evolución de ingresos/gastos, tabla PGC, top proveedores. Auto-detección emitidas/recibidas por NIF.
+
+</td>
+</tr>
+</table>
 
 ---
 
-## Arquitectura
+## 🌍 Cobertura fiscal completa
+
+<div align="center">
+
+<img src="frontend/public/images/spain-ccaa.svg" alt="Mapa CCAA España" width="520"/>
+
+*21 territorios fiscales · 1.008 deducciones · régimen común + 4 forales + Ceuta/Melilla*
+
+</div>
+
+| Territorio | Régimen IRPF | Modelos IVA | Sucesiones/Donaciones | Estado |
+|:-----------|:------------|:------------|:----------------------|:------:|
+| 15 CCAA régimen común | Estatal + autonómico | 303, 390 | Específicas por CCAA | ✅ 100 % |
+| País Vasco (Álava, Bizkaia, Gipuzkoa) | 7 tramos foral | 303 / 300 Gipuzkoa | Normativa foral | ✅ 100 % |
+| Navarra | 11 tramos foral | F69 | Normativa foral | ✅ 100 % |
+| Canarias | Común | 420 IGIC | Específica | ✅ 100 % |
+| Ceuta / Melilla | 60 % bonificación | IPSI (6 tipos) | Específica | ✅ 100 % |
+
+---
+
+## 💰 Planes y precios
+
+<table>
+<tr>
+<td width="33%" align="center" valign="top">
+
+### 👤 Particular
+**5 € / mes**
+
+Asalariados y pensionistas
+
+✅ Chat fiscal ilimitado<br/>
+✅ Simulador IRPF completo<br/>
+✅ Análisis de nóminas<br/>
+✅ Deducciones básicas<br/>
+✅ Guía fiscal adaptativa<br/>
+❌ Autónomo/Creator tools
+
+</td>
+<td width="33%" align="center" valign="top">
+
+### 💼 Autónomo
+**39 € / mes** *(IVA incl.)*
+
+Trabajadores por cuenta propia
+
+✅ Todo lo del plan Particular<br/>
+✅ Modelos 303/130/131/349<br/>
+✅ Clasificador de facturas<br/>
+✅ Contabilidad PGC completa<br/>
+✅ Workspace + calendario fiscal<br/>
+✅ Cripto FIFO + Modelos 720/721
+
+</td>
+<td width="33%" align="center" valign="top">
+
+### 🎬 Creator
+**49 € / mes**
+
+YouTubers, streamers, influencers
+
+✅ Todo lo del plan Autónomo<br/>
+✅ IVA por plataforma<br/>
+✅ Modelo 349 intracomunitario<br/>
+✅ DAC7 + CNAE 60.39<br/>
+✅ Perfiles multi-rol<br/>
+✅ Soporte prioritario
+
+</td>
+</tr>
+</table>
+
+<div align="center">
+
+*Stripe Checkout + Customer Portal. **Sin permanencia. Cancela cuando quieras.***
+
+</div>
+
+---
+
+## 📸 Capturas
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center"><img src="frontend/public/images/capterra/screenshot-landing.png" width="400" alt="Landing"/><br/><sub>Landing</sub></td>
+<td align="center"><img src="frontend/public/images/capterra/screenshot-chat.png" width="400" alt="Chat"/><br/><sub>Chat fiscal con SSE</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="frontend/public/images/capterra/screenshot-guia-fiscal.png" width="400" alt="Guía fiscal"/><br/><sub>Guía fiscal adaptativa</sub></td>
+<td align="center"><img src="frontend/public/images/capterra/screenshot-calendario.png" width="400" alt="Calendario"/><br/><sub>Calendario fiscal autónomo</sub></td>
+</tr>
+</table>
+
+</div>
+
+---
+
+## 🏗️ Arquitectura
 
 <details>
-<summary>Ver diagrama completo</summary>
+<summary><b>Ver diagrama completo</b></summary>
 
 ```
-+------------------------------------------------------------+
-|                       Frontend                             |
-|  React 18 + Vite + TypeScript                              |
-|                                                            |
-|  /chat             SSE streaming conversacional            |
-|  /guia-fiscal      Tax Guide Wizard + LiveEstimatorBar     |
-|  /clasificador     Invoice OCR + PGC classification        |
-|  /contabilidad     Libro Diario/Mayor/Balance/PyG          |
-|  /defensia         Wizard reclamaciones + export DOCX/PDF  |
-|  /modelo-200       Simulador IS + PDF borrador             |
-+---------------------------+--------------------------------+
-                            |
-                            v  JWT + Rate Limit + 13 Security Layers
-+------------------------------------------------------------+
-|                    FastAPI Backend                          |
-|                                                            |
-|  +--------------------------------------------------+     |
-|  |           CoordinatorAgent (Router)               |     |
-|  +----+--------+----------+----------+---------+----+     |
-|       |        |          |          |         |          |
-|  +----v---+ +--v-----+ +-v------+ +-v------+            |
-|  |  Tax   | |Payslip | | Notif. | |Workspace|            |
-|  | Agent  | | Agent  | | Agent  | | Agent   |            |
-|  +--------+ +--------+ +--------+ +---------+            |
-|                                                            |
-|  +--------------------------------------------------+     |
-|  |              DefensIA Engine                      |     |
-|  |  Extraccion Gemini -> Reglas R001-R030 ->         |     |
-|  |  RAG Verificador -> Redactor LLM (Jinja2)        |     |
-|  +--------------------------------------------------+     |
-|                                                            |
-|  +--------------------------------------------------+     |
-|  |              Modelo 200 IS Engine                 |     |
-|  |  Simulador 7 territorios + Modelo 202 + PDF      |     |
-|  +--------------------------------------------------+     |
-|                                                            |
-|  13 Tools + Gemini OCR + Contabilidad Service             |
-+------------------------------------------------------------+
-       |          |          |         |          |
-       v          v          v         v          v
-  +--------+ +--------+ +------+ +-------+ +--------+
-  | Turso  | |Upstash | |OpenAI| |Stripe | | Gemini |
-  | SQLite | | Redis  | | LLM  | |Payments| | OCR   |
-  +--------+ +--------+ +------+ +-------+ +--------+
+┌────────────────────────────────────────────────────────────┐
+│                         Frontend                           │
+│  React 18 + Vite + TypeScript                              │
+│                                                            │
+│  /chat             SSE streaming conversacional            │
+│  /guia-fiscal      Tax Guide Wizard + LiveEstimatorBar     │
+│  /clasificador     Invoice OCR + PGC classification        │
+│  /contabilidad     Libro Diario/Mayor/Balance/PyG          │
+│  /defensia         Wizard reclamaciones + export DOCX/PDF  │
+│  /modelo-200       Simulador IS + PDF borrador             │
+└────────────────────────────┬───────────────────────────────┘
+                             │
+                             ▼  JWT + Rate Limit + 13 Security Layers
+┌────────────────────────────────────────────────────────────┐
+│                     FastAPI Backend                        │
+│                                                            │
+│  ┌──────────────────────────────────────────────────┐     │
+│  │           CoordinatorAgent (Router)              │     │
+│  └───┬────────┬────────────┬────────────┬──────────┘     │
+│      │        │            │            │                │
+│  ┌───▼──┐ ┌──▼─────┐ ┌────▼────┐ ┌────▼──────┐          │
+│  │ Tax  │ │Payslip │ │  Notif. │ │ Workspace │          │
+│  │Agent │ │ Agent  │ │  Agent  │ │   Agent   │          │
+│  └──────┘ └────────┘ └─────────┘ └───────────┘          │
+│                                                            │
+│  ┌──────────────────────────────────────────────────┐     │
+│  │              DefensIA Engine                     │     │
+│  │  Gemini Extract → Rules R001-R030 →              │     │
+│  │  RAG Verify → LLM Redactor (Jinja2)              │     │
+│  └──────────────────────────────────────────────────┘     │
+│                                                            │
+│  ┌──────────────────────────────────────────────────┐     │
+│  │              Modelo 200 IS Engine                │     │
+│  │  Simulador 7 territorios + Modelo 202 + PDF      │     │
+│  └──────────────────────────────────────────────────┘     │
+│                                                            │
+│  13 Tools + Gemini OCR + Contabilidad Service              │
+└─────┬──────────┬──────────┬─────────┬──────────┬──────────┘
+      │          │          │         │          │
+      ▼          ▼          ▼         ▼          ▼
+┌─────────┐ ┌────────┐ ┌───────┐ ┌────────┐ ┌────────┐
+│  Turso  │ │Upstash │ │OpenAI │ │ Stripe │ │ Gemini │
+│ SQLite  │ │ Redis  │ │  LLM  │ │Payments│ │  OCR   │
+└─────────┘ └────────┘ └───────┘ └────────┘ └────────┘
 ```
 
 </details>
 
-### Stack Tecnológico
+### Stack técnico
 
-**Backend:** FastAPI, Python 3.12+, Turso (SQLite), Upstash Redis/Vector, OpenAI GPT-5-mini, Google Gemini 3 Flash, Groq (LlamaGuard4), Stripe, Resend
+| Capa | Tecnología |
+|:-----|:-----------|
+| **Frontend** | React 18, Vite 5, TypeScript 5, React Router, Lucide, Recharts, vanilla-cookieconsent v3 |
+| **Backend** | FastAPI, Python 3.12+, Pydantic, Uvicorn, SlowAPI |
+| **Datos** | Turso (SQLite distribuido), Upstash Redis, Upstash Vector |
+| **IA** | OpenAI GPT-5-mini, Google Gemini 3 Flash Image, Groq (LlamaGuard4) |
+| **Pagos** | Stripe Checkout + Customer Portal |
+| **Email** | Resend (password reset, alertas) |
+| **Infra** | Railway (auto-deploy), Cloudflare (DNS + Turnstile) |
 
-**Frontend:** React 18, Vite 5, TypeScript, React Router, Lucide React, Recharts, vanilla-cookieconsent v3
+### RAG pipeline
 
-**Infra:** Railway (auto-deploy), Cloudflare (DNS + Turnstile CAPTCHA), GitHub (Copilot code review instructions)
-
-### RAG Pipeline
-
-- **463 documentos** oficiales (AEAT, BOE, Diputaciones Forales)
-- **92.393 chunks**, **85.587 embeddings** (text-embedding-3-large)
-- FTS5 + búsqueda semántica híbrida
-- Crawler automatizado: 90 URLs, 23 territorios, Scrapling anti-bot
+- **463 documentos** oficiales — AEAT, BOE, Diputaciones Forales.
+- **92.393 chunks** indexados, **85.587 embeddings** (OpenAI `text-embedding-3-large`).
+- **FTS5 + búsqueda semántica híbrida** con fallback de acentos y filtro territorial.
+- **Crawler automatizado** — 90 URLs, 23 territorios, Scrapling anti-bot.
 
 ---
 
-## Seguridad (13 capas)
+## 🛡️ Seguridad (13 capas)
 
 <details>
-<summary>Ver las 13 capas de seguridad</summary>
+<summary><b>Ver las 13 capas</b></summary>
 
-1. **Rate Limiting** — SlowAPI + Upstash Redis
-2. **Security Headers** — CSP, X-Frame-Options, XSS, Referrer-Policy
-3. **JWT Auth** — Access + refresh tokens
-4. **Cloudflare Turnstile** — CAPTCHA en Login + Register
-5. **MFA / 2FA** — TOTP + backup codes
-6. **Prompt Injection** — Llama Prompt Guard 2 via Groq
-7. **PII Detection** — DNI/NIE, telefonos, emails, cuentas bancarias
-8. **SQL Injection** — Consultas parametrizadas + deteccion OWASP
-9. **Content Moderation** — Llama Guard 4, 14 categorias
-10. **Content Restriction** — Contenido autónomo bloqueado para plan Particular
-11. **Semantic Cache** — Upstash Vector, umbral 0,93, TTL 24h
-12. **Guardrails** — Validación input/output
-13. **Audit Logger** — Registro inmutable
+| # | Capa | Herramienta |
+|:-:|:-----|:-----------|
+| 1 | Rate Limiting | SlowAPI + Upstash Redis |
+| 2 | Security Headers | CSP, X-Frame-Options, XSS, Referrer-Policy |
+| 3 | JWT Auth | Access + refresh tokens |
+| 4 | CAPTCHA | Cloudflare Turnstile en Login / Register |
+| 5 | MFA / 2FA | TOTP + backup codes |
+| 6 | Prompt Injection | Llama Prompt Guard 2 via Groq |
+| 7 | PII Detection | DNI/NIE, teléfonos, emails, IBAN |
+| 8 | SQL Injection | Consultas parametrizadas + detección OWASP |
+| 9 | Content Moderation | Llama Guard 4 (14 categorías) |
+| 10 | Content Restriction | Contenido autónomo bloqueado para plan Particular |
+| 11 | Semantic Cache | Upstash Vector, umbral 0,93, TTL 24 h |
+| 12 | Guardrails | Validación input/output |
+| 13 | Audit Logger | Registro inmutable |
 
 </details>
 
 ---
 
-## Quick Start
+## ⚡ Quick Start (desarrolladores)
 
-### Requisitos previos
+### Requisitos
 
 - Python 3.12+
 - Node.js 18+
 - API Keys: OpenAI, Turso, Upstash, Groq, Stripe, Resend, Google Gemini
 
-### 1. Clonar y configurar variables de entorno
+### 1 · Clonar y configurar
 
 ```bash
 git clone https://github.com/Nambu89/Impuestify.git
@@ -244,12 +300,12 @@ cp .env.example .env
 # Editar .env con tus API keys (ver .env.example para la lista completa)
 ```
 
-### 2. Backend
+### 2 · Backend
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Seed datos de referencia
@@ -259,27 +315,26 @@ python scripts/seed_deductions_territorial.py
 python scripts/seed_pgc_accounts.py
 python scripts/seed_test_users.py
 
-# Iniciar
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 3. Frontend
+### 3 · Frontend
 
 ```bash
 cd frontend
 npm install
-npm run dev   # http://localhost:3000
+npm run dev         # http://localhost:5173
 ```
 
 ---
 
-## Testing
+## 🧪 Testing
 
 ```bash
-# Backend (~1.800+ tests, incluye 379 DefensIA + 47 IS)
+# Backend — ~1.800 tests (incluye 379 DefensIA + 47 Modelo 200)
 cd backend && pytest tests/ -v
 
-# Frontend (build check)
+# Frontend — build check
 cd frontend && npm run build
 
 # E2E Playwright
@@ -287,7 +342,7 @@ npx playwright test tests/e2e/
 ```
 
 <details>
-<summary>Usuarios de test</summary>
+<summary><b>Usuarios de test</b></summary>
 
 | Email | Password | Plan |
 |:------|:---------|:-----|
@@ -301,30 +356,25 @@ Seed: `cd backend && python scripts/seed_test_users.py`
 
 ---
 
-## Screenshots
+## 🚢 Deployment
 
-> *Próximamente: capturas de la interfaz principal, DefensIA wizard, clasificador de facturas y dashboard contable.*
+Railway auto-deploy en cada push a `main`. Dos servicios independientes:
 
----
-
-## Deployment
-
-Railway auto-deploy en cada push a `main`. Dos servicios:
-
-- **Backend**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1`
-- **Frontend**: `npm run build && npx vite preview --host 0.0.0.0 --port $PORT`
+- **Backend** — `uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 120`
+- **Frontend** — `npm run build && npx vite preview --host 0.0.0.0 --port $PORT`
 
 <details>
-<summary>Troubleshooting</summary>
+<summary><b>Troubleshooting rápido</b></summary>
 
 | Problema | Solución |
 |:---------|:---------|
-| Backend no conecta a Turso | Verificar `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` |
+| Backend no conecta a Turso | Verificar `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` |
 | Escala IRPF no encontrada | `python scripts/seed_estatal_scale.py` |
 | Deducciones vacías | `python scripts/seed_deductions.py` + `seed_deductions_territorial.py` |
 | PGC cuentas vacías | `python scripts/seed_pgc_accounts.py` |
 | Clasificador facturas 503 | Verificar `GOOGLE_GEMINI_API_KEY` |
-| Upload timeout | El OCR Gemini tarda 30-60s, timeout configurado a 120s |
+| Upload timeout | El OCR Gemini tarda 30–60 s, timeout 120 s |
+| DefensIA uploads 503 | Verificar `DEFENSIA_STORAGE_KEY` |
 | CORS errors | Verificar `ALLOWED_ORIGINS` incluye URL del frontend |
 | UnicodeEncodeError Windows | Ejecutar con `PYTHONUTF8=1` |
 
@@ -332,30 +382,32 @@ Railway auto-deploy en cada push a `main`. Dos servicios:
 
 ---
 
-## Contribuir
+## 🤝 Contribuir
 
 1. Fork del repositorio
 2. Crear rama: `git checkout -b feat/mi-feature`
-3. Seguir las convenciones de naming (ver `CLAUDE.md`)
+3. Seguir las convenciones de naming (ver [`CLAUDE.md`](CLAUDE.md))
 4. Asegurar que pasan los tests: `pytest tests/ -v` + `npm run build`
 5. Pull request contra `main`
 
-El proyecto incluye instrucciones de code review para GitHub Copilot en `.github/copilot-instructions.md`.
+Todas las PR se revisan con las instrucciones oficiales en [`.github/copilot-instructions.md`](.github/copilot-instructions.md).
 
 ---
 
-## Disclaimer Legal
+## ⚠️ Disclaimer legal
 
-Impuestify es una herramienta de asistencia informativa. **No constituye asesoramiento fiscal profesional.** Siempre consulta con un asesor fiscal cualificado para decisiones importantes.
+Impuestify es una **herramienta de asistencia informativa** apoyada en legislación oficial. **No constituye asesoramiento fiscal profesional.** Antes de presentar cualquier modelo o escrito ante la administración, consulta con un asesor fiscal o abogado colegiado.
+
+El módulo **DefensIA** incluye disclaimer obligatorio en 4 superficies (banner, argumentos, escrito exportado, checkbox pre-export) antes de cualquier exportación DOCX/PDF.
 
 ---
 
 <div align="center">
 
-**[impuestify.com](https://impuestify.com)**
+### [🚀 impuestify.com](https://impuestify.com)
 
-Desarrollado por **Fernando Prada**
+Desarrollado con ❤️ por **Fernando Prada**
 
-MIT License
+*MIT License*
 
 </div>

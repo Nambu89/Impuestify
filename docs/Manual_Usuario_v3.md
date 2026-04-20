@@ -354,6 +354,32 @@ Impuestify puede generar borradores en PDF de los principales modelos fiscales p
 
 ---
 
+## 10bis. Modelo 200 — Impuesto sobre Sociedades
+
+Si tienes una **sociedad limitada (SL)**, **sociedad anónima (SA)** o empresa de nueva creación, Impuestify incluye un simulador completo del Impuesto sobre Sociedades.
+
+Accede desde **Herramientas > Modelo 200** o en `/modelo-200`.
+
+### Qué cubre
+
+- **7 territorios**: régimen común + los 4 territorios forales (Álava, Bizkaia, Gipuzkoa, Navarra) + Zona Especial Canaria (ZEC) + Ceuta/Melilla.
+- **Tipos impositivos adaptados** por territorio y por tipo de entidad (general, empresa de reducida dimensión, entidad de nueva creación, entidades ZEC).
+- **Pagos fraccionados** (Modelo 202) calculados según el Art. 40 LIS.
+- **PDF borrador** con las 16 casillas principales listas para revisar.
+- **Prefill desde workspace**: si tienes tu contabilidad cargada en un workspace, Impuestify rellena automáticamente los datos de la cuenta de Pérdidas y Ganancias en el simulador.
+
+### Cómo usarlo
+
+1. Entra en `/modelo-200` y sigue el wizard en 4 pasos.
+2. Selecciona el territorio fiscal (aplicará los tipos y bonificaciones correctos).
+3. Introduce los datos contables (resultado del ejercicio, ajustes, bases negativas de ejercicios anteriores…). Si tienes workspace, muchos campos se rellenan solos.
+4. Revisa el resultado: base imponible, tipo aplicado, cuota íntegra, cuota líquida y pago fraccionado estimado.
+5. Descarga el PDF borrador.
+
+> **Aviso**: El simulador es orientativo. Antes de presentar el Modelo 200 ante la AEAT o la Diputación Foral correspondiente, valida el resultado con un asesor fiscal especializado en Impuesto sobre Sociedades.
+
+---
+
 ## 11. Suscripción y Facturación
 
 ### Planes y precios

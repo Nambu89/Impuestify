@@ -109,3 +109,57 @@ playwright.config.ts
 
 # Windows reserved filename
 nul
+
+# Databases locales
+vectors.db
+*.db
+!*.db.example
+
+# Vite cache
+**/vite.config.ts.timestamp-*.mjs
+**/vite.config.js.timestamp-*.mjs
+
+# Carpetas locales de trabajo (fixtures, features en investigacion)
+Facturas prueba*/
+Nueva Feature*/
+
+# Playwright reports y artefactos E2E locales
+tests/e2e/playwright-report/
+tests/e2e/session*-results.json
+tests/e2e/dom-diagnostic.js
+tests/e2e/retest-session*.js
+tests/e2e/get-response-texts.js
+
+# QA diagnostico especificos por sesion/fecha (resultado de runs puntuales)
+tests/e2e/qa-diagnose.spec.ts
+tests/e2e/qa-session*.spec.ts
+tests/e2e/qa-s1*-*.spec.ts
+tests/e2e/qa-exhaustivo-*.spec.ts
+tests/e2e/qa-full-*.spec.ts
+tests/e2e/qa-clasificador-*.spec.ts
+tests/e2e/qa-mobile-upload-facturas.spec.ts
+tests/e2e/qa-guia-fiscal-gipuzkoa-*.spec.ts
+tests/e2e/qa-workspaces-*.spec.ts
+tests/e2e/s1*-qa-*.spec.ts
+tests/e2e/s2*-qa-*.spec.ts
+tests/e2e/regression-*.spec.ts
+tests/e2e/debug-*.spec.ts
+tests/e2e/crypto-bug-diagnosis.spec.ts
+tests/e2e/crypto-login-check.spec.ts
+tests/e2e/env-check-*.spec.ts
+tests/e2e/guia-fiscal-*-*.spec.ts
+tests/e2e/guia-fiscal-melilla-*.spec.ts
+tests/e2e/session-docs-nomina-*.spec.ts
+tests/e2e/tax-guide-*-*.spec.ts
+tests/e2e/subscription-flow-*.spec.ts
+tests/e2e/fixtures/invoices_prueba/
+
+# Documentos marketing generados localmente
+Impuestify_*.docx
+Impuestify_*.pdf
+
+# Artefactos accidentales de pastes rotos
+implementation_plan.md.resolved
+
+# Windows Task Scheduler exports (locales)
+**/_task.xml

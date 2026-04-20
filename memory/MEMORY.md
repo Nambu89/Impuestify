@@ -1,11 +1,11 @@
 # TaxIA (Impuestify) — Memoria del Agente
 
-> Ultima actualizacion: 2026-04-13 (sesion 32)
-> Sesion 32: DefensIA Parte 1 COMPLETA — nuevo modulo defensor fiscal anti-alucinacion
-> Brainstorming + spec + plan + 16 tasks TDD ejecutadas en rama `claude/defensia-v1`
-> 58 tests verdes, caso David (141 archivos, 4 reclamaciones) como ground truth
-> Motor hibrido 4 fases: Gemini extraccion → reglas deterministas → RAG verificador → LLM redactor
-> Pendiente Parte 2: 30 reglas R001-R030, RAG verificador, writer, frontend, beta
+> Ultima actualizacion: 2026-04-20 (sesion 34 + hotfixes post-merge)
+> Sesion 34: DefensIA + Modelo 200 IS mergeados a main en produccion
+> Bug 84 hotfix: prefix /api/ faltante en endpoints DefensIA frontend
+> DefensIA back-link "Volver a inicio" anadido en las 3 paginas
+> README reescrito con toque visual cliente + logo + screenshots capterra
+> Cleanup: 23 fragmentos de codigo basura borrados del root, gitignore ampliado
 
 ## Indice de archivos de memoria
 
@@ -57,16 +57,24 @@
 | `memory/project_session30_rag_workspaces.md` | Sesion 30: RAG fix (OOM, tildes, SSE, 84K sync), workspace RAG hibrido, facturas test |
 | `memory/project_workspace_vision.md` | Vision workspace = centro operaciones autonomo. RAG hibrido (global + docs usuario) |
 | `memory/project_session32_defensia_part1.md` | Sesion 32 (2026-04-13): DefensIA Parte 1. Motor hibrido 4 fases anti-alucinacion. 58 tests, caso David ground truth |
-| `memory/project_session33_defensia_part2.md` | **Sesion 33 (2026-04-15): DefensIA Parte 2 COMPLETA. Wave 2B Back (9 servicios + 13 endpoints) + Wave 1F/2F Front (Vitest + 15+6 tasks) + Wave 3 parcial (GDPR + audits). 62 commits, 375 backend tests + 92 frontend. Copilot 16/16 resuelto. Pipeline end-to-end funcional: upload Fase 1 auto, brief POST, analyze SSE** |
+| `memory/project_session33_defensia_part2.md` | Sesion 33 (2026-04-15): DefensIA Parte 2 COMPLETA. Wave 2B Back + Wave 1F/2F Front + Wave 3 parcial. 62 commits, 375 back + 92 front tests. Copilot 16/16 |
+| `memory/project_session34_modelo200_is.md` | Sesion 34: Modelo 200 IS — simulador 7 territorios, 47 tests, endpoints, workspace prefill, PDF, frontend wizard |
+| `memory/project_session34_defensia_fixtures_copilot3.md` | Sesion 34: T3-001b fixtures PDF caso David + Copilot round 3 + cleanup 58 archivos basura |
+| `memory/project_session22_rag_fix.md` | Sesion 22: RAG fix completo (territory tildes, OOM, SSE, Vector sync 84K) |
+| `memory/project_workspace_vision.md` | Vision workspace = centro operaciones autonomo. RAG hibrido (global + docs usuario) |
+| `memory/bugfixes-2026-04.md` | Bugs Abril 2026 (65-84): clasificador, RAG crash, importes OCR, workspace, defensia, hotfix /api prefix |
+| `memory/feedback_always_research_first.md` | SIEMPRE investigar antes de dar datos factuales (anti-alucinacion) |
+| `memory/feedback_no_browser_console.md` | NUNCA hacer console.log con datos sensibles (PII, tokens) |
 
 ## Datos clave del proyecto
 
 - **Dominio**: `impuestify.com` (NO .es)
 - **Hosting**: Railway (frontend + backend). Auto-deploy ON. **1 worker** (344 MB, OOM con >1)
-- **VITE_API_URL**: `https://taxia-production.up.railway.app`
-- **Tests**: ~1,758 backend PASS + frontend build OK
+- **VITE_API_URL**: `https://taxia-production.up.railway.app` (sin `/api`, hay que anadirlo en cada call)
+- **Backend API prefix**: TODOS los routers usan `prefix="/api/..."` — olvidarlo en frontend = 404 (Bug 84)
+- **Tests**: ~1,800+ backend PASS + frontend build OK
 - **Modelo LLM**: SIEMPRE gpt-5-mini. Params: `temperature=1`, `max_completion_tokens` (NUNCA `max_tokens`)
-- **Upstash Vector**: 84,036 embeddings sincronizados (100%). Sync script: `scripts/sync_to_upstash.py`
+- **RAG**: 463 docs, 92,393 chunks, 85,587 embeddings sincronizados en Upstash Vector
 - **Owner**: `fernando.prada@proton.me` (sin restricciones)
 - **Test users QA**: `test.particular/autonomo/creator@impuestify.es` (Test2026!)
 
@@ -84,8 +92,13 @@
 ## BACKLOG — Pendiente
 
 ### Alta prioridad (proxima sesion)
-- [ ] **DefensIA merge a main** — Rama `claude/defensia-v1` con 62 commits, 375 backend tests + 92 frontend tests, Copilot 16/16 resuelto, pipeline end-to-end funcional. Bloqueadores para merge: (1) T3-001 E2E Playwright caso David 4 viewports con fixtures anonimizados, (2) T3-001b script anonimize_caso_david.py, (3) T3-006 verifier final, (4) beta test con David Oliva primero, (5) deploy prod: seed DEFENSIA_STORAGE_KEY env var en Railway. Ver `memory/project_session33_defensia_part2.md`
-- [ ] **Ingestar al RAG los 3 Manuales AEAT 2025 descargados en sesion 32** — `docs/AEAT/IRPF/AEAT-Manual_Practico_IRPF_2025_Parte1.pdf` (7.54 MB), `_Parte2.pdf` (3.80 MB), `docs/AEAT/IVA/AEAT-Manual_Practico_IVA_2025.pdf` (6.30 MB). Total: 17.64 MB nuevos, criticos para el chat fiscal (campana renta 2025 ya activa desde 8-abr-2026). Accion: `backend/scripts/reingest_aeat.py` o ingesta selectiva de los 3 ficheros → Turso + Upstash Vector. Verificar con `python -m backend.scripts.doc_crawler --stats` que inventario refleja docs nuevos. Ver `memory/crawler-state.md`.
+- [x] ~~**DefensIA merge a main**~~ DONE sesion 34 (mergeado 71+ commits)
+- [x] ~~**Ingestar al RAG los 3 Manuales AEAT 2025**~~ DONE sesion 34 (463 docs, 92K chunks, 85K embeddings)
+- [x] ~~**Hotfix lazy imports Modelo200Page**~~ DONE sesion 34
+- [x] ~~**Bug 84 hotfix: prefix /api faltante DefensIA**~~ DONE 2026-04-20 (commit 20bf545)
+- [x] ~~**DefensIA back-link "Volver a inicio"**~~ DONE 2026-04-20 (commit 8f7932c)
+- [ ] **DEFENSIA_STORAGE_KEY en Railway** — sin esto uploads DefensIA devuelven 503
+- [ ] **Seed pharmacy deductions en produccion Turso**
 - [ ] **Investigar DR130 diseno de registro actualizado** — El historico `DR130_e2019.xls` (ejercicio 2015 version 11) ya no esta en sede. AEAT tiene ahora los disenos en `sede.agenciatributaria.gob.es/Sede/iva/pre-303/nuevo-servicio-pre303-importacion-libros-electronico/formatos-electronicos-libros-registro.html` actualizados a 01-01-2026. Accion: WebFetch esa pagina, localizar link al DR del Modelo 130 actual, actualizar watchlist. Estimado: 10 min.
 - [ ] **Investigar Scrapling anti-bot fail en AEAT downloads** — En sesion 32 detectado que `check_url_exists` devuelve 200 pero `download_document` devuelve 404 para los mismos URLs tras volumen de requests. `curl` directo descarga sin problema. Probable rate limiting / fingerprint detection de Cloudflare en AEAT. Accion: reviewar Scrapling fetcher config, considerar fallback a urllib/httpx para dominio `sede.agenciatributaria.gob.es`, o pasar User-Agent manual. Estimado: 30-45 min.
 - [ ] **PDFs prerrellenados desde chat** — Tool `generate_modelo_pdf` en WorkspaceAgent. El RAG calcula modelo (303/130) con datos workspace + CCAA usuario → genera PDF descargable desde el chat
@@ -102,20 +115,24 @@
 - [ ] Integracion factura electronica (FacturaE/VeriFactu)
 - [ ] App movil (React Native)
 
-## DefensIA — Estado actual (sesion 33)
+## DefensIA — Estado actual (post-merge main, sesion 34)
 
-- **Rama**: `claude/defensia-v1` (62 commits, NO mergeada a main)
-- **Tests**: 375 backend + 92 frontend verdes
-- **Wave 2B Backend COMPLETO**: rate_limits, storage AES-GCM+zstd, quota reserve-commit-release atomico, RAG verifier 0.7, writer + 9 plantillas Jinja2, export DOCX/PDF, service fachada, agent con guardrails, router 13 endpoints
-- **Wave 1F+2F Frontend COMPLETO**: Vitest + RTL + jsdom, types, 11 componentes, 6 hooks SSE/blob, 3 pages con dark theme, Header dropdown entry, App.tsx lazy routes
-- **Wave 3 PARCIAL**: GDPR cascade 7 tablas, ortografia audit (87 tildes fixed), anti-hallucination audit (invariante #2), dead code removal. Pendiente T3-001 E2E Playwright + T3-006 verifier final
-- **Pipeline end-to-end funcional**: upload PDF -> Fase 1 auto (classifier + extractor Gemini + phase detector) -> POST brief -> analyze SSE (reglas + RAG verifier + writer con TEAR abreviada/general segun cuota) -> dictamen + escrito persistidos -> ExpedientePage con tabs
-- **Copilot resuelto 16/16**: 2 rondas, 10 bugs CRITICAL fixeados (rules engine enums, phase detector SANCIONADOR + naive datetime, writer REPOSICION, migrations fail-fast, quota user-binding + atomic multi-worker)
-- **Security**: Bandit B701 silenciado (writer markdown no HTML), axios CVE SSRF parcheado
-- **Motor hibrido 4 fases OPERATIVO**: Fase 1 extraccion automatica tras upload + Fases 2-4 tras brief explicito (regla #1 preservada)
-- **Regla #1 del producto**: NO arranca analisis juridico hasta que user escribe brief. Fase 1 (extraccion tecnica) SI auto-dispara al upload
-- **Invariante #2 anti-alucinacion**: 0 citas normativas hardcoded en plantillas Jinja2 (script auditor verifica)
-- **Invariante multi-worker**: quota reserve usa UPDATE condicional atomico con rowcount check (no TOCTOU)
-- **Alcance v1**: 5 tributos (IRPF+IVA+ISD+ITP+Plusvalia) + verificacion/comprobacion limitada + sancionador + reposicion/TEAR abreviada/general
-- **Monetizacion**: 1/3/5 expedientes/mes por plan Particular/Autonomo/Creator + 15/12/10 EUR extra
-- **Docs**: `plans/2026-04-13-defensia-{design,implementation-plan,implementation-plan-part2}.md` + `memory/project_session32_defensia_part1.md` + `memory/project_session33_defensia_part2.md`
+- **Estado**: MERGEADO A MAIN en produccion (71+ commits integrados).
+- **Tests**: 375 backend + 92 frontend verdes. Build frontend OK.
+- **Hotfix 2026-04-20**: prefix `/api/` anadido a los 9 endpoints DefensIA del frontend (Bug 84). Back-link "Volver a inicio" anadido a las 3 paginas.
+- **Pipeline end-to-end funcional**: upload PDF → Fase 1 auto (classifier + extractor Gemini + phase detector) → POST brief → analyze SSE (reglas + RAG verifier + writer con TEAR abreviada/general segun cuota) → dictamen + escrito persistidos → ExpedientePage con tabs.
+- **Regla #1 del producto**: NO arranca analisis juridico hasta que user escribe brief. Fase 1 (extraccion tecnica) SI auto-dispara al upload.
+- **Invariantes**: (#2) 0 citas normativas hardcoded en plantillas Jinja2. (#multi-worker) quota reserve atomico via UPDATE condicional.
+- **Alcance v1**: 5 tributos (IRPF + IVA + ISD + ITP + Plusvalia) + verificacion / comprobacion limitada / sancionador + reposicion / TEAR abreviada / TEAR general.
+- **Monetizacion**: 1 / 3 / 5 expedientes/mes por plan Particular/Autonomo/Creator + 15 / 12 / 10 EUR por expediente extra.
+- **Pendiente prod**: `DEFENSIA_STORAGE_KEY` en Railway (sin esto uploads devuelven 503).
+- **Docs**: `plans/2026-04-13-defensia-{design,implementation-plan,implementation-plan-part2}.md`, `memory/project_session32_defensia_part1.md`, `memory/project_session33_defensia_part2.md`, `memory/project_session34_defensia_fixtures_copilot3.md`.
+
+## Modelo 200 IS — Estado actual (sesion 34)
+
+- **Estado**: MERGEADO A MAIN (11 commits). Hotfix lazy imports Modelo200Page aplicado.
+- **Tests**: 47 tests Modelo 200 + Modelo 202.
+- **Territorios**: 7 (regimen comun + 4 forales + ZEC + Ceuta/Melilla).
+- **Features**: simulador IS, pagos fraccionados Modelo 202 (Art. 40 LIS), workspace prefill desde PyG contable, PDF borrador 16 casillas, frontend wizard 4 pasos.
+- **Tool**: `simulate_is` integrada en TaxAgent.
+- **Docs**: `memory/project_session34_modelo200_is.md`.

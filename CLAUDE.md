@@ -127,8 +127,12 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 | Creator | 49 EUR/mes | Influencers, YouTubers, streamers, bloggers | + IVA by platform, Modelo 349, DAC7, CNAE 60.39, multi-role profiles |
 | Autonomo | 39 EUR/mes IVA incl. | Self-employed | + All models (303/130/131), crypto, workspace, calendar |
 
-## Key Updates (2026-04-13)
+## Key Updates (2026-04-20)
 
+- **Hotfix 2026-04-20 — Bug 84**: DefensIA `/defensia/expedientes` 404 en produccion. Causa: backend monta `/api/defensia`, frontend llamaba `/defensia` sin prefix. Fix: prefix `/api/` anadido en 9 call sites (7 archivos). Tests actualizados. Regla documentada en `frontend/CLAUDE.md` — TODO hook nuevo DEBE usar `/api/<router>/...`. Commit `20bf545` en main.
+- **DefensIA — "Volver a inicio"**: Back-link anadido en `DefensiaListPage`, `DefensiaWizardPage` y `DefensiaExpedientePage` (este ultimo navega a `/defensia`). Estilo `.defensia-back-link` clonado del patron `.cf-back-link`. Commit `8f7932c` en main.
+- **Session 34 — Merge final a main**: DefensIA (71+ commits) + Modelo 200 IS (11 commits) mergeados a main en produccion. Hotfix lazy imports `Modelo200Page` (app crasheaba por imports faltantes). Copilot rounds 8-9 (48 comentarios resueltos en total). RAG ingesta completa: 463 docs, 92,393 chunks, 85,587 embeddings. `copilot-instructions.md` activo.
+- **Cleanup 2026-04-20**: 23 fragmentos de codigo basura borrados del root (fragments de paste rotos: `({`, `[...prev`, `parseDeductions(content)`, etc.). `.gitignore` ampliado: vectors.db, vite timestamps, playwright reports, QA session-specific tests, carpetas locales.
 - **Session 32 — DefensIA Parte 1** (sesion 32): Nuevo modulo defensor fiscal con motor hibrido anti-alucinacion (Gemini extraccion → reglas deterministas → RAG verificador → LLM redactor controlado). Brainstorming + spec + plan + Wave 1 Back ejecutada en rama `claude/defensia-v1`. **58 tests verdes** (migracion, models, taxonomy, classifier, 7 extractores, phase detector 12-estados, caso David ground truth, rules engine scaffold). Caso David Oliva (141 archivos, 4 reclamaciones encadenadas) como ground truth del producto. 4 bugs detectados y fixeados (ver bugfixes-2026-04.md Bug 78-81). Parte 2 pendiente (~58 tasks: 30 reglas R001-R030, RAG verificador, writer service, frontend completo, E2E, beta). Spec en `plans/2026-04-13-defensia-design.md`, plan en `plans/2026-04-13-defensia-implementation-plan.md`, memoria sesion en `memory/project_session32_defensia_part1.md`. 23 commits.
 - **DefensIA scope v1**: 5 tributos (IRPF + IVA + ISD + ITP + Plusvalia Municipal) + procedimientos verificacion/comprobacion limitada/sancionador + vias reposicion/TEAR (abreviado y general). FUERA: inspeccion, apremio, TEAC, contencioso, IS. Monetizacion: 1/3/5 expedientes/mes por plan Particular/Autonomo/Creator + 15/12/10 EUR por expediente extra. Disclaimer obligatorio en 4 superficies (banner, argumentos, escrito exportado, checkbox pre-export). Entrada en dropdown "Herramientas" del Header.tsx (en Parte 2).
 - **Regla #1 de producto DefensIA**: el sistema NO arranca analisis juridico hasta que el usuario escriba su brief. Fase 1 (extraccion tecnica) SI puede auto-dispararse al subir documentos. Fases 2-4 (reglas + RAG verificador + redactor) requieren accion explicita del usuario.
@@ -193,6 +197,6 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 
 When context reaches ~50%, Claude Code compresses history. To preserve critical info:
 - Re-read `CLAUDE.md` + relevant descendant CLAUDE.md after compaction
-- Check `memory/MEMORY.md` for project state (updated 2026-04-10, session 31)
+- Check `memory/MEMORY.md` for project state (updated 2026-04-20, session 34 + hotfixes)
 - Check `agent-comms.md` for pending inter-agent tasks
 - Check `claude-progress.txt` for session history
