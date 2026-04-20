@@ -125,7 +125,7 @@ export function DefensiaWizardPage() {
       dispatch({ type: "CREAR_START" });
       try {
         const res = await apiRequest<{ id: string }>(
-          "/defensia/expedientes",
+          "/api/defensia/expedientes",
           {
             method: "POST",
             body: JSON.stringify({
@@ -149,7 +149,7 @@ export function DefensiaWizardPage() {
     if (state.paso === 4 && state.expedienteId) {
       try {
         await apiRequest(
-          `/defensia/expedientes/${state.expedienteId}/brief`,
+          `/api/defensia/expedientes/${state.expedienteId}/brief`,
           {
             method: "POST",
             body: JSON.stringify({ texto: state.brief }),

@@ -50,7 +50,7 @@ export function EscritoEditor({
       const token = localStorage.getItem("access_token");
       const contenido = editor.getHTML();
       const res = await fetch(
-        `${API_URL}/defensia/expedientes/${expedienteId}/escrito/${escritoId}`,
+        `${API_URL}/api/defensia/expedientes/${expedienteId}/escrito/${escritoId}`,
         {
           method: "PATCH",
           headers: {

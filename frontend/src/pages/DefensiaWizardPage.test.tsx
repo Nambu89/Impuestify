@@ -67,7 +67,7 @@ describe("DefensiaWizardPage", () => {
     expect(siguiente).not.toBeDisabled();
     await user.click(siguiente);
     expect(apiRequestMock).toHaveBeenCalledWith(
-      "/defensia/expedientes",
+      "/api/defensia/expedientes",
       expect.objectContaining({ method: "POST" }),
     );
     expect(await screen.findByText(/paso 2/i)).toBeInTheDocument();
@@ -152,13 +152,13 @@ describe("DefensiaWizardPage", () => {
     await user.click(screen.getByRole("button", { name: /siguiente/i }));
 
     expect(apiRequestMock).toHaveBeenCalledWith(
-      "/defensia/expedientes/exp-new-1/brief",
+      "/api/defensia/expedientes/exp-new-1/brief",
       expect.objectContaining({
         method: "POST",
       }),
     );
     const briefCall = apiRequestMock.mock.calls.find(
-      (c) => c[0] === "/defensia/expedientes/exp-new-1/brief",
+      (c) => c[0] === "/api/defensia/expedientes/exp-new-1/brief",
     );
     expect(briefCall![1].body).toContain("falta de motivación");
 

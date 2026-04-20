@@ -18,7 +18,7 @@ cd frontend && npm run build # Must pass before any commit
 | Hook | File | Purpose |
 |------|------|---------|
 | `useAuth` | hooks/useAuth.tsx | Auth context (login, logout, token management). User includes `is_owner`, `subscription_status`, `subscription_plan` |
-| `useApi` | hooks/useApi.ts | Returns `{ askQuestion, getHealth, apiRequest }`. Use `apiRequest(url)` for GET, `apiRequest(url, {method:'POST'})` for POST. **NOT an axios instance** — never call `.get()/.post()` on it |
+| `useApi` | hooks/useApi.ts | Returns `{ askQuestion, getHealth, apiRequest }`. Use `apiRequest(url)` for GET, `apiRequest(url, {method:'POST'})` for POST. **NOT an axios instance** — never call `.get()/.post()` on it. **SIEMPRE** prefijo `/api/<router>/...` en la URL (backend monta todos los routers bajo `/api`). En prod `VITE_API_URL` = dominio backend sin `/api`, olvidarlo = 404 (Bug 84) |
 | `useConversations` | hooks/useConversations.ts | Conversation CRUD operations |
 | `useStreamingChat` | hooks/useStreamingChat.ts | SSE v3.0: `content_chunk` append + `content` replace. `responseAccRef` (useRef) avoids stale closures. `TimelineStep[]` for StreamingTimeline |
 | `useWorkspaces` | hooks/useWorkspaces.ts | Workspace CRUD, file upload, active workspace state |

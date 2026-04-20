@@ -7,6 +7,12 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-04-20] FRONTEND — 🟢 DONE — Bug 84 hotfix: DefensIA `/defensia/expedientes` 404 en prod
+
+Hotfix prefix `/api/` en 9 call sites DefensIA (7 archivos: useDefensiaExpedientes, useDefensiaExpediente, useDefensiaAnalyze, useDefensiaChat, useDefensiaUpload, useDefensiaExport, DefensiaWizardPage, EscritoEditor). Backend monta `/api/defensia`, frontend llamaba `/defensia` sin prefix. Tests actualizados. Build OK. Documentado en bugfixes-2026-04.md Bug 84.
+
+---
+
 ## [2026-04-20] PM Coordinator — 🟢 DONE — Sesión 34 final: merge main + hotfix + docs + Copilot 48/48
 
 Todo mergeado a main y en producción. Hotfix lazy imports Modelo200Page. 48 comentarios Copilot (9 rounds). README + Manual v3 + Business Plan reescritos. copilot-instructions.md activo. Caveman plugin. RAG 463 docs completa. Pendiente: DEFENSIA_STORAGE_KEY en Railway.

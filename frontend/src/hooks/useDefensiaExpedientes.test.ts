@@ -50,7 +50,7 @@ describe("useDefensiaExpedientes", () => {
     apiRequestMock.mockResolvedValue({ expedientes: [] });
     renderHook(() => useDefensiaExpedientes());
     await waitFor(() =>
-      expect(apiRequestMock).toHaveBeenCalledWith("/defensia/expedientes"),
+      expect(apiRequestMock).toHaveBeenCalledWith("/api/defensia/expedientes"),
     );
   });
 });
