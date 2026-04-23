@@ -51,8 +51,8 @@ const VENTAJAS = [
 
 export default function CeutaMelillaPage() {
     useSEO({
-        title: 'Ventajas Fiscales en Ceuta y Melilla | Impuestify',
-        description: 'Descubre las ventajas fiscales exclusivas de Ceuta y Melilla: deducción 60% cuota IRPF, IPSI en lugar de IVA, bonificaciones IS.',
+        title: 'Fiscalidad en Ceuta y Melilla — Impuestify',
+        description: 'Cómo se aplica la deducción del 60 % en la cuota del IRPF, el IPSI en lugar del IVA y las bonificaciones del IS para residentes en Ceuta y Melilla.',
         canonical: '/ceuta-melilla',
         keywords: 'fiscalidad Ceuta Melilla, IPSI, deducción 60% IRPF, ventajas fiscales Ceuta, impuestos Melilla',
         schema: [

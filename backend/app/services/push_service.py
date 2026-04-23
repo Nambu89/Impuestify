@@ -245,13 +245,13 @@ async def send_deadline_alerts(db: Optional[TursoClient] = None) -> dict:
 
                 if days_remaining >= 15:
                     title = "Recordatorio fiscal"
-                    body = f"Recuerda: {model_info} vence el {end_date_str}"
+                    body = f"{model_info} vence el {end_date_str}"
                 elif days_remaining >= 5:
-                    title = "Plazo fiscal proximo"
-                    body = f"Quedan {days_remaining} dias para presentar {model_info}"
+                    title = "Plazo fiscal próximo"
+                    body = f"Quedan {days_remaining} días para presentar {model_info}"
                 else:
-                    title = "ULTIMO DIA — Plazo fiscal"
-                    body = f"ULTIMO DIA: {model_info} vence manana"
+                    title = "Último día — Plazo fiscal"
+                    body = f"Último día: {model_info} vence mañana"
 
                 # Send push
                 push_result = await send_push(
@@ -329,15 +329,15 @@ def _build_deadline_email_html(deadlines: list[dict], frontend_url: str) -> str:
                 Impuestify
             </h1>
             <p style="margin: 6px 0 0 0; opacity: 0.85; font-size: 14px;">
-                Recordatorio de plazos fiscales — 30 dias
+                Plazos fiscales a 30 días
             </p>
         </div>
 
         <!-- Body -->
         <div style="padding: 28px 32px; background: #f8fafc;">
             <p style="margin: 0 0 20px 0; color: #1a202c; font-size: 15px; line-height: 1.6;">
-                Tienes los siguientes plazos fiscales que vencen en los proximos <strong>30 dias</strong>.
-                Recuerda presentarlos a tiempo para evitar recargos.
+                Estos plazos vencen en los próximos <strong>30 días</strong>.
+                Preséntalos antes de la fecha límite para evitar recargos.
             </p>
 
             <!-- Deadlines table -->
@@ -356,7 +356,7 @@ def _build_deadline_email_html(deadlines: list[dict], frontend_url: str) -> str:
                             </th>
                             <th style="padding: 10px 12px; text-align: left; color: #374151;
                                        font-weight: 600; border-bottom: 2px solid #e2e8f0;">
-                                Fecha limite
+                                Fecha límite
                             </th>
                         </tr>
                     </thead>
@@ -381,12 +381,9 @@ def _build_deadline_email_html(deadlines: list[dict], frontend_url: str) -> str:
 
             <!-- Footer disclaimer -->
             <p style="color: #6b7280; font-size: 12px; margin: 0; line-height: 1.5;">
-                Este recordatorio es meramente informativo y no constituye asesoramiento fiscal
-                profesional. Consulta con un gestor o asesor fiscal antes de presentar tus
-                declaraciones.<br><br>
-                Puedes desactivar estos recordatorios en cualquier momento desde tu
-                <a href="{profile_url}" style="color: #1a56db; text-decoration: underline;">
-                    perfil en Impuestify</a>.
+                Aviso orientativo. Antes de presentar cualquier modelo, contrasta con tu asesor o gestor fiscal.<br><br>
+                Si no quieres seguir recibiéndolos, desactívalos en tu
+                <a href="{profile_url}" style="color: #1a56db; text-decoration: underline;">perfil</a>.
             </p>
         </div>
 

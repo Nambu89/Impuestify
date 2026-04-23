@@ -46,8 +46,8 @@ function getBarClass(pct: number): string {
 
 export default function CalculadoraUmbralesPage() {
   useSEO({
-    title: 'Calculadora Umbrales Contables PGC — Impuestify',
-    description: '¿Normal o abreviado? Comprueba qué plan contable aplica a tu empresa según activo, cifra de negocios y número de empleados.',
+    title: 'Umbrales contables PGC normal o abreviado — Impuestify',
+    description: 'Comprueba si a tu empresa le aplica el PGC normal o el abreviado según activo, cifra de negocios y plantilla en los dos últimos ejercicios.',
     canonical: '/calculadora-umbrales',
     keywords: 'umbrales contables, PGC normal abreviado, plan general contabilidad, balance abreviado, PYMES contabilidad',
     schema: {
@@ -158,7 +158,7 @@ export default function CalculadoraUmbralesPage() {
           <Building2 size={32} />
           <div>
             <h1>Calculadora de Umbrales Contables</h1>
-            <p>Descubre si tu empresa puede usar PGC PYMES, balance abreviado o si necesita auditoría</p>
+            <p>Qué PGC te aplica, si puedes llevar balance abreviado y si estás obligado a auditar.</p>
           </div>
         </div>
 
@@ -316,14 +316,14 @@ export default function CalculadoraUmbralesPage() {
                 <p className="calc-umb-disclaimer">{result.disclaimer}</p>
 
                 <div className="calc-umb-cta">
-                  <p>¿Necesitas ayuda con la contabilidad de tu empresa?</p>
-                  <a href="/contact" className="calc-umb-cta-btn">Contactar con un asesor</a>
+                  <p>¿Quieres que te echemos una mano con la contabilidad?</p>
+                  <a href="/contact" className="calc-umb-cta-btn">Hablar con el equipo</a>
                 </div>
               </>
             ) : (
               <div className="calc-umb-placeholder">
                 <Building2 size={48} />
-                <p>Introduce los datos financieros de los 2 últimos ejercicios y pulsa "Clasificar empresa"</p>
+                <p>Rellena los datos de los dos últimos ejercicios y pulsa "Clasificar empresa".</p>
               </div>
             )}
           </div>

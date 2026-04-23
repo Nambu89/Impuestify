@@ -59,46 +59,46 @@ export default function AITransparencyModal({ onAccept }: AITransparencyModalPro
                     <div className="ai-notice">
                         <Shield size={20} />
                         <p>
-                            <strong>Impuestify utiliza inteligencia artificial</strong> (los últimos modelos de lenguaje del mercado)
-                            para responder a tus consultas fiscales.
+                            <strong>Impuestify funciona con IA</strong> (modelos de lenguaje de última generación) para
+                            responder tus consultas fiscales.
                         </p>
                     </div>
 
                     <div className="ai-features">
-                        <h3>Es importante que sepas:</h3>
+                        <h3>Antes de empezar:</h3>
 
                         <div className="ai-feature-item">
                             <AlertCircle size={18} className="feature-icon warning" />
                             <div className="feature-text">
-                                <strong>La IA puede cometer errores</strong>
-                                <p>Las respuestas pueden contener inexactitudes o "alucinaciones"</p>
+                                <strong>La IA se equivoca</strong>
+                                <p>A veces inventa datos. Revisa siempre las cifras antes de usarlas.</p>
                             </div>
                         </div>
 
                         <div className="ai-feature-item">
                             <CheckCircle size={18} className="feature-icon success" />
                             <div className="feature-text">
-                                <strong>Siempre verifica con un profesional</strong>
-                                <p>Esta herramienta NO sustituye el asesoramiento fiscal certificado</p>
+                                <strong>Esto no sustituye a un asesor</strong>
+                                <p>Para decisiones importantes, contrasta con un fiscalista colegiado.</p>
                             </div>
                         </div>
 
                         <div className="ai-feature-item">
                             <Shield size={18} className="feature-icon primary" />
                             <div className="feature-text">
-                                <strong>Tus datos están protegidos</strong>
-                                <p>Cumplimos con RGPD y procesamos tu información de forma segura</p>
+                                <strong>Tus datos, bajo RGPD</strong>
+                                <p>Tratamiento seguro, servidores en la UE y borrado a petición.</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="ai-legal-links">
                         <p className="legal-text">
-                            Para más información, consulta nuestra{' '}
+                            Más detalle en la{' '}
                             <Link to="/ai-transparency" target="_blank">
                                 Política de Transparencia IA
                             </Link>
-                            {' y nuestra '}
+                            {' y la '}
                             <Link to="/privacy-policy" target="_blank">
                                 Política de Privacidad
                             </Link>

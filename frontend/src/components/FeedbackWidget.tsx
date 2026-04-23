@@ -146,8 +146,8 @@ export default function FeedbackWidget() {
                         {sent ? (
                             <div className="feedback-success">
                                 <CheckCircle size={40} />
-                                <p>¡Gracias por tu feedback!</p>
-                                <span>Tu mensaje ha sido recibido.</span>
+                                <p>Gracias.</p>
+                                <span>Lo leemos y te contestamos si hace falta.</span>
                             </div>
                         ) : (
                             <form className="feedback-form" onSubmit={handleSubmit}>

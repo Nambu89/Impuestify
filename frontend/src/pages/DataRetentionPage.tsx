@@ -295,7 +295,7 @@ export default function DataRetentionPage() {
 
                 <div className="legal-cta">
                     <p>
-                        Impuestify se compromete a conservar sus datos solo el tiempo estrictamente necesario.
+                        Conservamos tus datos solo el tiempo imprescindible para prestar el servicio y cumplir la ley.
                     </p>
                 </div>
             </div>

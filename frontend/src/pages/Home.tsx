@@ -68,8 +68,8 @@ export default function Home() {
     const { isAuthenticated } = useAuth()
 
     useSEO({
-        title: 'Impuestify — Asistente Fiscal IA para España | IRPF, Autónomos, Creadores',
-        description: 'Asistente fiscal con IA para particulares, autónomos y creadores de contenido en España. Simulador IRPF, +1000 deducciones, 21 territorios.',
+        title: 'Impuestify — Asistente fiscal con IA para España',
+        description: 'Simulador de IRPF con los tramos de tu CCAA, base de deducciones autonómicas y guías para autónomos y creadores. 21 territorios cubiertos.',
         canonical: '/',
         keywords: 'asistente fiscal IA, impuestos España, IRPF, declaración renta, deducciones autónomo, creadores contenido',
         schema: {

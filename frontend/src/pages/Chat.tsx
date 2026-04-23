@@ -411,7 +411,7 @@ export default function Chat() {
                                         {message.loading ? (
                                             <div className="message-loading">
                                                 <Loader2 size={20} className="animate-spin" />
-                                                <span>Analizando tu consulta...</span>
+                                                <span>Pensando...</span>
                                             </div>
                                         ) : (
                                             <>
@@ -579,9 +579,7 @@ export default function Chat() {
                         <div className="modal-header">
                             <h3>📎 Analizar documento</h3>
                             <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px', lineHeight: '1.5', marginBottom: '12px' }}>
-                                Sube un documento nómina o notificación de la AEAT en formato PDF o imagen.
-                                Analizaré el contenido, identificaré plazos importantes y te ayudaré
-                                a entender los pasos a seguir.
+                                Sube una nómina o una notificación de la AEAT (PDF o imagen) y te digo qué pone, qué plazos hay y qué toca hacer.
                             </p>
                             <button
                                 className="modal-close"
@@ -595,7 +593,7 @@ export default function Chat() {
                                 const analysisMessage: Message = {
                                     id: Date.now().toString(),
                                     role: 'assistant',
-                                    content: `📋 ** Análisis de Notificación: ${analysis.type}**\n\n${analysis.summary} \n\n-- -\n\n💡 Puedes hacerme preguntas sobre esta notificación y te ayudaré con toda la información de la AEAT.`
+                                    content: `📋 ** Análisis de Notificación: ${analysis.type}**\n\n${analysis.summary} \n\n-- -\n\n💡 Pregúntame lo que quieras sobre esta notificación.`
                                 }
 
                                 setMessages(prev => [...prev, analysisMessage])

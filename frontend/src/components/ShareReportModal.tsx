@@ -42,7 +42,7 @@ export function ShareReportModal({ reportId, onClose }: ShareReportModalProps) {
             })
 
             if (response.status === 503) {
-                setError('El envio por email no esta disponible en este momento. Puedes descargar el PDF y enviarlo manualmente.')
+                setError('El envío por email no está disponible ahora mismo. Descarga el PDF y mándalo tú.')
                 return
             }
 
@@ -68,7 +68,7 @@ export function ShareReportModal({ reportId, onClose }: ShareReportModalProps) {
         <div className="share-modal-overlay" onClick={onClose}>
             <div className="share-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="share-modal-header">
-                    <h3>Enviar informe a tu asesor fiscal</h3>
+                    <h3>Enviar el informe a tu asesor</h3>
                     <button className="share-modal-close" onClick={onClose}>
                         <X size={20} />
                     </button>
@@ -78,7 +78,7 @@ export function ShareReportModal({ reportId, onClose }: ShareReportModalProps) {
                     <div className="share-modal-body">
                         <div className="share-success">
                             <Check size={32} />
-                            <p>Informe enviado correctamente a <strong>{email}</strong></p>
+                            <p>Informe enviado a <strong>{email}</strong></p>
                         </div>
                     </div>
                 ) : (
@@ -104,7 +104,7 @@ export function ShareReportModal({ reportId, onClose }: ShareReportModalProps) {
                             <textarea
                                 id="advisor-message"
                                 className="share-textarea"
-                                placeholder="Adjunto mi simulacion IRPF para revision..."
+                                placeholder="Hola, te paso mi simulación del IRPF para que la revises..."
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 maxLength={500}

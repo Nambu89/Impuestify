@@ -31,8 +31,8 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function CalculadoraRetencionesPage() {
   useSEO({
-    title: 'Calculadora Retenciones IRPF 2026 Gratis — Impuestify',
-    description: 'Calcula tu retención de IRPF 2026 según el algoritmo oficial de la AEAT. Resultado inmediato, gratis, sin registro. Para asalariados y autónomos.',
+    title: 'Calculadora de retenciones IRPF 2026 — Impuestify',
+    description: 'Calcula el tipo de retención de tu nómina en 2026 siguiendo el algoritmo de la AEAT. Válido para asalariados y para autónomos con retención.',
     canonical: '/calculadora-retenciones',
     keywords: 'calculadora retenciones IRPF 2026, retención nómina, tipo retención, algoritmo AEAT, calcular IRPF',
     schema: [
@@ -135,7 +135,7 @@ export default function CalculadoraRetencionesPage() {
           <Calculator size={32} />
           <div>
             <h1>Calculadora de Retenciones IRPF 2026</h1>
-            <p>Calcula tu tipo de retención según el algoritmo oficial de la AEAT</p>
+            <p>Tu tipo de retención con el algoritmo que aplica la AEAT.</p>
           </div>
         </div>
 
@@ -360,14 +360,14 @@ export default function CalculadoraRetencionesPage() {
                 <p className="calc-ret-disclaimer">{result.disclaimer}</p>
 
                 <div className="calc-ret-cta">
-                  <p>¿Quieres saber cuánto te devuelve Hacienda?</p>
-                  <a href="/guia-fiscal" className="calc-ret-cta-btn">Usar la Guía Fiscal completa</a>
+                  <p>¿Te sale a devolver o a pagar en la renta? Hazlo con la Guía Fiscal.</p>
+                  <a href="/guia-fiscal" className="calc-ret-cta-btn">Ir a la Guía Fiscal</a>
                 </div>
               </>
             ) : (
               <div className="calc-ret-placeholder">
                 <Calculator size={48} />
-                <p>Introduce tus datos y pulsa "Calcular retención" para ver tu resultado</p>
+                <p>Rellena los datos y pulsa "Calcular retención".</p>
               </div>
             )}
           </div>

@@ -49,11 +49,11 @@ export default function CookieConsentBanner() {
                 translations: {
                     es: {
                         consentModal: {
-                            title: 'Utilizamos cookies',
+                            title: 'Cookies',
                             description:
-                                'Utilizamos cookies propias y tecnologías de almacenamiento local para el funcionamiento del servicio y mejorar tu experiencia. ' +
-                                'Puedes aceptar todas, rechazar las no esenciales o configurar tus preferencias. ' +
-                                'Consulta nuestra <a href="/politica-cookies">Política de Cookies</a> para más información.',
+                                'Usamos cookies propias y almacenamiento local para que el servicio funcione. Las no esenciales ' +
+                                'las decides tú: aceptar, rechazar o afinarlas en preferencias. Detalles completos en la ' +
+                                '<a href="/politica-cookies">Política de Cookies</a>.',
                             acceptAllBtn: 'Aceptar todas',
                             acceptNecessaryBtn: 'Rechazar',
                             showPreferencesBtn: 'Configurar cookies',
@@ -66,19 +66,17 @@ export default function CookieConsentBanner() {
                             closeIconLabel: 'Cerrar',
                             sections: [
                                 {
-                                    title: 'Uso de cookies y almacenamiento local',
+                                    title: 'Cookies y almacenamiento local',
                                     description:
-                                        'Utilizamos cookies y almacenamiento local (localStorage) para garantizar el funcionamiento del servicio ' +
-                                        'y, en el futuro, para analizar el uso de la plataforma de forma anónima. ' +
-                                        'Puedes activar o desactivar cada categoría según tus preferencias. ' +
-                                        'Para más detalles, consulta nuestra <a href="/politica-cookies">Política de Cookies</a>.',
+                                        'Usamos cookies y localStorage para que el servicio funcione. En el futuro podrán servir para métricas ' +
+                                        'anónimas de uso. Activa o desactiva cada categoría según prefieras. ' +
+                                        'Detalles en la <a href="/politica-cookies">Política de Cookies</a>.',
                                 },
                                 {
                                     title: 'Cookies estrictamente necesarias',
                                     description:
-                                        'Estas cookies y datos de almacenamiento local son imprescindibles para que el sitio funcione correctamente. ' +
-                                        'Incluyen la autenticación del usuario (JWT) y el registro de tus preferencias de cookies. ' +
-                                        'No se pueden desactivar.',
+                                        'Sin estas cookies el sitio no funciona. Cubren la autenticación (JWT) y el propio registro de tus ' +
+                                        'preferencias de cookies. No se pueden desactivar.',
                                     linkedCategory: 'necessary',
                                     cookieTable: {
                                         headers: {
@@ -112,9 +110,9 @@ export default function CookieConsentBanner() {
                                 {
                                     title: 'Cookies analíticas',
                                     description:
-                                        'Estas cookies nos permiten analizar de forma anónima cómo se utiliza la plataforma para poder mejorarla. ' +
-                                        'Actualmente no utilizamos cookies analíticas, pero esta categoría queda preparada para el futuro. ' +
-                                        'Están desactivadas por defecto y solo se activarán con tu consentimiento.',
+                                        'Servirían para ver de forma anónima cómo se usa la plataforma. Hoy por hoy no usamos ninguna: ' +
+                                        'esta categoría queda reservada por si las incorporamos más adelante. ' +
+                                        'Están desactivadas por defecto y solo se activan con tu consentimiento.',
                                     linkedCategory: 'analytics',
                                     cookieTable: {
                                         headers: {
@@ -136,7 +134,7 @@ export default function CookieConsentBanner() {
                                 {
                                     title: 'Más información',
                                     description:
-                                        'Si tienes dudas sobre nuestra política de cookies, puedes <a href="mailto:privacy@impuestify.com">contactarnos</a>.',
+                                        'Si algo no te cuadra en la política de cookies, escríbenos a <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>.',
                                 },
                             ],
                         },

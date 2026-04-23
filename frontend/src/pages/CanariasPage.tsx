@@ -59,8 +59,8 @@ const IGIC_TIPOS = [
 
 export default function CanariasPage() {
     useSEO({
-        title: 'Fiscalidad en Canarias — IGIC, ZEC y Deducciones | Impuestify',
-        description: 'Descubre las ventajas fiscales de Canarias: IGIC al 7% en lugar de IVA 21%, ZEC al 4% para sociedades, RIC, deducciones específicas.',
+        title: 'Fiscalidad en Canarias: IGIC, ZEC y RIC — Impuestify',
+        description: 'Cómo tributa quien reside o factura en Canarias: IGIC al 7 % en lugar de IVA, ZEC al 4 % en sociedades, RIC y deducciones propias del archipiélago.',
         canonical: '/canarias',
         keywords: 'fiscalidad Canarias, IGIC, ZEC Canarias, RIC, deducciones Canarias, impuestos Canarias',
         schema: [

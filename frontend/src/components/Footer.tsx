@@ -20,12 +20,11 @@ export default function Footer() {
                     <div className="footer-section">
                         <h3>Impuestify</h3>
                         <p className="footer-tagline">
-                            Tu asistente fiscal inteligente
+                            Tu asistente fiscal con IA
                         </p>
                         <p className="footer-disclaimer">
                             <Bot className="inline-icon" size={14} />
-                            {' '}Este servicio utiliza inteligencia artificial.
-                            La información es orientativa, no sustituye asesoramiento profesional.
+                            {' '}Respuestas generadas con IA: son orientativas y no sustituyen al asesor fiscal.
                         </p>
                     </div>
 

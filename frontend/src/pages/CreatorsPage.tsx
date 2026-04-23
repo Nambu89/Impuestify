@@ -128,8 +128,8 @@ export default function CreatorsPage() {
     const [openFaq, setOpenFaq] = useState<number | null>(null)
 
     useSEO({
-        title: 'Impuestos para Creadores de Contenido | YouTubers, TikTokers, Streamers | Impuestify',
-        description: 'Calculadora fiscal para creadores de contenido en España. IVA por plataforma, Modelo 349, DAC7, CNAE 60.39. Desde 49 EUR/mes.',
+        title: 'Fiscalidad para creadores de contenido — Impuestify',
+        description: 'Guía fiscal para creadores en España: IVA según plataforma (YouTube, Twitch, TikTok, Patreon), Modelo 349, reporte DAC7 y alta CNAE 60.39.',
         canonical: '/creadores-de-contenido',
         keywords: 'impuestos creadores contenido, YouTubers impuestos, TikTok fiscal, streamers IVA, influencer autónomo',
         schema: [

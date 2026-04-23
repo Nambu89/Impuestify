@@ -61,8 +61,8 @@ function BreakdownBar({ label, amount, pct, colorClass, isBase }: BreakdownBarPr
 
 export default function NetSalaryPage() {
     useSEO({
-        title: 'Calculadora Sueldo Neto Autónomo 2026 — Impuestify',
-        description: 'Calcula cuánto te queda neto como autónomo en 2026. IRPF, IVA, cuota Seguridad Social según tu régimen fiscal. 5 regímenes. Gratis.',
+        title: 'Calculadora de sueldo neto para autónomos — Impuestify',
+        description: 'Calcula lo que te queda en la mano tras IRPF, IVA o IGIC y cuota de autónomos. Soporta régimen común, Canarias, Ceuta, Melilla y País Vasco.',
         canonical: '/calculadora-neto',
         keywords: 'calculadora neto autónomo 2026, sueldo neto autónomo, cuota autónomo, IRPF autónomo, IVA autónomo',
         schema: [
@@ -130,7 +130,7 @@ export default function NetSalaryPage() {
                         <span className="ns-title-highlight">¿Cuánto te queda</span> limpio?
                     </h1>
                     <p className="ns-subtitle">
-                        Calcula tu sueldo neto real como autónomo — en segundos, sin rodeos
+                        Tu sueldo neto real de autónomo, calculado con la cuota que te toca este año.
                     </p>
                 </div>
 
@@ -303,9 +303,8 @@ export default function NetSalaryPage() {
                         <div className="ns-disclaimer">
                             <Info size={14} />
                             <span>
-                                Cálculo orientativo basado en estimación IRPF general. Para una
-                                simulación exacta usa la{' '}
-                                <a href="/guia-fiscal" className="ns-link">Guía Fiscal</a>.
+                                Estimación orientativa sobre IRPF general. Para el cálculo exacto con tu CCAA y deducciones,
+                                usa la <a href="/guia-fiscal" className="ns-link">Guía Fiscal</a>.
                             </span>
                         </div>
                     </section>

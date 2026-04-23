@@ -189,8 +189,8 @@ export default function ObligadoDeclararPage() {
     const [checked, setChecked] = useState(false)
 
     useSEO({
-        title: '¿Estoy Obligado a Declarar la Renta 2026? — Impuestify',
-        description: 'Comprueba en 30 segundos si estás obligado a presentar la declaración de la renta 2026. Umbrales actualizados, un pagador o varios.',
+        title: '¿Estás obligado a declarar la renta 2026? — Impuestify',
+        description: 'Comprueba si tienes que presentar declaración en 2026 según ingresos, tipo de rendimientos, número de pagadores y situación como autónomo.',
         canonical: '/obligado-declarar',
         keywords: 'obligado declarar renta 2026, umbrales declaración, límite rentas IRPF, dos pagadores renta, exento declaración',
         schema: [
@@ -277,9 +277,8 @@ export default function ObligadoDeclararPage() {
                             la renta en 2026?
                         </h1>
                         <p className="od-hero-subtitle">
-                            Compruébalo en 30 segundos. Datos fiscales actualizados a la
-                            campaña de la renta 2025/2026, incluyendo el nuevo límite de
-                            15.876 EUR para dos pagadores.
+                            Tres preguntas y lo sabes. Con los umbrales de la campaña 2025/2026, incluido
+                            el nuevo tope de 15.876 EUR para dos pagadores.
                         </p>
                     </FadeContent>
                 </div>
@@ -292,7 +291,7 @@ export default function ObligadoDeclararPage() {
                         <div className="od-checker-card">
                             <h2 className="od-checker-title">Comprobador rápido</h2>
                             <p className="od-checker-desc">
-                                Responde 3 preguntas y te diremos si tienes obligación de declarar.
+                                Tres preguntas, resultado al instante.
                             </p>
 
                             {/* Pregunta 1 */}
@@ -414,12 +413,12 @@ export default function ObligadoDeclararPage() {
                                             <div className="od-result-body">
                                                 <strong>No, no estás obligado a declarar</strong>
                                                 <p>
-                                                    Tus ingresos están por debajo del límite mínimo para tu
-                                                    situación. Aun así, puede convenirte declarar si te
-                                                    practicaron retenciones o tienes deducciones pendientes.
+                                                    Tus ingresos no llegan al umbral. Puede aun así compensarte
+                                                    presentarla si te retuvieron en nómina o tienes deducciones
+                                                    sin aplicar.
                                                 </p>
                                                 <Link to="/guia-fiscal" className="od-result-cta">
-                                                    ¿Me sale a devolver? Calcúlalo gratis
+                                                    Mira si te sale a devolver
                                                     <ArrowRight size={14} />
                                                 </Link>
                                             </div>
@@ -456,8 +455,8 @@ export default function ObligadoDeclararPage() {
                             )}
 
                             <p className="od-checker-disclaimer">
-                                Esta herramienta es orientativa. Para casos complejos (inmuebles,
-                                criptomonedas, herencias) consulta la guía fiscal completa o a un asesor.
+                                Resultado orientativo. Para inmuebles, cripto o herencias, tira de la guía
+                                fiscal completa o pregunta a un asesor.
                             </p>
                         </div>
                     </FadeContent>

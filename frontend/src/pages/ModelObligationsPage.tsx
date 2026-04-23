@@ -57,8 +57,8 @@ function formatDate(dateStr: string): string {
 
 export default function ModelObligationsPage() {
     useSEO({
-        title: 'Modelos Fiscales Obligatorios por Actividad — Impuestify',
-        description: 'Descubre qué modelos de la AEAT debes presentar según tu actividad, régimen y territorio. Modelos 303, 130, 131, 390 y más.',
+        title: 'Qué modelos fiscales te toca presentar — Impuestify',
+        description: 'Mira qué modelos AEAT aplican a tu actividad y territorio: 303, 130, 131, 390, 347, 349 y resumen anual, con sus plazos de presentación.',
         canonical: '/modelos-obligatorios',
         keywords: 'modelos fiscales obligatorios, modelo 303, modelo 130, modelo 390, AEAT modelos, declaraciones trimestrales',
         schema: {
@@ -131,14 +131,14 @@ export default function ModelObligationsPage() {
                 <div className="mo-container">
                     <div className="mo-hero-badge">
                         <ClipboardList size={14} />
-                        <span>Asesor de obligaciones fiscales</span>
+                        <span>Obligaciones fiscales</span>
                     </div>
                     <h1 className="mo-hero-title">
-                        ¿Qué modelos fiscales tienes que presentar?
+                        ¿Qué modelos tengo que presentar?
                     </h1>
                     <p className="mo-hero-subtitle">
-                        Introduce tu perfil fiscal y descubre todos los modelos que debes presentar
-                        ante Hacienda, con fechas límite y enlaces a la sede electrónica.
+                        Dinos cómo es tu actividad y te devolvemos la lista de modelos que te tocan, con fechas
+                        y enlace directo a la sede electrónica correspondiente.
                     </p>
                 </div>
             </section>
@@ -345,9 +345,9 @@ export default function ModelObligationsPage() {
 
                     <div className="mo-disclaimer">
                         <AlertTriangle size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                        Esta herramienta es orientativa. Consulta con un asesor fiscal para confirmar tus
-                        obligaciones concretas. Las fechas límite pueden variar si caen en día inhábil.
-                        Datos actualizados para el ejercicio fiscal 2025 (presentación 2026).
+                        Listado orientativo. Confirma con tu asesor los modelos exactos que te aplican. Las fechas
+                        se trasladan al día hábil siguiente si caen en festivo. Datos del ejercicio 2025
+                        (presentación en 2026).
                     </div>
                 </section>
             )}
@@ -357,7 +357,7 @@ export default function ModelObligationsPage() {
                     <div className="mo-empty-icon">
                         <ClipboardList size={48} />
                     </div>
-                    <p>No se han encontrado obligaciones para este perfil.</p>
+                    <p>Con este perfil no hay modelos periódicos que presentar.</p>
                 </div>
             )}
         </div>

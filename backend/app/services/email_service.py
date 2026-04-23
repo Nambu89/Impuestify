@@ -106,15 +106,15 @@ class EmailService:
             </div>
             <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px;">
                 <p>Hola,</p>
-                <p><strong>{user_name}</strong> ha compartido contigo un informe fiscal generado con Impuestify:</p>
+                <p><strong>{user_name}</strong> te comparte un informe fiscal generado con Impuestify:</p>
                 <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin: 15px 0;">
                     <p style="margin: 0; font-weight: 600;">{report_title}</p>
                 </div>
-                <p>Encontrarás el informe en PDF adjunto a este email.</p>
+                <p>El PDF va adjunto.</p>
                 <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
                 <p style="color: #666; font-size: 12px;">
-                    Este informe ha sido generado automáticamente por Impuestify y tiene carácter
-                    meramente orientativo. No constituye asesoramiento fiscal profesional.
+                    Informe orientativo generado de forma automática. No sustituye al asesoramiento
+                    de un profesional fiscal.
                 </p>
             </div>
         </div>

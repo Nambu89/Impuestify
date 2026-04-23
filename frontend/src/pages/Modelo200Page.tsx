@@ -125,8 +125,8 @@ export default function Modelo200Page() {
   const { workspaces, fetchWorkspaces } = useWorkspaces()
 
   useSEO({
-    title: 'Modelo 200 \u2014 Simulador Impuesto sobre Sociedades | Impuestify',
-    description: 'Calcula el Impuesto sobre Sociedades (IS) de tu empresa. Simulador Modelo 200 con tipo reducido para pymes, nueva creaci\u00f3n, deducciones I+D+i, BINs y pagos fraccionados Modelo 202.',
+    title: 'Simulador del Modelo 200 (IS) — Impuestify',
+    description: 'Calcula la cuota del Impuesto sobre Sociedades con ajustes extracontables, compensación de BINs, tipo reducido de pymes y deducciones por I+D+i.',
     canonical: '/modelo-200',
     keywords: 'modelo 200, impuesto sociedades, IS, pyme, SL, simulador, deducciones I+D, BINs, modelo 202',
     schema: {

@@ -75,8 +75,8 @@ const IRPF_TRAMOS = [
 
 export default function ForalPage() {
     useSEO({
-        title: 'Declaración de la Renta en Territorios Forales | Impuestify',
-        description: 'Calcula tu IRPF foral en Araba, Bizkaia, Gipuzkoa y Navarra. Tramos, deducciones y modelos específicos del País Vasco y Navarra.',
+        title: 'IRPF en País Vasco y Navarra — Impuestify',
+        description: 'Cómo tributar en territorios forales: tramos y deducciones de Araba, Bizkaia, Gipuzkoa y Navarra, con los modelos de cada hacienda foral.',
         canonical: '/territorios-forales',
         keywords: 'IRPF foral, País Vasco impuestos, Navarra IRPF, Bizkaia declaración renta, Gipuzkoa fiscal, Araba hacienda foral',
         schema: [

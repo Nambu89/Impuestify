@@ -145,8 +145,8 @@ export default function ChecklistBorradorPage() {
     const [expandedId, setExpandedId] = useState<number | null>(null)
 
     useSEO({
-        title: 'Checklist Borrador Renta 2026: 15 Puntos antes de Confirmar — Impuestify',
-        description: '1 de cada 3 borradores tiene errores. Comprueba los 15 puntos clave antes de confirmar tu declaración de la renta 2026.',
+        title: 'Qué revisar en el borrador de la renta 2026 — Impuestify',
+        description: 'Lista con 15 comprobaciones habituales antes de confirmar el borrador: CCAA, situación familiar, retenciones, vivienda, deducciones autonómicas.',
         canonical: '/checklist-borrador',
         keywords: 'checklist borrador renta 2026, revisar borrador AEAT, errores declaración renta, confirmar borrador',
         og: { type: 'article' },
@@ -345,9 +345,9 @@ export default function ChecklistBorradorPage() {
                         ) : null}
 
                         <div className="checklist-sidebar-cta">
-                            <p>¿Quieres que Impuestify detecte automáticamente tus deducciones?</p>
+                            <p>Deja que Impuestify te apunte las deducciones que se te suelen escapar.</p>
                             <Link to="/guia-fiscal" className="checklist-btn-primary">
-                                Guía fiscal gratuita
+                                Guía fiscal gratis
                                 <ArrowRight size={16} />
                             </Link>
                             <Link to="/register" className="checklist-btn-secondary">
@@ -477,10 +477,11 @@ export default function ChecklistBorradorPage() {
                     <FadeContent direction="up" duration={500} delay={300}>
                         <div className="checklist-cta-box">
                             <h2 className="checklist-cta-title">
-                                ¿Quieres que Impuestify detecte automáticamente tus deducciones?
+                                Deja que Impuestify te apunte las deducciones que te tocan
                             </h2>
                             <p className="checklist-cta-sub">
-                                Nuestro asistente fiscal IA analiza tu situación, detecta las deducciones autonómicas que te corresponden y te guía paso a paso antes de confirmar tu borrador.
+                                Revisamos tu situación, señalamos las deducciones autonómicas aplicables y te acompañamos
+                                punto por punto antes de que confirmes el borrador.
                             </p>
                             <div className="checklist-cta-actions">
                                 <Link to="/guia-fiscal" className="checklist-btn-primary checklist-btn-lg">

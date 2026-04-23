@@ -96,8 +96,8 @@ export function DefensiaWizardPage() {
   const [analyzeStatus, setAnalyzeStatus] = useState<string | null>(null);
 
   useSEO({
-    title: "DefensIA — Nuevo expediente",
-    description: "Abre un expediente en DefensIA paso a paso.",
+    title: "Nuevo expediente — DefensIA",
+    description: "Asistente paso a paso para abrir un expediente de defensa frente a Hacienda.",
     noindex: true,
   });
 

@@ -25,8 +25,8 @@ export function DefensiaExpedientePage() {
   const [exportFormato, setExportFormato] = useState<"docx" | "pdf">("docx");
 
   useSEO({
-    title: expediente ? `DefensIA — ${expediente.titulo}` : "DefensIA — Expediente",
-    description: "Detalle del expediente: argumentos y escrito.",
+    title: expediente ? `${expediente.titulo} — DefensIA` : "Expediente — DefensIA",
+    description: "Argumentos legales, escrito de defensa y documentos del expediente.",
     noindex: true,
   });
 

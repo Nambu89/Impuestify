@@ -11,8 +11,8 @@ export function DefensiaListPage() {
   const { expedientes, loading, error, refetch } = useDefensiaExpedientes();
 
   useSEO({
-    title: "DefensIA — Mis expedientes",
-    description: "Expedientes abiertos en DefensIA.",
+    title: "Mis expedientes — DefensIA",
+    description: "Expedientes que tienes abiertos frente a Hacienda, con su estado y plazo.",
     noindex: true,
   });
 

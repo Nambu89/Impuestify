@@ -55,8 +55,8 @@ export default function Modelo202Page() {
   const [calculated, setCalculated] = useState(false)
 
   useSEO({
-    title: 'Modelo 202 \u2014 Pagos fraccionados Impuesto sobre Sociedades | Impuestify',
-    description: 'Calcula los pagos fraccionados del Impuesto sobre Sociedades (Modelo 202). Art. 40.2 (sobre cuota) y Art. 40.3 (sobre base imponible).',
+    title: 'Pagos fraccionados del IS (Modelo 202) — Impuestify',
+    description: 'Calcula los pagos fraccionados del Impuesto sobre Sociedades por el Art. 40.2 (sobre cuota del ejercicio anterior) o por el Art. 40.3 (sobre base imponible del ejercicio).',
     canonical: '/modelo-202',
     keywords: 'modelo 202, pagos fraccionados, IS, impuesto sociedades, Art 40.2, Art 40.3',
   })

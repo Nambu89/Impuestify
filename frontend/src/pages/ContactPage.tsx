@@ -16,10 +16,10 @@ export default function ContactPage() {
         name: user?.name || '',
         email: user?.email || '',
         subject: contactType === 'autonomo'
-            ? 'Información sobre plan para autónomos'
+            ? 'Interés en el plan para autónomos'
             : '',
         message: contactType === 'autonomo'
-            ? 'Me gustaría recibir información sobre el plan especializado para autónomos y profesionales por cuenta propia.'
+            ? 'Me interesa el plan para autónomos. Avisadme cuando esté disponible.'
             : '',
     })
 
@@ -62,8 +62,7 @@ export default function ContactPage() {
                         <CheckCircle size={48} />
                         <h2>Mensaje enviado</h2>
                         <p>
-                            Hemos recibido tu solicitud. Te responderemos lo antes posible
-                            a <strong>{form.email}</strong>.
+                            Nos ha llegado. Te respondemos a <strong>{form.email}</strong> en cuanto podamos.
                         </p>
                         <Link to="/" className="btn btn-primary">
                             Volver al inicio
@@ -93,9 +92,8 @@ export default function ContactPage() {
                             </div>
                             <h1>Plan para autónomos y profesionales</h1>
                             <p>
-                                Estamos preparando un plan especializado con herramientas adaptadas
-                                a las necesidades de autónomos y profesionales por cuenta propia.
-                                Déjanos tus datos y te informaremos en cuanto esté disponible.
+                                Estamos cocinando un plan con herramientas pensadas para autónomos y profesionales
+                                por cuenta propia. Déjanos tu correo y te avisamos cuando esté listo.
                             </p>
                         </>
                     ) : (
@@ -104,10 +102,9 @@ export default function ContactPage() {
                                 <Mail size={16} />
                                 <span>Contacto</span>
                             </div>
-                            <h1>Contacta con nosotros</h1>
+                            <h1>Escríbenos</h1>
                             <p>
-                                ¿Tienes alguna duda o sugerencia? Rellena el formulario
-                                y te responderemos lo antes posible.
+                                Dudas, sugerencias, un bug que has encontrado. Rellena el formulario y te contestamos.
                             </p>
                         </>
                     )}

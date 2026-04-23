@@ -535,17 +535,17 @@ async def forgot_password(request: Request, data: ForgotPasswordRequest):
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
     <div style="background: #1a56db; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
         <h1 style="margin: 0; font-size: 20px;">Impuestify</h1>
-        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Recuperacion de contrasena</p>
+        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Recuperación de contraseña</p>
     </div>
     <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px;">
         <p>Hola,</p>
-        <p>Has solicitado restablecer tu contrasena en Impuestify.</p>
+        <p>Pulsa el botón para crear una nueva contraseña en Impuestify:</p>
         <div style="text-align: center; margin: 25px 0;">
-            <a href="{reset_link}" style="background: #1a56db; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600;">Restablecer contrasena</a>
+            <a href="{reset_link}" style="background: #1a56db; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600;">Cambiar contraseña</a>
         </div>
-        <p style="color: #666; font-size: 13px;">Este enlace expira en 1 hora. Si no solicitaste este cambio, ignora este email.</p>
+        <p style="color: #666; font-size: 13px;">El enlace caduca en 1 hora. Si no fuiste tú, puedes ignorar este correo; tu cuenta sigue intacta.</p>
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-        <p style="color: #999; font-size: 11px;">Impuestify - Asistente fiscal inteligente</p>
+        <p style="color: #999; font-size: 11px;">Impuestify — Fiscalidad española</p>
     </div>
 </div>
 """
@@ -553,7 +553,7 @@ async def forgot_password(request: Request, data: ForgotPasswordRequest):
         email_service = get_email_service()
         result = await email_service.send_email(
             to=user.email,
-            subject="Restablece tu contrasena en Impuestify",
+            subject="Cambia tu contraseña en Impuestify",
             html=html,
         )
         if not result.get("success"):
@@ -579,7 +579,7 @@ async def reset_password(request: Request, data: ResetPasswordRequest):
     if not token_data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El enlace de recuperacion no es valido o ha expirado"
+            detail="El enlace de recuperación no es válido o ha caducado"
         )
 
     user = await user_service.get_user_by_id(token_data.user_id)
@@ -587,7 +587,7 @@ async def reset_password(request: Request, data: ResetPasswordRequest):
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El enlace de recuperacion no es valido o ha expirado"
+            detail="El enlace de recuperación no es válido o ha caducado"
         )
 
     new_hash = hash_password(data.new_password)
@@ -595,4 +595,4 @@ async def reset_password(request: Request, data: ResetPasswordRequest):
 
     logger.info(f"Password reset completed for user: {user.id}")
 
-    return {"message": "Contrasena actualizada correctamente. Ya puedes iniciar sesion."}
+    return {"message": "Contraseña actualizada. Ya puedes iniciar sesión."}
