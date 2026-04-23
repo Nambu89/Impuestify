@@ -116,10 +116,12 @@ export default function Home() {
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
                         <p className="hero-subtitle">
-                            Declara tu IRPF, gestiona tus facturas y contabilidad de autónomo,
-                            simula el Impuesto sobre Sociedades y defiéndete ante Hacienda.
-                            Todo en un solo sitio, con IA, cobertura en los 21 regímenes
-                            fiscales de España y respuestas citando la legislación oficial.
+                            Haz la renta, lleva la contabilidad de tu actividad como
+                            autónomo, calcula el Impuesto sobre Sociedades o contesta un
+                                requerimiento de Hacienda. Todo desde la misma web. Funciona
+                            con IA, sirve para las 15 comunidades autónomas, las cuatro
+                            forales y Ceuta y Melilla, y cada respuesta te enseña el
+                            artículo de la ley en el que se apoya.
                         </p>
                     </FadeContent>
                     <FadeContent delay={300} duration={600}>
@@ -151,8 +153,8 @@ export default function Home() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Qué puedes hacer con Impuestify</h2>
                         <p className="section-subtitle">
-                            Una plataforma fiscal integral para particulares, autónomos, creadores digitales y sociedades.
-                            Estas son las herramientas reales que tienes desde el primer minuto.
+                            Sirve para particulares, autónomos, creadores y sociedades.
+                            Esto es lo que tienes dentro desde el primer minuto.
                         </p>
                     </FadeContent>
 
@@ -160,8 +162,8 @@ export default function Home() {
                         <FadeContent delay={80} duration={400}>
                             <SpotlightCard className="what-card" spotlightColor="rgba(26, 86, 219, 0.1)">
                                 <div className="what-icon"><FileText size={26} /></div>
-                                <h3>Declara tu IRPF</h3>
-                                <p>Simulador completo de renta con tributación conjunta, forales y Ceuta/Melilla. Descubre deducciones autonómicas que te corresponden.</p>
+                                <h3>Haz tu renta</h3>
+                                <p>Calcula el IRPF con los tramos de tu comunidad o de tu territorio foral. Te dice si sale a pagar o a devolver y qué deducciones autonómicas puedes meter.</p>
                             </SpotlightCard>
                         </FadeContent>
 
@@ -169,7 +171,7 @@ export default function Home() {
                             <SpotlightCard className="what-card" spotlightColor="rgba(6, 182, 212, 0.1)">
                                 <div className="what-icon"><Building2 size={26} /></div>
                                 <h3>Impuesto sobre Sociedades</h3>
-                                <p>Simulador del Modelo 200 para SL, SA y empresas de nueva creación. 7 territorios: común, 4 forales, ZEC y Ceuta/Melilla. Pagos fraccionados Modelo 202.</p>
+                                <p>Modelo 200 para tu SL o tu SA. Régimen común, los cuatro forales, ZEC de Canarias y Ceuta/Melilla. También te calcula los pagos fraccionados del Modelo 202.</p>
                             </SpotlightCard>
                         </FadeContent>
 
@@ -177,7 +179,7 @@ export default function Home() {
                             <SpotlightCard className="what-card" spotlightColor="rgba(16, 185, 129, 0.1)">
                                 <div className="what-icon"><Receipt size={26} /></div>
                                 <h3>IVA y modelos trimestrales</h3>
-                                <p>303, 130, 131, 308, 349, 720, 721 y sus variantes forales (300 Gipuzkoa, F69 Navarra, 420 IGIC Canarias, IPSI Ceuta/Melilla). Borrador PDF listo.</p>
+                                <p>303, 130, 131, 308, 349, 720 y 721. En Gipuzkoa usa el 300, en Navarra el F69, en Canarias el 420 (IGIC) y en Ceuta/Melilla el IPSI. Todos con borrador en PDF.</p>
                             </SpotlightCard>
                         </FadeContent>
 
@@ -185,7 +187,7 @@ export default function Home() {
                             <SpotlightCard className="what-card" spotlightColor="rgba(139, 92, 246, 0.1)">
                                 <div className="what-icon"><Landmark size={26} /></div>
                                 <h3>Sucesiones y Donaciones</h3>
-                                <p>Cálculo del ISD con normativa específica de cada una de las 21 CCAA, incluyendo bonificaciones forales y de Ceuta/Melilla.</p>
+                                <p>ISD con la normativa de cada comunidad, incluidas las bonificaciones forales y las de Ceuta y Melilla.</p>
                             </SpotlightCard>
                         </FadeContent>
 
@@ -193,31 +195,31 @@ export default function Home() {
                             <SpotlightCard className="what-card" spotlightColor="rgba(239, 68, 68, 0.1)">
                                 <div className="what-icon"><Scale size={26} /></div>
                                 <h3>DefensIA: defensa fiscal</h3>
-                                <p>Analiza liquidaciones, requerimientos y sanciones de la AEAT y genera borradores de escritos (reposición, TEAR, alegaciones) con validación normativa.</p>
+                                <p>Si Hacienda te manda una liquidación, una sanción o un requerimiento, DefensIA lee el documento y te redacta el recurso: reposición, TEAR (abreviado o general) o alegaciones.</p>
                             </SpotlightCard>
                         </FadeContent>
 
                         <FadeContent delay={330} duration={400}>
                             <SpotlightCard className="what-card" spotlightColor="rgba(234, 179, 8, 0.1)">
                                 <div className="what-icon"><ScanLine size={26} /></div>
-                                <h3>Facturas y contabilidad PGC</h3>
-                                <p>Sube facturas y se clasifican automáticamente al Plan General Contable. Libro Diario, Mayor, Balance y Pérdidas y Ganancias exportables al Registro Mercantil.</p>
+                                <h3>Facturas y contabilidad</h3>
+                                <p>Subes tus facturas, las clasifica al Plan General Contable y te monta los libros Diario, Mayor, Balance y Pérdidas y Ganancias. Los exportas listos para el Registro Mercantil.</p>
                             </SpotlightCard>
                         </FadeContent>
 
                         <FadeContent delay={380} duration={400}>
                             <SpotlightCard className="what-card" spotlightColor="rgba(59, 130, 246, 0.1)">
                                 <div className="what-icon"><MessageSquare size={26} /></div>
-                                <h3>Chat fiscal conversacional</h3>
-                                <p>Pregunta en lenguaje natural. Respuestas basadas en 463+ documentos oficiales de AEAT, BOE y Diputaciones Forales, con cita a la fuente legal.</p>
+                                <h3>Chat fiscal</h3>
+                                <p>Le preguntas como si hablaras con un asesor. Lo que te contesta viene de más de 460 documentos oficiales (AEAT, BOE, Diputaciones Forales), y siempre te pone la cita al artículo de la ley.</p>
                             </SpotlightCard>
                         </FadeContent>
 
                         <FadeContent delay={430} duration={400}>
                             <SpotlightCard className="what-card" spotlightColor="rgba(6, 182, 212, 0.1)">
                                 <div className="what-icon"><Calculator size={26} /></div>
-                                <h3>6 calculadoras públicas</h3>
-                                <p>Sueldo neto, retenciones IRPF, umbrales contables, obligaciones fiscales, obligado a declarar y checklist del borrador. Sin registro.</p>
+                                <h3>Calculadoras gratis</h3>
+                                <p>Sueldo neto, retenciones de IRPF, umbrales contables, qué modelos tienes que presentar, si estás obligado a declarar y checklist del borrador. Sin registrarte.</p>
                             </SpotlightCard>
                         </FadeContent>
                     </div>
@@ -225,10 +227,10 @@ export default function Home() {
                     <FadeContent delay={500} duration={500}>
                         <div className="what-it-does-footer">
                             <p>
-                                <strong>Lo que Impuestify NO hace:</strong> no presenta modelos ante la AEAT en tu nombre, no realiza
-                                gestión laboral activa (nóminas, TC1/TC2, contratos) y no sustituye el asesoramiento profesional
-                                de un asesor fiscal o abogado colegiado. Siempre valida la información con un experto antes de
-                                presentar cualquier modelo o escrito oficial.
+                                <strong>Lo que no hace Impuestify:</strong> no presenta modelos ante la AEAT
+                                en tu nombre, no gestiona nóminas, TC1/TC2 ni contratos laborales, y no
+                                sustituye a un asesor fiscal o a un abogado colegiado. Antes de presentar un
+                                modelo o un escrito oficial, pásaselo a un profesional.
                             </p>
                         </div>
                     </FadeContent>
@@ -248,8 +250,8 @@ export default function Home() {
             <section className="savings">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">Ahorra en tu declaración de la renta</h2>
-                        <p className="section-subtitle">La mayoría de contribuyentes desconoce deducciones a las que tiene derecho</p>
+                        <h2 className="section-title">Deducciones que no sabías que podías aplicarte</h2>
+                        <p className="section-subtitle">Muchos contribuyentes pagan de más porque ni se enteran de que tienen derecho a una deducción autonómica.</p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
                         <div className="savings-grid">
@@ -257,22 +259,22 @@ export default function Home() {
                                 <span className="savings-card__amount">
                                     <CountUp to={847} separator="." duration={2.5} /> EUR
                                 </span>
-                                <span className="savings-card__label">Ahorro medio descubierto por usuario</span>
-                                <span className="savings-card__detail">En deducciones autonómicas no aplicadas</span>
+                                <span className="savings-card__label">Ahorro medio que aparece por usuario</span>
+                                <span className="savings-card__detail">En deducciones autonómicas que no se habían aplicado</span>
                             </div>
                             <div className="savings-card">
                                 <span className="savings-card__amount">
                                     <CountUp to={3} duration={1.5} /> min
                                 </span>
-                                <span className="savings-card__label">Tiempo medio de consulta</span>
-                                <span className="savings-card__detail">vs 45 min de media con un asesor fiscal</span>
+                                <span className="savings-card__label">Tiempo medio de una consulta</span>
+                                <span className="savings-card__detail">Una asesoría tradicional tarda unos 45 minutos</span>
                             </div>
                             <div className="savings-card">
                                 <span className="savings-card__amount">
                                     5 EUR<span className="savings-card__period">/mes</span>
                                 </span>
-                                <span className="savings-card__label">vs 150-300 EUR de una asesoría</span>
-                                <span className="savings-card__detail">Ahorra hasta un 97% en asesoramiento fiscal</span>
+                                <span className="savings-card__label">Una asesoría cobra entre 150 y 300 EUR al mes</span>
+                                <span className="savings-card__detail">Con Impuestify pagas hasta un 97% menos</span>
                             </div>
                         </div>
                     </FadeContent>
@@ -286,14 +288,15 @@ export default function Home() {
                         <div className="stats-grid">
                             <div className="stat-item">
                                 <span className="stat-number">
-                                    <CountUp to={428} separator="." duration={2.5} />
+                                    <CountUp to={463} separator="." duration={2.5} />
                                     <span>+</span>
                                 </span>
                                 <span className="stat-label">Documentos oficiales</span>
                             </div>
                             <div className="stat-item">
                                 <span className="stat-number">
-                                    <CountUp to={128} duration={2} />
+                                    <CountUp to={1000} separator="." duration={2} />
+                                    <span>+</span>
                                 </span>
                                 <span className="stat-label">Deducciones fiscales</span>
                             </div>
@@ -316,8 +319,8 @@ export default function Home() {
             <section className="coverage">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">Cobertura fiscal completa de toda España</h2>
-                        <p className="section-subtitle">Incluidas las comunidades con sistema fiscal propio</p>
+                        <h2 className="section-title">Todas las comunidades, también las forales</h2>
+                        <p className="section-subtitle">Mapa fiscal de España: régimen común, País Vasco, Navarra, Canarias y Ceuta/Melilla</p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
                         <div className="territory-grid">
@@ -364,7 +367,7 @@ export default function Home() {
             <section className="comparison">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">¿Por qué nuestra IA es diferente?</h2>
+                        <h2 className="section-title">Por qué nuestra IA no se inventa las respuestas</h2>
                     </FadeContent>
                     <div className="comparison-grid">
                         <FadeContent delay={100} duration={500}>
@@ -389,11 +392,11 @@ export default function Home() {
                                     Impuestify
                                 </h3>
                                 <ul className="comparison-list">
-                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Sistema multi-agente especializado</li>
-                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> RAG sobre 428+ documentos oficiales con citas legales</li>
-                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> 17 CCAA + territorios forales + Ceuta/Melilla</li>
-                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Motor de 128 deducciones personalizadas</li>
-                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Guardrails IA: moderación, anti-inyección, filtrado PII</li>
+                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Agentes distintos para renta, nóminas, AEAT y contabilidad</li>
+                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Cada respuesta cita el artículo concreto de la ley</li>
+                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> 15 CCAA + 4 forales + Ceuta y Melilla</li>
+                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Más de mil deducciones autonómicas y forales</li>
+                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> Protección frente a inyección de prompts y filtrado de datos personales</li>
                                 </ul>
                             </SpotlightCard>
                         </FadeContent>
@@ -405,7 +408,7 @@ export default function Home() {
             <section className="features">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">Tecnología de vanguardia</h2>
+                        <h2 className="section-title">Cómo funciona por debajo</h2>
                     </FadeContent>
                     <div className="features-grid">
                         <FadeContent delay={100} duration={400}>
@@ -413,8 +416,8 @@ export default function Home() {
                                 <div className="feature-icon">
                                     <Users size={28} />
                                 </div>
-                                <h3>IA Multi-Agente</h3>
-                                <p>Agentes especializados en fiscal, nóminas, notificaciones AEAT y gestión documental.</p>
+                                <h3>Varios agentes, cada uno a lo suyo</h3>
+                                <p>Un agente se ocupa de lo fiscal, otro de las nóminas, otro de las notificaciones de la AEAT y otro de tus documentos. Así cada pregunta va al que realmente sabe del tema.</p>
                             </SpotlightCard>
                         </FadeContent>
                         <FadeContent delay={200} duration={400}>
@@ -422,8 +425,8 @@ export default function Home() {
                                 <div className="feature-icon">
                                     <Search size={28} />
                                 </div>
-                                <h3>463+ Documentos Oficiales</h3>
-                                <p>Base indexada sobre normativa real de AEAT, BOE y Diputaciones Forales. Cada respuesta cita su fuente.</p>
+                                <h3>Más de 460 documentos oficiales indexados</h3>
+                                <p>AEAT, BOE, las cuatro Diputaciones Forales y boletines autonómicos. Cuando el asistente te responde, te enseña exactamente de dónde ha sacado la respuesta.</p>
                             </SpotlightCard>
                         </FadeContent>
                         <FadeContent delay={300} duration={400}>
@@ -431,8 +434,8 @@ export default function Home() {
                                 <div className="feature-icon">
                                     <Lock size={28} />
                                 </div>
-                                <h3>Seguro y Privado</h3>
-                                <p>Guardrails IA: moderación de contenido, detección de inyección y filtrado de datos personales. RGPD compliant.</p>
+                                <h3>Tus datos no se quedan por ahí</h3>
+                                <p>Filtramos DNIs, IBANs, teléfonos y correos antes de que lleguen al modelo. Bloqueamos intentos de manipulación del asistente. Todo bajo RGPD y servidores en la UE.</p>
                             </SpotlightCard>
                         </FadeContent>
                         <FadeContent delay={400} duration={400}>
@@ -440,8 +443,8 @@ export default function Home() {
                                 <div className="feature-icon">
                                     <Calculator size={28} />
                                 </div>
-                                <h3>Calculadora Neto</h3>
-                                <p>Descubre cuánto te queda limpio como autónomo. Desglose real: IRPF, IVA, Seguridad Social y gastos.</p>
+                                <h3>Sueldo neto del autónomo</h3>
+                                <p>Cuánto te queda limpio al mes. Te enseña el desglose: IRPF, IVA, Seguridad Social y gastos.</p>
                             </SpotlightCard>
                         </FadeContent>
                         <FadeContent delay={500} duration={400}>
@@ -450,8 +453,8 @@ export default function Home() {
                                     <div className="feature-icon">
                                         <Calculator size={28} />
                                     </div>
-                                    <h3>Calculadora Retenciones</h3>
-                                    <p>¿Cuánto te retienen de IRPF en la nómina? Calcula tu tipo de retención con el algoritmo oficial de la AEAT.</p>
+                                    <h3>Retenciones de tu nómina</h3>
+                                    <p>¿Cuánto te están quitando de IRPF cada mes? Te lo calcula con el mismo algoritmo que usa la AEAT.</p>
                                 </SpotlightCard>
                             </a>
                         </FadeContent>
@@ -461,8 +464,8 @@ export default function Home() {
                                     <div className="feature-icon">
                                         <Building2 size={28} />
                                     </div>
-                                    <h3>Umbrales Contables</h3>
-                                    <p>¿Tu empresa debe usar PGC Normal o PYMES? ¿Necesita auditoría? Clasifica tu empresa según la LSC.</p>
+                                    <h3>Umbrales contables</h3>
+                                    <p>¿Tu empresa va con PGC Normal o con PYMES? ¿Necesita auditoría? Te lo dice según los umbrales de la Ley de Sociedades de Capital.</p>
                                 </SpotlightCard>
                             </a>
                         </FadeContent>
@@ -472,8 +475,8 @@ export default function Home() {
                                     <div className="feature-icon">
                                         <FileText size={28} />
                                     </div>
-                                    <h3>Obligaciones Fiscales</h3>
-                                    <p>¿Qué modelos tienes que presentar? Descubre tus obligaciones fiscales según tu perfil, CCAA y actividad.</p>
+                                    <h3>Qué modelos te tocan</h3>
+                                    <p>Según tu perfil, tu comunidad y tu actividad, te decimos qué modelos tienes que presentar y cuándo vencen.</p>
                                 </SpotlightCard>
                             </a>
                         </FadeContent>
@@ -484,7 +487,7 @@ export default function Home() {
                                         <Heart size={28} />
                                     </div>
                                     <h3>Farmacias</h3>
-                                    <p>Recargo de Equivalencia automático, fondo de comercio, deducciones específicas para farmacéuticos titulares.</p>
+                                    <p>Recargo de equivalencia aplicado automático, fondo de comercio, deducciones propias de farmacéuticos titulares. Pensado para el día a día de una oficina de farmacia.</p>
                                 </SpotlightCard>
                             </a>
                         </FadeContent>
