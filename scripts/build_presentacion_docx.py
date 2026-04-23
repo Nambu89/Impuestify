@@ -256,7 +256,7 @@ def build_section_2(doc: Document) -> None:
         "La fiscalidad española es uno de los sistemas tributarios más fragmentados de Europa:",
     )
     for item in [
-        "21 regímenes fiscales distintos (15 CCAA + 4 forales + Ceuta/Melilla).",
+        "21 regímenes fiscales distintos: 17 comunidades autónomas (15 de régimen común más los 4 territorios forales de País Vasco y Navarra) y las dos ciudades autónomas de Ceuta y Melilla.",
         "Más de 1.000 deducciones activas entre estatales, autonómicas y forales.",
         "Normativa actualizada cada año por AEAT, BOE y Diputaciones Forales.",
         "Procedimientos administrativos complejos que requieren asesoramiento especializado.",

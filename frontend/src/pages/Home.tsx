@@ -118,10 +118,11 @@ export default function Home() {
                         <p className="hero-subtitle">
                             Haz la renta, lleva la contabilidad de tu actividad como
                             autónomo, calcula el Impuesto sobre Sociedades o contesta un
-                                requerimiento de Hacienda. Todo desde la misma web. Funciona
-                            con IA, sirve para las 15 comunidades autónomas, las cuatro
-                            forales y Ceuta y Melilla, y cada respuesta te enseña el
-                            artículo de la ley en el que se apoya.
+                            requerimiento de Hacienda. Todo desde la misma web. Funciona
+                            con IA, cubre las 17 comunidades autónomas (con los cuatro
+                            territorios forales incluidos) y las ciudades autónomas de
+                            Ceuta y Melilla, y cada respuesta te enseña el artículo de
+                            la ley en el que se apoya.
                         </p>
                     </FadeContent>
                     <FadeContent delay={300} duration={600}>
@@ -454,7 +455,7 @@ export default function Home() {
                                 <ul className="comparison-list">
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> Agentes distintos para renta, nóminas, AEAT y contabilidad</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> Cada respuesta cita el artículo concreto de la ley</li>
-                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> 15 CCAA + 4 forales + Ceuta y Melilla</li>
+                                    <li><CheckCircle size={16} className="comparison-icon-yes" /> 17 CCAA (con los 4 forales) + Ceuta y Melilla</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> Más de mil deducciones autonómicas y forales</li>
                                     <li><CheckCircle size={16} className="comparison-icon-yes" /> Protección frente a inyección de prompts y filtrado de datos personales</li>
                                 </ul>

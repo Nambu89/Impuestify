@@ -30,7 +30,7 @@
 > Hacienda habla en 21 lenguas fiscales distintas. Impuestify las habla todas.
 
 - 🧠 **GPT-5-mini + RAG sobre 463 documentos oficiales** (AEAT, BOE, 4 Diputaciones Forales).
-- 🗺️ **21 territorios cubiertos al 100 %** — 15 CCAA + 4 forales + Ceuta y Melilla.
+- 🗺️ **21 regímenes fiscales cubiertos al 100 %** — 17 comunidades autónomas (con los 4 territorios forales) + las ciudades autónomas de Ceuta y Melilla.
 - 🛡️ **DefensIA** — defensor fiscal automatizado con motor anti-alucinación (30 reglas + RAG verificador).
 - 🧾 **Clasificador de facturas con OCR Gemini** — 0,0003 € por factura, contabilidad PGC automática.
 - 📊 **Simulador IRPF completo** — 8 sub-calculadoras, tributación conjunta, ~1.008 deducciones.
