@@ -15,49 +15,49 @@ const FEATURES = [
         icon: Calculator,
         title: 'Simulador IRPF con royalties',
         description:
-            'Calcula tu IRPF incluyendo derechos de autor y royalties de plataformas digitales. Retención del 24% aplicada correctamente sobre ingresos de YouTube, Twitch o Patreon.',
+            'Calcula el IRPF con derechos de autor y royalties de plataformas digitales. Aplica la retención del 24% sobre ingresos de YouTube, Twitch o Patreon.',
     },
     {
         icon: Globe,
         title: 'IVA por plataforma',
         description:
-            'Calcula el IVA aplicable según la plataforma: YouTube/Google (factura con IVA 0% intracomunitario), TikTok UK (sin IVA peninsular), Twitch (régimen especial servicios digitales).',
+            'Calcula el IVA según la plataforma: YouTube/Google (IVA 0% intracomunitario), TikTok UK (sin IVA peninsular), Twitch (régimen especial de servicios digitales).',
     },
     {
         icon: FileText,
         title: 'Epígrafe IAE para creadores',
         description:
-            'Identifica el epígrafe correcto del IAE para tu actividad como creador. La DGT lo aclara en la consulta vinculante V0773-22. Evita sanciones por epígrafe incorrecto.',
+            'Te ayuda a elegir el epígrafe IAE correcto para tu actividad. La DGT lo aclara en la consulta vinculante V0773-22. Un epígrafe mal puesto puede costarte una sanción.',
     },
     {
         icon: FileText,
         title: 'Modelo 349 automático',
         description:
-            'Gestión de las operaciones intracomunitarias con Google Ireland, Meta Platforms Ireland y TikTok Technology. Declaración informativa trimestral sin errores.',
+            'Gestiona las operaciones intracomunitarias con Google Ireland, Meta Platforms Ireland y TikTok Technology. Declaración informativa trimestral sin errores.',
     },
     {
         icon: Zap,
-        title: 'Asistente IA especializado',
+        title: 'Asistente con IA',
         description:
-            'Motor de IA entrenado sobre la normativa fiscal específica de creadores digitales: DAC7, Modelo 238, Plan Tributario AEAT 2026, consultas DGT sobre plataformas.',
+            'IA entrenada con la normativa que afecta a creadores digitales: DAC7, Modelo 238, Plan Tributario AEAT 2026 y consultas DGT sobre plataformas.',
     },
     {
         icon: Globe,
-        title: 'Cobertura 21 territorios',
+        title: 'Cobertura en 21 territorios',
         description:
-            'Incluye País Vasco, Navarra, Canarias (IGIC), Ceuta y Melilla. Deducciones autonómicas propias de cada territorio calculadas con fuentes oficiales.',
+            'País Vasco, Navarra, Canarias (IGIC), Ceuta y Melilla incluidos. Deducciones autonómicas de cada territorio calculadas a partir de fuentes oficiales.',
     },
     {
         icon: Bell,
-        title: 'Alertas de plazos fiscales',
+        title: 'Avisos de plazos',
         description:
-            'Notificaciones de los modelos 303, 130, 349 y Renta. Nunca más una multa por presentación fuera de plazo. Calendario fiscal personalizado según tu situación.',
+            'Avisos de los modelos 303, 130, 349 y Renta. Se acabó pagar multas por presentar tarde. Calendario fiscal ajustado a tu caso.',
     },
     {
         icon: Shield,
         title: 'Análisis de documentos AEAT',
         description:
-            'Sube notificaciones de la AEAT y nóminas para que la IA las analice. Detecta importes incorrectos y obligaciones fiscales que quizá desconocías.',
+            'Sube notificaciones de la AEAT y nóminas y la IA las lee por ti. Detecta importes incorrectos y obligaciones que quizá no tenías en el radar.',
     },
 ]
 
@@ -104,23 +104,23 @@ const COMPARISON_ROWS = [
 const FAQS = [
     {
         q: '¿Qué epígrafe IAE necesito como creador de contenido?',
-        a: 'La Dirección General de Tributos aclaró en la consulta vinculante V0773-22 que los creadores de contenido digital tributan en el epígrafe 961.1 (Producción de películas cinematográficas) o 961.2 (Distribución de películas cinematográficas), dependiendo de si produces y distribuyes tú mismo. En muchos casos también aplica el 843 (Servicios de publicidad, relaciones públicas y similares) si los ingresos principales son patrocinios. Nuestro asistente analiza tu caso concreto y determina el epígrafe correcto.',
+        a: 'La Dirección General de Tributos aclaró en la consulta vinculante V0773-22 que los creadores de contenido digital tributan en el epígrafe 961.1 (producción de películas cinematográficas) o 961.2 (distribución de películas cinematográficas), según si produces y distribuyes tú mismo. Si tus ingresos principales vienen de patrocinios, en muchos casos aplica el 843 (servicios de publicidad, relaciones públicas y similares). El asistente revisa tu caso y te dice cuál te toca.',
     },
     {
         q: '¿Tengo que facturar a YouTube/Google?',
-        a: 'Sí. YouTube paga a través de Google Ireland Limited, una entidad comunitaria. Si estás dado de alta como autónomo con NIF-IVA, emites factura con IVA 0% (operación intracomunitaria, Modelo 349 trimestral). Si no tienes NIF-IVA, Google puede aplicar retención en origen. La correcta configuración de tu cuenta de AdSense con el formulario W-8BEN-E es fundamental para evitar retenciones incorrectas.',
+        a: 'Sí. YouTube paga a través de Google Ireland Limited, una entidad comunitaria. Si estás de alta como autónomo con NIF-IVA, emites factura con IVA 0% (operación intracomunitaria, Modelo 349 trimestral). Si no tienes NIF-IVA, Google puede practicar retención en origen. Para evitar retenciones que no te tocan, configura bien tu cuenta de AdSense con el formulario W-8BEN-E.',
     },
     {
         q: '¿Cómo declaro los ingresos de TikTok si pagan desde UK?',
-        a: 'TikTok Technology Limited opera desde Irlanda y Reino Unido. Tras el Brexit, los pagos desde UK no son operaciones intracomunitarias. Tributan como servicios prestados a entidad no comunitaria: IVA al tipo cero con reglas de localización inversa. El importe bruto se declara en IRPF como rendimiento de actividad económica. La retención en origen aplicada por TikTok (si la hay) puede deducirse como crédito fiscal según el Convenio de Doble Imposición España-UK.',
+        a: 'TikTok Technology Limited opera desde Irlanda y Reino Unido. Tras el Brexit, los pagos desde UK ya no son operaciones intracomunitarias: se tratan como servicios prestados a entidad no comunitaria, con IVA al tipo cero y reglas de localización inversa. El importe bruto va a IRPF como rendimiento de actividad económica. Si TikTok te aplica retención en origen, puedes deducirla como crédito fiscal por el Convenio de Doble Imposición España-UK.',
     },
     {
         q: '¿Necesito darme de alta como autónomo?',
-        a: 'Si tus ingresos por creación de contenido superan el Salario Mínimo Interprofesional de forma habitual (o incluso de forma esporádica si la TGSS te lo requiere), sí estás obligado a darte de alta como autónomo en el RETA. La jurisprudencia del Tribunal Supremo establece que la habitualidad, no el importe, determina la obligación. Si son ingresos ocasionales por debajo del SMI, puede ser suficiente tributar como rendimiento de capital mobiliario o rendimiento de trabajo según el tipo de contrato.',
+        a: 'Si tus ingresos por creación de contenido superan el Salario Mínimo Interprofesional de forma habitual (o incluso de forma esporádica si la TGSS te lo requiere), tienes que darte de alta en el RETA. El Tribunal Supremo dice que lo que obliga es la habitualidad, no el importe. Si son ingresos puntuales por debajo del SMI, puede bastar con tributarlos como rendimiento de capital mobiliario o de trabajo, según el tipo de contrato.',
     },
     {
         q: '¿Qué pasa si no he declarado mis ingresos de plataformas?',
-        a: 'Desde 2023, las plataformas digitales (YouTube, TikTok, Twitch, Airbnb, etc.) están obligadas a reportar a Hacienda los ingresos de sus creadores en España mediante el Modelo 238 (DAC7). La AEAT ya tiene esos datos. Presentar una declaración complementaria antes de recibir una notificación reduce las sanciones significativamente: del 50-150% con requerimiento previo, al 10-20% si regularizas voluntariamente. Nuestro asistente te ayuda a calcular el importe exacto a regularizar.',
+        a: 'Desde 2023, las plataformas digitales (YouTube, TikTok, Twitch, Airbnb, etc.) tienen que reportar a Hacienda los ingresos de sus creadores en España con el Modelo 238 (DAC7). La AEAT ya tiene esos datos. Presentar una complementaria antes de que te llegue el requerimiento baja la sanción del 50-150% al 10-20% si regularizas voluntariamente. El asistente te ayuda a calcular el importe exacto.',
     },
 ]
 
@@ -188,15 +188,15 @@ export default function CreatorsPage() {
                                 animationSpeed={6}
                                 className="creators-hero__gradient"
                             >
-                                Creadores de Contenido
+                                creadores de contenido
                             </GradientText>
                             {' '}en España
                         </h1>
                         <p className="creators-hero__subtitle">
-                            El único asistente fiscal con IA que entiende{' '}
+                            Asistente fiscal con IA pensado para{' '}
                             <strong>YouTube, TikTok, Twitch e Instagram</strong>.
                             IRPF, IVA por plataforma, IAE para influencers y DAC7.
-                            Cobertura en los 21 territorios: régimen común, foral y Canarias.
+                            Cubre los 21 territorios: régimen común, foral y Canarias.
                         </p>
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
@@ -225,9 +225,9 @@ export default function CreatorsPage() {
                                 <div>
                                     <h3>Hacienda ya sabe cuánto ganas</h3>
                                     <p>
-                                        Desde 2023, la directiva DAC7 obliga a YouTube, TikTok y Twitch a reportar
-                                        tus ingresos a la AEAT mediante el <strong>Modelo 238</strong>. No declararlo
-                                        conlleva sanciones del 50-150% del importe no declarado.
+                                        Desde 2023, la directiva DAC7 obliga a YouTube, TikTok y Twitch a pasarle
+                                        tus ingresos a la AEAT mediante el <strong>Modelo 238</strong>. No declararlos
+                                        supone sanciones del 50-150% del importe omitido.
                                     </p>
                                 </div>
                             </div>
@@ -236,12 +236,11 @@ export default function CreatorsPage() {
                                     <FileText size={24} />
                                 </div>
                                 <div>
-                                    <h3>Objetivo prioritario del Plan Tributario AEAT 2026</h3>
+                                    <h3>En el punto de mira del Plan Tributario AEAT 2026</h3>
                                     <p>
-                                        El Plan Anual de Control Tributario 2026 de la AEAT señala expresamente
-                                        a los <strong>creadores de contenido digital</strong> como colectivo de
-                                        especial seguimiento por la brecha entre ingresos declarados y reportados
-                                        por plataformas.
+                                        El Plan Anual de Control Tributario 2026 de la AEAT cita de forma
+                                        expresa a los <strong>creadores de contenido digital</strong> por el
+                                        desfase entre lo que declaran y lo que reportan las plataformas.
                                     </p>
                                 </div>
                             </div>
@@ -250,11 +249,11 @@ export default function CreatorsPage() {
                                     <FileText size={24} />
                                 </div>
                                 <div>
-                                    <h3>El epígrafe IAE correcto evita sanciones</h3>
+                                    <h3>Un IAE mal puesto te puede costar caro</h3>
                                     <p>
                                         La consulta DGT <strong>V0773-22</strong> aclara el régimen fiscal de los
-                                        creadores. Un epígrafe incorrecto puede invalidar tus deducciones y
-                                        generar inspecciones. Impuestify identifica el correcto para tu caso.
+                                        creadores. Un epígrafe equivocado puede tumbarte deducciones y abrirte una
+                                        inspección. Impuestify elige el que te toca según tu caso.
                                     </p>
                                 </div>
                             </div>
@@ -269,7 +268,7 @@ export default function CreatorsPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Qué incluye el Plan Creator</h2>
                         <p className="section-subtitle">
-                            49 EUR/mes. IVA por plataforma, IAE para influencers, Modelo 349 y DAC7 — todo lo que necesitas para declarar correctamente como creador digital.
+                            49 EUR/mes. IVA por plataforma, IAE para influencers, Modelo 349 y DAC7. Lo que hace falta para declarar bien como creador digital.
                         </p>
                     </FadeContent>
                     <div className="creators-features__grid">
@@ -300,7 +299,7 @@ export default function CreatorsPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Comparativa de opciones</h2>
                         <p className="section-subtitle">
-                            Por qué Impuestify Creator es la opción más inteligente para tu bolsillo
+                            Lo que pagas y lo que recibes frente a una gestoría tradicional y a OnlyTax
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -363,7 +362,7 @@ export default function CreatorsPage() {
                             </table>
                         </div>
                         <p className="creators-comparison__note">
-                            Precios de competidores a marzo 2026. Impuestify no tiene permanencia: cancela cuando quieras.
+                            Precios de competidores a marzo de 2026. Impuestify no tiene permanencia: cancelas cuando quieras.
                         </p>
                     </FadeContent>
                 </div>
@@ -375,7 +374,7 @@ export default function CreatorsPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Preguntas frecuentes</h2>
                         <p className="section-subtitle">
-                            Las dudas más habituales de los creadores de contenido con Hacienda
+                            Las dudas que suelen tener los creadores cuando aparece Hacienda
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -414,7 +413,7 @@ export default function CreatorsPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Ventajas fiscales por territorio</h2>
                         <p className="section-subtitle">
-                            Tu CCAA de residencia puede reducir significativamente tu factura fiscal como creador
+                            Según dónde residas, la factura fiscal puede bajar bastante
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -428,11 +427,11 @@ export default function CreatorsPage() {
                                 <ul className="creators-territories__list">
                                     <li>IGIC al 7% en lugar de IVA al 21%</li>
                                     <li>ZEC: Impuesto de Sociedades al 4%</li>
-                                    <li>RIC: reduce hasta el 90% de la base imponible</li>
-                                    <li>IVA streamer Canarias: tipo especial IGIC</li>
+                                    <li>RIC: reduce hasta un 90% de la base imponible</li>
+                                    <li>Streamers en Canarias: tipo específico de IGIC</li>
                                 </ul>
                                 <span className="creators-territories__link">
-                                    Ver fiscalidad canaria <ArrowRight size={14} />
+                                    Ver fiscalidad en Canarias <ArrowRight size={14} />
                                 </span>
                             </Link>
 
@@ -444,12 +443,12 @@ export default function CreatorsPage() {
                                 <h3>Ceuta y Melilla</h3>
                                 <ul className="creators-territories__list">
                                     <li>IPSI al 4% en lugar de IVA al 21%</li>
-                                    <li>Deducción del 60% en IRPF por rentas obtenidas</li>
+                                    <li>Deducción del 60% en IRPF por rentas obtenidas allí</li>
                                     <li>Sin IVA en operaciones locales</li>
-                                    <li>Uno de los regímenes más favorables de Europa</li>
+                                    <li>De los regímenes más favorables de Europa</li>
                                 </ul>
                                 <span className="creators-territories__link">
-                                    Ver fiscalidad Ceuta y Melilla <ArrowRight size={14} />
+                                    Ver fiscalidad en Ceuta y Melilla <ArrowRight size={14} />
                                 </span>
                             </Link>
 
@@ -460,10 +459,10 @@ export default function CreatorsPage() {
                                 </div>
                                 <h3>País Vasco y Navarra</h3>
                                 <ul className="creators-territories__list">
-                                    <li>IRPF influencer Madrid vs País Vasco: hasta 5 puntos menos</li>
-                                    <li>7 tramos en País Vasco vs 6 en régimen común</li>
-                                    <li>Deducciones exclusivas no disponibles en el resto</li>
-                                    <li>Gestión autónoma de Hacienda Foral</li>
+                                    <li>IRPF influencer en Madrid vs País Vasco: hasta 5 puntos menos</li>
+                                    <li>7 tramos en País Vasco frente a 6 en régimen común</li>
+                                    <li>Deducciones propias que no existen en el resto del Estado</li>
+                                    <li>Gestión directa con la Hacienda Foral</li>
                                 </ul>
                                 <span className="creators-territories__link">
                                     Ver territorios forales <ArrowRight size={14} />
@@ -479,11 +478,11 @@ export default function CreatorsPage() {
                                 <ul className="creators-territories__list">
                                     <li>Deflactación de la tarifa autonómica del IRPF</li>
                                     <li>Bonificación del 100% en sucesiones y donaciones</li>
-                                    <li>Deducción por arrendamiento de vivienda habitual</li>
-                                    <li>Hub de creadores: ecosistema fiscal competitivo</li>
+                                    <li>Deducción por alquiler de vivienda habitual</li>
+                                    <li>Concentra buena parte de los creadores con fiscalidad atractiva</li>
                                 </ul>
                                 <span className="creators-territories__link creators-territories__link--disabled">
-                                    Consulta tu caso al asistente
+                                    Pregunta tu caso al asistente
                                 </span>
                             </div>
                         </div>
@@ -500,7 +499,7 @@ export default function CreatorsPage() {
                                 <Map size={20} />
                                 <div>
                                     <strong>País Vasco y Navarra</strong>
-                                    <span>Régimen foral: deducciones exclusivas que no existen en el régimen común</span>
+                                    <span>Régimen foral: deducciones que no existen en el régimen común</span>
                                 </div>
                                 <ArrowRight size={16} />
                             </Link>
@@ -516,7 +515,7 @@ export default function CreatorsPage() {
                                 <MapPin size={20} />
                                 <div>
                                     <strong>Ceuta y Melilla — IPSI</strong>
-                                    <span>IPSI 4% y deducción del 60% en IRPF: el régimen más favorable</span>
+                                    <span>IPSI al 4% y deducción del 60% en IRPF</span>
                                 </div>
                                 <ArrowRight size={16} />
                             </Link>
@@ -535,15 +534,15 @@ export default function CreatorsPage() {
                             </div>
                             <h2>Empieza a declarar bien por 49 EUR/mes</h2>
                             <p>
-                                Sin permanencia. Sin sorpresas. El asistente fiscal que entiende
-                                tu actividad como creador digital mejor que ninguna gestoría tradicional.
+                                Sin permanencia ni letra pequeña. Un asistente fiscal que conoce
+                                tu trabajo como creador digital y habla tu idioma.
                             </p>
                             <Link to="/subscribe?highlight=creator" className="btn btn-primary btn-lg">
                                 Empieza por 49 EUR/mes
                                 <ArrowRight size={20} />
                             </Link>
                             <p className="creators-cta__note">
-                                49 EUR/mes. Sin permanencia. Cancela cuando quieras.
+                                49 EUR/mes. Sin permanencia. Cancelas cuando quieras.
                             </p>
                         </div>
                     </FadeContent>

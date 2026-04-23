@@ -31,7 +31,8 @@ export function DefensiaChat({ expedienteId }: Props) {
       <div className="defensia-chat-messages" role="log">
         {messages.length === 0 && (
           <p className="defensia-chat-empty">
-            Pregunta a DefensIA sobre tu expediente. Solo hablará del caso cargado.
+            Pregúntale a DefensIA sobre este expediente. Solo responderá
+            sobre el caso que tienes abierto.
           </p>
         )}
         {messages.map((m, i) => (

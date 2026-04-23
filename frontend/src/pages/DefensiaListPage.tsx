@@ -12,7 +12,7 @@ export function DefensiaListPage() {
 
   useSEO({
     title: "DefensIA — Mis expedientes",
-    description: "Gestor de expedientes fiscales defensivos.",
+    description: "Expedientes abiertos en DefensIA.",
     noindex: true,
   });
 
@@ -28,7 +28,7 @@ export function DefensiaListPage() {
           <Scale size={28} aria-hidden="true" />
           <div>
             <h1>DefensIA</h1>
-            <p>Expedientes fiscales defensivos</p>
+            <p>Tus expedientes frente a Hacienda</p>
           </div>
         </div>
         <button
@@ -64,10 +64,10 @@ export function DefensiaListPage() {
       {!loading && !error && expedientes.length === 0 && (
         <div className="defensia-list-empty">
           <Scale size={48} aria-hidden="true" />
-          <h2>Ningún expediente todavía</h2>
+          <h2>Todavía no tienes expedientes</h2>
           <p>
-            Crea tu primer expediente para analizar una comprobación,
-            sanción o requerimiento fiscal.
+            Abre uno cuando recibas una comprobación, un requerimiento o una
+            sanción de Hacienda y quieras estudiar la respuesta.
           </p>
           <button
             type="button"

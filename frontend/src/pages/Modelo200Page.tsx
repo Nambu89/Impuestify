@@ -135,7 +135,7 @@ export default function Modelo200Page() {
       name: 'Simulador Modelo 200 \u2014 Impuesto sobre Sociedades',
       applicationCategory: 'FinanceApplication',
       operatingSystem: 'Web',
-      description: 'Simulador del Impuesto sobre Sociedades para empresas espa\u00f1olas.',
+      description: 'Calcula la cuota del Impuesto sobre Sociedades aplicando ajustes extracontables, compensaci\u00f3n de BINs, deducciones por I+D+i y bonificaciones por territorio.',
     },
   })
 
@@ -245,7 +245,7 @@ export default function Modelo200Page() {
         <div className="m200-header">
           <Building2 size={40} />
           <h1>Modelo 200 &mdash; Impuesto sobre Sociedades</h1>
-          <p>Calcula la cuota del IS de tu empresa paso a paso</p>
+          <p>Estima la cuota del IS a partir de tu resultado contable y los ajustes fiscales del ejercicio.</p>
         </div>
 
         {/* Stepper */}
@@ -783,7 +783,7 @@ export default function Modelo200Page() {
                 <ChevronLeft size={18} /> Anterior
               </button>
               <button className="m200-btn m200-btn--primary" onClick={goNext}>
-                Calcular resultado <ChevronRight size={18} />
+                Calcular <ChevronRight size={18} />
               </button>
             </div>
           </div>

@@ -92,7 +92,7 @@ export default function Modelo202Page() {
         <div className="m202-header">
           <FileText size={36} />
           <h1>Modelo 202 &mdash; Pagos fraccionados IS</h1>
-          <p>Calcula los 3 pagos a cuenta del Impuesto sobre Sociedades</p>
+          <p>Estima los tres pagos a cuenta (abril, octubre y diciembre) bajo las modalidades del Art. 40.2 y Art. 40.3 LIS.</p>
         </div>
 
         <div className="m202-card">
@@ -297,7 +297,7 @@ export default function Modelo202Page() {
               <span className="m202-result-amount">{fmtEur(result40_2.total)}</span>
             </div>
             <p className="m202-disclaimer">
-              Estimaci&oacute;n orientativa. Los pagos fraccionados bajo Art. 40.2 LIS son id&eacute;nticos cada trimestre (18% de la base de c&aacute;lculo). Consulte con su asesor fiscal.
+              Estimaci&oacute;n orientativa. Bajo el Art. 40.2 LIS los tres pagos son iguales (18% sobre la base de c&aacute;lculo del &uacute;ltimo ejercicio cerrado). Revisa los importes con tu asesor antes de presentar cada modelo.
             </p>
           </div>
         )}
@@ -322,7 +322,7 @@ export default function Modelo202Page() {
               <span className="m202-result-amount">{fmtEur(result40_3.total)}</span>
             </div>
             <p className="m202-disclaimer">
-              Estimaci&oacute;n orientativa. Art. 40.3 LIS: porcentaje = 5/7 del tipo gravamen. Obligatorio para entidades con INCN &gt; 6M EUR. Consulte con su asesor fiscal.
+              Estimaci&oacute;n orientativa. Art. 40.3 LIS: porcentaje = 5/7 del tipo de gravamen. Obligatorio para entidades con INCN &gt; 6M EUR en el ejercicio anterior. Contrasta las bases acumuladas con tu asesor antes de presentar cada pago.
             </p>
           </div>
         )}

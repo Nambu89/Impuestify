@@ -140,9 +140,9 @@ function UploadZone({ onFile }: { onFile: (f: File) => void }) {
 
 function UploadProgress({ step }: { step: UploadStep }) {
     const steps: Array<{ key: UploadStep; label: string }> = [
-        { key: 'extracting',  label: 'Extrayendo datos...'   },
-        { key: 'classifying', label: 'Clasificando...'       },
-        { key: 'done',        label: 'Generando asiento...'  },
+        { key: 'extracting',  label: 'Leyendo la factura...'        },
+        { key: 'classifying', label: 'Buscando la cuenta PGC...'    },
+        { key: 'done',        label: 'Montando el asiento...'       },
     ]
     return (
         <div className="cf-progress">
@@ -177,7 +177,7 @@ function ExtractionCard({ data }: { data: InvoiceExtraction }) {
                 <div className="cf-alert cf-alert--warning">
                     <AlertTriangle size={16} />
                     <div>
-                        <strong>Advertencias de validación:</strong>
+                        <strong>Revisa esto antes de guardar:</strong>
                         <ul className="cf-alert__list">
                             {data.errores_validacion.map((e, i) => <li key={i}>{e}</li>)}
                         </ul>
@@ -215,7 +215,7 @@ function ExtractionCard({ data }: { data: InvoiceExtraction }) {
                         aria-expanded={linesOpen}
                     >
                         {linesOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        {linesOpen ? 'Ocultar líneas' : `Ver ${data.lineas.length} línea(s) de detalle`}
+                        {linesOpen ? 'Ocultar líneas' : `Ver ${data.lineas.length === 1 ? 'la línea' : `las ${data.lineas.length} líneas`} de detalle`}
                     </button>
                     {linesOpen && (
                         <div className="cf-table-wrap">
@@ -323,7 +323,7 @@ function ClassificationCard({ data, invoiceId, onReclassify, onConfirm }: Classi
 
             {data.confianza !== 'alta' && data.alternativas?.length > 0 && !editing && (
                 <div className="cf-pgc-alternatives">
-                    <p className="cf-pgc-alternatives__label">Alternativas sugeridas:</p>
+                    <p className="cf-pgc-alternatives__label">¿Encaja mejor otra cuenta?</p>
                     <div className="cf-pgc-alternatives__list">
                         {data.alternativas.map(alt => (
                             <button
@@ -346,14 +346,14 @@ function ClassificationCard({ data, invoiceId, onReclassify, onConfirm }: Classi
                         <Search size={15} />
                         <input
                             type="text"
-                            placeholder="Buscar cuenta PGC (código o nombre)..."
+                            placeholder="Código o nombre de la cuenta..."
                             value={searchVal}
                             onChange={e => setSearchVal(e.target.value)}
                             className="cf-pgc-search__input"
                             autoFocus
                         />
                     </div>
-                    <p className="cf-pgc-search__hint">Formato: código + nombre (ej: "629 Otros servicios")</p>
+                    <p className="cf-pgc-search__hint">Ej: 629 Otros servicios</p>
                     <div className="cf-pgc-search__actions">
                         <button
                             className="cf-btn cf-btn--primary"
@@ -388,7 +388,7 @@ function ClassificationCard({ data, invoiceId, onReclassify, onConfirm }: Classi
                 ) : (
                     <div className="cf-pgc-confirmed">
                         <CheckCircle size={18} className="cf-pgc-confirmed__icon" />
-                        <span>Clasificación confirmada</span>
+                        <span>Listo, clasificada</span>
                     </div>
                 )}
             </div>
@@ -427,7 +427,7 @@ function InvoiceList({ invoices, onDelete, onView }: InvoiceListProps) {
     return (
         <div className="cf-list-section">
             <div className="cf-list-header">
-                <h3 className="cf-section-title">Facturas registradas</h3>
+                <h3 className="cf-section-title">Tus facturas</h3>
                 <div className="cf-list-filters">
                     <select
                         value={year}
@@ -465,7 +465,7 @@ function InvoiceList({ invoices, onDelete, onView }: InvoiceListProps) {
             {filtered.length === 0 ? (
                 <div className="cf-empty">
                     <FileText size={40} />
-                    <p>No hay facturas para los filtros seleccionados.</p>
+                    <p>No hay facturas con estos filtros.</p>
                 </div>
             ) : (
                 <>
@@ -605,7 +605,7 @@ export default function ClasificadorFacturasPage() {
     async function handleFile(file: File) {
         // Validate size (10 MB)
         if (file.size > 10 * 1024 * 1024) {
-            setUploadError('El archivo supera el límite de 10 MB.')
+            setUploadError('La factura pesa más de 10 MB.')
             return
         }
 
@@ -671,7 +671,7 @@ export default function ClasificadorFacturasPage() {
             await loadInvoices()
         } catch (err: unknown) {
             setUploadStep('error')
-            const msg = err instanceof Error ? err.message : 'Error al procesar la factura.'
+            const msg = err instanceof Error ? err.message : 'No hemos podido procesar la factura.'
             setUploadError(msg)
         }
     }
@@ -684,13 +684,13 @@ export default function ClasificadorFacturasPage() {
     }
 
     async function handleDelete(id: string) {
-        if (!window.confirm('¿Eliminar esta factura? Esta acción no se puede deshacer.')) return
+        if (!window.confirm('¿Eliminar esta factura? No se puede deshacer.')) return
         try {
             await apiRequest(`/api/invoices/${id}`, { method: 'DELETE' })
             setInvoices(prev => prev.filter(inv => inv.id !== id))
             if (result?.id === id) setResult(null)
         } catch {
-            alert('No se pudo eliminar la factura.')
+            alert('No hemos podido eliminar la factura.')
         }
     }
 
@@ -746,7 +746,7 @@ export default function ClasificadorFacturasPage() {
             setUploadStep('done')
             window.scrollTo({ top: 0, behavior: 'smooth' })
         } catch {
-            alert('No se pudieron cargar los detalles de la factura.')
+            alert('No hemos podido cargar el detalle de la factura.')
         }
     }
 
@@ -765,9 +765,9 @@ export default function ClasificadorFacturasPage() {
                         <FileText size={28} />
                     </div>
                     <div>
-                        <h1 className="cf-page-header__title">Clasificador de Facturas</h1>
+                        <h1 className="cf-page-header__title">Clasificador de facturas</h1>
                         <p className="cf-page-header__subtitle">
-                            Sube tus facturas y el sistema las extrae, clasifica según el PGC y genera el asiento contable automáticamente.
+                            Sube una factura: leemos los datos, buscamos la cuenta del PGC y dejamos el asiento hecho.
                         </p>
                     </div>
                 </div>
@@ -796,7 +796,7 @@ export default function ClasificadorFacturasPage() {
                     {uploadStep === 'done' && (
                         <div className="cf-upload-done-bar">
                             <CheckCircle size={18} className="cf-upload-done-bar__icon" />
-                            <span>Factura procesada correctamente</span>
+                            <span>Factura guardada</span>
                             <button
                                 className="cf-btn cf-btn--ghost cf-btn--sm"
                                 onClick={() => { setUploadStep('idle'); setResult(null) }}

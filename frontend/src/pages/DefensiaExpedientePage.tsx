@@ -26,7 +26,7 @@ export function DefensiaExpedientePage() {
 
   useSEO({
     title: expediente ? `DefensIA — ${expediente.titulo}` : "DefensIA — Expediente",
-    description: "Expediente DefensIA con argumentos verificados y escrito.",
+    description: "Detalle del expediente: argumentos y escrito.",
     noindex: true,
   });
 
@@ -63,10 +63,10 @@ export function DefensiaExpedientePage() {
         </Link>
         <div className="defensia-expediente-404">
           <AlertCircle size={48} aria-hidden="true" />
-          <h2>No se encontró el expediente</h2>
+          <h2>No encontramos el expediente</h2>
           <p>
-            Es posible que el enlace haya caducado o que no tengas permisos
-            para acceder a este expediente.
+            Puede que el enlace haya caducado o que no tengas permisos sobre
+            este expediente.
           </p>
         </div>
       </div>
@@ -166,8 +166,8 @@ export function DefensiaExpedientePage() {
             <div className="defensia-expediente-empty">
               <FileText size={32} aria-hidden="true" />
               <p>
-                Dictamen pendiente. Cuando termines de escribir tu brief pulsa
-                "Analizar" para que DefensIA genere los argumentos.
+                Dictamen pendiente. Cuando termines el brief, pulsa "Analizar"
+                y DefensIA generará los argumentos.
               </p>
             </div>
           )}
@@ -213,8 +213,8 @@ export function DefensiaExpedientePage() {
             <div className="defensia-expediente-empty">
               <FileText size={32} aria-hidden="true" />
               <p>
-                El escrito se generará automáticamente cuando DefensIA termine el
-                análisis del expediente.
+                El escrito aparecerá aquí en cuanto DefensIA termine el
+                análisis.
               </p>
             </div>
           )}

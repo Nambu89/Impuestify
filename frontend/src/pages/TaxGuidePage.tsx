@@ -110,7 +110,7 @@ function CcaaTip({ ccaa }: { ccaa: string }) {
                 <Shield size={18} />
                 <div>
                     <strong>Ventaja fiscal Ceuta/Melilla</strong>
-                    <p>Deducción del 60% sobre la cuota íntegra del IRPF (Art. 68.4 LIRPF). Además, aplica IPSI en lugar de IVA con tipos inferiores. Bonificación del 50% en cuotas de autónomos.</p>
+                    <p>Deducción del 60% sobre la cuota íntegra del IRPF (Art. 68.4 LIRPF). Aplica IPSI en lugar de IVA, con tipos más bajos, y la cuota de autónomos tiene una bonificación del 50%.</p>
                 </div>
             </div>
         )
@@ -122,7 +122,7 @@ function CcaaTip({ ccaa }: { ccaa: string }) {
                 <AlertTriangle size={18} />
                 <div>
                     <strong>Territorio foral</strong>
-                    <p>Los territorios forales tienen su propio sistema IRPF con escalas y deducciones específicas. No se aplican las deducciones estatales del régimen común.</p>
+                    <p>Los territorios forales tienen su propio IRPF, con escalas y deducciones distintas. Las deducciones estatales del régimen común no se aplican aquí.</p>
                 </div>
             </div>
         )
@@ -134,7 +134,7 @@ function CcaaTip({ ccaa }: { ccaa: string }) {
                 <Info size={18} />
                 <div>
                     <strong>Canarias</strong>
-                    <p>En Canarias se aplica el IGIC en lugar del IVA. El IRPF sigue el régimen común estatal con deducciones autonómicas propias.</p>
+                    <p>En Canarias se aplica IGIC en lugar de IVA. El IRPF se rige por el régimen común estatal, pero con deducciones autonómicas propias.</p>
                 </div>
             </div>
         )
@@ -164,8 +164,8 @@ function WizardModeSelector({ mode, onChange }: { mode: 'quick' | 'full'; onChan
             >
                 <BarChart3 size={16} />
                 <div>
-                    <strong>Completo</strong>
-                    <span>Todas las deducciones</span>
+                    <strong>Detallado</strong>
+                    <span>Con todas las deducciones</span>
                 </div>
             </button>
         </div>
@@ -178,7 +178,7 @@ function StepPersonal({ data, update }: StepProps) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Datos personales</h2>
-            <p className="tg-step__desc">Necesitamos saber dónde resides para aplicar las escalas correctas.</p>
+            <p className="tg-step__desc">Indícanos dónde resides. Cada comunidad autónoma tiene su propia escala.</p>
 
             <WizardModeSelector
                 mode={data.wizard_mode}
@@ -218,7 +218,7 @@ function StepPersonal({ data, update }: StepProps) {
                         label="Tributación conjunta"
                         checked={data.tributacion_conjunta}
                         onChange={v => update({ tributacion_conjunta: v })}
-                        help="Permite declarar con tu unidad familiar. Aplica una reducción fija sobre la base imponible."
+                        help="Declara con tu unidad familiar. Se aplica una reducción fija sobre la base imponible."
                     />
 
                     {data.tributacion_conjunta && (
@@ -256,7 +256,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Rendimientos del trabajo</h2>
-            <p className="tg-step__desc">Incluye tu salario, cotizaciones y retenciones.</p>
+            <p className="tg-step__desc">Apunta tu salario, las cotizaciones a la Seguridad Social y las retenciones.</p>
 
             {/* Número de pagadores */}
             <div className="tg-toggle-group">
@@ -305,8 +305,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
 
                     {data.ingresos_trabajo > 15876 && (
                         <div className="tg-alert tg-alert--warning">
-                            Con {data.num_pagadores} pagadores y más de 15.876 EUR de ingresos,
-                            es probable que estés obligado a presentar la declaración de la renta.
+                            Con {data.num_pagadores} pagadores y más de 15.876 EUR de ingresos seguramente tienes que presentar la declaración.
                         </div>
                     )}
                 </>
@@ -335,14 +334,14 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         value={data.salario_base_mensual}
                         onChange={v => update({ salario_base_mensual: v })}
                         suffix="EUR"
-                        help="Aparece en tu nómina como 'Salario base'"
+                        help="En la nómina aparece como 'Salario base'."
                     />
                     <NumberInput
                         label="Complementos salariales"
                         value={data.complementos_salariales}
                         onChange={v => update({ complementos_salariales: v })}
                         suffix="EUR"
-                        help="Plus transporte, antigüedad, productividad..."
+                        help="Plus de transporte, antigüedad, productividad, etc."
                     />
                     <div className="tg-field">
                         <label className="tg-field__label">Número de pagas</label>
@@ -362,8 +361,8 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         </div>
                         <span className="tg-field__help">
                             {data.num_pagas_anuales === 14
-                                ? '12 mensualidades + 2 pagas extras (junio y diciembre)'
-                                : '12 mensualidades con pagas extras prorrateadas'}
+                                ? '12 mensualidades más dos pagas extra (junio y diciembre).'
+                                : '12 mensualidades con las pagas extra prorrateadas.'}
                         </span>
                     </div>
                     {computedAnnual > 0 && (
@@ -378,7 +377,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                     value={data.ingresos_trabajo}
                     onChange={v => update({ ingresos_trabajo: v })}
                     suffix="EUR"
-                    help="Suma de todas tus nóminas brutas del año"
+                    help="Suma de todas las nóminas brutas del año."
                 />
             )}
 
@@ -387,7 +386,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                 value={data.ss_empleado}
                 onChange={v => update({ ss_empleado: v })}
                 suffix="EUR"
-                help="Total anual. Si no lo sabes, déjalo en 0 y se estimará (~6,35%)"
+                help="Total anual. Si no lo tienes a mano, déjalo en 0 y lo estimamos (~6,35%)."
             />
 
             <h3 className="tg-step__subtitle">Retenciones IRPF</h3>
@@ -398,7 +397,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                 onChange={v => update({ irpf_retenido_porcentaje: v })}
                 suffix="%"
                 step={0.1}
-                help="Aparece en tu nómina como '% IRPF' o 'retención IRPF'"
+                help="En la nómina aparece como '% IRPF' o 'retención IRPF'."
             />
 
             {data.irpf_retenido_porcentaje > 0 && computedAnnual > 0 && (
@@ -412,7 +411,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                 value={data.retenciones_trabajo}
                 onChange={v => update({ retenciones_trabajo: v })}
                 suffix="EUR"
-                help="Si pusiste el %, se calcula automáticamente. Si lo sabes exacto, ponlo aquí."
+                help="Si has indicado el porcentaje, se calcula solo. Si tienes el importe exacto, ponlo aquí."
             />
                 </>
             )}
@@ -451,10 +450,10 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         </select>
                         <span className="tg-field__help">
                             {data.estimacion_actividad === 'directa_simplificada'
-                                ? 'La más común. Incluye 5% de gastos de difícil justificación (máx. 2.000 EUR)'
+                                ? 'La opción habitual. Incluye un 5% de gastos de difícil justificación (máx. 2.000 EUR).'
                                 : data.estimacion_actividad === 'directa_normal'
-                                ? 'Requiere contabilidad ajustada al Código de Comercio. Permite provisiones'
-                                : 'Solo si tu actividad está incluida en la Orden de Módulos'}
+                                ? 'Requiere contabilidad ajustada al Código de Comercio. Admite provisiones.'
+                                : 'Solo si tu actividad está incluida en la Orden de Módulos.'}
                         </span>
                     </div>
 
@@ -463,7 +462,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         value={data.ingresos_actividad}
                         onChange={v => update({ ingresos_actividad: v })}
                         suffix="EUR"
-                        help="Total facturado (base imponible, sin IVA/IGIC)"
+                        help="Total facturado (base imponible, sin IVA/IGIC)."
                     />
 
                     <NumberInput
@@ -471,7 +470,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         value={data.gastos_actividad}
                         onChange={v => update({ gastos_actividad: v })}
                         suffix="EUR"
-                        help="Suministros, alquiler local, seguros, material, marketing..."
+                        help="Suministros, alquiler del local, seguros, material, marketing, etc."
                     />
 
                     <NumberInput
@@ -479,7 +478,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         value={data.cuota_autonomo_anual}
                         onChange={v => update({ cuota_autonomo_anual: v })}
                         suffix="EUR"
-                        help="Cuota mensual x 12. Ej: 293 EUR/mes = 3.516 EUR/año"
+                        help="Cuota mensual x 12. Por ejemplo: 293 EUR/mes son 3.516 EUR/año."
                     />
 
                     <NumberInput
@@ -487,7 +486,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         value={data.amortizaciones_actividad}
                         onChange={v => update({ amortizaciones_actividad: v })}
                         suffix="EUR"
-                        help="Amortización de activos fijos (ordenador, vehículo, mobiliario...)"
+                        help="Amortización de activos fijos: ordenador, vehículo, mobiliario, etc."
                     />
 
                     {data.estimacion_actividad === 'directa_normal' && (
@@ -496,7 +495,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                             value={data.provisiones_actividad}
                             onChange={v => update({ provisiones_actividad: v })}
                             suffix="EUR"
-                            help="Solo en estimación directa normal"
+                            help="Solo en estimación directa normal."
                         />
                     )}
 
@@ -514,7 +513,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         value={data.retenciones_actividad}
                         onChange={v => update({ retenciones_actividad: v })}
                         suffix="EUR"
-                        help="15% (o 7% nuevos autónomos) retenido por tus clientes profesionales"
+                        help="15% (o 7% si eres nuevo autónomo) retenido por tus clientes profesionales."
                     />
 
                     <NumberInput
@@ -522,7 +521,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         value={data.pagos_fraccionados_130}
                         onChange={v => update({ pagos_fraccionados_130: v })}
                         suffix="EUR"
-                        help="Suma de los 4 trimestres del Modelo 130 pagados"
+                        help="Suma de los cuatro trimestres del Modelo 130 ya pagados."
                     />
 
                     <h3 className="tg-step__subtitle">Reducciones</h3>
@@ -531,14 +530,14 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                         label="Inicio de actividad (primeros 2 años con beneficio)"
                         checked={data.inicio_actividad}
                         onChange={v => update({ inicio_actividad: v })}
-                        help="Reducción del 20% sobre el rendimiento neto positivo (Art. 32.3 LIRPF)"
+                        help="Reducción del 20% sobre el rendimiento neto positivo (Art. 32.3 LIRPF)."
                     />
 
                     <CheckboxInput
                         label="Más del 75% de ingresos de un solo cliente"
                         checked={data.un_solo_cliente}
                         onChange={v => update({ un_solo_cliente: v })}
-                        help="Autónomo económicamente dependiente (TRADE). Aplica reducción similar a trabajo (Art. 32.2 LIRPF)"
+                        help="Autónomo económicamente dependiente (TRADE). Se aplica una reducción similar a la de trabajo (Art. 32.2 LIRPF)."
                     />
                 </>
             )}
@@ -549,7 +548,7 @@ function StepTrabajo({ data, update, zeroIncomeAcknowledged, onAcknowledgeZeroIn
                     <AlertTriangle size={18} />
                     <div>
                         <strong>Sin ingresos introducidos</strong>
-                        <p>Has dejado los ingresos en 0. Si no has tenido rentas del trabajo este año, confirma para continuar.</p>
+                        <p>Has dejado los ingresos en 0. Si este año no has tenido rentas del trabajo, confírmalo para continuar.</p>
                         <button
                             type="button"
                             className="tg-nav__btn tg-nav__btn--secondary"
@@ -571,12 +570,12 @@ function StepAhorro({ data, update }: StepProps) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Ahorro e inversiones</h2>
-            <p className="tg-step__desc">Intereses, dividendos y ganancias patrimoniales tributan en la base del ahorro.</p>
+            <p className="tg-step__desc">Los intereses, dividendos y ganancias patrimoniales van a la base del ahorro.</p>
 
             <NumberInput label="Intereses de cuentas/depósitos" value={data.intereses} onChange={v => update({ intereses: v })} suffix="EUR" />
             <NumberInput label="Dividendos" value={data.dividendos} onChange={v => update({ dividendos: v })} suffix="EUR" />
-            <NumberInput label="Ganancias de fondos/acciones" value={data.ganancias_fondos} onChange={v => update({ ganancias_fondos: v })} suffix="EUR" help="Ganancias netas realizadas (ventas - compras)" />
-            <NumberInput label="Retenciones sobre capital mobiliario" value={data.retenciones_ahorro} onChange={v => update({ retenciones_ahorro: v })} suffix="EUR" help="19% retenido por bancos sobre intereses y dividendos" />
+            <NumberInput label="Ganancias de fondos/acciones" value={data.ganancias_fondos} onChange={v => update({ ganancias_fondos: v })} suffix="EUR" help="Ganancias netas ya realizadas (ventas menos compras)." />
+            <NumberInput label="Retenciones sobre capital mobiliario" value={data.retenciones_ahorro} onChange={v => update({ retenciones_ahorro: v })} suffix="EUR" help="19% retenido por el banco sobre intereses y dividendos." />
         </div>
     )
 }
@@ -587,20 +586,20 @@ function StepInmuebles({ data, update }: StepProps) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Inmuebles y alquileres</h2>
-            <p className="tg-step__desc">Si alquilas un inmueble, indica los ingresos y gastos asociados.</p>
+            <p className="tg-step__desc">Si alquilas un inmueble, anota los ingresos y los gastos asociados.</p>
 
             <NumberInput label="Ingresos por alquiler (anual)" value={data.ingresos_alquiler} onChange={v => update({ ingresos_alquiler: v })} suffix="EUR" />
-            <NumberInput label="Gastos deducibles del alquiler" value={data.gastos_alquiler_total} onChange={v => update({ gastos_alquiler_total: v })} suffix="EUR" help="IBI, comunidad, seguros, reparaciones, intereses hipoteca..." />
-            <NumberInput label="Valor de adquisición del inmueble" value={data.valor_adquisicion_inmueble} onChange={v => update({ valor_adquisicion_inmueble: v })} suffix="EUR" help="Para calcular la amortización (3% anual)" />
-            <NumberInput label="Retenciones sobre alquileres" value={data.retenciones_alquiler} onChange={v => update({ retenciones_alquiler: v })} suffix="EUR" help="19% retenido por inquilinos empresas/profesionales" />
+            <NumberInput label="Gastos deducibles del alquiler" value={data.gastos_alquiler_total} onChange={v => update({ gastos_alquiler_total: v })} suffix="EUR" help="IBI, comunidad, seguros, reparaciones, intereses de la hipoteca, etc." />
+            <NumberInput label="Valor de adquisición del inmueble" value={data.valor_adquisicion_inmueble} onChange={v => update({ valor_adquisicion_inmueble: v })} suffix="EUR" help="Sirve para calcular la amortización (3% anual)." />
+            <NumberInput label="Retenciones sobre alquileres" value={data.retenciones_alquiler} onChange={v => update({ retenciones_alquiler: v })} suffix="EUR" help="19% retenido por inquilinos que sean empresas o profesionales." />
 
             <h3 className="tg-step__subtitle">Alquiler como inquilino</h3>
-            <NumberInput label="Alquiler anual pagado (vivienda habitual)" value={data.alquiler_pagado_anual} onChange={v => update({ alquiler_pagado_anual: v })} suffix="EUR" help="Total anual pagado. Necesario para deducciones autonómicas por alquiler" />
-            <CheckboxInput label="Contrato de alquiler anterior al 1/1/2015" checked={data.alquiler_habitual_pre2015} onChange={v => update({ alquiler_habitual_pre2015: v })} help="Régimen transitorio estatal: deducción adicional del 10,05% (máx. 9.040 EUR/año)" />
+            <NumberInput label="Alquiler anual pagado (vivienda habitual)" value={data.alquiler_pagado_anual} onChange={v => update({ alquiler_pagado_anual: v })} suffix="EUR" help="Total anual pagado. Es necesario para las deducciones autonómicas por alquiler." />
+            <CheckboxInput label="Contrato de alquiler anterior al 1/1/2015" checked={data.alquiler_habitual_pre2015} onChange={v => update({ alquiler_habitual_pre2015: v })} help="Régimen transitorio estatal: deducción adicional del 10,05% (máx. 9.040 EUR/año)." />
 
             <h3 className="tg-step__subtitle">Segundas viviendas</h3>
-            <NumberInput label="Valor catastral de segundas viviendas" value={data.valor_catastral_segundas_viviendas} onChange={v => update({ valor_catastral_segundas_viviendas: v })} suffix="EUR" help="Viviendas no alquiladas ni vivienda habitual. Imputa 1,1%-2% como renta" />
-            <CheckboxInput label="Valor catastral revisado después de 1994" checked={data.valor_catastral_revisado_post1994} onChange={v => update({ valor_catastral_revisado_post1994: v })} help="Si fue revisado antes de 1994 se aplica el 2% en lugar del 1,1%" />
+            <NumberInput label="Valor catastral de segundas viviendas" value={data.valor_catastral_segundas_viviendas} onChange={v => update({ valor_catastral_segundas_viviendas: v })} suffix="EUR" help="Viviendas que no son habituales ni están alquiladas. Imputan entre el 1,1% y el 2% como renta." />
+            <CheckboxInput label="Valor catastral revisado después de 1994" checked={data.valor_catastral_revisado_post1994} onChange={v => update({ valor_catastral_revisado_post1994: v })} help="Si la revisión es anterior a 1994, se aplica el 2% en lugar del 1,1%." />
         </div>
     )
 }
@@ -611,7 +610,7 @@ function StepInversiones({ data, update }: StepProps) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Inversiones y cripto</h2>
-            <p className="tg-step__desc">Ganancias y pérdidas patrimoniales de acciones, fondos, criptomonedas, derivados y apuestas.</p>
+            <p className="tg-step__desc">Ganancias y pérdidas patrimoniales: acciones, fondos, criptomonedas, derivados y apuestas.</p>
 
             <CheckboxInput label="Tengo criptomonedas" checked={data.tiene_criptomonedas} onChange={v => {
                 update({ tiene_criptomonedas: v })
@@ -619,8 +618,8 @@ function StepInversiones({ data, update }: StepProps) {
             }} />
             {data.tiene_criptomonedas && (
                 <>
-                    <NumberInput label="Ganancias netas cripto" value={data.cripto_ganancia_neta} onChange={v => update({ cripto_ganancia_neta: v })} suffix="EUR" help="Ganancias realizadas (ventas - compras, método FIFO)" />
-                    <NumberInput label="Pérdidas netas cripto" value={data.cripto_perdida_neta} onChange={v => update({ cripto_perdida_neta: v })} suffix="EUR" help="Pérdidas realizadas (no compensadas). Atención: regla antiaplicación 61 días" />
+                    <NumberInput label="Ganancias netas cripto" value={data.cripto_ganancia_neta} onChange={v => update({ cripto_ganancia_neta: v })} suffix="EUR" help="Ganancias ya realizadas (ventas menos compras, método FIFO)." />
+                    <NumberInput label="Pérdidas netas cripto" value={data.cripto_perdida_neta} onChange={v => update({ cripto_perdida_neta: v })} suffix="EUR" help="Pérdidas realizadas aún sin compensar. Ojo con la regla antiaplicación de 61 días." />
                 </>
             )}
 
@@ -651,20 +650,20 @@ function StepInversiones({ data, update }: StepProps) {
             <CheckboxInput label="Tengo premios de apuestas privadas" checked={data.tiene_ganancias_juegos_privados} onChange={v => {
                 update({ tiene_ganancias_juegos_privados: v })
                 if (!v) update({ premios_metalico_privados: 0, perdidas_juegos_privados: 0 })
-            }} help="Casinos, póker, apuestas deportivas privadas (tributan en base general)" />
+            }} help="Casinos, póker, apuestas deportivas privadas. Tributan en base general." />
             {data.tiene_ganancias_juegos_privados && (
                 <>
                     <NumberInput label="Premios de juegos privados" value={data.premios_metalico_privados} onChange={v => update({ premios_metalico_privados: v })} suffix="EUR" />
-                    <NumberInput label="Pérdidas de juegos privados" value={data.perdidas_juegos_privados} onChange={v => update({ perdidas_juegos_privados: v })} suffix="EUR" help="Compensables solo con ganancias de juegos" />
+                    <NumberInput label="Pérdidas de juegos privados" value={data.perdidas_juegos_privados} onChange={v => update({ perdidas_juegos_privados: v })} suffix="EUR" help="Solo se compensan con ganancias de juegos." />
                 </>
             )}
 
             <CheckboxInput label="Tengo premios de loterías públicas" checked={data.tiene_premios_loterias} onChange={v => {
                 update({ tiene_premios_loterias: v })
                 if (!v) update({ premios_metalico_publicos: 0 })
-            }} help="Lotería Nacional, Euromillones, ONCE, Cruz Roja. Gravamen especial 20% (exentos primeros 40.000 EUR)" />
+            }} help="Lotería Nacional, Euromillones, ONCE, Cruz Roja. Gravamen especial del 20%. Los primeros 40.000 EUR están exentos." />
             {data.tiene_premios_loterias && (
-                <NumberInput label="Premios de loterías públicas" value={data.premios_metalico_publicos} onChange={v => update({ premios_metalico_publicos: v })} suffix="EUR" help="Importe bruto total. Los primeros 40.000 EUR están exentos" />
+                <NumberInput label="Premios de loterías públicas" value={data.premios_metalico_publicos} onChange={v => update({ premios_metalico_publicos: v })} suffix="EUR" help="Importe bruto total. Los primeros 40.000 EUR están exentos." />
             )}
         </div>
     )
@@ -676,13 +675,13 @@ function StepCreadorActividad({ data, update }: StepProps) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Actividad como creador de contenido</h2>
-            <p className="tg-step__desc">Indica tus ingresos por plataforma y gastos de tu actividad.</p>
+            <p className="tg-step__desc">Indica tus ingresos por plataforma y los gastos de tu actividad.</p>
 
             <div className="creator-info-card creator-info-card--warning">
                 <AlertTriangle size={20} />
                 <div>
-                    <strong>¿Sabías que...?</strong>
-                    <p>Desde el primer euro de ingreso como creador, estás obligado a darte de alta como autónomo en la Seguridad Social y en Hacienda.</p>
+                    <strong>Importante</strong>
+                    <p>Desde el primer euro que ingreses como creador tienes que darte de alta como autónomo en la Seguridad Social y en Hacienda.</p>
                 </div>
             </div>
 
@@ -713,7 +712,7 @@ function StepCreadorActividad({ data, update }: StepProps) {
                     className="tg-field__select"
                 >
                     <option value="">Selecciona tu epígrafe</option>
-                    <option value="8690">8690 — Otros servicios profesionales (recomendado)</option>
+                    <option value="8690">8690 — Otros servicios profesionales (el habitual)</option>
                     <option value="9020">9020 — Servicios de publicidad y relaciones públicas</option>
                     <option value="6010.1">6010.1 — Comercio al por menor</option>
                     <option value="961.1">961.1 — Producción y distribución cinematográfica</option>
@@ -766,21 +765,21 @@ function StepCreadorActividad({ data, update }: StepProps) {
                 value={data.cuota_autonomo_anual}
                 onChange={v => update({ cuota_autonomo_anual: v })}
                 suffix="EUR"
-                help="Cuota mensual x 12. Ej: 293 EUR/mes = 3.516 EUR/año"
+                help="Cuota mensual x 12. Por ejemplo: 293 EUR/mes son 3.516 EUR/año."
             />
             <NumberInput
                 label="Pagos fraccionados (Modelo 130) ya realizados"
                 value={data.pagos_fraccionados_130}
                 onChange={v => update({ pagos_fraccionados_130: v })}
                 suffix="EUR"
-                help="Suma de los 4 trimestres del Modelo 130 pagados"
+                help="Suma de los cuatro trimestres del Modelo 130 ya pagados."
             />
 
             <div className="creator-info-card creator-info-card--info">
                 <Info size={20} />
                 <div>
                     <strong>IVA en plataformas internacionales</strong>
-                    <p>Los pagos de YouTube (Google Ireland), Twitch (Amazon Luxembourg) o Meta (Meta Ireland) son operaciones intracomunitarias. No aplicas IVA español, pero debes presentar el Modelo 349.</p>
+                    <p>Los pagos de YouTube (Google Ireland), Twitch (Amazon Luxembourg) o Meta (Meta Ireland) son operaciones intracomunitarias. No repercutes IVA español, pero tienes que presentar el Modelo 349.</p>
                 </div>
             </div>
 
@@ -802,7 +801,7 @@ function StepCreadorActividad({ data, update }: StepProps) {
                 <Info size={20} />
                 <div>
                     <strong>Withholding tax (retención EE. UU.)</strong>
-                    <p>YouTube puede retener hasta el 30% sobre ingresos de audiencia estadounidense. Si enviaste el formulario W-8BEN, la retención se reduce al 0-15% por el convenio España-EE. UU.</p>
+                    <p>YouTube puede retener hasta el 30% sobre los ingresos de audiencia estadounidense. Si enviaste el formulario W-8BEN, la retención baja al 0-15% por el convenio España-EE. UU.</p>
                 </div>
             </div>
             <NumberInput
@@ -810,7 +809,7 @@ function StepCreadorActividad({ data, update }: StepProps) {
                 value={data.withholding_tax_pagado}
                 onChange={v => update({ withholding_tax_pagado: v })}
                 suffix="EUR"
-                help="Importe retenido directamente por la plataforma en origen"
+                help="Importe retenido por la plataforma en origen."
             />
         </div>
     )
@@ -851,7 +850,7 @@ function StepActividadAutonomo({ data, update }: StepProps) {
                 </select>
                 {isFarmaceutico && (
                     <span className="tg-field__help">
-                        CNAE 47.73 / IAE 652.1 — Sujeto al Régimen de Recargo de Equivalencia (Art. 154-163 LIVA). No presentas Modelo 303 (IVA).
+                        CNAE 47.73 / IAE 652.1. Te aplica el Régimen de Recargo de Equivalencia (Art. 154-163 LIVA), así que no presentas Modelo 303 de IVA.
                     </span>
                 )}
             </div>
@@ -869,10 +868,10 @@ function StepActividadAutonomo({ data, update }: StepProps) {
                 </select>
                 <span className="tg-field__help">
                     {data.estimacion_actividad === 'directa_simplificada'
-                        ? 'La más común. Incluye 5% de gastos de difícil justificación (máx. 2.000 EUR)'
+                        ? 'La opción habitual. Incluye un 5% de gastos de difícil justificación (máx. 2.000 EUR).'
                         : data.estimacion_actividad === 'directa_normal'
-                        ? 'Requiere contabilidad ajustada al Código de Comercio. Permite provisiones'
-                        : 'Solo si tu actividad está incluida en la Orden de Módulos'}
+                        ? 'Requiere contabilidad ajustada al Código de Comercio. Admite provisiones.'
+                        : 'Solo si tu actividad está incluida en la Orden de Módulos.'}
                 </span>
             </div>
 
@@ -881,28 +880,28 @@ function StepActividadAutonomo({ data, update }: StepProps) {
                 value={data.ingresos_actividad}
                 onChange={v => update({ ingresos_actividad: v })}
                 suffix="EUR"
-                help="Total facturado (base imponible, sin IVA/IGIC)"
+                help="Total facturado (base imponible, sin IVA/IGIC)."
             />
             <NumberInput
                 label="Gastos deducibles de actividad"
                 value={data.gastos_actividad}
                 onChange={v => update({ gastos_actividad: v })}
                 suffix="EUR"
-                help="Suministros, alquiler local, seguros, material, marketing..."
+                help="Suministros, alquiler del local, seguros, material, marketing, etc."
             />
             <NumberInput
                 label="Cuota de autónomo anual"
                 value={data.cuota_autonomo_anual}
                 onChange={v => update({ cuota_autonomo_anual: v })}
                 suffix="EUR"
-                help="Cuota mensual x 12. Ej: 293 EUR/mes = 3.516 EUR/año"
+                help="Cuota mensual x 12. Por ejemplo: 293 EUR/mes son 3.516 EUR/año."
             />
             <NumberInput
                 label="Amortizaciones"
                 value={data.amortizaciones_actividad}
                 onChange={v => update({ amortizaciones_actividad: v })}
                 suffix="EUR"
-                help="Amortización de activos fijos (ordenador, vehículo, mobiliario...)"
+                help="Amortización de activos fijos: ordenador, vehículo, mobiliario, etc."
             />
 
             {data.estimacion_actividad === 'directa_normal' && (
@@ -911,7 +910,7 @@ function StepActividadAutonomo({ data, update }: StepProps) {
                     value={data.provisiones_actividad}
                     onChange={v => update({ provisiones_actividad: v })}
                     suffix="EUR"
-                    help="Solo en estimación directa normal"
+                    help="Solo en estimación directa normal."
                 />
             )}
 
@@ -928,14 +927,14 @@ function StepActividadAutonomo({ data, update }: StepProps) {
                 value={data.retenciones_actividad}
                 onChange={v => update({ retenciones_actividad: v })}
                 suffix="EUR"
-                help="15% (o 7% nuevos autónomos) retenido por tus clientes profesionales"
+                help="15% (o 7% si eres nuevo autónomo) retenido por tus clientes profesionales."
             />
             <NumberInput
                 label="Pagos fraccionados Modelo 130"
                 value={data.pagos_fraccionados_130}
                 onChange={v => update({ pagos_fraccionados_130: v })}
                 suffix="EUR"
-                help="Suma de los 4 trimestres del Modelo 130 pagados"
+                help="Suma de los cuatro trimestres del Modelo 130 ya pagados."
             />
 
             <h3 className="tg-step__subtitle">Reducciones</h3>
@@ -943,13 +942,13 @@ function StepActividadAutonomo({ data, update }: StepProps) {
                 label="Inicio de actividad (primeros 2 años con beneficio)"
                 checked={data.inicio_actividad}
                 onChange={v => update({ inicio_actividad: v })}
-                help="Reducción del 20% sobre el rendimiento neto positivo (Art. 32.3 LIRPF)"
+                help="Reducción del 20% sobre el rendimiento neto positivo (Art. 32.3 LIRPF)."
             />
             <CheckboxInput
                 label="Más del 75% de ingresos de un solo cliente"
                 checked={data.un_solo_cliente}
                 onChange={v => update({ un_solo_cliente: v })}
-                help="Autónomo económicamente dependiente (TRADE). Aplica reducción similar a trabajo (Art. 32.2 LIRPF)"
+                help="Autónomo económicamente dependiente (TRADE). Se aplica una reducción similar a la de trabajo (Art. 32.2 LIRPF)."
             />
         </div>
     )
@@ -983,7 +982,7 @@ function StepFamilia({ data, update }: StepProps) {
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Situación familiar</h2>
-            <p className="tg-step__desc">Los mínimos personales y familiares reducen la base imponible.</p>
+            <p className="tg-step__desc">Los mínimos personales y familiares te bajan la base imponible.</p>
 
             <NumberInput label="Número de hijos" value={data.num_descendientes} onChange={handleDescendientes} min={0} step={1} />
 
@@ -1015,14 +1014,14 @@ function StepFamilia({ data, update }: StepProps) {
                         value={data.num_descendientes_discapacidad_33}
                         onChange={v => update({ num_descendientes_discapacidad_33: Math.min(v, data.num_descendientes) })}
                         min={0} step={1}
-                        help="Incrementa el mínimo por descendientes en 3.000 EUR por hijo (Art. 60.2 LIRPF)"
+                        help="Sube el mínimo por descendientes en 3.000 EUR por hijo (Art. 60.2 LIRPF)."
                     />
                     <NumberInput
                         label="Hijos con discapacidad 65% o más"
                         value={data.num_descendientes_discapacidad_65}
                         onChange={v => update({ num_descendientes_discapacidad_65: Math.min(v, data.num_descendientes) })}
                         min={0} step={1}
-                        help="Incrementa el mínimo por descendientes en 9.000 EUR por hijo (Art. 60.2 LIRPF)"
+                        help="Sube el mínimo por descendientes en 9.000 EUR por hijo (Art. 60.2 LIRPF)."
                     />
                 </>
             )}
@@ -1035,22 +1034,22 @@ function StepFamilia({ data, update }: StepProps) {
                         value={data.num_ascendientes_discapacidad_33}
                         onChange={v => update({ num_ascendientes_discapacidad_33: v })}
                         min={0} step={1}
-                        help="Incrementa el mínimo por ascendientes en 3.000 EUR por persona (Art. 60.3 LIRPF)"
+                        help="Sube el mínimo por ascendientes en 3.000 EUR por persona (Art. 60.3 LIRPF)."
                     />
                     <NumberInput
                         label="Ascendientes con discapacidad 65% o más"
                         value={data.num_ascendientes_discapacidad_65}
                         onChange={v => update({ num_ascendientes_discapacidad_65: v })}
                         min={0} step={1}
-                        help="Incrementa el mínimo por ascendientes en 9.000 EUR por persona (Art. 60.3 LIRPF)"
+                        help="Sube el mínimo por ascendientes en 9.000 EUR por persona (Art. 60.3 LIRPF)."
                     />
                 </>
             )}
 
-            <CheckboxInput label="Madre trabajadora dada de alta en la SS" checked={data.madre_trabajadora_ss} onChange={v => update({ madre_trabajadora_ss: v })} help="Deducción por maternidad: 1.200 EUR/hijo menor de 3 años" />
+            <CheckboxInput label="Madre trabajadora dada de alta en la SS" checked={data.madre_trabajadora_ss} onChange={v => update({ madre_trabajadora_ss: v })} help="Deducción por maternidad: 1.200 EUR por cada hijo menor de 3 años." />
 
             {data.madre_trabajadora_ss && (
-                <NumberInput label="Gastos de guardería (anual)" value={data.gastos_guarderia_anual} onChange={v => update({ gastos_guarderia_anual: v })} suffix="EUR" help="Hasta 1.000 EUR adicionales por hijo en guardería autorizada" />
+                <NumberInput label="Gastos de guardería (anual)" value={data.gastos_guarderia_anual} onChange={v => update({ gastos_guarderia_anual: v })} suffix="EUR" help="Hasta 1.000 EUR adicionales por hijo si la guardería está autorizada." />
             )}
 
             <CheckboxInput label="Familia numerosa reconocida" checked={data.familia_numerosa} onChange={v => update({ familia_numerosa: v })} />
@@ -1082,26 +1081,26 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
     return (
         <div className="tg-step">
             <h2 className="tg-step__title">Deducciones y reducciones</h2>
-            <p className="tg-step__desc">Estas deducciones reducen directamente tu cuota o tu base imponible.</p>
+            <p className="tg-step__desc">Te bajan directamente la cuota o la base imponible.</p>
 
             <h3 className="tg-step__subtitle">Planes de pensiones</h3>
-            <NumberInput label="Aportaciones propias a planes de pensiones" value={data.aportaciones_plan_pensiones} onChange={v => update({ aportaciones_plan_pensiones: v })} suffix="EUR" help="Máximo 1.500 EUR/año (reducen la base imponible general)" />
-            <NumberInput label="Aportaciones de la empresa" value={data.aportaciones_plan_pensiones_empresa} onChange={v => update({ aportaciones_plan_pensiones_empresa: v })} suffix="EUR" help="Límite conjunto con propias: 8.500 EUR" />
+            <NumberInput label="Aportaciones propias a planes de pensiones" value={data.aportaciones_plan_pensiones} onChange={v => update({ aportaciones_plan_pensiones: v })} suffix="EUR" help="Máximo 1.500 EUR al año. Bajan la base imponible general." />
+            <NumberInput label="Aportaciones de la empresa" value={data.aportaciones_plan_pensiones_empresa} onChange={v => update({ aportaciones_plan_pensiones_empresa: v })} suffix="EUR" help="Límite conjunto con las propias: 8.500 EUR." />
 
             <h3 className="tg-step__subtitle">Vivienda habitual (hipoteca anterior al 1/1/2013)</h3>
-            <CheckboxInput label="Tengo hipoteca firmada antes del 1 de enero de 2013" checked={data.hipoteca_pre2013} onChange={v => update({ hipoteca_pre2013: v })} help="Régimen transitorio: deducción del 15% sobre máx. 9.040 EUR/año" />
+            <CheckboxInput label="Tengo hipoteca firmada antes del 1 de enero de 2013" checked={data.hipoteca_pre2013} onChange={v => update({ hipoteca_pre2013: v })} help="Régimen transitorio: deducción del 15% sobre un máximo de 9.040 EUR al año." />
 
             {data.hipoteca_pre2013 && (
                 <>
-                    <NumberInput label="Capital amortizado en el año" value={data.capital_amortizado_hipoteca} onChange={v => update({ capital_amortizado_hipoteca: v })} suffix="EUR" help="Principal pagado durante el ejercicio" />
+                    <NumberInput label="Capital amortizado en el año" value={data.capital_amortizado_hipoteca} onChange={v => update({ capital_amortizado_hipoteca: v })} suffix="EUR" help="Principal pagado durante el ejercicio." />
                     <NumberInput label="Intereses de hipoteca pagados" value={data.intereses_hipoteca} onChange={v => update({ intereses_hipoteca: v })} suffix="EUR" />
                 </>
             )}
 
             <h3 className="tg-step__subtitle">Donativos</h3>
-            <NumberInput label="Donativos a entidades Ley 49/2002" value={data.donativos_ley_49_2002} onChange={v => update({ donativos_ley_49_2002: v })} suffix="EUR" help="ONGs, fundaciones... 80% primeros 250 EUR, 40% resto" />
+            <NumberInput label="Donativos a entidades Ley 49/2002" value={data.donativos_ley_49_2002} onChange={v => update({ donativos_ley_49_2002: v })} suffix="EUR" help="ONG, fundaciones, etc. Se deduce el 80% sobre los primeros 250 EUR y el 40% sobre el resto." />
             {data.donativos_ley_49_2002 > 0 && (
-                <CheckboxInput label="Donante recurrente (3+ años misma entidad)" checked={data.donativo_recurrente} onChange={v => update({ donativo_recurrente: v })} help="Sube al 45% el exceso sobre 250 EUR" />
+                <CheckboxInput label="Donante recurrente (3 años o más en la misma entidad)" checked={data.donativo_recurrente} onChange={v => update({ donativo_recurrente: v })} help="El exceso sobre 250 EUR pasa del 40% al 45%." />
             )}
 
             <h3 className="tg-step__subtitle">Obligaciones familiares</h3>
@@ -1110,14 +1109,14 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
                 value={data.pension_compensatoria_exconyuge}
                 onChange={v => update({ pension_compensatoria_exconyuge: v })}
                 suffix="EUR"
-                help="Reduce la base imponible general. Solo pensiones fijadas por resolución judicial (Art. 55 LIRPF)"
+                help="Baja la base imponible general. Solo si la pensión viene fijada por resolución judicial (Art. 55 LIRPF)."
             />
             <NumberInput
                 label="Anualidades por alimentos a los hijos (anual)"
                 value={data.anualidades_alimentos_hijos}
                 onChange={v => update({ anualidades_alimentos_hijos: v })}
                 suffix="EUR"
-                help="Reciben tributación separada y favorable. Solo si fijadas por decisión judicial (Art. 64 LIRPF)"
+                help="Tributan de forma separada y más favorable. Solo si están fijadas por decisión judicial (Art. 64 LIRPF)."
             />
 
             <h3 className="tg-step__subtitle">Ingresos del extranjero</h3>
@@ -1126,24 +1125,24 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
                 value={data.impuestos_pagados_extranjero}
                 onChange={v => update({ impuestos_pagados_extranjero: v })}
                 suffix="EUR"
-                help="Para deducción por doble imposición internacional. Impuestos análogos al IRPF pagados fuera de España (Art. 80 LIRPF)"
+                help="Sirve para la deducción por doble imposición internacional: impuestos análogos al IRPF pagados fuera de España (Art. 80 LIRPF)."
             />
 
             <h3 className="tg-step__subtitle">Pérdidas de ejercicios anteriores</h3>
-            <p className="tg-step__hint">Si tuviste pérdidas patrimoniales o de capital en los últimos 4 años que no se han compensado, indícalas aquí. Reducen tu base imponible (Art. 48-49 LIRPF).</p>
+            <p className="tg-step__hint">Si tuviste pérdidas patrimoniales o de capital en los últimos 4 años y aún no las has compensado, anótalas aquí. Te bajan la base imponible (Art. 48-49 LIRPF).</p>
             <NumberInput
                 label="Pérdidas patrimoniales del ahorro (acciones, fondos, cripto)"
                 value={data.perdidas_gp_ahorro_pendientes}
                 onChange={v => update({ perdidas_gp_ahorro_pendientes: v })}
                 suffix="EUR"
-                help="Pérdidas por venta de acciones, fondos, ETFs o criptomonedas de los últimos 4 ejercicios pendientes de compensar"
+                help="Pérdidas por venta de acciones, fondos, ETF o criptomonedas de los últimos 4 ejercicios, pendientes de compensar."
             />
             <NumberInput
                 label="Pérdidas por rendimientos del capital mobiliario"
                 value={data.perdidas_rcm_pendientes}
                 onChange={v => update({ perdidas_rcm_pendientes: v })}
                 suffix="EUR"
-                help="Rendimientos negativos de depósitos, bonos, seguros u otros productos financieros"
+                help="Rendimientos negativos de depósitos, bonos, seguros u otros productos financieros."
             />
 
             {/* Task 1: DynamicFiscalForm — CCAA-specific deduction fields */}
@@ -1163,7 +1162,7 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
             {/* Phase B: Proactive deduction discovery */}
             {data.comunidad_autonoma && (
                 <div className="tg-discovery">
-                    <h3 className="tg-step__subtitle">Deducciones descubiertas para {data.comunidad_autonoma}</h3>
+                    <h3 className="tg-step__subtitle">Deducciones de {data.comunidad_autonoma} que te pueden aplicar</h3>
 
                     {discoveryLoading && <p className="tg-discovery__loading">Buscando deducciones...</p>}
 
@@ -1180,7 +1179,7 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
 
                     {!discoveryError && discoveryResult && discoveryResult.eligible.length > 0 && (
                         <div className="tg-discovery__section">
-                            <p className="tg-discovery__section-label tg-discovery__section-label--eligible">Deducciones a las que tienes derecho</p>
+                            <p className="tg-discovery__section-label tg-discovery__section-label--eligible">Te corresponden estas deducciones</p>
                             {discoveryResult.eligible.map((d: any) => (
                                 <div key={d.code} className="tg-deduction-card tg-deduction-card--eligible">
                                     <div className="tg-deduction-card__header">
@@ -1203,7 +1202,7 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
 
                     {!discoveryError && discoveryResult && discoveryResult.missing_questions.length > 0 && (
                         <div className="tg-discovery__section">
-                            <p className="tg-discovery__section-label tg-discovery__section-label--maybe">Responde para descubrir más deducciones</p>
+                            <p className="tg-discovery__section-label tg-discovery__section-label--maybe">Contesta estas preguntas para ver si te aplican más</p>
                             {discoveryResult.missing_questions.slice(0, 5).map((q: MissingQuestion) => (
                                 <div key={q.key} className="tg-deduction-question">
                                     <span className="tg-deduction-question__text">{q.text}</span>
@@ -1224,7 +1223,7 @@ function StepDeducciones({ data, update, discoveryResult, discoveryLoading, disc
                     )}
 
                     {!discoveryError && discoveryResult && discoveryResult.eligible.length === 0 && discoveryResult.missing_questions.length === 0 && !discoveryLoading && (
-                        <p className="tg-discovery__empty">No se encontraron deducciones adicionales para tu situación.</p>
+                        <p className="tg-discovery__empty">No hay deducciones adicionales para tu situación.</p>
                     )}
                 </div>
             )}
@@ -1242,7 +1241,7 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
         return (
             <div className="tg-step">
                 <h2 className="tg-step__title">Resultado de la estimación</h2>
-                <p className="tg-step__desc">{loading ? 'Calculando tu estimación...' : 'Completa los pasos anteriores para ver tu resultado.'}</p>
+                <p className="tg-step__desc">{loading ? 'Calculando...' : 'Completa los pasos anteriores para ver el resultado.'}</p>
             </div>
         )
     }
@@ -1257,7 +1256,7 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
             <div className={`tg-result-card ${isRefund ? 'tg-result-card--refund' : 'tg-result-card--payment'}`}>
                 <span className="tg-result-card__label">{isRefund ? 'Hacienda te devuelve (aprox.)' : 'A pagar a Hacienda (aprox.)'}</span>
                 <span className="tg-result-card__amount">{abs.toLocaleString('es-ES', { minimumFractionDigits: 2 })} EUR</span>
-                <span className="tg-result-card__disclaimer">Resultado aproximado, no vinculante</span>
+                <span className="tg-result-card__disclaimer">Resultado aproximado. No es vinculante.</span>
             </div>
 
             <div className="tg-breakdown">
@@ -1362,21 +1361,21 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                         {data?.tiene_ingresos_intracomunitarios && (
                             <div className="obligacion-card obligacion-card--alert">
                                 <strong>Modelo 349</strong>
-                                <p>Debes presentar declaración de operaciones intracomunitarias (trimestral)</p>
+                                <p>Presentación trimestral de la declaración de operaciones intracomunitarias.</p>
                             </div>
                         )}
                         <div className="obligacion-card">
                             <strong>Modelo 130</strong>
-                            <p>Pago fraccionado IRPF trimestral (20% del rendimiento neto acumulado)</p>
+                            <p>Pago fraccionado de IRPF trimestral: 20% del rendimiento neto acumulado.</p>
                         </div>
                         <div className="obligacion-card">
                             <strong>DAC7</strong>
-                            <p>Las plataformas ya reportan tus ingresos a la AEAT. Asegúrate de que tu declaración coincida.</p>
+                            <p>Las plataformas ya reportan tus ingresos a la AEAT. Tu declaración tiene que cuadrar con esos datos.</p>
                         </div>
                         {data?.epigrafe_iae && (
                             <div className="obligacion-card">
                                 <strong>Epígrafe IAE: {data.epigrafe_iae}</strong>
-                                <p>Tu actividad está clasificada con este epígrafe en Hacienda</p>
+                                <p>Tu actividad está clasificada en Hacienda con este epígrafe.</p>
                             </div>
                         )}
                     </div>
@@ -1398,23 +1397,22 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                             <strong>Recargo de Equivalencia</strong>
                         </div>
                         <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.5' }}>
-                            Como farmacéutico sujeto al Recargo de Equivalencia (Art. 154-163 LIVA), no necesitas presentar
-                            el Modelo 303 (IVA) ni el 390 (resumen anual IVA). El IVA + RE lo ingresa tu proveedor.
-                            Tipos RE: 5,2% (IVA 21%), 1,4% (IVA 10%), 0,5% (IVA 4%).
+                            Como farmacéutico sujeto al Recargo de Equivalencia (Art. 154-163 LIVA), no presentas el Modelo 303 (IVA) ni el 390 (resumen anual). El IVA y el recargo los ingresa tu proveedor.
+                            Tipos de recargo: 5,2% (IVA 21%), 1,4% (IVA 10%) y 0,5% (IVA 4%).
                         </p>
                     </div>
                     <div className="obligaciones-grid">
                         <div className="obligacion-card">
                             <strong>Modelo 130</strong>
-                            <p>Pago fraccionado IRPF trimestral (20% del rendimiento neto acumulado)</p>
+                            <p>Pago fraccionado de IRPF trimestral: 20% del rendimiento neto acumulado.</p>
                         </div>
                         <div className="obligacion-card">
                             <strong>Cuota RETA</strong>
-                            <p>Cotización mensual a la Seguridad Social</p>
+                            <p>Cotización mensual a la Seguridad Social.</p>
                         </div>
                         <div className="obligacion-card">
                             <strong>CNAE 47.73 / IAE 652.1</strong>
-                            <p>Comercio al por menor de productos farmacéuticos</p>
+                            <p>Comercio al por menor de productos farmacéuticos.</p>
                         </div>
                     </div>
                 </div>
@@ -1426,15 +1424,15 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
                     <div className="obligaciones-grid">
                         <div className="obligacion-card">
                             <strong>Modelo 130</strong>
-                            <p>Pago fraccionado IRPF (20% rendimiento neto acumulado)</p>
+                            <p>Pago fraccionado de IRPF: 20% del rendimiento neto acumulado.</p>
                         </div>
                         <div className="obligacion-card">
                             <strong>Modelo 303</strong>
-                            <p>Autoliquidación IVA trimestral</p>
+                            <p>Autoliquidación trimestral de IVA.</p>
                         </div>
                         <div className="obligacion-card">
                             <strong>Cuota RETA</strong>
-                            <p>Cotización mensual a la Seguridad Social</p>
+                            <p>Cotización mensual a la Seguridad Social.</p>
                         </div>
                     </div>
                 </div>
@@ -1442,14 +1440,14 @@ function StepResultado({ result, loading, onSaveProfile, savingProfile, saveProf
 
             <div className="tg-disclaimer">
                 <p className="tg-disclaimer__title">Resultado aproximado</p>
-                <p>Esta estimación es orientativa y no constituye asesoramiento fiscal profesional. El resultado puede variar respecto a tu declaración final por factores como:</p>
+                <p>Es una estimación orientativa, no asesoramiento fiscal profesional. El resultado puede variar respecto a tu declaración final por cosas como:</p>
                 <ul className="tg-disclaimer__list">
-                    <li>Pérdidas de ejercicios anteriores pendientes de compensar</li>
-                    <li>Rendimientos irregulares, imputaciones de renta o retribuciones en especie</li>
-                    <li>Datos fiscales exactos proporcionados por la AEAT (certificados de retenciones)</li>
-                    <li>Deducciones autonómicas que requieran documentación específica</li>
+                    <li>Pérdidas de ejercicios anteriores pendientes de compensar.</li>
+                    <li>Rendimientos irregulares, imputaciones de renta o retribuciones en especie.</li>
+                    <li>Los datos fiscales exactos que facilita la AEAT (certificados de retenciones).</li>
+                    <li>Deducciones autonómicas que exijan documentación específica.</li>
                 </ul>
-                <p>Para una declaración precisa, consulta con un asesor fiscal o utiliza el borrador de la AEAT con tus datos fiscales reales.</p>
+                <p>Para una declaración precisa, consulta con un asesor fiscal o usa el borrador de la AEAT con tus datos reales.</p>
             </div>
 
             {saveProfileDone ? (
@@ -1938,7 +1936,7 @@ export default function TaxGuidePage() {
                         </div>
                         <div style={{ marginTop: 'var(--spacing-6)' }}>
                             <h3 className="tg-step__subtitle">Alquiler</h3>
-                            <NumberInput label="Alquiler anual pagado (vivienda habitual)" value={data.alquiler_pagado_anual} onChange={v => updateData({ alquiler_pagado_anual: v })} suffix="EUR" help="Para calcular deducciones autonómicas por alquiler" />
+                            <NumberInput label="Alquiler anual pagado (vivienda habitual)" value={data.alquiler_pagado_anual} onChange={v => updateData({ alquiler_pagado_anual: v })} suffix="EUR" help="Sirve para calcular las deducciones autonómicas por alquiler." />
                         </div>
                     </div>
                 )
@@ -1994,7 +1992,7 @@ export default function TaxGuidePage() {
                     Simulador <span>IRPF</span>
                 </h1>
                 <p className="tax-guide__header-desc">
-                    Calcula tu declaración de la renta con todas las deducciones de tu comunidad autónoma
+                    Calcula tu declaración de la renta con las deducciones de tu comunidad autónoma.
                 </p>
             </div>
 

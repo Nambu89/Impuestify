@@ -39,11 +39,11 @@ export function PreExportModal({ open, formato, onClose, onConfirm }: Props) {
             <div>
               <strong>Aviso legal importante</strong>
               <p>
-                El escrito generado por DefensIA es una orientación técnica
-                basada en reglas fiscales deterministas y jurisprudencia
-                verificada. <strong>No sustituye asesoramiento profesional.</strong>{" "}
-                Antes de presentarlo ante la Administración tributaria, revísalo
-                con un asesor fiscal o abogado colegiado.
+                El escrito que genera DefensIA es orientativo: se apoya en
+                reglas fiscales deterministas y jurisprudencia verificada,
+                pero <strong>no sustituye asesoramiento profesional</strong>.
+                Antes de presentarlo ante la Administración tributaria,
+                revísalo con un asesor fiscal o con un abogado colegiado.
               </p>
             </div>
           </div>

@@ -97,7 +97,7 @@ export function DefensiaWizardPage() {
 
   useSEO({
     title: "DefensIA — Nuevo expediente",
-    description: "Creación guiada de expediente fiscal defensivo.",
+    description: "Abre un expediente en DefensIA paso a paso.",
     noindex: true,
   });
 
@@ -169,19 +169,19 @@ export function DefensiaWizardPage() {
     // textual. onDone navega al expediente, donde ExpedientePage muestra
     // el dictamen + escrito ya persistidos por el backend.
     if (state.paso === 5 && state.expedienteId) {
-      setAnalyzeStatus("Iniciando análisis…");
+      setAnalyzeStatus("Preparando el análisis…");
       let doneFired = false;
       try {
         await analyze(state.expedienteId, {
-          onPhase: () => setAnalyzeStatus("Detectando fase procesal…"),
+          onPhase: () => setAnalyzeStatus("Detectando la fase procesal…"),
           onCandidatos: (d) =>
             setAnalyzeStatus(
-              `Aplicando reglas deterministas (${d.count} candidatos)…`,
+              `Aplicando reglas (${d.count} candidatos)…`,
             ),
           onVerificando: () =>
-            setAnalyzeStatus("Verificando argumentos contra el corpus RAG…"),
-          onDictamen: () => setAnalyzeStatus("Redactando dictamen…"),
-          onEscrito: () => setAnalyzeStatus("Redactando escrito de alegaciones…"),
+            setAnalyzeStatus("Verificando argumentos contra el corpus normativo…"),
+          onDictamen: () => setAnalyzeStatus("Redactando el dictamen…"),
+          onEscrito: () => setAnalyzeStatus("Redactando el escrito de alegaciones…"),
           onDone: () => {
             doneFired = true;
             setAnalyzeStatus(null);
@@ -311,15 +311,15 @@ export function DefensiaWizardPage() {
                 <FaseBadge fase={state.faseDetectada} />
                 {state.faseDetectada === "INDETERMINADA" && (
                   <p className="defensia-wizard-hint">
-                    No hemos podido determinar la fase con los documentos
-                    subidos. Puedes continuar y describir el caso en el
-                    siguiente paso — el motor intentará deducirla del brief.
+                    Con los documentos subidos no podemos fijar la fase. Puedes
+                    continuar y describir el caso en el paso siguiente; el
+                    motor intentará deducirla del brief.
                   </p>
                 )}
               </>
             ) : (
               <p className="defensia-wizard-hint">
-                Analizando los documentos para detectar la fase procesal…
+                Leyendo los documentos para detectar la fase procesal…
               </p>
             )}
           </section>
@@ -329,8 +329,8 @@ export function DefensiaWizardPage() {
           <section aria-labelledby="paso4-title">
             <h2 id="paso4-title">Describe tu caso (brief)</h2>
             <p className="defensia-wizard-hint">
-              Explica con tus palabras qué ha pasado y qué buscas conseguir.
-              DefensIA no arranca el análisis jurídico hasta leer este brief.
+              Cuéntanos con tus palabras qué ha pasado y qué quieres conseguir.
+              DefensIA no empieza el análisis jurídico hasta leer este brief.
             </p>
             <textarea
               className="defensia-wizard-textarea"
@@ -351,20 +351,19 @@ export function DefensiaWizardPage() {
             {!analyzing && !analyzeStatus && (
               <>
                 <p>
-                  Todo listo. Al pulsar "Analizar expediente" DefensIA
-                  comenzará:
+                  Al pulsar "Analizar expediente" DefensIA hará lo siguiente:
                 </p>
                 <ol>
-                  <li>Aplicar las 30 reglas deterministas</li>
-                  <li>Verificar cada argumento contra el corpus RAG</li>
-                  <li>Redactar un dictamen con citas verificadas</li>
+                  <li>Aplicar las reglas deterministas al caso.</li>
+                  <li>Verificar cada argumento contra el corpus normativo.</li>
+                  <li>Redactar un dictamen con las citas ya comprobadas.</li>
                 </ol>
               </>
             )}
             {(analyzing || analyzeStatus) && (
               <div className="defensia-wizard-analyzing" role="status">
                 <Loader2 size={20} className="spin" aria-hidden="true" />
-                <span>{analyzeStatus || "Analizando expediente…"}</span>
+                <span>{analyzeStatus || "Analizando el expediente…"}</span>
               </div>
             )}
             {analyzeError && !analyzing && (
