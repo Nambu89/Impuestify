@@ -83,6 +83,10 @@
     margin: 0;
 }
 
+.footer-links--compact {
+    margin-top: 1rem;
+}
+
 .footer-links li {
     margin-bottom: var(--spacing-2);
 }

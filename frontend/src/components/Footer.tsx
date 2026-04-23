@@ -5,7 +5,7 @@
  * Best practices: Visible on all pages, accessible, clear links
  */
 import { Link } from 'react-router-dom';
-import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle, Cookie, Settings, Map, Gavel } from 'lucide-react';
+import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle, Cookie, Settings, Map, Gavel, User } from 'lucide-react';
 import { showCookiePreferences } from './CookieConsent';
 import './Footer.css';
 
@@ -26,6 +26,14 @@ export default function Footer() {
                             <Bot className="inline-icon" size={14} />
                             {' '}Respuestas generadas con IA: son orientativas y no sustituyen al asesor fiscal.
                         </p>
+                        <ul className="footer-links footer-links--compact">
+                            <li>
+                                <Link to="/sobre-mi">
+                                    <User size={16} className="link-icon" />
+                                    Sobre mí
+                                </Link>
+                            </li>
+                        </ul>
                     </div>
 
                     <div className="footer-section">

@@ -26,6 +26,7 @@ const AITransparencyPage = lazy(() => import('./pages/AITransparencyPage'))
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const AvisoLegalPage = lazy(() => import('./pages/AvisoLegalPage'))
+const SobreMiPage = lazy(() => import('./pages/SobreMiPage'))
 const DataRetentionPage = lazy(() => import('./pages/DataRetentionPage'))
 const ForalPage = lazy(() => import('./pages/ForalPage'))
 const CeutaMelillaPage = lazy(() => import('./pages/CeutaMelillaPage'))
@@ -104,6 +105,9 @@ function App() {
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/subscribe" element={<SubscribePage />} />
                     <Route path="/contact" element={<ContactPage />} />
+
+                    {/* Public info pages */}
+                    <Route path="/sobre-mi" element={<SobreMiPage />} />
 
                     {/* Legal Pages - Publicly Accessible */}
                     <Route path="/aviso-legal" element={<AvisoLegalPage />} />

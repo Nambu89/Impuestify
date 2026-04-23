@@ -247,66 +247,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* De dónde viene — historia + motivación */}
-            <section className="about-origin">
-                <div className="container">
-                    <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">De dónde viene Impuestify</h2>
-                    </FadeContent>
-
-                    <FadeContent delay={100} duration={600}>
-                        <div className="about-origin__prose">
-                            <p>
-                                Impuestify empezó porque la fiscalidad española es demasiado
-                                complicada para cualquiera: da igual que seas pyme, asalariado,
-                                funcionario o creador de contenido. La información está
-                                repartida entre la AEAT, el BOE, las cuatro Diputaciones Forales
-                                y los boletines autonómicos, y nadie tiene tiempo ni ganas de
-                                juntarla por su cuenta.
-                            </p>
-
-                            <p>
-                                Probé los asistentes de IA genéricos y la sensación era siempre
-                                la misma: respuestas que suenan bien, pero que se inventan la
-                                mitad de la ley. Los RAG comerciales no están entrenados con
-                                fiscalidad española; mezclan normativa de otros países, confunden
-                                tramos y se saltan los forales como si no existieran.
-                            </p>
-
-                            <p>
-                                Así que lo monté yo. La idea era coger los documentos oficiales
-                                españoles de verdad (hoy hay más de 460 entre AEAT, BOE y las
-                                cuatro Diputaciones Forales), indexarlos, y hacer que el
-                                asistente citase el artículo concreto de la ley en cada
-                                respuesta. Las herramientas que hay dentro no son aleatorias:
-                                escuché qué pedía la gente y construí lo que más demanda tenía.
-                            </p>
-
-                            <p>
-                                Hay un motivo personal detrás. Me cansé de recibir requerimientos
-                                de Hacienda y no entender ni la mitad de lo que ponía, y de que
-                                la única salida fuera pagar a un abogado para que me tradujera
-                                un folio de dos páginas. De ahí salió DefensIA: subes el
-                                requerimiento, el sistema lee el documento y redacta el borrador
-                                del recurso, para que al menos puedas ir a tu asesor sabiendo
-                                de qué va.
-                            </p>
-
-                            <p>
-                                El fin es ese: que cualquiera que no sea profesional pueda
-                                entender su propia fiscalidad, sin carrera de derecho tributario
-                                y sin pagar 200 euros al mes a una gestoría que muchas veces
-                                tampoco se lo explica.
-                            </p>
-
-                            <p className="about-origin__signature">
-                                — Fernando Prada, fundador.
-                            </p>
-                        </div>
-                    </FadeContent>
-                </div>
-            </section>
-
             {/* Value Proposition — Quantified Savings */}
             <section className="savings">
                 <div className="container">
