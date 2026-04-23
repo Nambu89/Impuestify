@@ -3,7 +3,8 @@ import { useSEO } from '../hooks/useSEO'
 import {
     MessageSquare, Shield, FileText, ArrowRight, Calculator, CreditCard,
     CheckCircle, X, Users, Cpu, Search, Lock, Map, Zap, ExternalLink, CalendarDays, Video,
-    Globe, AlertTriangle, BookOpen, Building2, Heart, Briefcase
+    Globe, AlertTriangle, BookOpen, Building2, Heart, Briefcase,
+    Scale, Receipt, Landmark, ScanLine
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Header from '../components/Header'
@@ -115,8 +116,10 @@ export default function Home() {
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
                         <p className="hero-subtitle">
-                            El único asistente fiscal con IA que cubre todas las comunidades autónomas,
-                            incluyendo los territorios forales del País Vasco y Navarra.
+                            Declara tu IRPF, gestiona tus facturas y contabilidad de autónomo,
+                            simula el Impuesto sobre Sociedades y defiéndete ante Hacienda.
+                            Todo en un solo sitio, con IA, cobertura en los 21 regímenes
+                            fiscales de España y respuestas citando la legislación oficial.
                         </p>
                     </FadeContent>
                     <FadeContent delay={300} duration={600}>
@@ -137,6 +140,96 @@ export default function Home() {
                                     </Link>
                                 </>
                             )}
+                        </div>
+                    </FadeContent>
+                </div>
+            </section>
+
+            {/* Qué puedes hacer con Impuestify — explicación clara del producto */}
+            <section className="what-it-does">
+                <div className="container">
+                    <FadeContent delay={0} duration={500}>
+                        <h2 className="section-title">Qué puedes hacer con Impuestify</h2>
+                        <p className="section-subtitle">
+                            Una plataforma fiscal integral para particulares, autónomos, creadores digitales y sociedades.
+                            Estas son las herramientas reales que tienes desde el primer minuto.
+                        </p>
+                    </FadeContent>
+
+                    <div className="what-it-does-grid">
+                        <FadeContent delay={80} duration={400}>
+                            <SpotlightCard className="what-card" spotlightColor="rgba(26, 86, 219, 0.1)">
+                                <div className="what-icon"><FileText size={26} /></div>
+                                <h3>Declara tu IRPF</h3>
+                                <p>Simulador completo de renta con tributación conjunta, forales y Ceuta/Melilla. Descubre deducciones autonómicas que te corresponden.</p>
+                            </SpotlightCard>
+                        </FadeContent>
+
+                        <FadeContent delay={130} duration={400}>
+                            <SpotlightCard className="what-card" spotlightColor="rgba(6, 182, 212, 0.1)">
+                                <div className="what-icon"><Building2 size={26} /></div>
+                                <h3>Impuesto sobre Sociedades</h3>
+                                <p>Simulador del Modelo 200 para SL, SA y empresas de nueva creación. 7 territorios: común, 4 forales, ZEC y Ceuta/Melilla. Pagos fraccionados Modelo 202.</p>
+                            </SpotlightCard>
+                        </FadeContent>
+
+                        <FadeContent delay={180} duration={400}>
+                            <SpotlightCard className="what-card" spotlightColor="rgba(16, 185, 129, 0.1)">
+                                <div className="what-icon"><Receipt size={26} /></div>
+                                <h3>IVA y modelos trimestrales</h3>
+                                <p>303, 130, 131, 308, 349, 720, 721 y sus variantes forales (300 Gipuzkoa, F69 Navarra, 420 IGIC Canarias, IPSI Ceuta/Melilla). Borrador PDF listo.</p>
+                            </SpotlightCard>
+                        </FadeContent>
+
+                        <FadeContent delay={230} duration={400}>
+                            <SpotlightCard className="what-card" spotlightColor="rgba(139, 92, 246, 0.1)">
+                                <div className="what-icon"><Landmark size={26} /></div>
+                                <h3>Sucesiones y Donaciones</h3>
+                                <p>Cálculo del ISD con normativa específica de cada una de las 21 CCAA, incluyendo bonificaciones forales y de Ceuta/Melilla.</p>
+                            </SpotlightCard>
+                        </FadeContent>
+
+                        <FadeContent delay={280} duration={400}>
+                            <SpotlightCard className="what-card" spotlightColor="rgba(239, 68, 68, 0.1)">
+                                <div className="what-icon"><Scale size={26} /></div>
+                                <h3>DefensIA: defensa fiscal</h3>
+                                <p>Analiza liquidaciones, requerimientos y sanciones de la AEAT y genera borradores de escritos (reposición, TEAR, alegaciones) con validación normativa.</p>
+                            </SpotlightCard>
+                        </FadeContent>
+
+                        <FadeContent delay={330} duration={400}>
+                            <SpotlightCard className="what-card" spotlightColor="rgba(234, 179, 8, 0.1)">
+                                <div className="what-icon"><ScanLine size={26} /></div>
+                                <h3>Facturas y contabilidad PGC</h3>
+                                <p>Sube facturas y se clasifican automáticamente al Plan General Contable. Libro Diario, Mayor, Balance y Pérdidas y Ganancias exportables al Registro Mercantil.</p>
+                            </SpotlightCard>
+                        </FadeContent>
+
+                        <FadeContent delay={380} duration={400}>
+                            <SpotlightCard className="what-card" spotlightColor="rgba(59, 130, 246, 0.1)">
+                                <div className="what-icon"><MessageSquare size={26} /></div>
+                                <h3>Chat fiscal conversacional</h3>
+                                <p>Pregunta en lenguaje natural. Respuestas basadas en 463+ documentos oficiales de AEAT, BOE y Diputaciones Forales, con cita a la fuente legal.</p>
+                            </SpotlightCard>
+                        </FadeContent>
+
+                        <FadeContent delay={430} duration={400}>
+                            <SpotlightCard className="what-card" spotlightColor="rgba(6, 182, 212, 0.1)">
+                                <div className="what-icon"><Calculator size={26} /></div>
+                                <h3>6 calculadoras públicas</h3>
+                                <p>Sueldo neto, retenciones IRPF, umbrales contables, obligaciones fiscales, obligado a declarar y checklist del borrador. Sin registro.</p>
+                            </SpotlightCard>
+                        </FadeContent>
+                    </div>
+
+                    <FadeContent delay={500} duration={500}>
+                        <div className="what-it-does-footer">
+                            <p>
+                                <strong>Lo que Impuestify NO hace:</strong> no presenta modelos ante la AEAT en tu nombre, no realiza
+                                gestión laboral activa (nóminas, TC1/TC2, contratos) y no sustituye el asesoramiento profesional
+                                de un asesor fiscal o abogado colegiado. Siempre valida la información con un experto antes de
+                                presentar cualquier modelo o escrito oficial.
+                            </p>
                         </div>
                     </FadeContent>
                 </div>
@@ -329,8 +422,8 @@ export default function Home() {
                                 <div className="feature-icon">
                                     <Search size={28} />
                                 </div>
-                                <h3>428+ Documentos Oficiales</h3>
-                                <p>RAG sobre normativa real de AEAT, BOE y Diputaciones Forales. Cada respuesta cita su fuente.</p>
+                                <h3>463+ Documentos Oficiales</h3>
+                                <p>Base indexada sobre normativa real de AEAT, BOE y Diputaciones Forales. Cada respuesta cita su fuente.</p>
                             </SpotlightCard>
                         </FadeContent>
                         <FadeContent delay={300} duration={400}>
