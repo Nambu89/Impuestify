@@ -5,7 +5,7 @@
  * Best practices: Visible on all pages, accessible, clear links
  */
 import { Link } from 'react-router-dom';
-import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle, Cookie, Settings, Map } from 'lucide-react';
+import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle, Cookie, Settings, Map, Gavel } from 'lucide-react';
 import { showCookiePreferences } from './CookieConsent';
 import './Footer.css';
 
@@ -32,6 +32,12 @@ export default function Footer() {
                     <div className="footer-section">
                         <h4>Legal</h4>
                         <ul className="footer-links">
+                            <li>
+                                <Link to="/aviso-legal">
+                                    <Gavel size={16} className="link-icon" />
+                                    Aviso Legal
+                                </Link>
+                            </li>
                             <li>
                                 <Link to="/privacy-policy">
                                     <FileText size={16} className="link-icon" />

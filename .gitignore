@@ -163,3 +163,6 @@ implementation_plan.md.resolved
 
 # Windows Task Scheduler exports (locales)
 **/_task.xml
+
+# Benchmarks scrapeados de webs de terceros (solo uso interno)
+docs/ayudat_legal_scrape/

@@ -3,21 +3,30 @@
  * Displays PRIVACY_POLICY.md content
  */
 import { Link } from 'react-router-dom';
+import { LegalEntity } from '../components/legal/LegalEntity';
 import './LegalPage.css';
 
 export default function PrivacyPolicyPage() {
     return (
         <div className="legal-page">
             <div className="legal-container">
-                <Link to="/" className="back-link">← Volver al chat</Link>
+                <Link to="/" className="back-link">← Volver al inicio</Link>
 
                 <h1>Política de Privacidad</h1>
-                <p className="last-updated">Última actualización: 3 de enero de 2026</p>
+                <p className="last-updated">Última actualización: 23 de abril de 2026</p>
+
+                <LegalEntity title="1. Información del Responsable del tratamiento" asDataController />
 
                 <section>
-                    <h2>1. Información del Responsable</h2>
-                    <p><strong>Impuestify</strong></p>
-                    <p>Email: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a></p>
+                    <h2>1 bis. Delegado de Protección de Datos</h2>
+                    <p>
+                        Dado el volumen actual de tratamiento y la forma jurídica del titular del servicio,
+                        Impuestify no está obligado a designar un Delegado de Protección de Datos (DPD)
+                        conforme al artículo 37 del RGPD. No obstante, las consultas y el ejercicio de derechos
+                        de protección de datos se canalizan a través de la dirección
+                        {' '}<a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>, atendida
+                        directamente por el titular del servicio.
+                    </p>
                 </section>
 
                 <section>

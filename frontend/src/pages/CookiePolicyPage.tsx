@@ -6,6 +6,7 @@
  */
 import { Link } from 'react-router-dom';
 import { showCookiePreferences } from '../components/CookieConsent';
+import { LegalEntity } from '../components/legal/LegalEntity';
 import './LegalPage.css';
 
 export default function CookiePolicyPage() {
@@ -15,7 +16,9 @@ export default function CookiePolicyPage() {
                 <Link to="/" className="back-link">← Volver al inicio</Link>
 
                 <h1>Política de Cookies</h1>
-                <p className="last-updated">Última actualización: 3 de marzo de 2026</p>
+                <p className="last-updated">Última actualización: 23 de abril de 2026</p>
+
+                <LegalEntity title="0. Titular del servicio responsable de las cookies" />
 
                 <section>
                     <h2>1. ¿Qué son las cookies?</h2>

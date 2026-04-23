@@ -25,6 +25,7 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 const AITransparencyPage = lazy(() => import('./pages/AITransparencyPage'))
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
+const AvisoLegalPage = lazy(() => import('./pages/AvisoLegalPage'))
 const DataRetentionPage = lazy(() => import('./pages/DataRetentionPage'))
 const ForalPage = lazy(() => import('./pages/ForalPage'))
 const CeutaMelillaPage = lazy(() => import('./pages/CeutaMelillaPage'))
@@ -105,10 +106,14 @@ function App() {
                     <Route path="/contact" element={<ContactPage />} />
 
                     {/* Legal Pages - Publicly Accessible */}
+                    <Route path="/aviso-legal" element={<AvisoLegalPage />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                    <Route path="/politica-privacidad" element={<PrivacyPolicyPage />} />
                     <Route path="/ai-transparency" element={<AITransparencyPage />} />
                     <Route path="/politica-cookies" element={<CookiePolicyPage />} />
+                    <Route path="/cookie-policy" element={<CookiePolicyPage />} />
                     <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/terms-of-service" element={<TermsPage />} />
                     <Route path="/data-retention" element={<DataRetentionPage />} />
 
                     {/* SEO Landing Pages - Publicly Accessible */}

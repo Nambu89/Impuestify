@@ -3,6 +3,7 @@
  * Full terms adapted from TERMS_OF_SERVICE.md
  */
 import { Link } from 'react-router-dom';
+import { LegalEntity } from '../components/legal/LegalEntity';
 import './LegalPage.css';
 
 export default function TermsPage() {
@@ -13,7 +14,9 @@ export default function TermsPage() {
 
                 <h1>Términos y Condiciones de Servicio</h1>
                 <p className="subtitle">Impuestify - Asistente Fiscal Inteligente</p>
-                <p className="last-updated">Última actualización: 3 de enero de 2026 | Versión 1.0</p>
+                <p className="last-updated">Última actualización: 23 de abril de 2026 | Versión 1.1</p>
+
+                <LegalEntity title="0. Titular del servicio" />
 
                 <section>
                     <h2>1. Aceptación de los Términos</h2>
