@@ -221,3 +221,49 @@ El Manual Renta 2025 Parte 1 fue publicado el **27-03-2026** (12 dias antes del 
 Tests unitarios `useDefensiaExpedientes.test.ts` + `useDefensiaExpediente.test.ts` + `DefensiaWizardPage.test.tsx` actualizados (los que usaban `expect.stringContaining("/defensia/...")` siguen pasando).
 **Leccion:** Todos los endpoints del backend usan prefix `/api/...`. Cualquier hook frontend nuevo DEBE usar `/api/<router>/<path>` — incluso cuando el hook anterior del mismo dominio ya lo hacia. Regla ya documentada en `copilot-instructions.md` tras round 9, pero el codigo DefensIA se escribio antes y no se migro.
 **Archivos:** 7 archivos frontend + 3 tests.
+
+## [2026-04-23] Bug 85: Paginas legales sin identificacion del titular (LSSI-CE Art. 10)
+
+### Sintoma
+Alfredo Perez (CEO Ayuda T Pymes) responde tras outreach: "no encuentro el CIF en los terminos legales de la web". Las paginas Terminos, Politica de Privacidad y Politica de Cookies no incluian datos identificativos del prestador del servicio (titular, CIF/DNI, domicilio fiscal, contacto), incumpliendo el art. 10 de la LSSI-CE y el art. 13 del RGPD.
+
+### Causa raiz
+La aplicacion fue construida por un fundador unico que aun no tiene SL constituida, asi que el repositorio no tenia datos legales de titularidad. Las paginas legales se redactaron en su dia sin la seccion obligatoria de "Responsable del tratamiento / Titular del servicio", asumiendo que se rellenaria al constituir la SL. El detalle se nos paso hasta que un cliente potencial lo detecto.
+
+### Fix
+Componente reusable `frontend/src/components/legal/LegalEntity.tsx` con todos los datos del titular obtenidos de `frontend/src/components/legal/legalData.ts` (un unico archivo de constants). Insertado en TermsPage, PrivacyPolicyPage y CookiePolicyPage. Nueva pagina `/aviso-legal` (`AvisoLegalPage.tsx`) dedicada al art. 10 LSSI-CE. Footer.tsx con link al Aviso Legal (icono Gavel). Datos rellenados con persona fisica:
+- Nombre: Fernando Prada Gorge
+- DNI: 45308568V
+- Domicilio: Calle del Monasterio de Rueda, 1, 50007 Zaragoza
+- Email contacto: fernando.prada@proton.me
+- Email RGPD: privacy@impuestify.com
+- Nota explicativa sobre la forma juridica actual (persona fisica, SL en proceso de constitucion)
+
+Cuando se constituya la SL, solo hay que actualizar `legalData.ts` con CIF, domicilio social y datos del Registro Mercantil. El componente se renderiza igual.
+
+**Leccion:** Mantener centralizada la identificacion del titular en un solo archivo (`legalData.ts`) y montar un componente reusable (`<LegalEntity />`). Asi cuando cambia la forma juridica solo se actualiza un sitio. Toda app SaaS espanola DEBE incluir aviso legal LSSI-CE Art. 10 con titular, CIF, domicilio, contacto.
+
+**Archivos:** `frontend/src/components/legal/{LegalEntity.tsx,legalData.ts}`, `frontend/src/pages/{AvisoLegalPage.tsx,TermsPage.tsx,PrivacyPolicyPage.tsx,CookiePolicyPage.tsx}`, `frontend/src/App.tsx`, `frontend/src/components/Footer.tsx`. Commit 0abe6b8.
+
+## [2026-04-27] Bug 86: Modelos trimestrales no detectaba CCAA forales/IGIC/IPSI segun perfil
+
+### Sintoma
+Usuario reporta: "al elegir Pais Vasco, Navarra, Canarias, Ceuta o Melilla en el perfil, NO me carga los modelos trimestrales correspondientes". `/declaraciones` mostraba siempre Modelo 303 + 130 estandar, ignorando el regimen fiscal real del usuario (300 Gipuzkoa, F-69 Navarra, 420 IGIC Canarias, IPSI Ceuta/Melilla).
+
+### Causa raiz
+La deteccion de territorio en `DeclarationsPage.tsx` usaba matching estricto sobre cadenas concretas (`userCcaa.includes('Bizkaia')`, `userCcaa.includes('Canarias')`, etc.) y era case-sensitive. Pero `profile.ccaa_residencia` puede llegar con variantes:
+1. **"Pais Vasco" / "Pais Vasco" / "Euskadi"** sin diputacion concreta — guardado por `region_detector.py` cuando el chat extrae "bilbao", "euskadi", "bilbo" del mensaje del usuario.
+2. **"Alava" sin tilde**, **"Vizcaya"** en castellano antiguo, **"Guipuzcoa"** sin K — datos legacy o entrada manual.
+3. **Mayusculas/minusculas inconsistentes** ("PAIS VASCO", "canarias").
+Ninguna variante hacia match con la lista hardcoded → `isCanarias=false`, `isCeutaMelilla=false`, `isForal=false` → tabs forales/IGIC/IPSI no se renderizaban.
+
+### Fix
+1. Toda la deteccion sobre `userCcaa.toLowerCase()` (`ccaaLower`) — case-insensitive.
+2. Anadidas variantes: `alava`/`alava`-sin-tilde, `vizcaya`, `guipuzcoa`/`guipuzcoa`-sin-tilde.
+3. Nuevo flag `isPaisVascoGenerico` cuando contiene "vasco" o "euskadi" pero sin diputacion → tratado como foral con `territory130='Bizkaia'` por defecto y selector visible para que el user precise.
+4. Label "IVA foral" cuando es Pais Vasco generico (en lugar del confuso "303 IVA").
+5. `useEffect` de auto-deteccion incluye rama explicita para `vasco`/`euskadi` que setea `Bizkaia` como diputacion por defecto.
+
+**Leccion:** Cualquier deteccion de CCAA en frontend debe ser case-insensitive y tolerante a variantes habituales (sin tildes, en castellano antiguo, sin diputacion concreta). El extractor del chat es una fuente de datos no canonica que puede saltarse el dropdown de SettingsPage. Si recibimos "Pais Vasco" sin diputacion, la app debe seguir funcionando con un default razonable (Bizkaia) y dejar que el usuario precise.
+
+**Archivos:** `frontend/src/pages/DeclarationsPage.tsx`. Commit 565d324.

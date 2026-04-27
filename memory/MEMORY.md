@@ -1,11 +1,13 @@
 # TaxIA (Impuestify) — Memoria del Agente
 
-> Ultima actualizacion: 2026-04-20 (sesion 34 + hotfixes post-merge)
-> Sesion 34: DefensIA + Modelo 200 IS mergeados a main en produccion
-> Bug 84 hotfix: prefix /api/ faltante en endpoints DefensIA frontend
-> DefensIA back-link "Volver a inicio" anadido en las 3 paginas
-> README reescrito con toque visual cliente + logo + screenshots capterra
-> Cleanup: 23 fragmentos de codigo basura borrados del root, gitignore ampliado
+> Ultima actualizacion: 2026-04-27 (sesion 35: humanizer, legal, demo, outreach Ayudat)
+> Outreach Alfredo Perez (CEO Ayuda T Pymes): respondio personalmente, pide demo
+> Paginas legales con titular real (DNI 45308568V, Zaragoza) — LSSI-CE + RGPD compliant
+> Humanizer Wikipedia aplicado en 3 fases: home, 9 paginas core, chat+widgets+emails+SEO
+> Nueva pagina /sobre-mi con historia fundador (sacada de la landing para limpiarla)
+> Bug 85 fixed: deteccion variantes CCAA en /declaraciones (Pais Vasco generico, etc.)
+> Carpeta Demo/ con guion 7 min + 4 PDFs AEAT simulados para grabar video Loom
+> Sesion 34 (previa): DefensIA + Modelo 200 IS mergeados a main, Bug 84 prefix /api/
 
 ## Indice de archivos de memoria
 
@@ -59,6 +61,9 @@
 | `memory/project_session32_defensia_part1.md` | Sesion 32 (2026-04-13): DefensIA Parte 1. Motor hibrido 4 fases anti-alucinacion. 58 tests, caso David ground truth |
 | `memory/project_session33_defensia_part2.md` | Sesion 33 (2026-04-15): DefensIA Parte 2 COMPLETA. Wave 2B Back + Wave 1F/2F Front + Wave 3 parcial. 62 commits, 375 back + 92 front tests. Copilot 16/16 |
 | `memory/project_session34_modelo200_is.md` | Sesion 34: Modelo 200 IS — simulador 7 territorios, 47 tests, endpoints, workspace prefill, PDF, frontend wizard |
+| `memory/project_session35_humanizer_legal.md` | Sesion 35: humanizer Wikipedia 40 archivos, paginas legales con DNI Fernando, /sobre-mi, Demo/ Alfredo, Bug 85 |
+| `memory/project_outreach_ayudat.md` | Outreach Alfredo Perez (CEO Ayudat): emails enviados, contexto, demo pendiente, alfredoperez@ayudat.es |
+| `memory/feedback_humanizer_wikipedia.md` | Humanizer Wikipedia AI Cleanup: patrones a evitar al redactar copy visible al usuario |
 | `memory/project_session34_defensia_fixtures_copilot3.md` | Sesion 34: T3-001b fixtures PDF caso David + Copilot round 3 + cleanup 58 archivos basura |
 | `memory/project_session22_rag_fix.md` | Sesion 22: RAG fix completo (territory tildes, OOM, SSE, Vector sync 84K) |
 | `memory/project_workspace_vision.md` | Vision workspace = centro operaciones autonomo. RAG hibrido (global + docs usuario) |
@@ -93,12 +98,20 @@
 
 ### Alta prioridad (proxima sesion)
 - [x] ~~**DefensIA merge a main**~~ DONE sesion 34 (mergeado 71+ commits)
-- [x] ~~**Ingestar al RAG los 3 Manuales AEAT 2025**~~ DONE sesion 34 (463 docs, 92K chunks, 85K embeddings)
+- [x] ~~**Ingestar al RAG los 3 Manuales AEAT 2025**~~ DONE sesion 34
 - [x] ~~**Hotfix lazy imports Modelo200Page**~~ DONE sesion 34
-- [x] ~~**Bug 84 hotfix: prefix /api faltante DefensIA**~~ DONE 2026-04-20 (commit 20bf545)
+- [x] ~~**Bug 84 prefix /api DefensIA**~~ DONE 2026-04-20 (commit 20bf545)
 - [x] ~~**DefensIA back-link "Volver a inicio"**~~ DONE 2026-04-20 (commit 8f7932c)
+- [x] ~~**Paginas legales con titular real (LSSI-CE + RGPD)**~~ DONE 2026-04-23 (commit 0abe6b8) DNI 45308568V Zaragoza
+- [x] ~~**Humanizer Wikipedia AI Cleanup en 9 paginas + Home**~~ DONE 2026-04-23 (commits 82c63cb, 737e8f2, b88551f)
+- [x] ~~**/sobre-mi page**~~ DONE 2026-04-23 (commit 9bf789c) historia fundador con link en footer
+- [x] ~~**Bug 85: variantes CCAA en /declaraciones**~~ DONE 2026-04-27 (commit 565d324)
+- [x] ~~**Demo/ guion + 4 PDFs AEAT simulados para Alfredo**~~ DONE 2026-04-24
+- [ ] **Grabar video Loom 7 min para Alfredo** siguiendo `Demo/GUION_DEMO_COMPLETO.md`
+- [ ] **Constituir SL** — bloqueador para enterprise (Alfredo lo detecto en 10s)
 - [ ] **DEFENSIA_STORAGE_KEY en Railway** — sin esto uploads DefensIA devuelven 503
 - [ ] **Seed pharmacy deductions en produccion Turso**
+- [ ] **Outreach Laborai** — email tech partnership pendiente desde sesion 33
 - [ ] **Investigar DR130 diseno de registro actualizado** — El historico `DR130_e2019.xls` (ejercicio 2015 version 11) ya no esta en sede. AEAT tiene ahora los disenos en `sede.agenciatributaria.gob.es/Sede/iva/pre-303/nuevo-servicio-pre303-importacion-libros-electronico/formatos-electronicos-libros-registro.html` actualizados a 01-01-2026. Accion: WebFetch esa pagina, localizar link al DR del Modelo 130 actual, actualizar watchlist. Estimado: 10 min.
 - [ ] **Investigar Scrapling anti-bot fail en AEAT downloads** — En sesion 32 detectado que `check_url_exists` devuelve 200 pero `download_document` devuelve 404 para los mismos URLs tras volumen de requests. `curl` directo descarga sin problema. Probable rate limiting / fingerprint detection de Cloudflare en AEAT. Accion: reviewar Scrapling fetcher config, considerar fallback a urllib/httpx para dominio `sede.agenciatributaria.gob.es`, o pasar User-Agent manual. Estimado: 30-45 min.
 - [ ] **PDFs prerrellenados desde chat** — Tool `generate_modelo_pdf` en WorkspaceAgent. El RAG calcula modelo (303/130) con datos workspace + CCAA usuario → genera PDF descargable desde el chat
