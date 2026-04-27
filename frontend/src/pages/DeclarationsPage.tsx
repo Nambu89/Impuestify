@@ -406,32 +406,43 @@ export default function DeclarationsPage() {
     const [form420, setForm420] = useState<Calculate420Input>({})
     const [formIpsi, setFormIpsi] = useState<CalculateIpsiInput>({})
 
-    // Territory detection for conditional tabs and labels
+    // Territory detection for conditional tabs and labels.
+    // Tolerante a variantes: el perfil puede llegar como "Bizkaia" (canónico),
+    // pero el extractor del chat o datos legacy pueden guardar "País Vasco",
+    // "Pais Vasco", "Euskadi", "Alava" sin tilde, etc. Si no detectamos bien,
+    // las pestañas forales/IGIC/IPSI no se muestran.
     const userCcaa = profile?.ccaa_residencia || ''
-    const isCeutaMelilla = ['Ceuta', 'Melilla'].some(t => userCcaa.includes(t))
-    const isCanarias = userCcaa.includes('Canarias')
-    const isGipuzkoa = userCcaa.includes('Gipuzkoa') || userCcaa.includes('Guipuzcoa')
-    const isNavarra = userCcaa.includes('Navarra')
-    const isForal = isGipuzkoa || isNavarra || ['Araba', 'Alava', 'Bizkaia', 'Vizcaya'].some(t => userCcaa.includes(t))
-    const ipsiTerritorio = userCcaa.includes('Melilla') ? 'Melilla' : 'Ceuta'
+    const ccaaLower = userCcaa.toLowerCase()
+    const isCeutaMelilla = ccaaLower.includes('ceuta') || ccaaLower.includes('melilla')
+    const isCanarias = ccaaLower.includes('canarias')
+    const isGipuzkoa = ccaaLower.includes('gipuzkoa') || ccaaLower.includes('guipuzcoa') || ccaaLower.includes('guipúzcoa')
+    const isNavarra = ccaaLower.includes('navarra')
+    const isAraba = ccaaLower.includes('araba') || ccaaLower.includes('álava') || ccaaLower.includes('alava')
+    const isBizkaia = ccaaLower.includes('bizkaia') || ccaaLower.includes('vizcaya')
+    const isPaisVascoGenerico = (ccaaLower.includes('vasco') || ccaaLower.includes('euskadi')) && !isAraba && !isBizkaia && !isGipuzkoa
+    const isForal = isGipuzkoa || isNavarra || isAraba || isBizkaia || isPaisVascoGenerico
+    const ipsiTerritorio = ccaaLower.includes('melilla') ? 'Melilla' : 'Ceuta'
 
-    // IVA model name varies by territory
+    // IVA model name varies by territory.
+    // Para "País Vasco" sin diputación específica el usuario elige la diputación
+    // en el selector de territory130; mostramos label genérico "300/303 IVA".
     const ivaModeloNum = isGipuzkoa ? '300' : isNavarra ? 'F-69' : '303'
-    const ivaModeloLabel = isGipuzkoa ? '300 IVA' : isNavarra ? 'F-69 IVA' : '303 IVA'
+    const ivaModeloLabel = isGipuzkoa ? '300 IVA' : isNavarra ? 'F-69 IVA' : isPaisVascoGenerico ? 'IVA foral' : '303 IVA'
 
     // Auto-detect territory from profile
     useEffect(() => {
         if (profile?.ccaa_residencia) {
-            const ccaa = profile.ccaa_residencia
-            if (['Araba', 'Alava'].some(t => ccaa.includes(t))) setTerritory130('Araba')
-            else if (ccaa.includes('Gipuzkoa') || ccaa.includes('Guipuzcoa')) setTerritory130('Gipuzkoa')
-            else if (ccaa.includes('Bizkaia') || ccaa.includes('Vizcaya')) setTerritory130('Bizkaia')
-            else if (ccaa.includes('Navarra')) setTerritory130('Navarra')
+            const ccaa = profile.ccaa_residencia.toLowerCase()
+            if (ccaa.includes('araba') || ccaa.includes('álava') || ccaa.includes('alava')) setTerritory130('Araba')
+            else if (ccaa.includes('gipuzkoa') || ccaa.includes('guipuzcoa') || ccaa.includes('guipúzcoa')) setTerritory130('Gipuzkoa')
+            else if (ccaa.includes('bizkaia') || ccaa.includes('vizcaya')) setTerritory130('Bizkaia')
+            else if (ccaa.includes('navarra')) setTerritory130('Navarra')
+            else if (ccaa.includes('vasco') || ccaa.includes('euskadi')) setTerritory130('Bizkaia') // País Vasco sin diputación → default editable
             else setTerritory130('Comun')
 
-            // Default to IPSI for Ceuta/Melilla, IGIC for Canarias
-            if (['Ceuta', 'Melilla'].some(t => ccaa.includes(t))) setModelo('ipsi')
-            else if (ccaa.includes('Canarias')) setModelo('420')
+            // Default tab según el régimen del territorio
+            if (ccaa.includes('ceuta') || ccaa.includes('melilla')) setModelo('ipsi')
+            else if (ccaa.includes('canarias')) setModelo('420')
         }
     }, [profile])
 
