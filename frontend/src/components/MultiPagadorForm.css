@@ -1,4 +1,93 @@
-/* MultiPagadorForm — Acordeón de pagadores estilo app AEAT */
+/* MultiPagadorForm — Acordeón de pagadores estilo app AEAT.
+ *
+ * Estilos auto-contenidos: el componente se usa tanto en TaxGuidePage como
+ * en SettingsPage. Antes dependía de las clases .tg-field* definidas en
+ * TaxGuidePage.css; al renderizarse en Settings los inputs caían al estilo
+ * por defecto del navegador. Ahora la lista .mp-field* clona los mismos
+ * estilos premium para que el componente luzca igual en cualquier página.
+ */
+
+/* ====== Form fields (auto-contenidos) ====== */
+
+.mp-field {
+    margin-bottom: var(--spacing-4);
+}
+
+.mp-field__label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: var(--spacing-2);
+}
+
+.mp-field__input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.mp-field__input,
+.mp-field__select {
+    width: 100%;
+    height: 48px;
+    padding: 0 var(--spacing-4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-base);
+    font-family: var(--font-family);
+    color: var(--color-white);
+    background: rgba(255, 255, 255, 0.07);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.mp-field__input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.mp-field__select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right var(--spacing-4) center;
+    background-size: 16px;
+    padding-right: 2.5rem;
+}
+
+.mp-field__select option {
+    background: #1e293b;
+    color: var(--color-white);
+}
+
+.mp-field__input:focus,
+.mp-field__select:focus {
+    outline: none;
+    border-color: var(--color-primary-light);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.2);
+}
+
+.mp-field__suffix {
+    position: absolute;
+    right: var(--spacing-4);
+    color: rgba(255, 255, 255, 0.45);
+    font-size: var(--font-size-sm);
+    pointer-events: none;
+}
+
+.mp-field__input-wrap .mp-field__input {
+    padding-right: 3.5rem;
+}
+
+.mp-field__help {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: var(--spacing-1);
+}
 
 /* ====== Contenedor principal ====== */
 

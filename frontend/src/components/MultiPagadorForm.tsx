@@ -103,12 +103,12 @@ function PagadorCard({
 
             {expanded && (
                 <div className="mp-pagador__fields">
-                    <div className="tg-field">
-                        <label className="tg-field__label">Nombre del pagador</label>
-                        <div className="tg-field__input-wrap">
+                    <div className="mp-field">
+                        <label className="mp-field__label">Nombre del pagador</label>
+                        <div className="mp-field__input-wrap">
                             <input
                                 type="text"
-                                className="tg-field__input"
+                                className="mp-field__input"
                                 value={pagador.nombre}
                                 onChange={e => update({ nombre: e.target.value })}
                                 placeholder="Nombre del pagador"
@@ -116,10 +116,10 @@ function PagadorCard({
                         </div>
                     </div>
 
-                    <div className="tg-field">
-                        <label className="tg-field__label">Tipo de rendimiento</label>
+                    <div className="mp-field">
+                        <label className="mp-field__label">Tipo de rendimiento</label>
                         <select
-                            className="tg-field__select"
+                            className="mp-field__select"
                             value={pagador.clave}
                             onChange={e => update({ clave: e.target.value as Pagador['clave'] })}
                         >
@@ -129,12 +129,12 @@ function PagadorCard({
                         </select>
                     </div>
 
-                    <div className="tg-field">
-                        <label className="tg-field__label">Retribuciones brutas</label>
-                        <div className="tg-field__input-wrap">
+                    <div className="mp-field">
+                        <label className="mp-field__label">Retribuciones brutas</label>
+                        <div className="mp-field__input-wrap">
                             <input
                                 type="number"
-                                className="tg-field__input"
+                                className="mp-field__input"
                                 value={pagador.retribuciones_dinerarias || ''}
                                 onChange={e => update({ retribuciones_dinerarias: parseFloat(e.target.value) || 0 })}
                                 min={0}
@@ -142,16 +142,16 @@ function PagadorCard({
                                 inputMode="decimal"
                                 placeholder="0"
                             />
-                            <span className="tg-field__suffix">EUR</span>
+                            <span className="mp-field__suffix">EUR</span>
                         </div>
                     </div>
 
-                    <div className="tg-field">
-                        <label className="tg-field__label">Retenciones IRPF</label>
-                        <div className="tg-field__input-wrap">
+                    <div className="mp-field">
+                        <label className="mp-field__label">Retenciones IRPF</label>
+                        <div className="mp-field__input-wrap">
                             <input
                                 type="number"
-                                className="tg-field__input"
+                                className="mp-field__input"
                                 value={pagador.retenciones || ''}
                                 onChange={e => update({ retenciones: parseFloat(e.target.value) || 0 })}
                                 min={0}
@@ -159,16 +159,16 @@ function PagadorCard({
                                 inputMode="decimal"
                                 placeholder="0"
                             />
-                            <span className="tg-field__suffix">EUR</span>
+                            <span className="mp-field__suffix">EUR</span>
                         </div>
                     </div>
 
-                    <div className="tg-field">
-                        <label className="tg-field__label">Cotizaciones SS</label>
-                        <div className="tg-field__input-wrap">
+                    <div className="mp-field">
+                        <label className="mp-field__label">Cotizaciones SS</label>
+                        <div className="mp-field__input-wrap">
                             <input
                                 type="number"
-                                className="tg-field__input"
+                                className="mp-field__input"
                                 value={pagador.gastos_deducibles || ''}
                                 onChange={e => update({ gastos_deducibles: parseFloat(e.target.value) || 0 })}
                                 min={0}
@@ -176,9 +176,9 @@ function PagadorCard({
                                 inputMode="decimal"
                                 placeholder="0"
                             />
-                            <span className="tg-field__suffix">EUR</span>
+                            <span className="mp-field__suffix">EUR</span>
                         </div>
-                        <span className="tg-field__help">Cuota del trabajador a la Seguridad Social</span>
+                        <span className="mp-field__help">Cuota del trabajador a la Seguridad Social</span>
                     </div>
 
                     <button
@@ -191,12 +191,12 @@ function PagadorCard({
 
                     {showExtra && (
                         <div className="mp-pagador__extra-fields">
-                            <div className="tg-field">
-                                <label className="tg-field__label">Retribuciones en especie</label>
-                                <div className="tg-field__input-wrap">
+                            <div className="mp-field">
+                                <label className="mp-field__label">Retribuciones en especie</label>
+                                <div className="mp-field__input-wrap">
                                     <input
                                         type="number"
-                                        className="tg-field__input"
+                                        className="mp-field__input"
                                         value={pagador.retribuciones_especie || ''}
                                         onChange={e => update({ retribuciones_especie: parseFloat(e.target.value) || 0 })}
                                         min={0}
@@ -204,17 +204,17 @@ function PagadorCard({
                                         inputMode="decimal"
                                         placeholder="0"
                                     />
-                                    <span className="tg-field__suffix">EUR</span>
+                                    <span className="mp-field__suffix">EUR</span>
                                 </div>
-                                <span className="tg-field__help">Coche empresa, seguro médico, tickets restaurante...</span>
+                                <span className="mp-field__help">Coche empresa, seguro médico, tickets restaurante...</span>
                             </div>
 
-                            <div className="tg-field">
-                                <label className="tg-field__label">Ingresos a cuenta</label>
-                                <div className="tg-field__input-wrap">
+                            <div className="mp-field">
+                                <label className="mp-field__label">Ingresos a cuenta</label>
+                                <div className="mp-field__input-wrap">
                                     <input
                                         type="number"
-                                        className="tg-field__input"
+                                        className="mp-field__input"
                                         value={pagador.ingresos_cuenta || ''}
                                         onChange={e => update({ ingresos_cuenta: parseFloat(e.target.value) || 0 })}
                                         min={0}
@@ -222,9 +222,9 @@ function PagadorCard({
                                         inputMode="decimal"
                                         placeholder="0"
                                     />
-                                    <span className="tg-field__suffix">EUR</span>
+                                    <span className="mp-field__suffix">EUR</span>
                                 </div>
-                                <span className="tg-field__help">Ingreso a cuenta de retribuciones en especie</span>
+                                <span className="mp-field__help">Ingreso a cuenta de retribuciones en especie</span>
                             </div>
                         </div>
                     )}
