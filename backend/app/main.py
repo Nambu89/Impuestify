@@ -341,7 +341,14 @@ allowed_origins_str = os.environ.get("ALLOWED_ORIGINS", "*")
 if allowed_origins_str == "*":
     if _is_production:
         logger.warning("ALLOWED_ORIGINS='*' in production — restricting to impuestify.com")
-        allowed_origins = ["https://impuestify.com", "https://www.impuestify.com"]
+        # Defensive prod fallback: also allow the public demo host so the
+        # /api/demo/* endpoints work for prospect testing if env var is unset.
+        allowed_origins = [
+            "https://impuestify.com",
+            "https://www.impuestify.com",
+            "https://fernandopradagorge.dev",
+            "https://www.fernandopradagorge.dev",
+        ]
     else:
         allowed_origins = ["*"]
 else:
