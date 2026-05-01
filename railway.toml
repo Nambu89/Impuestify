@@ -1,15 +1,20 @@
 # Railway Config — Impuestify Backend
 # Docs: https://docs.railway.com/reference/config-as-code
 # Schema: https://backboard.railway.app/railway.schema.json
-# Note: This file configures the backend service only.
-# Root Directory is set to /backend in the Railway dashboard.
+#
+# This file works whether or not the Railway service has Root Directory set to
+# /backend. If Root is /, the build runs from the repo root and the commands
+# below `cd backend` themselves; the root requirements.txt re-includes the
+# real dependency list so Railpack still detects Python.
+# If Root is /backend, the dashboard-level config takes precedence and uses
+# backend/railway.toml — leaving this file harmless.
 
 [build]
 builder = "RAILPACK"
-buildCommand = "pip install -r requirements.txt"
+buildCommand = "pip install -r backend/requirements.txt"
 
 [deploy]
-startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 120"
+startCommand = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 120"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"

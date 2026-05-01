@@ -1,0 +1,5 @@
+# Root requirements file — points to the real list inside backend/.
+# Railway/Railpack detects Python at repo root by the presence of this file,
+# so the build picks the Python toolchain even when package.json (devDeps for
+# Playwright / ruflo) is also present.
+-r backend/requirements.txt
