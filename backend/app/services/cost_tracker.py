@@ -145,16 +145,18 @@ class CostTracker:
         )
         totals = dict(result.rows[0]) if result.rows else {}
 
-        # Top 10 users by cost
+        # Top 10 users by cost.
+        # Note: plan info lives in `subscriptions.plan_type`, not on `users`.
         top_result = await db.execute(
             """SELECT
                  um.user_id,
                  u.email,
-                 u.subscription_plan,
+                 s.plan_type AS subscription_plan,
                  COALESCE(SUM(um.cost_usd), 0) as user_cost_usd,
                  COUNT(*) as request_count
                FROM usage_metrics um
                LEFT JOIN users u ON um.user_id = u.id
+               LEFT JOIN subscriptions s ON s.user_id = um.user_id
                WHERE um.created_at >= ?
                GROUP BY um.user_id
                ORDER BY user_cost_usd DESC
@@ -166,13 +168,13 @@ class CostTracker:
         # Cost by plan
         plan_result = await db.execute(
             """SELECT
-                 COALESCE(u.subscription_plan, 'none') as plan,
+                 COALESCE(s.plan_type, 'none') as plan,
                  COALESCE(SUM(um.cost_usd), 0) as plan_cost_usd,
                  COUNT(DISTINCT um.user_id) as user_count
                FROM usage_metrics um
-               LEFT JOIN users u ON um.user_id = u.id
+               LEFT JOIN subscriptions s ON s.user_id = um.user_id
                WHERE um.created_at >= ?
-               GROUP BY u.subscription_plan""",
+               GROUP BY s.plan_type""",
             [since],
         )
         by_plan = {dict(row)["plan"]: dict(row) for row in plan_result.rows or []}

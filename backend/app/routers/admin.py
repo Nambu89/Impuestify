@@ -220,6 +220,29 @@ async def grant_beta_access(
     }
 
 
+@router.post("/users/{user_id}/sync-stripe")
+async def sync_user_from_stripe(
+    user_id: str,
+    owner: TokenData = Depends(_require_owner),
+    db: TursoClient = Depends(get_db_client),
+):
+    """Reconcile a user's subscription with Stripe (recover from missed webhooks)."""
+    user_result = await db.execute(
+        "SELECT id, email FROM users WHERE id = ?", [user_id]
+    )
+    if not user_result.rows:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    service = await get_subscription_service()
+    summary = await service.sync_from_stripe(user_id)
+
+    logger.info(
+        "Admin sync-stripe: user=%s by=%s result=%s",
+        user_id, owner.email, summary,
+    )
+    return summary
+
+
 @router.put("/users/{user_id}/revoke-beta")
 async def revoke_beta_access(
     user_id: str,
@@ -421,7 +444,12 @@ async def get_feedback_stats(
     owner: TokenData = Depends(_require_owner),
     db: TursoClient = Depends(get_db_client),
 ):
-    """Return feedback counters grouped by type, status and priority (owner-only)."""
+    """Return feedback counters (owner-only).
+
+    Response includes both detail dicts (by_type/by_status/by_priority) and
+    flat counters (bugs_open, features_pending, new_count, total) consumed
+    by the admin frontend stats panel.
+    """
     by_type_result = await db.execute(
         "SELECT type, COUNT(*) as cnt FROM feedback GROUP BY type"
     )
@@ -432,13 +460,27 @@ async def get_feedback_stats(
         "SELECT priority, COUNT(*) as cnt FROM feedback GROUP BY priority"
     )
 
-    def rows_to_dict(rows):
-        return {row[list(row.keys())[0]]: row["cnt"] for row in rows}
+    bugs_open_result = await db.execute(
+        "SELECT COUNT(*) as cnt FROM feedback "
+        "WHERE type = 'bug' AND status NOT IN ('done', 'wont_fix')"
+    )
+    features_pending_result = await db.execute(
+        "SELECT COUNT(*) as cnt FROM feedback "
+        "WHERE type = 'feature' AND status NOT IN ('done', 'wont_fix')"
+    )
+    new_count_result = await db.execute(
+        "SELECT COUNT(*) as cnt FROM feedback WHERE status = 'new'"
+    )
+    total_result = await db.execute("SELECT COUNT(*) as cnt FROM feedback")
 
     return {
         "by_type": {row["type"]: row["cnt"] for row in by_type_result.rows},
         "by_status": {row["status"]: row["cnt"] for row in by_status_result.rows},
         "by_priority": {row["priority"]: row["cnt"] for row in by_priority_result.rows},
+        "bugs_open": bugs_open_result.rows[0]["cnt"] if bugs_open_result.rows else 0,
+        "features_pending": features_pending_result.rows[0]["cnt"] if features_pending_result.rows else 0,
+        "new_count": new_count_result.rows[0]["cnt"] if new_count_result.rows else 0,
+        "total": total_result.rows[0]["cnt"] if total_result.rows else 0,
     }
 
 
@@ -474,6 +516,12 @@ async def list_feedback(
     where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     offset = (page - 1) * limit
 
+    total_result = await db.execute(
+        f"SELECT COUNT(*) AS cnt FROM feedback f {where_clause}",
+        list(params),
+    )
+    total = total_result.rows[0]["cnt"] if total_result.rows else 0
+
     result = await db.execute(
         f"""
         SELECT f.id, f.type, f.title, f.description, f.page_url,
@@ -504,7 +552,7 @@ async def list_feedback(
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
         })
-    return items
+    return {"items": items, "total": total}
 
 
 @router.get("/feedback/{feedback_id}")
@@ -620,6 +668,12 @@ async def list_contact_requests(
     where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     offset = (page - 1) * limit
 
+    total_result = await db.execute(
+        f"SELECT COUNT(*) AS cnt FROM contact_requests {where_clause}",
+        list(params),
+    )
+    total = total_result.rows[0]["cnt"] if total_result.rows else 0
+
     result = await db.execute(
         f"""
         SELECT id, user_id, email, name, message, request_type, status, created_at
@@ -643,7 +697,7 @@ async def list_contact_requests(
             "status": row["status"],
             "created_at": row["created_at"],
         })
-    return items
+    return {"items": items, "total": total}
 
 
 class ContactRequestUpdateBody(BaseModel):
@@ -763,6 +817,12 @@ async def list_chat_ratings(
     where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     offset = (page - 1) * limit
 
+    total_result = await db.execute(
+        f"SELECT COUNT(*) AS cnt FROM chat_ratings cr {where_clause}",
+        list(params),
+    )
+    total = total_result.rows[0]["cnt"] if total_result.rows else 0
+
     result = await db.execute(
         f"""
         SELECT cr.id, cr.user_id, cr.message_id, cr.conversation_id,
@@ -789,7 +849,7 @@ async def list_chat_ratings(
             "comment": row.get("comment"),
             "created_at": row["created_at"],
         })
-    return items
+    return {"items": items, "total": total}
 
 
 @router.post("/purge-semantic-cache")

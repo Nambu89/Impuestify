@@ -233,10 +233,12 @@ class SubscriptionService:
 
         if event_type == "checkout.session.completed":
             await self._handle_checkout_completed(data)
-        elif event_type == "customer.subscription.updated":
-            await self._handle_subscription_updated(data)
+        elif event_type in ("customer.subscription.created", "customer.subscription.updated"):
+            await self._handle_subscription_upserted(data)
         elif event_type == "customer.subscription.deleted":
             await self._handle_subscription_deleted(data)
+        elif event_type in ("invoice.paid", "invoice.payment_succeeded"):
+            await self._handle_invoice_paid(data)
         elif event_type == "invoice.payment_failed":
             await self._handle_payment_failed(data)
         else:
@@ -272,57 +274,177 @@ class SubscriptionService:
             extra={"customer_id": customer_id, "plan_type": plan_type},
         )
 
-    async def _handle_subscription_updated(self, subscription: dict):
-        """Handle subscription update (plan change, renewal, etc.)."""
+    def _plan_type_from_price_id(self, price_id: Optional[str]) -> Optional[str]:
+        """Map a Stripe price id to our plan_type. Returns None if unknown."""
+        if not price_id:
+            return None
+        if price_id == settings.STRIPE_PRICE_ID_AUTONOMO:
+            return "autonomo"
+        if price_id == settings.STRIPE_PRICE_ID_CREATOR:
+            return "creator"
+        if price_id == settings.STRIPE_PRICE_ID:
+            return "particular"
+        return None
+
+    @staticmethod
+    def _ts_to_iso(ts: Optional[int]) -> Optional[str]:
+        if not ts:
+            return None
+        return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
+
+    async def _handle_subscription_upserted(self, subscription: dict):
+        """Handle customer.subscription.created or .updated.
+
+        Persist the latest Stripe state: status, plan_type (derived from price id),
+        period start/end, cancellation flag, and the stripe_subscription_id itself.
+        """
         db = await self._get_db()
         customer_id = subscription.get("customer")
+        sub_id = subscription.get("id")
         status = subscription.get("status")
         cancel_at_period_end = subscription.get("cancel_at_period_end", False)
 
-        # Map Stripe status to our status
         status_map = {
             "active": "active",
             "past_due": "past_due",
             "canceled": "canceled",
             "incomplete": "inactive",
+            "incomplete_expired": "inactive",
             "trialing": "active",
             "unpaid": "past_due",
         }
         our_status = status_map.get(status, status)
 
-        period_end = subscription.get("current_period_end")
-        period_end_str = (
-            datetime.utcfromtimestamp(period_end).isoformat() if period_end else None
+        # In recent Stripe API versions, current_period_start/end live on items[0],
+        # not on the root subscription object. Fall back to root for older payloads.
+        items = (subscription.get("items") or {}).get("data") or []
+        first_item = items[0] if items else {}
+        period_start_ts = (
+            first_item.get("current_period_start")
+            or subscription.get("current_period_start")
         )
+        period_end_ts = (
+            first_item.get("current_period_end")
+            or subscription.get("current_period_end")
+        )
+        period_start_str = self._ts_to_iso(period_start_ts)
+        period_end_str = self._ts_to_iso(period_end_ts)
+
+        price_id = first_item.get("price", {}).get("id") if first_item else None
+        plan_type = self._plan_type_from_price_id(price_id)
+
+        # Build dynamic update so we never overwrite plan_type with NULL when the price
+        # is unknown (defensive: avoids losing data on an unrecognized price).
+        sets = [
+            "stripe_subscription_id = ?",
+            "status = ?",
+            "cancel_at_period_end = ?",
+            "current_period_start = COALESCE(?, current_period_start)",
+            "current_period_end = ?",
+            "updated_at = datetime('now')",
+        ]
+        params = [
+            sub_id,
+            our_status,
+            int(cancel_at_period_end),
+            period_start_str,
+            period_end_str,
+        ]
+        if plan_type:
+            sets.append("plan_type = ?")
+            params.append(plan_type)
+        params.append(customer_id)
 
         await db.execute(
-            """
-            UPDATE subscriptions
-            SET status = ?,
-                cancel_at_period_end = ?,
-                current_period_end = ?,
-                updated_at = datetime('now')
-            WHERE stripe_customer_id = ?
-            """,
-            [our_status, int(cancel_at_period_end), period_end_str, customer_id],
+            f"UPDATE subscriptions SET {', '.join(sets)} WHERE stripe_customer_id = ?",
+            params,
         )
-        logger.info(f"Subscription updated to {our_status}", extra={"customer_id": customer_id})
+        logger.info(
+            f"Subscription upserted to {our_status} (plan={plan_type})",
+            extra={"customer_id": customer_id, "subscription_id": sub_id},
+        )
+
+    # Backwards-compat alias (older code/tests may reference this name).
+    async def _handle_subscription_updated(self, subscription: dict):
+        await self._handle_subscription_upserted(subscription)
+
+    async def _handle_invoice_paid(self, invoice: dict):
+        """Handle invoice.paid / invoice.payment_succeeded.
+
+        Acts as a safety net: if checkout.session.completed or
+        customer.subscription.created were missed, this still activates the
+        subscription on first successful payment and extends the period on renewals.
+        """
+        db = await self._get_db()
+        customer_id = invoice.get("customer")
+        subscription_id = invoice.get("subscription")
+        period_end = invoice.get("period_end") or invoice.get("lines", {}).get("data", [{}])[0].get("period", {}).get("end")
+        period_end_str = self._ts_to_iso(period_end)
+
+        if not customer_id:
+            return
+
+        sets = ["status = 'active'", "updated_at = datetime('now')"]
+        params: list = []
+        if subscription_id:
+            sets.append("stripe_subscription_id = COALESCE(stripe_subscription_id, ?)")
+            params.append(subscription_id)
+        if period_end_str:
+            sets.append("current_period_end = ?")
+            params.append(period_end_str)
+        params.append(customer_id)
+
+        await db.execute(
+            f"UPDATE subscriptions SET {', '.join(sets)} WHERE stripe_customer_id = ?",
+            params,
+        )
+        logger.info(
+            "Invoice paid → subscription activated",
+            extra={"customer_id": customer_id, "subscription_id": subscription_id},
+        )
 
     async def _handle_subscription_deleted(self, subscription: dict):
-        """Handle subscription cancellation."""
+        """Handle subscription cancellation.
+
+        If the customer still has another active subscription in Stripe (e.g. they
+        had two subscriptions and only one was canceled), re-sync so the DB reflects
+        the surviving one instead of forcing 'canceled'.
+        """
         db = await self._get_db()
         customer_id = subscription.get("customer")
+        deleted_sub_id = subscription.get("id")
 
+        # Only act if this customer's row references the canceled subscription
+        # (or has no subscription_id at all, which is the legacy case).
         await db.execute(
             """
             UPDATE subscriptions
             SET status = 'canceled',
                 updated_at = datetime('now')
             WHERE stripe_customer_id = ?
+              AND (stripe_subscription_id = ? OR stripe_subscription_id IS NULL)
             """,
+            [customer_id, deleted_sub_id],
+        )
+        logger.info(
+            "Subscription canceled",
+            extra={"customer_id": customer_id, "subscription_id": deleted_sub_id},
+        )
+
+        # Look up the user_id for this customer and try to recover from any other
+        # active subscription they may still have.
+        user_row = await db.execute(
+            "SELECT user_id FROM subscriptions WHERE stripe_customer_id = ? LIMIT 1",
             [customer_id],
         )
-        logger.info("Subscription canceled", extra={"customer_id": customer_id})
+        if user_row.rows:
+            try:
+                await self.sync_from_stripe(user_row.rows[0]["user_id"])
+            except Exception as e:
+                logger.warning(
+                    "Re-sync after subscription delete failed",
+                    extra={"customer_id": customer_id, "error": str(e)},
+                )
 
     async def _handle_payment_failed(self, invoice: dict):
         """Handle failed payment."""
@@ -440,6 +562,61 @@ class SubscriptionService:
             "SELECT * FROM subscriptions WHERE user_id = ?", [user_id]
         )
         return result.rows[0] if result.rows else None
+
+    async def sync_from_stripe(self, user_id: str) -> dict:
+        """Reconcile our DB state for `user_id` with Stripe (recover from missed webhooks).
+
+        Steps:
+        1. Look up the user's Stripe customer id.
+        2. List subscriptions for that customer.
+        3. Pick the most relevant one (active/trialing > past_due > canceled).
+        4. Persist its current state via `_handle_subscription_upserted`.
+
+        Returns a summary dict for the caller to log/show.
+        """
+        if not settings.is_stripe_configured:
+            return {"synced": False, "reason": "stripe_not_configured"}
+
+        db = await self._get_db()
+        result = await db.execute(
+            "SELECT stripe_customer_id FROM subscriptions WHERE user_id = ?",
+            [user_id],
+        )
+        if not result.rows or not result.rows[0]["stripe_customer_id"]:
+            return {"synced": False, "reason": "no_stripe_customer"}
+
+        customer_id = result.rows[0]["stripe_customer_id"]
+        s = _get_stripe()
+
+        subs = s.Subscription.list(customer=customer_id, status="all", limit=10)
+        items = list(subs.auto_paging_iter()) if hasattr(subs, "auto_paging_iter") else (subs.data or [])
+
+        if not items:
+            return {
+                "synced": False,
+                "reason": "no_subscriptions_in_stripe",
+                "customer_id": customer_id,
+            }
+
+        priority = {"active": 0, "trialing": 1, "past_due": 2, "unpaid": 3,
+                    "incomplete": 4, "canceled": 5, "incomplete_expired": 6}
+        items.sort(key=lambda sub: priority.get(getattr(sub, "status", "incomplete"), 99))
+        chosen = items[0]
+        chosen_dict = chosen.to_dict() if hasattr(chosen, "to_dict") else dict(chosen)
+
+        # Stripe SDK objects can also expose .id / .customer at top level — ensure shape.
+        chosen_dict.setdefault("customer", customer_id)
+        chosen_dict.setdefault("id", getattr(chosen, "id", None))
+
+        await self._handle_subscription_upserted(chosen_dict)
+
+        return {
+            "synced": True,
+            "customer_id": customer_id,
+            "subscription_id": chosen_dict.get("id"),
+            "stripe_status": chosen_dict.get("status"),
+            "subscriptions_total": len(items),
+        }
 
     async def grant_grace_period(self, user_id: str, end_date: str = "2026-12-31T23:59:59"):
         """Grant grace period to an existing user."""
