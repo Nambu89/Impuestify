@@ -29,27 +29,27 @@ GABRIEL_NAME = "Gabriel"
 FROM_ADDRESS = "Fernando (Impuestify) <soporte@impuestify.com>"
 REPLY_TO = "soporte@impuestify.com"  # Cloudflare forwards to fernando.prada@proton.me
 
-SUBJECT = "Tu cuenta de Impuestify ya está activa — disculpa por las molestias"
+SUBJECT = "Necesito que vuelvas a registrarte en Impuestify — te explico"
 
 TEXT_BODY = f"""Hola {GABRIEL_NAME},
 
-Soy Fernando, el desarrollador de Impuestify. Gracias por avisarnos del problema y disculpa el mal rato.
+Soy Fernando, el desarrollador de Impuestify. Te escribo otra vez por un detalle más.
 
-Tras tu pago hubo un fallo en la activación que dejó tu cuenta sin acceso aunque el cobro sí se procesó. Ya está corregido.
+Mientras corregía el problema de tu pago, durante las pruebas técnicas tu cuenta de usuario se borró sin querer. No queda nada de información tuya en el sistema, así que no es un problema de datos: simplemente la cuenta ya no existe.
 
-Esto es lo que hemos hecho:
+Lo que necesito de ti:
 
-- Tu cuenta queda activa de inmediato. Puedes entrar en https://impuestify.com con tu cuenta de Google y empezar a usarla.
-- Te devolvemos los dos pagos de 5 €. Verás los reembolsos en tu tarjeta en los próximos 5-7 días laborables.
-- Te regalamos un mes completo de acceso gratuito como compensación. No se renovará automáticamente, así que no tendrás más cargos: si pasado el mes te resulta útil, podrás suscribirte de nuevo cuando quieras.
+- Vuelve a entrar en https://impuestify.com y regístrate de nuevo con tu cuenta de Google (la misma de antes, gabriel.demacedo1@gmail.com).
+- Cuando termines de registrarte, respóndeme a este correo con un "ya está" para que lo sepa.
+- En cuanto me avises, te activo manualmente el mes gratis del que te hablé en el correo anterior. Tú no tendrás que pagar ni hacer nada más.
 
-Si encuentras cualquier otro problema o tienes dudas, responde a este correo y te atiendo personalmente. Si quieres mandarme feedback (sugerencias, cosas que cambiarías, lo que sea), también vale a este mismo correo: me llega directo a mí.
+Los dos reembolsos de 5 € siguen su curso normal en tu tarjeta, eso no cambia.
 
-Disculpa de nuevo y gracias por la paciencia.
+De verdad disculpa todas las molestias. Si en algún momento decides no volver a probar la herramienta lo entiendo perfectamente; igualmente sigo a tu disposición en este mismo correo para cualquier feedback, duda o crítica que quieras compartir.
 
 Un saludo,
 Fernando
-Impuestify · https://impuestify.com
+Desarrollador de Impuestify · https://impuestify.com
 """
 
 HTML_BODY = f"""<!doctype html>
@@ -58,23 +58,23 @@ HTML_BODY = f"""<!doctype html>
   <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
     <div style="background:#1a56db;color:#fff;padding:18px 22px;border-radius:8px 8px 0 0;">
       <h1 style="margin:0;font-size:18px;font-weight:600;">Impuestify</h1>
-      <p style="margin:4px 0 0 0;opacity:0.9;font-size:13px;">Tu cuenta ya está activa</p>
+      <p style="margin:4px 0 0 0;opacity:0.9;font-size:13px;">Necesito un último paso por tu parte</p>
     </div>
     <div style="background:#ffffff;padding:24px 22px;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;border-top:0;line-height:1.55;">
       <p>Hola {GABRIEL_NAME},</p>
-      <p>Soy Fernando, el desarrollador de Impuestify. Gracias por avisarnos del problema y disculpa el mal rato.</p>
-      <p>Tras tu pago hubo un fallo en la activación que dejó tu cuenta sin acceso aunque el cobro sí se procesó. Ya está corregido.</p>
-      <p style="margin-bottom:8px;"><strong>Esto es lo que hemos hecho:</strong></p>
-      <ul style="margin:0 0 16px 18px;padding:0;">
-        <li>Tu cuenta queda activa de inmediato. Puedes entrar en
+      <p>Soy Fernando, el desarrollador de Impuestify. Te escribo otra vez por un detalle más.</p>
+      <p>Mientras corregía el problema de tu pago, durante las pruebas técnicas tu cuenta de usuario se borró sin querer. No queda nada de información tuya en el sistema, así que no es un problema de datos: simplemente la cuenta ya no existe.</p>
+      <p style="margin-bottom:8px;"><strong>Lo que necesito de ti:</strong></p>
+      <ol style="margin:0 0 16px 18px;padding:0;">
+        <li>Vuelve a entrar en
           <a href="https://impuestify.com" style="color:#1a56db;text-decoration:none;">impuestify.com</a>
-          con tu cuenta de Google.</li>
-        <li>Te devolvemos los dos pagos de 5 €. Los verás reflejados en tu tarjeta en 5-7 días laborables.</li>
-        <li>Te regalamos un mes completo de acceso gratuito como compensación.
-          No se renovará automáticamente, así que no tendrás más cargos.</li>
-      </ul>
-      <p>Si encuentras cualquier otro problema o tienes dudas, responde a este correo y te atiendo personalmente. Si quieres mandarme feedback (sugerencias, cosas que cambiarías, lo que sea), también vale a este mismo correo: me llega directo a mí.</p>
-      <p>Disculpa de nuevo y gracias por la paciencia.</p>
+          y regístrate de nuevo con tu cuenta de Google
+          (la misma de antes, <em>gabriel.demacedo1@gmail.com</em>).</li>
+        <li>Cuando termines, respóndeme a este correo con un “ya está”.</li>
+        <li>En cuanto me avises, te activo manualmente el mes gratis del que te hablé. Tú no tendrás que pagar ni hacer nada más.</li>
+      </ol>
+      <p>Los dos reembolsos de 5 € siguen su curso normal en tu tarjeta, eso no cambia.</p>
+      <p>De verdad disculpa todas las molestias. Si en algún momento decides no volver a probar la herramienta lo entiendo perfectamente; sigo a tu disposición en este mismo correo para cualquier feedback, duda o crítica que quieras compartir.</p>
       <p style="margin-top:18px;">Un saludo,<br><strong>Fernando</strong><br>Desarrollador de Impuestify</p>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">
       <p style="color:#6b7280;font-size:12px;margin:0;">Impuestify · <a href="https://impuestify.com" style="color:#6b7280;">impuestify.com</a></p>

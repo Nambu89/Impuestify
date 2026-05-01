@@ -9,7 +9,9 @@ Provides:
 Rate limiting for feedback: 10 submissions per user per day (COUNT query, not slowapi).
 Screenshot validation: max 2 MB, must be PNG or JPEG (magic bytes check).
 """
+import asyncio
 import base64
+import html as html_lib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -19,7 +21,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 
 from app.auth.jwt_handler import get_current_user, TokenData
+from app.config import settings
 from app.database.turso_client import get_db_client, TursoClient
+from app.services.email_service import get_email_service
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +118,101 @@ class ChatRatingRequest(BaseModel):
 # Helper: enforce daily rate limit (10 feedbacks/user/day)
 # ---------------------------------------------------------------
 
+_TYPE_LABELS = {"bug": "Error", "feature": "Sugerencia", "general": "General"}
+
+
+async def _notify_owner_of_feedback(
+    feedback_id: str,
+    feedback_type: str,
+    title: str,
+    description: str,
+    page_url: Optional[str],
+    user_email: str,
+    user_id: str,
+) -> None:
+    """Send the owner an email summarising a new feedback item.
+
+    Best-effort: never raise. Resend failures are logged so the user-facing
+    request always succeeds even if the notification doesn't go out.
+    """
+    if not settings.is_resend_configured:
+        logger.info("Skipping feedback notification: Resend not configured")
+        return
+
+    try:
+        type_label = _TYPE_LABELS.get(feedback_type, feedback_type)
+        subject = f"[Impuestify · {type_label}] {title[:80]}"
+
+        # Plain-text fallback
+        text_lines = [
+            f"Tipo: {type_label}",
+            f"De: {user_email} (id: {user_id})",
+        ]
+        if page_url:
+            text_lines.append(f"Pagina: {page_url}")
+        text_lines.append("")
+        text_lines.append(f"Titulo: {title}")
+        text_lines.append("")
+        text_lines.append("Descripcion:")
+        text_lines.append(description)
+        text_lines.append("")
+        text_lines.append(
+            f"Abrir en panel: https://impuestify.com/admin/feedback#{feedback_id}"
+        )
+        text_body = "\n".join(text_lines)
+
+        # HTML body — escape user-controlled fields to prevent injection in the inbox.
+        e_title = html_lib.escape(title)
+        e_desc = html_lib.escape(description).replace("\n", "<br>")
+        e_email = html_lib.escape(user_email)
+        e_page = html_lib.escape(page_url) if page_url else None
+        page_block = (
+            f'<p style="margin:6px 0;"><strong>Pagina:</strong> '
+            f'<a href="{e_page}" style="color:#1a56db;">{e_page}</a></p>'
+            if e_page
+            else ""
+        )
+
+        html_body = f"""<!doctype html>
+<html lang="es">
+<body style="margin:0;padding:0;background:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1f2937;">
+  <div style="max-width:600px;margin:0 auto;padding:20px 16px;">
+    <div style="background:#1a56db;color:#fff;padding:14px 20px;border-radius:8px 8px 0 0;">
+      <p style="margin:0;font-size:12px;letter-spacing:1px;opacity:0.85;">FEEDBACK · {html_lib.escape(type_label).upper()}</p>
+      <h1 style="margin:6px 0 0 0;font-size:18px;font-weight:600;">{e_title}</h1>
+    </div>
+    <div style="background:#fff;padding:18px 20px;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;border-top:0;line-height:1.55;">
+      <p style="margin:0 0 8px 0;"><strong>De:</strong> {e_email}</p>
+      {page_block}
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:14px 0;">
+      <p style="margin:0;white-space:pre-wrap;">{e_desc}</p>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:14px 0;">
+      <p style="margin:0;font-size:13px;">
+        <a href="https://impuestify.com/admin/feedback#{feedback_id}"
+           style="color:#1a56db;text-decoration:none;">Abrir en el panel admin</a>
+      </p>
+      <p style="margin:8px 0 0 0;color:#9ca3af;font-size:11px;">
+        feedback_id: {feedback_id} · user_id: {user_id}
+      </p>
+    </div>
+  </div>
+</body>
+</html>"""
+
+        service = get_email_service()
+        result = await service.send_email(
+            to=settings.OWNER_EMAIL,
+            subject=subject,
+            html=html_body,
+        )
+        if not result.get("success"):
+            logger.warning(
+                "Owner feedback notification failed: %s", result.get("error")
+            )
+    except Exception as exc:  # pragma: no cover - notification must never break submit
+        logger.warning("Owner feedback notification raised: %s", exc, exc_info=True)
+
+
 async def _check_feedback_rate_limit(user_id: str, db: TursoClient) -> None:
     result = await db.execute(
         "SELECT COUNT(*) as cnt FROM feedback WHERE user_id = ? AND created_at > date('now', '-1 day')",
@@ -173,6 +272,21 @@ async def create_feedback(
         feedback_id,
         current_user.user_id,
         body.type,
+    )
+
+    # Notify the owner by email so we react to bugs/suggestions without having
+    # to poll the admin panel. Fire-and-forget: any failure is logged but the
+    # user's submission already succeeded above.
+    asyncio.create_task(
+        _notify_owner_of_feedback(
+            feedback_id=feedback_id,
+            feedback_type=body.type,
+            title=body.title,
+            description=body.description,
+            page_url=body.page_url,
+            user_email=current_user.email,
+            user_id=current_user.user_id,
+        )
     )
 
     return {
