@@ -388,6 +388,24 @@
     width: 100%;
 }
 
+.files-header-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .files-header-actions {
+        flex-direction: row;
+        width: auto;
+    }
+
+    .files-header-actions .btn-sm {
+        width: auto;
+    }
+}
+
 .files-loading,
 .files-empty,
 .files-placeholder {

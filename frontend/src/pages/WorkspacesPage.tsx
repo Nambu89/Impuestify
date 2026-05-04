@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import {
     FolderOpen,
     Plus,
@@ -15,7 +16,8 @@ import {
     Pencil,
     Check,
     RefreshCw,
-    BarChart3
+    BarChart3,
+    Sparkles
 } from 'lucide-react'
 import Header from '../components/Header'
 import IntegrityBadge from '../components/IntegrityBadge'
@@ -648,14 +650,24 @@ export default function WorkspacesPage() {
                                                 <span className="files-workspace-icon">{selectedWorkspace.icon}</span>
                                                 <h2>{selectedWorkspace.name}</h2>
                                             </div>
-                                            <label
-                                                htmlFor="workspace-file-upload"
-                                                className="btn btn-primary btn-sm"
-                                                style={{ cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.4 : 1 }}
-                                            >
-                                                <Upload size={16} />
-                                                <span>{uploadProgress || (uploading ? 'Subiendo...' : 'Subir archivos')}</span>
-                                            </label>
+                                            <div className="files-header-actions">
+                                                <Link
+                                                    to={`/clasificador-facturas?workspace_id=${selectedWorkspace.id}`}
+                                                    className="btn btn-secondary btn-sm"
+                                                    title="Subir varias facturas y clasificar con IA"
+                                                >
+                                                    <Sparkles size={16} />
+                                                    <span>Clasificar facturas</span>
+                                                </Link>
+                                                <label
+                                                    htmlFor="workspace-file-upload"
+                                                    className="btn btn-primary btn-sm"
+                                                    style={{ cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.4 : 1 }}
+                                                >
+                                                    <Upload size={16} />
+                                                    <span>{uploadProgress || (uploading ? 'Subiendo...' : 'Subir archivos')}</span>
+                                                </label>
+                                            </div>
                                         </div>
 
                                         <div className="ws-view-tabs">

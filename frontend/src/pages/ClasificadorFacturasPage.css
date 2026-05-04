@@ -206,6 +206,152 @@
     font-weight: 600;
 }
 
+/* ── Workspace picker ────────────────────────────────────────────────────── */
+
+.cf-workspace-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+}
+
+.cf-workspace-picker__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.cf-workspace-picker__select {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 12px;
+    background: #1e293b;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.cf-workspace-picker__select:focus {
+    outline: none;
+    border-color: var(--color-primary-light, #3b82f6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.cf-workspace-picker__select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cf-workspace-picker__hint {
+    flex-basis: 100%;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.cf-upload-zone--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Batch queue ─────────────────────────────────────────────────────────── */
+
+.cf-queue {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 16px 18px;
+}
+
+.cf-queue__header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cf-queue__title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.cf-queue__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cf-queue__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.cf-queue__item--processing {
+    border-color: rgba(6, 182, 212, 0.35);
+    background: rgba(6, 182, 212, 0.06);
+}
+
+.cf-queue__item--success {
+    border-color: rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.07);
+}
+
+.cf-queue__item--error {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.cf-queue__icon {
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.55);
+    display: inline-flex;
+}
+
+.cf-queue__item--success .cf-queue__icon { color: #22c55e; }
+.cf-queue__item--error .cf-queue__icon   { color: #ef4444; }
+.cf-queue__item--processing .cf-queue__icon { color: var(--color-accent, #06b6d4); }
+
+.cf-queue__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.cf-queue__name {
+    font-size: 0.875rem;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cf-queue__status {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.cf-queue__status--ok  { color: #22c55e; }
+.cf-queue__status--err { color: #ef4444; }
+
 /* ── Upload done bar ─────────────────────────────────────────────────────── */
 
 .cf-upload-done-bar {

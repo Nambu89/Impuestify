@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Search, ArrowLeft } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Search, ArrowLeft, FolderOpen } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useApi } from '../hooks/useApi'
+import { useWorkspaces } from '../hooks/useWorkspaces'
 import './ClasificadorFacturasPage.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -64,6 +65,19 @@ interface InvoiceListItem {
 
 type UploadStep = 'idle' | 'extracting' | 'classifying' | 'done' | 'error'
 
+type QueueItemStatus = 'pending' | 'processing' | 'success' | 'error'
+
+interface QueueItem {
+    id: string
+    filename: string
+    size: number
+    status: QueueItemStatus
+    error?: string
+    invoiceId?: string
+}
+
+const MAX_BATCH = 10
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function ConfianzaBadge({ nivel }: { nivel: 'alta' | 'media' | 'baja' | 'manual' }) {
@@ -91,28 +105,29 @@ function formatDate(dateStr: string) {
 
 // ─── Upload Zone ──────────────────────────────────────────────────────────────
 
-function UploadZone({ onFile }: { onFile: (f: File) => void }) {
+function UploadZone({ onFiles, disabled }: { onFiles: (files: File[]) => void; disabled?: boolean }) {
     const [dragging, setDragging] = useState(false)
     const inputId = 'cf-file-upload'
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault()
         setDragging(false)
-        const file = e.dataTransfer.files[0]
-        if (file) onFile(file)
-    }, [onFile])
+        if (disabled) return
+        const files = Array.from(e.dataTransfer.files)
+        if (files.length) onFiles(files)
+    }, [onFiles, disabled])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) onFile(file)
+        const files = Array.from(e.target.files || [])
+        if (files.length) onFiles(files)
         e.target.value = ''
     }
 
     return (
         <label
             htmlFor={inputId}
-            className={`cf-upload-zone${dragging ? ' cf-upload-zone--dragging' : ''}`}
-            onDragOver={e => { e.preventDefault(); setDragging(true) }}
+            className={`cf-upload-zone${dragging ? ' cf-upload-zone--dragging' : ''}${disabled ? ' cf-upload-zone--disabled' : ''}`}
+            onDragOver={e => { e.preventDefault(); if (!disabled) setDragging(true) }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             tabIndex={0}
@@ -125,14 +140,46 @@ function UploadZone({ onFile }: { onFile: (f: File) => void }) {
                 accept=".pdf,.jpg,.jpeg,.png,image/*"
                 onChange={handleChange}
                 className="cf-upload-input"
+                multiple
+                disabled={disabled}
             />
             <Upload size={40} className="cf-upload-icon" />
-            <p className="cf-upload-title">Arrastra tu factura aquí</p>
-            <p className="cf-upload-subtitle">PDF, JPG o PNG · máximo 10 MB</p>
+            <p className="cf-upload-title">Arrastra tus facturas aquí</p>
+            <p className="cf-upload-subtitle">PDF, JPG o PNG · hasta {MAX_BATCH} a la vez · máximo 10 MB cada una</p>
             <span className="cf-upload-btn" role="button">
-                Subir factura
+                Seleccionar facturas
             </span>
         </label>
+    )
+}
+
+function BatchQueue({ items }: { items: QueueItem[] }) {
+    if (!items.length) return null
+    return (
+        <div className="cf-queue">
+            <div className="cf-queue__header">
+                <span className="cf-queue__title">Procesando {items.length} factura{items.length === 1 ? '' : 's'}</span>
+            </div>
+            <ul className="cf-queue__list">
+                {items.map(item => (
+                    <li key={item.id} className={`cf-queue__item cf-queue__item--${item.status}`}>
+                        <span className="cf-queue__icon">
+                            {item.status === 'pending' && <FileText size={16} />}
+                            {item.status === 'processing' && <Loader2 size={16} className="cf-progress__spinner" />}
+                            {item.status === 'success' && <CheckCircle size={16} />}
+                            {item.status === 'error' && <XCircle size={16} />}
+                        </span>
+                        <div className="cf-queue__body">
+                            <span className="cf-queue__name">{item.filename}</span>
+                            {item.status === 'pending' && <span className="cf-queue__status">En cola</span>}
+                            {item.status === 'processing' && <span className="cf-queue__status">Leyendo y clasificando...</span>}
+                            {item.status === 'success' && <span className="cf-queue__status cf-queue__status--ok">Clasificada</span>}
+                            {item.status === 'error' && <span className="cf-queue__status cf-queue__status--err">{item.error || 'Error'}</span>}
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        </div>
     )
 }
 
@@ -572,16 +619,34 @@ function InvoiceList({ invoices, onDelete, onView }: InvoiceListProps) {
 
 export default function ClasificadorFacturasPage() {
     const { apiRequest } = useApi()
+    const { workspaces, fetchWorkspaces } = useWorkspaces()
+    const [searchParams] = useSearchParams()
     const [uploadStep, setUploadStep] = useState<UploadStep>('idle')
     const [uploadError, setUploadError] = useState<string | null>(null)
     const [result, setResult] = useState<InvoiceResult | null>(null)
     const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
     const [loadingList, setLoadingList] = useState(true)
+    const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>('')
+    const [queue, setQueue] = useState<QueueItem[]>([])
+    const [batchSummary, setBatchSummary] = useState<{ success: number; error: number } | null>(null)
 
-    // Load invoice list on mount
+    // Load invoice list + workspaces on mount
     useEffect(() => {
         loadInvoices()
-    }, [])
+        fetchWorkspaces()
+    }, [fetchWorkspaces])
+
+    // Initialize selected workspace once workspaces load (URL param > default > first)
+    useEffect(() => {
+        if (selectedWorkspaceId || !workspaces.length) return
+        const fromUrl = searchParams.get('workspace_id')
+        if (fromUrl && workspaces.some(w => w.id === fromUrl)) {
+            setSelectedWorkspaceId(fromUrl)
+            return
+        }
+        const def = workspaces.find(w => w.is_default) || workspaces[0]
+        if (def) setSelectedWorkspaceId(def.id)
+    }, [workspaces, searchParams, selectedWorkspaceId])
 
     async function loadInvoices() {
         setLoadingList(true)
@@ -602,20 +667,128 @@ export default function ClasificadorFacturasPage() {
         }
     }
 
-    async function handleFile(file: File) {
-        // Validate size (10 MB)
-        if (file.size > 10 * 1024 * 1024) {
-            setUploadError('La factura pesa más de 10 MB.')
+    function mapUploadResultToInvoiceResult(uploadResult: any): InvoiceResult {
+        const factura = uploadResult.factura
+        const clasificacion = uploadResult.clasificacion
+        return {
+            id: uploadResult.id,
+            extraccion: {
+                emisor_nombre: factura?.emisor?.nombre || '',
+                emisor_nif: factura?.emisor?.nif_cif || '',
+                receptor_nombre: factura?.receptor?.nombre || '',
+                receptor_nif: factura?.receptor?.nif_cif || '',
+                fecha: factura?.fecha_factura || '',
+                numero_factura: factura?.numero_factura || '',
+                lineas: (factura?.lineas || []).map((l: any) => ({
+                    concepto: l.concepto || '',
+                    cantidad: l.cantidad || 0,
+                    precio_unitario: l.precio_unitario || 0,
+                    base: l.base_imponible || 0,
+                })),
+                base_imponible: factura?.base_imponible_total || 0,
+                tipo_iva: factura?.tipo_iva_pct || 0,
+                cuota_iva: factura?.cuota_iva || 0,
+                retenciones: factura?.retencion_irpf || 0,
+                total: factura?.total || 0,
+                confianza: uploadResult.validacion?.confianza_extraccion || 'media',
+                errores_validacion: uploadResult.validacion?.errores_validacion || [],
+            },
+            clasificacion: {
+                cuenta_pgc: clasificacion?.cuenta_code || '',
+                cuenta_pgc_nombre: clasificacion?.cuenta_nombre || '',
+                confianza: clasificacion?.confianza || 'media',
+                alternativas: (clasificacion?.alternativas || []).map((a: any) => ({
+                    cuenta_pgc: a.code || '',
+                    cuenta_pgc_nombre: a.nombre || '',
+                })),
+            },
+            confirmada: false,
+        }
+    }
+
+    async function handleFiles(files: File[]) {
+        if (!files.length) return
+
+        if (files.length > MAX_BATCH) {
+            setUploadError(`Máximo ${MAX_BATCH} facturas a la vez. Has seleccionado ${files.length}.`)
+            setUploadStep('error')
+            return
+        }
+
+        // Validate sizes
+        const oversized = files.filter(f => f.size > 10 * 1024 * 1024)
+        if (oversized.length) {
+            setUploadError(`Estas facturas pesan más de 10 MB: ${oversized.map(f => f.name).join(', ')}`)
+            setUploadStep('error')
             return
         }
 
         setUploadError(null)
         setResult(null)
+        setBatchSummary(null)
+
+        // Single file: keep classic UX (extracting/classifying steps)
+        if (files.length === 1) {
+            await handleSingleFile(files[0])
+            return
+        }
+
+        // Batch flow
+        const initial: QueueItem[] = files.map((f, i) => ({
+            id: `${Date.now()}-${i}`,
+            filename: f.name,
+            size: f.size,
+            status: 'pending',
+        }))
+        setQueue(initial)
+        setUploadStep('extracting')
+
+        try {
+            const formData = new FormData()
+            files.forEach(f => formData.append('files', f))
+            if (selectedWorkspaceId) formData.append('workspace_id', selectedWorkspaceId)
+
+            // Mark all as processing while server runs (server processes sequentially; we don't get per-file progress)
+            setQueue(prev => prev.map(it => ({ ...it, status: 'processing' })))
+
+            const batchResult = await apiRequest('/api/invoices/upload-batch', {
+                method: 'POST',
+                body: formData,
+                timeout: 600000,
+            })
+
+            // Map results back to queue items by filename order (server preserves order)
+            const serverResults: any[] = batchResult?.results || []
+            setQueue(prev => prev.map((it, idx) => {
+                const r = serverResults[idx]
+                if (!r) return { ...it, status: 'error', error: 'Sin respuesta del servidor' }
+                if (r.success) {
+                    return { ...it, status: 'success', invoiceId: r.data?.id }
+                }
+                return { ...it, status: 'error', error: typeof r.error === 'string' ? r.error : 'Error procesando' }
+            }))
+
+            setBatchSummary({
+                success: batchResult?.success_count || 0,
+                error: batchResult?.error_count || 0,
+            })
+            setUploadStep('done')
+            await loadInvoices()
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'No hemos podido procesar el lote.'
+            setQueue(prev => prev.map(it => it.status === 'processing' ? { ...it, status: 'error', error: msg } : it))
+            setUploadError(msg)
+            setUploadStep('error')
+        }
+    }
+
+    async function handleSingleFile(file: File) {
         setUploadStep('extracting')
 
         try {
             const formData = new FormData()
             formData.append('file', file)
+            if (selectedWorkspaceId) formData.append('workspace_id', selectedWorkspaceId)
 
             // Step 1: Upload + extract (Gemini OCR can take 30-60s)
             const uploadResult = await apiRequest('/api/invoices/upload', {
@@ -626,48 +799,11 @@ export default function ClasificadorFacturasPage() {
 
             setUploadStep('classifying')
 
-            // Map backend response to frontend InvoiceResult shape
-            const factura = uploadResult.factura
-            const clasificacion = uploadResult.clasificacion
-            const mapped: InvoiceResult = {
-                id: uploadResult.id,
-                extraccion: {
-                    emisor_nombre: factura?.emisor?.nombre || '',
-                    emisor_nif: factura?.emisor?.nif_cif || '',
-                    receptor_nombre: factura?.receptor?.nombre || '',
-                    receptor_nif: factura?.receptor?.nif_cif || '',
-                    fecha: factura?.fecha_factura || '',
-                    numero_factura: factura?.numero_factura || '',
-                    lineas: (factura?.lineas || []).map((l: any) => ({
-                        concepto: l.concepto || '',
-                        cantidad: l.cantidad || 0,
-                        precio_unitario: l.precio_unitario || 0,
-                        base_imponible: l.base_imponible || 0,
-                    })),
-                    base_imponible: factura?.base_imponible_total || 0,
-                    tipo_iva: factura?.tipo_iva_pct || 0,
-                    cuota_iva: factura?.cuota_iva || 0,
-                    retenciones: factura?.retencion_irpf || 0,
-                    total: factura?.total || 0,
-                    confianza: uploadResult.validacion?.confianza_extraccion || 'media',
-                    errores_validacion: uploadResult.validacion?.errores_validacion || [],
-                },
-                clasificacion: {
-                    cuenta_pgc: clasificacion?.cuenta_code || '',
-                    cuenta_pgc_nombre: clasificacion?.cuenta_nombre || '',
-                    confianza: clasificacion?.confianza || 'media',
-                    alternativas: (clasificacion?.alternativas || []).map((a: any) => ({
-                        cuenta_pgc: a.code || '',
-                        cuenta_pgc_nombre: a.nombre || '',
-                    })),
-                },
-                confirmada: false,
-            }
+            const mapped = mapUploadResultToInvoiceResult(uploadResult)
 
             setUploadStep('done')
             setResult(mapped)
 
-            // Refresh list
             await loadInvoices()
         } catch (err: unknown) {
             setUploadStep('error')
@@ -751,6 +887,16 @@ export default function ClasificadorFacturasPage() {
     }
 
     const isProcessing = uploadStep === 'extracting' || uploadStep === 'classifying'
+    const isBatchMode = queue.length > 0
+    const selectedWorkspace = workspaces.find(w => w.id === selectedWorkspaceId)
+
+    function resetUpload() {
+        setUploadStep('idle')
+        setResult(null)
+        setUploadError(null)
+        setQueue([])
+        setBatchSummary(null)
+    }
 
     return (
         <div className="cf-page">
@@ -772,13 +918,44 @@ export default function ClasificadorFacturasPage() {
                     </div>
                 </div>
 
+                {/* Workspace selector */}
+                {workspaces.length > 0 && (
+                    <section className="cf-section cf-workspace-picker">
+                        <label htmlFor="cf-workspace-select" className="cf-workspace-picker__label">
+                            <FolderOpen size={16} />
+                            Guardar facturas en
+                        </label>
+                        <select
+                            id="cf-workspace-select"
+                            className="cf-workspace-picker__select"
+                            value={selectedWorkspaceId}
+                            onChange={e => setSelectedWorkspaceId(e.target.value)}
+                            disabled={isProcessing || isBatchMode && uploadStep !== 'done' && uploadStep !== 'error'}
+                        >
+                            {workspaces.map(w => (
+                                <option key={w.id} value={w.id}>
+                                    {w.icon} {w.name}{w.is_default ? ' (Principal)' : ''}
+                                </option>
+                            ))}
+                        </select>
+                        {selectedWorkspace && (
+                            <span className="cf-workspace-picker__hint">
+                                Las facturas aparecerán también en este workspace.
+                            </span>
+                        )}
+                    </section>
+                )}
+
                 {/* Upload section */}
                 <section className="cf-section">
-                    {!isProcessing && uploadStep !== 'done' ? (
-                        <UploadZone onFile={handleFile} />
-                    ) : isProcessing ? (
+                    {!isProcessing && !isBatchMode && uploadStep !== 'done' ? (
+                        <UploadZone onFiles={handleFiles} />
+                    ) : isProcessing && !isBatchMode ? (
                         <UploadProgress step={uploadStep} />
                     ) : null}
+
+                    {/* Batch queue (multi-file) */}
+                    {isBatchMode && <BatchQueue items={queue} />}
 
                     {uploadStep === 'error' && uploadError && (
                         <div className="cf-alert cf-alert--error">
@@ -786,22 +963,38 @@ export default function ClasificadorFacturasPage() {
                             <span>{uploadError}</span>
                             <button
                                 className="cf-btn cf-btn--ghost cf-btn--sm"
-                                onClick={() => { setUploadStep('idle'); setUploadError(null) }}
+                                onClick={resetUpload}
                             >
                                 Reintentar
                             </button>
                         </div>
                     )}
 
-                    {uploadStep === 'done' && (
+                    {uploadStep === 'done' && !isBatchMode && (
                         <div className="cf-upload-done-bar">
                             <CheckCircle size={18} className="cf-upload-done-bar__icon" />
                             <span>Factura guardada</span>
                             <button
                                 className="cf-btn cf-btn--ghost cf-btn--sm"
-                                onClick={() => { setUploadStep('idle'); setResult(null) }}
+                                onClick={resetUpload}
                             >
                                 Subir otra factura
+                            </button>
+                        </div>
+                    )}
+
+                    {uploadStep === 'done' && isBatchMode && batchSummary && (
+                        <div className="cf-upload-done-bar">
+                            <CheckCircle size={18} className="cf-upload-done-bar__icon" />
+                            <span>
+                                {batchSummary.success} factura{batchSummary.success === 1 ? '' : 's'} guardada{batchSummary.success === 1 ? '' : 's'}
+                                {batchSummary.error > 0 && ` · ${batchSummary.error} con error`}
+                            </span>
+                            <button
+                                className="cf-btn cf-btn--ghost cf-btn--sm"
+                                onClick={resetUpload}
+                            >
+                                Subir más facturas
                             </button>
                         </div>
                     )}

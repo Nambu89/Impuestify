@@ -15,7 +15,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Query, Request
+from fastapi import APIRouter, File, Form, UploadFile, HTTPException, Depends, Query, Request
 from pydantic import BaseModel
 
 from app.auth.jwt_handler import get_current_user, TokenData
@@ -94,28 +94,40 @@ def _validate_file(file_bytes: bytes, content_type: str | None) -> str:
 # POST /upload
 # ---------------------------------------------------------------------------
 
-@router.post("/upload")
-@limiter.limit("10/minute")
-async def upload_invoice(
-    request: Request,
-    file: UploadFile = File(...),
-    current_user: TokenData = Depends(get_current_user),
-    access: SubscriptionAccess = Depends(require_active_subscription),
-):
-    """Sube una factura, extrae datos con OCR, clasifica PGC y genera asiento contable."""
-
-    # Plan gate: only autonomo, creator, or owner
-    if not access.is_owner and access.plan_type not in ALLOWED_PLANS:
-        raise HTTPException(
-            status_code=403,
-            detail="Esta funcionalidad requiere plan Autónomo o Creator.",
+async def _resolve_workspace_id(db, user_id: str, requested: Optional[str]) -> Optional[str]:
+    """Validate workspace ownership or fallback to user's default workspace. Returns None if user has no workspaces."""
+    if requested:
+        result = await db.execute(
+            "SELECT id FROM workspaces WHERE id = ? AND user_id = ?",
+            [requested, user_id],
         )
+        if result.rows:
+            return requested
+        logger.warning(f"User {user_id} requested workspace {requested} not owned; falling back to default")
 
-    # Read and validate file
-    file_bytes = await file.read()
-    mime_type = _validate_file(file_bytes, file.content_type)
+    result = await db.execute(
+        "SELECT id FROM workspaces WHERE user_id = ? AND is_default = 1 LIMIT 1",
+        [user_id],
+    )
+    if result.rows:
+        return result.rows[0]["id"]
 
-    # --- OCR extraction ---
+    result = await db.execute(
+        "SELECT id FROM workspaces WHERE user_id = ? ORDER BY created_at LIMIT 1",
+        [user_id],
+    )
+    return result.rows[0]["id"] if result.rows else None
+
+
+async def _process_single_invoice(
+    file_bytes: bytes,
+    mime_type: str,
+    filename: str,
+    user_id: str,
+    workspace_id: Optional[str],
+    db,
+) -> dict:
+    """Run OCR + classification + persistence for a single invoice."""
     if not settings.GOOGLE_GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="Servicio OCR no configurado.")
 
@@ -128,14 +140,11 @@ async def upload_invoice(
 
     factura = extraction.factura
 
-    # --- PGC classification ---
-    db = await get_db_client()
     classifier = InvoiceClassifierService(
         api_key=settings.GOOGLE_GEMINI_API_KEY,
         db=db,
         model=settings.GEMINI_MODEL,
     )
-
     concepto = ", ".join(l.concepto for l in factura.lineas) if factura.lineas else factura.numero_factura
     try:
         clasificacion = await classifier.classify(
@@ -148,11 +157,9 @@ async def upload_invoice(
         logger.error("Classification failed", exc_info=exc)
         raise HTTPException(status_code=422, detail=f"Error clasificando la factura: {exc}")
 
-    # --- Parse date for year / trimestre ---
     try:
         fecha_dt = datetime.strptime(factura.fecha_factura, "%Y-%m-%d")
     except ValueError:
-        # Fallback: try other common formats
         try:
             fecha_dt = datetime.strptime(factura.fecha_factura, "%d/%m/%Y")
         except ValueError:
@@ -161,12 +168,9 @@ async def upload_invoice(
     year = fecha_dt.year
     trimestre = _parse_trimestre(fecha_dt.month)
 
-    # --- Save to libro_registro ---
     invoice_id = str(uuid.uuid4())
-    user_id = current_user.user_id
-
     raw_extraction_json = json.dumps(factura.model_dump(), default=str)
-    clasificacion_json = json.dumps(clasificacion.model_dump(), default=str)
+    now_iso = datetime.now(timezone.utc).isoformat()
 
     await db.execute(
         """
@@ -181,35 +185,39 @@ async def upload_invoice(
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
-            invoice_id,
-            user_id,
-            factura.tipo,
-            factura.numero_factura,
-            factura.fecha_factura,
-            factura.fecha_operacion,
-            factura.emisor.nif_cif,
-            factura.emisor.nombre,
-            factura.receptor.nif_cif,
-            factura.receptor.nombre,
-            factura.base_imponible_total,
-            factura.tipo_iva_pct,
-            factura.cuota_iva,
-            factura.tipo_re_pct,
-            factura.cuota_re,
-            factura.retencion_irpf_pct,
-            factura.retencion_irpf,
-            factura.total,
-            clasificacion.cuenta_code,
-            clasificacion.cuenta_nombre,
-            clasificacion.confianza,
-            raw_extraction_json,
-            year,
-            trimestre,
-            datetime.now(timezone.utc).isoformat(),
+            invoice_id, user_id, factura.tipo, factura.numero_factura,
+            factura.fecha_factura, factura.fecha_operacion,
+            factura.emisor.nif_cif, factura.emisor.nombre,
+            factura.receptor.nif_cif, factura.receptor.nombre,
+            factura.base_imponible_total, factura.tipo_iva_pct, factura.cuota_iva,
+            factura.tipo_re_pct, factura.cuota_re,
+            factura.retencion_irpf_pct, factura.retencion_irpf,
+            factura.total, clasificacion.cuenta_code, clasificacion.cuenta_nombre,
+            clasificacion.confianza, raw_extraction_json,
+            year, trimestre, now_iso,
         ],
     )
 
-    # --- Generate + save asiento contable ---
+    workspace_file_id: Optional[str] = None
+    if workspace_id:
+        workspace_file_id = str(uuid.uuid4())
+        try:
+            await db.execute(
+                """
+                INSERT INTO workspace_files
+                    (id, workspace_id, filename, file_type, mime_type, file_size,
+                     extracted_text, extracted_data, processing_status, created_at)
+                VALUES (?, ?, ?, 'factura', ?, ?, ?, ?, 'completed', ?)
+                """,
+                [
+                    workspace_file_id, workspace_id, filename, mime_type,
+                    len(file_bytes), concepto, raw_extraction_json, now_iso,
+                ],
+            )
+        except Exception as exc:
+            logger.warning(f"Could not register invoice in workspace_files: {exc}")
+            workspace_file_id = None
+
     contabilidad = ContabilidadService(db=db)
     asiento_lines = ContabilidadService.generate_asiento_lines(
         tipo=factura.tipo,
@@ -233,6 +241,9 @@ async def upload_invoice(
 
     return {
         "id": invoice_id,
+        "workspace_file_id": workspace_file_id,
+        "workspace_id": workspace_id,
+        "filename": filename,
         "factura": factura.model_dump(),
         "clasificacion": clasificacion.model_dump(),
         "validacion": {
@@ -241,6 +252,111 @@ async def upload_invoice(
             "nif_receptor_valido": extraction.nif_receptor_valido,
             "errores_validacion": extraction.errores_validacion,
         },
+    }
+
+
+@router.post("/upload")
+@limiter.limit("10/minute")
+async def upload_invoice(
+    request: Request,
+    file: UploadFile = File(...),
+    workspace_id: Optional[str] = Form(None),
+    current_user: TokenData = Depends(get_current_user),
+    access: SubscriptionAccess = Depends(require_active_subscription),
+):
+    """Sube una factura, extrae datos con OCR, clasifica PGC y genera asiento contable."""
+
+    if not access.is_owner and access.plan_type not in ALLOWED_PLANS:
+        raise HTTPException(
+            status_code=403,
+            detail="Esta funcionalidad requiere plan Autónomo o Creator.",
+        )
+
+    file_bytes = await file.read()
+    mime_type = _validate_file(file_bytes, file.content_type)
+
+    db = await get_db_client()
+    resolved_workspace_id = await _resolve_workspace_id(db, current_user.user_id, workspace_id)
+
+    return await _process_single_invoice(
+        file_bytes=file_bytes,
+        mime_type=mime_type,
+        filename=file.filename or "factura.pdf",
+        user_id=current_user.user_id,
+        workspace_id=resolved_workspace_id,
+        db=db,
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /upload-batch — Multiple files
+# ---------------------------------------------------------------------------
+
+MAX_BATCH_SIZE = 10
+
+
+@router.post("/upload-batch")
+@limiter.limit("3/minute")
+async def upload_invoices_batch(
+    request: Request,
+    files: list[UploadFile] = File(...),
+    workspace_id: Optional[str] = Form(None),
+    current_user: TokenData = Depends(get_current_user),
+    access: SubscriptionAccess = Depends(require_active_subscription),
+):
+    """Sube hasta 10 facturas en una sola peticion. Procesa secuencialmente."""
+
+    if not access.is_owner and access.plan_type not in ALLOWED_PLANS:
+        raise HTTPException(
+            status_code=403,
+            detail="Esta funcionalidad requiere plan Autónomo o Creator.",
+        )
+
+    if len(files) > MAX_BATCH_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Maximo {MAX_BATCH_SIZE} facturas por peticion.",
+        )
+
+    if not files:
+        raise HTTPException(status_code=400, detail="No se ha enviado ningun archivo.")
+
+    db = await get_db_client()
+    resolved_workspace_id = await _resolve_workspace_id(db, current_user.user_id, workspace_id)
+
+    results: list[dict] = []
+    success_count = 0
+    error_count = 0
+
+    for upload in files:
+        filename = upload.filename or "factura.pdf"
+        try:
+            file_bytes = await upload.read()
+            mime_type = _validate_file(file_bytes, upload.content_type)
+            invoice = await _process_single_invoice(
+                file_bytes=file_bytes,
+                mime_type=mime_type,
+                filename=filename,
+                user_id=current_user.user_id,
+                workspace_id=resolved_workspace_id,
+                db=db,
+            )
+            results.append({"filename": filename, "success": True, "data": invoice})
+            success_count += 1
+        except HTTPException as exc:
+            results.append({"filename": filename, "success": False, "error": exc.detail})
+            error_count += 1
+        except Exception as exc:
+            logger.error(f"Unexpected error processing {filename}", exc_info=exc)
+            results.append({"filename": filename, "success": False, "error": "Error inesperado procesando la factura."})
+            error_count += 1
+
+    return {
+        "workspace_id": resolved_workspace_id,
+        "total": len(files),
+        "success_count": success_count,
+        "error_count": error_count,
+        "results": results,
     }
 
 
