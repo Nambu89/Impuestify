@@ -23,6 +23,7 @@ from app.services.conversation_cache import ConversationCache
 from app.auth.jwt_handler import get_current_user, TokenData
 from app.auth.subscription_guard import require_active_subscription
 from app.security import sql_validator, guardrails_system
+from app.security.security_pipeline import security_pipeline
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
 from app.services.subscription_service import SubscriptionAccess
 from app.utils.streaming import ProgressCallback, sse_generator, filter_json_from_content
@@ -110,20 +111,28 @@ async def ask_question_stream(
     Compatible with Railway's timeout limits via heartbeats.
     """
     
-    # === SECURITY: Input validation ===
-    sql_check = sql_validator.validate_user_input(request.question)
-    if not sql_check.is_safe:
-        raise HTTPException(
-            status_code=400,
-            detail={"error": "Security violation", "type": "sql_injection"}
-        )
-    
-    guardrails_check = guardrails_system.validate_input(request.question)
-    if not guardrails_check.is_safe and guardrails_check.risk_level == "critical":
-        raise HTTPException(
-            status_code=400,
-            detail={"error": "Question violates safety guidelines"}
-        )
+    # === SECURITY PIPELINE: 6 layers (sanitize → injection → SQLi → PII → topic) ===
+    pipeline_result = security_pipeline.check(
+        question=request.question,
+        user_id=current_user.user_id,
+    )
+    if not pipeline_result.is_safe:
+        # Stream a polite rejection back to the client (don't 400; UX is better)
+        async def rejection_stream():
+            yield {
+                "event": "content",
+                "data": pipeline_result.rejection_message or
+                        "Solo respondo preguntas de fiscalidad española. Reformula tu pregunta dentro de este ámbito.",
+            }
+            yield {"event": "done", "data": json.dumps({
+                "blocked": True,
+                "layer": pipeline_result.layer,
+                "reason": pipeline_result.reason,
+            })}
+        return EventSourceResponse(rejection_stream())
+
+    # Replace the original question with the sanitized version for downstream logic
+    request.question = pipeline_result.sanitized_text or request.question
     
     # === CONTENT RESTRICTION: Autonomo detection (only block "particular" plan) ===
     if not access.is_owner and access.plan_type not in ("autonomo", "creator") and detect_autonomo_query(request.question):

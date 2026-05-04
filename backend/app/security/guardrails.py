@@ -86,6 +86,24 @@ class TaxIAGuardrails:
         r'\b(qué tal|cómo estás|cómo vas|saludos)\b',
         r'^(hola|hi|hey)\s*[!.?]*$'
     ]
+
+    # Output drift detection — phrases or patterns indicating the LLM left scope.
+    # Triggered when post-LLM output contains roleplay, code, off-topic narrative.
+    OUTPUT_DRIFT_PATTERNS = [
+        # Roleplay onomatopoeia / persona starts
+        r'^\s*[¡!]?\s*(guau|miau|cuac|muu|kikiriki|woof|meow)\b',
+        # First-person impersonation as non-fiscal entity
+        r'\bsoy\s+un[a]?\s+(perro|gato|gata|akita|labrador|loro|caballo|niñ[oa]|robot|hacker|médico|medico|abogado|chef|cocinero|profesor|cantante|escritor|poeta|policía|policia|youtuber|tiktoker|streamer)\b',
+        r'\b(ahora\s+soy|en\s+este\s+rol\s+soy|haciendo\s+(de|el\s+papel)|en\s+modo|como\s+\w+\s+te\s+(digo|diría|diria|cuento|recomiendo|recomendaría|aconsejaría|aconsejaria))\b',
+        # Code blocks (LLM should never generate code in a fiscal app)
+        r'```\s*(python|javascript|js|typescript|ts|sql|bash|sh|shell|powershell|java|c\+\+|cpp|c#|csharp|rust|go|ruby|php|html|css)\b',
+        r'\bdef\s+\w+\s*\([^)]*\)\s*:',                # python def
+        r'\bfunction\s+\w+\s*\(',                       # JS function
+        r'^\s*(import|from)\s+\w+',                     # python import
+        # Generic off-scope narrative starters
+        r'^\s*(érase\s+una\s+vez|once\s+upon\s+a\s+time|capítulo\s+\d+)',
+    ]
+    COMPILED_DRIFT = [re.compile(p, re.IGNORECASE | re.MULTILINE) for p in OUTPUT_DRIFT_PATTERNS]
     
     def __init__(self, enable_strict_mode: bool = True):
         """
@@ -215,7 +233,25 @@ class TaxIAGuardrails:
         violations = []
         suggestions = []
         risk_level = "none"
-        
+
+        # CRITICAL: detect output drift (roleplay, code, off-topic)
+        for pattern in self.COMPILED_DRIFT:
+            if pattern.search(llm_response):
+                violations.append(f"Output drift detected: {pattern.pattern[:60]}")
+                logger.error(f"OUTPUT DRIFT BLOCKED: pattern={pattern.pattern[:60]} response_preview={llm_response[:120]!r}")
+                risk_level = "critical"
+                suggestions.append(
+                    "La respuesta del modelo se ha salido del ámbito fiscal. "
+                    "Se ha bloqueado y reemplazado por un mensaje de re-encuadre."
+                )
+                # Short-circuit: drift is unacceptable, no need to keep checking
+                return GuardrailsResult(
+                    is_safe=False,
+                    risk_level="critical",
+                    violations=violations,
+                    suggestions=suggestions,
+                )
+
         # Check if response contains grounding (references to sources)
         has_grounding = any(
             indicator in llm_response.lower()
