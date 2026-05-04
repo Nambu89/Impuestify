@@ -58,12 +58,10 @@
 .mo-hero-title {
     font-size: clamp(2rem, 5vw, 3.2rem);
     font-weight: 800;
-    line-height: 1.15;
+    line-height: 1.2;
     margin-bottom: var(--spacing-md);
-    background: linear-gradient(135deg, var(--color-white) 60%, rgba(255, 255, 255, 0.6));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--color-white);
+    padding-bottom: 4px;
 }
 
 .mo-hero-subtitle {
@@ -198,11 +196,12 @@
 
 .mo-results-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 380px));
     gap: var(--spacing-lg);
     max-width: 1100px;
     margin: 0 auto;
     padding: 0 var(--spacing-lg);
+    justify-content: center;
 }
 
 /* ── Model Card ──────────────────────────────────────────── */

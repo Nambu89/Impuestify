@@ -108,6 +108,12 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             <Link to="/modelos-trimestrales" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
                                 <ClipboardList size={15} /> Modelos Trimestrales
                             </Link>
+                            <Link to="/modelo-200" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <Building2 size={15} /> Modelo 200 - IS
+                            </Link>
+                            <Link to="/modelo-202" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
+                                <Building2 size={15} /> Modelo 202 - Pagos IS
+                            </Link>
                             <Link to="/clasificador-facturas" className="nav-dropdown__item" onClick={() => setToolsOpen(false)}>
                                 <FileText size={15} /> Clasificador Facturas
                             </Link>
@@ -211,6 +217,12 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             </Link>
                             <Link to="/modelos-trimestrales" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
                                 <ClipboardList size={18} /> Modelos Trimestrales
+                            </Link>
+                            <Link to="/modelo-200" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <Building2 size={18} /> Modelo 200 - IS
+                            </Link>
+                            <Link to="/modelo-202" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
+                                <Building2 size={18} /> Modelo 202 - Pagos IS
                             </Link>
                             <Link to="/clasificador-facturas" className="mobile-nav__link mobile-nav__link--sub" onClick={() => setMobileMenuOpen(false)}>
                                 <FileText size={18} /> Clasificador Facturas
