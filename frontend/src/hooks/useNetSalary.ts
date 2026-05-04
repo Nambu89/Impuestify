@@ -3,13 +3,17 @@ import { useApi } from './useApi'
 
 export interface NetSalaryInput {
     facturacion_bruta_mensual: number
-    tipo_iva: number
+    tipo_iva: number | null
     retencion_irpf: number
     cuota_autonomo_mensual: number
     gastos_deducibles_mensual: number
     es_nuevo_autonomo: boolean
     tarifa_plana: boolean
+    comunidad_autonoma?: string
 }
+
+export type RegimenFiscal = 'comun' | 'foral_vasco' | 'foral_navarra' | 'ceuta_melilla' | 'canarias'
+export type ImpuestoIndirecto = 'IVA' | 'IGIC' | 'IPSI'
 
 export interface NetSalaryResult {
     success: boolean
@@ -29,6 +33,10 @@ export interface NetSalaryResult {
     tipo_irpf_efectivo: number
     porcentaje_neto: number
     ahorro_retencion_vs_irpf: number
+    regimen_fiscal?: RegimenFiscal | null
+    impuesto_indirecto?: ImpuestoIndirecto | null
+    tipo_impuesto_indirecto?: number | null
+    deduccion_ceuta_melilla?: number | null
     error?: string
 }
 

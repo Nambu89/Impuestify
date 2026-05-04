@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
-import { ChevronDown, ChevronUp, TrendingDown, Info, Euro, Percent, Minus, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { ChevronDown, ChevronUp, TrendingDown, Info, Euro, Percent, Minus, CheckCircle2, AlertTriangle, MapPin } from 'lucide-react'
 import Header from '../components/Header'
-import { useNetSalary, type NetSalaryInput } from '../hooks/useNetSalary'
+import { useNetSalary, type NetSalaryInput, type RegimenFiscal } from '../hooks/useNetSalary'
 import { useSEO } from '../hooks/useSEO'
+import { CCAA_OPTIONS_WITH_PLACEHOLDER } from '../constants/ccaa'
 import './NetSalaryPage.css'
 
 const IVA_OPTIONS = [
@@ -12,14 +13,53 @@ const IVA_OPTIONS = [
     { label: '0%', value: 0 },
 ]
 
+const IGIC_OPTIONS = [
+    { label: '7%', value: 7 },
+    { label: '3%', value: 3 },
+    { label: '0%', value: 0 },
+    { label: '9,5%', value: 9.5 },
+    { label: '13,5%', value: 13.5 },
+]
+
+const IPSI_OPTIONS = [
+    { label: '4%', value: 4 },
+    { label: '0,5%', value: 0.5 },
+    { label: '1%', value: 1 },
+    { label: '2,5%', value: 2.5 },
+    { label: '5%', value: 5 },
+    { label: '10%', value: 10 },
+]
+
 const DEFAULT_INPUT: NetSalaryInput = {
     facturacion_bruta_mensual: 0,
-    tipo_iva: 21,
+    tipo_iva: null,
     retencion_irpf: 15,
     cuota_autonomo_mensual: 293,
     gastos_deducibles_mensual: 0,
     es_nuevo_autonomo: false,
     tarifa_plana: false,
+    comunidad_autonoma: '',
+}
+
+const FORAL_CCAA = new Set(['Araba', 'Bizkaia', 'Gipuzkoa', 'Navarra'])
+const CANARIAS_CCAA = new Set(['Canarias'])
+const CEUTA_MELILLA_CCAA = new Set(['Ceuta', 'Melilla'])
+
+function deriveRegime(ccaa: string): RegimenFiscal {
+    if (FORAL_CCAA.has(ccaa)) return ccaa === 'Navarra' ? 'foral_navarra' : 'foral_vasco'
+    if (CANARIAS_CCAA.has(ccaa)) return 'canarias'
+    if (CEUTA_MELILLA_CCAA.has(ccaa)) return 'ceuta_melilla'
+    return 'comun'
+}
+
+function regimeLabel(r: RegimenFiscal): string {
+    switch (r) {
+        case 'foral_vasco': return 'Régimen foral vasco'
+        case 'foral_navarra': return 'Régimen foral Navarra'
+        case 'ceuta_melilla': return 'Ceuta / Melilla (con deducción 60%)'
+        case 'canarias': return 'Canarias (IGIC)'
+        default: return 'Régimen común'
+    }
 }
 
 function formatEur(value: number): string {
@@ -91,9 +131,24 @@ export default function NetSalaryPage() {
     const [advancedOpen, setAdvancedOpen] = useState(false)
     const { result, loading, error, calculate } = useNetSalary()
 
+    const ccaa = input.comunidad_autonoma || ''
+    const regime = useMemo<RegimenFiscal>(() => deriveRegime(ccaa), [ccaa])
+    const indirectOptions = regime === 'canarias' ? IGIC_OPTIONS : regime === 'ceuta_melilla' ? IPSI_OPTIONS : IVA_OPTIONS
+    const indirectName = regime === 'canarias' ? 'IGIC' : regime === 'ceuta_melilla' ? 'IPSI' : 'IVA'
+
     const handleFacChange = useCallback((raw: string) => {
         const val = parseFloat(raw.replace(',', '.')) || 0
         setInput(prev => ({ ...prev, facturacion_bruta_mensual: val }))
+    }, [])
+
+    const handleCcaaChange = useCallback((value: string) => {
+        const newRegime = deriveRegime(value)
+        setInput(prev => ({
+            ...prev,
+            comunidad_autonoma: value,
+            // Reset tipo_iva when switching regime so backend auto-detects the right rate
+            tipo_iva: newRegime === deriveRegime(prev.comunidad_autonoma || '') ? prev.tipo_iva : null,
+        }))
     }, [])
 
     const handleNuevoAutonomo = useCallback((checked: boolean) => {
@@ -140,6 +195,36 @@ export default function NetSalaryPage() {
                     {/* Panel izquierdo: inputs */}
                     <section className="ns-inputs-panel">
 
+                        {/* CCAA selector */}
+                        <div className="ns-field">
+                            <label className="ns-label" htmlFor="ccaa">
+                                <MapPin size={14} /> Comunidad autónoma
+                            </label>
+                            <select
+                                id="ccaa"
+                                className="ns-input ns-select"
+                                value={ccaa}
+                                onChange={e => handleCcaaChange(e.target.value)}
+                            >
+                                {CCAA_OPTIONS_WITH_PLACEHOLDER.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                            {ccaa && (
+                                <p className="ns-field-hint ns-field-hint--info">
+                                    {regimeLabel(regime)} · Impuesto indirecto: <strong>{indirectName}</strong>
+                                    {regime === 'foral_vasco' && ' · escala foral 7 tramos (marginal 49%)'}
+                                    {regime === 'foral_navarra' && ' · escala foral 11 tramos (marginal 52,8%)'}
+                                    {regime === 'ceuta_melilla' && ' · deducción 60% sobre cuota IRPF'}
+                                </p>
+                            )}
+                            {!ccaa && (
+                                <p className="ns-field-hint">
+                                    Selecciona tu CCAA para aplicar el IRPF correcto (común, foral, Canarias o Ceuta/Melilla).
+                                </p>
+                            )}
+                        </div>
+
                         {/* Input principal */}
                         <div className="ns-main-input-wrap">
                             <label className="ns-main-label" htmlFor="facturacion">
@@ -181,11 +266,18 @@ export default function NetSalaryPage() {
                             {advancedOpen && (
                                 <div className="ns-advanced-body">
 
-                                    {/* Tipo IVA */}
+                                    {/* Tipo impuesto indirecto (IVA / IGIC / IPSI) */}
                                     <div className="ns-field">
-                                        <label className="ns-label">Tipo de IVA</label>
+                                        <label className="ns-label">Tipo de {indirectName}</label>
                                         <div className="ns-radio-group">
-                                            {IVA_OPTIONS.map(opt => (
+                                            <button
+                                                className={`ns-radio-btn ${input.tipo_iva === null ? 'ns-radio-btn--active' : ''}`}
+                                                onClick={() => setInput(prev => ({ ...prev, tipo_iva: null }))}
+                                                title="Aplicar tipo general según régimen"
+                                            >
+                                                Auto
+                                            </button>
+                                            {indirectOptions.map(opt => (
                                                 <button
                                                     key={opt.value}
                                                     className={`ns-radio-btn ${input.tipo_iva === opt.value ? 'ns-radio-btn--active' : ''}`}
@@ -196,7 +288,9 @@ export default function NetSalaryPage() {
                                             ))}
                                         </div>
                                         <p className="ns-field-hint">
-                                            General 21% | Reducido 10% | Superreducido 4% | Exento 0%
+                                            {indirectName === 'IVA' && 'General 21% | Reducido 10% | Superreducido 4% | Exento 0%'}
+                                            {indirectName === 'IGIC' && 'Canarias — General 7% | Reducido 3% | Cero 0% | Incrementado 9,5% | Especial 13,5%'}
+                                            {indirectName === 'IPSI' && 'Ceuta/Melilla — Servicios 4% (general) | Bienes 0,5% a 10% según producto'}
                                         </p>
                                     </div>
 
@@ -346,6 +440,26 @@ export default function NetSalaryPage() {
                                         </div>
                                     </div>
 
+                                    {/* Régimen aplicado + impuesto indirecto + deducción C/M */}
+                                    {result.regimen_fiscal && (
+                                        <div className="ns-regime-chips">
+                                            <span className={`ns-chip ns-chip--regime ns-chip--${result.regimen_fiscal}`}>
+                                                <MapPin size={12} />
+                                                {regimeLabel(result.regimen_fiscal)}
+                                            </span>
+                                            {result.impuesto_indirecto && (
+                                                <span className="ns-chip ns-chip--indirect">
+                                                    {result.impuesto_indirecto} {formatPct(result.tipo_impuesto_indirecto || 0)}%
+                                                </span>
+                                            )}
+                                            {result.deduccion_ceuta_melilla && result.deduccion_ceuta_melilla > 0 && (
+                                                <span className="ns-chip ns-chip--deduction">
+                                                    Deducción 60%: -{formatEur(result.deduccion_ceuta_melilla)} EUR/año
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+
                                     {/* Warning: reserva mensual si retenciones no cubren IRPF */}
                                     {result.ahorro_retencion_vs_irpf < 0 && (
                                         <div className="ns-reserve-warning">
@@ -370,7 +484,7 @@ export default function NetSalaryPage() {
                                         />
                                         {result.iva_a_pagar_hacienda > 0 && (
                                             <BreakdownBar
-                                                label={`IVA neto a Hacienda (${input.tipo_iva}%)`}
+                                                label={`${result.impuesto_indirecto || 'IVA'} neto a Hacienda (${formatPct(result.tipo_impuesto_indirecto ?? input.tipo_iva ?? 21)}%)`}
                                                 amount={result.iva_a_pagar_hacienda}
                                                 pct={(result.iva_a_pagar_hacienda / result.facturacion_bruta) * 100}
                                                 colorClass="ns-color-iva"
