@@ -1026,6 +1026,36 @@ class TursoClient:
                 except Exception:
                     pass  # column already exists
 
+            # Reasoning trail log (EU AI Act Art. 86 right-to-explanation +
+            # AESIA Guide 14). Records WHICH rag chunks + tools + security
+            # decisions led to each assistant message. 24-month retention via
+            # nightly purge.
+            await self.execute(
+                """
+                CREATE TABLE IF NOT EXISTS reasoning_trails (
+                    id TEXT PRIMARY KEY,
+                    message_id TEXT NOT NULL,
+                    user_id TEXT NOT NULL,
+                    conversation_id TEXT,
+                    rag_chunks TEXT,
+                    tools_called TEXT,
+                    security_layers TEXT,
+                    fiscal_profile_snapshot TEXT,
+                    model TEXT,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )
+                """
+            )
+            await self.execute(
+                "CREATE INDEX IF NOT EXISTS idx_reasoning_trails_user ON reasoning_trails(user_id)"
+            )
+            await self.execute(
+                "CREATE INDEX IF NOT EXISTS idx_reasoning_trails_message ON reasoning_trails(message_id)"
+            )
+            await self.execute(
+                "CREATE INDEX IF NOT EXISTS idx_reasoning_trails_created ON reasoning_trails(created_at)"
+            )
+
             # --- DefensIA tables (spec plans/2026-04-13-defensia-design.md §7.4) ---
             from pathlib import Path as _Path
             _migration_path = _Path(__file__).parent / "migrations" / "20260413_defensia_tables.sql"

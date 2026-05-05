@@ -675,12 +675,33 @@ async def ask_question_stream(
                     # Save messages to database
                     await conv_service.add_message(conversation_id, "user", request.question)
                     assistant_msg = await conv_service.add_message(
-                        conversation_id, 
-                        "assistant", 
+                        conversation_id,
+                        "assistant",
                         clean_content,
                         metadata={"sources": sources_data}
                     )
                     await conv_service.add_message_sources(assistant_msg["id"], sources_data)
+
+                    # Reasoning trail (EU AI Act Art. 86 right-to-explanation +
+                    # AESIA Guide 14). Records what RAG chunks/tools/security
+                    # decisions led to this response. Non-blocking on failure.
+                    try:
+                        from app.services.reasoning_trail import reasoning_trail_recorder
+                        tools_used = []
+                        if hasattr(response, "metadata") and response.metadata:
+                            tools_used = response.metadata.get("tool_calls") or response.metadata.get("tools_called") or []
+                        await reasoning_trail_recorder.record(
+                            message_id=assistant_msg["id"],
+                            user_id=current_user.user_id,
+                            conversation_id=conversation_id,
+                            rag_chunks=relevant_chunks,
+                            tools_called=tools_used,
+                            security_layer=getattr(pipeline_result, "layer", "all_clear"),
+                            fiscal_profile=fiscal_profile,
+                            model="gpt-5-mini",
+                        )
+                    except Exception as e:
+                        logger.warning(f"reasoning_trail recording failed (non-blocking): {e}")
                     
                     # Update cache (include RAG chunks for follow-up optimization)
                     updated_history = await conv_service.get_recent_messages(conversation_id, limit=20)
