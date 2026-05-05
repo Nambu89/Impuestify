@@ -26,6 +26,7 @@ class TokenData(BaseModel):
     user_id: str
     email: Optional[str] = None
     exp: Optional[datetime] = None
+    jti: Optional[str] = None  # for refresh-token rotation tracking
 
 
 class TokenResponse(BaseModel):
@@ -64,27 +65,34 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     return encoded_jwt
 
 
-def create_refresh_token(data: Dict[str, Any]) -> str:
+def create_refresh_token(data: Dict[str, Any], jti: Optional[str] = None) -> str:
     """
     Create a new refresh token.
-    
-    Refresh tokens have a longer expiration and are used to obtain new access tokens.
-    
+
+    Refresh tokens have a longer expiration and are used to obtain new access
+    tokens. Each token carries a unique `jti` claim so the server can track
+    individual refresh tokens for rotation + reuse-detection (OWASP ASVS
+    5.0 4.2.5).
+
     Args:
         data: Payload data to encode in the token
-        
+        jti: Optional JWT ID. If omitted a UUID4 is generated.
+
     Returns:
         Encoded JWT refresh token string
     """
+    import uuid as _uuid
+
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    
+
     to_encode.update({
         "exp": expire,
         "iat": datetime.now(timezone.utc),
-        "type": "refresh"
+        "type": "refresh",
+        "jti": jti or str(_uuid.uuid4()),
     })
-    
+
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -102,23 +110,29 @@ def verify_token(token: str, token_type: str = "access") -> Optional[TokenData]:
     """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        
+
         # Verify token type
         if payload.get("type") != token_type:
             logger.warning(f"Invalid token type: expected {token_type}, got {payload.get('type')}")
             return None
-        
+
         user_id: str = payload.get("sub") or payload.get("user_id")
         if user_id is None:
             logger.warning("Token missing user_id")
             return None
-        
-        return TokenData(
+
+        td = TokenData(
             user_id=user_id,
             email=payload.get("email"),
-            exp=datetime.fromtimestamp(payload.get("exp", 0))
+            exp=datetime.fromtimestamp(payload.get("exp", 0)),
         )
-        
+        # Expose jti to callers that need rotation tracking
+        try:
+            td.jti = payload.get("jti")  # type: ignore[attr-defined]
+        except Exception:
+            pass
+        return td
+
     except JWTError as e:
         logger.warning(f"JWT verification failed: {e}")
         return None
@@ -213,23 +227,49 @@ def create_reset_token(user_id: str, email: str) -> str:
 
 def create_tokens_for_user(user_id: str, email: str) -> TokenResponse:
     """
-    Create both access and refresh tokens for a user.
-    
-    Args:
-        user_id: User's unique identifier
-        email: User's email address
-        
-    Returns:
-        TokenResponse with both tokens
+    Create both access and refresh tokens for a user. Synchronous variant
+    that does NOT register the refresh token jti in the rotation store. Used
+    for non-async contexts and tests.
+
+    For real production flow, prefer `issue_tokens_with_rotation()` which is
+    async and registers the jti via the RefreshTokenStore.
     """
     token_data = {"sub": user_id, "email": email}
-    
+
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)
-    
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+
+
+async def issue_tokens_with_rotation(user_id: str, email: str) -> TokenResponse:
+    """
+    Issue access + refresh tokens AND persist the refresh-token jti in the
+    rotation store so future /auth/refresh calls can detect reuse.
+    """
+    import uuid as _uuid
+    from app.auth.refresh_token_store import refresh_token_store
+
+    token_data = {"sub": user_id, "email": email}
+    access_token = create_access_token(token_data)
+    new_jti = str(_uuid.uuid4())
+    refresh_token = create_refresh_token(token_data, jti=new_jti)
+    try:
+        await refresh_token_store.register(
+            jti=new_jti, user_id=user_id, raw_token=refresh_token,
+            ttl_days=REFRESH_TOKEN_EXPIRE_DAYS,
+        )
+    except Exception as e:
+        logger.warning(f"Could not register refresh-token jti (rotation disabled): {e}")
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )

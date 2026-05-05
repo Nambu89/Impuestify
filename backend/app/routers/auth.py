@@ -526,28 +526,66 @@ async def google_login(request: Request, body: GoogleAuthRequest):
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(data: RefreshRequest):
     """
-    Refresh access token using refresh token.
-    
-    Returns new access and refresh tokens.
+    Refresh access token using refresh token (with rotation + reuse detection).
+
+    OWASP ASVS 5.0 4.2.5: each refresh token is single-use. If the same
+    refresh token is presented twice, every session for the user is revoked
+    and the user is notified via email.
     """
+    from app.auth.jwt_handler import issue_tokens_with_rotation
+    from app.auth.refresh_token_store import refresh_token_store
+
     token_data = verify_token(data.refresh_token, token_type="refresh")
-    
+
     if not token_data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de refresco inválido o expirado"
+            detail="Token de refresco inválido o expirado",
         )
-    
+
     # Get user to ensure they still exist and are active
     user = await user_service.get_user_by_id(token_data.user_id)
-    
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario no encontrado o inactivo"
+            detail="Usuario no encontrado o inactivo",
         )
-    
-    return create_tokens_for_user(user.id, user.email)
+
+    jti = getattr(token_data, "jti", None)
+    if not jti:
+        # Legacy refresh tokens issued before jti was added — accept once and
+        # rotate forward to a tracked one.
+        logger.info(f"Legacy refresh token (no jti) accepted for user={user.id} — rotating")
+    else:
+        rotation = await refresh_token_store.validate_and_consume(
+            jti=jti, raw_token=data.refresh_token, user_id=user.id,
+        )
+        if not rotation.ok:
+            detail = "Token de refresco inválido."
+            if rotation.reason == "reuse_detected":
+                detail = (
+                    "Hemos detectado un uso indebido de tu sesión. "
+                    "Hemos cerrado todas tus sesiones por seguridad."
+                )
+            elif rotation.reason == "revoked":
+                detail = "Sesión revocada. Vuelve a iniciar sesión."
+            elif rotation.reason == "expired":
+                detail = "Token de refresco caducado."
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
+
+    new_tokens = await issue_tokens_with_rotation(user.id, user.email)
+
+    # Audit chain: link old jti to new (if we had one)
+    if jti:
+        try:
+            new_jti = verify_token(new_tokens.refresh_token, token_type="refresh")
+            new_jti_val = getattr(new_jti, "jti", None) if new_jti else None
+            if new_jti_val:
+                await refresh_token_store.link_rotation(jti, new_jti_val)
+        except Exception:
+            pass
+
+    return new_tokens
 
 
 @router.get("/me", response_model=UserResponse)

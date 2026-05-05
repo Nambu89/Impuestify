@@ -1026,6 +1026,25 @@ class TursoClient:
                 except Exception:
                     pass  # column already exists
 
+            # Refresh-token rotation + reuse detection (OWASP ASVS 5.0 4.2.5).
+            # If a refresh token is presented twice we treat it as theft and
+            # revoke every session for that user.
+            result = await self.execute("PRAGMA table_info(sessions)")
+            session_columns = {row["name"] for row in result.rows}
+            for col, coltype in [
+                ("used_at", "TEXT"),
+                ("revoked_at", "TEXT"),
+                ("rotated_to", "TEXT"),
+            ]:
+                if col not in session_columns:
+                    try:
+                        await self.execute(
+                            f"ALTER TABLE sessions ADD COLUMN {col} {coltype}"
+                        )
+                        logger.info(f"Added {col} column to sessions table")
+                    except Exception:
+                        pass
+
             # WebAuthn / Passkey credentials (NIST SP 800-63-4 phishing-resistant 2FA).
             # One user can register multiple passkeys (different devices). TOTP remains
             # available as a fallback in user_profiles / mfa tables.

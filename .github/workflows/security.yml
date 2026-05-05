@@ -137,7 +137,44 @@ jobs:
             pip-audit-results.json
             npm-audit-results.json
 
-  # --- Layer 3: DAST (weekly only) ---
+  # --- Layer 3: Container / filesystem CVE scan (Trivy) ---
+  # Aqua Security Trivy scans the filesystem for known CVEs in OS packages,
+  # language deps and IaC misconfigs. Fails on HIGH/CRITICAL.
+  trivy:
+    name: Trivy CVE Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: '.'
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: sarif
+          output: trivy-results.sarif
+
+      - name: Upload Trivy SARIF to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-fs
+
+      - name: Upload Trivy artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results
+          path: trivy-results.sarif
+
+  # --- Layer 4: DAST (weekly only) ---
   dast:
     name: OWASP ZAP API Scan
     runs-on: ubuntu-latest
