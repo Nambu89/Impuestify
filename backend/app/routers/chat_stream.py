@@ -258,6 +258,29 @@ async def ask_question_stream(
                     logger.warning(f"SemanticWindow failed, falling back to recent messages: {sw_err}")
                     conversation_history = await conv_service.get_recent_messages(conversation_id, limit=20)
 
+            # === Multi-turn trajectory check (Crescendo / Echo Chamber defense) ===
+            # We are inside the event_stream generator so we yield the
+            # rejection events directly instead of returning a new response.
+            try:
+                from app.security.trajectory_analyzer import analyze_trajectory
+                user_turns = [
+                    msg.get("content", "") for msg in (conversation_history or [])
+                    if msg.get("role") == "user"
+                ]
+                user_turns.append(request.question)
+                traj = analyze_trajectory(user_turns)
+                if not traj.is_safe:
+                    yield {"event": "content", "data": traj.reason}
+                    yield {"event": "done", "data": json.dumps({
+                        "blocked": True,
+                        "reason": "trajectory_drift",
+                        "drift_turns": traj.drift_turns,
+                        "window_size": traj.window_size,
+                    })}
+                    return
+            except Exception as e:
+                logger.warning(f"Trajectory analyzer failed (non-blocking): {e}")
+
             # === Load workspace context if workspace_id provided ===
             workspace_context = ""
             workspace_files_info = []
