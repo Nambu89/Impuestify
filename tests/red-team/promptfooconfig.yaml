@@ -29,7 +29,20 @@ providers:
           "question": "{{ prompt }}",
           "conversation_id": null
         }
-      transformResponse: "json.choices?.[0]?.message?.content || JSON.stringify(json)"
+      # Endpoint returns SSE (text/event-stream). Promptfoo passes (json, text)
+      # to transformResponse. We collect every `data:` line into a single string
+      # so contains/regex assertions match either the streamed content or the
+      # final JSON payload (which carries the blocked=true flag for assertions
+      # that look for the rejection marker).
+      transformResponse: |
+        (json, text) => {
+          const raw = (text != null ? String(text) : '') || (json ? JSON.stringify(json) : '');
+          const out = [];
+          for (const line of raw.split(/\r?\n/)) {
+            if (line.startsWith('data: ')) out.push(line.slice(6));
+          }
+          return out.length ? out.join('\n') : raw;
+        }
 
 defaultTest:
   assert:
