@@ -12,6 +12,10 @@ local.db*
 /data/
 /cache/
 /docs/
+!/docs/incident-response/
+!/docs/incident-response/**
+!/docs/compliance/
+!/docs/compliance/**
 /plans/
 
 # notebooks checkpoints

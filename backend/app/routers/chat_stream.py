@@ -25,6 +25,7 @@ from app.auth.subscription_guard import require_active_subscription
 from app.security import sql_validator, guardrails_system
 from app.security.security_pipeline import security_pipeline
 from app.security.token_budget import token_budget_tracker
+from app.security.velocity_check import velocity_checker
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
 from app.services.subscription_service import SubscriptionAccess
 from app.utils.streaming import ProgressCallback, sse_generator, filter_json_from_content
@@ -134,6 +135,22 @@ async def ask_question_stream(
 
     # Replace the original question with the sanitized version for downstream logic
     request.question = pipeline_result.sanitized_text or request.question
+
+    # === VELOCITY CHECK: same-prompt flooding defense ===
+    velocity_result = velocity_checker.check(
+        user_id=current_user.user_id,
+        question=request.question,
+        request=req,
+    )
+    if not velocity_result.allowed:
+        async def velocity_block_stream():
+            yield {"event": "content", "data": velocity_result.reason or "Demasiadas peticiones repetidas. Espera un momento."}
+            yield {"event": "done", "data": json.dumps({
+                "blocked": True,
+                "reason": "velocity_throttle",
+                "repeat_count": velocity_result.repeat_count,
+            })}
+        return EventSourceResponse(velocity_block_stream())
 
     # === TOKEN BUDGET: daily LLM consumption cap per user (LLM10 Unbounded Consumption) ===
     budget_status = token_budget_tracker.check(
