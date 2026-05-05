@@ -213,11 +213,20 @@ class SubscriptionService:
         """
         Process a Stripe webhook event.
 
-        Returns a dict with the processing result.
+        Resilience contract:
+          - Signature failure -> raises ValueError (caller returns HTTP 400).
+          - Handler success -> returns {"status": "ok", ...}.
+          - Handler exception (permanent error, e.g. orphan customer with no
+            local row) -> returns {"status": "error_swallowed", ...}. Caller
+            returns HTTP 200 so Stripe stops the retry storm.
+          - Truly transient errors should be re-raised inside the handler if
+            we want a retry; we currently treat all handler errors as terminal
+            because all our handlers are idempotent UPDATEs against optional
+            rows.
         """
         s = _get_stripe()
 
-        # Verify webhook signature
+        # Verify webhook signature (only this raises to caller)
         try:
             event = s.Webhook.construct_event(
                 payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
@@ -225,26 +234,50 @@ class SubscriptionService:
         except s.error.SignatureVerificationError:
             logger.warning("Webhook signature verification failed")
             raise ValueError("Invalid signature")
+        except Exception as e:
+            # Malformed payload, secret format error, etc. Treat like signature.
+            logger.warning(f"Webhook construct_event failed: {type(e).__name__}: {e}")
+            raise ValueError(f"Invalid event payload: {type(e).__name__}")
 
-        event_type = event["type"]
-        data = event["data"]["object"]
+        event_type = event.get("type", "unknown")
+        event_id = event.get("id", "unknown")
+        data = (event.get("data") or {}).get("object") or {}
 
-        logger.info(f"Webhook received: {event_type}")
+        logger.info(f"Webhook received: {event_type} (id={event_id})")
 
-        if event_type == "checkout.session.completed":
-            await self._handle_checkout_completed(data)
-        elif event_type in ("customer.subscription.created", "customer.subscription.updated"):
-            await self._handle_subscription_upserted(data)
-        elif event_type == "customer.subscription.deleted":
-            await self._handle_subscription_deleted(data)
-        elif event_type in ("invoice.paid", "invoice.payment_succeeded"):
-            await self._handle_invoice_paid(data)
-        elif event_type == "invoice.payment_failed":
-            await self._handle_payment_failed(data)
-        else:
-            logger.info(f"Unhandled webhook event: {event_type}")
+        handler_map = {
+            "checkout.session.completed": self._handle_checkout_completed,
+            "customer.subscription.created": self._handle_subscription_upserted,
+            "customer.subscription.updated": self._handle_subscription_upserted,
+            "customer.subscription.deleted": self._handle_subscription_deleted,
+            "invoice.paid": self._handle_invoice_paid,
+            "invoice.payment_succeeded": self._handle_invoice_paid,
+            "invoice.payment_failed": self._handle_payment_failed,
+        }
 
-        return {"status": "ok", "event_type": event_type}
+        handler = handler_map.get(event_type)
+        if not handler:
+            logger.info(f"Unhandled webhook event: {event_type} (id={event_id})")
+            return {"status": "ignored", "event_type": event_type, "event_id": event_id}
+
+        try:
+            await handler(data)
+            return {"status": "ok", "event_type": event_type, "event_id": event_id}
+        except Exception as e:
+            # Swallow permanent handler errors so Stripe stops retrying.
+            # Common cases: customer was deleted from our DB (orphan webhook),
+            # row already in expected state, missing optional fields in payload.
+            logger.error(
+                f"Webhook handler failed for {event_type} (id={event_id}). "
+                f"Returning 200 to stop Stripe retry storm. Error: {e}",
+                exc_info=True,
+            )
+            return {
+                "status": "error_swallowed",
+                "event_type": event_type,
+                "event_id": event_id,
+                "error": str(e)[:200],
+            }
 
     async def _handle_checkout_completed(self, session: dict):
         """Handle successful checkout: activate subscription and update plan_type."""
@@ -406,45 +439,68 @@ class SubscriptionService:
     async def _handle_subscription_deleted(self, subscription: dict):
         """Handle subscription cancellation.
 
-        If the customer still has another active subscription in Stripe (e.g. they
-        had two subscriptions and only one was canceled), re-sync so the DB reflects
-        the surviving one instead of forcing 'canceled'.
+        Idempotent and tolerant of orphan webhooks (e.g. user deleted locally
+        but Stripe still has the customer). If we have no local row for this
+        customer, log and return — do NOT raise.
+
+        If the customer still has another active subscription in Stripe (e.g.
+        they had two subscriptions and only one was canceled), re-sync so the
+        DB reflects the surviving one instead of forcing 'canceled'.
         """
-        db = await self._get_db()
         customer_id = subscription.get("customer")
         deleted_sub_id = subscription.get("id")
 
-        # Only act if this customer's row references the canceled subscription
-        # (or has no subscription_id at all, which is the legacy case).
-        await db.execute(
-            """
-            UPDATE subscriptions
-            SET status = 'canceled',
-                updated_at = datetime('now')
-            WHERE stripe_customer_id = ?
-              AND (stripe_subscription_id = ? OR stripe_subscription_id IS NULL)
-            """,
-            [customer_id, deleted_sub_id],
-        )
-        logger.info(
-            "Subscription canceled",
-            extra={"customer_id": customer_id, "subscription_id": deleted_sub_id},
-        )
+        if not customer_id:
+            logger.info("subscription.deleted with no customer_id — skipping")
+            return
 
-        # Look up the user_id for this customer and try to recover from any other
-        # active subscription they may still have.
-        user_row = await db.execute(
+        db = await self._get_db()
+
+        # Idempotency check: do we even have this customer locally?
+        existing = await db.execute(
             "SELECT user_id FROM subscriptions WHERE stripe_customer_id = ? LIMIT 1",
             [customer_id],
         )
-        if user_row.rows:
-            try:
-                await self.sync_from_stripe(user_row.rows[0]["user_id"])
-            except Exception as e:
-                logger.warning(
-                    "Re-sync after subscription delete failed",
-                    extra={"customer_id": customer_id, "error": str(e)},
-                )
+        if not existing.rows:
+            logger.info(
+                f"subscription.deleted: no local subscription row for customer "
+                f"{customer_id} (likely user deleted locally). Acknowledging."
+            )
+            return
+
+        # Mark canceled
+        try:
+            await db.execute(
+                """
+                UPDATE subscriptions
+                SET status = 'canceled',
+                    updated_at = datetime('now')
+                WHERE stripe_customer_id = ?
+                  AND (stripe_subscription_id = ? OR stripe_subscription_id IS NULL)
+                """,
+                [customer_id, deleted_sub_id],
+            )
+            logger.info(
+                "Subscription canceled",
+                extra={"customer_id": customer_id, "subscription_id": deleted_sub_id},
+            )
+        except Exception as e:
+            logger.warning(
+                f"UPDATE subscriptions canceled failed (non-blocking): {e}",
+                extra={"customer_id": customer_id},
+            )
+
+        # Try to recover from any other active subscription they may still have.
+        # Wrap the whole branch — sync_from_stripe can call Stripe API and DB.
+        try:
+            user_id = existing.rows[0]["user_id"]
+            if user_id:
+                await self.sync_from_stripe(user_id)
+        except Exception as e:
+            logger.warning(
+                "Re-sync after subscription delete failed (non-blocking)",
+                extra={"customer_id": customer_id, "error": str(e)},
+            )
 
     async def _handle_payment_failed(self, invoice: dict):
         """Handle failed payment."""

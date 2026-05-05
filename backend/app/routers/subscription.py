@@ -143,8 +143,13 @@ async def stripe_webhook(request: Request):
     """
     Handle Stripe webhook events.
 
-    This endpoint is called by Stripe and verifies the event signature.
-    No JWT auth required — signature verification is the auth mechanism.
+    Signature verification IS the auth mechanism (no JWT). Returns:
+      - 200: event accepted (success or swallowed permanent error)
+      - 400: invalid signature (Stripe should not retry)
+      - 503: webhook not configured (missing secret)
+
+    Never returns 500: handler-level exceptions are caught and logged inside
+    handle_webhook_event so Stripe stops the retry storm.
     """
     if not settings.is_stripe_configured or not settings.STRIPE_WEBHOOK_SECRET:
         raise HTTPException(
@@ -158,10 +163,28 @@ async def stripe_webhook(request: Request):
     service = await get_subscription_service()
 
     try:
-        result = await service.handle_webhook_event(payload, sig_header)
-        return result
-    except ValueError:
+        return await service.handle_webhook_event(payload, sig_header)
+    except ValueError as e:
+        logger.warning(f"Webhook signature/payload rejected: {e}")
         raise HTTPException(status_code=400, detail="Firma de webhook invalida.")
     except Exception as e:
-        logger.error("Webhook processing error", exc_info=True)
-        raise HTTPException(status_code=500, detail="Error procesando webhook.")
+        # Last-resort guard. Should not normally trigger because
+        # handle_webhook_event swallows handler-level errors. If we end up
+        # here, it's something around the dispatcher itself (db pool exhausted,
+        # etc.) — return 200 anyway to avoid Stripe deactivating our endpoint.
+        logger.error(
+            "Unexpected error in webhook dispatcher — acknowledging anyway "
+            "to keep Stripe endpoint healthy. Error: %s",
+            e,
+            exc_info=True,
+        )
+        return {"status": "error_acknowledged", "error": str(e)[:200]}
+
+
+@router.get("/webhook/health")
+async def webhook_health():
+    """Lightweight readiness check for the Stripe webhook endpoint."""
+    return {
+        "configured": bool(getattr(settings, "STRIPE_WEBHOOK_SECRET", "")),
+        "stripe_ready": bool(settings.is_stripe_configured),
+    }
