@@ -53,33 +53,48 @@ _GREETING_PATTERNS = [
     re.compile(r"^\s*(hola|buenas|buenos\s+días|buenas\s+tardes|buenas\s+noches|qué\s+tal|hey|hi|hello)\s*[!.?¿¡]?\s*$", re.IGNORECASE),
 ]
 
-# Hard size limits
+# Hard size limits for user input. RAG chunks use sanitize_text(no cap).
 MAX_LENGTH = 4000          # chars
 MIN_LENGTH = 2             # chars (we already short-circuit on greetings)
+
+
+# Pre-compiled regexes for sanitization (zero-width + bidi + control).
+# Using \uXXXX escapes (not raw chars) so the file stays ASCII-safe.
+_ZERO_WIDTH_RE = re.compile(
+    "[​-‏ -‮⁠-⁯]"
+)
+_CONTROL_RE = re.compile(
+    "[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]"
+)
 
 
 def _is_greeting(text: str) -> bool:
     return any(p.match(text.strip()) for p in _GREETING_PATTERNS)
 
 
-def _sanitize(text: str) -> str:
+def sanitize_text(text: str, max_length: Optional[int] = None) -> str:
     """
     Strip zero-width and control chars, normalize unicode (NFKC).
-    Keep length within hard limit.
+
+    Public helper used by both:
+      - User input via the security pipeline (cap = MAX_LENGTH).
+      - RAG document chunks at ingestion (no cap — chunks may legitimately
+        run thousands of characters; pass max_length=None).
     """
     if not text:
         return ""
-    # NFKC normalization (collapses compatibility chars like full-width)
     text = unicodedata.normalize("NFKC", text)
-    # Drop zero-width and bidi-override characters (common in injection attacks)
-    text = re.sub(r"[​-‏ -‮⁠-⁯]", "", text)
-    # Drop control chars (except \n \r \t)
-    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
-    # Trim
+    text = _ZERO_WIDTH_RE.sub("", text)
+    text = _CONTROL_RE.sub("", text)
     text = text.strip()
-    if len(text) > MAX_LENGTH:
-        text = text[:MAX_LENGTH]
+    if max_length is not None and len(text) > max_length:
+        text = text[:max_length]
     return text
+
+
+def _sanitize(text: str) -> str:
+    """User-input sanitizer: enforces the pipeline hard length cap."""
+    return sanitize_text(text, max_length=MAX_LENGTH)
 
 
 class SecurityPipeline:

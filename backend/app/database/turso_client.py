@@ -1012,6 +1012,20 @@ class TursoClient:
                 except Exception:
                     pass  # column already exists
 
+            # Add trust_level column to documents (RAG source-trust tagging — defends
+            # against PoisonedRAG by marking each ingested doc as official_aeat,
+            # official_boe, official_foral, official_ccaa, or crawled_third_party).
+            result = await self.execute("PRAGMA table_info(documents)")
+            doc_columns = {row["name"] for row in result.rows}
+            if "trust_level" not in doc_columns:
+                try:
+                    await self.execute(
+                        "ALTER TABLE documents ADD COLUMN trust_level TEXT DEFAULT 'unknown'"
+                    )
+                    logger.info("Added trust_level column to documents table")
+                except Exception:
+                    pass  # column already exists
+
             # --- DefensIA tables (spec plans/2026-04-13-defensia-design.md §7.4) ---
             from pathlib import Path as _Path
             _migration_path = _Path(__file__).parent / "migrations" / "20260413_defensia_tables.sql"

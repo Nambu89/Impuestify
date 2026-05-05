@@ -346,6 +346,21 @@ export default function Chat() {
                     />
                 )}
 
+                {/* AI disclosure banner — EU AI Act Art. 50 + AESIA Guides 13/14 */}
+                <div
+                    className="chat-ai-disclosure"
+                    role="note"
+                    aria-label="Aviso de uso de inteligencia artificial"
+                >
+                    <span aria-hidden="true">ℹ️</span>
+                    <span>
+                        Impuestify usa <strong>inteligencia artificial</strong>. Las respuestas
+                        son orientativas y no sustituyen al asesoramiento de un profesional
+                        colegiado. Verifica siempre las cifras y referencias normativas
+                        antes de actuar (Reglamento UE de IA, Art. 50).
+                    </span>
+                </div>
+
                 <div className="chat-container">
                     {messages.length === 0 ? (
                         <div className="chat-empty-state">
@@ -397,6 +412,8 @@ export default function Chat() {
                                 <div
                                     key={message.id}
                                     className={`message ${message.role} `}
+                                    role={message.role === 'assistant' ? 'note' : undefined}
+                                    aria-label={message.role === 'assistant' ? 'Respuesta generada por IA' : undefined}
                                 >
                                     {message.role === 'assistant' ? (
                                         <div className="message-avatar">

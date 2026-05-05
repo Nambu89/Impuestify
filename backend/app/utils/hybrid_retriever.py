@@ -238,6 +238,7 @@ class HybridRetriever:
                     SELECT
                         dc.id, dc.content, dc.page_number,
                         d.filename, d.title, d.source,
+                        COALESCE(d.trust_level, 'unknown') AS trust_level,
                         rank
                     FROM document_chunks_fts fts
                     JOIN document_chunks dc ON dc.id = fts.chunk_id
@@ -255,6 +256,7 @@ class HybridRetriever:
                     SELECT
                         dc.id, dc.content, dc.page_number,
                         d.filename, d.title, d.source,
+                        COALESCE(d.trust_level, 'unknown') AS trust_level,
                         rank
                     FROM document_chunks_fts fts
                     JOIN document_chunks dc ON dc.id = fts.chunk_id
@@ -275,6 +277,7 @@ class HybridRetriever:
                     "source": row["filename"] or "",
                     "title": row["title"] or "",
                     "territory": row["source"] or "",
+                    "trust_level": row.get("trust_level", "unknown") if hasattr(row, "get") else (row["trust_level"] if "trust_level" in row.keys() else "unknown"),
                     "tax_type": "",
                     "similarity": abs(row["rank"]) if row["rank"] else 0,
                     "_search_type": "fts5",
@@ -301,7 +304,8 @@ class HybridRetriever:
             if territory:
                 sql = f"""
                     SELECT dc.id, dc.content, dc.page_number,
-                           d.filename, d.title, d.source
+                           d.filename, d.title, d.source,
+                           COALESCE(d.trust_level, 'unknown') AS trust_level
                     FROM document_chunks dc
                     JOIN documents d ON d.id = dc.document_id
                     WHERE {conditions} AND d.source = ?
@@ -311,7 +315,8 @@ class HybridRetriever:
             else:
                 sql = f"""
                     SELECT dc.id, dc.content, dc.page_number,
-                           d.filename, d.title, d.source
+                           d.filename, d.title, d.source,
+                           COALESCE(d.trust_level, 'unknown') AS trust_level
                     FROM document_chunks dc
                     JOIN documents d ON d.id = dc.document_id
                     WHERE {conditions}
@@ -329,6 +334,7 @@ class HybridRetriever:
                     "source": row["filename"] or "",
                     "title": row["title"] or "",
                     "territory": row["source"] or "",
+                    "trust_level": row["trust_level"] if "trust_level" in row.keys() else "unknown",
                     "tax_type": "",
                     "similarity": 0.5,
                     "_search_type": "like",

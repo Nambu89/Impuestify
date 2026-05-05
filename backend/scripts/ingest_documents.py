@@ -508,12 +508,19 @@ async def ingest(
             tax_type = detect_tax_type(filepath.name)
             year = extract_year(filepath.name)
 
+            # Classify trust level by filepath/source (defense vs PoisonedRAG)
+            try:
+                from scripts.backfill_trust_levels import classify_trust
+                trust_level = classify_trust(str(filepath), territory or "", filepath.name)
+            except Exception:
+                trust_level = "unknown"
+
             await db.execute(
                 """
                 INSERT INTO documents
                 (id, filename, filepath, title, document_type, year, source,
-                 total_pages, file_size, hash, processed, processing_status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'processing')
+                 total_pages, file_size, hash, processed, processing_status, trust_level)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'processing', ?)
                 """,
                 [
                     doc_id,
@@ -526,6 +533,7 @@ async def ingest(
                     total_pages,
                     filepath.stat().st_size,
                     file_hash,
+                    trust_level,
                 ],
             )
 
@@ -533,10 +541,17 @@ async def ingest(
             chunk_ids = []
             chunk_texts = []
 
+            # Sanitize chunks before storage: same NFKC/control-char/zero-width
+            # cleanup we apply to user input, but with no length cap (chunks
+            # can legitimately run thousands of chars). Defends against poisoned
+            # PDFs that smuggle invisible instructions for the LLM.
+            from app.security.security_pipeline import sanitize_text
+
             for chunk in chunks:
                 chunk_id = str(uuid.uuid4())
+                clean_content = sanitize_text(chunk.content, max_length=None) or chunk.content
                 chunk_ids.append(chunk_id)
-                chunk_texts.append(chunk.content)
+                chunk_texts.append(clean_content)
 
                 await db.execute(
                     """
@@ -549,10 +564,10 @@ async def ingest(
                         chunk_id,
                         doc_id,
                         chunk.chunk_index,
-                        chunk.content,
-                        hashlib.md5(chunk.content.encode()).hexdigest(),
+                        clean_content,
+                        hashlib.md5(clean_content.encode()).hexdigest(),
                         chunk.page_number,
-                        len(chunk.content.split()),
+                        len(clean_content.split()),
                     ],
                 )
 
