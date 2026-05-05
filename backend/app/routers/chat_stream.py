@@ -582,6 +582,28 @@ async def ask_question_stream(
                     # Filter permission-asking / internal reasoning from LLM
                     clean_content = _filter_permission_asking(clean_content)
 
+                    # Citation verification: flag any legal citation that does not
+                    # appear in the retrieved RAG chunks. Append a warning footer
+                    # if any are unverified (do NOT silently strip — user must see
+                    # both the claim and the warning).
+                    try:
+                        from app.security.citation_verifier import verify_citations
+                        verification = verify_citations(
+                            response_text=clean_content,
+                            rag_chunks=[
+                                {"id": c.get("id"), "text": c.get("text", "")}
+                                for c in (relevant_chunks or [])
+                            ],
+                        )
+                        if verification.has_unverified and verification.annotated_response:
+                            logger.warning(
+                                "Unverified citations flagged in response: %s",
+                                [c.text for c in verification.unverified],
+                            )
+                            clean_content = verification.annotated_response
+                    except Exception as e:
+                        logger.warning(f"Citation verifier failed (non-blocking): {e}")
+
                     # Stream final content
                     await callback.content(clean_content)
                     
