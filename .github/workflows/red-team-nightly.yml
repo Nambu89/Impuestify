@@ -23,7 +23,9 @@ jobs:
 
     env:
       PROMPTFOO_TARGET_URL: ${{ secrets.PROMPTFOO_TARGET_URL }}
-      PROMPTFOO_AUTH_TOKEN: ${{ secrets.PROMPTFOO_AUTH_TOKEN }}
+      PROMPTFOO_LOGIN_URL: ${{ secrets.PROMPTFOO_LOGIN_URL }}
+      PROMPTFOO_AUTH_EMAIL: ${{ secrets.PROMPTFOO_AUTH_EMAIL }}
+      PROMPTFOO_AUTH_PASSWORD: ${{ secrets.PROMPTFOO_AUTH_PASSWORD }}
       # Avoid Promptfoo's cloud sharing
       PROMPTFOO_DISABLE_TELEMETRY: "1"
       PROMPTFOO_DISABLE_UPDATE_CHECK: "1"
@@ -39,14 +41,31 @@ jobs:
 
       - name: Validate required secrets
         run: |
-          if [ -z "$PROMPTFOO_TARGET_URL" ]; then
-            echo "::error::PROMPTFOO_TARGET_URL secret is missing."
+          missing=0
+          for var in PROMPTFOO_TARGET_URL PROMPTFOO_LOGIN_URL PROMPTFOO_AUTH_EMAIL PROMPTFOO_AUTH_PASSWORD; do
+            if [ -z "${!var}" ]; then
+              echo "::error::Secret $var is missing."
+              missing=1
+            fi
+          done
+          [ $missing -eq 0 ]
+
+      - name: Login to obtain fresh access token
+        id: login
+        run: |
+          # Access tokens expire in 30 min, so we authenticate fresh each run.
+          # Credentials live as repo secrets; only the in-memory token is exposed
+          # to the suite.
+          response=$(curl -sS -X POST "$PROMPTFOO_LOGIN_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"$PROMPTFOO_AUTH_EMAIL\",\"password\":\"$PROMPTFOO_AUTH_PASSWORD\"}")
+          token=$(echo "$response" | jq -r '.tokens.access_token // .access_token // empty')
+          if [ -z "$token" ]; then
+            echo "::error::Login failed. Response: $response"
             exit 1
           fi
-          if [ -z "$PROMPTFOO_AUTH_TOKEN" ]; then
-            echo "::error::PROMPTFOO_AUTH_TOKEN secret is missing."
-            exit 1
-          fi
+          echo "::add-mask::$token"
+          echo "PROMPTFOO_AUTH_TOKEN=$token" >> "$GITHUB_ENV"
 
       - name: Install Promptfoo
         run: npm install -g promptfoo@latest
