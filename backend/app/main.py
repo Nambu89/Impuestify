@@ -393,6 +393,10 @@ app.include_router(user_rights_router)
 from app.routers.subscription import router as subscription_router
 app.include_router(subscription_router)
 
+# WebAuthn / Passkey 2FA (NIST SP 800-63-4 phishing-resistant)
+from app.routers.webauthn_router import router as webauthn_router
+app.include_router(webauthn_router)
+
 # Contact Form Endpoint
 from app.routers.contact import router as contact_router
 app.include_router(contact_router)

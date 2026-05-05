@@ -1026,6 +1026,28 @@ class TursoClient:
                 except Exception:
                     pass  # column already exists
 
+            # WebAuthn / Passkey credentials (NIST SP 800-63-4 phishing-resistant 2FA).
+            # One user can register multiple passkeys (different devices). TOTP remains
+            # available as a fallback in user_profiles / mfa tables.
+            await self.execute(
+                """
+                CREATE TABLE IF NOT EXISTS webauthn_credentials (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    credential_id TEXT NOT NULL UNIQUE,
+                    public_key TEXT NOT NULL,
+                    sign_count INTEGER DEFAULT 0,
+                    transports TEXT,
+                    label TEXT,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    last_used_at TEXT
+                )
+                """
+            )
+            await self.execute(
+                "CREATE INDEX IF NOT EXISTS idx_webauthn_user ON webauthn_credentials(user_id)"
+            )
+
             # Reasoning trail log (EU AI Act Art. 86 right-to-explanation +
             # AESIA Guide 14). Records WHICH rag chunks + tools + security
             # decisions led to each assistant message. 24-month retention via

@@ -19,6 +19,7 @@ interface AuthContextType {
     googleLogin: (idToken: string) => Promise<void>
     completeMfaLogin: (mfaToken: string, code: string) => Promise<void>
     register: (email: string, password: string, name?: string, ccaa_residencia?: string, turnstile_token?: string) => Promise<void>
+    loginWithTokens: (accessToken: string, refreshToken: string, user: User) => void
     logout: () => void
 }
 
@@ -185,6 +186,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    const loginWithTokens = (accessToken: string, refreshToken: string, userData: User) => {
+        // Used by passkey login: backend returns tokens directly, we hydrate
+        // the auth context manually instead of going through /auth/login.
+        localStorage.setItem(TOKEN_KEY, accessToken)
+        localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+        setUser(userData)
+    }
+
     const logout = () => {
         logger.debug('Logging out')
         localStorage.removeItem(TOKEN_KEY)
@@ -201,6 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             googleLogin,
             completeMfaLogin,
             register,
+            loginWithTokens,
             logout
         }}>
             {children}

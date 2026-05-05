@@ -90,3 +90,7 @@ Jinja2>=3.1.4
 # compresion previa al cifrado (reduce tamano del BLOB en Turso).
 cryptography>=42.0
 zstandard>=0.22
+
+# WebAuthn / Passkey 2FA (Sprint 2 P0 #2)
+# NIST SP 800-63-4 phishing-resistant authentication.
+webauthn>=2.0.0

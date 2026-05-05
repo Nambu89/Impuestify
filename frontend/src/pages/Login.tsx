@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FileText, Mail, Lock, Eye, EyeOff, Loader2, Calculator, Map, Shield, AlertCircle, KeyRound } from 'lucide-react'
+import { FileText, Mail, Lock, Eye, EyeOff, Loader2, Calculator, Map, Shield, AlertCircle, KeyRound, Fingerprint } from 'lucide-react'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../hooks/useAuth'
+import { usePasskeys } from '../hooks/usePasskeys'
 import TurnstileWidget from '../components/TurnstileWidget'
 import './Auth.css'
 
@@ -10,7 +11,24 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 export default function Login() {
     const navigate = useNavigate()
-    const { login, googleLogin, completeMfaLogin } = useAuth()
+    const { login, googleLogin, completeMfaLogin, loginWithTokens } = useAuth()
+    const passkeys = usePasskeys()
+    const passkeysSupported = passkeys.isSupported()
+
+    const handlePasskeyLogin = async () => {
+        if (!email) {
+            setError('Introduce tu email para iniciar con passkey')
+            return
+        }
+        setError('')
+        const tokens = await passkeys.loginWithPasskey(email)
+        if (tokens) {
+            loginWithTokens(tokens.access_token, tokens.refresh_token, tokens.user as any)
+            navigate('/chat')
+        } else if (passkeys.error) {
+            setError(passkeys.error)
+        }
+    }
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -314,6 +332,28 @@ export default function Login() {
                             )}
                         </button>
                     </form>
+
+                    {passkeysSupported && (
+                        <button
+                            type="button"
+                            className="auth-passkey-btn"
+                            onClick={handlePasskeyLogin}
+                            disabled={passkeys.loading || !email}
+                            title={!email ? 'Introduce tu email primero' : 'Iniciar con passkey (más seguro)'}
+                        >
+                            {passkeys.loading ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Verificando passkey...
+                                </>
+                            ) : (
+                                <>
+                                    <Fingerprint size={18} />
+                                    Iniciar con passkey
+                                </>
+                            )}
+                        </button>
+                    )}
 
                     <p className="auth-switch-link">
                         ¿No tienes cuenta?{' '}
