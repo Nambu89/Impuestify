@@ -24,6 +24,7 @@ from app.auth.jwt_handler import get_current_user, TokenData
 from app.auth.subscription_guard import require_active_subscription
 from app.security import sql_validator, guardrails_system
 from app.security.security_pipeline import security_pipeline
+from app.security.token_budget import token_budget_tracker
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
 from app.services.subscription_service import SubscriptionAccess
 from app.utils.streaming import ProgressCallback, sse_generator, filter_json_from_content
@@ -133,6 +134,34 @@ async def ask_question_stream(
 
     # Replace the original question with the sanitized version for downstream logic
     request.question = pipeline_result.sanitized_text or request.question
+
+    # === TOKEN BUDGET: daily LLM consumption cap per user (LLM10 Unbounded Consumption) ===
+    budget_status = token_budget_tracker.check(
+        user_id=current_user.user_id,
+        plan_type=access.plan_type,
+        is_owner=access.is_owner,
+        request=req,
+    )
+    if not budget_status.allowed:
+        async def budget_block_stream():
+            limit_kt = budget_status.limit // 1000
+            yield {
+                "event": "content",
+                "data": (
+                    f"Has alcanzado tu límite diario de consultas IA "
+                    f"(~{limit_kt}k tokens del plan {budget_status.plan_type}). "
+                    f"El contador se reinicia a las 00:00 UTC. "
+                    f"Si necesitas más capacidad de forma habitual, considera el plan Autónomo o Creator."
+                ),
+            }
+            yield {"event": "done", "data": json.dumps({
+                "blocked": True,
+                "reason": "daily_token_budget_exceeded",
+                "used": budget_status.used,
+                "limit": budget_status.limit,
+                "reset_at": budget_status.reset_at,
+            })}
+        return EventSourceResponse(budget_block_stream())
     
     # === CONTENT RESTRICTION: Autonomo detection (only block "particular" plan) ===
     if not access.is_owner and access.plan_type not in ("autonomo", "creator") and detect_autonomo_query(request.question):
@@ -603,6 +632,26 @@ async def ask_question_stream(
                             clean_content = verification.annotated_response
                     except Exception as e:
                         logger.warning(f"Citation verifier failed (non-blocking): {e}")
+
+                    # Record token usage against the user's daily budget.
+                    # Conservative estimate: ~4 chars/token for Spanish. We add
+                    # the prompt context (RAG + question + history) and the
+                    # response. Real OpenAI usage may differ; this is for budget
+                    # caps, not billing.
+                    try:
+                        estimated_tokens = (
+                            len(request.question or "")
+                            + len(combined_context or "")
+                            + len(clean_content or "")
+                        ) // 4
+                        if estimated_tokens > 0:
+                            token_budget_tracker.record(
+                                user_id=current_user.user_id,
+                                tokens=estimated_tokens,
+                                request=req,
+                            )
+                    except Exception as e:
+                        logger.warning(f"Token budget record failed (non-blocking): {e}")
 
                     # Stream final content
                     await callback.content(clean_content)
