@@ -290,6 +290,90 @@ async def login(request: Request, data: LoginRequest):
     )
 
 
+@router.post("/login-bot")
+@limiter.limit("5/minute")
+async def login_bot(request: Request, data: LoginRequest):
+    """
+    Bot/CI login endpoint that bypasses Turnstile.
+
+    Hardened by:
+      1. Secret header `X-Bot-Secret` must match `BOT_LOGIN_SECRET` env var.
+      2. Email must be in `BOT_LOGIN_ALLOWED_EMAILS` (comma-separated env var).
+      3. Same rate limit as /login (5/min).
+
+    Used by the GitHub Actions red-team-nightly workflow to authenticate
+    the qa-redteam user without solving a Turnstile challenge.
+
+    If `BOT_LOGIN_SECRET` is unset the endpoint returns 503 (disabled).
+    """
+    import os
+    bot_secret = os.getenv("BOT_LOGIN_SECRET", "").strip()
+    if not bot_secret:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Bot login no está configurado.",
+        )
+
+    provided = request.headers.get("x-bot-secret", "")
+    if provided != bot_secret:
+        # Constant-time-ish: log but always return same status code
+        logger.warning("login-bot rejected: invalid secret")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No autorizado.",
+        )
+
+    allowed = {
+        e.strip().lower()
+        for e in os.getenv("BOT_LOGIN_ALLOWED_EMAILS", "qa-redteam@impuestify.es").split(",")
+        if e.strip()
+    }
+    if data.email.lower() not in allowed:
+        logger.warning(f"login-bot rejected: email {data.email} not in allowlist")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email no permitido para login-bot.",
+        )
+
+    user = await user_service.authenticate_user(data.email, data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email o contraseña incorrectos",
+        )
+
+    # Bot user must NOT have MFA — fail loudly if someone enables it
+    try:
+        db = await get_db_client()
+        mfa_result = await db.execute(
+            "SELECT is_enabled FROM user_mfa WHERE user_id = ? AND is_enabled = 1",
+            [user.id],
+        )
+        if mfa_result.rows:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Bot user no debe tener MFA activado.",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+
+    sub_service = await get_subscription_service()
+    access = await sub_service.check_access(user_id=user.id, email=user.email)
+    tokens = create_tokens_for_user(user.id, user.email)
+
+    logger.info(f"login-bot success for {data.email}")
+    return AuthResponse(
+        user=UserResponse(
+            id=user.id, email=user.email, name=user.name,
+            is_active=user.is_active, is_admin=user.is_admin,
+            is_owner=access.is_owner, subscription_status=access.status,
+        ),
+        tokens=tokens,
+    )
+
+
 @router.post("/google")
 @limiter.limit("10/minute")
 async def google_login(request: Request, body: GoogleAuthRequest):

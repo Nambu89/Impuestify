@@ -26,6 +26,7 @@ jobs:
       PROMPTFOO_LOGIN_URL: ${{ secrets.PROMPTFOO_LOGIN_URL }}
       PROMPTFOO_AUTH_EMAIL: ${{ secrets.PROMPTFOO_AUTH_EMAIL }}
       PROMPTFOO_AUTH_PASSWORD: ${{ secrets.PROMPTFOO_AUTH_PASSWORD }}
+      PROMPTFOO_BOT_SECRET: ${{ secrets.PROMPTFOO_BOT_SECRET }}
       # Avoid Promptfoo's cloud sharing
       PROMPTFOO_DISABLE_TELEMETRY: "1"
       PROMPTFOO_DISABLE_UPDATE_CHECK: "1"
@@ -42,7 +43,7 @@ jobs:
       - name: Validate required secrets
         run: |
           missing=0
-          for var in PROMPTFOO_TARGET_URL PROMPTFOO_LOGIN_URL PROMPTFOO_AUTH_EMAIL PROMPTFOO_AUTH_PASSWORD; do
+          for var in PROMPTFOO_TARGET_URL PROMPTFOO_LOGIN_URL PROMPTFOO_AUTH_EMAIL PROMPTFOO_AUTH_PASSWORD PROMPTFOO_BOT_SECRET; do
             if [ -z "${!var}" ]; then
               echo "::error::Secret $var is missing."
               missing=1
@@ -54,10 +55,11 @@ jobs:
         id: login
         run: |
           # Access tokens expire in 30 min, so we authenticate fresh each run.
-          # Credentials live as repo secrets; only the in-memory token is exposed
-          # to the suite.
+          # Uses /auth/login-bot which bypasses Turnstile via X-Bot-Secret header
+          # and is restricted server-side to a hardcoded allowlist (qa-redteam).
           response=$(curl -sS -X POST "$PROMPTFOO_LOGIN_URL" \
             -H "Content-Type: application/json" \
+            -H "X-Bot-Secret: $PROMPTFOO_BOT_SECRET" \
             -d "{\"email\":\"$PROMPTFOO_AUTH_EMAIL\",\"password\":\"$PROMPTFOO_AUTH_PASSWORD\"}")
           token=$(echo "$response" | jq -r '.tokens.access_token // .access_token // empty')
           if [ -z "$token" ]; then
