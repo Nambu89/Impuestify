@@ -7,6 +7,20 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-05-09] BACKEND — 🟢 DONE — Sesion 38: 4 bugs fix + topic classifier context-aware
+
+Bugs 85-88 fixeados (ver `memory/bugfixes-2026-05.md`):
+- Bug 85 P0: Topic classifier ciego al contexto bloqueaba preguntas legitimas con workspace adjunto (caso David Oliva: "evalua si mi declaracion es correcta" + workspace RENTA 2025 → bloqueado 6x). Fix general: TopicContext + system prompt actualizado + cache rekeyed con context_hash. Off-scope explicito sigue bloqueado, prompt injection bloqueado en layer 2.
+- Bug 86 P0: token_budget + velocity_check no awaitan AsyncRedis (sprint 3 sesion 37). Toda proteccion anti-runaway desactivada en prod 4 dias. Fix: async correcto con compat dual sync/async.
+- Bug 87 P1: PII detector revienta con 429/413 Groq prompts largos. Fix: per-instance cache + length guard 3000 + retry sync + fallback regex.
+- Bug 88 cosmetico: logs `duplicate column` al startup. Fix: PRAGMA table_info pre-check.
+
+Tests: 60/60 nuevos + modificados PASS, 161/161 security pipeline regresion PASS. Plan-checker PASS, verifier VERIFIED 8/8 criterios. Plan en `plans/2026-05-09-fix-topic-classifier-context-aware.md`.
+
+📢 NEEDS_REVIEW: smoke test manual pre-deploy con cuenta David Oliva o equivalente (workspace adjunto + pregunta ambigua → debe llegar al agente). Tras deploy: monitorizar Railway 30 min para confirmar desaparicion de `Token budget read failed (fail-open)`.
+
+---
+
 ## [2026-04-20] FRONTEND — 🟢 DONE — Bug 84 hotfix: DefensIA `/defensia/expedientes` 404 en prod
 
 Hotfix prefix `/api/` en 9 call sites DefensIA (7 archivos: useDefensiaExpedientes, useDefensiaExpediente, useDefensiaAnalyze, useDefensiaChat, useDefensiaUpload, useDefensiaExport, DefensiaWizardPage, EscritoEditor). Backend monta `/api/defensia`, frontend llamaba `/defensia` sin prefix. Tests actualizados. Build OK. Documentado en bugfixes-2026-04.md Bug 84.

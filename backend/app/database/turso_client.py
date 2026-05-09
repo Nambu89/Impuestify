@@ -5,9 +5,18 @@ Uses the new libsql SDK (June 2025) for connecting to Turso.
 Replaces deprecated libsql-client package.
 """
 import os
+import re
 import logging
 from typing import Optional, List, Any
 from contextlib import asynccontextmanager
+
+# Idempotent ALTER TABLE ... ADD COLUMN detection. Using PRAGMA table_info
+# beforehand avoids the noisy driver-level "duplicate column name" log line
+# that fires before Python catches the exception.
+_ALTER_ADD_COL_RE = re.compile(
+    r"ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+(\w+)",
+    re.IGNORECASE,
+)
 
 # New Turso SDK (libsql)
 try:
@@ -1139,6 +1148,24 @@ class TursoClient:
             logger.error(f"Failed to initialize schema: {e}")
             raise
 
+    async def _column_exists(self, table: str, column: str) -> bool:
+        """Check if a column exists in a table via PRAGMA table_info.
+
+        Returns False on any error (caller will then attempt the ALTER and
+        fall back to the duplicate-column except path if it really does exist).
+        """
+        try:
+            result = await self.execute(f"PRAGMA table_info({table})")
+            rows = getattr(result, "rows", None) or []
+            for r in rows:
+                # libsql returns dict-like rows with 'name' key
+                name = r.get("name") if hasattr(r, "get") else (r[1] if len(r) > 1 else None)
+                if name == column:
+                    return True
+            return False
+        except Exception:
+            return False
+
     async def _apply_defensia_migration(self, migration_path, label: str) -> None:
         """Aplica un .sql DefensIA con idempotencia + fail-fast.
 
@@ -1147,6 +1174,10 @@ class TursoClient:
         Asi evitamos que el servicio inicie con un schema incompleto y el
         log ``migration applied`` solo se emite si no hubo errores. La
         idempotencia cubre re-deploys sin tabla ``schema_migrations``.
+
+        Para `ALTER TABLE ... ADD COLUMN` consultamos primero
+        ``PRAGMA table_info`` y saltamos silenciosamente si la columna ya
+        existe — evita el log ruidoso del driver Hrana al re-arrancar.
         """
         if not migration_path.exists():
             logger.warning(
@@ -1166,12 +1197,23 @@ class TursoClient:
             stmt = "\n".join(exec_lines).strip()
             if not stmt:
                 continue
+
+            # Pre-check: ALTER TABLE ... ADD COLUMN cuando ya existe la columna
+            m = _ALTER_ADD_COL_RE.search(stmt)
+            if m:
+                table, col = m.group(1), m.group(2)
+                if await self._column_exists(table, col):
+                    continue  # idempotente sin log ruidoso
+
             try:
                 await self.execute(stmt)
             except Exception as exc:
                 msg = str(exc).lower()
                 if "duplicate column" in msg or "already exists" in msg:
                     # Idempotente: el schema ya estaba al dia para este stmt.
+                    # Cubre el caso de migraciones que NO son ALTER ADD COLUMN
+                    # (CREATE INDEX IF NOT EXISTS no falla, pero si alguna
+                    # migracion futura olvida el IF NOT EXISTS, seguimos a salvo).
                     continue
                 logger.exception(
                     "DefensIA %s migration stmt failed; aborting init_schema: %s",

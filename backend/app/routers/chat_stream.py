@@ -24,6 +24,7 @@ from app.auth.jwt_handler import get_current_user, TokenData
 from app.auth.subscription_guard import require_active_subscription
 from app.security import sql_validator, guardrails_system
 from app.security.security_pipeline import security_pipeline
+from app.security.topic_classifier import TopicContext
 from app.security.token_budget import token_budget_tracker
 from app.security.velocity_check import velocity_checker
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
@@ -89,6 +90,77 @@ async def get_db(request: Request) -> TursoClient:
     raise HTTPException(status_code=503, detail="Database not connected")
 
 
+async def _build_pipeline_context(
+    db: TursoClient,
+    user_id: str,
+    workspace_id: Optional[str],
+    conversation_id: Optional[str],
+) -> Optional[TopicContext]:
+    """Build a TopicContext for the security pipeline (Bug A fix).
+
+    Extracts only the metadata the topic classifier needs:
+      - workspace name + doc count + file types (1 query, owner-checked)
+      - last 2 user turns from the conversation (1 query)
+
+    Both queries are best-effort: if anything fails we return ``None`` and
+    the pipeline behaves as before (strict classifier with no context). The
+    extra cost is ~5-15 ms Turso vs the 200-400 ms of the classifier itself.
+    """
+    if not workspace_id and not conversation_id:
+        return None
+
+    ctx = TopicContext()
+
+    if workspace_id:
+        try:
+            ws_result = await db.execute(
+                """
+                SELECT
+                    w.name AS ws_name,
+                    COUNT(f.id) AS file_count,
+                    GROUP_CONCAT(DISTINCT f.file_type) AS file_types
+                FROM workspaces w
+                LEFT JOIN workspace_files f
+                    ON f.workspace_id = w.id
+                    AND f.processing_status = 'completed'
+                WHERE w.id = ? AND w.user_id = ?
+                GROUP BY w.id
+                """,
+                [workspace_id, user_id],
+            )
+            rows = getattr(ws_result, "rows", None) or []
+            if rows:
+                row = rows[0]
+                ctx.workspace_name = row.get("ws_name") if hasattr(row, "get") else row[0]
+                ctx.workspace_doc_count = (row.get("file_count") if hasattr(row, "get") else row[1]) or 0
+                types_raw = (row.get("file_types") if hasattr(row, "get") else row[2]) or ""
+                ctx.workspace_file_types = [t for t in types_raw.split(",") if t]
+        except Exception as e:
+            logger.warning(f"_build_pipeline_context workspace query failed: {e}")
+
+    if conversation_id:
+        try:
+            msg_result = await db.execute(
+                """
+                SELECT content FROM messages
+                WHERE conversation_id = ? AND role = 'user'
+                ORDER BY created_at DESC LIMIT 2
+                """,
+                [conversation_id],
+            )
+            rows = getattr(msg_result, "rows", None) or []
+            ctx.recent_user_turns = [
+                ((r.get("content") if hasattr(r, "get") else r[0]) or "")[:200]
+                for r in rows
+            ]
+        except Exception as e:
+            logger.warning(f"_build_pipeline_context messages query failed: {e}")
+
+    if ctx.workspace_name or ctx.recent_user_turns:
+        return ctx
+    return None
+
+
 # === Routes ===
 
 @router.post("/ask/stream")
@@ -113,10 +185,35 @@ async def ask_question_stream(
     Compatible with Railway's timeout limits via heartbeats.
     """
     
+    # === Restore workspace_id from stored conversation BEFORE pipeline check ===
+    # If the user is following up in an existing conversation that already has
+    # a workspace attached, we need that metadata for the topic classifier
+    # so ambiguous follow-ups ("¿es correcto?") aren't blocked.
+    if request.conversation_id and not request.workspace_id:
+        try:
+            _conv_service_pre = ConversationService(db)
+            stored_ws = await _conv_service_pre.get_conversation_workspace(
+                request.conversation_id, current_user.user_id
+            )
+            if stored_ws:
+                request.workspace_id = stored_ws
+        except Exception as e:
+            logger.debug(f"Pre-pipeline workspace restore skipped: {e}")
+
+    # Build context (workspace name + recent turns) for the topic classifier.
+    # Layers 1-5 of the pipeline ignore this — only layer 6 reads it.
+    pipeline_context = await _build_pipeline_context(
+        db=db,
+        user_id=current_user.user_id,
+        workspace_id=request.workspace_id,
+        conversation_id=request.conversation_id,
+    )
+
     # === SECURITY PIPELINE: 6 layers (sanitize → injection → SQLi → PII → topic) ===
     pipeline_result = security_pipeline.check(
         question=request.question,
         user_id=current_user.user_id,
+        context=pipeline_context,
     )
     if not pipeline_result.is_safe:
         # Stream a polite rejection back to the client (don't 400; UX is better)
@@ -137,7 +234,7 @@ async def ask_question_stream(
     request.question = pipeline_result.sanitized_text or request.question
 
     # === VELOCITY CHECK: same-prompt flooding defense ===
-    velocity_result = velocity_checker.check(
+    velocity_result = await velocity_checker.check(
         user_id=current_user.user_id,
         question=request.question,
         request=req,
@@ -153,7 +250,7 @@ async def ask_question_stream(
         return EventSourceResponse(velocity_block_stream())
 
     # === TOKEN BUDGET: daily LLM consumption cap per user (LLM10 Unbounded Consumption) ===
-    budget_status = token_budget_tracker.check(
+    budget_status = await token_budget_tracker.check(
         user_id=current_user.user_id,
         plan_type=access.plan_type,
         is_owner=access.is_owner,
@@ -190,15 +287,10 @@ async def ask_question_stream(
     # === Conversation setup ===
     conv_service = ConversationService(db)
     conversation_id = request.conversation_id
-    
-    # === Restore workspace_id from stored conversation on follow-ups ===
-    if request.conversation_id and not request.workspace_id:
-        stored_ws = await conv_service.get_conversation_workspace(
-            request.conversation_id, current_user.user_id
-        )
-        if stored_ws:
-            request.workspace_id = stored_ws
-            logger.info(f"Restored workspace_id {stored_ws} from conversation {request.conversation_id}")
+
+    # NOTE: workspace_id was already restored from the stored conversation
+    # earlier (before the security pipeline) so the topic classifier could
+    # see workspace context. No need to restore again here.
 
     if not conversation_id:
         logger.info("Creating new conversation (no ID provided)")
@@ -701,7 +793,7 @@ async def ask_question_stream(
                             + len(clean_content or "")
                         ) // 4
                         if estimated_tokens > 0:
-                            token_budget_tracker.record(
+                            await token_budget_tracker.record(
                                 user_id=current_user.user_id,
                                 tokens=estimated_tokens,
                                 request=req,

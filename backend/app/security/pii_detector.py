@@ -5,6 +5,8 @@ Detects and masks sensitive personal information in user inputs
 to protect privacy and comply with data protection regulations.
 """
 import re
+import time
+import hashlib
 import logging
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
@@ -12,6 +14,16 @@ from dataclasses import dataclass
 from app.config import settings  # ← FIX: Import settings at module level
 
 logger = logging.getLogger(__name__)
+
+# Texts longer than this skip the Groq call entirely and go straight to the
+# deterministic regex scanner. Reasons:
+#   1. Groq `gpt-oss-safeguard-20b` rejects requests over its context window
+#      with HTTP 413 (observed in prod logs 2026-05-07).
+#   2. Long inputs are usually pasted documents — the regex catches the
+#      high-value PII (DNI, IBAN, email, phone) without spending Groq quota.
+#   3. Latency: avoids a 2-3s LLM call when the user is just pasting their
+#      payslip into chat.
+_REGEX_FALLBACK_THRESHOLD = 3000
 
 
 @dataclass
@@ -98,52 +110,118 @@ class PIIDetector:
         },
     }
     
+    # Per-instance cache cap. Reached → cache cleared. Simple LRU-ish.
+    _CACHE_MAX = 2048
+
     def __init__(self, mask_pii: bool = True, log_detections: bool = True):
         """
         Initialize the PII detector with Groq client.
         """
         from groq import Groq
         from app.config import settings
-        
+
         self.mask_pii = mask_pii
         self.log_detections = log_detections
         self.client = None
-        
+        # Per-instance cache so tests with monkey-patched clients keep their
+        # own state (Bug C fix). Hash → result.
+        self._cache: Dict[str, PIIDetectionResult] = {}
+
         if settings.GROQ_API_KEY:
             try:
                 self.client = Groq(api_key=settings.GROQ_API_KEY)
-                logger.info(f"✅ PII Detector initialized with Groq model: {settings.GROQ_MODEL_SAFETY}")
+                logger.info(f"PII Detector initialized with Groq model: {settings.GROQ_MODEL_SAFETY}")
             except Exception as e:
-                logger.error(f"❌ Failed to initialize Groq client for PII Detector: {e}")
+                logger.error(f"Failed to initialize Groq client for PII Detector: {e}")
         else:
-            logger.warning("⚠️ GROQ_API_KEY not found. PII Detection Logic will fail.")
+            logger.warning("GROQ_API_KEY not found. PII Detection Logic will fail.")
+
+    def _cache_clear(self) -> None:
+        """Clear the per-instance cache (used by tests)."""
+        self._cache.clear()
 
     def detect(self, text: str) -> PIIDetectionResult:
         """
-        Detect PII in text using Llama Guard 4 (Category S7: Privacy).
+        Detect PII in text. Uses Llama Guard / gpt-oss-safeguard for general
+        privacy reasoning, deterministic regex for long inputs / fallback,
+        and an LRU cache to avoid hammering Groq with repeat traffic.
+
+        Behaviour (Bug C fix, sesion 38):
+        - Empty / very short input → fast path, no call.
+        - >_REGEX_FALLBACK_THRESHOLD chars → regex-only (avoids 413).
+        - Otherwise: cache hit → return cached. Cache miss → call Groq.
+        - On 429 (rate limit) → sleep 0.5 s, retry once. On any other error
+          or repeat 429 → fall back to regex (so we still catch high-value
+          PII instead of failing fully open).
         """
         if not text:
-            return PIIDetectionResult(has_pii=False, detected_types=[], masked_text="", original_text="", detections={})
+            return PIIDetectionResult(
+                has_pii=False, detected_types=[], masked_text="",
+                original_text="", detections={},
+            )
 
+        # Long inputs: skip Groq, deterministic only.
+        if len(text) > _REGEX_FALLBACK_THRESHOLD:
+            return self._regex_only(text)
+
+        # Per-instance cache: avoids repeat Groq calls on identical inputs.
+        text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
+        cached = self._cache.get(text_hash)
+        if cached is not None:
+            return cached
+
+        result = self._detect_uncached(text)
+
+        if len(self._cache) >= self._CACHE_MAX:
+            # Simple LRU-ish: drop the oldest half. Avoids unbounded growth
+            # without the overhead of an OrderedDict / functools wrapper.
+            for k in list(self._cache.keys())[: self._CACHE_MAX // 2]:
+                self._cache.pop(k, None)
+        self._cache[text_hash] = result
+        return result
+
+    def _detect_uncached(self, text: str) -> PIIDetectionResult:
+        """The Groq-backed path, separated from caching."""
         if not self.client:
              return PIIDetectionResult(
-                 has_pii=False, 
-                 detected_types=["GROQ_CLIENT_MISSING"], 
-                 masked_text=text, 
+                 has_pii=False,
+                 detected_types=["GROQ_CLIENT_MISSING"],
+                 masked_text=text,
                  original_text=text,
                  detections={}
              )
 
+        from app.config import settings
+
         try:
-            from app.config import settings
-            
-            # Use Llama Guard 4 to detect S7 (Privacy)
             completion = self.client.chat.completions.create(
                 model=settings.GROQ_MODEL_SAFETY,
                 messages=[{"role": "user", "content": text}],
                 temperature=0.0
             )
-            
+        except Exception as e:
+            err_str = str(e)
+            if "429" in err_str:
+                # Free-tier shared with LlamaGuard. One sync retry buys us
+                # the difference; if it fails again we fall back to regex
+                # so we still catch DNI / IBAN / email instead of fail-open.
+                time.sleep(0.5)
+                try:
+                    completion = self.client.chat.completions.create(
+                        model=settings.GROQ_MODEL_SAFETY,
+                        messages=[{"role": "user", "content": text}],
+                        temperature=0.0
+                    )
+                except Exception as e2:
+                    logger.warning(f"PII Detector 429 retry failed, regex fallback: {e2}")
+                    return self._regex_only(text)
+            else:
+                # Includes 413 request-too-large from gpt-oss-safeguard-20b
+                # when the input is just under the threshold but still big.
+                logger.warning(f"PII Detector API error, regex fallback: {e}")
+                return self._regex_only(text)
+
+        try:
             response = completion.choices[0].message.content.strip()
 
             # Support both Llama Guard format ("unsafe\nS7") and
@@ -165,7 +243,7 @@ class PIIDetector:
             detected_types = ["PII (Privacy Violation S7)"] if is_unsafe else []
 
             if is_unsafe and self.log_detections:
-                 logger.warning(f"🚨 PII detected by moderation model: {response}")
+                 logger.warning(f"PII detected by moderation model: {response}")
 
             return PIIDetectionResult(
                 has_pii=is_unsafe,
@@ -176,8 +254,42 @@ class PIIDetector:
             )
 
         except Exception as e:
-            logger.error(f"❌ PII Detector API Error: {e}")
-            return PIIDetectionResult(has_pii=False, detected_types=[f"API_ERROR: {str(e)}"], masked_text=text, original_text=text, detections={})
+            logger.warning(f"PII Detector parse error, regex fallback: {e}")
+            return self._regex_only(text)
+
+    def _regex_only(self, text: str) -> PIIDetectionResult:
+        """Deterministic-only PII scan using ``self.PII_PATTERNS``.
+
+        Used when:
+        - Input exceeds Groq context window (length guard).
+        - Groq returns 413 / 429 (after retry) / any other API error.
+
+        Catches the high-value Spanish PII (DNI, NIE, IBAN, email, phone, CIF)
+        which is what the prompt-injection regex layer also relies on. Not
+        as nuanced as the LLM but never fails open silently.
+        """
+        detected: Dict[str, List[str]] = {}
+        masked = text
+        detected_types: List[str] = []
+
+        for pii_type, cfg in self.PII_PATTERNS.items():
+            try:
+                matches = re.findall(cfg["pattern"], text)
+            except re.error:
+                continue
+            if matches:
+                detected[pii_type] = matches if isinstance(matches[0], str) else [str(m) for m in matches]
+                detected_types.append(cfg["description"])
+                if self.mask_pii:
+                    masked = re.sub(cfg["pattern"], cfg["mask"], masked)
+
+        return PIIDetectionResult(
+            has_pii=bool(detected),
+            detected_types=detected_types,
+            masked_text=masked if self.mask_pii else text,
+            original_text=text,
+            detections=detected,
+        )
     
     def mask(self, text: str) -> str:
         """

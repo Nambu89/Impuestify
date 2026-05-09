@@ -25,7 +25,7 @@ from typing import List, Optional
 from app.security.prompt_injection import prompt_injection_filter
 from app.security.pii_detector import pii_detector
 from app.security.sql_injection import sql_validator
-from app.security.topic_classifier import check_fiscal_topic
+from app.security.topic_classifier import check_fiscal_topic, TopicContext
 from app.security.audit_logger import audit_logger, AuditEventType
 
 logger = logging.getLogger(__name__)
@@ -117,12 +117,22 @@ class SecurityPipeline:
         self.enable_sqli = enable_sqli
         self.enable_topic_classifier = enable_topic_classifier
 
-    def check(self, question: str, user_id: Optional[str] = None) -> PipelineResult:
+    def check(
+        self,
+        question: str,
+        user_id: Optional[str] = None,
+        context: Optional[TopicContext] = None,
+    ) -> PipelineResult:
         """
         Run all enabled layers in order. Short-circuit on first reject.
 
         Returns PipelineResult with is_safe=False on any reject. The caller
         should NOT invoke the LLM if is_safe is False.
+
+        ``context`` is forwarded only to the topic classifier (layer 6).
+        Layers 1-5 (sanitization, prompt injection, SQLi, PII) are immune
+        to any context the caller supplies — keeping the security posture
+        identical regardless of workspace state.
         """
         # ── Layer 1: Sanitization & length ──
         sanitized = _sanitize(question or "")
@@ -195,7 +205,7 @@ class SecurityPipeline:
 
         # ── Layer 6: Topic classifier (HARD whitelist) ──
         if self.enable_topic_classifier:
-            topic = check_fiscal_topic(sanitized)
+            topic = check_fiscal_topic(sanitized, context=context)
             if not topic.is_fiscal:
                 return self._reject(
                     layer="topic_classifier",

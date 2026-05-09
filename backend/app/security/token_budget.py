@@ -94,10 +94,14 @@ class TokenBudgetTracker:
 
     # ── Read ────────────────────────────────────────────────────────────────
 
-    def check(self, user_id: str, plan_type: Optional[str], is_owner: bool = False, request=None) -> BudgetStatus:
+    async def check(self, user_id: str, plan_type: Optional[str], is_owner: bool = False, request=None) -> BudgetStatus:
         """
         Read current usage and decide whether the user is allowed another call.
         Does NOT increment.
+
+        Async because the Upstash Redis client (`upstash_redis.asyncio.Redis`)
+        is async — calling `.get()` without await previously returned a
+        coroutine and broke the int() cast (fail-open silently). Bug B fix.
         """
         plan = (plan_type or "particular").lower()
         limit = DAILY_LIMITS.get(plan, DAILY_LIMITS["particular"])
@@ -120,6 +124,9 @@ class TokenBudgetTracker:
 
         try:
             raw = redis.get(_key(user_id))
+            # Support both async and sync Redis clients (tests may inject sync mocks)
+            if hasattr(raw, "__await__"):
+                raw = await raw
             if raw is not None:
                 # Upstash returns str/bytes/int depending on client version
                 if isinstance(raw, bytes):
@@ -147,10 +154,12 @@ class TokenBudgetTracker:
 
     # ── Write ───────────────────────────────────────────────────────────────
 
-    def record(self, user_id: str, tokens: int, request=None) -> int:
+    async def record(self, user_id: str, tokens: int, request=None) -> int:
         """
         Record `tokens` against today's counter. Returns the new total or -1 on
         failure (we never raise — billing is best-effort).
+
+        Async for the same reason as ``check`` — AsyncRedis client.
         """
         if tokens <= 0:
             return -1
@@ -159,22 +168,28 @@ class TokenBudgetTracker:
             return -1
         try:
             key = _key(user_id)
-            new_total = redis.incrby(key, tokens) if hasattr(redis, "incrby") else None
-            if new_total is None:
-                # Upstash REST client uses .incr_by in some versions, plain .incr in others
-                if hasattr(redis, "incr_by"):
-                    new_total = redis.incr_by(key, tokens)
-                else:
-                    # Fallback: call incr `tokens` times (avoid in prod; only for tiny burst)
-                    for _ in range(min(tokens, 50)):
-                        new_total = redis.incr(key)
+            new_total = None
+            if hasattr(redis, "incrby"):
+                new_total = redis.incrby(key, tokens)
+            elif hasattr(redis, "incr_by"):
+                new_total = redis.incr_by(key, tokens)
+            else:
+                # Fallback: call incr `tokens` times (avoid in prod; only for tiny burst)
+                for _ in range(min(tokens, 50)):
+                    new_total = redis.incr(key)
+                    if hasattr(new_total, "__await__"):
+                        new_total = await new_total
+            if hasattr(new_total, "__await__"):
+                new_total = await new_total
             # Normalize return type
             try:
                 new_total = int(new_total) if new_total is not None else -1
             except (TypeError, ValueError):
                 new_total = -1
             try:
-                redis.expire(key, COUNTER_TTL_SECONDS)
+                exp_result = redis.expire(key, COUNTER_TTL_SECONDS)
+                if hasattr(exp_result, "__await__"):
+                    await exp_result
             except Exception:
                 pass
             return new_total

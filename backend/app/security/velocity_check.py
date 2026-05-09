@@ -64,7 +64,8 @@ class VelocityChecker:
             return getattr(request.app.state, "upstash_client", None)
         return None
 
-    def check(self, user_id: str, question: str, request=None) -> VelocityResult:
+    async def check(self, user_id: str, question: str, request=None) -> VelocityResult:
+        """Async because the Upstash Redis client is async (Bug B fix)."""
         if not user_id or not question:
             return VelocityResult(allowed=True, repeat_count=0)
 
@@ -76,13 +77,19 @@ class VelocityChecker:
         try:
             if hasattr(redis, "incr"):
                 count = redis.incr(key)
+                if hasattr(count, "__await__"):
+                    count = await count
             else:
-                redis.set(key, "1")
+                set_result = redis.set(key, "1")
+                if hasattr(set_result, "__await__"):
+                    await set_result
                 count = 1
             if count == 1:
                 # First hit -> set TTL
                 if hasattr(redis, "expire"):
-                    redis.expire(key, WINDOW_SECONDS)
+                    exp_result = redis.expire(key, WINDOW_SECONDS)
+                    if hasattr(exp_result, "__await__"):
+                        await exp_result
             count = int(count) if count is not None else 0
         except Exception as e:
             logger.warning(f"Velocity check Redis error (fail-open): {e}")
