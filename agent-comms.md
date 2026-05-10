@@ -7,6 +7,27 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-05-10] MARKETING — 🟢 DONE — Sesion 39: 11 vídeos verticales HyperFrames
+
+11 vídeos 1080x1920 generados con skill `hyperframes` (HeyGen), pipeline HTML+GSAP+Chromium → MP4. Ubicación: `videos/<demo>/renders/`.
+
+**Nuevos sesión 39** (5): demo-clasificador (OCR+PGC+asiento), demo-guia-fiscal (wizard IRPF Creator Canarias), demo-modelo303 (IVA trimestral), demo-workspace (dashboard contable), demo-notif-aeat (parser notificación AEAT), demo-payslip (análisis nómina).
+
+**Re-renderizados sesión 39** (2): demo-chat + demo-retenciones — fix bug logo estirado (`.logo-row` faltaba `align-items: center`, Chromium estiraba el `<img>` por flex stretch default).
+
+**Heads-up**: demo-defensia + demo-modelo200 tienen el mismo CSS pattern original. Si se nota igual, fixear y re-render. Plantilla correcta documentada en `memory/reference_hyperframes_skill.md`.
+
+**Memorias añadidas**:
+- `memory/reference_hyperframes_skill.md`: skill HyperFrames, comandos, plantilla CSS anti-bug logo.
+- `memory/reference_animejs_library.md`: anime.js v4.4 evaluada (post midudev). Decisión adopción pendiente.
+- `memory/project_session39_videos_marketing.md`: resumen sesión + branding palette + prompt Gemini Imagen para nuevas heros.
+
+**Bugs sesión 38**: 85-88 desplegados y verificados en producción. Anti-runaway operativo. PII detector resiliente.
+
+📢 NEEDS_REVIEW: subir vídeos a redes (TikTok/Reels/LinkedIn/Shorts) — pipeline manual. Decidir si `videos/` va a git (peso renders ~1.5-2 MB cada uno).
+
+---
+
 ## [2026-05-09] BACKEND — 🟢 DONE — Sesion 38: 4 bugs fix + topic classifier context-aware
 
 Bugs 85-88 fixeados (ver `memory/bugfixes-2026-05.md`):
@@ -1689,6 +1710,14 @@ Ver detalles completos en el reporte.
 4. (MENOR) Actualizar CLAUDE.md — /api/irpf/estimate requiere JWT (no es publico)
 
 ## Tareas activas
+
+[2026-05-10] [BACKEND] 🟢 DONE — Modelo 131 (Pago Fraccionado IRPF Estimación Objetiva — Módulos) implementado from scratch. Bug 89 + audit `docs/audits/modelo_131_validation_2026-05.md` resueltos. Calculator `backend/app/utils/calculators/modelo_131.py` (3 apartados: I empresarial 4/3/2%, II sin datos-base 2%, III agraria 2%) + tool wrapper `backend/app/tools/modelo_131_tool.py` + endpoint `POST /api/modelo-131/calculate` + render PDF `_render_131` (promovido a FULL_MODELOS) + corregido plazo 4T a 1-30 enero en `seed_estatal_deadlines.py`. **60 tests PASS** (37 calculator + 23 tool). Casos AEAT A/B/C/D/E/G del audit verificados ground truth. Reducciones territoriales soportadas: Ceuta/Melilla 60% + La Palma 60% (caller debe verificar vigencia anual). Tool registrado en `app/tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS + __all__).
+
+[2026-05-10] [FRONTEND] 🔴 PENDING — Crear `frontend/src/pages/M131CalculatorPage.tsx` (clonar M130CalculatorPage). Backend listo: `POST /api/modelo-131/calculate` operativo. Wizard sugerido en audit (sección 6, 9 pasos). Ruta `/calculadora-131` en `App.tsx`. Hook `useModelo131()` análogo a `useModeloPDF`. Schema JSON-LD `WebApplication` + `HowTo` para SEO (sesión 27 pattern). Botón "Generar borrador 131 PDF" en `DeclarationsPage`.
+
+[2026-05-10] [BACKEND] 🔴 PENDING — Forales (Araba, Bizkaia, Gipuzkoa, Navarra) — out of scope sesión 40. Tienen modelos forales propios de pago fraccionado IRPF módulos. Implementar como calculadoras separadas si demanda usuarios forales en módulos.
+
+[2026-05-10] [BACKEND] 🔴 PENDING — Añadir regla en `tax_agent.py` system prompt: si usuario menciona "modulos" o `estimacion_objetiva` y pregunta sobre pago trimestral → usar `calculate_modelo_131`. Si menciona estimación directa → 130. Si ambiguo → preguntar.
 
 [2026-03-06] [QA] 🟡 IN_PROGRESS — Tests E2E Workspaces en produccion (https://impuestify.com). Usuarios: test_particular@impuestify.com + test_autonomo@impuestify.com. 6 tests T1-T6.
 

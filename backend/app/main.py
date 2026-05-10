@@ -461,6 +461,18 @@ app.include_router(modelo_720_router)
 from app.routers.modelo_131 import router as modelo_131_router
 app.include_router(modelo_131_router)
 
+# Modelo 349 (Declaracion Recapitulativa Operaciones Intracomunitarias)
+from app.routers.modelo_349 import router as modelo_349_router
+app.include_router(modelo_349_router)
+
+# Modelo 390 (Resumen Anual IVA)
+from app.routers.modelo_390 import router as modelo_390_router
+app.include_router(modelo_390_router)
+
+# Modelo 309 (Declaracion-Liquidacion No Periodica IVA)
+from app.routers.modelo_309 import router as modelo_309_router
+app.include_router(modelo_309_router)
+
 # Plusvalia Municipal (IIVTNU)
 from app.routers.plusvalia import router as plusvalia_router
 app.include_router(plusvalia_router)

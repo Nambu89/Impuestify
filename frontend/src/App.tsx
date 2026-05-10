@@ -55,6 +55,10 @@ const DefensiaWizardPage = lazy(() => import('./pages/DefensiaWizardPage'))
 const DefensiaExpedientePage = lazy(() => import('./pages/DefensiaExpedientePage'))
 const Modelo200Page = lazy(() => import('./pages/Modelo200Page'))
 const Modelo202Page = lazy(() => import('./pages/Modelo202Page'))
+const M131CalculatorPage = lazy(() => import('./pages/M131CalculatorPage'))
+const M349CalculatorPage = lazy(() => import('./pages/M349CalculatorPage'))
+const M390CalculatorPage = lazy(() => import('./pages/M390CalculatorPage'))
+const M309CalculatorPage = lazy(() => import('./pages/M309CalculatorPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -181,6 +185,24 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <M130CalculatorPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route path="/calculadora-modelo-131" element={<M131CalculatorPage />} />
+                    <Route path="/calculadora-modelo-309" element={<M309CalculatorPage />} />
+                    <Route
+                        path="/calculadora-modelo-349"
+                        element={
+                            <ProtectedRoute>
+                                <M349CalculatorPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/calculadora-modelo-390"
+                        element={
+                            <ProtectedRoute>
+                                <M390CalculatorPage />
                             </ProtectedRoute>
                         }
                     />
