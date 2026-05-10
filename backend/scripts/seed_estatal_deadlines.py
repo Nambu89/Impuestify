@@ -127,6 +127,8 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
         },
 
         # Modelo 131 IRPF pagos fraccionados (estimacion objetiva) — 4T
+        # FIX audit modelo_131_validation_2026-05: plazo 4T es 1-30 enero
+        # (NO 1-20 como en otros 4T trimestrales). Art. 110.2 RIRPF.
         {
             "id": _make_id("131", TERRITORY, "4T", y),
             "model": "131",
@@ -135,12 +137,12 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "period": "4T",
             "tax_year": y,
             "start_date": f"{y}-01-01",
-            "end_date": f"{y}-01-20",
+            "end_date": f"{y}-01-30",
             "domiciliation_date": None,
             "applies_to": "autonomos",
             "description": (
                 "Pago fraccionado IRPF (estimacion objetiva/modulos) correspondiente al 4T "
-                f"del ejercicio {y - 1}. Plazo: 1-20 de enero."
+                f"del ejercicio {y - 1}. Plazo: 1-30 de enero."
             ),
             "source_url": SOURCE_URL,
             "is_active": 1,

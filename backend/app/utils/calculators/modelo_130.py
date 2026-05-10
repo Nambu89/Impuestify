@@ -39,6 +39,16 @@ class Modelo130Calculator:
     _VIVIENDA_HABITUAL_MAX = 660.14  # EUR per quarter
     _VIVIENDA_HABITUAL_PCT = 0.02   # 2% of rendimiento neto acumulado
 
+    # Sección II — actividades agrícolas/ganaderas/forestales/pesqueras
+    # Art. 110.1.b RIRPF: 2% sobre volumen de ingresos (excluido capital).
+    # Ceuta/Melilla: 2% × 0,40 = 0,8% (Art. 110.2 RIRPF, reducción 60%).
+    _AGRARIA_PCT = 2.0
+    _AGRARIA_PCT_CEUTA_MELILLA = 0.8
+
+    # Dispensa de presentación por retención (Art. 109.2/3 RIRPF + foral Gipuzkoa).
+    _DISPENSA_PCT_COMUN = 70.0
+    _DISPENSA_PCT_GIPUZKOA = 50.0
+
     # Navarra progressive table (applied to annualised rend_neto)
     _NAVARRA_TABLE = [
         (6_500.0,   6.0),
@@ -635,6 +645,81 @@ class Modelo130Calculator:
             if rend_neto_anterior <= threshold:
                 return deduction
         return 0.0
+
+    def calculate_agricola(
+        self,
+        *,
+        quarter: int,
+        volumen_ingresos: float,
+        retenciones_trimestre: float = 0.0,
+        ceuta_melilla: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Sección II del Modelo 130 — actividades agrícolas/ganaderas/forestales/pesqueras.
+
+        Art. 110.1.b RIRPF: pago = 2% × volumen_ingresos − retenciones del trimestre.
+        Ceuta/Melilla: 0,8% (reducción 60% del Art. 110.2 RIRPF).
+
+        Casillas 08-11 oficiales del Modelo 130:
+            08 = volumen de ingresos del trimestre (excluyendo subvenciones de capital)
+            09 = 2% de la casilla 08 (0,8% Ceuta/Melilla)
+            10 = retenciones e ingresos a cuenta del trimestre
+            11 = resultado sección II = max(0, 09 − 10)
+        """
+        tipo_pct = self._AGRARIA_PCT_CEUTA_MELILLA if ceuta_melilla else self._AGRARIA_PCT
+        casilla_08 = round(max(0.0, volumen_ingresos), 2)
+        casilla_09 = round(casilla_08 * (tipo_pct / 100), 2)
+        casilla_10 = round(max(0.0, retenciones_trimestre), 2)
+        casilla_11 = round(max(0.0, casilla_09 - casilla_10), 2)
+
+        return {
+            "quarter": quarter,
+            "ceuta_melilla": ceuta_melilla,
+            "tipo_aplicado": tipo_pct,
+            "resultado": casilla_11,
+            "casillas": {
+                "08_volumen_ingresos": casilla_08,
+                "09_cuota_pct": casilla_09,
+                "10_retenciones_trimestre": casilla_10,
+                "11_resultado_seccion_II": casilla_11,
+            },
+        }
+
+    @classmethod
+    def is_dispensado_por_retencion(
+        cls,
+        *,
+        es_profesional: bool,
+        pct_retencion_anio_anterior: float,
+        territorio: str = "Comun",
+        actividad_agraria: bool = False,
+    ) -> bool:
+        """
+        Comprueba la dispensa de presentar Modelo 130 (Art. 109.2/3 RIRPF).
+
+        - Profesionales / agrarios con ≥ 70% de retenciones en año anterior
+          NO están obligados a presentar el Modelo 130.
+        - En Gipuzkoa el umbral foral baja al 50% (sólo profesionales).
+
+        Args:
+            es_profesional: True si la actividad es profesional (epígrafe IAE 2/3).
+            pct_retencion_anio_anterior: % de ingresos sometidos a retención el año
+                anterior (0–100). En agrarios excluye subvenciones e indemnizaciones.
+            territorio: Etiqueta de territorio ("Comun", "Gipuzkoa", etc.).
+            actividad_agraria: True si actividad agrícola/ganadera/forestal.
+
+        Returns:
+            True si el contribuyente está dispensado de presentar el modelo.
+        """
+        if not (es_profesional or actividad_agraria):
+            return False
+        territorio_norm = (territorio or "").strip().capitalize()
+        threshold = (
+            cls._DISPENSA_PCT_GIPUZKOA
+            if (territorio_norm == "Gipuzkoa" and es_profesional)
+            else cls._DISPENSA_PCT_COMUN
+        )
+        return pct_retencion_anio_anterior >= threshold
 
     @staticmethod
     def _navarra_percentage(rend_neto: float) -> float:

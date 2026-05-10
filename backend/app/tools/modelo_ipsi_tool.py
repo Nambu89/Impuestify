@@ -108,9 +108,22 @@ async def calculate_modelo_ipsi_tool(
     ipsi_deducible_importaciones: float = 0,
     compensacion_periodos_anteriores: float = 0,
     restricted_mode: bool = False,
+    caso: str = "general",
 ) -> Dict[str, Any]:
-    """Calculate the quarterly IPSI self-assessment for Ceuta/Melilla."""
-    if restricted_mode:
+    """Calculate the quarterly IPSI self-assessment for Ceuta/Melilla.
+
+    Args:
+        caso: Tipo de caso. "general" para autonomos/empresas; "compraventa_inmueble"
+              para particulares que tributan IPSI por compraventa de vivienda en
+              Ceuta/Melilla (no requiere ser autonomo). Si caso != "general" el
+              flag restricted_mode se ignora porque el hecho imponible no esta
+              reservado a autonomos.
+    """
+    # IPSI tambien afecta a particulares (compraventa de inmueble en Ceuta/Melilla
+    # tributa al 4% — no es operacion exclusiva de autonomos). Solo bloqueamos en
+    # restricted_mode cuando el caso encaja claramente en actividad de autonomo.
+    PARTICULAR_CASES = {"compraventa_inmueble"}
+    if restricted_mode and caso not in PARTICULAR_CASES:
         from app.security.content_restriction import get_autonomo_block_response
         logger.warning("calculate_modelo_ipsi called in restricted_mode — blocking")
         return {
@@ -234,11 +247,23 @@ async def calculate_modelo_ipsi_tool(
             lines.append(f"- Compensacion periodos anteriores: -{compensacion_periodos_anteriores:,.2f} EUR")
         lines.append(f"- **Resultado final: {resultado:,.2f} EUR — {tipo_resultado}**")
 
+        # Plazos oficiales (idem en Ceuta y Melilla):
+        #   T1 → 1-20 abril | T2 → 1-20 julio | T3 → 1-20 octubre
+        #   T4 → 1-30 enero del ano siguiente (Melilla 31 enero; Ceuta operativamente
+        #        prorrogado del 20 al 30 enero por instruccion anual)
+        plazo_por_trimestre = {
+            1: "del 1 al 20 de abril",
+            2: "del 1 al 20 de julio",
+            3: "del 1 al 20 de octubre",
+            4: f"del 1 al 30 de enero de {year + 1}",
+        }
+        plazo_texto = plazo_por_trimestre[trimestre]
+
         lines.append("")
         if resultado > 0:
             lines.append(
                 f"Debes ingresar {resultado:,.2f} EUR a la Ciudad Autonoma de {territorio} "
-                f"antes del dia 20 del mes siguiente al trimestre."
+                f"{plazo_texto}."
             )
         elif resultado < 0 and trimestre < 4:
             lines.append(

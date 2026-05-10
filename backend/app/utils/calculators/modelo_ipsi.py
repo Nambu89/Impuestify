@@ -211,6 +211,15 @@ class ModeloIpsiCalculator:
         # -----------------------------------------------------------------------
         # 2. IPSI DEDUCIBLE — cuotas soportadas por concepto
         # -----------------------------------------------------------------------
+        # Validacion normativa: la regularizacion de prorrata SOLO se aplica en
+        # el 4T (igual que regularizacion_anual). Aplicarla en Q1-Q3 es un error
+        # contable que distorsiona el resultado del trimestre.
+        if regularizacion_prorrata and quarter != 4:
+            raise ValueError(
+                "regularizacion_prorrata solo puede aplicarse en el 4T "
+                "(quarter=4). Recibido quarter={}.".format(quarter)
+            )
+
         total_deducible = round(
             cuota_corrientes_interiores
             + cuota_inversion_interiores

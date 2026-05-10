@@ -338,6 +338,42 @@ existing = {r['id'] for r in result.rows or []}
 valid = [s for s in sources if s['id'] in existing]
 ```
 
+### Tool LLM = wrapper del calculator (REGLA OBLIGATORIA)
+
+> **NUNCA reimplementar logica numerica en `app/tools/modelo_*.py`.** El tool LLM
+> debe limitarse a (1) validar inputs, (2) invocar el calculator canonico de
+> `app/utils/calculators/`, (3) formatear la respuesta para el LLM, y (4) manejar
+> `restricted_mode`. Si el calculator tiene un bug, **arreglar el calculator**, no
+> el tool. Las casillas oficiales AEAT viven en el calculator.
+
+Motivacion: el drift entre `modelo_303_tool.py` (reimplementado) y
+`Modelo303Calculator` (testado) causo BUG-303-01..03 en produccion: casillas mal
+numeradas (78 vs 71), `casilla_45` incompleta (5 sumandos en vez de 10), plazos
+T4 erroneos. Auditoria: `docs/audits/modelo_303_validation_2026-05.md`.
+
+```python
+# OK — wrapper delegando al calculator
+from app.utils.calculators.modelo_303 import Modelo303Calculator
+
+async def calculate_modelo_303_tool(trimestre, base_21, ..., restricted_mode=False):
+    if restricted_mode:
+        return {"success": False, "error": "restricted", ...}
+    if trimestre not in (1, 2, 3, 4):
+        return {"success": False, "error": "trimestre invalido", ...}
+    calc = Modelo303Calculator(None)
+    result = await calc.calculate(base_21=base_21, quarter=trimestre, ...)
+    formatted = _format_for_llm(result)  # solo presentacion
+    return {"success": True, **map_keys(result), "formatted_response": formatted}
+
+# NO — reimplementar la aritmetica en el tool (drift garantizado)
+casilla_45 = casilla_29 + casilla_31 + casilla_33 + casilla_37 + casilla_41  # FALTAN 35,39,42,43,44
+casilla_71 = compensacion_periodos_anteriores  # MAL: 71 es resultado, 78 es compensacion
+```
+
+Aplicable a: `modelo_303_tool.py`, `modelo_130_tool.py`, `modelo_308_tool.py`,
+`modelo_309_tool.py`, `modelo_720_tool.py`, `modelo_721_tool.py`,
+`modelo_ipsi_tool.py`, `is_simulator_tool.py` y futuros wrappers de modelos AEAT.
+
 ## Common Backend Tasks
 
 **New endpoint**: Create `app/routers/my_feature.py` → `router = APIRouter(prefix="/api/my-feature")` → register in `main.py` with `app.include_router()`.

@@ -2,7 +2,10 @@
 Modelo PDF Generator for TaxIA.
 
 Generates informational PDFs with calculated casilla data for
-Spanish tax form models (Modelos Tributarios): 303, 130, 308, 720, 721, IPSI.
+Spanish tax form models (Modelos Tributarios).
+
+Fully implemented: 303, 130, 131, 200, 308, 349, 390, 720, 721, IPSI.
+Placeholder stubs (under development): 100, 309, 420.
 """
 import io
 import logging
@@ -20,6 +23,13 @@ MODELO_NAMES: Dict[str, str] = {
     "720": "Declaración de Bienes y Derechos en el Extranjero",
     "721": "Declaración de Monedas Virtuales en el Extranjero",
     "ipsi": "IPSI — Impuesto sobre la Producción, los Servicios y la Importación",
+    # Placeholders (en desarrollo)
+    "100": "Declaración del IRPF (Renta)",
+    "131": "IRPF Pago Fraccionado — Estimación Objetiva (Módulos)",
+    "309": "Declaración no periódica — IVA",
+    "349": "Declaración recapitulativa de operaciones intracomunitarias",
+    "390": "Resumen anual del IVA",
+    "420": "Autoliquidación IGIC (Canarias)",
 }
 
 # Foral variant names
@@ -29,7 +39,13 @@ FORAL_NAMES: Dict[str, str] = {
     "420": "Modelo 420 — Autoliquidación IGIC (Canarias)",
 }
 
-VALID_MODELOS = {"303", "130", "200", "308", "720", "721", "ipsi"}
+# Modelos con render completo
+FULL_MODELOS = {"303", "130", "131", "200", "308", "349", "390", "720", "721", "ipsi"}
+
+# Modelos en desarrollo — devuelven PDF placeholder mínimo
+PLACEHOLDER_MODELOS = {"100", "309", "420"}
+
+VALID_MODELOS = FULL_MODELOS | PLACEHOLDER_MODELOS
 
 
 def _format_eur(amount: float) -> str:
@@ -106,17 +122,31 @@ class ModeloPDFGenerator:
         self._render_contribuyente(story, user_info)
 
         # Modelo-specific layout
-        render_method = {
+        render_map = {
             "303": self._render_303,
             "130": self._render_130,
+            "131": self._render_131,
             "200": self._render_200,
             "308": self._render_308,
+            "349": self._render_modelo_349,
+            "390": self._render_modelo_390,
             "720": self._render_720,
             "721": self._render_721,
             "ipsi": self._render_ipsi,
-        }[modelo_type]
+        }
 
-        render_method(story, data)
+        if modelo_type in render_map:
+            render_map[modelo_type](story, data)
+        else:
+            # Placeholder stub para modelos en desarrollo (100, 309, 420)
+            self._render_placeholder(
+                story,
+                modelo_type=modelo_type,
+                data=data,
+                user_info=user_info,
+                trimestre=trimestre,
+                ejercicio=ejercicio,
+            )
 
         # Disclaimer
         story.append(Spacer(1, 8 * mm))
@@ -525,6 +555,110 @@ class ModeloPDFGenerator:
         self._render_resultado(story, "Resultado a ingresar", resultado_final)
 
     # ------------------------------------------------------------------ #
+    # Modelo 131 — Pago Fraccionado IRPF Estimación Objetiva (Módulos)
+    # ------------------------------------------------------------------ #
+
+    def _render_131(self, story: list, data: dict):
+        """
+        Render Modelo 131 layout — apartados I (empresarial), II (sin
+        datos-base) y III (agraria).
+
+        El `data` debe seguir la estructura devuelta por `Modelo131Calculator`
+        (vía `calculate_modelo_131_tool`): contiene `casillas` (01-12),
+        `desglose`, `apartado`, `tipo_aplicado`.
+        """
+        casillas = data.get("casillas", {})
+        desglose = data.get("desglose", {})
+        apartado = data.get("apartado", "I")
+
+        # Sección I/II/III — cuotas
+        if apartado == "I":
+            cuota_rows: List[Tuple[str, str, float]] = [
+                ("01", "Rendimiento neto previo módulos (anual)",
+                 casillas.get("01_rendimiento_neto_modulos", 0)),
+                ("02", "Tipo aplicable (%)",
+                 casillas.get("02_tipo_aplicable", 0)),
+                ("03", "Resultado actividades empresariales",
+                 casillas.get("03_resultado_empresarial", 0)),
+            ]
+            seccion_label = "Apartado I — Actividades empresariales en módulos"
+        elif apartado == "III":
+            cuota_rows = [
+                ("04", "Volumen ingresos agrario (trimestre)",
+                 casillas.get("04_volumen_ingresos_agrario", 0)),
+                ("05", "Cuota agraria 2%",
+                 casillas.get("05_cuota_agraria", 0)),
+            ]
+            seccion_label = (
+                "Apartado III — Actividades agrícolas / ganaderas / forestales / pesqueras"
+            )
+        else:  # II
+            cuota_rows = [
+                ("01", "Volumen ingresos del trimestre",
+                 casillas.get("01_rendimiento_neto_modulos", 0)),
+                ("02", "Tipo aplicable (%)",
+                 casillas.get("02_tipo_aplicable", 0)),
+                ("03", "Resultado",
+                 casillas.get("03_resultado_empresarial", 0)),
+            ]
+            seccion_label = "Apartado II — Actividad empresarial sin datos-base"
+
+        cuota_rows.append((
+            "06", "Total cuotas", casillas.get("06_total_cuotas", 0),
+        ))
+        self._render_casillas_table(story, cuota_rows, seccion_label)
+
+        # Reducciones territoriales (Ceuta/Melilla, La Palma)
+        reducciones = casillas.get("07_reducciones", 0)
+        if reducciones > 0:
+            concepto = desglose.get("reduccion_concepto", "Reducción territorial")
+            self._simple_section_table(
+                story,
+                "Reducciones territoriales",
+                [
+                    (concepto, _format_eur(reducciones)),
+                    (
+                        "Resultado tras reducciones",
+                        _format_eur(casillas.get("08_resultado_tras_reducciones", 0)),
+                    ),
+                ],
+            )
+
+        # Minoraciones (retenciones, pagos previos, complementaria)
+        minoracion_rows: List[Tuple[str, str]] = []
+        if casillas.get("09_retenciones_trimestre", 0) > 0:
+            minoracion_rows.append((
+                "Retenciones del trimestre [09]",
+                _format_eur(casillas["09_retenciones_trimestre"]),
+            ))
+        if casillas.get("10_pagos_anteriores", 0) > 0:
+            minoracion_rows.append((
+                "Pagos fraccionados anteriores [10]",
+                _format_eur(casillas["10_pagos_anteriores"]),
+            ))
+        if casillas.get("11_complementaria", 0) > 0:
+            minoracion_rows.append((
+                "Resultado autoliquidación anterior [11]",
+                _format_eur(casillas["11_complementaria"]),
+            ))
+        if apartado == "I":
+            minoracion_brl = desglose.get("minoracion_rendimientos_bajos", 0)
+            if minoracion_brl > 0:
+                minoracion_rows.append((
+                    "Minoración rendimientos bajos",
+                    _format_eur(minoracion_brl),
+                ))
+        if minoracion_rows:
+            self._simple_section_table(
+                story, "Retenciones y minoraciones", minoracion_rows,
+            )
+
+        # Resultado final
+        resultado_final = casillas.get("12_resultado_final",
+                                       data.get("resultado_final", 0))
+        self._render_resultado(story, "Resultado a ingresar [12]", resultado_final)
+
+    # ------------------------------------------------------------------ #
     # Modelo 308 — RE (Recargo de Equivalencia)
     # ------------------------------------------------------------------ #
 
@@ -811,3 +945,280 @@ class ModeloPDFGenerator:
                 info_parts.append(f"Tipo efectivo: {tipo_efectivo}%")
             story.append(Spacer(1, 4 * mm))
             story.append(Paragraph(" | ".join(info_parts), self._body_style))
+
+    # ------------------------------------------------------------------ #
+    # Modelo 390 — Resumen Anual IVA
+    # ------------------------------------------------------------------ #
+
+    def _render_modelo_390(self, story: list, data: dict):
+        """
+        Render Modelo 390 layout: exoneracion (Art. 71.7 RIVA) o sumatorio
+        anual de los 4 trimestres del 303.
+
+        Acepta la salida de `calculate_modelo_390_tool` o de
+        `Modelo390Calculator.calculate()`.
+        """
+        from reportlab.lib.units import mm
+        from reportlab.platypus import Paragraph, Spacer
+        from xml.sax.saxutils import escape
+
+        territory_info = data.get("territory_info") or {}
+        modelo = data.get("modelo")
+        obligado = bool(data.get("obligado"))
+        plazo = data.get("plazo", "1 al 30 de enero del año siguiente")
+        hacienda = data.get("hacienda") or territory_info.get("hacienda", "AEAT")
+
+        # Cabecera con plazo y hacienda
+        cab_rows: List[Tuple[str, str]] = [
+            ("Modelo aplicable", escape(str(modelo)) if modelo else "No aplica (IPSI)"),
+            ("Plazo de presentacion", escape(str(plazo))),
+            ("Hacienda", escape(str(hacienda))),
+            ("Obligado a presentar", "Si" if obligado else "No"),
+        ]
+        if territory_info.get("nota"):
+            cab_rows.append(("Nota territorial", escape(str(territory_info["nota"]))))
+        self._simple_section_table(story, "Datos del resumen anual", cab_rows)
+        story.append(Spacer(1, 4 * mm))
+
+        # Exoneracion: mostrar motivo y salir
+        if not obligado:
+            story.append(Paragraph("Estado de la obligacion", self._heading_style))
+            motivo = data.get("motivo_exoneracion") or territory_info.get("nota") or (
+                "No tienes obligacion de presentar este modelo."
+            )
+            story.append(Paragraph(
+                f"<b>EXONERADO.</b> {escape(str(motivo))}",
+                self._body_style,
+            ))
+
+            chequeos = data.get("exoneraciones_aplicables") or []
+            if chequeos:
+                story.append(Spacer(1, 3 * mm))
+                story.append(Paragraph("Causas:", self._body_style))
+                for chk in chequeos:
+                    chk_label = escape(str(chk.get("chequeo", "")))
+                    chk_motivo = escape(str(chk.get("motivo", "")))
+                    story.append(Paragraph(f"- <b>{chk_label}</b>: {chk_motivo}", self._body_style))
+            return
+
+        # Obligado: mostrar sumatorio anual si llega
+        resumen = data.get("resumen_anual") or {}
+        if not resumen:
+            story.append(Paragraph(
+                "Estas obligado a presentar este modelo. Para ver el sumatorio "
+                "anual con casillas, completa los 4 trimestres del Modelo 303.",
+                self._body_style,
+            ))
+            return
+
+        # IVA Devengado anual
+        devengado_rows: List[Tuple[str, str, float]] = []
+        if resumen.get("cuota_devengada_4"):
+            devengado_rows.append(("", "Cuota IVA 4% anual", resumen["cuota_devengada_4"]))
+        if resumen.get("cuota_devengada_10"):
+            devengado_rows.append(("", "Cuota IVA 10% anual", resumen["cuota_devengada_10"]))
+        if resumen.get("cuota_devengada_21"):
+            devengado_rows.append(("", "Cuota IVA 21% anual", resumen["cuota_devengada_21"]))
+        if resumen.get("cuota_devengada_intra"):
+            devengado_rows.append(("", "Adquisiciones intracomunitarias", resumen["cuota_devengada_intra"]))
+        if resumen.get("cuota_devengada_isp"):
+            devengado_rows.append(("", "Inversion sujeto pasivo", resumen["cuota_devengada_isp"]))
+        devengado_rows.append(("", "Total IVA devengado anual", resumen.get("total_devengado_anual", 0)))
+        self._render_casillas_table(story, devengado_rows, "IVA Devengado anual (sumatorio 303)")
+
+        # IVA Deducible anual
+        deducible_rows: List[Tuple[str, str, float]] = []
+        if resumen.get("cuota_deducible_corrientes"):
+            deducible_rows.append(("", "Bienes y servicios corrientes", resumen["cuota_deducible_corrientes"]))
+        if resumen.get("cuota_deducible_inversion"):
+            deducible_rows.append(("", "Bienes de inversion", resumen["cuota_deducible_inversion"]))
+        if resumen.get("cuota_deducible_importaciones"):
+            deducible_rows.append(("", "Importaciones", resumen["cuota_deducible_importaciones"]))
+        if resumen.get("cuota_deducible_intra"):
+            deducible_rows.append(("", "Adquisiciones intracomunitarias", resumen["cuota_deducible_intra"]))
+        deducible_rows.append(("", "Total IVA deducible anual", resumen.get("total_deducible_anual", 0)))
+        self._render_casillas_table(story, deducible_rows, "IVA Deducible anual (sumatorio 303)")
+
+        # Resultado liquidacion anual
+        resultado_anual = resumen.get("resultado_liquidacion_anual", 0)
+        self._render_resultado(story, "Resultado liquidacion anual", resultado_anual)
+
+    # ------------------------------------------------------------------ #
+    # Modelo 349 — Declaracion recapitulativa intracomunitaria
+    # ------------------------------------------------------------------ #
+
+    def _render_modelo_349(self, story: list, data: dict):
+        """Render Modelo 349 layout: periodicidad + resumen por clave + cuadre 303."""
+        from reportlab.lib.units import mm
+        from reportlab.platypus import Paragraph, Spacer
+
+        # Periodicidad y plazo
+        periodicidad = data.get("periodicidad", "trimestral")
+        periodo = data.get("periodo", "")
+        plazo = data.get("plazo", "")
+        motivo = data.get("periodicidad_motivo", "")
+        ccaa = data.get("ccaa") or "Territorio comun"
+
+        meta_rows: List[Tuple[str, str]] = [
+            ("Periodicidad", str(periodicidad).capitalize()),
+            ("Periodo declarado", str(periodo)),
+            ("Plazo de presentacion", str(plazo)),
+            ("Territorio del declarante", str(ccaa)),
+        ]
+        if motivo:
+            meta_rows.append(("Motivo de la periodicidad", str(motivo)))
+        self._simple_section_table(story, "Datos de la declaracion", meta_rows)
+
+        # Totales agregados
+        totales = data.get("totales", {})
+        if totales:
+            tot_rows: List[Tuple[str, str, float]] = [
+                ("E+T+M+H", "Entregas intracomunitarias de bienes",
+                 float(totales.get("entregas_bienes", 0))),
+                ("A", "Adquisiciones intracomunitarias de bienes",
+                 float(totales.get("adquisiciones_bienes", 0))),
+                ("S", "Prestaciones intracomunitarias de servicios",
+                 float(totales.get("servicios_prestados", 0))),
+                ("I", "Adquisiciones intracomunitarias de servicios",
+                 float(totales.get("servicios_adquiridos", 0))),
+                ("R+D+C", "Operaciones de consignacion (call-off stock)",
+                 float(totales.get("consignacion", 0))),
+                ("N", "Rectificaciones de periodos anteriores",
+                 float(totales.get("rectificaciones", 0))),
+                ("", "Volumen relevante (umbral 50.000 EUR)",
+                 float(totales.get("volumen_relevante", 0))),
+                ("", "Total general (todas las claves)",
+                 float(totales.get("total_general", 0))),
+            ]
+            self._render_casillas_table(story, tot_rows, "Totales agregados por clave")
+
+        # Detalle por clave (n_operaciones / n_operadores)
+        resumen = data.get("resumen") or {}
+        por_clave = resumen.get("por_clave") or {}
+        if por_clave:
+            from xml.sax.saxutils import escape as _esc
+
+            labels = {
+                "E": "Entregas bienes (Art. 25 LIVA)",
+                "A": "Adquisiciones bienes",
+                "T": "Triangular",
+                "S": "Servicios prestados (Art. 69.uno.1 LIVA)",
+                "I": "Servicios adquiridos",
+                "M": "Tras importacion",
+                "H": "Representante en M",
+                "R": "Transferencia consignacion",
+                "D": "Devolucion consignacion",
+                "C": "Sustitucion consignacion",
+                "N": "Rectificacion",
+            }
+            detalle_rows: List[Tuple[str, str]] = []
+            for clave, info in por_clave.items():
+                if info.get("n_operaciones", 0) <= 0:
+                    continue
+                detalle_rows.append((
+                    f"[{clave}] {_esc(labels.get(clave, clave))}",
+                    f"{info.get('importe', 0):,.2f} EUR — {info.get('n_operaciones', 0)} ops "
+                    f"/ {info.get('n_operadores', 0)} operadores",
+                ))
+            if detalle_rows:
+                self._simple_section_table(story, "Detalle por clave de operacion", detalle_rows)
+
+        # Avisos NIF / VIES
+        formato_inv = data.get("formato_invalidos") or []
+        vies_warnings = data.get("vies_warnings") or []
+        if formato_inv or vies_warnings:
+            story.append(Spacer(1, 4 * mm))
+            story.append(Paragraph("Avisos sobre operadores", self._heading_style))
+            for v in formato_inv:
+                story.append(Paragraph(
+                    f"- NIF-IVA con formato invalido: {v.get('nif_iva')} "
+                    f"({v.get('country') or 's/p'}): {v.get('motivo') or ''}",
+                    self._body_style,
+                ))
+            for w in vies_warnings:
+                story.append(Paragraph(f"- {w}", self._body_style))
+
+        # Cuadre 303
+        cuadre = data.get("cuadre_303")
+        if cuadre:
+            story.append(Spacer(1, 4 * mm))
+            story.append(Paragraph("Cuadre 303 <-> 349", self._heading_style))
+            if cuadre.get("cuadre_ok"):
+                story.append(Paragraph(
+                    "Cuadre OK (diferencias dentro de tolerancia 0,5 EUR).",
+                    self._body_style,
+                ))
+            else:
+                for w in cuadre.get("warnings", []) or []:
+                    story.append(Paragraph(f"- {w}", self._body_style))
+
+        # Resultado highlight (en 349 no hay cuota, mostramos volumen relevante)
+        volumen = float((totales or {}).get("volumen_relevante", 0))
+        self._render_resultado(story, "Volumen intracomunitario declarado", volumen)
+
+    # ------------------------------------------------------------------ #
+    # Placeholder stub — Modelos en desarrollo (100, 131, 309, 420)
+    # ------------------------------------------------------------------ #
+
+    def _render_placeholder(
+        self,
+        story: list,
+        modelo_type: str,
+        data: dict,
+        user_info: dict,
+        trimestre: str,
+        ejercicio: int,
+    ):
+        """
+        Render a minimal placeholder PDF for modelos in development.
+
+        Includes header (already rendered upstream), basic user data,
+        period info, and a clear "in development" notice with AEAT pointer.
+        """
+        from reportlab.lib.units import mm
+        from reportlab.platypus import Paragraph, Spacer
+        from xml.sax.saxutils import escape
+
+        modelo_label = MODELO_NAMES.get(modelo_type, f"Modelo {modelo_type}")
+
+        # Aviso destacado de borrador en desarrollo
+        story.append(Paragraph("Estado del documento", self._heading_style))
+        notice = (
+            f"<b>Modelo {escape(modelo_type.upper())} — Borrador en desarrollo.</b> "
+            "Esta funcionalidad estará disponible próximamente. "
+            "Para presentación oficial, acude a Sede Electrónica AEAT "
+            "(<a href='https://sede.agenciatributaria.gob.es'>sede.agenciatributaria.gob.es</a>)."
+        )
+        story.append(Paragraph(notice, self._body_style))
+        story.append(Spacer(1, 6 * mm))
+
+        # Datos básicos del usuario y periodo (recapitulación visible)
+        nif = escape((user_info or {}).get("nif", "") or "—")
+        nombre = escape((user_info or {}).get("nombre", "") or "—")
+
+        rows_data: List[Tuple[str, str]] = [
+            ("Modelo", f"{escape(modelo_type.upper())} — {escape(modelo_label)}"),
+            ("Nombre / Razón social", nombre),
+            ("NIF / CIF", nif),
+            ("Ejercicio", str(ejercicio)),
+            ("Periodo", escape(str(trimestre))),
+        ]
+
+        # Si llegan datos extra del caller (por ejemplo CCAA/ regimen), reflejarlos
+        if isinstance(data, dict):
+            for key in ("ccaa", "regimen", "actividad", "epigrafe_iae"):
+                val = data.get(key)
+                if val:
+                    rows_data.append((key.replace("_", " ").capitalize(), escape(str(val))))
+
+        self._simple_section_table(story, "Datos básicos", rows_data)
+
+        # Nota técnica para el usuario
+        story.append(Spacer(1, 6 * mm))
+        story.append(Paragraph(
+            "Este documento es un borrador placeholder generado por Impuestify mientras "
+            "se finaliza la implementación específica de este modelo. La estructura final "
+            "de casillas, casos especiales y validaciones será incorporada en próximas "
+            "versiones.",
+            self._small_style,
+        ))

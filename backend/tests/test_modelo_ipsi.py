@@ -281,7 +281,7 @@ class TestIpsiCalculatorDeducible:
 
     @pytest.mark.asyncio
     async def test_all_deducible_concepts(self, calculator):
-        """All deductible concepts."""
+        """All deductible concepts (regularizacion_prorrata only applies in Q4)."""
         result = await calculator.calculate(
             territorio="Ceuta",
             base_4=50000,
@@ -291,8 +291,8 @@ class TestIpsiCalculatorDeducible:
             cuota_importaciones_inversion=50,
             rectificacion_deducciones=-30,
             regularizacion_inversion=20,
-            regularizacion_prorrata=10,  # ignored, not Q4
-            quarter=1,
+            regularizacion_prorrata=10,  # solo valido en Q4
+            quarter=4,
         )
         # Total deducible: 300 + 200 + 100 + 50 + (-30) + 20 + 10 = 650
         assert result["total_deducible"] == 650.0
@@ -456,3 +456,123 @@ class TestIpsiToolDefinition:
     def test_tool_in_executors(self):
         from app.tools import TOOL_EXECUTORS
         assert "calculate_modelo_ipsi" in TOOL_EXECUTORS
+
+
+# ---------------------------------------------------------------------------
+# Bug 97 — auditoria sesion 40 (P0)
+# ---------------------------------------------------------------------------
+class TestIpsiBug97AuditFixes:
+    """Regresion para los 3 bugs P0 detectados en la auditoria IPSI 2026-05."""
+
+    # 1. regularizacion_prorrata solo Q4
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("trimestre", [1, 2, 3])
+    async def test_regularizacion_prorrata_raises_outside_q4(
+        self, calculator, trimestre
+    ):
+        """En Q1/Q2/Q3, aplicar regularizacion_prorrata debe lanzar ValueError."""
+        with pytest.raises(ValueError, match="regularizacion_prorrata"):
+            await calculator.calculate(
+                territorio="Ceuta",
+                base_4=10000,
+                regularizacion_prorrata=100,
+                quarter=trimestre,
+            )
+
+    @pytest.mark.asyncio
+    async def test_regularizacion_prorrata_allowed_in_q4(self, calculator):
+        """En Q4, regularizacion_prorrata debe sumarse al total deducible."""
+        result = await calculator.calculate(
+            territorio="Melilla",
+            base_4=10000,
+            cuota_corrientes_interiores=200,
+            regularizacion_prorrata=50,
+            quarter=4,
+        )
+        # 200 + 50 = 250
+        assert result["total_deducible"] == 250.0
+
+    @pytest.mark.asyncio
+    async def test_regularizacion_prorrata_zero_outside_q4_ok(self, calculator):
+        """Pasar regularizacion_prorrata=0 fuera de Q4 NO debe lanzar."""
+        result = await calculator.calculate(
+            territorio="Ceuta",
+            base_4=10000,
+            regularizacion_prorrata=0,
+            quarter=2,
+        )
+        assert result["total_deducible"] == 0.0
+
+    # 2. Mensaje plazo T4 — vence 30 enero, no 20 mes siguiente
+    @pytest.mark.asyncio
+    async def test_t4_plazo_message_30_enero(self):
+        """Tool T4 con resultado a ingresar debe citar plazo correcto (30 enero)."""
+        from app.tools.modelo_ipsi_tool import calculate_modelo_ipsi_tool
+
+        result = await calculate_modelo_ipsi_tool(
+            territorio="Ceuta",
+            trimestre=4,
+            base_4=10000,
+            ipsi_deducible=0,
+            year=2025,
+        )
+        resp = result["formatted_response"]
+        assert "30 de enero de 2026" in resp
+        # Debe NO contener la frase incorrecta antigua
+        assert "antes del dia 20 del mes siguiente" not in resp
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "trimestre,expected_plazo",
+        [
+            (1, "del 1 al 20 de abril"),
+            (2, "del 1 al 20 de julio"),
+            (3, "del 1 al 20 de octubre"),
+        ],
+    )
+    async def test_t1_t2_t3_plazo_correctos(self, trimestre, expected_plazo):
+        """Tool Q1-Q3 con resultado a ingresar debe citar plazo correcto."""
+        from app.tools.modelo_ipsi_tool import calculate_modelo_ipsi_tool
+
+        result = await calculate_modelo_ipsi_tool(
+            territorio="Melilla",
+            trimestre=trimestre,
+            base_4=10000,
+            ipsi_deducible=0,
+            year=2025,
+        )
+        assert expected_plazo in result["formatted_response"]
+
+    # 3. restricted_mode no debe bloquear casos de Particular legitimos
+    @pytest.mark.asyncio
+    async def test_restricted_mode_allows_compraventa_inmueble(self):
+        """Particular en compraventa de vivienda Ceuta/Melilla NO debe bloquearse."""
+        from app.tools.modelo_ipsi_tool import calculate_modelo_ipsi_tool
+
+        result = await calculate_modelo_ipsi_tool(
+            territorio="Melilla",
+            trimestre=2,
+            base_4=200000,
+            ipsi_deducible=0,
+            restricted_mode=True,
+            caso="compraventa_inmueble",
+        )
+        assert result["success"] is True
+        # 200000 * 0.04 = 8000
+        assert result["total_devengado"] == 8000.0
+
+    @pytest.mark.asyncio
+    async def test_restricted_mode_still_blocks_general_case(self):
+        """El bloqueo sigue activo para caso general (autonomo) en restricted_mode."""
+        from app.tools.modelo_ipsi_tool import calculate_modelo_ipsi_tool
+
+        result = await calculate_modelo_ipsi_tool(
+            territorio="Ceuta",
+            trimestre=1,
+            base_4=10000,
+            ipsi_deducible=0,
+            restricted_mode=True,
+            # caso por defecto = "general"
+        )
+        assert result["success"] is False
+        assert result["error"] == "restricted"

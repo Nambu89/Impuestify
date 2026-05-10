@@ -237,6 +237,27 @@ AHORRO_AUTONOMICO_2024 = [
     (5, 999999, 35940, 699999, 14),
 ]
 
+# Escala estatal del ahorro 2025 (LIRPF art.66.1, redacción Ley 7/2024 vigente desde 1-ene-2025)
+# Confirmado por AEAT INFORMA enero 2025: el último tramo (>300.000 EUR) se eleva del 14% al 15%.
+# Ceuta/Melilla heredan esta escala vía ESTATAL_SCALE_JURISDICTIONS.
+AHORRO_ESTATAL_2025 = [
+    (1, 6000, 0, 6000, 9.5),
+    (2, 50000, 570, 44000, 10.5),
+    (3, 200000, 5190, 150000, 11.5),
+    (4, 300000, 22440, 100000, 13.5),
+    (5, 999999, 35940, 699999, 15),  # Ley 7/2024: 14% → 15%
+]
+
+# Escala autonómica del ahorro 2025 (LIRPF art.76, redacción Ley 7/2024)
+# Réplica de la estatal para CCAAs de régimen común.
+AHORRO_AUTONOMICO_2025 = [
+    (1, 6000, 0, 6000, 9.5),
+    (2, 50000, 570, 44000, 10.5),
+    (3, 200000, 5190, 150000, 11.5),
+    (4, 300000, 22440, 100000, 13.5),
+    (5, 999999, 35940, 699999, 15),  # Ley 7/2024: 14% → 15%
+]
+
 
 async def populate():
     """Populate tax_parameters and ahorro scales."""
@@ -443,18 +464,32 @@ async def populate():
     dup_count = dup_result.rows[0]["cnt"] if dup_result.rows else 0
     print(f"  ✓ {dup_count} parámetros duplicados a 2025")
 
-    print("\n📅 Duplicating irpf_scales ahorro from 2024 → 2025...")
+    # Escala del ahorro 2025: NO duplicar literalmente desde 2024.
+    # Ley 7/2024 (vigente 1-ene-2025, AEAT INFORMA enero 2025) eleva el último tramo
+    # (>300.000 EUR) del 14% al 15% en estatal y autonómica complementaria.
+    print("\n📅 Inserting irpf_scales ahorro 2025 (Ley 7/2024)...")
     await db.execute("DELETE FROM irpf_scales WHERE year = 2025 AND scale_type = 'ahorro'")
-    await db.execute("""
-        INSERT INTO irpf_scales (id, jurisdiction, year, scale_type, tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable)
-        SELECT
-            lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(2)) || '-' || hex(randomblob(6))),
-            jurisdiction, 2025, scale_type, tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable
-        FROM irpf_scales WHERE year = 2024 AND scale_type = 'ahorro'
-    """)
-    dup_result = await db.execute("SELECT COUNT(*) as cnt FROM irpf_scales WHERE year = 2025 AND scale_type = 'ahorro'")
-    dup_count = dup_result.rows[0]["cnt"] if dup_result.rows else 0
-    print(f"  ✓ {dup_count} filas ahorro duplicadas a 2025")
+    ahorro_2025_inserted = 0
+    for tramo_num, base_hasta, cuota_integra, resto_base, tipo in AHORRO_ESTATAL_2025:
+        await db.execute(
+            "INSERT INTO irpf_scales (id, jurisdiction, year, scale_type, tramo_num, "
+            "base_hasta, cuota_integra, resto_base, tipo_aplicable) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [str(uuid.uuid4()), "Estatal", 2025, "ahorro", tramo_num,
+             base_hasta, cuota_integra, resto_base, tipo]
+        )
+        ahorro_2025_inserted += 1
+    for ccaa in ccaa_regimen_comun:
+        for tramo_num, base_hasta, cuota_integra, resto_base, tipo in AHORRO_AUTONOMICO_2025:
+            await db.execute(
+                "INSERT INTO irpf_scales (id, jurisdiction, year, scale_type, tramo_num, "
+                "base_hasta, cuota_integra, resto_base, tipo_aplicable) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [str(uuid.uuid4()), ccaa, 2025, "ahorro", tramo_num,
+                 base_hasta, cuota_integra, resto_base, tipo]
+            )
+            ahorro_2025_inserted += 1
+    print(f"  ✓ {ahorro_2025_inserted} filas ahorro 2025 (estatal + {len(ccaa_regimen_comun)} CCAAs) — top bracket 15%")
 
     await db.disconnect()
     print(f"\n{'='*60}")
