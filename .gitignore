@@ -11,11 +11,8 @@ mark_admin.sql
 local.db*
 /data/
 /cache/
-/docs/
-!/docs/incident-response/
-!/docs/incident-response/**
-!/docs/compliance/
-!/docs/compliance/**
+/docs/*
+!/docs/audits/
 /plans/
 
 # notebooks checkpoints
@@ -170,3 +167,6 @@ implementation_plan.md.resolved
 
 # Benchmarks scrapeados de webs de terceros (solo uso interno)
 docs/ayudat_legal_scrape/
+
+# Vídeos marketing HyperFrames (local, no van a producción)
+videos/
