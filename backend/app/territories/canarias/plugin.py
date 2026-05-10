@@ -90,6 +90,72 @@ class CanariasTerritory(TerritoryPlugin):
                 organismo="ATC",
             ))
 
+        # AIEM (Modelo 450) — productores canarios con bienes en lista AIEM.
+        # Heuristica conservadora: el plugin lo añade si el perfil declara
+        # explicitamente `produce_bienes_aiem=True` o tiene `epigrafe_iae`
+        # registrado en `AIEM_TIPOS_POR_EPIGRAFE`. Asi evitamos falsos
+        # positivos para autonomos de servicios (que NO tributan AIEM).
+        if situacion in ("autonomo", "sociedad"):
+            produce_aiem = profile.get("produce_bienes_aiem", False)
+            epigrafes = profile.get("epigrafes_iae") or []
+            if not isinstance(epigrafes, list):
+                epigrafes = [epigrafes]
+            if not produce_aiem and epigrafes:
+                from app.utils.calculators.modelo_450 import lookup_tipo_aiem
+                produce_aiem = any(
+                    lookup_tipo_aiem(str(e)) is not None for e in epigrafes
+                )
+
+            if produce_aiem:
+                obligations.append(ModelObligation(
+                    modelo="450",
+                    nombre="Modelo 450 - AIEM trimestral",
+                    descripcion=(
+                        "Autoliquidacion trimestral del Arbitrio sobre "
+                        "Importaciones y Entregas de Mercancias en Canarias "
+                        "(productores en lista AIEM, Anexo IV TR Decreto "
+                        "Legislativo 1/2025)."
+                    ),
+                    periodicidad="trimestral",
+                    aplica_si=situacion,
+                    obligatorio=True,
+                    deadlines=_trimestral_deadlines("450"),
+                    organismo="ATC",
+                    notas=(
+                        "Tipos AIEM 5/10/15/25 %. Plazo T4: 1-30 enero ano "
+                        "siguiente. Impuesto monofasico — solo lo paga el "
+                        "productor. Importaciones se liquidan en aduana via DUA."
+                    ),
+                ))
+
+        # AIEM ZEC (Modelo 455) — entidades ZEC con autorizacion para
+        # producir/entregar mercancias. Requiere flag explicito `regimen_zec`.
+        if situacion == "sociedad" and profile.get("regimen_zec", False):
+            obligations.append(ModelObligation(
+                modelo="455",
+                nombre="Modelo 455 - AIEM ZEC anual",
+                descripcion=(
+                    "Autoliquidacion anual del AIEM para entidades ZEC "
+                    "(Zona Especial Canaria) con autorizacion para producir / "
+                    "entregar mercancias en Canarias."
+                ),
+                periodicidad="anual",
+                aplica_si="sociedad",
+                obligatorio=True,
+                deadlines=[Deadline(
+                    modelo="455",
+                    description="Modelo 455 - AIEM ZEC anual",
+                    date="2026-01-30",
+                    period="annual",
+                )],
+                organismo="ATC",
+                notas=(
+                    "Periodicidad ANUAL (1-30 enero ano siguiente). Requiere "
+                    "autorizacion previa del Consorcio ZEC (Ley 19/1994). "
+                    "Tipos AIEM 5/10/15/25 %."
+                ),
+            ))
+
         return obligations
 
     def get_rag_filters(self, ccaa: str) -> Dict[str, Any]:

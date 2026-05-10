@@ -206,20 +206,21 @@ class TestModeloPDFGenerator:
 class TestModeloPDFPlaceholders:
     """Verify placeholder PDFs for modelos still under development."""
 
-    def test_valid_modelos_set_has_13(self):
-        """VALID_MODELOS = full (10) + placeholder (3) = 13.
+    def test_valid_modelos_set_has_15(self):
+        """VALID_MODELOS = full (10) + placeholder (5) = 15.
 
         Updated 2026-05: Modelos 131, 349, 390 ascendidos a FULL.
+        Updated 2026-05 (sesion 40): AIEM 450 + 455 anadidos como placeholders.
         """
         assert len(FULL_MODELOS) == 10
-        assert len(PLACEHOLDER_MODELOS) == 3
-        assert len(VALID_MODELOS) == 13
+        assert len(PLACEHOLDER_MODELOS) == 5
+        assert len(VALID_MODELOS) == 15
         assert FULL_MODELOS.isdisjoint(PLACEHOLDER_MODELOS)
 
     def test_placeholder_modelos_expected(self):
         """Placeholder set must include all anunciados pendientes."""
         assert PLACEHOLDER_MODELOS == {
-            "100", "309", "420",
+            "100", "309", "420", "450", "455",
         }
 
     @pytest.mark.parametrize("modelo", sorted(PLACEHOLDER_MODELOS))
