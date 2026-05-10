@@ -5,7 +5,7 @@ Generates informational PDFs with calculated casilla data for
 Spanish tax form models (Modelos Tributarios).
 
 Fully implemented: 303, 130, 131, 200, 308, 349, 390, 720, 721, IPSI.
-Placeholder stubs (under development): 100, 309, 420.
+Placeholder stubs (under development): 100, 309, 420, 450, 455.
 """
 import io
 import logging
@@ -30,6 +30,8 @@ MODELO_NAMES: Dict[str, str] = {
     "349": "Declaración recapitulativa de operaciones intracomunitarias",
     "390": "Resumen anual del IVA",
     "420": "Autoliquidación IGIC (Canarias)",
+    "450": "AIEM — Autoliquidación trimestral productores (Canarias)",
+    "455": "AIEM ZEC — Autoliquidación anual operadores ZEC (Canarias)",
 }
 
 # Foral variant names
@@ -37,13 +39,20 @@ FORAL_NAMES: Dict[str, str] = {
     "300": "Modelo 300 — Autoliquidación IVA (Gipuzkoa)",
     "F69": "Modelo F69 — Autoliquidación IVA (Navarra)",
     "420": "Modelo 420 — Autoliquidación IGIC (Canarias)",
+    "130-bizkaia": "Modelo 130 Bizkaia — Pago Fraccionado IRPF",
+    "130-gipuzkoa": "Modelo 130 Gipuzkoa — Pago Fraccionado IRPF",
+    "130-araba": "Modelo 130 Araba/Álava — Pago Fraccionado IRPF",
+    "130-navarra": "Modelo 130 Navarra — Pago Fraccionado IRPF",
 }
+
+# Variantes forales del Modelo 130 admitidas en `user_info["variante_foral"]`
+MODELO_130_FORAL_VARIANTS = {"130-bizkaia", "130-gipuzkoa", "130-araba", "130-navarra"}
 
 # Modelos con render completo
 FULL_MODELOS = {"303", "130", "131", "200", "308", "349", "390", "720", "721", "ipsi"}
 
 # Modelos en desarrollo — devuelven PDF placeholder mínimo
-PLACEHOLDER_MODELOS = {"100", "309", "420"}
+PLACEHOLDER_MODELOS = {"100", "309", "420", "450", "455"}
 
 VALID_MODELOS = FULL_MODELOS | PLACEHOLDER_MODELOS
 
@@ -516,7 +525,19 @@ class ModeloPDFGenerator:
     # ------------------------------------------------------------------ #
 
     def _render_130(self, story: list, data: dict):
-        """Render Modelo 130 layout: Sections I-IV."""
+        """Render Modelo 130 layout: Sections I-IV.
+
+        If `data["variante_foral"]` is one of the foral 130 variants
+        ("130-bizkaia", "130-gipuzkoa", "130-araba", "130-navarra"), the foral
+        renderer is used instead. The foral payload is the dict returned by
+        :func:`calculate_modelo_130_foral_tool` (contains `casillas`,
+        `regimen` / `modalidad`, `tipo_aplicado`, `plazo`, `resultado_final`).
+        """
+        variante = (data or {}).get("variante_foral")
+        if variante in MODELO_130_FORAL_VARIANTS:
+            self._render_130_foral(story, data, variante)
+            return
+
         seccion_i = data.get("seccion_i", {})
 
         # Section I
@@ -553,6 +574,140 @@ class ModeloPDFGenerator:
         # Resultado
         resultado_final = data.get("resultado_final", 0)
         self._render_resultado(story, "Resultado a ingresar", resultado_final)
+
+    # ------------------------------------------------------------------ #
+    # Modelo 130 — Variantes Forales (Bizkaia / Gipuzkoa / Araba / Navarra)
+    # ------------------------------------------------------------------ #
+
+    _FORAL_130_LABELS: Dict[str, str] = {
+        "130-bizkaia": "Modelo 130 Bizkaia",
+        "130-gipuzkoa": "Modelo 130 Gipuzkoa",
+        "130-araba": "Modelo 130 Araba/Álava",
+        "130-navarra": "Modelo 130 Navarra",
+    }
+
+    # Etiquetas humanas para las casillas devueltas por cada calculator foral.
+    # Si una clave no aparece aquí, se muestra tal cual (con underscores).
+    _FORAL_130_CASILLA_LABELS: Dict[str, str] = {
+        # Bizkaia general / excepcional
+        "01_base_calculo": "Base de cálculo",
+        "02_tipo_aplicable_pct": "Tipo aplicable (%)",
+        "03_cuota_base": "Cuota base",
+        "04_retenciones_penultimo": "Retenciones penúltimo año",
+        "05_minoracion_25pct_retenciones": "Minoración 25% retenciones",
+        "06_resultado_pago_fraccionado": "Resultado pago fraccionado",
+        # Bizkaia primeros 2 años
+        "01_ingresos_acumulados": "Ingresos acumulados",
+        "02_gastos_acumulados": "Gastos acumulados",
+        "03_rendimiento_neto_acumulado": "Rendimiento neto acumulado",
+        "04_cuota_20pct": "Cuota 20%",
+        "05_retenciones_acumuladas": "Retenciones acumuladas",
+        "06_pagos_anteriores": "Pagos fraccionados anteriores",
+        "07_resultado_pago_fraccionado": "Resultado pago fraccionado",
+        # Gipuzkoa general
+        "01_rend_neto_penultimo": "Rendimiento neto penúltimo año",
+        # Gipuzkoa excepcional
+        "01_volumen_operaciones_trimestre": "Volumen operaciones trimestre",
+        "04_retenciones_trimestre": "Retenciones del trimestre",
+        "05_resultado_pago_fraccionado": "Resultado pago fraccionado",
+        # Araba
+        "01_ingresos_trimestre": "Ingresos del trimestre",
+        "02_gastos_trimestre": "Gastos del trimestre",
+        "03_rendimiento_neto_trimestral": "Rendimiento neto trimestral",
+        "04_cuota_5pct": "Cuota 5%",
+        "05_retenciones_trimestre": "Retenciones del trimestre",
+        # Navarra modalidad primera (casillas oficiales 131-140)
+        "131_rend_neto_penultimo": "Rendimiento neto penúltimo año",
+        "132_porcentaje_tabla": "% tabla progresiva",
+        "133_cuota_anual": "Cuota anual",
+        "134_retenciones_penultimo": "Retenciones penúltimo año",
+        "135_cuota_neta_anual": "Cuota neta anual",
+        "140_pago_trimestral": "Pago trimestral",
+        # Navarra modalidad segunda (casillas oficiales 01-15)
+        "04_factor_anualizacion": "Factor anualización",
+        "05_rendimiento_neto_anualizado": "Rendimiento neto anualizado",
+        "06_porcentaje_tabla": "% tabla progresiva",
+        "07_retenciones_acumuladas": "Retenciones acumuladas",
+        "08_pagos_anteriores": "Pagos fraccionados anteriores",
+        "10_cuota_sobre_rend_real": "Cuota sobre rendimiento real",
+        "15_resultado_pago_fraccionado": "Resultado pago fraccionado",
+    }
+
+    def _render_130_foral(self, story: list, data: dict, variante: str):
+        """
+        Render una variante foral del Modelo 130.
+
+        Args:
+            data: Dict devuelto por `calculate_modelo_130_foral_tool` que
+                contiene `casillas`, `tipo_aplicado`, `regimen` / `modalidad`,
+                `plazo`, `resultado_final`.
+            variante: Una de las claves de `MODELO_130_FORAL_VARIANTS`.
+        """
+        from reportlab.lib.units import mm
+        from reportlab.platypus import Paragraph, Spacer
+
+        # ---- Cabecera con régimen / modalidad ----
+        territorio_label = self._FORAL_130_LABELS.get(variante, "Modelo 130 Foral")
+
+        if data.get("dispensado"):
+            self._render_resultado(
+                story,
+                f"{territorio_label} — DISPENSA DE PRESENTACIÓN",
+                0.0,
+            )
+            disclaimer = (
+                f"Con un {data.get('pct_retencion_anio_anterior', 0):.1f}% de "
+                f"retención el año anterior (umbral aplicable "
+                f"{data.get('umbral_dispensa_pct', 0):.0f}%), no estás "
+                f"obligado a presentar el Modelo 130 este trimestre."
+            )
+            story.append(Spacer(1, 4 * mm))
+            story.append(Paragraph(disclaimer, self._body_style))
+            return
+
+        regimen_modalidad: List[str] = []
+        if data.get("regimen"):
+            regimen_modalidad.append(f"Régimen: <b>{data['regimen']}</b>")
+        if data.get("modalidad"):
+            regimen_modalidad.append(f"Modalidad: <b>{data['modalidad']}</b>")
+        tipo = data.get("tipo_aplicado")
+        if tipo is not None:
+            regimen_modalidad.append(f"Tipo aplicado: <b>{tipo}%</b>")
+
+        if regimen_modalidad:
+            story.append(Paragraph(" — ".join(regimen_modalidad), self._body_style))
+            story.append(Spacer(1, 3 * mm))
+
+        # ---- Tabla de casillas ----
+        casillas = data.get("casillas", {})
+        rows: List[Tuple[str, str, float]] = []
+        for key, value in casillas.items():
+            # key formato "NN_descripcion" → numero + label legible
+            num, _, _ = key.partition("_")
+            label = self._FORAL_130_CASILLA_LABELS.get(key, key.replace("_", " "))
+            try:
+                amount = float(value)
+            except (TypeError, ValueError):
+                amount = 0.0
+            rows.append((num, label, amount))
+
+        if rows:
+            self._render_casillas_table(
+                story, rows, f"{territorio_label} — Casillas",
+            )
+
+        # ---- Resultado ----
+        resultado_final = data.get("resultado_final", 0)
+        self._render_resultado(story, "Resultado a ingresar", resultado_final)
+
+        # ---- Plazo informativo ----
+        plazo = data.get("plazo")
+        if plazo:
+            story.append(Spacer(1, 3 * mm))
+            story.append(Paragraph(
+                f"Plazo de presentación: <b>{plazo}</b>.",
+                self._small_style,
+            ))
 
     # ------------------------------------------------------------------ #
     # Modelo 131 — Pago Fraccionado IRPF Estimación Objetiva (Módulos)

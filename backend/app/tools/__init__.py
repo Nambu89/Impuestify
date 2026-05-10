@@ -10,6 +10,10 @@ from app.tools.search_tool import SEARCH_TAX_REGULATIONS_TOOL, search_tax_regula
 from app.tools.payslip_analysis_tool import PAYSLIP_ANALYSIS_TOOL, analyze_payslip_tool
 from app.tools.modelo_303_tool import MODELO_303_TOOL, calculate_modelo_303_tool
 from app.tools.modelo_130_tool import MODELO_130_TOOL, calculate_modelo_130_tool
+from app.tools.modelo_130_foral_tool import (
+	MODELO_130_FORAL_TOOL,
+	calculate_modelo_130_foral_tool,
+)
 from app.tools.modelo_131_tool import MODELO_131_TOOL, calculate_modelo_131_tool
 from app.tools.modelo_390_tool import MODELO_390_TOOL, calculate_modelo_390_tool
 from app.tools.modelo_349_tool import MODELO_349_TOOL, calculate_modelo_349_tool
@@ -28,6 +32,8 @@ from app.tools.plusvalia_municipal_tool import PLUSVALIA_MUNICIPAL_TOOL, calcula
 from app.tools.modelo_308_tool import MODELO_308_TOOL, calculate_modelo_308_tool
 from app.tools.modelo_309_tool import MODELO_309_TOOL, calculate_modelo_309_tool
 from app.tools.is_simulator_tool import IS_SIMULATOR_TOOL, simulate_is_tool
+from app.tools.modelo_450_tool import MODELO_450_TOOL, calculate_modelo_450_tool
+from app.tools.modelo_455_tool import MODELO_455_TOOL, calculate_modelo_455_tool
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)
@@ -40,6 +46,7 @@ ALL_TOOLS = [
 	PAYSLIP_ANALYSIS_TOOL,
 	MODELO_303_TOOL,
 	MODELO_130_TOOL,
+	MODELO_130_FORAL_TOOL,
 	MODELO_131_TOOL,
 	MODELO_390_TOOL,
 	MODELO_349_TOOL,
@@ -58,6 +65,8 @@ ALL_TOOLS = [
 	MODELO_308_TOOL,
 	MODELO_309_TOOL,
 	IS_SIMULATOR_TOOL,
+	MODELO_450_TOOL,
+	MODELO_455_TOOL,
 ]
 
 # Registry of tool execution functions
@@ -69,6 +78,7 @@ TOOL_EXECUTORS = {
 	"analyze_payslip": analyze_payslip_tool,
 	"calculate_modelo_303": calculate_modelo_303_tool,
 	"calculate_modelo_130": calculate_modelo_130_tool,
+	"calculate_modelo_130_foral": calculate_modelo_130_foral_tool,
 	"calculate_modelo_131": calculate_modelo_131_tool,
 	"calculate_modelo_390": calculate_modelo_390_tool,
 	"calculate_modelo_349": calculate_modelo_349_tool,
@@ -87,6 +97,8 @@ TOOL_EXECUTORS = {
 	"calculate_modelo_308": calculate_modelo_308_tool,
 	"calculate_modelo_309": calculate_modelo_309_tool,
 	"simulate_is": simulate_is_tool,
+	"calculate_modelo_450": calculate_modelo_450_tool,
+	"calculate_modelo_455": calculate_modelo_455_tool,
 }
 
 __all__ = [
@@ -99,6 +111,7 @@ __all__ = [
 	"PAYSLIP_ANALYSIS_TOOL",
 	"MODELO_303_TOOL",
 	"MODELO_130_TOOL",
+	"MODELO_130_FORAL_TOOL",
 	"MODELO_131_TOOL",
 	"MODELO_390_TOOL",
 	"MODELO_349_TOOL",
@@ -111,6 +124,7 @@ __all__ = [
 	"analyze_payslip_tool",
 	"calculate_modelo_303_tool",
 	"calculate_modelo_130_tool",
+	"calculate_modelo_130_foral_tool",
 	"calculate_modelo_131_tool",
 	"calculate_modelo_390_tool",
 	"calculate_modelo_349_tool",
@@ -142,4 +156,8 @@ __all__ = [
 	"calculate_modelo_309_tool",
 	"IS_SIMULATOR_TOOL",
 	"simulate_is_tool",
+	"MODELO_450_TOOL",
+	"calculate_modelo_450_tool",
+	"MODELO_455_TOOL",
+	"calculate_modelo_455_tool",
 ]
