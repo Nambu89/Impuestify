@@ -406,10 +406,189 @@ def bin_limite_pct(facturacion_anual: float) -> float:
 # Tributacion minima (Art. 30 bis LIS)
 # ---------------------------------------------------------------------------
 
-def tributacion_minima_pct(es_nueva_creacion: bool) -> float:
+def tributacion_minima_pct(
+    es_nueva_creacion: bool = False,
+    es_banca_hidrocarburos: bool = False,
+) -> float:
     """Cuota liquida minima como % de la BI (Art. 30 bis LIS, RDL 4/2024).
 
-    - 15% en general
+    - 18% para entidades de credito y exploracion/produccion hidrocarburos
     - 10% para entidades nueva creacion
+    - 15% en general
     """
-    return 10.0 if es_nueva_creacion else 15.0
+    if es_banca_hidrocarburos:
+        return 18.0
+    if es_nueva_creacion:
+        return 10.0
+    return 15.0
+
+
+# ---------------------------------------------------------------------------
+# Tributacion minima — umbrales de aplicabilidad (Art. 30 bis LIS)
+# ---------------------------------------------------------------------------
+
+# La tributacion minima Art. 30 bis aplica a:
+#  (a) Contribuyentes con INCN >= 20.000.000 EUR en los 12 meses anteriores.
+#  (b) Contribuyentes en regimen de consolidacion fiscal (cualquier INCN).
+TRIBUTACION_MINIMA_INCN_THRESHOLD: float = 20_000_000.0
+
+
+def aplica_tributacion_minima(
+    facturacion_anual: float,
+    grupo_consolidado: bool = False,
+) -> bool:
+    """Devuelve True si aplica el calculo de cuota liquida minima Art. 30 bis."""
+    if grupo_consolidado:
+        return True
+    return facturacion_anual >= TRIBUTACION_MINIMA_INCN_THRESHOLD
+
+
+# ---------------------------------------------------------------------------
+# Reserva de nivelacion (Art. 105 LIS) — solo ERD (INCN < 10M)
+# ---------------------------------------------------------------------------
+
+# Empresas de Reducida Dimension (INCN < 10M) pueden minorar BI hasta el 10%
+# de la base imponible positiva, con un maximo absoluto de 1.000.000 EUR.
+# Importe indisponible 5 anos; revierte si genera BIN posterior.
+RESERVA_NIVELACION_PCT: float = 10.0
+RESERVA_NIVELACION_MAX_EUR: float = 1_000_000.0
+ERD_INCN_THRESHOLD: float = 10_000_000.0
+
+
+def aplica_reserva_nivelacion(facturacion_anual: float) -> bool:
+    """ERD (INCN < 10.000.000 EUR) puede aplicar reserva nivelacion Art. 105."""
+    return 0 < facturacion_anual < ERD_INCN_THRESHOLD
+
+
+# ---------------------------------------------------------------------------
+# Cooperativas (Ley 20/1990)
+# ---------------------------------------------------------------------------
+
+# Cooperativas fiscalmente protegidas: 20% sobre la BI cooperativa
+# (Art. 28 Ley 20/1990).  Cooperativas de credito/seguros: 25%.
+COOPERATIVA_TIPO_PROTEGIDA: float = 20.0
+COOPERATIVA_TIPO_NO_PROTEGIDA: float = 25.0
+
+# Cooperativas especialmente protegidas: 50% bonificacion sobre cuota integra
+# (Art. 34.2 Ley 20/1990).
+COOPERATIVA_ESP_PROTEGIDA_BONIFICACION_PCT: float = 0.50
+
+
+# ---------------------------------------------------------------------------
+# I+D — exceso sobre media 2 anos anteriores (Art. 35.1.b LIS)
+# ---------------------------------------------------------------------------
+
+# Sobre el gasto I+D que supere la media de los 2 ejercicios anteriores se
+# aplica el 42% en lugar del 25% base.
+ID_PCT_EXCESO_MEDIA: float = 42.0
+
+
+# ---------------------------------------------------------------------------
+# Pago fraccionado minimo (DA 14a LIS) — INCN >= 10M, modalidad art40_3
+# ---------------------------------------------------------------------------
+
+# 23% del resultado contable positivo del periodo (con ajustes positivos).
+# 25% para entidades de credito y exploracion/produccion hidrocarburos.
+PAGO_FRACC_MINIMO_PCT_GENERAL: float = 23.0
+PAGO_FRACC_MINIMO_PCT_BANCA: float = 25.0
+PAGO_FRACC_MINIMO_INCN_THRESHOLD: float = 10_000_000.0
+
+
+# ---------------------------------------------------------------------------
+# ZEC Canarias — techo base bonificable por empleos creados (Art. 43 Ley 19/1994)
+# ---------------------------------------------------------------------------
+
+# Tipo IS ZEC: 4%.  Solo aplica al tramo de BI no superior al techo.
+# El exceso tributa al tipo general (25%).
+ZEC_TIPO_IS: float = 4.0
+ZEC_TECHO_BASE_PRIMEROS_5_EMPLEOS: float = 1_800_000.0  # primeros 5 empleos
+ZEC_TECHO_INCREMENTO_POR_EMPLEO_EXTRA: float = 500_000.0  # cada empleo adicional
+ZEC_EMPLEOS_MINIMOS: int = 5
+ZEC_EMPLEOS_MAX_COMPUTABLES: int = 50
+
+
+def zec_techo_base(empleos_creados: int) -> float:
+    """Techo de base imponible bonificable al 4% segun empleos ZEC creados.
+
+    Art. 43 Ley 19/1994:
+    - 1.800.000 EUR por los primeros 5 empleos creados.
+    - +500.000 EUR por cada empleo adicional hasta un maximo de 50.
+
+    Si empleos < 5 → no se cumple requisito ZEC, devuelve 0.
+    """
+    if empleos_creados < ZEC_EMPLEOS_MINIMOS:
+        return 0.0
+    empleos_extra = min(empleos_creados, ZEC_EMPLEOS_MAX_COMPUTABLES) - ZEC_EMPLEOS_MINIMOS
+    return ZEC_TECHO_BASE_PRIMEROS_5_EMPLEOS + empleos_extra * ZEC_TECHO_INCREMENTO_POR_EMPLEO_EXTRA
+
+
+# ---------------------------------------------------------------------------
+# Deducciones cinematograficas (Art. 36 LIS)
+# ---------------------------------------------------------------------------
+
+# Producciones espanolas (Art. 36.1):
+#  - 30% sobre el primer millon de base de deduccion
+#  - 25% sobre el exceso
+#  - Limite 20.000.000 EUR (40.000.000 EUR en CSI o si rodadas en Cataluna
+#    con porcentaje de gasto territorial reforzado).
+CINE_ESPANOLA_PCT_PRIMER_MILLON: float = 30.0
+CINE_ESPANOLA_PCT_RESTO: float = 25.0
+CINE_ESPANOLA_BASE_PRIMER_TRAMO: float = 1_000_000.0
+CINE_ESPANOLA_LIMITE_GENERAL: float = 20_000_000.0
+CINE_ESPANOLA_LIMITE_REFORZADO: float = 40_000_000.0  # CSI / Cataluna
+
+# Producciones extranjeras (Art. 36.2):
+#  - 30% sobre el gasto en territorio espanol
+#  - Base minima 1.000.000 EUR
+#  - Limite 20.000.000 EUR
+CINE_EXTRANJERA_PCT: float = 30.0
+CINE_EXTRANJERA_BASE_MINIMA: float = 1_000_000.0
+CINE_EXTRANJERA_LIMITE: float = 20_000_000.0
+
+# Series TV (Art. 36.1 primera produccion en serie):
+CINE_SERIES_TV_PCT: float = 25.0
+
+
+def calcular_deduccion_cine(
+    gasto: float,
+    tipo_produccion: str = "espanola",
+    csi_o_cataluna: bool = False,
+) -> float:
+    """Calcula la deduccion por inversion en producciones cinematograficas.
+
+    Args:
+        gasto: base de deduccion (gasto admitido).
+        tipo_produccion: "espanola" | "extranjera" | "serie".
+        csi_o_cataluna: True si aplica techo reforzado 40M (CSI / Cataluna).
+
+    Returns:
+        Importe de la deduccion antes de aplicar limite cuota.
+    """
+    if gasto <= 0:
+        return 0.0
+
+    if tipo_produccion == "espanola":
+        if gasto <= CINE_ESPANOLA_BASE_PRIMER_TRAMO:
+            ded = gasto * CINE_ESPANOLA_PCT_PRIMER_MILLON / 100
+        else:
+            ded = (
+                CINE_ESPANOLA_BASE_PRIMER_TRAMO * CINE_ESPANOLA_PCT_PRIMER_MILLON / 100
+                + (gasto - CINE_ESPANOLA_BASE_PRIMER_TRAMO) * CINE_ESPANOLA_PCT_RESTO / 100
+            )
+        techo = (
+            CINE_ESPANOLA_LIMITE_REFORZADO
+            if csi_o_cataluna
+            else CINE_ESPANOLA_LIMITE_GENERAL
+        )
+        return round(min(ded, techo), 2)
+
+    if tipo_produccion == "extranjera":
+        if gasto < CINE_EXTRANJERA_BASE_MINIMA:
+            return 0.0
+        ded = gasto * CINE_EXTRANJERA_PCT / 100
+        return round(min(ded, CINE_EXTRANJERA_LIMITE), 2)
+
+    if tipo_produccion == "serie":
+        return round(gasto * CINE_SERIES_TV_PCT / 100, 2)
+
+    return 0.0
