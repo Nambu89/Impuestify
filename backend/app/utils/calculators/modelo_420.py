@@ -1,39 +1,46 @@
 """
 Modelo 420 Calculator — IGIC (Impuesto General Indirecto Canario).
 
-Legal basis:
-- Ley 20/1991, de 7 de junio, de modificacion de los aspectos fiscales del Regimen Economico
-  Fiscal de Canarias (RIGC).
-- Decreto 268/2011, de 4 de agosto, Reglamento de gestion e inspeccion tributaria de Canarias.
-- Orden de 20 de diciembre de 2022 (BOC) por la que se aprueba el Modelo 420.
+Legal basis (vigente 2025+):
+- Decreto Legislativo 1/2025, de 9 de octubre, por el que se aprueba el Texto
+  Refundido de la Comunidad Autonoma de Canarias del IGIC y AIEM (BOC nº 207
+  de 2025-10-20, vigor 2025-10-21).
+- Ley 20/1991, de 7 de junio, REF Canarias (marco constitucional).
+- Decreto 268/2011, de 4 de agosto, Reglamento de gestion e inspeccion.
+- Orden por la que se aprueba anualmente el Modelo 420.
 
-Key distinction:
-- Canarias is NOT part of the EU VAT territory (Art. 6 Directiva IVA).
-- Canarias does NOT apply IVA (Impuesto sobre el Valor Anadido).
-- IGIC uses 7 rate tiers vs. 3 IVA tiers. Structure is otherwise analogous to Modelo 303.
+Derogacion 2025-10-21:
+- Arts. 51-61 Ley 4/2012 (escala antigua) — DEROGADOS.
+- Tipo 13.5% (incrementado_2 antiguo) → 15%.
+- Tipo 35% (especial tabaco rubio antiguo) → 20% (unificado tabaco).
+- Renombrado "reducido 3%" → "superreducido 3%".
+- Anadido "reducido 5%" (Art. 35 TR).
+- Anadido "energeticos 1%" (Art. 33 bis TR).
 
-IGIC rates (Ley 4/2012, art. 27 — vigentes 2025):
-  Tipo cero         0 %    Alimentos basicos, medicamentos, agua, transporte publico,
-                            VPO, servicios sanitarios y educativos.
-  Tipo reducido     3 %    Suministros industriales, quimicos, textiles, minerales,
-                            madera, papel, caucho, alimentos elaborados.
-  Tipo general      7 %    Tipo residual (todo lo no encuadrado en otro tipo).
-  Incrementado 1    9.5 %  Vehiculos de motor, embarcaciones, joyeria.
-  Incrementado 2   13.5 %  Bebidas alcoholicas, perfumeria, articulos de piel,
-                            electronica de consumo.
-  Especial 1       20 %    Tabaco negro.
-  Especial 2       35 %    Tabaco rubio / Virginia.
+Tipos vigentes 2025+ (TR Decreto Legislativo 1/2025):
+  Tipo cero          0 %    Alimentos basicos, medicamentos, agua, transporte
+                              publico, VPO, sanitarios, educativos.
+  Tipo energeticos   1 %    Suministros gas, electricidad residencial (Art. 33 bis).
+  Tipo superreducido 3 %    Suministros industriales, quimicos, textiles,
+                              minerales, madera, papel, caucho.
+  Tipo reducido      5 %    Alimentos elaborados (Art. 35 TR).
+  Tipo general       7 %    Tipo residual.
+  Incrementado 1     9.5 %  Vehiculos de motor, embarcaciones, joyeria.
+  Incrementado 2    15 %    Bebidas alcoholicas, perfumeria, peleteria,
+                              electronica de consumo (sustituye al 13.5%).
+  Especial          20 %    Labores del tabaco unificado (Art. 37 TR).
 
-Calculates:
-  IGIC devengado (output) by rate tier, adquisiciones extracanarias, inversion sujeto pasivo,
-  modificaciones de bases/cuotas, and total devengado.
-  IGIC deducible (input) by concept and total deducible.
-  Resultado del regimen general, ajustes, and resultado final de liquidacion.
+REPEP — Regimen Especial Pequeño Empresario:
+- Umbral: 30.000 EUR/ano (volumen operaciones ano anterior).
+- Sujetos REPEP estan EXENTOS del Modelo 420.
+- La verificacion del umbral se hace en `app/territories/canarias/plugin.py`,
+  no en el calculator (separation of concerns).
 
-Usage:
-    repo = TaxParameterRepository(db)
-    calc = Modelo420Calculator(repo)
-    result = await calc.calculate(base_7=10000, cuota_corrientes_interiores=700, quarter=2)
+Calcula:
+  IGIC devengado (output) por tipo, adquisiciones extracanarias, inversion
+  sujeto pasivo, modificaciones de bases/cuotas, total devengado.
+  IGIC deducible (input) por concepto y total deducible.
+  Resultado del regimen general, ajustes y resultado final de liquidacion.
 """
 from typing import Any, Dict
 
@@ -41,43 +48,136 @@ from app.utils.tax_parameter_repository import TaxParameterRepository
 
 
 # ---------------------------------------------------------------------------
-# Named constants for IGIC rates (Ley 4/2012, art. 27 — vigentes 2025)
+# Constantes — tipos vigentes 2025+ (TR Decreto Legislativo 1/2025)
 # ---------------------------------------------------------------------------
 TIPO_CERO = 0.00
-TIPO_REDUCIDO = 0.03
+TIPO_ENERGETICOS = 0.01
+TIPO_SUPERREDUCIDO = 0.03
+TIPO_REDUCIDO = 0.05
 TIPO_GENERAL = 0.07
 TIPO_INCREMENTADO_1 = 0.095
-TIPO_INCREMENTADO_2 = 0.135
-TIPO_ESPECIAL_1 = 0.20
-TIPO_ESPECIAL_2 = 0.35
+TIPO_INCREMENTADO_2 = 0.15
+TIPO_ESPECIAL = 0.20
+
+
+# ---------------------------------------------------------------------------
+# Tabla parametrica por ejercicio — IGIC_RATES_BY_YEAR
+# ---------------------------------------------------------------------------
+# 2024 mantiene escala antigua (Ley 4/2012 art. 27 — derogada 2025-10-21).
+# 2025+ aplica el TR Decreto Legislativo 1/2025.
+IGIC_RATES_BY_YEAR: Dict[int, Dict[str, float]] = {
+    2024: {
+        "cero": 0.00,
+        "energeticos": 0.01,        # ya existia parcialmente
+        "superreducido": 0.03,      # antes "reducido"
+        "reducido": 0.05,           # ya existia
+        "general": 0.07,
+        "incrementado_1": 0.095,
+        "incrementado_2": 0.135,    # DEROGADO 2025
+        "especial": 0.20,           # tabaco negro
+        "especial_tabaco_rubio_legacy": 0.35,  # DEROGADO 2025
+    },
+    2025: {
+        "cero": 0.00,
+        "energeticos": 0.01,
+        "superreducido": 0.03,
+        "reducido": 0.05,
+        "general": 0.07,
+        "incrementado_1": 0.095,
+        "incrementado_2": 0.15,     # NUEVO 2025
+        "especial": 0.20,           # tabaco unificado
+    },
+    2026: {
+        "cero": 0.00,
+        "energeticos": 0.01,
+        "superreducido": 0.03,
+        "reducido": 0.05,
+        "general": 0.07,
+        "incrementado_1": 0.095,
+        "incrementado_2": 0.15,
+        "especial": 0.20,
+    },
+}
+
+
+# Tipos derogados — accesibles solo para auditoria de ejercicios <2025.
+DEROGATED_RATES_2024: Dict[str, float] = {
+    "incrementado_2_old": 0.135,
+    "especial_tabaco_rubio_old": 0.35,
+}
+
+
+# Plazos Modelo 420 (Art. 71 RIGC + Orden anual ATC):
+# T1: 1-20 abril; T2: 1-20 julio; T3: 1-20 octubre; T4: 1-30 enero ano siguiente.
+PLAZOS_MODELO_420: Dict[int, Dict[str, Any]] = {
+    1: {"trimestre": "T1", "mes_fin": 4, "dia_fin": 20, "anio_siguiente": False},
+    2: {"trimestre": "T2", "mes_fin": 7, "dia_fin": 20, "anio_siguiente": False},
+    3: {"trimestre": "T3", "mes_fin": 10, "dia_fin": 20, "anio_siguiente": False},
+    4: {"trimestre": "T4", "mes_fin": 1, "dia_fin": 30, "anio_siguiente": True},
+}
+
+
+# REPEP — Regimen Especial Pequeño Empresario IGIC.
+# Umbral exencion: 30.000 EUR/ano (volumen operaciones ano anterior).
+REPEP_THRESHOLD_EUR = 30000.0
+
+
+def _resolve_year(year: int | None) -> int:
+    """Devuelve el year a aplicar; default = 2025 (esquema vigente)."""
+    if year is None:
+        return 2025
+    return int(year)
+
+
+def _rate_incrementado_2(year: int) -> float:
+    """13.5% para 2024, 15% para 2025+."""
+    if year < 2025:
+        return DEROGATED_RATES_2024["incrementado_2_old"]
+    return TIPO_INCREMENTADO_2
+
+
+def _rate_especial(year: int, tabaco_rubio_legacy: bool) -> float:
+    """
+    Tipo especial: 20% por defecto.
+    Si year<2025 y tabaco_rubio_legacy=True → 35% (esquema antiguo).
+    En 2025+ el flag legacy se ignora (tabaco unificado al 20%).
+    """
+    if year < 2025 and tabaco_rubio_legacy:
+        return DEROGATED_RATES_2024["especial_tabaco_rubio_old"]
+    return TIPO_ESPECIAL
 
 
 class Modelo420Calculator:
     """
-    Calculates the IGIC quarterly self-assessment (Modelo 420) for Canarias.
+    Calculadora autoliquidacion trimestral IGIC (Modelo 420) para Canarias.
 
-    The calculator mirrors the structure of Modelo 303 (IVA) but uses the 7-tier
-    IGIC rate schedule instead of the 3-tier IVA schedule.
-
-    Args:
-        repo: TaxParameterRepository — accepted for protocol consistency.
-              Not used internally: IGIC rates are statutory constants, not DB params.
+    La estructura mimica el Modelo 303 (IVA peninsular) pero usa la escala
+    parametrizada por ejercicio del TR Decreto Legislativo 1/2025.
     """
 
-    def __init__(self, repo: TaxParameterRepository) -> None:
-        self._repo = repo  # Kept for protocol consistency; not queried.
+    def __init__(self, repo: TaxParameterRepository | None) -> None:
+        self._repo = repo  # Reservado para futuras consultas a parametros.
 
     async def calculate(
         self,
         *,
-        # --- IGIC DEVENGADO: bases imponibles por tipo ---
-        base_0: float = 0.0,
-        base_3: float = 0.0,
-        base_7: float = 0.0,
-        base_9_5: float = 0.0,
-        base_13_5: float = 0.0,
-        base_20: float = 0.0,
-        base_35: float = 0.0,
+        # --- IGIC DEVENGADO: bases imponibles por tipo (nombres canonicos) ---
+        base_cero: float = 0.0,
+        base_energeticos: float = 0.0,
+        base_superreducido: float = 0.0,
+        base_reducido: float = 0.0,
+        base_general: float = 0.0,
+        base_incrementado_1: float = 0.0,
+        base_incrementado_2: float = 0.0,
+        base_especial: float = 0.0,
+        # --- Aliases legacy (retro-compat con callers anteriores al refactor) ---
+        base_0: float = 0.0,    # alias base_cero
+        base_3: float = 0.0,    # alias base_superreducido
+        base_7: float = 0.0,    # alias base_general
+        base_9_5: float = 0.0,  # alias base_incrementado_1
+        base_13_5: float = 0.0, # alias base_incrementado_2 (year=2024)
+        base_20: float = 0.0,   # alias base_especial
+        base_35: float = 0.0,   # alias base_especial con tabaco_rubio_legacy=True
         # Adquisiciones extracanarias (equiv. intracomunitarias en IVA)
         base_extracanarias: float = 0.0,
         tipo_extracanarias: float = TIPO_GENERAL,
@@ -103,101 +203,92 @@ class Modelo420Calculator:
         resultado_anterior_complementaria: float = 0.0,
         # --- Control ---
         quarter: int = 1,
+        year: int | None = None,
+        tabaco_rubio_legacy: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        """
-        Calculate the IGIC quarterly self-assessment (Modelo 420).
+        """Calcula la autoliquidacion trimestral IGIC (Modelo 420)."""
+        # -------------------------------------------------------------------
+        # 0. Aliases legacy → nombres canonicos (no rompe callers antiguos)
+        # -------------------------------------------------------------------
+        if base_0 and not base_cero:
+            base_cero = base_0
+        if base_3 and not base_superreducido:
+            base_superreducido = base_3
+        if base_7 and not base_general:
+            base_general = base_7
+        if base_9_5 and not base_incrementado_1:
+            base_incrementado_1 = base_9_5
+        if base_13_5 and not base_incrementado_2:
+            base_incrementado_2 = base_13_5
+        if base_20 and not base_especial:
+            base_especial = base_20
+        if base_35 and not base_especial:
+            base_especial = base_35
+            tabaco_rubio_legacy = True
 
-        IGIC DEVENGADO (output):
-            base_0: Base imponible al tipo cero (0 %).
-                Alimentos basicos, medicamentos, agua, transporte publico, VPO,
-                servicios sanitarios y educativos.
-            base_3: Base imponible al tipo reducido (3 %).
-                Suministros industriales, quimicos, textiles, minerales, madera, papel,
-                caucho, alimentos elaborados.
-            base_7: Base imponible al tipo general (7 %).
-                Tipo residual para operaciones no encuadradas en otros tipos.
-            base_9_5: Base imponible al tipo incrementado 1 (9.5 %).
-                Vehiculos de motor, embarcaciones, joyeria.
-            base_13_5: Base imponible al tipo incrementado 2 (13.5 %).
-                Bebidas alcoholicas, perfumeria, articulos de piel, electronica de consumo.
-            base_20: Base imponible al tipo especial 1 (20 %). Tabaco negro.
-            base_35: Base imponible al tipo especial 2 (35 %). Tabaco rubio / Virginia.
-            base_extracanarias: Base imponible por adquisiciones de bienes o servicios
-                fuera de Canarias (equivalente intracomunitario en IVA).
-            tipo_extracanarias: Tipo aplicable a adquisiciones extracanarias (decimal 0.0–1.0).
-                Por defecto 0.07 (tipo general). Usar el tipo que corresponda al bien/servicio.
-            base_inversion_sp: Base imponible en operaciones con inversion del sujeto pasivo.
-                El tipo aplicado es el general (7 %) salvo indicacion contraria via kwargs.
-            mod_bases: Modificaciones de bases imponibles de periodos anteriores.
-                Puede ser negativo (rectificacion a la baja).
-            mod_cuotas: Modificaciones de cuotas devengadas de periodos anteriores.
-                Puede ser negativo (rectificacion a la baja).
+        # -------------------------------------------------------------------
+        # 0.b Validaciones
+        # -------------------------------------------------------------------
+        bases = {
+            "base_cero": base_cero,
+            "base_energeticos": base_energeticos,
+            "base_superreducido": base_superreducido,
+            "base_reducido": base_reducido,
+            "base_general": base_general,
+            "base_incrementado_1": base_incrementado_1,
+            "base_incrementado_2": base_incrementado_2,
+            "base_especial": base_especial,
+            "base_extracanarias": base_extracanarias,
+            "base_inversion_sp": base_inversion_sp,
+        }
+        for name, val in bases.items():
+            if val < 0:
+                raise ValueError(
+                    f"La base imponible '{name}' no puede ser negativa: {val}"
+                )
 
-        IGIC DEDUCIBLE (input):
-            cuota_corrientes_interiores: Cuotas IGIC soportadas en operaciones corrientes interiores.
-            cuota_inversion_interiores: Cuotas IGIC soportadas en bienes de inversion interiores.
-            cuota_importaciones_corrientes: Cuotas IGIC en importaciones de bienes corrientes.
-            cuota_importaciones_inversion: Cuotas IGIC en importaciones de bienes de inversion.
-            cuota_extracanarias_corrientes: Cuotas en adquisiciones extracanarias corrientes.
-            cuota_extracanarias_inversion: Cuotas en adquisiciones extracanarias de inversion.
-            rectificacion_deducciones: Rectificacion de deducciones de periodos anteriores.
-                Puede ser negativo si se rectifica al alza o al objeto de devolucion.
-            compensacion_agricultura: Compensaciones del regimen especial de agricultura,
-                ganaderia y pesca (REAGP), Art. 59 Ley 20/1991.
-            regularizacion_inversion: Regularizacion de bienes de inversion, Arts. 109-113 RIGC.
-            regularizacion_prorrata: Regularizacion anual de la prorrata (solo 4T).
+        if quarter not in (1, 2, 3, 4):
+            raise ValueError(f"quarter debe estar entre 1 y 4, recibido: {quarter}")
 
-        RESULTADO:
-            cuotas_compensar_anteriores: Cuotas a compensar de autoliquidaciones anteriores
-                (siempre >= 0; se ignoran valores negativos).
-            regularizacion_anual: Importe de la regularizacion anual de la prorrata.
-                Solo se aplica cuando quarter == 4.
-            resultado_anterior_complementaria: Resultado de la autoliquidacion anterior
-                en caso de que la presente sea complementaria. Default 0.
-            quarter: Trimestre de la autoliquidacion (1-4).
+        year_resolved = _resolve_year(year)
+        if year_resolved < 2010 or year_resolved > 2099:
+            raise ValueError(f"year fuera de rango razonable: {year_resolved}")
 
-        Returns:
-            Dict with:
-            - desglose_devengado (dict): breakdown of IGIC output by tier and concept.
-            - total_devengado (float): total IGIC devengado.
-            - desglose_deducible (dict): breakdown of IGIC input by concept.
-            - total_deducible (float): total IGIC deducible.
-            - resultado_regimen_general (float): devengado - deducible.
-            - cuotas_compensar_anteriores (float): applied from previous periods.
-            - regularizacion_anual (float): applied only in Q4.
-            - resultado_liquidacion (float): final amount payable (+) or to compensate (-).
-            - resultado_anterior_complementaria (float): prior result if complementary.
-            - cuota_diferencial_complementaria (float): net of complementary filing.
-            - quarter (int): period number.
-            - igic_rates (dict): statutory rates used in the calculation.
-        """
-        # -----------------------------------------------------------------------
-        # 1. IGIC DEVENGADO — cuotas por tipo de gravamen
-        # -----------------------------------------------------------------------
-        cuota_0 = round(base_0 * TIPO_CERO, 2)
-        cuota_3 = round(base_3 * TIPO_REDUCIDO, 2)
-        cuota_7 = round(base_7 * TIPO_GENERAL, 2)
-        cuota_9_5 = round(base_9_5 * TIPO_INCREMENTADO_1, 2)
-        cuota_13_5 = round(base_13_5 * TIPO_INCREMENTADO_2, 2)
-        cuota_20 = round(base_20 * TIPO_ESPECIAL_1, 2)
-        cuota_35 = round(base_35 * TIPO_ESPECIAL_2, 2)
+        # -------------------------------------------------------------------
+        # 1. Resolver tipos para el ejercicio
+        # -------------------------------------------------------------------
+        rate_incrementado_2 = _rate_incrementado_2(year_resolved)
+        rate_especial = _rate_especial(year_resolved, tabaco_rubio_legacy)
 
-        # Adquisiciones extracanarias — tipo variable segun naturaleza del bien/servicio
+        # -------------------------------------------------------------------
+        # 2. IGIC DEVENGADO
+        # -------------------------------------------------------------------
+        cuota_cero = round(base_cero * TIPO_CERO, 2)
+        cuota_energeticos = round(base_energeticos * TIPO_ENERGETICOS, 2)
+        cuota_superreducido = round(base_superreducido * TIPO_SUPERREDUCIDO, 2)
+        cuota_reducido = round(base_reducido * TIPO_REDUCIDO, 2)
+        cuota_general = round(base_general * TIPO_GENERAL, 2)
+        cuota_incrementado_1 = round(base_incrementado_1 * TIPO_INCREMENTADO_1, 2)
+        cuota_incrementado_2 = round(base_incrementado_2 * rate_incrementado_2, 2)
+        cuota_especial = round(base_especial * rate_especial, 2)
+
+        # Adquisiciones extracanarias — tipo variable
         tipo_extracanarias_clamped = max(0.0, min(float(tipo_extracanarias), 1.0))
         cuota_extracanarias = round(base_extracanarias * tipo_extracanarias_clamped, 2)
 
-        # Inversion del sujeto pasivo — tipo general por defecto (Art. 19 Ley 20/1991)
+        # Inversion sujeto pasivo — tipo general por defecto (Art. 19 Ley 20/1991)
         cuota_inversion_sp = round(base_inversion_sp * TIPO_GENERAL, 2)
 
         total_devengado = round(
-            cuota_0
-            + cuota_3
-            + cuota_7
-            + cuota_9_5
-            + cuota_13_5
-            + cuota_20
-            + cuota_35
+            cuota_cero
+            + cuota_energeticos
+            + cuota_superreducido
+            + cuota_reducido
+            + cuota_general
+            + cuota_incrementado_1
+            + cuota_incrementado_2
+            + cuota_especial
             + cuota_extracanarias
             + cuota_inversion_sp
             + mod_cuotas,
@@ -206,39 +297,44 @@ class Modelo420Calculator:
 
         desglose_devengado: Dict[str, Any] = {
             "tipo_cero": {
-                "base": round(base_0, 2),
+                "base": round(base_cero, 2),
                 "tipo": TIPO_CERO,
-                "cuota": cuota_0,
+                "cuota": cuota_cero,
+            },
+            "tipo_energeticos": {
+                "base": round(base_energeticos, 2),
+                "tipo": TIPO_ENERGETICOS,
+                "cuota": cuota_energeticos,
+            },
+            "tipo_superreducido": {
+                "base": round(base_superreducido, 2),
+                "tipo": TIPO_SUPERREDUCIDO,
+                "cuota": cuota_superreducido,
             },
             "tipo_reducido": {
-                "base": round(base_3, 2),
+                "base": round(base_reducido, 2),
                 "tipo": TIPO_REDUCIDO,
-                "cuota": cuota_3,
+                "cuota": cuota_reducido,
             },
             "tipo_general": {
-                "base": round(base_7, 2),
+                "base": round(base_general, 2),
                 "tipo": TIPO_GENERAL,
-                "cuota": cuota_7,
+                "cuota": cuota_general,
             },
             "tipo_incrementado_1": {
-                "base": round(base_9_5, 2),
+                "base": round(base_incrementado_1, 2),
                 "tipo": TIPO_INCREMENTADO_1,
-                "cuota": cuota_9_5,
+                "cuota": cuota_incrementado_1,
             },
             "tipo_incrementado_2": {
-                "base": round(base_13_5, 2),
-                "tipo": TIPO_INCREMENTADO_2,
-                "cuota": cuota_13_5,
+                "base": round(base_incrementado_2, 2),
+                "tipo": rate_incrementado_2,
+                "cuota": cuota_incrementado_2,
             },
-            "tipo_especial_1_tabaco_negro": {
-                "base": round(base_20, 2),
-                "tipo": TIPO_ESPECIAL_1,
-                "cuota": cuota_20,
-            },
-            "tipo_especial_2_tabaco_rubio": {
-                "base": round(base_35, 2),
-                "tipo": TIPO_ESPECIAL_2,
-                "cuota": cuota_35,
+            "tipo_especial": {
+                "base": round(base_especial, 2),
+                "tipo": rate_especial,
+                "cuota": cuota_especial,
             },
             "adquisiciones_extracanarias": {
                 "base": round(base_extracanarias, 2),
@@ -254,9 +350,9 @@ class Modelo420Calculator:
             "modificacion_cuotas": round(mod_cuotas, 2),
         }
 
-        # -----------------------------------------------------------------------
-        # 2. IGIC DEDUCIBLE — cuotas soportadas por concepto
-        # -----------------------------------------------------------------------
+        # -------------------------------------------------------------------
+        # 3. IGIC DEDUCIBLE
+        # -------------------------------------------------------------------
         total_deducible = round(
             cuota_corrientes_interiores
             + cuota_inversion_interiores
@@ -284,16 +380,19 @@ class Modelo420Calculator:
             "regularizacion_prorrata": round(regularizacion_prorrata, 2),
         }
 
-        # -----------------------------------------------------------------------
-        # 3. RESULTADO
-        # -----------------------------------------------------------------------
+        # -------------------------------------------------------------------
+        # 4. RESULTADO
+        # -------------------------------------------------------------------
         resultado_regimen_general = round(total_devengado - total_deducible, 2)
 
-        # Compensacion de cuotas de periodos anteriores — nunca puede ser negativa
-        cuotas_compensar_aplicadas = max(0.0, round(float(cuotas_compensar_anteriores), 2))
+        cuotas_compensar_aplicadas = max(
+            0.0, round(float(cuotas_compensar_anteriores), 2)
+        )
 
-        # Regularizacion anual de la prorrata — exclusiva del 4T (Ley 20/1991, art. 37)
-        regularizacion_anual_aplicada = round(float(regularizacion_anual), 2) if quarter == 4 else 0.0
+        # Regularizacion anual exclusiva del 4T (TR Decreto Legislativo 1/2025).
+        regularizacion_anual_aplicada = (
+            round(float(regularizacion_anual), 2) if quarter == 4 else 0.0
+        )
 
         resultado_liquidacion = round(
             resultado_regimen_general
@@ -302,35 +401,39 @@ class Modelo420Calculator:
             2,
         )
 
-        # Autoliquidacion complementaria: diferencia neta respecto a la anterior
         cuota_diferencial_complementaria = round(
             resultado_liquidacion - float(resultado_anterior_complementaria), 2
         )
 
+        # -------------------------------------------------------------------
+        # 5. RATES expuestos en output
+        # -------------------------------------------------------------------
+        # En 2025+ NO exponer claves del esquema derogado (tipo_especial_2 etc).
+        igic_rates: Dict[str, float] = {
+            "tipo_cero": TIPO_CERO,
+            "tipo_energeticos": TIPO_ENERGETICOS,
+            "tipo_superreducido": TIPO_SUPERREDUCIDO,
+            "tipo_reducido": TIPO_REDUCIDO,
+            "tipo_general": TIPO_GENERAL,
+            "tipo_incrementado_1": TIPO_INCREMENTADO_1,
+            "tipo_incrementado_2": rate_incrementado_2,
+            "tipo_especial": rate_especial,
+        }
+
         return {
-            # --- Devengado ---
             "desglose_devengado": desglose_devengado,
             "total_devengado": total_devengado,
-            # --- Deducible ---
             "desglose_deducible": desglose_deducible,
             "total_deducible": total_deducible,
-            # --- Resultado ---
             "resultado_regimen_general": resultado_regimen_general,
             "cuotas_compensar_anteriores": cuotas_compensar_aplicadas,
             "regularizacion_anual": regularizacion_anual_aplicada,
             "resultado_liquidacion": resultado_liquidacion,
-            # --- Complementaria ---
-            "resultado_anterior_complementaria": round(float(resultado_anterior_complementaria), 2),
+            "resultado_anterior_complementaria": round(
+                float(resultado_anterior_complementaria), 2
+            ),
             "cuota_diferencial_complementaria": cuota_diferencial_complementaria,
-            # --- Metadatos ---
             "quarter": quarter,
-            "igic_rates": {
-                "tipo_cero": TIPO_CERO,
-                "tipo_reducido": TIPO_REDUCIDO,
-                "tipo_general": TIPO_GENERAL,
-                "tipo_incrementado_1": TIPO_INCREMENTADO_1,
-                "tipo_incrementado_2": TIPO_INCREMENTADO_2,
-                "tipo_especial_1": TIPO_ESPECIAL_1,
-                "tipo_especial_2": TIPO_ESPECIAL_2,
-            },
+            "year": year_resolved,
+            "igic_rates": igic_rates,
         }

@@ -15,6 +15,8 @@ from app.utils.is_scales import (
     get_is_regimen,
     calcular_cuota_por_tramos,
     get_is_deduccion_params,
+    bin_limite_pct,
+    reserva_capitalizacion_pct_2025,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,8 @@ class ISInput:
     tipo_entidad: str = "sl"  # sl, slp, sa, nueva_creacion
     facturacion_anual: float = 0.0
     ejercicios_con_bi_positiva: int = 10
+    ejercicio: int = 2024  # 2024 default (pre-Ley 7/2024). Pasar 2025+ para reformas.
+    incremento_plantilla_pct: float = 0.0  # Para reserva capitalizacion 2025+ (Ley 7/2024)
 
     # Ajustes
     gastos_no_deducibles: float = 0.0
@@ -134,7 +138,7 @@ class ISSimulator:
         14. = Resultado liquidacion
         """
         result = ISResult()
-        regimen = get_is_regimen(inp.territorio, inp.es_zec)
+        regimen = get_is_regimen(inp.territorio, inp.es_zec, ejercicio=inp.ejercicio)
         result.regimen = regimen.nombre
         result.territorio = inp.territorio
 
@@ -267,40 +271,49 @@ class ISSimulator:
     def _calcular_reserva_capitalizacion(inp: ISInput, base_previa: float) -> float:
         """Paso 4: reserva capitalizacion (Art. 25 LIS).
 
-        10% del incremento de fondos propios, limitado al 10% de la base imponible previa.
+        Pre-Ley 7/2024 (ejercicio < 2025):
+          10% del incremento de fondos propios, limitado al 10% de la base imponible previa.
+        Ley 7/2024 (ejercicio >= 2025):
+          20% base, escala 23/26.5/30% segun incremento plantilla, limite 20% base previa.
         """
         if inp.incremento_ffpp <= 0 or base_previa <= 0:
             return 0.0
-        deduccion_params = get_is_deduccion_params(inp.territorio)
-        rc_pct = deduccion_params.reserva_cap_pct / 100
+        deduccion_params = get_is_deduccion_params(inp.territorio, inp.ejercicio)
+        # En 2025+ aplicar escala plantilla si esta informada.
+        if inp.ejercicio >= 2025 and inp.incremento_plantilla_pct > 0:
+            rc_pct = reserva_capitalizacion_pct_2025(inp.incremento_plantilla_pct) / 100
+        else:
+            rc_pct = deduccion_params.reserva_cap_pct / 100
         reserva = inp.incremento_ffpp * rc_pct
-        limite = base_previa * 0.10
+        limite = base_previa * (deduccion_params.reserva_cap_limite_pct / 100)
         return round(min(reserva, limite), 2)
 
     @staticmethod
     def _calcular_bins(inp: ISInput, base_previa: float) -> float:
         """Paso 6: compensacion de BINs (Art. 26 LIS).
 
-        Limites:
-        - facturacion >20M: maximo 70% de base_previa
-        - facturacion <1M: 100%
-        - resto: 100%
+        Limites segun INCN (parametrizados en is_scales.bin_limite_pct):
+        - INCN < 20M     : 100% (suelo 1M libre)
+        - 20M <= INCN < 60M : 70%
+        - INCN >= 60M    : 50%
         """
         if inp.bins_pendientes <= 0 or base_previa <= 0:
             return 0.0
-        if inp.facturacion_anual > 20_000_000:
-            limite = base_previa * 0.70
-        else:
-            limite = base_previa  # 100%
+        pct = bin_limite_pct(inp.facturacion_anual) / 100
+        limite = base_previa * pct
         return round(min(inp.bins_pendientes, limite), 2)
 
     @staticmethod
     def _seleccionar_tramos(regimen, inp: ISInput):
-        """Paso 8: selecciona escala segun tipo entidad y facturacion."""
+        """Paso 8: selecciona escala segun tipo entidad y facturacion (INCN)."""
         if inp.tipo_entidad == "nueva_creacion" and inp.ejercicios_con_bi_positiva <= 2:
             return regimen.tramos_nueva_creacion
-        if inp.facturacion_anual > 0 and inp.facturacion_anual < 1_000_000:
-            return regimen.tramos_pyme
+        # Microempresa: INCN < 1M (RDL 4/2024 + Ley 7/2024)
+        if 0 < inp.facturacion_anual < 1_000_000:
+            return regimen.tramos_microempresa
+        # ERD: 1M <= INCN < 10M (Empresa Reducida Dimension Art. 101 LIS)
+        if 1_000_000 <= inp.facturacion_anual < 10_000_000:
+            return regimen.tramos_erd
         return regimen.tramos_general
 
     @staticmethod
@@ -321,7 +334,7 @@ class ISSimulator:
         if cuota_integra <= 0:
             return {}
 
-        params = get_is_deduccion_params(inp.territorio)
+        params = get_is_deduccion_params(inp.territorio, inp.ejercicio)
         detalle: dict[str, float] = {}
 
         # I+D (Art. 35.1 LIS)
@@ -332,9 +345,9 @@ class ISSimulator:
         if inp.gasto_it > 0:
             detalle["it"] = round(inp.gasto_it * params.it_pct / 100, 2)
 
-        # Donativos mecenazgo (Ley 49/2002) — 35%
+        # Donativos mecenazgo Sociedades (Art. 20 Ley 49/2002) — 40% (NO 35% IRPF)
         if inp.donativos > 0:
-            detalle["donativos"] = round(inp.donativos * 0.35, 2)
+            detalle["donativos"] = round(inp.donativos * params.donativos_pct / 100, 2)
 
         # Aplicar limite global (% cuota integra) a deducciones limitadas
         total_limitadas = sum(detalle.values())
