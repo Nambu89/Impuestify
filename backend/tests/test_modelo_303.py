@@ -158,3 +158,126 @@ async def test_metadata(calc):
     assert r["territory"] == "navarra"
     assert r["quarter"] == 3
     assert r["year"] == 2026
+
+
+# =====================================================================
+# REGRESSION TESTS — Audit 2026-05 (BUG-303-01..03 P0 fixes)
+# =====================================================================
+# Estos tests cubren los 3 bugs P0 detectados en
+# docs/audits/modelo_303_validation_2026-05.md y validan que el TOOL
+# (no solo el calculator) respeta la numeracion oficial de casillas
+# AEAT y los plazos correctos.
+
+
+@pytest.mark.asyncio
+async def test_303_casilla_78_compensacion_no_71():
+    """BUG-303-01: cuotas a compensar de periodos anteriores van a la
+    casilla 78, no a la 71. La 71 es el resultado liquidacion."""
+    from app.tools.modelo_303_tool import calculate_modelo_303_tool
+
+    result = await calculate_modelo_303_tool(
+        trimestre=2,
+        year=2025,
+        base_21=10000,
+        iva_deducible_bienes_corrientes=500,
+        compensacion_periodos_anteriores=300,
+    )
+    assert result["success"]
+    casillas = result["casillas"]
+    assert casillas["casilla_78_compensacion_anterior"] == 300.0
+    # casilla 71 NO debe ser la compensacion (300); debe ser el resultado liquidacion
+    assert casillas["casilla_71_resultado_liquidacion"] != 300.0
+    # La compensacion debe quedar referenciada como casilla 78 en el dict resultado
+    assert result["resultado"]["compensacion_anterior"] == 300.0
+
+
+@pytest.mark.asyncio
+async def test_303_casilla_71_resultado_liquidacion():
+    """BUG-303-01: casilla 71 = resultado liquidacion final
+    (= 69 - 70). En este caso simple (sin atribucion parcial, sin
+    aduana, sin complementaria, sin regularizacion):
+    71 = devengado - deducible - compensacion."""
+    from app.tools.modelo_303_tool import calculate_modelo_303_tool
+
+    result = await calculate_modelo_303_tool(
+        trimestre=2,
+        year=2025,
+        base_21=10000,                            # devengado = 2100
+        iva_deducible_bienes_corrientes=500,      # deducible = 500
+        compensacion_periodos_anteriores=300,     # casilla 78
+    )
+    # Resultado regimen general = 2100 - 500 = 1600
+    # Casilla 69 = 66 + 77 - 78 + 68 = 1600 + 0 - 300 + 0 = 1300
+    # Casilla 71 = 69 - 70 = 1300 - 0 = 1300
+    casillas = result["casillas"]
+    assert casillas["casilla_46_regimen_general"] == 1600.0
+    assert casillas["casilla_69_resultado_previo"] == 1300.0
+    assert casillas["casilla_71_resultado_liquidacion"] == 1300.0
+    assert result["resultado"]["resultado_final"] == 1300.0
+
+
+@pytest.mark.asyncio
+async def test_303_plazo_t4_30_enero_y_domiciliacion_dia_25():
+    """BUG-303-02: plazo T4 SIEMPRE 30 enero (no 20 ni alternativo).
+    Domiciliacion 5 dias antes (dia 25). Debe mencionar festivos."""
+    from app.tools.modelo_303_tool import calculate_modelo_303_tool, _format_plazo
+
+    # Helper directo
+    plazo_t4 = _format_plazo(4, 2025)
+    assert "30 de enero" in plazo_t4
+    assert "25 de enero" in plazo_t4  # domiciliacion
+    assert "20 de enero" not in plazo_t4
+    assert "festivo" in plazo_t4.lower()
+
+    # T1, T2, T3 mantienen 20 + domiciliacion 15
+    plazo_t1 = _format_plazo(1, 2025)
+    assert "20 de abril" in plazo_t1
+    assert "15 de abril" in plazo_t1
+
+    plazo_t2 = _format_plazo(2, 2025)
+    assert "20 de julio" in plazo_t2
+    assert "15 de julio" in plazo_t2
+
+    plazo_t3 = _format_plazo(3, 2025)
+    assert "20 de octubre" in plazo_t3
+    assert "15 de octubre" in plazo_t3
+
+    # Verificacion end-to-end: plazo aparece en formatted_response del tool
+    result = await calculate_modelo_303_tool(
+        trimestre=4,
+        year=2025,
+        base_21=10000,
+        iva_deducible_bienes_corrientes=500,
+    )
+    assert result["success"]
+    assert "30 de enero" in result["formatted_response"]
+    assert "25 de enero" in result["formatted_response"]
+    assert result["plazo_presentacion"] == plazo_t4
+
+
+@pytest.mark.asyncio
+async def test_303_casilla_45_total_deducible_suma_10_casillas():
+    """BUG-303-03: casilla 45 = 29 + 31 + 33 + 35 + 37 + 39 + 41 + 42 + 43 + 44.
+    El tool debe delegar al calculator para obtener la suma completa de las
+    10 casillas (no las 5 que sumaba el tool reimplementado)."""
+    calc = Modelo303Calculator(None)
+    r = await calc.calculate(
+        cuota_corrientes_interiores=100,        # casilla 29
+        cuota_inversion_interiores=200,          # casilla 31
+        cuota_importaciones_corrientes=50,       # casilla 33
+        cuota_importaciones_inversion=25,        # casilla 35
+        cuota_intracom_corrientes=75,            # casilla 37
+        cuota_intracom_inversion=30,             # casilla 39
+        rectificacion_deducciones=10,            # casilla 41
+        compensacion_agricultura=15,             # casilla 42
+        regularizacion_inversion=-5,             # casilla 43
+        regularizacion_prorrata=20,              # casilla 44
+    )
+    expected_45 = 100 + 200 + 50 + 25 + 75 + 30 + 10 + 15 + (-5) + 20  # 520
+    assert r["casilla_45"] == expected_45
+    # Confirmar que las 10 casillas estan incluidas (no las 5 viejas del tool)
+    assert r["casilla_35"] == 25
+    assert r["casilla_39"] == 30
+    assert r["casilla_42"] == 15
+    assert r["casilla_43"] == -5
+    assert r["casilla_44"] == 20

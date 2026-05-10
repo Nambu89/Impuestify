@@ -457,6 +457,10 @@ app.include_router(rag_quality_router)
 from app.routers.modelo_720 import router as modelo_720_router
 app.include_router(modelo_720_router)
 
+# Modelo 131 (Pago Fraccionado IRPF Estimación Objetiva — Módulos)
+from app.routers.modelo_131 import router as modelo_131_router
+app.include_router(modelo_131_router)
+
 # Plusvalia Municipal (IIVTNU)
 from app.routers.plusvalia import router as plusvalia_router
 app.include_router(plusvalia_router)
