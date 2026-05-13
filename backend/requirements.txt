@@ -23,7 +23,12 @@ passlib[bcrypt]>=1.7.4
 redis>=5.0.0  # For Upstash Redis TCP endpoint (SlowAPI compatible)
 
 # --- AI Safety & Guardrails ---
-guardrails-ai>=0.5.0
+# 2026-05-13: guardrails-ai QUARANTINED en PyPI (admin review). Build falla con
+# "No matching distribution found". El modulo app/security/guardrails.py la
+# importa en try/except con fallback rule-based (GUARDRAILS_AVAILABLE=False),
+# asi que la app funciona sin esta dependencia. Restaurar cuando PyPI levante
+# la cuarentena. Ref: https://pypi.org/project/guardrails-ai/
+# guardrails-ai>=0.5.0
 
 # --- PDF Processing ---
 pymupdf4llm>=0.2.6
