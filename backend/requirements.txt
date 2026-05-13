@@ -32,6 +32,7 @@ redis>=5.0.0  # For Upstash Redis TCP endpoint (SlowAPI compatible)
 
 # --- PDF Processing ---
 pymupdf4llm>=0.2.6
+azure-ai-documentintelligence>=1.0.2  # OCR para ingesta RAG (scripts/ingest_documents.py)
 pymupdf>=1.23.0
 
 # --- Utils ---
