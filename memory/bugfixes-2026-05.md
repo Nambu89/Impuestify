@@ -1,5 +1,47 @@
 # Bugfixes — Mayo 2026 (sesion 38+)
 
+## Bug 100 — `purge_semantic_cache.py` borra el RAG por accidente (INCIDENTE PRODUCCION)
+
+**Reportado por**: agente Claude (sesion 41, 2026-05-13) tras ejecutar el script.
+**Sintoma**: ejecucion de `python scripts/purge_semantic_cache.py` con intencion de invalidar respuestas viejas con banner falso positivo (Bug 99) → borro 84,063 vectors del indice Upstash. ESE INDICE CONTENIA EL RAG COMPLETO, no solo el semantic cache. Produccion se quedo sin contexto RAG hasta re-sync.
+
+**Causa raiz**:
+- `semantic_cache.py` lee `UPSTASH_VECTOR_REST_URL` + `_TOKEN`.
+- `sync_to_upstash.py` lee `UPSTASH_VECTOR_RAG_URL` + `_TOKEN`.
+- Ambas variables en `.env` (Railway y local) apuntaban al MISMO indice Upstash Vector — sin namespaces separados.
+- Ambos scripts hacen upsert/query sin pasar `namespace=` → todo va al namespace default.
+- `purge_semantic_cache.py` llamaba `index.reset()` que wipea TODO el indice, no solo entradas de cache.
+- No habia guardrail por tamaño: 84K vectors es claramente RAG, no cache (cache deberia tener <1000 con TTL 24h).
+
+**Fix permanente** (script reescrito):
+- `purge_semantic_cache.py` ahora:
+  - Detecta si `UPSTASH_VECTOR_REST_URL == UPSTASH_VECTOR_RAG_URL` y avisa.
+  - Si `vector_count > MAX_SAFE_CACHE_SIZE (1000)`, REHUSA `index.reset()` salvo `--force`.
+  - Default mode: **selective delete** — itera entradas con `index.range()` y borra solo las que tienen `metadata.response` (forma del cache entry). Entradas RAG tienen `metadata.content` y se preservan.
+  - `--pattern X` para filtrar por substring en metadata.query.
+- Mientras tanto la migracion definitiva a namespaces separados queda en backlog (P1):
+  - `semantic_cache.py` → namespace="cache"
+  - `sync_to_upstash.py` → namespace="rag" + migracion existing
+  - Requiere coordinar con Railway env vars y validacion en prod.
+
+**Recovery**:
+- Usuario ejecuto `python scripts/sync_to_upstash.py` para repoblar el indice desde Turso (84K embeddings preservados en Turso DB → re-upload a Upstash Vector). ~5-15 min downtime de RAG en produccion.
+
+**Reglas nuevas**:
+- **NUNCA llamar `index.reset()` en un Upstash Vector compartido** sin verificar vector_count y metadata shape.
+- **Scripts destructivos deben tener guardrails por tamaño** (rehusar si vector_count > umbral seguro).
+- **Antes de purgar cache, hacer dry-run/stats** para confirmar que el indice no contiene RAG.
+
+**Archivos modificados**:
+- `backend/scripts/purge_semantic_cache.py` (reescritura con guardrails).
+
+**Backlog (P1, sesion 42)**:
+- Migrar semantic_cache.py y sync_to_upstash.py a namespaces separados ("cache" vs "rag").
+- Re-ingestar existentes 84K vectors con `namespace="rag"` explicito.
+- Validar que cache search filtra por namespace y no contamina con chunks RAG.
+
+---
+
 ## Bug 99 — Citation verifier marca Ley 37/1992 (LIVA) como "no verificada"
 
 **Reportado por**: usuario (caso real comparativa TributAI vs Impuestify) 2026-05-13.
