@@ -420,9 +420,23 @@ async def ingest(
     existing_filenames = set()
 
     if not dry_run and db and not force:
-        result = await db.execute(
-            "SELECT hash, filename FROM documents WHERE processed = 1"
+        # Cargar TODOS los hashes (processed=0 y processed=1).
+        # Si solo filtrábamos por processed=1, los docs con inserción parcial
+        # fallida (processed=0) pasaban el dedup, gastaban Azure DI y luego
+        # fallaban en INSERT con UNIQUE constraint. Incidente 2026-05-13.
+        # Antes de cargar, purgar docs huérfanos (processed=0) y sus chunks
+        # para permitir reintento limpio.
+        purge_result = await db.execute(
+            "DELETE FROM document_chunks WHERE document_id IN "
+            "(SELECT id FROM documents WHERE processed = 0)"
         )
+        purge_docs = await db.execute("DELETE FROM documents WHERE processed = 0")
+        purged_count = getattr(purge_docs, "rowcount", 0) or 0
+        if purged_count > 0:
+            print(f"🧹 Purgados {purged_count} docs huérfanos (processed=0) "
+                  f"+ chunks asociados\n")
+
+        result = await db.execute("SELECT hash, filename FROM documents")
         for row in result.rows:
             if row.get("hash"):
                 existing_hashes.add(row["hash"])
