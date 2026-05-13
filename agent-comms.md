@@ -7,6 +7,34 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-05-13] BACKEND — 🟢 DONE — Sesion 41: Superar TributAI (caso EEUU IVA) — Bug 99 + 4 secciones prompt
+
+Disparado por caso usuario comparativa TributAI vs Impuestify. TributAI dio respuesta mas usable (texto factura copy-paste, ejemplo numerico, Pro tip REDEME, B2B asumido, oferta guardar CCAA). Impuestify mas riguroso PERO con banner falso positivo "no he podido verificar Ley 37/1992" que destruia confianza.
+
+**Cambios**:
+- **Citation verifier**: `_FUNDAMENTAL_LAWS_WHITELIST` con 27 leyes/RD/TR fundamentales (LIVA, LIRPF, LIS, LGT, LIGIC, etc.). Aplica SOLO a categorias `ley`/`rd`/`real_decreto`, no a `art_law`. `Art. 999.99 LIRPF` inventado sigue flagueado (test cubierto).
+- **System prompt TaxAgent**: 4 secciones nuevas — PATRÓN ANSWER-FIRST ANTE AMBIGÜEDAD (heuristicas B2B/B2C/UE), TEXTO LITERAL PARA FACTURAS (6 plantillas copy-paste), EJEMPLOS Y PRO TIP (numero realista + Pro tip REDEME/dispensa 130/tarifa plana/etc.), `_build_prompt` con `proactive_profile_hint` para CCAA/situacion/IAE/ISD vacios.
+- **Tests**: 44 PASS (36 citation_verifier + 8 tax_agent_prompt). Riesgo whitelist demasiado permisiva CUBIERTO con 2 tests del plan-checker.
+
+**Pendiente (NEEDS_REVIEW del usuario antes de deploy)**:
+- Commit + push a main.
+- Tras deploy Railway: `python scripts/purge_semantic_cache.py` para invalidar respuestas viejas (TTL 24h).
+- Validacion manual prod con `test.autonomo@impuestify.es`: 6 criterios (Factura SIN IVA primera linea, sin banner Ley 37/1992, texto literal copy-paste, Arts. 69-70 LIVA, ejemplo numerico, Pro tip).
+
+**Archivos**:
+- `backend/app/security/citation_verifier.py`
+- `backend/app/agents/tax_agent.py`
+- `backend/tests/test_citation_verifier.py`
+- `backend/tests/test_tax_agent_prompt.py` (NEW)
+- `memory/bugfixes-2026-05.md` (Bug 99)
+- `memory/MEMORY.md` (sesion 41)
+- `plans/2026-05-13-superar-tributai.md` (plan PASS)
+
+**Backlog generado**:
+- Memoria proactiva END-TO-END (T6 solo añade hint; falta endpoint conversacional de guardado en `user_profiles` desde chat). Hoy el LLM ofrece guardar pero el usuario debe ir a `/perfil` manualmente.
+
+---
+
 ## [2026-05-10] MARKETING — 🟢 DONE — Sesion 39: 11 vídeos verticales HyperFrames
 
 11 vídeos 1080x1920 generados con skill `hyperframes` (HeyGen), pipeline HTML+GSAP+Chromium → MP4. Ubicación: `videos/<demo>/renders/`.

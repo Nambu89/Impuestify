@@ -1,5 +1,47 @@
 # Bugfixes — Mayo 2026 (sesion 38+)
 
+## Bug 99 — Citation verifier marca Ley 37/1992 (LIVA) como "no verificada"
+
+**Reportado por**: usuario (caso real comparativa TributAI vs Impuestify) 2026-05-13.
+**Sintoma**: ante la pregunta "Tengo un cliente en Nueva York al que voy a facturar consultoría. ¿Qué IVA le pongo?", Impuestify devolvio respuesta tecnicamente correcta (Arts. 69-73 LIVA, distincion B2B/B2C) PERO con banner final `⚠ No he podido verificar esta referencia normativa en mis fuentes documentales: Ley 37/1992. Contrasta directamente con el BOE o tu asesor antes de actuar sobre ellas.`. Ley 37/1992 ES la LIVA — norma fundamental espanola del IVA. El banner destruye toda la confianza del usuario.
+
+**Causa raiz**:
+- `citation_verifier.py:_normalize` + `verify_citations` busca substring de la cita en los chunks RAG retrieval.
+- Para preguntas sobre IVA EEUU, los chunks recuperados hablan de "prestaciones de servicios", "destinatarios fuera de la UE", etc., pero NO contienen literalmente el string "Ley 37/1992" (suelen usar "LIVA").
+- El verifier marca la cita como unverified → footer warning automatico.
+- TributAI da respuesta menos rigurosa (cita Art. 21 LIVA — erroneo, ese articulo es para BIENES no servicios) pero SIN banner de incertidumbre → usuario percibe mas confiable.
+
+**Fix general** (no parche del caso):
+- Nuevo `_FUNDAMENTAL_LAWS_WHITELIST` en `citation_verifier.py` con 27 entradas: LIVA, LIRPF, LIS, LGT, LIGIC, LISD, LIP, LIIEE, mecenazgo, REF Canarias, cesion CCAA, reglamentos (RIVA, RIRPF, RIS, RGAT, facturacion), RDLeg (TR ITPAJD/LRHL/LIRNR), Ley 7/2024.
+- `_is_fundamental_law_reference()` helper aplica SOLO a categorias `ley`/`rd`/`real_decreto`, NUNCA a `art_law`. Articulos especificos inventados (Art. 999.99 LIRPF) siguen siendo flaggueados.
+- `verify_citations` consulta whitelist tras fallar el match en chunks → marca `verified=True, matched_chunk_id="whitelist_fundamental_law"`.
+- Same fix beneficia a NotificationAgent (Ley 58/2003 LGT en plazos AEAT) y a todos los demas agentes que invocan el verifier via chat_stream.
+
+**System prompt TaxAgent ampliado** (mismo PR para cerrar gap vs TributAI):
+- `## PATRÓN ANSWER-FIRST ANTE AMBIGÜEDAD` — heuristicas B2B/B2C/UE/no-UE para asumir caso mas probable y matizar alterno en 1 linea.
+- `## TEXTO LITERAL PARA FACTURAS` — plantillas copy-paste para 6 casos comunes (servicios B2B no-UE, B2C no-UE Art. 69.dos.b, exportacion bienes, intracom, ISP, RE).
+- `## EJEMPLOS Y PRO TIP` — ejemplo numerico obligatorio + seccion Pro tip con REDEME, dispensa Modelo 130, tarifa plana, ISD bonificaciones, etc.
+- `_build_prompt` extendido con `proactive_profile_hint` — detecta campos perfil vacios (CCAA + IVA, situacion_laboral + autonomo, epigrafe_iae + creador, CCAA + ISD) y pide al LLM ofrecer guardarlos en `/perfil`.
+
+**Validacion**:
+- 36 tests citation_verifier (6 nuevos del fix, incluyen riesgo whitelist demasiado permisiva).
+- 8 tests tax_agent_prompt (keyword-based, no snapshot).
+- Total 44 PASS.
+
+**Archivos modificados**:
+- `backend/app/security/citation_verifier.py`: whitelist + helper + verify_citations.
+- `backend/app/agents/tax_agent.py`: 4 secciones nuevas en system prompt + proactive_profile_hint en _build_prompt.
+- `backend/tests/test_citation_verifier.py`: 7 tests nuevos (incl. LGT NotificationAgent).
+- `backend/tests/test_tax_agent_prompt.py` (NEW): 8 tests.
+
+**Ops post-deploy**:
+- Ejecutar `python scripts/purge_semantic_cache.py` para invalidar respuestas viejas con el banner (TTL 24h en Upstash Vector).
+- Validacion manual: repetir pregunta original con `test.autonomo@impuestify.es`, verificar 6 criterios (Factura SIN IVA primera linea, sin banner Ley 37/1992, texto literal copy-paste, Arts. 69-70 LIVA, ejemplo numerico, Pro tip REDEME).
+
+**Plan completo**: `plans/2026-05-13-superar-tributai.md` (validado PASS por plan-checker).
+
+---
+
 ## Bug 85 — Topic classifier bloquea preguntas legitimas con workspace adjunto
 
 **Reportado por**: David Oliva (cuenta hotmail) 2026-05-07.

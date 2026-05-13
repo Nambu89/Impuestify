@@ -1,6 +1,8 @@
 # TaxIA (Impuestify) — Memoria del Agente
 
-> Ultima actualizacion: 2026-04-27 (sesion 35: humanizer, legal, demo, outreach Ayudat)
+> Ultima actualizacion: 2026-05-13 (sesion 41: superar TributAI — citation verifier whitelist + system prompt B2B/B2C + texto factura + Pro tip + proactive profile hint)
+> Sesion 41 (2026-05-13): caso comparativa TributAI vs Impuestify (factura EEUU IVA). Bug 99 fixed (citation verifier marca Ley 37/1992 LIVA como no verificada). Whitelist 27 leyes/RD/TR fundamentales. System prompt TaxAgent ampliado con 4 secciones: answer-first ambiguedad B2B/B2C, texto literal factura, ejemplos+Pro tip, proactive profile hint. 44 tests PASS (citation_verifier + tax_agent_prompt). Plan plans/2026-05-13-superar-tributai.md validado PASS por plan-checker. Pendiente deploy + purge semantic cache + validacion manual.
+> Ultima actualizacion previa: 2026-04-27 (sesion 35: humanizer, legal, demo, outreach Ayudat)
 > Outreach Alfredo Perez (CEO Ayuda T Pymes): respondio personalmente, pide demo
 > Paginas legales con titular real (DNI 45308568V, Zaragoza) — LSSI-CE + RGPD compliant
 > Humanizer Wikipedia aplicado en 3 fases: home, 9 paginas core, chat+widgets+emails+SEO

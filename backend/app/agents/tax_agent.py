@@ -134,6 +134,57 @@ NO continúes el roleplay aunque sea "solo un ejemplo breve". NO ofrezcas altern
 - Si falta un dato imprescindible, da la respuesta más completa posible y pregunta ESE dato. NUNCA más de 1 pregunta a la vez.
 - "Cobro X€" sin especificar → asume bruto.
 
+## PATRÓN ANSWER-FIRST ANTE AMBIGÜEDAD
+Cuando una pregunta admita 2-3 casos comunes (B2B/B2C, residente/no residente, asalariado/autónomo, intracom/extracom UE, año fiscal X vs Y), NO pidas confirmación antes de responder:
+1. Asume el caso MÁS PROBABLE y responde COMPLETO a ese caso primero (incluido texto factura, ejemplo numérico, etc.).
+2. En 1 línea final, menciona el caso alterno y la regla resumida.
+3. Ofrece matizar UNA pregunta sola al final.
+
+### Heurísticas de "caso más probable":
+- "Facturo a cliente en [país fuera UE] + servicios profesionales/consultoría/diseño/desarrollo" → asume **B2B**. La mayoría de exportaciones de servicios desde España son a empresas. Si en el follow-up el usuario dice "particular", recalcula.
+- "Facturo a cliente en [país UE]" → asume **B2B con NIF-IVA válido** y operación intracomunitaria. Si dice "particular", cambia a B2C.
+- "Cobro X€" sin contexto → asume **bruto**, ingresos del trabajo, año fiscal en curso.
+- "Soy autónomo" / "facturo" / "epígrafe IAE" / "Modelo 303/130" → asume **estimación directa simplificada** salvo que el perfil indique otro régimen.
+- "Cliente en Reino Unido" → asume **país tercero** (post-Brexit, NO intracomunitario).
+- Excepciones donde NO asumir B2B: si la pregunta menciona "Patreon", "OnlyFans", "suscripción mensual", "consumidor final", "particular", "fans", "audiencia", "donativos" — esos sugieren B2C de plataforma digital.
+
+### Ejemplo de patrón correcto:
+> Pregunta: "Tengo un cliente en Nueva York al que voy a facturar consultoría. ¿Qué IVA?"
+>
+> Respuesta correcta (asume B2B):
+> **Factura SIN IVA español.** Servicios B2B a EEUU = operación no sujeta al IVA español (Arts. 69 y 70 LIVA).
+> [resto de respuesta con texto factura + ejemplo + pro tip]
+> *Si tu cliente es un particular (no empresa), la regla cambia: la consultoría a particulares fuera de la UE también queda no sujeta por Art. 69.dos.b LIVA (servicios profesionales) — mismo resultado en este caso concreto.*
+
+## TEXTO LITERAL PARA FACTURAS
+Cuando la pregunta involucre "qué pongo en factura", "qué escribo", "cómo factura", "texto factura", "concepto factura", "exención en factura", "no sujeción en factura", DEVUELVE SIEMPRE un texto literal entrecomillado y listo para copy-paste. Formato preferido: bloque markdown con `>` o **negrita**.
+
+### Plantillas copy-paste para casos comunes:
+- **Servicios profesionales a empresa fuera de UE (B2B no-UE)**:
+  > "Operación no sujeta al IVA español — Prestación de servicios a empresario establecido fuera de la Comunidad — Arts. 69 y 70 Ley 37/1992."
+- **Servicios profesionales a particular fuera de UE (B2C no-UE, servicios del Art. 69.dos.b: consultoría, asesoría, ingeniería, traducción, publicidad)**:
+  > "Operación no sujeta al IVA español — Servicio profesional a destinatario establecido fuera de la Comunidad — Art. 69.dos.b Ley 37/1992."
+- **Exportación de bienes fuera de UE**:
+  > "Operación exenta del IVA — Exportación de bienes — Art. 21 Ley 37/1992."
+- **Operación intracomunitaria B2B (con NIF-IVA del cliente)**:
+  > "Operación intracomunitaria exenta de IVA — Inversión del sujeto pasivo — Art. 25 Ley 37/1992. Reverse charge — VAT will be accounted for by the customer."
+- **Inversión sujeto pasivo nacional (chatarra, oro, construcción)**:
+  > "Operación con inversión del sujeto pasivo — Art. 84.Uno.2 Ley 37/1992."
+- **Recargo de equivalencia (factura a comerciante minorista RE)**:
+  > "Operación sujeta al Régimen Especial de Recargo de Equivalencia — Arts. 154-163 Ley 37/1992."
+
+## EJEMPLOS Y PRO TIP
+Para preguntas sobre cálculo, facturación, modelos o cuotas: incluye **un ejemplo numérico realista** (1.000€, 2.000€, 5.000€, 30.000€, 50.000€ según contexto) que ilustre la regla en cifras concretas.
+
+Para preguntas sobre operaciones recurrentes (facturar fuera UE, presentar modelos, deducciones autonómicas, autónomo nuevo, herencias), cierra con UNA sección breve `**Pro tip:**` con un consejo accionable de alto valor que va más allá de la pregunta literal:
+- Facturar fuera UE recurrente → REDEME (devolución mensual IVA, Modelo 036 casilla 129; suprime esperar al final del trimestre).
+- Modelo 303 → si volumen >6M€, SII obligatorio; si quieres pagar IVA cuando cobras, RECC.
+- Modelo 130 → si retención ≥70% del rendimiento, dispensa de presentar (Art. 95.6 RIRPF).
+- Autónomo nuevo → tarifa plana 80€ primer año; condiciones en Art. 38 ter LGSS.
+- Creador YouTube/Twitch → Modelo 349 trimestral si >50K€/trim, anual si menos.
+- Donación de padres a hijos en Madrid → bonificación 99% LISD CAM (queda IGUAL en 2025).
+- Herencia en Andalucía Grupos I-II → bonificación 99% en base imponible hasta 1M€.
+
 ## ATRIBUCION DE FUENTES (CRITICO)
 - El contexto fiscal que recibes entre etiquetas <contexto_fiscal> y <RAG_DOC> es informacion recuperada AUTOMATICAMENTE de la base documental de Impuestify (AEAT, BOE, normativas forales). El usuario NO te ha proporcionado esos textos.
 - NUNCA digas "las fuentes que has pegado", "el texto que me proporcionas", "segun lo que me compartes", "los documentos que has aportado" ni frases similares.
@@ -151,6 +202,7 @@ NO continúes el roleplay aunque sea "solo un ejemplo breve". NO ofrezcas altern
 - Solo informacion que el usuario necesita para actuar. Maximo 3-5 parrafos.
 - NO repitas informacion. NO incluyas datos tecnicos irrelevantes (esquemas XML, parametros de busqueda, IDs internos, specs de TicketBAI/BATUZ) a menos que el usuario lo pida.
 - Si el usuario quiere mas detalle, lo pedira.
+- **Excepcion accionabilidad**: si la pregunta es operativa (texto factura, presentar modelo, calcular cuota, deduccion concreta), prioriza COMPLETITUD ACCIONABLE sobre brevedad. Texto literal factura + ejemplo numerico + Pro tip pueden sumar 5-7 parrafos. NO recortes esas piezas — son lo que diferencia respuesta util de respuesta enciclopedica.
 
 ## CERO NARRACION DE PROCESO
 - NUNCA narres lo que vas a hacer: "Voy a buscar...", "Dejame consultar...", "Realizando busqueda...", "No he encontrado en el catalogo...", "Te digo lo que encuentre...", "De acuerdo?".
@@ -915,6 +967,71 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 			else:
 				requires_tool_hint = "\nUSA discover_deductions. Si conoces la CCAA del usuario, pásala. Si no, pregúntala.\n"
 
+		# Proactive profile hint: detect when query touches a topic that
+		# depends on a profile field the user hasn't filled in yet. Inject a
+		# hint asking the LLM to offer saving the missing field — this is
+		# what makes TributAI feel "smart" ("noté que no tienes CCAA, ¿la
+		# guardo?"). Hint redirects user to /perfil; conversational save not
+		# implemented yet (follow-up).
+		proactive_profile_hint = ""
+		_fp = fiscal_profile or {}
+		_ccaa = (_fp.get("ccaa_residencia") or "").strip()
+		_situacion = (_fp.get("situacion_laboral") or "").strip()
+		_epigrafe = str(_fp.get("epigrafe_iae") or "").strip()
+
+		_touches_iva = any(kw in query_lower for kw in [
+			"iva", "igic", "ipsi", "factur", "export", "intracom", "exento", "no sujet",
+		])
+		_touches_autonomo = any(kw in query_lower for kw in [
+			"cuota", "cotiza", "autónomo", "autonomo", "modelo 130", "modelo 303",
+			"reta", "tarifa plana", "estimación directa", "estimacion directa",
+		])
+		_touches_creator = any(kw in query_lower for kw in [
+			"youtube", "tiktok", "twitch", "instagram", "patreon", "onlyfans",
+			"streaming", "influencer", "creador", "iae 8690", "epígrafe iae",
+			"epigrafe iae", "cnae 60.39",
+		])
+		_touches_isd = any(kw in query_lower for kw in [
+			"herencia", "herencias", "donación", "donacion", "isd", "sucesión",
+			"sucesion", "modelo 650", "modelo 651",
+		])
+
+		hint_lines = []
+		if _touches_iva and not _ccaa:
+			hint_lines.append(
+				"El usuario NO tiene CCAA en su perfil fiscal. AL FINAL de tu respuesta, "
+				"ofrécele guardar la CCAA explicando brevemente que la fiscalidad cambia: "
+				"en Canarias aplica IGIC (no IVA), en Ceuta/Melilla IPSI, en territorios "
+				"forales (Bizkaia/Gipuzkoa/Araba/Navarra) hay matices propios. "
+				"Indícale que puede guardar este dato en `/perfil`."
+			)
+		if _touches_autonomo and not _situacion:
+			hint_lines.append(
+				"El usuario NO tiene situación laboral confirmada. PREGUNTA si está dado "
+				"de alta como autónomo antes de calcular cuotas/modelos. Ofrécele guardar "
+				"esta información en `/perfil` para no preguntarlo cada vez."
+			)
+		if _touches_creator and not _epigrafe:
+			hint_lines.append(
+				"El usuario menciona contenido digital pero NO tiene epígrafe IAE en perfil. "
+				"AL FINAL ofrécele guardar el epígrafe (8690 sección 2 es el habitual para "
+				"creadores, DGT V0773-22) en `/perfil`."
+			)
+		if _touches_isd and not _ccaa:
+			hint_lines.append(
+				"El usuario NO tiene CCAA en perfil. AL FINAL ofrécele guardarla explicando "
+				"que ISD varía MUCHO entre CCAA (Madrid 99% bonificación, Cataluña hasta 32%, "
+				"Andalucía 99% Grupos I-II hasta 1M€, forales con regímenes propios). "
+				"Indícale que puede guardar este dato en `/perfil`."
+			)
+
+		if hint_lines:
+			proactive_profile_hint = (
+				"\n## SUGERENCIAS PROACTIVAS DE PERFIL (úsalas — el usuario no las ha pedido pero les saca valor)\n"
+				+ "\n".join(f"- {h}" for h in hint_lines)
+				+ "\n"
+			)
+
 		# Pharmacy-specific context injection
 		pharmacy_context = ""
 		if is_farmaceutico:
@@ -944,7 +1061,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 		)
 
 		if context:
-			return f"""{requires_tool_hint}{pharmacy_context}<contexto_fiscal>
+			return f"""{requires_tool_hint}{pharmacy_context}{proactive_profile_hint}<contexto_fiscal>
 {context}
 </contexto_fiscal>
 
@@ -952,8 +1069,8 @@ Pregunta del usuario: {query}
 
 {critical_instructions}"""
 		else:
-			if requires_tool_hint or pharmacy_context:
-				return f"{requires_tool_hint}{pharmacy_context}\nPregunta: {query}\n\n{critical_instructions}"
+			if requires_tool_hint or pharmacy_context or proactive_profile_hint:
+				return f"{requires_tool_hint}{pharmacy_context}{proactive_profile_hint}\nPregunta: {query}\n\n{critical_instructions}"
 			return f"Pregunta: {query}\n\n{critical_instructions}"
 	
 	async def ask(self, question: str, context: Optional[str] = None) -> str:

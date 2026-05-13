@@ -65,6 +65,82 @@ _COMPILED_PATTERNS = [
 ]
 
 
+# ── Fundamental laws whitelist ───────────────────────────────────────────────
+#
+# Spanish tax law has a handful of foundational statutes that every assistant
+# response will cite (LIRPF, LIVA, LGT, LIS, etc.). The RAG chunk retrieval is
+# topic-targeted: a chunk about deduction X may not contain the literal string
+# "Ley 35/2006" even though it's about LIRPF. Flagging "Ley 35/2006" as
+# unverified in that case is a false positive that destroys user trust — the
+# user reads "I couldn't verify the basic income tax law" and assumes the
+# whole answer is unreliable.
+#
+# The whitelist below treats these statutes as part of the implicit corpus
+# that ALWAYS exists. It applies ONLY to category-level citations
+# (ley/rd/real_decreto), NEVER to specific articles of those laws — an
+# invented "Art. 999.99 LIRPF" must still flag if no chunk supports it.
+_FUNDAMENTAL_LAWS_WHITELIST = frozenset({
+    # Leyes fiscales fundamentales
+    "ley 37/1992",        # LIVA
+    "ley 35/2006",        # LIRPF
+    "ley 27/2014",        # LIS
+    "ley 58/2003",        # LGT
+    "ley 20/1991",        # LIGIC (Canarias)
+    "ley 29/1987",        # LISD
+    "ley 19/1991",        # LIP
+    "ley 38/1992",        # LIIEE
+    "ley 49/2002",        # Régimen fiscal entidades sin fines lucrativos / mecenazgo
+    "ley 19/1994",        # REF Canarias
+    "ley 22/2009",        # Cesión tributos a CCAA
+    "ley 11/2021",        # Medidas prevención fraude
+    "ley 7/2024",         # Reforma fiscal microempresas + ahorro 2025
+    # Reglamentos
+    "rd 1624/1992",       # RIVA
+    "rd 439/2007",        # RIRPF
+    "rd 634/2015",        # RIS
+    "rd 828/1995",        # RITPAJD
+    "rd 1065/2007",       # RGAT
+    "rd 1619/2012",       # Reglamento facturación
+    # Reales Decretos Legislativos / Textos Refundidos
+    "rd legislativo 1/1993",  # TR ITPAJD
+    "rd legislativo 2/2004",  # TR LRHL (Haciendas Locales)
+    "rd legislativo 5/2004",  # TR LIRNR
+    "real decreto legislativo 1/1993",
+    "real decreto legislativo 2/2004",
+    "real decreto legislativo 5/2004",
+    # Variantes "Real Decreto" sin abreviar
+    "real decreto 1624/1992",
+    "real decreto 439/2007",
+    "real decreto 634/2015",
+    "real decreto 828/1995",
+    "real decreto 1065/2007",
+    "real decreto 1619/2012",
+})
+
+# NOTE: bare siglas (e.g., "según la LIVA...") do NOT need a whitelist
+# because the citation extractor's art_law pattern requires a leading
+# number (\d+) before the sigla — "LIVA" alone never produces a Citation.
+# So no false positive is possible for sigla-only references.
+
+
+def _is_fundamental_law_reference(citation: "Citation") -> bool:
+    """
+    True if the citation refers to a foundational Spanish tax statute that
+    the model can safely cite without RAG-chunk evidence. Applies ONLY to
+    category-level citations (ley/rd/real_decreto), never to specific
+    articles of those laws.
+    """
+    if citation.label not in ("ley", "rd", "real_decreto"):
+        return False
+    norm = citation.normalized
+    if norm in _FUNDAMENTAL_LAWS_WHITELIST:
+        return True
+    # Tolerate minor spacing variations that NFKD/regex may leave in (e.g.,
+    # "ley 37 / 1992" → "ley 37/1992" after collapse). _normalize already
+    # collapses whitespace, so direct membership check is sufficient.
+    return False
+
+
 # ── Normalization ────────────────────────────────────────────────────────────
 
 # Map common article abbreviations so "Art. 68" and "Artículo 68" compare equal.
@@ -157,10 +233,16 @@ def verify_citations(
             chunk_index.append((chunk_id, _normalize(text)))
 
     if not chunk_index:
-        # No retrieval evidence: every citation is unverified.
+        # No retrieval evidence: every citation is unverified, EXCEPT
+        # fundamental laws which are part of the implicit corpus.
+        unverified: List[Citation] = []
         for c in citations:
-            c.verified = False
-        unverified = list(citations)
+            if _is_fundamental_law_reference(c):
+                c.verified = True
+                c.matched_chunk_id = "whitelist_fundamental_law"
+            else:
+                c.verified = False
+                unverified.append(c)
     else:
         unverified: List[Citation] = []
         for c in citations:
@@ -172,7 +254,14 @@ def verify_citations(
                     matched = True
                     break
             if not matched:
-                unverified.append(c)
+                # Fall back to whitelist for fundamental laws (LIVA, LIRPF, etc.)
+                # whose number may not literally appear in chunks targeted at a
+                # specific article or deduction.
+                if _is_fundamental_law_reference(c):
+                    c.verified = True
+                    c.matched_chunk_id = "whitelist_fundamental_law"
+                else:
+                    unverified.append(c)
 
     has_unverified = bool(unverified)
     warning_footer = _build_warning_footer(unverified) if has_unverified else None
