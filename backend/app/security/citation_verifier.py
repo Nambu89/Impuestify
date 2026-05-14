@@ -123,21 +123,78 @@ _FUNDAMENTAL_LAWS_WHITELIST = frozenset({
 # So no false positive is possible for sigla-only references.
 
 
+# Whitelist de articulos canonicos que el system prompt de TaxAgent cita
+# explicitamente en sus plantillas. Estos articulos existen y son
+# verificables contra el BOE, pero los chunks RAG pueden no contener su
+# numero literal (e.g., el chunk dice "operacion no sujeta" sin citar el
+# articulo). Sin esta whitelist, el verifier marca como unverified citas
+# tipo "Art. 70 LIVA" cuando el chunk no lo escribe textualmente.
+#
+# Mantener en sincronia con las plantillas del system prompt en
+# `app/agents/tax_agent.py` (secciones TEXTO LITERAL PARA FACTURAS y
+# EJEMPLOS Y PRO TIP). Si se añade un articulo nuevo en el prompt,
+# añadirlo aqui tras verificarlo en el BOE.
+_CANONICAL_ARTICLES_WHITELIST = frozenset({
+    # LIVA — localizacion servicios y operaciones especiales
+    "art 21 liva",
+    "art 25 liva",
+    "art 69 liva",
+    "art 69.dos liva",
+    "art 69.dos.b liva",
+    "art 70 liva",
+    "art 84 liva",
+    "art 84.uno.2 liva",
+    "art 154 liva",
+    "art 155 liva",
+    "art 156 liva",
+    "art 157 liva",
+    "art 158 liva",
+    "art 159 liva",
+    "art 160 liva",
+    "art 161 liva",
+    "art 162 liva",
+    "art 163 liva",
+    # LIRPF — articulos clave citados en pro tips
+    "art 68 lirpf",
+    "art 68.4 lirpf",
+    "art 96 lirpf",
+    "art 81 lirpf",
+    # RIRPF — dispensas y retenciones
+    "art 95.6 rirpf",
+    "art 95 rirpf",
+    # LGSS — autonomos
+    "art 38 lgss",
+    "art 38 ter lgss",
+})
+
+
 def _is_fundamental_law_reference(citation: "Citation") -> bool:
     """
-    True if the citation refers to a foundational Spanish tax statute that
-    the model can safely cite without RAG-chunk evidence. Applies ONLY to
-    category-level citations (ley/rd/real_decreto), never to specific
-    articles of those laws.
+    True if the citation refers to a foundational Spanish tax statute or
+    a canonical article documented in the TaxAgent system prompt. The model
+    can safely cite these without requiring a RAG chunk that contains the
+    exact numeric reference. Two whitelists:
+      1. Law-level (ley/rd/real_decreto) → _FUNDAMENTAL_LAWS_WHITELIST.
+      2. Article-level (art_law) → _CANONICAL_ARTICLES_WHITELIST,
+         limited to articles the system prompt explicitly cites.
+
+    For all other art_law citations (invented or rare articles), RAG chunk
+    evidence is still required.
     """
-    if citation.label not in ("ley", "rd", "real_decreto"):
+    if citation.label in ("ley", "rd", "real_decreto"):
+        return citation.normalized in _FUNDAMENTAL_LAWS_WHITELIST
+    if citation.label == "art_law":
+        norm = citation.normalized
+        # The regex captures both "Art. 70 LIVA" and "70 LIVA" (when used in
+        # compound like "Arts. 69 y 70 LIVA"). _normalize only adds "art "
+        # prefix when the original had "Art./Artículo". So try both variants.
+        candidates = {norm}
+        if not norm.startswith("art "):
+            candidates.add(f"art {norm}")
+        for cand in candidates:
+            if cand in _CANONICAL_ARTICLES_WHITELIST:
+                return True
         return False
-    norm = citation.normalized
-    if norm in _FUNDAMENTAL_LAWS_WHITELIST:
-        return True
-    # Tolerate minor spacing variations that NFKD/regex may leave in (e.g.,
-    # "ley 37 / 1992" → "ley 37/1992" after collapse). _normalize already
-    # collapses whitespace, so direct membership check is sufficient.
     return False
 
 

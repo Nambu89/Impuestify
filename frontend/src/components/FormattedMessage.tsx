@@ -143,10 +143,18 @@ function detectCalloutSection(text: string): { variant: CalloutBlock['variant'];
 }
 
 // --- Direct answer detection ---
-// Matches first paragraph when it looks like a fiscal verdict:
-// "**Factura SIN IVA**", "**NO aplicas IVA**", "**Sí, debes...**", "**No,**"
-// Also short paragraphs (<200 chars) that start with bold text.
-const DIRECT_ANSWER_REGEX = /^\*{1,2}((?:NO|SÍ|Sí|Si|No,?|Factura\s+(?:SIN|CON)|Aplicas|No aplicas|Debes|No debes|Exempt)[^*\n]{0,180})\*{1,2}/i
+// Detecta la PRIMERA frase del mensaje cuando expresa un veredicto fiscal.
+// Acepta el verdict con o SIN bold (**), con o sin colon, con o sin coma.
+// Ejemplos válidos:
+//   "Factura SIN IVA: prestación de servicios..."
+//   "**Factura SIN IVA**. Cuando facturas..."
+//   "NO aplicas IVA español."
+//   "Sí, debes presentar Modelo 303."
+const VERDICT_KEYWORDS = '(?:NO\\s+aplicas|NO\\s+debes|Aplicas|Debes|Factura\\s+(?:SIN|CON)|S[ÍíIi],?|No,?|Exento|Sujet[oa])'
+const DIRECT_ANSWER_REGEX = new RegExp(
+    `^\\*{0,2}(${VERDICT_KEYWORDS}[^\\n]{0,200}?)(?:[.:!?]|\\*{1,2})`,
+    'i'
+)
 
 function detectDirectAnswer(text: string): { verdict: string; rest: string } | null {
     const firstPara = text.split(/\n\n/)[0].trim()
@@ -156,18 +164,27 @@ function detectDirectAnswer(text: string): { verdict: string; rest: string } | n
     if (/[✅✔️⚠\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]/u.test(firstPara)) return null
     const m = firstPara.match(DIRECT_ANSWER_REGEX)
     if (!m) return null
-    const verdict = m[1].trim()
-    const rest = text.slice(text.indexOf(firstPara) + firstPara.length).trim()
+    // Strip leading/trailing asterisks
+    const verdict = m[1].replace(/^\*+|\*+$/g, '').trim()
+    if (verdict.length < 4) return null
+    // Take everything AFTER the matched verdict sentence
+    const idx = text.indexOf(m[0]) + m[0].length
+    const rest = text.slice(idx).trim()
     return { verdict, rest }
 }
 
 // --- Pro tip detection ---
-const PRO_TIP_REGEX = /^\*{1,2}(?:Pro tip|Truco|Pro Tip|TRUCO)\b[^*]*\*{0,2}[:：]?\s*/im
+// Detecta "Pro tip" / "Truco" en CUALQUIER parte del texto, incluso dentro
+// de bullet list ("- Pro tip: ..."). Extrae el contenido y lo separa.
+const PRO_TIP_LINE_REGEX = /^[\s>*+\-•]*\*{0,2}(?:Pro\s+tip|Truco|Pro\s+Tip|TRUCO)\*{0,2}\s*[:：]\s*(.+)$/im
 
-function detectProTip(text: string): { content: string } | null {
-    if (!PRO_TIP_REGEX.test(text)) return null
-    const cleaned = text.replace(PRO_TIP_REGEX, '').trim()
-    return { content: cleaned }
+function detectProTip(text: string): { content: string; textWithoutProTip: string } | null {
+    const m = text.match(PRO_TIP_LINE_REGEX)
+    if (!m) return null
+    const proTipContent = m[1].trim()
+    // Remove the entire matched line (including bullet prefix) from the original text
+    const textWithoutProTip = text.replace(m[0], '').replace(/\n{3,}/g, '\n\n').trim()
+    return { content: proTipContent, textWithoutProTip }
 }
 
 function parseContent(rawContent: string): ContentBlock[] {
@@ -208,6 +225,16 @@ function parseContent(rawContent: string): ContentBlock[] {
         contentForSections = directAnswer.rest
     }
 
+    // Step 3b: Global Pro tip extraction (also handles tips inside bullet
+    // lists or anywhere in the body). The verdict for ProTipCard is rendered
+    // at the END of the message, so we extract first and push later.
+    let trailingProTip: ProTipBlock | null = null
+    const globalProTip = detectProTip(contentForSections)
+    if (globalProTip) {
+        trailingProTip = { type: 'pro_tip', content: globalProTip.content }
+        contentForSections = globalProTip.textWithoutProTip
+    }
+
     // Step 4: Split into sections by double newlines followed by emoji or header markers
     // We split on patterns that indicate a new "section"
     const sections = splitIntoSections(contentForSections)
@@ -216,9 +243,14 @@ function parseContent(rawContent: string): ContentBlock[] {
         const trimmed = section.trim()
         if (!trimmed) continue
 
-        // Try pro tip block (before simulation so it takes priority)
+        // Try pro tip block (before simulation so it takes priority).
+        // Si la sección contiene OTRO texto además del Pro tip, conserva
+        // ese texto en un text block separado para no perder contenido.
         const proTip = detectProTip(trimmed)
         if (proTip) {
+            if (proTip.textWithoutProTip) {
+                blocks.push({ type: 'text', content: proTip.textWithoutProTip })
+            }
             blocks.push({ type: 'pro_tip', content: proTip.content })
             continue
         }
@@ -250,6 +282,11 @@ function parseContent(rawContent: string): ContentBlock[] {
 
         // Regular text
         blocks.push({ type: 'text', content: trimmed })
+    }
+
+    // Append Pro tip extracted globally (if any) at the end of the message.
+    if (trailingProTip) {
+        blocks.push(trailingProTip)
     }
 
     return blocks

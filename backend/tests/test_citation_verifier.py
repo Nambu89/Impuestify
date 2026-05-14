@@ -104,14 +104,17 @@ def test_verify_one_missing_flagged():
 
 def test_verify_empty_chunks_flags_non_whitelisted():
     """With empty chunks, non-whitelisted citations are flagged.
-    Whitelisted fundamental laws (e.g., Ley 22/2009) are NOT flagged."""
-    response = "Según Art. 68.4 LIRPF y Ley 22/2009 se aplica."
+    Whitelisted fundamental laws AND canonical articles are NOT flagged."""
+    # Mix de articulo NO canonico + ley fundamental + articulo canonico
+    response = "Según Art. 999 LIRPF inventado y Ley 22/2009 y Art. 68.4 LIRPF se aplica."
     result = verify_citations(response, rag_chunks=[])
     assert result.has_unverified
-    # Art. 68.4 LIRPF flagged (specific article needs chunk evidence)
-    assert any(c.label == "art_law" for c in result.unverified)
+    # Art. 999 LIRPF flagged (no whitelist, no chunk)
+    assert any("999" in c.text for c in result.unverified)
     # Ley 22/2009 is whitelisted (foundational: cesión tributos CCAA)
     assert not any(c.normalized == "ley 22/2009" for c in result.unverified)
+    # Art. 68.4 LIRPF whitelisted (canonical article)
+    assert not any("68.4" in c.text for c in result.unverified)
 
 
 def test_verify_no_citations_returns_clean():
@@ -219,6 +222,49 @@ def test_invented_article_of_real_law_still_flagged():
     assert result.has_unverified
     art_cites = [c for c in result.unverified if c.label == "art_law"]
     assert art_cites, "Invented article must be flagged"
+
+
+def test_canonical_article_70_liva_whitelisted():
+    """Art. 70 LIVA es citado por el system prompt en la plantilla
+    'Servicios profesionales a empresa fuera de UE'. Sin whitelist
+    canonica, el verifier lo marca unverified cuando los chunks RAG
+    hablan de la operacion pero no escriben '70 LIVA' literal.
+    Regression test sesion 41 — segundo screenshot mobile."""
+    response = "Operacion no sujeta — Arts. 69 y 70 LIVA."
+    chunks = [{"id": "c1", "text": "Servicios prestados a empresas fuera de la UE no sujetos"}]
+    result = verify_citations(response, chunks)
+    art_cites = [c for c in result.citations if c.label == "art_law"]
+    assert art_cites
+    assert all(c.verified for c in art_cites), (
+        f"Canonical articles should be verified: {[(c.text, c.verified) for c in art_cites]}"
+    )
+
+
+def test_canonical_article_21_liva_whitelisted():
+    """Art. 21 LIVA — exportacion de bienes. Whitelisted."""
+    response = "Operacion exenta — Exportacion de bienes — Art. 21 LIVA."
+    result = verify_citations(response, [])
+    art_cites = [c for c in result.citations if c.label == "art_law"]
+    assert art_cites
+    assert all(c.verified for c in art_cites)
+
+
+def test_canonical_article_68_4_lirpf_whitelisted():
+    """Art. 68.4 LIRPF — deduccion Ceuta/Melilla. Whitelisted."""
+    response = "Deduccion 60% segun Art. 68.4 LIRPF."
+    result = verify_citations(response, [])
+    art_cites = [c for c in result.citations if c.label == "art_law"]
+    assert art_cites
+    assert all(c.verified for c in art_cites)
+
+
+def test_invented_article_still_flagged_after_canonical_whitelist():
+    """Art. 999 LIVA (inventado) NO esta en whitelist canonica. Sigue
+    flagueado para evitar hallucinations."""
+    response = "Segun Art. 999 LIVA aplicarias..."
+    result = verify_citations(response, [])
+    assert result.has_unverified
+    assert any(c.label == "art_law" for c in result.unverified)
 
 
 def test_fundamental_law_lgt_whitelisted_for_notification_agent():
