@@ -267,6 +267,52 @@ const CALLOUT_ICONS: Record<CalloutBlock['variant'], React.ReactNode> = {
     question: <MessageCircle size={18} />,
 }
 
+// --- Custom markdown components ---
+
+/**
+ * Custom blockquote: add `.blockquote-warning` class when content starts
+ * with ⚠ (citation verifier "no he podido verificar...") so CSS can
+ * render it with amber/yellow high-contrast styling instead of the
+ * default low-contrast info style.
+ */
+function MdBlockquote({ children, ...rest }: React.HTMLAttributes<HTMLQuoteElement>) {
+    const childText = React.Children.toArray(children)
+        .map((c) => (typeof c === 'string' ? c : ''))
+        .join('')
+    const childHtml = JSON.stringify(children)
+    const isWarning = /⚠|⚠/.test(childText) || /⚠|\\u26a0/i.test(childHtml)
+    return (
+        <blockquote {...rest} className={isWarning ? 'blockquote-warning' : undefined}>
+            {children}
+        </blockquote>
+    )
+}
+
+/**
+ * Custom paragraph: detect "📄 Fuentes: ..." sentinel emitted by the
+ * backend (tax_agent.format_sources_inline) and wrap it in a styled
+ * .sources-block. Falls back to plain paragraph.
+ */
+function MdParagraph({ children, ...rest }: React.HTMLAttributes<HTMLParagraphElement>) {
+    const childText = React.Children.toArray(children)
+        .map((c) => (typeof c === 'string' ? c : ''))
+        .join('')
+    // Backend format: "\n\n📄 **Fuentes**: doc1 (pág X), doc2 (pág Y)"
+    if (/^\s*📄\s*\*?\*?Fuentes/i.test(childText) || /Fuentes\s*[:：]/i.test(childText.slice(0, 40))) {
+        return (
+            <p {...rest} className="sources-block">
+                {children}
+            </p>
+        )
+    }
+    return <p {...rest}>{children}</p>
+}
+
+const MARKDOWN_COMPONENTS = {
+    blockquote: MdBlockquote,
+    p: MdParagraph,
+} as const
+
 function CalloutBox({ block }: { block: CalloutBlock }) {
     return (
         <div className={`fmt-callout fmt-callout--${block.variant}`}>
@@ -276,7 +322,7 @@ function CalloutBox({ block }: { block: CalloutBlock }) {
             </div>
             {block.content && (
                 <div className="fmt-callout-body">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>{block.content}</ReactMarkdown>
                 </div>
             )}
         </div>
@@ -309,7 +355,7 @@ export const FormattedMessage: React.FC<FormattedMessageProps> = ({ content }) =
                     case 'text':
                         return (
                             <div key={i} className="fmt-text">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.content}</ReactMarkdown>
+                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>{block.content}</ReactMarkdown>
                             </div>
                         )
                 }

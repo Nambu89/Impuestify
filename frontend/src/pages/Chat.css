@@ -531,18 +531,65 @@
     background: rgba(26, 86, 219, 0.03);
 }
 
-/* Blockquotes */
+/* Blockquotes — default style (informative).
+   Diseñado para fondo OSCURO del chat (.message.assistant tiene
+   background rgba(255,255,255,0.06)). Antes usaba gray-600 que era
+   ilegible. Ahora gray-100 + bg azul más visible. */
 .message-text blockquote {
-    border-left: 3px solid var(--color-primary-light);
-    margin: 0.5em 0;
-    padding: var(--spacing-2) var(--spacing-3);
-    color: var(--color-gray-600);
-    background: rgba(26, 86, 219, 0.03);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    border-left: 3px solid var(--color-accent);
+    margin: 0.8em 0;
+    padding: var(--spacing-3) var(--spacing-4);
+    color: var(--color-gray-100);
+    background: rgba(6, 182, 212, 0.08);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
 .message-text blockquote p {
     margin: 0.2em 0;
+    color: inherit;
+}
+
+/* Warning blockquote — citation verifier "no he podido verificar...".
+   La clase .blockquote-warning la añade FormattedMessage cuando el
+   contenido del blockquote empieza por ⚠. Estilo amber prominente. */
+.message-text blockquote.blockquote-warning {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    color: #fde68a;
+}
+
+.message-text blockquote.blockquote-warning strong {
+    color: #fcd34d;
+}
+
+/* Estilo dedicado para el bloque "Fuentes" (📄 Fuentes: ...).
+   FormattedMessage envuelve este patrón en .sources-block. */
+.sources-block {
+    margin-top: var(--spacing-4);
+    padding-top: var(--spacing-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.9em;
+    color: var(--color-gray-300);
+    line-height: 1.5;
+}
+
+.sources-block .sources-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-accent);
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.sources-block .source-item {
+    display: inline;
+    color: var(--color-gray-200);
+}
+
+.sources-block .source-item + .source-item::before {
+    content: ", ";
+    color: var(--color-gray-400);
 }
 
 /* Horizontal rule */
