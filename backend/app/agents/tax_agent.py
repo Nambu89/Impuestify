@@ -154,7 +154,9 @@ Cuando una pregunta admita 2-3 casos comunes (B2B/B2C, residente/no residente, a
 > Respuesta correcta (asume B2B):
 > **Factura SIN IVA español.** Servicios B2B a EEUU = operación no sujeta al IVA español (Arts. 69 y 70 LIVA).
 > [resto de respuesta con texto factura + ejemplo + pro tip]
-> *Si tu cliente es un particular (no empresa), la regla cambia: la consultoría a particulares fuera de la UE también queda no sujeta por Art. 69.dos.b LIVA (servicios profesionales) — mismo resultado en este caso concreto.*
+> *Si tu cliente es un particular (no empresa), la regla general (Art. 69.Uno.2.º LIVA) localiza el servicio en España y SÍ se aplica IVA español. EXCEPCIÓN — Art. 69.Dos LIVA: si el servicio es uno de los "intangibles" listados (a) derechos autor/patentes/licencias; (b) fondos de comercio/exclusivas; (c) publicidad; (d) asesoramiento, auditoría, ingeniería, gabinete de estudios, abogacía, consultores, expertos contables/fiscales; (e) tratamiento de datos; (f) traducción, corrección, composición; (g) seguros/operaciones financieras; (h) cesión personal; (i) doblaje películas; (j) arrendamiento bienes muebles; (k) acceso a redes energéticas; (l) obligación de no prestar) Y el destinatario particular está establecido FUERA de la Comunidad, entonces NO se localiza en España → tampoco sujeta al IVA español.*
+
+> **Regla operativa B2C/EEUU consultoría**: cae en Art. 69.Dos.d (asesoramiento/consultores) → particular EEUU = no sujeta IVA español. MISMO resultado que B2B pero distinta base legal (B2B: Art. 69.Uno.1.º; B2C servicios intangibles a no-UE: Art. 69.Dos.d).
 
 ## TEXTO LITERAL PARA FACTURAS
 Cuando la pregunta involucre "qué pongo en factura", "qué escribo", "cómo factura", "texto factura", "concepto factura", "exención en factura", "no sujeción en factura", DEVUELVE SIEMPRE un texto literal entrecomillado y listo para copy-paste. Formato preferido: bloque markdown con `>` o **negrita**.
@@ -162,8 +164,11 @@ Cuando la pregunta involucre "qué pongo en factura", "qué escribo", "cómo fac
 ### Plantillas copy-paste para casos comunes:
 - **Servicios profesionales a empresa fuera de UE (B2B no-UE)**:
   > "Operación no sujeta al IVA español — Prestación de servicios a empresario establecido fuera de la Comunidad — Arts. 69 y 70 Ley 37/1992."
-- **Servicios profesionales a particular fuera de UE (B2C no-UE, servicios del Art. 69.dos.b: consultoría, asesoría, ingeniería, traducción, publicidad)**:
-  > "Operación no sujeta al IVA español — Servicio profesional a destinatario establecido fuera de la Comunidad — Art. 69.dos.b Ley 37/1992."
+- **Servicios "intangibles" del Art. 69.Dos LIVA a particular fuera de UE (B2C no-UE)**. Servicios listados: (d) asesoramiento/consultoría/ingeniería/abogacía/auditoría; (c) publicidad; (f) traducción; (a) derechos de autor/licencias; (e) tratamiento de datos; (g) seguros/financieros; (j) arrendamiento bienes muebles; etc. La letra correcta del apartado depende del servicio concreto — ÚSALA. Texto factura:
+  > "Operación no sujeta al IVA español — Servicio del Art. 69.Dos.[LETRA] LIVA prestado a destinatario establecido fuera de la Comunidad — Ley 37/1992."
+
+  (Sustituye [LETRA] por la letra del apartado que corresponde: d para consultoría/asesoramiento/ingeniería, c para publicidad, f para traducción, a para derechos de autor, etc.)
+- **Servicios B2C a particular fuera de UE NO listados en Art. 69.Dos** (servicios "personales" no incluidos en la lista — p. ej. coaching personal sin componente profesional, servicios de bienestar): regla general Art. 69.Uno.2.º → SÍ sujeta IVA español. Texto factura: normal con IVA repercutido.
 - **Exportación de bienes fuera de UE**:
   > "Operación exenta del IVA — Exportación de bienes — Art. 21 Ley 37/1992."
 - **Operación intracomunitaria B2B (con NIF-IVA del cliente)**:
