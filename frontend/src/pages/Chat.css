@@ -149,6 +149,8 @@
     flex: 1;
     overflow-y: auto;
     padding: var(--spacing-6) var(--spacing-4);
+    /* Extra bottom padding so last message isn't hidden under fixed footer */
+    padding-bottom: calc(var(--spacing-6) + 96px + env(safe-area-inset-bottom, 0px));
     scroll-behavior: smooth;
 }
 
@@ -474,13 +476,20 @@
     margin: 0.2em 0;
 }
 
-/* Inline code */
+/* Inline code — visible on dark assistant bubble */
 .message-text code {
-    background: rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     font-family: 'Courier New', monospace;
     font-size: 0.9em;
+}
+
+/* Code inside user bubble (light context) */
+.message.user .message-text code {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
 }
 
 /* Code blocks */
@@ -513,22 +522,23 @@
 }
 
 .message-text thead th {
-    background: var(--color-gray-50);
-    border: 1px solid var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     padding: var(--spacing-2) var(--spacing-3);
     text-align: left;
     font-weight: 600;
-    color: var(--color-gray-700);
+    color: var(--color-gray-200);
+    white-space: nowrap;
 }
 
 .message-text tbody td {
-    border: 1px solid var(--color-gray-200);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     padding: var(--spacing-2) var(--spacing-3);
-    color: var(--color-gray-600);
+    color: var(--color-gray-300);
 }
 
 .message-text tbody tr:hover {
-    background: rgba(26, 86, 219, 0.03);
+    background: rgba(26, 86, 219, 0.08);
 }
 
 /* Blockquotes — default style (informative).
@@ -659,6 +669,8 @@
 .chat-footer {
     background: transparent;
     padding: var(--spacing-3) var(--spacing-4) var(--spacing-5);
+    /* iOS safe-area for home indicator */
+    padding-bottom: calc(var(--spacing-5) + env(safe-area-inset-bottom, 0px));
     position: fixed;
     bottom: 0;
     left: 0;
@@ -1037,6 +1049,8 @@
 @media (min-width: 768px) {
     .chat-container {
         padding: var(--spacing-8) var(--spacing-6);
+        /* Footer becomes static on tablet+ — reset extra bottom padding */
+        padding-bottom: var(--spacing-8);
     }
 
     .chat-empty h2 {

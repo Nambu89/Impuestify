@@ -5,12 +5,15 @@
  * 1. Hide/collapse inline JSON blocks
  * 2. Render IRPF simulation data as styled cards
  * 3. Convert emoji-prefixed sections into callout boxes
- * 4. Keep regular markdown rendered normally
+ * 4. Render direct-answer verdict card (green, prominent)
+ * 5. Render copyable blockquotes (legal text / invoice templates)
+ * 6. Render Pro tip card (golden)
+ * 7. Keep regular markdown rendered normally
  */
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Calculator, Lightbulb, CheckCircle2, AlertTriangle, MessageCircle, Info, TrendingUp } from 'lucide-react'
+import { Calculator, Lightbulb, CheckCircle2, AlertTriangle, MessageCircle, TrendingUp, Zap, Copy, Check } from 'lucide-react'
 import './FormattedMessage.css'
 
 interface FormattedMessageProps {
@@ -38,7 +41,18 @@ interface CalloutBlock {
     content: string
 }
 
-type ContentBlock = TextBlock | SimulationBlock | CalloutBlock
+interface DirectAnswerBlock {
+    type: 'direct_answer'
+    verdict: string
+    rest: string
+}
+
+interface ProTipBlock {
+    type: 'pro_tip'
+    content: string
+}
+
+type ContentBlock = TextBlock | SimulationBlock | CalloutBlock | DirectAnswerBlock | ProTipBlock
 
 // --- Emoji-to-callout mapping ---
 
@@ -128,6 +142,34 @@ function detectCalloutSection(text: string): { variant: CalloutBlock['variant'];
     return { variant, title, content }
 }
 
+// --- Direct answer detection ---
+// Matches first paragraph when it looks like a fiscal verdict:
+// "**Factura SIN IVA**", "**NO aplicas IVA**", "**Sí, debes...**", "**No,**"
+// Also short paragraphs (<200 chars) that start with bold text.
+const DIRECT_ANSWER_REGEX = /^\*{1,2}((?:NO|SÍ|Sí|Si|No,?|Factura\s+(?:SIN|CON)|Aplicas|No aplicas|Debes|No debes|Exempt)[^*\n]{0,180})\*{1,2}/i
+
+function detectDirectAnswer(text: string): { verdict: string; rest: string } | null {
+    const firstPara = text.split(/\n\n/)[0].trim()
+    // Must be short enough to be a verdict (not a full paragraph)
+    if (firstPara.length > 350) return null
+    // Already handled as a callout (has emoji marker)
+    if (/[✅✔️⚠\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]/u.test(firstPara)) return null
+    const m = firstPara.match(DIRECT_ANSWER_REGEX)
+    if (!m) return null
+    const verdict = m[1].trim()
+    const rest = text.slice(text.indexOf(firstPara) + firstPara.length).trim()
+    return { verdict, rest }
+}
+
+// --- Pro tip detection ---
+const PRO_TIP_REGEX = /^\*{1,2}(?:Pro tip|Truco|Pro Tip|TRUCO)\b[^*]*\*{0,2}[:：]?\s*/im
+
+function detectProTip(text: string): { content: string } | null {
+    if (!PRO_TIP_REGEX.test(text)) return null
+    const cleaned = text.replace(PRO_TIP_REGEX, '').trim()
+    return { content: cleaned }
+}
+
 function parseContent(rawContent: string): ContentBlock[] {
     const blocks: ContentBlock[] = []
 
@@ -157,13 +199,29 @@ function parseContent(rawContent: string): ContentBlock[] {
     // Step 2: Clean up multiple blank lines
     content = content.replace(/\n{3,}/g, '\n\n')
 
-    // Step 3: Split into sections by double newlines followed by emoji or header markers
+    // Step 3: Check for direct answer in the whole content (first paragraph only)
+    let contentForSections = content
+    const directAnswer = detectDirectAnswer(content)
+    if (directAnswer) {
+        blocks.push({ type: 'direct_answer', verdict: directAnswer.verdict, rest: directAnswer.rest })
+        // The rest will be processed as normal sections below
+        contentForSections = directAnswer.rest
+    }
+
+    // Step 4: Split into sections by double newlines followed by emoji or header markers
     // We split on patterns that indicate a new "section"
-    const sections = splitIntoSections(content)
+    const sections = splitIntoSections(contentForSections)
 
     for (const section of sections) {
         const trimmed = section.trim()
         if (!trimmed) continue
+
+        // Try pro tip block (before simulation so it takes priority)
+        const proTip = detectProTip(trimmed)
+        if (proTip) {
+            blocks.push({ type: 'pro_tip', content: proTip.content })
+            continue
+        }
 
         // Try simulation block
         const sim = parseSimulationBlock(trimmed)
@@ -237,6 +295,66 @@ function splitIntoSections(content: string): string[] {
 
 // --- Renderers ---
 
+function DirectAnswerCard({ block }: { block: DirectAnswerBlock }) {
+    return (
+        <div className="fmt-direct-answer">
+            <div className="fmt-direct-answer-header">
+                <Zap size={16} />
+                <span className="fmt-direct-answer-label">Respuesta directa</span>
+            </div>
+            <p className="fmt-direct-answer-verdict">{block.verdict}</p>
+        </div>
+    )
+}
+
+function ProTipCard({ block }: { block: ProTipBlock }) {
+    return (
+        <div className="fmt-pro-tip">
+            <div className="fmt-pro-tip-header">
+                <Lightbulb size={16} />
+                <span>Pro tip fiscal</span>
+            </div>
+            <div className="fmt-pro-tip-body">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>{block.content}</ReactMarkdown>
+            </div>
+        </div>
+    )
+}
+
+function CopyButton({ text }: { text: string }) {
+    const [copied, setCopied] = useState(false)
+
+    const handleCopy = useCallback(async () => {
+        try {
+            await navigator.clipboard.writeText(text)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        } catch {
+            // Fallback for older browsers
+            const el = document.createElement('textarea')
+            el.value = text
+            document.body.appendChild(el)
+            el.select()
+            document.execCommand('copy')
+            document.body.removeChild(el)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        }
+    }, [text])
+
+    return (
+        <button
+            className={`fmt-copy-btn${copied ? ' fmt-copy-btn--copied' : ''}`}
+            onClick={handleCopy}
+            title={copied ? 'Copiado' : 'Copiar texto'}
+            aria-label={copied ? 'Texto copiado' : 'Copiar al portapapeles'}
+        >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            <span>{copied ? 'Copiado' : 'Copiar'}</span>
+        </button>
+    )
+}
+
 function SimulationCard({ block }: { block: SimulationBlock }) {
     return (
         <div className="fmt-simulation">
@@ -270,17 +388,42 @@ const CALLOUT_ICONS: Record<CalloutBlock['variant'], React.ReactNode> = {
 // --- Custom markdown components ---
 
 /**
- * Custom blockquote: add `.blockquote-warning` class when content starts
- * with ⚠ (citation verifier "no he podido verificar...") so CSS can
- * render it with amber/yellow high-contrast styling instead of the
- * default low-contrast info style.
+ * Custom blockquote:
+ * - add `.blockquote-warning` class when content starts with ⚠
+ * - add copy button for legal/invoice template blockquotes (>80 chars, no warning)
  */
 function MdBlockquote({ children, ...rest }: React.HTMLAttributes<HTMLQuoteElement>) {
     const childText = React.Children.toArray(children)
-        .map((c) => (typeof c === 'string' ? c : ''))
+        .flatMap((c) => {
+            if (typeof c === 'string') return [c]
+            if (React.isValidElement(c)) {
+                const props = c.props as { children?: React.ReactNode }
+                return React.Children.toArray(props.children).map((cc) =>
+                    typeof cc === 'string' ? cc : ''
+                )
+            }
+            return ['']
+        })
         .join('')
     const childHtml = JSON.stringify(children)
     const isWarning = /⚠|⚠/.test(childText) || /⚠|\\u26a0/i.test(childHtml)
+    // Legal/invoice template: long text without warning emoji
+    const isLegalText = !isWarning && childText.trim().length > 80 &&
+        /(?:Art[sí]?\.?\s*\d|Ley\s+\d|RD\s+\d|Directiva|sujeta|exenta|intracomun|IVA|IRPF)/i.test(childText)
+
+    if (isLegalText) {
+        return (
+            <div className="fmt-copyable-quote">
+                <blockquote {...rest} className="fmt-copyable-quote__text">
+                    {children}
+                </blockquote>
+                <div className="fmt-copyable-quote__actions">
+                    <CopyButton text={childText.trim()} />
+                </div>
+            </div>
+        )
+    }
+
     return (
         <blockquote {...rest} className={isWarning ? 'blockquote-warning' : undefined}>
             {children}
@@ -348,6 +491,10 @@ export const FormattedMessage: React.FC<FormattedMessageProps> = ({ content }) =
         <div className="fmt-message">
             {blocks.map((block, i) => {
                 switch (block.type) {
+                    case 'direct_answer':
+                        return <DirectAnswerCard key={i} block={block} />
+                    case 'pro_tip':
+                        return <ProTipCard key={i} block={block} />
                     case 'simulation':
                         return <SimulationCard key={i} block={block} />
                     case 'callout':
