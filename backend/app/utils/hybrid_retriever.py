@@ -155,18 +155,28 @@ class HybridRetriever:
 
         try:
             # Build filter variants: canonical (with accents) + stripped (without)
-            # Covers both directions: "Cataluna"→"Cataluña" and "Aragón"→"Aragon"
+            # Covers both directions: "Cataluna"→"Cataluña" and "Aragón"→"Aragon".
+            # CRITICO: cuando filtra por una CCAA, SIEMPRE incluir también
+            # 'Estatal' y 'AEAT' en el OR. Motivo: impuestos como IVA, IS, IRNR,
+            # IIEE NO están cedidos a las CCAA — su normativa vive en territory
+            # 'Estatal'/'AEAT'. Sin esto, una pregunta sobre IVA EEUU con perfil
+            # Aragón devuelve solo TributosCedidos autonómicos y omite LIVA.
             filter_variants = []
             if territory:
                 from app.utils.ccaa_constants import normalize_ccaa
                 canonical = normalize_ccaa(territory)
                 stripped = self._strip_accents(canonical)
-                # Always try canonical first, then stripped, deduplicated
                 seen = set()
+                ccaa_variants = []
                 for variant in [canonical, stripped, territory]:
-                    if variant not in seen:
-                        filter_variants.append(f"territory = '{variant}'")
+                    if variant and variant not in seen:
+                        ccaa_variants.append(variant)
                         seen.add(variant)
+                # Build OR filter: CCAA-variants OR Estatal OR AEAT
+                or_terms = [f"territory = '{v}'" for v in ccaa_variants]
+                or_terms.append("territory = 'Estatal'")
+                or_terms.append("territory = 'AEAT'")
+                filter_variants.append(" OR ".join(or_terms))
             else:
                 filter_variants = [None]
 
@@ -229,7 +239,11 @@ class HybridRetriever:
             fts_query = self._clean_fts_query(query)
 
             if territory:
-                # Normalize territory: "Cataluna" → "Cataluña", "Aragón" → also "Aragon"
+                # Normalize territory: "Cataluna" → "Cataluña", "Aragón" → also "Aragon".
+                # CRITICO: incluir SIEMPRE 'Estatal' y 'AEAT' además de la CCAA.
+                # Impuestos NO cedidos (IVA, IS, IRNR, IIEE) viven en estos
+                # territories. Sin esto, queries de IVA con perfil CCAA no
+                # encuentran la LIVA y citan articulos no verificables.
                 from app.utils.ccaa_constants import normalize_ccaa
                 canonical_territory = normalize_ccaa(territory)
                 stripped_territory = self._strip_accents(canonical_territory)
@@ -244,7 +258,7 @@ class HybridRetriever:
                     JOIN document_chunks dc ON dc.id = fts.chunk_id
                     JOIN documents d ON d.id = dc.document_id
                     WHERE document_chunks_fts MATCH ?
-                      AND (d.source = ? OR d.source = ?)
+                      AND d.source IN (?, ?, 'Estatal', 'AEAT')
                     ORDER BY rank
                     LIMIT ?
                     """,
@@ -302,13 +316,16 @@ class HybridRetriever:
             conditions = " AND ".join([f"dc.content LIKE '%' || ? || '%'" for _ in words])
 
             if territory:
+                # Incluir Estatal y AEAT junto a la CCAA. Mismo motivo que en
+                # FTS5: impuestos NO cedidos (IVA, IS, IRNR, IIEE) viven en
+                # los territories nacionales.
                 sql = f"""
                     SELECT dc.id, dc.content, dc.page_number,
                            d.filename, d.title, d.source,
                            COALESCE(d.trust_level, 'unknown') AS trust_level
                     FROM document_chunks dc
                     JOIN documents d ON d.id = dc.document_id
-                    WHERE {conditions} AND d.source = ?
+                    WHERE {conditions} AND d.source IN (?, 'Estatal', 'AEAT')
                     LIMIT ?
                 """
                 params = words + [territory, k]
