@@ -40,9 +40,14 @@ logger = logging.getLogger(__name__)
 
 # Match orders matter: more specific first.
 _CITATION_PATTERNS: List[Tuple[str, str]] = [
-    # Articles of common Spanish tax laws
+    # Articles of common Spanish tax laws.
+    # `(?<![\d/])` lookbehind prevents capturing years used in law
+    # references (e.g. "Ley 58/2003 LGT" must NOT yield "2003 LGT" as
+    # an article — that's the year, captured separately by the `ley`
+    # pattern). The `(?<![\d/])` blocks numbers preceded by another
+    # digit or a slash.
     (
-        r"\b(?:art(?:\.|ículo|iculo)?\s*)?\d+(?:\.\d+)?(?:\s*(?:bis|ter|quater|quinquies))?\s*(?:de\s+la\s+)?(?:LIRPF|LIVA|LGT|LIS|LISD|LISYD|LIP|LIIEE|LMV|LFTE|TRLITPAJD|TRLRHL|TRLIRNR|LIVMDH)\b",
+        r"(?<![\d/])\b(?:art(?:\.|ículo|iculo)?\s*)?\d+(?:\.\d+)?(?:\s*(?:bis|ter|quater|quinquies))?\s*(?:de\s+la\s+)?(?:LIRPF|LIVA|LGT|LIS|LISD|LISYD|LIP|LIIEE|LMV|LFTE|TRLITPAJD|TRLRHL|TRLIRNR|LIVMDH)\b",
         "art_law",
     ),
     # Generic numeric law/RD references
@@ -65,152 +70,30 @@ _COMPILED_PATTERNS = [
 ]
 
 
-# ── Fundamental laws whitelist ───────────────────────────────────────────────
+# ── Authoritative legal registry (data-driven) ───────────────────────────────
 #
-# Spanish tax law has a handful of foundational statutes that every assistant
-# response will cite (LIRPF, LIVA, LGT, LIS, etc.). The RAG chunk retrieval is
-# topic-targeted: a chunk about deduction X may not contain the literal string
-# "Ley 35/2006" even though it's about LIRPF. Flagging "Ley 35/2006" as
-# unverified in that case is a false positive that destroys user trust — the
-# user reads "I couldn't verify the basic income tax law" and assumes the
-# whole answer is unreliable.
+# Substitutes the previous hardcoded whitelists `_FUNDAMENTAL_LAWS_WHITELIST`
+# and `_CANONICAL_ARTICLES_WHITELIST`. The registry loads known norms +
+# canonical articles from YAML files in `backend/data/legal/`, validated
+# with pydantic at startup. Maintainers add new norms by editing YAML, not
+# Python. Future migration to a SQL table is a single-file change.
 #
-# The whitelist below treats these statutes as part of the implicit corpus
-# that ALWAYS exists. It applies ONLY to category-level citations
-# (ley/rd/real_decreto), NEVER to specific articles of those laws — an
-# invented "Art. 999.99 LIRPF" must still flag if no chunk supports it.
-_FUNDAMENTAL_LAWS_WHITELIST = frozenset({
-    # Leyes fiscales fundamentales
-    "ley 37/1992",        # LIVA
-    "ley 35/2006",        # LIRPF
-    "ley 27/2014",        # LIS
-    "ley 58/2003",        # LGT
-    "ley 20/1991",        # LIGIC (Canarias)
-    "ley 29/1987",        # LISD
-    "ley 19/1991",        # LIP
-    "ley 38/1992",        # LIIEE
-    "ley 49/2002",        # Régimen fiscal entidades sin fines lucrativos / mecenazgo
-    "ley 19/1994",        # REF Canarias
-    "ley 22/2009",        # Cesión tributos a CCAA
-    "ley 11/2021",        # Medidas prevención fraude
-    "ley 7/2024",         # Reforma fiscal microempresas + ahorro 2025
-    # Reglamentos
-    "rd 1624/1992",       # RIVA
-    "rd 439/2007",        # RIRPF
-    "rd 634/2015",        # RIS
-    "rd 828/1995",        # RITPAJD
-    "rd 1065/2007",       # RGAT
-    "rd 1619/2012",       # Reglamento facturación
-    # Reales Decretos Legislativos / Textos Refundidos
-    "rd legislativo 1/1993",  # TR ITPAJD
-    "rd legislativo 2/2004",  # TR LRHL (Haciendas Locales)
-    "rd legislativo 5/2004",  # TR LIRNR
-    "real decreto legislativo 1/1993",
-    "real decreto legislativo 2/2004",
-    "real decreto legislativo 5/2004",
-    # Variantes "Real Decreto" sin abreviar
-    "real decreto 1624/1992",
-    "real decreto 439/2007",
-    "real decreto 634/2015",
-    "real decreto 828/1995",
-    "real decreto 1065/2007",
-    "real decreto 1619/2012",
-})
+# Behaviour: the verifier asks the registry whether a citation refers to
+# a known legal reference (norm OR canonical article). If yes, it is
+# considered verified without requiring RAG chunk evidence. Invented or
+# unknown citations still require chunk support, preserving the safety
+# net against hallucinations.
+def _is_known_legal_reference(citation: "Citation") -> bool:
+    """True if the citation refers to a vigent norm or canonical article
+    in the legal registry (data-driven via YAML)."""
+    # Lazy import avoids circular dependency at module load time.
+    from app.services.legal import get_legal_registry
+    registry = get_legal_registry()
 
-# NOTE: bare siglas (e.g., "según la LIVA...") do NOT need a whitelist
-# because the citation extractor's art_law pattern requires a leading
-# number (\d+) before the sigla — "LIVA" alone never produces a Citation.
-# So no false positive is possible for sigla-only references.
-
-
-# Whitelist de articulos canonicos que el system prompt de TaxAgent cita
-# explicitamente en sus plantillas. Estos articulos existen y son
-# verificables contra el BOE, pero los chunks RAG pueden no contener su
-# numero literal (e.g., el chunk dice "operacion no sujeta" sin citar el
-# articulo). Sin esta whitelist, el verifier marca como unverified citas
-# tipo "Art. 70 LIVA" cuando el chunk no lo escribe textualmente.
-#
-# Mantener en sincronia con las plantillas del system prompt en
-# `app/agents/tax_agent.py` (secciones TEXTO LITERAL PARA FACTURAS y
-# EJEMPLOS Y PRO TIP). Si se añade un articulo nuevo en el prompt,
-# añadirlo aqui tras verificarlo en el BOE.
-_CANONICAL_ARTICLES_WHITELIST = frozenset({
-    # LIVA — localizacion servicios y operaciones especiales
-    "art 21 liva",
-    "art 25 liva",
-    "art 69 liva",
-    "art 69.uno liva",
-    "art 69.uno.1 liva",
-    "art 69.uno.2 liva",
-    "art 69.dos liva",
-    "art 69.dos.a liva",
-    "art 69.dos.b liva",
-    "art 69.dos.c liva",
-    "art 69.dos.d liva",
-    "art 69.dos.e liva",
-    "art 69.dos.f liva",
-    "art 69.dos.g liva",
-    "art 69.dos.h liva",
-    "art 69.dos.i liva",
-    "art 69.dos.j liva",
-    "art 69.dos.k liva",
-    "art 69.dos.l liva",
-    "art 70 liva",
-    "art 70.dos liva",
-    "art 84 liva",
-    "art 84.uno liva",
-    "art 84.uno.2 liva",
-    "art 154 liva",
-    "art 155 liva",
-    "art 156 liva",
-    "art 157 liva",
-    "art 158 liva",
-    "art 159 liva",
-    "art 160 liva",
-    "art 161 liva",
-    "art 162 liva",
-    "art 163 liva",
-    # LIRPF — articulos clave citados en pro tips
-    "art 68 lirpf",
-    "art 68.4 lirpf",
-    "art 96 lirpf",
-    "art 81 lirpf",
-    # RIRPF — dispensas y retenciones
-    "art 95.6 rirpf",
-    "art 95 rirpf",
-    # LGSS — autonomos
-    "art 38 lgss",
-    "art 38 ter lgss",
-})
-
-
-def _is_fundamental_law_reference(citation: "Citation") -> bool:
-    """
-    True if the citation refers to a foundational Spanish tax statute or
-    a canonical article documented in the TaxAgent system prompt. The model
-    can safely cite these without requiring a RAG chunk that contains the
-    exact numeric reference. Two whitelists:
-      1. Law-level (ley/rd/real_decreto) → _FUNDAMENTAL_LAWS_WHITELIST.
-      2. Article-level (art_law) → _CANONICAL_ARTICLES_WHITELIST,
-         limited to articles the system prompt explicitly cites.
-
-    For all other art_law citations (invented or rare articles), RAG chunk
-    evidence is still required.
-    """
     if citation.label in ("ley", "rd", "real_decreto"):
-        return citation.normalized in _FUNDAMENTAL_LAWS_WHITELIST
+        return registry.is_known_norm(citation.normalized)
     if citation.label == "art_law":
-        norm = citation.normalized
-        # The regex captures both "Art. 70 LIVA" and "70 LIVA" (when used in
-        # compound like "Arts. 69 y 70 LIVA"). _normalize only adds "art "
-        # prefix when the original had "Art./Artículo". So try both variants.
-        candidates = {norm}
-        if not norm.startswith("art "):
-            candidates.add(f"art {norm}")
-        for cand in candidates:
-            if cand in _CANONICAL_ARTICLES_WHITELIST:
-                return True
-        return False
+        return registry.is_known_article(citation.normalized)
     return False
 
 
@@ -307,12 +190,13 @@ def verify_citations(
 
     if not chunk_index:
         # No retrieval evidence: every citation is unverified, EXCEPT
-        # fundamental laws which are part of the implicit corpus.
+        # those known by the legal registry (vigent norms / canonical
+        # articles from `backend/data/legal/`).
         unverified: List[Citation] = []
         for c in citations:
-            if _is_fundamental_law_reference(c):
+            if _is_known_legal_reference(c):
                 c.verified = True
-                c.matched_chunk_id = "whitelist_fundamental_law"
+                c.matched_chunk_id = "legal_registry"
             else:
                 c.verified = False
                 unverified.append(c)
@@ -327,12 +211,13 @@ def verify_citations(
                     matched = True
                     break
             if not matched:
-                # Fall back to whitelist for fundamental laws (LIVA, LIRPF, etc.)
-                # whose number may not literally appear in chunks targeted at a
-                # specific article or deduction.
-                if _is_fundamental_law_reference(c):
+                # Fall back to the legal registry: a citation whose
+                # number isn't literally in the retrieved chunks is
+                # still valid if it refers to a vigent norm or canonical
+                # article in the catalog.
+                if _is_known_legal_reference(c):
                     c.verified = True
-                    c.matched_chunk_id = "whitelist_fundamental_law"
+                    c.matched_chunk_id = "legal_registry"
                 else:
                     unverified.append(c)
 

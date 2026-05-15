@@ -1,0 +1,134 @@
+# Plantillas copy-paste para facturas según naturaleza de la operación.
+#
+# Antes estaban hardcoded en el system prompt de tax_agent.py. Ahora
+# viven aquí para que cualquier cambio normativo se refleje editando
+# este YAML, sin tocar código.
+#
+# Estructura:
+#   key:           identificador único (usado en _get_system_prompt
+#                  para construir la sección "TEXTO LITERAL PARA
+#                  FACTURAS")
+#   scenario:      qué operación cubre (humanizado)
+#   legal_basis:   artículo/s LIVA que aplica
+#   triggers:      keywords/expresiones que el LLM debe detectar para
+#                  usar esta plantilla
+#   text:          el texto literal que se introduce en la factura
+#                  (puede contener placeholders entre [CORCHETES] que
+#                  el LLM sustituye según el caso)
+#   notes:         observaciones para el LLM sobre cuándo NO usarla
+
+schema_version: 1
+
+templates:
+  - key: b2b_servicios_no_ue
+    scenario: "Servicios profesionales a empresa establecida fuera de UE (B2B)"
+    legal_basis: "Art. 69.Uno.1.º LIVA"
+    triggers:
+      - "cliente en EEUU"
+      - "empresa fuera UE"
+      - "facturo a empresa extranjera no UE"
+      - "consultoría a empresa estadounidense"
+    text: |
+      Operación no sujeta al IVA español — Prestación de servicios a empresario establecido fuera de la Comunidad — Art. 69.Uno.1.º Ley 37/1992.
+    notes: |
+      El destinatario es empresario/profesional fuera de la Comunidad → se
+      localiza en su sede. NO confundir con "exención" (eso sería Art. 21
+      para BIENES). NO presenta Modelo 349 (es solo intracomunitarias).
+
+  - key: b2c_servicios_intangibles_no_ue
+    scenario: "Servicios intangibles del Art. 69.Dos LIVA a particular fuera de UE"
+    legal_basis: "Art. 69.Dos.[LETRA] LIVA — sustituir letra según servicio"
+    triggers:
+      - "particular fuera UE"
+      - "consumidor final fuera UE"
+      - "consultoría a particular extranjero"
+      - "factura a persona fisica EEUU"
+    text: |
+      Operación no sujeta al IVA español — Servicio del Art. 69.Dos.[LETRA] LIVA prestado a destinatario no empresario establecido fuera de la Comunidad — Ley 37/1992.
+    notes: |
+      El servicio debe estar en la lista del Art. 69.Dos. Sustituye [LETRA]
+      por la letra correcta del apartado según el servicio prestado.
+      Mapeo letra → servicio (memorízalo):
+        a) Derechos de autor, patentes, licencias
+        b) Cesión de fondos de comercio, exclusivas
+        c) Publicidad
+        d) Asesoramiento, auditoría, ingeniería, gabinete de estudios,
+           abogacía, consultores, expertos contables/fiscales
+        e) Tratamiento de datos e informaciones
+        f) Traducción, corrección, composición
+        g) Seguros, reaseguros, operaciones financieras
+        h) Cesión de personal
+        i) Doblaje de películas
+        j) Arrendamiento de bienes muebles (excepto medios transporte)
+        k) Acceso/distribución redes gas, electricidad, calor
+        l) Obligaciones de no prestar los servicios anteriores
+      Si el servicio NO está en esta lista → regla general Art. 69.Uno.2.º
+      (sujeta al IVA español). Usa template `b2c_servicios_no_listados_no_ue`.
+
+  - key: b2c_servicios_no_listados_no_ue
+    scenario: "Servicios NO listados en Art. 69.Dos a particular fuera UE"
+    legal_basis: "Art. 69.Uno.2.º LIVA — regla general"
+    triggers:
+      - "particular fuera UE servicio no profesional"
+      - "consumidor final servicio personal"
+    text: |
+      Operación sujeta al IVA español al tipo general — Servicio prestado a destinatario no empresario, localizado en sede del prestador (Art. 69.Uno.2.º Ley 37/1992).
+    notes: |
+      Aplica IVA español normalmente (21% / 10% / 4% según tipo). Solo
+      escapan al IVA español los servicios listados en Art. 69.Dos cuando
+      el destinatario está fuera UE.
+
+  - key: exportacion_bienes_no_ue
+    scenario: "Entrega de BIENES fuera de UE"
+    legal_basis: "Art. 21 LIVA"
+    triggers:
+      - "exporto productos"
+      - "envío mercancía fuera UE"
+      - "venta de bienes a EEUU"
+    text: |
+      Operación exenta del IVA — Exportación de bienes — Art. 21 Ley 37/1992.
+    notes: |
+      Solo para BIENES físicos (entregas). NO usar para servicios — los
+      servicios usan Art. 69-70. Conservar prueba de salida de la
+      Comunidad (DUA aduanas, transportista, etc.).
+
+  - key: intracomunitaria_b2b
+    scenario: "Operación intracomunitaria B2B con NIF-IVA válido"
+    legal_basis: "Art. 25 LIVA"
+    triggers:
+      - "factura a empresa UE"
+      - "cliente Francia / Alemania / Italia"
+      - "B2B intracomunitario"
+    text: |
+      Operación intracomunitaria exenta de IVA — Inversión del sujeto pasivo — Art. 25 Ley 37/1992. Reverse charge — VAT will be accounted for by the customer.
+    notes: |
+      Requiere NIF-IVA válido del cliente verificado en VIES. Obligatorio
+      Modelo 349 (trimestral si >50.000€/trim, anual si menos).
+
+  - key: inversion_sujeto_pasivo_nacional
+    scenario: "Inversión del sujeto pasivo nacional (chatarra, oro, construcción)"
+    legal_basis: "Art. 84.Uno.2 LIVA"
+    triggers:
+      - "ISP"
+      - "chatarra"
+      - "oro de inversión"
+      - "ejecución obra construcción"
+    text: |
+      Operación con inversión del sujeto pasivo — Art. 84.Uno.2 Ley 37/1992.
+    notes: |
+      Casos específicos: chatarra (Art. 84.Uno.2.c), oro de inversión,
+      ejecuciones de obra inmobiliaria entre empresarios, etc.
+
+  - key: recargo_equivalencia
+    scenario: "Factura emitida a comerciante minorista en RE"
+    legal_basis: "Arts. 154-163 LIVA"
+    triggers:
+      - "cliente en recargo de equivalencia"
+      - "farmacia"
+      - "estanco"
+      - "kiosco"
+    text: |
+      Operación sujeta al Régimen Especial de Recargo de Equivalencia — Arts. 154-163 Ley 37/1992.
+    notes: |
+      Tipos vigentes: 5.2% (sobre IVA 21%), 1.4% (sobre IVA 10%), 0.5%
+      (sobre IVA 4%). El minorista no presenta Modelo 303 ni 390.

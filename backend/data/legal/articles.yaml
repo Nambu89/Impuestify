@@ -1,0 +1,237 @@
+# Artículos canónicos del articulado vigente que el system prompt de
+# TaxAgent cita de forma habitual en sus plantillas.
+#
+# NO contiene la ley completa — solo los artículos referenciados en
+# respuestas operativas (texto factura, modelos, pro tips). Cuando una
+# respuesta cite un artículo NO listado aquí Y el chunk RAG retrievado
+# no lo respalde, el citation verifier marcará el banner ⚠ legítimamente.
+#
+# Estructura:
+#   law:           sigla de la norma (referencia a norms.yaml)
+#   article:       número del artículo ("21", "69", etc.)
+#   subarticle:    apartado/letra ("Uno.1", "Dos.d", "84.uno.2"); null
+#                  si la cita aplica al artículo entero
+#   topic:         tag corto para localizar el artículo
+#   vigent_from:   ISO 8601 — desde cuándo se cita esta forma del artículo
+#   vigent_until:  null si vigente
+#
+# Para añadir nuevos: editar este YAML + commit con razón
+# ("feat(legal): añadir Art. X LEY tras reforma RD Y/AAAA").
+
+schema_version: 1
+
+articles:
+  # ── LIVA: localización de servicios y operaciones exteriores ──
+  - law: LIVA
+    article: "21"
+    subarticle: null
+    topic: "Exenciones exportaciones bienes y servicios accesorios"
+    vigent_from: "1993-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "25"
+    subarticle: null
+    topic: "Exenciones operaciones intracomunitarias"
+    vigent_from: "1993-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: null
+    topic: "Lugar de realización de prestaciones de servicios — reglas generales"
+    vigent_from: "2010-01-01"  # Tras Ley 2/2010 (Directiva 2008/8/CE)
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Uno.1"
+    topic: "B2B: lugar destino servicios entre empresarios"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Uno.2"
+    topic: "B2C: lugar prestador (regla general no empresarios)"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.a"
+    topic: "Servicios cesión derechos autor/patentes/licencias B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.b"
+    topic: "Cesión fondos de comercio/exclusivas B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.c"
+    topic: "Publicidad B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.d"
+    topic: "Asesoramiento, auditoría, ingeniería, abogacía, consultores B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.e"
+    topic: "Tratamiento de datos e informaciones B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.f"
+    topic: "Traducción, corrección, composición B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.g"
+    topic: "Seguros, reaseguros, operaciones financieras B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.h"
+    topic: "Cesión de personal B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.i"
+    topic: "Doblaje de películas B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.j"
+    topic: "Arrendamiento de bienes muebles B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.k"
+    topic: "Acceso/distribución redes energéticas B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "69"
+    subarticle: "Dos.l"
+    topic: "Obligaciones de no prestar B2C no-UE"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "70"
+    subarticle: null
+    topic: "Reglas especiales lugar realización servicios"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "70"
+    subarticle: "Dos"
+    topic: "Regla de uso efectivo"
+    vigent_from: "2010-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "84"
+    subarticle: null
+    topic: "Sujeto pasivo del IVA"
+    vigent_from: "1993-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "84"
+    subarticle: "Uno.2"
+    topic: "Inversión del sujeto pasivo"
+    vigent_from: "1993-01-01"
+    vigent_until: null
+
+  # Régimen Especial de Recargo de Equivalencia
+  - law: LIVA
+    article: "154"
+    subarticle: null
+    topic: "RE — ámbito subjetivo"
+    vigent_from: "1993-01-01"
+    vigent_until: null
+
+  - law: LIVA
+    article: "163"
+    subarticle: null
+    topic: "RE — obligaciones formales"
+    vigent_from: "1993-01-01"
+    vigent_until: null
+
+  # ── LIRPF: deducciones, retenciones, obligación de declarar ──
+  - law: LIRPF
+    article: "68"
+    subarticle: null
+    topic: "Deducciones de la cuota"
+    vigent_from: "2007-01-01"
+    vigent_until: null
+
+  - law: LIRPF
+    article: "68"
+    subarticle: "4"
+    topic: "Deducción residencia Ceuta y Melilla 60%"
+    vigent_from: "2007-01-01"
+    vigent_until: null
+
+  - law: LIRPF
+    article: "81"
+    subarticle: null
+    topic: "Deducción maternidad"
+    vigent_from: "2007-01-01"
+    vigent_until: null
+
+  - law: LIRPF
+    article: "96"
+    subarticle: null
+    topic: "Obligación de declarar"
+    vigent_from: "2007-01-01"
+    vigent_until: null
+
+  # ── RIRPF: dispensas, retenciones ──
+  - law: RIRPF
+    article: "95"
+    subarticle: null
+    topic: "Importe de las retenciones e ingresos a cuenta"
+    vigent_from: "2007-04-01"
+    vigent_until: null
+
+  - law: RIRPF
+    article: "95"
+    subarticle: "6"
+    topic: "Dispensa Modelo 130 si retención ≥70% rendimiento"
+    vigent_from: "2007-04-01"
+    vigent_until: null
+
+  # ── LGSS: autónomos ──
+  - law: LGT
+    article: "223"
+    subarticle: null
+    topic: "Plazo recurso de reposición"
+    vigent_from: "2004-07-01"
+    vigent_until: null

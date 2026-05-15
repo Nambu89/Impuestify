@@ -1,0 +1,209 @@
+# Catálogo de normas tributarias españolas vigentes.
+#
+# Fuente de verdad para citation verifier — sustituye el hardcode previo
+# en _FUNDAMENTAL_LAWS_WHITELIST. Mantenible sin tocar código: editar
+# este YAML + commit con razón → CI valida + deploy.
+#
+# Estructura de cada entrada:
+#   sigla:        sigla oficial (LIVA, LIRPF, LGT, etc.)
+#   full_id:      forma "Tipo Numero/Año" usada en citas legales
+#   name:         nombre completo de la norma
+#   norm_type:    ley | rd | real_decreto | rd_legislativo | norma_foral
+#                 | decreto_foral
+#   vigent_from:  fecha de entrada en vigor (ISO 8601)
+#   vigent_until: fecha de derogación (null = vigente)
+#   aliases:      otras formas en las que el LLM puede citar la norma
+#
+# IMPORTANTE: cada vez que AEAT publica una reforma legal, se actualiza
+# este YAML. Adición + cambios de vigencia se commitean con explicación.
+
+schema_version: 1
+
+norms:
+  # ── Leyes tributarias fundamentales ──
+  - sigla: LIVA
+    full_id: "Ley 37/1992"
+    name: "Impuesto sobre el Valor Añadido"
+    norm_type: ley
+    vigent_from: "1993-01-01"
+    vigent_until: null
+    aliases: ["liva", "ley 37/1992", "ley del iva"]
+
+  - sigla: LIRPF
+    full_id: "Ley 35/2006"
+    name: "Impuesto sobre la Renta de las Personas Físicas"
+    norm_type: ley
+    vigent_from: "2007-01-01"
+    vigent_until: null
+    aliases: ["lirpf", "ley 35/2006"]
+
+  - sigla: LIS
+    full_id: "Ley 27/2014"
+    name: "Impuesto sobre Sociedades"
+    norm_type: ley
+    vigent_from: "2015-01-01"
+    vigent_until: null
+    aliases: ["lis", "ley 27/2014"]
+
+  - sigla: LGT
+    full_id: "Ley 58/2003"
+    name: "General Tributaria"
+    norm_type: ley
+    vigent_from: "2004-07-01"
+    vigent_until: null
+    aliases: ["lgt", "ley 58/2003", "ley general tributaria"]
+
+  - sigla: LIGIC
+    full_id: "Ley 20/1991"
+    name: "Modificación de los aspectos fiscales del Régimen Económico Fiscal de Canarias"
+    norm_type: ley
+    vigent_from: "1991-06-08"
+    vigent_until: null
+    aliases: ["ligic", "ley 20/1991", "ley del igic"]
+
+  - sigla: LISD
+    full_id: "Ley 29/1987"
+    name: "Impuesto sobre Sucesiones y Donaciones"
+    norm_type: ley
+    vigent_from: "1988-01-01"
+    vigent_until: null
+    aliases: ["lisd", "lisyd", "ley 29/1987"]
+
+  - sigla: LIP
+    full_id: "Ley 19/1991"
+    name: "Impuesto sobre el Patrimonio"
+    norm_type: ley
+    vigent_from: "1992-01-01"
+    vigent_until: null
+    aliases: ["lip", "ley 19/1991"]
+
+  - sigla: LIIEE
+    full_id: "Ley 38/1992"
+    name: "Impuestos Especiales"
+    norm_type: ley
+    vigent_from: "1993-01-01"
+    vigent_until: null
+    aliases: ["liiee", "ley 38/1992"]
+
+  - sigla: L49_2002
+    full_id: "Ley 49/2002"
+    name: "Régimen fiscal de las entidades sin fines lucrativos y de los incentivos fiscales al mecenazgo"
+    norm_type: ley
+    vigent_from: "2003-01-01"
+    vigent_until: null
+    aliases: ["ley 49/2002", "ley de mecenazgo"]
+
+  - sigla: L19_1994
+    full_id: "Ley 19/1994"
+    name: "Modificación del Régimen Económico y Fiscal de Canarias"
+    norm_type: ley
+    vigent_from: "1994-07-08"
+    vigent_until: null
+    aliases: ["ley 19/1994", "ref canarias"]
+
+  - sigla: L22_2009
+    full_id: "Ley 22/2009"
+    name: "Sistema de financiación de las Comunidades Autónomas de régimen común"
+    norm_type: ley
+    vigent_from: "2010-01-01"
+    vigent_until: null
+    aliases: ["ley 22/2009", "ley de cesion de tributos"]
+
+  - sigla: L11_2021
+    full_id: "Ley 11/2021"
+    name: "Medidas de prevención y lucha contra el fraude fiscal"
+    norm_type: ley
+    vigent_from: "2021-07-11"
+    vigent_until: null
+    aliases: ["ley 11/2021"]
+
+  - sigla: L7_2024
+    full_id: "Ley 7/2024"
+    name: "Reforma fiscal — microempresas, tributación mínima global, ahorro 2025"
+    norm_type: ley
+    vigent_from: "2025-01-01"
+    vigent_until: null
+    aliases: ["ley 7/2024"]
+
+  # ── Reglamentos ──
+  - sigla: RIVA
+    full_id: "RD 1624/1992"
+    name: "Reglamento del IVA"
+    norm_type: rd
+    vigent_from: "1993-01-01"
+    vigent_until: null
+    aliases: ["riva", "rd 1624/1992", "real decreto 1624/1992"]
+
+  - sigla: RIRPF
+    full_id: "RD 439/2007"
+    name: "Reglamento del IRPF"
+    norm_type: rd
+    vigent_from: "2007-04-01"
+    vigent_until: null
+    aliases: ["rirpf", "rd 439/2007", "real decreto 439/2007"]
+
+  - sigla: RIS
+    full_id: "RD 634/2015"
+    name: "Reglamento del Impuesto sobre Sociedades"
+    norm_type: rd
+    vigent_from: "2015-07-12"
+    vigent_until: null
+    aliases: ["ris", "rd 634/2015", "real decreto 634/2015"]
+
+  - sigla: RITPAJD
+    full_id: "RD 828/1995"
+    name: "Reglamento del ITP y AJD"
+    norm_type: rd
+    vigent_from: "1995-09-07"
+    vigent_until: null
+    aliases: ["ritpajd", "rd 828/1995"]
+
+  - sigla: RGAT
+    full_id: "RD 1065/2007"
+    name: "Reglamento General de las actuaciones y los procedimientos de gestión e inspección tributaria"
+    norm_type: rd
+    vigent_from: "2008-01-01"
+    vigent_until: null
+    aliases: ["rgat", "rd 1065/2007"]
+
+  - sigla: RD_FACTURACION
+    full_id: "RD 1619/2012"
+    name: "Reglamento de Facturación"
+    norm_type: rd
+    vigent_from: "2013-01-01"
+    vigent_until: null
+    aliases: ["rd 1619/2012", "reglamento de facturacion"]
+
+  # ── Textos Refundidos (Reales Decretos Legislativos) ──
+  - sigla: TRLITPAJD
+    full_id: "RD Legislativo 1/1993"
+    name: "Texto Refundido del ITP y AJD"
+    norm_type: rd_legislativo
+    vigent_from: "1993-10-25"
+    vigent_until: null
+    aliases:
+      - "trlitpajd"
+      - "rd legislativo 1/1993"
+      - "real decreto legislativo 1/1993"
+
+  - sigla: TRLRHL
+    full_id: "RD Legislativo 2/2004"
+    name: "Texto Refundido de la Ley Reguladora de las Haciendas Locales"
+    norm_type: rd_legislativo
+    vigent_from: "2004-04-10"
+    vigent_until: null
+    aliases:
+      - "trlrhl"
+      - "rd legislativo 2/2004"
+      - "real decreto legislativo 2/2004"
+
+  - sigla: TRLIRNR
+    full_id: "RD Legislativo 5/2004"
+    name: "Texto Refundido del Impuesto sobre la Renta de no Residentes"
+    norm_type: rd_legislativo
+    vigent_from: "2004-03-14"
+    vigent_until: null
+    aliases:
+      - "trlirnr"
+      - "rd legislativo 5/2004"
+      - "real decreto legislativo 5/2004"

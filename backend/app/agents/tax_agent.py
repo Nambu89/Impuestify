@@ -86,14 +86,53 @@ class TaxAgent:
 			logger.error("TaxAgent initialization failed - missing OPENAI_API_KEY")
 			raise ValueError("OPENAI_API_KEY is required")
 	
+	def _render_invoice_templates_section(self) -> str:
+		"""Render the "Plantillas copy-paste" markdown bullets from the
+		legal registry. If the registry is empty (e.g. YAML missing in
+		dev), returns a degraded but safe fallback so the prompt does
+		not break.
+		"""
+		try:
+			from app.services.legal import get_legal_registry
+			registry = get_legal_registry()
+			templates = registry.all_invoice_templates()
+		except Exception as exc:
+			logger.warning("Could not load invoice templates from registry: %s", exc)
+			return "  (Sin plantillas — registry no disponible. Cita Arts. 69-70 LIVA para servicios B2B no-UE.)"
+
+		if not templates:
+			return "  (Registry vacío — actualiza `backend/data/legal/invoice_templates.yaml`.)"
+
+		lines: list[str] = []
+		for tpl in templates:
+			lines.append(f"- **{tpl.scenario}** ({tpl.legal_basis}):")
+			# Each line of the template becomes a quoted markdown line.
+			for tline in tpl.text.strip().splitlines():
+				if tline.strip():
+					lines.append(f"  > {tline.strip()}")
+			if tpl.notes:
+				# Notes inline (the LLM uses these to choose the right template).
+				notes_oneline = " ".join(tpl.notes.split())
+				lines.append(f"  _Nota: {notes_oneline}_")
+		return "\n".join(lines)
+
 	def _get_system_prompt(self) -> str:
-		"""Genera el system prompt con la fecha actual y lógica de años fiscales"""
+		"""Genera el system prompt con la fecha actual y lógica de años fiscales.
+
+		Las plantillas de factura y la lista de servicios del Art. 69.Dos
+		LIVA se cargan dinámicamente desde el registry legal (data-driven,
+		ver `backend/data/legal/invoice_templates.yaml`). Esto evita
+		hardcodear el corpus legal en el código — cambios normativos
+		futuros solo requieren editar el YAML.
+		"""
 
 		# Determinar periodo de campaña de renta
 		if 4 <= self.current_month <= 6:
 			irpf_context = f"Campaña de la Renta {self.irpf_declaration_year} activa — declarando ingresos de {self.irpf_fiscal_year}."
 		else:
 			irpf_context = f"Próxima declaración en {self.irpf_declaration_year + 1} (ingresos de {self.current_year})."
+
+		invoice_templates_section = self._render_invoice_templates_section()
 
 		return f"""Eres Impuestify, experto en fiscalidad española. Respondes con datos concretos, cifras y referencias legales. Tuteas al usuario, eres claro y directo. Lenguaje natural, sin jerga excesiva.
 
@@ -162,21 +201,7 @@ Cuando una pregunta admita 2-3 casos comunes (B2B/B2C, residente/no residente, a
 Cuando la pregunta involucre "qué pongo en factura", "qué escribo", "cómo factura", "texto factura", "concepto factura", "exención en factura", "no sujeción en factura", DEVUELVE SIEMPRE un texto literal entrecomillado y listo para copy-paste. Formato preferido: bloque markdown con `>` o **negrita**.
 
 ### Plantillas copy-paste para casos comunes:
-- **Servicios profesionales a empresa fuera de UE (B2B no-UE)**:
-  > "Operación no sujeta al IVA español — Prestación de servicios a empresario establecido fuera de la Comunidad — Arts. 69 y 70 Ley 37/1992."
-- **Servicios "intangibles" del Art. 69.Dos LIVA a particular fuera de UE (B2C no-UE)**. Servicios listados: (d) asesoramiento/consultoría/ingeniería/abogacía/auditoría; (c) publicidad; (f) traducción; (a) derechos de autor/licencias; (e) tratamiento de datos; (g) seguros/financieros; (j) arrendamiento bienes muebles; etc. La letra correcta del apartado depende del servicio concreto — ÚSALA. Texto factura:
-  > "Operación no sujeta al IVA español — Servicio del Art. 69.Dos.[LETRA] LIVA prestado a destinatario establecido fuera de la Comunidad — Ley 37/1992."
-
-  (Sustituye [LETRA] por la letra del apartado que corresponde: d para consultoría/asesoramiento/ingeniería, c para publicidad, f para traducción, a para derechos de autor, etc.)
-- **Servicios B2C a particular fuera de UE NO listados en Art. 69.Dos** (servicios "personales" no incluidos en la lista — p. ej. coaching personal sin componente profesional, servicios de bienestar): regla general Art. 69.Uno.2.º → SÍ sujeta IVA español. Texto factura: normal con IVA repercutido.
-- **Exportación de bienes fuera de UE**:
-  > "Operación exenta del IVA — Exportación de bienes — Art. 21 Ley 37/1992."
-- **Operación intracomunitaria B2B (con NIF-IVA del cliente)**:
-  > "Operación intracomunitaria exenta de IVA — Inversión del sujeto pasivo — Art. 25 Ley 37/1992. Reverse charge — VAT will be accounted for by the customer."
-- **Inversión sujeto pasivo nacional (chatarra, oro, construcción)**:
-  > "Operación con inversión del sujeto pasivo — Art. 84.Uno.2 Ley 37/1992."
-- **Recargo de equivalencia (factura a comerciante minorista RE)**:
-  > "Operación sujeta al Régimen Especial de Recargo de Equivalencia — Arts. 154-163 Ley 37/1992."
+{invoice_templates_section}
 
 ## EJEMPLOS Y PRO TIP
 Para preguntas sobre cálculo, facturación, modelos o cuotas: incluye **un ejemplo numérico realista** (1.000€, 2.000€, 5.000€, 30.000€, 50.000€ según contexto) que ilustre la regla en cifras concretas.

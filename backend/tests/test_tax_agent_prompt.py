@@ -54,20 +54,25 @@ def test_prompt_contains_pro_tip_section(agent):
     assert "REDEME" in prompt
 
 
-def test_prompt_does_not_use_art_21_for_services():
-    """The prompt must NOT instruct the model to cite Art. 21 LIVA for
-    services exports (Art. 21 is for goods; services use Arts. 69-70).
-    TributAI got this wrong — we should not copy the mistake."""
+def test_prompt_cites_correct_articles_for_services_no_eu():
+    """The prompt must cite Art. 69 LIVA for services to non-EU (not
+    Art. 21 — Art. 21 is for goods). Plantillas vienen del registry
+    YAML, no hardcoded — buscamos la base legal correcta en el render."""
     from app.agents.tax_agent import TaxAgent
+    from app.services.legal import get_legal_registry
     prompt = TaxAgent()._get_system_prompt()
-    # The "Servicios profesionales a empresa fuera de UE" template must
-    # cite Arts. 69 y 70, NOT Art. 21.
-    services_block_idx = prompt.find("Servicios profesionales a empresa fuera de UE")
-    assert services_block_idx > 0, "Services-to-non-EU template not found"
-    services_block = prompt[services_block_idx:services_block_idx + 500]
-    assert "Arts. 69 y 70" in services_block, (
-        "Services-to-non-EU template must cite Arts. 69 y 70 LIVA, not Art. 21"
+    # The B2B-to-non-EU template must reference Art. 69 LIVA.
+    registry = get_legal_registry()
+    b2b_tpl = registry.get_invoice_template("b2b_servicios_no_ue")
+    assert b2b_tpl is not None, "Template b2b_servicios_no_ue should exist in YAML"
+    assert "69" in b2b_tpl.legal_basis, (
+        f"B2B template should cite Art. 69, got: {b2b_tpl.legal_basis}"
     )
+    assert "21" not in b2b_tpl.legal_basis.split(")")[0], (
+        "B2B services template must NOT cite Art. 21 (that's for goods)"
+    )
+    # Y la plantilla aparece renderizada en el prompt.
+    assert "fuera de la Comunidad" in prompt
 
 
 # ── _build_prompt proactive hints ────────────────────────────────────────────

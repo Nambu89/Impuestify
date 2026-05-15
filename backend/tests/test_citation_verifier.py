@@ -156,7 +156,7 @@ def test_no_partial_citation_collision():
     # The collision protection still works (no false match), but whitelist
     # rescues the citation. This is the desired behavior.
     assert not result.has_unverified
-    assert result.citations[0].matched_chunk_id == "whitelist_fundamental_law"
+    assert result.citations[0].matched_chunk_id == "legal_registry"
 
 
 # ── Fundamental laws whitelist (P0 fix — Bug 99) ─────────────────────────────
@@ -177,7 +177,7 @@ def test_fundamental_law_liva_whitelisted():
     ley_cites = [c for c in result.citations if c.label == "ley"]
     assert ley_cites
     assert all(c.verified for c in ley_cites)
-    assert all(c.matched_chunk_id == "whitelist_fundamental_law" for c in ley_cites)
+    assert all(c.matched_chunk_id == "legal_registry" for c in ley_cites)
 
 
 def test_fundamental_law_lirpf_siglas():
@@ -286,7 +286,7 @@ def test_fundamental_law_lgt_whitelisted_for_notification_agent():
     ley_cites = [c for c in result.citations if c.label == "ley"]
     assert ley_cites
     assert all(c.verified for c in ley_cites)
-    assert all(c.matched_chunk_id == "whitelist_fundamental_law" for c in ley_cites)
+    assert all(c.matched_chunk_id == "legal_registry" for c in ley_cites)
 
 
 def test_whitelist_does_not_cover_arbitrary_articles():
