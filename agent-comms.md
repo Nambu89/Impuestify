@@ -7,6 +7,38 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-05-17] BACKEND — 🟢 DONE — Sesion 42 CIERRE: catálogo legal 25→37 normas (+48%)
+
+**Resumen sesión 42** (12 normas añadidas, 3 commits pushed):
+
+1. **Hallazgo clave**: backlog "BOE links chat (P0)" YA estaba implementado end-to-end — schema `url_html_consolidada` + `CitationEnricher` + pipeline + frontend `MdAnchor`. 16/16 tests `test_citation_enricher.py` PASS. Backlog actualizado.
+
+2. **Task C completa (commit f0f1576)**: +8 normas estatales vía BOE API:
+   - L39_2015 LPAC, L40_2015 LRJSP, RDL_26_2021 plusvalía, RDL_13_2022 SS autónomos, RDL_19_2021 rehabilitación, RD_1007_2023 VeriFactu, RDL_4_2024 medidas urgentes, L20_1990 cooperativas
+
+3. **TRIGIC Canarias (commit 912c3d4)**: DLeg 1/2025 IGIC + AIEM. Encontrado iterando 207 sumarios BOC 2025 con Scrapling Fetcher. PDF 979KB verificado con PyMuPDF. URL: `https://sede.gobiernodecanarias.org/boc/boc-a-2025-207-3598.pdf`. Tool nueva `scripts/find_norm_in_portal.py` reutilizable.
+
+4. **Doc-crawler 3 normas (commit 6aa0eb0)**: L8_1991_IPSI Ceuta/Melilla (BOE-A-1991-7645), L13_1996 medidas fiscales (BOE-A-1996-29117), L35_2015_BAREMO daños (BOE-A-2015-10197 vía static_url).
+
+5. **Doc-crawler v2 FALLIDO + REVERTIDO**: intentó añadir 13 normas (NF forales + DLeg autonómicos) con URLs apuntando a **homepages del boletín territorial** (bocm.es, gencat.cat/dogc/, juntadeandalucia.es/boja/) en lugar del texto consolidado específico. Números NF probablemente asumidos sin verificación oficial (NF 13/2013, NF 33/2013, etc.). 3 FAIL HTTP 404 + 1 WARN SSL explícitos. Reverted vía `git checkout` antes de commit.
+
+**Reglas nuevas establecidas**:
+- `memory/feedback_only_official_sources.md`: PROHIBIDO Wikipedia/blogs/Google Scholar para datos legales. Solo BOE/BOPV/BOC/BOJA/DOGC/AEAT/portales forales. Si fuente bloqueada → NOT_FOUND, no buscar alternativa no oficial.
+- Implícita: NUNCA `url_html_consolidada` a homepage de boletín; siempre a texto consolidado específico. Anti-patrón detectado por usuario, doc-crawler v2 reverted.
+
+**Pendiente sesión 43+** (no resoluble desde tooling actual):
+- NF IRPF Bizkaia/Gipuzkoa/Araba — portales JS-heavy, navegación humana necesaria
+- LF IRPF Navarra vigente
+- DLeg ITPAJD/ISD Madrid/Andalucía/Cataluña/Valencia/Galicia
+- Patrón seguro: PM aporta URL específica al texto consolidado verificada, yo ejecuto `add_norm.py --url`
+
+**Verificación final**:
+- `python scripts/validate_norms.py` → 37/37 OK
+- `python -m pytest tests/legal/ -q` → 124/124 PASS
+- Commits push: f0f1576, 912c3d4, 6aa0eb0 → main
+
+---
+
 ## [2026-05-17] BACKEND — 🟢 DONE — Sesion 42: catálogo legal +8 normas verificadas BOE
 
 **Tarea**: Auditar `backend/data/legal/norms.yaml` vs leyes citadas en código (`is_simulator.py`, `is_scales.py`, `withholding_rate.py`, `modelo_*.py`, `defensia_rules/`). Añadir las que faltan vía `add_norm.py` con verificación BOE API en vivo (zero-invention).
