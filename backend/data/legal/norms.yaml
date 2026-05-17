@@ -409,3 +409,19 @@ norms:
       - "regimen fiscal cooperativas"
     boe_id: "BOE-A-1990-30735"
     url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1990-30735"
+
+  - sigla: TRIGIC_CANARIAS
+    full_id: "Decreto Legislativo 1/2025"
+    name: "Texto Refundido de las normas legales aprobadas por la Comunidad Autónoma de Canarias en relación con el IGIC y el AIEM (Decreto Legislativo 1/2025, de 13 de octubre)"
+    norm_type: rd_legislativo
+    vigent_from: "2025-10-21"
+    vigent_until: null
+    aliases:
+      - "decreto legislativo 1/2025"
+      - "dleg 1/2025"
+      - "tr igic canarias"
+      - "texto refundido igic"
+      - "tr aiem"
+    source_id: static_url
+    source_norm_id: "https://sede.gobiernodecanarias.org/boc/boc-a-2025-207-3598.pdf"
+    url_html_consolidada: "https://sede.gobiernodecanarias.org/boc/boc-a-2025-207-3598.pdf"
