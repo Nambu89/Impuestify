@@ -178,14 +178,28 @@ def test_dispatcher_unknown_source_returns_none():
 
 
 def test_registry_get_url_html_for_static_url_norm():
-    """A norm with source_id=static_url must resolve via the dispatcher."""
-    from app.services.legal.registry import YamlLegalNormsRegistry
-    reg = YamlLegalNormsRegistry.from_directory()
-    norm = reg.get_norm("NF 13/2013")
-    assert norm is not None
+    """A norm with source_id=static_url must resolve via the dispatcher.
+
+    Uses a synthetic norm built ad-hoc (no fixture in YAML) to test the
+    dispatcher path. norms.yaml only contains norms verified against
+    official sources — adding test fixtures there would risk mixing
+    test data with production data.
+    """
+    from app.services.legal.models import LegalNorm
+    from app.services.legal.sources import get_legal_source_dispatcher
+    norm = LegalNorm(
+        sigla="TEST_STATIC",
+        full_id="Test 1/2099",
+        name="Test norm static_url",
+        norm_type="ley",
+        vigent_from=date(2099, 1, 1),
+        source_id="static_url",
+        source_norm_id="https://example.com/test.pdf",
+    )
     assert norm.effective_source_id() == "static_url"
-    url = reg.get_url_html(norm)
-    assert url and url.startswith("https://www.bizkaia.eus/")
+    dispatcher = get_legal_source_dispatcher()
+    url = dispatcher.get_url_html("static_url", norm.effective_source_norm_id())
+    assert url == "https://example.com/test.pdf"
 
 
 def test_registry_get_url_html_for_boe_norm():

@@ -243,6 +243,49 @@ Plugins futuros (sin hardcoded — añadir clase + registrar en dispatcher):
 `bome` (Melilla), `bob`/`bog`/`botha` (forales). Cada uno = un fichero
 en `sources/` + un test.
 
+### Garantía cero invención: validate_norms + add_norm
+
+**Regla**: ninguna norma entra al YAML sin haber sido validada contra
+su fuente oficial en vivo.
+
+**Validador CI** (`backend/scripts/validate_norms.py`):
+```bash
+PYTHONUTF8=1 python scripts/validate_norms.py
+```
+- BOE: llama API real con cada `boe_id`, exige 200 + titulo
+- BOPV: llama API real con cada `source_norm_id`
+- static_url: HEAD a la URL, exige 2xx/3xx
+- Output: `[OK] / [FAIL] / [WARN]` por norma + summary
+- Exit code != 0 si hay FAIL → CI rechaza merge
+
+**CLI añadir nueva norma** (`backend/scripts/add_norm.py`):
+```bash
+# Por BOE id (estatal o autonómica si BOE la consolida):
+python scripts/add_norm.py --boe BOE-A-2022-17101 --sigla LEY_22_2022 \\
+    --aliases "ley 22/2022"
+
+# Por BOPV (Euskadi autonómico):
+python scripts/add_norm.py --bopv 2024/12/5380 --sigla DECRETO_X_2024 \\
+    --full-id "Decreto 200/2024" --name "..." --vigent-from 2024-12-15
+
+# Por URL estática (boletines sin API):
+python scripts/add_norm.py --url https://www.bizkaia.eus/.../doc.pdf \\
+    --sigla NF_X --full-id "Norma Foral 13/2013" --name "IRPF Bizkaia" \\
+    --norm-type norma_foral --vigent-from 2014-01-01
+```
+- El script HACE la petición HTTP real. Si la fuente rechaza el ID o
+  la URL devuelve 404, exit != 0 y NO se escribe en YAML.
+- Para `--boe`, infiere `full_id`/`name`/`vigent_from` desde la
+  respuesta oficial (cero invención posible).
+- No sobrescribe entradas existentes.
+
+**Detección cambios BOE** (`backend/scripts/sync_boe_recent.py`):
+```bash
+python scripts/sync_boe_recent.py --days 7
+```
+- Cron weekly. Lista normas de nuestro YAML cuya consolidada cambió
+  en los últimos N días en BOE. Permite revisar manualmente.
+
 ### Cómo declarar la fuente de una norma en `norms.yaml`
 
 ```yaml

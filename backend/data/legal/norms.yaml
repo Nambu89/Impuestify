@@ -260,6 +260,7 @@ norms:
     url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2004-4527"
 
   # ── Conciertos/Convenios económicos (publicados en BOE estatal) ──
+  # Ambos verificados contra API BOE 2026-05-17 con curl.
   - sigla: CONCIERTO_EUSKADI
     full_id: "Ley 12/2002"
     name: "Concierto Económico con la Comunidad Autónoma del País Vasco"
@@ -275,58 +276,18 @@ norms:
 
   - sigla: CONVENIO_NAVARRA
     full_id: "Ley 28/1990"
-    name: "Convenio Económico entre el Estado y Navarra"
+    name: "Convenio Económico entre el Estado y la Comunidad Foral de Navarra"
     norm_type: ley
-    vigent_from: "1991-01-01"
+    vigent_from: "1990-12-27"
     vigent_until: null
     aliases:
       - "ley 28/1990"
       - "convenio economico navarra"
-    boe_id: "BOE-A-1990-31119"
-    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1990-31119"
+    boe_id: "BOE-A-1990-31117"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1990-31117"
 
-  # ── Normas forales fiscales — Bizkaia (BOB, sin API REST) ──
-  # source_id: static_url + source_norm_id con la URL completa.
-  - sigla: NF_IRPF_BIZKAIA
-    full_id: "Norma Foral 13/2013"
-    name: "IRPF de Bizkaia"
-    norm_type: norma_foral
-    vigent_from: "2014-01-01"
-    vigent_until: null
-    aliases:
-      - "nf 13/2013"
-      - "norma foral 13/2013"
-      - "irpf bizkaia"
-    source_id: static_url
-    source_norm_id: "https://www.bizkaia.eus/lehendakaritza/Bao_bob/2013/12/20131213a237.pdf"
-    url_html_consolidada: "https://www.bizkaia.eus/lehendakaritza/Bao_bob/2013/12/20131213a237.pdf"
-
-  - sigla: NF_IS_BIZKAIA
-    full_id: "Norma Foral 11/2013"
-    name: "Impuesto sobre Sociedades de Bizkaia"
-    norm_type: norma_foral
-    vigent_from: "2014-01-01"
-    vigent_until: null
-    aliases:
-      - "nf 11/2013"
-      - "norma foral 11/2013"
-      - "is bizkaia"
-    source_id: static_url
-    source_norm_id: "https://www.bizkaia.eus/lehendakaritza/Bao_bob/2013/12/20131213a237.pdf"
-    url_html_consolidada: "https://www.bizkaia.eus/lehendakaritza/Bao_bob/2013/12/20131213a237.pdf"
-
-  # ── Canarias autonómica ──
-  - sigla: DLEG_TRIBUTOS_CANARIAS
-    full_id: "Decreto Legislativo 1/2009"
-    name: "Texto Refundido de los Tributos Cedidos en Canarias"
-    norm_type: decreto_foral  # taxonómicamente "decreto legislativo autonómico"; usamos foral por proximidad
-    vigent_from: "2009-04-21"
-    vigent_until: null
-    aliases:
-      - "dleg 1/2009 canarias"
-      - "decreto legislativo 1/2009"
-      - "tributos cedidos canarias"
-    # Publicado en BOC (sin API REST). URL pública del Gobierno de Canarias.
-    source_id: static_url
-    source_norm_id: "https://www.gobiernodecanarias.org/libroazul/pdf/65040.pdf"
-    url_html_consolidada: "https://www.gobiernodecanarias.org/libroazul/pdf/65040.pdf"
+  # NOTA: Las normas forales (NF Bizkaia/Gipuzkoa/Araba), DLeg Canarias,
+  # Leyes autonomicas (ITP CAM, ISD Andalucia, etc.) se añadiran tras
+  # verificacion automatica via scripts/add_norm.py contra fuente oficial.
+  # NO se permite entrada manual sin verificacion (regla: validate_norms.py
+  # corre en CI y rechaza URLs/IDs que no respondan 200).
