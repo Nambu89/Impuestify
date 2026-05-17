@@ -781,6 +781,18 @@ async def ask_question_stream(
                     except Exception as e:
                         logger.warning(f"Citation verifier failed (non-blocking): {e}")
 
+                    # Enriquece markdown con links a BOE consolidado.
+                    # Cualquier "Ley X/Y", "RD X/Y", "Art. X LEY" del LLM que
+                    # exista en data/legal/norms.yaml se sustituye por
+                    # `[Texto](https://www.boe.es/...)`. Citas inventadas se
+                    # dejan intactas. Vease backend/app/services/legal/.
+                    try:
+                        from app.services.legal.citation_enricher import get_citation_enricher
+                        enricher = get_citation_enricher()
+                        clean_content = enricher.enrich_markdown(clean_content)
+                    except Exception as e:
+                        logger.warning(f"Citation enricher failed (non-blocking): {e}")
+
                     # Record token usage against the user's daily budget.
                     # Conservative estimate: ~4 chars/token for Spanish. We add
                     # the prompt context (RAG + question + history) and the

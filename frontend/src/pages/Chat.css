@@ -602,6 +602,28 @@
     color: var(--color-gray-400);
 }
 
+/* External links inyectados por CitationEnricher backend (BOE consolidados).
+   Color accent + underline dotted para diferenciar de texto normal y de
+   sources. Hover refuerza intencionalidad clic. */
+.message-text a.md-external-link {
+    color: var(--color-accent);
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+}
+
+.message-text a.md-external-link:hover {
+    color: #22d3ee;
+    text-decoration-style: solid;
+}
+
+.message-text a.md-external-link::after {
+    content: " \2197"; /* arrow up-right indicador externo */
+    font-size: 0.85em;
+    opacity: 0.7;
+    margin-left: 1px;
+}
+
 /* Horizontal rule */
 .message-text hr {
     border: none;

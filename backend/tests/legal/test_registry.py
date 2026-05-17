@@ -43,6 +43,33 @@ def test_all_articles_reference_existing_norms():
         )
 
 
+def test_all_norms_have_boe_id():
+    """Every norm in norms.yaml must carry a `boe_id` matching the official
+    BOE-A-NNNN-NNNN format. Required for BOE API integration (sesión 42)."""
+    import re
+    norms, _, _ = load_all()
+    pattern = re.compile(r"^BOE-[A-Z]-\d{4}-\d+$")
+    for norm in norms.norms:
+        assert norm.boe_id is not None, (
+            f"Norm '{norm.sigla}' lacks boe_id — required for BOE API links + vigencia check"
+        )
+        assert pattern.match(norm.boe_id), (
+            f"Norm '{norm.sigla}' has invalid boe_id format: '{norm.boe_id}'"
+        )
+
+
+def test_all_norms_have_url_html_or_can_construct():
+    """Every norm should either have `url_html_consolidada` cached OR have
+    a `boe_id` so the URL can be reconstructed at request time."""
+    norms, _, _ = load_all()
+    for norm in norms.norms:
+        has_url = norm.url_html_consolidada is not None
+        has_id = norm.boe_id is not None
+        assert has_url or has_id, (
+            f"Norm '{norm.sigla}' has neither url_html_consolidada nor boe_id"
+        )
+
+
 # ── is_known_norm ────────────────────────────────────────────────────────
 
 

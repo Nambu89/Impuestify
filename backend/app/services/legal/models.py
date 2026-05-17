@@ -31,6 +31,20 @@ class LegalNorm(BaseModel):
     vigent_from: date
     vigent_until: Optional[date] = None
     aliases: List[str] = Field(default_factory=list)
+    # BOE identifier (formato oficial BOE-A-NNNN-NNNN). Permite verificar
+    # vigencia via API BOE Datos Abiertos y construir link a versión
+    # consolidada oficial. Opcional para no romper YAMLs sin migrar.
+    boe_id: Optional[str] = Field(
+        default=None,
+        pattern=r"^BOE-[A-Z]-\d{4}-\d+$",
+        description='Identificador BOE oficial, ej "BOE-A-1992-28740"',
+    )
+    # URL HTML consolidada cacheada desde la API. Si null, se reconstruye
+    # con `https://www.boe.es/buscar/act.php?id={boe_id}` cuando se necesite.
+    url_html_consolidada: Optional[str] = Field(
+        default=None,
+        description="URL HTML versión consolidada vigente en BOE",
+    )
 
     @field_validator("norm_type")
     @classmethod

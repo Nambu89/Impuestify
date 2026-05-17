@@ -488,9 +488,34 @@ function MdParagraph({ children, ...rest }: React.HTMLAttributes<HTMLParagraphEl
     return <p {...rest}>{children}</p>
 }
 
+/**
+ * Custom anchor: external links (BOE consolidados, etc.) open in new
+ * tab with rel="noopener noreferrer" + ExternalLink icon. Internal
+ * links (same origin) keep default behaviour.
+ */
+function MdAnchor({ href, children, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+    const url = href || ''
+    const isExternal = /^https?:\/\//i.test(url) && !url.includes(typeof window !== 'undefined' ? window.location.host : '')
+    if (!isExternal) {
+        return <a href={href} {...rest}>{children}</a>
+    }
+    return (
+        <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="md-external-link"
+            {...rest}
+        >
+            {children}
+        </a>
+    )
+}
+
 const MARKDOWN_COMPONENTS = {
     blockquote: MdBlockquote,
     p: MdParagraph,
+    a: MdAnchor,
 } as const
 
 function CalloutBox({ block }: { block: CalloutBlock }) {

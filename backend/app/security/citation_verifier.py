@@ -97,6 +97,61 @@ def _is_known_legal_reference(citation: "Citation") -> bool:
     return False
 
 
+def _check_derogated_norms(citations: Iterable["Citation"]) -> List["Citation"]:
+    """Check vigencia of cited norms against BOE API. Returns list of
+    derogated norms (so callers can add a specific warning).
+
+    Synchronous-ish: each norm consulted has a 1.5s timeout. With cache
+    in Turso (30 days TTL), most calls are <50ms cache hits. First-time
+    queries pay the network cost once per norm.
+
+    Gated by `BOE_VERIFY_VIGENCIA` env var (off by default until we
+    validate latency impact in production). When off, returns [] and
+    chat pipeline behaves exactly like before.
+
+    Graceful degradation: any error (timeout, network, parse) is
+    treated as "assume vigente" — we never false-flag a norm as
+    derogated when BOE is unreachable.
+    """
+    import os
+    if os.environ.get("BOE_VERIFY_VIGENCIA", "false").lower() not in ("1", "true", "yes"):
+        return []
+
+    from app.services.legal import get_legal_registry
+    registry = get_legal_registry()
+
+    derogated: List["Citation"] = []
+    for c in citations:
+        if c.label not in ("ley", "rd", "real_decreto"):
+            continue
+        norm = registry.get_norm(c.normalized)
+        if norm is None or norm.boe_id is None:
+            continue
+        try:
+            # Async call from sync context — only runs when env-gated.
+            import asyncio
+            vigent = asyncio.run(_check_vigencia_async(norm.boe_id))
+        except Exception as exc:
+            logger.debug("Vigencia check failed for %s: %s — assuming vigent", norm.boe_id, exc)
+            continue
+        if vigent is False:
+            derogated.append(c)
+    return derogated
+
+
+async def _check_vigencia_async(boe_id: str) -> Optional[bool]:
+    """Helper: instantiate BoeApiClient and check vigencia. None on error."""
+    from app.services.legal.boe_client import BoeApiClient
+    from app.database.turso_client import get_turso_client
+    db = None
+    try:
+        db = await get_turso_client()
+    except Exception:
+        pass
+    async with BoeApiClient(db=db, timeout_s=1.5) as client:
+        return await client.is_vigent(boe_id)
+
+
 # ── Normalization ────────────────────────────────────────────────────────────
 
 # Map common article abbreviations so "Art. 68" and "Artículo 68" compare equal.
@@ -221,11 +276,25 @@ def verify_citations(
                 else:
                     unverified.append(c)
 
+    # Optional BOE API vigencia check (env-gated, off by default).
+    # Marks norms as derogated if BOE confirms they are not in force.
+    derogated = _check_derogated_norms(citations) if not unverified else []
+
     has_unverified = bool(unverified)
     warning_footer = _build_warning_footer(unverified) if has_unverified else None
-    annotated = _annotate_response(response_text, unverified) if has_unverified else None
 
-    if has_unverified:
+    if derogated:
+        derogated_footer = _build_derogated_footer(derogated)
+        warning_footer = (warning_footer or "") + derogated_footer
+        # Append to annotated_response too if it exists, otherwise create.
+        annotated = (response_text + warning_footer) if response_text else None
+        has_unverified = True  # surface derogated as a warning
+        logger.warning("BOE API flagged %d derogated norm(s): %s",
+                       len(derogated), [c.text for c in derogated])
+    else:
+        annotated = _annotate_response(response_text, unverified) if has_unverified else None
+
+    if unverified:
         logger.warning(
             "Citation verifier flagged %d unverified citation(s): %s",
             len(unverified),
@@ -234,10 +303,26 @@ def verify_citations(
 
     return VerificationResult(
         citations=citations,
-        unverified=unverified,
+        unverified=unverified + derogated,
         has_unverified=has_unverified,
         warning_footer=warning_footer,
         annotated_response=annotated,
+    )
+
+
+def _build_derogated_footer(derogated: List["Citation"]) -> str:
+    """Specific warning when BOE API confirms a cited norm is derogated."""
+    if not derogated:
+        return ""
+    if len(derogated) == 1:
+        cite_list = f"**{derogated[0].text}**"
+        intro = "esta norma figura como derogada"
+    else:
+        cite_list = ", ".join(f"**{c.text}**" for c in derogated)
+        intro = "estas normas figuran como derogadas"
+    return (
+        f"\n\n> ⚠️ Según la API oficial del BOE, {intro}: {cite_list}. "
+        f"Consulta la versión vigente actual antes de aplicar."
     )
 
 

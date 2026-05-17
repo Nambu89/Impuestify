@@ -161,3 +161,64 @@ que conseguimos con el Protocol pattern.
 - Stanford 2025: "Legal RAG Hallucinations" — 17-33% hallucination rate
   en LexisNexis/Westlaw. La verificación contra catálogo authoritative
   es una de las mitigaciones recomendadas.
+
+## Integración BOE API Datos Abiertos (sesión 42)
+
+`backend/app/services/legal/boe_client.py` añade verificación de
+vigencia y enriquecimiento de links contra la API oficial:
+`https://www.boe.es/datosabiertos/api/`.
+
+### Componentes
+
+- **`BoeApiClient`**: HTTP client async con cache Turso 30 días
+  (UPSERT race-safe). Devuelve `NormaBoeMetadata` con
+  `estatus_derogacion`, `vigencia_agotada`, `url_html_consolidada`,
+  `url_eli`, fechas. Accept solo `application/xml` (la API rechaza JSON).
+- **`CitationEnricher`**: detecta citas en markdown (`Ley 37/1992`,
+  `RD 1624/1992`, `Art. 69 LIVA`, …) y las sustituye por markdown links
+  a la URL `boe.es/buscar/act.php?id={boe_id}` del registry. Citas no
+  registradas se dejan intactas. Idempotente. No toca código existente
+  ni bloques fenced.
+- **Verifier**: opcional vía env `BOE_VERIFY_VIGENCIA=true`. Consulta
+  la API por cada norma citada; si BOE confirma derogada, añade un
+  footer específico `⚠ Según la API oficial del BOE, esta norma figura
+  como derogada`. Default off para evitar latencia 1.5s primera vez.
+
+### Tabla cache
+
+```sql
+CREATE TABLE boe_cache (
+    boe_id TEXT PRIMARY KEY,
+    metadata_json TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+);
+CREATE INDEX idx_boe_cache_expires ON boe_cache(expires_at);
+```
+
+Escritura via UPSERT `ON CONFLICT(boe_id) DO UPDATE` — race-safe bajo
+N workers Railway futuros.
+
+### Mapping `boe_id` en `norms.yaml`
+
+Cada norma del catálogo debe llevar `boe_id` (formato
+`BOE-A-NNNN-NNNN`) verificable contra
+`https://www.boe.es/buscar/act.php?id={boe_id}`. Test
+`test_all_norms_have_boe_id` lo garantiza como gate CI.
+
+### Cuándo añadir nuevas normas
+
+1. Editar `norms.yaml` añadiendo entrada con `boe_id`.
+2. Validar el `boe_id` con curl:
+   ```
+   curl -H "Accept: application/xml" \
+     https://www.boe.es/datosabiertos/api/legislacion-consolidada/id/{boe_id}
+   ```
+3. Confirmar `<status><code>200</code>` y `<titulo>` esperado.
+4. Commit.
+
+### Documentación oficial BOE
+
+- Datos Abiertos: https://www.boe.es/datosabiertos/api/api.php
+- FAQ Consolidada: https://www.boe.es/datosabiertos/faq/consolidada.php
+- PDF API: https://www.boe.es/datosabiertos/documentos/APIconsolidada.pdf

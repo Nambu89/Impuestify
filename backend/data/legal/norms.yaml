@@ -1,8 +1,7 @@
 # Catálogo de normas tributarias españolas vigentes.
 #
-# Fuente de verdad para citation verifier — sustituye el hardcode previo
-# en _FUNDAMENTAL_LAWS_WHITELIST. Mantenible sin tocar código: editar
-# este YAML + commit con razón → CI valida + deploy.
+# Fuente de verdad para citation verifier y enricher de links a BOE.
+# Mantenible sin tocar código: editar este YAML + commit → CI valida + deploy.
 #
 # Estructura de cada entrada:
 #   sigla:        sigla oficial (LIVA, LIRPF, LGT, etc.)
@@ -13,6 +12,14 @@
 #   vigent_from:  fecha de entrada en vigor (ISO 8601)
 #   vigent_until: fecha de derogación (null = vigente)
 #   aliases:      otras formas en las que el LLM puede citar la norma
+#   boe_id:       identificador oficial BOE (formato BOE-A-NNNN-NNNN). Permite
+#                 verificar vigencia contra API BOE Datos Abiertos y construir
+#                 link a versión consolidada oficial. Verificable con
+#                 `curl -H "Accept: application/xml"
+#                  https://www.boe.es/datosabiertos/api/legislacion-consolidada/id/{boe_id}`
+#   url_html_consolidada:  URL HTML pública opcional (cache del campo
+#                 <url_html_consolidada> que devuelve la API). Si null,
+#                 se construye desde boe_id: https://www.boe.es/buscar/act.php?id={boe_id}
 #
 # IMPORTANTE: cada vez que AEAT publica una reforma legal, se actualiza
 # este YAML. Adición + cambios de vigencia se commitean con explicación.
@@ -28,6 +35,8 @@ norms:
     vigent_from: "1993-01-01"
     vigent_until: null
     aliases: ["liva", "ley 37/1992", "ley del iva"]
+    boe_id: "BOE-A-1992-28740"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1992-28740"
 
   - sigla: LIRPF
     full_id: "Ley 35/2006"
@@ -36,6 +45,8 @@ norms:
     vigent_from: "2007-01-01"
     vigent_until: null
     aliases: ["lirpf", "ley 35/2006"]
+    boe_id: "BOE-A-2006-20764"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2006-20764"
 
   - sigla: LIS
     full_id: "Ley 27/2014"
@@ -44,6 +55,8 @@ norms:
     vigent_from: "2015-01-01"
     vigent_until: null
     aliases: ["lis", "ley 27/2014"]
+    boe_id: "BOE-A-2014-12328"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2014-12328"
 
   - sigla: LGT
     full_id: "Ley 58/2003"
@@ -52,6 +65,8 @@ norms:
     vigent_from: "2004-07-01"
     vigent_until: null
     aliases: ["lgt", "ley 58/2003", "ley general tributaria"]
+    boe_id: "BOE-A-2003-23186"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2003-23186"
 
   - sigla: LIGIC
     full_id: "Ley 20/1991"
@@ -60,6 +75,8 @@ norms:
     vigent_from: "1991-06-08"
     vigent_until: null
     aliases: ["ligic", "ley 20/1991", "ley del igic"]
+    boe_id: "BOE-A-1991-14463"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1991-14463"
 
   - sigla: LISD
     full_id: "Ley 29/1987"
@@ -68,6 +85,8 @@ norms:
     vigent_from: "1988-01-01"
     vigent_until: null
     aliases: ["lisd", "lisyd", "ley 29/1987"]
+    boe_id: "BOE-A-1987-28141"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1987-28141"
 
   - sigla: LIP
     full_id: "Ley 19/1991"
@@ -76,6 +95,8 @@ norms:
     vigent_from: "1992-01-01"
     vigent_until: null
     aliases: ["lip", "ley 19/1991"]
+    boe_id: "BOE-A-1991-14392"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1991-14392"
 
   - sigla: LIIEE
     full_id: "Ley 38/1992"
@@ -84,6 +105,8 @@ norms:
     vigent_from: "1993-01-01"
     vigent_until: null
     aliases: ["liiee", "ley 38/1992"]
+    boe_id: "BOE-A-1992-28741"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1992-28741"
 
   - sigla: L49_2002
     full_id: "Ley 49/2002"
@@ -92,6 +115,8 @@ norms:
     vigent_from: "2003-01-01"
     vigent_until: null
     aliases: ["ley 49/2002", "ley de mecenazgo"]
+    boe_id: "BOE-A-2002-25039"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2002-25039"
 
   - sigla: L19_1994
     full_id: "Ley 19/1994"
@@ -100,6 +125,8 @@ norms:
     vigent_from: "1994-07-08"
     vigent_until: null
     aliases: ["ley 19/1994", "ref canarias"]
+    boe_id: "BOE-A-1994-15794"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1994-15794"
 
   - sigla: L22_2009
     full_id: "Ley 22/2009"
@@ -108,6 +135,8 @@ norms:
     vigent_from: "2010-01-01"
     vigent_until: null
     aliases: ["ley 22/2009", "ley de cesion de tributos"]
+    boe_id: "BOE-A-2009-20375"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2009-20375"
 
   - sigla: L11_2021
     full_id: "Ley 11/2021"
@@ -116,14 +145,18 @@ norms:
     vigent_from: "2021-07-11"
     vigent_until: null
     aliases: ["ley 11/2021"]
+    boe_id: "BOE-A-2021-11473"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2021-11473"
 
   - sigla: L7_2024
     full_id: "Ley 7/2024"
-    name: "Reforma fiscal — microempresas, tributación mínima global, ahorro 2025"
+    name: "Impuesto Complementario tributación mínima global, impuesto margen intereses entidades financieras y líquidos cigarrillos electrónicos"
     norm_type: ley
     vigent_from: "2025-01-01"
     vigent_until: null
     aliases: ["ley 7/2024"]
+    boe_id: "BOE-A-2024-26694"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2024-26694"
 
   # ── Reglamentos ──
   - sigla: RIVA
@@ -133,6 +166,8 @@ norms:
     vigent_from: "1993-01-01"
     vigent_until: null
     aliases: ["riva", "rd 1624/1992", "real decreto 1624/1992"]
+    boe_id: "BOE-A-1992-28925"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1992-28925"
 
   - sigla: RIRPF
     full_id: "RD 439/2007"
@@ -141,6 +176,8 @@ norms:
     vigent_from: "2007-04-01"
     vigent_until: null
     aliases: ["rirpf", "rd 439/2007", "real decreto 439/2007"]
+    boe_id: "BOE-A-2007-6820"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2007-6820"
 
   - sigla: RIS
     full_id: "RD 634/2015"
@@ -149,6 +186,8 @@ norms:
     vigent_from: "2015-07-12"
     vigent_until: null
     aliases: ["ris", "rd 634/2015", "real decreto 634/2015"]
+    boe_id: "BOE-A-2015-7771"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2015-7771"
 
   - sigla: RITPAJD
     full_id: "RD 828/1995"
@@ -157,6 +196,8 @@ norms:
     vigent_from: "1995-09-07"
     vigent_until: null
     aliases: ["ritpajd", "rd 828/1995"]
+    boe_id: "BOE-A-1995-15071"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1995-15071"
 
   - sigla: RGAT
     full_id: "RD 1065/2007"
@@ -165,6 +206,8 @@ norms:
     vigent_from: "2008-01-01"
     vigent_until: null
     aliases: ["rgat", "rd 1065/2007"]
+    boe_id: "BOE-A-2007-15984"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2007-15984"
 
   - sigla: RD_FACTURACION
     full_id: "RD 1619/2012"
@@ -173,6 +216,8 @@ norms:
     vigent_from: "2013-01-01"
     vigent_until: null
     aliases: ["rd 1619/2012", "reglamento de facturacion"]
+    boe_id: "BOE-A-2012-14696"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2012-14696"
 
   # ── Textos Refundidos (Reales Decretos Legislativos) ──
   - sigla: TRLITPAJD
@@ -185,6 +230,8 @@ norms:
       - "trlitpajd"
       - "rd legislativo 1/1993"
       - "real decreto legislativo 1/1993"
+    boe_id: "BOE-A-1993-25359"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1993-25359"
 
   - sigla: TRLRHL
     full_id: "RD Legislativo 2/2004"
@@ -196,6 +243,8 @@ norms:
       - "trlrhl"
       - "rd legislativo 2/2004"
       - "real decreto legislativo 2/2004"
+    boe_id: "BOE-A-2004-4214"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2004-4214"
 
   - sigla: TRLIRNR
     full_id: "RD Legislativo 5/2004"
@@ -207,3 +256,5 @@ norms:
       - "trlirnr"
       - "rd legislativo 5/2004"
       - "real decreto legislativo 5/2004"
+    boe_id: "BOE-A-2004-4527"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2004-4527"

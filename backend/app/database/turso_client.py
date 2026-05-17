@@ -369,6 +369,22 @@ class TursoClient:
             )
             """,
             
+            # BOE API cache — verificacion vigencia de leyes/RDs contra
+            # API Datos Abiertos del BOE. TTL 30 dias (la vigencia cambia
+            # poco). UPSERT en escrituras (ON CONFLICT) para race-condition
+            # safety con N workers Railway futuros.
+            """
+            CREATE TABLE IF NOT EXISTS boe_cache (
+                boe_id TEXT PRIMARY KEY,
+                metadata_json TEXT NOT NULL,
+                fetched_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL
+            )
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS idx_boe_cache_expires ON boe_cache(expires_at)
+            """,
+
             # Search analytics
             """
             CREATE TABLE IF NOT EXISTS search_analytics (
