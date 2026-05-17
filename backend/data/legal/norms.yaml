@@ -425,3 +425,31 @@ norms:
     source_id: static_url
     source_norm_id: "https://sede.gobiernodecanarias.org/boc/boc-a-2025-207-3598.pdf"
     url_html_consolidada: "https://sede.gobiernodecanarias.org/boc/boc-a-2025-207-3598.pdf"
+
+  - sigla: L8_1991_IPSI
+    full_id: "Ley 8/1991"
+    name: "Ley 8/1991, de 25 de marzo, por la que se aprueba el arbitrio sobre la producción y la importación en las ciudades de Ceuta y Melilla."
+    norm_type: ley
+    vigent_from: "1991-03-27"
+    vigent_until: null
+    boe_id: "BOE-A-1991-7645"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1991-7645"
+
+  - sigla: L13_1996
+    full_id: "Ley 13/1996"
+    name: "Ley 13/1996, de 30 de diciembre, de Medidas Fiscales, Administrativas y del Orden Social."
+    norm_type: ley
+    vigent_from: "1997-01-01"
+    vigent_until: null
+    boe_id: "BOE-A-1996-29117"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1996-29117"
+
+  - sigla: L35_2015_BAREMO
+    full_id: "Ley 35/2015"
+    name: "Ley 35/2015, de 22 de septiembre, de reforma del sistema para la valoración de daños en accidentes de circulación"
+    norm_type: ley
+    vigent_from: "2015-09-22"
+    vigent_until: null
+    source_id: static_url
+    source_norm_id: "https://www.boe.es/buscar/act.php?id=BOE-A-2015-10197"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2015-10197"
