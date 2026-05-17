@@ -1,5 +1,54 @@
 # Bugfixes — Mayo 2026 (sesion 38+)
 
+## Bug 102 — Refactor data-driven legal registry (anti-patron eliminado)
+
+**Reportado por**: usuario sesion 41 (2026-05-15). "Has hardcodeado muchas cosas! Esto no cumple con las mejores practicas."
+
+**Sintoma**: tras fixes Bug 99/101, el codigo contenia hardcoded en Python:
+- `_FUNDAMENTAL_LAWS_WHITELIST` (27 leyes) en `citation_verifier.py`
+- `_CANONICAL_ARTICLES_WHITELIST` (40+ articulos) en `citation_verifier.py`
+- Plantillas factura inline en system prompt de `tax_agent.py`
+- Lista Art. 69.Dos.a-l inline en system prompt
+
+**Anti-patron**: corpus normativo dentro de Python. AEAT publica reformas constantemente → cada cambio toca codigo y redeploy. Un fiscalista no-dev no puede mantenerlo. La lista crece sin freno (cientos leyes, miles articulos).
+
+**Fix arquitectonico** (commit `cd31319`):
+- Pattern: Repository + Protocol (DDD).
+- `backend/data/legal/{norms,articles,invoice_templates}.yaml` — fuente verdad versionada en git.
+- `backend/app/services/legal/` — Pydantic v2 models + loader con `LegalDataError` + citation_parser + `LegalNormsRegistry` Protocol + `YamlLegalNormsRegistry` impl + singleton via `@lru_cache`.
+- `citation_verifier.py`: elimina ambas whitelists. Usa `registry.is_known_norm()` / `is_known_article()` via DI lazy.
+- `tax_agent._get_system_prompt`: seccion "Plantillas copy-paste" renderiza dinamicamente desde el registry.
+- Regex `art_law` añade lookbehind `(?<![\d/])` para no capturar años como articulos.
+- Fallback graceful si YAML missing (registry vacio, no crash).
+- Tests integridad referencial + schema como gate CI.
+
+**Beneficios**:
+- Añadir ley nueva: editar `norms.yaml` + commit, sin Python.
+- Reforma articulado: cerrar `vigent_until` + nueva entrada `vigent_from`. Permite citas historicas.
+- Migrable a SQL en futuro: solo añadir `SqlLegalNormsRegistry` impl, callers no cambian.
+
+**Tests**: 123 (40 citation_verifier + 75 legal/ + 8 tax_agent_prompt) PASS. Suite total 3126 PASS.
+
+**Docs**: `backend/app/services/legal/README.md` (guia mantenimiento).
+
+**Memoria**: `memory/feedback_no_hardcode_legal.md` (regla permanente).
+
+**Backlog tech debt**: MEMORY.md sesion 41 tech debt (migrar a Turso, Admin UI YAML, sync BOE API, versioning anual, replicar patron a CCAA/modelos/tipos IVA).
+
+---
+
+## Bug 101 — RAG filter CCAA excluye normativa estatal
+
+**Reportado por**: usuario sesion 41 (2026-05-14, captura WhatsApp 22.58.46). Banner ⚠ "No he podido verificar 70 LIVA" en respuesta sobre IVA EEUU.
+
+**Causa raiz**: `hybrid_retriever.py` filtraba RAG EXACTAMENTE por `territory=CCAA` del perfil. Para perfil Aragon, recuperaba chunks de `Aragon-DLeg 1/2005 TributosCedidos` (irrelevantes para IVA) y NO recuperaba la LIVA (territory='Estatal'). Resultado: respuesta cita Art. 70 LIVA correctamente pero verifier no lo encuentra en chunks → banner falso positivo. User: "IVA es estatal, no cedido a CCAA → al filtrar por Aragon se pierde la LIVA". Razon.
+
+**Fix** (commit `379a935`): `_vector_search` (Upstash) y `_fts_search` (FTS5 Turso) ahora añaden SIEMPRE `'Estatal'` y `'AEAT'` al OR del filtro CCAA. Impuestos no cedidos (IVA, IS, IRNR, IIEE) viven en estos territories — relevantes para cualquier usuario independientemente de su residencia.
+
+**Verificado**: pruebas usuario sesion 41 confirman captura final (23.49.07) sin banner ⚠ y respuesta correcta.
+
+---
+
 ## Bug 100 — `purge_semantic_cache.py` borra el RAG por accidente (INCIDENTE PRODUCCION)
 
 **Reportado por**: agente Claude (sesion 41, 2026-05-13) tras ejecutar el script.

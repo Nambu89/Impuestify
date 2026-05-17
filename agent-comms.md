@@ -7,6 +7,50 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-05-17] BACKEND+FRONTEND — 🟢 DONE — Sesion 41 CIERRE: refactor data-driven + UX
+
+13 commits hoy (sesion 41 completa 2026-05-13 a 05-17):
+
+**Bugs cerrados**:
+- Bug 99 (citation verifier falso positivo Ley 37/1992) → fix inicial + refactor data-driven
+- Bug 100 (purge_semantic_cache borra RAG 84K vectors) → guardrails + re-ingest 488 docs/12h
+- Bug 101 (RAG filter CCAA excluye Estatal/AEAT) → IN ('CCAA', 'Estatal', 'AEAT')
+- Bug 102 (anti-patron hardcode normativo) → refactor a YAML+Pydantic+Protocol
+
+**Frontend UX nuevo**:
+- DirectAnswerCard verde "Respuesta directa" + ProTipCard dorada + CopyableQuote con boton Copiar
+- Banner ⚠ amber legible (antes invisible en fondo oscuro)
+- Sources block con label cyan
+- Safe-area-inset-bottom iOS
+
+**Arquitectura legal nueva** (`backend/data/legal/` + `backend/app/services/legal/`):
+- 3 YAMLs versionados (norms, articles, invoice_templates)
+- Pydantic v2 validation startup
+- Repository+Protocol pattern (migrable SQL futuro)
+- 123 tests nuevos (75 legal/ + 40 citation_verifier + 8 prompt)
+- README mantenimiento
+
+**Verificacion competitiva**: Impuestify SUPERA a TributAI en rigor juridico (Arts. 69-70 LIVA correctos vs Art. 21 erroneo). Captura final usuario confirma 6 criterios cumplidos.
+
+**Pendiente** (NEEDS_REVIEW pero no bloqueante):
+- Validacion manual final tras ultimo deploy `cd31319` (refactor) — funcionalmente identico al previo `ca01046` pero verificar no regresion
+- Polish UX: boton Copiar mas grande mobile, spacing Pro tip
+
+**Backlog tech debt sesion 42+**:
+- Migrar `data/legal/*.yaml` a tabla Turso cuando >200 leyes
+- Admin UI editar YAML legal (owner-only)
+- Sync automatico BOE API → PR diff articulado
+- Versioning anual plantillas factura
+- Replicar patron data-driven a CCAA, modelos AEAT, tipos IVA
+
+**Reglas nuevas establecidas**:
+- `memory/feedback_read_before_fix.md` — leer TODO config + comentarios + doc oficial ANTES de fix infra
+- `memory/feedback_no_hardcode_legal.md` — nunca hardcodear corpus legal en Python
+
+**Plan sesion 41**: `plans/2026-05-13-superar-tributai.md` (validado PASS plan-checker + verifier).
+
+---
+
 ## [2026-05-13] BACKEND — 🟢 DONE — Sesion 41: Superar TributAI (caso EEUU IVA) — Bug 99 + 4 secciones prompt
 
 Disparado por caso usuario comparativa TributAI vs Impuestify. TributAI dio respuesta mas usable (texto factura copy-paste, ejemplo numerico, Pro tip REDEME, B2B asumido, oferta guardar CCAA). Impuestify mas riguroso PERO con banner falso positivo "no he podido verificar Ley 37/1992" que destruia confianza.
