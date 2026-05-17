@@ -291,3 +291,15 @@ norms:
   # verificacion automatica via scripts/add_norm.py contra fuente oficial.
   # NO se permite entrada manual sin verificacion (regla: validate_norms.py
   # corre en CI y rechaza URLs/IDs que no respondan 200).
+
+  - sigla: LF_IS_NAVARRA
+    full_id: "Ley Foral 26/2016"
+    name: "Ley Foral 26/2016, de 28 de diciembre, del Impuesto sobre Sociedades."
+    norm_type: ley
+    vigent_from: "2017-01-01"
+    vigent_until: null
+    aliases:
+      - "ley foral 26/2016"
+      - "ls navarra"
+    boe_id: "BOE-A-2017-2356"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2017-2356"
