@@ -7,6 +7,57 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-05-17] BACKEND — 🟢 DONE — Sesion 42: catálogo legal +8 normas verificadas BOE
+
+**Tarea**: Auditar `backend/data/legal/norms.yaml` vs leyes citadas en código (`is_simulator.py`, `is_scales.py`, `withholding_rate.py`, `modelo_*.py`, `defensia_rules/`). Añadir las que faltan vía `add_norm.py` con verificación BOE API en vivo (zero-invention).
+
+**8 normas añadidas** (25 → 33, +33%):
+- `L39_2015` — Ley 39/2015 LPAC (Procedimiento Administrativo Común)
+- `L40_2015` — Ley 40/2015 LRJSP (Régimen Jurídico Sector Público)
+- `RDL_26_2021` — Plusvalía municipal (post-STC)
+- `RDL_13_2022` — Tarifas SS autónomos (sistema cotización real)
+- `RDL_19_2021` — Rehabilitación edificatoria + deducción IRPF eficiencia energética
+- `RD_1007_2023` — VeriFactu / SIF (Reglamento facturación)
+- `RDL_4_2024` — Medidas urgentes fiscales/energéticas 2024
+- `L20_1990` — Régimen fiscal de cooperativas
+
+**Verificación**: `validate_norms.py` → 33/33 OK (HTTP 200 en BOE API). 124/124 tests legal/ PASS.
+
+**Pendiente (PM follow-up — BOE IDs no localizados)**:
+- Ley 35/2015 Baremo daños personales — API 404 (puede no estar consolidada)
+- Ley 8/1991 IPSI Ceuta — múltiples IDs probados, no match
+- Ley 13/1996 IPSI Melilla — sin localizar
+- Decreto Legislativo 1/2025 IGIC Canarias — NO está en BOE (es BOC, requiere source_id=static_url + URL verificada)
+- Normas Forales Bizkaia/Gipuzkoa/Araba IRPF+IS+IVA — portales forales con URLs no estables (404 en intentos)
+- Decretos Legislativos CCAA (ITPAJD CAM, ISD Andalucía, etc.) — requieren búsqueda manual
+
+**Recomendación**: PM verifica IDs pendientes manualmente desde BOE search UI + ejecuta `add_norm.py --boe BOE-A-XXXX-XXXX ...` o `--url <BOC/BOG/BOB URL>` para forales/CCAA.
+
+**Diff**: `backend/data/legal/norms.yaml` +106 líneas, 0 modificaciones.
+
+---
+
+## [2026-05-17] CRAWLER — 🟡 IN_PROGRESS — Sesion 42: exploración catálogo tributario territorial
+
+**Tarea iniciada**: Crawlear normativa tributaria de TODOS los territorios españoles para expandir `backend/data/legal/norms.yaml` (actualmente 24 entradas estatales + 2 conciertos/convenios).
+
+**Hallazgos clave**:
+- ✅ 2 normas verificadas (ya en YAML): CONCIERTO_EUSKADI (BOE-A-2002-9969), CONVENIO_NAVARRA (BOE-A-1990-31117)
+- 🟡 14 normas identificadas pero NO verificadas (forales IRPF/IS/IVA + CCAA DLeg tributos cedidos + IPSI Ceuta/Melilla)
+- 🔴 Portales forales/CCAA bloqueados por URLs dinámicas, anti-bot, 403/404
+- 📋 Plan propuesto: Fase A (manual BOE search 1h) + Fase B (Playwright explorer sesión 43+)
+
+**Artefacto** (`plans/2026-05-17-catalog-territorios-propuesto.md`):
+- Tabla 8 normas forales pendientes (Bizkaia/Gipuzkoa/Araba/Navarra IRPF/IS/IVA/ITPAJD/ISD)
+- Tabla 6 normas CCAA (Canarias DLeg 1/2009, IGIC 4/2012; Madrid/Cataluña ISD/ITPAJD; Andalucía/Valencia DLeg)
+- Tabla 2 IPSI locales (Ceuta/Melilla reglamentos)
+- Comandos `add_norm.py` template listos tras verificación
+- Bloqueadores documentados + soluciones propuestas
+
+**Próximo paso** (Sesión 43): TBD por coordinador. Necesita decisión sobre Playwright+ script automation vs. búsqueda manual BOE continuada.
+
+---
+
 ## [2026-05-17] BACKEND+FRONTEND — 🟢 DONE — Sesion 41 CIERRE: refactor data-driven + UX
 
 13 commits hoy (sesion 41 completa 2026-05-13 a 05-17):

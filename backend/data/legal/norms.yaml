@@ -303,3 +303,109 @@ norms:
       - "ls navarra"
     boe_id: "BOE-A-2017-2356"
     url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2017-2356"
+
+  - sigla: L39_2015
+    full_id: "Ley 39/2015"
+    name: "Ley 39/2015, de 1 de octubre, del Procedimiento Administrativo Común de las Administraciones Públicas."
+    norm_type: ley
+    vigent_from: "2016-10-02"
+    vigent_until: null
+    aliases:
+      - "ley 39/2015"
+      - "lpac"
+      - "procedimiento administrativo comun"
+    boe_id: "BOE-A-2015-10565"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2015-10565"
+
+  - sigla: L40_2015
+    full_id: "Ley 40/2015"
+    name: "Ley 40/2015, de 1 de octubre, de Régimen Jurídico del Sector Público."
+    norm_type: ley
+    vigent_from: "2016-10-02"
+    vigent_until: null
+    aliases:
+      - "ley 40/2015"
+      - "lrjsp"
+      - "regimen juridico sector publico"
+    boe_id: "BOE-A-2015-10566"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2015-10566"
+
+  - sigla: RDL_26_2021
+    full_id: "Real Decreto-ley 26/2021"
+    name: "Real Decreto-ley 26/2021, de 8 de noviembre, por el que se adapta el texto refundido de la Ley Reguladora de las Haciendas Locales, aprobado por el Real Decreto Legislativo 2/2004, de 5 de marzo, a la reciente jurisprudencia del Tribunal Constitucional respecto del Impuesto sobre el Incremento de Valor de los Terrenos de Naturaleza Urbana."
+    norm_type: rd
+    vigent_from: "2021-11-10"
+    vigent_until: null
+    aliases:
+      - "rdl 26/2021"
+      - "real decreto-ley 26/2021"
+      - "plusvalia municipal"
+      - "iivtnu rdl"
+    boe_id: "BOE-A-2021-18276"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2021-18276"
+
+  - sigla: RDL_13_2022
+    full_id: "Real Decreto-ley 13/2022"
+    name: "Real Decreto-ley 13/2022, de 26 de julio, por el que se establece un nuevo sistema de cotización para los trabajadores por cuenta propia o autónomos y se mejora la protección por cese de actividad."
+    norm_type: rd
+    vigent_from: "2023-01-01"
+    vigent_until: null
+    aliases:
+      - "rdl 13/2022"
+      - "real decreto-ley 13/2022"
+      - "cotizacion autonomos"
+    boe_id: "BOE-A-2022-12482"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2022-12482"
+
+  - sigla: RDL_19_2021
+    full_id: "Real Decreto-ley 19/2021"
+    name: "Real Decreto-ley 19/2021, de 5 de octubre, de medidas urgentes para impulsar la actividad de rehabilitación edificatoria en el contexto del Plan de Recuperación, Transformación y Resiliencia."
+    norm_type: rd
+    vigent_from: "2021-10-06"
+    vigent_until: null
+    aliases:
+      - "rdl 19/2021"
+      - "real decreto-ley 19/2021"
+      - "rehabilitacion edificatoria"
+      - "eficiencia energetica deduccion"
+    boe_id: "BOE-A-2021-16230"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2021-16230"
+
+  - sigla: RD_1007_2023
+    full_id: "Real Decreto 1007/2023"
+    name: "Real Decreto 1007/2023, de 5 de diciembre, por el que se aprueba el Reglamento que establece los requisitos que deben adoptar los sistemas y programas informáticos o electrónicos que soporten los procesos de facturación de empresarios y profesionales, y la estandarización de formatos de los registros de facturación."
+    norm_type: rd
+    vigent_from: "2023-12-07"
+    vigent_until: null
+    aliases:
+      - "rd 1007/2023"
+      - "real decreto 1007/2023"
+      - "verifactu"
+      - "sif facturacion"
+      - "reglamento facturacion verificable"
+    boe_id: "BOE-A-2023-24840"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2023-24840"
+
+  - sigla: RDL_4_2024
+    full_id: "Real Decreto-ley 4/2024"
+    name: "Real Decreto-ley 4/2024, de 26 de junio, por el que se prorrogan determinadas medidas para afrontar las consecuencias económicas y sociales derivadas de los conflictos en Ucrania y Oriente Próximo y se adoptan medidas urgentes en materia fiscal, energética y social."
+    norm_type: rd
+    vigent_from: "2024-06-28"
+    vigent_until: null
+    aliases:
+      - "rdl 4/2024"
+      - "real decreto-ley 4/2024"
+    boe_id: "BOE-A-2024-12944"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-2024-12944"
+
+  - sigla: L20_1990
+    full_id: "Ley 20/1990"
+    name: "Ley 20/1990, de 19 de diciembre, sobre Régimen Fiscal de las Cooperativas."
+    norm_type: ley
+    vigent_from: "1990-12-20"
+    vigent_until: null
+    aliases:
+      - "ley 20/1990"
+      - "regimen fiscal cooperativas"
+    boe_id: "BOE-A-1990-30735"
+    url_html_consolidada: "https://www.boe.es/buscar/act.php?id=BOE-A-1990-30735"
