@@ -74,6 +74,12 @@ class LegalNormsRegistry(Protocol):
         """Return every template — used to render system prompt section."""
         ...
 
+    def get_url_html(self, norm: LegalNorm) -> Optional[str]:
+        """Resolve the public URL for a norm. Delegates to the configured
+        `source_id` plugin via the dispatcher; falls back to
+        `url_html_consolidada` cached in the YAML."""
+        ...
+
 
 # ── Concrete YAML implementation ─────────────────────────────────────────
 
@@ -154,6 +160,21 @@ class YamlLegalNormsRegistry:
 
     def all_invoice_templates(self) -> list[InvoiceTemplate]:
         return list(self._templates_by_key.values())
+
+    def get_url_html(self, norm: LegalNorm) -> Optional[str]:
+        """Resolve URL using the dispatcher; cached YAML URL has priority."""
+        if norm is None:
+            return None
+        # YAML-cached URL has priority (avoids round-trip when known).
+        if norm.url_html_consolidada:
+            return norm.url_html_consolidada
+        from app.services.legal.sources import get_legal_source_dispatcher
+        dispatcher = get_legal_source_dispatcher()
+        source_id = norm.effective_source_id()
+        norm_id = norm.effective_source_norm_id()
+        if not norm_id:
+            return None
+        return dispatcher.get_url_html(source_id, norm_id)
 
     # ── Helpers ──
 

@@ -222,3 +222,58 @@ Cada norma del catálogo debe llevar `boe_id` (formato
 - Datos Abiertos: https://www.boe.es/datosabiertos/api/api.php
 - FAQ Consolidada: https://www.boe.es/datosabiertos/faq/consolidada.php
 - PDF API: https://www.boe.es/datosabiertos/documentos/APIconsolidada.pdf
+
+## Arquitectura multi-fuente (LegalSource plugins)
+
+A partir de mayo 2026 las normas pueden venir de varios boletines
+oficiales (BOE estatal, BOPV Euskadi autonómico, BOB Bizkaia, BOC
+Canarias, etc.). Cada origen es un plugin `LegalSource` con interfaz
+común. El YAML declara qué plugin usar por norma.
+
+### Plugins disponibles
+
+| `source_id` | Plugin | Boletín | API REST | Verifica vigencia? |
+|-------------|--------|---------|----------|--------------------|
+| `boe` (default) | `BoeApiSource` | BOE Estatal | ✅ XML | ✅ |
+| `bopv` | `BopvApiSource` | BOPV Euskadi autonómico | ✅ JSON | ✅ |
+| `static_url` | `StaticUrlSource` | Fallback (PDF/HTML directo) | ❌ | ❌ |
+
+Plugins futuros (sin hardcoded — añadir clase + registrar en dispatcher):
+`bon` (Navarra), `boc` (Canarias autonómico), `bocce` (Ceuta),
+`bome` (Melilla), `bob`/`bog`/`botha` (forales). Cada uno = un fichero
+en `sources/` + un test.
+
+### Cómo declarar la fuente de una norma en `norms.yaml`
+
+```yaml
+# Por defecto BOE: omites source_id (compat con normas estatales).
+- sigla: LIVA
+  ...
+  boe_id: "BOE-A-1992-28740"
+
+# BOPV autonómico (api.euskadi.eus/bopv/administrative-acts):
+- sigla: DECRETO_FISCAL_EUSKADI_X_2024
+  ...
+  source_id: bopv
+  source_norm_id: "2024/12/5380"   # formato YYYY/MM/numOrder
+
+# Boletín sin API (PDF/HTML estable):
+- sigla: NF_IRPF_BIZKAIA
+  ...
+  source_id: static_url
+  source_norm_id: "https://www.bizkaia.eus/.../doc.pdf"
+  url_html_consolidada: "https://www.bizkaia.eus/.../doc.pdf"
+```
+
+### Cómo añadir un nuevo plugin
+
+1. Crear `backend/app/services/legal/sources/{source_id}.py` que
+   implemente la clase con `source_id`, `fetch_norma`, `is_vigent`,
+   `get_url_html`.
+2. Registrarlo en `dispatcher.py::_default_sources()`.
+3. Añadirlo a `tests/legal/test_registry.py::KNOWN_SOURCES`.
+4. Documentarlo en este README.
+5. Norms con `source_id: {nuevo}` ya funcionan.
+
+Cero cambios en `citation_enricher.py`, `citation_verifier.py` ni el
+system prompt — la abstracción está clean.

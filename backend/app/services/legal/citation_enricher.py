@@ -136,15 +136,11 @@ class CitationEnricher:
         return f"[{full}]({url})"
 
     def _url_for_norm(self, norm) -> Optional[str]:
-        """Resolve the BOE URL for a norm. Falls back to constructing the
-        standard pattern from `boe_id` if `url_html_consolidada` is empty."""
+        """Resolve the public URL for a norm via the registry, which
+        delegates to the right LegalSource plugin (boe, bopv, …)."""
         if norm is None:
             return None
-        if norm.url_html_consolidada:
-            return norm.url_html_consolidada
-        if norm.boe_id:
-            return f"https://www.boe.es/buscar/act.php?id={norm.boe_id}"
-        return None
+        return self._registry.get_url_html(norm)
 
 
 # ── Singleton accessor ───────────────────────────────────────────────────

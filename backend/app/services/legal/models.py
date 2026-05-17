@@ -43,8 +43,35 @@ class LegalNorm(BaseModel):
     # con `https://www.boe.es/buscar/act.php?id={boe_id}` cuando se necesite.
     url_html_consolidada: Optional[str] = Field(
         default=None,
-        description="URL HTML versión consolidada vigente en BOE",
+        description="URL HTML versión consolidada vigente",
     )
+    # Plugin de origen para verificación de vigencia y resolución de URL.
+    # Si vacío, default = "boe" (compat con normas estatales existentes).
+    # Valores válidos: boe | bopv | static_url | (futuros: bon, boc, …)
+    source_id: Optional[str] = Field(
+        default=None,
+        description="Identificador del plugin LegalSource (boe, bopv, static_url, …)",
+    )
+    # ID dentro del sistema del source. Para BOE = boe_id; para BOPV =
+    # "YYYY/MM/numOrder"; para static_url = la URL completa.
+    source_norm_id: Optional[str] = Field(
+        default=None,
+        description="ID nativo del source. Si null, fallback a boe_id.",
+    )
+
+    def effective_source_id(self) -> str:
+        """Default = "boe" si no se especifica (compat con YAMLs previos)."""
+        return self.source_id or "boe"
+
+    def effective_source_norm_id(self) -> Optional[str]:
+        """Resolve which identifier to pass to the source plugin."""
+        if self.source_norm_id:
+            return self.source_norm_id
+        if self.effective_source_id() == "boe":
+            return self.boe_id
+        if self.effective_source_id() == "static_url":
+            return self.url_html_consolidada
+        return None
 
     @field_validator("norm_type")
     @classmethod
