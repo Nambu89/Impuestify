@@ -1,0 +1,4 @@
+# Development tooling — NOT installed in production (Railway uses requirements.txt only)
+ruff==0.6.9
+pre-commit==4.0.1
+pytest-cov==5.0.0
