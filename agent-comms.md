@@ -7,6 +7,23 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-05-18] DEVOPS/CODER — 🟢 DONE — Sesion 43: Quality Gates Phase 1 completas
+
+- **Branch**: `claude/quality-gates` (21 commits, PR #16 draft)
+- **CI**: 5/5 verde en `.github/workflows/ci.yml` (backend-lint, backend-test, frontend-lint, frontend-build, frontend-test)
+- **Pre-commit**: 12 hooks instalados (ruff + eslint + prettier + safety), todos pass en `pre-commit run --all-files`
+- **Baselines tolerados Phase 1**:
+  - Backend ruff: 179 violations via `--exit-zero`
+  - Frontend eslint: 234 warnings via `--max-warnings 256`
+  - Frontend typecheck: ~30 TS errors via soft-fail
+- **Bonus fix**: `react-is@18.3.1` peer dep para recharts 3.x (build estaba roto pre-existing)
+- **Issues abiertos para Phase 1.5**:
+  - #14 — eslint warnings → 0
+  - #15 — ruff 179 → 0 + typecheck cleanup
+- **Pendiente**: squash-merge PR #16 a main (pendiente confirmación user)
+- **Lección anti-whitewashing documentada en `memory/project_session43_quality_gates.md`**: si necesitas tolerar baseline, usa flag de tolerancia en runner (--exit-zero, --max-warnings, continue-on-error), NUNCA desactives reglas globalmente.
+- **Para próximos agentes**: si añades código nuevo, ahora `git commit` ejecuta pre-commit hooks. Si tu commit falla, fix las quejas o usa `git commit --no-verify` (pero CI te bloqueará igualmente). PR a main requiere CI 5/5 verde.
+
 ## [2026-05-17] BACKEND — 🟢 DONE — Sesion 42 CIERRE: catálogo legal 25→37 normas (+48%)
 
 **Resumen sesión 42** (12 normas añadidas, 3 commits pushed):
