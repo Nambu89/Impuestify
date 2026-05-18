@@ -9,6 +9,9 @@ cd backend && pip install -r requirements.txt
 cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 cd backend && pytest tests/ -v --tb=short
 # Expected: 1083+ tests PASS
+cd backend && ruff check .              # Lint (CI gate, --exit-zero Phase 1)
+cd backend && ruff format .             # Format (CI gate)
+cd backend && pip install -r requirements-dev.txt  # First time only
 ```
 
 ### Environment Variables (required)

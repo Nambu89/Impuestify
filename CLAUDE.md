@@ -107,6 +107,31 @@ Aplica a: cualquier implementacion que involucre >2 archivos o >2 tareas.
 Plan → /check-plan (PASS?) → Presentar al usuario → Aprobacion → Implementar → /verify (VERIFIED?) → Reportar completado
 ```
 
+## Code Quality Tooling
+
+| Layer | Tool | Run |
+|-------|------|-----|
+| Backend lint | ruff | `cd backend && ruff check .` |
+| Backend format | ruff format | `cd backend && ruff format .` |
+| Backend tests | pytest | `cd backend && pytest tests/ -q` |
+| Frontend lint | eslint v9 | `cd frontend && npm run lint` |
+| Frontend format | prettier | `cd frontend && npm run format` |
+| Frontend typecheck | tsc --noEmit | `cd frontend && npm run typecheck` |
+| Frontend build | vite | `cd frontend && npm run build` |
+| Pre-commit (all) | pre-commit | `pre-commit run --all-files` |
+
+**Install dev tooling once per machine:**
+
+```bash
+cd backend && pip install -r requirements-dev.txt
+pre-commit install
+```
+
+**CI runs all checks on every PR** (`.github/workflows/ci.yml`, 5 parallel jobs). Bypass pre-commit ONLY for emergency commits: `git commit --no-verify` — but CI will still report. Baseline tolerances (Phase 1):
+- Backend ruff: `--exit-zero` for 179 pre-existing violations (cleanup: issue #15)
+- Frontend eslint: `--max-warnings 256` for 234 warnings (cleanup: issue #14)
+- Frontend typecheck: soft-fail for ~30 pre-existing TS errors (cleanup: issue #15)
+
 ## Post-Bugfix Protocol (OBLIGATORIO)
 
 Después de arreglar cualquier bug, SIEMPRE documentar en estos 3 sitios:
