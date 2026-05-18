@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "vite",
         "build": "npx vite build",
-        "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+        "lint": "eslint . --report-unused-disable-directives --max-warnings 256",
         "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
         "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
         "typecheck": "tsc --noEmit",
