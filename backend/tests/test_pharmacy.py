@@ -7,14 +7,20 @@ Validates:
 - CNAE/IAE constants
 - Modelo303Calculator RE awareness
 """
+
 import pytest
+
+from app.territories.registry import _registry, get_territory
 from app.territories.startup import register_all_territories
-from app.territories.registry import get_territory, _registry
-from app.utils.pharmacy_constants import (
-    PHARMACY_CNAE, PHARMACY_IAE, PHARMACY_ACTIVITY,
-    RE_RATES, PHARMACY_DEDUCTIONS, PHARMACY_IVA_TYPES,
-)
 from app.utils.calculators.modelo_303 import Modelo303Calculator
+from app.utils.pharmacy_constants import (
+    PHARMACY_ACTIVITY,
+    PHARMACY_CNAE,
+    PHARMACY_DEDUCTIONS,
+    PHARMACY_IAE,
+    PHARMACY_IVA_TYPES,
+    RE_RATES,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -50,6 +56,7 @@ def _modelo_ids(obligations: list) -> set:
 
 
 # ── Constants tests ──────────────────────────────────────────────
+
 
 class TestPharmacyConstants:
     def test_cnae(self):
@@ -93,6 +100,7 @@ class TestPharmacyConstants:
 
 # ── Modelo303Calculator RE awareness ─────────────────────────────
 
+
 class TestModelo303RecargoEquivalencia:
     def test_farmaceutico_is_re(self):
         assert Modelo303Calculator.is_recargo_equivalencia("farmaceutico") is True
@@ -113,6 +121,7 @@ class TestModelo303RecargoEquivalencia:
 
 
 # ── Model obligations for farmaceutico ───────────────────────────
+
 
 class TestFarmaceuticoObligations:
     def test_farmaceutico_madrid_no_303(self):
@@ -147,10 +156,13 @@ class TestFarmaceuticoObligations:
 
     def test_farmaceutico_with_employees(self):
         """Farmaceutico with employees should have retenciones 111 + 190."""
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "farmaceutico",
-            "tiene_empleados": True,
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "farmaceutico",
+                "tiene_empleados": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "111" in ids, "Should have retenciones 111 with employees"
         assert "190" in ids, "Should have resumen anual 190"
@@ -158,30 +170,39 @@ class TestFarmaceuticoObligations:
 
     def test_farmaceutico_with_alquileres(self):
         """Farmaceutico with rented premises should have 115 + 180."""
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "farmaceutico",
-            "tiene_alquileres": True,
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "farmaceutico",
+                "tiene_alquileres": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "115" in ids, "Should have retenciones alquiler 115"
         assert "180" in ids, "Should have resumen anual alquiler 180"
 
     def test_farmaceutico_estimacion_objetiva(self):
         """Farmaceutico with estimacion objetiva should use 131 instead of 130."""
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "farmaceutico",
-            "estimacion": "objetiva",
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "farmaceutico",
+                "estimacion": "objetiva",
+            },
+        )
         ids = _modelo_ids(obs)
         assert "131" in ids, "Estimacion objetiva should use 131"
         assert "130" not in ids, "Should NOT have 130 with estimacion objetiva"
 
     def test_farmaceutico_ops_terceros(self):
         """Farmaceutico with ops >3005 should have 347."""
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "farmaceutico",
-            "tiene_ops_terceros_3005": True,
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "farmaceutico",
+                "tiene_ops_terceros_3005": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "347" in ids, "Should have 347 with ops >3005"
 
@@ -189,9 +210,9 @@ class TestFarmaceuticoObligations:
         """Farmaceutico obligations should include a note about Recargo de Equivalencia."""
         obs = _get_modelos("Madrid", {"situacion_laboral": "farmaceutico"})
         all_notes = " ".join(ob.notas or "" for ob in obs)
-        assert "Recargo de Equivalencia" in all_notes, (
-            f"Should mention Recargo de Equivalencia in notes, got: {all_notes}"
-        )
+        assert (
+            "Recargo de Equivalencia" in all_notes
+        ), f"Should mention Recargo de Equivalencia in notes, got: {all_notes}"
 
     def test_farmaceutico_canarias_no_420(self):
         """Farmaceutico in Canarias should NOT have IGIC 420 either (RE applies)."""

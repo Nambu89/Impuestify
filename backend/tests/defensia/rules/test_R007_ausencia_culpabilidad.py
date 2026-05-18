@@ -27,6 +27,7 @@ Principios de estos tests:
   Para mantener R007 verde de forma independiente, el test importa directamente
   su propio modulo con `importlib.reload` tras el reset autouse del conftest.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -66,6 +67,7 @@ def _cargar_solo_R007() -> None:
 # Helpers locales — encapsulan el boilerplate minimo para cada caso
 # ---------------------------------------------------------------------------
 
+
 def _exp_con_sancion(
     *,
     fase: Fase,
@@ -92,8 +94,11 @@ def _exp_con_sancion(
 # Test 1 — Positivo caso David: motivacion generica en norma compleja
 # ---------------------------------------------------------------------------
 
+
 def test_R007_dispara_con_motivacion_culpabilidad_generica(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """Caso David: acuerdo 191+194 sobre art. 41 bis RIRPF (norma compleja).
 
@@ -126,23 +131,21 @@ def test_R007_dispara_con_motivacion_culpabilidad_generica(
 
     r007 = [c for c in candidatos if c.regla_id == "R007"]
     assert len(r007) == 1, (
-        f"R007 debe disparar con motivacion generica; got {len(r007)} "
-        f"candidatos: {candidatos}"
+        f"R007 debe disparar con motivacion generica; got {len(r007)} " f"candidatos: {candidatos}"
     )
     arg = r007[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.datos_disparo.get("motivo") == "motivacion_generica", (
-        f"datos_disparo debe contener motivo='motivacion_generica'; "
-        f"got {arg.datos_disparo!r}"
+        f"datos_disparo debe contener motivo='motivacion_generica'; " f"got {arg.datos_disparo!r}"
     )
     # Cita semantica — NUNCA hardcoded articulo concreto
     cita = arg.cita_normativa_propuesta.lower()
-    assert "culpabilidad" in cita, (
-        f"cita_normativa_propuesta debe mencionar 'culpabilidad'; got {cita!r}"
-    )
-    assert "motivacion" in cita or "motivación" in cita, (
-        f"cita_normativa_propuesta debe mencionar 'motivacion'; got {cita!r}"
-    )
+    assert (
+        "culpabilidad" in cita
+    ), f"cita_normativa_propuesta debe mencionar 'culpabilidad'; got {cita!r}"
+    assert (
+        "motivacion" in cita or "motivación" in cita
+    ), f"cita_normativa_propuesta debe mencionar 'motivacion'; got {cita!r}"
     # Anti-hardcode: no debe contener referencias literales a articulos
     assert "179.2" not in arg.cita_normativa_propuesta
     assert "183.1" not in arg.cita_normativa_propuesta
@@ -154,8 +157,11 @@ def test_R007_dispara_con_motivacion_culpabilidad_generica(
 # Test 2 — Positivo: razonamiento por exclusion
 # ---------------------------------------------------------------------------
 
+
 def test_R007_dispara_con_razonamiento_por_exclusion(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """STS 1695/2024 proscribe razonar la culpa "por exclusion".
 
@@ -181,9 +187,7 @@ def test_R007_dispara_con_razonamiento_por_exclusion(
     candidatos = evaluar(expediente, brief)
 
     r007 = [c for c in candidatos if c.regla_id == "R007"]
-    assert len(r007) == 1, (
-        "R007 debe disparar cuando el acuerdo razona la culpa por exclusion"
-    )
+    assert len(r007) == 1, "R007 debe disparar cuando el acuerdo razona la culpa por exclusion"
     assert r007[0].datos_disparo.get("motivo") == "razonamiento_por_exclusion"
 
 
@@ -191,8 +195,11 @@ def test_R007_dispara_con_razonamiento_por_exclusion(
 # Test 3 — Positivo: falta analisis de interpretacion razonable
 # ---------------------------------------------------------------------------
 
+
 def test_R007_dispara_sin_analisis_interpretacion_razonable(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """Art. 179.2.d LGT exige analizar si la norma admite interpretacion razonable.
 
@@ -217,9 +224,7 @@ def test_R007_dispara_sin_analisis_interpretacion_razonable(
     candidatos = evaluar(expediente, brief)
 
     r007 = [c for c in candidatos if c.regla_id == "R007"]
-    assert len(r007) == 1, (
-        "R007 debe disparar cuando no hay analisis de interpretacion razonable"
-    )
+    assert len(r007) == 1, "R007 debe disparar cuando no hay analisis de interpretacion razonable"
     assert r007[0].datos_disparo.get("motivo") == "sin_analisis_interpretacion_razonable"
 
 
@@ -227,8 +232,11 @@ def test_R007_dispara_sin_analisis_interpretacion_razonable(
 # Test 4 — Negativo: motivacion especifica completa
 # ---------------------------------------------------------------------------
 
+
 def test_R007_no_dispara_con_motivacion_especifica_completa(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """Cuando el acuerdo sancionador motiva especificamente la culpabilidad,
     no razona por exclusion y analiza expresamente si la norma admite
@@ -262,8 +270,11 @@ def test_R007_no_dispara_con_motivacion_especifica_completa(
 # Test 5 — Negativo: fase no sancionadora (filtro del motor)
 # ---------------------------------------------------------------------------
 
+
 def test_R007_no_dispara_fuera_de_fase_sancionadora(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """Aunque los datos coincidan con el trigger, si la fase del expediente es
     LIQUIDACION_FIRME_PLAZO_RECURSO (sin sancion notificada todavia), R007

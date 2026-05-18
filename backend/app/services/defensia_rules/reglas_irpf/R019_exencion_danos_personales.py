@@ -43,6 +43,7 @@ Decisiones de diseno (documentadas para futuros mantenedores):
       regimen (limites del ET) y su argumento defensivo corresponderia
       a otra regla distinta del rango R011-R020.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -52,7 +53,6 @@ from app.models.defensia import (
     TipoDocumento,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Cita semantica libre — el RAG verificador resuelve la cita canonica. Se
 # guarda como constante para documentar la intencion y facilitar ajustes
@@ -94,26 +94,18 @@ def _evaluar_documento(datos: dict) -> tuple[str, dict] | None:
     origen = datos.get("origen")
     incluida = bool(datos.get("incluida_como_renta_sujeta", False))
     resolucion_judicial = bool(datos.get("resolucion_judicial", False))
-    en_cumplimiento_sentencia = bool(
-        datos.get("en_cumplimiento_sentencia", False)
-    )
+    en_cumplimiento_sentencia = bool(datos.get("en_cumplimiento_sentencia", False))
     pagador = datos.get("pagador")
 
     # Trigger 1: responsabilidad civil con resolucion judicial y la
     # Administracion la incluye como renta sujeta.
-    if (
-        origen == "responsabilidad_civil_danos_personales"
-        and resolucion_judicial
-        and incluida
-    ):
+    if origen == "responsabilidad_civil_danos_personales" and resolucion_judicial and incluida:
         disparo = {
             "motivo": "responsabilidad_civil_judicial",
             "origen": origen,
             "resolucion_judicial": True,
         }
-        importe = datos.get("indemnizacion_declarada_exenta") or datos.get(
-            "importe"
-        )
+        importe = datos.get("indemnizacion_declarada_exenta") or datos.get("importe")
         if importe is not None:
             disparo["importe"] = importe
         return ("responsabilidad_civil_judicial", disparo)
@@ -131,9 +123,7 @@ def _evaluar_documento(datos: dict) -> tuple[str, dict] | None:
         }
         if origen:
             disparo["origen"] = origen
-        importe = datos.get("importe") or datos.get(
-            "indemnizacion_declarada_exenta"
-        )
+        importe = datos.get("importe") or datos.get("indemnizacion_declarada_exenta")
         if importe is not None:
             disparo["importe"] = importe
         return ("aseguradora_en_cumplimiento_sentencia", disparo)
@@ -144,11 +134,7 @@ def _evaluar_documento(datos: dict) -> tuple[str, dict] | None:
     if origen == "acuerdo_mediacion_MASC":
         importe = datos.get("importe")
         baremo = datos.get("importe_baremo_aplicable")
-        if (
-            importe is not None
-            and baremo is not None
-            and importe <= baremo
-        ):
+        if importe is not None and baremo is not None and importe <= baremo:
             return (
                 "acuerdo_mediacion_MASC",
                 {

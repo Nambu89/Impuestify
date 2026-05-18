@@ -8,16 +8,19 @@ Supports two query modes:
   - Numeric query  (e.g. "0505", "505", "casilla 505"):   exact + prefix search by casilla_num
   - Text query     (e.g. "cuota integra", "trabajo"):      LIKE search on description
 """
-from typing import Dict, Any
+
 import logging
 import re
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 async def _get_db():
     from app.database.turso_client import get_db_client
+
     return await get_db_client()
+
 
 CASILLA_LOOKUP_TOOL = {
     "type": "function",
@@ -88,7 +91,7 @@ def _format_results(rows: list[dict], query: str) -> str:
 async def lookup_casilla_tool(
     query: str,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Look up IRPF casilla(s) by number or description text.
 

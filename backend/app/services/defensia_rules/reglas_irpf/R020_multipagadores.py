@@ -34,6 +34,7 @@ el ``defensia_rag_verifier`` contra el corpus normativo. Por eso aqui no
 aparecen literales como "Art. 96 LIRPF" ni "RDL 4/2024" — solo terminos
 semanticos descriptivos del supuesto.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -45,7 +46,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # ---------------------------------------------------------------------------
 # Constantes — limites y umbrales del art. 96 LIRPF tras RDL 4/2024
@@ -88,14 +88,13 @@ _TIPOS_LIQUIDACION = (
     TipoDocumento.PROPUESTA_LIQUIDACION,
 )
 
-_TIPOS_SANCION = (
-    TipoDocumento.ACUERDO_IMPOSICION_SANCION,
-)
+_TIPOS_SANCION = (TipoDocumento.ACUERDO_IMPOSICION_SANCION,)
 
 
 # ---------------------------------------------------------------------------
 # Regla
 # ---------------------------------------------------------------------------
+
 
 @regla(
     id="R020",
@@ -143,11 +142,7 @@ def evaluar(
     # Disparador 1 y 2 — liquidaciones / propuestas
     # -----------------------------------------------------------------------
     doc_liquidacion = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDACION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDACION),
         None,
     )
     if doc_liquidacion is not None:
@@ -223,11 +218,7 @@ def evaluar(
     # Disparador 3 — sancion por no declarar bajo el umbral real
     # -----------------------------------------------------------------------
     doc_sancion = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_SANCION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_SANCION),
         None,
     )
     if doc_sancion is not None:

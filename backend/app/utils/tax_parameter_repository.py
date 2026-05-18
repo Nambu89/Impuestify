@@ -7,7 +7,7 @@ Caches results in memory to avoid repeated DB queries within the same request.
 Follows Dependency Inversion: calculators depend on this abstraction,
 not on SQL queries directly.
 """
-from typing import Dict, Optional
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,14 +26,14 @@ class TaxParameterRepository:
 
     def __init__(self, db):
         self._db = db
-        self._cache: Dict[str, Dict[str, float]] = {}
+        self._cache: dict[str, dict[str, float]] = {}
 
     async def get_params(
         self,
         category: str,
         year: int,
         jurisdiction: str = "Estatal",
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Get all parameters for a category/year/jurisdiction.
 
@@ -59,7 +59,10 @@ class TaxParameterRepository:
         if not params and year > 2023:
             logger.info(
                 "No tax_parameters for %s/%d/%s — falling back to %d",
-                category, year, jurisdiction, year - 1,
+                category,
+                year,
+                jurisdiction,
+                year - 1,
             )
             result = await self._db.execute(
                 "SELECT param_key, value FROM tax_parameters "
@@ -77,8 +80,8 @@ class TaxParameterRepository:
         param_key: str,
         year: int,
         jurisdiction: str = "Estatal",
-        default: Optional[float] = None,
-    ) -> Optional[float]:
+        default: float | None = None,
+    ) -> float | None:
         """Get a single parameter value."""
         params = await self.get_params(category, year, jurisdiction)
         return params.get(param_key, default)
@@ -88,7 +91,7 @@ class TaxParameterRepository:
         category: str,
         year: int,
         jurisdiction: str,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Get params for a specific jurisdiction, falling back to Estatal.
 

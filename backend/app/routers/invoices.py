@@ -10,23 +10,22 @@ Endpoints:
 """
 
 import json
-import uuid
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+import uuid
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, File, Form, UploadFile, HTTPException, Depends, Query, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from pydantic import BaseModel
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.subscription_guard import require_active_subscription
-from app.services.subscription_service import SubscriptionAccess
 from app.config import settings
 from app.database.turso_client import get_db_client
 from app.security.rate_limiter import limiter
-from app.services.invoice_ocr_service import InvoiceOCRService
-from app.services.invoice_classifier_service import InvoiceClassifierService
 from app.services.contabilidad_service import ContabilidadService
+from app.services.invoice_classifier_service import InvoiceClassifierService
+from app.services.invoice_ocr_service import InvoiceOCRService
+from app.services.subscription_service import SubscriptionAccess
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +50,7 @@ ALLOWED_PLANS = {"autonomo", "creator"}
 # Request / Response models
 # ---------------------------------------------------------------------------
 
+
 class ReclassifyRequest(BaseModel):
     cuenta_pgc: str
     cuenta_pgc_nombre: str
@@ -59,6 +59,7 @@ class ReclassifyRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _parse_trimestre(month: int) -> int:
     """Return trimestre 1-4 from month 1-12."""
@@ -77,11 +78,11 @@ def _validate_file(file_bytes: bytes, content_type: str | None) -> str:
         raise HTTPException(
             status_code=400,
             detail=f"Tipo de archivo no soportado: {content_type}. "
-                   f"Se aceptan: {', '.join(ALLOWED_MIME_TYPES.keys())}",
+            f"Se aceptan: {', '.join(ALLOWED_MIME_TYPES.keys())}",
         )
 
     expected_magic = ALLOWED_MIME_TYPES[content_type]
-    if not file_bytes[:len(expected_magic)] == expected_magic:
+    if not file_bytes[: len(expected_magic)] == expected_magic:
         raise HTTPException(
             status_code=400,
             detail="El contenido del archivo no coincide con el tipo declarado.",
@@ -94,7 +95,8 @@ def _validate_file(file_bytes: bytes, content_type: str | None) -> str:
 # POST /upload
 # ---------------------------------------------------------------------------
 
-async def _resolve_workspace_id(db, user_id: str, requested: Optional[str]) -> Optional[str]:
+
+async def _resolve_workspace_id(db, user_id: str, requested: str | None) -> str | None:
     """Validate workspace ownership or fallback to user's default workspace. Returns None if user has no workspaces."""
     if requested:
         result = await db.execute(
@@ -103,7 +105,9 @@ async def _resolve_workspace_id(db, user_id: str, requested: Optional[str]) -> O
         )
         if result.rows:
             return requested
-        logger.warning(f"User {user_id} requested workspace {requested} not owned; falling back to default")
+        logger.warning(
+            f"User {user_id} requested workspace {requested} not owned; falling back to default"
+        )
 
     result = await db.execute(
         "SELECT id FROM workspaces WHERE user_id = ? AND is_default = 1 LIMIT 1",
@@ -124,14 +128,16 @@ async def _process_single_invoice(
     mime_type: str,
     filename: str,
     user_id: str,
-    workspace_id: Optional[str],
+    workspace_id: str | None,
     db,
 ) -> dict:
     """Run OCR + classification + persistence for a single invoice."""
     if not settings.GOOGLE_GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="Servicio OCR no configurado.")
 
-    ocr_service = InvoiceOCRService(api_key=settings.GOOGLE_GEMINI_API_KEY, model=settings.GEMINI_MODEL)
+    ocr_service = InvoiceOCRService(
+        api_key=settings.GOOGLE_GEMINI_API_KEY, model=settings.GEMINI_MODEL
+    )
     try:
         extraction = await ocr_service.extract_from_bytes(file_bytes, mime_type)
     except Exception as exc:
@@ -145,7 +151,9 @@ async def _process_single_invoice(
         db=db,
         model=settings.GEMINI_MODEL,
     )
-    concepto = ", ".join(l.concepto for l in factura.lineas) if factura.lineas else factura.numero_factura
+    concepto = (
+        ", ".join(l.concepto for l in factura.lineas) if factura.lineas else factura.numero_factura
+    )
     try:
         clasificacion = await classifier.classify(
             concepto=concepto,
@@ -170,7 +178,7 @@ async def _process_single_invoice(
 
     invoice_id = str(uuid.uuid4())
     raw_extraction_json = json.dumps(factura.model_dump(), default=str)
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -185,20 +193,35 @@ async def _process_single_invoice(
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
-            invoice_id, user_id, factura.tipo, factura.numero_factura,
-            factura.fecha_factura, factura.fecha_operacion,
-            factura.emisor.nif_cif, factura.emisor.nombre,
-            factura.receptor.nif_cif, factura.receptor.nombre,
-            factura.base_imponible_total, factura.tipo_iva_pct, factura.cuota_iva,
-            factura.tipo_re_pct, factura.cuota_re,
-            factura.retencion_irpf_pct, factura.retencion_irpf,
-            factura.total, clasificacion.cuenta_code, clasificacion.cuenta_nombre,
-            clasificacion.confianza, raw_extraction_json,
-            year, trimestre, now_iso,
+            invoice_id,
+            user_id,
+            factura.tipo,
+            factura.numero_factura,
+            factura.fecha_factura,
+            factura.fecha_operacion,
+            factura.emisor.nif_cif,
+            factura.emisor.nombre,
+            factura.receptor.nif_cif,
+            factura.receptor.nombre,
+            factura.base_imponible_total,
+            factura.tipo_iva_pct,
+            factura.cuota_iva,
+            factura.tipo_re_pct,
+            factura.cuota_re,
+            factura.retencion_irpf_pct,
+            factura.retencion_irpf,
+            factura.total,
+            clasificacion.cuenta_code,
+            clasificacion.cuenta_nombre,
+            clasificacion.confianza,
+            raw_extraction_json,
+            year,
+            trimestre,
+            now_iso,
         ],
     )
 
-    workspace_file_id: Optional[str] = None
+    workspace_file_id: str | None = None
     if workspace_id:
         workspace_file_id = str(uuid.uuid4())
         try:
@@ -210,8 +233,14 @@ async def _process_single_invoice(
                 VALUES (?, ?, ?, 'factura', ?, ?, ?, ?, 'completed', ?)
                 """,
                 [
-                    workspace_file_id, workspace_id, filename, mime_type,
-                    len(file_bytes), concepto, raw_extraction_json, now_iso,
+                    workspace_file_id,
+                    workspace_id,
+                    filename,
+                    mime_type,
+                    len(file_bytes),
+                    concepto,
+                    raw_extraction_json,
+                    now_iso,
                 ],
             )
         except Exception as exc:
@@ -260,7 +289,7 @@ async def _process_single_invoice(
 async def upload_invoice(
     request: Request,
     file: UploadFile = File(...),
-    workspace_id: Optional[str] = Form(None),
+    workspace_id: str | None = Form(None),
     current_user: TokenData = Depends(get_current_user),
     access: SubscriptionAccess = Depends(require_active_subscription),
 ):
@@ -300,7 +329,7 @@ MAX_BATCH_SIZE = 10
 async def upload_invoices_batch(
     request: Request,
     files: list[UploadFile] = File(...),
-    workspace_id: Optional[str] = Form(None),
+    workspace_id: str | None = Form(None),
     current_user: TokenData = Depends(get_current_user),
     access: SubscriptionAccess = Depends(require_active_subscription),
 ):
@@ -348,7 +377,13 @@ async def upload_invoices_batch(
             error_count += 1
         except Exception as exc:
             logger.error(f"Unexpected error processing {filename}", exc_info=exc)
-            results.append({"filename": filename, "success": False, "error": "Error inesperado procesando la factura."})
+            results.append(
+                {
+                    "filename": filename,
+                    "success": False,
+                    "error": "Error inesperado procesando la factura.",
+                }
+            )
             error_count += 1
 
     return {
@@ -364,12 +399,13 @@ async def upload_invoices_batch(
 # GET / — List invoices
 # ---------------------------------------------------------------------------
 
+
 @router.get("")
 async def list_invoices(
     request: Request,
     year: int = Query(default=2026, ge=2000, le=2100),
-    trimestre: Optional[int] = Query(default=None, ge=1, le=4),
-    tipo: Optional[str] = Query(default=None, pattern="^(emitida|recibida)$"),
+    trimestre: int | None = Query(default=None, ge=1, le=4),
+    tipo: str | None = Query(default=None, pattern="^(emitida|recibida)$"),
     current_user: TokenData = Depends(get_current_user),
 ):
     """Lista las facturas del usuario filtradas por año, trimestre y/o tipo."""
@@ -398,6 +434,7 @@ async def list_invoices(
 # ---------------------------------------------------------------------------
 # GET /{invoice_id} — Invoice detail + asiento
 # ---------------------------------------------------------------------------
+
 
 @router.get("/{invoice_id}")
 async def get_invoice(
@@ -436,6 +473,7 @@ async def get_invoice(
 # ---------------------------------------------------------------------------
 # PUT /{invoice_id}/reclassify — Manual reclassification
 # ---------------------------------------------------------------------------
+
 
 @router.put("/{invoice_id}/reclassify")
 async def reclassify_invoice(
@@ -512,6 +550,7 @@ async def reclassify_invoice(
 # ---------------------------------------------------------------------------
 # DELETE /{invoice_id} — Delete invoice + asientos (GDPR cascade)
 # ---------------------------------------------------------------------------
+
 
 @router.delete("/{invoice_id}")
 async def delete_invoice(

@@ -110,7 +110,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ====== Empty State ====== */
@@ -183,7 +185,9 @@
     display: flex;
     align-items: flex-start;
     gap: var(--spacing-3);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07);
     transition: all var(--transition-base);
     cursor: pointer;
     border: 2px solid rgba(255, 255, 255, 0.07);
@@ -191,13 +195,17 @@
 
 .workspace-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.13);
 }
 
 .workspace-card.is-selected {
     border-color: var(--color-primary-light);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 8px 24px rgba(0, 0, 0, 0.3);
+    box-shadow:
+        0 0 0 3px rgba(59, 130, 246, 0.2),
+        0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .workspace-card.is-default {
@@ -321,16 +329,22 @@
     background: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(12px);
     border-radius: var(--radius-xl);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
     min-height: 320px;
     position: relative;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
     border: 2px solid rgba(255, 255, 255, 0.07);
 }
 
 .files-panel--drag-over {
     border-color: var(--color-primary-light);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 4px 16px rgba(0, 0, 0, 0.25);
+    box-shadow:
+        0 0 0 4px rgba(59, 130, 246, 0.15),
+        0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 .files-drag-overlay {
@@ -528,7 +542,9 @@
     padding: var(--spacing-2);
     color: rgba(255, 255, 255, 0.25);
     opacity: 0;
-    transition: opacity var(--transition-fast), color var(--transition-fast);
+    transition:
+        opacity var(--transition-fast),
+        color var(--transition-fast);
     border-radius: var(--radius-md);
 }
 
@@ -565,7 +581,9 @@
     max-width: 480px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     animation: slideUp 0.25s ease;
 }
 
@@ -660,7 +678,10 @@
     font-family: var(--font-family);
     color: var(--color-white);
     background: rgba(255, 255, 255, 0.06);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-fast);
     -webkit-appearance: none;
 }
 
@@ -889,8 +910,12 @@
 /* ====== Animations ====== */
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
@@ -1039,7 +1064,9 @@
     border: none;
     border-bottom: 2px solid transparent;
     cursor: pointer;
-    transition: color 0.2s, border-color 0.2s;
+    transition:
+        color 0.2s,
+        border-color 0.2s;
     margin-bottom: -1px;
 }
 

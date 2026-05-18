@@ -16,8 +16,8 @@ import pytest
 
 from app.security.topic_classifier import (
     FiscalTopicClassifier,
-    TopicContext,
     TopicCheckResult,
+    TopicContext,
     _build_user_message,
     _context_hash,
     _has_fiscal_signal,
@@ -69,9 +69,7 @@ def test_has_fiscal_signal_only_when_meaningful():
     assert _has_fiscal_signal(None) is False
     assert _has_fiscal_signal(TopicContext()) is False
     assert _has_fiscal_signal(TopicContext(workspace_name="RENTA")) is False  # 0 docs
-    assert _has_fiscal_signal(
-        TopicContext(workspace_name="RENTA", workspace_doc_count=3)
-    ) is True
+    assert _has_fiscal_signal(TopicContext(workspace_name="RENTA", workspace_doc_count=3)) is True
     assert _has_fiscal_signal(TopicContext(recent_user_turns=["¿IRPF?"])) is True
 
 
@@ -105,9 +103,7 @@ def test_build_user_message_includes_workspace():
 
 
 def test_build_user_message_includes_recent_turns():
-    ctx = TopicContext(
-        recent_user_turns=["¿Cuánto IRPF pago?", "¿y si tributo conjunto?"]
-    )
+    ctx = TopicContext(recent_user_turns=["¿Cuánto IRPF pago?", "¿y si tributo conjunto?"])
     msg = _build_user_message("y eso cómo se calcula", ctx)
     assert "Cuánto IRPF" in msg
     assert "tributo conjunto" in msg
@@ -157,7 +153,9 @@ def test_check_with_workspace_context_includes_block_in_groq_prompt():
 
 
 def test_check_returns_groq_verdict():
-    classifier = _classifier_with_mock(_mock_groq_response(True, confidence=0.9, reason="es fiscal"))
+    classifier = _classifier_with_mock(
+        _mock_groq_response(True, confidence=0.9, reason="es fiscal")
+    )
     ctx = TopicContext(workspace_name="RENTA 2025", workspace_doc_count=6)
     result = classifier.check("evalua mi declaracion", context=ctx)
     assert result.is_fiscal is True
@@ -176,9 +174,7 @@ def test_check_blocks_when_groq_says_offscope_even_with_context():
 
 def test_check_low_confidence_yes_still_rejects():
     """Sensitivity threshold (0.7) is enforced even with context."""
-    classifier = _classifier_with_mock(
-        _mock_groq_response(True, confidence=0.5, reason="dudoso")
-    )
+    classifier = _classifier_with_mock(_mock_groq_response(True, confidence=0.5, reason="dudoso"))
     ctx = TopicContext(workspace_name="RENTA 2025", workspace_doc_count=6)
     result = classifier.check("revisa esto", context=ctx)
     assert result.is_fiscal is False

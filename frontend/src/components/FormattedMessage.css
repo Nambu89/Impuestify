@@ -196,7 +196,9 @@
     border: 1.5px solid rgba(16, 185, 129, 0.45);
     padding: var(--spacing-4) var(--spacing-5);
     margin: var(--spacing-1) 0 var(--spacing-3);
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.06), 0 2px 8px rgba(16, 185, 129, 0.12);
+    box-shadow:
+        0 0 0 4px rgba(16, 185, 129, 0.06),
+        0 2px 8px rgba(16, 185, 129, 0.12);
     position: relative;
     overflow: hidden;
 }
@@ -256,7 +258,9 @@
     border: 1.5px solid rgba(245, 158, 11, 0.4);
     overflow: hidden;
     margin: var(--spacing-3) 0 var(--spacing-2);
-    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.05), 0 2px 8px rgba(245, 158, 11, 0.1);
+    box-shadow:
+        0 0 0 4px rgba(245, 158, 11, 0.05),
+        0 2px 8px rgba(245, 158, 11, 0.1);
     position: relative;
 }
 

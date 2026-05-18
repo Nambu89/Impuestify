@@ -5,6 +5,7 @@ Validates the 11 new CCAA territorial deductions before DB insertion.
 Does NOT require a live database connection — all tests work against
 the in-memory Python data structures.
 """
+
 import json
 import sys
 from pathlib import Path
@@ -39,12 +40,18 @@ from seed_deductions_territorial_v2 import (
 # ---------------------------------------------------------------------------
 # Constants derived from the seed data
 # ---------------------------------------------------------------------------
-ALL_DEDUCTIONS: list[dict] = [
-    d for deductions in ALL_TERRITORIAL_V2.values() for d in deductions
-]
+ALL_DEDUCTIONS: list[dict] = [d for deductions in ALL_TERRITORIAL_V2.values() for d in deductions]
 
-REQUIRED_FIELDS = ("code", "name", "type", "category", "description",
-                   "legal_reference", "requirements_json", "questions_json")
+REQUIRED_FIELDS = (
+    "code",
+    "name",
+    "type",
+    "category",
+    "description",
+    "legal_reference",
+    "requirements_json",
+    "questions_json",
+)
 
 EXPECTED_MIN_DEDUCTIONS_PER_TERRITORY = 4
 
@@ -67,6 +74,7 @@ EXPECTED_CCAA = {
 # Structural / cardinality tests
 # ===========================================================================
 
+
 class TestCoverage:
     """Tests that verify the expected CCAA and minimum deduction counts."""
 
@@ -79,13 +87,17 @@ class TestCoverage:
     def test_no_unexpected_territories(self):
         """No extra territories should be present (avoids duplicate with v1)."""
         v1_territories = {
-            "Araba", "Bizkaia", "Gipuzkoa", "Navarra",
-            "Madrid", "Catalunia", "Andalucia", "Valencia",
+            "Araba",
+            "Bizkaia",
+            "Gipuzkoa",
+            "Navarra",
+            "Madrid",
+            "Catalunia",
+            "Andalucia",
+            "Valencia",
         }
         unexpected = set(ALL_TERRITORIAL_V2.keys()) & v1_territories
-        assert not unexpected, (
-            f"Territories already in v1 seed found in v2: {unexpected}"
-        )
+        assert not unexpected, f"Territories already in v1 seed found in v2: {unexpected}"
 
     def test_minimum_deductions_per_territory(self):
         """Every CCAA must have at least 4 deductions."""
@@ -109,6 +121,7 @@ class TestCoverage:
 # Uniqueness tests
 # ===========================================================================
 
+
 class TestUniqueness:
     """Tests that verify there are no duplicate entries."""
 
@@ -117,9 +130,7 @@ class TestUniqueness:
         for territory, deductions in ALL_TERRITORIAL_V2.items():
             codes = [d["code"] for d in deductions]
             duplicates = [c for c in codes if codes.count(c) > 1]
-            assert not duplicates, (
-                f"Duplicate codes in {territory}: {list(set(duplicates))}"
-            )
+            assert not duplicates, f"Duplicate codes in {territory}: {list(set(duplicates))}"
 
     def test_no_duplicate_code_territory_pairs(self):
         """The (code, territory) combination must be globally unique."""
@@ -137,23 +148,22 @@ class TestUniqueness:
         """All codes must be globally unique (no code repeated across CCAA)."""
         all_codes = [d["code"] for d in ALL_DEDUCTIONS]
         duplicates = list({c for c in all_codes if all_codes.count(c) > 1})
-        assert not duplicates, (
-            f"Codes appear in multiple CCAA (likely copy-paste error): {duplicates}"
-        )
+        assert (
+            not duplicates
+        ), f"Codes appear in multiple CCAA (likely copy-paste error): {duplicates}"
 
     def test_no_duplicate_names_within_territory(self):
         """Within each territory, deduction names must be unique."""
         for territory, deductions in ALL_TERRITORIAL_V2.items():
             names = [d["name"] for d in deductions]
             duplicates = [n for n in names if names.count(n) > 1]
-            assert not duplicates, (
-                f"Duplicate names in {territory}: {list(set(duplicates))}"
-            )
+            assert not duplicates, f"Duplicate names in {territory}: {list(set(duplicates))}"
 
 
 # ===========================================================================
 # Required fields tests
 # ===========================================================================
+
 
 class TestRequiredFields:
     """Tests that verify all required fields are present and non-empty."""
@@ -171,7 +181,9 @@ class TestRequiredFields:
 
     def test_all_codes_non_empty(self):
         """Codes must be non-empty strings."""
-        bad = [d for d in ALL_DEDUCTIONS if not isinstance(d.get("code"), str) or not d["code"].strip()]
+        bad = [
+            d for d in ALL_DEDUCTIONS if not isinstance(d.get("code"), str) or not d["code"].strip()
+        ]
         assert not bad, f"Deductions with empty/invalid code: {[d.get('name') for d in bad]}"
 
     def test_all_types_are_valid(self):
@@ -188,6 +200,7 @@ class TestRequiredFields:
 # ===========================================================================
 # Category tests
 # ===========================================================================
+
 
 class TestCategories:
     """Tests that verify category values are valid."""
@@ -207,21 +220,19 @@ class TestCategories:
         This guards against accidental category monotony in the data.
         """
         from collections import Counter
+
         counts = Counter(d["category"] for d in ALL_DEDUCTIONS)
         total = len(ALL_DEDUCTIONS)
-        overrepresented = [
-            (cat, count)
-            for cat, count in counts.items()
-            if count / total > 0.60
-        ]
-        assert not overrepresented, (
-            f"Category(ies) account for >60% of all deductions: {overrepresented}"
-        )
+        overrepresented = [(cat, count) for cat, count in counts.items() if count / total > 0.60]
+        assert (
+            not overrepresented
+        ), f"Category(ies) account for >60% of all deductions: {overrepresented}"
 
 
 # ===========================================================================
 # Territory name tests
 # ===========================================================================
+
 
 class TestTerritories:
     """Tests that verify territory names are valid Spanish CCAA names."""
@@ -240,6 +251,7 @@ class TestTerritories:
 # ===========================================================================
 # JSON field tests
 # ===========================================================================
+
 
 class TestJsonFields:
     """Tests that verify JSON fields parse correctly and have the right shape."""
@@ -302,8 +314,7 @@ class TestJsonFields:
                         q_type = q.get("type")
                         if q_type and q_type not in valid_question_types:
                             bad.append(
-                                f"{d['code']} q[{i}] '{q.get('key')}': "
-                                f"unknown type '{q_type}'"
+                                f"{d['code']} q[{i}] '{q.get('key')}': " f"unknown type '{q_type}'"
                             )
                 except json.JSONDecodeError:
                     pass
@@ -314,6 +325,7 @@ class TestJsonFields:
 # Amount / percentage consistency tests
 # ===========================================================================
 
+
 class TestAmounts:
     """Tests that verify financial fields are consistent."""
 
@@ -322,11 +334,13 @@ class TestAmounts:
         bad = [
             d["code"]
             for d in ALL_DEDUCTIONS
-            if not any([
-                d.get("fixed_amount"),
-                d.get("max_amount"),
-                d.get("percentage"),
-            ])
+            if not any(
+                [
+                    d.get("fixed_amount"),
+                    d.get("max_amount"),
+                    d.get("percentage"),
+                ]
+            )
         ]
         assert not bad, (
             f"Deductions with no amount/percentage specified: {bad}. "
@@ -338,8 +352,7 @@ class TestAmounts:
         bad = [
             f"{d['code']}: {d['percentage']}"
             for d in ALL_DEDUCTIONS
-            if d.get("percentage") is not None
-            and not (0 < d["percentage"] <= 100)
+            if d.get("percentage") is not None and not (0 < d["percentage"] <= 100)
         ]
         assert not bad, f"Deductions with percentage out of 0-100 range: {bad}"
 
@@ -366,15 +379,15 @@ class TestAmounts:
 # validate_deductions() function tests
 # ===========================================================================
 
+
 class TestValidateFunction:
     """Tests for the built-in validation helper."""
 
     def test_validate_returns_no_errors_for_valid_data(self):
         """validate_deductions() must return an empty error list for the current data."""
         errors = validate_deductions(dry_run=False)
-        assert errors == [], (
-            f"validate_deductions() found {len(errors)} error(s):\n"
-            + "\n".join(f"  - {e}" for e in errors)
+        assert errors == [], f"validate_deductions() found {len(errors)} error(s):\n" + "\n".join(
+            f"  - {e}" for e in errors
         )
 
     def test_dry_run_does_not_raise(self, capsys):
@@ -401,9 +414,9 @@ class TestValidateFunction:
         ALL_TERRITORIAL_V2["Canarias"] = original + [broken]
         try:
             errors = validate_deductions(dry_run=False)
-            assert any("MISSING code" in e for e in errors), (
-                f"Expected MISSING code error. Got: {errors}"
-            )
+            assert any(
+                "MISSING code" in e for e in errors
+            ), f"Expected MISSING code error. Got: {errors}"
         finally:
             ALL_TERRITORIAL_V2["Canarias"] = original
 
@@ -424,8 +437,8 @@ class TestValidateFunction:
         ALL_TERRITORIAL_V2["Canarias"] = original + [broken]
         try:
             errors = validate_deductions(dry_run=False)
-            assert any("INVALID category" in e for e in errors), (
-                f"Expected INVALID category error. Got: {errors}"
-            )
+            assert any(
+                "INVALID category" in e for e in errors
+            ), f"Expected INVALID category error. Got: {errors}"
         finally:
             ALL_TERRITORIAL_V2["Canarias"] = original

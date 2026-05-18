@@ -1,4 +1,5 @@
 """Tests for Modelo 130 Gipuzkoa (Pago Fraccionado IRPF foral)."""
+
 import pytest
 
 from app.utils.calculators.modelo_130_gipuzkoa import Modelo130GipuzkoaCalculator
@@ -12,6 +13,7 @@ def calc():
 # ===========================================================================
 # Régimen general (rend. neto penúltimo > 0, ≥ 3.er año)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_general_basico(calc):
@@ -69,6 +71,7 @@ async def test_general_rend_negativo_clipa(calc):
 # Régimen excepcional (años 1-2 o rend. penúltimo ≤ 0)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_excepcional_basico(calc):
     """Excepcional: 50.000 operaciones × 1% = 500."""
@@ -109,6 +112,7 @@ async def test_excepcional_retenciones_superan_cuota(calc):
 # ===========================================================================
 # Dispensa por retención (Norma Foral Gipuzkoa)
 # ===========================================================================
+
 
 def test_dispensa_profesional_50pct():
     """Profesional con ≥ 50 % → dispensado."""
@@ -164,6 +168,7 @@ def test_dispensa_empresarial_no_aplica():
 # Plazos (verificados en gipuzkoa.eus 2026-05)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_plazos_los_cuatro_trimestres(calc):
     plazos_esperados = {
@@ -184,6 +189,7 @@ async def test_plazos_los_cuatro_trimestres(calc):
 # ===========================================================================
 # Edge cases / validaciones
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_quarter_invalido_raise(calc):
@@ -254,6 +260,7 @@ async def test_redondeo_dos_decimales(calc):
 # ===========================================================================
 # Wrapper foral tool — routing y dispensa
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_wrapper_routing_gipuzkoa_general():

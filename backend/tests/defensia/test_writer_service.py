@@ -5,6 +5,7 @@ markdown con disclaimer duplicado, preservación de tildes y símbolos
 (autoescape=False), manejo de expedientes sin argumentos y uso de modelos
 Pydantic reales (ExpedienteEstructurado + ArgumentoVerificado).
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -22,10 +23,9 @@ from app.models.defensia import (
 )
 from app.services.defensia_writer_service import (
     DISCLAIMER_CANONICO,
-    DefensiaWriterService,
     UMBRAL_TEAR_ABREVIADA_EUR,
+    DefensiaWriterService,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -103,10 +103,7 @@ def test_seleccionar_plantilla_por_fase_comprobacion_propuesta(writer):
 
 def test_seleccionar_plantilla_por_fase_comprobacion_post_alegaciones(writer):
     expediente = _build_expediente(Fase.COMPROBACION_POST_ALEGACIONES)
-    assert (
-        writer.seleccionar_plantilla(expediente)
-        == "alegaciones_comprobacion_limitada.j2"
-    )
+    assert writer.seleccionar_plantilla(expediente) == "alegaciones_comprobacion_limitada.j2"
 
 
 @pytest.mark.parametrize(
@@ -207,9 +204,7 @@ def test_render_incluye_argumento_cita_verificada(writer):
         Fase.COMPROBACION_PROPUESTA,
         documentos=[_build_documento()],
     )
-    output = writer.render_escrito(
-        expediente, [argumento], fecha_hoy=date(2026, 4, 14)
-    )
+    output = writer.render_escrito(expediente, [argumento], fecha_hoy=date(2026, 4, 14))
     assert cita in output
 
 
@@ -227,9 +222,7 @@ def test_render_preserva_tildes(writer):
         Fase.COMPROBACION_PROPUESTA,
         documentos=[_build_documento()],
     )
-    output = writer.render_escrito(
-        expediente, [argumento], fecha_hoy=date(2026, 4, 14)
-    )
+    output = writer.render_escrito(expediente, [argumento], fecha_hoy=date(2026, 4, 14))
     assert "Motivación" in output
     assert "Administración" in output
 
@@ -246,9 +239,7 @@ def test_render_autoescape_false(writer):
         Fase.COMPROBACION_PROPUESTA,
         documentos=[_build_documento()],
     )
-    output = writer.render_escrito(
-        expediente, [argumento], fecha_hoy=date(2026, 4, 14)
-    )
+    output = writer.render_escrito(expediente, [argumento], fecha_hoy=date(2026, 4, 14))
     # Los caracteres aparecen tal cual, sin ser escapados a entidades HTML.
     assert "2.º" in output
     assert "<" in output
@@ -269,9 +260,7 @@ def test_render_sin_argumentos_no_crashea(writer):
         Fase.COMPROBACION_PROPUESTA,
         documentos=[_build_documento()],
     )
-    output = writer.render_escrito(
-        expediente, argumentos=[], fecha_hoy=date(2026, 4, 14)
-    )
+    output = writer.render_escrito(expediente, argumentos=[], fecha_hoy=date(2026, 4, 14))
     # Estructura mínima: header + suplico + footer.
     assert "# " in output
     assert "Suplico" in output
@@ -331,9 +320,7 @@ def test_writer_usa_modelos_reales(writer):
     assert isinstance(expediente, ExpedienteEstructurado)
     assert isinstance(argumento, ArgumentoVerificado)
 
-    output = writer.render_escrito(
-        expediente, [argumento], fecha_hoy=date(2026, 4, 14)
-    )
+    output = writer.render_escrito(expediente, [argumento], fecha_hoy=date(2026, 4, 14))
     # La plantilla ha resuelto .descripcion, .cita_verificada y
     # .referencia_normativa_canonica del modelo real.
     assert "Falta de motivación" in output

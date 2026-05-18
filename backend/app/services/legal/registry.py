@@ -6,17 +6,17 @@ callers depend on the Protocol.
 
 Thread-safe: singleton via `lru_cache`. Reload via `reset_legal_registry()`.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from app.services.legal.citation_parser import (
     ParsedArticleCitation,
-    ParsedNormCitation,
     parse_article_citation,
     parse_norm_citation,
     split_compound_article_citation,
@@ -46,27 +46,29 @@ class LegalNormsRegistry(Protocol):
     depend on the protocol, not on a concrete impl.
     """
 
-    def is_known_norm(self, normalized_citation: str, as_of: Optional[date] = None) -> bool:
+    def is_known_norm(self, normalized_citation: str, as_of: date | None = None) -> bool:
         """True if the citation refers to a vigent norm in the catalog."""
         ...
 
     def is_known_article(
         self,
         normalized_citation: str,
-        as_of: Optional[date] = None,
+        as_of: date | None = None,
     ) -> bool:
         """True if the citation refers to a vigent canonical article."""
         ...
 
-    def get_norm(self, sigla_or_id: str) -> Optional[LegalNorm]:
+    def get_norm(self, sigla_or_id: str) -> LegalNorm | None:
         """Return the LegalNorm matching by sigla, full_id, or alias."""
         ...
 
-    def get_article(self, law: str, article: str, subarticle: Optional[str] = None) -> Optional[CanonicalArticle]:
+    def get_article(
+        self, law: str, article: str, subarticle: str | None = None
+    ) -> CanonicalArticle | None:
         """Return the canonical article if present."""
         ...
 
-    def get_invoice_template(self, key: str) -> Optional[InvoiceTemplate]:
+    def get_invoice_template(self, key: str) -> InvoiceTemplate | None:
         """Return the invoice template by key."""
         ...
 
@@ -74,7 +76,7 @@ class LegalNormsRegistry(Protocol):
         """Return every template — used to render system prompt section."""
         ...
 
-    def get_url_html(self, norm: LegalNorm) -> Optional[str]:
+    def get_url_html(self, norm: LegalNorm) -> str | None:
         """Resolve the public URL for a norm. Delegates to the configured
         `source_id` plugin via the dispatcher; falls back to
         `url_html_consolidada` cached in the YAML."""
@@ -99,7 +101,7 @@ class YamlLegalNormsRegistry:
         self._norms_by_sigla: dict[str, LegalNorm] = {}
         self._norms_by_alias: dict[str, LegalNorm] = {}
         self._norms_by_type_number_year: dict[tuple[str, int, int], LegalNorm] = {}
-        self._articles_index: dict[tuple[str, str, Optional[str]], CanonicalArticle] = {}
+        self._articles_index: dict[tuple[str, str, str | None], CanonicalArticle] = {}
         self._templates_by_key: dict[str, InvoiceTemplate] = {}
 
         self._build_norm_indexes(norms_catalog)
@@ -107,7 +109,7 @@ class YamlLegalNormsRegistry:
         self._build_template_indexes(templates_catalog)
 
     @classmethod
-    def from_directory(cls, data_dir: Path | None = None) -> "YamlLegalNormsRegistry":
+    def from_directory(cls, data_dir: Path | None = None) -> YamlLegalNormsRegistry:
         """Load all YAMLs from `data_dir` (or default `backend/data/legal/`)."""
         norms, articles, templates = load_all(data_dir)
         return cls(norms, articles, templates)
@@ -136,32 +138,34 @@ class YamlLegalNormsRegistry:
 
     # ── Public lookup ──
 
-    def is_known_norm(self, normalized_citation: str, as_of: Optional[date] = None) -> bool:
+    def is_known_norm(self, normalized_citation: str, as_of: date | None = None) -> bool:
         norm = self._resolve_norm(normalized_citation)
         if norm is None:
             return False
         return norm.is_vigent_on(as_of or date.today())
 
-    def is_known_article(self, normalized_citation: str, as_of: Optional[date] = None) -> bool:
+    def is_known_article(self, normalized_citation: str, as_of: date | None = None) -> bool:
         # Try direct parse first, then compound forms.
         for parsed in _iter_article_candidates(normalized_citation):
             if self._article_is_known(parsed, as_of):
                 return True
         return False
 
-    def get_norm(self, sigla_or_id: str) -> Optional[LegalNorm]:
+    def get_norm(self, sigla_or_id: str) -> LegalNorm | None:
         return self._resolve_norm(sigla_or_id)
 
-    def get_article(self, law: str, article: str, subarticle: Optional[str] = None) -> Optional[CanonicalArticle]:
+    def get_article(
+        self, law: str, article: str, subarticle: str | None = None
+    ) -> CanonicalArticle | None:
         return self._articles_index.get((law.upper(), article, subarticle))
 
-    def get_invoice_template(self, key: str) -> Optional[InvoiceTemplate]:
+    def get_invoice_template(self, key: str) -> InvoiceTemplate | None:
         return self._templates_by_key.get(key)
 
     def all_invoice_templates(self) -> list[InvoiceTemplate]:
         return list(self._templates_by_key.values())
 
-    def get_url_html(self, norm: LegalNorm) -> Optional[str]:
+    def get_url_html(self, norm: LegalNorm) -> str | None:
         """Resolve URL using the dispatcher; cached YAML URL has priority."""
         if norm is None:
             return None
@@ -169,6 +173,7 @@ class YamlLegalNormsRegistry:
         if norm.url_html_consolidada:
             return norm.url_html_consolidada
         from app.services.legal.sources import get_legal_source_dispatcher
+
         dispatcher = get_legal_source_dispatcher()
         source_id = norm.effective_source_id()
         norm_id = norm.effective_source_norm_id()
@@ -178,7 +183,7 @@ class YamlLegalNormsRegistry:
 
     # ── Helpers ──
 
-    def _resolve_norm(self, citation: str) -> Optional[LegalNorm]:
+    def _resolve_norm(self, citation: str) -> LegalNorm | None:
         cleaned = citation.lower().strip()
         if cleaned.upper() in self._norms_by_sigla:
             return self._norms_by_sigla[cleaned.upper()]
@@ -193,7 +198,7 @@ class YamlLegalNormsRegistry:
     def _article_is_known(
         self,
         parsed: ParsedArticleCitation,
-        as_of: Optional[date],
+        as_of: date | None,
     ) -> bool:
         # Try exact subarticle match first, then walk up to broader entries.
         target = as_of or date.today()
@@ -235,7 +240,7 @@ def _normalise_year(year: int) -> int:
 
 
 @lru_cache(maxsize=1)
-def get_legal_registry(data_dir: Optional[str] = None) -> LegalNormsRegistry:
+def get_legal_registry(data_dir: str | None = None) -> LegalNormsRegistry:
     """Return the singleton registry. Lazy-loaded.
 
     On YAML errors logs the problem and returns a degraded empty
@@ -260,13 +265,14 @@ def reset_legal_registry() -> None:
     get_legal_registry.cache_clear()
 
 
-def _empty_registry() -> "YamlLegalNormsRegistry":
+def _empty_registry() -> YamlLegalNormsRegistry:
     """Build an empty registry — used as fallback on YAML errors."""
     from app.services.legal.models import (
         ArticlesCatalog,
         InvoiceTemplatesCatalog,
         NormsCatalog,
     )
+
     return YamlLegalNormsRegistry(
         NormsCatalog(norms=[]),
         ArticlesCatalog(articles=[]),

@@ -50,49 +50,49 @@ export function useNetSalary() {
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const abortRef = useRef<AbortController | null>(null)
 
-    const calculate = useCallback((input: NetSalaryInput) => {
-        if (!input.facturacion_bruta_mensual || input.facturacion_bruta_mensual <= 0) {
-            setResult(null)
-            setError(null)
-            return
-        }
+    const calculate = useCallback(
+        (input: NetSalaryInput) => {
+            if (!input.facturacion_bruta_mensual || input.facturacion_bruta_mensual <= 0) {
+                setResult(null)
+                setError(null)
+                return
+            }
 
-        if (timerRef.current) clearTimeout(timerRef.current)
-        if (abortRef.current) abortRef.current.abort()
+            if (timerRef.current) clearTimeout(timerRef.current)
+            if (abortRef.current) abortRef.current.abort()
 
-        timerRef.current = setTimeout(async () => {
-            setLoading(true)
-            setError(null)
+            timerRef.current = setTimeout(async () => {
+                setLoading(true)
+                setError(null)
 
-            const controller = new AbortController()
-            abortRef.current = controller
+                const controller = new AbortController()
+                abortRef.current = controller
 
-            try {
-                const data = await apiRequest<NetSalaryResult>(
-                    '/api/irpf/net-salary',
-                    {
+                try {
+                    const data = await apiRequest<NetSalaryResult>('/api/irpf/net-salary', {
                         method: 'POST',
                         body: JSON.stringify(input),
                         signal: controller.signal,
+                    })
+                    if (!controller.signal.aborted) {
+                        setResult(data)
+                        if (!data.success) {
+                            setError(data.error || 'Error al calcular el sueldo neto')
+                        }
                     }
-                )
-                if (!controller.signal.aborted) {
-                    setResult(data)
-                    if (!data.success) {
-                        setError(data.error || 'Error al calcular el sueldo neto')
+                } catch (err: any) {
+                    if (err.name !== 'AbortError' && !controller.signal.aborted) {
+                        setError(err.message || 'Error de conexion')
+                    }
+                } finally {
+                    if (!controller.signal.aborted) {
+                        setLoading(false)
                     }
                 }
-            } catch (err: any) {
-                if (err.name !== 'AbortError' && !controller.signal.aborted) {
-                    setError(err.message || 'Error de conexion')
-                }
-            } finally {
-                if (!controller.signal.aborted) {
-                    setLoading(false)
-                }
-            }
-        }, DEBOUNCE_MS)
-    }, [apiRequest])
+            }, DEBOUNCE_MS)
+        },
+        [apiRequest],
+    )
 
     const reset = useCallback(() => {
         if (timerRef.current) clearTimeout(timerRef.current)

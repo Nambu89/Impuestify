@@ -1,6 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FileText, Mail, Lock, Eye, EyeOff, Loader2, Calculator, Map, Shield, AlertCircle, KeyRound, Fingerprint } from 'lucide-react'
+import {
+    FileText,
+    Mail,
+    Lock,
+    Eye,
+    EyeOff,
+    Loader2,
+    Calculator,
+    Map,
+    Shield,
+    AlertCircle,
+    KeyRound,
+    Fingerprint,
+} from 'lucide-react'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../hooks/useAuth'
 import { usePasskeys } from '../hooks/usePasskeys'
@@ -119,7 +132,8 @@ export default function Login() {
                 <h1 className="auth-brand__title">Tu asesor fiscal con IA</h1>
 
                 <p className="auth-brand__subtitle">
-                    El único asistente que cubre los 21 territorios de España con IA y fuentes oficiales.
+                    El único asistente que cubre los 21 territorios de España con IA y fuentes
+                    oficiales.
                 </p>
 
                 <div className="auth-brand__pills">
@@ -148,18 +162,107 @@ export default function Login() {
             {/* Form panel */}
             <div className="auth-form-panel">
                 {mfaStep ? (
-                <div className="auth-card">
-                    <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <KeyRound size={40} style={{ color: 'var(--color-primary)', marginBottom: '0.75rem' }} />
-                        <h2>Verificación en dos pasos</h2>
-                        <p className="auth-card__subtitle">
-                            {useBackupCode
-                                ? 'Introduce uno de tus códigos de respaldo'
-                                : 'Introduce el código de 6 dígitos de tu app de autenticación'}
-                        </p>
-                    </div>
+                    <div className="auth-card">
+                        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                            <KeyRound
+                                size={40}
+                                style={{ color: 'var(--color-primary)', marginBottom: '0.75rem' }}
+                            />
+                            <h2>Verificación en dos pasos</h2>
+                            <p className="auth-card__subtitle">
+                                {useBackupCode
+                                    ? 'Introduce uno de tus códigos de respaldo'
+                                    : 'Introduce el código de 6 dígitos de tu app de autenticación'}
+                            </p>
+                        </div>
 
-                    <form onSubmit={handleMfaSubmit} className="auth-form">
+                        <form onSubmit={handleMfaSubmit} className="auth-form">
+                            {error && (
+                                <div className="auth-message auth-message--error">
+                                    <AlertCircle size={16} />
+                                    {error}
+                                </div>
+                            )}
+
+                            <div className="auth-input-group">
+                                <label htmlFor="mfa-code">
+                                    {useBackupCode ? 'Código de respaldo' : 'Código TOTP'}
+                                </label>
+                                <div className="auth-input-wrapper">
+                                    <span className="auth-input-icon">
+                                        <KeyRound size={18} />
+                                    </span>
+                                    <input
+                                        ref={mfaInputRef}
+                                        type={useBackupCode ? 'text' : 'text'}
+                                        id="mfa-code"
+                                        className="auth-input"
+                                        placeholder={useBackupCode ? 'abc12345' : '000000'}
+                                        value={mfaCode}
+                                        onChange={(e) => {
+                                            const val = useBackupCode
+                                                ? e.target.value
+                                                : e.target.value.replace(/\D/g, '').slice(0, 6)
+                                            setMfaCode(val)
+                                        }}
+                                        required
+                                        autoComplete="one-time-code"
+                                        inputMode={useBackupCode ? 'text' : 'numeric'}
+                                        style={{
+                                            letterSpacing: useBackupCode ? 'normal' : '0.5em',
+                                            fontFamily: 'monospace',
+                                            fontSize: '1.25rem',
+                                            textAlign: 'center',
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="auth-submit-btn"
+                                disabled={isLoading || (!useBackupCode && mfaCode.length < 6)}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 size={18} className="animate-spin" />{' '}
+                                        Verificando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Shield size={18} /> Verificar
+                                    </>
+                                )}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="auth-forgot-link"
+                                style={{
+                                    display: 'block',
+                                    textAlign: 'center',
+                                    marginTop: '0.5rem',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: 'var(--color-primary)',
+                                }}
+                                onClick={() => {
+                                    setUseBackupCode(!useBackupCode)
+                                    setMfaCode('')
+                                }}
+                            >
+                                {useBackupCode
+                                    ? 'Usar código de la app'
+                                    : '¿No tienes la app? Usar código de respaldo'}
+                            </button>
+                        </form>
+                    </div>
+                ) : (
+                    <div className="auth-card">
+                        <h2>Bienvenido de nuevo</h2>
+                        <p className="auth-card__subtitle">Inicia sesión para continuar</p>
+
                         {error && (
                             <div className="auth-message auth-message--error">
                                 <AlertCircle size={16} />
@@ -167,199 +270,155 @@ export default function Login() {
                             </div>
                         )}
 
-                        <div className="auth-input-group">
-                            <label htmlFor="mfa-code">{useBackupCode ? 'Código de respaldo' : 'Código TOTP'}</label>
-                            <div className="auth-input-wrapper">
-                                <span className="auth-input-icon">
-                                    <KeyRound size={18} />
-                                </span>
-                                <input
-                                    ref={mfaInputRef}
-                                    type={useBackupCode ? 'text' : 'text'}
-                                    id="mfa-code"
-                                    className="auth-input"
-                                    placeholder={useBackupCode ? 'abc12345' : '000000'}
-                                    value={mfaCode}
-                                    onChange={(e) => {
-                                        const val = useBackupCode ? e.target.value : e.target.value.replace(/\D/g, '').slice(0, 6)
-                                        setMfaCode(val)
-                                    }}
-                                    required
-                                    autoComplete="one-time-code"
-                                    inputMode={useBackupCode ? 'text' : 'numeric'}
-                                    style={{ letterSpacing: useBackupCode ? 'normal' : '0.5em', fontFamily: 'monospace', fontSize: '1.25rem', textAlign: 'center' }}
-                                />
-                            </div>
-                        </div>
-
-                        <button type="submit" className="auth-submit-btn" disabled={isLoading || (!useBackupCode && mfaCode.length < 6)}>
-                            {isLoading ? (
-                                <><Loader2 size={18} className="animate-spin" /> Verificando...</>
-                            ) : (
-                                <><Shield size={18} /> Verificar</>
-                            )}
-                        </button>
-
-                        <button
-                            type="button"
-                            className="auth-forgot-link"
-                            style={{ display: 'block', textAlign: 'center', marginTop: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)' }}
-                            onClick={() => { setUseBackupCode(!useBackupCode); setMfaCode('') }}
-                        >
-                            {useBackupCode ? 'Usar código de la app' : '¿No tienes la app? Usar código de respaldo'}
-                        </button>
-                    </form>
-                </div>
-                ) : (
-                <div className="auth-card">
-                    <h2>Bienvenido de nuevo</h2>
-                    <p className="auth-card__subtitle">Inicia sesión para continuar</p>
-
-                    {error && (
-                        <div className="auth-message auth-message--error">
-                            <AlertCircle size={16} />
-                            {error}
-                        </div>
-                    )}
-
-                    {GOOGLE_CLIENT_ID && (
-                        <>
-                            <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                <GoogleLogin
-                                    onSuccess={async (response) => {
-                                        if (!response.credential) return
-                                        setError('')
-                                        setIsLoading(true)
-                                        try {
-                                            await googleLogin(response.credential)
-                                            navigate('/chat')
-                                        } catch (err: any) {
-                                            if (err.message === 'MFA_REQUIRED' && err.mfa_token) {
-                                                setMfaStep(true)
-                                                setMfaToken(err.mfa_token)
+                        {GOOGLE_CLIENT_ID && (
+                            <>
+                                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                    <GoogleLogin
+                                        onSuccess={async (response) => {
+                                            if (!response.credential) return
+                                            setError('')
+                                            setIsLoading(true)
+                                            try {
+                                                await googleLogin(response.credential)
+                                                navigate('/chat')
+                                            } catch (err: any) {
+                                                if (
+                                                    err.message === 'MFA_REQUIRED' &&
+                                                    err.mfa_token
+                                                ) {
+                                                    setMfaStep(true)
+                                                    setMfaToken(err.mfa_token)
+                                                    setIsLoading(false)
+                                                    return
+                                                }
+                                                const detail = err?.response?.data?.detail
+                                                setError(
+                                                    detail ||
+                                                        'Error con Google. Inténtalo de nuevo.',
+                                                )
+                                            } finally {
                                                 setIsLoading(false)
-                                                return
                                             }
-                                            const detail = err?.response?.data?.detail
-                                            setError(detail || 'Error con Google. Inténtalo de nuevo.')
-                                        } finally {
-                                            setIsLoading(false)
+                                        }}
+                                        onError={() => setError('Error al conectar con Google.')}
+                                        text="continue_with"
+                                        shape="rectangular"
+                                        width="320"
+                                        locale="es"
+                                    />
+                                </div>
+                                <div className="auth-divider">
+                                    <span>o</span>
+                                </div>
+                            </>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="auth-form">
+                            <div className="auth-input-group">
+                                <label htmlFor="email">Email</label>
+                                <div className="auth-input-wrapper">
+                                    <span className="auth-input-icon">
+                                        <Mail size={18} />
+                                    </span>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        className="auth-input"
+                                        placeholder="tu@email.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        autoComplete="email"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="auth-input-group">
+                                <label htmlFor="password">Contraseña</label>
+                                <div className="auth-input-wrapper">
+                                    <span className="auth-input-icon">
+                                        <Lock size={18} />
+                                    </span>
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        id="password"
+                                        className="auth-input auth-input--with-toggle"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        autoComplete="current-password"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="auth-input-toggle"
+                                        onClick={() => setShowPassword((v) => !v)}
+                                        aria-label={
+                                            showPassword
+                                                ? 'Ocultar contraseña'
+                                                : 'Mostrar contraseña'
                                         }
-                                    }}
-                                    onError={() => setError('Error al conectar con Google.')}
-                                    text="continue_with"
-                                    shape="rectangular"
-                                    width="320"
-                                    locale="es"
-                                />
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
-                            <div className="auth-divider"><span>o</span></div>
-                        </>
-                    )}
 
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        <div className="auth-input-group">
-                            <label htmlFor="email">Email</label>
-                            <div className="auth-input-wrapper">
-                                <span className="auth-input-icon">
-                                    <Mail size={18} />
-                                </span>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    className="auth-input"
-                                    placeholder="tu@email.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    autoComplete="email"
-                                />
-                            </div>
-                        </div>
+                            <Link to="/forgot-password" className="auth-forgot-link">
+                                ¿Olvidaste tu contraseña?
+                            </Link>
 
-                        <div className="auth-input-group">
-                            <label htmlFor="password">Contraseña</label>
-                            <div className="auth-input-wrapper">
-                                <span className="auth-input-icon">
-                                    <Lock size={18} />
-                                </span>
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    id="password"
-                                    className="auth-input auth-input--with-toggle"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    autoComplete="current-password"
-                                />
-                                <button
-                                    type="button"
-                                    className="auth-input-toggle"
-                                    onClick={() => setShowPassword((v) => !v)}
-                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                        </div>
+                            <TurnstileWidget
+                                onVerify={(token) => setTurnstileToken(token)}
+                                onExpire={() => setTurnstileToken('')}
+                                onError={() => setTurnstileToken('')}
+                            />
 
-                        <Link to="/forgot-password" className="auth-forgot-link">
-                            ¿Olvidaste tu contraseña?
-                        </Link>
+                            <button type="submit" className="auth-submit-btn" disabled={isLoading}>
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 size={18} className="animate-spin" />
+                                        Iniciando sesión...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Shield size={18} />
+                                        Iniciar Sesión
+                                    </>
+                                )}
+                            </button>
+                        </form>
 
-                        <TurnstileWidget
-                            onVerify={(token) => setTurnstileToken(token)}
-                            onExpire={() => setTurnstileToken('')}
-                            onError={() => setTurnstileToken('')}
-                        />
+                        {passkeysSupported && (
+                            <button
+                                type="button"
+                                className="auth-passkey-btn"
+                                onClick={handlePasskeyLogin}
+                                disabled={passkeys.loading || !email}
+                                title={
+                                    !email
+                                        ? 'Introduce tu email primero'
+                                        : 'Iniciar con passkey (más seguro)'
+                                }
+                            >
+                                {passkeys.loading ? (
+                                    <>
+                                        <Loader2 size={18} className="animate-spin" />
+                                        Verificando passkey...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Fingerprint size={18} />
+                                        Iniciar con passkey
+                                    </>
+                                )}
+                            </button>
+                        )}
 
-                        <button
-                            type="submit"
-                            className="auth-submit-btn"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 size={18} className="animate-spin" />
-                                    Iniciando sesión...
-                                </>
-                            ) : (
-                                <>
-                                    <Shield size={18} />
-                                    Iniciar Sesión
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    {passkeysSupported && (
-                        <button
-                            type="button"
-                            className="auth-passkey-btn"
-                            onClick={handlePasskeyLogin}
-                            disabled={passkeys.loading || !email}
-                            title={!email ? 'Introduce tu email primero' : 'Iniciar con passkey (más seguro)'}
-                        >
-                            {passkeys.loading ? (
-                                <>
-                                    <Loader2 size={18} className="animate-spin" />
-                                    Verificando passkey...
-                                </>
-                            ) : (
-                                <>
-                                    <Fingerprint size={18} />
-                                    Iniciar con passkey
-                                </>
-                            )}
-                        </button>
-                    )}
-
-                    <p className="auth-switch-link">
-                        ¿No tienes cuenta?{' '}
-                        <Link to="/register">Crear cuenta</Link>
-                    </p>
-                </div>
+                        <p className="auth-switch-link">
+                            ¿No tienes cuenta? <Link to="/register">Crear cuenta</Link>
+                        </p>
+                    </div>
                 )}
             </div>
         </div>

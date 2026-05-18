@@ -2,8 +2,20 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
 import {
-    ArrowRight, CheckCircle, X, Video, ChevronLeft, Zap,
-    FileText, Globe, Calculator, Bell, Shield, ChevronDown, Map, MapPin
+    ArrowRight,
+    CheckCircle,
+    X,
+    Video,
+    ChevronLeft,
+    Zap,
+    FileText,
+    Globe,
+    Calculator,
+    Bell,
+    Shield,
+    ChevronDown,
+    Map,
+    MapPin,
 } from 'lucide-react'
 import FadeContent from '../components/reactbits/FadeContent'
 import SpotlightCard from '../components/reactbits/SpotlightCard'
@@ -129,9 +141,11 @@ export default function CreatorsPage() {
 
     useSEO({
         title: 'Fiscalidad para creadores de contenido — Impuestify',
-        description: 'Guía fiscal para creadores en España: IVA según plataforma (YouTube, Twitch, TikTok, Patreon), Modelo 349, reporte DAC7 y alta CNAE 60.39.',
+        description:
+            'Guía fiscal para creadores en España: IVA según plataforma (YouTube, Twitch, TikTok, Patreon), Modelo 349, reporte DAC7 y alta CNAE 60.39.',
         canonical: '/creadores-de-contenido',
-        keywords: 'impuestos creadores contenido, YouTubers impuestos, TikTok fiscal, streamers IVA, influencer autónomo',
+        keywords:
+            'impuestos creadores contenido, YouTubers impuestos, TikTok fiscal, streamers IVA, influencer autónomo',
         schema: [
             {
                 '@context': 'https://schema.org',
@@ -141,17 +155,31 @@ export default function CreatorsPage() {
                 applicationCategory: 'FinanceApplication',
                 operatingSystem: 'Web',
                 offers: { '@type': 'Offer', price: '49', priceCurrency: 'EUR' },
-                author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' }
+                author: {
+                    '@type': 'Organization',
+                    name: 'Impuestify',
+                    url: 'https://impuestify.com',
+                },
             },
             {
                 '@context': 'https://schema.org',
                 '@type': 'BreadcrumbList',
                 itemListElement: [
-                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
-                    { '@type': 'ListItem', position: 2, name: 'Creadores de Contenido', item: 'https://impuestify.com/creadores-de-contenido' }
-                ]
-            }
-        ]
+                    {
+                        '@type': 'ListItem',
+                        position: 1,
+                        name: 'Inicio',
+                        item: 'https://impuestify.com',
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: 'Creadores de Contenido',
+                        item: 'https://impuestify.com/creadores-de-contenido',
+                    },
+                ],
+            },
+        ],
     })
 
     return (
@@ -189,19 +217,22 @@ export default function CreatorsPage() {
                                 className="creators-hero__gradient"
                             >
                                 creadores de contenido
-                            </GradientText>
-                            {' '}en España
+                            </GradientText>{' '}
+                            en España
                         </h1>
                         <p className="creators-hero__subtitle">
                             Asistente fiscal con IA pensado para{' '}
-                            <strong>YouTube, TikTok, Twitch e Instagram</strong>.
-                            IRPF, IVA por plataforma, IAE para influencers y DAC7.
-                            Cubre los 21 territorios: régimen común, foral y Canarias.
+                            <strong>YouTube, TikTok, Twitch e Instagram</strong>. IRPF, IVA por
+                            plataforma, IAE para influencers y DAC7. Cubre los 21 territorios:
+                            régimen común, foral y Canarias.
                         </p>
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
                         <div className="creators-hero__actions">
-                            <Link to="/subscribe?highlight=creator" className="btn btn-primary btn-lg">
+                            <Link
+                                to="/subscribe?highlight=creator"
+                                className="btn btn-primary btn-lg"
+                            >
                                 Empieza por 49 EUR/mes
                                 <ArrowRight size={20} />
                             </Link>
@@ -225,9 +256,10 @@ export default function CreatorsPage() {
                                 <div>
                                     <h3>Hacienda ya sabe cuánto ganas</h3>
                                     <p>
-                                        Desde 2023, la directiva DAC7 obliga a YouTube, TikTok y Twitch a pasarle
-                                        tus ingresos a la AEAT mediante el <strong>Modelo 238</strong>. No declararlos
-                                        supone sanciones del 50-150% del importe omitido.
+                                        Desde 2023, la directiva DAC7 obliga a YouTube, TikTok y
+                                        Twitch a pasarle tus ingresos a la AEAT mediante el{' '}
+                                        <strong>Modelo 238</strong>. No declararlos supone sanciones
+                                        del 50-150% del importe omitido.
                                     </p>
                                 </div>
                             </div>
@@ -238,9 +270,11 @@ export default function CreatorsPage() {
                                 <div>
                                     <h3>En el punto de mira del Plan Tributario AEAT 2026</h3>
                                     <p>
-                                        El Plan Anual de Control Tributario 2026 de la AEAT cita de forma
-                                        expresa a los <strong>creadores de contenido digital</strong> por el
-                                        desfase entre lo que declaran y lo que reportan las plataformas.
+                                        El Plan Anual de Control Tributario 2026 de la AEAT cita de
+                                        forma expresa a los{' '}
+                                        <strong>creadores de contenido digital</strong> por el
+                                        desfase entre lo que declaran y lo que reportan las
+                                        plataformas.
                                     </p>
                                 </div>
                             </div>
@@ -251,9 +285,10 @@ export default function CreatorsPage() {
                                 <div>
                                     <h3>Un IAE mal puesto te puede costar caro</h3>
                                     <p>
-                                        La consulta DGT <strong>V0773-22</strong> aclara el régimen fiscal de los
-                                        creadores. Un epígrafe equivocado puede tumbarte deducciones y abrirte una
-                                        inspección. Impuestify elige el que te toca según tu caso.
+                                        La consulta DGT <strong>V0773-22</strong> aclara el régimen
+                                        fiscal de los creadores. Un epígrafe equivocado puede
+                                        tumbarte deducciones y abrirte una inspección. Impuestify
+                                        elige el que te toca según tu caso.
                                     </p>
                                 </div>
                             </div>
@@ -268,7 +303,8 @@ export default function CreatorsPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Qué incluye el Plan Creator</h2>
                         <p className="section-subtitle">
-                            49 EUR/mes. IVA por plataforma, IAE para influencers, Modelo 349 y DAC7. Lo que hace falta para declarar bien como creador digital.
+                            49 EUR/mes. IVA por plataforma, IAE para influencers, Modelo 349 y DAC7.
+                            Lo que hace falta para declarar bien como creador digital.
                         </p>
                     </FadeContent>
                     <div className="creators-features__grid">
@@ -299,7 +335,8 @@ export default function CreatorsPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Comparativa de opciones</h2>
                         <p className="section-subtitle">
-                            Lo que pagas y lo que recibes frente a una gestoría tradicional y a OnlyTax
+                            Lo que pagas y lo que recibes frente a una gestoría tradicional y a
+                            OnlyTax
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -311,7 +348,10 @@ export default function CreatorsPage() {
                                         <th>Gestoría tradicional</th>
                                         <th>OnlyTax</th>
                                         <th className="creators-comparison__th--highlight">
-                                            <Zap size={14} className="creators-comparison__th-icon" />
+                                            <Zap
+                                                size={14}
+                                                className="creators-comparison__th-icon"
+                                            />
                                             Impuestify Creator
                                         </th>
                                     </tr>
@@ -320,40 +360,70 @@ export default function CreatorsPage() {
                                     {COMPARISON_ROWS.map((row) => (
                                         <tr
                                             key={row.feature}
-                                            className={row.highlight ? 'creators-comparison__row--price' : ''}
+                                            className={
+                                                row.highlight
+                                                    ? 'creators-comparison__row--price'
+                                                    : ''
+                                            }
                                         >
-                                            <td className="creators-comparison__feature">{row.feature}</td>
+                                            <td className="creators-comparison__feature">
+                                                {row.feature}
+                                            </td>
                                             <td>
                                                 {typeof row.gestoria === 'boolean' ? (
                                                     row.gestoria ? (
-                                                        <CheckCircle size={18} className="creators-comparison__icon-yes" />
+                                                        <CheckCircle
+                                                            size={18}
+                                                            className="creators-comparison__icon-yes"
+                                                        />
                                                     ) : (
-                                                        <X size={18} className="creators-comparison__icon-no" />
+                                                        <X
+                                                            size={18}
+                                                            className="creators-comparison__icon-no"
+                                                        />
                                                     )
                                                 ) : (
-                                                    <span className="creators-comparison__text">{row.gestoria}</span>
+                                                    <span className="creators-comparison__text">
+                                                        {row.gestoria}
+                                                    </span>
                                                 )}
                                             </td>
                                             <td>
                                                 {typeof row.onlytax === 'boolean' ? (
                                                     row.onlytax ? (
-                                                        <CheckCircle size={18} className="creators-comparison__icon-yes" />
+                                                        <CheckCircle
+                                                            size={18}
+                                                            className="creators-comparison__icon-yes"
+                                                        />
                                                     ) : (
-                                                        <X size={18} className="creators-comparison__icon-no" />
+                                                        <X
+                                                            size={18}
+                                                            className="creators-comparison__icon-no"
+                                                        />
                                                     )
                                                 ) : (
-                                                    <span className="creators-comparison__text">{row.onlytax}</span>
+                                                    <span className="creators-comparison__text">
+                                                        {row.onlytax}
+                                                    </span>
                                                 )}
                                             </td>
                                             <td className="creators-comparison__td--highlight">
                                                 {typeof row.impuestify === 'boolean' ? (
                                                     row.impuestify ? (
-                                                        <CheckCircle size={18} className="creators-comparison__icon-yes" />
+                                                        <CheckCircle
+                                                            size={18}
+                                                            className="creators-comparison__icon-yes"
+                                                        />
                                                     ) : (
-                                                        <X size={18} className="creators-comparison__icon-no" />
+                                                        <X
+                                                            size={18}
+                                                            className="creators-comparison__icon-no"
+                                                        />
                                                     )
                                                 ) : (
-                                                    <span className="creators-comparison__text creators-comparison__text--highlight">{row.impuestify}</span>
+                                                    <span className="creators-comparison__text creators-comparison__text--highlight">
+                                                        {row.impuestify}
+                                                    </span>
                                                 )}
                                             </td>
                                         </tr>
@@ -362,7 +432,8 @@ export default function CreatorsPage() {
                             </table>
                         </div>
                         <p className="creators-comparison__note">
-                            Precios de competidores a marzo de 2026. Impuestify no tiene permanencia: cancelas cuando quieras.
+                            Precios de competidores a marzo de 2026. Impuestify no tiene
+                            permanencia: cancelas cuando quieras.
                         </p>
                     </FadeContent>
                 </div>
@@ -418,7 +489,10 @@ export default function CreatorsPage() {
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
                         <div className="creators-territories__grid">
-                            <Link to="/canarias" className="creators-territories__card creators-territories__card--canarias">
+                            <Link
+                                to="/canarias"
+                                className="creators-territories__card creators-territories__card--canarias"
+                            >
                                 <div className="creators-territories__card-header">
                                     <Globe size={20} />
                                     <span className="creators-territories__badge">IGIC 7%</span>
@@ -435,7 +509,10 @@ export default function CreatorsPage() {
                                 </span>
                             </Link>
 
-                            <Link to="/ceuta-melilla" className="creators-territories__card creators-territories__card--ceuta">
+                            <Link
+                                to="/ceuta-melilla"
+                                className="creators-territories__card creators-territories__card--ceuta"
+                            >
                                 <div className="creators-territories__card-header">
                                     <MapPin size={20} />
                                     <span className="creators-territories__badge">IPSI 4%</span>
@@ -452,16 +529,26 @@ export default function CreatorsPage() {
                                 </span>
                             </Link>
 
-                            <Link to="/territorios-forales" className="creators-territories__card creators-territories__card--foral">
+                            <Link
+                                to="/territorios-forales"
+                                className="creators-territories__card creators-territories__card--foral"
+                            >
                                 <div className="creators-territories__card-header">
                                     <Map size={20} />
-                                    <span className="creators-territories__badge">Régimen foral</span>
+                                    <span className="creators-territories__badge">
+                                        Régimen foral
+                                    </span>
                                 </div>
                                 <h3>País Vasco y Navarra</h3>
                                 <ul className="creators-territories__list">
-                                    <li>IRPF influencer en Madrid vs País Vasco: hasta 5 puntos menos</li>
+                                    <li>
+                                        IRPF influencer en Madrid vs País Vasco: hasta 5 puntos
+                                        menos
+                                    </li>
                                     <li>7 tramos en País Vasco frente a 6 en régimen común</li>
-                                    <li>Deducciones propias que no existen en el resto del Estado</li>
+                                    <li>
+                                        Deducciones propias que no existen en el resto del Estado
+                                    </li>
                                     <li>Gestión directa con la Hacienda Foral</li>
                                 </ul>
                                 <span className="creators-territories__link">
@@ -472,14 +559,19 @@ export default function CreatorsPage() {
                             <div className="creators-territories__card creators-territories__card--madrid">
                                 <div className="creators-territories__card-header">
                                     <MapPin size={20} />
-                                    <span className="creators-territories__badge">Deflactación</span>
+                                    <span className="creators-territories__badge">
+                                        Deflactación
+                                    </span>
                                 </div>
                                 <h3>Madrid</h3>
                                 <ul className="creators-territories__list">
                                     <li>Deflactación de la tarifa autonómica del IRPF</li>
                                     <li>Bonificación del 100% en sucesiones y donaciones</li>
                                     <li>Deducción por alquiler de vivienda habitual</li>
-                                    <li>Concentra buena parte de los creadores con fiscalidad atractiva</li>
+                                    <li>
+                                        Concentra buena parte de los creadores con fiscalidad
+                                        atractiva
+                                    </li>
                                 </ul>
                                 <span className="creators-territories__link creators-territories__link--disabled">
                                     Pregunta tu caso al asistente
@@ -495,11 +587,17 @@ export default function CreatorsPage() {
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
                         <div className="creators-internal-links__grid">
-                            <Link to="/territorios-forales" className="creators-internal-links__card">
+                            <Link
+                                to="/territorios-forales"
+                                className="creators-internal-links__card"
+                            >
                                 <Map size={20} />
                                 <div>
                                     <strong>País Vasco y Navarra</strong>
-                                    <span>Régimen foral: deducciones que no existen en el régimen común</span>
+                                    <span>
+                                        Régimen foral: deducciones que no existen en el régimen
+                                        común
+                                    </span>
                                 </div>
                                 <ArrowRight size={16} />
                             </Link>
@@ -507,7 +605,10 @@ export default function CreatorsPage() {
                                 <Globe size={20} />
                                 <div>
                                     <strong>Canarias — IGIC</strong>
-                                    <span>Impuesto General Indirecto Canario: cómo facturar desde las islas</span>
+                                    <span>
+                                        Impuesto General Indirecto Canario: cómo facturar desde las
+                                        islas
+                                    </span>
                                 </div>
                                 <ArrowRight size={16} />
                             </Link>
@@ -534,10 +635,13 @@ export default function CreatorsPage() {
                             </div>
                             <h2>Empieza a declarar bien por 49 EUR/mes</h2>
                             <p>
-                                Sin permanencia ni letra pequeña. Un asistente fiscal que conoce
-                                tu trabajo como creador digital y habla tu idioma.
+                                Sin permanencia ni letra pequeña. Un asistente fiscal que conoce tu
+                                trabajo como creador digital y habla tu idioma.
                             </p>
-                            <Link to="/subscribe?highlight=creator" className="btn btn-primary btn-lg">
+                            <Link
+                                to="/subscribe?highlight=creator"
+                                className="btn btn-primary btn-lg"
+                            >
                                 Empieza por 49 EUR/mes
                                 <ArrowRight size={20} />
                             </Link>

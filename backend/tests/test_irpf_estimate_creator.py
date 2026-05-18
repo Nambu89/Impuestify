@@ -12,9 +12,10 @@ Tests cover:
 
 All tests mock IRPFSimulator so no live Turso/DB connection is required.
 """
+
 import asyncio
-import sys
 import os
+import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -26,10 +27,10 @@ sys.path.insert(0, str(backend_dir))
 
 from app.routers.irpf_estimate import IRPFEstimateRequest, IRPFEstimateResponse
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_simulator_result(**overrides) -> dict:
     """Build a minimal simulator result dict."""
@@ -80,12 +81,14 @@ async def _call_endpoint(body: IRPFEstimateRequest) -> IRPFEstimateResponse:
     mock_simulate = AsyncMock(return_value=_make_simulator_result())
 
     mock_deduction_service = MagicMock()
-    mock_deduction_service.evaluate_eligibility = AsyncMock(return_value={
-        "eligible": [],
-        "maybe_eligible": [],
-        "estimated_savings": 0,
-        "total_deductions": 0,
-    })
+    mock_deduction_service.evaluate_eligibility = AsyncMock(
+        return_value={
+            "eligible": [],
+            "maybe_eligible": [],
+            "estimated_savings": 0,
+            "total_deductions": 0,
+        }
+    )
     mock_deduction_service.get_missing_questions = AsyncMock(return_value=[])
     mock_deduction_service.compute_ccaa_deduction_amounts = MagicMock(return_value=[])
 
@@ -99,10 +102,11 @@ async def _call_endpoint(body: IRPFEstimateRequest) -> IRPFEstimateResponse:
     mock_request = MagicMock()  # starlette Request (only needed for rate limiter)
 
     # Build a real Starlette Request so slowapi is satisfied
-    from starlette.testclient import TestClient
-    from starlette.requests import Request as StarletteRequest
-    from starlette.datastructures import Headers
     from io import BytesIO
+
+    from starlette.datastructures import Headers
+    from starlette.requests import Request as StarletteRequest
+    from starlette.testclient import TestClient
 
     scope = {
         "type": "http",
@@ -118,9 +122,14 @@ async def _call_endpoint(body: IRPFEstimateRequest) -> IRPFEstimateResponse:
 
     with (
         patch("app.utils.irpf_simulator.IRPFSimulator") as MockSimClass,
-        patch("app.database.turso_client.get_db_client", new_callable=AsyncMock, return_value=mock_db),
+        patch(
+            "app.database.turso_client.get_db_client", new_callable=AsyncMock, return_value=mock_db
+        ),
         patch("app.utils.ccaa_constants.normalize_ccaa", side_effect=lambda x: x),
-        patch("app.services.deduction_service.get_deduction_service", return_value=mock_deduction_service),
+        patch(
+            "app.services.deduction_service.get_deduction_service",
+            return_value=mock_deduction_service,
+        ),
         patch("app.services.deduction_service.DeductionService") as MockDeductionServiceClass,
         # Bypass slowapi rate-limit check — not what we're testing here
         patch("app.security.rate_limiter.limiter._check_request_limit", new_callable=AsyncMock),
@@ -130,6 +139,7 @@ async def _call_endpoint(body: IRPFEstimateRequest) -> IRPFEstimateResponse:
 
         # Inject a dummy current_user — bypass Depends() by calling the function directly
         from app.auth.jwt_handler import TokenData
+
         dummy_user = TokenData(user_id="test-user", email="test@test.com")
 
         response = await estimate_irpf(
@@ -144,6 +154,7 @@ async def _call_endpoint(body: IRPFEstimateRequest) -> IRPFEstimateResponse:
 # ---------------------------------------------------------------------------
 # T1: platform income sums correctly into ingresos_actividad
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_creator_plataformas_sum():
@@ -160,6 +171,7 @@ async def test_creator_plataformas_sum():
 # ---------------------------------------------------------------------------
 # T2: granular expenses sum into gastos_actividad
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_creator_gastos_sum():
@@ -182,6 +194,7 @@ async def test_creator_gastos_sum():
 # T3: withholding tax adds on top of retenciones_actividad
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_creator_withholding_tax():
     """withholding_tax_pagado is added to retenciones_actividad."""
@@ -198,6 +211,7 @@ async def test_creator_withholding_tax():
 # ---------------------------------------------------------------------------
 # T4: intracomunitarios > 0 → modelo_349_requerido = True
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_creator_modelo_349_required():
@@ -216,6 +230,7 @@ async def test_creator_modelo_349_required():
 # T5: no intracomunitarios → modelo_349_requerido = False
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_creator_modelo_349_not_required():
     """No intracomunitario income → modelo_349_requerido False."""
@@ -233,6 +248,7 @@ async def test_creator_modelo_349_not_required():
 # T6: epigrafe_iae passthrough into response
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_creator_iae_passthrough():
     """epigrafe_iae is returned as iae_seleccionado in the response."""
@@ -248,6 +264,7 @@ async def test_creator_iae_passthrough():
 # ---------------------------------------------------------------------------
 # T7: empty plataformas_ingresos dict does not crash
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_creator_empty_platforms():
@@ -266,6 +283,7 @@ async def test_creator_empty_platforms():
 # ---------------------------------------------------------------------------
 # T8: backward compatibility — no creator fields → same as before
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_creator_backward_compat():
@@ -292,6 +310,7 @@ async def test_creator_backward_compat():
 # T9: mixed income — trabajo + creator plataformas
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_creator_mixed_income():
     """Work income + platform income coexist without interference."""
@@ -310,6 +329,7 @@ async def test_creator_mixed_income():
 # ---------------------------------------------------------------------------
 # T10: full YouTuber scenario — 30k YouTube + 10k sponsors + gastos + withholding
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_creator_full_scenario():
@@ -355,6 +375,7 @@ async def test_creator_full_scenario():
 # T11: negative values in plataformas are ignored (only > 0 counts)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_creator_negative_values():
     """Negative platform values are excluded from the income sum."""
@@ -371,6 +392,7 @@ async def test_creator_negative_values():
 # ---------------------------------------------------------------------------
 # T12: non-numeric values in plataformas are ignored
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_creator_invalid_platform_values():

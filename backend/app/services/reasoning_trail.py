@@ -17,8 +17,8 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,61 +33,74 @@ class ReasoningTrailRecorder:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
     @staticmethod
-    def _summarize_chunks(chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _summarize_chunks(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Compact chunk metadata to keep DB rows small (no full text)."""
         out = []
         for c in chunks or []:
-            out.append({
-                "id": c.get("id"),
-                "source": c.get("title") or c.get("source"),
-                "page": c.get("page"),
-                "trust_level": c.get("trust_level"),
-                "similarity": round(c.get("similarity", 0) or 0, 4),
-            })
+            out.append(
+                {
+                    "id": c.get("id"),
+                    "source": c.get("title") or c.get("source"),
+                    "page": c.get("page"),
+                    "trust_level": c.get("trust_level"),
+                    "similarity": round(c.get("similarity", 0) or 0, 4),
+                }
+            )
         return out
 
     @staticmethod
-    def _summarize_tools(tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _summarize_tools(tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
         out = []
         for t in tool_calls or []:
-            out.append({
-                "name": t.get("name") or t.get("tool"),
-                "args_keys": sorted(list((t.get("arguments") or t.get("args") or {}).keys())),
-                "ok": t.get("ok", True),
-            })
+            out.append(
+                {
+                    "name": t.get("name") or t.get("tool"),
+                    "args_keys": sorted(list((t.get("arguments") or t.get("args") or {}).keys())),
+                    "ok": t.get("ok", True),
+                }
+            )
         return out
 
     async def record(
         self,
         message_id: str,
         user_id: str,
-        conversation_id: Optional[str],
-        rag_chunks: Optional[List[Dict[str, Any]]] = None,
-        tools_called: Optional[List[Dict[str, Any]]] = None,
-        security_layer: Optional[str] = None,
-        fiscal_profile: Optional[Dict[str, Any]] = None,
-        model: Optional[str] = None,
-    ) -> Optional[str]:
+        conversation_id: str | None,
+        rag_chunks: list[dict[str, Any]] | None = None,
+        tools_called: list[dict[str, Any]] | None = None,
+        security_layer: str | None = None,
+        fiscal_profile: dict[str, Any] | None = None,
+        model: str | None = None,
+    ) -> str | None:
         """Insert a reasoning trail row. Returns the row id, or None on failure."""
         try:
             db = await self._get_db()
             trail_id = str(uuid.uuid4())
 
             # Defensive: anything we don't recognize gets serialized as best-effort
-            chunks_json = json.dumps(self._summarize_chunks(rag_chunks or []), default=str, ensure_ascii=False)
-            tools_json = json.dumps(self._summarize_tools(tools_called or []), default=str, ensure_ascii=False)
+            chunks_json = json.dumps(
+                self._summarize_chunks(rag_chunks or []), default=str, ensure_ascii=False
+            )
+            tools_json = json.dumps(
+                self._summarize_tools(tools_called or []), default=str, ensure_ascii=False
+            )
             sec_json = json.dumps({"layer": security_layer or "all_clear"}, ensure_ascii=False)
 
             # Fiscal profile snapshot — only safe keys, no full object dump
             safe_profile = {}
             if fiscal_profile:
                 safe_keys = (
-                    "ccaa_residencia", "situacion_laboral", "tipo_actividad",
-                    "regimen_estimacion", "edad_contribuyente", "tributacion_conjunta",
+                    "ccaa_residencia",
+                    "situacion_laboral",
+                    "tipo_actividad",
+                    "regimen_estimacion",
+                    "edad_contribuyente",
+                    "tributacion_conjunta",
                     "roles_adicionales",
                 )
                 for k in safe_keys:
@@ -104,10 +117,16 @@ class ReasoningTrailRecorder:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
-                    trail_id, message_id, user_id, conversation_id,
-                    chunks_json, tools_json, sec_json,
-                    profile_json, model or "gpt-5-mini",
-                    datetime.now(timezone.utc).isoformat(),
+                    trail_id,
+                    message_id,
+                    user_id,
+                    conversation_id,
+                    chunks_json,
+                    tools_json,
+                    sec_json,
+                    profile_json,
+                    model or "gpt-5-mini",
+                    datetime.now(UTC).isoformat(),
                 ],
             )
             return trail_id
@@ -115,7 +134,7 @@ class ReasoningTrailRecorder:
             logger.warning(f"reasoning_trail.record failed (non-blocking): {e}")
             return None
 
-    async def get_for_message(self, message_id: str) -> Optional[Dict[str, Any]]:
+    async def get_for_message(self, message_id: str) -> dict[str, Any] | None:
         """Fetch the trail row for a given message (for /api/admin or right-to-explain)."""
         db = await self._get_db()
         result = await db.execute(

@@ -13,10 +13,11 @@ Usage:
     projector = IRPFProjector(db)
     result = await projector.project(user_id="...", year=2025)
 """
+
 import json
-import uuid
 import logging
-from typing import Any, Dict, List, Optional
+import uuid
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class IRPFProjector:
         # Optional overrides (from user profile or manual input)
         edad_contribuyente: int = 35,
         num_descendientes: int = 0,
-        anios_nacimiento_desc: Optional[List[int]] = None,
+        anios_nacimiento_desc: list[int] | None = None,
         custodia_compartida: bool = False,
         num_ascendientes_65: int = 0,
         num_ascendientes_75: int = 0,
@@ -78,7 +79,7 @@ class IRPFProjector:
         retenciones_ahorro: float = 0,
         # Control
         save_projection: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Project annual IRPF from quarterly declarations.
 
@@ -126,12 +127,11 @@ class IRPFProjector:
 
         # --- 4. Run IRPFSimulator ---
         from app.utils.irpf_simulator import IRPFSimulator
+
         simulator = IRPFSimulator(self._db)
 
         # Sum pagos fraccionados (Modelo 130) already paid
-        total_pagos_130 = sum(
-            d.get("tax_due", 0) or 0 for d in modelo_130_data
-        )
+        total_pagos_130 = sum(d.get("tax_due", 0) or 0 for d in modelo_130_data)
 
         # Retenciones from activity (accumulated from last quarter's 130)
         retenciones_actividad = 0.0
@@ -230,7 +230,7 @@ class IRPFProjector:
 
     async def _fetch_declarations(
         self, user_id: str, declaration_type: str, year: int
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Fetch all declarations of a type for a user/year."""
         result = await self._db.execute(
             """SELECT quarter, form_data, calculated_result, tax_due,
@@ -252,9 +252,7 @@ class IRPFProjector:
             rows.append(r)
         return rows
 
-    def _aggregate_activity_income(
-        self, modelo_130_data: List[Dict[str, Any]]
-    ) -> Dict[str, float]:
+    def _aggregate_activity_income(self, modelo_130_data: list[dict[str, Any]]) -> dict[str, float]:
         """
         Extract activity income/expenses from Modelo 130 declarations.
 
@@ -265,8 +263,13 @@ class IRPFProjector:
         (ingresos_trimestre, gastos_trimestre), so we must sum them.
         """
         if not modelo_130_data:
-            return {"ingresos": 0, "gastos": 0, "cuota_autonomo_anual": 0,
-                    "rendimiento_neto": 0, "num_quarters": 0}
+            return {
+                "ingresos": 0,
+                "gastos": 0,
+                "cuota_autonomo_anual": 0,
+                "rendimiento_neto": 0,
+                "num_quarters": 0,
+            }
 
         last_decl = max(modelo_130_data, key=lambda d: d["quarter"])
         territory = last_decl.get("territory", "Comun")
@@ -313,9 +316,9 @@ class IRPFProjector:
 
     def _aggregate_iva(
         self,
-        modelo_303_data: List[Dict[str, Any]],
-        modelo_420_data: List[Dict[str, Any]],
-    ) -> Dict[str, Any]:
+        modelo_303_data: list[dict[str, Any]],
+        modelo_420_data: list[dict[str, Any]],
+    ) -> dict[str, Any]:
         """Aggregate IVA/IGIC data for informational purposes."""
         total_devengado = 0.0
         total_deducible = 0.0
@@ -348,9 +351,7 @@ class IRPFProjector:
             "num_quarters_420": len(modelo_420_data),
         }
 
-    def _annualize(
-        self, activity: Dict[str, float], num_quarters: int
-    ) -> Dict[str, Any]:
+    def _annualize(self, activity: dict[str, float], num_quarters: int) -> dict[str, Any]:
         """
         Annualize activity income from partial year data.
 
@@ -361,8 +362,11 @@ class IRPFProjector:
         """
         if num_quarters == 0:
             return {
-                "ingresos": 0, "gastos": 0, "rendimiento_neto": 0,
-                "cuota_autonomo_anual": 0, "factor": 0,
+                "ingresos": 0,
+                "gastos": 0,
+                "rendimiento_neto": 0,
+                "cuota_autonomo_anual": 0,
+                "factor": 0,
                 "nota": "Sin datos trimestrales disponibles",
             }
 
@@ -378,24 +382,25 @@ class IRPFProjector:
             "cuota_autonomo_anual": round(activity["cuota_autonomo_anual"] * factor, 2),
             "factor": round(factor, 4),
             "nota": (
-                "Datos completos (4 trimestres)" if num_quarters == 4
+                "Datos completos (4 trimestres)"
+                if num_quarters == 4
                 else f"Extrapolado desde {num_quarters} trimestre(s) (factor x{factor:.2f})"
             ),
         }
 
-    async def _save_projection(
-        self, user_id: str, year: int, result: Dict[str, Any]
-    ) -> None:
+    async def _save_projection(self, user_id: str, year: int, result: dict[str, Any]) -> None:
         """Persist the annual projection in the annual_projections table."""
         projection = result.get("projection", {})
         annualized = result.get("annualized", {})
         num_quarters = result["quarterly_data"]["num_quarters_activity"]
 
-        input_summary = json.dumps({
-            "quarterly_data": result["quarterly_data"],
-            "annualized": annualized,
-            "iva_summary": result["iva_summary"],
-        })
+        input_summary = json.dumps(
+            {
+                "quarterly_data": result["quarterly_data"],
+                "annualized": annualized,
+                "iva_summary": result["iva_summary"],
+            }
+        )
 
         projection_detail = json.dumps(projection)
 
@@ -429,14 +434,20 @@ class IRPFProjector:
                        calculated_at = datetime('now')
                    WHERE id = ?""",
                 [
-                    input_summary, projected_income, projected_expenses,
-                    projected_net, projected_irpf, projected_payments,
-                    projected_differential, effective_rate,
-                    projection_detail, confidence_val, proj_id,
+                    input_summary,
+                    projected_income,
+                    projected_expenses,
+                    projected_net,
+                    projected_irpf,
+                    projected_payments,
+                    projected_differential,
+                    effective_rate,
+                    projection_detail,
+                    confidence_val,
+                    proj_id,
                 ],
             )
-            logger.info("Updated annual projection %s for user %s year %d",
-                        proj_id, user_id, year)
+            logger.info("Updated annual projection %s for user %s year %d", proj_id, user_id, year)
         else:
             proj_id = str(uuid.uuid4())
             await self._db.execute(
@@ -447,11 +458,20 @@ class IRPFProjector:
                     effective_rate, projection_detail, confidence)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 [
-                    proj_id, user_id, year, num_quarters, input_summary,
-                    projected_income, projected_expenses, projected_net,
-                    projected_irpf, projected_payments, projected_differential,
-                    effective_rate, projection_detail, confidence_val,
+                    proj_id,
+                    user_id,
+                    year,
+                    num_quarters,
+                    input_summary,
+                    projected_income,
+                    projected_expenses,
+                    projected_net,
+                    projected_irpf,
+                    projected_payments,
+                    projected_differential,
+                    effective_rate,
+                    projection_detail,
+                    confidence_val,
                 ],
             )
-            logger.info("Created annual projection %s for user %s year %d",
-                        proj_id, user_id, year)
+            logger.info("Created annual projection %s for user %s year %d", proj_id, user_id, year)

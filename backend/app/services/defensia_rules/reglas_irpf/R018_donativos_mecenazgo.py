@@ -29,6 +29,7 @@ resuelve ``defensia_rag_verifier`` contra el corpus normativo. Por eso aqui
 no aparecen literales como "Art. 68.3 LIRPF" ni "Ley 49/2002" — solo
 terminos semanticos ("donativo", "mecenazgo", "certificado", "recurrencia").
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -38,7 +39,6 @@ from app.models.defensia import (
     TipoDocumento,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Tipos de documento que pueden contener los campos estructurados de
 # donativo declarado / deduccion admitida. Se incluye OTROS para que el

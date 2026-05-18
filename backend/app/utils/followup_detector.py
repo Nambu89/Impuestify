@@ -8,8 +8,9 @@ Heuristic-based classifier that determines if a user query is:
 
 Zero latency (no API calls), pure pattern matching.
 """
+
 import re
-from typing import List, Dict, Literal
+from typing import Literal
 
 FollowUpType = Literal["clarification", "modification", "new_topic"]
 
@@ -29,15 +30,29 @@ _CLARIFICATION_PATTERNS = [
 
 # Connectors that suggest continuation of previous topic
 _CONTINUATION_CONNECTORS = [
-    "y si ", "y los ", "y las ", "y el ", "y la ", "y esos ", "y esas ",
-    "y ese ", "y esa ", "entonces ", "pero ", "aunque ", "sin embargo ",
-    "en ese caso ", "en mi caso ", "y en ", "y con ",
+    "y si ",
+    "y los ",
+    "y las ",
+    "y el ",
+    "y la ",
+    "y esos ",
+    "y esas ",
+    "y ese ",
+    "y esa ",
+    "entonces ",
+    "pero ",
+    "aunque ",
+    "sin embargo ",
+    "en ese caso ",
+    "en mi caso ",
+    "y en ",
+    "y con ",
 ]
 
 # Pronouns that reference previous context
 _REFERENCE_PRONOUNS = re.compile(
     r"\b(eso|esos|esas|ese|esa|esto|estos|estas|este|esta|lo mismo|lo anterior|lo de antes)\b",
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 
 # Fiscal keywords that suggest a substantive (non-clarification) query
@@ -50,19 +65,19 @@ _FISCAL_KEYWORDS = re.compile(
     r"valencia|aragón|aragon|navarra|bizkaia|gipuzkoa|araba|"
     r"ceuta|melilla|galicia|asturias|cantabria|murcia|extremadura|"
     r"castilla|baleares|canarias|rioja)\b",
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 
 # Modification signals: numbers, currencies, or CCAA changes
 _MODIFICATION_PATTERNS = re.compile(
     r"(\d[\d.,]*\s*€|\d[\d.,]*\s*euros?|\d{4,}|\bcambio\b|\bcambi[oa]\b|\bsi\s+cobr[oa]\b|\bsi\s+gan[oa]\b|\bsi\s+viv[oa]\b)",
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 
 
 def classify_followup(
     query: str,
-    conversation_history: List[Dict[str, str]],
+    conversation_history: list[dict[str, str]],
 ) -> FollowUpType:
     """
     Classify a user query as clarification, modification, or new_topic.
@@ -105,7 +120,21 @@ def classify_followup(
     # Short query (< 30 chars) without fiscal keywords → likely clarification
     if len(q) < 30 and not _FISCAL_KEYWORDS.search(q) and not _MODIFICATION_PATTERNS.search(q):
         # Only if it doesn't look like a standalone question
-        if "?" in q or not any(q.startswith(w) for w in ["cuánto", "cuanto", "cómo", "como", "dónde", "donde", "qué", "que", "cuál", "cual"]):
+        if "?" in q or not any(
+            q.startswith(w)
+            for w in [
+                "cuánto",
+                "cuanto",
+                "cómo",
+                "como",
+                "dónde",
+                "donde",
+                "qué",
+                "que",
+                "cuál",
+                "cual",
+            ]
+        ):
             return "clarification"
 
     # Long query with multiple fiscal keywords → new topic

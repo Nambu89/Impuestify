@@ -1,6 +1,9 @@
 """Tests for WarmupService — personalized greetings and RAG pre-loading."""
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from app.services.warmup_service import WarmupService
 
 
@@ -21,9 +24,9 @@ async def test_warmup_returns_greeting_for_user_with_profile(warmup):
         "ccaa_residencia": "Madrid",
         "situacion_laboral": "autonomo",
     }
-    with patch.object(warmup, '_get_profile', return_value=profile):
-        with patch.object(warmup, '_preload_rag', return_value=True):
-            with patch.object(warmup, '_generate_greeting', return_value="Hola, bienvenido"):
+    with patch.object(warmup, "_get_profile", return_value=profile):
+        with patch.object(warmup, "_preload_rag", return_value=True):
+            with patch.object(warmup, "_generate_greeting", return_value="Hola, bienvenido"):
                 result = await warmup.warmup("user123")
                 assert result["greeting"] == "Hola, bienvenido"
                 assert result["rag_preloaded"] is True
@@ -32,7 +35,7 @@ async def test_warmup_returns_greeting_for_user_with_profile(warmup):
 @pytest.mark.asyncio
 async def test_warmup_static_greeting_for_new_user(warmup):
     """Warmup without profile returns static greeting, no RAG preload."""
-    with patch.object(warmup, '_get_profile', return_value=None):
+    with patch.object(warmup, "_get_profile", return_value=None):
         result = await warmup.warmup("user_new")
         assert "Impuestify" in result["greeting"]
         assert result["rag_preloaded"] is False
@@ -45,9 +48,13 @@ async def test_warmup_handles_llm_failure_gracefully(warmup):
         "ccaa_residencia": "Cataluna",
         "situacion_laboral": "particular",
     }
-    with patch.object(warmup, '_get_profile', return_value=profile):
-        with patch.object(warmup, '_preload_rag', return_value=True):
-            with patch.object(warmup, '_generate_greeting', return_value="Hola, bienvenido a Impuestify. Soy tu asistente fiscal. Puedes preguntarme sobre IRPF, deducciones, modelos fiscales o cualquier duda tributaria."):
+    with patch.object(warmup, "_get_profile", return_value=profile):
+        with patch.object(warmup, "_preload_rag", return_value=True):
+            with patch.object(
+                warmup,
+                "_generate_greeting",
+                return_value="Hola, bienvenido a Impuestify. Soy tu asistente fiscal. Puedes preguntarme sobre IRPF, deducciones, modelos fiscales o cualquier duda tributaria.",
+            ):
                 result = await warmup.warmup("user456")
                 assert result["greeting"] is not None
                 assert len(result["greeting"]) > 0
@@ -84,7 +91,9 @@ async def test_warmup_get_profile_no_rows(warmup, mock_db):
 async def test_warmup_get_profile_no_ccaa(warmup, mock_db):
     """_get_profile returns None when ccaa_residencia is empty."""
     mock_result = MagicMock()
-    mock_result.rows = [{"ccaa_residencia": "", "situacion_laboral": "particular", "datos_fiscales": None}]
+    mock_result.rows = [
+        {"ccaa_residencia": "", "situacion_laboral": "particular", "datos_fiscales": None}
+    ]
     mock_db.execute = AsyncMock(return_value=mock_result)
 
     profile = await warmup._get_profile("user_no_ccaa")
@@ -94,6 +103,6 @@ async def test_warmup_get_profile_no_ccaa(warmup, mock_db):
 @pytest.mark.asyncio
 async def test_warmup_preload_rag_handles_missing_territory(warmup):
     """_preload_rag returns False when territory plugin is not found."""
-    with patch('app.services.warmup_service.get_territory', side_effect=KeyError("No plugin")):
+    with patch("app.services.warmup_service.get_territory", side_effect=KeyError("No plugin")):
         result = await warmup._preload_rag("UnknownTerritory", "particular")
         assert result is False

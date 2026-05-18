@@ -1,8 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
 import {
-    Shield, RefreshCw, AlertCircle, CheckCircle, Loader, Bug, Lightbulb,
-    MessageCircle, X, ExternalLink, ChevronLeft, ChevronRight, Image as ImageIcon
+    Shield,
+    RefreshCw,
+    AlertCircle,
+    CheckCircle,
+    Loader,
+    Bug,
+    Lightbulb,
+    MessageCircle,
+    X,
+    ExternalLink,
+    ChevronLeft,
+    ChevronRight,
+    Image as ImageIcon,
 } from 'lucide-react'
 import { useSubscription } from '../hooks/useSubscription'
 import { useFeedback, FeedbackItem, FeedbackStats } from '../hooks/useFeedback'
@@ -39,7 +50,8 @@ function TypeIcon({ type }: { type: string }) {
 
 export default function AdminFeedbackPage() {
     const { isOwner, loading: subLoading } = useSubscription()
-    const { adminGetFeedback, adminGetFeedbackStats, adminGetFeedbackDetail, adminUpdateFeedback } = useFeedback()
+    const { adminGetFeedback, adminGetFeedbackStats, adminGetFeedbackDetail, adminUpdateFeedback } =
+        useFeedback()
 
     const [items, setItems] = useState<FeedbackItem[]>([])
     const [stats, setStats] = useState<FeedbackStats | null>(null)
@@ -139,10 +151,18 @@ export default function AdminFeedbackPage() {
             await fetchItems()
             await fetchStats()
             // Update item in list inline
-            setItems(prev => prev.map(i => i.id === selectedId
-                ? { ...i, status: editStatus, priority: editPriority, admin_notes: editNotes }
-                : i
-            ))
+            setItems((prev) =>
+                prev.map((i) =>
+                    i.id === selectedId
+                        ? {
+                              ...i,
+                              status: editStatus,
+                              priority: editPriority,
+                              admin_notes: editNotes,
+                          }
+                        : i,
+                ),
+            )
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message || 'Error al guardar cambios' })
         } finally {
@@ -160,8 +180,14 @@ export default function AdminFeedbackPage() {
 
     const formatDate = (s: string) => {
         try {
-            return new Date(s).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
-        } catch { return s }
+            return new Date(s).toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+            })
+        } catch {
+            return s
+        }
     }
 
     if (subLoading) return <div className="loading-screen">Cargando...</div>
@@ -176,17 +202,24 @@ export default function AdminFeedbackPage() {
                     {/* Page header */}
                     <div className="admin-header">
                         <div className="admin-title-row">
-                            <h1><Shield size={26} /> Admin — Feedback</h1>
+                            <h1>
+                                <Shield size={26} /> Admin — Feedback
+                            </h1>
                             <button
                                 className="btn-refresh"
-                                onClick={() => { fetchItems(); fetchStats() }}
+                                onClick={() => {
+                                    fetchItems()
+                                    fetchStats()
+                                }}
                                 disabled={loading}
                                 title="Recargar"
                             >
                                 <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                             </button>
                         </div>
-                        <p className="admin-subtitle">Gestión de reportes y sugerencias de usuarios</p>
+                        <p className="admin-subtitle">
+                            Gestión de reportes y sugerencias de usuarios
+                        </p>
                     </div>
 
                     {/* Stats bar */}
@@ -202,7 +235,9 @@ export default function AdminFeedbackPage() {
                             <div className="afp-stat afp-stat--feature">
                                 <Lightbulb size={16} />
                                 <div>
-                                    <span className="afp-stat__value">{stats.features_pending}</span>
+                                    <span className="afp-stat__value">
+                                        {stats.features_pending}
+                                    </span>
                                     <span className="afp-stat__label">Sugerencias</span>
                                 </div>
                             </div>
@@ -226,7 +261,11 @@ export default function AdminFeedbackPage() {
                     {/* Message banner */}
                     {message && (
                         <div className={`admin-message ${message.type}`}>
-                            {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                            {message.type === 'success' ? (
+                                <CheckCircle size={18} />
+                            ) : (
+                                <AlertCircle size={18} />
+                            )}
                             {message.text}
                         </div>
                     )}
@@ -236,7 +275,7 @@ export default function AdminFeedbackPage() {
                         <select
                             className="afp-select"
                             value={filterType}
-                            onChange={e => setFilterType(e.target.value)}
+                            onChange={(e) => setFilterType(e.target.value)}
                         >
                             <option value="">Todos los tipos</option>
                             <option value="bug">Error</option>
@@ -246,7 +285,7 @@ export default function AdminFeedbackPage() {
                         <select
                             className="afp-select"
                             value={filterStatus}
-                            onChange={e => setFilterStatus(e.target.value)}
+                            onChange={(e) => setFilterStatus(e.target.value)}
                         >
                             <option value="">Todos los estados</option>
                             <option value="new">Nuevo</option>
@@ -259,7 +298,7 @@ export default function AdminFeedbackPage() {
                         <select
                             className="afp-select"
                             value={filterPriority}
-                            onChange={e => setFilterPriority(e.target.value)}
+                            onChange={(e) => setFilterPriority(e.target.value)}
                         >
                             <option value="">Todas las prioridades</option>
                             <option value="critical">Crítica</option>
@@ -290,27 +329,35 @@ export default function AdminFeedbackPage() {
                                 <>
                                     {/* Mobile cards */}
                                     <div className="afp-cards">
-                                        {items.map(item => (
+                                        {items.map((item) => (
                                             <div
                                                 key={item.id}
                                                 className={`afp-card ${selectedId === item.id ? 'afp-card--selected' : ''}`}
                                                 onClick={() => handleRowClick(item.id)}
                                             >
                                                 <div className="afp-card__top">
-                                                    <span className={`afp-type-badge afp-type--${item.type}`}>
+                                                    <span
+                                                        className={`afp-type-badge afp-type--${item.type}`}
+                                                    >
                                                         <TypeIcon type={item.type} />
                                                         {TYPE_LABELS[item.type]}
                                                     </span>
-                                                    <span className={`afp-status-badge afp-status--${item.status}`}>
+                                                    <span
+                                                        className={`afp-status-badge afp-status--${item.status}`}
+                                                    >
                                                         {STATUS_LABELS[item.status]}
                                                     </span>
                                                 </div>
                                                 <p className="afp-card__title">{item.title}</p>
                                                 <div className="afp-card__meta">
-                                                    <span className={`afp-priority afp-priority--${item.priority}`}>
+                                                    <span
+                                                        className={`afp-priority afp-priority--${item.priority}`}
+                                                    >
                                                         {PRIORITY_LABELS[item.priority]}
                                                     </span>
-                                                    <span className="afp-date">{formatDate(item.created_at)}</span>
+                                                    <span className="afp-date">
+                                                        {formatDate(item.created_at)}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))}
@@ -330,31 +377,47 @@ export default function AdminFeedbackPage() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {items.map(item => (
+                                                {items.map((item) => (
                                                     <tr
                                                         key={item.id}
-                                                        className={selectedId === item.id ? 'afp-row--selected' : ''}
+                                                        className={
+                                                            selectedId === item.id
+                                                                ? 'afp-row--selected'
+                                                                : ''
+                                                        }
                                                         onClick={() => handleRowClick(item.id)}
                                                     >
                                                         <td>
-                                                            <span className={`afp-type-badge afp-type--${item.type}`}>
+                                                            <span
+                                                                className={`afp-type-badge afp-type--${item.type}`}
+                                                            >
                                                                 <TypeIcon type={item.type} />
                                                                 {TYPE_LABELS[item.type]}
                                                             </span>
                                                         </td>
-                                                        <td className="afp-cell-title">{item.title}</td>
-                                                        <td className="afp-cell-email">{item.user_email || '-'}</td>
+                                                        <td className="afp-cell-title">
+                                                            {item.title}
+                                                        </td>
+                                                        <td className="afp-cell-email">
+                                                            {item.user_email || '-'}
+                                                        </td>
                                                         <td>
-                                                            <span className={`afp-status-badge afp-status--${item.status}`}>
+                                                            <span
+                                                                className={`afp-status-badge afp-status--${item.status}`}
+                                                            >
                                                                 {STATUS_LABELS[item.status]}
                                                             </span>
                                                         </td>
                                                         <td>
-                                                            <span className={`afp-priority afp-priority--${item.priority}`}>
+                                                            <span
+                                                                className={`afp-priority afp-priority--${item.priority}`}
+                                                            >
                                                                 {PRIORITY_LABELS[item.priority]}
                                                             </span>
                                                         </td>
-                                                        <td className="afp-cell-date">{formatDate(item.created_at)}</td>
+                                                        <td className="afp-cell-date">
+                                                            {formatDate(item.created_at)}
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -365,7 +428,7 @@ export default function AdminFeedbackPage() {
                                     <div className="afp-pagination">
                                         <button
                                             className="afp-page-btn"
-                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            onClick={() => setPage((p) => Math.max(1, p - 1))}
                                             disabled={page === 1 || loading}
                                         >
                                             <ChevronLeft size={16} />
@@ -375,7 +438,9 @@ export default function AdminFeedbackPage() {
                                         </span>
                                         <button
                                             className="afp-page-btn"
-                                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                            onClick={() =>
+                                                setPage((p) => Math.min(totalPages, p + 1))
+                                            }
                                             disabled={page >= totalPages || loading}
                                         >
                                             <ChevronRight size={16} />
@@ -392,7 +457,10 @@ export default function AdminFeedbackPage() {
                                     <h3>Detalle</h3>
                                     <button
                                         className="afp-detail__close"
-                                        onClick={() => { setSelectedId(null); setDetail(null) }}
+                                        onClick={() => {
+                                            setSelectedId(null)
+                                            setDetail(null)
+                                        }}
                                         aria-label="Cerrar panel"
                                     >
                                         <X size={18} />
@@ -407,11 +475,15 @@ export default function AdminFeedbackPage() {
                                     <div className="afp-detail__body">
                                         {/* Meta */}
                                         <div className="afp-detail__meta">
-                                            <span className={`afp-type-badge afp-type--${detail.type}`}>
+                                            <span
+                                                className={`afp-type-badge afp-type--${detail.type}`}
+                                            >
                                                 <TypeIcon type={detail.type} />
                                                 {TYPE_LABELS[detail.type]}
                                             </span>
-                                            <span className="afp-date">{formatDate(detail.created_at)}</span>
+                                            <span className="afp-date">
+                                                {formatDate(detail.created_at)}
+                                            </span>
                                         </div>
 
                                         <h4 className="afp-detail__title">{detail.title}</h4>
@@ -465,7 +537,11 @@ export default function AdminFeedbackPage() {
                                             <select
                                                 className="afp-edit-select"
                                                 value={editStatus}
-                                                onChange={e => setEditStatus(e.target.value as FeedbackItem['status'])}
+                                                onChange={(e) =>
+                                                    setEditStatus(
+                                                        e.target.value as FeedbackItem['status'],
+                                                    )
+                                                }
                                             >
                                                 <option value="new">Nuevo</option>
                                                 <option value="reviewed">Revisado</option>
@@ -481,7 +557,11 @@ export default function AdminFeedbackPage() {
                                             <select
                                                 className="afp-edit-select"
                                                 value={editPriority}
-                                                onChange={e => setEditPriority(e.target.value as FeedbackItem['priority'])}
+                                                onChange={(e) =>
+                                                    setEditPriority(
+                                                        e.target.value as FeedbackItem['priority'],
+                                                    )
+                                                }
                                             >
                                                 <option value="critical">Crítica</option>
                                                 <option value="high">Alta</option>
@@ -495,7 +575,7 @@ export default function AdminFeedbackPage() {
                                             <textarea
                                                 className="afp-edit-textarea"
                                                 value={editNotes}
-                                                onChange={e => setEditNotes(e.target.value)}
+                                                onChange={(e) => setEditNotes(e.target.value)}
                                                 placeholder="Notas internas sobre este feedback..."
                                                 rows={3}
                                             />
@@ -506,10 +586,16 @@ export default function AdminFeedbackPage() {
                                             onClick={handleSave}
                                             disabled={saving}
                                         >
-                                            {saving
-                                                ? <><Loader size={14} className="animate-spin" /> Guardando...</>
-                                                : <><CheckCircle size={14} /> Guardar cambios</>
-                                            }
+                                            {saving ? (
+                                                <>
+                                                    <Loader size={14} className="animate-spin" />{' '}
+                                                    Guardando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle size={14} /> Guardar cambios
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 ) : null}

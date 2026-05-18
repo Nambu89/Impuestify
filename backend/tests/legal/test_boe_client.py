@@ -3,9 +3,10 @@
 Network calls are mocked with `httpx.MockTransport` — no real BOE
 requests. Real-API fixtures captured from `curl` 2026-05-17.
 """
+
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 import httpx
@@ -17,7 +18,6 @@ from app.services.legal.boe_client import (
     NormaBoeMetadata,
     parse_norma_xml,
 )
-
 
 # ── Fixtures de respuesta XML BOE real (capturadas con curl) ─────────────
 
@@ -104,7 +104,9 @@ def _mock_transport(routes: dict[str, tuple[int, str]]) -> httpx.MockTransport:
         full = str(request.url)
         for path, (status, body) in routes.items():
             if path in full:
-                return httpx.Response(status, text=body, headers={"content-type": "application/xml"})
+                return httpx.Response(
+                    status, text=body, headers={"content-type": "application/xml"}
+                )
         return httpx.Response(404, text="not in mock")
 
     return httpx.MockTransport(handler)
@@ -240,11 +242,11 @@ async def test_cache_hit_does_not_call_api():
     """If a fresh entry exists in cache, no HTTP request is made."""
     db = _FakeDB()
     # Seed cache with a non-expired entry.
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     db._store["BOE-A-1992-28740"] = {
         "metadata_json": '{"boe_id":"BOE-A-1992-28740","titulo":"Cached","fecha_disposicion":null,'
-                         '"fecha_vigencia":null,"estatus_derogacion":false,"vigencia_agotada":false,'
-                         '"url_html_consolidada":null,"url_eli":null}',
+        '"fecha_vigencia":null,"estatus_derogacion":false,"vigencia_agotada":false,'
+        '"url_html_consolidada":null,"url_eli":null}',
         "fetched_at": now.isoformat(),
         "expires_at": (now + timedelta(days=30)).isoformat(),
     }
@@ -264,11 +266,11 @@ async def test_cache_hit_does_not_call_api():
 @pytest.mark.asyncio
 async def test_cache_expired_triggers_api_call():
     db = _FakeDB()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     db._store["BOE-A-1992-28740"] = {
         "metadata_json": '{"boe_id":"BOE-A-1992-28740","titulo":"Stale","fecha_disposicion":null,'
-                         '"fecha_vigencia":null,"estatus_derogacion":false,"vigencia_agotada":false,'
-                         '"url_html_consolidada":null,"url_eli":null}',
+        '"fecha_vigencia":null,"estatus_derogacion":false,"vigencia_agotada":false,'
+        '"url_html_consolidada":null,"url_eli":null}',
         "fetched_at": (now - timedelta(days=60)).isoformat(),
         "expires_at": (now - timedelta(days=30)).isoformat(),  # ya expirado
     }

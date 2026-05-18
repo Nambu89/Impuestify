@@ -1,6 +1,7 @@
 import pytest
-from app.territories.registry import get_territory, register_territory, list_territories, _registry
-from app.territories.base import TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig
+
+from app.territories.base import MinimosConfig, ScaleData, SimulationResult, TerritoryPlugin
+from app.territories.registry import _registry, get_territory, list_territories, register_territory
 
 
 class FakePlugin(TerritoryPlugin):

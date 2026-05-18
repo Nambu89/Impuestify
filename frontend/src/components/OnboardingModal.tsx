@@ -50,7 +50,7 @@ export default function OnboardingModal({ userName, onDismiss }: OnboardingModal
 
     return (
         <div className="onboarding-overlay" onClick={dismiss}>
-            <div className="onboarding-modal" onClick={e => e.stopPropagation()}>
+            <div className="onboarding-modal" onClick={(e) => e.stopPropagation()}>
                 <button className="onboarding-close" onClick={dismiss} aria-label="Cerrar">
                     <X size={20} />
                 </button>
@@ -62,17 +62,27 @@ export default function OnboardingModal({ userName, onDismiss }: OnboardingModal
 
                 <div className="onboarding-dots">
                     {steps.map((_, i) => (
-                        <span key={i} className={`onboarding-dot ${i === step ? 'onboarding-dot--active' : ''}`} />
+                        <span
+                            key={i}
+                            className={`onboarding-dot ${i === step ? 'onboarding-dot--active' : ''}`}
+                        />
                     ))}
                 </div>
 
                 <div className="onboarding-actions">
                     {isLast ? (
-                        <Link to="/chat" className="btn btn-primary btn-lg onboarding-cta" onClick={dismiss}>
+                        <Link
+                            to="/chat"
+                            className="btn btn-primary btn-lg onboarding-cta"
+                            onClick={dismiss}
+                        >
                             Empezar a usar Impuestify <ArrowRight size={18} />
                         </Link>
                     ) : (
-                        <button className="btn btn-primary btn-lg onboarding-cta" onClick={() => setStep(s => s + 1)}>
+                        <button
+                            className="btn btn-primary btn-lg onboarding-cta"
+                            onClick={() => setStep((s) => s + 1)}
+                        >
                             Siguiente <ArrowRight size={18} />
                         </button>
                     )}

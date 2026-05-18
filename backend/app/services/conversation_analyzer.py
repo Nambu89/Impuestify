@@ -7,9 +7,10 @@ and merge them into the user's profile. Runs as a background task.
 Priority: manual > llm > regex (check _source field)
 Skips conversations with < 3 messages.
 """
+
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from openai import AsyncOpenAI
 
@@ -55,6 +56,7 @@ class ConversationAnalyzer:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -63,7 +65,7 @@ class ConversationAnalyzer:
             self._client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         return self._client
 
-    async def _get_messages(self, conversation_id: str) -> List[Dict[str, str]]:
+    async def _get_messages(self, conversation_id: str) -> list[dict[str, str]]:
         """Load messages from database."""
         db = await self._get_db()
         result = await db.execute(
@@ -72,12 +74,10 @@ class ConversationAnalyzer:
         )
         return [dict(row) for row in result.rows or []]
 
-    async def _call_llm(self, messages: List[Dict[str, str]]) -> str:
+    async def _call_llm(self, messages: list[dict[str, str]]) -> str:
         """Call gpt-5-mini with the extraction prompt."""
         client = self._get_client()
-        conversation_text = "\n".join(
-            f"{m['role']}: {m['content']}" for m in messages
-        )
+        conversation_text = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
         response = await client.chat.completions.create(
             model="gpt-5-mini",
             messages=[
@@ -89,7 +89,7 @@ class ConversationAnalyzer:
         )
         return response.choices[0].message.content.strip()
 
-    async def _merge_facts(self, user_id: str, extracted: Dict[str, Any]) -> None:
+    async def _merge_facts(self, user_id: str, extracted: dict[str, Any]) -> None:
         """
         Merge extracted facts into user profile with source='llm'.
 
@@ -137,6 +137,7 @@ class ConversationAnalyzer:
         else:
             # No profile yet - create one (unlikely but safe)
             import uuid
+
             profile_id = str(uuid.uuid4())
             await db.execute(
                 """INSERT INTO user_profiles (id, user_id, datos_fiscales, created_at, updated_at)
@@ -144,7 +145,7 @@ class ConversationAnalyzer:
                 [profile_id, user_id, datos_json],
             )
 
-    async def analyze(self, conversation_id: str, user_id: str) -> Dict[str, Any]:
+    async def analyze(self, conversation_id: str, user_id: str) -> dict[str, Any]:
         """
         Analyze a conversation and extract fiscal facts.
 
@@ -173,7 +174,9 @@ class ConversationAnalyzer:
 
             logger.info(
                 "Extracted %d fiscal facts from conversation %s for user %s",
-                len(extracted), conversation_id, user_id,
+                len(extracted),
+                conversation_id,
+                user_id,
             )
             return extracted
 

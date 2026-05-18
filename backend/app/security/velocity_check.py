@@ -21,13 +21,12 @@ import hashlib
 import logging
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 WINDOW_SECONDS = 60
-MAX_REPEATS = 3   # 4th identical-ish prompt in 60s -> throttle
+MAX_REPEATS = 3  # 4th identical-ish prompt in 60s -> throttle
 
 
 _WS_RE = re.compile(r"\s+")
@@ -50,7 +49,7 @@ def _hash(text: str) -> str:
 class VelocityResult:
     allowed: bool
     repeat_count: int
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 class VelocityChecker:

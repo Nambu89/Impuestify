@@ -38,7 +38,10 @@
     font-family: var(--font-family);
     color: var(--color-white);
     background: rgba(255, 255, 255, 0.07);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-fast);
     box-sizing: border-box;
     -webkit-appearance: none;
     appearance: none;

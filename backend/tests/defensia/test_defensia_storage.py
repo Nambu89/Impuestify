@@ -10,6 +10,7 @@ TDD tests for `backend/app/services/defensia_storage.py`. Cubren:
 Regla de seguridad: NUNCA usar una clave dummy. Los tests generan una clave
 aleatoria de 32 bytes con `secrets.token_hex(32)` (64 caracteres hex).
 """
+
 from __future__ import annotations
 
 import secrets
@@ -70,14 +71,14 @@ def test_storage_roundtrip_large_pdf(monkeypatch):
     storage = DefensiaStorage()
 
     # 500 KB de contenido repetitivo (caso realista: PDF con mucho texto similar).
-    plaintext = (b"Articulo 41 bis RIRPF - procedimiento de verificacion de datos. " * 8000)
+    plaintext = b"Articulo 41 bis RIRPF - procedimiento de verificacion de datos. " * 8000
     assert len(plaintext) >= 500_000
 
     ciphertext, nonce = storage.cifrar(plaintext)
     # zstd debe comprimir fuertemente texto repetitivo antes del cifrado
-    assert len(ciphertext) < len(plaintext) // 2, (
-        f"zstd deberia comprimir texto repetitivo: ct={len(ciphertext)}, pt={len(plaintext)}"
-    )
+    assert (
+        len(ciphertext) < len(plaintext) // 2
+    ), f"zstd deberia comprimir texto repetitivo: ct={len(ciphertext)}, pt={len(plaintext)}"
 
     recovered = storage.descifrar(ciphertext, nonce)
     assert recovered == plaintext
@@ -136,6 +137,7 @@ def test_storage_key_passed_directly(monkeypatch):
 # Migracion SQL — wiring check y aplicacion idempotente
 # ---------------------------------------------------------------------------
 
+
 def test_storage_migration_referenced_in_init_schema():
     """Guard anti-drift: `turso_client.py` debe referenciar la migracion.
 
@@ -144,8 +146,7 @@ def test_storage_migration_referenced_in_init_schema():
     from pathlib import Path
 
     turso_source = (
-        Path(__file__).parent.parent.parent
-        / "app" / "database" / "turso_client.py"
+        Path(__file__).parent.parent.parent / "app" / "database" / "turso_client.py"
     ).read_text(encoding="utf-8")
     assert "20260414_defensia_storage.sql" in turso_source, (
         "init_schema() en turso_client.py no referencia la migracion de "
@@ -165,9 +166,7 @@ def test_storage_migration_adds_columns_and_is_idempotent(tmp_path):
     conn = sqlite3.connect(db_path)
     conn.execute("CREATE TABLE users (id TEXT PRIMARY KEY)")
 
-    migrations_dir = (
-        Path(__file__).parent.parent.parent / "app" / "database" / "migrations"
-    )
+    migrations_dir = Path(__file__).parent.parent.parent / "app" / "database" / "migrations"
     part1 = migrations_dir / "20260413_defensia_tables.sql"
     storage = migrations_dir / "20260414_defensia_storage.sql"
     assert storage.exists(), f"Storage migration missing: {storage}"
@@ -197,20 +196,14 @@ def test_storage_migration_adds_columns_and_is_idempotent(tmp_path):
 
     apply_storage_migration()
 
-    cols = {
-        row[1]
-        for row in conn.execute("PRAGMA table_info(defensia_documentos)")
-    }
-    assert {"contenido_cifrado", "nonce", "algo"}.issubset(cols), (
-        f"Columnas de storage ausentes tras migracion. Columnas: {cols}"
-    )
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(defensia_documentos)")}
+    assert {"contenido_cifrado", "nonce", "algo"}.issubset(
+        cols
+    ), f"Columnas de storage ausentes tras migracion. Columnas: {cols}"
 
     # Idempotencia: segunda aplicacion no debe crashear.
     apply_storage_migration()
-    cols_after = {
-        row[1]
-        for row in conn.execute("PRAGMA table_info(defensia_documentos)")
-    }
+    cols_after = {row[1] for row in conn.execute("PRAGMA table_info(defensia_documentos)")}
     assert cols == cols_after
 
     conn.close()

@@ -33,7 +33,8 @@ campañas. Esta calculadora expone una representación funcional consistente
 con el cálculo legal: el wrapper de PDF (`modelo_pdf_generator.py`) puede
 mapearlas a la maquetación oficial mientras los importes coincidan.
 """
-from typing import Any, Dict, Optional
+
+from typing import Any
 
 
 class Modelo130BizkaiaCalculator:
@@ -50,7 +51,7 @@ class Modelo130BizkaiaCalculator:
         4: "1 al 30 de enero del año siguiente",
     }
 
-    def __init__(self, repo: Optional[Any] = None) -> None:
+    def __init__(self, repo: Any | None = None) -> None:
         # repo no es necesario — los tipos están fijados por norma foral.
         # Se mantiene para coherencia con la firma del resto de calculators.
         self._repo = repo
@@ -71,7 +72,7 @@ class Modelo130BizkaiaCalculator:
         retenciones_acumuladas: float = 0.0,
         pagos_anteriores: float = 0.0,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula el resultado del Modelo 130 Bizkaia para el trimestre indicado.
 
@@ -98,13 +99,9 @@ class Modelo130BizkaiaCalculator:
                 casillas, desglose, plazo.
         """
         if quarter not in (1, 2, 3, 4):
-            raise ValueError(
-                f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4."
-            )
+            raise ValueError(f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4.")
         if anos_actividad < 0:
-            raise ValueError(
-                f"anos_actividad '{anos_actividad}' no puede ser negativo."
-            )
+            raise ValueError(f"anos_actividad '{anos_actividad}' no puede ser negativo.")
 
         # ---- Primeros 2 años ----
         if anos_actividad < 3:
@@ -120,9 +117,7 @@ class Modelo130BizkaiaCalculator:
         # ---- 3.er año en adelante ----
         regimen_norm = (regimen or "").strip().lower()
         if regimen_norm not in {"general", "excepcional"}:
-            raise ValueError(
-                f"regimen '{regimen}' invalid. Valid: 'general', 'excepcional'."
-            )
+            raise ValueError(f"regimen '{regimen}' invalid. Valid: 'general', 'excepcional'.")
 
         if regimen_norm == "excepcional":
             base = max(0.0, volumen_ventas_penultimo)
@@ -181,7 +176,7 @@ class Modelo130BizkaiaCalculator:
         gastos_acumulados: float,
         retenciones_acumuladas: float,
         pagos_anteriores: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Reglas análogas al Estatal para los primeros 2 años de actividad.
 

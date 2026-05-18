@@ -1,4 +1,5 @@
 """Tests for Modelo 130 Navarra (Pago Fraccionado IRPF foral)."""
+
 import pytest
 
 from app.utils.calculators.modelo_130_navarra import Modelo130NavarraCalculator
@@ -12,6 +13,7 @@ def calc():
 # ===========================================================================
 # Modalidad primera (penúltimo año + tabla progresiva, ÷4)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_primera_tramo_6pct(calc):
@@ -83,7 +85,7 @@ async def test_primera_retenciones_superan_cuota_clipa(calc):
     r = await calc.calculate(
         quarter=1,
         modalidad="primera",
-        rend_neto_penultimo=5000,    # cuota anual 300
+        rend_neto_penultimo=5000,  # cuota anual 300
         retenciones_penultimo=1000,  # > 300
     )
     assert r["resultado"] == 0
@@ -129,6 +131,7 @@ async def test_primera_no_obligado_cuota_baja(calc):
 # ===========================================================================
 # Modalidad segunda (acumulado del ejercicio, anualización)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_segunda_q1_anualizacion_x4(calc):
@@ -194,6 +197,7 @@ async def test_segunda_rend_negativo_resultado_cero(calc):
 # Plazos
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_plazos_los_cuatro_trimestres(calc):
     plazos_esperados = {
@@ -215,6 +219,7 @@ async def test_plazos_los_cuatro_trimestres(calc):
 # ===========================================================================
 # Validaciones / edge cases
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_quarter_invalido_raise(calc):
@@ -281,12 +286,12 @@ async def test_estructura_respuesta_segunda(calc):
 async def test_tabla_progresiva_limites(calc):
     """Verifica los límites exactos de la tabla progresiva."""
     casos = [
-        (6500, 6.0),     # límite ≤ 6.500
-        (6501, 12.0),    # > 6.500 → 12%
-        (12000, 12.0),   # límite ≤ 12.000
-        (12001, 18.0),   # > 12.000 → 18%
-        (24000, 18.0),   # límite ≤ 24.000
-        (24001, 24.0),   # > 24.000 → 24%
+        (6500, 6.0),  # límite ≤ 6.500
+        (6501, 12.0),  # > 6.500 → 12%
+        (12000, 12.0),  # límite ≤ 12.000
+        (12001, 18.0),  # > 12.000 → 18%
+        (24000, 18.0),  # límite ≤ 24.000
+        (24001, 24.0),  # > 24.000 → 24%
     ]
     for rend, esperado in casos:
         r = await calc.calculate(
@@ -294,4 +299,6 @@ async def test_tabla_progresiva_limites(calc):
             modalidad="primera",
             rend_neto_penultimo=rend,
         )
-        assert r["tipo_aplicado"] == esperado, f"rend={rend} esperaba {esperado}, got {r['tipo_aplicado']}"
+        assert (
+            r["tipo_aplicado"] == esperado
+        ), f"rend={rend} esperaba {esperado}, got {r['tipo_aplicado']}"

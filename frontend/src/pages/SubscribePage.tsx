@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-    Shield, CheckCircle, CreditCard, Calculator, ArrowLeft,
-    Loader, AlertCircle, Briefcase, X, Zap, Video
+    Shield,
+    CheckCircle,
+    CreditCard,
+    Calculator,
+    ArrowLeft,
+    Loader,
+    AlertCircle,
+    Briefcase,
+    X,
+    Zap,
+    Video,
 } from 'lucide-react'
 import { useSubscription } from '../hooks/useSubscription'
 import { useAuth } from '../hooks/useAuth'
@@ -125,7 +134,10 @@ export default function SubscribePage() {
                 {canceled && (
                     <div className="subscribe-alert">
                         <AlertCircle size={20} />
-                        <span>El proceso de pago fue cancelado. Puedes intentarlo de nuevo cuando quieras.</span>
+                        <span>
+                            El proceso de pago fue cancelado. Puedes intentarlo de nuevo cuando
+                            quieras.
+                        </span>
                     </div>
                 )}
 
@@ -195,7 +207,10 @@ export default function SubscribePage() {
                                 )}
                             </button>
                         ) : (
-                            <Link to="/register" className="btn btn-secondary btn-lg subscribe-plan__cta">
+                            <Link
+                                to="/register"
+                                className="btn btn-secondary btn-lg subscribe-plan__cta"
+                            >
                                 Crear cuenta
                             </Link>
                         )}
@@ -217,14 +232,19 @@ export default function SubscribePage() {
 
                         <div className="subscribe-plan__price">
                             <span className="subscribe-plan__currency">EUR</span>
-                            <span className="subscribe-plan__value subscribe-plan__value--creator">{PLAN_CREATOR.price}</span>
+                            <span className="subscribe-plan__value subscribe-plan__value--creator">
+                                {PLAN_CREATOR.price}
+                            </span>
                             <span className="subscribe-plan__period">/mes</span>
                         </div>
 
                         <ul className="subscribe-plan__features">
                             {PLAN_CREATOR.features.map((f) => (
                                 <li key={f}>
-                                    <CheckCircle size={16} className="subscribe-plan__icon-yes subscribe-plan__icon-yes--creator" />
+                                    <CheckCircle
+                                        size={16}
+                                        className="subscribe-plan__icon-yes subscribe-plan__icon-yes--creator"
+                                    />
                                     <span>{f}</span>
                                 </li>
                             ))}
@@ -249,7 +269,10 @@ export default function SubscribePage() {
                                 )}
                             </button>
                         ) : (
-                            <Link to="/register?plan=creator" className="btn btn-lg subscribe-plan__cta subscribe-plan__cta--creator">
+                            <Link
+                                to="/register?plan=creator"
+                                className="btn btn-lg subscribe-plan__cta subscribe-plan__cta--creator"
+                            >
                                 Crear cuenta
                             </Link>
                         )}
@@ -303,7 +326,10 @@ export default function SubscribePage() {
                                 )}
                             </button>
                         ) : (
-                            <Link to="/register?plan=autonomo" className="btn btn-primary btn-lg subscribe-plan__cta">
+                            <Link
+                                to="/register?plan=autonomo"
+                                className="btn btn-primary btn-lg subscribe-plan__cta"
+                            >
                                 Crear cuenta
                             </Link>
                         )}

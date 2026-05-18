@@ -1,14 +1,20 @@
 """Tests para el motor de reglas deterministas."""
+
 from app.models.defensia import (
-    ExpedienteEstructurado, Tributo, Fase,
-    Brief, ArgumentoCandidato,
+    ArgumentoCandidato,
+    Brief,
+    ExpedienteEstructurado,
+    Fase,
+    Tributo,
 )
-from app.services.defensia_rules_engine import regla, evaluar, REGISTRY, reset_registry
+from app.services.defensia_rules_engine import REGISTRY, evaluar, regla, reset_registry
 
 
 def _exp_basico():
     return ExpedienteEstructurado(
-        id="e1", tributo=Tributo.IRPF, ccaa="Madrid",
+        id="e1",
+        tributo=Tributo.IRPF,
+        ccaa="Madrid",
         documentos=[],
         fase_detectada=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         fase_confianza=0.9,

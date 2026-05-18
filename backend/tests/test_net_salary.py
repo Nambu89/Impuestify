@@ -6,19 +6,21 @@ y a _calcular_irpf_simplificado para tests unitarios de la escala IRPF.
 
 No requiere DB, LLM ni servidor levantado.
 """
+
 import math
+
 import pytest
 
 from app.routers.irpf_estimate import (
+    NetSalaryRequest,
     _calcular_irpf_simplificado,
     _compute_net_salary,
-    NetSalaryRequest,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
+
 
 def _r(
     facturacion_bruta_mensual: float = 3000.0,
@@ -48,6 +50,7 @@ def _r(
 # Tests auxiliares: escala IRPF
 # ---------------------------------------------------------------------------
 
+
 class TestIRPFSimplificado:
     def test_base_cero_devuelve_cero(self):
         assert _calcular_irpf_simplificado(0) == 0.0
@@ -72,6 +75,7 @@ class TestIRPFSimplificado:
 # ---------------------------------------------------------------------------
 # Test 1: facturacion basica 3.000 EUR, params por defecto
 # ---------------------------------------------------------------------------
+
 
 class TestBasic3000EUR:
     def test_basic_3000_eur(self):
@@ -110,6 +114,7 @@ class TestBasic3000EUR:
 # Test 2: nuevo autonomo, retencion 7%
 # ---------------------------------------------------------------------------
 
+
 class TestNewAutonomo7Pct:
     def test_new_autonomo_7pct(self):
         r_nuevo = _r(facturacion_bruta_mensual=3000.0, es_nuevo_autonomo=True)
@@ -132,6 +137,7 @@ class TestNewAutonomo7Pct:
 # Test 3: facturacion cero (edge case)
 # ---------------------------------------------------------------------------
 
+
 class TestZeroFacturacion:
     def test_zero_facturacion(self):
         r = _r(facturacion_bruta_mensual=0.0)
@@ -153,6 +159,7 @@ class TestZeroFacturacion:
 # Test 4: exento de IVA (sanitarios, educacion)
 # ---------------------------------------------------------------------------
 
+
 class TestExemptIVA:
     def test_exempt_iva(self):
         r = _r(facturacion_bruta_mensual=2000.0, tipo_iva=0.0)
@@ -170,6 +177,7 @@ class TestExemptIVA:
 # Test 5: IVA reducido 10%
 # ---------------------------------------------------------------------------
 
+
 class TestReducedIVA:
     def test_reduced_iva(self):
         r = _r(facturacion_bruta_mensual=2000.0, tipo_iva=10.0)
@@ -183,6 +191,7 @@ class TestReducedIVA:
 # ---------------------------------------------------------------------------
 # Test 6: con gastos deducibles 500 EUR/mes
 # ---------------------------------------------------------------------------
+
 
 class TestWithExpenses:
     def test_with_expenses(self):
@@ -210,6 +219,7 @@ class TestWithExpenses:
 # Test 7: ingresos altos, tramo 45%
 # ---------------------------------------------------------------------------
 
+
 class TestHighIncome45Pct:
     def test_high_income_45pct(self):
         # 10.000 EUR/mes = 120.000 EUR/anual -> tramo 45%
@@ -235,6 +245,7 @@ class TestHighIncome45Pct:
 # ---------------------------------------------------------------------------
 # Test 8: estructura completa de la respuesta
 # ---------------------------------------------------------------------------
+
 
 class TestResponseStructure:
     def test_response_structure(self):
@@ -296,8 +307,10 @@ class TestResponseStructure:
 # Tests territoriales: los 5 regimenes fiscales
 # ---------------------------------------------------------------------------
 
+
 class TestTerritorialMadrid:
     """Madrid: regimen comun, IVA 21%."""
+
     def test_madrid_comun(self):
         r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Comunidad de Madrid")
         assert r.regimen_fiscal == "comun"
@@ -309,6 +322,7 @@ class TestTerritorialMadrid:
 
 class TestTerritorialMalaga:
     """Malaga (Andalucia): regimen comun, IVA 21%, escala autonomica diferente."""
+
     def test_malaga_comun(self):
         r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Andalucía")
         assert r.regimen_fiscal == "comun"
@@ -321,6 +335,7 @@ class TestTerritorialMalaga:
 
 class TestTerritorialTenerife:
     """Tenerife (Canarias): IGIC 7% en vez de IVA 21%."""
+
     def test_canarias_igic(self):
         r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Canarias")
         assert r.regimen_fiscal == "canarias"
@@ -334,6 +349,7 @@ class TestTerritorialTenerife:
 
 class TestTerritorialMelilla:
     """Melilla: IPSI 4%, deduccion 60% cuota IRPF."""
+
     def test_melilla_ipsi_y_deduccion(self):
         r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Melilla")
         assert r.regimen_fiscal == "ceuta_melilla"
@@ -350,6 +366,7 @@ class TestTerritorialMelilla:
 
 class TestTerritorialBilbao:
     """Bilbao (Bizkaia): foral vasco, IVA 21%, escala propia."""
+
     def test_bizkaia_foral(self):
         r = _r(facturacion_bruta_mensual=3000.0, comunidad_autonoma="Bizkaia")
         assert r.regimen_fiscal == "foral_vasco"
@@ -363,6 +380,7 @@ class TestTerritorialBilbao:
 
 class TestCuotaSSPorIngresos:
     """Cuota SS auto-calculada por ingresos reales (sin cuota manual)."""
+
     def test_cuota_baja_ingresos(self):
         # 1000 EUR/mes facturacion -> rendimiento ~600 -> cuota baja
         r = _r(facturacion_bruta_mensual=1000.0)
@@ -382,6 +400,7 @@ class TestCuotaSSPorIngresos:
 # ---------------------------------------------------------------------------
 # Tests tarifa plana (DA 52a LGSS, RDL 13/2022): 80 EUR/mes nuevos autonomos
 # ---------------------------------------------------------------------------
+
 
 class TestTarifaPlana:
     def test_tarifa_plana_cuota_80(self):

@@ -18,8 +18,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +32,8 @@ ALERT_DEDUPE_TTL = 24 * 3600  # one alert per user per 24h
 @dataclass
 class AnomalyHit:
     user_id: str
-    email: Optional[str]
-    plan: Optional[str]
+    email: str | None
+    plan: str | None
     today_cost_usd: float
     baseline_avg_usd: float
     multiplier: float
@@ -52,15 +51,18 @@ class CostAnomalyDetector:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
-    async def find_anomalies(self, multiplier: float = DEFAULT_MULTIPLIER) -> List[AnomalyHit]:
+    async def find_anomalies(self, multiplier: float = DEFAULT_MULTIPLIER) -> list[AnomalyHit]:
         db = await self._get_db()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
         seven_days_ago = (now - timedelta(days=7)).isoformat()
-        yesterday_start = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        yesterday_start = (
+            (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        )
 
         # Today's cost per user
         today_result = await db.execute(
@@ -90,8 +92,9 @@ class CostAnomalyDetector:
             [seven_days_ago, today_start],
         )
         baseline_map = {
-            (row["user_id"] if "user_id" in row.keys() else row[0]):
-                float(row["baseline_avg"] if "baseline_avg" in row.keys() else row[1])
+            (row["user_id"] if "user_id" in row.keys() else row[0]): float(
+                row["baseline_avg"] if "baseline_avg" in row.keys() else row[1]
+            )
             for row in baseline_result.rows or []
         }
 
@@ -113,7 +116,7 @@ class CostAnomalyDetector:
             for row in meta_result.rows or []
         }
 
-        hits: List[AnomalyHit] = []
+        hits: list[AnomalyHit] = []
         for row in today_rows:
             uid = row["user_id"]
             today_cost = float(row["today_cost"])
@@ -129,24 +132,26 @@ class CostAnomalyDetector:
 
             ratio = (today_cost / baseline) if baseline > 0 else float("inf")
             meta = meta_map.get(uid, {})
-            hits.append(AnomalyHit(
-                user_id=uid,
-                email=meta.get("email"),
-                plan=meta.get("plan"),
-                today_cost_usd=round(today_cost, 4),
-                baseline_avg_usd=round(baseline, 4),
-                multiplier=round(ratio, 2) if ratio != float("inf") else -1,
-                today_requests=today_reqs,
-            ))
+            hits.append(
+                AnomalyHit(
+                    user_id=uid,
+                    email=meta.get("email"),
+                    plan=meta.get("plan"),
+                    today_cost_usd=round(today_cost, 4),
+                    baseline_avg_usd=round(baseline, 4),
+                    multiplier=round(ratio, 2) if ratio != float("inf") else -1,
+                    today_requests=today_reqs,
+                )
+            )
         return hits
 
-    async def alert_owner(self, hits: List[AnomalyHit], owner_email: str) -> int:
+    async def alert_owner(self, hits: list[AnomalyHit], owner_email: str) -> int:
         """Send a single grouped email if there are unalerted hits. Returns count emailed."""
         if not hits:
             return 0
 
         # Deduplicate via Redis flag (one alert per user per 24h)
-        new_hits: List[AnomalyHit] = []
+        new_hits: list[AnomalyHit] = []
         if self.redis is not None:
             for hit in hits:
                 key = f"cost_alert_sent:{hit.user_id}:{datetime.utcnow().strftime('%Y-%m-%d')}"
@@ -154,7 +159,9 @@ class CostAnomalyDetector:
                     existed = self.redis.get(key)
                     if existed:
                         continue
-                    self.redis.setex(key, ALERT_DEDUPE_TTL, "1") if hasattr(self.redis, "setex") else self.redis.set(key, "1", ex=ALERT_DEDUPE_TTL)
+                    self.redis.setex(key, ALERT_DEDUPE_TTL, "1") if hasattr(
+                        self.redis, "setex"
+                    ) else self.redis.set(key, "1", ex=ALERT_DEDUPE_TTL)
                 except Exception:
                     pass
                 new_hits.append(hit)
@@ -165,6 +172,7 @@ class CostAnomalyDetector:
             return 0
 
         from app.services.email_service import EmailService
+
         email = EmailService()
 
         rows_html = "".join(

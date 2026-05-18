@@ -21,36 +21,36 @@ const SIMULATION_KEYWORDS = [
 ]
 
 const CCAA_NAMES: Record<string, string> = {
-    'andalucía': 'Andalucía',
-    'andalucia': 'Andalucía',
-    'aragón': 'Aragón',
-    'aragon': 'Aragón',
-    'asturias': 'Asturias',
-    'baleares': 'Islas Baleares',
+    andalucía: 'Andalucía',
+    andalucia: 'Andalucía',
+    aragón: 'Aragón',
+    aragon: 'Aragón',
+    asturias: 'Asturias',
+    baleares: 'Islas Baleares',
     'islas baleares': 'Islas Baleares',
-    'canarias': 'Canarias',
-    'cantabria': 'Cantabria',
+    canarias: 'Canarias',
+    cantabria: 'Cantabria',
     'castilla-la mancha': 'Castilla-La Mancha',
     'castilla la mancha': 'Castilla-La Mancha',
     'castilla y león': 'Castilla y León',
     'castilla y leon': 'Castilla y León',
-    'cataluña': 'Cataluña',
-    'catalunya': 'Cataluña',
-    'ceuta': 'Ceuta',
+    cataluña: 'Cataluña',
+    catalunya: 'Cataluña',
+    ceuta: 'Ceuta',
     'comunidad valenciana': 'Comunidad Valenciana',
-    'valencia': 'Comunidad Valenciana',
-    'extremadura': 'Extremadura',
-    'galicia': 'Galicia',
+    valencia: 'Comunidad Valenciana',
+    extremadura: 'Extremadura',
+    galicia: 'Galicia',
     'la rioja': 'La Rioja',
-    'madrid': 'Madrid',
+    madrid: 'Madrid',
     'comunidad de madrid': 'Madrid',
-    'melilla': 'Melilla',
-    'murcia': 'Murcia',
+    melilla: 'Melilla',
+    murcia: 'Murcia',
     'región de murcia': 'Murcia',
-    'navarra': 'Navarra',
+    navarra: 'Navarra',
     'país vasco': 'País Vasco',
     'pais vasco': 'País Vasco',
-    'euskadi': 'País Vasco',
+    euskadi: 'País Vasco',
 }
 
 /**
@@ -59,7 +59,7 @@ const CCAA_NAMES: Record<string, string> = {
  */
 export function isIRPFSimulation(content: string): boolean {
     const lower = content.toLowerCase()
-    const matches = SIMULATION_KEYWORDS.filter(kw => lower.includes(kw))
+    const matches = SIMULATION_KEYWORDS.filter((kw) => lower.includes(kw))
     return matches.length >= 2
 }
 
@@ -94,8 +94,8 @@ function extractIncome(content: string): number | null {
         const matches = [...content.matchAll(pattern)]
         for (const match of matches) {
             const numStr = match[1]
-                .replace(/\./g, '')  // Remove thousands dots
-                .replace(/,/g, '.')  // Convert decimal comma
+                .replace(/\./g, '') // Remove thousands dots
+                .replace(/,/g, '.') // Convert decimal comma
             const num = parseFloat(numStr)
             // Income should be a reasonable amount (> 1000 and < 1M)
             if (num > 1000 && num < 1000000) {
@@ -146,7 +146,11 @@ interface ReportActionsProps {
     fiscalProfile?: FiscalProfileData
 }
 
-export function ReportActions({ messageContent, previousUserMessage, fiscalProfile }: ReportActionsProps) {
+export function ReportActions({
+    messageContent,
+    previousUserMessage,
+    fiscalProfile,
+}: ReportActionsProps) {
     const [downloading, setDownloading] = useState(false)
     const [downloaded, setDownloaded] = useState(false)
     const [reportId, setReportId] = useState<string | null>(null)
@@ -170,7 +174,7 @@ export function ReportActions({ messageContent, previousUserMessage, fiscalProfi
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token && { 'Authorization': `Bearer ${token}` }),
+                    ...(token && { Authorization: `Bearer ${token}` }),
                 },
                 body: JSON.stringify({
                     ccaa: fp.ccaa_residencia || ccaa,
@@ -275,15 +279,10 @@ export function ReportActions({ messageContent, previousUserMessage, fiscalProfi
                 )}
             </div>
 
-            {error && (
-                <p className="report-error">{error}</p>
-            )}
+            {error && <p className="report-error">{error}</p>}
 
             {showShareModal && reportId && (
-                <ShareReportModal
-                    reportId={reportId}
-                    onClose={() => setShowShareModal(false)}
-                />
+                <ShareReportModal reportId={reportId} onClose={() => setShowShareModal(false)} />
             )}
         </div>
     )

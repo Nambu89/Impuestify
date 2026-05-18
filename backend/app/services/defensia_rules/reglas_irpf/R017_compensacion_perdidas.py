@@ -35,6 +35,7 @@ Invariante #2 (design Parte 2): la cita normativa devuelta por la regla
 es SEMANTICA. La cita canonica ("Art. 49 LIRPF", parrafos, apartados) la
 resuelve el ``defensia_rag_verifier`` contra el corpus normativo.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -48,7 +49,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Cita semantica libre — el RAG verificador resuelve la referencia canonica.
 # Nunca debe contener "Art. 49", "LIRPF" ni numeros de articulo.
@@ -137,11 +137,7 @@ def evaluar(
     del plazo, o la compensacion ya alcanza el limite.
     """
     doc_liquidacion = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDACION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDACION),
         None,
     )
     if doc_liquidacion is None:
@@ -160,9 +156,7 @@ def evaluar(
     if not isinstance(perdidas_pendientes, list) or not perdidas_pendientes:
         return None
 
-    total_pendiente = _total_pendiente_en_plazo(
-        perdidas_pendientes, ejercicio_actual
-    )
+    total_pendiente = _total_pendiente_en_plazo(perdidas_pendientes, ejercicio_actual)
     if total_pendiente <= 0:
         # Todas las perdidas han caducado o el total es nulo.
         return None
@@ -192,14 +186,10 @@ def evaluar(
     # datos_disparo que los tests comparan con enteros.
     delta_norm: Any = int(delta) if float(delta).is_integer() else delta
     compensado_norm: Any = (
-        int(compensado_actual)
-        if float(compensado_actual).is_integer()
-        else compensado_actual
+        int(compensado_actual) if float(compensado_actual).is_integer() else compensado_actual
     )
     limite_norm: Any = (
-        int(limite_aplicable)
-        if float(limite_aplicable).is_integer()
-        else limite_aplicable
+        int(limite_aplicable) if float(limite_aplicable).is_integer() else limite_aplicable
     )
 
     return ArgumentoCandidato(

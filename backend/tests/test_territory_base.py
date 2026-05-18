@@ -1,4 +1,5 @@
 import pytest
+
 from app.territories.base import TerritoryPlugin
 
 

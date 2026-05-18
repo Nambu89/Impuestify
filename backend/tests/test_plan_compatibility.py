@@ -5,14 +5,16 @@ Covers:
 - validate_plan_role_compatibility() helper (unit tests)
 - update_fiscal_profile endpoint 403/200 behaviour (integration tests)
 """
+
 import sys
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Stub heavy deps before importing app modules
 # ---------------------------------------------------------------------------
+
 
 def _ensure_mock(module_name, **attrs):
     """Insert a MagicMock into sys.modules if the real module is absent."""
@@ -37,15 +39,15 @@ _ensure_mock("stripe")
 # ---------------------------------------------------------------------------
 
 from app.services.subscription_service import (  # noqa: E402
-    validate_plan_role_compatibility,
     SubscriptionAccess,
     SubscriptionService,
+    validate_plan_role_compatibility,
 )
-
 
 # ---------------------------------------------------------------------------
 # Unit tests — validate_plan_role_compatibility()
 # ---------------------------------------------------------------------------
+
 
 class TestValidatePlanRoleCompatibility:
     """Unit tests for the standalone helper function."""
@@ -135,6 +137,7 @@ class TestValidatePlanRoleCompatibility:
 # We mock the subscription service so no DB is needed.
 # ---------------------------------------------------------------------------
 
+
 class FakeRow(dict):
     pass
 
@@ -179,9 +182,12 @@ def _mock_current_user(user_id="user-123", email="test@impuestify.com"):
 
 
 # We import the router after stubs are in place.
-from app.routers.user_rights import update_fiscal_profile  # noqa: E402
-from app.routers.user_rights import FiscalProfileRequest   # noqa: E402
-from fastapi import HTTPException                          # noqa: E402
+from fastapi import HTTPException  # noqa: E402
+
+from app.routers.user_rights import (
+    FiscalProfileRequest,  # noqa: E402
+    update_fiscal_profile,  # noqa: E402
+)
 
 
 async def _call_endpoint(body_data: dict, plan_type: str, is_owner: bool = False):
@@ -274,9 +280,7 @@ class TestUpdateFiscalProfilePlanCheck:
             "app.routers.user_rights.get_subscription_service",
             return_value=mock_service,
         ):
-            result = await update_fiscal_profile(
-                body=body, current_user=current_user, db=mock_db
-            )
+            result = await update_fiscal_profile(body=body, current_user=current_user, db=mock_db)
 
         mock_service.check_access.assert_not_called()
         assert result["message"] == "Perfil fiscal guardado correctamente"

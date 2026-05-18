@@ -10,9 +10,8 @@ The URL itself is supplied by the registry (from `norms.yaml::url_html_consolida
 NOT hardcoded here. This source is just an adapter; the URLs themselves
 remain data-driven.
 """
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 from app.services.legal.sources.base import LegalSource, NormaSourceMetadata
 
@@ -22,15 +21,15 @@ class StaticUrlSource(LegalSource):
 
     source_id = "static_url"
 
-    async def fetch_norma(self, norm_id: str) -> Optional[NormaSourceMetadata]:
+    async def fetch_norma(self, norm_id: str) -> NormaSourceMetadata | None:
         # No backing API → can't fetch dynamic metadata.
         return None
 
-    async def is_vigent(self, norm_id: str) -> Optional[bool]:
+    async def is_vigent(self, norm_id: str) -> bool | None:
         # No vigencia endpoint → unknown. Callers treat as "assume vigent".
         return None
 
-    def get_url_html(self, norm_id: str) -> Optional[str]:
+    def get_url_html(self, norm_id: str) -> str | None:
         # The norm_id IS the URL for this source — the registry passes
         # the configured `url_html_consolidada` here directly.
         if not norm_id:

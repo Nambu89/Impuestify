@@ -17,16 +17,15 @@ the layer's nature requires it (topic classifier especially).
 """
 
 import logging
-import unicodedata
 import re
+import unicodedata
 from dataclasses import dataclass, field
-from typing import List, Optional
 
-from app.security.prompt_injection import prompt_injection_filter
+from app.security.audit_logger import AuditEventType, audit_logger
 from app.security.pii_detector import pii_detector
+from app.security.prompt_injection import prompt_injection_filter
 from app.security.sql_injection import sql_validator
-from app.security.topic_classifier import check_fiscal_topic, TopicContext
-from app.security.audit_logger import audit_logger, AuditEventType
+from app.security.topic_classifier import TopicContext, check_fiscal_topic
 
 logger = logging.getLogger(__name__)
 
@@ -41,38 +40,37 @@ REJECTION_MESSAGE = (
 @dataclass
 class PipelineResult:
     is_safe: bool
-    layer: str                       # which layer rejected (or 'all_clear')
-    reason: str                      # human-readable reason
-    matched_patterns: List[str] = field(default_factory=list)
-    rejection_message: Optional[str] = None
+    layer: str  # which layer rejected (or 'all_clear')
+    reason: str  # human-readable reason
+    matched_patterns: list[str] = field(default_factory=list)
+    rejection_message: str | None = None
     sanitized_text: str = ""
 
 
 # Strict greetings allowed without classifier (avoid blocking "hola")
 _GREETING_PATTERNS = [
-    re.compile(r"^\s*(hola|buenas|buenos\s+días|buenas\s+tardes|buenas\s+noches|qué\s+tal|hey|hi|hello)\s*[!.?¿¡]?\s*$", re.IGNORECASE),
+    re.compile(
+        r"^\s*(hola|buenas|buenos\s+días|buenas\s+tardes|buenas\s+noches|qué\s+tal|hey|hi|hello)\s*[!.?¿¡]?\s*$",
+        re.IGNORECASE,
+    ),
 ]
 
 # Hard size limits for user input. RAG chunks use sanitize_text(no cap).
-MAX_LENGTH = 4000          # chars
-MIN_LENGTH = 2             # chars (we already short-circuit on greetings)
+MAX_LENGTH = 4000  # chars
+MIN_LENGTH = 2  # chars (we already short-circuit on greetings)
 
 
 # Pre-compiled regexes for sanitization (zero-width + bidi + control).
 # Using \uXXXX escapes (not raw chars) so the file stays ASCII-safe.
-_ZERO_WIDTH_RE = re.compile(
-    "[​-‏ -‮⁠-⁯]"
-)
-_CONTROL_RE = re.compile(
-    "[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]"
-)
+_ZERO_WIDTH_RE = re.compile("[​-‏ -‮⁠-⁯]")
+_CONTROL_RE = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 
 def _is_greeting(text: str) -> bool:
     return any(p.match(text.strip()) for p in _GREETING_PATTERNS)
 
 
-def sanitize_text(text: str, max_length: Optional[int] = None) -> str:
+def sanitize_text(text: str, max_length: int | None = None) -> str:
     """
     Strip zero-width and control chars, normalize unicode (NFKC).
 
@@ -120,8 +118,8 @@ class SecurityPipeline:
     def check(
         self,
         question: str,
-        user_id: Optional[str] = None,
-        context: Optional[TopicContext] = None,
+        user_id: str | None = None,
+        context: TopicContext | None = None,
     ) -> PipelineResult:
         """
         Run all enabled layers in order. Short-circuit on first reject.
@@ -228,13 +226,14 @@ class SecurityPipeline:
         layer: str,
         reason: str,
         sanitized: str = "",
-        matched: Optional[List[str]] = None,
-        user_id: Optional[str] = None,
+        matched: list[str] | None = None,
+        user_id: str | None = None,
     ) -> PipelineResult:
         # Audit log — map pipeline layer to existing audit event types
         try:
             event_type = (
-                AuditEventType.SECURITY_PII_DETECTED if layer == "pii"
+                AuditEventType.SECURITY_PII_DETECTED
+                if layer == "pii"
                 else AuditEventType.SECURITY_INJECTION_ATTEMPT
             )
             audit_logger.log(

@@ -4,15 +4,16 @@ Report Generator for TaxIA.
 Generates PDF reports using ReportLab with IRPF simulation results,
 deductions, and fiscal profile data.
 """
+
 import io
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_markdown_to_reportlab(markdown_text: str) -> List[str]:
+def _parse_markdown_to_reportlab(markdown_text: str) -> list[str]:
     """
     Convert basic markdown to ReportLab-compatible paragraphs.
 
@@ -25,8 +26,8 @@ def _parse_markdown_to_reportlab(markdown_text: str) -> List[str]:
     import re
 
     lines = markdown_text.split("\n")
-    paragraphs: List[str] = []
-    current_paragraph: List[str] = []
+    paragraphs: list[str] = []
+    current_paragraph: list[str] = []
 
     for line in lines:
         stripped = line.strip()
@@ -71,11 +72,11 @@ def _parse_markdown_to_reportlab(markdown_text: str) -> List[str]:
 
 def generate_irpf_report(
     user_name: str,
-    simulation_data: Optional[Dict[str, Any]] = None,
-    deductions: Optional[List[Dict[str, Any]]] = None,
-    fiscal_profile: Optional[Dict[str, Any]] = None,
+    simulation_data: dict[str, Any] | None = None,
+    deductions: list[dict[str, Any]] | None = None,
+    fiscal_profile: dict[str, Any] | None = None,
     estimated_savings: float = 0.0,
-    chat_content: Optional[str] = None,
+    chat_content: str | None = None,
 ) -> bytes:
     """
     Generate a PDF report with IRPF simulation and deductions.
@@ -91,14 +92,19 @@ def generate_irpf_report(
     Returns:
         PDF file as bytes
     """
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.units import mm
     from reportlab.lib.colors import HexColor
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
     from reportlab.platypus import (
-        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable,
+        HRFlowable,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
     )
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -170,10 +176,12 @@ def generate_irpf_report(
 
     # === HEADER ===
     elements.append(Paragraph("Impuestify", title_style))
-    elements.append(Paragraph(
-        f"Informe Fiscal IRPF — {datetime.now().strftime('%d/%m/%Y')}",
-        ParagraphStyle("Subtitle", parent=body_style, fontSize=12, textColor=gray),
-    ))
+    elements.append(
+        Paragraph(
+            f"Informe Fiscal IRPF — {datetime.now().strftime('%d/%m/%Y')}",
+            ParagraphStyle("Subtitle", parent=body_style, fontSize=12, textColor=gray),
+        )
+    )
     elements.append(Spacer(1, 4 * mm))
     elements.append(HRFlowable(width="100%", thickness=1, color=primary))
     elements.append(Spacer(1, 6 * mm))
@@ -200,17 +208,21 @@ def generate_irpf_report(
 
     if len(taxpayer_data) > 1:
         t = Table(taxpayer_data, colWidths=[60 * mm, 100 * mm])
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), primary),
-            ("TEXTCOLOR", (0, 0), (-1, 0), white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
-            ("BACKGROUND", (0, 1), (-1, -1), light_bg),
-            ("GRID", (0, 0), (-1, -1), 0.5, gray),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ]))
+        t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), primary),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BACKGROUND", (0, 1), (-1, -1), light_bg),
+                    ("GRID", (0, 0), (-1, -1), 0.5, gray),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ]
+            )
+        )
         elements.append(t)
 
     # === IRPF SIMULATION ===
@@ -253,18 +265,22 @@ def generate_irpf_report(
                     sim_rows.append([label, f"{val:,.2f} EUR"])
 
         t = Table(sim_rows, colWidths=[100 * mm, 60 * mm])
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), primary),
-            ("TEXTCOLOR", (0, 0), (-1, 0), white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
-            ("BACKGROUND", (0, 1), (-1, -1), light_bg),
-            ("GRID", (0, 0), (-1, -1), 0.5, gray),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-            ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-        ]))
+        t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), primary),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BACKGROUND", (0, 1), (-1, -1), light_bg),
+                    ("GRID", (0, 0), (-1, -1), 0.5, gray),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                ]
+            )
+        )
         elements.append(t)
 
     # === DEDUCTIONS ===
@@ -286,27 +302,33 @@ def generate_irpf_report(
             ded_rows.append([name, dtype, amount])
 
         t = Table(ded_rows, colWidths=[80 * mm, 30 * mm, 50 * mm])
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), green),
-            ("TEXTCOLOR", (0, 0), (-1, 0), white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
-            ("BACKGROUND", (0, 1), (-1, -1), light_bg),
-            ("GRID", (0, 0), (-1, -1), 0.5, gray),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-            ("ALIGN", (2, 0), (2, -1), "RIGHT"),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ]))
+        t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), green),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BACKGROUND", (0, 1), (-1, -1), light_bg),
+                    ("GRID", (0, 0), (-1, -1), 0.5, gray),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("ALIGN", (2, 0), (2, -1), "RIGHT"),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ]
+            )
+        )
         elements.append(t)
 
         if estimated_savings > 0:
             elements.append(Spacer(1, 3 * mm))
-            elements.append(Paragraph(
-                f"Ahorro estimado total por deducciones: {estimated_savings:,.0f} EUR",
-                green_amount_style,
-            ))
+            elements.append(
+                Paragraph(
+                    f"Ahorro estimado total por deducciones: {estimated_savings:,.0f} EUR",
+                    green_amount_style,
+                )
+            )
 
     # === PERSONALIZED ANALYSIS (from chat) ===
     if chat_content:
@@ -322,20 +344,24 @@ def generate_irpf_report(
     elements.append(Spacer(1, 10 * mm))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=gray))
     elements.append(Spacer(1, 3 * mm))
-    elements.append(Paragraph(
-        "AVISO LEGAL: Este informe ha sido generado automáticamente por Impuestify y tiene "
-        "carácter meramente orientativo e informativo. No constituye asesoramiento fiscal "
-        "profesional ni sustituye la consulta a un asesor fiscal cualificado. Los cálculos "
-        "se basan en la información proporcionada por el usuario y en la normativa fiscal "
-        "vigente en el momento de la generación. Impuestify no se responsabiliza de errores "
-        "u omisiones en los datos proporcionados ni de las decisiones tomadas en base a este informe.",
-        small_style,
-    ))
+    elements.append(
+        Paragraph(
+            "AVISO LEGAL: Este informe ha sido generado automáticamente por Impuestify y tiene "
+            "carácter meramente orientativo e informativo. No constituye asesoramiento fiscal "
+            "profesional ni sustituye la consulta a un asesor fiscal cualificado. Los cálculos "
+            "se basan en la información proporcionada por el usuario y en la normativa fiscal "
+            "vigente en el momento de la generación. Impuestify no se responsabiliza de errores "
+            "u omisiones en los datos proporcionados ni de las decisiones tomadas en base a este informe.",
+            small_style,
+        )
+    )
     elements.append(Spacer(1, 3 * mm))
-    elements.append(Paragraph(
-        f"Generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')} por Impuestify (impuestify.com)",
-        ParagraphStyle("Footer", parent=small_style, alignment=TA_CENTER),
-    ))
+    elements.append(
+        Paragraph(
+            f"Generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')} por Impuestify (impuestify.com)",
+            ParagraphStyle("Footer", parent=small_style, alignment=TA_CENTER),
+        )
+    )
 
     # Build PDF
     doc.build(elements)

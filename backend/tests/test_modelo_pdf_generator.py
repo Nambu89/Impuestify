@@ -4,13 +4,14 @@ Tests for ModeloPDFGenerator.
 Verifies PDF generation for all 13 supported modelo types (7 full + 6 placeholder)
 plus unknown modelo validation.
 """
+
 import pytest
 
 from app.services.modelo_pdf_generator import (
-    ModeloPDFGenerator,
-    VALID_MODELOS,
     FULL_MODELOS,
     PLACEHOLDER_MODELOS,
+    VALID_MODELOS,
+    ModeloPDFGenerator,
 )
 
 
@@ -220,7 +221,11 @@ class TestModeloPDFPlaceholders:
     def test_placeholder_modelos_expected(self):
         """Placeholder set must include all anunciados pendientes."""
         assert PLACEHOLDER_MODELOS == {
-            "100", "309", "420", "450", "455",
+            "100",
+            "309",
+            "420",
+            "450",
+            "455",
         }
 
     @pytest.mark.parametrize("modelo", sorted(PLACEHOLDER_MODELOS))
@@ -229,9 +234,7 @@ class TestModeloPDFPlaceholders:
         result = generator.generate(modelo, {}, user_info, "1T", 2026)
         _assert_valid_pdf(result)
         # Reinforce the >=1KB requirement explicitly
-        assert len(result) >= 1024, (
-            f"Placeholder modelo {modelo} produced only {len(result)} bytes"
-        )
+        assert len(result) >= 1024, f"Placeholder modelo {modelo} produced only {len(result)} bytes"
 
     @pytest.mark.parametrize("modelo", sorted(PLACEHOLDER_MODELOS))
     def test_placeholder_contains_disclaimer_text(self, generator, user_info, modelo):

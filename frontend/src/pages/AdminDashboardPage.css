@@ -242,9 +242,15 @@
     flex-shrink: 0;
 }
 
-.adp-type--bug { background: #fca5a5; }
-.adp-type--feature { background: #fcd34d; }
-.adp-type--general { background: rgba(255, 255, 255, 0.3); }
+.adp-type--bug {
+    background: #fca5a5;
+}
+.adp-type--feature {
+    background: #fcd34d;
+}
+.adp-type--general {
+    background: rgba(255, 255, 255, 0.3);
+}
 
 /* Status mini badge */
 .adp-status-mini {
@@ -259,11 +265,21 @@
     color: var(--color-accent);
 }
 
-.adp-status--reviewed { color: #93c5fd; }
-.adp-status--planned { color: #a78bfa; }
-.adp-status--in_progress { color: #fcd34d; }
-.adp-status--done { color: #6ee7b7; }
-.adp-status--wont_fix { color: rgba(255, 255, 255, 0.3); }
+.adp-status--reviewed {
+    color: #93c5fd;
+}
+.adp-status--planned {
+    color: #a78bfa;
+}
+.adp-status--in_progress {
+    color: #fcd34d;
+}
+.adp-status--done {
+    color: #6ee7b7;
+}
+.adp-status--wont_fix {
+    color: rgba(255, 255, 255, 0.3);
+}
 
 .adp-date {
     font-size: 11px;

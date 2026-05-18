@@ -3,11 +3,11 @@ Subscription Service for TaxIA/Impuestify
 
 Handles Stripe integration, subscription lifecycle, and access control.
 """
-import uuid
+
 import logging
+import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from app.config import settings
 
@@ -22,6 +22,7 @@ def _get_stripe():
     global stripe
     if stripe is None:
         import stripe as _stripe
+
         _stripe.api_key = settings.STRIPE_SECRET_KEY
         stripe = _stripe
     return stripe
@@ -30,13 +31,14 @@ def _get_stripe():
 @dataclass
 class SubscriptionAccess:
     """Result of a subscription access check."""
+
     has_access: bool
     is_owner: bool
-    plan_type: Optional[str] = None
-    status: Optional[str] = None
+    plan_type: str | None = None
+    status: str | None = None
     reason: str = "no_subscription"
     # For frontend: where to redirect if no access
-    checkout_url: Optional[str] = None
+    checkout_url: str | None = None
 
 
 class SubscriptionService:
@@ -49,6 +51,7 @@ class SubscriptionService:
         if self.db:
             return self.db
         from app.database.turso_client import get_db_client
+
         return await get_db_client()
 
     # ------------------------------------------------------------------
@@ -56,8 +59,8 @@ class SubscriptionService:
     # ------------------------------------------------------------------
 
     async def create_stripe_customer(
-        self, user_id: str, email: str, name: Optional[str] = None
-    ) -> Optional[str]:
+        self, user_id: str, email: str, name: str | None = None
+    ) -> str | None:
         """
         Create a Stripe customer and insert a subscription record (inactive).
 
@@ -84,7 +87,9 @@ class SubscriptionService:
             name=name,
             metadata={"user_id": user_id},
         )
-        logger.info("Stripe customer created", extra={"user_id": user_id, "customer_id": customer.id})
+        logger.info(
+            "Stripe customer created", extra={"user_id": user_id, "customer_id": customer.id}
+        )
 
         if existing.rows:
             # Row exists but stripe_customer_id was NULL (grace_period/beta users)
@@ -114,9 +119,8 @@ class SubscriptionService:
     # ------------------------------------------------------------------
 
     async def create_checkout_session(
-        self, user_id: str, success_url: str, cancel_url: str,
-        plan_type: str = "particular"
-    ) -> Optional[str]:
+        self, user_id: str, success_url: str, cancel_url: str, plan_type: str = "particular"
+    ) -> str | None:
         """
         Create a Stripe Checkout Session.
 
@@ -139,9 +143,7 @@ class SubscriptionService:
 
         # If no customer ID yet (grace_period/beta users), create one now
         if not customer_id:
-            user_result = await db.execute(
-                "SELECT email, name FROM users WHERE id = ?", [user_id]
-            )
+            user_result = await db.execute("SELECT email, name FROM users WHERE id = ?", [user_id])
             if not user_result.rows:
                 raise ValueError("Usuario no encontrado.")
 
@@ -177,7 +179,7 @@ class SubscriptionService:
         logger.info("Checkout session created", extra={"user_id": user_id})
         return session.url
 
-    async def create_portal_session(self, user_id: str, return_url: str) -> Optional[str]:
+    async def create_portal_session(self, user_id: str, return_url: str) -> str | None:
         """
         Create a Stripe Customer Portal session for subscription management.
 
@@ -228,9 +230,7 @@ class SubscriptionService:
 
         # Verify webhook signature (only this raises to caller)
         try:
-            event = s.Webhook.construct_event(
-                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-            )
+            event = s.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
         except s.error.SignatureVerificationError:
             logger.warning("Webhook signature verification failed")
             raise ValueError("Invalid signature")
@@ -307,7 +307,7 @@ class SubscriptionService:
             extra={"customer_id": customer_id, "plan_type": plan_type},
         )
 
-    def _plan_type_from_price_id(self, price_id: Optional[str]) -> Optional[str]:
+    def _plan_type_from_price_id(self, price_id: str | None) -> str | None:
         """Map a Stripe price id to our plan_type. Returns None if unknown."""
         if not price_id:
             return None
@@ -320,10 +320,10 @@ class SubscriptionService:
         return None
 
     @staticmethod
-    def _ts_to_iso(ts: Optional[int]) -> Optional[str]:
+    def _ts_to_iso(ts: int | None) -> str | None:
         if not ts:
             return None
-        return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
+        return datetime.fromtimestamp(ts, tz=UTC).isoformat()
 
     async def _handle_subscription_upserted(self, subscription: dict):
         """Handle customer.subscription.created or .updated.
@@ -352,13 +352,11 @@ class SubscriptionService:
         # not on the root subscription object. Fall back to root for older payloads.
         items = (subscription.get("items") or {}).get("data") or []
         first_item = items[0] if items else {}
-        period_start_ts = (
-            first_item.get("current_period_start")
-            or subscription.get("current_period_start")
+        period_start_ts = first_item.get("current_period_start") or subscription.get(
+            "current_period_start"
         )
-        period_end_ts = (
-            first_item.get("current_period_end")
-            or subscription.get("current_period_end")
+        period_end_ts = first_item.get("current_period_end") or subscription.get(
+            "current_period_end"
         )
         period_start_str = self._ts_to_iso(period_start_ts)
         period_end_str = self._ts_to_iso(period_end_ts)
@@ -411,7 +409,9 @@ class SubscriptionService:
         db = await self._get_db()
         customer_id = invoice.get("customer")
         subscription_id = invoice.get("subscription")
-        period_end = invoice.get("period_end") or invoice.get("lines", {}).get("data", [{}])[0].get("period", {}).get("end")
+        period_end = invoice.get("period_end") or invoice.get("lines", {}).get("data", [{}])[0].get(
+            "period", {}
+        ).get("end")
         period_end_str = self._ts_to_iso(period_end)
 
         if not customer_id:
@@ -522,7 +522,7 @@ class SubscriptionService:
     # Access Control
     # ------------------------------------------------------------------
 
-    async def check_access(self, user_id: str, email: Optional[str] = None) -> SubscriptionAccess:
+    async def check_access(self, user_id: str, email: str | None = None) -> SubscriptionAccess:
         """
         Check if a user has access to the application.
 
@@ -557,9 +557,7 @@ class SubscriptionService:
         )
 
         if not result.rows:
-            return SubscriptionAccess(
-                has_access=False, is_owner=False, reason="user_not_found"
-            )
+            return SubscriptionAccess(has_access=False, is_owner=False, reason="user_not_found")
 
         row = result.rows[0]
 
@@ -591,7 +589,7 @@ class SubscriptionService:
         if sub_status == "grace_period" and period_end:
             try:
                 end_date = datetime.fromisoformat(period_end)
-                if end_date >= datetime.now(timezone.utc):
+                if end_date >= datetime.now(UTC):
                     return SubscriptionAccess(
                         has_access=True,
                         is_owner=False,
@@ -611,12 +609,10 @@ class SubscriptionService:
             reason="no_active_subscription",
         )
 
-    async def get_subscription(self, user_id: str) -> Optional[dict]:
+    async def get_subscription(self, user_id: str) -> dict | None:
         """Get subscription record for a user."""
         db = await self._get_db()
-        result = await db.execute(
-            "SELECT * FROM subscriptions WHERE user_id = ?", [user_id]
-        )
+        result = await db.execute("SELECT * FROM subscriptions WHERE user_id = ?", [user_id])
         return result.rows[0] if result.rows else None
 
     async def sync_from_stripe(self, user_id: str) -> dict:
@@ -645,7 +641,11 @@ class SubscriptionService:
         s = _get_stripe()
 
         subs = s.Subscription.list(customer=customer_id, status="all", limit=10)
-        items = list(subs.auto_paging_iter()) if hasattr(subs, "auto_paging_iter") else (subs.data or [])
+        items = (
+            list(subs.auto_paging_iter())
+            if hasattr(subs, "auto_paging_iter")
+            else (subs.data or [])
+        )
 
         if not items:
             return {
@@ -654,8 +654,15 @@ class SubscriptionService:
                 "customer_id": customer_id,
             }
 
-        priority = {"active": 0, "trialing": 1, "past_due": 2, "unpaid": 3,
-                    "incomplete": 4, "canceled": 5, "incomplete_expired": 6}
+        priority = {
+            "active": 0,
+            "trialing": 1,
+            "past_due": 2,
+            "unpaid": 3,
+            "incomplete": 4,
+            "canceled": 5,
+            "incomplete_expired": 6,
+        }
         items.sort(key=lambda sub: priority.get(getattr(sub, "status", "incomplete"), 99))
         chosen = items[0]
         chosen_dict = chosen.to_dict() if hasattr(chosen, "to_dict") else dict(chosen)
@@ -691,10 +698,10 @@ class SubscriptionService:
 
 
 def validate_plan_role_compatibility(
-    plan_type: Optional[str],
+    plan_type: str | None,
     situacion_laboral: str,
     is_owner: bool = False,
-) -> Optional[dict]:
+) -> dict | None:
     """
     Validate if a subscription plan allows a given fiscal role.
 
@@ -737,7 +744,7 @@ def validate_plan_role_compatibility(
 
 
 # Global singleton
-_subscription_service: Optional[SubscriptionService] = None
+_subscription_service: SubscriptionService | None = None
 
 
 async def get_subscription_service() -> SubscriptionService:

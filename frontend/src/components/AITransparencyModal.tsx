@@ -45,11 +45,7 @@ export default function AITransparencyModal({ onAccept }: AITransparencyModalPro
                         <Bot size={28} className="ai-icon" />
                         <h2>Sistema de Inteligencia Artificial</h2>
                     </div>
-                    <button
-                        className="ai-modal-close"
-                        onClick={handleAccept}
-                        aria-label="Cerrar"
-                    >
+                    <button className="ai-modal-close" onClick={handleAccept} aria-label="Cerrar">
                         <X size={24} />
                     </button>
                 </div>
@@ -59,8 +55,8 @@ export default function AITransparencyModal({ onAccept }: AITransparencyModalPro
                     <div className="ai-notice">
                         <Shield size={20} />
                         <p>
-                            <strong>Impuestify funciona con IA</strong> (modelos de lenguaje de última generación) para
-                            responder tus consultas fiscales.
+                            <strong>Impuestify funciona con IA</strong> (modelos de lenguaje de
+                            última generación) para responder tus consultas fiscales.
                         </p>
                     </div>
 
@@ -71,7 +67,10 @@ export default function AITransparencyModal({ onAccept }: AITransparencyModalPro
                             <AlertCircle size={18} className="feature-icon warning" />
                             <div className="feature-text">
                                 <strong>La IA se equivoca</strong>
-                                <p>A veces inventa datos. Revisa siempre las cifras antes de usarlas.</p>
+                                <p>
+                                    A veces inventa datos. Revisa siempre las cifras antes de
+                                    usarlas.
+                                </p>
                             </div>
                         </div>
 
@@ -79,7 +78,10 @@ export default function AITransparencyModal({ onAccept }: AITransparencyModalPro
                             <CheckCircle size={18} className="feature-icon success" />
                             <div className="feature-text">
                                 <strong>Esto no sustituye a un asesor</strong>
-                                <p>Para decisiones importantes, contrasta con un fiscalista colegiado.</p>
+                                <p>
+                                    Para decisiones importantes, contrasta con un fiscalista
+                                    colegiado.
+                                </p>
                             </div>
                         </div>
 
@@ -109,10 +111,7 @@ export default function AITransparencyModal({ onAccept }: AITransparencyModalPro
 
                 {/* Footer */}
                 <div className="ai-modal-footer">
-                    <button
-                        className="btn btn-primary-ai"
-                        onClick={handleAccept}
-                    >
+                    <button className="btn btn-primary-ai" onClick={handleAccept}>
                         <CheckCircle size={18} />
                         Entendido
                     </button>

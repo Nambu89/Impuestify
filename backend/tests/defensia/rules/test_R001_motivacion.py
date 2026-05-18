@@ -19,6 +19,7 @@ Triggers soportados (segun research R001):
     - Motivacion por remision sin haber notificado el acto previo
       (`motivacion_por_remision=True` + `acto_previo_notificado=False`)
 """
+
 from __future__ import annotations
 
 import importlib
@@ -34,7 +35,6 @@ from app.models.defensia import (
 from app.services.defensia_rules.reglas_procedimentales import R001_motivacion
 from app.services.defensia_rules_engine import REGISTRY, evaluar
 
-
 # ---------------------------------------------------------------------------
 # Re-registro de R001 en cada test
 # ---------------------------------------------------------------------------
@@ -43,6 +43,7 @@ from app.services.defensia_rules_engine import REGISTRY, evaluar
 # el REGISTRY vacio. Como `importlib.import_module` devuelve el modulo cacheado
 # y NO re-ejecuta el decorador `@regla`, necesitamos `importlib.reload()` para
 # forzar la re-registracion de R001 antes de cada test.
+
 
 @pytest.fixture(autouse=True)
 def _recargar_R001():
@@ -54,6 +55,7 @@ def _recargar_R001():
 # ---------------------------------------------------------------------------
 # Helpers locales
 # ---------------------------------------------------------------------------
+
 
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear el articulo canonico.
@@ -80,6 +82,7 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
 # Test 1 — Positivo: liquidacion sin fundamentos de derecho
 # ---------------------------------------------------------------------------
 
+
 def test_R001_positivo_sin_fundamentos_de_derecho(build_exp, build_brief, build_doc):
     """Si la liquidacion provisional no contiene fundamentos de derecho, dispara."""
     doc = build_doc(
@@ -98,9 +101,9 @@ def test_R001_positivo_sin_fundamentos_de_derecho(build_exp, build_brief, build_
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R001"
@@ -108,23 +111,21 @@ def test_R001_positivo_sin_fundamentos_de_derecho(build_exp, build_brief, build_
     # La cita debe ser semantica, NO hardcoded.
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
     assert "motivacion" in arg.cita_normativa_propuesta.lower(), (
-        f"La cita semantica debe mencionar 'motivacion', got: "
-        f"{arg.cita_normativa_propuesta!r}"
+        f"La cita semantica debe mencionar 'motivacion', got: " f"{arg.cita_normativa_propuesta!r}"
     )
 
     # datos_disparo debe exponer el motivo por el que dispara.
-    assert arg.datos_disparo.get("motivo") == "sin_fundamentos_derecho", (
-        f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("motivo") == "sin_fundamentos_derecho"
+    ), f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — Positivo: motivacion por remision sin acto previo notificado
 # ---------------------------------------------------------------------------
 
-def test_R001_positivo_motivacion_por_remision_sin_acto_previo(
-    build_exp, build_brief, build_doc
-):
+
+def test_R001_positivo_motivacion_por_remision_sin_acto_previo(build_exp, build_brief, build_doc):
     """Motivacion 'por remision' solo es valida si el acto previo esta notificado.
 
     Doctrina TEAC reiterada — si la liquidacion se remite a un acto anterior
@@ -147,20 +148,19 @@ def test_R001_positivo_motivacion_por_remision_sin_acto_previo(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}"
-    )
+    assert len(candidatos) == 1, f"Se esperaba 1 argumento candidato, got {len(candidatos)}"
     arg = candidatos[0]
     assert arg.regla_id == "R001"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
-    assert arg.datos_disparo.get("motivo") == "remision_sin_acto_previo", (
-        f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("motivo") == "remision_sin_acto_previo"
+    ), f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 3 — Negativo: motivacion completa (fundamentos + sin remision)
 # ---------------------------------------------------------------------------
+
 
 def test_R001_negativo_motivacion_completa(build_exp, build_brief, build_doc):
     """Si el acto contiene fundamentos de derecho y no usa motivacion por
@@ -182,14 +182,14 @@ def test_R001_negativo_motivacion_completa(build_exp, build_brief, build_doc):
     candidatos = evaluar(exp, brief)
 
     assert candidatos == [], (
-        f"La regla NO deberia disparar cuando hay motivacion completa, "
-        f"got: {candidatos}"
+        f"La regla NO deberia disparar cuando hay motivacion completa, " f"got: {candidatos}"
     )
 
 
 # ---------------------------------------------------------------------------
 # Test 4 — Negativo: fase fuera de alcance
 # ---------------------------------------------------------------------------
+
 
 def test_R001_negativo_fase_fuera_de_alcance(build_exp, build_brief, build_doc):
     """Aunque el documento cumpla el trigger tecnico, si la fase del expediente
@@ -211,14 +211,15 @@ def test_R001_negativo_fase_fuera_de_alcance(build_exp, build_brief, build_doc):
 
     candidatos = evaluar(exp, brief)
 
-    assert candidatos == [], (
-        f"La regla NO deberia disparar en fase FUERA_DE_ALCANCE, got: {candidatos}"
-    )
+    assert (
+        candidatos == []
+    ), f"La regla NO deberia disparar en fase FUERA_DE_ALCANCE, got: {candidatos}"
 
 
 # ---------------------------------------------------------------------------
 # Test 5 — Smoke de registro: R001 aparece en el REGISTRY tras el import
 # ---------------------------------------------------------------------------
+
 
 def test_R001_registrada_en_registry():
     """El reload del modulo R001_motivacion debe auto-registrar la regla."""

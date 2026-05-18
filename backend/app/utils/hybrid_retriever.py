@@ -7,10 +7,10 @@ Combines two search strategies with Reciprocal Rank Fusion (RRF):
 
 Falls back to FTS5-only if Upstash Vector is unavailable.
 """
-import struct
-import logging
+
 import asyncio
-from typing import List, Dict, Any, Optional
+import logging
+from typing import Any
 
 from app.config import settings
 
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 # Try to import upstash-vector
 try:
     from upstash_vector import Index
+
     UPSTASH_VECTOR_AVAILABLE = True
 except ImportError:
     UPSTASH_VECTOR_AVAILABLE = False
@@ -44,11 +45,11 @@ class HybridRetriever:
     def __init__(
         self,
         db_client=None,
-        vector_url: Optional[str] = None,
-        vector_token: Optional[str] = None,
+        vector_url: str | None = None,
+        vector_token: str | None = None,
     ):
         self.db = db_client
-        self._vector_index: Optional[Index] = None
+        self._vector_index: Index | None = None
 
         # Initialize Upstash Vector
         url = vector_url or settings.UPSTASH_VECTOR_RAG_URL
@@ -74,10 +75,10 @@ class HybridRetriever:
     async def search(
         self,
         query: str,
-        query_embedding: Optional[List[float]] = None,
+        query_embedding: list[float] | None = None,
         k: int = 5,
-        territory_filter: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        territory_filter: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Hybrid search: FTS5 + Vector → RRF fusion → trust scoring.
 
@@ -91,12 +92,20 @@ class HybridRetriever:
             List of dicts with: id, text, page, source, title, similarity, territory
         """
         candidates_k = k * self.CANDIDATE_MULTIPLIER
-        logger.debug("HybridRetriever.search() entered: k=%d, candidates_k=%d, has_vector=%s, territory=%s", k, candidates_k, self.has_vector_search, territory_filter)
+        logger.debug(
+            "HybridRetriever.search() entered: k=%d, candidates_k=%d, has_vector=%s, territory=%s",
+            k,
+            candidates_k,
+            self.has_vector_search,
+            territory_filter,
+        )
 
         # Run both searches in parallel
         if self.has_vector_search and query_embedding:
             fts_task = self._fts_search(query, k=candidates_k, territory=territory_filter)
-            vector_task = self._vector_search(query_embedding, k=candidates_k, territory=territory_filter)
+            vector_task = self._vector_search(
+                query_embedding, k=candidates_k, territory=territory_filter
+            )
 
             fts_results, vector_results = await asyncio.gather(
                 fts_task, vector_task, return_exceptions=True
@@ -111,7 +120,11 @@ class HybridRetriever:
                 vector_results = []
 
             # Fuse with RRF
-            logger.debug("Hybrid search: FTS5=%s, Vector=%s", len(fts_results) if not isinstance(fts_results, Exception) else 'ERR', len(vector_results) if not isinstance(vector_results, Exception) else 'ERR')
+            logger.debug(
+                "Hybrid search: FTS5=%s, Vector=%s",
+                len(fts_results) if not isinstance(fts_results, Exception) else "ERR",
+                len(vector_results) if not isinstance(vector_results, Exception) else "ERR",
+            )
             if fts_results and vector_results:
                 fused = self._rrf_fusion(fts_results, vector_results, k=k)
                 logger.debug("RRF fused: %d results", len(fused))
@@ -140,15 +153,16 @@ class HybridRetriever:
     def _strip_accents(text: str) -> str:
         """Remove accents for metadata filter matching (Aragón → Aragon)."""
         import unicodedata
-        nfkd = unicodedata.normalize('NFKD', text)
-        return ''.join(c for c in nfkd if not unicodedata.combining(c))
+
+        nfkd = unicodedata.normalize("NFKD", text)
+        return "".join(c for c in nfkd if not unicodedata.combining(c))
 
     async def _vector_search(
         self,
-        embedding: List[float],
+        embedding: list[float],
         k: int = 30,
-        territory: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        territory: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Query Upstash Vector for semantically similar chunks."""
         if not self._vector_index:
             return []
@@ -164,6 +178,7 @@ class HybridRetriever:
             filter_variants = []
             if territory:
                 from app.utils.ccaa_constants import normalize_ccaa
+
                 canonical = normalize_ccaa(territory)
                 stripped = self._strip_accents(canonical)
                 seen = set()
@@ -202,17 +217,19 @@ class HybridRetriever:
             chunks = []
             for r in results:
                 meta = r.metadata or {}
-                chunks.append({
-                    "id": r.id,
-                    "text": meta.get("content", ""),
-                    "page": meta.get("page", 0),
-                    "source": meta.get("source", ""),
-                    "title": meta.get("title", ""),
-                    "territory": meta.get("territory", ""),
-                    "tax_type": meta.get("tax_type", ""),
-                    "similarity": r.score,
-                    "_search_type": "vector",
-                })
+                chunks.append(
+                    {
+                        "id": r.id,
+                        "text": meta.get("content", ""),
+                        "page": meta.get("page", 0),
+                        "source": meta.get("source", ""),
+                        "title": meta.get("title", ""),
+                        "territory": meta.get("territory", ""),
+                        "tax_type": meta.get("tax_type", ""),
+                        "similarity": r.score,
+                        "_search_type": "vector",
+                    }
+                )
 
             return chunks
 
@@ -228,8 +245,8 @@ class HybridRetriever:
         self,
         query: str,
         k: int = 30,
-        territory: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        territory: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Full-text search using FTS5 (BM25) in Turso."""
         if not self.db:
             return []
@@ -245,6 +262,7 @@ class HybridRetriever:
                 # territories. Sin esto, queries de IVA con perfil CCAA no
                 # encuentran la LIVA y citan articulos no verificables.
                 from app.utils.ccaa_constants import normalize_ccaa
+
                 canonical_territory = normalize_ccaa(territory)
                 stripped_territory = self._strip_accents(canonical_territory)
                 result = await self.db.execute(
@@ -284,18 +302,22 @@ class HybridRetriever:
 
             chunks = []
             for row in result.rows:
-                chunks.append({
-                    "id": row["id"],
-                    "text": row["content"],
-                    "page": row["page_number"] or 0,
-                    "source": row["filename"] or "",
-                    "title": row["title"] or "",
-                    "territory": row["source"] or "",
-                    "trust_level": row.get("trust_level", "unknown") if hasattr(row, "get") else (row["trust_level"] if "trust_level" in row.keys() else "unknown"),
-                    "tax_type": "",
-                    "similarity": abs(row["rank"]) if row["rank"] else 0,
-                    "_search_type": "fts5",
-                })
+                chunks.append(
+                    {
+                        "id": row["id"],
+                        "text": row["content"],
+                        "page": row["page_number"] or 0,
+                        "source": row["filename"] or "",
+                        "title": row["title"] or "",
+                        "territory": row["source"] or "",
+                        "trust_level": row.get("trust_level", "unknown")
+                        if hasattr(row, "get")
+                        else (row["trust_level"] if "trust_level" in row.keys() else "unknown"),
+                        "tax_type": "",
+                        "similarity": abs(row["rank"]) if row["rank"] else 0,
+                        "_search_type": "fts5",
+                    }
+                )
 
             return chunks
 
@@ -305,15 +327,15 @@ class HybridRetriever:
             return await self._like_fallback(query, k, territory)
 
     async def _like_fallback(
-        self, query: str, k: int = 5, territory: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, query: str, k: int = 5, territory: str | None = None
+    ) -> list[dict[str, Any]]:
         """Fallback to LIKE search if FTS5 fails."""
         if not self.db:
             return []
 
         try:
             words = query.split()[:3]
-            conditions = " AND ".join([f"dc.content LIKE '%' || ? || '%'" for _ in words])
+            conditions = " AND ".join(["dc.content LIKE '%' || ? || '%'" for _ in words])
 
             if territory:
                 # Incluir Estatal y AEAT junto a la CCAA. Mismo motivo que en
@@ -368,10 +390,10 @@ class HybridRetriever:
 
     def _rrf_fusion(
         self,
-        fts_results: List[Dict],
-        vector_results: List[Dict],
+        fts_results: list[dict],
+        vector_results: list[dict],
         k: int = 5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Reciprocal Rank Fusion (RRF) to merge two ranked lists.
 
@@ -379,8 +401,8 @@ class HybridRetriever:
 
         where K=60 (standard) prevents overweighting top results.
         """
-        scores: Dict[str, float] = {}
-        chunks_by_id: Dict[str, Dict] = {}
+        scores: dict[str, float] = {}
+        chunks_by_id: dict[str, dict] = {}
 
         # Score FTS5 results
         for rank, chunk in enumerate(fts_results, start=1):
@@ -447,9 +469,7 @@ class HybridRetriever:
         except Exception:
             return 1.0  # fail open — RAG must keep working
 
-    async def _apply_trust_scoring(
-        self, results: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    async def _apply_trust_scoring(self, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Weight each result's similarity score by its document's integrity trust score.
 
@@ -472,9 +492,9 @@ class HybridRetriever:
             except Exception as e:
                 trust_scores.append(e)
 
-        kept: List[Dict[str, Any]] = []
+        kept: list[dict[str, Any]] = []
         blocked = 0
-        for result, trust in zip(results, trust_scores):
+        for result, trust in zip(results, trust_scores, strict=False):
             # Treat any exception as trust=1.0 (fail open)
             if isinstance(trust, Exception):
                 trust = 1.0
@@ -485,7 +505,8 @@ class HybridRetriever:
                 blocked += 1
                 logger.warning(
                     "RAG trust: excluding blocked document for chunk %s (trust=%.2f)",
-                    result.get("id", "?"), trust,
+                    result.get("id", "?"),
+                    trust,
                 )
                 continue
 
@@ -513,22 +534,72 @@ class HybridRetriever:
         """
         fts_operators = {"OR", "AND", "NOT", "NEAR"}
         spanish_stops = {
-            "que", "de", "en", "el", "la", "los", "las", "un", "una",
-            "por", "para", "con", "del", "al", "es", "se", "su", "no",
-            "lo", "le", "da", "ya", "te", "me", "si", "como", "pero",
-            "mas", "este", "esta", "son", "hay", "ser", "muy", "todo",
-            "toda", "todos", "todas", "cual", "donde", "cuando", "entre",
-            "sobre", "tras", "desde", "hasta", "sin", "hacia", "ante",
-            "bajo", "todas", "busca", "utiliza", "estan", "esten",
-            "relacionadas", "fuentes", "todas",
+            "que",
+            "de",
+            "en",
+            "el",
+            "la",
+            "los",
+            "las",
+            "un",
+            "una",
+            "por",
+            "para",
+            "con",
+            "del",
+            "al",
+            "es",
+            "se",
+            "su",
+            "no",
+            "lo",
+            "le",
+            "da",
+            "ya",
+            "te",
+            "me",
+            "si",
+            "como",
+            "pero",
+            "mas",
+            "este",
+            "esta",
+            "son",
+            "hay",
+            "ser",
+            "muy",
+            "todo",
+            "toda",
+            "todos",
+            "todas",
+            "cual",
+            "donde",
+            "cuando",
+            "entre",
+            "sobre",
+            "tras",
+            "desde",
+            "hasta",
+            "sin",
+            "hacia",
+            "ante",
+            "bajo",
+            "busca",
+            "utiliza",
+            "estan",
+            "esten",
+            "relacionadas",
+            "fuentes",
         }
         words = []
         for word in query.split():
             clean = "".join(c for c in word if c.isalnum())
-            if (clean
+            if (
+                clean
                 and clean.upper() not in fts_operators
                 and clean.lower() not in spanish_stops
-                and len(clean) > 2):
+                and len(clean) > 2
+            ):
                 words.append(clean)
         # Use OR for better recall — AND is too strict for long queries
         return " OR ".join(words) if words else query
@@ -538,7 +609,8 @@ class HybridRetriever:
 # EMBEDDING GENERATION HELPER
 # ============================================================
 
-async def get_query_embedding(query: str) -> Optional[List[float]]:
+
+async def get_query_embedding(query: str) -> list[float] | None:
     """
     Generate embedding for a search query using OpenAI.
 

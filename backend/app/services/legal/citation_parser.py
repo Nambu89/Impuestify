@@ -11,11 +11,11 @@ The citation_verifier extracts citations with a regex and produces a
 This module turns those strings into structured tuples that the
 registry can look up. Pure function, no side effects, easy to test.
 """
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 # Recognises forms like:
 #   "art 69 liva"             → article=69, subarticle=None, law=LIVA
@@ -27,9 +27,9 @@ from typing import Optional, Tuple
 # The "art " prefix is optional because the citation extractor may
 # capture compound forms ("69 y 70 liva") yielding just "70 liva".
 _ART_LAW_RE = re.compile(
-    r"^(?:art\s+)?"                              # optional "art "
+    r"^(?:art\s+)?"  # optional "art "
     r"(?P<article>\d+(?:\s*bis|\s*ter|\s*quater|\s*quinquies)?)"
-    r"(?:\.(?P<subarticle>[^\s]+))?"             # optional .uno.2 / .dos.d / .6
+    r"(?:\.(?P<subarticle>[^\s]+))?"  # optional .uno.2 / .dos.d / .6
     r"\s+"
     r"(?P<law>lirpf|liva|lgt|lis|lisd|lisyd|lip|liiee|lmv|lfte|"
     r"trlitpajd|trlrhl|trlirnr|livmdh|ligic|"
@@ -54,9 +54,9 @@ class ParsedArticleCitation:
     Example: "art 69.dos.d liva" → law='LIVA' article='69' subarticle='Dos.d'
     """
 
-    law: str          # uppercase sigla
-    article: str      # numeric part, e.g. "69"
-    subarticle: Optional[str]  # canonical case, e.g. "Dos.d", "Uno.1", "6"
+    law: str  # uppercase sigla
+    article: str  # numeric part, e.g. "69"
+    subarticle: str | None  # canonical case, e.g. "Dos.d", "Uno.1", "6"
 
 
 @dataclass(frozen=True)
@@ -66,12 +66,12 @@ class ParsedNormCitation:
     Example: "ley 37/1992" → norm_type='ley' number=37 year=1992
     """
 
-    norm_type: str   # 'ley', 'rd', 'rd_legislativo', 'norma_foral', etc.
+    norm_type: str  # 'ley', 'rd', 'rd_legislativo', 'norma_foral', etc.
     number: int
     year: int
 
 
-def parse_article_citation(normalized: str) -> Optional[ParsedArticleCitation]:
+def parse_article_citation(normalized: str) -> ParsedArticleCitation | None:
     """Parse an art_law citation. Returns None if it doesn't match."""
     m = _ART_LAW_RE.match(normalized.strip())
     if not m:
@@ -88,7 +88,7 @@ def parse_article_citation(normalized: str) -> Optional[ParsedArticleCitation]:
     )
 
 
-def parse_norm_citation(normalized: str) -> Optional[ParsedNormCitation]:
+def parse_norm_citation(normalized: str) -> ParsedNormCitation | None:
     """Parse a ley/RD-style citation. Returns None if it doesn't match."""
     m = _LAW_NUMBER_RE.match(normalized.strip())
     if not m:
@@ -147,7 +147,7 @@ def _canonicalise_subarticle(raw: str) -> str:
     return ".".join(out)
 
 
-def split_compound_article_citation(normalized: str) -> Tuple[Optional[ParsedArticleCitation], ...]:
+def split_compound_article_citation(normalized: str) -> tuple[ParsedArticleCitation | None, ...]:
     """Split compound citations like 'art 69 y 70 liva' into individuals.
 
     Returns a tuple of parsed articles. Empty tuple if no parse succeeds.

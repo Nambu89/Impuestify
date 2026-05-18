@@ -10,8 +10,8 @@ Cover the cases the tool handles:
 5. Validaciones (periodo invalido, base negativa).
 6. Tool registration.
 """
-import pytest
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Caso 1 — Farmacia/comercio en RE compra intracomunitaria
@@ -96,7 +96,8 @@ async def test_309_plazo_1t():
     from app.tools.modelo_309_tool import calculate_modelo_309_tool
 
     result = await calculate_modelo_309_tool(
-        periodo="1T", base_intracomunitarias_21=100,
+        periodo="1T",
+        base_intracomunitarias_21=100,
     )
     assert "20 de abril" in result["plazo"]
 
@@ -107,7 +108,8 @@ async def test_309_plazo_4t_30_enero():
     from app.tools.modelo_309_tool import calculate_modelo_309_tool
 
     result = await calculate_modelo_309_tool(
-        periodo="4T", base_intracomunitarias_21=100,
+        periodo="4T",
+        base_intracomunitarias_21=100,
     )
     assert "30 de enero" in result["plazo"]
 

@@ -43,18 +43,18 @@ anualidades por alimentos — por eso la regla se dispara como ajuste
 defensivo a favor del contribuyente cuando la liquidacion provisional
 de IRPF no aplica las escalas separadas.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
     ArgumentoCandidato,
     Brief,
     ExpedienteEstructurado,
-    Tributo,
     Fase,
     TipoDocumento,
+    Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Cita semantica libre — el RAG verificador resuelve la cita canonica.
 # Se guarda como constante para documentar la intencion y facilitar
@@ -79,8 +79,7 @@ _CITA_SEMANTICA = (
         Fase.TEAR_AMPLIACION_POSIBLE.value,
     ],
     descripcion=(
-        "Aplicacion de la especialidad de anualidades por alimentos "
-        "a hijos no aplicada por AEAT"
+        "Aplicacion de la especialidad de anualidades por alimentos " "a hijos no aplicada por AEAT"
     ),
 )
 def evaluar(
@@ -166,9 +165,7 @@ def evaluar(
 
     datos_liquidacion = liquidacion.datos or {}
     aplica_escalas = datos_liquidacion.get("aplica_escalas_separadas")
-    progenitor_no_custodio = bool(
-        datos_liquidacion.get("progenitor_no_custodio", False)
-    )
+    progenitor_no_custodio = bool(datos_liquidacion.get("progenitor_no_custodio", False))
 
     # Si AEAT ya aplica las escalas separadas, no hay ajuste que reclamar.
     if aplica_escalas is True:
@@ -201,12 +198,8 @@ def evaluar(
         cita_normativa_propuesta=_CITA_SEMANTICA,
         datos_disparo={
             "sentencia_id": sentencia.id,
-            "sentencia_incluye_anualidades": datos_sentencia.get(
-                "incluye_anualidades_alimentos"
-            ),
-            "sentencia_modifica_medidas": datos_sentencia.get(
-                "modifica_medidas_familiares"
-            ),
+            "sentencia_incluye_anualidades": datos_sentencia.get("incluye_anualidades_alimentos"),
+            "sentencia_modifica_medidas": datos_sentencia.get("modifica_medidas_familiares"),
             "liquidacion_id": liquidacion.id,
             "tipo_liquidacion": liquidacion.tipo_documento.value,
             "aplica_escalas_separadas": aplica_escalas,

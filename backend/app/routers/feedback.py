@@ -9,20 +9,20 @@ Provides:
 Rate limiting for feedback: 10 submissions per user per day (COUNT query, not slowapi).
 Screenshot validation: max 2 MB, must be PNG or JPEG (magic bytes check).
 """
+
 import asyncio
 import base64
 import html as html_lib
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.config import settings
-from app.database.turso_client import get_db_client, TursoClient
+from app.database.turso_client import TursoClient, get_db_client
 from app.services.email_service import get_email_service
 
 logger = logging.getLogger(__name__)
@@ -50,12 +50,13 @@ _JPEG_MAGIC = b"\xff\xd8\xff"
 # Pydantic models
 # ---------------------------------------------------------------
 
+
 class FeedbackCreateRequest(BaseModel):
     type: str = Field(..., description="bug | feature | general")
     title: str = Field(..., min_length=3, max_length=100)
     description: str = Field(..., min_length=10, max_length=2000)
-    page_url: Optional[str] = Field(None, max_length=500)
-    screenshot_data: Optional[str] = Field(None, description="Base64-encoded PNG or JPEG, max 2 MB")
+    page_url: str | None = Field(None, max_length=500)
+    screenshot_data: str | None = Field(None, description="Base64-encoded PNG or JPEG, max 2 MB")
 
     @field_validator("type")
     @classmethod
@@ -66,7 +67,7 @@ class FeedbackCreateRequest(BaseModel):
 
     @field_validator("screenshot_data")
     @classmethod
-    def validate_screenshot(cls, v: Optional[str]) -> Optional[str]:
+    def validate_screenshot(cls, v: str | None) -> str | None:
         if v is None:
             return v
         # Size check (base64 string length as proxy for file size)
@@ -93,7 +94,7 @@ class FeedbackItem(BaseModel):
     type: str
     title: str
     description: str
-    page_url: Optional[str] = None
+    page_url: str | None = None
     status: str
     priority: str
     created_at: str
@@ -102,9 +103,9 @@ class FeedbackItem(BaseModel):
 
 class ChatRatingRequest(BaseModel):
     message_id: str = Field(..., min_length=1, max_length=200)
-    conversation_id: Optional[str] = Field(None, max_length=200)
+    conversation_id: str | None = Field(None, max_length=200)
     rating: int = Field(..., description="-1 (dislike) or 1 (like)")
-    comment: Optional[str] = Field(None, max_length=500)
+    comment: str | None = Field(None, max_length=500)
 
     @field_validator("rating")
     @classmethod
@@ -126,7 +127,7 @@ async def _notify_owner_of_feedback(
     feedback_type: str,
     title: str,
     description: str,
-    page_url: Optional[str],
+    page_url: str | None,
     user_email: str,
     user_id: str,
 ) -> None:
@@ -156,9 +157,7 @@ async def _notify_owner_of_feedback(
         text_lines.append("Descripcion:")
         text_lines.append(description)
         text_lines.append("")
-        text_lines.append(
-            f"Abrir en panel: https://impuestify.com/admin/feedback#{feedback_id}"
-        )
+        text_lines.append(f"Abrir en panel: https://impuestify.com/admin/feedback#{feedback_id}")
         text_body = "\n".join(text_lines)
 
         # HTML body — escape user-controlled fields to prevent injection in the inbox.
@@ -206,9 +205,7 @@ async def _notify_owner_of_feedback(
             html=html_body,
         )
         if not result.get("success"):
-            logger.warning(
-                "Owner feedback notification failed: %s", result.get("error")
-            )
+            logger.warning("Owner feedback notification failed: %s", result.get("error"))
     except Exception as exc:  # pragma: no cover - notification must never break submit
         logger.warning("Owner feedback notification raised: %s", exc, exc_info=True)
 
@@ -230,6 +227,7 @@ async def _check_feedback_rate_limit(user_id: str, db: TursoClient) -> None:
 # POST /api/feedback
 # ---------------------------------------------------------------
 
+
 @router.post("/api/feedback", status_code=status.HTTP_201_CREATED)
 async def create_feedback(
     body: FeedbackCreateRequest,
@@ -245,7 +243,7 @@ async def create_feedback(
     await _check_feedback_rate_limit(current_user.user_id, db)
 
     feedback_id = str(uuid.uuid4())
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -299,6 +297,7 @@ async def create_feedback(
 # GET /api/feedback/my
 # ---------------------------------------------------------------
 
+
 @router.get("/api/feedback/my", response_model=list[FeedbackItem])
 async def list_my_feedback(
     current_user: TokenData = Depends(get_current_user),
@@ -337,6 +336,7 @@ async def list_my_feedback(
 # POST /api/chat-rating
 # ---------------------------------------------------------------
 
+
 @router.post("/api/chat-rating", status_code=status.HTTP_201_CREATED)
 async def create_chat_rating(
     body: ChatRatingRequest,
@@ -360,7 +360,7 @@ async def create_chat_rating(
         )
 
     rating_id = str(uuid.uuid4())
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """

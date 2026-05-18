@@ -24,6 +24,7 @@ controlado) para que solo R025 este en el REGISTRY durante estos tests.
 
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2-R025
 """
+
 from __future__ import annotations
 
 import importlib
@@ -39,14 +40,11 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 
-
 # ---------------------------------------------------------------------------
 # Aislamiento del REGISTRY — carga solo R025
 # ---------------------------------------------------------------------------
 
-_R025_MODULE_NAME = (
-    "app.services.defensia_rules.reglas_otros_tributos.R025_itp_valor_referencia"
-)
+_R025_MODULE_NAME = "app.services.defensia_rules.reglas_otros_tributos.R025_itp_valor_referencia"
 
 
 def _cargar_solo_R025() -> None:
@@ -75,6 +73,7 @@ def _recargar_R025():
 # Helpers locales
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear el articulo canonico.
 
@@ -100,9 +99,8 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
 # Test 1 — Positivo: valor referencia con tasacion pericial contradictoria
 # ---------------------------------------------------------------------------
 
-def test_R025_positivo_tasacion_pericial_contradictoria(
-    build_exp, build_brief, build_doc
-):
+
+def test_R025_positivo_tasacion_pericial_contradictoria(build_exp, build_brief, build_doc):
     """La liquidacion ITP aplica el valor de referencia catastral (300.000)
     como base imponible. El contribuyente dispone de tasacion pericial
     contradictoria que acredita un valor real de 250.000 EUR. R025 debe
@@ -129,35 +127,31 @@ def test_R025_positivo_tasacion_pericial_contradictoria(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R025"
 
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
     cita_lower = arg.cita_normativa_propuesta.lower()
-    assert (
-        "valor de referencia" in cita_lower
-        or "pericial" in cita_lower
-    ), (
+    assert "valor de referencia" in cita_lower or "pericial" in cita_lower, (
         f"La cita semantica debe mencionar 'valor de referencia' o "
         f"'pericial', got: {arg.cita_normativa_propuesta!r}"
     )
 
-    assert arg.datos_disparo.get("diferencia") == 50000, (
-        f"datos_disparo.diferencia inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("diferencia") == 50000
+    ), f"datos_disparo.diferencia inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — Positivo: valor referencia con informe tecnico discrepante
 # ---------------------------------------------------------------------------
 
-def test_R025_positivo_informe_tecnico_discrepante(
-    build_exp, build_brief, build_doc
-):
+
+def test_R025_positivo_informe_tecnico_discrepante(build_exp, build_brief, build_doc):
     """Alternativa a la tasacion pericial contradictoria: un informe tecnico
     emitido por arquitecto / tasador homologado que tambien discrepa del
     valor de referencia. Igualmente habilita la impugnacion individualizada
@@ -183,21 +177,22 @@ def test_R025_positivo_informe_tecnico_discrepante(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R025"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
 
-    assert arg.datos_disparo.get("diferencia") == 30000, (
-        f"datos_disparo.diferencia inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("diferencia") == 30000
+    ), f"datos_disparo.diferencia inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 3 — Negativo: sin prueba pericial no hay defensa
 # ---------------------------------------------------------------------------
+
 
 def test_R025_negativo_sin_prueba_pericial(build_exp, build_brief, build_doc):
     """Sin una prueba pericial o informe tecnico que acredite valor inferior,
@@ -217,24 +212,19 @@ def test_R025_negativo_sin_prueba_pericial(build_exp, build_brief, build_doc):
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=[doc],
     )
-    brief = build_brief(
-        "Me parece caro el valor de referencia pero no tengo tasacion."
-    )
+    brief = build_brief("Me parece caro el valor de referencia pero no tengo tasacion.")
 
     candidatos = evaluar(exp, brief)
 
-    assert candidatos == [], (
-        f"R025 no deberia disparar sin prueba pericial, got: {candidatos}"
-    )
+    assert candidatos == [], f"R025 no deberia disparar sin prueba pericial, got: {candidatos}"
 
 
 # ---------------------------------------------------------------------------
 # Test 4 — Negativo: valor declarado >= valor referencia
 # ---------------------------------------------------------------------------
 
-def test_R025_negativo_valor_declarado_mayor_o_igual(
-    build_exp, build_brief, build_doc
-):
+
+def test_R025_negativo_valor_declarado_mayor_o_igual(build_exp, build_brief, build_doc):
     """Si el valor declarado por el contribuyente en la escritura es mayor o
     igual al valor de referencia catastral, la base imponible ya es la
     declarada (no la de referencia) y la regla no aplica: no hay
@@ -255,8 +245,7 @@ def test_R025_negativo_valor_declarado_mayor_o_igual(
         docs=[doc],
     )
     brief = build_brief(
-        "Declare 310.000 EUR en la escritura pero tengo tasacion pericial por "
-        "250.000 EUR."
+        "Declare 310.000 EUR en la escritura pero tengo tasacion pericial por " "250.000 EUR."
     )
 
     candidatos = evaluar(exp, brief)
@@ -271,9 +260,8 @@ def test_R025_negativo_valor_declarado_mayor_o_igual(
 # Test 5 — Negativo: tributo distinto de ITP
 # ---------------------------------------------------------------------------
 
-def test_R025_negativo_tributo_distinto_de_ITP(
-    build_exp, build_brief, build_doc
-):
+
+def test_R025_negativo_tributo_distinto_de_ITP(build_exp, build_brief, build_doc):
     """La regla solo aplica a ITP. Si el expediente es de IRPF, IVA, ISD o
     Plusvalia Municipal, la regla no debe disparar aunque el documento
     contenga los datos de disparo."""
@@ -294,14 +282,13 @@ def test_R025_negativo_tributo_distinto_de_ITP(
 
     candidatos = evaluar(exp, brief)
 
-    assert candidatos == [], (
-        f"R025 no deberia disparar fuera de ITP, got: {candidatos}"
-    )
+    assert candidatos == [], f"R025 no deberia disparar fuera de ITP, got: {candidatos}"
 
 
 # ---------------------------------------------------------------------------
 # Test 6 — Invariante anti-hardcode de citas
 # ---------------------------------------------------------------------------
+
 
 def test_R025_cita_no_es_hardcoded(build_exp, build_brief, build_doc):
     """Invariante #2 del plan: la cita normativa propuesta NO puede contener
@@ -345,6 +332,7 @@ def test_R025_cita_no_es_hardcoded(build_exp, build_brief, build_doc):
 # Test 7 — Smoke de registro: R025 aparece en el REGISTRY y rango 0-30
 # ---------------------------------------------------------------------------
 
+
 def test_R025_registrada_en_registry():
     """Tras cargar solo R025 el REGISTRY debe contener exactamente esa clave,
     y el len debe estar dentro del rango [0, 30] del smoke global."""
@@ -360,6 +348,4 @@ def test_R025_registrada_en_registry():
     assert "REPOSICION_INTERPUESTA" in info["fases"]
     assert "TEAR_INTERPUESTA" in info["fases"]
     assert "TEAR_AMPLIACION_POSIBLE" in info["fases"]
-    assert 0 <= len(REGISTRY) <= 30, (
-        f"REGISTRY fuera del rango [0, 30], got {len(REGISTRY)}"
-    )
+    assert 0 <= len(REGISTRY) <= 30, f"REGISTRY fuera del rango [0, 30], got {len(REGISTRY)}"

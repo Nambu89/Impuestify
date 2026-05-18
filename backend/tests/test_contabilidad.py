@@ -1,11 +1,13 @@
 """
 Tests for ContabilidadService — double-entry journal entries and accounting books.
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from dataclasses import asdict
 
-from app.services.contabilidad_service import ContabilidadService, AsientoLine
+from dataclasses import asdict
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from app.services.contabilidad_service import AsientoLine, ContabilidadService
 
 
 # ---------------------------------------------------------------------------
@@ -199,9 +201,9 @@ class TestAsientoDebeEqualsHaber:
 
         total_debe = sum(l.debe for l in lines)
         total_haber = sum(l.haber for l in lines)
-        assert abs(total_debe - total_haber) < 0.01, (
-            f"Desbalance: debe={total_debe}, haber={total_haber}"
-        )
+        assert (
+            abs(total_debe - total_haber) < 0.01
+        ), f"Desbalance: debe={total_debe}, haber={total_haber}"
 
 
 # ---------------------------------------------------------------------------
@@ -295,9 +297,24 @@ class TestGetLibroMayor:
     @pytest.mark.asyncio
     async def test_get_libro_mayor(self):
         mock_rows = [
-            {"cuenta_code": "430", "cuenta_nombre": "Clientes", "total_debe": 5000.0, "total_haber": 0.0},
-            {"cuenta_code": "477", "cuenta_nombre": "HP IVA repercutido", "total_debe": 0.0, "total_haber": 1050.0},
-            {"cuenta_code": "705", "cuenta_nombre": "Prestaciones", "total_debe": 0.0, "total_haber": 3950.0},
+            {
+                "cuenta_code": "430",
+                "cuenta_nombre": "Clientes",
+                "total_debe": 5000.0,
+                "total_haber": 0.0,
+            },
+            {
+                "cuenta_code": "477",
+                "cuenta_nombre": "HP IVA repercutido",
+                "total_debe": 0.0,
+                "total_haber": 1050.0,
+            },
+            {
+                "cuenta_code": "705",
+                "cuenta_nombre": "Prestaciones",
+                "total_debe": 0.0,
+                "total_haber": 3950.0,
+            },
         ]
         mock_result = MagicMock()
         mock_result.rows = mock_rows
@@ -338,7 +355,14 @@ class TestSaveAsiento:
         mock_insert_result.rows = []
 
         mock_db = AsyncMock()
-        mock_db.execute = AsyncMock(side_effect=[mock_max_result, mock_insert_result, mock_insert_result, mock_insert_result])
+        mock_db.execute = AsyncMock(
+            side_effect=[
+                mock_max_result,
+                mock_insert_result,
+                mock_insert_result,
+                mock_insert_result,
+            ]
+        )
 
         service = ContabilidadService(db=mock_db)
         ids = await service.save_asiento(
@@ -362,8 +386,18 @@ class TestBalanceSumasSaldos:
     @pytest.mark.asyncio
     async def test_balance_sumas_saldos(self):
         mock_rows = [
-            {"cuenta_code": "430", "cuenta_nombre": "Clientes", "total_debe": 5000.0, "total_haber": 0.0},
-            {"cuenta_code": "705", "cuenta_nombre": "Prestaciones", "total_debe": 0.0, "total_haber": 5000.0},
+            {
+                "cuenta_code": "430",
+                "cuenta_nombre": "Clientes",
+                "total_debe": 5000.0,
+                "total_haber": 0.0,
+            },
+            {
+                "cuenta_code": "705",
+                "cuenta_nombre": "Prestaciones",
+                "total_debe": 0.0,
+                "total_haber": 5000.0,
+            },
         ]
         mock_result = MagicMock()
         mock_result.rows = mock_rows
@@ -388,9 +422,24 @@ class TestPyG:
     @pytest.mark.asyncio
     async def test_pyg_resultado(self):
         mock_rows = [
-            {"cuenta_code": "600", "cuenta_nombre": "Compras", "total_debe": 3000.0, "total_haber": 0.0},
-            {"cuenta_code": "629", "cuenta_nombre": "Otros servicios", "total_debe": 500.0, "total_haber": 0.0},
-            {"cuenta_code": "705", "cuenta_nombre": "Prestaciones", "total_debe": 0.0, "total_haber": 6000.0},
+            {
+                "cuenta_code": "600",
+                "cuenta_nombre": "Compras",
+                "total_debe": 3000.0,
+                "total_haber": 0.0,
+            },
+            {
+                "cuenta_code": "629",
+                "cuenta_nombre": "Otros servicios",
+                "total_debe": 500.0,
+                "total_haber": 0.0,
+            },
+            {
+                "cuenta_code": "705",
+                "cuenta_nombre": "Prestaciones",
+                "total_debe": 0.0,
+                "total_haber": 6000.0,
+            },
         ]
         mock_result = MagicMock()
         mock_result.rows = mock_rows

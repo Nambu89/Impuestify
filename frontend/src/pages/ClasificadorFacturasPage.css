@@ -100,7 +100,9 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
     background: rgba(255, 255, 255, 0.03);
     text-align: center;
 }
@@ -185,7 +187,9 @@
 }
 
 @keyframes cf-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .cf-progress__steps {
@@ -300,7 +304,9 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 10px;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
 }
 
 .cf-queue__item--processing {
@@ -324,9 +330,15 @@
     display: inline-flex;
 }
 
-.cf-queue__item--success .cf-queue__icon { color: #22c55e; }
-.cf-queue__item--error .cf-queue__icon   { color: #ef4444; }
-.cf-queue__item--processing .cf-queue__icon { color: var(--color-accent, #06b6d4); }
+.cf-queue__item--success .cf-queue__icon {
+    color: #22c55e;
+}
+.cf-queue__item--error .cf-queue__icon {
+    color: #ef4444;
+}
+.cf-queue__item--processing .cf-queue__icon {
+    color: var(--color-accent, #06b6d4);
+}
 
 .cf-queue__body {
     display: flex;
@@ -349,8 +361,12 @@
     color: rgba(255, 255, 255, 0.5);
 }
 
-.cf-queue__status--ok  { color: #22c55e; }
-.cf-queue__status--err { color: #ef4444; }
+.cf-queue__status--ok {
+    color: #22c55e;
+}
+.cf-queue__status--err {
+    color: #ef4444;
+}
 
 /* ── Upload done bar ─────────────────────────────────────────────────────── */
 

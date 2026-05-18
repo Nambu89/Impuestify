@@ -27,7 +27,8 @@ Plazos (verificados en gipuzkoa.eus, 2026-05):
   - Q3: 1 octubre – 10 noviembre
   - Q4: 1 enero – 10 febrero del año siguiente
 """
-from typing import Any, Dict, Optional
+
+from typing import Any
 
 
 class Modelo130GipuzkoaCalculator:
@@ -47,7 +48,7 @@ class Modelo130GipuzkoaCalculator:
         4: "1 de enero al 10 de febrero del año siguiente",
     }
 
-    def __init__(self, repo: Optional[Any] = None) -> None:
+    def __init__(self, repo: Any | None = None) -> None:
         self._repo = repo
 
     async def calculate(
@@ -62,7 +63,7 @@ class Modelo130GipuzkoaCalculator:
         volumen_operaciones_trimestre: float = 0.0,
         retenciones_trimestre: float = 0.0,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula el resultado del Modelo 130 Gipuzkoa.
 
@@ -84,15 +85,11 @@ class Modelo130GipuzkoaCalculator:
             casillas, desglose, plazo.
         """
         if quarter not in (1, 2, 3, 4):
-            raise ValueError(
-                f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4."
-            )
+            raise ValueError(f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4.")
 
         regimen_norm = (regimen or "").strip().lower()
         if regimen_norm not in {"general", "excepcional"}:
-            raise ValueError(
-                f"regimen '{regimen}' invalid. Valid: 'general', 'excepcional'."
-            )
+            raise ValueError(f"regimen '{regimen}' invalid. Valid: 'general', 'excepcional'.")
 
         if regimen_norm == "general":
             tipo_pct = self._TIPO_GENERAL_PCT

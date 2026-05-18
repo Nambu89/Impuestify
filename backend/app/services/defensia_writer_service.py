@@ -15,12 +15,12 @@ Referencias:
 - backend/app/templates/defensia/*.j2 (9 plantillas, T2B-005)
 - backend/app/services/defensia_export_service.py (consumidor, T2B-007/008)
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Optional
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -77,13 +77,11 @@ class DefensiaWriterService:
     los argumentos verificados por el motor de reglas + RAG verifier.
     """
 
-    def __init__(self, templates_dir: Optional[Path] = None):
+    def __init__(self, templates_dir: Path | None = None):
         if templates_dir is None:
             templates_dir = Path(__file__).parent.parent / "templates" / "defensia"
         if not templates_dir.exists():
-            raise RuntimeError(
-                f"DefensIA templates dir no encontrado: {templates_dir}"
-            )
+            raise RuntimeError(f"DefensIA templates dir no encontrado: {templates_dir}")
 
         # autoescape=False: el output es markdown legal, los inputs provienen
         # del RAG verifier (trusted pipeline) y no se renderiza HTML. Escapar
@@ -135,9 +133,7 @@ class DefensiaWriterService:
             return plantilla
 
         # Fallback genérico para fases fuera de alcance o indeterminadas.
-        logger.info(
-            "DefensIA writer fallback genérico para fase '%s'", fase_valor
-        )
+        logger.info("DefensIA writer fallback genérico para fase '%s'", fase_valor)
         return "escrito_generico.j2"
 
     # ------------------------------------------------------------------
@@ -148,10 +144,10 @@ class DefensiaWriterService:
         self,
         expediente: ExpedienteEstructurado,
         argumentos: list[ArgumentoVerificado],
-        brief: Optional[Brief] = None,
+        brief: Brief | None = None,
         *,
         cuota_estimada_eur: float = 0.0,
-        fecha_hoy: Optional[date] = None,
+        fecha_hoy: date | None = None,
         disclaimer: str = DISCLAIMER_CANONICO,
     ) -> str:
         """Renderiza el escrito principal del expediente en markdown.
@@ -160,9 +156,7 @@ class DefensiaWriterService:
         `_render` la generación del contenido. El resultado se pasa después
         a `DefensiaExportService` para conversión a DOCX/PDF.
         """
-        plantilla_nombre = self.seleccionar_plantilla(
-            expediente, cuota_estimada_eur
-        )
+        plantilla_nombre = self.seleccionar_plantilla(expediente, cuota_estimada_eur)
         return self._render(
             plantilla_nombre,
             expediente,
@@ -176,9 +170,9 @@ class DefensiaWriterService:
         self,
         expediente: ExpedienteEstructurado,
         argumentos: list[ArgumentoVerificado],
-        brief: Optional[Brief] = None,
+        brief: Brief | None = None,
         *,
-        fecha_hoy: Optional[date] = None,
+        fecha_hoy: date | None = None,
         disclaimer: str = DISCLAIMER_CANONICO,
     ) -> str:
         """Renderiza el dictamen resumen (output interno para el usuario).
@@ -206,13 +200,13 @@ class DefensiaWriterService:
         plantilla_nombre: str,
         expediente: ExpedienteEstructurado,
         argumentos: list[ArgumentoVerificado],
-        brief: Optional[Brief],
-        fecha_hoy: Optional[date],
+        brief: Brief | None,
+        fecha_hoy: date | None,
         disclaimer: str,
     ) -> str:
         template = self._env.get_template(plantilla_nombre)
         if fecha_hoy is None:
-            fecha_hoy = datetime.now(timezone.utc).date()
+            fecha_hoy = datetime.now(UTC).date()
 
         rendered = template.render(
             expediente=expediente,

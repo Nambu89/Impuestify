@@ -7,6 +7,7 @@ Run once to register the scheduled task:
 To remove:
     python -m backend.scripts.doc_crawler.setup_scheduler --remove
 """
+
 import argparse
 import subprocess
 import sys
@@ -19,8 +20,13 @@ BAT_FILE = Path(__file__).resolve().parent / "run_check.bat"
 
 # Map day abbreviations to XML DaysOfWeek element names
 DAY_MAP = {
-    "MON": "Monday", "TUE": "Tuesday", "WED": "Wednesday",
-    "THU": "Thursday", "FRI": "Friday", "SAT": "Saturday", "SUN": "Sunday",
+    "MON": "Monday",
+    "TUE": "Tuesday",
+    "WED": "Wednesday",
+    "THU": "Thursday",
+    "FRI": "Friday",
+    "SAT": "Saturday",
+    "SUN": "Sunday",
 }
 
 
@@ -112,12 +118,13 @@ def create_task(day: str = "MON", time: str = "09:00", run_always: bool = False)
         cmd = f'schtasks /create /tn "{TASK_NAME}" /xml "{xml_path}" /f'
         if run_always:
             import getpass
+
             username = getpass.getuser()
             cmd += f' /RU "{username}"'
         rc, stdout, stderr = _run_schtasks(cmd)
         if rc == 0:
             print(f"Tarea '{TASK_NAME}' registrada correctamente.")
-            print(f"Verificar: taskschd.msc o --check")
+            print("Verificar: taskschd.msc o --check")
             if stdout.strip():
                 print(stdout.strip())
             return True
@@ -162,8 +169,11 @@ def main():
     parser.add_argument("--check", action="store_true", help="Check if task exists")
     parser.add_argument("--day", default="MON", help="Day of week (MON-SUN, default: MON)")
     parser.add_argument("--time", default="09:00", help="Time (HH:MM, default: 09:00)")
-    parser.add_argument("--run-always", action="store_true",
-                        help="Run whether user is logged on or not (prompts for password)")
+    parser.add_argument(
+        "--run-always",
+        action="store_true",
+        help="Run whether user is logged on or not (prompts for password)",
+    )
 
     args = parser.parse_args()
 

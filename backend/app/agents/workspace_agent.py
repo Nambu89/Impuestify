@@ -7,14 +7,15 @@ Combines workspace documents with RAG knowledge base and all centralized tools.
 CCAA-aware: adapts tools and system prompt to user's fiscal regime
 (comun, foral_vasco, foral_navarra, ceuta_melilla, canarias).
 """
-import logging
-import json
+
 import asyncio
-from typing import Optional, List, Dict, Any
+import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
-from openai import OpenAI, AsyncOpenAI
+from openai import AsyncOpenAI, OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AgentResponse:
     """Response from the workspace agent"""
+
     content: str
-    sources: List[Dict[str, Any]]
-    metadata: Dict[str, Any]
+    sources: list[dict[str, Any]]
+    metadata: dict[str, Any]
     agent_name: str
 
 
@@ -43,10 +45,11 @@ class WorkspaceAgent:
     def __init__(
         self,
         name: str = "WorkspaceAgent",
-        model: Optional[str] = None,
-        api_key: Optional[str] = None
+        model: str | None = None,
+        api_key: str | None = None,
     ):
         from app.config import settings
+
         self.name = name
         self.model = model or settings.OPENAI_MODEL
         self.api_key = api_key or settings.OPENAI_API_KEY
@@ -64,14 +67,16 @@ class WorkspaceAgent:
         if self.api_key:
             self._client = OpenAI(api_key=self.api_key)
             self._async_client = AsyncOpenAI(api_key=self.api_key)
-            logger.info(f"WorkspaceAgent '{self.name}' initialized (year: {self.current_year}, Q{self.current_quarter})")
+            logger.info(
+                f"WorkspaceAgent '{self.name}' initialized (year: {self.current_year}, Q{self.current_quarter})"
+            )
         else:
             logger.error("WorkspaceAgent initialization failed - missing OPENAI_API_KEY")
             raise ValueError("OPENAI_API_KEY is required")
 
     # ── Fiscal profile formatting ──────────────────────────────────────
 
-    def _format_fiscal_profile(self, fp: Dict[str, Any]) -> str:
+    def _format_fiscal_profile(self, fp: dict[str, Any]) -> str:
         """Format fiscal profile dict into a readable string for the system prompt."""
         if not fp:
             return ""
@@ -106,7 +111,13 @@ class WorkspaceAgent:
                     lines.append(f"- {label}: {'Si' if val else 'No'}")
                 elif isinstance(val, float) and key == "tipo_retencion_facturas":
                     lines.append(f"- {label}: {val}%")
-                elif isinstance(val, (int, float)) and ("netos" in key or "cotizacion" in key or "pensiones" in key or "hipoteca" in key or "donativos" in key):
+                elif isinstance(val, (int, float)) and (
+                    "netos" in key
+                    or "cotizacion" in key
+                    or "pensiones" in key
+                    or "hipoteca" in key
+                    or "donativos" in key
+                ):
                     lines.append(f"- {label}: {val:,.2f} EUR")
                 else:
                     lines.append(f"- {label}: {val}")
@@ -114,7 +125,7 @@ class WorkspaceAgent:
 
     # ── CCAA-aware system prompt ───────────────────────────────────────
 
-    def _get_regime_context(self, fiscal_profile: Optional[Dict[str, Any]] = None) -> str:
+    def _get_regime_context(self, fiscal_profile: dict[str, Any] | None = None) -> str:
         """Generate CCAA-specific context for the system prompt."""
         if not fiscal_profile:
             return ""
@@ -124,6 +135,7 @@ class WorkspaceAgent:
             return ""
 
         from app.utils.regime_classifier import classify_regime
+
         regime = classify_regime(ccaa)
 
         if regime == "foral_vasco":
@@ -139,7 +151,7 @@ class WorkspaceAgent:
 - Al buscar deducciones, `discover_deductions` filtra por territorio "{ccaa}".
 """
         elif regime == "foral_navarra":
-            return f"""
+            return """
 🏛️ **REGIMEN FISCAL FORAL NAVARRA**:
 - El usuario tributa bajo la Hacienda Foral de Navarra, NO por la AEAT estatal.
 - IRPF foral navarro: escala propia (11 tramos, 13-52%), deduccion en cuota por minimo contribuyente 1.084 EUR.
@@ -181,7 +193,7 @@ class WorkspaceAgent:
 - Al simular IRPF, `simulate_irpf` usa los tramos autonomicos de {ccaa}.
 """
 
-    def _get_system_prompt(self, fiscal_profile: Optional[Dict[str, Any]] = None) -> str:
+    def _get_system_prompt(self, fiscal_profile: dict[str, Any] | None = None) -> str:
         """Generate system prompt with CCAA-aware context and workspace instructions."""
         fiscal_section = ""
         if fiscal_profile:
@@ -200,6 +212,7 @@ class WorkspaceAgent:
         # Determine CCAA-specific model names for the prompt
         ccaa = (fiscal_profile or {}).get("ccaa_residencia", "")
         from app.utils.regime_classifier import classify_regime
+
         regime = classify_regime(ccaa) if ccaa else "comun"
 
         iva_model = "Modelo 303 (IVA)"
@@ -263,7 +276,7 @@ Responde siempre en espaniol, de forma clara y estructurada."""
 
     # ── Tools ──────────────────────────────────────────────────────────
 
-    def _get_tools(self, restricted_mode: bool = False) -> List[Dict[str, Any]]:
+    def _get_tools(self, restricted_mode: bool = False) -> list[dict[str, Any]]:
         """Get ALL tools: workspace-specific + centralized (same as TaxAgent)."""
         # Workspace-specific tools
         workspace_tools = [
@@ -272,12 +285,8 @@ Responde siempre en espaniol, de forma clara y estructurada."""
                 "function": {
                     "name": "get_workspace_summary",
                     "description": "Obtiene un resumen de todos los archivos del workspace del usuario",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {},
-                        "required": []
-                    }
-                }
+                    "parameters": {"type": "object", "properties": {}, "required": []},
+                },
             },
             {
                 "type": "function",
@@ -289,16 +298,16 @@ Responde siempre en espaniol, de forma clara y estructurada."""
                         "properties": {
                             "quarter": {
                                 "type": "integer",
-                                "description": "Trimestre a calcular (1-4). Si no se especifica, usa el trimestre actual."
+                                "description": "Trimestre a calcular (1-4). Si no se especifica, usa el trimestre actual.",
                             },
                             "year": {
                                 "type": "integer",
-                                "description": "Anio fiscal. Si no se especifica, usa el anio actual."
-                            }
+                                "description": "Anio fiscal. Si no se especifica, usa el anio actual.",
+                            },
                         },
-                        "required": []
-                    }
-                }
+                        "required": [],
+                    },
+                },
             },
             {
                 "type": "function",
@@ -310,12 +319,12 @@ Responde siempre en espaniol, de forma clara y estructurada."""
                         "properties": {
                             "year": {
                                 "type": "integer",
-                                "description": "Anio para la proyeccion. Si no se especifica, usa el anio actual."
+                                "description": "Anio para la proyeccion. Si no se especifica, usa el anio actual.",
                             }
                         },
-                        "required": []
-                    }
-                }
+                        "required": [],
+                    },
+                },
             },
             {
                 "type": "function",
@@ -327,30 +336,35 @@ Responde siempre en espaniol, de forma clara y estructurada."""
                         "properties": {
                             "include_past": {
                                 "type": "boolean",
-                                "description": "Incluir fechas pasadas del anio actual. Por defecto false."
+                                "description": "Incluir fechas pasadas del anio actual. Por defecto false.",
                             }
                         },
-                        "required": []
-                    }
-                }
-            }
+                        "required": [],
+                    },
+                },
+            },
         ]
 
         # Add ALL centralized tools (same as TaxAgent)
         try:
             from app.tools import ALL_TOOLS
+
             workspace_tools.extend(ALL_TOOLS)
         except ImportError:
             logger.warning("Could not import centralized tools")
 
         # In restricted mode (particular plan), remove autonomo-specific tools
         RESTRICTED_TOOL_NAMES = {
-            "calculate_vat_balance", "calculate_modelo_303", "calculate_modelo_130",
-            "calculate_autonomous_quota", "calculate_modelo_ipsi"
+            "calculate_vat_balance",
+            "calculate_modelo_303",
+            "calculate_modelo_130",
+            "calculate_autonomous_quota",
+            "calculate_modelo_ipsi",
         }
         if restricted_mode:
             workspace_tools = [
-                t for t in workspace_tools
+                t
+                for t in workspace_tools
                 if t.get("function", {}).get("name") not in RESTRICTED_TOOL_NAMES
             ]
 
@@ -361,10 +375,10 @@ Responde siempre en espaniol, de forma clara y estructurada."""
     async def _execute_tool(
         self,
         function_name: str,
-        function_args: Dict[str, Any],
+        function_args: dict[str, Any],
         workspace_context: str,
-        user_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        user_id: str | None = None,
+    ) -> dict[str, Any]:
         """Execute a tool — workspace-specific or centralized."""
 
         # Workspace-specific tools (need workspace_context)
@@ -388,8 +402,10 @@ Responde siempre en espaniol, de forma clara y estructurada."""
         elif function_name == "update_fiscal_profile":
             try:
                 from app.tools import TOOL_EXECUTORS
+
                 executor = TOOL_EXECUTORS[function_name]
                 from app.database.turso_client import get_db_client
+
                 db = await get_db_client()
                 return await executor(user_id=user_id, db_client=db, **function_args)
             except Exception as e:
@@ -399,6 +415,7 @@ Responde siempre en espaniol, de forma clara y estructurada."""
         elif function_name == "discover_deductions":
             try:
                 from app.tools import TOOL_EXECUTORS
+
                 executor = TOOL_EXECUTORS[function_name]
                 # Auto-inject user_id for profile-based answers
                 return await executor(user_id=user_id, **function_args)
@@ -410,6 +427,7 @@ Responde siempre en espaniol, de forma clara y estructurada."""
             # ALL other tools — delegate to centralized TOOL_EXECUTORS
             try:
                 from app.tools import TOOL_EXECUTORS
+
                 if function_name in TOOL_EXECUTORS:
                     executor = TOOL_EXECUTORS[function_name]
                     return await executor(**function_args)
@@ -421,7 +439,7 @@ Responde siempre en espaniol, de forma clara y estructurada."""
 
     # ── Workspace-specific tool implementations ────────────────────────
 
-    async def _tool_get_workspace_summary(self, context: str) -> Dict[str, Any]:
+    async def _tool_get_workspace_summary(self, context: str) -> dict[str, Any]:
         """Get summary of workspace files."""
         files_info = []
         if "nomina" in context.lower() or "nomina" in context.lower():
@@ -436,26 +454,30 @@ Responde siempre en espaniol, de forma clara y estructurada."""
             "success": True,
             "summary": summary,
             "document_types": files_info,
-            "formatted_response": f"Resumen del Workspace\n\n{summary}\n\nPuedes preguntarme sobre cualquiera de estos documentos."
+            "formatted_response": f"Resumen del Workspace\n\n{summary}\n\nPuedes preguntarme sobre cualquiera de estos documentos.",
         }
 
-    async def _tool_calculate_vat_balance(self, context: str, quarter: int, year: int) -> Dict[str, Any]:
+    async def _tool_calculate_vat_balance(
+        self, context: str, quarter: int, year: int
+    ) -> dict[str, Any]:
         """Calculate VAT balance from invoices in context."""
         import re
+
         iva_soportado = 0.0
         iva_repercutido = 0.0
 
-        iva_pattern = r'IVA[:\s]*(\d+[.,]?\d*)\s*[EUR%]?'
+        iva_pattern = r"IVA[:\s]*(\d+[.,]?\d*)\s*[EUR%]?"
         matches = re.findall(iva_pattern, context, re.IGNORECASE)
         for match in matches:
-            amount = float(match.replace(',', '.'))
+            amount = float(match.replace(",", "."))
             if amount > 0:
                 iva_soportado += amount
 
         balance = iva_repercutido - iva_soportado
         return {
             "success": True,
-            "quarter": quarter, "year": year,
+            "quarter": quarter,
+            "year": year,
             "iva_soportado": iva_soportado,
             "iva_repercutido": iva_repercutido,
             "balance": balance,
@@ -469,27 +491,28 @@ Responde siempre en espaniol, de forma clara y estructurada."""
 
 {"Balance negativo: tienes IVA a compensar o devolver." if balance < 0 else "Balance positivo: tienes IVA a ingresar."}
 
-*Basado en las facturas de tu workspace. Revisa los datos con tu asesor.*"""
+*Basado en las facturas de tu workspace. Revisa los datos con tu asesor.*""",
         }
 
-    async def _tool_project_annual_irpf(self, context: str, year: int) -> Dict[str, Any]:
+    async def _tool_project_annual_irpf(self, context: str, year: int) -> dict[str, Any]:
         """Project annual IRPF from payslips."""
         import re
+
         bruto_mensual = 0.0
         irpf_retenido = 0.0
         meses_encontrados = 0
 
-        bruto_pattern = r'bruto[:\s]*(\d+[.,]?\d*)'
-        irpf_pattern = r'IRPF[:\s]*(\d+[.,]?\d*)[%EUR]?'
+        bruto_pattern = r"bruto[:\s]*(\d+[.,]?\d*)"
+        irpf_pattern = r"IRPF[:\s]*(\d+[.,]?\d*)[%EUR]?"
 
         bruto_matches = re.findall(bruto_pattern, context, re.IGNORECASE)
         irpf_matches = re.findall(irpf_pattern, context, re.IGNORECASE)
 
         if bruto_matches:
-            bruto_mensual = float(bruto_matches[0].replace(',', '.'))
+            bruto_mensual = float(bruto_matches[0].replace(",", "."))
             meses_encontrados = len(bruto_matches)
         if irpf_matches:
-            irpf_retenido = float(irpf_matches[0].replace(',', '.'))
+            irpf_retenido = float(irpf_matches[0].replace(",", "."))
 
         bruto_anual = bruto_mensual * 12 if bruto_mensual > 0 else 0
         irpf_anual_estimado = irpf_retenido * 12 if irpf_retenido > 0 else 0
@@ -513,18 +536,34 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
 
 **Tipo de retencion efectivo**: {(irpf_retenido/bruto_mensual*100) if bruto_mensual > 0 else 0:.2f}%
 
-*Esta es una proyeccion basada en tus nominas actuales. Los importes finales pueden variar.*"""
+*Esta es una proyeccion basada en tus nominas actuales. Los importes finales pueden variar.*""",
         }
 
-    async def _tool_get_quarterly_deadlines(self, include_past: bool = False) -> Dict[str, Any]:
+    async def _tool_get_quarterly_deadlines(self, include_past: bool = False) -> dict[str, Any]:
         """Get upcoming quarterly tax deadlines."""
         from datetime import date
 
         deadlines = [
-            {"quarter": 1, "deadline": f"20 de Abril {self.current_year}", "date": date(self.current_year, 4, 20)},
-            {"quarter": 2, "deadline": f"20 de Julio {self.current_year}", "date": date(self.current_year, 7, 20)},
-            {"quarter": 3, "deadline": f"20 de Octubre {self.current_year}", "date": date(self.current_year, 10, 20)},
-            {"quarter": 4, "deadline": f"30 de Enero {self.current_year + 1}", "date": date(self.current_year + 1, 1, 30)},
+            {
+                "quarter": 1,
+                "deadline": f"20 de Abril {self.current_year}",
+                "date": date(self.current_year, 4, 20),
+            },
+            {
+                "quarter": 2,
+                "deadline": f"20 de Julio {self.current_year}",
+                "date": date(self.current_year, 7, 20),
+            },
+            {
+                "quarter": 3,
+                "deadline": f"20 de Octubre {self.current_year}",
+                "date": date(self.current_year, 10, 20),
+            },
+            {
+                "quarter": 4,
+                "deadline": f"30 de Enero {self.current_year + 1}",
+                "date": date(self.current_year + 1, 1, 30),
+            },
         ]
 
         today = date.today()
@@ -549,7 +588,7 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
 - Modelo 130: Pago fraccionado IRPF (autonomos)
 - Modelo 111: Retenciones IRPF
 
-*Las fechas pueden variar si caen en festivo. Consulta el calendario de la AEAT.*"""
+*Las fechas pueden variar si caen en festivo. Consulta el calendario de la AEAT.*""",
         }
 
     # ── Main execution ─────────────────────────────────────────────────
@@ -559,13 +598,13 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
         query: str,
         context: str = "",
         rag_context: str = "",
-        sources: List[dict] = None,
-        conversation_history: List[dict] = None,
-        user_id: Optional[str] = None,
-        workspace_id: Optional[str] = None,
-        progress_callback: Optional[Any] = None,
+        sources: list[dict] = None,
+        conversation_history: list[dict] = None,
+        user_id: str | None = None,
+        workspace_id: str | None = None,
+        progress_callback: Any | None = None,
         restricted_mode: bool = False,
-        fiscal_profile: Optional[Dict[str, Any]] = None
+        fiscal_profile: dict[str, Any] | None = None,
     ) -> AgentResponse:
         """
         Run the workspace agent.
@@ -596,10 +635,7 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
         # Add conversation history
         if conversation_history:
             for msg in conversation_history:
-                messages.append({
-                    "role": msg.get("role"),
-                    "content": msg.get("content")
-                })
+                messages.append({"role": msg.get("role"), "content": msg.get("content")})
 
         # Build user message with workspace docs + RAG context
         user_message = self._build_prompt(query, context, rag_context)
@@ -614,9 +650,9 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
                     tools=self._get_tools(restricted_mode=restricted_mode),
                     tool_choice="auto",
                     temperature=1,
-                    max_completion_tokens=4000
+                    max_completion_tokens=4000,
                 ),
-                timeout=60.0
+                timeout=60.0,
             )
 
             message = response.choices[0].message
@@ -635,22 +671,26 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
                     await progress_callback.tool_call(function_name, function_args)
 
                 # Execute tool
-                tool_result = await self._execute_tool(function_name, function_args, context, user_id=user_id)
+                tool_result = await self._execute_tool(
+                    function_name, function_args, context, user_id=user_id
+                )
 
                 if progress_callback:
-                    await progress_callback.tool_result(function_name, tool_result.get("success", False))
+                    await progress_callback.tool_result(
+                        function_name, tool_result.get("success", False)
+                    )
 
                 # Add tool result and stream final response
-                messages.append({
-                    "role": "assistant",
-                    "content": None,
-                    "tool_calls": [tool_call.model_dump()]
-                })
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": tool_result.get("formatted_response", json.dumps(tool_result))
-                })
+                messages.append(
+                    {"role": "assistant", "content": None, "tool_calls": [tool_call.model_dump()]}
+                )
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": tool_result.get("formatted_response", json.dumps(tool_result)),
+                    }
+                )
 
                 # Stream the final response (same as TaxAgent)
                 content = await self._stream_response(messages, progress_callback)
@@ -672,18 +712,18 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
                     "workspace_id": workspace_id,
                     "tool_used": tool_used,
                     "current_quarter": self.current_quarter,
-                    "current_year": self.current_year
+                    "current_year": self.current_year,
                 },
-                agent_name=self.name
+                agent_name=self.name,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("WorkspaceAgent timeout")
             return AgentResponse(
                 content="El analisis esta tardando mas de lo esperado. Intenta con una pregunta mas especifica.",
                 sources=[],
                 metadata={"error": "timeout"},
-                agent_name=self.name
+                agent_name=self.name,
             )
         except Exception as e:
             logger.error(f"WorkspaceAgent error: {e}", exc_info=True)
@@ -691,17 +731,17 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
                 content=f"Error al analizar los documentos: {str(e)}",
                 sources=[],
                 metadata={"error": str(e)},
-                agent_name=self.name
+                agent_name=self.name,
             )
 
     # ── Streaming ──────────────────────────────────────────────────────
 
     async def _stream_response(
         self,
-        messages: List[Dict[str, Any]],
-        progress_callback: Optional[Any] = None,
+        messages: list[dict[str, Any]],
+        progress_callback: Any | None = None,
         timeout: float = 60.0,
-        chunk_timeout: float = 30.0
+        chunk_timeout: float = 30.0,
     ) -> str:
         """
         Call OpenAI with stream=True and emit content_chunk events in real-time.
@@ -716,9 +756,9 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
                     messages=messages,
                     temperature=1,
                     max_completion_tokens=4000,
-                    stream=True
+                    stream=True,
                 ),
-                timeout=timeout
+                timeout=timeout,
             )
 
             buffer = ""
@@ -727,16 +767,11 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
 
             while True:
                 try:
-                    chunk = await asyncio.wait_for(
-                        stream_iter.__anext__(),
-                        timeout=chunk_timeout
-                    )
+                    chunk = await asyncio.wait_for(stream_iter.__anext__(), timeout=chunk_timeout)
                 except StopAsyncIteration:
                     break
-                except asyncio.TimeoutError:
-                    logger.warning(
-                        f"Stream stalled after {sum(len(c) for c in accumulated)} chars"
-                    )
+                except TimeoutError:
+                    logger.warning(f"Stream stalled after {sum(len(c) for c in accumulated)} chars")
                     break
 
                 delta = chunk.choices[0].delta if chunk.choices else None
@@ -753,7 +788,7 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
             if buffer and progress_callback:
                 await progress_callback.content_chunk(buffer)
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("Streaming OpenAI call creation timed out")
             raise
         except Exception as e:
@@ -769,13 +804,15 @@ Basado en {meses_encontrados} nomina(s) encontrada(s):
         """Emit already-generated content as chunks for real-time display."""
         CHUNK_SIZE = 12
         for i in range(0, len(content), CHUNK_SIZE):
-            chunk = content[i:i + CHUNK_SIZE]
+            chunk = content[i : i + CHUNK_SIZE]
             await progress_callback.content_chunk(chunk)
             await asyncio.sleep(0.01)
 
     # ── Prompt building ────────────────────────────────────────────────
 
-    def _build_prompt(self, query: str, context: Optional[str] = None, rag_context: Optional[str] = None) -> str:
+    def _build_prompt(
+        self, query: str, context: str | None = None, rag_context: str | None = None
+    ) -> str:
         """Build user prompt with workspace context + RAG knowledge base."""
         parts = []
 
@@ -808,7 +845,7 @@ No hay documentos en el workspace. Pide al usuario que suba sus archivos fiscale
 
 
 # Global instance
-_workspace_agent: Optional[WorkspaceAgent] = None
+_workspace_agent: WorkspaceAgent | None = None
 
 
 def get_workspace_agent() -> WorkspaceAgent:

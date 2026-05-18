@@ -1,6 +1,7 @@
 """
 Tests for the automated document crawler.
 """
+
 import json
 import sys
 import tempfile
@@ -34,7 +35,6 @@ from backend.scripts.doc_crawler.watchlist import (
     get_stats,
     get_territories,
 )
-
 
 # ── Validate File Tests ─────────────────────────────────────────
 
@@ -162,9 +162,7 @@ class TestInventory:
 
     def test_save_and_load(self, tmp_path, monkeypatch):
         idx_path = tmp_path / "index.json"
-        monkeypatch.setattr(
-            "backend.scripts.doc_crawler.inventory.INVENTORY_INDEX", idx_path
-        )
+        monkeypatch.setattr("backend.scripts.doc_crawler.inventory.INVENTORY_INDEX", idx_path)
         inv = {"version": 1, "last_run": None, "documents": {"test.pdf": {"hash": "abc"}}}
         save_inventory(inv)
         loaded = load_inventory()
@@ -179,7 +177,9 @@ class TestInventory:
         assert inv["documents"]["test.pdf"]["source_url"] == "http://example.com"
 
     def test_update_document_existing(self):
-        inv = {"documents": {"test.pdf": {"hash": "old", "size": 500, "download_date": "2026-01-01"}}}
+        inv = {
+            "documents": {"test.pdf": {"hash": "old", "size": 500, "download_date": "2026-01-01"}}
+        }
         update_document(inv, "test.pdf", "http://example.com", "newhash", 2000, "updated")
         assert inv["documents"]["test.pdf"]["hash"] == "newhash"
         assert inv["documents"]["test.pdf"]["size"] == 2000
@@ -190,7 +190,13 @@ class TestInventory:
             tmp_path / "report.md",
         )
         results = [
-            {"status": "new", "dest": "test1.pdf", "url": "http://a.com", "size": 50000, "success": True},
+            {
+                "status": "new",
+                "dest": "test1.pdf",
+                "url": "http://a.com",
+                "size": 50000,
+                "success": True,
+            },
             {"status": "unchanged", "dest": "test2.pdf", "url": "http://b.com", "success": True},
             {"status": "failed", "dest": "test3.pdf", "message": "timeout", "success": False},
         ]
@@ -222,7 +228,13 @@ class TestNotifier:
         pi_path = tmp_path / "pending.json"
         monkeypatch.setattr("backend.scripts.doc_crawler.notifier.PENDING_INGEST", pi_path)
         results = [
-            {"status": "new", "dest": "a.pdf", "url": "http://a.com", "size": 1000, "success": True},
+            {
+                "status": "new",
+                "dest": "a.pdf",
+                "url": "http://a.com",
+                "size": 1000,
+                "success": True,
+            },
         ]
         write_pending_ingest(results)
         assert pi_path.exists()
@@ -247,6 +259,7 @@ class TestNotifier:
 class TestRobots:
     def test_can_fetch_no_robots(self):
         from backend.scripts.doc_crawler.robots import can_fetch, clear_cache
+
         clear_cache()
         # For a domain with no robots.txt, should allow (fail open)
         with patch("backend.scripts.doc_crawler.robots.RobotFileParser") as mock_rp:
@@ -321,44 +334,52 @@ class TestDownload:
 class TestDriftAnalyzer:
     def test_classify_irpf(self):
         from backend.scripts.doc_crawler.drift_analyzer import classify_file
+
         priority, reason = classify_file("AEAT/IRPF/AEAT-Manual_Practico_IRPF_2025_Tomo1.pdf")
         assert priority == "high"
         assert "IRPF" in reason
 
     def test_classify_ipsi(self):
         from backend.scripts.doc_crawler.drift_analyzer import classify_file
+
         priority, _ = classify_file("Ceuta/Ceuta-Ley_8_1991_IPSI_Ceuta_consolidado.pdf")
         assert priority == "high"
 
     def test_classify_igic(self):
         from backend.scripts.doc_crawler.drift_analyzer import classify_file
+
         priority, _ = classify_file("Canarias/Canarias-Ley_20_1991_IGIC_consolidado.pdf")
         assert priority == "high"
 
     def test_classify_tributos_cedidos(self):
         from backend.scripts.doc_crawler.drift_analyzer import classify_file
+
         priority, _ = classify_file("Madrid/Madrid-DLeg_1_2010_TributosCedidos_consolidado.pdf")
         assert priority == "high"
 
     def test_classify_estatuto_medium(self):
         from backend.scripts.doc_crawler.drift_analyzer import classify_file
+
         priority, _ = classify_file("Melilla/Melilla-Ley_Organica_2_1995_Estatuto_consolidado.pdf")
         assert priority == "medium"
 
     def test_classify_unknown_low(self):
         from backend.scripts.doc_crawler.drift_analyzer import classify_file
+
         priority, _ = classify_file("docs/random_document.pdf")
         assert priority == "low"
 
     def test_extract_territory(self):
         from backend.scripts.doc_crawler.drift_analyzer import extract_territory
+
         assert extract_territory("Ceuta/Ceuta-Ley_IPSI.pdf") == "Ceuta"
         assert extract_territory("AEAT/IRPF/Manual.pdf") == "AEAT"
         assert extract_territory("Canarias/IGIC.pdf") == "Canarias"
 
     def test_analyze_no_pending(self, tmp_path):
-        from backend.scripts.doc_crawler.drift_analyzer import analyze_drift
         from backend.scripts.doc_crawler import config
+        from backend.scripts.doc_crawler.drift_analyzer import analyze_drift
+
         original = config.PENDING_INGEST
         config.PENDING_INGEST = tmp_path / "nonexistent.json"
         try:
@@ -369,7 +390,10 @@ class TestDriftAnalyzer:
 
     def test_build_analysis_prompt(self):
         from backend.scripts.doc_crawler.drift_analyzer import build_analysis_prompt
-        changes = [{"path": "test.pdf", "priority": "high", "territory": "Madrid", "reason": "test"}]
+
+        changes = [
+            {"path": "test.pdf", "priority": "high", "territory": "Madrid", "reason": "test"}
+        ]
         prompt = build_analysis_prompt(changes)
         assert "Madrid" in prompt
         assert "JSON" in prompt

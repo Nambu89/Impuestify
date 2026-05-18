@@ -11,6 +11,7 @@ Base normativa (RAG verificador): art. 107.5 TRLHL tras RDL 26/2021 y STC
 
 Patron de aislamiento: reset_registry + reload/import controlado.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -26,10 +27,7 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, reset_registry
 
-
-_R027_MODULE_NAME = (
-    "app.services.defensia_rules.reglas_otros_tributos.R027_plusvalia_metodo_optimo"
-)
+_R027_MODULE_NAME = "app.services.defensia_rules.reglas_otros_tributos.R027_plusvalia_metodo_optimo"
 
 
 def _cargar_solo_R027() -> None:
@@ -56,9 +54,7 @@ def _evaluar(exp, brief):
 # ---------------------------------------------------------------------------
 
 
-def test_R027_positivo_objetivo_superior_a_directa(
-    build_exp, build_doc, build_brief
-):
+def test_R027_positivo_objetivo_superior_a_directa(build_exp, build_doc, build_brief):
     """Metodo objetivo 3000 EUR, directa 1500 EUR -> dispara con ahorro 1500."""
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -82,9 +78,7 @@ def test_R027_positivo_objetivo_superior_a_directa(
     assert arg.datos_disparo.get("ahorro") == 1500
 
 
-def test_R027_positivo_sin_opcion_directa_ofrecida(
-    build_exp, build_doc, build_brief
-):
+def test_R027_positivo_sin_opcion_directa_ofrecida(build_exp, build_doc, build_brief):
     """Objetivo 3000, calculable, sin opcion ofrecida -> dispara."""
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -133,9 +127,7 @@ def test_R027_negativo_directa_mayor_o_igual(build_exp, build_doc, build_brief):
     assert _evaluar(exp, brief) is None
 
 
-def test_R027_negativo_metodo_directa_ya_aplicado(
-    build_exp, build_doc, build_brief
-):
+def test_R027_negativo_metodo_directa_ya_aplicado(build_exp, build_doc, build_brief):
     """Si el metodo aplicado ya es 'directa', no hay conflicto."""
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -179,9 +171,7 @@ def test_R027_negativo_sin_datos_escritura(build_exp, build_doc, build_brief):
 # ---------------------------------------------------------------------------
 
 
-def test_R027_cita_es_semantica_no_hardcoded(
-    build_exp, build_doc, build_brief
-):
+def test_R027_cita_es_semantica_no_hardcoded(build_exp, build_doc, build_brief):
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={

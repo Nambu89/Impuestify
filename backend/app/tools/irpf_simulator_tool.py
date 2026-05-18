@@ -10,9 +10,10 @@ This is the enhanced version of calculate_irpf that handles:
 - Rental income with amortization and housing reduction
 - Personal and family minimum (MPYF) by CCAA
 """
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+
 import logging
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -49,377 +50,371 @@ IMPORTANTE sobre ingresos:
             "properties": {
                 "comunidad_autonoma": {
                     "type": "string",
-                    "description": "Comunidad autónoma del contribuyente. Afecta escala autonómica y MPYF."
+                    "description": "Comunidad autónoma del contribuyente. Afecta escala autonómica y MPYF.",
                 },
-                "year": {
-                    "type": "integer",
-                    "description": "Año fiscal (default 2024)"
-                },
+                "year": {"type": "integer", "description": "Año fiscal (default 2024)"},
                 "ingresos_trabajo": {
                     "type": "number",
-                    "description": "Ingresos brutos anuales del trabajo (salario bruto anual)"
+                    "description": "Ingresos brutos anuales del trabajo (salario bruto anual)",
                 },
                 "ss_empleado": {
                     "type": "number",
-                    "description": "SS pagada por el empleado en el año. Si 0 o no se indica, se estima automáticamente (~6.35% del bruto)"
+                    "description": "SS pagada por el empleado en el año. Si 0 o no se indica, se estima automáticamente (~6.35% del bruto)",
                 },
                 "intereses": {
                     "type": "number",
-                    "description": "Intereses de cuentas/depósitos cobrados en el año"
+                    "description": "Intereses de cuentas/depósitos cobrados en el año",
                 },
-                "dividendos": {
-                    "type": "number",
-                    "description": "Dividendos cobrados en el año"
-                },
+                "dividendos": {"type": "number", "description": "Dividendos cobrados en el año"},
                 "ganancias_fondos": {
                     "type": "number",
-                    "description": "Ganancias por venta/reembolso de fondos de inversión"
+                    "description": "Ganancias por venta/reembolso de fondos de inversión",
                 },
                 "ingresos_alquiler": {
                     "type": "number",
-                    "description": "Ingresos anuales por alquiler de inmuebles"
+                    "description": "Ingresos anuales por alquiler de inmuebles",
                 },
                 "gastos_alquiler_total": {
                     "type": "number",
-                    "description": "Gastos deducibles totales del alquiler (comunidad, seguros, IBI, reparaciones...)"
+                    "description": "Gastos deducibles totales del alquiler (comunidad, seguros, IBI, reparaciones...)",
                 },
                 "valor_adquisicion_inmueble": {
                     "type": "number",
-                    "description": "Valor de adquisición del inmueble alquilado (para calcular amortización al 3%)"
+                    "description": "Valor de adquisición del inmueble alquilado (para calcular amortización al 3%)",
                 },
                 "edad_contribuyente": {
                     "type": "integer",
-                    "description": "Edad del contribuyente. >65 y >75 aumentan el mínimo personal. Default: 35"
+                    "description": "Edad del contribuyente. >65 y >75 aumentan el mínimo personal. Default: 35",
                 },
                 "num_descendientes": {
                     "type": "integer",
-                    "description": "Número de hijos/descendientes a cargo. 0 si no tiene."
+                    "description": "Número de hijos/descendientes a cargo. 0 si no tiene.",
                 },
                 "anios_nacimiento_desc": {
                     "type": "array",
                     "items": {"type": "integer"},
-                    "description": "Años de nacimiento de cada hijo [2022, 2019]. Hijos <3 años suman 2.800€ extra."
+                    "description": "Años de nacimiento de cada hijo [2022, 2019]. Hijos <3 años suman 2.800€ extra.",
                 },
                 "custodia_compartida": {
                     "type": "boolean",
-                    "description": "true si custodia compartida → mínimos descendientes /2"
+                    "description": "true si custodia compartida → mínimos descendientes /2",
                 },
                 "num_ascendientes_65": {
                     "type": "integer",
-                    "description": "Ascendientes a cargo mayores de 65 años"
+                    "description": "Ascendientes a cargo mayores de 65 años",
                 },
                 "num_ascendientes_75": {
                     "type": "integer",
-                    "description": "Ascendientes a cargo mayores de 75 años"
+                    "description": "Ascendientes a cargo mayores de 75 años",
                 },
                 "discapacidad_contribuyente": {
                     "type": "integer",
-                    "description": "Porcentaje de discapacidad del contribuyente (0, 33, 65...)"
+                    "description": "Porcentaje de discapacidad del contribuyente (0, 33, 65...)",
                 },
                 "ceuta_melilla": {
                     "type": "boolean",
-                    "description": "true si el contribuyente reside y trabaja en Ceuta o Melilla. Aplica deduccion del 60% sobre la cuota integra (Art. 68.4 LIRPF). Usar true cuando la CCAA sea Ceuta o Melilla."
+                    "description": "true si el contribuyente reside y trabaja en Ceuta o Melilla. Aplica deduccion del 60% sobre la cuota integra (Art. 68.4 LIRPF). Usar true cuando la CCAA sea Ceuta o Melilla.",
                 },
                 "ingresos_actividad": {
                     "type": "number",
-                    "description": "Ingresos brutos anuales de actividad economica (autonomo/empresario). Es la facturacion total (base imponible, SIN IVA/IGIC). Si el usuario es autonomo, usar este campo EN VEZ DE ingresos_trabajo. Si es asalariado y autonomo a la vez, usar ambos campos."
+                    "description": "Ingresos brutos anuales de actividad economica (autonomo/empresario). Es la facturacion total (base imponible, SIN IVA/IGIC). Si el usuario es autonomo, usar este campo EN VEZ DE ingresos_trabajo. Si es asalariado y autonomo a la vez, usar ambos campos.",
                 },
                 "gastos_actividad": {
                     "type": "number",
-                    "description": "Gastos deducibles anuales de la actividad economica (suministros, alquiler local, seguros, material, servicios profesionales, viajes, formacion, marketing, etc.). NO incluir cuota de autonomo (campo separado) ni amortizaciones (campo separado)."
+                    "description": "Gastos deducibles anuales de la actividad economica (suministros, alquiler local, seguros, material, servicios profesionales, viajes, formacion, marketing, etc.). NO incluir cuota de autonomo (campo separado) ni amortizaciones (campo separado).",
                 },
                 "cuota_autonomo_anual": {
                     "type": "number",
-                    "description": "Cuota de Seguridad Social como autonomo pagada en el ano (ej: 300 EUR/mes x 12 = 3.600 EUR). Es gasto deducible al 100%. Si no se indica, preguntar al usuario."
+                    "description": "Cuota de Seguridad Social como autonomo pagada en el ano (ej: 300 EUR/mes x 12 = 3.600 EUR). Es gasto deducible al 100%. Si no se indica, preguntar al usuario.",
                 },
                 "amortizaciones_actividad": {
                     "type": "number",
-                    "description": "Amortizaciones de bienes de inversion afectos a la actividad (vehiculo, ordenador, mobiliario, maquinaria). Segun tablas oficiales de amortizacion."
+                    "description": "Amortizaciones de bienes de inversion afectos a la actividad (vehiculo, ordenador, mobiliario, maquinaria). Segun tablas oficiales de amortizacion.",
                 },
                 "estimacion_actividad": {
                     "type": "string",
                     "enum": ["directa_normal", "directa_simplificada", "objetiva"],
-                    "description": "'directa_simplificada' (default, mayoria de autonomos): anade 5% gastos dificil justificacion (max 2.000 EUR). 'directa_normal': mas detallada, permite provisiones. 'objetiva': modulos (no soportado aun)."
+                    "description": "'directa_simplificada' (default, mayoria de autonomos): anade 5% gastos dificil justificacion (max 2.000 EUR). 'directa_normal': mas detallada, permite provisiones. 'objetiva': modulos (no soportado aun).",
                 },
                 "inicio_actividad": {
                     "type": "boolean",
-                    "description": "true si el autonomo ha iniciado su actividad en el ano actual o anterior Y no ha tenido rendimiento neto positivo antes. Aplica reduccion del 20% (Art. 32.3 LIRPF)."
+                    "description": "true si el autonomo ha iniciado su actividad en el ano actual o anterior Y no ha tenido rendimiento neto positivo antes. Aplica reduccion del 20% (Art. 32.3 LIRPF).",
                 },
                 "un_solo_cliente": {
                     "type": "boolean",
-                    "description": "true si mas del 75% de los ingresos del autonomo provienen de un solo cliente (autonomo economicamente dependiente/TRADE). Aplica reduccion similar a rendimientos del trabajo (Art. 32.2 LIRPF)."
+                    "description": "true si mas del 75% de los ingresos del autonomo provienen de un solo cliente (autonomo economicamente dependiente/TRADE). Aplica reduccion similar a rendimientos del trabajo (Art. 32.2 LIRPF).",
                 },
                 "retenciones_actividad": {
                     "type": "number",
-                    "description": "Retenciones IRPF practicadas por clientes en facturas del autonomo (15% general, 7% nuevos autonomos primeros 3 anos). Total anual acumulado."
+                    "description": "Retenciones IRPF practicadas por clientes en facturas del autonomo (15% general, 7% nuevos autonomos primeros 3 anos). Total anual acumulado.",
                 },
                 "pagos_fraccionados_130": {
                     "type": "number",
-                    "description": "Total de pagos fraccionados del Modelo 130 realizados durante el ano (suma de los 4 trimestres). Se descuentan de la cuota total para calcular el resultado final (a pagar o a devolver)."
+                    "description": "Total de pagos fraccionados del Modelo 130 realizados durante el ano (suma de los 4 trimestres). Se descuentan de la cuota total para calcular el resultado final (a pagar o a devolver).",
                 },
                 "aportaciones_plan_pensiones": {
                     "type": "number",
-                    "description": "Aportaciones propias del contribuyente a planes de pensiones en el año (máx 1.500€ deducibles). Reduce la base imponible general."
+                    "description": "Aportaciones propias del contribuyente a planes de pensiones en el año (máx 1.500€ deducibles). Reduce la base imponible general.",
                 },
                 "aportaciones_plan_pensiones_empresa": {
                     "type": "number",
-                    "description": "Aportaciones de la empresa al plan de pensiones del empleado. Conjuntamente con las propias, máx 8.500€ (y máx 30% renta neta)."
+                    "description": "Aportaciones de la empresa al plan de pensiones del empleado. Conjuntamente con las propias, máx 8.500€ (y máx 30% renta neta).",
                 },
                 "hipoteca_pre2013": {
                     "type": "boolean",
-                    "description": "true si el contribuyente tiene hipoteca sobre su vivienda habitual contratada ANTES del 1 de enero de 2013 (deducción suprimida para hipotecas posteriores). Si true, pasará `capital_amortizado_hipoteca` e `intereses_hipoteca`."
+                    "description": "true si el contribuyente tiene hipoteca sobre su vivienda habitual contratada ANTES del 1 de enero de 2013 (deducción suprimida para hipotecas posteriores). Si true, pasará `capital_amortizado_hipoteca` e `intereses_hipoteca`.",
                 },
                 "capital_amortizado_hipoteca": {
                     "type": "number",
-                    "description": "Capital amortizado de la hipoteca pre-2013 en el año (cuotas de principal pagadas). Solo relevante si hipoteca_pre2013=true."
+                    "description": "Capital amortizado de la hipoteca pre-2013 en el año (cuotas de principal pagadas). Solo relevante si hipoteca_pre2013=true.",
                 },
                 "intereses_hipoteca": {
                     "type": "number",
-                    "description": "Intereses pagados de la hipoteca pre-2013 en el año. Solo relevante si hipoteca_pre2013=true. Base deducción = capital_amortizado + intereses, máx 9.040€. Deducción = 15%."
+                    "description": "Intereses pagados de la hipoteca pre-2013 en el año. Solo relevante si hipoteca_pre2013=true. Base deducción = capital_amortizado + intereses, máx 9.040€. Deducción = 15%.",
                 },
                 "madre_trabajadora_ss": {
                     "type": "boolean",
-                    "description": "true si la madre (o contribuyente principal) trabaja y cotiza a la Seguridad Social, y tiene hijos menores de 3 años. Habilita la deducción por maternidad (1.200€/hijo <3 años)."
+                    "description": "true si la madre (o contribuyente principal) trabaja y cotiza a la Seguridad Social, y tiene hijos menores de 3 años. Habilita la deducción por maternidad (1.200€/hijo <3 años).",
                 },
                 "gastos_guarderia_anual": {
                     "type": "number",
-                    "description": "Gastos anuales en guardería o centros de educación infantil autorizados para hijos menores de 3 años. Permite deducción adicional a la de maternidad (hasta 1.000€ extra por hijo)."
+                    "description": "Gastos anuales en guardería o centros de educación infantil autorizados para hijos menores de 3 años. Permite deducción adicional a la de maternidad (hasta 1.000€ extra por hijo).",
                 },
                 "familia_numerosa": {
                     "type": "boolean",
-                    "description": "true si el contribuyente tiene título de familia numerosa reconocido. Deducción: 1.200€/año (general) o 2.400€ (especial)."
+                    "description": "true si el contribuyente tiene título de familia numerosa reconocido. Deducción: 1.200€/año (general) o 2.400€ (especial).",
                 },
                 "tipo_familia_numerosa": {
                     "type": "string",
                     "enum": ["general", "especial"],
-                    "description": "'general' = 3 hijos (1.200€). 'especial' = 5+ hijos o 4 con discapacidad (2.400€). Solo relevante si familia_numerosa=true."
+                    "description": "'general' = 3 hijos (1.200€). 'especial' = 5+ hijos o 4 con discapacidad (2.400€). Solo relevante si familia_numerosa=true.",
                 },
                 "donativos_ley_49_2002": {
                     "type": "number",
-                    "description": "Total de donativos realizados en el año a entidades acogidas a la Ley 49/2002 (ONGs, fundaciones, iglesias con convenio). Deducción: 80% primeros 250€ + 40% exceso (o 45% si donativo_recurrente=true)."
+                    "description": "Total de donativos realizados en el año a entidades acogidas a la Ley 49/2002 (ONGs, fundaciones, iglesias con convenio). Deducción: 80% primeros 250€ + 40% exceso (o 45% si donativo_recurrente=true).",
                 },
                 "donativo_recurrente": {
                     "type": "boolean",
-                    "description": "true si el contribuyente lleva 2 o más años consecutivos donando a la misma entidad con importe igual o superior. Aumenta el tipo del exceso al 45%."
+                    "description": "true si el contribuyente lleva 2 o más años consecutivos donando a la misma entidad con importe igual o superior. Aumenta el tipo del exceso al 45%.",
                 },
                 "retenciones_trabajo": {
                     "type": "number",
-                    "description": "Total de retenciones IRPF soportadas en nómina durante el año. Necesario para calcular si la declaración sale a pagar o a devolver."
+                    "description": "Total de retenciones IRPF soportadas en nómina durante el año. Necesario para calcular si la declaración sale a pagar o a devolver.",
                 },
                 "retenciones_alquiler": {
                     "type": "number",
-                    "description": "Retenciones por rendimientos de alquiler (19%). Necesario para el resultado final de la declaración."
+                    "description": "Retenciones por rendimientos de alquiler (19%). Necesario para el resultado final de la declaración.",
                 },
                 "retenciones_ahorro": {
                     "type": "number",
-                    "description": "Retenciones por rendimientos del capital mobiliario (intereses, dividendos). Necesario para el resultado final."
+                    "description": "Retenciones por rendimientos del capital mobiliario (intereses, dividendos). Necesario para el resultado final.",
                 },
                 "tributacion_conjunta": {
                     "type": "boolean",
-                    "description": "true si la declaración se presenta de forma conjunta (matrimonio o monoparental). Aplica reducción sobre la base imponible general: 3.400€ para matrimonios y 2.150€ para unidades monoparentales (Art. 84 LIRPF)."
+                    "description": "true si la declaración se presenta de forma conjunta (matrimonio o monoparental). Aplica reducción sobre la base imponible general: 3.400€ para matrimonios y 2.150€ para unidades monoparentales (Art. 84 LIRPF).",
                 },
                 "tipo_unidad_familiar": {
                     "type": "string",
                     "enum": ["matrimonio", "monoparental"],
-                    "description": "'matrimonio' = cónyuge e hijos (reducción 3.400€). 'monoparental' = padre/madre con hijos sin cónyuge (reducción 2.150€). Solo relevante si tributacion_conjunta=true."
+                    "description": "'matrimonio' = cónyuge e hijos (reducción 3.400€). 'monoparental' = padre/madre con hijos sin cónyuge (reducción 2.150€). Solo relevante si tributacion_conjunta=true.",
                 },
                 "alquiler_habitual_pre2015": {
                     "type": "boolean",
-                    "description": "true si el contribuyente pagaba alquiler por su vivienda habitual con contrato anterior a 1 de enero de 2015 y sigue aplicando la deducción transitoria (DT 15ª LIRPF). La deducción es el 10,05% del alquiler pagado (máx. base 9.040€), con reducción lineal si BI entre 17.707,20€ y 24.107,20€. Desaparece con BI >= 24.107,20€."
+                    "description": "true si el contribuyente pagaba alquiler por su vivienda habitual con contrato anterior a 1 de enero de 2015 y sigue aplicando la deducción transitoria (DT 15ª LIRPF). La deducción es el 10,05% del alquiler pagado (máx. base 9.040€), con reducción lineal si BI entre 17.707,20€ y 24.107,20€. Desaparece con BI >= 24.107,20€.",
                 },
                 "alquiler_pagado_anual": {
                     "type": "number",
-                    "description": "Total de alquiler pagado por el contribuyente como inquilino en el año (no confundir con ingresos_alquiler que son rentas percibidas como propietario). Solo relevante si alquiler_habitual_pre2015=true."
+                    "description": "Total de alquiler pagado por el contribuyente como inquilino en el año (no confundir con ingresos_alquiler que son rentas percibidas como propietario). Solo relevante si alquiler_habitual_pre2015=true.",
                 },
                 "valor_catastral_segundas_viviendas": {
                     "type": "number",
-                    "description": "Valor catastral de inmuebles urbanos en propiedad distintos de la vivienda habitual que no generan rendimientos de alquiler (ej: segunda residencia vacía, plaza de garaje no alquilada). El fisco imputa un 1,1% (o 2% si el catastro no ha sido revisado desde 1994) como renta en la base general (Art. 85 LIRPF)."
+                    "description": "Valor catastral de inmuebles urbanos en propiedad distintos de la vivienda habitual que no generan rendimientos de alquiler (ej: segunda residencia vacía, plaza de garaje no alquilada). El fisco imputa un 1,1% (o 2% si el catastro no ha sido revisado desde 1994) como renta en la base general (Art. 85 LIRPF).",
                 },
                 "valor_catastral_revisado_post1994": {
                     "type": "boolean",
-                    "description": "true (default) si el valor catastral del inmueble fue revisado a partir de 1994 → imputación del 1,1%. false si el catastro es anterior a 1994 → imputación del 2%. Solo relevante si valor_catastral_segundas_viviendas > 0."
+                    "description": "true (default) si el valor catastral del inmueble fue revisado a partir de 1994 → imputación del 1,1%. false si el catastro es anterior a 1994 → imputación del 2%. Solo relevante si valor_catastral_segundas_viviendas > 0.",
                 },
                 "ganancias_acciones": {
                     "type": "number",
-                    "description": "Ganancias brutas por venta de acciones o participaciones en el año (casilla 0338). Base del ahorro."
+                    "description": "Ganancias brutas por venta de acciones o participaciones en el año (casilla 0338). Base del ahorro.",
                 },
                 "perdidas_acciones": {
                     "type": "number",
-                    "description": "Pérdidas por venta de acciones (casilla 0339). Compensan las ganancias de acciones."
+                    "description": "Pérdidas por venta de acciones (casilla 0339). Compensan las ganancias de acciones.",
                 },
                 "ganancias_reembolso_fondos": {
                     "type": "number",
-                    "description": "Ganancias por reembolso de participaciones en fondos de inversión (casilla 0320). Base del ahorro."
+                    "description": "Ganancias por reembolso de participaciones en fondos de inversión (casilla 0320). Base del ahorro.",
                 },
                 "perdidas_reembolso_fondos": {
                     "type": "number",
-                    "description": "Pérdidas por reembolso de fondos de inversión. Compensan las ganancias de fondos."
+                    "description": "Pérdidas por reembolso de fondos de inversión. Compensan las ganancias de fondos.",
                 },
                 "ganancias_derivados": {
                     "type": "number",
-                    "description": "Ganancias por operaciones con derivados, CFDs o Forex (casilla 0353). Base del ahorro."
+                    "description": "Ganancias por operaciones con derivados, CFDs o Forex (casilla 0353). Base del ahorro.",
                 },
                 "perdidas_derivados": {
                     "type": "number",
-                    "description": "Pérdidas por derivados/CFDs/Forex (casilla 0354). Compensan las ganancias de derivados."
+                    "description": "Pérdidas por derivados/CFDs/Forex (casilla 0354). Compensan las ganancias de derivados.",
                 },
                 "cripto_ganancia_neta": {
                     "type": "number",
-                    "description": "Ganancia patrimonial neta por transmisión de criptomonedas (casilla 1814). Base del ahorro. Usar cuando el usuario dice que ha vendido Bitcoin, Ethereum u otras criptomonedas con beneficio."
+                    "description": "Ganancia patrimonial neta por transmisión de criptomonedas (casilla 1814). Base del ahorro. Usar cuando el usuario dice que ha vendido Bitcoin, Ethereum u otras criptomonedas con beneficio.",
                 },
                 "cripto_perdida_neta": {
                     "type": "number",
-                    "description": "Pérdida patrimonial neta por transmisión de criptomonedas (casilla 1813). Compensa las ganancias cripto del mismo ejercicio."
+                    "description": "Pérdida patrimonial neta por transmisión de criptomonedas (casilla 1813). Compensa las ganancias cripto del mismo ejercicio.",
                 },
                 "premios_metalico_privados": {
                     "type": "number",
-                    "description": "Premios en metálico de juegos, apuestas o concursos privados (casilla 0282). Van a la base imponible GENERAL (no al ahorro). Ejemplos: apuestas deportivas online, premios de concursos televisivos, póker online."
+                    "description": "Premios en metálico de juegos, apuestas o concursos privados (casilla 0282). Van a la base imponible GENERAL (no al ahorro). Ejemplos: apuestas deportivas online, premios de concursos televisivos, póker online.",
                 },
                 "premios_especie_privados": {
                     "type": "number",
-                    "description": "Premios en especie de juegos/apuestas privados, valorados a precio de mercado (casilla 0283). Base general."
+                    "description": "Premios en especie de juegos/apuestas privados, valorados a precio de mercado (casilla 0283). Base general.",
                 },
                 "perdidas_juegos_privados": {
                     "type": "number",
-                    "description": "Pérdidas en juegos/apuestas privados (casilla 0287). Solo compensan ganancias del mismo tipo, no otras rentas."
+                    "description": "Pérdidas en juegos/apuestas privados (casilla 0287). Solo compensan ganancias del mismo tipo, no otras rentas.",
                 },
                 "premios_metalico_publicos": {
                     "type": "number",
-                    "description": "Premios en metálico de loterías del Estado, ONCE o Cruz Roja (casilla 0292). Exentos los primeros 40.000 EUR; el exceso tributa al 20% como gravamen especial separado (Art. 75bis LIRPF). NO van a la base general."
+                    "description": "Premios en metálico de loterías del Estado, ONCE o Cruz Roja (casilla 0292). Exentos los primeros 40.000 EUR; el exceso tributa al 20% como gravamen especial separado (Art. 75bis LIRPF). NO van a la base general.",
                 },
                 "premios_especie_publicos": {
                     "type": "number",
-                    "description": "Premios en especie de loterías públicas, valorados a precio de mercado (casilla 0293). Mismo tratamiento que premios_metalico_publicos."
+                    "description": "Premios en especie de loterías públicas, valorados a precio de mercado (casilla 0293). Mismo tratamiento que premios_metalico_publicos.",
                 },
                 # --- Fase XSD: Gastos granulares actividad (casillas 0181-0217) ---
                 "gastos_compras": {
                     "type": "number",
-                    "description": "Compras de mercaderías y materias primas (casilla 0181). Gasto deducible de actividad económica en estimación directa."
+                    "description": "Compras de mercaderías y materias primas (casilla 0181). Gasto deducible de actividad económica en estimación directa.",
                 },
                 "gastos_sueldos": {
                     "type": "number",
-                    "description": "Sueldos y salarios del personal empleado (casilla 0190). Solo para autónomos con trabajadores a cargo."
+                    "description": "Sueldos y salarios del personal empleado (casilla 0190). Solo para autónomos con trabajadores a cargo.",
                 },
                 "gastos_ss_empresa": {
                     "type": "number",
-                    "description": "Seguridad Social a cargo de la empresa (casilla 0191). Cuotas SS del empresario por sus empleados."
+                    "description": "Seguridad Social a cargo de la empresa (casilla 0191). Cuotas SS del empresario por sus empleados.",
                 },
                 "gastos_arrendamientos": {
                     "type": "number",
-                    "description": "Alquileres de locales, oficinas y bienes afectos a la actividad (casilla 0196)."
+                    "description": "Alquileres de locales, oficinas y bienes afectos a la actividad (casilla 0196).",
                 },
                 "gastos_reparaciones_actividad": {
                     "type": "number",
-                    "description": "Gastos de reparación y conservación de bienes afectos a la actividad (casilla 0197)."
+                    "description": "Gastos de reparación y conservación de bienes afectos a la actividad (casilla 0197).",
                 },
                 "gastos_servicios_profesionales": {
                     "type": "number",
-                    "description": "Servicios de profesionales independientes: gestoría, abogados, consultores (casilla 0198)."
+                    "description": "Servicios de profesionales independientes: gestoría, abogados, consultores (casilla 0198).",
                 },
                 "gastos_tributos": {
                     "type": "number",
-                    "description": "Tributos y tasas deducibles: IAE, IBI de local, tasas municipales (casilla 0201)."
+                    "description": "Tributos y tasas deducibles: IAE, IBI de local, tasas municipales (casilla 0201).",
                 },
                 "gastos_financieros_actividad": {
                     "type": "number",
-                    "description": "Gastos financieros de la actividad: intereses de préstamos afectos (casilla 0203)."
+                    "description": "Gastos financieros de la actividad: intereses de préstamos afectos (casilla 0203).",
                 },
                 "gastos_suministros_actividad": {
                     "type": "number",
-                    "description": "Suministros afectos a la actividad: luz, agua, internet, teléfono (casilla 0205). Para trabajadores en domicilio, hasta el 30% de la parte proporcional del inmueble."
+                    "description": "Suministros afectos a la actividad: luz, agua, internet, teléfono (casilla 0205). Para trabajadores en domicilio, hasta el 30% de la parte proporcional del inmueble.",
                 },
                 "gastos_otros": {
                     "type": "number",
-                    "description": "Otros gastos deducibles no clasificados en categorías anteriores (casilla 0217)."
+                    "description": "Otros gastos deducibles no clasificados en categorías anteriores (casilla 0217).",
                 },
                 "gastos_publicidad": {
                     "type": "number",
-                    "description": "Gastos de publicidad, marketing y promoción de la actividad (va en casilla 0217)."
+                    "description": "Gastos de publicidad, marketing y promoción de la actividad (va en casilla 0217).",
                 },
                 "gastos_formacion": {
                     "type": "number",
-                    "description": "Gastos de formación y actualización profesional relacionados con la actividad (va en 0217)."
+                    "description": "Gastos de formación y actualización profesional relacionados con la actividad (va en 0217).",
                 },
                 "gastos_software": {
                     "type": "number",
-                    "description": "Licencias de software, suscripciones SaaS y herramientas digitales afectas (va en 0217)."
+                    "description": "Licencias de software, suscripciones SaaS y herramientas digitales afectas (va en 0217).",
                 },
                 # --- Fase XSD: Ingresos granulares actividad (casillas 0171-0179) ---
                 "ingresos_ventas": {
                     "type": "number",
-                    "description": "Ingresos por ventas de bienes y prestación de servicios (casilla 0171). Si se proporciona este campo junto con otros ingresos granulares, sustituyen a ingresos_actividad."
+                    "description": "Ingresos por ventas de bienes y prestación de servicios (casilla 0171). Si se proporciona este campo junto con otros ingresos granulares, sustituyen a ingresos_actividad.",
                 },
                 "ingresos_subvenciones": {
                     "type": "number",
-                    "description": "Subvenciones de explotación y de capital afectas a la actividad (casilla 0173)."
+                    "description": "Subvenciones de explotación y de capital afectas a la actividad (casilla 0173).",
                 },
                 "ingresos_financieros_actividad": {
                     "type": "number",
-                    "description": "Ingresos financieros de la actividad económica (casilla 0175)."
+                    "description": "Ingresos financieros de la actividad económica (casilla 0175).",
                 },
                 "ingresos_otros_actividad": {
                     "type": "number",
-                    "description": "Otros ingresos de la actividad no clasificados en categorías anteriores (casilla 0179)."
+                    "description": "Otros ingresos de la actividad no clasificados en categorías anteriores (casilla 0179).",
                 },
                 # --- Fase XSD: Royalties / Derechos de autor ---
                 "ingresos_derechos_autor": {
                     "type": "number",
-                    "description": "Ingresos por royalties o derechos de autor (casilla 0128). Aplicable a creadores de contenido, escritores, músicos, artistas. Se suman al rendimiento de actividad. Si reduccion_derechos_autor=true, se aplica reducción del 30% (Art. 32.1 LIRPF)."
+                    "description": "Ingresos por royalties o derechos de autor (casilla 0128). Aplicable a creadores de contenido, escritores, músicos, artistas. Se suman al rendimiento de actividad. Si reduccion_derechos_autor=true, se aplica reducción del 30% (Art. 32.1 LIRPF).",
                 },
                 "reduccion_derechos_autor": {
                     "type": "boolean",
-                    "description": "true si los derechos de autor se han generado en más de 2 años (Art. 32.1 LIRPF). Aplica reducción del 30% sobre ingresos_derechos_autor."
+                    "description": "true si los derechos de autor se han generado en más de 2 años (Art. 32.1 LIRPF). Aplica reducción del 30% sobre ingresos_derechos_autor.",
                 },
                 "retencion_derechos_autor": {
                     "type": "number",
-                    "description": "Retenciones IRPF practicadas sobre los ingresos por derechos de autor (19% general). Se suman a retenciones_actividad para el cálculo del resultado final."
+                    "description": "Retenciones IRPF practicadas sobre los ingresos por derechos de autor (19% general). Se suman a retenciones_actividad para el cálculo del resultado final.",
                 },
                 # --- Fase XSD: Estimacion objetiva (modulos) ---
                 "modulos_rendimiento_neto": {
                     "type": "number",
-                    "description": "Rendimiento neto previo calculado por módulos (estimacion_actividad='objetiva'). Es el resultado de aplicar los módulos de la AEAT a la actividad del autónomo. Solo relevante si estimacion_actividad='objetiva'."
+                    "description": "Rendimiento neto previo calculado por módulos (estimacion_actividad='objetiva'). Es el resultado de aplicar los módulos de la AEAT a la actividad del autónomo. Solo relevante si estimacion_actividad='objetiva'.",
                 },
                 "modulos_indice_corrector": {
                     "type": "number",
-                    "description": "Índice corrector aplicable en estimación objetiva (default 1.0). Valores habituales: 0.75 (inicio actividad), 0.90 (determinadas actividades). Solo si estimacion_actividad='objetiva'."
+                    "description": "Índice corrector aplicable en estimación objetiva (default 1.0). Valores habituales: 0.75 (inicio actividad), 0.90 (determinadas actividades). Solo si estimacion_actividad='objetiva'.",
                 },
                 # --- Fase XSD: WorkIncome nuevos params ---
                 "defensa_juridica": {
                     "type": "number",
-                    "description": "Gastos de defensa jurídica del trabajador frente al empleador (casilla 0016). Deducible con límite de 300 EUR/año."
+                    "description": "Gastos de defensa jurídica del trabajador frente al empleador (casilla 0016). Deducible con límite de 300 EUR/año.",
                 },
                 "incremento_desempleado_nuevo_empleo": {
                     "type": "number",
-                    "description": "Incremento de gastos deducibles del trabajo por aceptar empleo en municipio distinto siendo desempleado (casilla 0020). Hasta 2.000 EUR adicionales sobre los 2.000 EUR base."
+                    "description": "Incremento de gastos deducibles del trabajo por aceptar empleo en municipio distinto siendo desempleado (casilla 0020). Hasta 2.000 EUR adicionales sobre los 2.000 EUR base.",
                 },
                 "incremento_discapacidad_activo": {
                     "type": "number",
-                    "description": "Incremento de gastos deducibles por discapacidad del trabajador activo (casilla 0021). 3.500 EUR si discapacidad >=33%; 7.750 EUR si >=65% o movilidad reducida."
+                    "description": "Incremento de gastos deducibles por discapacidad del trabajador activo (casilla 0021). 3.500 EUR si discapacidad >=33%; 7.750 EUR si >=65% o movilidad reducida.",
                 },
                 # --- Fase XSD: Gastos granulares alquiler (casillas 0105-0126) ---
                 "gastos_financiacion_alquiler": {
                     "type": "number",
-                    "description": "Intereses y gastos de financiación del inmueble alquilado (casilla 0105). Incluye intereses hipotecarios. Limitados al importe de los ingresos íntegros (Art. 23.1.a LIRPF)."
+                    "description": "Intereses y gastos de financiación del inmueble alquilado (casilla 0105). Incluye intereses hipotecarios. Limitados al importe de los ingresos íntegros (Art. 23.1.a LIRPF).",
                 },
                 "gastos_reparacion_alquiler": {
                     "type": "number",
-                    "description": "Gastos de reparación y conservación del inmueble alquilado (casilla 0106). Limitados conjuntamente con financiación al importe de ingresos íntegros."
+                    "description": "Gastos de reparación y conservación del inmueble alquilado (casilla 0106). Limitados conjuntamente con financiación al importe de ingresos íntegros.",
                 },
                 "gastos_comunidad_alquiler": {
                     "type": "number",
-                    "description": "Cuotas de comunidad de propietarios del inmueble alquilado (casilla 0109). Sin límite de importe."
+                    "description": "Cuotas de comunidad de propietarios del inmueble alquilado (casilla 0109). Sin límite de importe.",
                 },
                 "ibi_alquiler": {
                     "type": "number",
-                    "description": "IBI (Impuesto sobre Bienes Inmuebles) del inmueble alquilado. Deducible sin límite."
+                    "description": "IBI (Impuesto sobre Bienes Inmuebles) del inmueble alquilado. Deducible sin límite.",
                 },
                 "gastos_seguros_alquiler": {
                     "type": "number",
-                    "description": "Primas de seguro del inmueble alquilado: hogar, responsabilidad civil, impago (casilla 0114). Sin límite."
+                    "description": "Primas de seguro del inmueble alquilado: hogar, responsabilidad civil, impago (casilla 0114). Sin límite.",
                 },
                 "gastos_suministros_alquiler": {
                     "type": "number",
-                    "description": "Suministros del inmueble alquilado a cargo del propietario: agua, luz, gas (casilla 0113). Sin límite."
+                    "description": "Suministros del inmueble alquilado a cargo del propietario: agua, luz, gas (casilla 0113). Sin límite.",
                 },
                 "pagadores": {
                     "type": "array",
@@ -428,31 +423,40 @@ IMPORTANTE sobre ingresos:
                         "type": "object",
                         "properties": {
                             "nombre": {"type": "string", "description": "Nombre del pagador"},
-                            "retribuciones_dinerarias": {"type": "number", "description": "Retribuciones dinerarias brutas de este pagador"},
-                            "retenciones": {"type": "number", "description": "Retenciones IRPF de este pagador"},
-                            "gastos_deducibles": {"type": "number", "description": "Gastos deducibles (SS) de este pagador"},
-                        }
-                    }
+                            "retribuciones_dinerarias": {
+                                "type": "number",
+                                "description": "Retribuciones dinerarias brutas de este pagador",
+                            },
+                            "retenciones": {
+                                "type": "number",
+                                "description": "Retenciones IRPF de este pagador",
+                            },
+                            "gastos_deducibles": {
+                                "type": "number",
+                                "description": "Gastos deducibles (SS) de este pagador",
+                            },
+                        },
+                    },
                 },
                 "num_pagadores": {
                     "type": "integer",
                     "description": "Numero de pagadores/empleadores del contribuyente. Si es > 1, puede afectar al limite de obligacion de declarar (15.876 EUR vs 22.000 EUR).",
-                    "default": 1
+                    "default": 1,
                 },
                 "retribuciones_especie": {
                     "type": "number",
                     "description": "Retribuciones en especie recibidas (coche empresa, seguro medico, etc.). Se suman a la base imponible del trabajo.",
-                    "default": 0
+                    "default": 0,
                 },
                 "ingresos_cuenta": {
                     "type": "number",
                     "description": "Ingresos a cuenta repercutidos al trabajador. Se suman a la base imponible del trabajo.",
-                    "default": 0
-                }
+                    "default": 0,
+                },
             },
-            "required": ["comunidad_autonoma"]
-        }
-    }
+            "required": ["comunidad_autonoma"],
+        },
+    },
 }
 
 
@@ -469,7 +473,7 @@ async def simulate_irpf_tool(
     valor_adquisicion_inmueble: float = 0,
     edad_contribuyente: int = 35,
     num_descendientes: int = 0,
-    anios_nacimiento_desc: Optional[List[int]] = None,
+    anios_nacimiento_desc: list[int] | None = None,
     custodia_compartida: bool = False,
     num_ascendientes_65: int = 0,
     num_ascendientes_75: int = 0,
@@ -562,16 +566,16 @@ async def simulate_irpf_tool(
     gastos_seguros_alquiler: float = 0,
     gastos_suministros_alquiler: float = 0,
     # Multi-pagador support
-    pagadores: Optional[List[dict]] = None,
+    pagadores: list[dict] | None = None,
     num_pagadores: int = 1,
     retribuciones_especie: float = 0,
     ingresos_cuenta: float = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Execute IRPF simulation and return formatted result."""
     try:
-        from app.utils.irpf_simulator import IRPFSimulator
-        from app.utils.ccaa_constants import normalize_ccaa
         from app.database.turso_client import get_db_client
+        from app.utils.ccaa_constants import normalize_ccaa
+        from app.utils.irpf_simulator import IRPFSimulator
 
         db = await get_db_client()
         ccaa = normalize_ccaa(comunidad_autonoma)
@@ -583,7 +587,9 @@ async def simulate_irpf_tool(
         # Multi-pagador aggregation: if pagadores list provided, aggregate totals
         if pagadores:
             ingresos_trabajo = sum(
-                p.get("retribuciones_dinerarias", 0) + p.get("retribuciones_especie", 0) + p.get("ingresos_cuenta", 0)
+                p.get("retribuciones_dinerarias", 0)
+                + p.get("retribuciones_especie", 0)
+                + p.get("ingresos_cuenta", 0)
                 for p in pagadores
             )
             retenciones_trabajo = sum(p.get("retenciones", 0) for p in pagadores)
@@ -592,7 +598,10 @@ async def simulate_irpf_tool(
 
         logger.info(
             "Simulating IRPF: %s€ trabajo, %s, %s, ceuta_melilla=%s",
-            ingresos_trabajo, ccaa, year, ceuta_melilla,
+            ingresos_trabajo,
+            ccaa,
+            year,
+            ceuta_melilla,
         )
 
         simulator = IRPFSimulator(db)
@@ -603,9 +612,12 @@ async def simulate_irpf_tool(
         # Determine if granular rental expenses are provided
         # If any granular rental field > 0, use them; otherwise fall back to gastos_alquiler_total
         _rental_granulares_sum = (
-            gastos_financiacion_alquiler + gastos_reparacion_alquiler
-            + gastos_comunidad_alquiler + ibi_alquiler
-            + gastos_seguros_alquiler + gastos_suministros_alquiler
+            gastos_financiacion_alquiler
+            + gastos_reparacion_alquiler
+            + gastos_comunidad_alquiler
+            + ibi_alquiler
+            + gastos_seguros_alquiler
+            + gastos_suministros_alquiler
         )
         _use_rental_granulares = _rental_granulares_sum > 0
 
@@ -698,12 +710,16 @@ async def simulate_irpf_tool(
             incremento_desempleado_nuevo_empleo=incremento_desempleado_nuevo_empleo,
             incremento_discapacidad_activo=incremento_discapacidad_activo,
             # Fase XSD: Gastos granulares alquiler (solo si se proporcionan)
-            gastos_financiacion_alquiler=gastos_financiacion_alquiler if _use_rental_granulares else 0,
+            gastos_financiacion_alquiler=gastos_financiacion_alquiler
+            if _use_rental_granulares
+            else 0,
             gastos_reparacion_alquiler=gastos_reparacion_alquiler if _use_rental_granulares else 0,
             gastos_comunidad_alquiler=gastos_comunidad_alquiler if _use_rental_granulares else 0,
             ibi_alquiler=ibi_alquiler if _use_rental_granulares else 0,
             gastos_seguros_alquiler=gastos_seguros_alquiler if _use_rental_granulares else 0,
-            gastos_suministros_alquiler=gastos_suministros_alquiler if _use_rental_granulares else 0,
+            gastos_suministros_alquiler=gastos_suministros_alquiler
+            if _use_rental_granulares
+            else 0,
             # Multi-pagador / retribuciones especie
             retribuciones_especie=retribuciones_especie,
             ingresos_cuenta=ingresos_cuenta,
@@ -761,7 +777,9 @@ async def simulate_irpf_tool(
                 tax_year=effective_year,
                 answers=ded_answers,
             )
-            if ded_result.get("success") and (ded_result.get("deductions_found", 0) > 0 or ded_result.get("maybe_eligible", 0) > 0):
+            if ded_result.get("success") and (
+                ded_result.get("deductions_found", 0) > 0 or ded_result.get("maybe_eligible", 0) > 0
+            ):
                 formatted += "\n\n---\n" + ded_result["formatted_response"]
                 result["deductions"] = ded_result
         except Exception as e:
@@ -789,7 +807,7 @@ async def simulate_irpf_tool(
         }
 
 
-def _format_simulation_result(result: Dict, ccaa: str) -> str:
+def _format_simulation_result(result: dict, ccaa: str) -> str:
     """Format simulation result as user-friendly text for the LLM."""
     year = result["year"]
     trabajo = result.get("trabajo", {})
@@ -826,9 +844,7 @@ def _format_simulation_result(result: Dict, ccaa: str) -> str:
                 f"  Gastos dificil justificacion (5%): "
                 f"-{actividad['gastos_dificil_justificacion']:,.2f} EUR"
             )
-        lines.append(
-            f"  Rendimiento neto: {actividad['rendimiento_neto']:,.2f} EUR"
-        )
+        lines.append(f"  Rendimiento neto: {actividad['rendimiento_neto']:,.2f} EUR")
         if actividad.get("reduccion_aplicada", 0) > 0:
             tipo_red = actividad.get("tipo_reduccion", "")
             red_label = ""
@@ -837,12 +853,10 @@ def _format_simulation_result(result: Dict, ccaa: str) -> str:
             elif tipo_red == "dependiente_art32_2":
                 red_label = "autonomo dependiente Art. 32.2"
             lines.append(
-                f"  Reduccion ({red_label}): "
-                f"-{actividad['reduccion_aplicada']:,.2f} EUR"
+                f"  Reduccion ({red_label}): " f"-{actividad['reduccion_aplicada']:,.2f} EUR"
             )
         lines.append(
-            f"  Rendimiento neto reducido: "
-            f"{actividad['rendimiento_neto_reducido']:,.2f} EUR"
+            f"  Rendimiento neto reducido: " f"{actividad['rendimiento_neto_reducido']:,.2f} EUR"
         )
 
     # Rental income
@@ -855,13 +869,9 @@ def _format_simulation_result(result: Dict, ccaa: str) -> str:
         )
 
     # Tax bases
-    lines.append(
-        f"Base imponible general: {result['base_imponible_general']:,.2f}€"
-    )
+    lines.append(f"Base imponible general: {result['base_imponible_general']:,.2f}€")
     if result.get("base_imponible_ahorro", 0) > 0:
-        lines.append(
-            f"Base imponible del ahorro: {result['base_imponible_ahorro']:,.2f}€"
-        )
+        lines.append(f"Base imponible del ahorro: {result['base_imponible_ahorro']:,.2f}€")
 
     # Cuota íntegra
     lines.append(
@@ -885,9 +895,7 @@ def _format_simulation_result(result: Dict, ccaa: str) -> str:
         )
 
     # Cuota líquida
-    lines.append(
-        f"Cuota líquida general: {result['cuota_liquida_general']:,.2f}€"
-    )
+    lines.append(f"Cuota líquida general: {result['cuota_liquida_general']:,.2f}€")
     if result.get("cuota_ahorro", 0) > 0:
         lines.append(f"Cuota del ahorro: {result['cuota_ahorro']:,.2f}€")
 
@@ -904,9 +912,13 @@ def _format_simulation_result(result: Dict, ccaa: str) -> str:
         if result.get("retenciones_actividad", 0) > 0:
             lines.append(f"- Retenciones actividad: {result['retenciones_actividad']:,.2f} EUR")
         if result.get("pagos_fraccionados_130", 0) > 0:
-            lines.append(f"- Pagos fraccionados (Mod. 130): {result['pagos_fraccionados_130']:,.2f} EUR")
+            lines.append(
+                f"- Pagos fraccionados (Mod. 130): {result['pagos_fraccionados_130']:,.2f} EUR"
+            )
         if result.get("retenciones_alquiler", 0) > 0:
-            lines.append(f"- Retenciones alquiler: {result.get('retenciones_alquiler', 0):,.2f} EUR")
+            lines.append(
+                f"- Retenciones alquiler: {result.get('retenciones_alquiler', 0):,.2f} EUR"
+            )
         if result.get("retenciones_ahorro", 0) > 0:
             lines.append(f"- Retenciones ahorro: {result.get('retenciones_ahorro', 0):,.2f} EUR")
         lines.append(f"- Total retenciones: {total_ret:,.2f} EUR")

@@ -7,9 +7,10 @@ in Ceuta and Melilla. IPSI replaces IVA in these territories.
 Based on Ley 8/1991 (Ceuta) and Ley 13/1996 (Melilla).
 6 rate tiers: 0.5%, 1%, 2%, 4%, 8%, 10%.
 """
-from typing import Dict, Any
-from datetime import datetime
+
 import logging
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,60 +37,57 @@ determina que tipo aplica a cada bien/servicio.""",
                 "territorio": {
                     "type": "string",
                     "enum": ["Ceuta", "Melilla"],
-                    "description": "Ciudad autonoma: Ceuta o Melilla"
+                    "description": "Ciudad autonoma: Ceuta o Melilla",
                 },
                 "trimestre": {
                     "type": "integer",
-                    "description": "Trimestre de la declaracion (1, 2, 3 o 4)"
+                    "description": "Trimestre de la declaracion (1, 2, 3 o 4)",
                 },
-                "year": {
-                    "type": "integer",
-                    "description": "Ano fiscal. Por defecto: ano actual"
-                },
+                "year": {"type": "integer", "description": "Ano fiscal. Por defecto: ano actual"},
                 "base_4": {
                     "type": "number",
-                    "description": "Base imponible al tipo general (4%). La mayoria de operaciones van aqui"
+                    "description": "Base imponible al tipo general (4%). La mayoria de operaciones van aqui",
                 },
                 "base_0_5": {
                     "type": "number",
-                    "description": "Base imponible al tipo minimo (0.5%). Por defecto: 0"
+                    "description": "Base imponible al tipo minimo (0.5%). Por defecto: 0",
                 },
                 "base_1": {
                     "type": "number",
-                    "description": "Base imponible al tipo reducido (1%). Por defecto: 0"
+                    "description": "Base imponible al tipo reducido (1%). Por defecto: 0",
                 },
                 "base_2": {
                     "type": "number",
-                    "description": "Base imponible al tipo bonificado (2%). Por defecto: 0"
+                    "description": "Base imponible al tipo bonificado (2%). Por defecto: 0",
                 },
                 "base_8": {
                     "type": "number",
-                    "description": "Base imponible al tipo incrementado (8%). Por defecto: 0"
+                    "description": "Base imponible al tipo incrementado (8%). Por defecto: 0",
                 },
                 "base_10": {
                     "type": "number",
-                    "description": "Base imponible al tipo especial (10%). Por defecto: 0"
+                    "description": "Base imponible al tipo especial (10%). Por defecto: 0",
                 },
                 "ipsi_deducible": {
                     "type": "number",
-                    "description": "IPSI soportado deducible en compras de bienes y servicios corrientes"
+                    "description": "IPSI soportado deducible en compras de bienes y servicios corrientes",
                 },
                 "ipsi_deducible_inversion": {
                     "type": "number",
-                    "description": "IPSI soportado deducible en bienes de inversion. Por defecto: 0"
+                    "description": "IPSI soportado deducible en bienes de inversion. Por defecto: 0",
                 },
                 "ipsi_deducible_importaciones": {
                     "type": "number",
-                    "description": "IPSI soportado deducible en importaciones. Por defecto: 0"
+                    "description": "IPSI soportado deducible en importaciones. Por defecto: 0",
                 },
                 "compensacion_periodos_anteriores": {
                     "type": "number",
-                    "description": "Cuotas a compensar de periodos anteriores (>= 0). Por defecto: 0"
-                }
+                    "description": "Cuotas a compensar de periodos anteriores (>= 0). Por defecto: 0",
+                },
             },
-            "required": ["territorio", "trimestre", "base_4", "ipsi_deducible"]
-        }
-    }
+            "required": ["territorio", "trimestre", "base_4", "ipsi_deducible"],
+        },
+    },
 }
 
 
@@ -109,7 +107,7 @@ async def calculate_modelo_ipsi_tool(
     compensacion_periodos_anteriores: float = 0,
     restricted_mode: bool = False,
     caso: str = "general",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Calculate the quarterly IPSI self-assessment for Ceuta/Melilla.
 
     Args:
@@ -125,11 +123,12 @@ async def calculate_modelo_ipsi_tool(
     PARTICULAR_CASES = {"compraventa_inmueble"}
     if restricted_mode and caso not in PARTICULAR_CASES:
         from app.security.content_restriction import get_autonomo_block_response
+
         logger.warning("calculate_modelo_ipsi called in restricted_mode — blocking")
         return {
             "success": False,
             "error": "restricted",
-            "formatted_response": get_autonomo_block_response()
+            "formatted_response": get_autonomo_block_response(),
         }
 
     try:
@@ -140,20 +139,21 @@ async def calculate_modelo_ipsi_tool(
             return {
                 "success": False,
                 "error": "Trimestre debe ser 1, 2, 3 o 4",
-                "formatted_response": "El trimestre debe ser 1, 2, 3 o 4."
+                "formatted_response": "El trimestre debe ser 1, 2, 3 o 4.",
             }
 
         if territorio not in ("Ceuta", "Melilla"):
             return {
                 "success": False,
                 "error": "Territorio debe ser 'Ceuta' o 'Melilla'",
-                "formatted_response": "El IPSI solo aplica en Ceuta o Melilla."
+                "formatted_response": "El IPSI solo aplica en Ceuta o Melilla.",
             }
 
         compensacion_periodos_anteriores = max(compensacion_periodos_anteriores, 0)
 
         # Call calculator
         from app.utils.calculators.modelo_ipsi import ModeloIpsiCalculator
+
         calc = ModeloIpsiCalculator(None)
         result = await calc.calculate(
             territorio=territorio,
@@ -181,7 +181,7 @@ async def calculate_modelo_ipsi_tool(
             1: "enero-marzo",
             2: "abril-junio",
             3: "julio-septiembre",
-            4: "octubre-diciembre"
+            4: "octubre-diciembre",
         }[trimestre]
 
         if resultado > 0:
@@ -244,7 +244,9 @@ async def calculate_modelo_ipsi_tool(
         rg = result["resultado_regimen_general"]
         lines.append(f"- Resultado regimen general: {rg:,.2f} EUR")
         if compensacion_periodos_anteriores > 0:
-            lines.append(f"- Compensacion periodos anteriores: -{compensacion_periodos_anteriores:,.2f} EUR")
+            lines.append(
+                f"- Compensacion periodos anteriores: -{compensacion_periodos_anteriores:,.2f} EUR"
+            )
         lines.append(f"- **Resultado final: {resultado:,.2f} EUR — {tipo_resultado}**")
 
         # Plazos oficiales (idem en Ceuta y Melilla):
@@ -271,9 +273,7 @@ async def calculate_modelo_ipsi_tool(
                 f"en el siguiente trimestre."
             )
         elif resultado < 0 and trimestre == 4:
-            lines.append(
-                f"En el 4T puedes solicitar la devolucion de {abs(resultado):,.2f} EUR."
-            )
+            lines.append(f"En el 4T puedes solicitar la devolucion de {abs(resultado):,.2f} EUR.")
 
         lines.append("")
         lines.append(
@@ -301,5 +301,5 @@ async def calculate_modelo_ipsi_tool(
         return {
             "success": False,
             "error": str(e),
-            "formatted_response": f"Error al calcular el IPSI: {str(e)}"
+            "formatted_response": f"Error al calcular el IPSI: {str(e)}",
         }

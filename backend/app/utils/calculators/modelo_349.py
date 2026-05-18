@@ -46,12 +46,14 @@ Cuadre 303 <-> 349 (causa nº1 de requerimientos AEAT):
     deberian coincidir con suma 349 de clave A.
     Diferencias > 0,5 EUR generan paralela.
 """
+
 from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -61,17 +63,27 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------------------------------- #
 
 # Claves validas (Art. 4 Orden EHA/769/2010)
-CLAVES_VALIDAS: Tuple[str, ...] = (
-    "E", "A", "T", "S", "I", "M", "H", "R", "D", "C", "N",
+CLAVES_VALIDAS: tuple[str, ...] = (
+    "E",
+    "A",
+    "T",
+    "S",
+    "I",
+    "M",
+    "H",
+    "R",
+    "D",
+    "C",
+    "N",
 )
 
 # Subconjuntos para calculos de umbral y cuadre 303
-ENTREGAS_BIENES_CLAVES: Tuple[str, ...] = ("E", "T", "M", "H")
-ADQUISICIONES_BIENES_CLAVES: Tuple[str, ...] = ("A",)
-ENTREGAS_SERVICIOS_CLAVES: Tuple[str, ...] = ("S",)
-ADQUISICIONES_SERVICIOS_CLAVES: Tuple[str, ...] = ("I",)
-CONSIGNACION_CLAVES: Tuple[str, ...] = ("R", "D", "C")
-RECTIFICACION_CLAVES: Tuple[str, ...] = ("N",)
+ENTREGAS_BIENES_CLAVES: tuple[str, ...] = ("E", "T", "M", "H")
+ADQUISICIONES_BIENES_CLAVES: tuple[str, ...] = ("A",)
+ENTREGAS_SERVICIOS_CLAVES: tuple[str, ...] = ("S",)
+ADQUISICIONES_SERVICIOS_CLAVES: tuple[str, ...] = ("I",)
+CONSIGNACION_CLAVES: tuple[str, ...] = ("R", "D", "C")
+RECTIFICACION_CLAVES: tuple[str, ...] = ("N",)
 
 # Umbrales (Art. 10 Orden EHA/769/2010)
 UMBRAL_MENSUAL_TRIMESTRE: float = 50_000.0
@@ -82,10 +94,34 @@ UMBRAL_ANUAL_ENTREGAS: float = 15_000.0
 CUADRE_TOLERANCIA_EUR: float = 0.5
 
 # Codigos ISO de los Estados miembro de la UE (al 2026, Brexit ya aplicado)
-EU_COUNTRY_CODES: Tuple[str, ...] = (
-    "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES",
-    "FI", "FR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT",
-    "NL", "PL", "PT", "RO", "SE", "SI", "SK",
+EU_COUNTRY_CODES: tuple[str, ...] = (
+    "AT",
+    "BE",
+    "BG",
+    "CY",
+    "CZ",
+    "DE",
+    "DK",
+    "EE",
+    "EL",
+    "ES",
+    "FI",
+    "FR",
+    "HR",
+    "HU",
+    "IE",
+    "IT",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "PL",
+    "PT",
+    "RO",
+    "SE",
+    "SI",
+    "SK",
     # XI = Irlanda del Norte (acuerdo bienes post-Brexit, no servicios)
     "XI",
 )
@@ -93,7 +129,7 @@ EU_COUNTRY_CODES: Tuple[str, ...] = (
 # Formato del NIF-IVA por pais (longitud y caracteres permitidos despues del
 # prefijo ISO). Datos extraidos de la Comision Europea (TAXUD), simplificados.
 # Notar que la validacion final de checksum la hace VIES.
-_VAT_FORMATS: Dict[str, re.Pattern[str]] = {
+_VAT_FORMATS: dict[str, re.Pattern[str]] = {
     "AT": re.compile(r"^U\d{8}$"),
     "BE": re.compile(r"^[01]\d{9}$"),
     "BG": re.compile(r"^\d{9,10}$"),
@@ -143,16 +179,17 @@ class Operacion349:
     nombre: str
     clave: str
     importe: float
-    pais_codigo: Optional[str] = None  # Auto-derivado del prefijo NIF-IVA si no se pasa
-    periodo_rectificado: Optional[str] = None  # Solo para clave N o C
-    base_anterior_declarada: Optional[float] = None  # Solo para clave N
+    pais_codigo: str | None = None  # Auto-derivado del prefijo NIF-IVA si no se pasa
+    periodo_rectificado: str | None = None  # Solo para clave N o C
+    base_anterior_declarada: float | None = None  # Solo para clave N
 
     def __post_init__(self) -> None:  # pragma: no cover - dataclass init
         # Validaciones minimas (no bloquean la creacion del objeto)
         if self.clave not in CLAVES_VALIDAS:
             logger.warning(
                 "Operacion349 con clave invalida '%s' (operador=%s)",
-                self.clave, self.nif_operador,
+                self.clave,
+                self.nif_operador,
             )
 
 
@@ -160,11 +197,11 @@ class Operacion349:
 class CuadreResult:
     """Resultado del cuadre 303 <-> 349 para un periodo."""
 
-    diff_entregas_bienes: float = 0.0     # 303 c.60 vs sum(E+T+M+H)
+    diff_entregas_bienes: float = 0.0  # 303 c.60 vs sum(E+T+M+H)
     diff_adquisiciones_bienes: float = 0.0  # 303 c.36+38 vs sum(A)
-    diff_servicios_prestados: float = 0.0   # info, no hay casilla 303 explicita
+    diff_servicios_prestados: float = 0.0  # info, no hay casilla 303 explicita
     diff_servicios_adquiridos: float = 0.0  # info, no hay casilla 303 explicita
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     cuadre_ok: bool = True
 
 
@@ -187,16 +224,14 @@ class Modelo349Calculator:
     # Tamano maximo del cache VIES per-instance (LRU manual).
     _VIES_CACHE_MAX: int = 2048
     _VIES_TIMEOUT_SECONDS: float = 5.0
-    _VIES_ENDPOINT: str = (
-        "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number"
-    )
+    _VIES_ENDPOINT: str = "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number"
 
     def __init__(self, repo: Any = None) -> None:
         # `repo` se acepta por consistencia con el resto de calculadoras pero
         # no se usa (el 349 no depende de TaxParameterRepository).
         self._repo = repo
         # Cache: nif_iva_normalizado -> {"valid": bool, "nombre": str, "direccion": str, "fetched_at": float}
-        self._vies_cache: Dict[str, Dict[str, Any]] = {}
+        self._vies_cache: dict[str, dict[str, Any]] = {}
 
     # ------------------------------------------------------------------ #
     # Validacion de claves de operacion
@@ -219,7 +254,7 @@ class Modelo349Calculator:
         return re.sub(r"[\s\-\.]", "", str(nif)).upper()
 
     @classmethod
-    def validate_nif_iva_format(cls, nif: str) -> Tuple[bool, Optional[str], Optional[str]]:
+    def validate_nif_iva_format(cls, nif: str) -> tuple[bool, str | None, str | None]:
         """Valida el formato (longitud, caracteres) del NIF-IVA UE.
 
         Devuelve `(es_valido, codigo_pais, motivo)`. `codigo_pais` es ISO de 2
@@ -254,7 +289,7 @@ class Modelo349Calculator:
         *,
         fail_open: bool = True,
         client: Any = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Consulta el servicio VIES (REST) de la Comision Europea.
 
         Estrategia:
@@ -270,7 +305,7 @@ class Modelo349Calculator:
         normalized = self.normalize_nif_iva(nif)
         ok_format, country, motivo = self.validate_nif_iva_format(normalized)
 
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "valid": False,
             "nif_iva": normalized,
             "country": country,
@@ -383,10 +418,10 @@ class Modelo349Calculator:
         cls,
         *,
         operaciones_actual: Iterable[Operacion349],
-        importes_4_trimestres_anteriores: Optional[List[float]] = None,
-        operaciones_anuales: Optional[Iterable[Operacion349]] = None,
+        importes_4_trimestres_anteriores: list[float] | None = None,
+        operaciones_anuales: Iterable[Operacion349] | None = None,
         forzar_anual: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Determina la periodicidad del 349 segun umbrales legales.
 
         Args:
@@ -421,9 +456,13 @@ class Modelo349Calculator:
         volumen_anterior_max = max(anteriores) if anteriores else 0.0
 
         # Mensual si el trimestre actual o cualquiera de los 4 anteriores supera 50.000 EUR
-        if volumen_actual > UMBRAL_MENSUAL_TRIMESTRE or volumen_anterior_max > UMBRAL_MENSUAL_TRIMESTRE:
+        if (
+            volumen_actual > UMBRAL_MENSUAL_TRIMESTRE
+            or volumen_anterior_max > UMBRAL_MENSUAL_TRIMESTRE
+        ):
             motivo_origen = (
-                "trimestre actual" if volumen_actual > UMBRAL_MENSUAL_TRIMESTRE
+                "trimestre actual"
+                if volumen_actual > UMBRAL_MENSUAL_TRIMESTRE
                 else "alguno de los 4 trimestres anteriores"
             )
             return {
@@ -443,7 +482,8 @@ class Modelo349Calculator:
             ops_anuales = list(operaciones_anuales)
             volumen_anual_total = cls._volumen_relevante(ops_anuales)
             volumen_entregas_anual = cls._volumen_por_claves(
-                ops_anuales, ENTREGAS_BIENES_CLAVES + ENTREGAS_SERVICIOS_CLAVES,
+                ops_anuales,
+                ENTREGAS_BIENES_CLAVES + ENTREGAS_SERVICIOS_CLAVES,
             )
             if (
                 volumen_anual_total <= UMBRAL_ANUAL_TOTAL
@@ -499,9 +539,7 @@ class Modelo349Calculator:
             if mes_int == 7:
                 return f"1 al 20 de agosto de {year} (mes 7 {year})."
             siguiente = mes_int + 1
-            return (
-                f"1 al 20 del mes {siguiente:02d}/{year} (mes {mes_int:02d} {year})."
-            )
+            return f"1 al 20 del mes {siguiente:02d}/{year} (mes {mes_int:02d} {year})."
 
         if periodicidad == "trimestral":
             mapa = {
@@ -525,7 +563,7 @@ class Modelo349Calculator:
     def build_resumen(
         cls,
         operaciones: Iterable[Operacion349],
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Agrupa por clave y devuelve totales + numero de operadores.
 
         Returns:
@@ -543,19 +581,17 @@ class Modelo349Calculator:
             }
         """
         ops = list(operaciones)
-        por_clave: Dict[str, Dict[str, Any]] = {
+        por_clave: dict[str, dict[str, Any]] = {
             clave: {"importe": 0.0, "n_operaciones": 0, "operadores": set()}
             for clave in CLAVES_VALIDAS
         }
-        errores: List[str] = []
+        errores: list[str] = []
         operadores_global: set = set()
 
         for op in ops:
             clave = (op.clave or "").upper()
             if clave not in CLAVES_VALIDAS:
-                errores.append(
-                    f"Clave invalida '{op.clave}' en operador {op.nif_operador}"
-                )
+                errores.append(f"Clave invalida '{op.clave}' en operador {op.nif_operador}")
                 continue
             por_clave[clave]["importe"] += float(op.importe or 0.0)
             por_clave[clave]["n_operaciones"] += 1
@@ -565,7 +601,7 @@ class Modelo349Calculator:
                 operadores_global.add(nif_norm)
 
         # Convertir set a count + redondeos
-        por_clave_serializable: Dict[str, Dict[str, Any]] = {}
+        por_clave_serializable: dict[str, dict[str, Any]] = {}
         for clave, data in por_clave.items():
             n_operadores = len(data["operadores"])
             por_clave_serializable[clave] = {
@@ -629,7 +665,7 @@ class Modelo349Calculator:
         cls,
         *,
         operaciones_349: Iterable[Operacion349],
-        casillas_303: Optional[Dict[str, float]] = None,
+        casillas_303: dict[str, float] | None = None,
         tolerancia: float = CUADRE_TOLERANCIA_EUR,
     ) -> CuadreResult:
         """Cruza el 349 con las casillas relevantes del 303 del mismo periodo.
@@ -668,7 +704,7 @@ class Modelo349Calculator:
         diff_entregas = round(c60 - suma_eib_349, 2)
         diff_adquisiciones = round(suma_aib_303 - suma_aib_349, 2)
 
-        warnings_list: List[str] = []
+        warnings_list: list[str] = []
         cuadre_ok = True
 
         if abs(diff_entregas) > tolerancia:

@@ -3,9 +3,10 @@ Deduction Service for TaxIA.
 
 Provides CRUD operations and eligibility evaluation for IRPF deductions.
 """
+
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class DeductionService:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -27,8 +29,8 @@ class DeductionService:
         self,
         territory: str = "Estatal",
         tax_year: int = 2025,
-        category: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        category: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Get all active deductions for a territory and year.
 
@@ -63,8 +65,8 @@ class DeductionService:
         self,
         ccaa: str,
         tax_year: int = 2025,
-        category: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        category: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Get combined Estatal + CCAA deductions.
 
@@ -91,7 +93,7 @@ class DeductionService:
         ccaa_deductions = await self.get_deductions(ccaa, tax_year, category)
         return estatal + ccaa_deductions
 
-    def _parse_rows(self, rows) -> List[Dict[str, Any]]:
+    def _parse_rows(self, rows) -> list[dict[str, Any]]:
         """Parse DB rows into deduction dicts with JSON fields."""
         deductions = []
         for row in rows:
@@ -111,9 +113,9 @@ class DeductionService:
         self,
         territory: str = "Estatal",
         tax_year: int = 2025,
-        answers: Optional[Dict[str, Any]] = None,
-        ccaa: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        answers: dict[str, Any] | None = None,
+        ccaa: str | None = None,
+    ) -> dict[str, Any]:
         """
         Evaluate which deductions a user is eligible for based on their answers.
 
@@ -186,9 +188,9 @@ class DeductionService:
         self,
         territory: str = "Estatal",
         tax_year: int = 2025,
-        answers: Optional[Dict[str, Any]] = None,
-        ccaa: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        answers: dict[str, Any] | None = None,
+        ccaa: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Get questions that still need to be answered to evaluate eligibility.
 
@@ -210,7 +212,11 @@ class DeductionService:
             skip = False
             for req_key, req_value in reqs.items():
                 user_answer = answers.get(req_key)
-                if user_answer is not None and isinstance(req_value, bool) and bool(user_answer) != req_value:
+                if (
+                    user_answer is not None
+                    and isinstance(req_value, bool)
+                    and bool(user_answer) != req_value
+                ):
                     skip = True
                     break
             if skip:
@@ -221,13 +227,15 @@ class DeductionService:
                 qkey = q.get("key")
                 if qkey and qkey not in answers and qkey not in seen_keys:
                     seen_keys.add(qkey)
-                    missing_questions.append({
-                        "key": qkey,
-                        "text": q.get("text", ""),
-                        "type": q.get("type", "bool"),
-                        "deduction_code": d["code"],
-                        "deduction_name": d["name"],
-                    })
+                    missing_questions.append(
+                        {
+                            "key": qkey,
+                            "text": q.get("text", ""),
+                            "type": q.get("type", "bool"),
+                            "deduction_code": d["code"],
+                            "deduction_name": d["name"],
+                        }
+                    )
 
         return missing_questions
 
@@ -247,7 +255,7 @@ class DeductionService:
         Returns:
             Dict of answer keys understood by evaluate_eligibility().
         """
-        answers: Dict[str, Any] = {}
+        answers: dict[str, Any] = {}
 
         # --- Derived boolean answers ---
         if (profile.get("num_descendientes", 0) or 0) > 0:
@@ -306,8 +314,9 @@ class DeductionService:
             answers["deducia_antes_2013"] = True  # conservative assumption
 
         # Planes de pensiones
-        if (profile.get("aportaciones_plan_pensiones", 0) or 0) > 0 or \
-           (profile.get("aportaciones_plan_pensiones_empresa", 0) or 0) > 0:
+        if (profile.get("aportaciones_plan_pensiones", 0) or 0) > 0 or (
+            profile.get("aportaciones_plan_pensiones_empresa", 0) or 0
+        ) > 0:
             answers["aportaciones_planes_pensiones"] = True
 
         # Donativo
@@ -323,8 +332,9 @@ class DeductionService:
         # Criptomonedas (casillas 1800-1814)
         if profile.get("tiene_criptomonedas"):
             answers["tiene_criptomonedas"] = True
-        if (profile.get("cripto_ganancia_neta", 0) or 0) > 0 or \
-           (profile.get("cripto_perdida_neta", 0) or 0) > 0:
+        if (profile.get("cripto_ganancia_neta", 0) or 0) > 0 or (
+            profile.get("cripto_perdida_neta", 0) or 0
+        ) > 0:
             answers["tiene_ganancias_cripto"] = True
 
         # Ganancias patrimoniales financieras
@@ -392,9 +402,9 @@ class DeductionService:
 
     def compute_ccaa_deduction_amounts(
         self,
-        eligible: List[Dict[str, Any]],
-        user_data: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
+        eligible: list[dict[str, Any]],
+        user_data: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """
         Compute exact EUR amounts for eligible CCAA deductions.
 
@@ -469,7 +479,13 @@ class DeductionService:
                             amount = alquiler * pct / 100
 
                 # Housing investment / purchase
-                elif "VIV-JOVEN" in code or "VIV-HABITUAL" in code or "ADQUISICION-VIV" in code or "COMPRA-VIV" in code or "VIV-RURAL" in code:
+                elif (
+                    "VIV-JOVEN" in code
+                    or "VIV-HABITUAL" in code
+                    or "ADQUISICION-VIV" in code
+                    or "COMPRA-VIV" in code
+                    or "VIV-RURAL" in code
+                ):
                     if inversion_viv > 0:
                         base = min(inversion_viv, max_amt) if max_amt > 0 else inversion_viv
                         amount = base * pct / 100
@@ -552,18 +568,20 @@ class DeductionService:
             if amount <= 0:
                 continue
 
-            results.append({
-                "code": code,
-                "name": name,
-                "amount": round(amount, 2),
-                "percentage": pct,
-                "max_amount": max_amt,
-                "fixed_amount": fixed,
-            })
+            results.append(
+                {
+                    "code": code,
+                    "name": name,
+                    "amount": round(amount, 2),
+                    "percentage": pct,
+                    "max_amount": max_amt,
+                    "fixed_amount": fixed,
+                }
+            )
 
         return results
 
-    def _summarize(self, d: Dict[str, Any]) -> Dict[str, Any]:
+    def _summarize(self, d: dict[str, Any]) -> dict[str, Any]:
         """Create a summary dict for a deduction (without internal fields)."""
         summary = {
             "code": d["code"],
@@ -583,7 +601,7 @@ class DeductionService:
 
 
 # Singleton
-_deduction_service: Optional[DeductionService] = None
+_deduction_service: DeductionService | None = None
 
 
 def get_deduction_service(db_client=None) -> DeductionService:

@@ -64,9 +64,7 @@ function FiscalFieldInput({
                         <FieldBadges field={field} />
                     </span>
                 </label>
-                {field.help_text && (
-                    <span className="dff-help-text">{field.help_text}</span>
-                )}
+                {field.help_text && <span className="dff-help-text">{field.help_text}</span>}
             </div>
         )
     }
@@ -93,9 +91,7 @@ function FiscalFieldInput({
                         </option>
                     ))}
                 </select>
-                {field.help_text && (
-                    <span className="dff-help-text">{field.help_text}</span>
-                )}
+                {field.help_text && <span className="dff-help-text">{field.help_text}</span>}
             </div>
         )
     }
@@ -113,9 +109,7 @@ function FiscalFieldInput({
                     value={value ?? ''}
                     onChange={(e) => handleChange(e.target.value)}
                 />
-                {field.help_text && (
-                    <span className="dff-help-text">{field.help_text}</span>
-                )}
+                {field.help_text && <span className="dff-help-text">{field.help_text}</span>}
             </div>
         )
     }
@@ -138,9 +132,7 @@ function FiscalFieldInput({
                     />
                     <span className="input-suffix">EUR</span>
                 </div>
-                {field.help_text && (
-                    <span className="dff-help-text">{field.help_text}</span>
-                )}
+                {field.help_text && <span className="dff-help-text">{field.help_text}</span>}
             </div>
         )
     }
@@ -159,9 +151,7 @@ function FiscalFieldInput({
                 value={value ?? ''}
                 onChange={(e) => handleChange(e.target.value)}
             />
-            {field.help_text && (
-                <span className="dff-help-text">{field.help_text}</span>
-            )}
+            {field.help_text && <span className="dff-help-text">{field.help_text}</span>}
         </div>
     )
 }
@@ -232,9 +222,16 @@ function CollapsibleSection({
 // Base sections already covered by the parent form (SettingsPage or TaxGuidePage).
 // In compact mode, skip these to avoid duplicate fields.
 const BASE_SECTION_IDS = new Set([
-    'datos_personales', 'rendimientos_trabajo', 'rendimientos_ahorro',
-    'inmuebles', 'familia', 'discapacidad', 'reducciones',
-    'criptomonedas', 'apuestas_juegos', 'ganancias_patrimoniales_financieras',
+    'datos_personales',
+    'rendimientos_trabajo',
+    'rendimientos_ahorro',
+    'inmuebles',
+    'familia',
+    'discapacidad',
+    'reducciones',
+    'criptomonedas',
+    'apuestas_juegos',
+    'ganancias_patrimoniales_financieras',
     'actividad_economica',
 ])
 
@@ -248,9 +245,7 @@ export default function DynamicFiscalForm({
     const { sections: allSections, regime, loading } = useFiscalFields(ccaa)
 
     // In compact mode, filter out base sections already handled by the parent form
-    const sections = compact
-        ? allSections.filter(s => !BASE_SECTION_IDS.has(s.id))
-        : allSections
+    const sections = compact ? allSections.filter((s) => !BASE_SECTION_IDS.has(s.id)) : allSections
 
     if (!ccaa) {
         return (
@@ -278,7 +273,10 @@ export default function DynamicFiscalForm({
     return (
         <div className={`dff-root ${compact ? 'dff-root--compact' : ''}`}>
             {situacionLaboral === 'farmaceutico' && (
-                <div className="dff-regime-badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0' }}>
+                <div
+                    className="dff-regime-badge"
+                    style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0' }}
+                >
                     Farmacéutico/a — Recargo de Equivalencia (CNAE 47.73)
                 </div>
             )}

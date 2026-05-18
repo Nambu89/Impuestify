@@ -27,11 +27,12 @@ Invariantes
 - `defensia_escritos` requiere `dictamen_id`, `tipo_escrito`, `version=1`,
   `editado_por_usuario=0`, `created_at`, `updated_at`.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
+from datetime import UTC, datetime, timezone
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -47,7 +48,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_quota_service import QuotaExcedida
 from app.services.defensia_service import DefensiaService
-
 
 # --------------------------------------------------------------------------- #
 # Fake async DB — solo registra las llamadas para poder auditar el SQL
@@ -84,7 +84,7 @@ def expediente_con_fase() -> ExpedienteEstructurado:
         id="doc_1",
         nombre_original="liquidacion.pdf",
         tipo_documento=TipoDocumento.LIQUIDACION_PROVISIONAL,
-        fecha_acto=datetime(2026, 3, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 3, 1, tzinfo=UTC),
         datos={},
     )
     return ExpedienteEstructurado(
@@ -104,7 +104,7 @@ def expediente_sin_fase() -> ExpedienteEstructurado:
         id="doc_1",
         nombre_original="req.pdf",
         tipo_documento=TipoDocumento.REQUERIMIENTO,
-        fecha_acto=datetime(2026, 3, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 3, 1, tzinfo=UTC),
         datos={},
     )
     return ExpedienteEstructurado(
@@ -197,9 +197,7 @@ def _build_service_with_mocks(
 
 
 @pytest.mark.asyncio
-async def test_facade_pipeline_completo_happy_path(
-    monkeypatch, expediente_con_fase, brief_valido
-):
+async def test_facade_pipeline_completo_happy_path(monkeypatch, expediente_con_fase, brief_valido):
     db = FakeDB()
     candidatos = [_candidato("R001"), _candidato("R002")]
     verificados = [_verificado("R001"), _verificado("R002")]
@@ -216,42 +214,50 @@ async def test_facade_pipeline_completo_happy_path(
         call_order.append("evaluar")
         return candidatos
 
-    monkeypatch.setattr(
-        "app.services.defensia_rules_engine.evaluar", _fake_evaluar
-    )
+    monkeypatch.setattr("app.services.defensia_rules_engine.evaluar", _fake_evaluar)
     monkeypatch.setattr(
         "app.services.defensia_rules.load_all", lambda: call_order.append("load_all")
     )
 
     # Tambien envolvemos los mocks async para registrar el orden.
     original_reserve = mocks["quota_service"].reserve
+
     async def tracked_reserve(*a, **kw):
         call_order.append("reserve")
         return await original_reserve(*a, **kw)
+
     mocks["quota_service"].reserve = tracked_reserve
 
     original_verify = mocks["rag_verifier"].verify_all
+
     async def tracked_verify(*a, **kw):
         call_order.append("verify_all")
         return await original_verify(*a, **kw)
+
     mocks["rag_verifier"].verify_all = tracked_verify
 
     original_render_escrito = mocks["writer_service"].render_escrito
+
     def tracked_render_escrito(*a, **kw):
         call_order.append("render_escrito")
         return original_render_escrito(*a, **kw)
+
     mocks["writer_service"].render_escrito = tracked_render_escrito
 
     original_render_dictamen = mocks["writer_service"].render_dictamen
+
     def tracked_render_dictamen(*a, **kw):
         call_order.append("render_dictamen")
         return original_render_dictamen(*a, **kw)
+
     mocks["writer_service"].render_dictamen = tracked_render_dictamen
 
     original_commit = mocks["quota_service"].commit
+
     async def tracked_commit(*a, **kw):
         call_order.append("commit")
         return await original_commit(*a, **kw)
+
     mocks["quota_service"].commit = tracked_commit
 
     result = await service.analizar_expediente(
@@ -296,9 +302,7 @@ async def test_facade_pipeline_completo_happy_path(
 
 
 @pytest.mark.asyncio
-async def test_facade_release_on_rules_error(
-    monkeypatch, expediente_con_fase, brief_valido
-):
+async def test_facade_release_on_rules_error(monkeypatch, expediente_con_fase, brief_valido):
     db = FakeDB()
     service, mocks = _build_service_with_mocks(db=db)
 
@@ -327,21 +331,15 @@ async def test_facade_release_on_rules_error(
 
 
 @pytest.mark.asyncio
-async def test_facade_release_on_verify_error(
-    monkeypatch, expediente_con_fase, brief_valido
-):
+async def test_facade_release_on_verify_error(monkeypatch, expediente_con_fase, brief_valido):
     db = FakeDB()
     candidatos = [_candidato("R001")]
     service, mocks = _build_service_with_mocks(db=db, candidatos=candidatos)
 
-    monkeypatch.setattr(
-        "app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos
-    )
+    monkeypatch.setattr("app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos)
     monkeypatch.setattr("app.services.defensia_rules.load_all", lambda: None)
 
-    mocks["rag_verifier"].verify_all = AsyncMock(
-        side_effect=RuntimeError("rag caido")
-    )
+    mocks["rag_verifier"].verify_all = AsyncMock(side_effect=RuntimeError("rag caido"))
 
     with pytest.raises(RuntimeError, match="rag caido"):
         await service.analizar_expediente(
@@ -361,9 +359,7 @@ async def test_facade_release_on_verify_error(
 
 
 @pytest.mark.asyncio
-async def test_facade_release_on_writer_error(
-    monkeypatch, expediente_con_fase, brief_valido
-):
+async def test_facade_release_on_writer_error(monkeypatch, expediente_con_fase, brief_valido):
     db = FakeDB()
     candidatos = [_candidato("R001")]
     verificados = [_verificado("R001")]
@@ -371,14 +367,10 @@ async def test_facade_release_on_writer_error(
         db=db, candidatos=candidatos, verificados=verificados
     )
 
-    monkeypatch.setattr(
-        "app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos
-    )
+    monkeypatch.setattr("app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos)
     monkeypatch.setattr("app.services.defensia_rules.load_all", lambda: None)
 
-    mocks["writer_service"].render_escrito = MagicMock(
-        side_effect=RuntimeError("writer fail")
-    )
+    mocks["writer_service"].render_escrito = MagicMock(side_effect=RuntimeError("writer fail"))
 
     with pytest.raises(RuntimeError, match="writer fail"):
         await service.analizar_expediente(
@@ -398,9 +390,7 @@ async def test_facade_release_on_writer_error(
 
 
 @pytest.mark.asyncio
-async def test_facade_release_on_db_error(
-    monkeypatch, expediente_con_fase, brief_valido
-):
+async def test_facade_release_on_db_error(monkeypatch, expediente_con_fase, brief_valido):
     db = FakeDB()
     db.should_fail = True  # todas las execute revientan
 
@@ -410,9 +400,7 @@ async def test_facade_release_on_db_error(
         db=db, candidatos=candidatos, verificados=verificados
     )
 
-    monkeypatch.setattr(
-        "app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos
-    )
+    monkeypatch.setattr("app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos)
     monkeypatch.setattr("app.services.defensia_rules.load_all", lambda: None)
 
     with pytest.raises(RuntimeError, match="db explotado en test"):
@@ -433,20 +421,14 @@ async def test_facade_release_on_db_error(
 
 
 @pytest.mark.asyncio
-async def test_facade_quota_excedida_propaga(
-    monkeypatch, expediente_con_fase, brief_valido
-):
+async def test_facade_quota_excedida_propaga(monkeypatch, expediente_con_fase, brief_valido):
     db = FakeDB()
     service, mocks = _build_service_with_mocks(db=db)
-    mocks["quota_service"].reserve = AsyncMock(
-        side_effect=QuotaExcedida("cuota agotada")
-    )
+    mocks["quota_service"].reserve = AsyncMock(side_effect=QuotaExcedida("cuota agotada"))
 
     # Parcheos para evitar import side-effects aunque el test no llegue
     # tan lejos.
-    monkeypatch.setattr(
-        "app.services.defensia_rules_engine.evaluar", lambda exp, brief: []
-    )
+    monkeypatch.setattr("app.services.defensia_rules_engine.evaluar", lambda exp, brief: [])
     monkeypatch.setattr("app.services.defensia_rules.load_all", lambda: None)
 
     with pytest.raises(QuotaExcedida, match="cuota agotada"):
@@ -489,9 +471,7 @@ async def test_facade_descarte_argumentos_contabilizado(
         db=db, candidatos=candidatos, verificados=verificados
     )
 
-    monkeypatch.setattr(
-        "app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos
-    )
+    monkeypatch.setattr("app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos)
     monkeypatch.setattr("app.services.defensia_rules.load_all", lambda: None)
 
     result = await service.analizar_expediente(
@@ -517,9 +497,7 @@ async def test_facade_phase_detection_auto_si_indeterminada(
     db = FakeDB()
     service, mocks = _build_service_with_mocks(db=db)
 
-    monkeypatch.setattr(
-        "app.services.defensia_rules_engine.evaluar", lambda exp, brief: []
-    )
+    monkeypatch.setattr("app.services.defensia_rules_engine.evaluar", lambda exp, brief: [])
     monkeypatch.setattr("app.services.defensia_rules.load_all", lambda: None)
 
     detect_calls: list[str] = []
@@ -528,9 +506,7 @@ async def test_facade_phase_detection_auto_si_indeterminada(
         detect_calls.append(expediente.id)
         return (Fase.COMPROBACION_REQUERIMIENTO, 0.95)
 
-    monkeypatch.setattr(
-        "app.services.defensia_phase_detector.detect_fase", _fake_detect
-    )
+    monkeypatch.setattr("app.services.defensia_phase_detector.detect_fase", _fake_detect)
 
     # Caso A: fase INDETERMINADA -> llama detect_fase y actualiza el expediente
     result_a = await service.analizar_expediente(
@@ -567,13 +543,13 @@ async def test_facade_persiste_dictamen_con_sql_correcto(
     candidatos = [_candidato("R001")]
     verificados = [_verificado("R001")]
     service, mocks = _build_service_with_mocks(
-        db=db, candidatos=candidatos, verificados=verificados,
+        db=db,
+        candidatos=candidatos,
+        verificados=verificados,
         dictamen_md="# Dictamen David",
     )
 
-    monkeypatch.setattr(
-        "app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos
-    )
+    monkeypatch.setattr("app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos)
     monkeypatch.setattr("app.services.defensia_rules.load_all", lambda: None)
 
     result = await service.analizar_expediente(
@@ -633,13 +609,13 @@ async def test_facade_persiste_escrito_con_version_1(
     candidatos = [_candidato("R001")]
     verificados = [_verificado("R001")]
     service, mocks = _build_service_with_mocks(
-        db=db, candidatos=candidatos, verificados=verificados,
+        db=db,
+        candidatos=candidatos,
+        verificados=verificados,
         escrito_md="# Escrito final",
     )
 
-    monkeypatch.setattr(
-        "app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos
-    )
+    monkeypatch.setattr("app.services.defensia_rules_engine.evaluar", lambda exp, brief: candidatos)
     monkeypatch.setattr("app.services.defensia_rules.load_all", lambda: None)
 
     result = await service.analizar_expediente(
@@ -689,21 +665,22 @@ async def test_facade_persiste_escrito_con_version_1(
 
 def test_extraer_cuota_maxima_vacio():
     """Expediente sin documentos o sin datos_estructurados -> 0.0 (fallback)."""
-    from app.services.defensia_service import _extraer_cuota_maxima
     from app.models.defensia import ExpedienteEstructurado, Tributo
+    from app.services.defensia_service import _extraer_cuota_maxima
 
-    exp = ExpedienteEstructurado(
-        id="e1", tributo=Tributo.IRPF, ccaa="Madrid", documentos=[]
-    )
+    exp = ExpedienteEstructurado(id="e1", tributo=Tributo.IRPF, ccaa="Madrid", documentos=[])
     assert _extraer_cuota_maxima(exp) == 0.0
 
 
 def test_extraer_cuota_maxima_varios_campos_y_docs():
     """Recorre varios docs y campos canonicos y devuelve el maximo."""
-    from app.services.defensia_service import _extraer_cuota_maxima
     from app.models.defensia import (
-        DocumentoEstructurado, ExpedienteEstructurado, Tributo, TipoDocumento,
+        DocumentoEstructurado,
+        ExpedienteEstructurado,
+        TipoDocumento,
+        Tributo,
     )
+    from app.services.defensia_service import _extraer_cuota_maxima
 
     doc1 = DocumentoEstructurado(
         id="d1",
@@ -735,10 +712,13 @@ def test_extraer_cuota_maxima_varios_campos_y_docs():
 
 def test_extraer_cuota_maxima_ignora_tipos_invalidos():
     """Strings o None en campos no deben crashear."""
-    from app.services.defensia_service import _extraer_cuota_maxima
     from app.models.defensia import (
-        DocumentoEstructurado, ExpedienteEstructurado, Tributo, TipoDocumento,
+        DocumentoEstructurado,
+        ExpedienteEstructurado,
+        TipoDocumento,
+        Tributo,
     )
+    from app.services.defensia_service import _extraer_cuota_maxima
 
     doc = DocumentoEstructurado(
         id="d1",
@@ -746,18 +726,19 @@ def test_extraer_cuota_maxima_ignora_tipos_invalidos():
         tipo_documento=TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={"cuota": "no es un numero", "importe_total": None, "importe_sancion": 1234.56},
     )
-    exp = ExpedienteEstructurado(
-        id="e1", tributo=Tributo.IRPF, ccaa="Madrid", documentos=[doc]
-    )
+    exp = ExpedienteEstructurado(id="e1", tributo=Tributo.IRPF, ccaa="Madrid", documentos=[doc])
     assert _extraer_cuota_maxima(exp) == 1234.56
 
 
 def test_extraer_cuota_maxima_umbral_tear_decidible():
     """Comprueba que distinguimos <6000 EUR (abreviada) vs >=6000 EUR (general)."""
-    from app.services.defensia_service import _extraer_cuota_maxima
     from app.models.defensia import (
-        DocumentoEstructurado, ExpedienteEstructurado, Tributo, TipoDocumento,
+        DocumentoEstructurado,
+        ExpedienteEstructurado,
+        TipoDocumento,
+        Tributo,
     )
+    from app.services.defensia_service import _extraer_cuota_maxima
 
     def _build(cuota: float) -> ExpedienteEstructurado:
         doc = DocumentoEstructurado(

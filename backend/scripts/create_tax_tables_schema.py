@@ -1,6 +1,7 @@
 """
 Create SQL schema for structured tax tables.
 """
+
 import asyncio
 import os
 import sys
@@ -10,6 +11,7 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from dotenv import load_dotenv
+
 project_root = backend_dir.parent
 load_dotenv(project_root / ".env")
 
@@ -18,10 +20,10 @@ from app.database.turso_client import TursoClient
 
 async def create_tax_tables_schema():
     print("📝 Creating tax tables schema...\n")
-    
+
     db = TursoClient()
     await db.connect()
-    
+
     try:
         # 1. IRPF Scales table
         print("Creating irpf_scales table...")
@@ -40,20 +42,20 @@ async def create_tax_tables_schema():
             )
         """)
         print("✅ irpf_scales created\n")
-        
+
         # Create indexes
         print("Creating indexes...")
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_irpf_jurisdiction_year 
+            CREATE INDEX IF NOT EXISTS idx_irpf_jurisdiction_year
             ON irpf_scales(jurisdiction, year, scale_type)
         """)
-        
+
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_irpf_year 
+            CREATE INDEX IF NOT EXISTS idx_irpf_year
             ON irpf_scales(year)
         """)
         print("✅ Indexes created\n")
-        
+
         # 2. IVA Rates table (for future)
         print("Creating iva_rates table...")
         await db.execute("""
@@ -68,7 +70,7 @@ async def create_tax_tables_schema():
             )
         """)
         print("✅ iva_rates created\n")
-        
+
         # 3. Retentions table (for future)
         print("Creating irpf_retentions table...")
         await db.execute("""
@@ -83,15 +85,15 @@ async def create_tax_tables_schema():
             )
         """)
         print("✅ irpf_retentions created\n")
-        
+
         print("=" * 60)
         print("✅ ALL TABLES CREATED SUCCESSFULLY")
         print("=" * 60)
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         raise
-    
+
     finally:
         await db.disconnect()
 

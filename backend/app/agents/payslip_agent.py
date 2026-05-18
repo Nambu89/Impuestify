@@ -3,12 +3,12 @@ PayslipAgent - Specialized Payslip Analysis Agent
 
 Uses OpenAI API with function calling for payslip analysis.
 """
-import os
+
 import logging
-from pathlib import Path
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 from openai import OpenAI
 
@@ -17,26 +17,27 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class AgentResponse:
-	"""Response from the payslip agent"""
-	content: str
-	metadata: Dict[str, Any]
-	agent_name: str
+    """Response from the payslip agent"""
+
+    content: str
+    metadata: dict[str, Any]
+    agent_name: str
 
 
 class PayslipAgent:
-	"""
-	Payslip specialist agent using OpenAI API.
-	
-	Provides intelligent analysis of Spanish payslips (nóminas).
-	
-	Features:
-	- Analyzes salary components
-	- Calculates effective tax rates
-	- Provides personalized recommendations
-	- Detects anomalies in withholdings
-	"""
-	
-	SYSTEM_PROMPT = """Eres un experto analista de nóminas españolas, especializado en ayudar a trabajadores a entender sus nóminas y optimizar su situación fiscal.
+    """
+    Payslip specialist agent using OpenAI API.
+
+    Provides intelligent analysis of Spanish payslips (nóminas).
+
+    Features:
+    - Analyzes salary components
+    - Calculates effective tax rates
+    - Provides personalized recommendations
+    - Detects anomalies in withholdings
+    """
+
+    SYSTEM_PROMPT = """Eres un experto analista de nóminas españolas, especializado en ayudar a trabajadores a entender sus nóminas y optimizar su situación fiscal.
 
 📅 **CONTEXTO TEMPORAL ACTUAL**:
 - Fecha: {current_date}
@@ -111,216 +112,216 @@ Si NO estás seguro:
 ---
 
 Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnicos."""
-	
-	def __init__(
-		self,
-		name: str = "PayslipAgent",
-		model: Optional[str] = None,
-		api_key: Optional[str] = None
-	):
-		"""
-		Initialize PayslipAgent.
-		
-		Args:
-			name: Agent name
-			model: OpenAI model name
-			api_key: OpenAI API key
-		"""
-		from app.config import settings
-		self.name = name
-		self.model = model or settings.OPENAI_MODEL
-		self.api_key = api_key or settings.OPENAI_API_KEY
-		
-		# Fecha actual
-		self.current_date = datetime.now()
-		self.current_year = self.current_date.year
-		
-		self._client = None
-		
-		self._initialize()
-	
-	def _initialize(self):
-		"""Initialize the OpenAI client."""
-		if self.api_key:
-			self._client = OpenAI(api_key=self.api_key)
-			logger.info(f"PayslipAgent '{self.name}' initialized (model: {self.model})")
-		else:
-			logger.error("PayslipAgent initialization failed - missing OPENAI_API_KEY")
-			raise ValueError("OPENAI_API_KEY is required")
-	
-	def _get_system_prompt(self) -> str:
-		"""Genera el system prompt con la fecha actual"""
-		return self.SYSTEM_PROMPT.format(
-			current_date=self.current_date.strftime('%d de %B de %Y'),
-			current_year=self.current_year
-		)
-	
-	async def analyze(
-		self,
-		payslip_data: Dict[str, Any],
-		user_question: Optional[str] = None
-	) -> AgentResponse:
-		"""
-		Analiza una nómina con el agente.
-		
-		Args:
-			payslip_data: Datos extraídos de la nómina
-			user_question: Pregunta específica del usuario (opcional)
-			
-		Returns:
-			AgentResponse con análisis
-		"""
-		try:
-			# Import tools
-			from app.tools import ALL_TOOLS, TOOL_EXECUTORS
-			
-			# Construir contexto
-			context = self._build_context(payslip_data)
-			
-			# Construir pregunta
-			if user_question:
-				query = f"{user_question}\n\n{context}"
-			else:
-				query = f"Analiza esta nómina y proporciona recomendaciones:\n\n{context}"
-			
-			# Mensajes para el modelo
-			messages = [
-				{"role": "system", "content": self._get_system_prompt()},
-				{"role": "user", "content": query}
-			]
-			
-			# Primera llamada con tools
-			response = self._client.chat.completions.create(
-				model=self.model,
-				messages=messages,
-				tools=ALL_TOOLS,
-				tool_choice="auto",
-				temperature=1,  # gpt-5-mini requires temperature=1
-				max_completion_tokens=3000
-			)
-			
-			message = response.choices[0].message
-			
-			# Si hay tool call
-			if message.tool_calls:
-				import json
-				tool_call = message.tool_calls[0]
-				function_name = tool_call.function.name
-				function_args = json.loads(tool_call.function.arguments)
-				
-				logger.info(f"Tool called: {function_name}")
-				
-				# Ejecutar tool
-				if function_name in TOOL_EXECUTORS:
-					tool_executor = TOOL_EXECUTORS[function_name]
-					tool_result = await tool_executor(**function_args)
-				else:
-					tool_result = {"success": False, "error": f"Unknown function: {function_name}"}
-				
-				# Segunda llamada con resultado de la tool
-				messages.append({
-					"role": "assistant",
-					"content": None,
-					"tool_calls": [tool_call.model_dump()]
-				})
-				messages.append({
-					"role": "tool",
-					"tool_call_id": tool_call.id,
-					"content": json.dumps(tool_result)
-				})
-				
-				final_response = self._client.chat.completions.create(
-					model=self.model,
-					messages=messages,
-					temperature=1,  # gpt-5-mini requires temperature=1
-					max_completion_tokens=3000
-				)
-				content = final_response.choices[0].message.content
-			else:
-				content = message.content
-			
-			return AgentResponse(
-				content=content or "",
-				metadata={
-					"model": self.model,
-					"agent": self.name,
-					"tool_used": bool(message.tool_calls)
-				},
-				agent_name=self.name
-			)
-		
-		except Exception as e:
-			logger.error(f"PayslipAgent error: {e}", exc_info=True)
-			return AgentResponse(
-				content=f"Error al analizar la nómina: {str(e)}",
-				metadata={"error": str(e)},
-				agent_name=self.name
-			)
-	
-	async def analyze_payslip(self, pdf_path: str) -> Dict[str, Any]:
-		"""
-		Analyze payslip PDF and extract key data.
-		
-		Returns data compatible with notification analysis response.
-		
-		Args:
-			pdf_path: Path to PDF file
-			
-		Returns:
-			Dict with analysis data compatible with notifications endpoint
-		"""
-		try:
-			logger.info(f"📊 Analyzing payslip PDF: {pdf_path}")
-			
-			# Extract text from PDF using PyMuPDF
-			import pymupdf
-			import hashlib
-			
-			doc = pymupdf.open(pdf_path)
-			pdf_text = ""
-			for page in doc:
-				pdf_text += page.get_text()
-			doc.close()
-			
-			# Calculate file hash
-			with open(pdf_path, "rb") as f:
-				file_hash = hashlib.sha256(f.read()).hexdigest()
-			
-			logger.info(f"Extracted {len(pdf_text)} characters from PDF")
 
-			# Validate that PDF has extractable text — try Vision OCR if empty
-			if not pdf_text or len(pdf_text) < 100:
-				logger.warning("PDF text empty/minimal, attempting Vision OCR fallback")
-				try:
-					from app.utils.pdf_extractor import extract_with_vision_ocr
-					with open(pdf_path, "rb") as f:
-						ocr_result = await extract_with_vision_ocr(f.read(), Path(pdf_path).name)
-					if ocr_result.success and ocr_result.total_chars >= 50:
-						pdf_text = ocr_result.markdown_text
-						logger.info(f"Vision OCR recovered {ocr_result.total_chars} chars")
-					else:
-						raise ValueError("Vision OCR returned insufficient text")
-				except Exception as ocr_err:
-					logger.error(f"Vision OCR fallback failed: {ocr_err}")
-					return {
-						"type": "Nómina",
-						"summary": "**Error al procesar la nómina**\n\nNo se pudo extraer texto del PDF. Posibles causas:\n- Imagen escaneada de muy baja calidad\n- PDF corrupto o protegido\n\nPrueba a subir una foto más nítida o un PDF con texto seleccionable.",
-						"file_hash": file_hash,
-						"notification_date": datetime.now().strftime("%Y-%m-%d"),
-						"deadlines": [],
-						"region": {"region": "No especificada", "is_foral": False},
-						"severity": "low",
-						"reference_links": [],
-						"payslip_data": {}
-					}
-			
-			# SECURITY: Anonymize PII before sending to LLM
-			from app.services.payslip_extractor import PayslipExtractor
-			anonymized_text = PayslipExtractor.anonymize_text(pdf_text[:4000])
-			logger.info("🔒 PII anonymized before LLM extraction")
+    def __init__(
+        self, name: str = "PayslipAgent", model: str | None = None, api_key: str | None = None
+    ):
+        """
+        Initialize PayslipAgent.
 
-			# Use gpt-5-mini to extract structured data
-			extraction_prompt = f"""Extrae los datos clave de esta nómina española.
+        Args:
+                name: Agent name
+                model: OpenAI model name
+                api_key: OpenAI API key
+        """
+        from app.config import settings
+
+        self.name = name
+        self.model = model or settings.OPENAI_MODEL
+        self.api_key = api_key or settings.OPENAI_API_KEY
+
+        # Fecha actual
+        self.current_date = datetime.now()
+        self.current_year = self.current_date.year
+
+        self._client = None
+
+        self._initialize()
+
+    def _initialize(self):
+        """Initialize the OpenAI client."""
+        if self.api_key:
+            self._client = OpenAI(api_key=self.api_key)
+            logger.info(f"PayslipAgent '{self.name}' initialized (model: {self.model})")
+        else:
+            logger.error("PayslipAgent initialization failed - missing OPENAI_API_KEY")
+            raise ValueError("OPENAI_API_KEY is required")
+
+    def _get_system_prompt(self) -> str:
+        """Genera el system prompt con la fecha actual"""
+        return self.SYSTEM_PROMPT.format(
+            current_date=self.current_date.strftime("%d de %B de %Y"),
+            current_year=self.current_year,
+        )
+
+    async def analyze(
+        self, payslip_data: dict[str, Any], user_question: str | None = None
+    ) -> AgentResponse:
+        """
+        Analiza una nómina con el agente.
+
+        Args:
+                payslip_data: Datos extraídos de la nómina
+                user_question: Pregunta específica del usuario (opcional)
+
+        Returns:
+                AgentResponse con análisis
+        """
+        try:
+            # Import tools
+            from app.tools import ALL_TOOLS, TOOL_EXECUTORS
+
+            # Construir contexto
+            context = self._build_context(payslip_data)
+
+            # Construir pregunta
+            if user_question:
+                query = f"{user_question}\n\n{context}"
+            else:
+                query = f"Analiza esta nómina y proporciona recomendaciones:\n\n{context}"
+
+            # Mensajes para el modelo
+            messages = [
+                {"role": "system", "content": self._get_system_prompt()},
+                {"role": "user", "content": query},
+            ]
+
+            # Primera llamada con tools
+            response = self._client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                tools=ALL_TOOLS,
+                tool_choice="auto",
+                temperature=1,  # gpt-5-mini requires temperature=1
+                max_completion_tokens=3000,
+            )
+
+            message = response.choices[0].message
+
+            # Si hay tool call
+            if message.tool_calls:
+                import json
+
+                tool_call = message.tool_calls[0]
+                function_name = tool_call.function.name
+                function_args = json.loads(tool_call.function.arguments)
+
+                logger.info(f"Tool called: {function_name}")
+
+                # Ejecutar tool
+                if function_name in TOOL_EXECUTORS:
+                    tool_executor = TOOL_EXECUTORS[function_name]
+                    tool_result = await tool_executor(**function_args)
+                else:
+                    tool_result = {"success": False, "error": f"Unknown function: {function_name}"}
+
+                # Segunda llamada con resultado de la tool
+                messages.append(
+                    {"role": "assistant", "content": None, "tool_calls": [tool_call.model_dump()]}
+                )
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": json.dumps(tool_result),
+                    }
+                )
+
+                final_response = self._client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=1,  # gpt-5-mini requires temperature=1
+                    max_completion_tokens=3000,
+                )
+                content = final_response.choices[0].message.content
+            else:
+                content = message.content
+
+            return AgentResponse(
+                content=content or "",
+                metadata={
+                    "model": self.model,
+                    "agent": self.name,
+                    "tool_used": bool(message.tool_calls),
+                },
+                agent_name=self.name,
+            )
+
+        except Exception as e:
+            logger.error(f"PayslipAgent error: {e}", exc_info=True)
+            return AgentResponse(
+                content=f"Error al analizar la nómina: {str(e)}",
+                metadata={"error": str(e)},
+                agent_name=self.name,
+            )
+
+    async def analyze_payslip(self, pdf_path: str) -> dict[str, Any]:
+        """
+        Analyze payslip PDF and extract key data.
+
+        Returns data compatible with notification analysis response.
+
+        Args:
+                pdf_path: Path to PDF file
+
+        Returns:
+                Dict with analysis data compatible with notifications endpoint
+        """
+        try:
+            logger.info(f"📊 Analyzing payslip PDF: {pdf_path}")
+
+            # Extract text from PDF using PyMuPDF
+            import hashlib
+
+            import pymupdf
+
+            doc = pymupdf.open(pdf_path)
+            pdf_text = ""
+            for page in doc:
+                pdf_text += page.get_text()
+            doc.close()
+
+            # Calculate file hash
+            with open(pdf_path, "rb") as f:
+                file_hash = hashlib.sha256(f.read()).hexdigest()
+
+            logger.info(f"Extracted {len(pdf_text)} characters from PDF")
+
+            # Validate that PDF has extractable text — try Vision OCR if empty
+            if not pdf_text or len(pdf_text) < 100:
+                logger.warning("PDF text empty/minimal, attempting Vision OCR fallback")
+                try:
+                    from app.utils.pdf_extractor import extract_with_vision_ocr
+
+                    with open(pdf_path, "rb") as f:
+                        ocr_result = await extract_with_vision_ocr(f.read(), Path(pdf_path).name)
+                    if ocr_result.success and ocr_result.total_chars >= 50:
+                        pdf_text = ocr_result.markdown_text
+                        logger.info(f"Vision OCR recovered {ocr_result.total_chars} chars")
+                    else:
+                        raise ValueError("Vision OCR returned insufficient text")
+                except Exception as ocr_err:
+                    logger.error(f"Vision OCR fallback failed: {ocr_err}")
+                    return {
+                        "type": "Nómina",
+                        "summary": "**Error al procesar la nómina**\n\nNo se pudo extraer texto del PDF. Posibles causas:\n- Imagen escaneada de muy baja calidad\n- PDF corrupto o protegido\n\nPrueba a subir una foto más nítida o un PDF con texto seleccionable.",
+                        "file_hash": file_hash,
+                        "notification_date": datetime.now().strftime("%Y-%m-%d"),
+                        "deadlines": [],
+                        "region": {"region": "No especificada", "is_foral": False},
+                        "severity": "low",
+                        "reference_links": [],
+                        "payslip_data": {},
+                    }
+
+            # SECURITY: Anonymize PII before sending to LLM
+            from app.services.payslip_extractor import PayslipExtractor
+
+            anonymized_text = PayslipExtractor.anonymize_text(pdf_text[:4000])
+            logger.info("🔒 PII anonymized before LLM extraction")
+
+            # Use gpt-5-mini to extract structured data
+            extraction_prompt = f"""Extrae los datos clave de esta nómina española.
 
 TEXTO DE LA NÓMINA:
 ```
@@ -369,146 +370,150 @@ INSTRUCCIONES ESPECÍFICAS:
 
 Si no encuentras un dato, usa null. Sé preciso con los números. Si hay multi-página, suma los importes.
 """
-			
-			response = self._client.chat.completions.create(
-				model=self.model,  # Use instance model (configured from settings)
-				messages=[
-					{"role": "system", "content": "Eres un experto extractor de datos de nóminas españolas. Respondes SOLO en JSON válido."},
-					{"role": "user", "content": extraction_prompt}
-				],
-				temperature=1,
-				max_completion_tokens=2000,  # gpt-5-mini needs tokens for reasoning
-				response_format={"type": "json_object"}
-			)
-			
-			import json
 
-			# Guard against empty/None response from GPT
-			raw_content = response.choices[0].message.content
-			if not raw_content or not raw_content.strip():
-				logger.warning("⚠️ GPT returned empty content, falling back to regex extraction")
-				payslip_data = None
-			else:
-				try:
-					payslip_data = json.loads(raw_content)
-				except (json.JSONDecodeError, ValueError) as je:
-					logger.warning(f"⚠️ GPT returned invalid JSON: {je}, falling back to regex extraction")
-					payslip_data = None
+            response = self._client.chat.completions.create(
+                model=self.model,  # Use instance model (configured from settings)
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Eres un experto extractor de datos de nóminas españolas. Respondes SOLO en JSON válido.",
+                    },
+                    {"role": "user", "content": extraction_prompt},
+                ],
+                temperature=1,
+                max_completion_tokens=2000,  # gpt-5-mini needs tokens for reasoning
+                response_format={"type": "json_object"},
+            )
 
-			# Fallback: use regex-based PayslipExtractor if GPT extraction failed
-			if not payslip_data:
-				extractor = PayslipExtractor()
-				payslip_data = extractor._parse_payslip_data(pdf_text)
-				payslip_data['extraction_method'] = 'regex_fallback'
-				logger.info(f"✅ Regex fallback extracted {len(payslip_data)} fields")
+            import json
 
-			logger.info(f"✅ Extracted: {payslip_data.get('period_month')}/{payslip_data.get('period_year')}")
+            # Guard against empty/None response from GPT
+            raw_content = response.choices[0].message.content
+            if not raw_content or not raw_content.strip():
+                logger.warning("⚠️ GPT returned empty content, falling back to regex extraction")
+                payslip_data = None
+            else:
+                try:
+                    payslip_data = json.loads(raw_content)
+                except (json.JSONDecodeError, ValueError) as je:
+                    logger.warning(
+                        f"⚠️ GPT returned invalid JSON: {je}, falling back to regex extraction"
+                    )
+                    payslip_data = None
 
-			# SECURITY: Strip PII from data before LLM analysis
-			safe_data = PayslipExtractor.anonymize_data(payslip_data)
-			logger.info("🔒 PII stripped from payslip data before analysis")
+            # Fallback: use regex-based PayslipExtractor if GPT extraction failed
+            if not payslip_data:
+                extractor = PayslipExtractor()
+                payslip_data = extractor._parse_payslip_data(pdf_text)
+                payslip_data["extraction_method"] = "regex_fallback"
+                logger.info(f"✅ Regex fallback extracted {len(payslip_data)} fields")
 
-			# Generate analysis using agent's analyze method (with anonymized data)
-			analysis_response = await self.analyze(
-				payslip_data=safe_data,
-				user_question=None
-			)
-			
-			# Return in format compatible with notifications endpoint
-			return {
-				"type": "Nómina",
-				"summary": analysis_response.content,
-				"file_hash": file_hash,
-				"notification_date": f"{payslip_data.get('period_year', 2025)}-{payslip_data.get('period_month', 'Enero')}",
-				"deadlines": [],
-				"region": {
-					"region": payslip_data.get('region', 'No especificada'),
-					"is_foral": False
-				},
-				"severity": "low",
-				"reference_links": [],
-				"payslip_data": payslip_data
-			}
-			
-		except Exception as e:
-			logger.error(f"❌ Error analyzing payslip: {e}", exc_info=True)
-			return {
-				"type": "Nómina",
-				"summary": f"Error al analizar la nómina: {str(e)}",
-				"file_hash": "unknown",
-				"notification_date": datetime.now().strftime("%Y-%m-%d"),
-				"deadlines": [],
-				"region": {"region": "No especificada", "is_foral": False},
-				"severity": "low",
-				"reference_links": [],
-				"payslip_data": {}
-			}
+            logger.info(
+                f"✅ Extracted: {payslip_data.get('period_month')}/{payslip_data.get('period_year')}"
+            )
 
-	def _build_context(self, payslip_data: Dict[str, Any]) -> str:
-		"""Construye el contexto desde los datos de la nómina.
-		Incluye TODOS los campos extraidos para que el agente pueda
-		hacer follow-ups precisos (ej: 'sin el bonus', 'con 14 pagas')."""
-		period = f"{payslip_data.get('period_month', '?')}/{payslip_data.get('period_year', '?')}"
+            # SECURITY: Strip PII from data before LLM analysis
+            safe_data = PayslipExtractor.anonymize_data(payslip_data)
+            logger.info("🔒 PII stripped from payslip data before analysis")
 
-		def _f(key: str) -> str:
-			"""Format a numeric field or return '-'"""
-			val = payslip_data.get(key)
-			if val is None:
-				return '-'
-			try:
-				return f"{float(val):,.2f}€"
-			except (ValueError, TypeError):
-				return str(val)
+            # Generate analysis using agent's analyze method (with anonymized data)
+            analysis_response = await self.analyze(payslip_data=safe_data, user_question=None)
 
-		lines = [
-			f"Periodo: {period}",
-			f"Empresa: {payslip_data.get('company_name', '-')}",
-			"",
-			"DEVENGOS:",
-			f"- Salario base: {_f('base_salary')} | salary_base={payslip_data.get('base_salary', '-')}",
-			f"- Plus Convenio: {_f('plus_convenio')}",
-			f"- Cuenta Convenio: {_f('cuenta_convenio')}",
-			f"- P.P.P. Extras (pagas prorrateadas): {_f('ppp_extras')}",
-			f"- Bonus: {_f('bonus')}",
-			f"- Teletrabajo: {_f('teletrabajo')}",
-			f"- Seguro medico: {_f('seguro_medico')}",
-			f"- Total devengado (bruto): {_f('gross_salary')}",
-			"",
-			"DEDUCCIONES:",
-			f"- IRPF: {_f('irpf_amount')} (tipo: {payslip_data.get('irpf_percentage', '-')}%)",
-			f"- SS Contingencias comunes: {_f('ss_contingencias_comunes')}",
-			f"- SS MEI: {_f('ss_mei')}",
-			f"- SS Formacion: {_f('ss_formacion')}",
-			f"- SS Desempleo: {_f('ss_desempleo')}",
-			f"- Total SS trabajador: {_f('ss_contribution')}",
-			f"- Descuento en especie: {_f('descuento_especie')}",
-			f"- Total a deducir: {_f('total_deducir')}",
-			"",
-			f"LIQUIDO (neto): {_f('net_salary')}",
-			"",
-			"BASES:",
-			f"- Base SS: {_f('base_ss')} | Base IRPF: {_f('base_irpf')}",
-			f"- Pagas extras prorrateadas: {'Si (12 pagas)' if payslip_data.get('pagas_extras_prorrateadas') else 'No (14 pagas)' if payslip_data.get('pagas_extras_prorrateadas') is False else 'No especificado'}",
-			f"- Region: {payslip_data.get('region', '-')}",
-		]
+            # Return in format compatible with notifications endpoint
+            return {
+                "type": "Nómina",
+                "summary": analysis_response.content,
+                "file_hash": file_hash,
+                "notification_date": f"{payslip_data.get('period_year', 2025)}-{payslip_data.get('period_month', 'Enero')}",
+                "deadlines": [],
+                "region": {
+                    "region": payslip_data.get("region", "No especificada"),
+                    "is_foral": False,
+                },
+                "severity": "low",
+                "reference_links": [],
+                "payslip_data": payslip_data,
+            }
 
-		return "Datos de la nomina:\n\n" + "\n".join(lines)
+        except Exception as e:
+            logger.error(f"❌ Error analyzing payslip: {e}", exc_info=True)
+            return {
+                "type": "Nómina",
+                "summary": f"Error al analizar la nómina: {str(e)}",
+                "file_hash": "unknown",
+                "notification_date": datetime.now().strftime("%Y-%m-%d"),
+                "deadlines": [],
+                "region": {"region": "No especificada", "is_foral": False},
+                "severity": "low",
+                "reference_links": [],
+                "payslip_data": {},
+            }
+
+    def _build_context(self, payslip_data: dict[str, Any]) -> str:
+        """Construye el contexto desde los datos de la nómina.
+        Incluye TODOS los campos extraidos para que el agente pueda
+        hacer follow-ups precisos (ej: 'sin el bonus', 'con 14 pagas')."""
+        period = f"{payslip_data.get('period_month', '?')}/{payslip_data.get('period_year', '?')}"
+
+        def _f(key: str) -> str:
+            """Format a numeric field or return '-'"""
+            val = payslip_data.get(key)
+            if val is None:
+                return "-"
+            try:
+                return f"{float(val):,.2f}€"
+            except (ValueError, TypeError):
+                return str(val)
+
+        lines = [
+            f"Periodo: {period}",
+            f"Empresa: {payslip_data.get('company_name', '-')}",
+            "",
+            "DEVENGOS:",
+            f"- Salario base: {_f('base_salary')} | salary_base={payslip_data.get('base_salary', '-')}",
+            f"- Plus Convenio: {_f('plus_convenio')}",
+            f"- Cuenta Convenio: {_f('cuenta_convenio')}",
+            f"- P.P.P. Extras (pagas prorrateadas): {_f('ppp_extras')}",
+            f"- Bonus: {_f('bonus')}",
+            f"- Teletrabajo: {_f('teletrabajo')}",
+            f"- Seguro medico: {_f('seguro_medico')}",
+            f"- Total devengado (bruto): {_f('gross_salary')}",
+            "",
+            "DEDUCCIONES:",
+            f"- IRPF: {_f('irpf_amount')} (tipo: {payslip_data.get('irpf_percentage', '-')}%)",
+            f"- SS Contingencias comunes: {_f('ss_contingencias_comunes')}",
+            f"- SS MEI: {_f('ss_mei')}",
+            f"- SS Formacion: {_f('ss_formacion')}",
+            f"- SS Desempleo: {_f('ss_desempleo')}",
+            f"- Total SS trabajador: {_f('ss_contribution')}",
+            f"- Descuento en especie: {_f('descuento_especie')}",
+            f"- Total a deducir: {_f('total_deducir')}",
+            "",
+            f"LIQUIDO (neto): {_f('net_salary')}",
+            "",
+            "BASES:",
+            f"- Base SS: {_f('base_ss')} | Base IRPF: {_f('base_irpf')}",
+            f"- Pagas extras prorrateadas: {'Si (12 pagas)' if payslip_data.get('pagas_extras_prorrateadas') else 'No (14 pagas)' if payslip_data.get('pagas_extras_prorrateadas') is False else 'No especificado'}",
+            f"- Region: {payslip_data.get('region', '-')}",
+        ]
+
+        return "Datos de la nomina:\n\n" + "\n".join(lines)
 
 
 # Global agent instance
-_payslip_agent: Optional[PayslipAgent] = None
+_payslip_agent: PayslipAgent | None = None
 
 
 def get_payslip_agent() -> PayslipAgent:
-	"""
-	Get the global PayslipAgent instance.
-	
-	Returns:
-		PayslipAgent instance
-	"""
-	global _payslip_agent
-	
-	if _payslip_agent is None:
-		_payslip_agent = PayslipAgent()
-	
-	return _payslip_agent
+    """
+    Get the global PayslipAgent instance.
+
+    Returns:
+            PayslipAgent instance
+    """
+    global _payslip_agent
+
+    if _payslip_agent is None:
+        _payslip_agent = PayslipAgent()
+
+    return _payslip_agent

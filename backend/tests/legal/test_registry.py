@@ -4,6 +4,7 @@ These tests also serve as schema-integrity tests for the YAML data.
 If a maintainer breaks `norms.yaml`/`articles.yaml`/`invoice_templates.yaml`,
 CI fails before deploy.
 """
+
 from datetime import date
 
 import pytest
@@ -50,13 +51,14 @@ def test_all_norms_resolvable_to_url():
     (c) `source_norm_id` (other plugins like static_url accept URL directly).
     Required for the citation enricher to produce a working link."""
     import re
+
     boe_pattern = re.compile(r"^BOE-[A-Z]-\d{4}-\d+$")
     norms, _, _ = load_all()
     for norm in norms.norms:
         if norm.boe_id is not None:
-            assert boe_pattern.match(norm.boe_id), (
-                f"Norm '{norm.sigla}' has invalid boe_id format: '{norm.boe_id}'"
-            )
+            assert boe_pattern.match(
+                norm.boe_id
+            ), f"Norm '{norm.sigla}' has invalid boe_id format: '{norm.boe_id}'"
         has_url = norm.url_html_consolidada is not None
         has_boe = norm.boe_id is not None
         has_source = norm.source_norm_id is not None
@@ -100,12 +102,12 @@ def test_is_known_norm_liva_variants(registry, citation):
 @pytest.mark.parametrize(
     "citation",
     [
-        "ley 35/2006",       # LIRPF
-        "ley 27/2014",       # LIS
-        "ley 58/2003",       # LGT
-        "ley 22/2009",       # Cesión tributos
-        "rd 1624/1992",      # RIVA
-        "rd 439/2007",       # RIRPF
+        "ley 35/2006",  # LIRPF
+        "ley 27/2014",  # LIS
+        "ley 58/2003",  # LGT
+        "ley 22/2009",  # Cesión tributos
+        "rd 1624/1992",  # RIVA
+        "rd 439/2007",  # RIRPF
         "rd legislativo 5/2004",  # TRLIRNR
     ],
 )
@@ -116,7 +118,7 @@ def test_is_known_norm_other_fundamental(registry, citation):
 @pytest.mark.parametrize(
     "citation",
     [
-        "ley 99/2099",   # invented year
+        "ley 99/2099",  # invented year
         "ley 0/2000",
         "rd 9999/9999",
     ],
@@ -142,9 +144,7 @@ def test_is_known_norm_invented_returns_false(registry, citation):
     ],
 )
 def test_is_known_article_canonical(registry, citation):
-    assert registry.is_known_article(citation), (
-        f"Canonical article should be known: {citation}"
-    )
+    assert registry.is_known_article(citation), f"Canonical article should be known: {citation}"
 
 
 @pytest.mark.parametrize(
@@ -177,8 +177,8 @@ def test_compound_citation_short_form(registry):
 @pytest.mark.parametrize(
     "citation",
     [
-        "art 999 liva",       # invented
-        "art 999.99 lirpf",   # invented
+        "art 999 liva",  # invented
+        "art 999.99 lirpf",  # invented
         "art 500 lgt",
     ],
 )
@@ -219,7 +219,7 @@ def test_get_legal_registry_returns_singleton():
 def test_registry_fallback_on_missing_yaml(tmp_path):
     """If YAMLs are missing, the registry returns empty but does not crash."""
     reset_legal_registry()
-    reg = get_legal_registry(str(tmp_path))   # empty directory
+    reg = get_legal_registry(str(tmp_path))  # empty directory
     assert reg is not None
     # Empty registry → nothing is known
     assert not reg.is_known_norm("ley 37/1992")

@@ -8,7 +8,8 @@ Calculates:
 - Automatic amortization (3% of acquisition value from DB)
 - 60% reduction for housing rental (art. 23.2 LIRPF, from DB)
 """
-from typing import Any, Dict
+
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -34,7 +35,7 @@ class RentalIncomeCalculator:
         es_vivienda_habitual: bool = True,
         year: int = 2024,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate net reduced rental income.
 
@@ -68,11 +69,7 @@ class RentalIncomeCalculator:
             ingresos_alquiler,
         )
         gastos_no_limitados = (
-            gastos_comunidad
-            + gastos_seguros
-            + gastos_suministros
-            + ibi
-            + amortizacion
+            gastos_comunidad + gastos_seguros + gastos_suministros + ibi + amortizacion
         )
         total_gastos = gastos_limitados + gastos_no_limitados
         rendimiento_neto = ingresos_alquiler - total_gastos

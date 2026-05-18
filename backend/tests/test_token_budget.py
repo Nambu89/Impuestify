@@ -9,9 +9,9 @@ returns via `hasattr(x, '__await__')` and only awaits when needed.
 import pytest
 
 from app.security.token_budget import (
-    TokenBudgetTracker,
     DAILY_LIMITS,
     WARN_FRACTION,
+    TokenBudgetTracker,
 )
 
 
@@ -86,12 +86,15 @@ async def test_no_redis_record_returns_minus_one():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("plan,expected", [
-    ("particular", 50_000),
-    ("creator", 200_000),
-    ("autonomo", 150_000),
-    ("unknown_plan", 50_000),  # falls back to particular
-])
+@pytest.mark.parametrize(
+    "plan,expected",
+    [
+        ("particular", 50_000),
+        ("creator", 200_000),
+        ("autonomo", 150_000),
+        ("unknown_plan", 50_000),  # falls back to particular
+    ],
+)
 async def test_plan_limits(tracker, plan, expected):
     status = await tracker.check(user_id="u1", plan_type=plan, is_owner=False)
     assert status.limit == expected
@@ -163,6 +166,7 @@ async def test_users_isolated(tracker):
 @pytest.mark.asyncio
 async def test_reset_at_iso_format(tracker):
     from datetime import datetime
+
     status = await tracker.check(user_id="u1", plan_type="particular", is_owner=False)
     parsed = datetime.fromisoformat(status.reset_at)
     assert parsed > datetime.now(parsed.tzinfo)

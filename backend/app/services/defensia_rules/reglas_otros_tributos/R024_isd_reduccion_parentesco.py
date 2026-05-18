@@ -52,6 +52,7 @@ resuelve el ``defensia_rag_verifier`` contra el corpus normativo. Por eso
 aqui no aparecen literales como "Art. 20.2.a LISD", "Ley 29/1987" o
 "STS 242/2018" — solo terminos semanticos descriptivos del supuesto.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -63,7 +64,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # ---------------------------------------------------------------------------
 # Constantes — grupos de parentesco cubiertos por esta primera pasada
@@ -103,6 +103,7 @@ _TIPOS_LIQUIDACION = (
 # ---------------------------------------------------------------------------
 # Regla
 # ---------------------------------------------------------------------------
+
 
 @regla(
     id="R024",
@@ -155,11 +156,7 @@ def evaluar(
         return None
 
     doc_liquidacion = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDACION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDACION),
         None,
     )
     if doc_liquidacion is None:
@@ -205,12 +202,8 @@ def evaluar(
     # -----------------------------------------------------------------------
     # Disparador 2 — estatal OK pero bonificacion autonomica ignorada
     # -----------------------------------------------------------------------
-    bonificacion_aplicable = bool(
-        datos.get("bonificacion_autonomica_aplicable", False)
-    )
-    bonificacion_aplicada = bool(
-        datos.get("bonificacion_autonomica_aplicada", False)
-    )
+    bonificacion_aplicable = bool(datos.get("bonificacion_autonomica_aplicable", False))
+    bonificacion_aplicada = bool(datos.get("bonificacion_autonomica_aplicada", False))
 
     if bonificacion_aplicable and not bonificacion_aplicada:
         return ArgumentoCandidato(

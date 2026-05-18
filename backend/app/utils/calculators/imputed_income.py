@@ -16,8 +16,9 @@ Supports:
 - Usage filtering (only "disposicion" properties impute income)
 - Legacy single-value path for backwards compatibility
 """
+
 import calendar
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ImputedIncomeCalculator:
@@ -50,11 +51,11 @@ class ImputedIncomeCalculator:
     def calculate(
         self,
         *,
-        inmuebles: Optional[List[Dict[str, Any]]] = None,
+        inmuebles: list[dict[str, Any]] | None = None,
         valor_catastral_total: float = 0,
         valor_catastral_revisado: bool = True,
         year: int = 2024,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate imputed income for urban properties.
 
         Args:
@@ -114,11 +115,11 @@ class ImputedIncomeCalculator:
 
     def _calculate_per_property(
         self,
-        inmuebles: List[Dict[str, Any]],
+        inmuebles: list[dict[str, Any]],
         dias_ano: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process each property individually and aggregate results."""
-        detalle: List[Dict[str, Any]] = []
+        detalle: list[dict[str, Any]] = []
         total = 0.0
 
         for idx, prop in enumerate(inmuebles):
@@ -157,14 +158,16 @@ class ImputedIncomeCalculator:
                 2,
             )
 
-            detalle.append({
-                "indice": idx,
-                "valor_catastral": valor_catastral,
-                "porcentaje_aplicado": round(rate * 100, 1),
-                "dias_disposicion": dias_disposicion,
-                "porcentaje_titularidad": porcentaje_titularidad,
-                "renta_imputada": renta,
-            })
+            detalle.append(
+                {
+                    "indice": idx,
+                    "valor_catastral": valor_catastral,
+                    "porcentaje_aplicado": round(rate * 100, 1),
+                    "dias_disposicion": dias_disposicion,
+                    "porcentaje_titularidad": porcentaje_titularidad,
+                    "renta_imputada": renta,
+                }
+            )
             total += renta
 
         return {

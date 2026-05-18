@@ -13,6 +13,7 @@ Cubre:
     - Ceuta/Melilla → no aplica.
     - Validaciones (volumen negativo, trimestres incorrectos, restricted_mode).
 """
+
 from __future__ import annotations
 
 import pytest

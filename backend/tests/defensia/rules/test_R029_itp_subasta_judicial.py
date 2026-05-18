@@ -5,6 +5,7 @@ subasta judicial o ejecucion hipotecaria aplica el valor de referencia
 catastral como base imponible en lugar del precio de remate efectivamente
 pagado (doctrina TS consolidada).
 """
+
 from __future__ import annotations
 
 import importlib
@@ -20,10 +21,7 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, reset_registry
 
-
-_R029_MODULE_NAME = (
-    "app.services.defensia_rules.reglas_otros_tributos.R029_itp_subasta_judicial"
-)
+_R029_MODULE_NAME = "app.services.defensia_rules.reglas_otros_tributos.R029_itp_subasta_judicial"
 
 
 def _cargar_solo_R029() -> None:
@@ -50,9 +48,7 @@ def _evaluar(exp, brief):
 # ---------------------------------------------------------------------------
 
 
-def test_R029_positivo_subasta_judicial_valor_referencia(
-    build_exp, build_doc, build_brief
-):
+def test_R029_positivo_subasta_judicial_valor_referencia(build_exp, build_doc, build_brief):
     """Subasta judicial con precio remate 150.000 y base aplicada 220.000."""
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -77,9 +73,7 @@ def test_R029_positivo_subasta_judicial_valor_referencia(
     assert arg.datos_disparo.get("diferencia") == 70000
 
 
-def test_R029_positivo_ejecucion_hipotecaria(
-    build_exp, build_doc, build_brief
-):
+def test_R029_positivo_ejecucion_hipotecaria(build_exp, build_doc, build_brief):
     """Ejecucion hipotecaria con precio remate < base aplicada."""
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -127,9 +121,7 @@ def test_R029_negativo_compraventa_ordinaria(build_exp, build_doc, build_brief):
     assert _evaluar(exp, brief) is None
 
 
-def test_R029_negativo_base_igual_precio_remate(
-    build_exp, build_doc, build_brief
-):
+def test_R029_negativo_base_igual_precio_remate(build_exp, build_doc, build_brief):
     """Base aplicada == precio remate -> NO dispara."""
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -174,9 +166,7 @@ def test_R029_negativo_tributo_no_itp(build_exp, build_doc, build_brief):
 # ---------------------------------------------------------------------------
 
 
-def test_R029_cita_es_semantica_no_hardcoded(
-    build_exp, build_doc, build_brief
-):
+def test_R029_cita_es_semantica_no_hardcoded(build_exp, build_doc, build_brief):
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={

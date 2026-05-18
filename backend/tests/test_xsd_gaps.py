@@ -8,12 +8,14 @@ Tests for XSD gaps implementation:
 
 All tests use mocked DB responses -- no live Turso connection required.
 """
-import pytest
+
 import sys
-from pathlib import Path
-from unittest.mock import AsyncMock
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock
+
+import pytest
 
 # Setup path
 backend_dir = Path(__file__).parent.parent
@@ -22,14 +24,14 @@ sys.path.insert(0, str(backend_dir))
 from app.utils.calculators.mpyf import MPYFCalculator
 from app.utils.irpf_simulator import IRPFSimulator
 
-
 # ─────────────────────────────────────────────────────────────
 # Mock DB helper (same pattern as test_irpf_simulator.py)
 # ─────────────────────────────────────────────────────────────
 
+
 @dataclass
 class MockRow:
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
     def __getitem__(self, key):
         return self.data[key]
@@ -55,7 +57,7 @@ class MockRow:
 
 @dataclass
 class MockResult:
-    rows: List[MockRow]
+    rows: list[MockRow]
 
 
 MOCK_MPYF_ESTATAL = {
@@ -94,17 +96,65 @@ MOCK_INMUEBLES_PARAMS = {
 }
 
 MOCK_GENERAL_SCALE_ESTATAL = [
-    {"tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
-    {"tramo_num": 2, "base_hasta": 20200, "cuota_integra": 1182.75, "resto_base": 7750, "tipo_aplicable": 12},
-    {"tramo_num": 3, "base_hasta": 35200, "cuota_integra": 2112.75, "resto_base": 15000, "tipo_aplicable": 15},
-    {"tramo_num": 4, "base_hasta": 60000, "cuota_integra": 4362.75, "resto_base": 24800, "tipo_aplicable": 18.5},
-    {"tramo_num": 5, "base_hasta": 300000, "cuota_integra": 8952.75, "resto_base": 240000, "tipo_aplicable": 22.5},
-    {"tramo_num": 6, "base_hasta": 999999, "cuota_integra": 62952.75, "resto_base": 699999, "tipo_aplicable": 24.5},
+    {
+        "tramo_num": 1,
+        "base_hasta": 12450,
+        "cuota_integra": 0,
+        "resto_base": 12450,
+        "tipo_aplicable": 9.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 20200,
+        "cuota_integra": 1182.75,
+        "resto_base": 7750,
+        "tipo_aplicable": 12,
+    },
+    {
+        "tramo_num": 3,
+        "base_hasta": 35200,
+        "cuota_integra": 2112.75,
+        "resto_base": 15000,
+        "tipo_aplicable": 15,
+    },
+    {
+        "tramo_num": 4,
+        "base_hasta": 60000,
+        "cuota_integra": 4362.75,
+        "resto_base": 24800,
+        "tipo_aplicable": 18.5,
+    },
+    {
+        "tramo_num": 5,
+        "base_hasta": 300000,
+        "cuota_integra": 8952.75,
+        "resto_base": 240000,
+        "tipo_aplicable": 22.5,
+    },
+    {
+        "tramo_num": 6,
+        "base_hasta": 999999,
+        "cuota_integra": 62952.75,
+        "resto_base": 699999,
+        "tipo_aplicable": 24.5,
+    },
 ]
 
 MOCK_AHORRO_SCALE = [
-    {"tramo_num": 1, "base_hasta": 6000, "cuota_integra": 0, "resto_base": 6000, "tipo_aplicable": 9.5},
-    {"tramo_num": 2, "base_hasta": 50000, "cuota_integra": 570, "resto_base": 44000, "tipo_aplicable": 10.5},
+    {
+        "tramo_num": 1,
+        "base_hasta": 6000,
+        "cuota_integra": 0,
+        "resto_base": 6000,
+        "tipo_aplicable": 9.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 50000,
+        "cuota_integra": 570,
+        "resto_base": 44000,
+        "tipo_aplicable": 10.5,
+    },
 ]
 
 
@@ -149,6 +199,7 @@ def build_mock_db():
 # Gap 4 & 5: MPYF disability tests (unit tests on MPYFCalculator)
 # ─────────────────────────────────────────────────────────────
 
+
 class TestMPYFDisabilityDescendants:
     """Gap 4: Discapacidad descendientes (Art. 60.2 LIRPF, casilla 0519)."""
 
@@ -159,18 +210,23 @@ class TestMPYFDisabilityDescendants:
         calc = MPYFCalculator(db)  # MPYFCalculator takes repo, not db
         # But MPYFCalculator.__init__ takes TaxParameterRepository
         from app.utils.tax_parameter_repository import TaxParameterRepository
+
         repo = TaxParameterRepository(db)
         calc = MPYFCalculator(repo)
 
         # Baseline: no disability
         base = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_descendientes=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_descendientes=1,
         )
         # With 1 descendant 33% disability
         with_disc = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_descendientes=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_descendientes=1,
             num_descendientes_discapacidad_33=1,
         )
         diff_est = with_disc["mpyf_estatal"] - base["mpyf_estatal"]
@@ -180,17 +236,22 @@ class TestMPYFDisabilityDescendants:
     async def test_descendant_disability_65_adds_12000(self):
         """A descendant with 65%+ disability adds 9,000 + 3,000 gastos asistencia = 12,000 EUR."""
         from app.utils.tax_parameter_repository import TaxParameterRepository
+
         db = build_mock_db()
         repo = TaxParameterRepository(db)
         calc = MPYFCalculator(repo)
 
         base = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_descendientes=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_descendientes=1,
         )
         with_disc = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_descendientes=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_descendientes=1,
             num_descendientes_discapacidad_65=1,
         )
         diff_est = with_disc["mpyf_estatal"] - base["mpyf_estatal"]
@@ -204,17 +265,22 @@ class TestMPYFDisabilityAscendants:
     async def test_ascendant_disability_33_adds_3000(self):
         """An ascendant with 33-64% disability adds 3,000 EUR to MPYF."""
         from app.utils.tax_parameter_repository import TaxParameterRepository
+
         db = build_mock_db()
         repo = TaxParameterRepository(db)
         calc = MPYFCalculator(repo)
 
         base = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_ascendientes_65=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_ascendientes_65=1,
         )
         with_disc = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_ascendientes_65=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_ascendientes_65=1,
             num_ascendientes_discapacidad_33=1,
         )
         diff_est = with_disc["mpyf_estatal"] - base["mpyf_estatal"]
@@ -224,17 +290,22 @@ class TestMPYFDisabilityAscendants:
     async def test_ascendant_disability_65_adds_12000(self):
         """An ascendant with 65%+ disability adds 12,000 EUR."""
         from app.utils.tax_parameter_repository import TaxParameterRepository
+
         db = build_mock_db()
         repo = TaxParameterRepository(db)
         calc = MPYFCalculator(repo)
 
         base = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_ascendientes_65=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_ascendientes_65=1,
         )
         with_disc = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_ascendientes_65=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_ascendientes_65=1,
             num_ascendientes_discapacidad_65=1,
         )
         diff_est = with_disc["mpyf_estatal"] - base["mpyf_estatal"]
@@ -244,17 +315,24 @@ class TestMPYFDisabilityAscendants:
     async def test_both_desc_and_asc_disability(self):
         """Both disabled descendant and ascendant stack correctly."""
         from app.utils.tax_parameter_repository import TaxParameterRepository
+
         db = build_mock_db()
         repo = TaxParameterRepository(db)
         calc = MPYFCalculator(repo)
 
         base = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_descendientes=1, num_ascendientes_65=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_descendientes=1,
+            num_ascendientes_65=1,
         )
         with_both = await calc.calculate(
-            jurisdiction="Estatal", year=2024,
-            edad_contribuyente=40, num_descendientes=1, num_ascendientes_65=1,
+            jurisdiction="Estatal",
+            year=2024,
+            edad_contribuyente=40,
+            num_descendientes=1,
+            num_ascendientes_65=1,
             num_descendientes_discapacidad_33=1,
             num_ascendientes_discapacidad_65=1,
         )
@@ -266,6 +344,7 @@ class TestMPYFDisabilityAscendants:
 # ─────────────────────────────────────────────────────────────
 # Gaps 1-3: Simulator-level tests
 # ─────────────────────────────────────────────────────────────
+
 
 class TestPensionCompensatoria:
     """Gap 1: Pension compensatoria ex-conyuge (Art. 55 LIRPF, casilla 0475)."""

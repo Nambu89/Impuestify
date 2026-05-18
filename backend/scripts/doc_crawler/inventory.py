@@ -1,9 +1,10 @@
 """
 Inventory management — JSON index + human-readable report.
 """
+
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 from .config import CRAWLER_REPORT, DOCS_DIR, INVENTORY_INDEX
@@ -14,14 +15,14 @@ logger = logging.getLogger(__name__)
 def load_inventory() -> dict:
     """Load the crawler index from JSON. Returns empty dict if not found."""
     if INVENTORY_INDEX.exists():
-        with open(INVENTORY_INDEX, "r", encoding="utf-8") as f:
+        with open(INVENTORY_INDEX, encoding="utf-8") as f:
             return json.load(f)
     return {"version": 1, "last_run": None, "documents": {}}
 
 
 def save_inventory(data: dict) -> None:
     """Save the crawler index to JSON."""
-    data["last_run"] = datetime.now(timezone.utc).isoformat()
+    data["last_run"] = datetime.now(UTC).isoformat()
     with open(INVENTORY_INDEX, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
     logger.info(f"Inventory saved: {len(data.get('documents', {}))} documents")
@@ -36,7 +37,7 @@ def update_document(
     status: str,
 ) -> None:
     """Update a single document entry in the inventory."""
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     docs = inventory.setdefault("documents", {})
 
     if rel_path in docs:
@@ -62,13 +63,15 @@ def generate_report(results: list[dict]) -> str:
     Generate a human-readable report from crawl results.
     Writes to _crawler_report.md and returns the text.
     """
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     new = [r for r in results if r.get("status") == "new"]
     updated = [r for r in results if r.get("status") == "updated"]
     unchanged = [r for r in results if r.get("status") == "unchanged"]
     failed = [r for r in results if r.get("status") in ("failed", "invalid", "rate_limited")]
-    blocked = [r for r in results if r.get("status") in ("blocked", "robots_blocked", "limit_reached")]
+    blocked = [
+        r for r in results if r.get("status") in ("blocked", "robots_blocked", "limit_reached")
+    ]
     skipped = [r for r in results if r.get("status") in ("would_download", "would_skip")]
 
     lines = [

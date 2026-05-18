@@ -6,18 +6,20 @@ Tests cover:
 - content_restriction.detect_autonomo_query()
 - Subscription guard dependency behavior
 """
-import sys
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timedelta, timezone
-from dataclasses import asdict
 
+import sys
+from dataclasses import asdict
+from datetime import UTC, datetime, timedelta, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # ---------------------------------------------------------------------------
 # Patch heavy dependencies before importing app modules.
 # subscription_service only needs app.config (pydantic Settings).
 # content_restriction has no heavy deps.
 # ---------------------------------------------------------------------------
+
 
 def _ensure_mock(module_name, **attrs):
     """Insert a MagicMock into sys.modules if the real module is absent."""
@@ -26,6 +28,7 @@ def _ensure_mock(module_name, **attrs):
         for k, v in attrs.items():
             setattr(mock, k, v)
         sys.modules[module_name] = mock
+
 
 # These may not be installed in the test venv
 _ensure_mock("jose")
@@ -40,24 +43,26 @@ _ensure_mock("stripe")
 # Direct imports from the real modules
 # ---------------------------------------------------------------------------
 
-from app.services.subscription_service import SubscriptionService, SubscriptionAccess  # noqa: E402
 from app.security.content_restriction import (  # noqa: E402
     detect_autonomo_query,
     get_autonomo_block_response,
 )
-
+from app.services.subscription_service import SubscriptionAccess, SubscriptionService  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 class FakeRow(dict):
     """Dict subclass that supports both dict access and .get()."""
+
     pass
 
 
 class FakeResult:
     """Mimics Turso query result."""
+
     def __init__(self, rows=None):
         self.rows = rows or []
         self.rowcount = len(self.rows)
@@ -80,6 +85,7 @@ def service(mock_db):
 # check_access() tests
 # ---------------------------------------------------------------------------
 
+
 class TestCheckAccess:
     """Tests for SubscriptionService.check_access()."""
 
@@ -89,9 +95,7 @@ class TestCheckAccess:
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "owner@example.com"
 
-            access = await service.check_access(
-                user_id="user-1", email="owner@example.com"
-            )
+            access = await service.check_access(user_id="user-1", email="owner@example.com")
 
         assert access.has_access is True
         assert access.is_owner is True
@@ -104,9 +108,7 @@ class TestCheckAccess:
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "owner@example.com"
 
-            access = await service.check_access(
-                user_id="user-1", email="OWNER@Example.COM"
-            )
+            access = await service.check_access(user_id="user-1", email="OWNER@Example.COM")
 
         assert access.has_access is True
         assert access.is_owner is True
@@ -117,13 +119,20 @@ class TestCheckAccess:
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"
 
-            mock_db.execute.return_value = FakeResult([
-                FakeRow({"is_owner": True, "plan_type": "owner", "status": "active", "current_period_end": None})
-            ])
-
-            access = await service.check_access(
-                user_id="user-1", email="user@example.com"
+            mock_db.execute.return_value = FakeResult(
+                [
+                    FakeRow(
+                        {
+                            "is_owner": True,
+                            "plan_type": "owner",
+                            "status": "active",
+                            "current_period_end": None,
+                        }
+                    )
+                ]
             )
+
+            access = await service.check_access(user_id="user-1", email="user@example.com")
 
         assert access.has_access is True
         assert access.is_owner is True
@@ -135,13 +144,20 @@ class TestCheckAccess:
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"
 
-            mock_db.execute.return_value = FakeResult([
-                FakeRow({"is_owner": False, "plan_type": "particular", "status": "active", "current_period_end": None})
-            ])
-
-            access = await service.check_access(
-                user_id="user-2", email="user@example.com"
+            mock_db.execute.return_value = FakeResult(
+                [
+                    FakeRow(
+                        {
+                            "is_owner": False,
+                            "plan_type": "particular",
+                            "status": "active",
+                            "current_period_end": None,
+                        }
+                    )
+                ]
             )
+
+            access = await service.check_access(user_id="user-2", email="user@example.com")
 
         assert access.has_access is True
         assert access.is_owner is False
@@ -151,23 +167,25 @@ class TestCheckAccess:
     @pytest.mark.asyncio
     async def test_grace_period_valid(self, service, mock_db):
         """User in grace period with future end date has access."""
-        future_date = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+        future_date = (datetime.now(UTC) + timedelta(days=365)).isoformat()
 
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"
 
-            mock_db.execute.return_value = FakeResult([
-                FakeRow({
-                    "is_owner": False,
-                    "plan_type": "particular",
-                    "status": "grace_period",
-                    "current_period_end": future_date,
-                })
-            ])
-
-            access = await service.check_access(
-                user_id="user-3", email="user@example.com"
+            mock_db.execute.return_value = FakeResult(
+                [
+                    FakeRow(
+                        {
+                            "is_owner": False,
+                            "plan_type": "particular",
+                            "status": "grace_period",
+                            "current_period_end": future_date,
+                        }
+                    )
+                ]
             )
+
+            access = await service.check_access(user_id="user-3", email="user@example.com")
 
         assert access.has_access is True
         assert access.status == "grace_period"
@@ -176,23 +194,25 @@ class TestCheckAccess:
     @pytest.mark.asyncio
     async def test_grace_period_expired(self, service, mock_db):
         """User in grace period with past end date has NO access."""
-        past_date = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+        past_date = (datetime.now(UTC) - timedelta(days=1)).isoformat()
 
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"
 
-            mock_db.execute.return_value = FakeResult([
-                FakeRow({
-                    "is_owner": False,
-                    "plan_type": "particular",
-                    "status": "grace_period",
-                    "current_period_end": past_date,
-                })
-            ])
-
-            access = await service.check_access(
-                user_id="user-4", email="user@example.com"
+            mock_db.execute.return_value = FakeResult(
+                [
+                    FakeRow(
+                        {
+                            "is_owner": False,
+                            "plan_type": "particular",
+                            "status": "grace_period",
+                            "current_period_end": past_date,
+                        }
+                    )
+                ]
             )
+
+            access = await service.check_access(user_id="user-4", email="user@example.com")
 
         assert access.has_access is False
         assert access.reason == "no_active_subscription"
@@ -203,13 +223,20 @@ class TestCheckAccess:
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"
 
-            mock_db.execute.return_value = FakeResult([
-                FakeRow({"is_owner": False, "plan_type": "particular", "status": "inactive", "current_period_end": None})
-            ])
-
-            access = await service.check_access(
-                user_id="user-5", email="user@example.com"
+            mock_db.execute.return_value = FakeResult(
+                [
+                    FakeRow(
+                        {
+                            "is_owner": False,
+                            "plan_type": "particular",
+                            "status": "inactive",
+                            "current_period_end": None,
+                        }
+                    )
+                ]
             )
+
+            access = await service.check_access(user_id="user-5", email="user@example.com")
 
         assert access.has_access is False
         assert access.status == "inactive"
@@ -221,13 +248,20 @@ class TestCheckAccess:
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"
 
-            mock_db.execute.return_value = FakeResult([
-                FakeRow({"is_owner": False, "plan_type": "particular", "status": "canceled", "current_period_end": None})
-            ])
-
-            access = await service.check_access(
-                user_id="user-6", email="user@example.com"
+            mock_db.execute.return_value = FakeResult(
+                [
+                    FakeRow(
+                        {
+                            "is_owner": False,
+                            "plan_type": "particular",
+                            "status": "canceled",
+                            "current_period_end": None,
+                        }
+                    )
+                ]
             )
+
+            access = await service.check_access(user_id="user-6", email="user@example.com")
 
         assert access.has_access is False
         assert access.status == "canceled"
@@ -240,9 +274,7 @@ class TestCheckAccess:
 
             mock_db.execute.return_value = FakeResult([])
 
-            access = await service.check_access(
-                user_id="nonexistent", email="nobody@example.com"
-            )
+            access = await service.check_access(user_id="nonexistent", email="nobody@example.com")
 
         assert access.has_access is False
         assert access.reason == "user_not_found"
@@ -253,13 +285,20 @@ class TestCheckAccess:
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"
 
-            mock_db.execute.return_value = FakeResult([
-                FakeRow({"is_owner": False, "plan_type": "particular", "status": "past_due", "current_period_end": None})
-            ])
-
-            access = await service.check_access(
-                user_id="user-7", email="user@example.com"
+            mock_db.execute.return_value = FakeResult(
+                [
+                    FakeRow(
+                        {
+                            "is_owner": False,
+                            "plan_type": "particular",
+                            "status": "past_due",
+                            "current_period_end": None,
+                        }
+                    )
+                ]
             )
+
+            access = await service.check_access(user_id="user-7", email="user@example.com")
 
         assert access.has_access is False
         assert access.status == "past_due"
@@ -270,13 +309,20 @@ class TestCheckAccess:
         with patch("app.services.subscription_service.settings") as mock_settings:
             mock_settings.OWNER_EMAIL = "other@example.com"
 
-            mock_db.execute.return_value = FakeResult([
-                FakeRow({"is_owner": False, "plan_type": "creator", "status": "active", "current_period_end": None})
-            ])
-
-            access = await service.check_access(
-                user_id="user-8", email="user@example.com"
+            mock_db.execute.return_value = FakeResult(
+                [
+                    FakeRow(
+                        {
+                            "is_owner": False,
+                            "plan_type": "creator",
+                            "status": "active",
+                            "current_period_end": None,
+                        }
+                    )
+                ]
             )
+
+            access = await service.check_access(user_id="user-8", email="user@example.com")
 
         assert access.has_access is True
         assert access.plan_type == "creator"
@@ -288,25 +334,28 @@ class TestCheckAccess:
 # create_checkout_session() — creator plan tests
 # ---------------------------------------------------------------------------
 
+
 class TestCheckoutCreatorPlan:
     """Tests for creator plan checkout session creation."""
 
     @pytest.mark.asyncio
     async def test_creator_plan_uses_creator_price_id(self, service, mock_db):
         """create_checkout_session with plan_type='creator' uses STRIPE_PRICE_ID_CREATOR."""
-        mock_db.execute.return_value = FakeResult([
-            FakeRow({"stripe_customer_id": "cus_test123"})
-        ])
+        mock_db.execute.return_value = FakeResult([FakeRow({"stripe_customer_id": "cus_test123"})])
 
-        with patch("app.services.subscription_service.settings") as mock_settings, \
-             patch("app.services.subscription_service._get_stripe") as mock_get_stripe:
+        with (
+            patch("app.services.subscription_service.settings") as mock_settings,
+            patch("app.services.subscription_service._get_stripe") as mock_get_stripe,
+        ):
             mock_settings.is_stripe_configured = True
             mock_settings.STRIPE_PRICE_ID = "price_particular"
             mock_settings.STRIPE_PRICE_ID_AUTONOMO = "price_autonomo"
             mock_settings.STRIPE_PRICE_ID_CREATOR = "price_creator123"
 
             mock_stripe = MagicMock()
-            mock_stripe.checkout.Session.create.return_value = MagicMock(url="https://checkout.stripe.com/creator")
+            mock_stripe.checkout.Session.create.return_value = MagicMock(
+                url="https://checkout.stripe.com/creator"
+            )
             mock_get_stripe.return_value = mock_stripe
 
             url = await service.create_checkout_session(
@@ -324,12 +373,12 @@ class TestCheckoutCreatorPlan:
     @pytest.mark.asyncio
     async def test_creator_plan_not_configured_raises(self, service, mock_db):
         """create_checkout_session raises ValueError when STRIPE_PRICE_ID_CREATOR is None."""
-        mock_db.execute.return_value = FakeResult([
-            FakeRow({"stripe_customer_id": "cus_test123"})
-        ])
+        mock_db.execute.return_value = FakeResult([FakeRow({"stripe_customer_id": "cus_test123"})])
 
-        with patch("app.services.subscription_service.settings") as mock_settings, \
-             patch("app.services.subscription_service._get_stripe"):
+        with (
+            patch("app.services.subscription_service.settings") as mock_settings,
+            patch("app.services.subscription_service._get_stripe"),
+        ):
             mock_settings.is_stripe_configured = True
             mock_settings.STRIPE_PRICE_ID = "price_particular"
             mock_settings.STRIPE_PRICE_ID_AUTONOMO = "price_autonomo"
@@ -347,6 +396,7 @@ class TestCheckoutCreatorPlan:
 # ---------------------------------------------------------------------------
 # detect_autonomo_query() tests
 # ---------------------------------------------------------------------------
+
 
 class TestDetectAutonomoQuery:
     """Tests for content_restriction.detect_autonomo_query()."""
@@ -413,6 +463,7 @@ class TestDetectAutonomoQuery:
 # get_autonomo_block_response() tests
 # ---------------------------------------------------------------------------
 
+
 class TestAutonomoBlockResponse:
     """Tests for the autonomo block response message."""
 
@@ -438,6 +489,7 @@ class TestAutonomoBlockResponse:
 # SubscriptionAccess dataclass tests
 # ---------------------------------------------------------------------------
 
+
 class TestSubscriptionAccess:
     """Tests for the SubscriptionAccess dataclass."""
 
@@ -451,8 +503,7 @@ class TestSubscriptionAccess:
 
     def test_owner_access(self):
         access = SubscriptionAccess(
-            has_access=True, is_owner=True, plan_type="owner",
-            status="active", reason="owner"
+            has_access=True, is_owner=True, plan_type="owner", status="active", reason="owner"
         )
         assert access.has_access is True
         assert access.is_owner is True
@@ -462,6 +513,7 @@ class TestSubscriptionAccess:
 # ---------------------------------------------------------------------------
 # grant_grace_period() tests
 # ---------------------------------------------------------------------------
+
 
 class TestGrantGracePeriod:
     """Tests for SubscriptionService.grant_grace_period()."""

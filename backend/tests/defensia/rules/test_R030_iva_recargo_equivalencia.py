@@ -3,6 +3,7 @@
 Dispara cuando AEAT regulariza IVA a un comerciante minorista PF o EARE
 que deberia estar en regimen obligatorio de recargo de equivalencia.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -17,7 +18,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import REGISTRY, reset_registry
-
 
 _R030_MODULE_NAME = (
     "app.services.defensia_rules.reglas_otros_tributos.R030_iva_recargo_equivalencia"
@@ -48,9 +48,7 @@ def _evaluar(exp, brief):
 # ---------------------------------------------------------------------------
 
 
-def test_R030_positivo_persona_fisica_minorista_regularizada(
-    build_exp, build_doc, build_brief
-):
+def test_R030_positivo_persona_fisica_minorista_regularizada(build_exp, build_doc, build_brief):
     """PF minorista regularizada fuera del recargo de equivalencia -> dispara."""
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -122,9 +120,7 @@ def test_R030_negativo_recargo_ya_aplicado(build_exp, build_doc, build_brief):
     assert _evaluar(exp, brief) is None
 
 
-def test_R030_negativo_no_cumple_requisitos_minorista(
-    build_exp, build_doc, build_brief
-):
+def test_R030_negativo_no_cumple_requisitos_minorista(build_exp, build_doc, build_brief):
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={
@@ -144,9 +140,7 @@ def test_R030_negativo_no_cumple_requisitos_minorista(
     assert _evaluar(exp, brief) is None
 
 
-def test_R030_negativo_persona_juridica_no_eare(
-    build_exp, build_doc, build_brief
-):
+def test_R030_negativo_persona_juridica_no_eare(build_exp, build_doc, build_brief):
     """R030 solo aplica a PF o EARE — sociedades limitadas quedan fuera."""
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -171,9 +165,7 @@ def test_R030_negativo_persona_juridica_no_eare(
 # ---------------------------------------------------------------------------
 
 
-def test_R030_cita_es_semantica_no_hardcoded(
-    build_exp, build_doc, build_brief
-):
+def test_R030_cita_es_semantica_no_hardcoded(build_exp, build_doc, build_brief):
     doc = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={

@@ -22,24 +22,24 @@ from typing import Any
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-
 # ---------------------------------------------------------------------------
 # Paleta de colores
 # ---------------------------------------------------------------------------
 
+
 class Colors:
-    PRIMARY       = (26,  86, 219)   # #1a56db
-    PRIMARY_DARK  = (30,  64, 175)   # #1e40af
-    PRIMARY_LIGHT = (59, 130, 246)   # #3b82f6
-    ACCENT        = ( 6, 182, 212)   # #06b6d4
-    SECONDARY     = (15,  23,  42)   # #0f172a  (fondo oscuro)
-    GRAY800       = (30,  41,  59)   # #1e293b
-    GRAY700       = (51,  65,  85)   # #334155
-    GRAY400       = (148, 163, 184)  # #94a3b8
-    WHITE         = (255, 255, 255)
-    SUCCESS       = (16, 185, 129)   # #10b981
-    WARNING       = (245, 158,  11)  # #f59e0b
-    ERROR         = (239,  68,  68)  # #ef4444
+    PRIMARY = (26, 86, 219)  # #1a56db
+    PRIMARY_DARK = (30, 64, 175)  # #1e40af
+    PRIMARY_LIGHT = (59, 130, 246)  # #3b82f6
+    ACCENT = (6, 182, 212)  # #06b6d4
+    SECONDARY = (15, 23, 42)  # #0f172a  (fondo oscuro)
+    GRAY800 = (30, 41, 59)  # #1e293b
+    GRAY700 = (51, 65, 85)  # #334155
+    GRAY400 = (148, 163, 184)  # #94a3b8
+    WHITE = (255, 255, 255)
+    SUCCESS = (16, 185, 129)  # #10b981
+    WARNING = (245, 158, 11)  # #f59e0b
+    ERROR = (239, 68, 68)  # #ef4444
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +47,7 @@ class Colors:
 # ---------------------------------------------------------------------------
 
 _FONT_CACHE: dict[tuple[str, int], ImageFont.FreeTypeFont] = {}
+
 
 def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     key = (("bold" if bold else "regular"), size)
@@ -79,6 +80,7 @@ def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
 # Utilidades de dibujo
 # ---------------------------------------------------------------------------
 
+
 def _draw_gradient(
     img: Image.Image,
     color_top: tuple[int, int, int],
@@ -97,7 +99,10 @@ def _draw_gradient(
 
 def _draw_gradient_rect(
     draw: ImageDraw.ImageDraw,
-    x0: int, y0: int, x1: int, y1: int,
+    x0: int,
+    y0: int,
+    x1: int,
+    y1: int,
     color_left: tuple[int, int, int],
     color_right: tuple[int, int, int],
 ) -> None:
@@ -243,9 +248,7 @@ def _paste_logo(
         # el tablero. Solo pasa el contenido mas brillante del logo.
         lo, hi = 60, 95
 
-    alpha = gray.point(
-        lambda p: min(255, max(0, int((p - lo) * (255 / max(hi - lo, 1))))), "L"
-    )
+    alpha = gray.point(lambda p: min(255, max(0, int((p - lo) * (255 / max(hi - lo, 1))))), "L")
     alpha = alpha.filter(ImageFilter.GaussianBlur(1.2))
 
     r, g, b, _ = cropped.split()
@@ -263,6 +266,7 @@ def _paste_logo(
 def _draw_noise_texture(img: Image.Image, intensity: int = 8) -> None:
     """Agrega micro-textura sutil para profundidad."""
     import random
+
     pixels = img.load()
     w, h = img.size
     for _ in range(w * h // 20):
@@ -283,10 +287,12 @@ def _draw_noise_texture(img: Image.Image, intensity: int = 8) -> None:
 
 BulletType = str  # "check" | "cross" | "arrow" | "warning" | "star" | "number"
 
+
 @dataclass
 class Bullet:
     icon: BulletType
     text: str
+
 
 @dataclass
 class ContentSlide:
@@ -296,6 +302,7 @@ class ContentSlide:
     stat_label: str | None = None
     stat_sublabel: str | None = None
     highlight: str | None = None  # texto en caja destacada
+
 
 @dataclass
 class CarouselConfig:
@@ -312,6 +319,7 @@ class CarouselConfig:
 # Clase principal
 # ---------------------------------------------------------------------------
 
+
 class CarouselGenerator:
     """
     Genera carruseles de marca para Instagram (1080x1080) y LinkedIn (1080x1350).
@@ -323,7 +331,7 @@ class CarouselGenerator:
 
     PLATFORMS: dict[str, tuple[int, int]] = {
         "instagram": (1080, 1080),
-        "linkedin":  (1080, 1350),
+        "linkedin": (1080, 1350),
     }
 
     def __init__(
@@ -339,7 +347,11 @@ class CarouselGenerator:
         # Buscar logo
         if logo_path is None:
             candidates = [
-                Path(__file__).parents[2] / "frontend" / "public" / "images" / "logo-impuestify.png",
+                Path(__file__).parents[2]
+                / "frontend"
+                / "public"
+                / "images"
+                / "logo-impuestify.png",
                 Path("frontend/public/images/logo-impuestify.png"),
             ]
             logo_path = next((str(p) for p in candidates if p.exists()), None)
@@ -352,16 +364,16 @@ class CarouselGenerator:
 
         # Tamaños de fuente segun plataforma
         scale = 1.0 if platform == "instagram" else 0.92
-        self._fs_title    = int(64 * scale)
+        self._fs_title = int(64 * scale)
         self._fs_subtitle = int(36 * scale)
-        self._fs_body     = int(30 * scale)
-        self._fs_footer   = int(22 * scale)
-        self._fs_stat     = int(140 * scale)
-        self._fs_badge    = int(28 * scale)
+        self._fs_body = int(30 * scale)
+        self._fs_footer = int(22 * scale)
+        self._fs_stat = int(140 * scale)
+        self._fs_badge = int(28 * scale)
 
         # Margenes
-        self._mx = 80   # margen horizontal
-        self._my = 70   # margen vertical
+        self._mx = 80  # margen horizontal
+        self._my = 70  # margen vertical
 
     # -----------------------------------------------------------------------
     # API publica
@@ -467,9 +479,7 @@ class CarouselGenerator:
     # Parsing
     # -----------------------------------------------------------------------
 
-    def _parse_content_slides(
-        self, raw: list[dict[str, Any]]
-    ) -> list[ContentSlide]:
+    def _parse_content_slides(self, raw: list[dict[str, Any]]) -> list[ContentSlide]:
         result = []
         for item in raw:
             bullets = []
@@ -478,14 +488,16 @@ class CarouselGenerator:
                     bullets.append((str(b[0]), str(b[1])))
                 elif isinstance(b, dict):
                     bullets.append((b.get("icon", "arrow"), b.get("text", "")))
-            result.append(ContentSlide(
-                title=item.get("title", ""),
-                bullets=bullets,
-                stat_number=item.get("stat_number"),
-                stat_label=item.get("stat_label"),
-                stat_sublabel=item.get("stat_sublabel"),
-                highlight=item.get("highlight"),
-            ))
+            result.append(
+                ContentSlide(
+                    title=item.get("title", ""),
+                    bullets=bullets,
+                    stat_number=item.get("stat_number"),
+                    stat_label=item.get("stat_label"),
+                    stat_sublabel=item.get("stat_sublabel"),
+                    highlight=item.get("highlight"),
+                )
+            )
         return result
 
     # -----------------------------------------------------------------------
@@ -527,7 +539,10 @@ class CarouselGenerator:
         draw.rectangle([0, 0, self.W, 6], fill=Colors.ACCENT)
 
         # Linea sutil en footer
-        draw.rectangle([self._mx, self.H - self._my - 2, self.W - self._mx, self.H - self._my], fill=Colors.GRAY700)
+        draw.rectangle(
+            [self._mx, self.H - self._my - 2, self.W - self._mx, self.H - self._my],
+            fill=Colors.GRAY700,
+        )
 
     def _draw_footer(self, draw: ImageDraw.ImageDraw, img: Image.Image) -> None:
         """Footer: logo mini + impuestify.com a la izquierda, icono a la derecha."""
@@ -558,9 +573,7 @@ class CarouselGenerator:
     # Slide: Cover
     # -----------------------------------------------------------------------
 
-    def _render_cover(
-        self, title: str, subtitle: str, slide_num: int, total: int
-    ) -> Image.Image:
+    def _render_cover(self, title: str, subtitle: str, slide_num: int, total: int) -> Image.Image:
         img = self._new_canvas()
         self._add_decorative_elements(img)
         draw = ImageDraw.Draw(img)
@@ -574,15 +587,17 @@ class CarouselGenerator:
         sep_y = logo_y + 100
         _draw_gradient_rect(
             draw,
-            self.W // 2 - 180, sep_y,
-            self.W // 2 + 180, sep_y + 3,
+            self.W // 2 - 180,
+            sep_y,
+            self.W // 2 + 180,
+            sep_y + 3,
             Colors.PRIMARY,
             Colors.ACCENT,
         )
 
         # Titulo grande
         font_title = _load_font(self._fs_title, bold=True)
-        font_sub   = _load_font(self._fs_subtitle)
+        font_sub = _load_font(self._fs_subtitle)
 
         title_y = sep_y + 28
         text_w = self.W - self._mx * 2
@@ -596,17 +611,25 @@ class CarouselGenerator:
 
         # Titulo
         end_y = _multiline_text_wrapped(
-            draw, title, font_title, Colors.WHITE,
-            self.W // 2, start_y, text_w,
-            line_spacing=14, align="center",
+            draw,
+            title,
+            font_title,
+            Colors.WHITE,
+            self.W // 2,
+            start_y,
+            text_w,
+            line_spacing=14,
+            align="center",
         )
 
         # Linea accent bajo el titulo
         line_y = end_y + 18
         _draw_gradient_rect(
             draw,
-            self.W // 2 - 120, line_y,
-            self.W // 2 + 120, line_y + 4,
+            self.W // 2 - 120,
+            line_y,
+            self.W // 2 + 120,
+            line_y + 4,
             Colors.ACCENT,
             Colors.PRIMARY_LIGHT,
         )
@@ -614,9 +637,15 @@ class CarouselGenerator:
         # Subtitulo
         sub_y = line_y + 22
         _multiline_text_wrapped(
-            draw, subtitle, font_sub, Colors.ACCENT,
-            self.W // 2, sub_y, text_w,
-            line_spacing=10, align="center",
+            draw,
+            subtitle,
+            font_sub,
+            Colors.ACCENT,
+            self.W // 2,
+            sub_y,
+            text_w,
+            line_spacing=10,
+            align="center",
         )
 
         # "Desliza →" en footer
@@ -638,9 +667,7 @@ class CarouselGenerator:
     # Slide: Contenido con bullets
     # -----------------------------------------------------------------------
 
-    def _render_content_slide(
-        self, slide: ContentSlide, slide_num: int, total: int
-    ) -> Image.Image:
+    def _render_content_slide(self, slide: ContentSlide, slide_num: int, total: int) -> Image.Image:
         """Decide entre stat slide y bullet slide segun contenido."""
         if slide.stat_number:
             return self._render_stat_slide(slide, slide_num=slide_num, total=total)
@@ -662,14 +689,19 @@ class CarouselGenerator:
 
         # Titulo
         font_title = _load_font(self._fs_title - 6, bold=True)
-        font_body  = _load_font(self._fs_body)
+        font_body = _load_font(self._fs_body)
 
         text_w = self.W - self._mx * 2
         title_y = self._my + 30
 
         end_y = _multiline_text_wrapped(
-            draw, slide.title, font_title, Colors.WHITE,
-            self._mx, title_y, text_w - 80,
+            draw,
+            slide.title,
+            font_title,
+            Colors.WHITE,
+            self._mx,
+            title_y,
+            text_w - 80,
             line_spacing=12,
         )
 
@@ -727,9 +759,7 @@ class CarouselGenerator:
         self._draw_footer(draw, img)
         return img
 
-    def _draw_slide_badge(
-        self, draw: ImageDraw.ImageDraw, num: int, total: int
-    ) -> None:
+    def _draw_slide_badge(self, draw: ImageDraw.ImageDraw, num: int, total: int) -> None:
         """Circulo con numero de slide en esquina superior derecha."""
         r = 36
         cx = self.W - self._mx - r + 20
@@ -765,20 +795,25 @@ class CarouselGenerator:
         _draw_rounded_rect(img, box, radius=12, fill=Colors.PRIMARY, alpha=90)
         draw = ImageDraw.Draw(img)
         _multiline_text_wrapped(
-            draw, text, font, Colors.WHITE,
-            self._mx + 20, y + 14, text_w,
+            draw,
+            text,
+            font,
+            Colors.WHITE,
+            self._mx + 20,
+            y + 14,
+            text_w,
             line_spacing=8,
         )
         return y + h
 
     BULLET_COLORS: dict[str, tuple[int, int, int]] = {
-        "check":   Colors.SUCCESS,
-        "cross":   Colors.ERROR,
-        "arrow":   Colors.ACCENT,
+        "check": Colors.SUCCESS,
+        "cross": Colors.ERROR,
+        "arrow": Colors.ACCENT,
         "warning": Colors.WARNING,
-        "star":    Colors.WARNING,
-        "number":  Colors.PRIMARY_LIGHT,
-        "info":    Colors.ACCENT,
+        "star": Colors.WARNING,
+        "number": Colors.PRIMARY_LIGHT,
+        "info": Colors.ACCENT,
     }
 
     def _draw_bullet_icon(
@@ -884,8 +919,13 @@ class CarouselGenerator:
         text_x = self._mx + 55
         avail_w = text_w - 55 - 20
         end_y = _multiline_text_wrapped(
-            draw, text, font, Colors.WHITE,
-            text_x, y + 4, avail_w,
+            draw,
+            text,
+            font,
+            Colors.WHITE,
+            text_x,
+            y + 4,
+            avail_w,
             line_spacing=8,
         )
         return max(end_y, y + 52)
@@ -907,15 +947,17 @@ class CarouselGenerator:
         if slide_num:
             self._draw_slide_badge(draw, slide_num, total)
 
-        font_stat  = _load_font(self._fs_stat, bold=True)
+        font_stat = _load_font(self._fs_stat, bold=True)
         font_label = _load_font(self._fs_subtitle, bold=False)
-        font_sub   = _load_font(self._fs_body - 4)
+        font_sub = _load_font(self._fs_body - 4)
         text_w = self.W - self._mx * 2
 
         # Medir altura de todos los bloques para centrar verticalmente
         number = slide.stat_number or ""
         stat_bbox = draw.textbbox((0, 0), number, font=font_stat)
-        stat_h = int((stat_bbox[3] - stat_bbox[1]) * 1.45)  # compensar ascenders/descenders en fuentes grandes
+        stat_h = int(
+            (stat_bbox[3] - stat_bbox[1]) * 1.45
+        )  # compensar ascenders/descenders en fuentes grandes
         stat_w = stat_bbox[2] - stat_bbox[0]
 
         title_h = 0
@@ -937,9 +979,7 @@ class CarouselGenerator:
         gap_label_sub = 20 if sub_h else 0
 
         total_block = (
-            title_h + gap_title_stat +
-            stat_h + gap_stat_label +
-            label_h + gap_label_sub + sub_h
+            title_h + gap_title_stat + stat_h + gap_stat_label + label_h + gap_label_sub + sub_h
         )
 
         # Centrar el bloque completo verticalmente
@@ -949,8 +989,15 @@ class CarouselGenerator:
         # Titulo
         if slide.title:
             _multiline_text_wrapped(
-                draw, slide.title, font_title, Colors.WHITE,
-                self.W // 2, cursor_y, text_w, 12, align="center",
+                draw,
+                slide.title,
+                font_title,
+                Colors.WHITE,
+                self.W // 2,
+                cursor_y,
+                text_w,
+                12,
+                align="center",
             )
             cursor_y += title_h + gap_title_stat
 
@@ -963,16 +1010,30 @@ class CarouselGenerator:
         # Label
         if slide.stat_label:
             _multiline_text_wrapped(
-                draw, slide.stat_label, font_label, Colors.ACCENT,
-                self.W // 2, cursor_y, text_w, 8, align="center",
+                draw,
+                slide.stat_label,
+                font_label,
+                Colors.ACCENT,
+                self.W // 2,
+                cursor_y,
+                text_w,
+                8,
+                align="center",
             )
             cursor_y += label_h + gap_label_sub
 
         # Sublabel
         if slide.stat_sublabel:
             _multiline_text_wrapped(
-                draw, slide.stat_sublabel, font_sub, Colors.GRAY400,
-                self.W // 2, cursor_y, text_w, 8, align="center",
+                draw,
+                slide.stat_sublabel,
+                font_sub,
+                Colors.GRAY400,
+                self.W // 2,
+                cursor_y,
+                text_w,
+                8,
+                align="center",
             )
 
         self._draw_footer(draw, img)
@@ -990,14 +1051,17 @@ class CarouselGenerator:
         overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
         od = ImageDraw.Draw(overlay)
         od.ellipse([-100, -100, 500, 500], outline=(255, 255, 255, 20), width=2)
-        od.ellipse([self.W - 400, self.H - 400, self.W + 100, self.H + 100],
-                   outline=(255, 255, 255, 15), width=2)
+        od.ellipse(
+            [self.W - 400, self.H - 400, self.W + 100, self.H + 100],
+            outline=(255, 255, 255, 15),
+            width=2,
+        )
         img.paste(Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB"))
         draw = ImageDraw.Draw(img)
 
-        font_cta  = _load_font(self._fs_title, bold=True)
-        font_url  = _load_font(self._fs_subtitle, bold=True)
-        font_tag  = _load_font(self._fs_body)
+        font_cta = _load_font(self._fs_title, bold=True)
+        font_url = _load_font(self._fs_subtitle, bold=True)
+        font_tag = _load_font(self._fs_body)
 
         text_w = self.W - self._mx * 2
         cta_h = _text_height(draw, cta_text, font_cta, text_w, 14)
@@ -1013,8 +1077,15 @@ class CarouselGenerator:
         # Texto CTA
         text_y = start_y + logo_h + 30
         end_y = _multiline_text_wrapped(
-            draw, cta_text, font_cta, Colors.WHITE,
-            self.W // 2, text_y, text_w, 14, align="center",
+            draw,
+            cta_text,
+            font_cta,
+            Colors.WHITE,
+            self.W // 2,
+            text_y,
+            text_w,
+            14,
+            align="center",
         )
 
         # Caja URL
@@ -1062,6 +1133,7 @@ class CarouselGenerator:
 # ---------------------------------------------------------------------------
 # Generacion de los 4 carruseles del plan social media
 # ---------------------------------------------------------------------------
+
 
 def _generate_l2_deducciones_autonomos(gen: CarouselGenerator) -> None:
     """L2: 7 deducciones que el 90% de autónomos no conoce."""
@@ -1184,7 +1256,10 @@ def _generate_l4_guia_irpf(gen: CarouselGenerator) -> None:
                     ("arrow", "Base general: trabajo + inmobiliario + actividades"),
                     ("arrow", "Base ahorro: capital mobiliario + ganancias"),
                     ("check", "Se gravan a tipos distintos"),
-                    ("info", "Base ahorro: 19% hasta 6.000 € / 21% hasta 50.000 € / 23% hasta 200.000 € / 27% más"),
+                    (
+                        "info",
+                        "Base ahorro: 19% hasta 6.000 € / 21% hasta 50.000 € / 23% hasta 200.000 € / 27% más",
+                    ),
                 ],
             },
             {
@@ -1309,7 +1384,7 @@ def _generate_l8_calendario_fiscal(gen: CarouselGenerator) -> None:
                     ("arrow", "Modelo 303 (IVA 4T): hasta el 30 de enero"),
                     ("arrow", "Modelo 390 (resumen anual IVA): 30 enero"),
                     ("arrow", "Modelo 111/115 (retenciones 4T): 20 enero"),
-                    ("info",  "Modelo 720: bienes en el extranjero (hasta 31 marzo)"),
+                    ("info", "Modelo 720: bienes en el extranjero (hasta 31 marzo)"),
                 ],
             },
             {
@@ -1327,16 +1402,16 @@ def _generate_l8_calendario_fiscal(gen: CarouselGenerator) -> None:
                     ("arrow", "Desde 6 mayo: atención por teléfono (plan Le Llamamos)"),
                     ("check", "Puedes modificar el borrador todas las veces que necesites"),
                     ("warning", "Primer plazo domiciliacion: hasta 25 junio"),
-                    ("info",  "Modelos trimestrales: 303 (1T) hasta 20 mayo"),
+                    ("info", "Modelos trimestrales: 303 (1T) hasta 20 mayo"),
                 ],
             },
             {
                 "title": "Junio — Fin de la Renta",
                 "bullets": [
-                    ("cross",   "30 junio: CIERRE de la campaña de la Renta 2025"),
+                    ("cross", "30 junio: CIERRE de la campaña de la Renta 2025"),
                     ("warning", "A pagar con domiciliación: hasta 25 junio"),
-                    ("check",   "A pagar sin domiciliación: hasta 30 junio"),
-                    ("arrow",   "Fraccionamiento 60/40: segundo plazo 5 noviembre"),
+                    ("check", "A pagar sin domiciliación: hasta 30 junio"),
+                    ("arrow", "Fraccionamiento 60/40: segundo plazo 5 noviembre"),
                 ],
             },
             {
@@ -1345,7 +1420,7 @@ def _generate_l8_calendario_fiscal(gen: CarouselGenerator) -> None:
                     ("arrow", "Modelo 303 (IVA 2T): hasta 20 julio"),
                     ("arrow", "Modelo 130/131 (2T IRPF): hasta 22 julio"),
                     ("check", "Rectificación de autoliquidaciones presentadas"),
-                    ("info",  "Agosto: periodo de escasa actividad de la AEAT"),
+                    ("info", "Agosto: periodo de escasa actividad de la AEAT"),
                 ],
             },
             {
@@ -1360,28 +1435,28 @@ def _generate_l8_calendario_fiscal(gen: CarouselGenerator) -> None:
             {
                 "title": "Noviembre — Cierre del año",
                 "bullets": [
-                    ("arrow",   "5 noviembre: 2.° plazo fraccionamiento Renta 2025"),
-                    ("check",   "Planificación fiscal de cierre de ejercicio"),
-                    ("check",   "Aportaciones a plan de pensiones antes de 31 dic"),
+                    ("arrow", "5 noviembre: 2.° plazo fraccionamiento Renta 2025"),
+                    ("check", "Planificación fiscal de cierre de ejercicio"),
+                    ("check", "Aportaciones a plan de pensiones antes de 31 dic"),
                     ("warning", "Operaciones vinculadas: documentación obligatoria"),
                 ],
             },
             {
                 "title": "Diciembre — Cierre del ejercicio",
                 "bullets": [
-                    ("check",   "31 dic: último día para aportaciones a pensiones"),
-                    ("check",   "31 dic: último día para donaciones deducibles"),
-                    ("check",   "Revisar retenciones acumuladas del año"),
-                    ("arrow",   "Preparar documentación para la Renta 2026"),
+                    ("check", "31 dic: último día para aportaciones a pensiones"),
+                    ("check", "31 dic: último día para donaciones deducibles"),
+                    ("check", "Revisar retenciones acumuladas del año"),
+                    ("arrow", "Preparar documentación para la Renta 2026"),
                 ],
             },
             {
                 "title": "Fechas clave resumidas",
                 "bullets": [
-                    ("check",   "1 abr: apertura Renta 2025"),
-                    ("check",   "30 jun: cierre Renta 2025"),
-                    ("check",   "20 ene/abr/jul/oct: IVA trimestral"),
-                    ("check",   "22 ene/abr/jul/oct: IRPF autónomos"),
+                    ("check", "1 abr: apertura Renta 2025"),
+                    ("check", "30 jun: cierre Renta 2025"),
+                    ("check", "20 ene/abr/jul/oct: IVA trimestral"),
+                    ("check", "22 ene/abr/jul/oct: IRPF autónomos"),
                 ],
             },
             {

@@ -4,18 +4,21 @@ Quarterly Declarations REST API — Modelos 303, 130, 420.
 Lightweight endpoints that calculate and persist quarterly tax declarations.
 No LLM involved — direct calculator calls for fast (~50ms) responses.
 """
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from starlette.requests import Request
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.security.rate_limiter import limiter
 
 router = APIRouter(prefix="/api/declarations", tags=["declarations"])
 
 
 # === Request/Response Models ===
+
 
 class Calculate303Request(BaseModel):
     # IVA devengado
@@ -151,14 +154,14 @@ class SaveDeclarationRequest(BaseModel):
     territory: str
     year: int
     quarter: int
-    form_data: Dict[str, Any]
-    calculated_result: Dict[str, Any]
+    form_data: dict[str, Any]
+    calculated_result: dict[str, Any]
 
 
 class CalculationResponse(BaseModel):
     success: bool = True
-    result: Dict[str, Any] = Field(default_factory=dict)
-    error: Optional[str] = None
+    result: dict[str, Any] = Field(default_factory=dict)
+    error: str | None = None
 
 
 class ProjectionRequest(BaseModel):
@@ -167,7 +170,7 @@ class ProjectionRequest(BaseModel):
     # Family
     edad_contribuyente: int = 35
     num_descendientes: int = 0
-    anios_nacimiento_desc: Optional[List[int]] = None
+    anios_nacimiento_desc: list[int] | None = None
     custodia_compartida: bool = False
     num_ascendientes_65: int = 0
     num_ascendientes_75: int = 0
@@ -203,16 +206,17 @@ class ProjectionRequest(BaseModel):
 
 class DeclarationListResponse(BaseModel):
     success: bool = True
-    declarations: List[Dict[str, Any]] = Field(default_factory=list)
+    declarations: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class DeclarationDetailResponse(BaseModel):
     success: bool = True
-    declaration: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
+    declaration: dict[str, Any] | None = None
+    error: str | None = None
 
 
 # === Endpoints ===
+
 
 @router.post("/303/calculate", response_model=CalculationResponse)
 @limiter.limit("30/minute")
@@ -224,6 +228,7 @@ async def calculate_303(
     """Calculate Modelo 303 (IVA) — no LLM, direct calculator."""
     try:
         from app.utils.calculators.modelo_303 import Modelo303Calculator
+
         calc = Modelo303Calculator(None)
         result = await calc.calculate(**body.model_dump())
         return CalculationResponse(result=result)
@@ -241,6 +246,7 @@ async def calculate_130(
     """Calculate Modelo 130 (Pago Fraccionado IRPF) — no LLM, direct calculator."""
     try:
         from app.utils.calculators.modelo_130 import Modelo130Calculator
+
         calc = Modelo130Calculator(None)
         result = await calc.calculate(**body.model_dump())
         return CalculationResponse(result=result)
@@ -258,6 +264,7 @@ async def calculate_420(
     """Calculate Modelo 420 (IGIC Canarias) — no LLM, direct calculator."""
     try:
         from app.utils.calculators.modelo_420 import Modelo420Calculator
+
         calc = Modelo420Calculator(None)
         result = await calc.calculate(**body.model_dump())
         return CalculationResponse(result=result)
@@ -275,6 +282,7 @@ async def calculate_ipsi(
     """Calculate IPSI (Ceuta/Melilla) — no LLM, direct calculator."""
     try:
         from app.utils.calculators.modelo_ipsi import ModeloIpsiCalculator
+
         calc = ModeloIpsiCalculator(None)
         result = await calc.calculate(**body.model_dump())
         return CalculationResponse(result=result)
@@ -373,7 +381,7 @@ async def list_declarations(
         service = DeclarationService(db)
         declarations = await service.get_by_year(current_user.user_id, year)
         return DeclarationListResponse(declarations=declarations)
-    except Exception as e:
+    except Exception:
         return DeclarationListResponse(success=False)
 
 
@@ -394,7 +402,7 @@ async def get_quarter_declarations(
         service = DeclarationService(db)
         declarations = await service.get_quarter(current_user.user_id, year, quarter)
         return DeclarationListResponse(declarations=declarations)
-    except Exception as e:
+    except Exception:
         return DeclarationListResponse(success=False)
 
 
@@ -414,7 +422,9 @@ async def delete_declaration(
         service = DeclarationService(db)
         deleted = await service.delete(current_user.user_id, declaration_id)
         if not deleted:
-            raise HTTPException(status_code=404, detail="Declaration not found or already presented")
+            raise HTTPException(
+                status_code=404, detail="Declaration not found or already presented"
+            )
         return {"success": True}
     except HTTPException:
         raise

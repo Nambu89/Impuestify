@@ -6,10 +6,11 @@ Rate limited to prevent abuse.
 
 POST /api/calculadoras/plusvalia-municipal
 """
+
 import logging
-from typing import Any, Dict, Optional
-from pydantic import BaseModel, Field
+
 from fastapi import APIRouter, Request
+from pydantic import BaseModel, Field
 
 from app.security.rate_limiter import limiter
 
@@ -22,8 +23,10 @@ router = APIRouter(prefix="/api/calculadoras", tags=["calculadoras"])
 # Request / Response models
 # ---------------------------------------------------------------------------
 
+
 class PlusvaliaMunicipalRequest(BaseModel):
     """Datos de entrada para el calculo de plusvalia municipal."""
+
     precio_venta: float = Field(
         ..., ge=0, description="Precio de transmision del inmueble en euros."
     )
@@ -31,33 +34,26 @@ class PlusvaliaMunicipalRequest(BaseModel):
         ..., ge=0, description="Precio de adquisicion del inmueble en euros."
     )
     valor_catastral_total: float = Field(
-        ..., ge=0,
-        description="Valor catastral total del inmueble (suelo + construccion)."
+        ..., ge=0, description="Valor catastral total del inmueble (suelo + construccion)."
     )
     valor_catastral_suelo: float = Field(
-        ..., ge=0,
-        description="Valor catastral del suelo (aparece en el recibo del IBI)."
+        ..., ge=0, description="Valor catastral del suelo (aparece en el recibo del IBI)."
     )
-    anos_tenencia: int = Field(
-        ..., ge=0,
-        description="Anos completos de tenencia del inmueble."
-    )
+    anos_tenencia: int = Field(..., ge=0, description="Anos completos de tenencia del inmueble.")
     tipo_impositivo_municipal: float = Field(
-        default=30.0, ge=0, le=30,
-        description="Tipo impositivo del municipio (maximo legal: 30%)."
+        default=30.0, ge=0, le=30, description="Tipo impositivo del municipio (maximo legal: 30%)."
     )
     es_vivienda_habitual_dacion: bool = Field(
-        default=False,
-        description="True si es dacion en pago de vivienda habitual."
+        default=False, description="True si es dacion en pago de vivienda habitual."
     )
     es_divorcio: bool = Field(
-        default=False,
-        description="True si es transmision entre conyuges por divorcio."
+        default=False, description="True si es transmision entre conyuges por divorcio."
     )
 
 
 class MetodoObjetivoResponse(BaseModel):
     """Desglose del metodo objetivo."""
+
     metodo: str = "objetivo"
     valor_catastral_suelo: float
     coeficiente: float
@@ -69,27 +65,29 @@ class MetodoObjetivoResponse(BaseModel):
 
 class MetodoRealResponse(BaseModel):
     """Desglose del metodo real."""
+
     metodo: str = "real"
-    precio_venta: Optional[float] = None
-    precio_adquisicion: Optional[float] = None
-    plusvalia_total: Optional[float] = None
-    porcentaje_suelo: Optional[float] = None
+    precio_venta: float | None = None
+    precio_adquisicion: float | None = None
+    plusvalia_total: float | None = None
+    porcentaje_suelo: float | None = None
     base_imponible: float
     tipo_impositivo: float
     cuota: float
-    hay_plusvalia: Optional[bool] = None
+    hay_plusvalia: bool | None = None
 
 
 class PlusvaliaMunicipalResponse(BaseModel):
     """Respuesta completa del calculo de plusvalia municipal."""
+
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
     exento: bool = False
-    motivo_exencion: Optional[str] = None
+    motivo_exencion: str | None = None
     cuota_final: float = 0.0
-    metodo_objetivo: Optional[MetodoObjetivoResponse] = None
-    metodo_real: Optional[MetodoRealResponse] = None
-    metodo_elegido: Optional[str] = None
+    metodo_objetivo: MetodoObjetivoResponse | None = None
+    metodo_real: MetodoRealResponse | None = None
+    metodo_elegido: str | None = None
     disclaimer: str = (
         "Este calculo es orientativo. Los coeficientes y tipos impositivos "
         "pueden variar segun la ordenanza fiscal de cada municipio. "
@@ -100,6 +98,7 @@ class PlusvaliaMunicipalResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoint
 # ---------------------------------------------------------------------------
+
 
 @router.post(
     "/plusvalia-municipal",

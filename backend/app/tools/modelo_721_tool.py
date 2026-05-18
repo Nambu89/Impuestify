@@ -18,11 +18,12 @@ Umbrales:
 
 Plazo: 1 de enero a 31 de marzo del ejercicio siguiente.
 """
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +36,23 @@ UMBRAL_INCREMENTO_EUR = 20_000
 
 # Exchanges considerados extranjeros (no exhaustiva, orientativa)
 EXCHANGES_EXTRANJEROS_CONOCIDOS = {
-    "binance", "coinbase", "kraken", "bybit", "okx", "kucoin",
-    "gate.io", "bitfinex", "huobi", "htx", "crypto.com", "gemini",
-    "bitstamp", "bitget", "mexc", "phemex", "deribit",
+    "binance",
+    "coinbase",
+    "kraken",
+    "bybit",
+    "okx",
+    "kucoin",
+    "gate.io",
+    "bitfinex",
+    "huobi",
+    "htx",
+    "crypto.com",
+    "gemini",
+    "bitstamp",
+    "bitget",
+    "mexc",
+    "phemex",
+    "deribit",
 }
 
 # Exchanges con sede en Espana (NO extranjeros) — inscritos en el Registro de
@@ -45,7 +60,13 @@ EXCHANGES_EXTRANJEROS_CONOCIDOS = {
 # Fuente: https://www.bde.es/wbe/es/para-ciudadano/servicios-banco/registro-proveedores-criptoactivos/
 # Mantener sincronizada con el registro BdE actualizado (revisar cada 6 meses).
 EXCHANGES_ESPANOLES = {
-    "bit2me", "bitnovo", "onyze", "criptan", "vottun", "onyx", "bitbase",
+    "bit2me",
+    "bitnovo",
+    "onyze",
+    "criptan",
+    "vottun",
+    "onyx",
+    "bitbase",
 }
 
 # Exchanges internacionales que tienen una sucursal o filial espanola
@@ -57,10 +78,10 @@ EXCHANGES_ESPANOLES = {
 # Fuente: Registro de Proveedores de Servicios sobre Criptoactivos del Banco
 # de Espana. Verificar lista vigente periodicamente.
 EXCHANGES_CON_SUCURSAL_ESPANOLA = {
-    "binance",      # Binance Spain SL — inscrita julio 2022
-    "coinbase",     # Coinbase Custody International / sucursal espanola
-    "crypto.com",   # Foris DAX Spain SL
-    "kraken",       # Payward Spain SL
+    "binance",  # Binance Spain SL — inscrita julio 2022
+    "coinbase",  # Coinbase Custody International / sucursal espanola
+    "crypto.com",  # Foris DAX Spain SL
+    "kraken",  # Payward Spain SL
 }
 
 # ---------------------------------------------------------------------------
@@ -142,12 +163,12 @@ MODELO_721_TOOL: dict = {
 
 async def check_modelo_721_tool(
     crypto_extranjero_valor: float = 0,
-    exchanges_extranjeros: Optional[List[str]] = None,
-    ultimo_721_presentado: Optional[int] = None,
-    valor_ultimo_721: Optional[float] = None,
-    exchanges_via_sucursal_espanola: Optional[List[str]] = None,
+    exchanges_extranjeros: list[str] | None = None,
+    ultimo_721_presentado: int | None = None,
+    valor_ultimo_721: float | None = None,
+    exchanges_via_sucursal_espanola: list[str] | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Evalua la obligacion de presentar el Modelo 721 (criptomonedas en el extranjero).
 
@@ -181,18 +202,15 @@ async def check_modelo_721_tool(
         # 2. Si esta en EXCHANGES_CON_SUCURSAL_ESPANOLA Y el usuario indica que
         #    contrata con la sucursal espanola -> excluido (informa M172/M173)
         # 3. Resto -> afectado por M721
-        exchanges_afectados: List[str] = []
-        exchanges_espanoles: List[str] = []
-        exchanges_sucursal_excluidos: List[str] = []
+        exchanges_afectados: list[str] = []
+        exchanges_espanoles: list[str] = []
+        exchanges_sucursal_excluidos: list[str] = []
         for ex in exchanges:
             ex_clean = ex.strip()
             ex_lower = ex_clean.lower()
             if ex_lower in EXCHANGES_ESPANOLES:
                 exchanges_espanoles.append(ex_clean)
-            elif (
-                ex_lower in EXCHANGES_CON_SUCURSAL_ESPANOLA
-                and ex_lower in sucursal_set
-            ):
+            elif ex_lower in EXCHANGES_CON_SUCURSAL_ESPANOLA and ex_lower in sucursal_set:
                 exchanges_sucursal_excluidos.append(ex_clean)
             else:
                 exchanges_afectados.append(ex_clean)
@@ -214,16 +232,30 @@ async def check_modelo_721_tool(
         plazo = f"Del 1 de enero al 31 de marzo de {ejercicio + 1}"
 
         recomendaciones = _generar_recomendaciones_721(
-            obligado, obligado_umbral, obligado_incremento,
-            valor, incremento, exchanges_afectados, exchanges_espanoles,
-            exchanges_sucursal_excluidos, ejercicio
+            obligado,
+            obligado_umbral,
+            obligado_incremento,
+            valor,
+            incremento,
+            exchanges_afectados,
+            exchanges_espanoles,
+            exchanges_sucursal_excluidos,
+            ejercicio,
         )
 
         formatted = _format_721_response(
-            obligado, obligado_umbral, obligado_incremento,
-            valor, incremento, exchanges_afectados, exchanges_espanoles,
+            obligado,
+            obligado_umbral,
+            obligado_incremento,
+            valor,
+            incremento,
+            exchanges_afectados,
+            exchanges_espanoles,
             exchanges_sucursal_excluidos,
-            plazo, recomendaciones, ejercicio, ultimo_721_presentado
+            plazo,
+            recomendaciones,
+            ejercicio,
+            ultimo_721_presentado,
         )
 
         return {
@@ -266,13 +298,13 @@ def _generar_recomendaciones_721(
     por_incremento: bool,
     valor: float,
     incremento: float,
-    exchanges_afectados: List[str],
-    exchanges_espanoles: List[str],
-    exchanges_sucursal_excluidos: List[str],
+    exchanges_afectados: list[str],
+    exchanges_espanoles: list[str],
+    exchanges_sucursal_excluidos: list[str],
     ejercicio: int,
-) -> List[str]:
+) -> list[str]:
     """Genera recomendaciones personalizadas para el Modelo 721."""
-    recs: List[str] = []
+    recs: list[str] = []
 
     if not obligado:
         recs.append(
@@ -299,14 +331,11 @@ def _generar_recomendaciones_721(
         )
         return recs
 
-    recs.append(
-        f"Estas obligado a presentar el Modelo 721 del ejercicio {ejercicio}."
-    )
+    recs.append(f"Estas obligado a presentar el Modelo 721 del ejercicio {ejercicio}.")
 
     if por_umbral:
         recs.append(
-            f"Tu saldo ({valor:,.2f} EUR) supera el umbral de "
-            f"{UMBRAL_OBLIGACION_EUR:,.0f} EUR."
+            f"Tu saldo ({valor:,.2f} EUR) supera el umbral de " f"{UMBRAL_OBLIGACION_EUR:,.0f} EUR."
         )
     elif por_incremento:
         recs.append(
@@ -315,9 +344,7 @@ def _generar_recomendaciones_721(
         )
 
     if exchanges_afectados:
-        recs.append(
-            f"Exchanges extranjeros afectados: {', '.join(exchanges_afectados)}."
-        )
+        recs.append(f"Exchanges extranjeros afectados: {', '.join(exchanges_afectados)}.")
 
     if exchanges_espanoles:
         recs.append(
@@ -337,9 +364,7 @@ def _generar_recomendaciones_721(
             "la matriz internacional."
         )
 
-    recs.append(
-        f"Plazo de presentacion: del 1 de enero al 31 de marzo de {ejercicio + 1}."
-    )
+    recs.append(f"Plazo de presentacion: del 1 de enero al 31 de marzo de {ejercicio + 1}.")
     recs.append(
         "Se presenta telematicamente ante la AEAT. Debes informar por cada "
         "moneda virtual: tipo (BTC, ETH...), saldo a 31/dic en unidades y euros, "
@@ -365,16 +390,16 @@ def _format_721_response(
     por_incremento: bool,
     valor: float,
     incremento: float,
-    exchanges_afectados: List[str],
-    exchanges_espanoles: List[str],
-    exchanges_sucursal_excluidos: List[str],
+    exchanges_afectados: list[str],
+    exchanges_espanoles: list[str],
+    exchanges_sucursal_excluidos: list[str],
     plazo: str,
-    recomendaciones: List[str],
+    recomendaciones: list[str],
     ejercicio: int,
-    ultimo_presentado: Optional[int],
+    ultimo_presentado: int | None,
 ) -> str:
     """Formatea la respuesta del Modelo 721 para el usuario."""
-    lines: List[str] = []
+    lines: list[str] = []
     lines.append(f"Modelo 721 — Monedas Virtuales en el Extranjero (Ejercicio {ejercicio})")
     lines.append("")
 
@@ -399,9 +424,7 @@ def _format_721_response(
         lines.append(f"\nExchanges extranjeros: {', '.join(exchanges_afectados)}")
 
     if exchanges_espanoles:
-        lines.append(
-            f"Exchanges espanoles (excluidos): {', '.join(exchanges_espanoles)}"
-        )
+        lines.append(f"Exchanges espanoles (excluidos): {', '.join(exchanges_espanoles)}")
 
     if exchanges_sucursal_excluidos:
         lines.append(

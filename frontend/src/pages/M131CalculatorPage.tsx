@@ -55,7 +55,7 @@ export default function M131CalculatorPage() {
     const { result, loading, error, calculate } = useM131()
     const { downloadPDF, isLoading: pdfLoading, error: pdfError } = useModeloPDF()
 
-    const trimestreInfo = TRIMESTRES.find(t => t.value === trimestre)!
+    const trimestreInfo = TRIMESTRES.find((t) => t.value === trimestre)!
     const esCeutaMelilla = territorio === 'ceuta_melilla'
 
     async function handleSubmit(e: React.FormEvent) {
@@ -104,7 +104,7 @@ export default function M131CalculatorPage() {
                                     Trimestre que presentas
                                 </p>
                                 <div className="m130-trim-buttons">
-                                    {TRIMESTRES.map(t => (
+                                    {TRIMESTRES.map((t) => (
                                         <button
                                             type="button"
                                             key={t.value}
@@ -112,7 +112,9 @@ export default function M131CalculatorPage() {
                                             onClick={() => setTrimestre(t.value)}
                                         >
                                             <span className="m130-trim-btn-label">{t.label}</span>
-                                            <span className="m130-trim-btn-periodo">{t.periodo}</span>
+                                            <span className="m130-trim-btn-periodo">
+                                                {t.periodo}
+                                            </span>
                                         </button>
                                     ))}
                                 </div>
@@ -124,31 +126,45 @@ export default function M131CalculatorPage() {
 
                             {/* Territorio */}
                             <div className="m130-fields-card">
-                                <h2 className="m130-fields-title">Territorio y tipo de actividad</h2>
+                                <h2 className="m130-fields-title">
+                                    Territorio y tipo de actividad
+                                </h2>
                                 <div className="m130-field">
-                                    <label className="m130-label" htmlFor="territorio">Territorio fiscal</label>
+                                    <label className="m130-label" htmlFor="territorio">
+                                        Territorio fiscal
+                                    </label>
                                     <select
                                         id="territorio"
                                         className="m130-input"
                                         value={territorio}
-                                        onChange={e => setTerritorio(e.target.value)}
+                                        onChange={(e) => setTerritorio(e.target.value)}
                                     >
-                                        {TERRITORIOS.map(t => (
-                                            <option key={t.value} value={t.value}>{t.label}</option>
+                                        {TERRITORIOS.map((t) => (
+                                            <option key={t.value} value={t.value}>
+                                                {t.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
 
                                 <div className="m130-field">
-                                    <label className="m130-label" htmlFor="apartado">Apartado</label>
+                                    <label className="m130-label" htmlFor="apartado">
+                                        Apartado
+                                    </label>
                                     <select
                                         id="apartado"
                                         className="m130-input"
                                         value={apartado}
-                                        onChange={e => setApartado(e.target.value as M131Input['actividad_tipo'])}
+                                        onChange={(e) =>
+                                            setApartado(
+                                                e.target.value as M131Input['actividad_tipo'],
+                                            )
+                                        }
                                     >
-                                        {APARTADOS.map(a => (
-                                            <option key={a.value} value={a.value}>{a.label}</option>
+                                        {APARTADOS.map((a) => (
+                                            <option key={a.value} value={a.value}>
+                                                {a.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -174,11 +190,18 @@ export default function M131CalculatorPage() {
                                                     step={100}
                                                     placeholder="0"
                                                     value={rendimientoNeto || ''}
-                                                    onChange={e => setRendimientoNeto(parseFloat(e.target.value) || 0)}
+                                                    onChange={(e) =>
+                                                        setRendimientoNeto(
+                                                            parseFloat(e.target.value) || 0,
+                                                        )
+                                                    }
                                                 />
                                                 <span className="m130-input-suffix">EUR</span>
                                             </div>
-                                            <p className="m130-field-hint">Rendimiento neto calculado por modulos para el conjunto del ano.</p>
+                                            <p className="m130-field-hint">
+                                                Rendimiento neto calculado por modulos para el
+                                                conjunto del ano.
+                                            </p>
                                         </div>
 
                                         <div className="m130-field">
@@ -193,9 +216,13 @@ export default function M131CalculatorPage() {
                                                 step={1}
                                                 placeholder="0"
                                                 value={numAsalariados || ''}
-                                                onChange={e => setNumAsalariados(parseInt(e.target.value) || 0)}
+                                                onChange={(e) =>
+                                                    setNumAsalariados(parseInt(e.target.value) || 0)
+                                                }
                                             />
-                                            <p className="m130-field-hint">Afecta al porcentaje a ingresar (2%, 3% o 4%).</p>
+                                            <p className="m130-field-hint">
+                                                Afecta al porcentaje a ingresar (2%, 3% o 4%).
+                                            </p>
                                         </div>
                                     </>
                                 )}
@@ -215,11 +242,17 @@ export default function M131CalculatorPage() {
                                                 step={100}
                                                 placeholder="0"
                                                 value={volumenIngresos || ''}
-                                                onChange={e => setVolumenIngresos(parseFloat(e.target.value) || 0)}
+                                                onChange={(e) =>
+                                                    setVolumenIngresos(
+                                                        parseFloat(e.target.value) || 0,
+                                                    )
+                                                }
                                             />
                                             <span className="m130-input-suffix">EUR</span>
                                         </div>
-                                        <p className="m130-field-hint">Ingresos brutos de la actividad agraria del trimestre.</p>
+                                        <p className="m130-field-hint">
+                                            Ingresos brutos de la actividad agraria del trimestre.
+                                        </p>
                                     </div>
                                 )}
 
@@ -237,11 +270,16 @@ export default function M131CalculatorPage() {
                                             step={10}
                                             placeholder="0"
                                             value={retenciones || ''}
-                                            onChange={e => setRetenciones(parseFloat(e.target.value) || 0)}
+                                            onChange={(e) =>
+                                                setRetenciones(parseFloat(e.target.value) || 0)
+                                            }
                                         />
                                         <span className="m130-input-suffix">EUR</span>
                                     </div>
-                                    <p className="m130-field-hint">Retenciones de IRPF practicadas por clientes en facturas de este trimestre.</p>
+                                    <p className="m130-field-hint">
+                                        Retenciones de IRPF practicadas por clientes en facturas de
+                                        este trimestre.
+                                    </p>
                                 </div>
 
                                 <div className="m130-field">
@@ -259,11 +297,15 @@ export default function M131CalculatorPage() {
                                             placeholder="0"
                                             disabled={trimestre === 1}
                                             value={pagosAnteriores || ''}
-                                            onChange={e => setPagosAnteriores(parseFloat(e.target.value) || 0)}
+                                            onChange={(e) =>
+                                                setPagosAnteriores(parseFloat(e.target.value) || 0)
+                                            }
                                         />
                                         <span className="m130-input-suffix">EUR</span>
                                     </div>
-                                    <p className="m130-field-hint">Suma de M131 presentados anteriormente este ano.</p>
+                                    <p className="m130-field-hint">
+                                        Suma de M131 presentados anteriormente este ano.
+                                    </p>
                                 </div>
                             </div>
 
@@ -277,10 +319,20 @@ export default function M131CalculatorPage() {
                             <button
                                 type="submit"
                                 className="m130-cta-btn"
-                                style={{ width: '100%', justifyContent: 'center', border: 'none', marginTop: '1rem', cursor: loading ? 'wait' : 'pointer' }}
+                                style={{
+                                    width: '100%',
+                                    justifyContent: 'center',
+                                    border: 'none',
+                                    marginTop: '1rem',
+                                    cursor: loading ? 'wait' : 'pointer',
+                                }}
                                 disabled={loading}
                             >
-                                {loading ? <Loader2 size={16} className="spin" /> : <Calculator size={16} />}
+                                {loading ? (
+                                    <Loader2 size={16} className="spin" />
+                                ) : (
+                                    <Calculator size={16} />
+                                )}
                                 {loading ? 'Calculando...' : 'Calcular Modelo 131'}
                             </button>
 
@@ -288,9 +340,15 @@ export default function M131CalculatorPage() {
                                 <Info size={14} />
                                 <span>
                                     Esta calculadora es informativa. Presentacion oficial en{' '}
-                                    <a className="m130-link" href="https://sede.agenciatributaria.gob.es" target="_blank" rel="noopener noreferrer">
+                                    <a
+                                        className="m130-link"
+                                        href="https://sede.agenciatributaria.gob.es"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
                                         Sede Electronica AEAT
-                                    </a>.
+                                    </a>
+                                    .
                                 </span>
                             </div>
                         </form>
@@ -298,19 +356,27 @@ export default function M131CalculatorPage() {
 
                     {result && result.success && (
                         <section className="m130-result-panel" aria-live="polite">
-                            <div className={`m130-result-card ${result.resultado_final === 0 ? 'm130-result-card--zero' : 'm130-result-card--pagar'}`}>
+                            <div
+                                className={`m130-result-card ${result.resultado_final === 0 ? 'm130-result-card--zero' : 'm130-result-card--pagar'}`}
+                            >
                                 <div className="m130-result-label">
-                                    {result.resultado_final === 0
-                                        ? <><CheckCircle2 size={18} /> Resultado cero</>
-                                        : <><Euro size={18} /> A ingresar en Hacienda</>
-                                    }
+                                    {result.resultado_final === 0 ? (
+                                        <>
+                                            <CheckCircle2 size={18} /> Resultado cero
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Euro size={18} /> A ingresar en Hacienda
+                                        </>
+                                    )}
                                 </div>
                                 <div className="m130-result-amount">
                                     {formatEur(result.resultado_final)}
                                     <span className="m130-result-currency">EUR</span>
                                 </div>
                                 <div className="m130-result-sub">
-                                    Apartado: {result.apartado} — Tipo: {(result.tipo_aplicado * 100).toFixed(0)}%
+                                    Apartado: {result.apartado} — Tipo:{' '}
+                                    {(result.tipo_aplicado * 100).toFixed(0)}%
                                 </div>
                                 <div className="m130-result-deadline">
                                     <Calendar size={13} />
@@ -334,7 +400,9 @@ export default function M131CalculatorPage() {
                                                 <tr key={cas} className="m130-casilla-row">
                                                     <td className="m130-casilla-num">{cas}</td>
                                                     <td className="m130-casilla-label">{cas}</td>
-                                                    <td className="m130-casilla-value">{formatEur(val as number)} EUR</td>
+                                                    <td className="m130-casilla-value">
+                                                        {formatEur(val as number)} EUR
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -345,14 +413,34 @@ export default function M131CalculatorPage() {
                             <div className="m130-cta-card">
                                 <button
                                     className="m130-cta-btn"
-                                    style={{ width: '100%', justifyContent: 'center', border: 'none', cursor: pdfLoading ? 'wait' : 'pointer' }}
-                                    onClick={() => downloadPDF('131', { ...result }, String(trimestre) + 'T', currentYear)}
+                                    style={{
+                                        width: '100%',
+                                        justifyContent: 'center',
+                                        border: 'none',
+                                        cursor: pdfLoading ? 'wait' : 'pointer',
+                                    }}
+                                    onClick={() =>
+                                        downloadPDF(
+                                            '131',
+                                            { ...result },
+                                            String(trimestre) + 'T',
+                                            currentYear,
+                                        )
+                                    }
                                     disabled={pdfLoading}
                                 >
-                                    {pdfLoading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
+                                    {pdfLoading ? (
+                                        <Loader2 size={16} className="spin" />
+                                    ) : (
+                                        <Download size={16} />
+                                    )}
                                     {pdfLoading ? 'Generando...' : 'Descargar PDF'}
                                 </button>
-                                {pdfError && <p className="m130-advanced-calc m130-advanced-calc--warn">{pdfError}</p>}
+                                {pdfError && (
+                                    <p className="m130-advanced-calc m130-advanced-calc--warn">
+                                        {pdfError}
+                                    </p>
+                                )}
                             </div>
                         </section>
                     )}

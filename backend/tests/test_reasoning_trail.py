@@ -18,13 +18,23 @@ async def test_record_inserts_with_compact_chunks():
         message_id="m1",
         user_id="u1",
         conversation_id="c1",
-        rag_chunks=[{"id": "c1", "title": "AEAT Manual", "page": 12,
-                     "trust_level": "official_aeat", "similarity": 0.876,
-                     "text": "long text we should NOT persist verbatim..."}],
+        rag_chunks=[
+            {
+                "id": "c1",
+                "title": "AEAT Manual",
+                "page": 12,
+                "trust_level": "official_aeat",
+                "similarity": 0.876,
+                "text": "long text we should NOT persist verbatim...",
+            }
+        ],
         tools_called=[{"name": "simulate_irpf", "arguments": {"ingresos": 30000}, "ok": True}],
         security_layer="all_clear",
-        fiscal_profile={"ccaa_residencia": "Madrid", "situacion_laboral": "autonomo",
-                         "secret_key": "must_not_persist"},
+        fiscal_profile={
+            "ccaa_residencia": "Madrid",
+            "situacion_laboral": "autonomo",
+            "secret_key": "must_not_persist",
+        },
         model="gpt-5-mini",
     )
 
@@ -79,7 +89,9 @@ async def test_record_swallows_db_errors_non_blocking():
 
     rec = ReasoningTrailRecorder(db=db)
     rid = await rec.record(
-        message_id="m1", user_id="u1", conversation_id=None,
+        message_id="m1",
+        user_id="u1",
+        conversation_id=None,
     )
     assert rid is None  # Non-blocking — never raises
 
@@ -88,12 +100,14 @@ async def test_record_swallows_db_errors_non_blocking():
 async def test_get_for_message_parses_json_back():
     db = MagicMock()
     row = {
-        "id": "t1", "message_id": "m1", "user_id": "u1",
+        "id": "t1",
+        "message_id": "m1",
+        "user_id": "u1",
         "conversation_id": "c1",
         "rag_chunks": '[{"id":"c1","trust_level":"official_aeat"}]',
-        "tools_called": '[]',
+        "tools_called": "[]",
         "security_layers": '{"layer":"all_clear"}',
-        "fiscal_profile_snapshot": '{}',
+        "fiscal_profile_snapshot": "{}",
         "model": "gpt-5-mini",
         "created_at": "2026-05-05T00:00:00+00:00",
     }

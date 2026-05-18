@@ -8,15 +8,15 @@ patrimoniales derivadas de la transmision de monedas virtuales, segun:
   dentro de 2 meses para valores cotizados / 1 ano para no cotizados)
 - Casillas 1813 (perdidas) y 1814 (ganancias) del Modelo 100 IRPF
 """
+
 from __future__ import annotations
 
 import logging
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Optional
 
-from app.services.crypto_parser import CryptoTransaction, FIAT_CURRENCIES
+from app.services.crypto_parser import FIAT_CURRENCIES, CryptoTransaction
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class CryptoGain:
     anti_aplicacion: bool = False
     """True si la perdida no computa por la regla antiaplicacion (Art. 33.5.f LIRPF)."""
 
-    source_tx_id: Optional[str] = None
+    source_tx_id: str | None = None
     """ID de la transaccion origen (para trazabilidad)."""
 
 
@@ -209,7 +209,7 @@ def _apply_anti_aplicacion(
 
 def calculate_fifo_gains(
     transactions: list[CryptoTransaction],
-    tax_year: Optional[int] = None,
+    tax_year: int | None = None,
 ) -> FIFOResult:
     """
     Calcula las ganancias y perdidas patrimoniales por criptomonedas usando FIFO.
@@ -289,10 +289,10 @@ def calculate_fifo_gains(
             counterpart_amount = tx.counterpart_amount
             if counterpart_amount > 0 and counterpart not in FIAT_CURRENCIES:
                 # El coste del activo recibido es el valor de transmision del entregado
-                recv_total_eur = tx.total_eur or (
-                    (tx.price_eur or 0) * tx.amount
+                recv_total_eur = tx.total_eur or ((tx.price_eur or 0) * tx.amount)
+                recv_cost_per_unit = (
+                    recv_total_eur / counterpart_amount if counterpart_amount > 0 else 0.0
                 )
-                recv_cost_per_unit = recv_total_eur / counterpart_amount if counterpart_amount > 0 else 0.0
                 pool[counterpart].append(
                     _Lot(
                         amount=counterpart_amount,
@@ -317,7 +317,9 @@ def calculate_fifo_gains(
             else:
                 logger.warning(
                     "Transmision sin precio en EUR: %s %s %s",
-                    tx.asset, tx.amount, tx.date_utc,
+                    tx.asset,
+                    tx.amount,
+                    tx.date_utc,
                 )
                 transmission_total = 0.0
 
@@ -376,7 +378,9 @@ def calculate_fifo_gains(
             if remaining_to_sell > 1e-8:
                 logger.warning(
                     "Pool FIFO insuficiente para %s: faltan %.8f unidades en %s",
-                    tx.asset, remaining_to_sell, tx.date_utc,
+                    tx.asset,
+                    remaining_to_sell,
+                    tx.date_utc,
                 )
 
     # Aplicar regla antiaplicacion a las perdidas
@@ -387,7 +391,7 @@ def calculate_fifo_gains(
     return FIFOResult(gains=all_gains, summary=summary)
 
 
-def _build_summary(gains: list[CryptoGain], tax_year: Optional[int]) -> dict:
+def _build_summary(gains: list[CryptoGain], tax_year: int | None) -> dict:
     """
     Construye el resumen fiscal con totales y casillas AEAT.
 

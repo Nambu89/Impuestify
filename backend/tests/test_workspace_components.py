@@ -8,15 +8,17 @@ Tests for:
 - WorkspaceAgent
 - Workspace API endpoints
 """
-import os
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-import json
 
+import json
+import os
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # ============================================
 # INVOICE EXTRACTOR TESTS
 # ============================================
+
 
 class TestInvoiceExtractor:
     """Tests for the InvoiceExtractor service."""
@@ -35,8 +37,12 @@ class TestInvoiceExtractor:
 
         extractor = get_invoice_extractor()
         required_patterns = [
-            'invoice_number', 'invoice_date', 'nif_cif',
-            'base_imponible', 'total_factura', 'iva_total'
+            "invoice_number",
+            "invoice_date",
+            "nif_cif",
+            "base_imponible",
+            "total_factura",
+            "iva_total",
         ]
 
         for pattern in required_patterns:
@@ -51,7 +57,7 @@ class TestInvoiceExtractor:
         text = "Factura No: FRA-2025-001\nFecha: 15/01/2025"
 
         result = await extractor.extract_from_text(text)
-        assert result.get('invoice_number') == 'FRA-2025-001'
+        assert result.get("invoice_number") == "FRA-2025-001"
 
     @pytest.mark.asyncio
     async def test_extract_invoice_date(self):
@@ -62,7 +68,7 @@ class TestInvoiceExtractor:
         text = "Fecha de factura: 15/01/2025"
 
         result = await extractor.extract_from_text(text)
-        assert result.get('invoice_date') == '15/01/2025'
+        assert result.get("invoice_date") == "15/01/2025"
 
     @pytest.mark.asyncio
     async def test_extract_nif(self):
@@ -73,8 +79,8 @@ class TestInvoiceExtractor:
         text = "Emisor: Empresa S.L.\nCIF: B12345678\nCliente\nNIF: A87654321"
 
         result = await extractor.extract_from_text(text)
-        assert result.get('issuer_nif') == 'B12345678'
-        assert result.get('recipient_nif') == 'A87654321'
+        assert result.get("issuer_nif") == "B12345678"
+        assert result.get("recipient_nif") == "A87654321"
 
     @pytest.mark.asyncio
     async def test_extract_amounts(self):
@@ -89,8 +95,8 @@ class TestInvoiceExtractor:
         """
 
         result = await extractor.extract_from_text(text)
-        assert result.get('total_base_imponible') == 1000.0
-        assert result.get('total_factura') == 1210.0
+        assert result.get("total_base_imponible") == 1000.0
+        assert result.get("total_factura") == 1210.0
 
     @pytest.mark.asyncio
     async def test_extract_irpf_retention(self):
@@ -106,8 +112,11 @@ class TestInvoiceExtractor:
 
         result = await extractor.extract_from_text(text)
         # Pattern may extract percentage or amount - both are valid extractions
-        assert result.get('retencion_irpf') is not None or result.get('porcentaje_retencion') is not None
-        assert result.get('porcentaje_retencion') == 15.0
+        assert (
+            result.get("retencion_irpf") is not None
+            or result.get("porcentaje_retencion") is not None
+        )
+        assert result.get("porcentaje_retencion") == 15.0
 
     @pytest.mark.asyncio
     async def test_confidence_score(self):
@@ -125,11 +134,11 @@ class TestInvoiceExtractor:
         Total factura: 1.210,00 €
         """
         result = await extractor.extract_from_text(complete_text)
-        assert result.get('confidence_score', 0) >= 0.5
+        assert result.get("confidence_score", 0) >= 0.5
 
         # Empty text should have low confidence
         empty_result = await extractor.extract_from_text("")
-        assert empty_result.get('confidence_score', 0) == 0
+        assert empty_result.get("confidence_score", 0) == 0
 
     def test_generate_summary(self):
         """Test summary generation."""
@@ -137,17 +146,17 @@ class TestInvoiceExtractor:
 
         extractor = get_invoice_extractor()
         data = {
-            'invoice_number': 'FRA-001',
-            'invoice_date': '15/01/2025',
-            'total_base_imponible': 1000.0,
-            'total_iva': 210.0,
-            'total_factura': 1210.0
+            "invoice_number": "FRA-001",
+            "invoice_date": "15/01/2025",
+            "total_base_imponible": 1000.0,
+            "total_iva": 210.0,
+            "total_factura": 1210.0,
         }
 
         summary = extractor.generate_summary(data)
-        assert 'FRA-001' in summary
-        assert '1000.00' in summary or '1.000' in summary
-        assert '1210.00' in summary or '1.210' in summary
+        assert "FRA-001" in summary
+        assert "1000.00" in summary or "1.000" in summary
+        assert "1210.00" in summary or "1.210" in summary
 
     def test_vat_breakdown(self):
         """Test VAT breakdown by rate."""
@@ -155,22 +164,23 @@ class TestInvoiceExtractor:
 
         extractor = get_invoice_extractor()
         data = {
-            'base_imponible_21': 1000.0,
-            'cuota_iva_21': 210.0,
-            'base_imponible_10': 500.0,
-            'cuota_iva_10': 50.0
+            "base_imponible_21": 1000.0,
+            "cuota_iva_21": 210.0,
+            "base_imponible_10": 500.0,
+            "cuota_iva_10": 50.0,
         }
 
         breakdown = extractor.get_vat_breakdown(data)
-        assert '21%' in breakdown
-        assert '10%' in breakdown
-        assert breakdown['21%']['base'] == 1000.0
-        assert breakdown['10%']['cuota'] == 50.0
+        assert "21%" in breakdown
+        assert "10%" in breakdown
+        assert breakdown["21%"]["base"] == 1000.0
+        assert breakdown["10%"]["cuota"] == 50.0
 
 
 # ============================================
 # WORKSPACE EMBEDDING SERVICE TESTS
 # ============================================
+
 
 class TestWorkspaceEmbeddingService:
     """Tests for the WorkspaceEmbeddingService."""
@@ -179,7 +189,7 @@ class TestWorkspaceEmbeddingService:
         """Test that service initializes correctly."""
         from app.services.workspace_embedding_service import (
             WorkspaceEmbeddingService,
-            get_workspace_embedding_service
+            get_workspace_embedding_service,
         )
 
         service = get_workspace_embedding_service()
@@ -197,8 +207,8 @@ class TestWorkspaceEmbeddingService:
         short_text = "This is a short text."
         chunks = service.chunk_text(short_text)
         assert len(chunks) == 1
-        assert chunks[0]['text'] == short_text
-        assert chunks[0]['chunk_index'] == 0
+        assert chunks[0]["text"] == short_text
+        assert chunks[0]["chunk_index"] == 0
 
     def test_chunk_text_long(self):
         """Test chunking of long text."""
@@ -213,8 +223,8 @@ class TestWorkspaceEmbeddingService:
         assert len(chunks) > 1
         # Verify chunks have sequential indices
         for i, chunk in enumerate(chunks):
-            assert chunk['chunk_index'] == i
-            assert len(chunk['text']) <= service.CHUNK_SIZE + 100  # Allow some margin
+            assert chunk["chunk_index"] == i
+            assert len(chunk["text"]) <= service.CHUNK_SIZE + 100  # Allow some margin
 
     def test_chunk_text_preserves_sentences(self):
         """Test that chunking tries to preserve sentence boundaries."""
@@ -227,8 +237,10 @@ class TestWorkspaceEmbeddingService:
         chunks = service.chunk_text(text)
 
         # Most chunks should end with a period
-        chunks_ending_with_period = sum(1 for c in chunks if c['text'].rstrip().endswith('.'))
-        assert chunks_ending_with_period >= len(chunks) - 1  # Allow last chunk to not end with period
+        chunks_ending_with_period = sum(1 for c in chunks if c["text"].rstrip().endswith("."))
+        assert (
+            chunks_ending_with_period >= len(chunks) - 1
+        )  # Allow last chunk to not end with period
 
     def test_cosine_similarity(self):
         """Test cosine similarity calculation."""
@@ -251,8 +263,8 @@ class TestWorkspaceEmbeddingService:
     @pytest.mark.asyncio
     async def test_generate_embedding_with_valid_key(self):
         """Test embedding generation works with valid API key (if configured)."""
-        from app.services.workspace_embedding_service import get_workspace_embedding_service
         from app.config import settings
+        from app.services.workspace_embedding_service import get_workspace_embedding_service
 
         service = get_workspace_embedding_service()
 
@@ -270,6 +282,7 @@ class TestWorkspaceEmbeddingService:
 # FILE PROCESSING SERVICE TESTS
 # ============================================
 
+
 class TestFileProcessingService:
     """Tests for the FileProcessingService integration."""
 
@@ -277,7 +290,7 @@ class TestFileProcessingService:
         """Test that service initializes correctly."""
         from app.services.file_processing_service import (
             FileProcessingService,
-            file_processing_service
+            file_processing_service,
         )
 
         assert file_processing_service is not None
@@ -328,6 +341,7 @@ class TestFileProcessingService:
 # WORKSPACE AGENT TESTS
 # ============================================
 
+
 class TestWorkspaceAgent:
     """Tests for the WorkspaceAgent."""
 
@@ -349,17 +363,19 @@ class TestWorkspaceAgent:
 
     def test_agent_has_run_method(self):
         """Test that agent has async run method."""
-        from app.agents.workspace_agent import get_workspace_agent
         import asyncio
 
+        from app.agents.workspace_agent import get_workspace_agent
+
         agent = get_workspace_agent()
-        assert hasattr(agent, 'run')
+        assert hasattr(agent, "run")
         assert asyncio.iscoroutinefunction(agent.run)
 
 
 # ============================================
 # WORKSPACE API ENDPOINT TESTS
 # ============================================
+
 
 class TestWorkspaceAPIEndpoints:
     """Tests for Workspace API endpoints structure."""
@@ -368,24 +384,21 @@ class TestWorkspaceAPIEndpoints:
         """Test that workspace routes are registered."""
         from app.main import app
 
-        routes = [r.path for r in app.routes if hasattr(r, 'path')]
+        routes = [r.path for r in app.routes if hasattr(r, "path")]
 
-        assert '/api/workspaces' in routes
-        assert any('/api/workspaces/{workspace_id}' in r for r in routes)
-        assert any('/api/workspaces/{workspace_id}/files' in r for r in routes)
+        assert "/api/workspaces" in routes
+        assert any("/api/workspaces/{workspace_id}" in r for r in routes)
+        assert any("/api/workspaces/{workspace_id}/files" in r for r in routes)
 
     def test_workspace_router_tags(self):
         """Test that workspace router has correct tags."""
         from app.routers.workspaces import router
 
-        assert 'workspaces' in router.tags
+        assert "workspaces" in router.tags
 
     def test_workspace_models_defined(self):
         """Test that Pydantic models are properly defined."""
-        from app.routers.workspaces import (
-            CreateWorkspaceRequest,
-            WorkspaceResponse
-        )
+        from app.routers.workspaces import CreateWorkspaceRequest, WorkspaceResponse
 
         # Test CreateWorkspaceRequest
         request = CreateWorkspaceRequest(name="Test Workspace")
@@ -393,9 +406,7 @@ class TestWorkspaceAPIEndpoints:
 
         # Test with optional fields
         request_full = CreateWorkspaceRequest(
-            name="Test",
-            description="Description",
-            icon="briefcase"
+            name="Test", description="Description", icon="briefcase"
         )
         assert request_full.description == "Description"
 
@@ -404,57 +415,68 @@ class TestWorkspaceAPIEndpoints:
 # DATABASE SCHEMA TESTS
 # ============================================
 
+
 class TestWorkspaceDatabaseSchema:
     """Tests for workspace database schema."""
 
     def test_workspace_embeddings_table_in_schema(self):
         """Test that workspace_file_embeddings table is in schema."""
-        with open(os.path.join(os.path.dirname(__file__), '..', 'app', 'database', 'turso_client.py'), encoding='utf-8') as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "..", "app", "database", "turso_client.py"),
+            encoding="utf-8",
+        ) as f:
             schema_code = f.read()
 
-        assert 'workspace_file_embeddings' in schema_code
-        assert 'workspace_id TEXT NOT NULL' in schema_code
-        assert 'file_id TEXT NOT NULL' in schema_code
-        assert 'embedding BLOB NOT NULL' in schema_code
+        assert "workspace_file_embeddings" in schema_code
+        assert "workspace_id TEXT NOT NULL" in schema_code
+        assert "file_id TEXT NOT NULL" in schema_code
+        assert "embedding BLOB NOT NULL" in schema_code
 
     def test_workspace_embeddings_indexes(self):
         """Test that indexes are defined for embeddings table."""
-        with open(os.path.join(os.path.dirname(__file__), '..', 'app', 'database', 'turso_client.py'), encoding='utf-8') as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "..", "app", "database", "turso_client.py"),
+            encoding="utf-8",
+        ) as f:
             schema_code = f.read()
 
-        assert 'idx_ws_embeddings_workspace' in schema_code
-        assert 'idx_ws_embeddings_file' in schema_code
+        assert "idx_ws_embeddings_workspace" in schema_code
+        assert "idx_ws_embeddings_file" in schema_code
 
 
 # ============================================
 # INTEGRATION TESTS
 # ============================================
 
+
 class TestWorkspaceIntegration:
     """Integration tests for workspace components."""
 
     def test_chat_stream_workspace_integration(self):
         """Test that chat_stream.py has workspace integration."""
-        with open(os.path.join(os.path.dirname(__file__), '..', 'app', 'routers', 'chat_stream.py'), encoding='utf-8') as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "..", "app", "routers", "chat_stream.py"),
+            encoding="utf-8",
+        ) as f:
             code = f.read()
 
-        assert 'workspace_id' in code
-        assert 'workspace_context' in code
-        assert 'workspace_agent' in code
+        assert "workspace_id" in code
+        assert "workspace_context" in code
+        assert "workspace_agent" in code
 
     def test_file_processing_extracts_invoice_data(self):
         """Test that file processing service calls invoice extractor."""
         from app.services.file_processing_service import file_processing_service
 
         # Verify method exists
-        assert hasattr(file_processing_service, '_extract_invoice_data')
+        assert hasattr(file_processing_service, "_extract_invoice_data")
 
     def test_file_processing_generates_embeddings(self):
         """Test that file processing service can generate embeddings."""
         from app.services.file_processing_service import file_processing_service
 
         # Verify method exists
-        assert hasattr(file_processing_service, '_generate_file_embeddings')
+        assert hasattr(file_processing_service, "_generate_file_embeddings")
 
     @pytest.mark.asyncio
     async def test_invoice_extraction_in_processing(self):
@@ -470,4 +492,4 @@ class TestWorkspaceIntegration:
         """
 
         result = await file_processing_service._extract_invoice_data(sample_text)
-        assert 'summary' in result or 'error' in result
+        assert "summary" in result or "error" in result

@@ -51,15 +51,15 @@ export function useWorkspaces() {
         setError(null)
         try {
             const data = await apiRequest<Workspace[]>('/api/workspaces', {
-                method: 'GET'
+                method: 'GET',
             })
             setWorkspaces(data || [])
 
             // Auto-select default workspace if none selected
             // Using functional update to avoid dependency on activeWorkspace
-            setActiveWorkspace(current => {
+            setActiveWorkspace((current) => {
                 if (!current && data && data.length > 0) {
-                    return data.find(w => w.is_default) || data[0]
+                    return data.find((w) => w.is_default) || data[0]
                 }
                 return current
             })
@@ -71,46 +71,52 @@ export function useWorkspaces() {
         } finally {
             setLoading(false)
         }
-    }, [apiRequest])  // Removed activeWorkspace to prevent infinite loop
+    }, [apiRequest]) // Removed activeWorkspace to prevent infinite loop
 
-    const createWorkspace = useCallback(async (data: CreateWorkspaceData) => {
-        setLoading(true)
-        setError(null)
-        try {
-            const workspace = await apiRequest<Workspace>('/api/workspaces', {
-                method: 'POST',
-                body: JSON.stringify(data)
-            })
-            setWorkspaces(prev => [workspace, ...prev])
-            return workspace
-        } catch (err: any) {
-            setError(err.message || 'Error al crear workspace')
-            throw err
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
-
-    const deleteWorkspace = useCallback(async (workspaceId: string) => {
-        setLoading(true)
-        setError(null)
-        try {
-            await apiRequest(`/api/workspaces/${workspaceId}`, {
-                method: 'DELETE'
-            })
-            setWorkspaces(prev => prev.filter(w => w.id !== workspaceId))
-
-            if (activeWorkspace?.id === workspaceId) {
-                setActiveWorkspace(null)
-                setWorkspaceFiles([])
+    const createWorkspace = useCallback(
+        async (data: CreateWorkspaceData) => {
+            setLoading(true)
+            setError(null)
+            try {
+                const workspace = await apiRequest<Workspace>('/api/workspaces', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                })
+                setWorkspaces((prev) => [workspace, ...prev])
+                return workspace
+            } catch (err: any) {
+                setError(err.message || 'Error al crear workspace')
+                throw err
+            } finally {
+                setLoading(false)
             }
-        } catch (err: any) {
-            setError(err.message || 'Error al eliminar workspace')
-            throw err
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest, activeWorkspace])
+        },
+        [apiRequest],
+    )
+
+    const deleteWorkspace = useCallback(
+        async (workspaceId: string) => {
+            setLoading(true)
+            setError(null)
+            try {
+                await apiRequest(`/api/workspaces/${workspaceId}`, {
+                    method: 'DELETE',
+                })
+                setWorkspaces((prev) => prev.filter((w) => w.id !== workspaceId))
+
+                if (activeWorkspace?.id === workspaceId) {
+                    setActiveWorkspace(null)
+                    setWorkspaceFiles([])
+                }
+            } catch (err: any) {
+                setError(err.message || 'Error al eliminar workspace')
+                throw err
+            } finally {
+                setLoading(false)
+            }
+        },
+        [apiRequest, activeWorkspace],
+    )
 
     const selectWorkspace = useCallback((workspace: Workspace | null) => {
         setActiveWorkspace(workspace)
@@ -119,31 +125,37 @@ export function useWorkspaces() {
         }
     }, [])
 
-    const fetchWorkspaceFiles = useCallback(async (workspaceId: string) => {
-        // Increment request ID to detect stale responses from previous workspace
-        const requestId = ++filesRequestIdRef.current
+    const fetchWorkspaceFiles = useCallback(
+        async (workspaceId: string) => {
+            // Increment request ID to detect stale responses from previous workspace
+            const requestId = ++filesRequestIdRef.current
 
-        setLoading(true)
-        try {
-            const data = await apiRequest<WorkspaceFile[]>(`/api/workspaces/${workspaceId}/files`, {
-                method: 'GET'
-            })
-            // Only update state if no newer request has been issued
-            if (requestId === filesRequestIdRef.current) {
-                setWorkspaceFiles(data || [])
+            setLoading(true)
+            try {
+                const data = await apiRequest<WorkspaceFile[]>(
+                    `/api/workspaces/${workspaceId}/files`,
+                    {
+                        method: 'GET',
+                    },
+                )
+                // Only update state if no newer request has been issued
+                if (requestId === filesRequestIdRef.current) {
+                    setWorkspaceFiles(data || [])
+                }
+                return data
+            } catch (err: any) {
+                if (requestId === filesRequestIdRef.current) {
+                    setWorkspaceFiles([])
+                }
+                throw err
+            } finally {
+                if (requestId === filesRequestIdRef.current) {
+                    setLoading(false)
+                }
             }
-            return data
-        } catch (err: any) {
-            if (requestId === filesRequestIdRef.current) {
-                setWorkspaceFiles([])
-            }
-            throw err
-        } finally {
-            if (requestId === filesRequestIdRef.current) {
-                setLoading(false)
-            }
-        }
-    }, [apiRequest])
+        },
+        [apiRequest],
+    )
 
     const uploadFile = useCallback(async (workspaceId: string, file: File, fileType?: string) => {
         setLoading(true)
@@ -161,9 +173,9 @@ export function useWorkspaces() {
             const response = await fetch(`${API_URL}/api/workspaces/${workspaceId}/files`, {
                 method: 'POST',
                 headers: {
-                    ...(token && { Authorization: `Bearer ${token}` })
+                    ...(token && { Authorization: `Bearer ${token}` }),
                 },
-                body: formData
+                body: formData,
             })
 
             if (!response.ok) {
@@ -172,14 +184,14 @@ export function useWorkspaces() {
             }
 
             const uploadedFile = await response.json()
-            setWorkspaceFiles(prev => [uploadedFile, ...prev])
+            setWorkspaceFiles((prev) => [uploadedFile, ...prev])
 
             // Update workspace file count
-            setWorkspaces(prev => prev.map(w =>
-                w.id === workspaceId
-                    ? { ...w, file_count: w.file_count + 1 }
-                    : w
-            ))
+            setWorkspaces((prev) =>
+                prev.map((w) =>
+                    w.id === workspaceId ? { ...w, file_count: w.file_count + 1 } : w,
+                ),
+            )
 
             return uploadedFile
         } catch (err: any) {
@@ -190,66 +202,84 @@ export function useWorkspaces() {
         }
     }, [])
 
-    const renameWorkspace = useCallback(async (workspaceId: string, newName: string) => {
-        const updated = await apiRequest<Workspace>(`/api/workspaces/${workspaceId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ name: newName })
-        })
-        setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, name: newName } : w))
-        setActiveWorkspace(prev => prev?.id === workspaceId ? { ...prev, name: newName } : prev)
-        return updated
-    }, [apiRequest])
-
-    const confirmClassification = useCallback(async (
-        workspaceId: string,
-        fileId: string,
-        nuevaCuenta?: { code: string; nombre: string }
-    ) => {
-        setLoading(true)
-        setError(null)
-        try {
-            const body = nuevaCuenta
-                ? { nueva_cuenta_code: nuevaCuenta.code, nueva_cuenta_nombre: nuevaCuenta.nombre }
-                : {}
-            await apiRequest(
-                `/api/workspaces/${workspaceId}/files/${fileId}/confirm-classification`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify(body),
-                }
-            )
-            // Refresh files to get updated classification
-            await fetchWorkspaceFiles(workspaceId)
-        } catch (err: any) {
-            setError(err.message || 'Error al confirmar clasificacion')
-            throw err
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest, fetchWorkspaceFiles])
-
-    const deleteFile = useCallback(async (workspaceId: string, fileId: string) => {
-        setLoading(true)
-        setError(null)
-        try {
-            await apiRequest(`/api/workspaces/${workspaceId}/files/${fileId}`, {
-                method: 'DELETE'
+    const renameWorkspace = useCallback(
+        async (workspaceId: string, newName: string) => {
+            const updated = await apiRequest<Workspace>(`/api/workspaces/${workspaceId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ name: newName }),
             })
-            setWorkspaceFiles(prev => prev.filter(f => f.id !== fileId))
+            setWorkspaces((prev) =>
+                prev.map((w) => (w.id === workspaceId ? { ...w, name: newName } : w)),
+            )
+            setActiveWorkspace((prev) =>
+                prev?.id === workspaceId ? { ...prev, name: newName } : prev,
+            )
+            return updated
+        },
+        [apiRequest],
+    )
 
-            // Update workspace file count
-            setWorkspaces(prev => prev.map(w =>
-                w.id === workspaceId
-                    ? { ...w, file_count: Math.max(0, w.file_count - 1) }
-                    : w
-            ))
-        } catch (err: any) {
-            setError(err.message || 'Error al eliminar archivo')
-            throw err
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+    const confirmClassification = useCallback(
+        async (
+            workspaceId: string,
+            fileId: string,
+            nuevaCuenta?: { code: string; nombre: string },
+        ) => {
+            setLoading(true)
+            setError(null)
+            try {
+                const body = nuevaCuenta
+                    ? {
+                          nueva_cuenta_code: nuevaCuenta.code,
+                          nueva_cuenta_nombre: nuevaCuenta.nombre,
+                      }
+                    : {}
+                await apiRequest(
+                    `/api/workspaces/${workspaceId}/files/${fileId}/confirm-classification`,
+                    {
+                        method: 'POST',
+                        body: JSON.stringify(body),
+                    },
+                )
+                // Refresh files to get updated classification
+                await fetchWorkspaceFiles(workspaceId)
+            } catch (err: any) {
+                setError(err.message || 'Error al confirmar clasificacion')
+                throw err
+            } finally {
+                setLoading(false)
+            }
+        },
+        [apiRequest, fetchWorkspaceFiles],
+    )
+
+    const deleteFile = useCallback(
+        async (workspaceId: string, fileId: string) => {
+            setLoading(true)
+            setError(null)
+            try {
+                await apiRequest(`/api/workspaces/${workspaceId}/files/${fileId}`, {
+                    method: 'DELETE',
+                })
+                setWorkspaceFiles((prev) => prev.filter((f) => f.id !== fileId))
+
+                // Update workspace file count
+                setWorkspaces((prev) =>
+                    prev.map((w) =>
+                        w.id === workspaceId
+                            ? { ...w, file_count: Math.max(0, w.file_count - 1) }
+                            : w,
+                    ),
+                )
+            } catch (err: any) {
+                setError(err.message || 'Error al eliminar archivo')
+                throw err
+            } finally {
+                setLoading(false)
+            }
+        },
+        [apiRequest],
+    )
 
     return {
         workspaces,
@@ -265,6 +295,6 @@ export function useWorkspaces() {
         fetchWorkspaceFiles,
         uploadFile,
         confirmClassification,
-        deleteFile
+        deleteFile,
     }
 }

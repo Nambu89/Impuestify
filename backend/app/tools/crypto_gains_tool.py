@@ -5,12 +5,13 @@ Calcula las ganancias y perdidas patrimoniales derivadas de la transmision de
 monedas virtuales del usuario usando el metodo FIFO obligatorio (Art. 37.1.Undecies LIRPF).
 Devuelve el resumen fiscal con casillas 1813 y 1814 del Modelo 100.
 """
+
 from __future__ import annotations
 
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +55,8 @@ CRYPTO_GAINS_TOOL: dict = {
 
 
 async def calculate_crypto_gains_tool(
-    tax_year: Optional[int] = None,
-    user_id: Optional[str] = None,
+    tax_year: int | None = None,
+    user_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Calcula ganancias/perdidas FIFO de criptomonedas para el usuario.
@@ -89,8 +90,8 @@ async def calculate_crypto_gains_tool(
 
     try:
         from app.database.turso_client import get_db_client
-        from app.utils.calculators.crypto_fifo import calculate_fifo_gains
         from app.services.crypto_parser import CryptoTransaction
+        from app.utils.calculators.crypto_fifo import calculate_fifo_gains
 
         db = await get_db_client()
 
@@ -230,9 +231,7 @@ def _format_gains_response(summary: dict, tax_year: int, total_txs: int) -> str:
             f"  Perdidas no computables (antiaplicacion Art. 33.5.f LIRPF): "
             f"{summary['anti_aplicacion_count']} operaciones"
         )
-        lines.append(
-            f"  Perdidas computables: {summary['computable_losses_eur']:,.2f} EUR"
-        )
+        lines.append(f"  Perdidas computables: {summary['computable_losses_eur']:,.2f} EUR")
 
     net = summary["net_result_eur"]
     if net >= 0:
@@ -243,12 +242,10 @@ def _format_gains_response(summary: dict, tax_year: int, total_txs: int) -> str:
     lines.append("")
     lines.append("Casillas Modelo 100:")
     lines.append(
-        f"  Casilla 1814 (ganancias patrimoniales cripto): "
-        f"{summary['casilla_1814']:,.2f} EUR"
+        f"  Casilla 1814 (ganancias patrimoniales cripto): " f"{summary['casilla_1814']:,.2f} EUR"
     )
     lines.append(
-        f"  Casilla 1813 (perdidas patrimoniales cripto): "
-        f"{summary['casilla_1813']:,.2f} EUR"
+        f"  Casilla 1813 (perdidas patrimoniales cripto): " f"{summary['casilla_1813']:,.2f} EUR"
     )
 
     if net > 0:

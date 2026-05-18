@@ -22,11 +22,11 @@ Invariantes de seguridad
 Decision de producto Q1 (cerrada): opcion B — base64 + zstd + AES-256-GCM en
 BLOB. Ver ``plans/2026-04-13-defensia-implementation-plan-part2.md``.
 """
+
 from __future__ import annotations
 
 import logging
 import os
-from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class DefensiaStorage:
     :class:`DefensiaStorageUnavailable`.
     """
 
-    def __init__(self, key: Optional[bytes] = None):
+    def __init__(self, key: bytes | None = None):
         self._disabled = False
         self._aes = None
         self._compressor = None
@@ -85,7 +85,7 @@ class DefensiaStorage:
         self._decompressor = zstd.ZstdDecompressor()
 
     @staticmethod
-    def _resolve_key(key: Optional[bytes]) -> Optional[bytes]:
+    def _resolve_key(key: bytes | None) -> bytes | None:
         """Resuelve la clave a partir de parametro directo o env var.
 
         Devuelve ``None`` si no hay clave valida (warning en logs). Nunca
@@ -115,10 +115,7 @@ class DefensiaStorage:
         try:
             return bytes.fromhex(key_hex)
         except ValueError:
-            logger.warning(
-                "DEFENSIA_STORAGE_KEY no es hex valido. Servicio "
-                "deshabilitado."
-            )
+            logger.warning("DEFENSIA_STORAGE_KEY no es hex valido. Servicio " "deshabilitado.")
             return None
 
     @property
@@ -129,11 +126,10 @@ class DefensiaStorage:
     def _ensure_enabled(self) -> None:
         if not self.is_enabled:
             raise DefensiaStorageUnavailable(
-                "DefensIA storage service disabled: "
-                "DEFENSIA_STORAGE_KEY not configured"
+                "DefensIA storage service disabled: " "DEFENSIA_STORAGE_KEY not configured"
             )
 
-    def cifrar(self, plaintext: bytes) -> Tuple[bytes, bytes]:
+    def cifrar(self, plaintext: bytes) -> tuple[bytes, bytes]:
         """Comprime con zstd y cifra con AES-256-GCM.
 
         Parameters

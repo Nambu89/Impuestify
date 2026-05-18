@@ -7,6 +7,10 @@ React 18 + Vite 5 + TypeScript 5.2. Custom CSS (NO Tailwind). Icons: Lucide Reac
 ```bash
 cd frontend && npm run dev   # Dev server on :5173
 cd frontend && npm run build # Must pass before any commit
+cd frontend && npm run lint             # ESLint v9 flat config (CI gate, --max-warnings 256)
+cd frontend && npm run format           # Prettier write (4sp/single/no-semi)
+cd frontend && npm run format:check     # Prettier check (CI gate)
+cd frontend && npm run typecheck        # tsc --noEmit (CI gate soft-fail Phase 1)
 ```
 
 ### Color Palette (CSS variables in styles/global.css)

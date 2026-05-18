@@ -1,8 +1,10 @@
 """Diagnostic: list all users in DB to confirm we're connected to prod."""
-import sys
+
 import asyncio
 import os
+import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent

@@ -18,7 +18,13 @@ interface AuthContextType {
     login: (email: string, password: string, turnstile_token?: string) => Promise<void>
     googleLogin: (idToken: string) => Promise<void>
     completeMfaLogin: (mfaToken: string, code: string) => Promise<void>
-    register: (email: string, password: string, name?: string, ccaa_residencia?: string, turnstile_token?: string) => Promise<void>
+    register: (
+        email: string,
+        password: string,
+        name?: string,
+        ccaa_residencia?: string,
+        turnstile_token?: string,
+    ) => Promise<void>
     loginWithTokens: (accessToken: string, refreshToken: string, user: User) => void
     logout: () => void
 }
@@ -33,8 +39,8 @@ const REFRESH_TOKEN_KEY = 'refresh_token'
 const authApi = axios.create({
     baseURL: API_URL,
     headers: {
-        'Content-Type': 'application/json'
-    }
+        'Content-Type': 'application/json',
+    },
 })
 
 authApi.interceptors.request.use((config) => {
@@ -63,15 +69,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 logger.debug('Access token expired, attempting refresh')
                 try {
                     const refreshRes = await authApi.post('/auth/refresh', {
-                        refresh_token: refreshToken
+                        refresh_token: refreshToken,
                     })
-                    const { access_token, refresh_token } = refreshRes.data.tokens || refreshRes.data
+                    const { access_token, refresh_token } =
+                        refreshRes.data.tokens || refreshRes.data
                     localStorage.setItem(TOKEN_KEY, access_token)
                     if (refresh_token) localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token)
 
                     // Retry /auth/me with new token
                     const retryRes = await authApi.get('/auth/me', {
-                        headers: { Authorization: `Bearer ${access_token}` }
+                        headers: { Authorization: `Bearer ${access_token}` },
                     })
                     logger.debug('User fetched after refresh:', retryRes.data.email)
                     setUser(retryRes.data)
@@ -163,7 +170,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(user)
     }
 
-    const register = async (email: string, password: string, name?: string, ccaa_residencia?: string, turnstile_token?: string) => {
+    const register = async (
+        email: string,
+        password: string,
+        name?: string,
+        ccaa_residencia?: string,
+        turnstile_token?: string,
+    ) => {
         logger.debug('Registering:', email)
         try {
             const response = await authApi.post('/auth/register', {
@@ -202,17 +215,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <AuthContext.Provider value={{
-            user,
-            isAuthenticated: !!user,
-            isLoading,
-            login,
-            googleLogin,
-            completeMfaLogin,
-            register,
-            loginWithTokens,
-            logout
-        }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                isAuthenticated: !!user,
+                isLoading,
+                login,
+                googleLogin,
+                completeMfaLogin,
+                register,
+                loginWithTokens,
+                logout,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     )

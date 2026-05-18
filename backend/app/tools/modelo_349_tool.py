@@ -12,11 +12,12 @@ Wraps `Modelo349Calculator`:
 
 NO genera fichero AEAT, NO presenta. Solo computa y avisa.
 """
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.utils.calculators.modelo_349 import (
     CLAVES_VALIDAS,
@@ -153,10 +154,10 @@ MODELO_349_TOOL = {
 # --------------------------------------------------------------------------- #
 
 
-def _build_operaciones(raw: List[Dict[str, Any]]) -> tuple[List[Operacion349], List[str]]:
+def _build_operaciones(raw: list[dict[str, Any]]) -> tuple[list[Operacion349], list[str]]:
     """Convierte input dict -> Operacion349. Retorna (ops_validas, errores)."""
-    operaciones: List[Operacion349] = []
-    errores: List[str] = []
+    operaciones: list[Operacion349] = []
+    errores: list[str] = []
     for idx, op in enumerate(raw or []):
         try:
             nif = str(op.get("nif_operador", "")).strip()
@@ -210,8 +211,18 @@ def _periodo_label(periodicidad: str, periodo: str, year: int) -> str:
         try:
             mes = int(periodo)
             meses = [
-                "enero", "febrero", "marzo", "abril", "mayo", "junio",
-                "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+                "enero",
+                "febrero",
+                "marzo",
+                "abril",
+                "mayo",
+                "junio",
+                "julio",
+                "agosto",
+                "septiembre",
+                "octubre",
+                "noviembre",
+                "diciembre",
             ]
             return f"{meses[mes - 1].capitalize()} {year}"
         except (ValueError, IndexError):
@@ -222,16 +233,16 @@ def _periodo_label(periodicidad: str, periodo: str, year: int) -> str:
 
 
 async def calculate_modelo_349_tool(
-    operaciones: List[Dict[str, Any]],
+    operaciones: list[dict[str, Any]],
     periodo: str = "1T",
-    year: Optional[int] = None,
-    ccaa: Optional[str] = None,
-    importes_4_trimestres_anteriores: Optional[List[float]] = None,
-    casillas_303: Optional[Dict[str, float]] = None,
+    year: int | None = None,
+    ccaa: str | None = None,
+    importes_4_trimestres_anteriores: list[float] | None = None,
+    casillas_303: dict[str, float] | None = None,
     validar_vies: bool = False,
     forzar_anual: bool = False,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Calcula el Modelo 349 a partir de una lista de operaciones intracomunitarias."""
     if restricted_mode:
         from app.security.content_restriction import get_autonomo_block_response
@@ -288,19 +299,21 @@ async def calculate_modelo_349_tool(
         calc = Modelo349Calculator()
 
         # ----- Validacion sintactica de NIF-IVA -----
-        nif_validations: List[Dict[str, Any]] = []
+        nif_validations: list[dict[str, Any]] = []
         for op in ops:
             ok_format, country, motivo = calc.validate_nif_iva_format(op.nif_operador)
-            nif_validations.append({
-                "nif_iva": calc.normalize_nif_iva(op.nif_operador),
-                "country": country,
-                "format_ok": ok_format,
-                "motivo": motivo,
-                "vies": None,
-            })
+            nif_validations.append(
+                {
+                    "nif_iva": calc.normalize_nif_iva(op.nif_operador),
+                    "country": country,
+                    "format_ok": ok_format,
+                    "motivo": motivo,
+                    "vies": None,
+                }
+            )
 
         # ----- Validacion VIES opcional -----
-        vies_warnings: List[str] = []
+        vies_warnings: list[str] = []
         if validar_vies:
             for entry in nif_validations:
                 if not entry["format_ok"]:
@@ -332,7 +345,7 @@ async def calculate_modelo_349_tool(
         resumen = calc.build_resumen(ops)
 
         # ----- Cuadre 303 -----
-        cuadre_dict: Optional[Dict[str, Any]] = None
+        cuadre_dict: dict[str, Any] | None = None
         if casillas_303:
             cuadre = calc.cuadrar_con_303(operaciones_349=ops, casillas_303=casillas_303)
             cuadre_dict = {
@@ -349,8 +362,10 @@ async def calculate_modelo_349_tool(
         totales = resumen["totales"]
         por_clave = resumen["por_clave"]
 
-        lines: List[str] = []
-        lines.append(f"**Modelo 349 — Declaracion recapitulativa intracomunitaria — {periodo_label}**")
+        lines: list[str] = []
+        lines.append(
+            f"**Modelo 349 — Declaracion recapitulativa intracomunitaria — {periodo_label}**"
+        )
         lines.append(f"Periodicidad detectada: **{periodicidad}** ({periodicidad_info['motivo']})")
         lines.append(f"Plazo de presentacion: {plazo}")
         if ccaa_canonical:
@@ -385,7 +400,9 @@ async def calculate_modelo_349_tool(
         lines.append(f"- Adquisiciones bienes (A): {totales['adquisiciones_bienes']:,.2f} EUR")
         lines.append(f"- Servicios prestados (S): {totales['servicios_prestados']:,.2f} EUR")
         lines.append(f"- Servicios adquiridos (I): {totales['servicios_adquiridos']:,.2f} EUR")
-        lines.append(f"- Volumen relevante (umbral 50.000 EUR): {totales['volumen_relevante']:,.2f} EUR")
+        lines.append(
+            f"- Volumen relevante (umbral 50.000 EUR): {totales['volumen_relevante']:,.2f} EUR"
+        )
         lines.append(f"- Total general (todas las claves): {totales['total_general']:,.2f} EUR")
         lines.append(f"- Operadores unicos: {resumen['operadores_unicos']}")
         lines.append(f"- Operaciones declaradas: {resumen['operaciones_count']}")
@@ -428,8 +445,12 @@ async def calculate_modelo_349_tool(
         logger.info(
             "Modelo 349 calculated: periodicidad=%s, periodo=%s %s, ops=%d, "
             "operadores=%d, volumen_relevante=%.2f, cuadre_ok=%s",
-            periodicidad, periodo, year, resumen["operaciones_count"],
-            resumen["operadores_unicos"], totales["volumen_relevante"],
+            periodicidad,
+            periodo,
+            year,
+            resumen["operaciones_count"],
+            resumen["operadores_unicos"],
+            totales["volumen_relevante"],
             cuadre_dict["cuadre_ok"] if cuadre_dict else "n/a",
         )
 

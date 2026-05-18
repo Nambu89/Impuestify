@@ -1,6 +1,9 @@
 """Tests for CostTracker service."""
-import pytest
+
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from app.services.cost_tracker import CostTracker
 
 

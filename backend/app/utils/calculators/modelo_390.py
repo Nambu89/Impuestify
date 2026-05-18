@@ -37,15 +37,16 @@ NOTA: Solo cubre regimen general. Los apartados informativos detallados
 (volumen de operaciones por epigrafe, exenciones, exportaciones agregadas)
 quedan para futura iteracion (datos no capturados hoy en `Modelo303Calculator`).
 """
+
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.utils.ccaa_constants import (
     CANARIAS_SET,
     CEUTA_MELILLA,
-    FORAL_VASCO,
     FORAL_NAVARRA,
+    FORAL_VASCO,
     normalize_ccaa,
 )
 from app.utils.tax_parameter_repository import TaxParameterRepository
@@ -55,7 +56,7 @@ UMBRAL_SII_EUR: float = 6_010_121.04
 
 # Regimenes especiales que (exclusivos) exoneran de presentar 390
 REGIMENES_EXONERAN_SOLOS = {
-    "simplificado",          # Modulos IVA — sustituye 390 por 303 4T+datos
+    "simplificado",  # Modulos IVA — sustituye 390 por 303 4T+datos
     "recargo_equivalencia",  # RE comerciante minorista
 }
 
@@ -66,7 +67,7 @@ class Modelo390Calculator:
     y aplicando las reglas de exoneracion del Art. 71.7 RIVA.
     """
 
-    def __init__(self, repo: Optional[TaxParameterRepository] = None) -> None:
+    def __init__(self, repo: TaxParameterRepository | None = None) -> None:
         self._repo = repo
 
     # ------------------------------------------------------------------ #
@@ -77,7 +78,7 @@ class Modelo390Calculator:
     def check_exoneracion_sii(
         volumen_operaciones_ano_anterior: float = 0.0,
         sii_voluntario: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Detecta si el sujeto esta obligado a SII y por tanto exonerado del 390.
 
@@ -104,8 +105,7 @@ class Modelo390Calculator:
             return {
                 "exonerado": True,
                 "motivo": (
-                    "Sujeto acogido voluntariamente a SII — "
-                    "exoneracion 390 (Art. 71.7 RIVA)."
+                    "Sujeto acogido voluntariamente a SII — " "exoneracion 390 (Art. 71.7 RIVA)."
                 ),
                 "umbral": UMBRAL_SII_EUR,
             }
@@ -116,7 +116,7 @@ class Modelo390Calculator:
         }
 
     @staticmethod
-    def check_redeme(en_redeme: bool = False) -> Dict[str, Any]:
+    def check_redeme(en_redeme: bool = False) -> dict[str, Any]:
         """
         Detecta exoneracion por inscripcion en REDEME
         (Registro de Devolucion Mensual del IVA).
@@ -132,7 +132,7 @@ class Modelo390Calculator:
         return {"exonerado": False, "motivo": ""}
 
     @staticmethod
-    def check_grupo_iva(en_grupo_iva: bool = False) -> Dict[str, Any]:
+    def check_grupo_iva(en_grupo_iva: bool = False) -> dict[str, Any]:
         """Detecta exoneracion por pertenencia a grupo de IVA (Cap. IX Tit. IX LIVA)."""
         if en_grupo_iva:
             return {
@@ -146,8 +146,8 @@ class Modelo390Calculator:
 
     @staticmethod
     def check_regimen_especial_exclusivo(
-        regimen_especial: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        regimen_especial: str | None = None,
+    ) -> dict[str, Any]:
         """
         Detecta exoneracion por estar en regimen simplificado o recargo de
         equivalencia exclusivamente, sin obligacion de presentar 303.
@@ -172,7 +172,7 @@ class Modelo390Calculator:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def get_variante_territorial(territory: Optional[str]) -> Dict[str, Any]:
+    def get_variante_territorial(territory: str | None) -> dict[str, Any]:
         """
         Devuelve el modelo de resumen anual aplicable segun el territorio.
 
@@ -200,8 +200,7 @@ class Modelo390Calculator:
                 "hacienda": "Gobierno de Canarias (sede.gobiernodecanarias.org)",
                 "aplica_iva": False,
                 "nota": (
-                    "Canarias aplica IGIC, no IVA. El resumen anual es el "
-                    "Modelo 425, NO el 390."
+                    "Canarias aplica IGIC, no IVA. El resumen anual es el " "Modelo 425, NO el 390."
                 ),
                 "territory": canonical,
             }
@@ -277,8 +276,8 @@ class Modelo390Calculator:
 
     @staticmethod
     def build_from_303_quarterly(
-        trimestres: List[Dict[str, Any]],
-    ) -> Dict[str, Any]:
+        trimestres: list[dict[str, Any]],
+    ) -> dict[str, Any]:
         """
         Agrega 4 resultados de Modelo303Calculator a casillas resumen anual del 390.
 
@@ -310,7 +309,7 @@ class Modelo390Calculator:
                 f"{len(trimestres) if isinstance(trimestres, list) else 'N/A'})"
             )
 
-        def _get(t: Dict[str, Any], *keys: str, default: float = 0.0) -> float:
+        def _get(t: dict[str, Any], *keys: str, default: float = 0.0) -> float:
             """Lookup robusto: busca la clave en el dict plano o en sub-dicts."""
             for k in keys:
                 if k in t:
@@ -333,30 +332,16 @@ class Modelo390Calculator:
         cuota_4_anual = sum(_get(t, "casilla_03", "cuota_4") for t in trimestres)
         cuota_10_anual = sum(_get(t, "casilla_06", "cuota_10") for t in trimestres)
         cuota_21_anual = sum(_get(t, "casilla_09", "cuota_21") for t in trimestres)
-        cuota_intra_anual = sum(
-            _get(t, "casilla_12", "cuota_intracomunitaria") for t in trimestres
-        )
+        cuota_intra_anual = sum(_get(t, "casilla_12", "cuota_intracomunitaria") for t in trimestres)
         cuota_isp_anual = sum(_get(t, "casilla_14") for t in trimestres)
-        total_devengado = sum(
-            _get(t, "casilla_27", "total_devengado") for t in trimestres
-        )
+        total_devengado = sum(_get(t, "casilla_27", "total_devengado") for t in trimestres)
 
         # IVA deducible anual
-        cuota_corrientes = sum(
-            _get(t, "casilla_29", "bienes_corrientes") for t in trimestres
-        )
-        cuota_inversion = sum(
-            _get(t, "casilla_31", "bienes_inversion") for t in trimestres
-        )
-        cuota_importaciones = sum(
-            _get(t, "casilla_33", "importaciones") for t in trimestres
-        )
-        cuota_intra_ded = sum(
-            _get(t, "casilla_37", "intracomunitarias") for t in trimestres
-        )
-        total_deducible = sum(
-            _get(t, "casilla_45", "total_deducible") for t in trimestres
-        )
+        cuota_corrientes = sum(_get(t, "casilla_29", "bienes_corrientes") for t in trimestres)
+        cuota_inversion = sum(_get(t, "casilla_31", "bienes_inversion") for t in trimestres)
+        cuota_importaciones = sum(_get(t, "casilla_33", "importaciones") for t in trimestres)
+        cuota_intra_ded = sum(_get(t, "casilla_37", "intracomunitarias") for t in trimestres)
+        total_deducible = sum(_get(t, "casilla_45", "total_deducible") for t in trimestres)
 
         # Resultado liquidacion anual (suma de resultados trimestrales)
         resultado_anual = sum(
@@ -387,13 +372,13 @@ class Modelo390Calculator:
     def validate_complete(
         cls,
         *,
-        territory: Optional[str] = None,
+        territory: str | None = None,
         volumen_operaciones_ano_anterior: float = 0.0,
         en_redeme: bool = False,
         en_grupo_iva: bool = False,
         sii_voluntario: bool = False,
-        regimen_especial: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        regimen_especial: str | None = None,
+    ) -> dict[str, Any]:
         """
         Determina si el sujeto debe presentar 390 (o variante territorial).
 
@@ -428,7 +413,7 @@ class Modelo390Calculator:
             }
 
         # Caso 3: chequeos de exoneracion (Art. 71.7 RIVA)
-        chequeos: List[Dict[str, Any]] = []
+        chequeos: list[dict[str, Any]] = []
 
         sii = cls.check_exoneracion_sii(
             volumen_operaciones_ano_anterior=volumen_operaciones_ano_anterior,
@@ -474,16 +459,16 @@ class Modelo390Calculator:
     async def calculate(
         self,
         *,
-        trimestres_303: Optional[List[Dict[str, Any]]] = None,
-        territory: Optional[str] = None,
+        trimestres_303: list[dict[str, Any]] | None = None,
+        territory: str | None = None,
         volumen_operaciones_ano_anterior: float = 0.0,
         en_redeme: bool = False,
         en_grupo_iva: bool = False,
         sii_voluntario: bool = False,
-        regimen_especial: Optional[str] = None,
+        regimen_especial: str | None = None,
         year: int = 2025,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculo completo del Modelo 390:
             1. Determina variante territorial.
@@ -519,7 +504,7 @@ class Modelo390Calculator:
             regimen_especial=regimen_especial,
         )
 
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "obligado": validacion["obligado"],
             "modelo": validacion["modelo"],
             "motivo_exoneracion": validacion["motivo_exoneracion"],

@@ -4,12 +4,10 @@ Content Restriction for TaxIA/Impuestify
 Detects autonomo (self-employed) queries and blocks them for
 users on the Particular (salaried workers) plan.
 """
-import re
-from typing import List
 
 # Keywords that indicate a query is about autonomo/self-employed topics.
 # Ordered roughly by specificity (more specific first).
-AUTONOMO_KEYWORDS: List[str] = [
+AUTONOMO_KEYWORDS: list[str] = [
     # Direct references
     "autónomo",
     "autonomo",

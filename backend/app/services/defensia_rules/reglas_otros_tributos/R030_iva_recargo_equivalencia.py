@@ -11,6 +11,7 @@ Base normativa (resuelta por el RAG verificador, no por la regla):
     - Arts. 148 a 163 LIVA. Tipos de recargo: 5,2 % (general), 1,4 %
       (reducido), 0,5 % (superreducido), 1,75 % (tabaco).
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -21,7 +22,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 _CITA_SEMANTICA = (
     "Regimen especial obligatorio del recargo de equivalencia para "
@@ -74,11 +74,7 @@ def evaluar(
         return None
 
     doc = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDACION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDACION),
         None,
     )
     if doc is None:

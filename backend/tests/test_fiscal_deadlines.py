@@ -10,15 +10,17 @@ Coverage:
 - Notification alert logic (mock pywebpush)
 - notification_log idempotency
 """
+
 import json
-import uuid
-import pytest
-from datetime import date, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+import os
 
 # ---- Ensure test can import backend modules ----
 import sys
-import os
+import uuid
+from datetime import date, timedelta
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+
+import pytest
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if PROJECT_ROOT not in sys.path:
@@ -97,6 +99,7 @@ class TestICalParser:
         # We test parse_ical_content with icalendar installed
         try:
             import icalendar
+
             self.icalendar_available = True
         except ImportError:
             self.icalendar_available = False
@@ -106,6 +109,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(SAMPLE_ICS, 2026)
         assert isinstance(result, list)
 
@@ -114,6 +118,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(SAMPLE_ICS, 2026)
         assert len(result) == 4
 
@@ -122,6 +127,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(SAMPLE_ICS, 2026)
         modelo_303 = [d for d in result if d["model"] == "303"]
         assert len(modelo_303) >= 1
@@ -132,6 +138,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(SAMPLE_ICS, 2026)
         modelo_100 = [d for d in result if d["model"] == "100"]
         assert len(modelo_100) >= 1
@@ -142,6 +149,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(MINIMAL_ICS, 2026)
         modelo_130 = [d for d in result if d["model"] == "130"]
         assert len(modelo_130) == 1
@@ -152,6 +160,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(SAMPLE_ICS, 2026)
         for d in result:
             assert len(d["start_date"]) == 10
@@ -163,6 +172,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result1 = parse_ical_content(SAMPLE_ICS, 2026)
         result2 = parse_ical_content(SAMPLE_ICS, 2026)
         ids1 = [d["id"] for d in result1]
@@ -174,6 +184,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(SAMPLE_ICS, 2026)
         for d in result:
             assert d["territory"] == "Estatal"
@@ -183,6 +194,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(NO_EVENTS_ICS, 2026)
         assert result == []
 
@@ -191,6 +203,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(SAMPLE_ICS, 2026, dry_run=True)
         assert len(result) == 4
 
@@ -199,6 +212,7 @@ class TestICalParser:
         if not self.icalendar_available:
             pytest.skip("icalendar not installed")
         from scripts.sync_fiscal_calendar import parse_ical_content
+
         result = parse_ical_content(SAMPLE_ICS, 2026)
         modelo_347 = [d for d in result if d["model"] == "347"]
         assert len(modelo_347) == 1
@@ -209,21 +223,25 @@ class TestICalParser:
 # Section 2: Deterministic ID generation
 # ============================================================
 
+
 class TestDeadlineIdGeneration:
     """Tests for _make_id helper function."""
 
     def test_make_id_basic(self):
         from scripts.sync_fiscal_calendar import _make_id
+
         result = _make_id("303", "Estatal", "1T", 2026)
         assert result == "303_estatal_1t_2026"
 
     def test_make_id_foral(self):
         from scripts.sync_fiscal_calendar import _make_id
+
         result = _make_id("300", "Gipuzkoa", "2T", 2026)
         assert result == "300_gipuzkoa_2t_2026"
 
     def test_make_id_navarra(self):
         from scripts.sync_fiscal_calendar import _make_id
+
         result = _make_id("F-65", "Navarra", "anual", 2026)
         assert "navarra" in result
         assert "2026" in result
@@ -231,18 +249,21 @@ class TestDeadlineIdGeneration:
 
     def test_make_id_consistent(self):
         from scripts.sync_fiscal_calendar import _make_id
+
         id1 = _make_id("100", "Estatal", "anual", 2026)
         id2 = _make_id("100", "Estatal", "anual", 2026)
         assert id1 == id2
 
     def test_make_id_year_differentiates(self):
         from scripts.sync_fiscal_calendar import _make_id
+
         id_2025 = _make_id("303", "Estatal", "1T", 2025)
         id_2026 = _make_id("303", "Estatal", "1T", 2026)
         assert id_2025 != id_2026
 
     def test_make_id_period_differentiates(self):
         from scripts.sync_fiscal_calendar import _make_id
+
         id_1t = _make_id("303", "Estatal", "1T", 2026)
         id_2t = _make_id("303", "Estatal", "2T", 2026)
         assert id_1t != id_2t
@@ -252,11 +273,13 @@ class TestDeadlineIdGeneration:
 # Section 3: Foral seed data tests
 # ============================================================
 
+
 class TestForalSeedData:
     """Tests for seed_foral_deadlines.build_foral_deadlines_2026."""
 
     def setup_method(self):
         from scripts.seed_foral_deadlines import build_foral_deadlines_2026
+
         self.build_fn = build_foral_deadlines_2026
 
     def test_returns_list(self):
@@ -278,8 +301,18 @@ class TestForalSeedData:
 
     def test_all_required_fields_present(self):
         result = self.build_fn(2026)
-        required = {"id", "model", "model_name", "territory", "period", "tax_year",
-                    "start_date", "end_date", "applies_to", "is_active"}
+        required = {
+            "id",
+            "model",
+            "model_name",
+            "territory",
+            "period",
+            "tax_year",
+            "start_date",
+            "end_date",
+            "applies_to",
+            "is_active",
+        }
         for d in result:
             missing = required - d.keys()
             assert not missing, f"Deadline {d.get('id')} missing fields: {missing}"
@@ -354,6 +387,7 @@ class TestForalSeedData:
 # Section 4: Push service unit tests (no DB, no pywebpush)
 # ============================================================
 
+
 class TestPushServiceLogic:
     """Tests for push_service without real DB or pywebpush."""
 
@@ -382,8 +416,12 @@ class TestPushServiceLogic:
 
         with patch.object(push_service.settings, "VAPID_PRIVATE_KEY", "fake_key"):
             with patch.object(push_service.settings, "VAPID_PUBLIC_KEY", "fake_pub"):
-                with patch("backend.app.services.push_service._pywebpush_available", return_value=True):
-                    with patch("backend.app.services.push_service.webpush", MagicMock(), create=True):
+                with patch(
+                    "backend.app.services.push_service._pywebpush_available", return_value=True
+                ):
+                    with patch(
+                        "backend.app.services.push_service.webpush", MagicMock(), create=True
+                    ):
                         result = await push_service.send_push("user1", "Title", "Body", db=mock_db)
 
         assert result["sent"] == 0
@@ -395,10 +433,12 @@ class TestPushServiceLogic:
 
         mock_db = MagicMock()
         # First call -> deadlines, second call -> subscriptions
-        mock_db.execute = AsyncMock(side_effect=[
-            MagicMock(rows=[]),  # fiscal_deadlines
-            MagicMock(rows=[]),  # push_subscriptions
-        ])
+        mock_db.execute = AsyncMock(
+            side_effect=[
+                MagicMock(rows=[]),  # fiscal_deadlines
+                MagicMock(rows=[]),  # push_subscriptions
+            ]
+        )
 
         result = await push_service.send_deadline_alerts(db=mock_db)
 
@@ -415,23 +455,29 @@ class TestPushServiceLogic:
         deadline_end = (today + timedelta(days=15)).isoformat()
 
         mock_db = MagicMock()
-        mock_db.execute = AsyncMock(side_effect=[
-            # deadlines
-            MagicMock(rows=[{
-                "id": "303_estatal_1t_2026",
-                "model": "303",
-                "model_name": "IVA trimestral",
-                "territory": "Estatal",
-                "period": "1T",
-                "tax_year": 2026,
-                "end_date": deadline_end,
-                "applies_to": "autonomos",
-            }]),
-            # subscriptions (one user)
-            MagicMock(rows=[{"user_id": "user-1", "alert_days": "15,5,1"}]),
-            # notification_log check -> already sent
-            MagicMock(rows=[{"id": "existing-log-id"}]),
-        ])
+        mock_db.execute = AsyncMock(
+            side_effect=[
+                # deadlines
+                MagicMock(
+                    rows=[
+                        {
+                            "id": "303_estatal_1t_2026",
+                            "model": "303",
+                            "model_name": "IVA trimestral",
+                            "territory": "Estatal",
+                            "period": "1T",
+                            "tax_year": 2026,
+                            "end_date": deadline_end,
+                            "applies_to": "autonomos",
+                        }
+                    ]
+                ),
+                # subscriptions (one user)
+                MagicMock(rows=[{"user_id": "user-1", "alert_days": "15,5,1"}]),
+                # notification_log check -> already sent
+                MagicMock(rows=[{"id": "existing-log-id"}]),
+            ]
+        )
 
         result = await push_service.send_deadline_alerts(db=mock_db)
 
@@ -449,16 +495,18 @@ class TestPushServiceLogic:
         deadlines = []
         for i in range(max_n + 2):
             end = (today + timedelta(days=15)).isoformat()
-            deadlines.append({
-                "id": f"deadline_{i}",
-                "model": "303",
-                "model_name": "IVA",
-                "territory": "Estatal",
-                "period": f"T{i}",
-                "tax_year": 2026,
-                "end_date": end,
-                "applies_to": "autonomos",
-            })
+            deadlines.append(
+                {
+                    "id": f"deadline_{i}",
+                    "model": "303",
+                    "model_name": "IVA",
+                    "territory": "Estatal",
+                    "period": f"T{i}",
+                    "tax_year": 2026,
+                    "end_date": end,
+                    "applies_to": "autonomos",
+                }
+            )
 
         calls = (
             [MagicMock(rows=deadlines)]
@@ -489,11 +537,13 @@ class TestPushServiceLogic:
 # Section 5: API endpoint model tests (no HTTP)
 # ============================================================
 
+
 class TestDeadlineModels:
     """Tests for Pydantic models in deadlines router."""
 
     def test_fiscal_deadline_out_model(self):
         from app.routers.deadlines import FiscalDeadlineOut
+
         obj = FiscalDeadlineOut(
             id="303_estatal_1t_2026",
             model="303",
@@ -511,6 +561,7 @@ class TestDeadlineModels:
 
     def test_push_subscribe_request_validation(self):
         from app.routers.deadlines import PushSubscribeRequest
+
         req = PushSubscribeRequest(
             endpoint="https://fcm.googleapis.com/fcm/send/abc123",
             p256dh="BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlTiHTlmtNPlDRLMkqd_87t-RBkTQQsGRFE",
@@ -520,6 +571,7 @@ class TestDeadlineModels:
 
     def test_push_subscribe_request_custom_alert_days(self):
         from app.routers.deadlines import PushSubscribeRequest
+
         req = PushSubscribeRequest(
             endpoint="https://fcm.googleapis.com/fcm/send/abc123",
             p256dh="BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlTiHTlmtNPlDRLMkqd_87t-RBkTQQsGRFE",
@@ -530,11 +582,13 @@ class TestDeadlineModels:
 
     def test_push_unsubscribe_request(self):
         from app.routers.deadlines import PushUnsubscribeRequest
+
         req = PushUnsubscribeRequest(endpoint="https://fcm.googleapis.com/fcm/send/abc123")
         assert len(req.endpoint) > 10
 
     def test_row_to_deadline_helper(self):
         from app.routers.deadlines import _row_to_deadline
+
         row = {
             "id": "100_estatal_anual_2026",
             "model": "100",
@@ -557,6 +611,7 @@ class TestDeadlineModels:
 
     def test_row_to_deadline_without_optional_fields(self):
         from app.routers.deadlines import _row_to_deadline
+
         row = {
             "id": "303_estatal_1t_2026",
             "model": "303",
@@ -578,17 +633,25 @@ class TestDeadlineModels:
 # Section 6: Territory routing logic
 # ============================================================
 
+
 class TestTerritoryRouting:
     """Tests for _get_user_territory logic in deadlines router."""
 
     @pytest.mark.asyncio
     async def test_foral_ccaa_maps_to_foral_territory(self):
         from app.routers.deadlines import _get_user_territory
+
         mock_db = MagicMock()
-        mock_db.execute = AsyncMock(return_value=MagicMock(rows=[{
-            "ccaa_residencia": "Gipuzkoa",
-            "situacion_laboral": "autonomo",
-        }]))
+        mock_db.execute = AsyncMock(
+            return_value=MagicMock(
+                rows=[
+                    {
+                        "ccaa_residencia": "Gipuzkoa",
+                        "situacion_laboral": "autonomo",
+                    }
+                ]
+            )
+        )
         territory, applies_to = await _get_user_territory("user-1", mock_db)
         assert territory == "Gipuzkoa"
         assert "autonomos" in applies_to
@@ -596,11 +659,18 @@ class TestTerritoryRouting:
     @pytest.mark.asyncio
     async def test_comun_ccaa_maps_to_estatal(self):
         from app.routers.deadlines import _get_user_territory
+
         mock_db = MagicMock()
-        mock_db.execute = AsyncMock(return_value=MagicMock(rows=[{
-            "ccaa_residencia": "Madrid",
-            "situacion_laboral": "empleado",
-        }]))
+        mock_db.execute = AsyncMock(
+            return_value=MagicMock(
+                rows=[
+                    {
+                        "ccaa_residencia": "Madrid",
+                        "situacion_laboral": "empleado",
+                    }
+                ]
+            )
+        )
         territory, applies_to = await _get_user_territory("user-1", mock_db)
         assert territory == "Estatal"
         assert "todos" in applies_to
@@ -608,6 +678,7 @@ class TestTerritoryRouting:
     @pytest.mark.asyncio
     async def test_no_profile_defaults_to_estatal(self):
         from app.routers.deadlines import _get_user_territory
+
         mock_db = MagicMock()
         mock_db.execute = AsyncMock(return_value=MagicMock(rows=[]))
         territory, applies_to = await _get_user_territory("user-unknown", mock_db)
@@ -617,33 +688,54 @@ class TestTerritoryRouting:
     @pytest.mark.asyncio
     async def test_autonomo_situacion_includes_autonomos(self):
         from app.routers.deadlines import _get_user_territory
+
         mock_db = MagicMock()
-        mock_db.execute = AsyncMock(return_value=MagicMock(rows=[{
-            "ccaa_residencia": "Cataluna",
-            "situacion_laboral": "autonomo",
-        }]))
+        mock_db.execute = AsyncMock(
+            return_value=MagicMock(
+                rows=[
+                    {
+                        "ccaa_residencia": "Cataluna",
+                        "situacion_laboral": "autonomo",
+                    }
+                ]
+            )
+        )
         _, applies_to = await _get_user_territory("user-1", mock_db)
         assert "autonomos" in applies_to
 
     @pytest.mark.asyncio
     async def test_particular_situacion_excludes_autonomos(self):
         from app.routers.deadlines import _get_user_territory
+
         mock_db = MagicMock()
-        mock_db.execute = AsyncMock(return_value=MagicMock(rows=[{
-            "ccaa_residencia": "Madrid",
-            "situacion_laboral": "particular",
-        }]))
+        mock_db.execute = AsyncMock(
+            return_value=MagicMock(
+                rows=[
+                    {
+                        "ccaa_residencia": "Madrid",
+                        "situacion_laboral": "particular",
+                    }
+                ]
+            )
+        )
         _, applies_to = await _get_user_territory("user-1", mock_db)
         assert "autonomos" not in applies_to
 
     @pytest.mark.asyncio
     async def test_navarra_maps_to_navarra(self):
         from app.routers.deadlines import _get_user_territory
+
         mock_db = MagicMock()
-        mock_db.execute = AsyncMock(return_value=MagicMock(rows=[{
-            "ccaa_residencia": "Navarra",
-            "situacion_laboral": "autonomo",
-        }]))
+        mock_db.execute = AsyncMock(
+            return_value=MagicMock(
+                rows=[
+                    {
+                        "ccaa_residencia": "Navarra",
+                        "situacion_laboral": "autonomo",
+                    }
+                ]
+            )
+        )
         territory, _ = await _get_user_territory("user-1", mock_db)
         assert territory == "Navarra"
 
@@ -652,11 +744,13 @@ class TestTerritoryRouting:
 # Section 7: Push payload tests
 # ============================================================
 
+
 class TestPushPayload:
     """Tests for _build_payload helper in push_service."""
 
     def test_build_payload_valid_json(self):
         from app.services.push_service import _build_payload
+
         payload_str = _build_payload("Title", "Body")
         payload = json.loads(payload_str)
         assert payload["title"] == "Title"
@@ -664,23 +758,27 @@ class TestPushPayload:
 
     def test_build_payload_default_url(self):
         from app.services.push_service import _build_payload
+
         payload_str = _build_payload("Title", "Body")
         payload = json.loads(payload_str)
         assert payload["url"] == "/calendario"
 
     def test_build_payload_custom_url(self):
         from app.services.push_service import _build_payload
+
         payload_str = _build_payload("Title", "Body", url="/dashboard")
         payload = json.loads(payload_str)
         assert payload["url"] == "/dashboard"
 
     def test_build_payload_under_4kb(self):
         from app.services.push_service import _build_payload
+
         payload_str = _build_payload("Title" * 10, "Body" * 50)
         assert len(payload_str.encode("utf-8")) < 4096
 
     def test_build_payload_tag(self):
         from app.services.push_service import _build_payload
+
         payload_str = _build_payload("Title", "Body", tag="custom-tag")
         payload = json.loads(payload_str)
         assert payload["tag"] == "custom-tag"
@@ -689,6 +787,7 @@ class TestPushPayload:
 # ============================================================
 # Section 8: Notification log idempotency logic
 # ============================================================
+
 
 class TestNotificationLogIdempotency:
     """Test the duplicate-detection logic in send_deadline_alerts."""
@@ -702,20 +801,26 @@ class TestNotificationLogIdempotency:
         end_date = (today + timedelta(days=5)).isoformat()
 
         # deadline + subscription + notification_log says already sent
-        calls_iter = iter([
-            MagicMock(rows=[{
-                "id": "303_estatal_1t_2026",
-                "model": "303",
-                "model_name": "IVA",
-                "territory": "Estatal",
-                "period": "1T",
-                "tax_year": 2026,
-                "end_date": end_date,
-                "applies_to": "autonomos",
-            }]),
-            MagicMock(rows=[{"user_id": "u1", "alert_days": "15,5,1"}]),
-            MagicMock(rows=[{"id": "log-exists"}]),  # already logged
-        ])
+        calls_iter = iter(
+            [
+                MagicMock(
+                    rows=[
+                        {
+                            "id": "303_estatal_1t_2026",
+                            "model": "303",
+                            "model_name": "IVA",
+                            "territory": "Estatal",
+                            "period": "1T",
+                            "tax_year": 2026,
+                            "end_date": end_date,
+                            "applies_to": "autonomos",
+                        }
+                    ]
+                ),
+                MagicMock(rows=[{"user_id": "u1", "alert_days": "15,5,1"}]),
+                MagicMock(rows=[{"id": "log-exists"}]),  # already logged
+            ]
+        )
 
         mock_db = MagicMock()
         mock_db.execute = AsyncMock(side_effect=lambda *a, **kw: next(calls_iter))
@@ -737,6 +842,7 @@ class TestNotificationLogIdempotency:
 
     def test_max_notifications_per_day_constant(self):
         from app.services.push_service import MAX_NOTIFICATIONS_PER_DAY
+
         assert MAX_NOTIFICATIONS_PER_DAY == 3
 
 
@@ -744,11 +850,13 @@ class TestNotificationLogIdempotency:
 # Section 9: Config VAPID fields
 # ============================================================
 
+
 class TestVapidConfig:
     """Tests for VAPID configuration in settings."""
 
     def test_vapid_fields_exist_in_settings(self):
         from app.config import Settings
+
         s = Settings()
         assert hasattr(s, "VAPID_PUBLIC_KEY")
         assert hasattr(s, "VAPID_PRIVATE_KEY")
@@ -756,6 +864,7 @@ class TestVapidConfig:
 
     def test_vapid_defaults(self):
         from app.config import Settings
+
         s = Settings()
         assert s.VAPID_PUBLIC_KEY is None
         assert s.VAPID_PRIVATE_KEY is None
@@ -766,13 +875,16 @@ class TestVapidConfig:
 # Section 10: DB schema tests (structure validation)
 # ============================================================
 
+
 class TestDBSchemaStatements:
     """Verify new table SQL is parseable (structural check without DB)."""
 
     def test_fiscal_deadlines_table_statement_has_required_columns(self):
         """Check that init_schema includes fiscal_deadlines table definition."""
         import inspect
+
         from app.database import turso_client
+
         source = inspect.getsource(turso_client)
         assert "fiscal_deadlines" in source
         assert "push_subscriptions" in source
@@ -780,7 +892,9 @@ class TestDBSchemaStatements:
 
     def test_fiscal_deadlines_indexes_present(self):
         import inspect
+
         from app.database import turso_client
+
         source = inspect.getsource(turso_client)
         assert "idx_deadlines_territory" in source
         assert "idx_deadlines_end_date" in source
@@ -788,18 +902,24 @@ class TestDBSchemaStatements:
 
     def test_push_subscriptions_unique_constraint(self):
         import inspect
+
         from app.database import turso_client
+
         source = inspect.getsource(turso_client)
         assert "UNIQUE(user_id, endpoint)" in source
 
     def test_notification_log_unique_constraint(self):
         import inspect
+
         from app.database import turso_client
+
         source = inspect.getsource(turso_client)
         assert "UNIQUE(user_id, deadline_id, alert_type)" in source
 
     def test_alert_days_default_present(self):
         import inspect
+
         from app.database import turso_client
+
         source = inspect.getsource(turso_client)
         assert "15,5,1" in source

@@ -16,6 +16,7 @@ Usage:
     python scripts/seed_deductions_territorial_v2.py
     python scripts/seed_deductions_territorial_v2.py --dry-run
 """
+
 import argparse
 import asyncio
 import json
@@ -48,10 +49,20 @@ GALICIA_2025 = [
             "Base imponible menor o igual a 22.000 EUR individual / 31.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_adopcion_reciente",
+                    "text": "Has tenido un hijo o adoptado este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_total",
+                    "text": "Cuantos hijos tienes en total?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "GAL-FAMILIA-NUM",
@@ -65,10 +76,20 @@ GALICIA_2025 = [
             "Base imponible menor o igual a 22.000 EUR individual / 31.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_numerosa",
+                    "text": "Tienes titulo de familia numerosa?",
+                    "type": "bool",
+                },
+                {
+                    "key": "familia_numerosa_especial",
+                    "text": "Es de categoria especial?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "GAL-ALQUILER-VIV",
@@ -87,11 +108,21 @@ GALICIA_2025 = [
             "BI total - minimos menor o igual a 22.000 EUR individual / 31.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "menor_35_anos", "text": "Tienes 35 años o menos?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {"key": "menor_35_anos", "text": "Tienes 35 años o menos?", "type": "bool"},
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "GAL-CUIDADO-HIJOS",
@@ -107,11 +138,21 @@ GALICIA_2025 = [
             "Requiere que ambos progenitores trabajen."
         ),
         "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
-        "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 años?", "type": "bool"},
-            {"key": "guarderia_autorizada", "text": "Estan en una guarderia o centro de educacion infantil?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 años?", "type": "bool"},
+                {
+                    "key": "guarderia_autorizada",
+                    "text": "Estan en una guarderia o centro de educacion infantil?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gasto_guarderia",
+                    "text": "Cuanto has pagado de guarderia este año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "GAL-INVERSION-EMPRESA",
@@ -127,10 +168,16 @@ GALICIA_2025 = [
             "La empresa debe cumplir requisitos del art. 68.1 LIRPF adaptados."
         ),
         "requirements_json": json.dumps({"inversion_empresa_nueva": True}),
-        "questions_json": json.dumps([
-            {"key": "inversion_empresa_nueva", "text": "Has invertido en acciones o participaciones de una empresa de nueva creacion en Galicia?", "type": "bool"},
-            {"key": "importe_inversion", "text": "Cuanto has invertido?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "inversion_empresa_nueva",
+                    "text": "Has invertido en acciones o participaciones de una empresa de nueva creacion en Galicia?",
+                    "type": "bool",
+                },
+                {"key": "importe_inversion", "text": "Cuanto has invertido?", "type": "number"},
+            ]
+        ),
     },
     {
         "code": "GAL-REHABILITACION",
@@ -146,10 +193,20 @@ GALICIA_2025 = [
             "durante la vida del inmueble."
         ),
         "requirements_json": json.dumps({"rehabilitacion_vivienda": True}),
-        "questions_json": json.dumps([
-            {"key": "rehabilitacion_vivienda", "text": "Has realizado obras de rehabilitacion en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_obras", "text": "Cuanto has invertido en las obras?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "rehabilitacion_vivienda",
+                    "text": "Has realizado obras de rehabilitacion en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_obras",
+                    "text": "Cuanto has invertido en las obras?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "GAL-ADQUISICION-VIV",
@@ -164,12 +221,24 @@ GALICIA_2025 = [
             "contribuyentes menores de 36 años o familias numerosas. "
             "Tramo autonomico que complementa la DT 18a LIRPF cuando procede."
         ),
-        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {"vivienda_habitual_propiedad": True, "menor_36_anos": True}
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_habitual_propiedad",
+                    "text": "Tienes una vivienda habitual en propiedad con hipoteca?",
+                    "type": "bool",
+                },
+                {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+                {
+                    "key": "importe_hipoteca_anual",
+                    "text": "Cuanto pagas al año de hipoteca?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "GAL-DONATIVOS",
@@ -185,10 +254,16 @@ GALICIA_2025 = [
             "Limite: 10% de la cuota integra autonomica."
         ),
         "requirements_json": json.dumps({"donativo_entidad_gallega": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_entidad_gallega", "text": "Has donado a fundaciones o asociaciones de interes general con sede en Galicia?", "type": "bool"},
-            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativo_entidad_gallega",
+                    "text": "Has donado a fundaciones o asociaciones de interes general con sede en Galicia?",
+                    "type": "bool",
+                },
+                {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+            ]
+        ),
     },
 ]
 
@@ -209,10 +284,20 @@ ASTURIAS_2025 = [
             "Sin limite de renta declarado expresamente en la norma base."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo, adoptado o acogido este año?", "type": "bool"},
-            {"key": "num_hijos_recientes", "text": "Cuantos hijos has tenido, adoptado o acogido este año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_adopcion_reciente",
+                    "text": "Has tenido un hijo, adoptado o acogido este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_recientes",
+                    "text": "Cuantos hijos has tenido, adoptado o acogido este año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "AST-ACOGIMIENTO",
@@ -226,10 +311,20 @@ ASTURIAS_2025 = [
             "durante mas de 30 dias del periodo impositivo."
         ),
         "requirements_json": json.dumps({"acogimiento_familiar": True}),
-        "questions_json": json.dumps([
-            {"key": "acogimiento_familiar", "text": "Tienes menores en acogimiento familiar no remunerado?", "type": "bool"},
-            {"key": "num_menores_acogidos", "text": "Cuantos menores tienes en acogimiento?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "acogimiento_familiar",
+                    "text": "Tienes menores en acogimiento familiar no remunerado?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_menores_acogidos",
+                    "text": "Cuantos menores tienes en acogimiento?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "AST-ARRENDAMIENTO-VIV",
@@ -246,11 +341,21 @@ ASTURIAS_2025 = [
             "BI general + ahorro menor o igual a 35.000 EUR individual / 45.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+                {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
+            ]
+        ),
     },
     {
         "code": "AST-VIV-HABITUAL",
@@ -266,10 +371,20 @@ ASTURIAS_2025 = [
             "autonomico. BI menor o igual a 25.009 EUR individual / 35.240 EUR conjunta."
         ),
         "requirements_json": json.dumps({"vivienda_habitual_propiedad": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_habitual_propiedad",
+                    "text": "Tienes una vivienda habitual en propiedad con hipoteca?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_hipoteca_anual",
+                    "text": "Cuanto pagas al año de hipoteca?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "AST-DONATIVOS",
@@ -285,10 +400,16 @@ ASTURIAS_2025 = [
             "Limite: 10% de la cuota integra autonomica."
         ),
         "requirements_json": json.dumps({"donativo_entidad_asturiana": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_entidad_asturiana", "text": "Has donado a fundaciones o entidades de utilidad publica con actividad en Asturias?", "type": "bool"},
-            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativo_entidad_asturiana",
+                    "text": "Has donado a fundaciones o entidades de utilidad publica con actividad en Asturias?",
+                    "type": "bool",
+                },
+                {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+            ]
+        ),
     },
     {
         "code": "AST-FAM-MONOPARENTAL",
@@ -303,10 +424,20 @@ ASTURIAS_2025 = [
             "Incremento por numero de hijos segun baremo."
         ),
         "requirements_json": json.dumps({"familia_monoparental": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_monoparental", "text": "Eres familia monoparental?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "Cuantos hijos tienes a cargo?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_monoparental",
+                    "text": "Eres familia monoparental?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_total",
+                    "text": "Cuantos hijos tienes a cargo?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
@@ -331,11 +462,21 @@ CANTABRIA_2025 = [
             "Incompatible con la deduccion por zonas de reto demografico (20%, max 600/1.200 EUR)."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+                {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
+            ]
+        ),
     },
     {
         "code": "CANT-OBRAS-MEJORA",
@@ -351,10 +492,20 @@ CANTABRIA_2025 = [
             "Incluye obras de eficiencia energetica, instalaciones, etc."
         ),
         "requirements_json": json.dumps({"obras_mejora_vivienda": True}),
-        "questions_json": json.dumps([
-            {"key": "obras_mejora_vivienda", "text": "Has realizado obras de mejora en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_obras", "text": "Cuanto has invertido en las obras?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "obras_mejora_vivienda",
+                    "text": "Has realizado obras de mejora en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_obras",
+                    "text": "Cuanto has invertido en las obras?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CANT-FAM-NUM",
@@ -369,10 +520,20 @@ CANTABRIA_2025 = [
             "titulo de familia numerosa en vigor."
         ),
         "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_numerosa",
+                    "text": "Tienes titulo de familia numerosa?",
+                    "type": "bool",
+                },
+                {
+                    "key": "familia_numerosa_especial",
+                    "text": "Es de categoria especial?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "CANT-CUIDADO-FAMILIARES",
@@ -386,10 +547,20 @@ CANTABRIA_2025 = [
             "que convivan con el contribuyente y no tengan rentas superiores a 8.000 EUR."
         ),
         "requirements_json": json.dumps({"ascendiente_a_cargo": True}),
-        "questions_json": json.dumps([
-            {"key": "ascendiente_a_cargo", "text": "Tienes padres u otros familiares mayores de 70 años o discapacitados a tu cargo?", "type": "bool"},
-            {"key": "num_ascendientes", "text": "Cuantos familiares tienes a tu cargo?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "ascendiente_a_cargo",
+                    "text": "Tienes padres u otros familiares mayores de 70 años o discapacitados a tu cargo?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_ascendientes",
+                    "text": "Cuantos familiares tienes a tu cargo?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CANT-GASTOS-EDUCATIVOS",
@@ -404,10 +575,20 @@ CANTABRIA_2025 = [
             "para hijos en edad escolar obligatoria. Maximo 200 EUR por hijo."
         ),
         "requirements_json": json.dumps({"hijos_escolarizados": True}),
-        "questions_json": json.dumps([
-            {"key": "hijos_escolarizados", "text": "Tienes hijos en edad escolar (6-16 años)?", "type": "bool"},
-            {"key": "gastos_educativos", "text": "Cuanto has gastado en libros, material y escolaridad este año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hijos_escolarizados",
+                    "text": "Tienes hijos en edad escolar (6-16 años)?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gastos_educativos",
+                    "text": "Cuanto has gastado en libros, material y escolaridad este año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
@@ -428,10 +609,20 @@ LA_RIOJA_2025 = [
             "Para familias con BI menor o igual a 18.030 EUR individual / 30.050 EUR conjunta."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_adopcion_reciente",
+                    "text": "Has tenido un hijo o adoptado este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_total",
+                    "text": "Cuantos hijos tienes en total?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "RIO-VIV-JOVEN",
@@ -446,12 +637,24 @@ LA_RIOJA_2025 = [
             "de vivienda habitual para contribuyentes menores de 36 años o familias numerosas "
             "como complemento al tramo autonomico. BI menor o igual a 18.030 EUR."
         ),
-        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {"vivienda_habitual_propiedad": True, "menor_36_anos": True}
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_habitual_propiedad",
+                    "text": "Tienes una vivienda habitual en propiedad con hipoteca?",
+                    "type": "bool",
+                },
+                {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+                {
+                    "key": "importe_hipoteca_anual",
+                    "text": "Cuanto pagas al año de hipoteca?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "RIO-ACCESO-INTERNET",
@@ -466,9 +669,15 @@ LA_RIOJA_2025 = [
             "Solo primer año de contratacion. BI menor o igual a 18.030 EUR."
         ),
         "requirements_json": json.dumps({"primer_acceso_internet_rural": True}),
-        "questions_json": json.dumps([
-            {"key": "primer_acceso_internet_rural", "text": "Has contratado Internet de banda ancha por primera vez en un municipio riojano de menos de 3.000 habitantes?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "primer_acceso_internet_rural",
+                    "text": "Has contratado Internet de banda ancha por primera vez en un municipio riojano de menos de 3.000 habitantes?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "RIO-BICI-ELECTRICA",
@@ -483,10 +692,16 @@ LA_RIOJA_2025 = [
             "(pedelec), con máximo de 150 EUR. Para desplazamientos al trabajo o uso habitual."
         ),
         "requirements_json": json.dumps({"adquisicion_bici_electrica": True}),
-        "questions_json": json.dumps([
-            {"key": "adquisicion_bici_electrica", "text": "Has comprado una bicicleta electrica (pedelec) este año?", "type": "bool"},
-            {"key": "precio_bici", "text": "Cuanto costo la bicicleta?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "adquisicion_bici_electrica",
+                    "text": "Has comprado una bicicleta electrica (pedelec) este año?",
+                    "type": "bool",
+                },
+                {"key": "precio_bici", "text": "Cuanto costo la bicicleta?", "type": "number"},
+            ]
+        ),
     },
     {
         "code": "RIO-AUTONOMOS-SUMINISTROS",
@@ -503,10 +718,20 @@ LA_RIOJA_2025 = [
             "parcialmente en domicilio."
         ),
         "requirements_json": json.dumps({"autonomo_domicilio": True}),
-        "questions_json": json.dumps([
-            {"key": "autonomo_domicilio", "text": "Eres autonomo y trabajas parcialmente desde tu domicilio?", "type": "bool"},
-            {"key": "gasto_suministros_hogar", "text": "Cuanto has pagado de suministros en tu hogar este año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "autonomo_domicilio",
+                    "text": "Eres autonomo y trabajas parcialmente desde tu domicilio?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gasto_suministros_hogar",
+                    "text": "Cuanto has pagado de suministros en tu hogar este año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "RIO-ARRENDAMIENTO-VIV",
@@ -523,10 +748,20 @@ LA_RIOJA_2025 = [
             "BL del ahorro menor o igual a 1.800 EUR. Contrato con ITP presentado."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
@@ -548,11 +783,25 @@ ARAGON_2025 = [
             "BI menor o igual a 35.000 EUR individual / 50.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
-            {"key": "municipio_rural", "text": "Resides en un municipio de menos de 10.000 habitantes?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_adopcion_reciente",
+                    "text": "Has tenido un hijo o adoptado este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_total",
+                    "text": "Cuantos hijos tienes en total?",
+                    "type": "number",
+                },
+                {
+                    "key": "municipio_rural",
+                    "text": "Resides en un municipio de menos de 10.000 habitantes?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "ARG-ADOPCION-INT",
@@ -567,9 +816,15 @@ ARAGON_2025 = [
             "reconocida por las autoridades espanolas competentes."
         ),
         "requirements_json": json.dumps({"adopcion_internacional": True}),
-        "questions_json": json.dumps([
-            {"key": "adopcion_internacional", "text": "Has adoptado un hijo en el extranjero este año?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "adopcion_internacional",
+                    "text": "Has adoptado un hijo en el extranjero este año?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "ARG-DEPENDIENTES",
@@ -583,10 +838,20 @@ ARAGON_2025 = [
             "que conviva con el contribuyente y tenga rentas propias menores o iguales a 8.000 EUR anuales."
         ),
         "requirements_json": json.dumps({"familiar_dependiente_cargo": True}),
-        "questions_json": json.dumps([
-            {"key": "familiar_dependiente_cargo", "text": "Tienes a tu cargo familiares mayores de 75 años o con dependencia reconocida?", "type": "bool"},
-            {"key": "num_dependientes", "text": "Cuantos familiares dependientes tienes?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familiar_dependiente_cargo",
+                    "text": "Tienes a tu cargo familiares mayores de 75 años o con dependencia reconocida?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_dependientes",
+                    "text": "Cuantos familiares dependientes tienes?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "ARG-DACION-ALQUILER",
@@ -603,10 +868,20 @@ ARAGON_2025 = [
             "NO es una deduccion general por alquiler — Aragon no tiene deduccion general por arrendamiento."
         ),
         "requirements_json": json.dumps({"dacion_pago_alquiler": True}),
-        "questions_json": json.dumps([
-            {"key": "dacion_pago_alquiler", "text": "Entregaste tu vivienda por dacion en pago y ahora la alquilas?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "dacion_pago_alquiler",
+                    "text": "Entregaste tu vivienda por dacion en pago y ahora la alquilas?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "ARG-VIV-RURAL",
@@ -622,10 +897,20 @@ ARAGON_2025 = [
             "en zonas en riesgo de despoblacion."
         ),
         "requirements_json": json.dumps({"vivienda_rural_aragon": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_rural_aragon", "text": "Has comprado tu vivienda habitual en un municipio aragones con menos de 3.000 habitantes?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_rural_aragon",
+                    "text": "Has comprado tu vivienda habitual en un municipio aragones con menos de 3.000 habitantes?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_hipoteca_anual",
+                    "text": "Cuanto pagas al año de hipoteca?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "ARG-LIBROS-TEXTO",
@@ -641,10 +926,20 @@ ARAGON_2025 = [
             "Sujeta a limites de renta segun BI del contribuyente."
         ),
         "requirements_json": json.dumps({"hijos_escolarizados": True}),
-        "questions_json": json.dumps([
-            {"key": "hijos_escolarizados", "text": "Tienes hijos en Primaria, ESO o FP Basica?", "type": "bool"},
-            {"key": "gasto_libros", "text": "Cuanto has gastado en libros de texto?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hijos_escolarizados",
+                    "text": "Tienes hijos en Primaria, ESO o FP Basica?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gasto_libros",
+                    "text": "Cuanto has gastado en libros de texto?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "ARG-GUARDERIA",
@@ -660,11 +955,21 @@ ARAGON_2025 = [
             "BI menor o igual a 35.000 EUR individual / 50.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
-        "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 años?", "type": "bool"},
-            {"key": "guarderia_autorizada", "text": "Estan en una guarderia autorizada?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 años?", "type": "bool"},
+                {
+                    "key": "guarderia_autorizada",
+                    "text": "Estan en una guarderia autorizada?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gasto_guarderia",
+                    "text": "Cuanto has pagado de guarderia este año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "ARG-ARRENDADOR-SOCIAL",
@@ -681,9 +986,15 @@ ARAGON_2025 = [
             "de programas sociales de vivienda."
         ),
         "requirements_json": json.dumps({"arrendador_vivienda_social": True}),
-        "questions_json": json.dumps([
-            {"key": "arrendador_vivienda_social", "text": "Has cedido alguna vivienda al Gobierno de Aragon o entidades del Plan de Vivienda Social?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "arrendador_vivienda_social",
+                    "text": "Has cedido alguna vivienda al Gobierno de Aragon o entidades del Plan de Vivienda Social?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
 ]
 
@@ -705,11 +1016,25 @@ CASTILLA_Y_LEON_2025 = [
             "+600 EUR si conyuge o hijo con discapacidad >=65%. Sin limite de renta."
         ),
         "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_numerosa",
+                    "text": "Tienes titulo de familia numerosa?",
+                    "type": "bool",
+                },
+                {
+                    "key": "familia_numerosa_especial",
+                    "text": "Es de categoria especial?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_total",
+                    "text": "Cuantos hijos tienes en total?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CYL-NACIMIENTO",
@@ -724,10 +1049,20 @@ CASTILLA_Y_LEON_2025 = [
             "Importes duplicados si hijo con discapacidad >=33%."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_adopcion_reciente",
+                    "text": "Has tenido un hijo o adoptado este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_total",
+                    "text": "Cuantos hijos tienes en total?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CYL-CUIDADO-HIJOS",
@@ -742,12 +1077,24 @@ CASTILLA_Y_LEON_2025 = [
             "max 1.320 EUR por hijo menor de 4 anios. Ambos progenitores deben trabajar. "
             "BI menor o igual a 18.900 EUR individual / 31.500 EUR conjunta."
         ),
-        "requirements_json": json.dumps({"hijo_menor_4": True, "ambos_progenitores_trabajan": True}),
-        "questions_json": json.dumps([
-            {"key": "hijo_menor_4", "text": "Tienes hijos menores de 4 años?", "type": "bool"},
-            {"key": "ambos_progenitores_trabajan", "text": "Trabajais ambos progenitores?", "type": "bool"},
-            {"key": "num_hijos_menores", "text": "Cuantos hijos menores de 4 años tienes?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {"hijo_menor_4": True, "ambos_progenitores_trabajan": True}
+        ),
+        "questions_json": json.dumps(
+            [
+                {"key": "hijo_menor_4", "text": "Tienes hijos menores de 4 años?", "type": "bool"},
+                {
+                    "key": "ambos_progenitores_trabajan",
+                    "text": "Trabajais ambos progenitores?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_menores",
+                    "text": "Cuantos hijos menores de 4 años tienes?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CYL-VIV-JOVEN",
@@ -763,12 +1110,24 @@ CASTILLA_Y_LEON_2025 = [
             "Base maxima 10.000 EUR/anio. Valor vivienda <150.000 EUR. "
             "BI menor o igual a 18.900 EUR individual / 31.500 EUR conjunta."
         ),
-        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {"vivienda_habitual_propiedad": True, "menor_36_anos": True}
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_habitual_propiedad",
+                    "text": "Tienes una vivienda habitual en propiedad con hipoteca?",
+                    "type": "bool",
+                },
+                {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+                {
+                    "key": "importe_hipoteca_anual",
+                    "text": "Cuanto pagas al año de hipoteca?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CYL-ALQUILER-VIV",
@@ -785,10 +1144,20 @@ CASTILLA_Y_LEON_2025 = [
             "BI menor o igual a 18.900 EUR individual / 31.500 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CYL-DONATIVOS",
@@ -803,10 +1172,16 @@ CASTILLA_Y_LEON_2025 = [
             "Fundaciones de Castilla y Leon. Limite: 10% de la cuota integra autonomica."
         ),
         "requirements_json": json.dumps({"donativo_fundacion_cyl": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_fundacion_cyl", "text": "Has donado a fundaciones inscritas en el Registro de Fundaciones de Castilla y Leon?", "type": "bool"},
-            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativo_fundacion_cyl",
+                    "text": "Has donado a fundaciones inscritas en el Registro de Fundaciones de Castilla y Leon?",
+                    "type": "bool",
+                },
+                {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+            ]
+        ),
     },
 ]
 
@@ -828,11 +1203,25 @@ CASTILLA_LA_MANCHA_2025 = [
             "con menos de 2.500 habitantes. BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
-            {"key": "municipio_rural", "text": "Resides en un municipio de menos de 2.500 habitantes?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_adopcion_reciente",
+                    "text": "Has tenido un hijo o adoptado este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_total",
+                    "text": "Cuantos hijos tienes en total?",
+                    "type": "number",
+                },
+                {
+                    "key": "municipio_rural",
+                    "text": "Resides en un municipio de menos de 2.500 habitantes?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "CLM-DISCAPACIDAD",
@@ -846,10 +1235,20 @@ CASTILLA_LA_MANCHA_2025 = [
             "Deduccion adicional: 300 EUR Grado I, 600 EUR Grado II, 900 EUR Grado III dependencia."
         ),
         "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "Tienes algun grado de discapacidad reconocida (33% o mas)?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "Que grado de discapacidad tienes?", "type": "text"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "discapacidad_reconocida",
+                    "text": "Tienes algun grado de discapacidad reconocida (33% o mas)?",
+                    "type": "bool",
+                },
+                {
+                    "key": "grado_discapacidad",
+                    "text": "Que grado de discapacidad tienes?",
+                    "type": "text",
+                },
+            ]
+        ),
     },
     {
         "code": "CLM-FAM-NUM",
@@ -863,10 +1262,20 @@ CASTILLA_LA_MANCHA_2025 = [
             "BI menor o igual a 27.000 EUR individual / 36.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_numerosa",
+                    "text": "Tienes titulo de familia numerosa?",
+                    "type": "bool",
+                },
+                {
+                    "key": "familia_numerosa_especial",
+                    "text": "Es de categoria especial?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "CLM-GASTOS-EDUCATIVOS",
@@ -882,10 +1291,20 @@ CASTILLA_LA_MANCHA_2025 = [
             "Limites especiales para familias numerosas (BI hasta 40.000 EUR)."
         ),
         "requirements_json": json.dumps({"hijos_escolarizados": True}),
-        "questions_json": json.dumps([
-            {"key": "hijos_escolarizados", "text": "Tienes hijos en etapas de educacion obligatoria?", "type": "bool"},
-            {"key": "gastos_educativos", "text": "Cuanto has gastado en educacion este año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hijos_escolarizados",
+                    "text": "Tienes hijos en etapas de educacion obligatoria?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gastos_educativos",
+                    "text": "Cuanto has gastado en educacion este año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CLM-ARRENDAMIENTO-VIV",
@@ -902,10 +1321,20 @@ CASTILLA_LA_MANCHA_2025 = [
             "BI menor o igual a 12.500 EUR individual / 25.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
@@ -926,10 +1355,20 @@ EXTREMADURA_2025 = [
             "y otros rendimientos netos <=300 EUR (excluidos exentos)."
         ),
         "requirements_json": json.dumps({"rendimientos_trabajo": True, "renta_baja": True}),
-        "questions_json": json.dumps([
-            {"key": "rendimientos_trabajo", "text": "Obtienes rendimientos del trabajo (sueldo, pension)?", "type": "bool"},
-            {"key": "base_imponible_estimada", "text": "Cual es tu base imponible general aproximada?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "rendimientos_trabajo",
+                    "text": "Obtienes rendimientos del trabajo (sueldo, pension)?",
+                    "type": "bool",
+                },
+                {
+                    "key": "base_imponible_estimada",
+                    "text": "Cual es tu base imponible general aproximada?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "EXT-VIV-JOVEN",
@@ -945,12 +1384,24 @@ EXTREMADURA_2025 = [
             "Menores de 36 anios. BI <=19.000 EUR individual / 24.000 EUR conjunta "
             "(28.000/45.000 en municipios rurales)."
         ),
-        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_36_anos": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {"vivienda_habitual_propiedad": True, "menor_36_anos": True}
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_habitual_propiedad",
+                    "text": "Tienes una vivienda habitual en propiedad con hipoteca?",
+                    "type": "bool",
+                },
+                {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
+                {
+                    "key": "importe_hipoteca_anual",
+                    "text": "Cuanto pagas al año de hipoteca?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "EXT-FAM-MONOPARENTAL",
@@ -965,10 +1416,20 @@ EXTREMADURA_2025 = [
             "Incompatible con deduccion estatal por familia monoparental con 2 o mas hijos."
         ),
         "requirements_json": json.dumps({"familia_monoparental": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_monoparental", "text": "Eres familia monoparental?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "Cuantos hijos tienes a cargo?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_monoparental",
+                    "text": "Eres familia monoparental?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_total",
+                    "text": "Cuantos hijos tienes a cargo?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "EXT-CUIDADO-DISCAPACIDAD",
@@ -984,10 +1445,20 @@ EXTREMADURA_2025 = [
             "BI <=19.000 EUR individual / 24.000 EUR conjunta (28.000/45.000 rural)."
         ),
         "requirements_json": json.dumps({"familiar_discapacitado_cargo": True}),
-        "questions_json": json.dumps([
-            {"key": "familiar_discapacitado_cargo", "text": "Tienes familiares con discapacidad mayor o igual al 65% a tu cargo que convivan contigo?", "type": "bool"},
-            {"key": "num_familiares_disc", "text": "Cuantos familiares discapacitados tienes a cargo?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familiar_discapacitado_cargo",
+                    "text": "Tienes familiares con discapacidad mayor o igual al 65% a tu cargo que convivan contigo?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_familiares_disc",
+                    "text": "Cuantos familiares discapacitados tienes a cargo?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "EXT-ARRENDAMIENTO-VIV",
@@ -1003,11 +1474,21 @@ EXTREMADURA_2025 = [
             "BI <=28.000 EUR individual / 45.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+                {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+            ]
+        ),
     },
 ]
 
@@ -1029,12 +1510,24 @@ MURCIA_2025 = [
             "Para contribuyentes de 40 anios o menos. "
             "BI general + ahorro <=40.000 EUR. BL ahorro <=1.800 EUR."
         ),
-        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "menor_40_anos": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca anterior a 2013?", "type": "bool"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {"vivienda_habitual_propiedad": True, "menor_40_anos": True}
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_habitual_propiedad",
+                    "text": "Tienes una vivienda habitual en propiedad con hipoteca anterior a 2013?",
+                    "type": "bool",
+                },
+                {"key": "menor_35_anos", "text": "Tienes menos de 35 años?", "type": "bool"},
+                {
+                    "key": "importe_hipoteca_anual",
+                    "text": "Cuanto pagas al año de hipoteca?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "MUR-GUARDERIA",
@@ -1050,11 +1543,21 @@ MURCIA_2025 = [
             "BI <=30.000 EUR individual / 50.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hijo_menor_3": True, "guarderia_autorizada": True}),
-        "questions_json": json.dumps([
-            {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 años?", "type": "bool"},
-            {"key": "guarderia_autorizada", "text": "Estan en una guarderia autorizada?", "type": "bool"},
-            {"key": "gasto_guarderia", "text": "Cuanto has pagado de guarderia este año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {"key": "hijo_menor_3", "text": "Tienes hijos menores de 3 años?", "type": "bool"},
+                {
+                    "key": "guarderia_autorizada",
+                    "text": "Estan en una guarderia autorizada?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gasto_guarderia",
+                    "text": "Cuanto has pagado de guarderia este año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "MUR-FAM-NUM",
@@ -1068,10 +1571,20 @@ MURCIA_2025 = [
             "BI menor o igual a 45.000 EUR individual / 60.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_numerosa",
+                    "text": "Tienes titulo de familia numerosa?",
+                    "type": "bool",
+                },
+                {
+                    "key": "familia_numerosa_especial",
+                    "text": "Es de categoria especial?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "MUR-MEDIOAMBIENTE",
@@ -1087,10 +1600,20 @@ MURCIA_2025 = [
             "Max 7.000 EUR. Incluye ahorro de agua domestica."
         ),
         "requirements_json": json.dumps({"instalacion_renovable": True}),
-        "questions_json": json.dumps([
-            {"key": "instalacion_renovable", "text": "Has instalado energias renovables o sistemas de ahorro de agua en tu vivienda?", "type": "bool"},
-            {"key": "importe_instalacion", "text": "Cuanto ha costado la instalacion?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "instalacion_renovable",
+                    "text": "Has instalado energias renovables o sistemas de ahorro de agua en tu vivienda?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_instalacion",
+                    "text": "Cuanto ha costado la instalacion?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "MUR-DONATIVOS",
@@ -1105,10 +1628,16 @@ MURCIA_2025 = [
             "y actividades sociales de la Region de Murcia."
         ),
         "requirements_json": json.dumps({"donativo_patrimonio_murcia": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_patrimonio_murcia", "text": "Has donado para conservacion del patrimonio historico de Murcia?", "type": "bool"},
-            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativo_patrimonio_murcia",
+                    "text": "Has donado para conservacion del patrimonio historico de Murcia?",
+                    "type": "bool",
+                },
+                {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+            ]
+        ),
     },
     {
         "code": "MUR-ARRENDAMIENTO-VIV",
@@ -1125,10 +1654,20 @@ MURCIA_2025 = [
             "BL ahorro <=1.800 EUR."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
@@ -1150,10 +1689,20 @@ BALEARES_2025 = [
             "(Primaria y ESO). BI menor o igual a 25.000 EUR individual / 45.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hijos_escolarizados": True}),
-        "questions_json": json.dumps([
-            {"key": "hijos_escolarizados", "text": "Tienes hijos en Primaria o ESO?", "type": "bool"},
-            {"key": "gasto_libros", "text": "Cuanto has gastado en libros de texto?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hijos_escolarizados",
+                    "text": "Tienes hijos en Primaria o ESO?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gasto_libros",
+                    "text": "Cuanto has gastado en libros de texto?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "BAL-IDIOMAS",
@@ -1169,10 +1718,20 @@ BALEARES_2025 = [
             "BI <=33.000 EUR individual / 52.800 EUR conjunta."
         ),
         "requirements_json": json.dumps({"gastos_idiomas": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_idiomas", "text": "Has pagado clases o examenes de certificacion de idiomas este año?", "type": "bool"},
-            {"key": "importe_idiomas", "text": "Cuanto has gastado en idiomas?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "gastos_idiomas",
+                    "text": "Has pagado clases o examenes de certificacion de idiomas este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_idiomas",
+                    "text": "Cuanto has gastado en idiomas?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "BAL-ARRENDAMIENTO-VIV",
@@ -1188,11 +1747,21 @@ BALEARES_2025 = [
             "BI <=33.000 EUR individual / 52.800 EUR conjunta (39.600/63.360 familia numerosa)."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-            {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+                {"key": "menor_36_anos", "text": "Tienes menos de 36 años?", "type": "bool"},
+            ]
+        ),
     },
     {
         "code": "BAL-SOSTENIBILIDAD",
@@ -1208,10 +1777,20 @@ BALEARES_2025 = [
             "de eficiencia energetica antes y despues."
         ),
         "requirements_json": json.dumps({"instalacion_renovable": True}),
-        "questions_json": json.dumps([
-            {"key": "instalacion_renovable", "text": "Has instalado energia fotovoltaica, eolica o biomasa en tu vivienda?", "type": "bool"},
-            {"key": "importe_instalacion", "text": "Cuanto ha costado la instalacion?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "instalacion_renovable",
+                    "text": "Has instalado energia fotovoltaica, eolica o biomasa en tu vivienda?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_instalacion",
+                    "text": "Cuanto ha costado la instalacion?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "BAL-DONATIVOS",
@@ -1227,10 +1806,16 @@ BALEARES_2025 = [
             "Limite: 10% de la cuota integra autonomica."
         ),
         "requirements_json": json.dumps({"donativo_entidad_baleares": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_entidad_baleares", "text": "Has donado a entidades sin animo de lucro con sede en Baleares?", "type": "bool"},
-            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativo_entidad_baleares",
+                    "text": "Has donado a entidades sin animo de lucro con sede en Baleares?",
+                    "type": "bool",
+                },
+                {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+            ]
+        ),
     },
     {
         "code": "BAL-SEGUROS-VIDA",
@@ -1246,10 +1831,20 @@ BALEARES_2025 = [
             "BI menor o igual a 25.000 EUR individual / 45.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"seguros_salud": True}),
-        "questions_json": json.dumps([
-            {"key": "seguros_salud", "text": "Pagas primas de seguros de vida o enfermedad por tu cuenta?", "type": "bool"},
-            {"key": "importe_primas", "text": "Cuanto has pagado de primas de seguro este año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "seguros_salud",
+                    "text": "Pagas primas de seguros de vida o enfermedad por tu cuenta?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_primas",
+                    "text": "Cuanto has pagado de primas de seguro este año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
@@ -1270,10 +1865,20 @@ CANARIAS_2025 = [
             "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado este año?", "type": "bool"},
-            {"key": "num_hijos_total", "text": "Cuantos hijos tienes en total?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_adopcion_reciente",
+                    "text": "Has tenido un hijo o adoptado este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_total",
+                    "text": "Cuantos hijos tienes en total?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CANA-ESTUDIOS",
@@ -1289,10 +1894,20 @@ CANARIAS_2025 = [
             "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hijos_estudios_universitarios": True}),
-        "questions_json": json.dumps([
-            {"key": "hijos_estudios_universitarios", "text": "Tienes hijos cursando estudios universitarios?", "type": "bool"},
-            {"key": "gasto_matricula_universidad", "text": "Cuanto has pagado de matricula universitaria?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hijos_estudios_universitarios",
+                    "text": "Tienes hijos cursando estudios universitarios?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gasto_matricula_universidad",
+                    "text": "Cuanto has pagado de matricula universitaria?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CANA-FAM-NUM",
@@ -1306,10 +1921,20 @@ CANARIAS_2025 = [
             "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_numerosa",
+                    "text": "Tienes titulo de familia numerosa?",
+                    "type": "bool",
+                },
+                {
+                    "key": "familia_numerosa_especial",
+                    "text": "Es de categoria especial?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "CANA-VIV-HABITUAL",
@@ -1325,12 +1950,28 @@ CANARIAS_2025 = [
             "del regimen transitorio estatal (DT 18a LIRPF). "
             "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
         ),
-        "requirements_json": json.dumps({"vivienda_habitual_propiedad": True, "adquisicion_antes_2013": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_habitual_propiedad", "text": "Tienes una vivienda habitual en propiedad con hipoteca?", "type": "bool"},
-            {"key": "adquisicion_antes_2013", "text": "La adquiriste antes del 1 de enero de 2013?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto pagas al año de hipoteca?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {"vivienda_habitual_propiedad": True, "adquisicion_antes_2013": True}
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_habitual_propiedad",
+                    "text": "Tienes una vivienda habitual en propiedad con hipoteca?",
+                    "type": "bool",
+                },
+                {
+                    "key": "adquisicion_antes_2013",
+                    "text": "La adquiriste antes del 1 de enero de 2013?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_hipoteca_anual",
+                    "text": "Cuanto pagas al año de hipoteca?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CANA-DONATIVOS",
@@ -1346,10 +1987,16 @@ CANARIAS_2025 = [
             "Limite: 10% de la cuota integra autonomica."
         ),
         "requirements_json": json.dumps({"donativo_entidad_canaria": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_entidad_canaria", "text": "Has donado a fundaciones con sede en Canarias?", "type": "bool"},
-            {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativo_entidad_canaria",
+                    "text": "Has donado a fundaciones con sede en Canarias?",
+                    "type": "bool",
+                },
+                {"key": "importe_donativos", "text": "Cuanto has donado?", "type": "number"},
+            ]
+        ),
     },
     {
         "code": "CANA-ALQUILER-VIV",
@@ -1366,10 +2013,20 @@ CANARIAS_2025 = [
             "BI general + ahorro menor o igual a 45.500 EUR individual / 60.500 EUR conjunta."
         ),
         "requirements_json": json.dumps({"alquiler_vivienda_habitual": True}),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al año?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al año?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "CANA-GASTOS-ENFERMEDAD",
@@ -1385,10 +2042,20 @@ CANARIAS_2025 = [
             "BI menor o igual a 39.000 EUR individual / 52.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"gastos_salud_propios": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_salud_propios", "text": "Has tenido gastos sanitarios no cubiertos por la Seguridad Social (gafas, dentista, ortopedia)?", "type": "bool"},
-            {"key": "importe_gastos_salud", "text": "Cuanto has gastado en total?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "gastos_salud_propios",
+                    "text": "Has tenido gastos sanitarios no cubiertos por la Seguridad Social (gafas, dentista, ortopedia)?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_gastos_salud",
+                    "text": "Cuanto has gastado en total?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
@@ -1448,8 +2115,16 @@ def validate_deductions(dry_run: bool = False) -> list[str]:
                 errors.append(f"DUPLICATE: {code} in {territory}")
             all_keys.add(key)
 
-            for field in ("code", "name", "type", "category", "description",
-                          "legal_reference", "requirements_json", "questions_json"):
+            for field in (
+                "code",
+                "name",
+                "type",
+                "category",
+                "description",
+                "legal_reference",
+                "requirements_json",
+                "questions_json",
+            ):
                 if not d.get(field):
                     errors.append(f"MISSING {field}: {code} ({territory})")
 

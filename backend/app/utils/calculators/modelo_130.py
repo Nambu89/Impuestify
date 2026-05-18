@@ -15,7 +15,8 @@ Each territory's calculation is delegated to a private method. The public
 NOTE: All rates are fixed by law (no DB look-up needed). TaxParameterRepository
 is accepted in __init__ for protocol consistency with other calculators.
 """
-from typing import Any, Dict
+
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -30,14 +31,14 @@ class Modelo130Calculator:
 
     # Art. 80 bis deduction table (Territorio Comun) — annual rend_neto -> quarterly deduction
     _ART_80BIS_TABLE = [
-        (9_000.0,  100.0),
-        (10_000.0,  75.0),
-        (11_000.0,  50.0),
-        (12_000.0,  25.0),
+        (9_000.0, 100.0),
+        (10_000.0, 75.0),
+        (11_000.0, 50.0),
+        (12_000.0, 25.0),
     ]
     # Maximum quarterly deduction for vivienda habitual (casilla 16)
     _VIVIENDA_HABITUAL_MAX = 660.14  # EUR per quarter
-    _VIVIENDA_HABITUAL_PCT = 0.02   # 2% of rendimiento neto acumulado
+    _VIVIENDA_HABITUAL_PCT = 0.02  # 2% of rendimiento neto acumulado
 
     # Sección II — actividades agrícolas/ganaderas/forestales/pesqueras
     # Art. 110.1.b RIRPF: 2% sobre volumen de ingresos (excluido capital).
@@ -51,9 +52,9 @@ class Modelo130Calculator:
 
     # Navarra progressive table (applied to annualised rend_neto)
     _NAVARRA_TABLE = [
-        (6_500.0,   6.0),
-        (12_000.0,  12.0),
-        (24_000.0,  18.0),
+        (6_500.0, 6.0),
+        (12_000.0, 12.0),
+        (24_000.0, 18.0),
         (float("inf"), 24.0),
     ]
 
@@ -79,20 +80,20 @@ class Modelo130Calculator:
         gastos_trimestre: float = 0.0,
         retenciones_trimestre: float = 0.0,
         # --- Gipuzkoa / Bizkaia common ---
-        regimen: str = "general",           # "general" | "excepcional"
-        rend_neto_penultimo: float = 0.0,   # rendimiento neto del penultimo ano
+        regimen: str = "general",  # "general" | "excepcional"
+        rend_neto_penultimo: float = 0.0,  # rendimiento neto del penultimo ano
         retenciones_penultimo: float = 0.0,
         volumen_operaciones_trimestre: float = 0.0,
         retenciones_trimestre_gipuzkoa: float = 0.0,  # retenciones del trimestre (Gipuzkoa / Bizkaia excepcional)
         # --- Bizkaia extra ---
-        anos_actividad: int = 3,            # if < 3 → first-2-years rules apply
+        anos_actividad: int = 3,  # if < 3 → first-2-years rules apply
         volumen_ventas_penultimo: float = 0.0,
         # --- Navarra ---
-        modalidad: str = "segunda",         # "primera" | "segunda"
+        modalidad: str = "segunda",  # "primera" | "segunda"
         retenciones_acumuladas_navarra: float = 0.0,  # alias for clarity in Navarra
         pagos_anteriores_navarra: float = 0.0,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate the quarterly Modelo 130 result.
 
@@ -225,7 +226,7 @@ class Modelo130Calculator:
         rend_neto_anterior: float,
         tiene_vivienda_habitual: bool,
         resultado_anterior_complementaria: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Territorio Comun (AEAT) and Ceuta/Melilla variant.
 
@@ -238,14 +239,14 @@ class Modelo130Calculator:
         # --- Section I (Estimacion Directa) ---
         casilla_01 = round(ingresos_acumulados, 2)
         casilla_02 = round(gastos_acumulados, 2)
-        casilla_03 = round(casilla_01 - casilla_02, 2)          # rendimiento neto
+        casilla_03 = round(casilla_01 - casilla_02, 2)  # rendimiento neto
         casilla_04 = round(max(0.0, casilla_03) * (tipo_pct / 100), 2)
         casilla_05 = round(retenciones_acumuladas, 2)
         casilla_06 = round(pagos_anteriores, 2)
         casilla_07 = round(max(0.0, casilla_04 - casilla_05 - casilla_06), 2)
 
         # --- Section III (Total) ---
-        casilla_12 = casilla_07   # skip section II (agricola)
+        casilla_12 = casilla_07  # skip section II (agricola)
 
         casilla_13 = round(self._art_80bis_deduction(rend_neto_anterior), 2)
         casilla_14 = round(max(0.0, casilla_12 - casilla_13), 2)
@@ -308,7 +309,7 @@ class Modelo130Calculator:
         gastos_trimestre: float,
         retenciones_trimestre: float,
         pagos_anteriores: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Araba/Alava (Territorio Historico).
 
@@ -357,7 +358,7 @@ class Modelo130Calculator:
         retenciones_penultimo: float,
         volumen_operaciones_trimestre: float,
         retenciones_trimestre: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Gipuzkoa (Territorio Historico).
 
@@ -431,7 +432,7 @@ class Modelo130Calculator:
         gastos_acumulados: float,
         retenciones_acumuladas: float,
         pagos_anteriores: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Bizkaia (Territorio Historico).
 
@@ -534,7 +535,7 @@ class Modelo130Calculator:
         gastos_acumulados: float,
         retenciones_acumuladas: float,
         pagos_anteriores: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Navarra (Comunidad Foral — Hacienda Tributaria de Navarra).
 
@@ -653,7 +654,7 @@ class Modelo130Calculator:
         volumen_ingresos: float,
         retenciones_trimestre: float = 0.0,
         ceuta_melilla: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Sección II del Modelo 130 — actividades agrícolas/ganaderas/forestales/pesqueras.
 
@@ -733,10 +734,10 @@ class Modelo130Calculator:
             > 24.000     → 24%
         """
         navarra_table = [
-            (6_500.0,         6.0),
-            (12_000.0,       12.0),
-            (24_000.0,       18.0),
-            (float("inf"),   24.0),
+            (6_500.0, 6.0),
+            (12_000.0, 12.0),
+            (24_000.0, 18.0),
+            (float("inf"), 24.0),
         ]
         for threshold, pct in navarra_table:
             if rend_neto <= threshold:

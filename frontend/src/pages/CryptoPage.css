@@ -75,7 +75,9 @@
     background: rgba(255, 255, 255, 0.03);
     padding: var(--spacing-8) var(--spacing-4);
     cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
+    transition:
+        border-color 0.2s,
+        background 0.2s;
     position: relative;
 }
 
@@ -143,7 +145,9 @@
     font-weight: 600;
     cursor: pointer;
     border: none;
-    transition: transform 0.15s, box-shadow 0.15s;
+    transition:
+        transform 0.15s,
+        box-shadow 0.15s;
 }
 
 .crypto-btn--primary {
@@ -224,7 +228,9 @@
     cursor: pointer;
     border-radius: var(--radius-lg);
     white-space: nowrap;
-    transition: color 0.15s, background 0.15s;
+    transition:
+        color 0.15s,
+        background 0.15s;
 }
 
 .crypto-tab:hover {
@@ -290,7 +296,9 @@
 /* ========== SPIN ANIMATION ========== */
 
 @keyframes cryptoSpin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .crypto-spin {
@@ -439,7 +447,9 @@
     background: transparent;
     color: rgba(255, 255, 255, 0.3);
     cursor: pointer;
-    transition: color 0.15s, background 0.15s;
+    transition:
+        color 0.15s,
+        background 0.15s;
 }
 
 .crypto-delete-btn:hover {
@@ -468,7 +478,9 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition:
+        background 0.15s,
+        color 0.15s;
 }
 
 .crypto-page-btn:hover:not(:disabled) {
@@ -518,7 +530,9 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-xl);
     padding: var(--spacing-4);
-    transition: transform 0.15s, border-color 0.15s;
+    transition:
+        transform 0.15s,
+        border-color 0.15s;
 }
 
 .crypto-holding-card:hover {
@@ -658,10 +672,18 @@
     opacity: 0.7;
 }
 
-.crypto-gains__card--positive .crypto-gains__card-icon { color: #6ee7b7; }
-.crypto-gains__card--negative .crypto-gains__card-icon { color: #fca5a5; }
-.crypto-gains__card--net-pos .crypto-gains__card-icon { color: #93c5fd; }
-.crypto-gains__card--net-neg .crypto-gains__card-icon { color: #fcd34d; }
+.crypto-gains__card--positive .crypto-gains__card-icon {
+    color: #6ee7b7;
+}
+.crypto-gains__card--negative .crypto-gains__card-icon {
+    color: #fca5a5;
+}
+.crypto-gains__card--net-pos .crypto-gains__card-icon {
+    color: #93c5fd;
+}
+.crypto-gains__card--net-neg .crypto-gains__card-icon {
+    color: #fcd34d;
+}
 
 .crypto-gains__card > div {
     display: flex;

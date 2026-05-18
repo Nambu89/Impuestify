@@ -14,6 +14,7 @@ Usage:
     python scripts/migrate_fix_deduction_spelling.py
     python scripts/migrate_fix_deduction_spelling.py --dry-run
 """
+
 import argparse
 import asyncio
 import json
@@ -29,7 +30,6 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from app.database.turso_client import TursoClient  # noqa: E402
-
 
 # Ordered replacement pairs (applied sequentially)
 TEXT_REPLACEMENTS = [
@@ -146,9 +146,9 @@ async def migrate(dry_run: bool = False) -> None:
             if new_name != old_name:
                 print(f"         name: {old_name!r} → {new_name!r}")
             if new_desc != old_desc:
-                print(f"         desc changed")
+                print("         desc changed")
             if new_questions != old_questions:
-                print(f"         questions_json changed")
+                print("         questions_json changed")
 
             if not dry_run:
                 await db.execute(
@@ -156,7 +156,9 @@ async def migrate(dry_run: bool = False) -> None:
                     [new_name, new_desc, new_questions, row_id],
                 )
 
-    print(f"\nTotal: {updated} deductions {'would be ' if dry_run else ''}updated out of {len(result.rows)}")
+    print(
+        f"\nTotal: {updated} deductions {'would be ' if dry_run else ''}updated out of {len(result.rows)}"
+    )
 
     await db.disconnect()
     print("Done!")

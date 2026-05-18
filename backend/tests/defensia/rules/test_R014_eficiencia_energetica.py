@@ -33,6 +33,7 @@ Descartes (NO dispara):
     - Sin certificado energetico presentado (requisito formal legitimo).
     - Deduccion ya admitida parcialmente (AEAT no la denego).
 """
+
 from __future__ import annotations
 
 import importlib
@@ -48,7 +49,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 
-
 # ---------------------------------------------------------------------------
 # Aislamiento — carga explicita y exclusiva de R014
 # ---------------------------------------------------------------------------
@@ -60,6 +60,7 @@ from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 #
 # Este patron de aislamiento garantiza que el test solo ve R014, sin
 # contaminacion de otras reglas del Grupo A (importante para paralelizacion).
+
 
 def _cargar_solo_R014() -> None:
     """Resetea el registry y carga exclusivamente el modulo R014."""
@@ -82,6 +83,7 @@ def _recargar_R014():
 # Helpers locales
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica.
 
@@ -91,18 +93,12 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
     (erroneamente) "art. 68.7 LIRPF" — tambien vetado aqui. La cita canonica
     debe resolverla el RAG verificador contra el corpus normativo.
     """
-    assert "DA 50" not in cita, (
-        f"Cita hardcoded detectada: 'DA 50' en '{cita}'"
-    )
-    assert "Disposicion Adicional Quincuagesima" not in cita, (
-        f"Cita hardcoded detectada: 'Disposicion Adicional Quincuagesima' en '{cita}'"
-    )
-    assert "RDL 19/2021" not in cita, (
-        f"Cita hardcoded detectada: 'RDL 19/2021' en '{cita}'"
-    )
-    assert "art. 68.7" not in cita.lower(), (
-        f"Cita hardcoded detectada: 'art. 68.7' en '{cita}'"
-    )
+    assert "DA 50" not in cita, f"Cita hardcoded detectada: 'DA 50' en '{cita}'"
+    assert (
+        "Disposicion Adicional Quincuagesima" not in cita
+    ), f"Cita hardcoded detectada: 'Disposicion Adicional Quincuagesima' en '{cita}'"
+    assert "RDL 19/2021" not in cita, f"Cita hardcoded detectada: 'RDL 19/2021' en '{cita}'"
+    assert "art. 68.7" not in cita.lower(), f"Cita hardcoded detectada: 'art. 68.7' en '{cita}'"
 
 
 def _datos_obra_clase_B_denegada() -> dict:
@@ -118,6 +114,7 @@ def _datos_obra_clase_B_denegada() -> dict:
 # ---------------------------------------------------------------------------
 # Test 1 — Positivo: obra con certificado clase B denegada
 # ---------------------------------------------------------------------------
+
 
 def test_R014_positivo_obra_clase_B_denegada(build_exp, build_brief, build_doc):
     """Obra con certificado clase B post-obra y deduccion denegada → dispara.
@@ -140,9 +137,9 @@ def test_R014_positivo_obra_clase_B_denegada(build_exp, build_brief, build_doc):
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R014"
@@ -155,17 +152,18 @@ def test_R014_positivo_obra_clase_B_denegada(build_exp, build_brief, build_doc):
     )
 
     # datos_disparo debe exponer tipo_deduccion y clase_energetica.
-    assert arg.datos_disparo.get("tipo_deduccion") == "40_por_ciento", (
-        f"datos_disparo.tipo_deduccion inesperado: {arg.datos_disparo!r}"
-    )
-    assert arg.datos_disparo.get("clase_energetica") == "B", (
-        f"datos_disparo.clase_energetica inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("tipo_deduccion") == "40_por_ciento"
+    ), f"datos_disparo.tipo_deduccion inesperado: {arg.datos_disparo!r}"
+    assert (
+        arg.datos_disparo.get("clase_energetica") == "B"
+    ), f"datos_disparo.clase_energetica inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — Positivo: reduccion >= 30 % consumo energia primaria
 # ---------------------------------------------------------------------------
+
 
 def test_R014_positivo_reduccion_consumo_primaria(build_exp, build_brief, build_doc):
     """Reduccion del 35 % del consumo de energia primaria → dispara (40 %)."""
@@ -183,26 +181,25 @@ def test_R014_positivo_reduccion_consumo_primaria(build_exp, build_brief, build_
         fase=Fase.COMPROBACION_PROPUESTA,
         docs=[doc],
     )
-    brief = build_brief(
-        "La obra redujo un 35 % el consumo de energia primaria no renovable."
-    )
+    brief = build_brief("La obra redujo un 35 % el consumo de energia primaria no renovable.")
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R014"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
-    assert arg.datos_disparo.get("tipo_deduccion") == "40_por_ciento", (
-        f"datos_disparo.tipo_deduccion inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("tipo_deduccion") == "40_por_ciento"
+    ), f"datos_disparo.tipo_deduccion inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 3 — Positivo: reduccion >= 7 % demanda calefaccion/refrigeracion
 # ---------------------------------------------------------------------------
+
 
 def test_R014_positivo_reduccion_demanda(build_exp, build_brief, build_doc):
     """Reduccion del 10 % de la demanda → dispara (tipo 20 %)."""
@@ -220,26 +217,25 @@ def test_R014_positivo_reduccion_demanda(build_exp, build_brief, build_doc):
         fase=Fase.TEAR_INTERPUESTA,
         docs=[doc],
     )
-    brief = build_brief(
-        "La obra redujo un 10 % la demanda de calefaccion y refrigeracion."
-    )
+    brief = build_brief("La obra redujo un 10 % la demanda de calefaccion y refrigeracion.")
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R014"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
-    assert arg.datos_disparo.get("tipo_deduccion") == "20_por_ciento", (
-        f"datos_disparo.tipo_deduccion inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("tipo_deduccion") == "20_por_ciento"
+    ), f"datos_disparo.tipo_deduccion inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 4 — Negativo: sin certificado energetico
 # ---------------------------------------------------------------------------
+
 
 def test_R014_negativo_sin_certificado(build_exp, build_brief, build_doc):
     """Si el contribuyente no presento certificado energetico, la denegacion
@@ -262,14 +258,15 @@ def test_R014_negativo_sin_certificado(build_exp, build_brief, build_doc):
 
     candidatos = evaluar(exp, brief)
 
-    assert candidatos == [], (
-        f"La regla NO deberia disparar sin certificado energetico, got: {candidatos}"
-    )
+    assert (
+        candidatos == []
+    ), f"La regla NO deberia disparar sin certificado energetico, got: {candidatos}"
 
 
 # ---------------------------------------------------------------------------
 # Test 5 — Negativo: deduccion ya admitida
 # ---------------------------------------------------------------------------
+
 
 def test_R014_negativo_deduccion_admitida(build_exp, build_brief, build_doc):
     """Si AEAT ya admitio (total o parcialmente) la deduccion, no hay
@@ -292,14 +289,15 @@ def test_R014_negativo_deduccion_admitida(build_exp, build_brief, build_doc):
 
     candidatos = evaluar(exp, brief)
 
-    assert candidatos == [], (
-        f"La regla NO deberia disparar con deduccion admitida, got: {candidatos}"
-    )
+    assert (
+        candidatos == []
+    ), f"La regla NO deberia disparar con deduccion admitida, got: {candidatos}"
 
 
 # ---------------------------------------------------------------------------
 # Test 6 — Anti-hardcode + smoke de registro (invariante #2 + rango REGISTRY)
 # ---------------------------------------------------------------------------
+
 
 def test_R014_anti_hardcode_y_registry(build_exp, build_brief, build_doc):
     """Combina dos acceptance criteria:

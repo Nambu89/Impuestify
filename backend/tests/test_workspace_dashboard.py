@@ -5,14 +5,16 @@ Verifies GET /{workspace_id}/dashboard returns the expected
 response structure with all KPIs, quarterly/monthly breakdowns,
 PGC accounts, suppliers, and recent invoices.
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from types import SimpleNamespace
 
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_rows(dicts):
     """Turn a list of dicts into a result object with .rows that support .get()."""
@@ -36,6 +38,7 @@ EMPTY_KPI_ROW = {
 # Tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_dashboard_response_structure():
     """The dashboard endpoint returns a dict with all expected top-level keys
@@ -46,9 +49,17 @@ async def test_dashboard_response_structure():
     mock_request = MagicMock()
 
     mock_workspace = SimpleNamespace(
-        id="ws-1", user_id="u-1", name="Test", description=None,
-        icon="📁", is_default=False, max_files=50, max_size_mb=100,
-        created_at=None, updated_at=None, file_count=0,
+        id="ws-1",
+        user_id="u-1",
+        name="Test",
+        description=None,
+        icon="📁",
+        is_default=False,
+        max_files=50,
+        max_size_mb=100,
+        created_at=None,
+        updated_at=None,
+        file_count=0,
     )
 
     mock_service = AsyncMock()
@@ -57,12 +68,12 @@ async def test_dashboard_response_structure():
     # Every db.execute call returns empty rows except KPIs (needs at least one row)
     mock_db = AsyncMock()
     mock_db.execute.side_effect = [
-        _make_rows([EMPTY_KPI_ROW]),   # KPIs
-        _make_rows([]),                 # por_trimestre
-        _make_rows([]),                 # por_mes
-        _make_rows([]),                 # por_cuenta_pgc
-        _make_rows([]),                 # top_proveedores
-        _make_rows([]),                 # facturas_recientes
+        _make_rows([EMPTY_KPI_ROW]),  # KPIs
+        _make_rows([]),  # por_trimestre
+        _make_rows([]),  # por_mes
+        _make_rows([]),  # por_cuenta_pgc
+        _make_rows([]),  # top_proveedores
+        _make_rows([]),  # facturas_recientes
     ]
 
     mock_user = SimpleNamespace(user_id="u-1", email="test@example.com")
@@ -88,10 +99,15 @@ async def test_dashboard_response_structure():
     # --- KPIs ---
     kpis = result["kpis"]
     expected_kpi_keys = {
-        "ingresos_total", "gastos_total",
-        "iva_repercutido", "iva_soportado", "balance_iva",
-        "retencion_irpf_total", "resultado_neto",
-        "facturas_count", "facturas_pendientes",
+        "ingresos_total",
+        "gastos_total",
+        "iva_repercutido",
+        "iva_soportado",
+        "balance_iva",
+        "retencion_irpf_total",
+        "resultado_neto",
+        "facturas_count",
+        "facturas_pendientes",
     }
     assert set(kpis.keys()) == expected_kpi_keys
     # All should be zero for an empty workspace
@@ -125,9 +141,17 @@ async def test_dashboard_with_data():
 
     mock_request = MagicMock()
     mock_workspace = SimpleNamespace(
-        id="ws-2", user_id="u-2", name="Facturas", description=None,
-        icon="📁", is_default=False, max_files=50, max_size_mb=100,
-        created_at=None, updated_at=None, file_count=5,
+        id="ws-2",
+        user_id="u-2",
+        name="Facturas",
+        description=None,
+        icon="📁",
+        is_default=False,
+        max_files=50,
+        max_size_mb=100,
+        created_at=None,
+        updated_at=None,
+        file_count=5,
     )
 
     mock_service = AsyncMock()
@@ -136,45 +160,73 @@ async def test_dashboard_with_data():
     mock_db = AsyncMock()
     mock_db.execute.side_effect = [
         # KPIs
-        _make_rows([{
-            "ingresos_total": 10000.50,
-            "gastos_total": 3200.00,
-            "iva_repercutido": 2100.105,
-            "iva_soportado": 672.00,
-            "retencion_irpf_total": 1500.00,
-            "facturas_count": 8,
-            "facturas_pendientes": 2,
-        }]),
+        _make_rows(
+            [
+                {
+                    "ingresos_total": 10000.50,
+                    "gastos_total": 3200.00,
+                    "iva_repercutido": 2100.105,
+                    "iva_soportado": 672.00,
+                    "retencion_irpf_total": 1500.00,
+                    "facturas_count": 8,
+                    "facturas_pendientes": 2,
+                }
+            ]
+        ),
         # por_trimestre
-        _make_rows([
-            {"trimestre": 1, "ingresos": 5000.0, "gastos": 1600.0,
-             "iva_repercutido": 1050.0, "iva_soportado": 336.0},
-            {"trimestre": 2, "ingresos": 5000.50, "gastos": 1600.0,
-             "iva_repercutido": 1050.105, "iva_soportado": 336.0},
-        ]),
+        _make_rows(
+            [
+                {
+                    "trimestre": 1,
+                    "ingresos": 5000.0,
+                    "gastos": 1600.0,
+                    "iva_repercutido": 1050.0,
+                    "iva_soportado": 336.0,
+                },
+                {
+                    "trimestre": 2,
+                    "ingresos": 5000.50,
+                    "gastos": 1600.0,
+                    "iva_repercutido": 1050.105,
+                    "iva_soportado": 336.0,
+                },
+            ]
+        ),
         # por_mes
-        _make_rows([
-            {"mes": "2026-01", "ingresos": 2500.0, "gastos": 800.0},
-            {"mes": "2026-02", "ingresos": 2500.0, "gastos": 800.0},
-        ]),
+        _make_rows(
+            [
+                {"mes": "2026-01", "ingresos": 2500.0, "gastos": 800.0},
+                {"mes": "2026-02", "ingresos": 2500.0, "gastos": 800.0},
+            ]
+        ),
         # por_cuenta_pgc
-        _make_rows([
-            {"cuenta": "700", "nombre": "Ventas", "total": 10000.50, "tipo_cuenta": "ingreso"},
-            {"cuenta": "600", "nombre": "Compras", "total": 3200.00, "tipo_cuenta": "gasto"},
-        ]),
+        _make_rows(
+            [
+                {"cuenta": "700", "nombre": "Ventas", "total": 10000.50, "tipo_cuenta": "ingreso"},
+                {"cuenta": "600", "nombre": "Compras", "total": 3200.00, "tipo_cuenta": "gasto"},
+            ]
+        ),
         # top_proveedores
-        _make_rows([
-            {"nombre": "Vodafone", "nif": "A12345678", "total": 1800.0, "facturas": 3},
-        ]),
+        _make_rows(
+            [
+                {"nombre": "Vodafone", "nif": "A12345678", "total": 1800.0, "facturas": 3},
+            ]
+        ),
         # facturas_recientes
-        _make_rows([
-            {
-                "id": "inv-1", "fecha_factura": "2026-02-15",
-                "emisor_nombre": "Vodafone", "concepto": "Telefonia",
-                "total": 60.50, "tipo": "recibida",
-                "cuenta_pgc": "629", "clasificacion_confianza": "alta",
-            },
-        ]),
+        _make_rows(
+            [
+                {
+                    "id": "inv-1",
+                    "fecha_factura": "2026-02-15",
+                    "emisor_nombre": "Vodafone",
+                    "concepto": "Telefonia",
+                    "total": 60.50,
+                    "tipo": "recibida",
+                    "cuenta_pgc": "629",
+                    "clasificacion_confianza": "alta",
+                },
+            ]
+        ),
     ]
 
     mock_user = SimpleNamespace(user_id="u-2", email="test@example.com")
@@ -222,8 +274,9 @@ async def test_dashboard_with_data():
 @pytest.mark.asyncio
 async def test_dashboard_workspace_not_found():
     """Returns 404 when workspace does not exist or belongs to another user."""
-    from app.routers.workspaces import get_workspace_dashboard
     from fastapi import HTTPException
+
+    from app.routers.workspaces import get_workspace_dashboard
 
     mock_service = AsyncMock()
     mock_service.get_workspace.return_value = None

@@ -13,16 +13,18 @@ Covers:
 9. Sale at a loss (no abatimiento/reinversion)
 10. Edge case: vivienda habitual but no reinversion flag
 """
-import pytest
+
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from app.utils.calculators.capital_gains_property import (
-    PropertyCapitalGainsCalculator,
     COEF_ABATIMIENTO_INMUEBLES,
-    FECHA_LIMITE_ABATIMIENTO,
     FECHA_FIN_PERMANENCIA,
+    FECHA_LIMITE_ABATIMIENTO,
     LIMITE_ACUMULADO_TRANSMISION,
+    PropertyCapitalGainsCalculator,
 )
 
 
@@ -34,6 +36,7 @@ def calculator():
 # ---------------------------------------------------------------------------
 # 1. Basic sale — no abatimiento, no reinversion
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_basic_sale_no_exemptions(calculator):
@@ -73,6 +76,7 @@ async def test_basic_sale_no_exemptions(calculator):
 # 2. Art. 38 — full reinversion (100% exempt)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_art38_full_reinversion(calculator):
     """Vivienda habitual with full reinversion: gain fully exempt."""
@@ -105,6 +109,7 @@ async def test_art38_full_reinversion(calculator):
 # 3. Art. 38 — partial reinversion
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_art38_partial_reinversion(calculator):
     """Vivienda habitual with partial reinversion: proportional exemption."""
@@ -136,6 +141,7 @@ async def test_art38_partial_reinversion(calculator):
 # ---------------------------------------------------------------------------
 # 4. DT 9a — pre-1994 acquisition (abatimiento)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_dt9a_abatimiento_pre1994(calculator):
@@ -176,6 +182,7 @@ async def test_dt9a_abatimiento_pre1994(calculator):
 # 5. DT 9a — 400K cumulative limit exceeded
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_dt9a_400k_limit(calculator):
     """Pre-1994 property but valor transmision > 400K: no abatimiento."""
@@ -207,6 +214,7 @@ async def test_dt9a_400k_limit(calculator):
 # ---------------------------------------------------------------------------
 # 6. Post-2006 acquisition — no abatimiento
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_post2006_no_abatimiento(calculator):
@@ -241,6 +249,7 @@ async def test_post2006_no_abatimiento(calculator):
 # ---------------------------------------------------------------------------
 # 7. Multiple sales — aggregation
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_multiple_sales_aggregation(calculator):
@@ -283,6 +292,7 @@ async def test_multiple_sales_aggregation(calculator):
 # 8. Integration with IRPFSimulator
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_simulator_integration():
     """Verify that ventas_inmuebles flows through IRPFSimulator.simulate()."""
@@ -296,20 +306,86 @@ async def test_simulator_integration():
         """Generate mock scale rows."""
         if scale_type == "ahorro":
             return [
-                {"tramo_num": 1, "base_hasta": 6000, "cuota_integra": 0, "resto_base": 6000, "tipo_aplicable": 19.0},
-                {"tramo_num": 2, "base_hasta": 50000, "cuota_integra": 1140, "resto_base": 44000, "tipo_aplicable": 21.0},
-                {"tramo_num": 3, "base_hasta": 200000, "cuota_integra": 10380, "resto_base": 150000, "tipo_aplicable": 23.0},
-                {"tramo_num": 4, "base_hasta": 300000, "cuota_integra": 44880, "resto_base": 100000, "tipo_aplicable": 27.0},
-                {"tramo_num": 5, "base_hasta": 999999, "cuota_integra": 71880, "resto_base": 700000, "tipo_aplicable": 28.0},
+                {
+                    "tramo_num": 1,
+                    "base_hasta": 6000,
+                    "cuota_integra": 0,
+                    "resto_base": 6000,
+                    "tipo_aplicable": 19.0,
+                },
+                {
+                    "tramo_num": 2,
+                    "base_hasta": 50000,
+                    "cuota_integra": 1140,
+                    "resto_base": 44000,
+                    "tipo_aplicable": 21.0,
+                },
+                {
+                    "tramo_num": 3,
+                    "base_hasta": 200000,
+                    "cuota_integra": 10380,
+                    "resto_base": 150000,
+                    "tipo_aplicable": 23.0,
+                },
+                {
+                    "tramo_num": 4,
+                    "base_hasta": 300000,
+                    "cuota_integra": 44880,
+                    "resto_base": 100000,
+                    "tipo_aplicable": 27.0,
+                },
+                {
+                    "tramo_num": 5,
+                    "base_hasta": 999999,
+                    "cuota_integra": 71880,
+                    "resto_base": 700000,
+                    "tipo_aplicable": 28.0,
+                },
             ]
         # General scale
         return [
-            {"tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
-            {"tramo_num": 2, "base_hasta": 20200, "cuota_integra": 1182.75, "resto_base": 7750, "tipo_aplicable": 12.0},
-            {"tramo_num": 3, "base_hasta": 35200, "cuota_integra": 2112.75, "resto_base": 15000, "tipo_aplicable": 15.0},
-            {"tramo_num": 4, "base_hasta": 60000, "cuota_integra": 4362.75, "resto_base": 24800, "tipo_aplicable": 18.5},
-            {"tramo_num": 5, "base_hasta": 300000, "cuota_integra": 8950.75, "resto_base": 240000, "tipo_aplicable": 22.5},
-            {"tramo_num": 6, "base_hasta": 999999, "cuota_integra": 62950.75, "resto_base": 700000, "tipo_aplicable": 24.5},
+            {
+                "tramo_num": 1,
+                "base_hasta": 12450,
+                "cuota_integra": 0,
+                "resto_base": 12450,
+                "tipo_aplicable": 9.5,
+            },
+            {
+                "tramo_num": 2,
+                "base_hasta": 20200,
+                "cuota_integra": 1182.75,
+                "resto_base": 7750,
+                "tipo_aplicable": 12.0,
+            },
+            {
+                "tramo_num": 3,
+                "base_hasta": 35200,
+                "cuota_integra": 2112.75,
+                "resto_base": 15000,
+                "tipo_aplicable": 15.0,
+            },
+            {
+                "tramo_num": 4,
+                "base_hasta": 60000,
+                "cuota_integra": 4362.75,
+                "resto_base": 24800,
+                "tipo_aplicable": 18.5,
+            },
+            {
+                "tramo_num": 5,
+                "base_hasta": 300000,
+                "cuota_integra": 8950.75,
+                "resto_base": 240000,
+                "tipo_aplicable": 22.5,
+            },
+            {
+                "tramo_num": 6,
+                "base_hasta": 999999,
+                "cuota_integra": 62950.75,
+                "resto_base": 700000,
+                "tipo_aplicable": 24.5,
+            },
         ]
 
     def execute_side_effect(query, params=None):
@@ -326,9 +402,11 @@ async def test_simulator_integration():
                 mock_row.keys = lambda r=row: r.keys()
                 # Make dict() work on the row
                 mock_row.__iter__ = lambda self, r=row: iter(r)
+
                 # Support dict(row) via items
                 def _items(r=row):
                     return r.items()
+
                 mock_row.items = _items
                 mock_rows.append(mock_row)
             mock_result.rows = mock_rows
@@ -375,6 +453,7 @@ async def test_simulator_integration():
 # 9. Sale at a loss
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_sale_at_loss(calculator):
     """Sale at a loss: no abatimiento or reinversion, negative ganancia."""
@@ -408,6 +487,7 @@ async def test_sale_at_loss(calculator):
 # 10. Vivienda habitual but no reinversion flag
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_vivienda_habitual_no_reinversion(calculator):
     """Vivienda habitual sold without reinversion: full gain taxed."""
@@ -437,6 +517,7 @@ async def test_vivienda_habitual_no_reinversion(calculator):
 # 11. Empty ventas list
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_empty_ventas(calculator):
     """No sales: returns empty result."""
@@ -449,6 +530,7 @@ async def test_empty_ventas(calculator):
 # ---------------------------------------------------------------------------
 # 12. DT 9a — partial abatimiento (not 100% reduction)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_dt9a_partial_abatimiento(calculator):
@@ -503,6 +585,7 @@ async def test_dt9a_partial_abatimiento(calculator):
 # 13. DT 9a with amortizaciones (previously rented property)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_amortizaciones_previously_rented(calculator):
     """Property with accumulated depreciation from rental period."""
@@ -532,6 +615,7 @@ async def test_amortizaciones_previously_rented(calculator):
 # 14. Art. 38.1 — Reinversion within 24-month plazo
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_reinversion_within_24_months(calculator):
     """Reinversion within 24 months: exemption applies normally."""
@@ -559,7 +643,9 @@ async def test_reinversion_within_24_months(calculator):
     desglose = result["desglose"][0]
     assert desglose["aplica_reinversion"] is True
     # No warnings about plazo in avisos (or aviso is about something else)
-    assert "avisos" not in result or not any("fuera del plazo" in a for a in result.get("avisos", []))
+    assert "avisos" not in result or not any(
+        "fuera del plazo" in a for a in result.get("avisos", [])
+    )
 
 
 @pytest.mark.asyncio

@@ -17,14 +17,9 @@ export function ConversationSidebar({
     onSelectConversation,
     onNewConversation,
     isOpen = false,
-    onClose
+    onClose,
 }: ConversationSidebarProps) {
-    const {
-        conversations,
-        loading,
-        fetchConversations,
-        deleteConversation
-    } = useConversations()
+    const { conversations, loading, fetchConversations, deleteConversation } = useConversations()
 
     // Fetch conversations when sidebar opens or active conversation changes
     useEffect(() => {
@@ -85,7 +80,7 @@ export function ConversationSidebar({
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     color: '#666',
-                                    borderRadius: '8px'
+                                    borderRadius: '8px',
                                 }}
                             >
                                 <X size={20} />
@@ -117,7 +112,9 @@ export function ConversationSidebar({
                                     <MessageSquare size={16} />
                                     <div className="conversation-info">
                                         <div className="conversation-title">{conv.title}</div>
-                                        <div className="conversation-date">{formatDate(conv.updated_at)}</div>
+                                        <div className="conversation-date">
+                                            {formatDate(conv.updated_at)}
+                                        </div>
                                     </div>
                                 </div>
                                 <button

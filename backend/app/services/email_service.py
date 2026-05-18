@@ -3,9 +3,9 @@ Email Service for TaxIA using Resend.
 
 Provides email sending capabilities for sharing reports with advisors.
 """
-import base64
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ class EmailService:
             raise RuntimeError("Resend is not configured. Set RESEND_API_KEY.")
 
         import resend
+
         resend.api_key = settings.RESEND_API_KEY
         self._resend = resend
         self._from_email = settings.RESEND_FROM_EMAIL
@@ -37,8 +38,8 @@ class EmailService:
         to: str,
         subject: str,
         html: str,
-        attachments: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        attachments: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """
         Send an email via Resend.
 
@@ -63,10 +64,12 @@ class EmailService:
         if attachments:
             resend_attachments = []
             for att in attachments:
-                resend_attachments.append({
-                    "filename": att["filename"],
-                    "content": list(att["content"]),  # Resend expects list of bytes
-                })
+                resend_attachments.append(
+                    {
+                        "filename": att["filename"],
+                        "content": list(att["content"]),  # Resend expects list of bytes
+                    }
+                )
             params["attachments"] = resend_attachments
 
         try:
@@ -83,7 +86,7 @@ class EmailService:
         user_name: str,
         report_title: str,
         pdf_bytes: bytes,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Send an IRPF report PDF to a tax advisor.
 
@@ -124,15 +127,17 @@ class EmailService:
             to=advisor_email,
             subject=subject,
             html=html,
-            attachments=[{
-                "filename": f"informe_irpf_{user_name.replace(' ', '_')}.pdf",
-                "content": pdf_bytes,
-            }],
+            attachments=[
+                {
+                    "filename": f"informe_irpf_{user_name.replace(' ', '_')}.pdf",
+                    "content": pdf_bytes,
+                }
+            ],
         )
 
 
 # Singleton
-_email_service: Optional[EmailService] = None
+_email_service: EmailService | None = None
 
 
 def get_email_service() -> EmailService:

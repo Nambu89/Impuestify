@@ -3,9 +3,10 @@ Owner Guard — Shared dependency that ensures the caller is the platform owner.
 
 Used by admin.py, rag_quality.py, and any future owner-only routers.
 """
+
 from fastapi import Depends, HTTPException, status
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.services.subscription_service import get_subscription_service
 
 

@@ -16,8 +16,9 @@ Exenciones:
 - Dacion en pago de vivienda habitual
 - Aportaciones a sociedad conyugal
 """
-from typing import Dict, Any, Optional
+
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -50,32 +51,32 @@ y devuelve el mas favorable para el contribuyente, segun RDL 26/2021.""",
             "properties": {
                 "precio_venta": {
                     "type": "number",
-                    "description": "Precio de transmision (venta) del inmueble en euros."
+                    "description": "Precio de transmision (venta) del inmueble en euros.",
                 },
                 "precio_adquisicion": {
                     "type": "number",
-                    "description": "Precio de adquisicion del inmueble en euros."
+                    "description": "Precio de adquisicion del inmueble en euros.",
                 },
                 "valor_catastral_total": {
                     "type": "number",
                     "description": (
                         "Valor catastral total del inmueble (suelo + construccion) "
                         "en euros. Aparece en el recibo del IBI."
-                    )
+                    ),
                 },
                 "valor_catastral_suelo": {
                     "type": "number",
                     "description": (
                         "Valor catastral del suelo en euros. "
                         "Aparece desglosado en el recibo del IBI."
-                    )
+                    ),
                 },
                 "anos_tenencia": {
                     "type": "integer",
                     "description": (
                         "Anos completos de tenencia del inmueble "
                         "(desde la adquisicion hasta la transmision). Maximo relevante: 20."
-                    )
+                    ),
                 },
                 "tipo_impositivo_municipal": {
                     "type": "number",
@@ -83,38 +84,39 @@ y devuelve el mas favorable para el contribuyente, segun RDL 26/2021.""",
                         "Tipo impositivo del municipio en porcentaje (maximo legal: 30%). "
                         "Ejemplos: Madrid 29%, Barcelona 30%, Valencia 30%, Sevilla 30%. "
                         "Si no se conoce, usar 30% (maximo legal)."
-                    )
+                    ),
                 },
                 "es_vivienda_habitual_dacion": {
                     "type": "boolean",
                     "description": (
                         "True si la transmision es una dacion en pago de la vivienda habitual "
                         "(exenta de plusvalia municipal segun Art. 105.1.c TRLRHL)."
-                    )
+                    ),
                 },
                 "es_divorcio": {
                     "type": "boolean",
                     "description": (
                         "True si la transmision es entre conyuges por disolucion matrimonial "
                         "(exenta de plusvalia municipal segun Art. 104.3 TRLRHL)."
-                    )
-                }
+                    ),
+                },
             },
             "required": [
                 "precio_venta",
                 "precio_adquisicion",
                 "valor_catastral_total",
                 "valor_catastral_suelo",
-                "anos_tenencia"
-            ]
-        }
-    }
+                "anos_tenencia",
+            ],
+        },
+    },
 }
 
 
 # ---------------------------------------------------------------------------
 # Tool executor
 # ---------------------------------------------------------------------------
+
 
 async def calculate_plusvalia_municipal_tool(
     precio_venta: float,
@@ -125,7 +127,7 @@ async def calculate_plusvalia_municipal_tool(
     tipo_impositivo_municipal: float = 30.0,
     es_vivienda_habitual_dacion: bool = False,
     es_divorcio: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calcula la plusvalia municipal (IIVTNU) por ambos metodos y devuelve
     el mas favorable para el contribuyente.

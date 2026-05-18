@@ -17,18 +17,20 @@ Fuentes:
 
 Auditoria: docs/audits/modelo_200_validation_2026-05.md
 """
-from __future__ import annotations
-from dataclasses import dataclass
 
+from __future__ import annotations
+
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Tramos / Regimen
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class ISTramo:
     base_hasta: float  # EUR, float("inf") para ilimitado
-    tipo: float        # porcentaje (ej: 25.0)
+    tipo: float  # porcentaje (ej: 25.0)
 
 
 @dataclass(frozen=True)
@@ -46,8 +48,8 @@ class ISRegimen:
     tramos_microempresa: list[ISTramo]
     tramos_erd: list[ISTramo]
     tramos_nueva_creacion: list[ISTramo]
-    bonificacion_cuota: float          # 0.0 o 0.5 (Ceuta/Melilla)
-    tipo_zec: float | None             # solo Canarias ZEC
+    bonificacion_cuota: float  # 0.0 o 0.5 (Ceuta/Melilla)
+    tipo_zec: float | None  # solo Canarias ZEC
 
 
 # ---------------------------------------------------------------------------
@@ -128,7 +130,7 @@ _GIPUZKOA_2024 = ISRegimen(
 # el escenario base 19%/17%/15% como aproximacion conservadora.
 _GIPUZKOA_2025 = ISRegimen(
     nombre="foral_gipuzkoa",
-    tramos_general=[ISTramo(float("inf"), 19.0)],   # NF 1/2025
+    tramos_general=[ISTramo(float("inf"), 19.0)],  # NF 1/2025
     tramos_microempresa=[ISTramo(50_000, 15.0), ISTramo(float("inf"), 17.0)],
     tramos_erd=[ISTramo(50_000, 15.0), ISTramo(float("inf"), 17.0)],
     tramos_nueva_creacion=[ISTramo(50_000, 15.0), ISTramo(float("inf"), 19.0)],
@@ -199,10 +201,10 @@ SCALES_BY_YEAR: dict[int, dict[str, ISRegimen]] = {
     },
     2025: {
         "comun": _COMUN_2025,
-        "foral_alava": _ALAVA_2024,         # sin cambios reportados
-        "foral_bizkaia": _BIZKAIA_2024,     # sin cambios reportados
-        "foral_gipuzkoa": _GIPUZKOA_2025,   # NF 1/2025
-        "foral_navarra": _NAVARRA_2025,     # LF 26/2016 microempresa 19%
+        "foral_alava": _ALAVA_2024,  # sin cambios reportados
+        "foral_bizkaia": _BIZKAIA_2024,  # sin cambios reportados
+        "foral_gipuzkoa": _GIPUZKOA_2025,  # NF 1/2025
+        "foral_navarra": _NAVARRA_2025,  # LF 26/2016 microempresa 19%
         "zec_canarias": _CANARIAS_ZEC,
         "ceuta_melilla": _CEUTA_MELILLA_2025,
     },
@@ -226,15 +228,19 @@ DEFAULT_EJERCICIO = 2024
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def _regimen_key(territorio: str, es_zec: bool) -> str:
     """Devuelve la clave de regimen segun territorio."""
-    from app.utils.ccaa_constants import normalize_ccaa, FORAL_VASCO, CEUTA_MELILLA as CM_SET
+    from app.utils.ccaa_constants import CEUTA_MELILLA as CM_SET
+    from app.utils.ccaa_constants import FORAL_VASCO, normalize_ccaa
 
     canon = normalize_ccaa(territorio)
     if es_zec and canon == "Canarias":
         return "zec_canarias"
     if canon in FORAL_VASCO:
-        return {"Araba": "foral_alava", "Bizkaia": "foral_bizkaia", "Gipuzkoa": "foral_gipuzkoa"}[canon]
+        return {"Araba": "foral_alava", "Bizkaia": "foral_bizkaia", "Gipuzkoa": "foral_gipuzkoa"}[
+            canon
+        ]
     if canon == "Navarra":
         return "foral_navarra"
     if canon in CM_SET:
@@ -287,14 +293,15 @@ def calcular_cuota_por_tramos(base_imponible: float, tramos: list[ISTramo]) -> f
 # Deducciones IS por territorio + ejercicio
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class ISDeduccionParams:
-    id_pct: float                  # I+D porcentaje base (Art. 35.1.b LIS)
-    it_pct: float                  # IT porcentaje (Art. 35.2 LIS)
+    id_pct: float  # I+D porcentaje base (Art. 35.1.b LIS)
+    it_pct: float  # IT porcentaje (Art. 35.2 LIS)
     limite_deducciones_pct: float  # limite global sobre cuota integra (Art. 39.1)
-    reserva_cap_pct: float         # reserva capitalizacion (Art. 25 LIS)
+    reserva_cap_pct: float  # reserva capitalizacion (Art. 25 LIS)
     reserva_cap_limite_pct: float  # limite reserva capitalizacion sobre BI previa
-    donativos_pct: float           # donativos Sociedades (Art. 20 Ley 49/2002)
+    donativos_pct: float  # donativos Sociedades (Art. 20 Ley 49/2002)
 
 
 # --- Comun por ejercicio ---
@@ -324,16 +331,28 @@ _DED_COMUN_2025 = ISDeduccionParams(
 
 # Forales (sin cambios significativos por Ley 7/2024 para deducciones genericas)
 _DED_BIZKAIA = ISDeduccionParams(
-    id_pct=30.0, it_pct=15.0, limite_deducciones_pct=35.0,
-    reserva_cap_pct=10.0, reserva_cap_limite_pct=10.0, donativos_pct=40.0,
+    id_pct=30.0,
+    it_pct=15.0,
+    limite_deducciones_pct=35.0,
+    reserva_cap_pct=10.0,
+    reserva_cap_limite_pct=10.0,
+    donativos_pct=40.0,
 )
 _DED_GIPUZKOA = ISDeduccionParams(
-    id_pct=30.0, it_pct=15.0, limite_deducciones_pct=35.0,
-    reserva_cap_pct=10.0, reserva_cap_limite_pct=10.0, donativos_pct=40.0,
+    id_pct=30.0,
+    it_pct=15.0,
+    limite_deducciones_pct=35.0,
+    reserva_cap_pct=10.0,
+    reserva_cap_limite_pct=10.0,
+    donativos_pct=40.0,
 )
 _DED_NAVARRA = ISDeduccionParams(
-    id_pct=25.0, it_pct=12.0, limite_deducciones_pct=25.0,
-    reserva_cap_pct=10.0, reserva_cap_limite_pct=10.0, donativos_pct=40.0,
+    id_pct=25.0,
+    it_pct=12.0,
+    limite_deducciones_pct=25.0,
+    reserva_cap_pct=10.0,
+    reserva_cap_limite_pct=10.0,
+    donativos_pct=40.0,
 )
 
 
@@ -360,6 +379,7 @@ def get_is_deduccion_params(
 # ---------------------------------------------------------------------------
 # Helpers Ley 7/2024 — incremento plantilla (reserva capitalizacion)
 # ---------------------------------------------------------------------------
+
 
 def reserva_capitalizacion_pct_2025(incremento_plantilla_pct: float) -> float:
     """Devuelve el % de reserva de capitalizacion para 2025 segun incremento de plantilla.
@@ -405,6 +425,7 @@ def bin_limite_pct(facturacion_anual: float) -> float:
 # ---------------------------------------------------------------------------
 # Tributacion minima (Art. 30 bis LIS)
 # ---------------------------------------------------------------------------
+
 
 def tributacion_minima_pct(
     es_nueva_creacion: bool = False,
@@ -575,11 +596,7 @@ def calcular_deduccion_cine(
                 CINE_ESPANOLA_BASE_PRIMER_TRAMO * CINE_ESPANOLA_PCT_PRIMER_MILLON / 100
                 + (gasto - CINE_ESPANOLA_BASE_PRIMER_TRAMO) * CINE_ESPANOLA_PCT_RESTO / 100
             )
-        techo = (
-            CINE_ESPANOLA_LIMITE_REFORZADO
-            if csi_o_cataluna
-            else CINE_ESPANOLA_LIMITE_GENERAL
-        )
+        techo = CINE_ESPANOLA_LIMITE_REFORZADO if csi_o_cataluna else CINE_ESPANOLA_LIMITE_GENERAL
         return round(min(ded, techo), 2)
 
     if tipo_produccion == "extranjera":

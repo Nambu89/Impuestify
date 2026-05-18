@@ -16,6 +16,7 @@ Output: one line per norm + summary. Sample:
     [FAIL] CONVENIO_NAV  BOE-A-1990-31119   404 La información no existe
     [SKIP] NF_X          (static_url)       HEAD 200
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,7 @@ import httpx
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.services.legal.loader import load_norms  # noqa: E402
-from app.services.legal.models import LegalNorm   # noqa: E402
+from app.services.legal.models import LegalNorm  # noqa: E402
 
 logging.basicConfig(level=logging.WARNING, format="%(message)s")
 logger = logging.getLogger("validate_norms")
@@ -57,11 +58,12 @@ async def _validate_boe(norm: LegalNorm, client: httpx.AsyncClient) -> tuple[str
         return ("FAIL", f"{boe_id} no existe en BOE (body status no 200)")
     # Confirm titulo non-empty
     import re
+
     m = re.search(r"<titulo>([^<]+)</titulo>", body)
     titulo = (m.group(1) if m else "").strip()
     if not titulo:
         return ("WARN", f"{boe_id} sin titulo en API")
-    return ("OK", f"{boe_id} 200 \"{titulo[:60]}...\"")
+    return ("OK", f'{boe_id} 200 "{titulo[:60]}..."')
 
 
 async def _validate_bopv(norm: LegalNorm, client: httpx.AsyncClient) -> tuple[str, str]:
@@ -131,16 +133,20 @@ async def validate_all(norms: list[LegalNorm], fast: bool) -> int:
             elif label == "WARN":
                 warnings += 1
     print()
-    print(f"Total: {len(norms)}  OK: {len(norms) - failures - warnings}  WARN: {warnings}  FAIL: {failures}")
+    print(
+        f"Total: {len(norms)}  OK: {len(norms) - failures - warnings}  WARN: {warnings}  FAIL: {failures}"
+    )
     return failures
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--fast", action="store_true",
-                        help="Skip API endpoints (boe/bopv); only validate static_url HEAD")
-    parser.add_argument("--strict", action="store_true",
-                        help="Treat WARN as failure")
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Skip API endpoints (boe/bopv); only validate static_url HEAD",
+    )
+    parser.add_argument("--strict", action="store_true", help="Treat WARN as failure")
     args = parser.parse_args()
 
     try:

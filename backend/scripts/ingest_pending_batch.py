@@ -2,6 +2,7 @@
 
 Usage: cd backend && python scripts/ingest_pending_batch.py
 """
+
 import asyncio
 import os
 import subprocess
@@ -15,11 +16,13 @@ DOCS_DIR = PROJECT_ROOT / "docs"
 
 sys.path.insert(0, str(BACKEND_DIR))
 from dotenv import load_dotenv
+
 load_dotenv(PROJECT_ROOT / ".env")
 
 
 async def get_ingested_filenames() -> set[str]:
     from app.database.turso_client import TursoClient
+
     db = TursoClient()
     await db.connect()
     r = await db.execute("SELECT filename FROM documents")
@@ -61,7 +64,7 @@ async def main():
                 env={**os.environ, "PYTHONUTF8": "1"},
             )
         except subprocess.TimeoutExpired:
-            print(f"  TIMEOUT (30 min) — skipping")
+            print("  TIMEOUT (30 min) — skipping")
             continue
         # Show last 5 lines of output
         lines = (result.stdout + result.stderr).strip().splitlines()

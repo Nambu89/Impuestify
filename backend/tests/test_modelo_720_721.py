@@ -8,8 +8,10 @@ Covers:
 - Clasificacion exchanges (extranjero vs espanol)
 - Respuestas formateadas
 """
-import pytest
+
 from datetime import datetime
+
+import pytest
 
 # ---------------------------------------------------------------------------
 # Modelo 720 tests
@@ -244,9 +246,7 @@ async def test_720_cese_cuenta_con_720_previo_obliga():
     )
 
     assert result["success"] is True
-    assert result["obligado_720"] is True, (
-        "Cese de cuenta con 720 previo debe obligar"
-    )
+    assert result["obligado_720"] is True, "Cese de cuenta con 720 previo debe obligar"
     assert len(result["ceses_obligan_declarar"]) == 1
     assert result["ceses_obligan_declarar"][0]["categoria"] == "cuentas"
     assert result["ceses_obligan_declarar"][0]["subtipo"] == "A"
@@ -335,9 +335,7 @@ async def test_720_cese_sin_720_previo_no_obliga():
     )
 
     assert result["success"] is True
-    assert result["obligado_720"] is False, (
-        "Sin 720 previo, el cese no genera obligacion"
-    )
+    assert result["obligado_720"] is False, "Sin 720 previo, el cese no genera obligacion"
     assert result["ceses_obligan_declarar"] == []
     # El cese se devuelve marcado como no obligatorio + razon
     assert len(result["ceses_titularidad"]) == 1
@@ -398,9 +396,7 @@ async def test_720_subtipos_desglose_correcto():
     assert "A" in result["subtipos"]["cuentas"]
     assert "B" in result["subtipos"]["cuentas"]
     assert result["subtipos"]["cuentas"]["A"]["valor"] == 30_000
-    assert result["subtipos"]["cuentas"]["A"]["descripcion"].lower().startswith(
-        "cuenta corriente"
-    )
+    assert result["subtipos"]["cuentas"]["A"]["descripcion"].lower().startswith("cuenta corriente")
     assert result["subtipos_warnings"] == []
     formatted = result["formatted_response"]
     assert "Clave A" in formatted
@@ -437,8 +433,7 @@ async def test_720_subtipo_clave_invalida_warning():
 
     assert result["success"] is True
     assert result["obligado_720"] is True
-    assert any("dr720" in w.lower() or "fuera de" in w.lower()
-               for w in result["subtipos_warnings"])
+    assert any("dr720" in w.lower() or "fuera de" in w.lower() for w in result["subtipos_warnings"])
     assert "Z" not in result["subtipos"].get("valores", {})
 
 

@@ -15,7 +15,7 @@ export default function Dashboard() {
         total_chunks: 1250,
         total_documents: 45,
         cache_hits: 0,
-        avg_response_time: 0.8
+        avg_response_time: 0.8,
     })
     const [isLoading] = useState(false)
 

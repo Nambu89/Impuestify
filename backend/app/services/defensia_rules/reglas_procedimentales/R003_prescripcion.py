@@ -19,10 +19,10 @@ fue el 2021-06-30 SI supera el plazo (4 anos + 1 dia).
 Absorbe el sub-caso "calculo de plazos" (antigua R008 del plan v1, descartada
 como regla autonoma segun decision del research doc).
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime, timezone  # noqa: F401 — datetime exportado para patch en tests
-from typing import Optional
 
 from app.models.defensia import (
     ArgumentoCandidato,
@@ -35,25 +35,26 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # ---------------------------------------------------------------------------
 # Constantes auxiliares
 # ---------------------------------------------------------------------------
 
 # Documentos emitidos por la AEAT (vs. ESCRITO_*_USUARIO o auxiliares). Son los
 # unicos que pueden interrumpir o iniciar el computo de prescripcion.
-_TIPOS_ACTO_AEAT: frozenset[TipoDocumento] = frozenset({
-    TipoDocumento.REQUERIMIENTO,
-    TipoDocumento.PROPUESTA_LIQUIDACION,
-    TipoDocumento.LIQUIDACION_PROVISIONAL,
-    TipoDocumento.ACUERDO_INICIO_SANCIONADOR,
-    TipoDocumento.PROPUESTA_SANCION,
-    TipoDocumento.ACUERDO_IMPOSICION_SANCION,
-    TipoDocumento.ACTA_INSPECCION,
-    TipoDocumento.PROVIDENCIA_APREMIO,
-    TipoDocumento.RESOLUCION_TEAR,
-    TipoDocumento.RESOLUCION_TEAC,
-})
+_TIPOS_ACTO_AEAT: frozenset[TipoDocumento] = frozenset(
+    {
+        TipoDocumento.REQUERIMIENTO,
+        TipoDocumento.PROPUESTA_LIQUIDACION,
+        TipoDocumento.LIQUIDACION_PROVISIONAL,
+        TipoDocumento.ACUERDO_INICIO_SANCIONADOR,
+        TipoDocumento.PROPUESTA_SANCION,
+        TipoDocumento.ACUERDO_IMPOSICION_SANCION,
+        TipoDocumento.ACTA_INSPECCION,
+        TipoDocumento.PROVIDENCIA_APREMIO,
+        TipoDocumento.RESOLUCION_TEAR,
+        TipoDocumento.RESOLUCION_TEAC,
+    }
+)
 
 # Fases donde la prescripcion puede ser un argumento util. Usamos los valores
 # literales del enum `Fase` tal como esta definido hoy en models.defensia.
@@ -81,6 +82,7 @@ _CITA_PROPUESTA = (
 # Helpers deterministas (Python puro, sin LLM)
 # ---------------------------------------------------------------------------
 
+
 def _fin_plazo_voluntario(ejercicio: int, tributo: Tributo) -> date:
     """Devuelve el ultimo dia del plazo voluntario de declaracion del ejercicio.
 
@@ -99,7 +101,7 @@ def _fin_plazo_voluntario(ejercicio: int, tributo: Tributo) -> date:
 
 def _ejercicio_del_expediente(
     expediente: ExpedienteEstructurado,
-) -> Optional[int]:
+) -> int | None:
     """Busca el ejercicio fiscal en los `datos` de los documentos.
 
     Usa el primer documento AEAT con `datos.ejercicio` no nulo (en orden
@@ -125,7 +127,7 @@ def _ejercicio_del_expediente(
 
 def _primer_acto_aeat(
     expediente: ExpedienteEstructurado,
-) -> Optional[DocumentoEstructurado]:
+) -> DocumentoEstructurado | None:
     """Devuelve el primer acto AEAT con `fecha_acto` no nula, en orden ASC.
 
     Este es el punto de referencia para medir el plazo: la AEAT interrumpe
@@ -157,6 +159,7 @@ def _hay_interrupcion_explicita(expediente: ExpedienteEstructurado) -> bool:
 # Regla
 # ---------------------------------------------------------------------------
 
+
 @regla(
     id="R003",
     tributos=[
@@ -177,7 +180,7 @@ def _hay_interrupcion_explicita(expediente: ExpedienteEstructurado) -> bool:
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R003 sobre el expediente.
 
     Devuelve un `ArgumentoCandidato` si dispara, o `None` si no procede. La

@@ -1,8 +1,10 @@
 """Tests para el extractor de liquidación provisional IRPF."""
-import pytest
-from unittest.mock import patch
-from app.services.defensia_data_extractor import extract_liquidacion_provisional
 
+from unittest.mock import patch
+
+import pytest
+
+from app.services.defensia_data_extractor import extract_liquidacion_provisional
 
 MOCK_GEMINI_OUTPUT = {
     "referencia": "REF-XXXXX",

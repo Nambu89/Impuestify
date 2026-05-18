@@ -7,10 +7,10 @@ import pytest
 
 from app.services.contabilidad_export_service import ContabilidadExportService
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def diario_entries() -> list[dict]:
@@ -84,6 +84,7 @@ def factura_registro() -> list[dict]:
 # CSV tests
 # ---------------------------------------------------------------------------
 
+
 class TestLibroDiarioCSV:
     def test_libro_diario_csv(self, diario_entries: list[dict]):
         raw = ContabilidadExportService.libro_diario_to_csv(diario_entries)
@@ -95,8 +96,13 @@ class TestLibroDiarioCSV:
 
         # Header row
         assert rows[0] == [
-            "Fecha", "N Asiento", "Cuenta", "Nombre Cuenta",
-            "Debe", "Haber", "Concepto",
+            "Fecha",
+            "N Asiento",
+            "Cuenta",
+            "Nombre Cuenta",
+            "Debe",
+            "Haber",
+            "Concepto",
         ]
         # 3 data rows
         assert len(rows) == 4  # header + 3

@@ -33,9 +33,10 @@ NO confundir con Modelo 308 (solicitud de devolucion para sujetos ocasionales
 de medios de transporte nuevos, transportistas en simplificado, o RE con
 devoluciones a viajeros tax-free).
 """
-from typing import Dict, Any
-from datetime import datetime
+
 import logging
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -88,48 +89,45 @@ vehiculos, o comerciantes RE que devuelven IVA a viajeros tax-free).
             "properties": {
                 "periodo": {
                     "type": "string",
-                    "description": "Trimestre de la operacion: '1T', '2T', '3T' o '4T'."
+                    "description": "Trimestre de la operacion: '1T', '2T', '3T' o '4T'.",
                 },
-                "year": {
-                    "type": "integer",
-                    "description": "Ano fiscal. Por defecto: ano actual"
-                },
+                "year": {"type": "integer", "description": "Ano fiscal. Por defecto: ano actual"},
                 "base_intracomunitarias_21": {
                     "type": "number",
-                    "description": "Base imponible de adquisiciones intracomunitarias al tipo general (21% IVA + 5,2% RE). Por defecto: 0"
+                    "description": "Base imponible de adquisiciones intracomunitarias al tipo general (21% IVA + 5,2% RE). Por defecto: 0",
                 },
                 "base_intracomunitarias_10": {
                     "type": "number",
-                    "description": "Base imponible de adquisiciones intracomunitarias al tipo reducido (10% IVA + 1,4% RE). Por defecto: 0"
+                    "description": "Base imponible de adquisiciones intracomunitarias al tipo reducido (10% IVA + 1,4% RE). Por defecto: 0",
                 },
                 "base_intracomunitarias_4": {
                     "type": "number",
-                    "description": "Base imponible de adquisiciones intracomunitarias al tipo superreducido (4% IVA + 0,5% RE). Por defecto: 0"
+                    "description": "Base imponible de adquisiciones intracomunitarias al tipo superreducido (4% IVA + 0,5% RE). Por defecto: 0",
                 },
                 "base_intracomunitarias_tabaco": {
                     "type": "number",
-                    "description": "Base imponible de adquisiciones intracomunitarias de labores del tabaco (21% IVA + 1,75% RE). Por defecto: 0"
+                    "description": "Base imponible de adquisiciones intracomunitarias de labores del tabaco (21% IVA + 1,75% RE). Por defecto: 0",
                 },
                 "base_isp_21": {
                     "type": "number",
-                    "description": "Base imponible de operaciones con inversion del sujeto pasivo al tipo general 21%. Por defecto: 0"
+                    "description": "Base imponible de operaciones con inversion del sujeto pasivo al tipo general 21%. Por defecto: 0",
                 },
                 "base_isp_10": {
                     "type": "number",
-                    "description": "Base imponible de operaciones con inversion del sujeto pasivo al tipo reducido 10%. Por defecto: 0"
+                    "description": "Base imponible de operaciones con inversion del sujeto pasivo al tipo reducido 10%. Por defecto: 0",
                 },
                 "base_isp_4": {
                     "type": "number",
-                    "description": "Base imponible de operaciones con inversion del sujeto pasivo al tipo superreducido 4%. Por defecto: 0"
+                    "description": "Base imponible de operaciones con inversion del sujeto pasivo al tipo superreducido 4%. Por defecto: 0",
                 },
                 "aplica_re": {
                     "type": "boolean",
-                    "description": "Si el sujeto esta en regimen de Recargo de Equivalencia (true) o no (false). Si false, solo se calcula IVA, sin RE. Por defecto: true"
-                }
+                    "description": "Si el sujeto esta en regimen de Recargo de Equivalencia (true) o no (false). Si false, solo se calcula IVA, sin RE. Por defecto: true",
+                },
             },
-            "required": ["periodo"]
-        }
-    }
+            "required": ["periodo"],
+        },
+    },
 }
 
 
@@ -145,7 +143,7 @@ async def calculate_modelo_309_tool(
     base_isp_4: float = 0,
     aplica_re: bool = True,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate the Modelo 309 (non-periodic IVA self-assessment) for retailers
     in the Recargo de Equivalencia (RE) regime, or for any taxable person
@@ -174,6 +172,7 @@ async def calculate_modelo_309_tool(
     """
     if restricted_mode:
         from app.security.content_restriction import get_autonomo_block_response
+
         logger.warning("calculate_modelo_309 called in restricted_mode — blocking")
         return {
             "success": False,
@@ -237,18 +236,18 @@ async def calculate_modelo_309_tool(
             cuota_intra_tabaco_re = 0.0
 
         total_cuota_intra_iva = round(
-            cuota_intra_21_iva + cuota_intra_10_iva + cuota_intra_4_iva
-            + cuota_intra_tabaco_iva,
+            cuota_intra_21_iva + cuota_intra_10_iva + cuota_intra_4_iva + cuota_intra_tabaco_iva,
             2,
         )
         total_cuota_intra_re = round(
-            cuota_intra_21_re + cuota_intra_10_re + cuota_intra_4_re
-            + cuota_intra_tabaco_re,
+            cuota_intra_21_re + cuota_intra_10_re + cuota_intra_4_re + cuota_intra_tabaco_re,
             2,
         )
         total_base_intra = round(
-            base_intracomunitarias_21 + base_intracomunitarias_10
-            + base_intracomunitarias_4 + base_intracomunitarias_tabaco,
+            base_intracomunitarias_21
+            + base_intracomunitarias_10
+            + base_intracomunitarias_4
+            + base_intracomunitarias_tabaco,
             2,
         )
 
@@ -266,12 +265,8 @@ async def calculate_modelo_309_tool(
             cuota_isp_10_re = 0.0
             cuota_isp_4_re = 0.0
 
-        total_cuota_isp_iva = round(
-            cuota_isp_21_iva + cuota_isp_10_iva + cuota_isp_4_iva, 2
-        )
-        total_cuota_isp_re = round(
-            cuota_isp_21_re + cuota_isp_10_re + cuota_isp_4_re, 2
-        )
+        total_cuota_isp_iva = round(cuota_isp_21_iva + cuota_isp_10_iva + cuota_isp_4_iva, 2)
+        total_cuota_isp_re = round(cuota_isp_21_re + cuota_isp_10_re + cuota_isp_4_re, 2)
         total_base_isp = round(base_isp_21 + base_isp_10 + base_isp_4, 2)
 
         # ===== TOTAL A INGRESAR =====
@@ -292,9 +287,7 @@ async def calculate_modelo_309_tool(
 
         # ===== BUILD FORMATTED RESPONSE =====
         lines = []
-        lines.append(
-            f"**Modelo 309 — Autoliquidacion No Periodica IVA — {periodo_label}**"
-        )
+        lines.append(f"**Modelo 309 — Autoliquidacion No Periodica IVA — {periodo_label}**")
         regimen_label = "Recargo de Equivalencia" if aplica_re else "regimen general"
         lines.append(f"Regimen: {regimen_label}")
         lines.append("Presentacion: AEAT (sede.agenciatributaria.gob.es)")
@@ -355,16 +348,12 @@ async def calculate_modelo_309_tool(
                     f"RE {total_cuota_intra_re:,.2f} EUR**"
                 )
             else:
-                lines.append(
-                    f"- **Total intracomunitarias: IVA {total_cuota_intra_iva:,.2f} EUR**"
-                )
+                lines.append(f"- **Total intracomunitarias: IVA {total_cuota_intra_iva:,.2f} EUR**")
             lines.append("")
 
         # Section: Inversion del sujeto pasivo
         if has_isp:
-            lines.append(
-                "**Inversion del sujeto pasivo (Art. 84.uno.2.o LIVA)**"
-            )
+            lines.append("**Inversion del sujeto pasivo (Art. 84.uno.2.o LIVA)**")
             if base_isp_21 > 0:
                 if aplica_re:
                     lines.append(
@@ -374,8 +363,7 @@ async def calculate_modelo_309_tool(
                     )
                 else:
                     lines.append(
-                        f"- Base 21%: {base_isp_21:,.2f} EUR | "
-                        f"IVA: {cuota_isp_21_iva:,.2f} EUR"
+                        f"- Base 21%: {base_isp_21:,.2f} EUR | " f"IVA: {cuota_isp_21_iva:,.2f} EUR"
                     )
             if base_isp_10 > 0:
                 if aplica_re:
@@ -386,8 +374,7 @@ async def calculate_modelo_309_tool(
                     )
                 else:
                     lines.append(
-                        f"- Base 10%: {base_isp_10:,.2f} EUR | "
-                        f"IVA: {cuota_isp_10_iva:,.2f} EUR"
+                        f"- Base 10%: {base_isp_10:,.2f} EUR | " f"IVA: {cuota_isp_10_iva:,.2f} EUR"
                     )
             if base_isp_4 > 0:
                 if aplica_re:
@@ -398,8 +385,7 @@ async def calculate_modelo_309_tool(
                     )
                 else:
                     lines.append(
-                        f"- Base 4%: {base_isp_4:,.2f} EUR | "
-                        f"IVA: {cuota_isp_4_iva:,.2f} EUR"
+                        f"- Base 4%: {base_isp_4:,.2f} EUR | " f"IVA: {cuota_isp_4_iva:,.2f} EUR"
                     )
             if aplica_re:
                 lines.append(
@@ -407,9 +393,7 @@ async def calculate_modelo_309_tool(
                     f"RE {total_cuota_isp_re:,.2f} EUR**"
                 )
             else:
-                lines.append(
-                    f"- **Total ISP: IVA {total_cuota_isp_iva:,.2f} EUR**"
-                )
+                lines.append(f"- **Total ISP: IVA {total_cuota_isp_iva:,.2f} EUR**")
             lines.append("")
 
         # Resultado

@@ -41,11 +41,7 @@
     align-items: center;
     gap: var(--spacing-2);
     padding: var(--spacing-2) var(--spacing-4);
-    background: linear-gradient(
-        135deg,
-        rgba(26, 86, 219, 0.25) 0%,
-        rgba(6, 182, 212, 0.25) 100%
-    );
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.25) 0%, rgba(6, 182, 212, 0.25) 100%);
     border-radius: var(--radius-full);
     color: var(--color-accent);
     font-size: var(--font-size-sm);
@@ -136,7 +132,9 @@
     height: auto;
     margin: var(--spacing-8) auto 0;
     border-radius: var(--radius-xl);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(6, 182, 212, 0.15);
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 4px 16px rgba(6, 182, 212, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -164,7 +162,9 @@
     gap: var(--spacing-3);
     position: relative;
     z-index: 0;
-    transition: border-color var(--transition-base), background var(--transition-base);
+    transition:
+        border-color var(--transition-base),
+        background var(--transition-base);
 }
 
 .ceuta-ventaja__card:hover {
@@ -185,11 +185,7 @@
     justify-content: center;
     width: 48px;
     height: 48px;
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-accent) 100%
-    );
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     color: var(--color-white);
     border-radius: var(--radius-lg);
     flex-shrink: 0;
@@ -278,11 +274,7 @@
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-primary-dark) 100%
-    );
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     color: var(--color-white);
     border-radius: var(--radius-full);
     font-size: var(--font-size-lg);
@@ -351,11 +343,7 @@
 }
 
 .ceuta-irpf__example-row--total {
-    background: linear-gradient(
-        90deg,
-        rgba(26, 86, 219, 0.12) 0%,
-        rgba(6, 182, 212, 0.12) 100%
-    );
+    background: linear-gradient(90deg, rgba(26, 86, 219, 0.12) 0%, rgba(6, 182, 212, 0.12) 100%);
     border-color: rgba(59, 130, 246, 0.3);
     color: var(--color-primary-light);
     font-size: var(--font-size-base);
@@ -387,7 +375,9 @@
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(12px);
-    transition: border-color var(--transition-base), background var(--transition-base);
+    transition:
+        border-color var(--transition-base),
+        background var(--transition-base);
 }
 
 .ceuta-requisitos__card--ok {
@@ -452,7 +442,9 @@
     border-radius: var(--radius-xl);
     padding: var(--spacing-6);
     backdrop-filter: blur(12px);
-    transition: border-color var(--transition-base), background var(--transition-base);
+    transition:
+        border-color var(--transition-base),
+        background var(--transition-base);
 }
 
 .ceuta-faq__item:hover {
@@ -486,11 +478,7 @@
     margin: 0 auto;
     text-align: center;
     padding: var(--spacing-10) var(--spacing-6);
-    background: linear-gradient(
-        135deg,
-        var(--color-secondary) 0%,
-        var(--color-gray-800) 100%
-    );
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-gray-800) 100%);
     border-radius: var(--radius-2xl);
     border: 1px solid rgba(255, 255, 255, 0.08);
     color: var(--color-white);
@@ -502,11 +490,7 @@
     justify-content: center;
     width: 72px;
     height: 72px;
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-accent) 100%
-    );
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     border-radius: var(--radius-2xl);
     margin-bottom: var(--spacing-6);
 }

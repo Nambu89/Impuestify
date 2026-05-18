@@ -43,7 +43,7 @@ function PagadorCard({
 }) {
     const [expanded, setExpanded] = useState(true)
     const [showExtra, setShowExtra] = useState(
-        pagador.retribuciones_especie > 0 || pagador.ingresos_cuenta > 0
+        pagador.retribuciones_especie > 0 || pagador.ingresos_cuenta > 0,
     )
 
     const update = (partial: Partial<Pagador>) => onChange({ ...pagador, ...partial })
@@ -52,7 +52,11 @@ function PagadorCard({
 
     const handleDelete = () => {
         if (hasData) {
-            if (!window.confirm(`¿Eliminar el pagador "${pagador.nombre || `Pagador ${index + 1}`}"?`)) {
+            if (
+                !window.confirm(
+                    `¿Eliminar el pagador "${pagador.nombre || `Pagador ${index + 1}`}"?`,
+                )
+            ) {
                 return
             }
         }
@@ -60,16 +64,21 @@ function PagadorCard({
     }
 
     const displayName = pagador.nombre.trim() || `Pagador ${index + 1}`
-    const claveLabel = CLAVE_OPTIONS.find(o => o.value === pagador.clave)?.label ?? pagador.clave
+    const claveLabel = CLAVE_OPTIONS.find((o) => o.value === pagador.clave)?.label ?? pagador.clave
 
     return (
         <div className="mp-pagador">
             <div
                 className={`mp-pagador__header ${expanded ? 'mp-pagador__header--expanded' : ''}`}
-                onClick={() => setExpanded(e => !e)}
+                onClick={() => setExpanded((e) => !e)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(v => !v) } }}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setExpanded((v) => !v)
+                    }
+                }}
                 aria-expanded={expanded}
             >
                 <div className="mp-pagador__header-info">
@@ -78,7 +87,8 @@ function PagadorCard({
                         <span className="mp-pagador__header-name">{displayName}</span>
                         {!expanded && pagador.retribuciones_dinerarias > 0 && (
                             <span className="mp-pagador__header-summary">
-                                {pagador.retribuciones_dinerarias.toLocaleString('es-ES')} EUR · {claveLabel}
+                                {pagador.retribuciones_dinerarias.toLocaleString('es-ES')} EUR ·{' '}
+                                {claveLabel}
                             </span>
                         )}
                     </div>
@@ -91,7 +101,10 @@ function PagadorCard({
                         <button
                             type="button"
                             className="mp-pagador__delete"
-                            onClick={e => { e.stopPropagation(); handleDelete() }}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete()
+                            }}
                             aria-label={`Eliminar ${displayName}`}
                             title="Eliminar pagador"
                         >
@@ -110,7 +123,7 @@ function PagadorCard({
                                 type="text"
                                 className="mp-field__input"
                                 value={pagador.nombre}
-                                onChange={e => update({ nombre: e.target.value })}
+                                onChange={(e) => update({ nombre: e.target.value })}
                                 placeholder="Nombre del pagador"
                             />
                         </div>
@@ -121,10 +134,12 @@ function PagadorCard({
                         <select
                             className="mp-field__select"
                             value={pagador.clave}
-                            onChange={e => update({ clave: e.target.value as Pagador['clave'] })}
+                            onChange={(e) => update({ clave: e.target.value as Pagador['clave'] })}
                         >
-                            {CLAVE_OPTIONS.map(opt => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            {CLAVE_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -136,7 +151,11 @@ function PagadorCard({
                                 type="number"
                                 className="mp-field__input"
                                 value={pagador.retribuciones_dinerarias || ''}
-                                onChange={e => update({ retribuciones_dinerarias: parseFloat(e.target.value) || 0 })}
+                                onChange={(e) =>
+                                    update({
+                                        retribuciones_dinerarias: parseFloat(e.target.value) || 0,
+                                    })
+                                }
                                 min={0}
                                 step={100}
                                 inputMode="decimal"
@@ -153,7 +172,9 @@ function PagadorCard({
                                 type="number"
                                 className="mp-field__input"
                                 value={pagador.retenciones || ''}
-                                onChange={e => update({ retenciones: parseFloat(e.target.value) || 0 })}
+                                onChange={(e) =>
+                                    update({ retenciones: parseFloat(e.target.value) || 0 })
+                                }
                                 min={0}
                                 step={100}
                                 inputMode="decimal"
@@ -170,7 +191,9 @@ function PagadorCard({
                                 type="number"
                                 className="mp-field__input"
                                 value={pagador.gastos_deducibles || ''}
-                                onChange={e => update({ gastos_deducibles: parseFloat(e.target.value) || 0 })}
+                                onChange={(e) =>
+                                    update({ gastos_deducibles: parseFloat(e.target.value) || 0 })
+                                }
                                 min={0}
                                 step={10}
                                 inputMode="decimal"
@@ -178,15 +201,18 @@ function PagadorCard({
                             />
                             <span className="mp-field__suffix">EUR</span>
                         </div>
-                        <span className="mp-field__help">Cuota del trabajador a la Seguridad Social</span>
+                        <span className="mp-field__help">
+                            Cuota del trabajador a la Seguridad Social
+                        </span>
                     </div>
 
                     <button
                         type="button"
                         className="mp-pagador__extra-toggle"
-                        onClick={() => setShowExtra(v => !v)}
+                        onClick={() => setShowExtra((v) => !v)}
                     >
-                        {showExtra ? '▲ Ocultar' : '▼ Mostrar'} retribuciones en especie e ingresos a cuenta
+                        {showExtra ? '▲ Ocultar' : '▼ Mostrar'} retribuciones en especie e ingresos
+                        a cuenta
                     </button>
 
                     {showExtra && (
@@ -198,7 +224,12 @@ function PagadorCard({
                                         type="number"
                                         className="mp-field__input"
                                         value={pagador.retribuciones_especie || ''}
-                                        onChange={e => update({ retribuciones_especie: parseFloat(e.target.value) || 0 })}
+                                        onChange={(e) =>
+                                            update({
+                                                retribuciones_especie:
+                                                    parseFloat(e.target.value) || 0,
+                                            })
+                                        }
                                         min={0}
                                         step={100}
                                         inputMode="decimal"
@@ -206,7 +237,9 @@ function PagadorCard({
                                     />
                                     <span className="mp-field__suffix">EUR</span>
                                 </div>
-                                <span className="mp-field__help">Coche empresa, seguro médico, tickets restaurante...</span>
+                                <span className="mp-field__help">
+                                    Coche empresa, seguro médico, tickets restaurante...
+                                </span>
                             </div>
 
                             <div className="mp-field">
@@ -216,7 +249,11 @@ function PagadorCard({
                                         type="number"
                                         className="mp-field__input"
                                         value={pagador.ingresos_cuenta || ''}
-                                        onChange={e => update({ ingresos_cuenta: parseFloat(e.target.value) || 0 })}
+                                        onChange={(e) =>
+                                            update({
+                                                ingresos_cuenta: parseFloat(e.target.value) || 0,
+                                            })
+                                        }
                                         min={0}
                                         step={10}
                                         inputMode="decimal"
@@ -224,7 +261,9 @@ function PagadorCard({
                                     />
                                     <span className="mp-field__suffix">EUR</span>
                                 </div>
-                                <span className="mp-field__help">Ingreso a cuenta de retribuciones en especie</span>
+                                <span className="mp-field__help">
+                                    Ingreso a cuenta de retribuciones en especie
+                                </span>
                             </div>
                         </div>
                     )}
@@ -257,7 +296,7 @@ export default function MultiPagadorForm({
 
     const totalRetribuciones = pagadores.reduce(
         (sum, p) => sum + p.retribuciones_dinerarias + p.retribuciones_especie + p.ingresos_cuenta,
-        0
+        0,
     )
     const totalRetenciones = pagadores.reduce((sum, p) => sum + p.retenciones, 0)
     const totalSS = pagadores.reduce((sum, p) => sum + p.gastos_deducibles, 0)
@@ -270,17 +309,13 @@ export default function MultiPagadorForm({
                     pagador={pagador}
                     index={index}
                     total={pagadores.length}
-                    onChange={updated => handleChangePagador(index, updated)}
+                    onChange={(updated) => handleChangePagador(index, updated)}
                     onDelete={() => handleDelete(index)}
                 />
             ))}
 
             {pagadores.length < maxPagadores && (
-                <button
-                    type="button"
-                    className="mp-form__add-btn"
-                    onClick={handleAdd}
-                >
+                <button type="button" className="mp-form__add-btn" onClick={handleAdd}>
                     + Añadir pagador
                 </button>
             )}
@@ -289,15 +324,21 @@ export default function MultiPagadorForm({
                 <div className="mp-totals">
                     <div className="mp-totals__item">
                         <span className="mp-totals__label">Total retribuciones</span>
-                        <span className="mp-totals__value">{totalRetribuciones.toLocaleString('es-ES')} EUR</span>
+                        <span className="mp-totals__value">
+                            {totalRetribuciones.toLocaleString('es-ES')} EUR
+                        </span>
                     </div>
                     <div className="mp-totals__item">
                         <span className="mp-totals__label">Total retenciones</span>
-                        <span className="mp-totals__value">{totalRetenciones.toLocaleString('es-ES')} EUR</span>
+                        <span className="mp-totals__value">
+                            {totalRetenciones.toLocaleString('es-ES')} EUR
+                        </span>
                     </div>
                     <div className="mp-totals__item">
                         <span className="mp-totals__label">Total SS</span>
-                        <span className="mp-totals__value">{totalSS.toLocaleString('es-ES')} EUR</span>
+                        <span className="mp-totals__value">
+                            {totalSS.toLocaleString('es-ES')} EUR
+                        </span>
                     </div>
                 </div>
             )}

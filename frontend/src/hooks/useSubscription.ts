@@ -58,29 +58,32 @@ export function useSubscription(): UseSubscriptionReturn {
         fetchStatus()
     }, [fetchStatus])
 
-    const createCheckout = useCallback(async (planType: string = 'particular') => {
-        try {
-            const result = await apiRequest('/subscription/create-checkout', {
-                method: 'POST',
-                body: JSON.stringify({
-                    success_url: `${window.location.origin}/chat?subscription=success`,
-                    cancel_url: `${window.location.origin}/subscribe?canceled=true`,
-                    plan_type: planType,
-                }),
-            })
+    const createCheckout = useCallback(
+        async (planType: string = 'particular') => {
+            try {
+                const result = await apiRequest('/subscription/create-checkout', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        success_url: `${window.location.origin}/chat?subscription=success`,
+                        cancel_url: `${window.location.origin}/subscribe?canceled=true`,
+                        plan_type: planType,
+                    }),
+                })
 
-            if (result.checkout_url) {
-                window.location.href = result.checkout_url
-            } else {
-                const msg = 'No se pudo crear la sesión de pago. Inténtalo de nuevo.'
-                setError(msg)
-                throw new Error(msg)
+                if (result.checkout_url) {
+                    window.location.href = result.checkout_url
+                } else {
+                    const msg = 'No se pudo crear la sesión de pago. Inténtalo de nuevo.'
+                    setError(msg)
+                    throw new Error(msg)
+                }
+            } catch (err: any) {
+                setError(err.message || 'Error al crear sesión de pago')
+                throw err
             }
-        } catch (err: any) {
-            setError(err.message || 'Error al crear sesión de pago')
-            throw err
-        }
-    }, [apiRequest])
+        },
+        [apiRequest],
+    )
 
     const openPortal = useCallback(async () => {
         try {

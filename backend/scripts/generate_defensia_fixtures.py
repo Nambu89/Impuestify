@@ -10,11 +10,13 @@ ground truth. Any resemblance to a real taxpayer is excluded by design.
 
 Run: python backend/scripts/generate_defensia_fixtures.py
 """
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -25,7 +27,6 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from reportlab.lib import colors
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 JSON_PATH = REPO_ROOT / "backend/tests/defensia/fixtures/caso_david/expediente_anonimizado.json"
@@ -310,9 +311,7 @@ def generate_sentencia_medidas() -> Path:
 
     story.append(Paragraph("JUZGADO DE PRIMERA INSTANCIA", H1))
     story.append(Paragraph("Procedimiento: Medidas provisionales previas", BODY))
-    story.append(
-        Paragraph("Autos numero 0000/2024 (datos anonimizados)", BODY)
-    )
+    story.append(Paragraph("Autos numero 0000/2024 (datos anonimizados)", BODY))
     story.append(Spacer(1, 3 * mm))
 
     story.append(Paragraph("SENTENCIA", H1))

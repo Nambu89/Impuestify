@@ -10,6 +10,7 @@ Base normativa (resuelta por el RAG verificador, no por la regla):
     - Art. 10 TRLITPAJD (RDL 1/1993) + doctrina reiterada TS Sala 3.ª sobre
       subastas judiciales y valor de adquisicion.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -20,7 +21,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 _CITA_SEMANTICA = (
     "Base imponible en transmisiones patrimoniales onerosas derivadas de "
@@ -78,11 +78,7 @@ def evaluar(
         return None
 
     doc = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDACION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDACION),
         None,
     )
     if doc is None:

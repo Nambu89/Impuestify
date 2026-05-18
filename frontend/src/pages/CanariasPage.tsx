@@ -1,8 +1,17 @@
 import { Link } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
 import {
-    ArrowRight, CheckCircle, X, Sun, Receipt,
-    Building2, PiggyBank, Calculator, ChevronLeft, Info, Zap
+    ArrowRight,
+    CheckCircle,
+    X,
+    Sun,
+    Receipt,
+    Building2,
+    PiggyBank,
+    Calculator,
+    ChevronLeft,
+    Info,
+    Zap,
 } from 'lucide-react'
 import FadeContent from '../components/reactbits/FadeContent'
 import SpotlightCard from '../components/reactbits/SpotlightCard'
@@ -60,9 +69,11 @@ const IGIC_TIPOS = [
 export default function CanariasPage() {
     useSEO({
         title: 'Fiscalidad en Canarias: IGIC, ZEC y RIC — Impuestify',
-        description: 'Cómo tributa quien reside o factura en Canarias: IGIC al 7 % en lugar de IVA, ZEC al 4 % en sociedades, RIC y deducciones propias del archipiélago.',
+        description:
+            'Cómo tributa quien reside o factura en Canarias: IGIC al 7 % en lugar de IVA, ZEC al 4 % en sociedades, RIC y deducciones propias del archipiélago.',
         canonical: '/canarias',
-        keywords: 'fiscalidad Canarias, IGIC, ZEC Canarias, RIC, deducciones Canarias, impuestos Canarias',
+        keywords:
+            'fiscalidad Canarias, IGIC, ZEC Canarias, RIC, deducciones Canarias, impuestos Canarias',
         schema: [
             {
                 '@context': 'https://schema.org',
@@ -106,8 +117,18 @@ export default function CanariasPage() {
                 '@context': 'https://schema.org',
                 '@type': 'BreadcrumbList',
                 itemListElement: [
-                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
-                    { '@type': 'ListItem', position: 2, name: 'Canarias', item: 'https://impuestify.com/canarias' },
+                    {
+                        '@type': 'ListItem',
+                        position: 1,
+                        name: 'Inicio',
+                        item: 'https://impuestify.com',
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: 'Canarias',
+                        item: 'https://impuestify.com/canarias',
+                    },
                 ],
             },
         ],
@@ -146,12 +167,11 @@ export default function CanariasPage() {
                             </GradientText>
                         </h1>
                         <p className="canarias-hero__subtitle">
-                            Canarias tiene un{' '}
-                            <strong>régimen fiscal radicalmente distinto</strong> al
-                            peninsular. Sin IVA, con IGIC al 7%, la Zona Especial Canaria
-                            al 4% en Sociedades, la RIC para reducir hasta el 90% de la
-                            base imponible y deducciones IRPF exclusivas. Impuestify
-                            calcula tu ahorro real con IA y fuentes oficiales.
+                            Canarias tiene un <strong>régimen fiscal radicalmente distinto</strong>{' '}
+                            al peninsular. Sin IVA, con IGIC al 7%, la Zona Especial Canaria al 4%
+                            en Sociedades, la RIC para reducir hasta el 90% de la base imponible y
+                            deducciones IRPF exclusivas. Impuestify calcula tu ahorro real con IA y
+                            fuentes oficiales.
                         </p>
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
@@ -161,27 +181,21 @@ export default function CanariasPage() {
                                     <CountUp to={7} duration={1.5} />
                                     <span>%</span>
                                 </span>
-                                <span className="canarias-hero__stat-label">
-                                    IGIC General
-                                </span>
+                                <span className="canarias-hero__stat-label">IGIC General</span>
                             </div>
                             <div className="canarias-hero__stat">
                                 <span className="canarias-hero__stat-value">
                                     <CountUp to={4} duration={1.2} />
                                     <span>%</span>
                                 </span>
-                                <span className="canarias-hero__stat-label">
-                                    IS en ZEC
-                                </span>
+                                <span className="canarias-hero__stat-label">IS en ZEC</span>
                             </div>
                             <div className="canarias-hero__stat">
                                 <span className="canarias-hero__stat-value">
                                     <CountUp to={50} duration={2} />
                                     <span>%</span>
                                 </span>
-                                <span className="canarias-hero__stat-label">
-                                    Ahorro vs IVA
-                                </span>
+                                <span className="canarias-hero__stat-label">Ahorro vs IVA</span>
                             </div>
                         </div>
                     </FadeContent>
@@ -211,12 +225,10 @@ export default function CanariasPage() {
             <section className="canarias-ventajas" id="ventajas">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">
-                            Ventajas del régimen canario
-                        </h2>
+                        <h2 className="section-title">Ventajas del régimen canario</h2>
                         <p className="section-subtitle">
-                            Un sistema fiscal diseñado para compensar la insularidad y
-                            potenciar la actividad economica del archipielago
+                            Un sistema fiscal diseñado para compensar la insularidad y potenciar la
+                            actividad economica del archipielago
                         </p>
                     </FadeContent>
                     <div className="canarias-ventajas__grid">
@@ -299,12 +311,10 @@ export default function CanariasPage() {
             <section className="canarias-zec">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">
-                            Zona Especial Canaria — 4% en Sociedades
-                        </h2>
+                        <h2 className="section-title">Zona Especial Canaria — 4% en Sociedades</h2>
                         <p className="section-subtitle">
-                            Un régimen excepcional para empresas que se establezcan y
-                            generen empleo real en el archipiélago
+                            Un régimen excepcional para empresas que se establezcan y generen empleo
+                            real en el archipiélago
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -314,10 +324,9 @@ export default function CanariasPage() {
                                 <div className="canarias-zec__step-content">
                                     <h3>Constituye tu empresa en la ZEC</h3>
                                     <p>
-                                        Registro en el Consorcio de la Zona Especial Canaria,
-                                        con domicilio social y sede de dirección efectiva en
-                                        Canarias. La inscripcion es previa al inicio de la
-                                        actividad.
+                                        Registro en el Consorcio de la Zona Especial Canaria, con
+                                        domicilio social y sede de dirección efectiva en Canarias.
+                                        La inscripcion es previa al inicio de la actividad.
                                     </p>
                                 </div>
                             </div>
@@ -326,10 +335,10 @@ export default function CanariasPage() {
                                 <div className="canarias-zec__step-content">
                                     <h3>Cumple requisitos de empleo e inversion</h3>
                                     <p>
-                                        Minimo 5 empleados en Gran Canaria o Tenerife (3 en el
-                                        resto de islas), e inversion minima de 100.000 EUR
-                                        (50.000 EUR en islas menores) en activos afectos a la
-                                        actividad en el primer ano.
+                                        Minimo 5 empleados en Gran Canaria o Tenerife (3 en el resto
+                                        de islas), e inversion minima de 100.000 EUR (50.000 EUR en
+                                        islas menores) en activos afectos a la actividad en el
+                                        primer ano.
                                     </p>
                                 </div>
                             </div>
@@ -338,10 +347,10 @@ export default function CanariasPage() {
                                 <div className="canarias-zec__step-content">
                                     <h3>Tributa al 4% en Impuesto de Sociedades</h3>
                                     <p>
-                                        Sobre los beneficios hasta los límites establecidos
-                                        por empleado (cantidades crecientes según plantilla).
-                                        El beneficio que supere el límite tributa al tipo
-                                        general del 25%.
+                                        Sobre los beneficios hasta los límites establecidos por
+                                        empleado (cantidades crecientes según plantilla). El
+                                        beneficio que supere el límite tributa al tipo general del
+                                        25%.
                                     </p>
                                 </div>
                             </div>
@@ -375,8 +384,8 @@ export default function CanariasPage() {
                                 </div>
                             </div>
                             <p className="canarias-zec__example-note">
-                                Valores orientativos sujetos a los límites de base imponible
-                                por número de empleados establecidos en la normativa ZEC vigente.
+                                Valores orientativos sujetos a los límites de base imponible por
+                                número de empleados establecidos en la normativa ZEC vigente.
                             </p>
                         </div>
                     </FadeContent>
@@ -391,8 +400,8 @@ export default function CanariasPage() {
                             ¿Qué herramientas cubren el régimen canario?
                         </h2>
                         <p className="section-subtitle">
-                            TaxDown, Taxfix y otros asistentes no cubren el IGIC ni la ZEC ni
-                            la RIC canaria
+                            TaxDown, Taxfix y otros asistentes no cubren el IGIC ni la ZEC ni la RIC
+                            canaria
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={500}>
@@ -410,32 +419,51 @@ export default function CanariasPage() {
                                 <tbody>
                                     <tr className="canarias-comparison__row--highlight">
                                         <td>
-                                            <Zap size={16} className="canarias-comparison__icon-brand" />
+                                            <Zap
+                                                size={16}
+                                                className="canarias-comparison__icon-brand"
+                                            />
                                             <strong>Impuestify</strong>
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="canarias-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="canarias-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="canarias-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="canarias-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="canarias-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="canarias-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="canarias-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="canarias-comparison__icon-yes"
+                                            />
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>TaxDown</td>
                                         <td>
-                                            <span className="canarias-comparison__partial">Parcial</span>
+                                            <span className="canarias-comparison__partial">
+                                                Parcial
+                                            </span>
                                         </td>
                                         <td>
                                             <X size={18} className="canarias-comparison__icon-no" />
                                         </td>
                                         <td>
-                                            <span className="canarias-comparison__partial">Parcial</span>
+                                            <span className="canarias-comparison__partial">
+                                                Parcial
+                                            </span>
                                         </td>
                                         <td>
                                             <X size={18} className="canarias-comparison__icon-no" />
@@ -459,10 +487,14 @@ export default function CanariasPage() {
                                     <tr>
                                         <td>ChatGPT / IA generica</td>
                                         <td>
-                                            <span className="canarias-comparison__partial">Parcial</span>
+                                            <span className="canarias-comparison__partial">
+                                                Parcial
+                                            </span>
                                         </td>
                                         <td>
-                                            <span className="canarias-comparison__partial">Parcial</span>
+                                            <span className="canarias-comparison__partial">
+                                                Parcial
+                                            </span>
                                         </td>
                                         <td>
                                             <X size={18} className="canarias-comparison__icon-no" />
@@ -474,13 +506,22 @@ export default function CanariasPage() {
                                     <tr>
                                         <td>Asesor tradicional</td>
                                         <td>
-                                            <CheckCircle size={18} className="canarias-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="canarias-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="canarias-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="canarias-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="canarias-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="canarias-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
                                             <X size={18} className="canarias-comparison__icon-no" />
@@ -502,51 +543,42 @@ export default function CanariasPage() {
                     <FadeContent delay={100} duration={600}>
                         <div className="canarias-faq__grid">
                             <div className="canarias-faq__item">
-                                <h3>
-                                    Los residentes en Canarias pagan IVA?
-                                </h3>
+                                <h3>Los residentes en Canarias pagan IVA?</h3>
                                 <p>
-                                    No. Canarias no forma parte del territorio aduanero de la
-                                    Union Europea a efectos del IVA. En su lugar aplica el
-                                    Impuesto General Indirecto Canario (IGIC), con tipos
-                                    significativamente inferiores al IVA peninsular.
+                                    No. Canarias no forma parte del territorio aduanero de la Union
+                                    Europea a efectos del IVA. En su lugar aplica el Impuesto
+                                    General Indirecto Canario (IGIC), con tipos significativamente
+                                    inferiores al IVA peninsular.
                                 </p>
                             </div>
                             <div className="canarias-faq__item">
-                                <h3>
-                                    ¿Qué es la Zona Especial Canaria?
-                                </h3>
+                                <h3>¿Qué es la Zona Especial Canaria?</h3>
                                 <p>
-                                    La ZEC es un régimen especial aprobado por la Unión Europea
-                                    que permite a empresas radicadas en Canarias tributar al 4%
-                                    en el Impuesto de Sociedades, frente al 25% general, siempre
-                                    que cumplan requisitos de creacion de empleo e inversion en
-                                    el archipielago.
+                                    La ZEC es un régimen especial aprobado por la Unión Europea que
+                                    permite a empresas radicadas en Canarias tributar al 4% en el
+                                    Impuesto de Sociedades, frente al 25% general, siempre que
+                                    cumplan requisitos de creacion de empleo e inversion en el
+                                    archipielago.
                                 </p>
                             </div>
                             <div className="canarias-faq__item">
-                                <h3>
-                                    ¿Puedo aplicar la RIC como autónomo?
-                                </h3>
+                                <h3>¿Puedo aplicar la RIC como autónomo?</h3>
                                 <p>
                                     Sí. Los autónomos con actividad económica en Canarias pueden
-                                    aplicar la Reserva para Inversiones en Canarias (RIC) y
-                                    reducir hasta el 90% de su base imponible en IRPF,
-                                    destinando beneficios a inversiones productivas en el
-                                    archipielago dentro de los plazos establecidos.
+                                    aplicar la Reserva para Inversiones en Canarias (RIC) y reducir
+                                    hasta el 90% de su base imponible en IRPF, destinando beneficios
+                                    a inversiones productivas en el archipielago dentro de los
+                                    plazos establecidos.
                                 </p>
                             </div>
                             <div className="canarias-faq__item">
-                                <h3>
-                                    ¿Cómo ayuda Impuestify con el régimen canario?
-                                </h3>
+                                <h3>¿Cómo ayuda Impuestify con el régimen canario?</h3>
                                 <p>
-                                    Nuestro motor de IA tiene acceso a la normativa específica
-                                    de Canarias: Ley 20/1991 del IGIC, Ley 19/1994 del REF
-                                    Canario (RIC y ZEC), y el Decreto Legislativo 1/2009 de
-                                    deducciones IRPF. Puede calcular tu IGIC, estimar el ahorro
-                                    con la RIC y descubrir todas las deducciones aplicables a
-                                    tu situación.
+                                    Nuestro motor de IA tiene acceso a la normativa específica de
+                                    Canarias: Ley 20/1991 del IGIC, Ley 19/1994 del REF Canario (RIC
+                                    y ZEC), y el Decreto Legislativo 1/2009 de deducciones IRPF.
+                                    Puede calcular tu IGIC, estimar el ahorro con la RIC y descubrir
+                                    todas las deducciones aplicables a tu situación.
                                 </p>
                             </div>
                         </div>
@@ -564,9 +596,9 @@ export default function CanariasPage() {
                             </div>
                             <h2>Calcula tu ahorro fiscal en Canarias</h2>
                             <p>
-                                La única IA fiscal que entiende el régimen canario: IGIC,
-                                ZEC, RIC y deducciones propias. Resultados personalizados
-                                con citas a la norma oficial.
+                                La única IA fiscal que entiende el régimen canario: IGIC, ZEC, RIC y
+                                deducciones propias. Resultados personalizados con citas a la norma
+                                oficial.
                             </p>
                             <Link to="/register" className="btn btn-primary btn-lg">
                                 Empezar ahora — desde 5 €/mes

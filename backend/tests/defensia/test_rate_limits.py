@@ -9,6 +9,7 @@ Los limites responden a la decision de producto:
 - upload documento: 20/min
 - resto CRUD: 60/min (default)
 """
+
 from __future__ import annotations
 
 from app.security.defensia_rate_limits import (

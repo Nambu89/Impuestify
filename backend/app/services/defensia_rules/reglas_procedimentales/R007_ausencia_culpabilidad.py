@@ -39,6 +39,7 @@ aqui no aparecen literales como "Art. 179.2.d LGT" ni "STS 21-9-2020" — solo
 terminos semanticos ("culpabilidad", "motivacion especifica", "interpretacion
 razonable").
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -48,7 +49,6 @@ from app.models.defensia import (
     TipoDocumento,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Cita semantica libre — el RAG verificador resuelve la cita canonica. Se
 # guarda como constante para documentar la intencion y facilitar ajustes

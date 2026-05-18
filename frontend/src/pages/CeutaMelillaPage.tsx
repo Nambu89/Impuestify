@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
 import {
-    ArrowRight, CheckCircle, Calculator, Shield,
-    FileText, TrendingDown, Users, ChevronLeft, Info
+    ArrowRight,
+    CheckCircle,
+    Calculator,
+    Shield,
+    FileText,
+    TrendingDown,
+    Users,
+    ChevronLeft,
+    Info,
 } from 'lucide-react'
 import FadeContent from '../components/reactbits/FadeContent'
 import SpotlightCard from '../components/reactbits/SpotlightCard'
@@ -52,9 +59,11 @@ const VENTAJAS = [
 export default function CeutaMelillaPage() {
     useSEO({
         title: 'Fiscalidad en Ceuta y Melilla — Impuestify',
-        description: 'Cómo se aplica la deducción del 60 % en la cuota del IRPF, el IPSI en lugar del IVA y las bonificaciones del IS para residentes en Ceuta y Melilla.',
+        description:
+            'Cómo se aplica la deducción del 60 % en la cuota del IRPF, el IPSI en lugar del IVA y las bonificaciones del IS para residentes en Ceuta y Melilla.',
         canonical: '/ceuta-melilla',
-        keywords: 'fiscalidad Ceuta Melilla, IPSI, deducción 60% IRPF, ventajas fiscales Ceuta, impuestos Melilla',
+        keywords:
+            'fiscalidad Ceuta Melilla, IPSI, deducción 60% IRPF, ventajas fiscales Ceuta, impuestos Melilla',
         schema: [
             {
                 '@context': 'https://schema.org',
@@ -98,8 +107,18 @@ export default function CeutaMelillaPage() {
                 '@context': 'https://schema.org',
                 '@type': 'BreadcrumbList',
                 itemListElement: [
-                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
-                    { '@type': 'ListItem', position: 2, name: 'Ceuta y Melilla', item: 'https://impuestify.com/ceuta-melilla' },
+                    {
+                        '@type': 'ListItem',
+                        position: 1,
+                        name: 'Inicio',
+                        item: 'https://impuestify.com',
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: 'Ceuta y Melilla',
+                        item: 'https://impuestify.com/ceuta-melilla',
+                    },
                 ],
             },
         ],
@@ -139,9 +158,9 @@ export default function CeutaMelillaPage() {
                         </h1>
                         <p className="ceuta-hero__subtitle">
                             Las ciudades autónomas de Ceuta y Melilla tienen un{' '}
-                            <strong>régimen fiscal especial</strong> con ventajas únicas
-                            en IRPF, IVA y Seguridad Social. Impuestify calcula tu ahorro
-                            real con IA y fuentes oficiales.
+                            <strong>régimen fiscal especial</strong> con ventajas únicas en IRPF,
+                            IVA y Seguridad Social. Impuestify calcula tu ahorro real con IA y
+                            fuentes oficiales.
                         </p>
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
@@ -151,18 +170,14 @@ export default function CeutaMelillaPage() {
                                     <CountUp to={60} duration={2} />
                                     <span>%</span>
                                 </span>
-                                <span className="ceuta-hero__stat-label">
-                                    Deducción IRPF
-                                </span>
+                                <span className="ceuta-hero__stat-label">Deducción IRPF</span>
                             </div>
                             <div className="ceuta-hero__stat">
                                 <span className="ceuta-hero__stat-value">
                                     <CountUp to={4} duration={1.5} />
                                     <span>%</span>
                                 </span>
-                                <span className="ceuta-hero__stat-label">
-                                    Tipo IPSI general
-                                </span>
+                                <span className="ceuta-hero__stat-label">Tipo IPSI general</span>
                             </div>
                             <div className="ceuta-hero__stat">
                                 <span className="ceuta-hero__stat-value">
@@ -203,12 +218,10 @@ export default function CeutaMelillaPage() {
             <section className="ceuta-ventajas" id="ventajas">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">
-                            Principales ventajas fiscales
-                        </h2>
+                        <h2 className="section-title">Principales ventajas fiscales</h2>
                         <p className="section-subtitle">
-                            Un régimen especial diseñado para compensar el alejamiento
-                            geográfico y potenciar la economía local
+                            Un régimen especial diseñado para compensar el alejamiento geográfico y
+                            potenciar la economía local
                         </p>
                     </FadeContent>
                     <div className="ceuta-ventajas__grid">
@@ -250,8 +263,8 @@ export default function CeutaMelillaPage() {
                             Cómo funciona la deducción del 60% en el IRPF
                         </h2>
                         <p className="section-subtitle">
-                            Art. 68.4 de la Ley 35/2006 del IRPF — Deducción por rentas
-                            obtenidas en Ceuta o Melilla
+                            Art. 68.4 de la Ley 35/2006 del IRPF — Deducción por rentas obtenidas en
+                            Ceuta o Melilla
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -261,9 +274,9 @@ export default function CeutaMelillaPage() {
                                 <div className="ceuta-irpf__step-content">
                                     <h3>Calcula tu cuota íntegra total</h3>
                                     <p>
-                                        La cuota íntegra es el resultado de aplicar los
-                                        tipos de la escala del IRPF a tu base liquidable.
-                                        Incluye la parte estatal y la parte autonómica.
+                                        La cuota íntegra es el resultado de aplicar los tipos de la
+                                        escala del IRPF a tu base liquidable. Incluye la parte
+                                        estatal y la parte autonómica.
                                     </p>
                                 </div>
                             </div>
@@ -272,10 +285,9 @@ export default function CeutaMelillaPage() {
                                 <div className="ceuta-irpf__step-content">
                                     <h3>Identifica las rentas de Ceuta/Melilla</h3>
                                     <p>
-                                        La deducción aplica a la parte de la cuota
-                                        correspondiente a rentas obtenidas y computadas
-                                        en Ceuta o Melilla (trabajo, actividad
-                                        económica, etc.).
+                                        La deducción aplica a la parte de la cuota correspondiente a
+                                        rentas obtenidas y computadas en Ceuta o Melilla (trabajo,
+                                        actividad económica, etc.).
                                     </p>
                                 </div>
                             </div>
@@ -284,10 +296,9 @@ export default function CeutaMelillaPage() {
                                 <div className="ceuta-irpf__step-content">
                                     <h3>Aplica el 60% de deducción</h3>
                                     <p>
-                                        Sobre la parte proporcional de cuota íntegra que
-                                        corresponda a esas rentas, se aplica una deducción
-                                        del 60%. El resultado se resta de tu cuota líquida
-                                        final.
+                                        Sobre la parte proporcional de cuota íntegra que corresponda
+                                        a esas rentas, se aplica una deducción del 60%. El resultado
+                                        se resta de tu cuota líquida final.
                                     </p>
                                 </div>
                             </div>
@@ -321,10 +332,9 @@ export default function CeutaMelillaPage() {
                                 </div>
                             </div>
                             <p className="ceuta-irpf__example-note">
-                                Valores orientativos. El cálculo exacto depende de
-                                reducciones, mínimos personales y familiares, y otros
-                                factores. Usa nuestro asistente para tu cálculo
-                                personalizado.
+                                Valores orientativos. El cálculo exacto depende de reducciones,
+                                mínimos personales y familiares, y otros factores. Usa nuestro
+                                asistente para tu cálculo personalizado.
                             </p>
                         </div>
                     </FadeContent>
@@ -337,8 +347,8 @@ export default function CeutaMelillaPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Requisitos para aplicar las ventajas</h2>
                         <p className="section-subtitle">
-                            La normativa establece condiciones específicas de residencia
-                            y actividad para beneficiarse del régimen especial
+                            La normativa establece condiciones específicas de residencia y actividad
+                            para beneficiarse del régimen especial
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -351,8 +361,8 @@ export default function CeutaMelillaPage() {
                                 <ul>
                                     <li>
                                         <CheckCircle size={14} />
-                                        Residencia fiscal en Ceuta o Melilla durante parte
-                                        del año (o todo el año)
+                                        Residencia fiscal en Ceuta o Melilla durante parte del año
+                                        (o todo el año)
                                     </li>
                                     <li>
                                         <CheckCircle size={14} />
@@ -360,8 +370,8 @@ export default function CeutaMelillaPage() {
                                     </li>
                                     <li>
                                         <CheckCircle size={14} />
-                                        La proporción de la deducción depende del tiempo
-                                        de residencia en el ejercicio
+                                        La proporción de la deducción depende del tiempo de
+                                        residencia en el ejercicio
                                     </li>
                                 </ul>
                             </div>
@@ -373,18 +383,17 @@ export default function CeutaMelillaPage() {
                                 <ul>
                                     <li>
                                         <CheckCircle size={14} />
-                                        Alta como autónomo con domicilio fiscal en Ceuta
-                                        o Melilla
+                                        Alta como autónomo con domicilio fiscal en Ceuta o Melilla
                                     </li>
                                     <li>
                                         <CheckCircle size={14} />
-                                        Actividad económica desarrollada principalmente
-                                        en Ceuta o Melilla
+                                        Actividad económica desarrollada principalmente en Ceuta o
+                                        Melilla
                                     </li>
                                     <li>
                                         <CheckCircle size={14} />
-                                        Cumplimiento de estar al corriente con la
-                                        Seguridad Social y la AEAT
+                                        Cumplimiento de estar al corriente con la Seguridad Social y
+                                        la AEAT
                                     </li>
                                 </ul>
                             </div>
@@ -403,51 +412,43 @@ export default function CeutaMelillaPage() {
                         <div className="ceuta-faq__grid">
                             <div className="ceuta-faq__item">
                                 <h3>
-                                    ¿Me afecta la deducción si trabajo en Ceuta pero
-                                    vivo en la Península?
+                                    ¿Me afecta la deducción si trabajo en Ceuta pero vivo en la
+                                    Península?
                                 </h3>
                                 <p>
-                                    La deducción del 60% aplica a residentes fiscales en
-                                    Ceuta o Melilla. Si resides en la Península pero
-                                    obtienes rentas en Ceuta, el tratamiento puede
-                                    variar. Nuestro asistente analiza tu situación
-                                    concreta.
+                                    La deducción del 60% aplica a residentes fiscales en Ceuta o
+                                    Melilla. Si resides en la Península pero obtienes rentas en
+                                    Ceuta, el tratamiento puede variar. Nuestro asistente analiza tu
+                                    situación concreta.
+                                </p>
+                            </div>
+                            <div className="ceuta-faq__item">
+                                <h3>¿El IPSI equivale exactamente al IVA?</h3>
+                                <p>
+                                    No son exactamente equivalentes. El IPSI tiene sus propios tipos
+                                    y reglas. No hay derecho a deducción del IVA soportado como en
+                                    el régimen general. Es un impuesto local con lógica propia.
                                 </p>
                             </div>
                             <div className="ceuta-faq__item">
                                 <h3>
-                                    ¿El IPSI equivale exactamente al IVA?
-                                </h3>
-                                <p>
-                                    No son exactamente equivalentes. El IPSI tiene sus
-                                    propios tipos y reglas. No hay derecho a deducción
-                                    del IVA soportado como en el régimen general. Es
-                                    un impuesto local con lógica propia.
-                                </p>
-                            </div>
-                            <div className="ceuta-faq__item">
-                                <h3>
-                                    ¿La bonificación del 50% SS aplica a todos
-                                    los autónomos en Ceuta?
+                                    ¿La bonificación del 50% SS aplica a todos los autónomos en
+                                    Ceuta?
                                 </h3>
                                 <p>
                                     Aplica a autónomos que residan y ejerzan su actividad
-                                    principalmente en Ceuta o Melilla. Existen
-                                    restricciones para actividades de comercio exterior
-                                    o cuya clientela esté principalmente fuera de estas
-                                    ciudades.
+                                    principalmente en Ceuta o Melilla. Existen restricciones para
+                                    actividades de comercio exterior o cuya clientela esté
+                                    principalmente fuera de estas ciudades.
                                 </p>
                             </div>
                             <div className="ceuta-faq__item">
-                                <h3>
-                                    ¿Cómo puede ayudarme Impuestify con Ceuta/Melilla?
-                                </h3>
+                                <h3>¿Cómo puede ayudarme Impuestify con Ceuta/Melilla?</h3>
                                 <p>
-                                    Nuestro motor tiene acceso a la normativa específica
-                                    de Ceuta y Melilla: el Art. 68.4 LIRPF, la Ley del
-                                    IPSI y la normativa de SS para autónomos. Puede
-                                    calcular tu IRPF aplicando la deducción correcta y
-                                    descubrir todas las ventajas aplicables a tu caso.
+                                    Nuestro motor tiene acceso a la normativa específica de Ceuta y
+                                    Melilla: el Art. 68.4 LIRPF, la Ley del IPSI y la normativa de
+                                    SS para autónomos. Puede calcular tu IRPF aplicando la deducción
+                                    correcta y descubrir todas las ventajas aplicables a tu caso.
                                 </p>
                             </div>
                         </div>
@@ -465,17 +466,17 @@ export default function CeutaMelillaPage() {
                             </div>
                             <h2>Calcula tu ahorro fiscal</h2>
                             <p>
-                                Descubre cuánto puedes ahorrar gracias al régimen
-                                especial de Ceuta y Melilla. Resultados personalizados
-                                con citas al artículo de ley correspondiente.
+                                Descubre cuánto puedes ahorrar gracias al régimen especial de Ceuta
+                                y Melilla. Resultados personalizados con citas al artículo de ley
+                                correspondiente.
                             </p>
                             <Link to="/register" className="btn btn-primary btn-lg">
                                 Empezar ahora — desde 5 €/mes
                                 <ArrowRight size={20} />
                             </Link>
                             <p className="ceuta-cta__note">
-                                También accesible desde el plan Particular (5 €/mes).
-                                Sin permanencia.
+                                También accesible desde el plan Particular (5 €/mes). Sin
+                                permanencia.
                             </p>
                         </div>
                     </FadeContent>

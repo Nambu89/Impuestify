@@ -5,13 +5,13 @@ TODAS las tablas defensia_* quedan sin filas con ese user_id ni hijos
 transitivos. Testea el delete explicito del router user_rights.py como
 defensa en profundidad frente al ON DELETE CASCADE de la migracion.
 """
+
 from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
 
 import pytest
-
 
 BASE_MIGRATION = (
     Path(__file__).parent.parent.parent
@@ -216,10 +216,7 @@ def test_router_user_rights_references_all_seven_defensia_tables():
     olvida alguna tabla.
     """
     router_src = (
-        Path(__file__).parent.parent.parent
-        / "app"
-        / "routers"
-        / "user_rights.py"
+        Path(__file__).parent.parent.parent / "app" / "routers" / "user_rights.py"
     ).read_text(encoding="utf-8")
 
     tablas_esperadas = [
@@ -233,6 +230,5 @@ def test_router_user_rights_references_all_seven_defensia_tables():
     ]
     for tabla in tablas_esperadas:
         assert f"DELETE FROM {tabla}" in router_src, (
-            f"user_rights.py no hace DELETE FROM {tabla} — "
-            f"GDPR cascade incompleto"
+            f"user_rights.py no hace DELETE FROM {tabla} — " f"GDPR cascade incompleto"
         )

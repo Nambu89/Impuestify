@@ -1,9 +1,10 @@
 import pytest
+
 from app.territories.canarias.plugin import CanariasTerritory
 from app.territories.ceuta_melilla.plugin import CeutaMelillaTerritory
 
-
 # --- Canarias ---
+
 
 def test_canarias_territory():
     plugin = CanariasTerritory()
@@ -33,6 +34,7 @@ def test_canarias_uses_default_renta_model():
 
 
 # --- Ceuta / Melilla ---
+
 
 def test_ceuta_melilla_territory():
     plugin = CeutaMelillaTerritory()

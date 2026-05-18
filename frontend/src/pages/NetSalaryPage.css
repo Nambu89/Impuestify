@@ -166,7 +166,9 @@
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: color 0.2s, background 0.2s;
+    transition:
+        color 0.2s,
+        background 0.2s;
 }
 
 .ns-advanced-toggle:hover {
@@ -257,7 +259,9 @@
     color: var(--color-white);
     font-size: 0.95rem;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
     -moz-appearance: textfield;
 }
 
@@ -376,7 +380,9 @@
     height: 14px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.5);
-    transition: transform 0.2s, background 0.2s;
+    transition:
+        transform 0.2s,
+        background 0.2s;
 }
 
 .ns-toggle-input:checked + .ns-toggle-track {
@@ -460,7 +466,9 @@
 }
 
 @keyframes nsSpin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ---- Error ---- */

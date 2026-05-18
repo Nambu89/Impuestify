@@ -118,22 +118,77 @@ _EXCL_RE = re.compile("|".join(EXCLUDE_PATTERNS))
 # Category inference rules (checked in order — first match wins)
 # ---------------------------------------------------------------------------
 CATEGORY_RULES: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"nacimiento|adopci[oó]n|parto|acogimiento familiar|acogimiento de menores|hijo", re.IGNORECASE), "familia"),
-    (re.compile(r"familia numerosa|familia monoparental|monoparental|numerosa", re.IGNORECASE), "familia"),
+    (
+        re.compile(
+            r"nacimiento|adopci[oó]n|parto|acogimiento familiar|acogimiento de menores|hijo",
+            re.IGNORECASE,
+        ),
+        "familia",
+    ),
+    (
+        re.compile(r"familia numerosa|familia monoparental|monoparental|numerosa", re.IGNORECASE),
+        "familia",
+    ),
     (re.compile(r"discapacidad|minusval[ií]a", re.IGNORECASE), "discapacidad"),
     (re.compile(r"alquiler|arrendamiento|arrendador|arrendat", re.IGNORECASE), "vivienda"),
-    (re.compile(r"vivienda|inmueble|rehabilitaci[oó]n.*vivienda|adquisici[oó]n.*vivienda|habitua", re.IGNORECASE), "vivienda"),
-    (re.compile(r"sostenibilidad|energ[eé]t|renovable|eficiencia|autoconsumo|solar", re.IGNORECASE), "sostenibilidad"),
-    (re.compile(r"guarder[ií]a|educaci[oó]n|escolar|libros de texto|idiomas|estudios|formaci[oó]n|m[aá]ster|doctorado", re.IGNORECASE), "educacion"),
+    (
+        re.compile(
+            r"vivienda|inmueble|rehabilitaci[oó]n.*vivienda|adquisici[oó]n.*vivienda|habitua",
+            re.IGNORECASE,
+        ),
+        "vivienda",
+    ),
+    (
+        re.compile(
+            r"sostenibilidad|energ[eé]t|renovable|eficiencia|autoconsumo|solar", re.IGNORECASE
+        ),
+        "sostenibilidad",
+    ),
+    (
+        re.compile(
+            r"guarder[ií]a|educaci[oó]n|escolar|libros de texto|idiomas|estudios|formaci[oó]n|m[aá]ster|doctorado",
+            re.IGNORECASE,
+        ),
+        "educacion",
+    ),
     (re.compile(r"donaci[oó]n|donativo|donaciones", re.IGNORECASE), "donaciones"),
-    (re.compile(r"inversi[oó]n.*acciones|acciones.*participaciones|entidades.*nuevas|creaci[oó]n.*reciente|[aá]ngel inversor|MAB|econom[ií]a social", re.IGNORECASE), "inversion"),
-    (re.compile(r"despoblaci[oó]n|rural|municipio.*peque[ñn]|traslado.*residencia", re.IGNORECASE), "territorial"),
+    (
+        re.compile(
+            r"inversi[oó]n.*acciones|acciones.*participaciones|entidades.*nuevas|creaci[oó]n.*reciente|[aá]ngel inversor|MAB|econom[ií]a social",
+            re.IGNORECASE,
+        ),
+        "inversion",
+    ),
+    (
+        re.compile(
+            r"despoblaci[oó]n|rural|municipio.*peque[ñn]|traslado.*residencia", re.IGNORECASE
+        ),
+        "territorial",
+    ),
     (re.compile(r"transporte|bicicleta|veh[ií]culo", re.IGNORECASE), "movilidad"),
-    (re.compile(r"cuidado.*familiar|cuidado.*ascendiente|cuidado.*descendiente|conciliaci[oó]n|emplead.* hogar", re.IGNORECASE), "familia"),
-    (re.compile(r"emprendimiento|autoempleo|aut[oó]nomo|cuenta propia", re.IGNORECASE), "actividad_economica"),
+    (
+        re.compile(
+            r"cuidado.*familiar|cuidado.*ascendiente|cuidado.*descendiente|conciliaci[oó]n|emplead.* hogar",
+            re.IGNORECASE,
+        ),
+        "familia",
+    ),
+    (
+        re.compile(r"emprendimiento|autoempleo|aut[oó]nomo|cuenta propia", re.IGNORECASE),
+        "actividad_economica",
+    ),
     (re.compile(r"ELA|esclerosis|enfermedad|salud|sanitari", re.IGNORECASE), "salud"),
-    (re.compile(r"patrimonio hist[oó]rico|patrimonio cultural|rehabilitaci[oó]n.*bien|bien.*interes cultural", re.IGNORECASE), "donaciones"),
-    (re.compile(r"investigaci[oó]n|desarrollo|innovaci[oó]n|tecnol[oó]g", re.IGNORECASE), "donaciones"),
+    (
+        re.compile(
+            r"patrimonio hist[oó]rico|patrimonio cultural|rehabilitaci[oó]n.*bien|bien.*interes cultural",
+            re.IGNORECASE,
+        ),
+        "donaciones",
+    ),
+    (
+        re.compile(r"investigaci[oó]n|desarrollo|innovaci[oó]n|tecnol[oó]g", re.IGNORECASE),
+        "donaciones",
+    ),
     (re.compile(r"trabajo|laboral", re.IGNORECASE), "trabajo"),
 ]
 
@@ -164,9 +219,15 @@ def infer_requirements(description: str, category: str) -> dict[str, Any]:
         reqs["familia_monoparental"] = True
     if "discapacidad" in desc_lower:
         reqs["discapacidad_reconocida"] = True
-    if any(w in desc_lower for w in ["alquiler", "arrendamiento"]) and "vivienda habitual" in desc_lower:
+    if (
+        any(w in desc_lower for w in ["alquiler", "arrendamiento"])
+        and "vivienda habitual" in desc_lower
+    ):
         reqs["alquila_vivienda_habitual"] = True
-    if any(w in desc_lower for w in ["compra", "adquisici", "vivienda habitual"]) and category == "vivienda":
+    if (
+        any(w in desc_lower for w in ["compra", "adquisici", "vivienda habitual"])
+        and category == "vivienda"
+    ):
         reqs["vivienda_habitual"] = True
     if any(w in desc_lower for w in ["donaci", "donativo"]):
         reqs["realiza_donativos"] = True
@@ -174,15 +235,30 @@ def infer_requirements(description: str, category: str) -> dict[str, Any]:
         reqs["hijos_en_guarderia"] = True
     if any(w in desc_lower for w in ["libros de texto", "material escolar"]):
         reqs["gastos_educacion_hijos"] = True
-    if any(w in desc_lower for w in ["j[oó]ven", "j[oo]venes", "menores de 3", "menores de 36", "menores de 35", "menor"]):
+    if any(
+        w in desc_lower
+        for w in [
+            "j[oó]ven",
+            "j[oo]venes",
+            "menores de 3",
+            "menores de 36",
+            "menores de 35",
+            "menor",
+        ]
+    ):
         reqs["edad_limite_aplicable"] = True
-    if "energ" in desc_lower and any(w in desc_lower for w in ["renovable", "autoconsumo", "eficiencia"]):
+    if "energ" in desc_lower and any(
+        w in desc_lower for w in ["renovable", "autoconsumo", "eficiencia"]
+    ):
         reqs["obras_mejora_energetica"] = True
     if any(w in desc_lower for w in ["rural", "despoblaci", "municipio peque"]):
         reqs["reside_zona_rural"] = True
     if "investigaci" in desc_lower and "inversi" not in desc_lower:
         reqs["donativo_investigacion"] = True
-    if any(w in desc_lower for w in ["acciones", "participaciones", "nuevas entidades", "reciente creaci"]):
+    if any(
+        w in desc_lower
+        for w in ["acciones", "participaciones", "nuevas entidades", "reciente creaci"]
+    ):
         reqs["inversion_empresa_nueva"] = True
     if "autónomos" in desc_lower or "cuenta propia" in desc_lower:
         reqs["autonomo"] = True
@@ -200,32 +276,40 @@ def build_questions(description: str, category: str, territory: str) -> list[dic
 
     # Primary boolean gate — always present
     short_desc = description[:100].rstrip()
-    questions.append({
-        "key": "aplica_deduccion",
-        "text": f"¿Cumples los requisitos para la deduccion de {territory}: {short_desc}?",
-        "type": "bool",
-    })
+    questions.append(
+        {
+            "key": "aplica_deduccion",
+            "text": f"¿Cumples los requisitos para la deduccion de {territory}: {short_desc}?",
+            "type": "bool",
+        }
+    )
 
     # Supplementary amount question
     if category in ("vivienda", "educacion", "donaciones", "inversion", "sostenibilidad"):
-        questions.append({
-            "key": "importe_pagado",
-            "text": "¿Cual es el importe total pagado o invertido este año con derecho a esta deduccion?",
-            "type": "number",
-        })
+        questions.append(
+            {
+                "key": "importe_pagado",
+                "text": "¿Cual es el importe total pagado o invertido este año con derecho a esta deduccion?",
+                "type": "number",
+            }
+        )
     elif category == "familia":
         if any(w in desc_lower for w in ["nacimiento", "adopci"]):
-            questions.append({
-                "key": "num_hijos_nacidos",
-                "text": "¿Cuantos hijos han nacido o han sido adoptados este año?",
-                "type": "number",
-            })
+            questions.append(
+                {
+                    "key": "num_hijos_nacidos",
+                    "text": "¿Cuantos hijos han nacido o han sido adoptados este año?",
+                    "type": "number",
+                }
+            )
     elif category == "discapacidad":
-        questions.append({
-            "key": "grado_discapacidad",
-            "text": "¿Cual es el grado de discapacidad reconocido (porcentaje)?",
-            "type": "number",
-        })
+        questions.append(
+            {
+                "key": "grado_discapacidad",
+                "text": "¿Cual es el grado de discapacidad reconocido (porcentaje)?",
+                "type": "number",
+            }
+        )
 
     return questions
 
@@ -296,9 +380,9 @@ def parse_properties(path: Path) -> list[dict[str, Any]]:
             if len(segments) < 4:
                 continue
 
-            xsd_path = segments[0]   # /DatosEconomicos/Resultados/DeduccionAutonomicaRes/...
+            xsd_path = segments[0]  # /DatosEconomicos/Resultados/DeduccionAutonomicaRes/...
             field_type = segments[1]  # P102, X, LGC, FEC, ...
-            casilla = segments[2]     # numeric or ### or *NNN
+            casilla = segments[2]  # numeric or ### or *NNN
             description = segments[3]
 
             # Only keep monetary deduction fields
@@ -330,18 +414,20 @@ def parse_properties(path: Path) -> list[dict[str, Any]]:
             reqs = infer_requirements(description, category)
             questions = build_questions(description, category, territory)
 
-            results.append({
-                "xsd_key": xsd_key,
-                "xsd_path": xsd_path,
-                "ccaa_node": ccaa_node,
-                "territory": territory,
-                "casilla": casilla,
-                "description": description,
-                "category": category,
-                "code": code,
-                "requirements_json": json.dumps(reqs, ensure_ascii=False),
-                "questions_json": json.dumps(questions, ensure_ascii=False),
-            })
+            results.append(
+                {
+                    "xsd_key": xsd_key,
+                    "xsd_path": xsd_path,
+                    "ccaa_node": ccaa_node,
+                    "territory": territory,
+                    "casilla": casilla,
+                    "description": description,
+                    "category": category,
+                    "code": code,
+                    "requirements_json": json.dumps(reqs, ensure_ascii=False),
+                    "questions_json": json.dumps(questions, ensure_ascii=False),
+                }
+            )
 
     return results
 
@@ -373,17 +459,19 @@ def save_reference_json(deductions: list[dict[str, Any]], dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     output = []
     for d in deductions:
-        output.append({
-            "xsd_key": d["xsd_key"],
-            "xsd_path": d["xsd_path"],
-            "territory": d["territory"],
-            "casilla_aeat": d["casilla"],
-            "description": d["description"],
-            "category": d["category"],
-            "code": d["code"],
-            "requirements": json.loads(d["requirements_json"]),
-            "questions": json.loads(d["questions_json"]),
-        })
+        output.append(
+            {
+                "xsd_key": d["xsd_key"],
+                "xsd_path": d["xsd_path"],
+                "territory": d["territory"],
+                "casilla_aeat": d["casilla"],
+                "description": d["description"],
+                "category": d["category"],
+                "code": d["code"],
+                "requirements": json.loads(d["requirements_json"]),
+                "questions": json.loads(d["questions_json"]),
+            }
+        )
     dest.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nJSON de referencia guardado: {dest}")
 
@@ -439,14 +527,14 @@ async def seed_deductions_xsd(deductions: list[dict[str, Any]]) -> None:
                 [
                     deduction_id,
                     d["code"],
-                    2024,                       # tax year from XSD
+                    2024,  # tax year from XSD
                     d["territory"],
                     name,
                     "deduccion",
                     d["category"],
-                    None,                        # percentage unknown from XSD
-                    None,                        # max_amount unknown from XSD
-                    None,                        # fixed_amount unknown from XSD
+                    None,  # percentage unknown from XSD
+                    None,  # max_amount unknown from XSD
+                    None,  # fixed_amount unknown from XSD
                     f"Modelo 100 IRPF 2024 — Casilla {d['casilla']}",
                     d["description"],
                     d["requirements_json"],
@@ -466,7 +554,9 @@ async def seed_deductions_xsd(deductions: list[dict[str, Any]]) -> None:
 # Entrypoint
 # ---------------------------------------------------------------------------
 async def main() -> None:
-    properties_path = PROJECT_ROOT / "docs" / "AEAT" / "Renta-2025" / "diccionarioXSD_2024.properties"
+    properties_path = (
+        PROJECT_ROOT / "docs" / "AEAT" / "Renta-2025" / "diccionarioXSD_2024.properties"
+    )
 
     if not properties_path.exists():
         print(f"ERROR: Archivo no encontrado: {properties_path}")

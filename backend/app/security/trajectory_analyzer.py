@@ -25,7 +25,6 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -34,16 +33,16 @@ logger = logging.getLogger(__name__)
 # accumulate across turns into a forbidden trajectory.
 _DRIFT_KEYWORDS = re.compile(
     r"\b("
-    r"akita|perro|gato|loro|cachorro|"                     # animal roleplay
-    r"hacker|hackear|exploit|cracker|"                     # offensive
-    r"código|codigo|script|función|funcion|programa|"      # code requests
-    r"python|javascript|typescript|sql|bash|shell|"        # languages
-    r"poema|poesía|poesia|cuento|historia|novela|"         # creative writing off-topic
-    r"receta|cocina|comida|"                              # food
-    r"romance|amor|seducción|seduccion|"                   # romance
-    r"chatgpt|gpt-4|gpt-5|claude|gemini|llama|"            # cross-model
-    r"sin\s+filtros?|sin\s+restricciones|liberado|"        # jailbreak hints
-    r"ignora|olvida|saltate|sáltate"                       # bypass hints
+    r"akita|perro|gato|loro|cachorro|"  # animal roleplay
+    r"hacker|hackear|exploit|cracker|"  # offensive
+    r"código|codigo|script|función|funcion|programa|"  # code requests
+    r"python|javascript|typescript|sql|bash|shell|"  # languages
+    r"poema|poesía|poesia|cuento|historia|novela|"  # creative writing off-topic
+    r"receta|cocina|comida|"  # food
+    r"romance|amor|seducción|seduccion|"  # romance
+    r"chatgpt|gpt-4|gpt-5|claude|gemini|llama|"  # cross-model
+    r"sin\s+filtros?|sin\s+restricciones|liberado|"  # jailbreak hints
+    r"ignora|olvida|saltate|sáltate"  # bypass hints
     r")\b",
     re.IGNORECASE | re.UNICODE,
 )
@@ -59,12 +58,12 @@ class TrajectoryResult:
     is_safe: bool
     drift_turns: int
     window_size: int
-    matched_keywords: List[str]
+    matched_keywords: list[str]
     reason: str
 
 
 def analyze_trajectory(
-    user_turns: List[str],
+    user_turns: list[str],
     window: int = TRAJECTORY_WINDOW,
     drift_threshold: int = DRIFT_TURNS_THRESHOLD,
 ) -> TrajectoryResult:
@@ -83,7 +82,7 @@ def analyze_trajectory(
         return TrajectoryResult(True, 0, len(last), [], "insufficient_window")
 
     drift_count = 0
-    matched: List[str] = []
+    matched: list[str] = []
     for turn in last:
         m = _DRIFT_KEYWORDS.search(turn)
         if m:
@@ -93,7 +92,9 @@ def analyze_trajectory(
     if drift_count >= drift_threshold:
         logger.warning(
             "Trajectory drift detected: %d/%d turns drifty, keywords=%s",
-            drift_count, len(last), matched,
+            drift_count,
+            len(last),
+            matched,
         )
         return TrajectoryResult(
             is_safe=False,

@@ -4,15 +4,16 @@ Export Router for TaxIA.
 Provides endpoints for generating IRPF reports, modelo PDFs,
 and sharing them with advisors.
 """
+
 import json
 import logging
 import secrets
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from app.auth.jwt_handler import get_current_user
 from app.security.rate_limiter import limiter
@@ -24,12 +25,14 @@ router = APIRouter(prefix="/api/export", tags=["export"])
 
 # === Request/Response Models ===
 
+
 class IRPFReportRequest(BaseModel):
     """Request for IRPF report generation."""
+
     ccaa: str = Field(..., description="Comunidad autonoma")
     ingresos_trabajo: float = Field(0, description="Ingresos brutos anuales del trabajo")
     year: int = Field(2025, description="Ano fiscal")
-    answers: Optional[Dict[str, Any]] = Field(default=None, description="Respuestas para deducciones")
+    answers: dict[str, Any] | None = Field(default=None, description="Respuestas para deducciones")
     # Extended fields for complete simulation
     retenciones_trabajo: float = Field(0, description="Retenciones IRPF en nómina")
     ss_empleado: float = Field(0, description="Cotización SS empleado anual")
@@ -62,16 +65,19 @@ class IRPFReportRequest(BaseModel):
     dividendos: float = Field(0, description="Dividendos")
     ganancias_fondos: float = Field(0, description="Ganancias fondos")
     # Chat content for personalized analysis
-    chat_content: Optional[str] = Field(default=None, description="Contenido markdown del análisis del asistente")
+    chat_content: str | None = Field(
+        default=None, description="Contenido markdown del análisis del asistente"
+    )
 
 
 class ModeloPDFRequest(BaseModel):
     """Request for Modelo Tributario PDF generation."""
+
     modelo: str = Field(..., description="Tipo de modelo: 303, 130, 308, 720, 721, ipsi")
     data: dict = Field(..., description="Datos calculados del modelo (casillas, resultados)")
     trimestre: str = Field("1T", description="Periodo: 1T, 2T, 3T, 4T, anual")
     ejercicio: int = Field(2026, description="Año fiscal")
-    contribuyente: Optional[dict] = Field(
+    contribuyente: dict | None = Field(
         default=None,
         description="Datos del contribuyente: {nombre, nif, variante_foral}",
     )
@@ -79,19 +85,22 @@ class ModeloPDFRequest(BaseModel):
 
 class ShareWithAdvisorRequest(BaseModel):
     """Request to share a report with an advisor."""
+
     report_id: str = Field(..., description="ID del informe generado")
     advisor_email: EmailStr = Field(..., description="Email del asesor")
-    message: Optional[str] = Field(default=None, description="Mensaje opcional")
+    message: str | None = Field(default=None, description="Mensaje opcional")
 
 
 class ReportResponse(BaseModel):
     """Response after report generation."""
+
     report_id: str
     share_token: str
     message: str
 
 
 # === Endpoints ===
+
 
 @router.post("/irpf-report", response_class=Response)
 @limiter.limit("5/minute")
@@ -137,6 +146,7 @@ async def generate_irpf_report(
     if has_income:
         try:
             from app.tools.irpf_simulator_tool import simulate_irpf_tool
+
             sim_result = await simulate_irpf_tool(
                 comunidad_autonoma=body.ccaa,
                 ingresos_trabajo=body.ingresos_trabajo,
@@ -180,6 +190,7 @@ async def generate_irpf_report(
     estimated_savings = 0.0
     try:
         from app.tools.deduction_discovery_tool import discover_deductions_tool
+
         ded_result = await discover_deductions_tool(
             ccaa=body.ccaa,
             tax_year=body.year,
@@ -193,6 +204,7 @@ async def generate_irpf_report(
 
     # Generate PDF
     from app.services.report_generator import generate_irpf_report as gen_pdf
+
     pdf_bytes = gen_pdf(
         user_name=user_name,
         simulation_data=simulation_data,
@@ -206,14 +218,16 @@ async def generate_irpf_report(
     report_id = str(uuid.uuid4())
     share_token = secrets.token_urlsafe(32)
 
-    report_data = json.dumps({
-        "ccaa": body.ccaa,
-        "year": body.year,
-        "ingresos_trabajo": body.ingresos_trabajo,
-        "simulation": simulation_data,
-        "deductions_count": len(deductions),
-        "estimated_savings": estimated_savings,
-    })
+    report_data = json.dumps(
+        {
+            "ccaa": body.ccaa,
+            "year": body.year,
+            "ingresos_trabajo": body.ingresos_trabajo,
+            "simulation": simulation_data,
+            "deductions_count": len(deductions),
+            "estimated_savings": estimated_savings,
+        }
+    )
 
     try:
         await db.execute(
@@ -286,6 +300,7 @@ async def share_with_advisor(
 
     # Send email
     from app.services.email_service import get_email_service
+
     email_service = get_email_service()
 
     send_result = await email_service.send_report_to_advisor(
@@ -330,7 +345,7 @@ async def export_modelo_pdf(
     Supported modelos: 303, 130, 308, 720, 721, ipsi.
     Returns PDF as download.
     """
-    from app.services.modelo_pdf_generator import ModeloPDFGenerator, VALID_MODELOS
+    from app.services.modelo_pdf_generator import VALID_MODELOS, ModeloPDFGenerator
 
     if body.modelo not in VALID_MODELOS:
         raise HTTPException(

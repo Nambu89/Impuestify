@@ -20,6 +20,7 @@ Principios de estos tests:
   directamente su propio modulo — eso dispara el decorador `@regla` y registra
   la R006 en el REGISTRY sin tocar las otras.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -47,6 +48,7 @@ def _cargar_solo_R006() -> None:
     from app.services.defensia_rules.reglas_procedimentales import (
         R006_non_bis_in_idem,
     )
+
     reset_registry()
     importlib.reload(R006_non_bis_in_idem)
 
@@ -54,6 +56,7 @@ def _cargar_solo_R006() -> None:
 # ---------------------------------------------------------------------------
 # Helpers locales — encapsulan el boilerplate minimo para cada caso
 # ---------------------------------------------------------------------------
+
 
 def _exp_con_sancion(
     *,
@@ -80,8 +83,11 @@ def _exp_con_sancion(
 # Test 1 — Positivo caso David: doble tipicidad 191+194 detectada por extractor
 # ---------------------------------------------------------------------------
 
+
 def test_R006_dispara_con_doble_tipicidad_flag_true(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """El flag `tiene_doble_tipicidad_191_194=True` debe disparar la regla.
 
@@ -109,9 +115,7 @@ def test_R006_dispara_con_doble_tipicidad_flag_true(
     candidatos = evaluar(expediente, brief)
 
     r006 = [c for c in candidatos if c.regla_id == "R006"]
-    assert len(r006) == 1, (
-        f"R006 debe disparar exactamente 1 vez con flag True; got {len(r006)}"
-    )
+    assert len(r006) == 1, f"R006 debe disparar exactamente 1 vez con flag True; got {len(r006)}"
     assert isinstance(r006[0], ArgumentoCandidato)
     assert r006[0].datos_disparo, "datos_disparo no puede estar vacio"
 
@@ -120,8 +124,11 @@ def test_R006_dispara_con_doble_tipicidad_flag_true(
 # Test 2 — Positivo alternativo: datos explicitos via tipos_infraccion
 # ---------------------------------------------------------------------------
 
+
 def test_R006_dispara_con_tipos_infraccion_191_y_194(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """Fallback: la regla tambien dispara si `tipos_infraccion` contiene 191 y 194.
 
@@ -156,8 +163,11 @@ def test_R006_dispara_con_tipos_infraccion_191_y_194(
 # Test 3 — Negativo: solo 191 sin concurrencia con 194
 # ---------------------------------------------------------------------------
 
+
 def test_R006_no_dispara_con_solo_191(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """Una sancion 191 aislada NO constituye non bis in idem — no dispara."""
     _cargar_solo_R006()
@@ -177,17 +187,20 @@ def test_R006_no_dispara_con_solo_191(
 
     candidatos = evaluar(expediente, brief)
 
-    assert not any(c.regla_id == "R006" for c in candidatos), (
-        "R006 NO debe disparar cuando solo hay infraccion 191"
-    )
+    assert not any(
+        c.regla_id == "R006" for c in candidatos
+    ), "R006 NO debe disparar cuando solo hay infraccion 191"
 
 
 # ---------------------------------------------------------------------------
 # Test 4 — Negativo: fase no sancionadora
 # ---------------------------------------------------------------------------
 
+
 def test_R006_no_dispara_fuera_de_fase_sancionadora(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """Aunque el documento contenga datos compatibles, si la fase del expediente
     es liquidacion provisional (sin sancion aun), R006 NO debe disparar por
@@ -216,17 +229,20 @@ def test_R006_no_dispara_fuera_de_fase_sancionadora(
 
     candidatos = evaluar(expediente, brief)
 
-    assert not any(c.regla_id == "R006" for c in candidatos), (
-        "R006 NO debe disparar en fases no sancionadoras"
-    )
+    assert not any(
+        c.regla_id == "R006" for c in candidatos
+    ), "R006 NO debe disparar en fases no sancionadoras"
 
 
 # ---------------------------------------------------------------------------
 # Test 5 — Asercion anti-hardcode (invariante #2 del plan)
 # ---------------------------------------------------------------------------
 
+
 def test_R006_no_hardcodea_cita_normativa(
-    build_exp, build_doc, build_brief,
+    build_exp,
+    build_doc,
+    build_brief,
 ):
     """BLOCKER B2: la regla NO puede hardcodear ninguna cita normativa literal.
 

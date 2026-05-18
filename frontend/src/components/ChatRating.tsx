@@ -126,8 +126,8 @@ export default function ChatRating({ messageId, conversationId }: ChatRatingProp
                             className="chat-rating__comment-input"
                             placeholder="Añade un comentario..."
                             value={comment}
-                            onChange={e => setComment(e.target.value.slice(0, 300))}
-                            onKeyDown={e => {
+                            onChange={(e) => setComment(e.target.value.slice(0, 300))}
+                            onKeyDown={(e) => {
                                 if (e.key === 'Enter') handleSubmit()
                                 if (e.key === 'Escape') handleCancel()
                             }}

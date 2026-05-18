@@ -11,6 +11,7 @@ Cobertura:
   - Edge cases: rend negativo, num_asalariados negativo, quarter inválido.
   - Casos AEAT verificados (A-G del audit modelo_131_validation_2026-05.md).
 """
+
 import pytest
 
 from app.utils.calculators.modelo_131 import Modelo131Calculator
@@ -24,6 +25,7 @@ def calc():
 # ===========================================================================
 # Apartado I — Empresarial con datos-base
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_apartado_i_sin_asalariados_2pct(calc):
@@ -91,6 +93,7 @@ async def test_apartado_i_muchos_asalariados_4pct(calc):
 # ===========================================================================
 # Casos AEAT del audit (A-G)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_caso_a_bar_pequeno_madrid(calc):
@@ -206,18 +209,22 @@ async def test_caso_g_sin_datos_base(calc):
 # Minoración rendimientos bajos (tabla escalonada plana)
 # ===========================================================================
 
-@pytest.mark.parametrize("rend_anterior,esperada", [
-    (5000.0, 100.0),    # tramo ≤ 9.000 → 100
-    (9000.0, 100.0),    # límite inferior tramo 100
-    (9001.0, 75.0),     # tramo 9.001-10.000 → 75
-    (10000.0, 75.0),    # límite tramo 75
-    (10500.0, 50.0),    # tramo 10.001-11.000 → 50
-    (11500.0, 25.0),    # tramo 11.001-12.000 → 25
-    (12000.0, 25.0),    # límite tramo 25
-    (12001.0, 0.0),     # > 12.000 → 0
-    (50000.0, 0.0),     # > 12.000 → 0
-    (0.0, 0.0),         # 0 → no aplica (no hay dato)
-])
+
+@pytest.mark.parametrize(
+    "rend_anterior,esperada",
+    [
+        (5000.0, 100.0),  # tramo ≤ 9.000 → 100
+        (9000.0, 100.0),  # límite inferior tramo 100
+        (9001.0, 75.0),  # tramo 9.001-10.000 → 75
+        (10000.0, 75.0),  # límite tramo 75
+        (10500.0, 50.0),  # tramo 10.001-11.000 → 50
+        (11500.0, 25.0),  # tramo 11.001-12.000 → 25
+        (12000.0, 25.0),  # límite tramo 25
+        (12001.0, 0.0),  # > 12.000 → 0
+        (50000.0, 0.0),  # > 12.000 → 0
+        (0.0, 0.0),  # 0 → no aplica (no hay dato)
+    ],
+)
 def test_minoracion_rendimientos_bajos(calc, rend_anterior, esperada):
     """La tabla es escalonada PLANA, no interpolación lineal."""
     assert calc._minoracion_rendimientos_bajos(rend_anterior) == esperada
@@ -226,6 +233,7 @@ def test_minoracion_rendimientos_bajos(calc, rend_anterior, esperada):
 # ===========================================================================
 # Apartado III — Agraria + Ceuta/Melilla
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_agraria_ceuta_melilla(calc):
@@ -260,6 +268,7 @@ async def test_agraria_con_retenciones_y_pagos(calc):
 # ===========================================================================
 # Reducción La Palma
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_la_palma_reduccion_60pct(calc):
@@ -297,6 +306,7 @@ async def test_ceuta_prevalece_sobre_la_palma(calc):
 # ===========================================================================
 # Edge cases
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_rendimiento_negativo_no_da_resultado_negativo(calc):
@@ -351,6 +361,7 @@ def test_num_asalariados_negativo_raise(calc):
 # Plazos AEAT (incluido fix 4T = 1-30 enero, no 1-20)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_plazo_4t_correcto_30_enero(calc):
     """Plazo 4T es 1-30 enero (NO 1-20 como erróneamente seedeado)."""
@@ -383,6 +394,7 @@ async def test_plazos_trimestres(calc):
 # ===========================================================================
 # Complementaria (casilla 11)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_complementaria_resta_resultado_anterior(calc):
@@ -420,6 +432,7 @@ async def test_resultado_negativo_se_clipa_a_cero(calc):
 # Sin datos-base (apartado II)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_apartado_ii_basico(calc):
     """Apartado II: 8.000 × 2% = 160."""
@@ -449,6 +462,7 @@ async def test_apartado_ii_ceuta_reduccion(calc):
 # Estructura de respuesta
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_estructura_respuesta_completa(calc):
     """La respuesta contiene todas las casillas y el desglose."""
@@ -459,11 +473,18 @@ async def test_estructura_respuesta_completa(calc):
         num_asalariados=1,
     )
     expected_keys = {
-        "01_rendimiento_neto_modulos", "02_tipo_aplicable",
-        "03_resultado_empresarial", "04_volumen_ingresos_agrario",
-        "05_cuota_agraria", "06_total_cuotas", "07_reducciones",
-        "08_resultado_tras_reducciones", "09_retenciones_trimestre",
-        "10_pagos_anteriores", "11_complementaria", "12_resultado_final",
+        "01_rendimiento_neto_modulos",
+        "02_tipo_aplicable",
+        "03_resultado_empresarial",
+        "04_volumen_ingresos_agrario",
+        "05_cuota_agraria",
+        "06_total_cuotas",
+        "07_reducciones",
+        "08_resultado_tras_reducciones",
+        "09_retenciones_trimestre",
+        "10_pagos_anteriores",
+        "11_complementaria",
+        "12_resultado_final",
     }
     assert set(r["casillas"].keys()) == expected_keys
     assert "tipo_pct" in r["desglose"]

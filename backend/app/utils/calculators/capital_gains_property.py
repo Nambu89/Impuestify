@@ -10,17 +10,18 @@ Calculates capital gains from property sales for IRPF, including:
 
 The net gain goes to base del ahorro (Art. 46 LIRPF).
 """
+
 from __future__ import annotations
 
 import logging
 import math
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_date(date_str: Optional[str]) -> Optional[date]:
+def _parse_date(date_str: str | None) -> date | None:
     """Parse YYYY-MM-DD date string. Returns None on failure."""
     if not date_str:
         return None
@@ -59,10 +60,10 @@ class PropertyCapitalGainsCalculator:
     async def calculate(
         self,
         *,
-        ventas: List[Dict[str, Any]],
+        ventas: list[dict[str, Any]],
         valor_transmision_previo_2015: float = 0,
         year: int = 2025,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate capital gains from property sales.
 
         Args:
@@ -89,20 +90,18 @@ class PropertyCapitalGainsCalculator:
         if not ventas:
             return self._empty_result()
 
-        desglose: List[Dict[str, Any]] = []
+        desglose: list[dict[str, Any]] = []
         ganancia_bruta_total = 0.0
         abatimiento_total = 0.0
         exencion_reinversion_total = 0.0
         ganancia_neta_total = 0.0
-        avisos: List[str] = []
+        avisos: list[str] = []
 
         # Track cumulative valor transmision for DT 9a 400K limit
         valor_transmision_acumulado = valor_transmision_previo_2015
 
         for idx, venta in enumerate(ventas):
-            resultado_venta = self._process_venta(
-                venta, idx, valor_transmision_acumulado, year
-            )
+            resultado_venta = self._process_venta(venta, idx, valor_transmision_acumulado, year)
             desglose.append(resultado_venta)
 
             ganancia_bruta_total += resultado_venta["ganancia_bruta"]
@@ -133,11 +132,11 @@ class PropertyCapitalGainsCalculator:
 
     def _process_venta(
         self,
-        venta: Dict[str, Any],
+        venta: dict[str, Any],
         idx: int,
         valor_transmision_acumulado: float,
         year: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process a single property sale."""
         tipo = venta.get("tipo", "otro")
         precio_venta = float(venta.get("precio_venta", 0))
@@ -159,9 +158,7 @@ class PropertyCapitalGainsCalculator:
 
         # --- 2. Valor de adquisicion (Art. 35.1 LIRPF) ---
         # Valor adquisicion = precio_adquisicion + gastos + mejoras - amortizaciones
-        valor_adquisicion = (
-            precio_adquisicion + gastos_adquisicion + mejoras - amortizaciones
-        )
+        valor_adquisicion = precio_adquisicion + gastos_adquisicion + mejoras - amortizaciones
 
         # --- 3. Ganancia bruta ---
         ganancia_bruta = valor_transmision - valor_adquisicion
@@ -192,9 +189,7 @@ class PropertyCapitalGainsCalculator:
             # Check 400K cumulative limit
             if (valor_transmision_acumulado + precio_venta) <= LIMITE_ACUMULADO_TRANSMISION:
                 aplica_abatimiento = True
-                coeficiente_pct = self._calcular_coeficiente_abatimiento(
-                    fecha_adquisicion
-                )
+                coeficiente_pct = self._calcular_coeficiente_abatimiento(fecha_adquisicion)
                 # Abatimiento reduces the gain (capped at 100%)
                 coeficiente_pct = min(coeficiente_pct, 100.0)
                 abatimiento = round(ganancia_bruta * (coeficiente_pct / 100.0), 2)
@@ -204,7 +199,7 @@ class PropertyCapitalGainsCalculator:
         # --- 5. Exencion por reinversion en vivienda habitual (Art. 38) ---
         aplica_reinversion = False
         exencion_reinversion = 0.0
-        aviso_reinversion: Optional[str] = None
+        aviso_reinversion: str | None = None
 
         if (
             reinversion
@@ -228,7 +223,9 @@ class PropertyCapitalGainsCalculator:
                     )
                     logger.warning(
                         "Reinversion fuera de plazo: venta=%s, nueva_adq=%s, dias=%d",
-                        fecha_venta, fecha_nueva_adquisicion, plazo_dias,
+                        fecha_venta,
+                        fecha_nueva_adquisicion,
+                        plazo_dias,
                     )
             elif fecha_venta and not fecha_nueva_adquisicion:
                 # User has not yet acquired — still within 24-month window (or unknown)
@@ -299,7 +296,7 @@ class PropertyCapitalGainsCalculator:
         return min(coeficiente, 100.0)
 
     @staticmethod
-    def _empty_result() -> Dict[str, Any]:
+    def _empty_result() -> dict[str, Any]:
         """Return empty result when no sales provided."""
         return {
             "ganancia_bruta_total": 0.0,

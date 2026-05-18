@@ -23,11 +23,12 @@ Coverage:
   consolidated text contains all articles; deeper anchor fragments could
   be added if BOE exposes them in metadata — they don't for now).
 """
+
 from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.services.legal.registry import LegalNormsRegistry
@@ -69,7 +70,7 @@ _MARKDOWN_LINK_RE = re.compile(r"\[[^\]]*\]\([^\)]+\)")
 class CitationEnricher:
     """Enrich markdown text with links to BOE consolidated norms."""
 
-    def __init__(self, registry: "LegalNormsRegistry"):
+    def __init__(self, registry: LegalNormsRegistry):
         self._registry = registry
 
     def enrich_markdown(self, text: str) -> str:
@@ -135,7 +136,7 @@ class CitationEnricher:
             return full
         return f"[{full}]({url})"
 
-    def _url_for_norm(self, norm) -> Optional[str]:
+    def _url_for_norm(self, norm) -> str | None:
         """Resolve the public URL for a norm via the registry, which
         delegates to the right LegalSource plugin (boe, bopv, …)."""
         if norm is None:
@@ -146,7 +147,7 @@ class CitationEnricher:
 # ── Singleton accessor ───────────────────────────────────────────────────
 
 
-_enricher: Optional[CitationEnricher] = None
+_enricher: CitationEnricher | None = None
 
 
 def get_citation_enricher() -> CitationEnricher:
@@ -154,6 +155,7 @@ def get_citation_enricher() -> CitationEnricher:
     global _enricher
     if _enricher is None:
         from app.services.legal import get_legal_registry
+
         _enricher = CitationEnricher(get_legal_registry())
     return _enricher
 

@@ -1,11 +1,15 @@
 """Canarias territory plugin -- IGIC instead of IVA, common IRPF."""
-from typing import Any, Dict, List
 
-from typing import Any, Dict, List
+from typing import Any
 
 from app.territories.base import (
-    TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig,
-    ModelObligation, Deadline, DEADLINES_2026, _trimestral_deadlines,
+    Deadline,
+    MinimosConfig,
+    ModelObligation,
+    ScaleData,
+    SimulationResult,
+    TerritoryPlugin,
+    _trimestral_deadlines,
 )
 
 
@@ -21,14 +25,16 @@ class CanariasTerritory(TerritoryPlugin):
     AIEM (Arbitrio sobre Importaciones y Entregas de Mercancias en Canarias)
     applies on specific goods imported into the islands.
     """
+
     territories = ["Canarias"]
     regime = "canarias"
 
-    async def get_irpf_scales(self, year: int) -> List[ScaleData]:
+    async def get_irpf_scales(self, year: int) -> list[ScaleData]:
         return []
 
-    async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
+    async def simulate_irpf(self, profile: dict[str, Any], db) -> SimulationResult:
         from app.utils.irpf_simulator import IRPFSimulator
+
         simulator = IRPFSimulator(db)
         result = await simulator.simulate(**profile)
         return SimulationResult(
@@ -41,8 +47,9 @@ class CanariasTerritory(TerritoryPlugin):
             desglose=result,
         )
 
-    async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
+    async def get_deductions(self, ccaa: str, year: int, db) -> list[dict[str, Any]]:
         from app.services.deduction_service import DeductionService
+
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 
@@ -59,7 +66,7 @@ class CanariasTerritory(TerritoryPlugin):
             apply_as="base_reduction",
         )
 
-    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+    def get_model_obligations(self, profile: dict[str, Any]) -> list[ModelObligation]:
         """Canarias: IGIC 420 instead of IVA 303, resumen 425 instead of 390, NO 349.
         AIEM models (450, 455) if applicable."""
         # Get base obligations from parent
@@ -72,23 +79,34 @@ class CanariasTerritory(TerritoryPlugin):
         for ob in obligations:
             if ob.modelo == "420":
                 ob.nombre = "Modelo 420 - IGIC trimestral"
-                ob.descripcion = "Autoliquidacion trimestral del Impuesto General Indirecto Canario (IGIC 7%)"
+                ob.descripcion = (
+                    "Autoliquidacion trimestral del Impuesto General Indirecto Canario (IGIC 7%)"
+                )
                 ob.organismo = "ATC"
                 ob.notas = "Canarias no aplica IVA sino IGIC. Tipo general 7%"
 
         # Add resumen anual IGIC (425 instead of 390)
         situacion = profile.get("situacion_laboral", "particular")
         if situacion in ("autonomo", "sociedad"):
-            obligations.append(ModelObligation(
-                modelo="425",
-                nombre="Modelo 425 - Resumen anual IGIC",
-                descripcion="Resumen anual del Impuesto General Indirecto Canario",
-                periodicidad="anual",
-                aplica_si=situacion,
-                obligatorio=True,
-                deadlines=[Deadline(modelo="425", description="Resumen anual IGIC", date="2026-01-30", period="annual")],
-                organismo="ATC",
-            ))
+            obligations.append(
+                ModelObligation(
+                    modelo="425",
+                    nombre="Modelo 425 - Resumen anual IGIC",
+                    descripcion="Resumen anual del Impuesto General Indirecto Canario",
+                    periodicidad="anual",
+                    aplica_si=situacion,
+                    obligatorio=True,
+                    deadlines=[
+                        Deadline(
+                            modelo="425",
+                            description="Resumen anual IGIC",
+                            date="2026-01-30",
+                            period="annual",
+                        )
+                    ],
+                    organismo="ATC",
+                )
+            )
 
         # AIEM (Modelo 450) — productores canarios con bienes en lista AIEM.
         # Heuristica conservadora: el plugin lo añade si el perfil declara
@@ -102,63 +120,68 @@ class CanariasTerritory(TerritoryPlugin):
                 epigrafes = [epigrafes]
             if not produce_aiem and epigrafes:
                 from app.utils.calculators.modelo_450 import lookup_tipo_aiem
-                produce_aiem = any(
-                    lookup_tipo_aiem(str(e)) is not None for e in epigrafes
-                )
+
+                produce_aiem = any(lookup_tipo_aiem(str(e)) is not None for e in epigrafes)
 
             if produce_aiem:
-                obligations.append(ModelObligation(
-                    modelo="450",
-                    nombre="Modelo 450 - AIEM trimestral",
-                    descripcion=(
-                        "Autoliquidacion trimestral del Arbitrio sobre "
-                        "Importaciones y Entregas de Mercancias en Canarias "
-                        "(productores en lista AIEM, Anexo IV TR Decreto "
-                        "Legislativo 1/2025)."
-                    ),
-                    periodicidad="trimestral",
-                    aplica_si=situacion,
-                    obligatorio=True,
-                    deadlines=_trimestral_deadlines("450"),
-                    organismo="ATC",
-                    notas=(
-                        "Tipos AIEM 5/10/15/25 %. Plazo T4: 1-30 enero ano "
-                        "siguiente. Impuesto monofasico — solo lo paga el "
-                        "productor. Importaciones se liquidan en aduana via DUA."
-                    ),
-                ))
+                obligations.append(
+                    ModelObligation(
+                        modelo="450",
+                        nombre="Modelo 450 - AIEM trimestral",
+                        descripcion=(
+                            "Autoliquidacion trimestral del Arbitrio sobre "
+                            "Importaciones y Entregas de Mercancias en Canarias "
+                            "(productores en lista AIEM, Anexo IV TR Decreto "
+                            "Legislativo 1/2025)."
+                        ),
+                        periodicidad="trimestral",
+                        aplica_si=situacion,
+                        obligatorio=True,
+                        deadlines=_trimestral_deadlines("450"),
+                        organismo="ATC",
+                        notas=(
+                            "Tipos AIEM 5/10/15/25 %. Plazo T4: 1-30 enero ano "
+                            "siguiente. Impuesto monofasico — solo lo paga el "
+                            "productor. Importaciones se liquidan en aduana via DUA."
+                        ),
+                    )
+                )
 
         # AIEM ZEC (Modelo 455) — entidades ZEC con autorizacion para
         # producir/entregar mercancias. Requiere flag explicito `regimen_zec`.
         if situacion == "sociedad" and profile.get("regimen_zec", False):
-            obligations.append(ModelObligation(
-                modelo="455",
-                nombre="Modelo 455 - AIEM ZEC anual",
-                descripcion=(
-                    "Autoliquidacion anual del AIEM para entidades ZEC "
-                    "(Zona Especial Canaria) con autorizacion para producir / "
-                    "entregar mercancias en Canarias."
-                ),
-                periodicidad="anual",
-                aplica_si="sociedad",
-                obligatorio=True,
-                deadlines=[Deadline(
+            obligations.append(
+                ModelObligation(
                     modelo="455",
-                    description="Modelo 455 - AIEM ZEC anual",
-                    date="2026-01-30",
-                    period="annual",
-                )],
-                organismo="ATC",
-                notas=(
-                    "Periodicidad ANUAL (1-30 enero ano siguiente). Requiere "
-                    "autorizacion previa del Consorcio ZEC (Ley 19/1994). "
-                    "Tipos AIEM 5/10/15/25 %."
-                ),
-            ))
+                    nombre="Modelo 455 - AIEM ZEC anual",
+                    descripcion=(
+                        "Autoliquidacion anual del AIEM para entidades ZEC "
+                        "(Zona Especial Canaria) con autorizacion para producir / "
+                        "entregar mercancias en Canarias."
+                    ),
+                    periodicidad="anual",
+                    aplica_si="sociedad",
+                    obligatorio=True,
+                    deadlines=[
+                        Deadline(
+                            modelo="455",
+                            description="Modelo 455 - AIEM ZEC anual",
+                            date="2026-01-30",
+                            period="annual",
+                        )
+                    ],
+                    organismo="ATC",
+                    notas=(
+                        "Periodicidad ANUAL (1-30 enero ano siguiente). Requiere "
+                        "autorizacion previa del Consorcio ZEC (Ley 19/1994). "
+                        "Tipos AIEM 5/10/15/25 %."
+                    ),
+                )
+            )
 
         return obligations
 
-    def get_rag_filters(self, ccaa: str) -> Dict[str, Any]:
+    def get_rag_filters(self, ccaa: str) -> dict[str, Any]:
         return {
             "territory": "Canarias",
             "regime": "canarias",

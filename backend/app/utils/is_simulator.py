@@ -6,31 +6,32 @@ en 7 territorios (comun + 4 forales + ZEC Canarias + Ceuta/Melilla).
 Patron: composicion de sub-calculadoras, mismo estilo que irpf_simulator.py.
 Todos los importes monetarios en EUR (float), redondeados a 2 decimales en salida.
 """
+
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Literal
+
 import logging
+from dataclasses import dataclass, field
 
 from app.utils.is_scales import (
-    get_is_regimen,
-    calcular_cuota_por_tramos,
-    get_is_deduccion_params,
+    COOPERATIVA_ESP_PROTEGIDA_BONIFICACION_PCT,
+    COOPERATIVA_TIPO_PROTEGIDA,
+    ID_PCT_EXCESO_MEDIA,
+    PAGO_FRACC_MINIMO_INCN_THRESHOLD,
+    PAGO_FRACC_MINIMO_PCT_BANCA,
+    PAGO_FRACC_MINIMO_PCT_GENERAL,
+    RESERVA_NIVELACION_MAX_EUR,
+    RESERVA_NIVELACION_PCT,
+    aplica_reserva_nivelacion,
+    aplica_tributacion_minima,
     bin_limite_pct,
+    calcular_cuota_por_tramos,
+    calcular_deduccion_cine,
+    get_is_deduccion_params,
+    get_is_regimen,
     reserva_capitalizacion_pct_2025,
     # MEDIA gaps (auditoria 2026-05) — Wave C2
     tributacion_minima_pct,
-    aplica_tributacion_minima,
-    aplica_reserva_nivelacion,
-    RESERVA_NIVELACION_PCT,
-    RESERVA_NIVELACION_MAX_EUR,
-    COOPERATIVA_TIPO_PROTEGIDA,
-    COOPERATIVA_ESP_PROTEGIDA_BONIFICACION_PCT,
-    ID_PCT_EXCESO_MEDIA,
-    PAGO_FRACC_MINIMO_PCT_GENERAL,
-    PAGO_FRACC_MINIMO_PCT_BANCA,
-    PAGO_FRACC_MINIMO_INCN_THRESHOLD,
     zec_techo_base,
-    calcular_deduccion_cine,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Input / Output dataclasses
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ISInput:
@@ -104,7 +106,7 @@ class ISInput:
 
     # M5 — I+D adicionales (Art. 35.1.b LIS)
     gasto_id_personal_investigador: float = 0.0  # +17% adicional
-    gasto_id_inmovilizado_afecto: float = 0.0    # +8% adicional
+    gasto_id_inmovilizado_afecto: float = 0.0  # +8% adicional
 
     # M6 — ZEC techo por empleos (Art. 43 Ley 19/1994)
     zec_empleos_creados: int = 0  # min 5 (3 areas remotas, no validado aqui)
@@ -169,6 +171,7 @@ class IS202Result:
 # Simulator
 # ---------------------------------------------------------------------------
 
+
 class ISSimulator:
     """Simulador del Impuesto sobre Sociedades."""
 
@@ -205,7 +208,9 @@ class ISSimulator:
         result.ajustes_negativos = inp.ajustes_negativos
 
         # 4. Reserva capitalizacion (Art. 25 LIS)
-        base_previa_antes_rc = result.resultado_contable + result.ajustes_positivos - result.ajustes_negativos
+        base_previa_antes_rc = (
+            result.resultado_contable + result.ajustes_positivos - result.ajustes_negativos
+        )
         result.reserva_capitalizacion = cls._calcular_reserva_capitalizacion(
             inp, base_previa_antes_rc
         )
@@ -226,13 +231,9 @@ class ISSimulator:
             result.bin_generada = 0.0
 
         # 7.bis — Reserva de nivelacion (Art. 105 LIS) — solo ERD INCN<10M
-        result.reserva_nivelacion = cls._calcular_reserva_nivelacion(
-            inp, result.base_imponible
-        )
+        result.reserva_nivelacion = cls._calcular_reserva_nivelacion(inp, result.base_imponible)
         if result.reserva_nivelacion > 0:
-            result.base_imponible = round(
-                result.base_imponible - result.reserva_nivelacion, 2
-            )
+            result.base_imponible = round(result.base_imponible - result.reserva_nivelacion, 2)
 
         # RIC Canarias: reduce base imponible (limitado a 90% beneficio no distribuido)
         if inp.dotacion_ric > 0 and result.base_imponible > 0:
@@ -255,8 +256,7 @@ class ISSimulator:
                     result.base_imponible, inp.zec_empleos_creados, tramos
                 )
                 result.tipo_gravamen_aplicado = (
-                    f"ZEC 4% hasta techo + 25% exceso "
-                    f"({inp.zec_empleos_creados} empleos)"
+                    f"ZEC 4% hasta techo + 25% exceso " f"({inp.zec_empleos_creados} empleos)"
                 )
             else:
                 result.cuota_integra = calcular_cuota_por_tramos(result.base_imponible, tramos)
@@ -272,20 +272,14 @@ class ISSimulator:
         )
         # M4 — Cooperativas especialmente protegidas: 50% sobre cuota integra
         # (Art. 34.2 Ley 20/1990). Acumulable a Ceuta/Melilla en proporcion.
-        if (
-            inp.tipo_entidad == "cooperativa"
-            and inp.cooperativa_especialmente_protegida
-        ):
-            bonif_coop = round(
-                result.cuota_integra * COOPERATIVA_ESP_PROTEGIDA_BONIFICACION_PCT, 2
-            )
-            result.bonificaciones_total = round(
-                result.bonificaciones_total + bonif_coop, 2
-            )
+        if inp.tipo_entidad == "cooperativa" and inp.cooperativa_especialmente_protegida:
+            bonif_coop = round(result.cuota_integra * COOPERATIVA_ESP_PROTEGIDA_BONIFICACION_PCT, 2)
+            result.bonificaciones_total = round(result.bonificaciones_total + bonif_coop, 2)
 
         # 12. Cuota liquida
         result.cuota_liquida = round(
-            max(0.0, result.cuota_integra - result.deducciones_total - result.bonificaciones_total), 2
+            max(0.0, result.cuota_integra - result.deducciones_total - result.bonificaciones_total),
+            2,
         )
 
         # 12.bis — Tributacion minima (Art. 30 bis LIS) — INCN >= 20M o consolidado
@@ -386,7 +380,10 @@ class ISSimulator:
         """Paso 2: ajustes extracontables positivos."""
         ajustes = inp.gastos_no_deducibles
         # Diferencia amortizacion si fiscal > contable
-        if inp.amortizacion_fiscal is not None and inp.amortizacion_fiscal > inp.amortizacion_contable:
+        if (
+            inp.amortizacion_fiscal is not None
+            and inp.amortizacion_fiscal > inp.amortizacion_contable
+        ):
             ajustes += inp.amortizacion_fiscal - inp.amortizacion_contable
         return round(ajustes, 2)
 
@@ -482,13 +479,9 @@ class ISSimulator:
 
             # M5 — adicionales: +17% personal investigador, +8% inmovilizado afecto
             if inp.gasto_id_personal_investigador > 0:
-                detalle["id_personal"] = round(
-                    inp.gasto_id_personal_investigador * 17.0 / 100, 2
-                )
+                detalle["id_personal"] = round(inp.gasto_id_personal_investigador * 17.0 / 100, 2)
             if inp.gasto_id_inmovilizado_afecto > 0:
-                detalle["id_inmovilizado"] = round(
-                    inp.gasto_id_inmovilizado_afecto * 8.0 / 100, 2
-                )
+                detalle["id_inmovilizado"] = round(inp.gasto_id_inmovilizado_afecto * 8.0 / 100, 2)
 
         # IT (Art. 35.2 LIS)
         if inp.gasto_it > 0:
@@ -564,9 +557,7 @@ class ISSimulator:
         return round(min(inp.reserva_nivelacion, limite_pct, RESERVA_NIVELACION_MAX_EUR), 2)
 
     @staticmethod
-    def _calcular_cuota_zec_con_techo(
-        base_imponible: float, empleos: int, tramos
-    ) -> float:
+    def _calcular_cuota_zec_con_techo(base_imponible: float, empleos: int, tramos) -> float:
         """M6 — ZEC techo por empleos (Art. 43 Ley 19/1994).
 
         Aplica 4% sobre el tramo de BI hasta el techo permitido segun empleos
@@ -604,10 +595,7 @@ class ISSimulator:
         if result.base_imponible <= 0:
             return
 
-        es_nueva = (
-            inp.tipo_entidad == "nueva_creacion"
-            and inp.ejercicios_con_bi_positiva <= 2
-        )
+        es_nueva = inp.tipo_entidad == "nueva_creacion" and inp.ejercicios_con_bi_positiva <= 2
         pct_minimo = tributacion_minima_pct(
             es_nueva_creacion=es_nueva,
             es_banca_hidrocarburos=inp.es_banca_o_hidrocarburos,

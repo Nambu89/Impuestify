@@ -9,6 +9,7 @@ Usage:
     cd backend
     python scripts/seed_autonomous_quotas_2026.py
 """
+
 import asyncio
 import os
 import sys
@@ -18,6 +19,7 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from dotenv import load_dotenv
+
 project_root = backend_dir.parent
 load_dotenv(project_root / ".env")
 
@@ -28,21 +30,21 @@ from app.database.turso_client import TursoClient
 # Cuotas ligeramente superiores a 2025 (ultimo ano transitorio)
 TRAMOS_2026 = [
     # Tramo, Rend Min, Rend Max, Base Min, Base Max, Cuota Min, Cuota Max
-    (1,     0,    670,  653.59,  718.94,  200.00,  226.00),
-    (2,   670,    900,  718.94, 1018.82,  226.00,  320.00),
-    (3,   900, 1166.70, 849.67, 1018.82,  267.00,  320.00),
-    (4, 1166.70, 1300,  950.98, 1018.82,  299.00,  320.00),
-    (5,  1300,   1500,  960.78, 1018.82,  302.00,  320.00),
-    (6,  1500,   1700,  960.78, 1018.82,  302.00,  320.00),
-    (7,  1700,   1850, 1045.75, 1143.79,  329.00,  360.00),
-    (8,  1850,   2030, 1062.09, 1209.15,  334.00,  380.00),
-    (9,  2030,   2330, 1078.43, 1274.51,  339.00,  401.00),
-    (10, 2330,   2760, 1143.79, 1372.55,  360.00,  431.00),
-    (11, 2760,   3190, 1209.15, 1471.24,  380.00,  462.00),
-    (12, 3190,   3620, 1274.51, 1569.93,  401.00,  494.00),
-    (13, 3620,   4050, 1372.55, 1700.65,  431.00,  534.00),
-    (14, 4050,   6000, 1438.24, 1928.10,  452.00,  606.00),
-    (15, 6000,   None, 1633.99, 4909.50,  514.00, 1543.00),
+    (1, 0, 670, 653.59, 718.94, 200.00, 226.00),
+    (2, 670, 900, 718.94, 1018.82, 226.00, 320.00),
+    (3, 900, 1166.70, 849.67, 1018.82, 267.00, 320.00),
+    (4, 1166.70, 1300, 950.98, 1018.82, 299.00, 320.00),
+    (5, 1300, 1500, 960.78, 1018.82, 302.00, 320.00),
+    (6, 1500, 1700, 960.78, 1018.82, 302.00, 320.00),
+    (7, 1700, 1850, 1045.75, 1143.79, 329.00, 360.00),
+    (8, 1850, 2030, 1062.09, 1209.15, 334.00, 380.00),
+    (9, 2030, 2330, 1078.43, 1274.51, 339.00, 401.00),
+    (10, 2330, 2760, 1143.79, 1372.55, 360.00, 431.00),
+    (11, 2760, 3190, 1209.15, 1471.24, 380.00, 462.00),
+    (12, 3190, 3620, 1274.51, 1569.93, 401.00, 494.00),
+    (13, 3620, 4050, 1372.55, 1700.65, 431.00, 534.00),
+    (14, 4050, 6000, 1438.24, 1928.10, 452.00, 606.00),
+    (15, 6000, None, 1633.99, 4909.50, 514.00, 1543.00),
 ]
 
 
@@ -91,16 +93,24 @@ async def seed_2026():
                     cuota_min_bonificada, cuota_max_bonificada
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 [
-                    2026, tramo_num,
-                    rend_min, rend_max,
-                    base_min, base_max,
-                    cuota_min, cuota_max,
-                    region, bonif_pct,
-                    cuota_min_bonif, cuota_max_bonif,
+                    2026,
+                    tramo_num,
+                    rend_min,
+                    rend_max,
+                    base_min,
+                    base_max,
+                    cuota_min,
+                    cuota_max,
+                    region,
+                    bonif_pct,
+                    cuota_min_bonif,
+                    cuota_max_bonif,
                 ],
             )
             total += 1
-            print(f"  Tramo {tramo_num}: {rend_min}-{rend_max or 'inf'} -> {cuota_min}-{cuota_max} EUR")
+            print(
+                f"  Tramo {tramo_num}: {rend_min}-{rend_max or 'inf'} -> {cuota_min}-{cuota_max} EUR"
+            )
 
     result = await db.execute("SELECT COUNT(*) as count FROM autonomous_quotas WHERE year = 2026")
     count = result.rows[0]["count"]
@@ -115,7 +125,9 @@ async def seed_2026():
     )
     if test.rows:
         r = test.rows[0]
-        print(f"Test: 2500 EUR/mes -> Tramo {r['tramo_number']}, cuota {r['cuota_min']}-{r['cuota_max']} EUR")
+        print(
+            f"Test: 2500 EUR/mes -> Tramo {r['tramo_number']}, cuota {r['cuota_min']}-{r['cuota_max']} EUR"
+        )
 
     await db.disconnect()
     print("Done!")

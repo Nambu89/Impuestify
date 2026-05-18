@@ -4,8 +4,9 @@ Warmup Service for Impuestify.
 Pre-loads RAG context and generates personalized greetings
 when users open the chat, before they type anything.
 """
+
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from openai import AsyncOpenAI
 
@@ -44,6 +45,7 @@ class WarmupService:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -52,7 +54,7 @@ class WarmupService:
             self._client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         return self._client
 
-    async def _get_profile(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def _get_profile(self, user_id: str) -> dict[str, Any] | None:
         """Load user's fiscal profile."""
         db = await self._get_db()
         result = await db.execute(
@@ -77,7 +79,7 @@ class WarmupService:
             logger.warning(f"RAG warmup failed: {e}")
             return False
 
-    async def _generate_greeting(self, profile: Dict[str, Any]) -> str:
+    async def _generate_greeting(self, profile: dict[str, Any]) -> str:
         """Generate personalized greeting using gpt-5-mini."""
         ccaa = profile.get("ccaa_residencia", "")
         role = profile.get("situacion_laboral", "")
@@ -87,6 +89,7 @@ class WarmupService:
         datos = profile.get("datos_fiscales")
         if datos:
             import json
+
             if isinstance(datos, str):
                 try:
                     datos = json.loads(datos)
@@ -126,7 +129,7 @@ class WarmupService:
             logger.warning(f"Greeting generation failed: {e}")
             return STATIC_GREETING
 
-    async def warmup(self, user_id: str) -> Dict[str, Any]:
+    async def warmup(self, user_id: str) -> dict[str, Any]:
         """
         Warm up chat context for a user.
 

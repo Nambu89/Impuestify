@@ -4,14 +4,14 @@ Contact Router for TaxIA/Impuestify
 Handles contact form submissions (e.g. autonomo service interest).
 Submissions are stored in DB for the owner to review.
 """
-import uuid
+
 import logging
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
-from typing import Optional
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.database.turso_client import get_db_client
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,9 @@ router = APIRouter(prefix="/api/contact", tags=["contact"])
 
 
 class ContactFormRequest(BaseModel):
-    name: Optional[str] = None
+    name: str | None = None
     email: EmailStr
-    message: Optional[str] = None
+    message: str | None = None
     request_type: str = "autonomo_interest"
 
 
@@ -73,6 +73,6 @@ async def submit_contact_form(
             success=True,
             message="Tu solicitud ha sido enviada. Te contactaremos pronto.",
         )
-    except Exception as e:
+    except Exception:
         logger.error("Error saving contact request", exc_info=True)
         raise HTTPException(status_code=500, detail="Error al enviar la solicitud.")

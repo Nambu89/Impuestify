@@ -10,8 +10,9 @@ Covers:
 - Edge cases: zero income, very high income, multiple descendientes
 - Seed data integrity: FORAL_MINIMOS constants
 """
-import sys
+
 import asyncio
+import sys
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -20,6 +21,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Patch heavy optional dependencies before importing any app modules
 # ---------------------------------------------------------------------------
+
 
 def _mock(module_name, **attrs):
     if module_name not in sys.modules:
@@ -44,12 +46,13 @@ _mock("libsql_client")
 # Imports after mocking
 # ---------------------------------------------------------------------------
 
+from app.utils.irpf_simulator import FORAL_MINIMOS, IRPFSimulator  # noqa: E402
 from app.utils.regime_classifier import classify_regime, is_foral  # noqa: E402
-from app.utils.irpf_simulator import IRPFSimulator, FORAL_MINIMOS  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_scale_rows(tramos):
     """Convert list of (tramo_num, base_hasta, cuota_integra, resto_base, tipo) to dicts."""
@@ -66,33 +69,37 @@ def _make_scale_rows(tramos):
 
 
 # Araba/Bizkaia 7-tramo foral scale (2025)
-ARABA_TRAMOS = _make_scale_rows([
-    (1, 17360.00,  0.00,       17360.00, 23.00),
-    (2, 33280.00,  3992.80,    15920.00, 28.00),
-    (3, 42240.00,  8449.60,     8960.00, 34.00),
-    (4, 56760.00, 11496.00,    14520.00, 40.00),
-    (5, 76320.00, 17304.00,    19560.00, 45.00),
-    (6, 120840.00, 26106.00,   44520.00, 46.00),
-    (7, 999999.00, 46585.20,  879159.00, 49.00),
-])
+ARABA_TRAMOS = _make_scale_rows(
+    [
+        (1, 17360.00, 0.00, 17360.00, 23.00),
+        (2, 33280.00, 3992.80, 15920.00, 28.00),
+        (3, 42240.00, 8449.60, 8960.00, 34.00),
+        (4, 56760.00, 11496.00, 14520.00, 40.00),
+        (5, 76320.00, 17304.00, 19560.00, 45.00),
+        (6, 120840.00, 26106.00, 44520.00, 46.00),
+        (7, 999999.00, 46585.20, 879159.00, 49.00),
+    ]
+)
 
 # Navarra 11-tramo foral scale (2025)
-NAVARRA_TRAMOS = _make_scale_rows([
-    (1,   4484.00,     0.00,     4484.00, 13.00),
-    (2,   8968.00,   582.92,     4484.00, 22.00),
-    (3,  13452.00,  1569.40,     4484.00, 25.00),
-    (4,  17936.00,  2690.40,     4484.00, 28.00),
-    (5,  22420.00,  3945.92,     4484.00, 33.50),
-    (6,  33632.00,  5448.56,    11212.00, 37.00),
-    (7,  50448.00,  9596.00,    16816.00, 40.50),
-    (8,  67264.00, 16406.48,    16816.00, 44.00),
-    (9,  92372.00, 23805.52,    25108.00, 46.50),
-    (10, 163128.00, 35475.72,   70756.00, 48.00),
-    (11, 999999.00, 69438.60,  836871.00, 52.00),
-])
+NAVARRA_TRAMOS = _make_scale_rows(
+    [
+        (1, 4484.00, 0.00, 4484.00, 13.00),
+        (2, 8968.00, 582.92, 4484.00, 22.00),
+        (3, 13452.00, 1569.40, 4484.00, 25.00),
+        (4, 17936.00, 2690.40, 4484.00, 28.00),
+        (5, 22420.00, 3945.92, 4484.00, 33.50),
+        (6, 33632.00, 5448.56, 11212.00, 37.00),
+        (7, 50448.00, 9596.00, 16816.00, 40.50),
+        (8, 67264.00, 16406.48, 16816.00, 44.00),
+        (9, 92372.00, 23805.52, 25108.00, 46.50),
+        (10, 163128.00, 35475.72, 70756.00, 48.00),
+        (11, 999999.00, 69438.60, 836871.00, 52.00),
+    ]
+)
 
 
-def _make_work_result(rendimiento_neto_reducido: float) -> Dict[str, Any]:
+def _make_work_result(rendimiento_neto_reducido: float) -> dict[str, Any]:
     return {"rendimiento_neto_reducido": rendimiento_neto_reducido}
 
 
@@ -112,7 +119,7 @@ async def _run_simulate(
     donativos_forales: float = 0.0,
     ingresos_actividad: float = 0.0,
     year: int = 2025,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Build a minimal IRPFSimulator with mocked sub-calculators and run simulate().
     """
@@ -149,11 +156,13 @@ async def _run_simulate(
 
     # IRPFCalculator (used for _apply_scale and common-regime path)
     from app.utils.irpf_calculator import IRPFCalculator
+
     simulator._irpf_calc = IRPFCalculator()
     simulator._irpf_calc.db = mock_db
 
     # TaxParameterRepository
     from app.utils.tax_parameter_repository import TaxParameterRepository
+
     simulator._repo = TaxParameterRepository(mock_db)
 
     return await simulator.simulate(
@@ -173,6 +182,7 @@ async def _run_simulate(
 # ===========================================================================
 # Tests: Regime Classifier
 # ===========================================================================
+
 
 class TestRegimeClassifier:
     """classify_regime must return correct regimes for all foral territories."""
@@ -218,6 +228,7 @@ class TestRegimeClassifier:
 # Tests: FORAL_MINIMOS constants
 # ===========================================================================
 
+
 class TestForalMinimosConstants:
     """Validate FORAL_MINIMOS data integrity."""
 
@@ -251,6 +262,7 @@ class TestForalMinimosConstants:
 # Tests: _compute_foral_minimos
 # ===========================================================================
 
+
 class TestComputeForalMinimos:
     """Unit tests for IRPFSimulator._compute_foral_minimos."""
 
@@ -279,11 +291,7 @@ class TestComputeForalMinimos:
 
     def test_two_descendientes_vasco(self):
         vasco = FORAL_MINIMOS["foral_vasco"]
-        expected = (
-            vasco["contribuyente"]
-            + vasco["descendiente_1"]
-            + vasco["descendiente_2"]
-        )
+        expected = vasco["contribuyente"] + vasco["descendiente_1"] + vasco["descendiente_2"]
         result = self.sim._compute_foral_minimos(
             regime="foral_vasco",
             num_descendientes=2,
@@ -355,6 +363,7 @@ class TestComputeForalMinimos:
 # Tests: _get_foral_scale
 # ===========================================================================
 
+
 class TestGetForalScale:
     """Test that _get_foral_scale raises ValueError when scale is missing."""
 
@@ -390,6 +399,7 @@ class TestGetForalScale:
 # ===========================================================================
 # Tests: Foral simulation — Araba (Pais Vasco)
 # ===========================================================================
+
 
 class TestForalVascoSimulation:
     """Integration-level tests for the foral vasco simulation path."""
@@ -500,6 +510,7 @@ class TestForalVascoSimulation:
 # Tests: Foral simulation — Navarra
 # ===========================================================================
 
+
 class TestForalNavarraSimulation:
     """Integration-level tests for the foral navarra simulation path."""
 
@@ -554,6 +565,7 @@ class TestForalNavarraSimulation:
 # Tests: Common regime is NOT dispatched to foral path
 # ===========================================================================
 
+
 class TestCommonRegimeNotForal:
     """Verify that common-regime CCAA go through the normal simulate path."""
 
@@ -601,11 +613,13 @@ class TestCommonRegimeNotForal:
 # Tests: Foral scale arithmetic (pure unit, no async)
 # ===========================================================================
 
+
 class TestForalScaleArithmetic:
     """Verify that _apply_scale (inherited from IRPFCalculator) is correct for foral scales."""
 
     def setup_method(self):
         from app.utils.irpf_calculator import IRPFCalculator
+
         self.calc = IRPFCalculator()
 
     def test_araba_income_in_first_bracket(self):

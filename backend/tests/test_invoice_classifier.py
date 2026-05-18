@@ -1,15 +1,15 @@
 """Tests for InvoiceClassifierService — PGC classification with Gemini 3 Flash."""
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.services.invoice_classifier_service import (
     AlternativaPGC,
     ClasificacionPGC,
     InvoiceClassifierService,
 )
-
 
 # ---------------------------------------------------------------------------
 # ClasificacionPGC model
@@ -59,7 +59,11 @@ class TestClassifyInvoice:
 
     MOCK_PGC_ROWS = [
         {"code": "629", "name": "Otros servicios", "keywords": "servicios,asesoria"},
-        {"code": "623", "name": "Servicios de profesionales independientes", "keywords": "abogado,consultor"},
+        {
+            "code": "623",
+            "name": "Servicios de profesionales independientes",
+            "keywords": "abogado,consultor",
+        },
         {"code": "621", "name": "Arrendamientos y canones", "keywords": "alquiler,oficina"},
     ]
 
@@ -121,13 +125,15 @@ class TestClassifyInvoice:
             mock_genai.Client.return_value = mock_client
 
             mock_response = MagicMock()
-            mock_response.text = json.dumps({
-                "cuenta_code": "700",
-                "cuenta_nombre": "Ventas de mercaderias",
-                "confianza": "alta",
-                "alternativas": [],
-                "justificacion": "Venta directa de producto.",
-            })
+            mock_response.text = json.dumps(
+                {
+                    "cuenta_code": "700",
+                    "cuenta_nombre": "Ventas de mercaderias",
+                    "confianza": "alta",
+                    "alternativas": [],
+                    "justificacion": "Venta directa de producto.",
+                }
+            )
             mock_client.models.generate_content.return_value = mock_response
 
             service = InvoiceClassifierService(api_key="test-key", db=mock_db)

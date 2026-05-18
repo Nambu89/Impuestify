@@ -4,10 +4,11 @@ Fiscal Profile Update Tool
 Allows the AI agent to update the user's fiscal profile with data
 extracted from documents (payslips, invoices) or conversation context.
 """
+
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict
+from datetime import UTC, datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,57 +28,54 @@ UPDATE_FISCAL_PROFILE_TOOL = {
             "properties": {
                 "ingresos_trabajo": {
                     "type": "number",
-                    "description": "Ingresos brutos anuales del trabajo (EUR/ano)"
+                    "description": "Ingresos brutos anuales del trabajo (EUR/ano)",
                 },
                 "ss_empleado": {
                     "type": "number",
-                    "description": "Cotizacion SS empleado anual (EUR/ano)"
+                    "description": "Cotizacion SS empleado anual (EUR/ano)",
                 },
                 "retenciones_trabajo": {
                     "type": "number",
-                    "description": "Retenciones IRPF anuales sobre trabajo (EUR/ano)"
+                    "description": "Retenciones IRPF anuales sobre trabajo (EUR/ano)",
                 },
                 "situacion_laboral": {
                     "type": "string",
                     "enum": ["asalariado", "autonomo", "desempleado", "pensionista"],
-                    "description": "Situacion laboral del contribuyente"
+                    "description": "Situacion laboral del contribuyente",
                 },
                 "estado_civil": {
                     "type": "string",
                     "enum": ["soltero", "casado", "divorciado", "viudo", "pareja_de_hecho"],
-                    "description": "Estado civil"
+                    "description": "Estado civil",
                 },
                 "num_descendientes": {
                     "type": "integer",
-                    "description": "Numero de descendientes a cargo"
+                    "description": "Numero de descendientes a cargo",
                 },
                 "intereses": {
                     "type": "number",
-                    "description": "Intereses de cuentas/depositos (EUR)"
+                    "description": "Intereses de cuentas/depositos (EUR)",
                 },
-                "dividendos": {
-                    "type": "number",
-                    "description": "Dividendos recibidos (EUR)"
-                },
+                "dividendos": {"type": "number", "description": "Dividendos recibidos (EUR)"},
                 "ingresos_alquiler": {
                     "type": "number",
-                    "description": "Ingresos por alquiler (EUR/ano)"
+                    "description": "Ingresos por alquiler (EUR/ano)",
                 },
                 "aportaciones_plan_pensiones": {
                     "type": "number",
-                    "description": "Aportaciones a plan de pensiones (EUR/ano)"
+                    "description": "Aportaciones a plan de pensiones (EUR/ano)",
                 },
                 "base_cotizacion_reta": {
                     "type": "number",
-                    "description": "Base de cotizacion RETA para autonomos (EUR/mes)"
+                    "description": "Base de cotizacion RETA para autonomos (EUR/mes)",
                 },
                 "rendimientos_netos_mensuales": {
                     "type": "number",
-                    "description": "Rendimientos netos mensuales estimados para autonomos (EUR)"
+                    "description": "Rendimientos netos mensuales estimados para autonomos (EUR)",
                 },
                 "tipo_retencion_facturas": {
                     "type": "number",
-                    "description": "Tipo de retencion en facturas para autonomos (%)"
+                    "description": "Tipo de retencion en facturas para autonomos (%)",
                 },
             },
             "required": [],
@@ -86,7 +84,7 @@ UPDATE_FISCAL_PROFILE_TOOL = {
 }
 
 
-async def update_fiscal_profile_tool(user_id: str, db_client: Any, **kwargs) -> Dict[str, Any]:
+async def update_fiscal_profile_tool(user_id: str, db_client: Any, **kwargs) -> dict[str, Any]:
     """
     Update the user's fiscal profile with the provided fields.
     Merges with existing data, marks source as 'agent'.
@@ -94,13 +92,13 @@ async def update_fiscal_profile_tool(user_id: str, db_client: Any, **kwargs) -> 
     if not kwargs:
         return {"success": False, "error": "No se proporcionaron campos para actualizar"}
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     try:
         # Load existing profile
         existing = await db_client.execute(
             "SELECT id, datos_fiscales, ccaa_residencia, situacion_laboral FROM user_profiles WHERE user_id = ?",
-            [user_id]
+            [user_id],
         )
 
         datos_fiscales = {}
@@ -155,18 +153,19 @@ async def update_fiscal_profile_tool(user_id: str, db_client: Any, **kwargs) -> 
             await db_client.execute(sql, params)
         else:
             import uuid
+
             profile_id = str(uuid.uuid4())
             await db_client.execute(
                 """INSERT INTO user_profiles (id, user_id, datos_fiscales, situacion_laboral, created_at, updated_at)
                    VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))""",
-                [profile_id, user_id, datos_json, top_level_updates.get("situacion_laboral")]
+                [profile_id, user_id, datos_json, top_level_updates.get("situacion_laboral")],
             )
 
         logger.info(f"Fiscal profile updated for user {user_id}: {updated_keys}")
         return {
             "success": True,
             "updated_fields": updated_keys,
-            "message": f"Perfil fiscal actualizado: {', '.join(updated_keys)}"
+            "message": f"Perfil fiscal actualizado: {', '.join(updated_keys)}",
         }
 
     except Exception as e:

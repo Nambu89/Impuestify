@@ -79,7 +79,9 @@
     cursor: pointer;
     border-radius: var(--radius-lg);
     white-space: nowrap;
-    transition: color var(--transition-base), background var(--transition-base);
+    transition:
+        color var(--transition-base),
+        background var(--transition-base);
     flex-shrink: 0;
 }
 
@@ -158,7 +160,10 @@
     color: var(--color-white);
     background: rgba(255, 255, 255, 0.07);
     cursor: pointer;
-    transition: border-color var(--transition-base), box-shadow var(--transition-base), background var(--transition-base);
+    transition:
+        border-color var(--transition-base),
+        box-shadow var(--transition-base),
+        background var(--transition-base);
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -242,7 +247,9 @@
     background: rgba(255, 255, 255, 0.04);
     user-select: none;
     list-style: none;
-    transition: color var(--transition-base), background var(--transition-base);
+    transition:
+        color var(--transition-base),
+        background var(--transition-base);
 }
 
 .decl-form__details summary::-webkit-details-marker {
@@ -303,7 +310,10 @@
     font-weight: 500;
     color: var(--color-white);
     background: rgba(255, 255, 255, 0.07);
-    transition: border-color var(--transition-base), box-shadow var(--transition-base), background var(--transition-base);
+    transition:
+        border-color var(--transition-base),
+        box-shadow var(--transition-base),
+        background var(--transition-base);
 }
 
 .decl-field__input:focus {
@@ -318,19 +328,19 @@
     background: rgba(255, 255, 255, 0.09);
 }
 
-.decl-field__input[type="number"] {
+.decl-field__input[type='number'] {
     -moz-appearance: textfield;
     padding-right: var(--spacing-10);
 }
 
-.decl-field__input[type="number"]::-webkit-inner-spin-button,
-.decl-field__input[type="number"]::-webkit-outer-spin-button {
+.decl-field__input[type='number']::-webkit-inner-spin-button,
+.decl-field__input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
 /* select inherits .decl-field__input styles */
-.decl-field__input[tag="select"],
+.decl-field__input[tag='select'],
 select.decl-field__input {
     height: 44px;
     cursor: pointer;
@@ -371,7 +381,7 @@ select.decl-field__input {
     user-select: none;
 }
 
-.decl-checkbox input[type="checkbox"] {
+.decl-checkbox input[type='checkbox'] {
     width: 18px;
     height: 18px;
     accent-color: var(--color-primary);
@@ -402,8 +412,11 @@ select.decl-field__input {
     font-size: var(--font-size-sm);
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--transition-base), box-shadow var(--transition-base),
-                transform var(--transition-base), opacity var(--transition-base);
+    transition:
+        background var(--transition-base),
+        box-shadow var(--transition-base),
+        transform var(--transition-base),
+        opacity var(--transition-base);
     white-space: nowrap;
 }
 
@@ -599,7 +612,9 @@ select.decl-field__input {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .spin {
@@ -649,8 +664,11 @@ select.decl-field__input {
     background: rgba(255, 255, 255, 0.04);
     border-radius: var(--radius-xl);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    transition: background var(--transition-base), border-color var(--transition-base),
-                transform var(--transition-base), box-shadow var(--transition-base);
+    transition:
+        background var(--transition-base),
+        border-color var(--transition-base),
+        transform var(--transition-base),
+        box-shadow var(--transition-base);
     cursor: default;
 }
 

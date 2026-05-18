@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.security.pii_detector import PIIDetector, _REGEX_FALLBACK_THRESHOLD
+from app.security.pii_detector import _REGEX_FALLBACK_THRESHOLD, PIIDetector
 
 
 def _mock_completion(content: str = "safe"):
@@ -103,9 +103,7 @@ def test_429_retried_once_then_fallback_to_regex():
     detector.client = MagicMock()
 
     # Both calls raise 429-like exception
-    detector.client.chat.completions.create.side_effect = Exception(
-        "Error code: 429 - rate limit"
-    )
+    detector.client.chat.completions.create.side_effect = Exception("Error code: 429 - rate limit")
 
     text = "mi correo es test@example.com"
     result = detector.detect(text)

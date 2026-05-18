@@ -16,12 +16,14 @@ Usage:
     cd backend
     PYTHONUTF8=1 python scripts/seed_deductions_forales_v2.py
 """
+
 import asyncio
 import json
 import os
 import sys
 import uuid
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent
@@ -51,10 +53,20 @@ ARABA_FORALES_V2 = [
             "2.300 EUR por el tercero o posteriores."
         ),
         "requirements_json": json.dumps({"nacimiento_o_adopcion": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_o_adopcion", "text": "¿Ha nacido o adoptado un hijo este año?", "type": "bool"},
-            {"key": "numero_hijo", "text": "¿Es el primero, segundo o tercero (o posterior)?", "type": "text"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_o_adopcion",
+                    "text": "¿Ha nacido o adoptado un hijo este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "numero_hijo",
+                    "text": "¿Es el primero, segundo o tercero (o posterior)?",
+                    "type": "text",
+                },
+            ]
+        ),
     },
     {
         "code": "ARA-GUARDERIA",
@@ -67,10 +79,20 @@ ARABA_FORALES_V2 = [
         "legal_reference": "Art. 79 bis NF 33/2013 Araba",
         "description": "30% de los gastos en guardería, máximo 900 EUR por hijo menor de 3 años.",
         "requirements_json": json.dumps({"hijos_menores_3": True}),
-        "questions_json": json.dumps([
-            {"key": "hijos_menores_3", "text": "¿Tienes hijos menores de 3 años en guardería?", "type": "bool"},
-            {"key": "gastos_guarderia", "text": "¿Cuánto has pagado en guardería este año (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hijos_menores_3",
+                    "text": "¿Tienes hijos menores de 3 años en guardería?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gastos_guarderia",
+                    "text": "¿Cuánto has pagado en guardería este año (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "ARA-EPSV",
@@ -86,10 +108,20 @@ ARABA_FORALES_V2 = [
             "Sustituye a los planes de pensiones del régimen común."
         ),
         "requirements_json": json.dumps({"tiene_epsv": True}),
-        "questions_json": json.dumps([
-            {"key": "tiene_epsv", "text": "¿Tienes una EPSV (Entidad de Previsión Social Voluntaria)?", "type": "bool"},
-            {"key": "aportacion_epsv", "text": "¿Cuánto has aportado a la EPSV este año (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "tiene_epsv",
+                    "text": "¿Tienes una EPSV (Entidad de Previsión Social Voluntaria)?",
+                    "type": "bool",
+                },
+                {
+                    "key": "aportacion_epsv",
+                    "text": "¿Cuánto has aportado a la EPSV este año (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "ARA-DONACIONES",
@@ -101,10 +133,20 @@ ARABA_FORALES_V2 = [
         "legal_reference": "Art. 89 NF 33/2013 Araba",
         "description": "30% de los donativos realizados a entidades acogidas a la normativa foral.",
         "requirements_json": json.dumps({"donativos_forales": True}),
-        "questions_json": json.dumps([
-            {"key": "donativos_forales", "text": "¿Has realizado donativos a entidades sin ánimo de lucro este año?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Importe total de los donativos (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativos_forales",
+                    "text": "¿Has realizado donativos a entidades sin ánimo de lucro este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_donativos",
+                    "text": "¿Importe total de los donativos (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "ARA-CONCILIACION",
@@ -119,13 +161,21 @@ ARABA_FORALES_V2 = [
             "excedencia o reducción de jornada por cuidado de hijos. "
             "Medida de fomento de conciliación incorporada en 2025."
         ),
-        "requirements_json": json.dumps({
-            "sexo": "hombre",
-            "excedencia_o_reduccion_jornada_cuidado": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "excedencia_o_reduccion_jornada_cuidado", "text": "¿Te has acogido a excedencia o reducción de jornada por cuidado de hijos este año?", "type": "bool"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "sexo": "hombre",
+                "excedencia_o_reduccion_jornada_cuidado": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "excedencia_o_reduccion_jornada_cuidado",
+                    "text": "¿Te has acogido a excedencia o reducción de jornada por cuidado de hijos este año?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     {
         "code": "ARA-VIUDEDAD",
@@ -140,9 +190,15 @@ ARABA_FORALES_V2 = [
             "Incorporado en la reforma foral de 2025."
         ),
         "requirements_json": json.dumps({"pension_viudedad": True}),
-        "questions_json": json.dumps([
-            {"key": "pension_viudedad", "text": "¿Percibes pensión de viudedad?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "pension_viudedad",
+                    "text": "¿Percibes pensión de viudedad?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
 ]
 
@@ -165,10 +221,20 @@ BIZKAIA_FORALES_V2 = [
             "1.800 EUR por el tercero o posteriores."
         ),
         "requirements_json": json.dumps({"nacimiento_o_adopcion": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_o_adopcion", "text": "¿Ha nacido o adoptado un hijo este año?", "type": "bool"},
-            {"key": "numero_hijo", "text": "¿Es el primero, segundo o tercero (o posterior)?", "type": "text"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_o_adopcion",
+                    "text": "¿Ha nacido o adoptado un hijo este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "numero_hijo",
+                    "text": "¿Es el primero, segundo o tercero (o posterior)?",
+                    "type": "text",
+                },
+            ]
+        ),
     },
     {
         "code": "BIZ-GUARDERIA",
@@ -181,10 +247,20 @@ BIZKAIA_FORALES_V2 = [
         "legal_reference": "Art. 80 bis NF 13/2013 Bizkaia",
         "description": "30% de los gastos en guardería, máximo 900 EUR por hijo menor de 3 años.",
         "requirements_json": json.dumps({"hijos_menores_3": True}),
-        "questions_json": json.dumps([
-            {"key": "hijos_menores_3", "text": "¿Tienes hijos menores de 3 años en guardería?", "type": "bool"},
-            {"key": "gastos_guarderia", "text": "¿Cuánto has pagado en guardería este año (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hijos_menores_3",
+                    "text": "¿Tienes hijos menores de 3 años en guardería?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gastos_guarderia",
+                    "text": "¿Cuánto has pagado en guardería este año (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "BIZ-EPSV",
@@ -196,10 +272,16 @@ BIZKAIA_FORALES_V2 = [
         "legal_reference": "Art. 72 NF 13/2013 Bizkaia",
         "description": "Reducción de base imponible por aportaciones a EPSV, límite 5.000 EUR.",
         "requirements_json": json.dumps({"tiene_epsv": True}),
-        "questions_json": json.dumps([
-            {"key": "tiene_epsv", "text": "¿Tienes una EPSV?", "type": "bool"},
-            {"key": "aportacion_epsv", "text": "¿Cuánto has aportado a la EPSV este año (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {"key": "tiene_epsv", "text": "¿Tienes una EPSV?", "type": "bool"},
+                {
+                    "key": "aportacion_epsv",
+                    "text": "¿Cuánto has aportado a la EPSV este año (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "BIZ-DONACIONES",
@@ -211,10 +293,16 @@ BIZKAIA_FORALES_V2 = [
         "legal_reference": "Art. 90 NF 13/2013 Bizkaia",
         "description": "30% de los donativos a entidades acogidas a la normativa foral de Bizkaia.",
         "requirements_json": json.dumps({"donativos_forales": True}),
-        "questions_json": json.dumps([
-            {"key": "donativos_forales", "text": "¿Has realizado donativos este año?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Importe total (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativos_forales",
+                    "text": "¿Has realizado donativos este año?",
+                    "type": "bool",
+                },
+                {"key": "importe_donativos", "text": "¿Importe total (EUR)?", "type": "number"},
+            ]
+        ),
     },
 ]
 
@@ -237,10 +325,20 @@ GIPUZKOA_FORALES_V2 = [
             "1.800 EUR por el tercero o posteriores."
         ),
         "requirements_json": json.dumps({"nacimiento_o_adopcion": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_o_adopcion", "text": "¿Ha nacido o adoptado un hijo este año?", "type": "bool"},
-            {"key": "numero_hijo", "text": "¿Es el primero, segundo o tercero (o posterior)?", "type": "text"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_o_adopcion",
+                    "text": "¿Ha nacido o adoptado un hijo este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "numero_hijo",
+                    "text": "¿Es el primero, segundo o tercero (o posterior)?",
+                    "type": "text",
+                },
+            ]
+        ),
     },
     {
         "code": "GIP-GUARDERIA",
@@ -253,10 +351,20 @@ GIPUZKOA_FORALES_V2 = [
         "legal_reference": "Art. 82 bis NF 3/2014 Gipuzkoa",
         "description": "30% de gastos de guardería, máximo 900 EUR por hijo menor de 3 años.",
         "requirements_json": json.dumps({"hijos_menores_3": True}),
-        "questions_json": json.dumps([
-            {"key": "hijos_menores_3", "text": "¿Tienes hijos menores de 3 años en guardería?", "type": "bool"},
-            {"key": "gastos_guarderia", "text": "¿Cuánto has pagado en guardería (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hijos_menores_3",
+                    "text": "¿Tienes hijos menores de 3 años en guardería?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gastos_guarderia",
+                    "text": "¿Cuánto has pagado en guardería (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "GIP-EPSV",
@@ -268,10 +376,16 @@ GIPUZKOA_FORALES_V2 = [
         "legal_reference": "Art. 74 NF 3/2014 Gipuzkoa",
         "description": "Reducción de base imponible por aportaciones a EPSV, límite 5.000 EUR.",
         "requirements_json": json.dumps({"tiene_epsv": True}),
-        "questions_json": json.dumps([
-            {"key": "tiene_epsv", "text": "¿Tienes una EPSV?", "type": "bool"},
-            {"key": "aportacion_epsv", "text": "¿Cuánto has aportado este año (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {"key": "tiene_epsv", "text": "¿Tienes una EPSV?", "type": "bool"},
+                {
+                    "key": "aportacion_epsv",
+                    "text": "¿Cuánto has aportado este año (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "GIP-DONACIONES",
@@ -283,10 +397,16 @@ GIPUZKOA_FORALES_V2 = [
         "legal_reference": "Art. 92 NF 3/2014 Gipuzkoa",
         "description": "30% de los donativos a entidades acogidas a la normativa foral de Gipuzkoa.",
         "requirements_json": json.dumps({"donativos_forales": True}),
-        "questions_json": json.dumps([
-            {"key": "donativos_forales", "text": "¿Has realizado donativos este año?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Importe total (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativos_forales",
+                    "text": "¿Has realizado donativos este año?",
+                    "type": "bool",
+                },
+                {"key": "importe_donativos", "text": "¿Importe total (EUR)?", "type": "number"},
+            ]
+        ),
     },
 ]
 
@@ -309,10 +429,20 @@ NAVARRA_FORALES_V2 = [
             "1.400 EUR por el tercero o posteriores."
         ),
         "requirements_json": json.dumps({"nacimiento_o_adopcion": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_o_adopcion", "text": "¿Ha nacido o adoptado un hijo este año?", "type": "bool"},
-            {"key": "numero_hijo", "text": "¿Es el primero, segundo o tercero (o posterior)?", "type": "text"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_o_adopcion",
+                    "text": "¿Ha nacido o adoptado un hijo este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "numero_hijo",
+                    "text": "¿Es el primero, segundo o tercero (o posterior)?",
+                    "type": "text",
+                },
+            ]
+        ),
     },
     {
         "code": "NAV-GUARDERIA",
@@ -325,10 +455,20 @@ NAVARRA_FORALES_V2 = [
         "legal_reference": "Art. 59 bis LF 22/1998 Navarra",
         "description": "30% de gastos de guardería, máximo 900 EUR por hijo menor de 3 años.",
         "requirements_json": json.dumps({"hijos_menores_3": True}),
-        "questions_json": json.dumps([
-            {"key": "hijos_menores_3", "text": "¿Tienes hijos menores de 3 años en guardería?", "type": "bool"},
-            {"key": "gastos_guarderia", "text": "¿Cuánto has pagado en guardería (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hijos_menores_3",
+                    "text": "¿Tienes hijos menores de 3 años en guardería?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gastos_guarderia",
+                    "text": "¿Cuánto has pagado en guardería (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "NAV-PENSIONES",
@@ -343,10 +483,20 @@ NAVARRA_FORALES_V2 = [
             "máximo 5.000 EUR (incluye planes de pensiones y EPSV reconocidas en Navarra)."
         ),
         "requirements_json": json.dumps({"tiene_plan_prevision": True}),
-        "questions_json": json.dumps([
-            {"key": "tiene_plan_prevision", "text": "¿Tienes un plan de pensiones o plan de previsión social?", "type": "bool"},
-            {"key": "aportacion_plan", "text": "¿Cuánto has aportado este año (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "tiene_plan_prevision",
+                    "text": "¿Tienes un plan de pensiones o plan de previsión social?",
+                    "type": "bool",
+                },
+                {
+                    "key": "aportacion_plan",
+                    "text": "¿Cuánto has aportado este año (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     {
         "code": "NAV-DONACIONES",
@@ -358,10 +508,16 @@ NAVARRA_FORALES_V2 = [
         "legal_reference": "Art. 65 LF 22/1998 Navarra",
         "description": "25% de los donativos a entidades acogidas a la normativa foral de Navarra.",
         "requirements_json": json.dumps({"donativos_forales": True}),
-        "questions_json": json.dumps([
-            {"key": "donativos_forales", "text": "¿Has realizado donativos este año?", "type": "bool"},
-            {"key": "importe_donativos", "text": "¿Importe total (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativos_forales",
+                    "text": "¿Has realizado donativos este año?",
+                    "type": "bool",
+                },
+                {"key": "importe_donativos", "text": "¿Importe total (EUR)?", "type": "number"},
+            ]
+        ),
     },
     {
         "code": "NAV-BICICLETA",
@@ -376,31 +532,36 @@ NAVARRA_FORALES_V2 = [
             "destinadas al desplazamiento urbano habitual. Incorporado en DFL 2025."
         ),
         "requirements_json": json.dumps({"bicicleta_urbana_adquirida": True}),
-        "questions_json": json.dumps([
-            {"key": "bicicleta_urbana_adquirida", "text": "¿Has comprado una bicicleta para desplazarte habitualmente este año?", "type": "bool"},
-            {"key": "precio_bicicleta", "text": "¿Cuánto costó la bicicleta (EUR)?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "bicicleta_urbana_adquirida",
+                    "text": "¿Has comprado una bicicleta para desplazarte habitualmente este año?",
+                    "type": "bool",
+                },
+                {
+                    "key": "precio_bicicleta",
+                    "text": "¿Cuánto costó la bicicleta (EUR)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
 # ---------------------------------------------------------------------------
 # Master list
 # ---------------------------------------------------------------------------
-ALL_FORAL_V2 = (
-    ARABA_FORALES_V2
-    + BIZKAIA_FORALES_V2
-    + GIPUZKOA_FORALES_V2
-    + NAVARRA_FORALES_V2
-)
+ALL_FORAL_V2 = ARABA_FORALES_V2 + BIZKAIA_FORALES_V2 + GIPUZKOA_FORALES_V2 + NAVARRA_FORALES_V2
 
 TAX_YEAR = 2025
 
 
 DEPRECATED_DUPLICATE_CODES = [
-    "ARA-VIVIENDA",   # duplicate of ARA-ALQUILER-VIV
-    "BIZ-VIVIENDA",   # duplicate of BIZ-ALQUILER-VIV
-    "GIP-VIVIENDA",   # duplicate of GIP-ALQUILER-VIV
-    "NAV-VIVIENDA",   # duplicate of NAV-ALQUILER-VIV
+    "ARA-VIVIENDA",  # duplicate of ARA-ALQUILER-VIV
+    "BIZ-VIVIENDA",  # duplicate of BIZ-ALQUILER-VIV
+    "GIP-VIVIENDA",  # duplicate of GIP-ALQUILER-VIV
+    "NAV-VIVIENDA",  # duplicate of NAV-ALQUILER-VIV
 ]
 
 
@@ -450,9 +611,7 @@ async def seed_deductions_forales_v2() -> None:
             ],
         )
         # Verify whether it was actually inserted (INSERT OR IGNORE is silent on conflict)
-        check = await db.execute(
-            "SELECT id FROM deductions WHERE code = ?", [ded["code"]]
-        )
+        check = await db.execute("SELECT id FROM deductions WHERE code = ?", [ded["code"]])
         if check.rows and check.rows[0]["id"] == row_id:
             inserted += 1
             print(f"  [INSERT] {ded['code']} — {ded['name']}")

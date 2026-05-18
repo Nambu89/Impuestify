@@ -30,9 +30,10 @@ IMPORTANT: Section I (estimación directa) requires CUMULATIVE figures from
 January 1st. Section II requires QUARTERLY figures. The tool documents this
 in the OpenAI schema so the LLM picks the right inputs.
 """
-from typing import Any, Dict, Optional
-from datetime import datetime
+
 import logging
+from datetime import datetime
+from typing import Any
 
 from app.utils.calculators.modelo_130 import Modelo130Calculator
 
@@ -269,7 +270,7 @@ def _build_seccion_i_response(
     *,
     trimestre: int,
     year: int,
-    casillas: Dict[str, float],
+    casillas: dict[str, float],
     deduccion_80bis: float,
     resultado_final: float,
     ceuta_melilla: bool,
@@ -302,29 +303,21 @@ def _build_seccion_i_response(
     # name `05_retenciones_acumuladas` is misleading. After the C1 fix the
     # value at key `06_pagos_anteriores` IS retenciones, and `05_*` IS pagos
     # previos in the formatted output. We re-map here for clarity.
-    pagos_previos_05 = casillas["06_pagos_anteriores"]   # see fix below
+    pagos_previos_05 = casillas["06_pagos_anteriores"]  # see fix below
     retenciones_06 = casillas["05_retenciones_acumuladas"]
 
     if pagos_previos_05 > 0:
-        lines.append(
-            f"- Pagos fraccionados anteriores [05]: -{_fmt(pagos_previos_05)} EUR"
-        )
+        lines.append(f"- Pagos fraccionados anteriores [05]: -{_fmt(pagos_previos_05)} EUR")
     if retenciones_06 > 0:
-        lines.append(
-            f"- Retenciones e ingresos a cuenta [06]: -{_fmt(retenciones_06)} EUR"
-        )
+        lines.append(f"- Retenciones e ingresos a cuenta [06]: -{_fmt(retenciones_06)} EUR")
 
-    lines.append(
-        f"- **Resultado sección I [07]: {_fmt(casillas['07_resultado_seccion_I'])} EUR**"
-    )
+    lines.append(f"- **Resultado sección I [07]: {_fmt(casillas['07_resultado_seccion_I'])} EUR**")
     lines.append("")
 
     # Sección III
     lines.append("**Sección III — Liquidación**")
     if deduccion_80bis > 0:
-        lines.append(
-            f"- Deducción art. 80 bis (rentas bajas) [13]: -{_fmt(deduccion_80bis)} EUR"
-        )
+        lines.append(f"- Deducción art. 80 bis (rentas bajas) [13]: -{_fmt(deduccion_80bis)} EUR")
     if casillas.get("16_deduccion_vivienda", 0) > 0:
         lines.append(
             f"- Deducción vivienda habitual [16]: -{_fmt(casillas['16_deduccion_vivienda'])} EUR"
@@ -361,7 +354,7 @@ def _build_seccion_ii_response(
     *,
     trimestre: int,
     year: int,
-    seccion_ii: Dict[str, Any],
+    seccion_ii: dict[str, Any],
 ) -> str:
     """Format the Section II (agrícola) result."""
     label = _TRIMESTRE_LABEL[trimestre]
@@ -395,7 +388,7 @@ async def calculate_modelo_130_tool(
     trimestre: int,
     ingresos_computables: float = 0.0,
     gastos_deducibles: float = 0.0,
-    year: Optional[int] = None,
+    year: int | None = None,
     retenciones_ingresos_cuenta: float = 0.0,
     pagos_fraccionados_anteriores: float = 0.0,
     rendimiento_neto_previo_anual: float = 0.0,
@@ -409,7 +402,7 @@ async def calculate_modelo_130_tool(
     pct_retencion_anio_anterior: float = 0.0,
     territorio: str = "Comun",
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Wrapper around :class:`Modelo130Calculator` for OpenAI function calling.
 
@@ -544,8 +537,7 @@ async def calculate_modelo_130_tool(
         )
 
         logger.info(
-            "Modelo 130 sección I: %s %s, ingresos=%s, gastos=%s, "
-            "neto=%s, resultado=%s",
+            "Modelo 130 sección I: %s %s, ingresos=%s, gastos=%s, " "neto=%s, resultado=%s",
             _TRIMESTRE_LABEL[trimestre],
             year,
             casillas["01_ingresos_acumulados"],

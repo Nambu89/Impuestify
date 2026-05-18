@@ -18,9 +18,8 @@ Uso tipico desde un endpoint::
     ):
         ...
 """
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 from fastapi import Depends, HTTPException, Request
 
@@ -34,7 +33,6 @@ from app.services.defensia_storage import DefensiaStorage
 from app.services.defensia_writer_service import DefensiaWriterService
 from app.utils.hybrid_retriever import HybridRetriever
 
-
 # ---------------------------------------------------------------------------
 # Singletons per-worker (lazy). El lock no hace falta: cada worker del uvicorn
 # importa este modulo una vez y FastAPI ejecuta las dependencias en el mismo
@@ -42,10 +40,10 @@ from app.utils.hybrid_retriever import HybridRetriever
 # inicializacion (solo asignaciones simples).
 # ---------------------------------------------------------------------------
 
-_storage_singleton: Optional[DefensiaStorage] = None
-_writer_singleton: Optional[DefensiaWriterService] = None
-_export_singleton: Optional[DefensiaExportService] = None
-_agent_singleton: Optional[DefensiaAgent] = None
+_storage_singleton: DefensiaStorage | None = None
+_writer_singleton: DefensiaWriterService | None = None
+_export_singleton: DefensiaExportService | None = None
+_agent_singleton: DefensiaAgent | None = None
 
 
 # ---------------------------------------------------------------------------

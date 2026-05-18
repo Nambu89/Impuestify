@@ -4,7 +4,13 @@ from pathlib import Path
 import pytest
 
 # Resolve relative to this file: tests/defensia/ -> backend/ -> app/database/migrations/
-MIGRATION = Path(__file__).parent.parent.parent / "app" / "database" / "migrations" / "20260413_defensia_tables.sql"
+MIGRATION = (
+    Path(__file__).parent.parent.parent
+    / "app"
+    / "database"
+    / "migrations"
+    / "20260413_defensia_tables.sql"
+)
 
 
 def test_migration_creates_all_tables(tmp_path):
@@ -23,7 +29,8 @@ def test_migration_creates_all_tables(tmp_path):
         "defensia_rag_log",
     }
     encontradas = {
-        r[0] for r in conn.execute(
+        r[0]
+        for r in conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'defensia_%'"
         )
     }
@@ -37,6 +44,7 @@ def test_init_schema_creates_defensia_tables(tmp_path, monkeypatch):
     to wire it into the production init_schema() entry point.
     """
     import sqlite3
+
     db_path = tmp_path / "prod.db"
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA foreign_keys = ON")
@@ -44,9 +52,12 @@ def test_init_schema_creates_defensia_tables(tmp_path, monkeypatch):
     # Simulate init_schema's DefensIA block inline (we can't call init_schema
     # directly in a unit test without the full Turso client setup)
     from pathlib import Path
+
     migration = (
         Path(__file__).parent.parent.parent
-        / "app" / "database" / "migrations"
+        / "app"
+        / "database"
+        / "migrations"
         / "20260413_defensia_tables.sql"
     )
     assert migration.exists(), f"Migration file missing: {migration}"
@@ -54,8 +65,7 @@ def test_init_schema_creates_defensia_tables(tmp_path, monkeypatch):
     # The production entry point in turso_client.py MUST contain a reference
     # to this exact file name. This is the real guard against drift.
     turso_source = (
-        Path(__file__).parent.parent.parent
-        / "app" / "database" / "turso_client.py"
+        Path(__file__).parent.parent.parent / "app" / "database" / "turso_client.py"
     ).read_text(encoding="utf-8")
     assert "20260413_defensia_tables.sql" in turso_source, (
         "init_schema() in turso_client.py does not reference the DefensIA "
@@ -69,7 +79,8 @@ def test_init_schema_creates_defensia_tables(tmp_path, monkeypatch):
     conn.commit()
 
     encontradas = {
-        r[0] for r in conn.execute(
+        r[0]
+        for r in conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'defensia_%'"
         )
     }
@@ -89,9 +100,7 @@ def test_migration_cascade_user_delete(tmp_path):
         "('e1','u1','Test','IRPF','Madrid','liquidacion','borrador','2026-04-13','2026-04-13')"
     )
     conn.execute("DELETE FROM users WHERE id='u1'")
-    count = conn.execute(
-        "SELECT COUNT(*) FROM defensia_expedientes WHERE id='e1'"
-    ).fetchone()[0]
+    count = conn.execute("SELECT COUNT(*) FROM defensia_expedientes WHERE id='e1'").fetchone()[0]
     assert count == 0, "cascade delete must remove expediente when user deleted"
 
 

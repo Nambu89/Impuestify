@@ -4,26 +4,30 @@ Tests for admin feedback/contact/ratings/dashboard endpoints.
 All tests mock auth and DB via FastAPI dependency_overrides.
 Tests cover: permissions, CRUD, stats, pagination, validation, GDPR delete.
 """
-import asyncio
-import pytest
-from unittest.mock import AsyncMock, MagicMock
-from fastapi.testclient import TestClient
-from fastapi import FastAPI, HTTPException
 
+import asyncio
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def mock_owner():
     from app.auth.jwt_handler import TokenData
+
     return TokenData(user_id="owner-001", email="fernando.prada@proton.me")
 
 
 @pytest.fixture
 def mock_regular_user():
     from app.auth.jwt_handler import TokenData
+
     return TokenData(user_id="user-regular-001", email="user@example.com")
 
 
@@ -32,17 +36,19 @@ def _make_admin_app(user_obj, db_obj, forbidden: bool = False):
     Create a FastAPI app with admin router and dependency overrides.
     If `forbidden=True`, _require_owner raises 403 (simulates non-owner access).
     """
-    from app.routers.admin import router, _require_owner
     from app.auth.jwt_handler import get_current_user
     from app.database.turso_client import get_db_client
+    from app.routers.admin import _require_owner, router
 
     app = FastAPI()
     app.include_router(router)
 
     if forbidden:
+
         async def _override_owner():
             raise HTTPException(status_code=403, detail="Forbidden")
     else:
+
         async def _override_owner():
             return user_obj
 
@@ -71,6 +77,7 @@ def _rows_db(rows):
 # Permission tests — regular user cannot access admin endpoints
 # ---------------------------------------------------------------------------
 
+
 class TestAdminPermissions:
     def test_non_owner_cannot_list_feedback(self, mock_regular_user):
         db = _count_db()
@@ -98,16 +105,19 @@ class TestAdminPermissions:
 # Dashboard
 # ---------------------------------------------------------------------------
 
+
 class TestDashboard:
     def test_dashboard_returns_expected_shape(self, mock_owner):
         db = AsyncMock()
 
         def _side_effect(sql, *args, **kwargs):
             if "plan_type" in sql and "GROUP BY" in sql:
-                return MagicMock(rows=[
-                    {"plan_type": "particular", "cnt": 8},
-                    {"plan_type": "autonomo", "cnt": 4},
-                ])
+                return MagicMock(
+                    rows=[
+                        {"plan_type": "particular", "cnt": 8},
+                        {"plan_type": "autonomo", "cnt": 4},
+                    ]
+                )
             return MagicMock(rows=[{"cnt": 10}])
 
         db.execute.side_effect = _side_effect
@@ -131,23 +141,26 @@ class TestDashboard:
 # Feedback list and detail
 # ---------------------------------------------------------------------------
 
+
 class TestAdminFeedbackList:
     def test_list_feedback_excludes_screenshot_data(self, mock_owner):
-        db = _rows_db([
-            {
-                "id": "fb-001",
-                "type": "bug",
-                "title": "Error en calculo",
-                "description": "Detalle del error.",
-                "page_url": None,
-                "status": "new",
-                "priority": "normal",
-                "admin_notes": None,
-                "user_email": "user@example.com",
-                "created_at": "2026-03-16T10:00:00",
-                "updated_at": "2026-03-16T10:00:00",
-            }
-        ])
+        db = _rows_db(
+            [
+                {
+                    "id": "fb-001",
+                    "type": "bug",
+                    "title": "Error en calculo",
+                    "description": "Detalle del error.",
+                    "page_url": None,
+                    "status": "new",
+                    "priority": "normal",
+                    "admin_notes": None,
+                    "user_email": "user@example.com",
+                    "created_at": "2026-03-16T10:00:00",
+                    "updated_at": "2026-03-16T10:00:00",
+                }
+            ]
+        )
         app = _make_admin_app(mock_owner, db)
         client = TestClient(app)
         resp = client.get("/api/admin/feedback")
@@ -183,22 +196,24 @@ class TestAdminFeedbackList:
 
 class TestAdminFeedbackDetail:
     def test_detail_includes_screenshot_data(self, mock_owner):
-        db = _rows_db([
-            {
-                "id": "fb-001",
-                "type": "bug",
-                "title": "Error",
-                "description": "Detalle.",
-                "page_url": None,
-                "screenshot_data": "base64encodedpng...",
-                "status": "new",
-                "priority": "normal",
-                "admin_notes": None,
-                "user_email": "user@example.com",
-                "created_at": "2026-03-16T10:00:00",
-                "updated_at": "2026-03-16T10:00:00",
-            }
-        ])
+        db = _rows_db(
+            [
+                {
+                    "id": "fb-001",
+                    "type": "bug",
+                    "title": "Error",
+                    "description": "Detalle.",
+                    "page_url": None,
+                    "screenshot_data": "base64encodedpng...",
+                    "status": "new",
+                    "priority": "normal",
+                    "admin_notes": None,
+                    "user_email": "user@example.com",
+                    "created_at": "2026-03-16T10:00:00",
+                    "updated_at": "2026-03-16T10:00:00",
+                }
+            ]
+        )
         app = _make_admin_app(mock_owner, db)
         client = TestClient(app)
         resp = client.get("/api/admin/feedback/fb-001")
@@ -220,6 +235,7 @@ class TestAdminFeedbackDetail:
 # Feedback stats — /feedback/stats must resolve BEFORE /feedback/{id}
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackStats:
     def test_stats_endpoint_resolves_before_id_route(self, mock_owner):
         """
@@ -229,9 +245,9 @@ class TestFeedbackStats:
         """
         db = AsyncMock()
         db.execute.side_effect = [
-            MagicMock(rows=[{"type": "bug", "cnt": 5}]),        # by_type query
-            MagicMock(rows=[{"status": "new", "cnt": 3}]),      # by_status query
-            MagicMock(rows=[{"priority": "normal", "cnt": 5}]), # by_priority query
+            MagicMock(rows=[{"type": "bug", "cnt": 5}]),  # by_type query
+            MagicMock(rows=[{"status": "new", "cnt": 3}]),  # by_status query
+            MagicMock(rows=[{"priority": "normal", "cnt": 5}]),  # by_priority query
         ]
         app = _make_admin_app(mock_owner, db)
         client = TestClient(app)
@@ -248,6 +264,7 @@ class TestFeedbackStats:
 # ---------------------------------------------------------------------------
 # Update feedback
 # ---------------------------------------------------------------------------
+
 
 class TestUpdateFeedback:
     def test_update_status_and_notes(self, mock_owner):
@@ -308,20 +325,23 @@ class TestUpdateFeedback:
 # Contact requests
 # ---------------------------------------------------------------------------
 
+
 class TestContactRequests:
     def test_list_contact_requests(self, mock_owner):
-        db = _rows_db([
-            {
-                "id": "cr-001",
-                "user_id": "u-001",
-                "email": "user@example.com",
-                "name": "Juan",
-                "message": "Quiero informacion sobre el plan autonomo.",
-                "request_type": "autonomo_interest",
-                "status": "pending",
-                "created_at": "2026-03-16T09:00:00",
-            }
-        ])
+        db = _rows_db(
+            [
+                {
+                    "id": "cr-001",
+                    "user_id": "u-001",
+                    "email": "user@example.com",
+                    "name": "Juan",
+                    "message": "Quiero informacion sobre el plan autonomo.",
+                    "request_type": "autonomo_interest",
+                    "status": "pending",
+                    "created_at": "2026-03-16T09:00:00",
+                }
+            ]
+        )
         app = _make_admin_app(mock_owner, db)
         client = TestClient(app)
         resp = client.get("/api/admin/contact-requests")
@@ -335,7 +355,7 @@ class TestContactRequests:
         db = AsyncMock()
         db.execute.side_effect = [
             MagicMock(rows=[{"id": "cr-001"}]),  # exists check
-            MagicMock(rows=[]),                    # UPDATE
+            MagicMock(rows=[]),  # UPDATE
         ]
         app = _make_admin_app(mock_owner, db)
         client = TestClient(app)
@@ -377,6 +397,7 @@ class TestContactRequests:
 # Chat ratings — /chat-ratings/stats must resolve BEFORE /chat-ratings
 # ---------------------------------------------------------------------------
 
+
 class TestChatRatingsAdmin:
     def test_stats_resolves_before_list_route(self, mock_owner):
         """
@@ -396,18 +417,20 @@ class TestChatRatingsAdmin:
         assert "trend_30d" in data
 
     def test_list_chat_ratings(self, mock_owner):
-        db = _rows_db([
-            {
-                "id": "cr-001",
-                "user_id": "u-001",
-                "user_email": "user@example.com",
-                "message_id": "msg-001",
-                "conversation_id": "conv-001",
-                "rating": 1,
-                "comment": None,
-                "created_at": "2026-03-16T11:00:00",
-            }
-        ])
+        db = _rows_db(
+            [
+                {
+                    "id": "cr-001",
+                    "user_id": "u-001",
+                    "user_email": "user@example.com",
+                    "message_id": "msg-001",
+                    "conversation_id": "conv-001",
+                    "rating": 1,
+                    "comment": None,
+                    "created_at": "2026-03-16T11:00:00",
+                }
+            ]
+        )
         app = _make_admin_app(mock_owner, db)
         client = TestClient(app)
         resp = client.get("/api/admin/chat-ratings")
@@ -436,6 +459,7 @@ class TestChatRatingsAdmin:
 # GDPR: deleting account also removes feedback and chat_ratings
 # ---------------------------------------------------------------------------
 
+
 class TestGDPRDelete:
     """
     Verify that user_rights.delete_user_account issues DELETE statements
@@ -443,8 +467,8 @@ class TestGDPRDelete:
     """
 
     def test_gdpr_deletes_feedback_and_ratings(self):
-        from app.routers.user_rights import delete_user_account
         from app.auth.jwt_handler import TokenData
+        from app.routers.user_rights import delete_user_account
 
         mock_user = TokenData(user_id="user-gdpr-001", email="gdpr@test.com")
         mock_db = AsyncMock()
@@ -464,8 +488,8 @@ class TestGDPRDelete:
         assert "chat_ratings" in combined, "GDPR delete must include chat_ratings table"
 
     def test_gdpr_response_shape(self):
-        from app.routers.user_rights import delete_user_account
         from app.auth.jwt_handler import TokenData
+        from app.routers.user_rights import delete_user_account
 
         mock_user = TokenData(user_id="user-gdpr-002", email="gdpr2@test.com")
         mock_db = AsyncMock()

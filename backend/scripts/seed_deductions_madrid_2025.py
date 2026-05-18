@@ -13,6 +13,7 @@ Usage:
     python scripts/seed_deductions_madrid_2025.py
     python scripts/seed_deductions_madrid_2025.py --dry-run
 """
+
 import argparse
 import asyncio
 import json
@@ -55,10 +56,20 @@ MADRID_2025: list[dict] = [
             "BI unidad familiar <= 61.860 EUR."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo o adoptado en los ultimos 3 anos?", "type": "bool"},
-            {"key": "num_hijos_recientes", "text": "Cuantos hijos has tenido o adoptado en los ultimos 3 anos?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_adopcion_reciente",
+                    "text": "Has tenido un hijo o adoptado en los ultimos 3 anos?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_recientes",
+                    "text": "Cuantos hijos has tenido o adoptado en los ultimos 3 anos?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 2. Adopcion internacional (Art. 5)
@@ -78,10 +89,20 @@ MADRID_2025: list[dict] = [
             "BI unidad familiar <= 61.860 EUR."
         ),
         "requirements_json": json.dumps({"adopcion_internacional": True}),
-        "questions_json": json.dumps([
-            {"key": "adopcion_internacional", "text": "Has realizado una adopcion internacional en los ultimos 3 anos?", "type": "bool"},
-            {"key": "num_adopciones_internacionales", "text": "Cuantas adopciones internacionales has realizado?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "adopcion_internacional",
+                    "text": "Has realizado una adopcion internacional en los ultimos 3 anos?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_adopciones_internacionales",
+                    "text": "Cuantas adopciones internacionales has realizado?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 3. Acogimiento familiar de menores (Art. 6)
@@ -101,10 +122,20 @@ MADRID_2025: list[dict] = [
             "BI <= 26.414,22 EUR individual / 37.322,20 EUR conjunta."
         ),
         "requirements_json": json.dumps({"acogimiento_menores": True}),
-        "questions_json": json.dumps([
-            {"key": "acogimiento_menores", "text": "Tienes menores en acogimiento familiar?", "type": "bool"},
-            {"key": "num_menores_acogidos", "text": "Cuantos menores tienes en acogimiento?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "acogimiento_menores",
+                    "text": "Tienes menores en acogimiento familiar?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_menores_acogidos",
+                    "text": "Cuantos menores tienes en acogimiento?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 4. Acogimiento no remunerado de mayores de 65 y/o discapacitados (Art. 7)
@@ -123,10 +154,20 @@ MADRID_2025: list[dict] = [
             "BI <= 26.414,22 EUR individual / 37.322,20 EUR conjunta."
         ),
         "requirements_json": json.dumps({"acogimiento_no_remunerado_65": True}),
-        "questions_json": json.dumps([
-            {"key": "acogimiento_no_remunerado_65", "text": "Acoges sin contraprestacion a personas mayores de 65 o con discapacidad?", "type": "bool"},
-            {"key": "num_personas_acogidas", "text": "Cuantas personas acoges?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "acogimiento_no_remunerado_65",
+                    "text": "Acoges sin contraprestacion a personas mayores de 65 o con discapacidad?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_personas_acogidas",
+                    "text": "Cuantas personas acoges?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 5. Cuidado de ascendientes (Art. 7 bis)
@@ -143,10 +184,20 @@ MADRID_2025: list[dict] = [
             "que genere derecho al minimo por ascendientes del IRPF."
         ),
         "requirements_json": json.dumps({"ascendiente_a_cargo": True}),
-        "questions_json": json.dumps([
-            {"key": "ascendiente_a_cargo", "text": "Tienes padres o abuelos a tu cargo mayores de 65 o con discapacidad?", "type": "bool"},
-            {"key": "num_ascendientes", "text": "Cuantos ascendientes tienes a tu cargo?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "ascendiente_a_cargo",
+                    "text": "Tienes padres o abuelos a tu cargo mayores de 65 o con discapacidad?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_ascendientes",
+                    "text": "Cuantos ascendientes tienes a tu cargo?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 6. Familias con 2+ descendientes e ingresos reducidos (Art. 7 ter)
@@ -166,14 +217,26 @@ MADRID_2025: list[dict] = [
             "BI general + ahorro <= 26.414,22 EUR individual / 37.322,20 EUR conjunta."
         ),
         "percentage": 10.0,
-        "requirements_json": json.dumps({
-            "dos_o_mas_descendientes": True,
-            "rendimientos_trabajo_max_24000": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "dos_o_mas_descendientes", "text": "Tienes 2 o mas hijos que generen derecho al minimo por descendientes?", "type": "bool"},
-            {"key": "rendimientos_netos_trabajo", "text": "Cuales son tus rendimientos netos del trabajo (casilla 0022)?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "dos_o_mas_descendientes": True,
+                "rendimientos_trabajo_max_24000": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "dos_o_mas_descendientes",
+                    "text": "Tienes 2 o mas hijos que generen derecho al minimo por descendientes?",
+                    "type": "bool",
+                },
+                {
+                    "key": "rendimientos_netos_trabajo",
+                    "text": "Cuales son tus rendimientos netos del trabajo (casilla 0022)?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 7. Obtencion de la condicion de familia numerosa (Art. 7 quater)
@@ -193,10 +256,20 @@ MADRID_2025: list[dict] = [
             "BI unidad familiar <= 61.860 EUR."
         ),
         "requirements_json": json.dumps({"familia_numerosa_nueva": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa_nueva", "text": "Has obtenido el titulo de familia numerosa este ano?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_numerosa_nueva",
+                    "text": "Has obtenido el titulo de familia numerosa este ano?",
+                    "type": "bool",
+                },
+                {
+                    "key": "familia_numerosa_especial",
+                    "text": "Es de categoria especial?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 8. Arrendamiento de vivienda habitual — inquilino (Art. 8)
@@ -217,15 +290,27 @@ MADRID_2025: list[dict] = [
             "BI unidad familiar <= 61.860 EUR. "
             "Requiere copia del deposito de fianza en IVIMA."
         ),
-        "requirements_json": json.dumps({
-            "alquiler_vivienda_habitual": True,
-            "menor_40_anos": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "menor_40_anos", "text": "Tienes menos de 40 anos?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al ano?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "alquiler_vivienda_habitual": True,
+                "menor_40_anos": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {"key": "menor_40_anos", "text": "Tienes menos de 40 anos?", "type": "bool"},
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al ano?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 9. Gastos derivados del arrendamiento de viviendas — arrendador (Art. 8 bis)
@@ -246,10 +331,20 @@ MADRID_2025: list[dict] = [
             "Requiere deposito de fianza en IVIMA."
         ),
         "requirements_json": json.dumps({"arrendador_vivienda": True}),
-        "questions_json": json.dumps([
-            {"key": "arrendador_vivienda", "text": "Eres propietario de una vivienda que tienes alquilada como vivienda?", "type": "bool"},
-            {"key": "gastos_arrendamiento", "text": "Cuanto has gastado en conservacion, seguros y certificacion energetica?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "arrendador_vivienda",
+                    "text": "Eres propietario de una vivienda que tienes alquilada como vivienda?",
+                    "type": "bool",
+                },
+                {
+                    "key": "gastos_arrendamiento",
+                    "text": "Cuanto has gastado en conservacion, seguros y certificacion energetica?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 10. Arrendamiento de viviendas vacias (Art. 8 ter)
@@ -268,9 +363,15 @@ MADRID_2025: list[dict] = [
             "minima del contrato de 1 ano. Compatible con la deduccion Art. 8 bis."
         ),
         "requirements_json": json.dumps({"vivienda_desocupada_alquilada": True}),
-        "questions_json": json.dumps([
-            {"key": "vivienda_desocupada_alquilada", "text": "Has puesto en alquiler una vivienda que llevaba mas de 1 ano vacia?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_desocupada_alquilada",
+                    "text": "Has puesto en alquiler una vivienda que llevaba mas de 1 ano vacia?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 11. Incremento de costes de financiacion por subida de tipos (Art. 8 quater)
@@ -290,10 +391,20 @@ MADRID_2025: list[dict] = [
             "BI general + ahorro <= 30.930 EUR individual / 37.322,20 EUR conjunta."
         ),
         "requirements_json": json.dumps({"hipoteca_variable_vivienda": True}),
-        "questions_json": json.dumps([
-            {"key": "hipoteca_variable_vivienda", "text": "Tienes hipoteca a tipo variable sobre tu vivienda habitual?", "type": "bool"},
-            {"key": "incremento_intereses", "text": "Cuanto han aumentado tus intereses hipotecarios respecto al ano anterior?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hipoteca_variable_vivienda",
+                    "text": "Tienes hipoteca a tipo variable sobre tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "incremento_intereses",
+                    "text": "Cuanto han aumentado tus intereses hipotecarios respecto al ano anterior?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 12. Cambio de residencia a municipio en riesgo de despoblamiento (Art. 10 bis)
@@ -313,9 +424,15 @@ MADRID_2025: list[dict] = [
             "BI general + ahorro <= 26.414,22 EUR individual / 37.322,20 EUR conjunta."
         ),
         "requirements_json": json.dumps({"cambio_residencia_despoblamiento": True}),
-        "questions_json": json.dumps([
-            {"key": "cambio_residencia_despoblamiento", "text": "Te has trasladado a un municipio en riesgo de despoblamiento de Madrid?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "cambio_residencia_despoblamiento",
+                    "text": "Te has trasladado a un municipio en riesgo de despoblamiento de Madrid?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 13. Adquisicion de vivienda habitual en municipio despoblamiento (Art. 10 ter)
@@ -336,10 +453,20 @@ MADRID_2025: list[dict] = [
             "BI <= 26.414,22 EUR individual / 37.322,20 EUR conjunta."
         ),
         "requirements_json": json.dumps({"adquisicion_vivienda_despoblamiento": True}),
-        "questions_json": json.dumps([
-            {"key": "adquisicion_vivienda_despoblamiento", "text": "Has comprado vivienda en un municipio en riesgo de despoblamiento de Madrid?", "type": "bool"},
-            {"key": "precio_adquisicion", "text": "Cual fue el precio de adquisicion de la vivienda?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "adquisicion_vivienda_despoblamiento",
+                    "text": "Has comprado vivienda en un municipio en riesgo de despoblamiento de Madrid?",
+                    "type": "bool",
+                },
+                {
+                    "key": "precio_adquisicion",
+                    "text": "Cual fue el precio de adquisicion de la vivienda?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 14. Pago de intereses de prestamos para vivienda habitual jovenes < 30 (Art. 12)
@@ -359,15 +486,27 @@ MADRID_2025: list[dict] = [
             "BI general + ahorro <= 26.414,22 EUR individual / 37.322,20 EUR conjunta; "
             "BI unidad familiar <= 61.860 EUR."
         ),
-        "requirements_json": json.dumps({
-            "vivienda_habitual_propiedad": True,
-            "menor_30_anos": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "vivienda_habitual_propiedad", "text": "Tienes vivienda habitual en propiedad con prestamo?", "type": "bool"},
-            {"key": "menor_30_anos", "text": "Tienes menos de 30 anos?", "type": "bool"},
-            {"key": "intereses_prestamo_vivienda", "text": "Cuanto has pagado de intereses del prestamo este ano?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "vivienda_habitual_propiedad": True,
+                "menor_30_anos": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_habitual_propiedad",
+                    "text": "Tienes vivienda habitual en propiedad con prestamo?",
+                    "type": "bool",
+                },
+                {"key": "menor_30_anos", "text": "Tienes menos de 30 anos?", "type": "bool"},
+                {
+                    "key": "intereses_prestamo_vivienda",
+                    "text": "Cuanto has pagado de intereses del prestamo este ano?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 15. Adquisicion de vivienda habitual por nacimiento/adopcion (Art. 13)
@@ -387,14 +526,26 @@ MADRID_2025: list[dict] = [
             "Ocupacion efectiva en 12 meses, permanencia minima 3 anos. "
             "BI <= 30.930 EUR x numero de miembros de la unidad familiar."
         ),
-        "requirements_json": json.dumps({
-            "adquisicion_vivienda_por_hijo": True,
-            "nacimiento_adopcion_reciente": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "adquisicion_vivienda_por_hijo", "text": "Has comprado vivienda tras el nacimiento o adopcion de un hijo (en los ultimos 3 anos)?", "type": "bool"},
-            {"key": "precio_adquisicion_vivienda", "text": "Cual fue el precio de adquisicion?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "adquisicion_vivienda_por_hijo": True,
+                "nacimiento_adopcion_reciente": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "adquisicion_vivienda_por_hijo",
+                    "text": "Has comprado vivienda tras el nacimiento o adopcion de un hijo (en los ultimos 3 anos)?",
+                    "type": "bool",
+                },
+                {
+                    "key": "precio_adquisicion_vivienda",
+                    "text": "Cual fue el precio de adquisicion?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 16. Gastos educativos (Art. 11)
@@ -415,12 +566,30 @@ MADRID_2025: list[dict] = [
             "BI general + ahorro <= 30.930 EUR x numero de miembros de la unidad familiar."
         ),
         "requirements_json": json.dumps({"gastos_educativos": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_educativos", "text": "Tienes gastos de escolaridad, idiomas o uniformes de tus hijos?", "type": "bool"},
-            {"key": "importe_escolaridad", "text": "Cuanto has pagado de escolaridad privada (no concertada)?", "type": "number"},
-            {"key": "importe_idiomas", "text": "Cuanto has pagado en ensenanza de idiomas?", "type": "number"},
-            {"key": "importe_uniformes", "text": "Cuanto has pagado en uniformes escolares?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "gastos_educativos",
+                    "text": "Tienes gastos de escolaridad, idiomas o uniformes de tus hijos?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_escolaridad",
+                    "text": "Cuanto has pagado de escolaridad privada (no concertada)?",
+                    "type": "number",
+                },
+                {
+                    "key": "importe_idiomas",
+                    "text": "Cuanto has pagado en ensenanza de idiomas?",
+                    "type": "number",
+                },
+                {
+                    "key": "importe_uniformes",
+                    "text": "Cuanto has pagado en uniformes escolares?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 17. Cuidado de hijos < 3, mayores dependientes, discapacitados (Art. 11 bis)
@@ -439,11 +608,25 @@ MADRID_2025: list[dict] = [
             "Aplica para cuidado de hijos < 3, ascendientes >= 65 o discapacitados >= 33%."
         ),
         "requirements_json": json.dumps({"empleada_hogar_cuidado": True}),
-        "questions_json": json.dumps([
-            {"key": "empleada_hogar_cuidado", "text": "Tienes contratada a una persona del hogar para cuidado de hijos < 3 o dependientes?", "type": "bool"},
-            {"key": "cotizaciones_ss_hogar", "text": "Cuanto pagas en cotizaciones a la SS por el empleado del hogar al ano?", "type": "number"},
-            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "empleada_hogar_cuidado",
+                    "text": "Tienes contratada a una persona del hogar para cuidado de hijos < 3 o dependientes?",
+                    "type": "bool",
+                },
+                {
+                    "key": "cotizaciones_ss_hogar",
+                    "text": "Cuanto pagas en cotizaciones a la SS por el empleado del hogar al ano?",
+                    "type": "number",
+                },
+                {
+                    "key": "familia_numerosa",
+                    "text": "Tienes titulo de familia numerosa?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 18. Pago de intereses de prestamos estudios (Art. 11 ter)
@@ -463,10 +646,20 @@ MADRID_2025: list[dict] = [
             "BI general + ahorro <= 30.930 EUR individual / 37.322,20 EUR conjunta."
         ),
         "requirements_json": json.dumps({"prestamo_estudios": True}),
-        "questions_json": json.dumps([
-            {"key": "prestamo_estudios", "text": "Tienes un prestamo para financiar estudios de Grado, Master o Doctorado?", "type": "bool"},
-            {"key": "intereses_prestamo_estudios", "text": "Cuanto has pagado de intereses del prestamo de estudios este ano?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "prestamo_estudios",
+                    "text": "Tienes un prestamo para financiar estudios de Grado, Master o Doctorado?",
+                    "type": "bool",
+                },
+                {
+                    "key": "intereses_prestamo_estudios",
+                    "text": "Cuanto has pagado de intereses del prestamo de estudios este ano?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 19. Donativos a fundaciones y clubes deportivos (Art. 9)
@@ -486,10 +679,20 @@ MADRID_2025: list[dict] = [
             "Limite: 10% de la base liquidable (general + ahorro)."
         ),
         "requirements_json": json.dumps({"donativo_a_entidad_acogida": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_a_entidad_acogida", "text": "Has hecho donativos a fundaciones o clubes deportivos inscritos en la CM de Madrid?", "type": "bool"},
-            {"key": "importe_donativos", "text": "Cuanto has donado en total?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativo_a_entidad_acogida",
+                    "text": "Has hecho donativos a fundaciones o clubes deportivos inscritos en la CM de Madrid?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_donativos",
+                    "text": "Cuanto has donado en total?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 20. Inversion en entidades de nueva o reciente creacion (Art. 15)
@@ -510,10 +713,16 @@ MADRID_2025: list[dict] = [
             "Mantenimiento minimo 3 anos."
         ),
         "requirements_json": json.dumps({"inversion_empresa_nueva": True}),
-        "questions_json": json.dumps([
-            {"key": "inversion_empresa_nueva", "text": "Has invertido en acciones o participaciones de una empresa de nueva creacion en Madrid?", "type": "bool"},
-            {"key": "importe_inversion", "text": "Cuanto has invertido?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "inversion_empresa_nueva",
+                    "text": "Has invertido en acciones o participaciones de una empresa de nueva creacion en Madrid?",
+                    "type": "bool",
+                },
+                {"key": "importe_inversion", "text": "Cuanto has invertido?", "type": "number"},
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 21. Inversiones en entidades cotizadas en el MAB (Art. 15 bis)
@@ -534,10 +743,16 @@ MADRID_2025: list[dict] = [
             "Solo acciones adquiridas en ampliaciones de capital."
         ),
         "requirements_json": json.dumps({"inversion_mab": True}),
-        "questions_json": json.dumps([
-            {"key": "inversion_mab", "text": "Has invertido en ampliaciones de capital de empresas del BME Growth (antiguo MAB)?", "type": "bool"},
-            {"key": "importe_inversion_mab", "text": "Cuanto has invertido?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "inversion_mab",
+                    "text": "Has invertido en ampliaciones de capital de empresas del BME Growth (antiguo MAB)?",
+                    "type": "bool",
+                },
+                {"key": "importe_inversion_mab", "text": "Cuanto has invertido?", "type": "number"},
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 22. Fomento del autoempleo de jovenes menores de 35 (Art. 16)
@@ -557,14 +772,22 @@ MADRID_2025: list[dict] = [
             "Permanencia minima de 1 ano desde el alta. "
             "Se aplica en el periodo impositivo del alta."
         ),
-        "requirements_json": json.dumps({
-            "autoempleo_joven": True,
-            "menor_35_anos": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "autoempleo_joven", "text": "Te has dado de alta como autonomo por primera vez este ano?", "type": "bool"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 anos?", "type": "bool"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "autoempleo_joven": True,
+                "menor_35_anos": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "autoempleo_joven",
+                    "text": "Te has dado de alta como autonomo por primera vez este ano?",
+                    "type": "bool",
+                },
+                {"key": "menor_35_anos", "text": "Tienes menos de 35 anos?", "type": "bool"},
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 23. Inversiones de nuevos contribuyentes procedentes del extranjero (Art. 17)
@@ -585,10 +808,20 @@ MADRID_2025: list[dict] = [
             "Espana en los 5 anos anteriores). Mantenimiento minimo 6 anos."
         ),
         "requirements_json": json.dumps({"nuevo_contribuyente_extranjero": True}),
-        "questions_json": json.dumps([
-            {"key": "nuevo_contribuyente_extranjero", "text": "Eres nuevo residente fiscal en Madrid procedente del extranjero?", "type": "bool"},
-            {"key": "importe_inversion_extranjero", "text": "Cuanto has invertido en entidades madrilenas?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nuevo_contribuyente_extranjero",
+                    "text": "Eres nuevo residente fiscal en Madrid procedente del extranjero?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_inversion_extranjero",
+                    "text": "Cuanto has invertido en entidades madrilenas?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
@@ -597,8 +830,15 @@ MADRID_2025: list[dict] = [
 # Validation
 # =============================================================================
 VALID_CATEGORIES: set[str] = {
-    "familia", "vivienda", "educacion", "donativos", "emprendimiento",
-    "trabajo", "discapacidad", "salud", "otros",
+    "familia",
+    "vivienda",
+    "educacion",
+    "donativos",
+    "emprendimiento",
+    "trabajo",
+    "discapacidad",
+    "salud",
+    "otros",
 }
 
 
@@ -614,8 +854,16 @@ def validate_deductions(dry_run: bool = False) -> list[str]:
             errors.append(f"DUPLICATE code: {code}")
         seen_codes.add(code)
 
-        for field in ("code", "name", "type", "category", "description",
-                      "legal_reference", "requirements_json", "questions_json"):
+        for field in (
+            "code",
+            "name",
+            "type",
+            "category",
+            "description",
+            "legal_reference",
+            "requirements_json",
+            "questions_json",
+        ):
             if not d.get(field):
                 errors.append(f"MISSING {field}: {code}")
 

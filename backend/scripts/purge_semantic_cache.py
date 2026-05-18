@@ -21,9 +21,10 @@ Usage:
     python backend/scripts/purge_semantic_cache.py             # selective delete
     python backend/scripts/purge_semantic_cache.py --force     # full reset (dangerous)
 """
+
+import argparse
 import os
 import sys
-import argparse
 from pathlib import Path
 
 # Fix Windows encoding for stdout
@@ -37,6 +38,7 @@ sys.path.insert(0, str(backend_dir))
 project_root = backend_dir.parent
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 try:
@@ -54,13 +56,18 @@ MAX_SAFE_CACHE_SIZE = 1000
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stats", action="store_true",
-                        help="Show stats only, no destructive action.")
-    parser.add_argument("--force", action="store_true",
-                        help="Override the RAG safety check. DANGEROUS — only "
-                             "use if you're sure the index has no RAG vectors.")
-    parser.add_argument("--pattern", default=None,
-                        help="Substring match against stored query metadata.")
+    parser.add_argument(
+        "--stats", action="store_true", help="Show stats only, no destructive action."
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Override the RAG safety check. DANGEROUS — only "
+        "use if you're sure the index has no RAG vectors.",
+    )
+    parser.add_argument(
+        "--pattern", default=None, help="Substring match against stored query metadata."
+    )
     args = parser.parse_args()
 
     url = os.getenv("UPSTASH_VECTOR_REST_URL")
@@ -84,7 +91,7 @@ def main() -> int:
     try:
         info = index.info()
         vector_count = info.vector_count
-        print(f"Index stats:")
+        print("Index stats:")
         print(f"   Vectors: {vector_count}")
         print(f"   Dimensions: {info.dimension}")
         print(f"   Similarity: {info.similarity_function}")
@@ -99,13 +106,13 @@ def main() -> int:
     if vector_count > MAX_SAFE_CACHE_SIZE and not args.force:
         print()
         print(f"🛑 ABORTING: {vector_count} vectors is > {MAX_SAFE_CACHE_SIZE}.")
-        print(f"   Looks like this index contains RAG embeddings (84K+ typical),")
-        print(f"   not just cache entries. Doing a full reset would destroy RAG.")
+        print("   Looks like this index contains RAG embeddings (84K+ typical),")
+        print("   not just cache entries. Doing a full reset would destroy RAG.")
         print()
-        print(f"   Options:")
-        print(f"   1. (Recommended) Use selective deletion below — no need to")
-        print(f"      reset the whole index.")
-        print(f"   2. Use --force ONLY if you've verified there is no RAG here.")
+        print("   Options:")
+        print("   1. (Recommended) Use selective deletion below — no need to")
+        print("      reset the whole index.")
+        print("   2. Use --force ONLY if you've verified there is no RAG here.")
         print()
         # Fall through to selective deletion
         _selective_delete(index, args.pattern)
@@ -162,7 +169,7 @@ def _selective_delete(index, pattern: str | None) -> None:
                 if pattern_lc not in query_text:
                     continue
             try:
-                index.delete(getattr(v, "id"))
+                index.delete(v.id)
                 deleted += 1
             except Exception as e:
                 print(f"   delete failed for {getattr(v, 'id', '?')}: {e}")

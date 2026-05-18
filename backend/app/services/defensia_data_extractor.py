@@ -8,7 +8,9 @@ Cálculos derivados (ej: diff_gastos_adquisicion_no_admitidos) se hacen en
 Python puro sobre los campos devueltos por Gemini — cero LLM en esa parte,
 para trazabilidad.
 """
+
 from __future__ import annotations
+
 import json
 import logging
 from io import BytesIO
@@ -64,6 +66,7 @@ DOCUMENTO:
 def _gemini_extract_liquidacion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     """Llama a Gemini Vision sobre el PDF. Aislado para mock en tests."""
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -94,9 +97,7 @@ def extract_liquidacion_provisional(pdf_bytes: bytes, nombre: str) -> dict[str, 
     declarados = datos.get("gastos_adquisicion_declarados")
     admitidos = datos.get("gastos_adquisicion_admitidos")
     if declarados is not None and admitidos is not None:
-        datos["diff_gastos_adquisicion_no_admitidos"] = round(
-            declarados - admitidos, 2
-        )
+        datos["diff_gastos_adquisicion_no_admitidos"] = round(declarados - admitidos, 2)
 
     return datos
 
@@ -129,6 +130,7 @@ DOCUMENTO:
 def _gemini_extract_sancion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     """Llama a Gemini para extraer datos de sanción. Aislado para mock."""
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -180,6 +182,7 @@ DOCUMENTO:
 
 def _gemini_extract_propuesta(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -221,6 +224,7 @@ DOCUMENTO:
 
 def _gemini_extract_requerimiento(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -264,6 +268,7 @@ DOCUMENTO:
 
 def _gemini_extract_escrito_usuario(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -329,12 +334,14 @@ def extract_libro_registro_xlsx(xlsx_bytes: bytes, nombre: str) -> dict[str, Any
                         total_bases += float(val)
                     elif "iva" in kl:
                         total_iva += float(val)
-        hojas.append({
-            "nombre": ws.title,
-            "columnas": columnas,
-            "num_filas": len(filas),
-            "filas": filas,
-        })
+        hojas.append(
+            {
+                "nombre": ws.title,
+                "columnas": columnas,
+                "num_filas": len(filas),
+                "filas": filas,
+            }
+        )
 
     return {
         "hojas": hojas,

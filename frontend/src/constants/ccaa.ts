@@ -47,7 +47,7 @@ export function getCcaaLabel(id: string): string {
 }
 
 /** CCAA_OPTIONS for dropdowns: { value, label } */
-export const CCAA_OPTIONS = CCAA_IDS.map(id => ({
+export const CCAA_OPTIONS = CCAA_IDS.map((id) => ({
     value: id,
     label: getCcaaLabel(id),
 }))

@@ -20,11 +20,12 @@ libre. La cita canonica ("art. 41 bis.1 parrafo 2 RIRPF", "STS 553/2023 de
 5-5-2023") la resuelve el `defensia_rag_verifier` contra el corpus normativo,
 nunca este modulo.
 """
+
 from __future__ import annotations
 
 import importlib
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -36,7 +37,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 
-
 # ---------------------------------------------------------------------------
 # Helper de aislamiento — carga solo R011 tras el reset del conftest
 # ---------------------------------------------------------------------------
@@ -46,12 +46,11 @@ from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 # el decorador `@regla`, hay que forzar un reload para re-registrar R011 en
 # el REGISTRY recien limpiado. Patron validado por los agents del Grupo A.
 
+
 def _cargar_solo_R011() -> None:
     """Limpia el REGISTRY y re-registra exclusivamente la regla R011."""
     reset_registry()
-    module_name = (
-        "app.services.defensia_rules.reglas_irpf.R011_vivienda_habitual_excepcion"
-    )
+    module_name = "app.services.defensia_rules.reglas_irpf.R011_vivienda_habitual_excepcion"
     if module_name in sys.modules:
         importlib.reload(sys.modules[module_name])
     else:
@@ -69,6 +68,7 @@ def _recargar_R011():
 # Helpers locales
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear el articulo canonico.
 
@@ -81,21 +81,13 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
         f"Cita hardcoded detectada: 'Art. 41 bis' en '{cita}'. "
         "La cita canonica debe venir del RAG verificador."
     )
-    assert "art. 41 bis" not in cita_lower, (
-        f"Cita hardcoded detectada: 'art. 41 bis' en '{cita}'."
-    )
-    assert "STS 553/2023" not in cita, (
-        f"Cita hardcoded detectada: 'STS 553/2023' en '{cita}'."
-    )
-    assert "sts 553/2023" not in cita_lower, (
-        f"Cita hardcoded detectada: 'sts 553/2023' en '{cita}'."
-    )
-    assert "art. 38" not in cita_lower, (
-        f"Cita hardcoded detectada: 'art. 38' en '{cita}'."
-    )
-    assert "rirpf" not in cita_lower, (
-        f"Cita hardcoded detectada: 'rirpf' en '{cita}'."
-    )
+    assert "art. 41 bis" not in cita_lower, f"Cita hardcoded detectada: 'art. 41 bis' en '{cita}'."
+    assert "STS 553/2023" not in cita, f"Cita hardcoded detectada: 'STS 553/2023' en '{cita}'."
+    assert (
+        "sts 553/2023" not in cita_lower
+    ), f"Cita hardcoded detectada: 'sts 553/2023' en '{cita}'."
+    assert "art. 38" not in cita_lower, f"Cita hardcoded detectada: 'art. 38' en '{cita}'."
+    assert "rirpf" not in cita_lower, f"Cita hardcoded detectada: 'rirpf' en '{cita}'."
 
 
 def _docs_caso_david(build_doc, *, incluir_sentencia: bool = True):
@@ -121,7 +113,7 @@ def _docs_caso_david(build_doc, *, incluir_sentencia: bool = True):
         },
         doc_id="doc-liquidacion-001",
         nombre_original="liquidacion_provisional_irpf_2024.pdf",
-        fecha_acto=datetime(2025, 3, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 3, 15, tzinfo=UTC),
     )
     escritura = build_doc(
         TipoDocumento.ESCRITURA,
@@ -132,7 +124,7 @@ def _docs_caso_david(build_doc, *, incluir_sentencia: bool = True):
         },
         doc_id="doc-escritura-001",
         nombre_original="escritura_vivienda_habitual.pdf",
-        fecha_acto=datetime(2024, 10, 22, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 10, 22, tzinfo=UTC),
     )
     docs = [liquidacion, escritura]
 
@@ -146,7 +138,7 @@ def _docs_caso_david(build_doc, *, incluir_sentencia: bool = True):
             },
             doc_id="doc-sentencia-001",
             nombre_original="sentencia_modificacion_medidas.pdf",
-            fecha_acto=datetime(2024, 6, 28, tzinfo=timezone.utc),
+            fecha_acto=datetime(2024, 6, 28, tzinfo=UTC),
         )
         docs.append(sentencia)
 
@@ -157,9 +149,8 @@ def _docs_caso_david(build_doc, *, incluir_sentencia: bool = True):
 # Test 1 — Positivo caso David: denegacion + sentencia + residencia < 3 anos
 # ---------------------------------------------------------------------------
 
-def test_R011_positivo_caso_david_dispara_por_excepcion_familiar(
-    build_exp, build_brief, build_doc
-):
+
+def test_R011_positivo_caso_david_dispara_por_excepcion_familiar(build_exp, build_brief, build_doc):
     """Caso ground truth David Oliva.
 
     AEAT deniega la exencion por reinversion porque la residencia efectiva fue
@@ -182,9 +173,9 @@ def test_R011_positivo_caso_david_dispara_por_excepcion_familiar(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R011"
@@ -203,25 +194,26 @@ def test_R011_positivo_caso_david_dispara_por_excepcion_familiar(
 
     # datos_disparo debe exponer la causa y la fecha de la sentencia.
     disparo = arg.datos_disparo
-    assert disparo.get("causa_excepcional") == "separacion_matrimonial", (
-        f"datos_disparo.causa_excepcional inesperado: {disparo!r}"
-    )
-    assert disparo.get("fecha_sentencia") == "2024-06-28", (
-        f"datos_disparo.fecha_sentencia inesperada: {disparo!r}"
-    )
+    assert (
+        disparo.get("causa_excepcional") == "separacion_matrimonial"
+    ), f"datos_disparo.causa_excepcional inesperado: {disparo!r}"
+    assert (
+        disparo.get("fecha_sentencia") == "2024-06-28"
+    ), f"datos_disparo.fecha_sentencia inesperada: {disparo!r}"
     dias_residencia = disparo.get("dias_residencia")
-    assert isinstance(dias_residencia, int), (
-        f"datos_disparo.dias_residencia debe ser int, got: {dias_residencia!r}"
-    )
+    assert isinstance(
+        dias_residencia, int
+    ), f"datos_disparo.dias_residencia debe ser int, got: {dias_residencia!r}"
     # 2022-05-12 -> 2024-10-22 = 894 dias (< 1095 del plazo de 3 anos)
-    assert 850 <= dias_residencia <= 950, (
-        f"dias_residencia fuera de rango esperado (~894): {dias_residencia}"
-    )
+    assert (
+        850 <= dias_residencia <= 950
+    ), f"dias_residencia fuera de rango esperado (~894): {dias_residencia}"
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — Negativo: denegacion + residencia corta, pero SIN sentencia
 # ---------------------------------------------------------------------------
+
 
 def test_R011_negativo_sin_sentencia_familiar(build_exp, build_brief, build_doc):
     """Sin sentencia de crisis matrimonial NO hay prueba de la excepcion.
@@ -237,15 +229,12 @@ def test_R011_negativo_sin_sentencia_familiar(build_exp, build_brief, build_doc)
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=docs,
     )
-    brief = build_brief(
-        "Me denegaron la exencion porque estuve solo 2 anos y 5 meses."
-    )
+    brief = build_brief("Me denegaron la exencion porque estuve solo 2 anos y 5 meses.")
 
     candidatos = evaluar(exp, brief)
 
     assert candidatos == [], (
-        f"R011 NO deberia disparar sin sentencia de crisis matrimonial, "
-        f"got: {candidatos}"
+        f"R011 NO deberia disparar sin sentencia de crisis matrimonial, " f"got: {candidatos}"
     )
 
 
@@ -253,9 +242,8 @@ def test_R011_negativo_sin_sentencia_familiar(build_exp, build_brief, build_doc)
 # Test 3 — Negativo: residencia cumple los 3 anos del parrafo 1
 # ---------------------------------------------------------------------------
 
-def test_R011_negativo_residencia_cumple_3_anos(
-    build_exp, build_brief, build_doc
-):
+
+def test_R011_negativo_residencia_cumple_3_anos(build_exp, build_brief, build_doc):
     """Si la residencia continuada alcanza los 3 anos, la exencion ya aplica
     por el parrafo 1 del art. 41 bis RIRPF. No hay conflicto que resolver y
     R011 no debe disparar."""
@@ -268,7 +256,7 @@ def test_R011_negativo_residencia_cumple_3_anos(
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-002",
-        fecha_acto=datetime(2025, 3, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 3, 15, tzinfo=UTC),
     )
     # 4 anos de residencia continuada -> cumple el plazo, sin excepcion.
     escritura = build_doc(
@@ -279,7 +267,7 @@ def test_R011_negativo_residencia_cumple_3_anos(
             "es_vivienda_habitual": True,
         },
         doc_id="doc-escritura-002",
-        fecha_acto=datetime(2024, 2, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 2, 1, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,
@@ -291,8 +279,7 @@ def test_R011_negativo_residencia_cumple_3_anos(
     candidatos = evaluar(exp, brief)
 
     assert candidatos == [], (
-        f"R011 NO deberia disparar cuando la residencia cumple el plazo, "
-        f"got: {candidatos}"
+        f"R011 NO deberia disparar cuando la residencia cumple el plazo, " f"got: {candidatos}"
     )
 
 
@@ -300,9 +287,8 @@ def test_R011_negativo_residencia_cumple_3_anos(
 # Test 4 — Negativo: denegacion por otra razon distinta al plazo
 # ---------------------------------------------------------------------------
 
-def test_R011_negativo_denegacion_por_otra_razon(
-    build_exp, build_brief, build_doc
-):
+
+def test_R011_negativo_denegacion_por_otra_razon(build_exp, build_brief, build_doc):
     """Si AEAT deniega la exencion por un motivo distinto al plazo de 3 anos
     (p.ej. reinversion parcial o fuera de plazo de reinversion), R011 esta
     fuera de su alcance y no debe disparar."""
@@ -315,7 +301,7 @@ def test_R011_negativo_denegacion_por_otra_razon(
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-003",
-        fecha_acto=datetime(2025, 3, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 3, 15, tzinfo=UTC),
     )
     escritura = build_doc(
         TipoDocumento.ESCRITURA,
@@ -325,7 +311,7 @@ def test_R011_negativo_denegacion_por_otra_razon(
             "es_vivienda_habitual": True,
         },
         doc_id="doc-escritura-003",
-        fecha_acto=datetime(2024, 10, 22, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 10, 22, tzinfo=UTC),
     )
     sentencia = build_doc(
         TipoDocumento.SENTENCIA_JUDICIAL,
@@ -335,7 +321,7 @@ def test_R011_negativo_denegacion_por_otra_razon(
             "causa": "separacion_matrimonial",
         },
         doc_id="doc-sentencia-003",
-        fecha_acto=datetime(2024, 6, 28, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 6, 28, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,
@@ -359,9 +345,8 @@ def test_R011_negativo_denegacion_por_otra_razon(
 # Test 5 — Anti-hardcode: asercion explicita sobre la cita semantica
 # ---------------------------------------------------------------------------
 
-def test_R011_cita_es_semantica_no_hardcoded(
-    build_exp, build_brief, build_doc
-):
+
+def test_R011_cita_es_semantica_no_hardcoded(build_exp, build_brief, build_doc):
     """Invariante #2: la cita normativa NO puede contener el articulo canonico.
 
     Este test replica las aserciones anti-hardcode del brief en un test aparte
@@ -385,15 +370,13 @@ def test_R011_cita_es_semantica_no_hardcoded(
         "Art. 41 bis" not in arg.cita_normativa_propuesta
         and "art. 41 bis" not in arg.cita_normativa_propuesta.lower()
         and "STS 553/2023" not in arg.cita_normativa_propuesta
-    ), (
-        f"La cita normativa debe ser semantica, got: "
-        f"{arg.cita_normativa_propuesta!r}"
-    )
+    ), f"La cita normativa debe ser semantica, got: " f"{arg.cita_normativa_propuesta!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 6 — Smoke de registro: R011 aparece en el REGISTRY tras el reload
 # ---------------------------------------------------------------------------
+
 
 def test_R011_registrada_en_registry():
     """El reload del modulo R011 debe auto-registrar la regla en el REGISTRY."""
@@ -402,9 +385,7 @@ def test_R011_registrada_en_registry():
         f"Claves actuales: {sorted(REGISTRY.keys())}"
     )
     info = REGISTRY["R011"]
-    assert "IRPF" in info["tributos"], (
-        f"R011 debe aplicar a IRPF, tributos={info['tributos']}"
-    )
+    assert "IRPF" in info["tributos"], f"R011 debe aplicar a IRPF, tributos={info['tributos']}"
     # IRPF unicamente — la excepcion del art. 41 bis RIRPF no aplica a IVA/ISD/ITP.
     assert "IVA" not in info["tributos"]
     assert "LIQUIDACION_FIRME_PLAZO_RECURSO" in info["fases"]

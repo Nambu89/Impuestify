@@ -12,10 +12,12 @@ Cubrimos:
 
 VIES integration test real: marcado @pytest.mark.integration y skip por defecto.
 """
+
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.utils.calculators.modelo_349 import (
     CLAVES_VALIDAS,
@@ -27,13 +29,14 @@ from app.utils.calculators.modelo_349 import (
     Operacion349,
 )
 
-
 # --------------------------------------------------------------------------- #
 # Factory helpers
 # --------------------------------------------------------------------------- #
 
 
-def op(clave: str, importe: float, nif: str = "IE9825613N", nombre: str = "Acme EU") -> Operacion349:
+def op(
+    clave: str, importe: float, nif: str = "IE9825613N", nombre: str = "Acme EU"
+) -> Operacion349:
     return Operacion349(nif_operador=nif, nombre=nombre, clave=clave, importe=importe)
 
 
@@ -348,12 +351,17 @@ class TestBuildResumen:
 
     def test_totales_agregados(self) -> None:
         ops = [
-            op("E", 1000), op("T", 500), op("M", 200), op("H", 100),  # entregas bienes = 1800
-            op("A", 800),                                              # adquis bienes = 800
-            op("S", 600),                                              # serv prestados = 600
-            op("I", 400),                                              # serv adquiridos = 400
-            op("R", 1200), op("D", 300), op("C", 100),                 # consignacion = 1600
-            op("N", -50),                                              # rectif = -50
+            op("E", 1000),
+            op("T", 500),
+            op("M", 200),
+            op("H", 100),  # entregas bienes = 1800
+            op("A", 800),  # adquis bienes = 800
+            op("S", 600),  # serv prestados = 600
+            op("I", 400),  # serv adquiridos = 400
+            op("R", 1200),
+            op("D", 300),
+            op("C", 100),  # consignacion = 1600
+            op("N", -50),  # rectif = -50
         ]
         resumen = Modelo349Calculator.build_resumen(ops)
         t = resumen["totales"]

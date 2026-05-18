@@ -1,4 +1,5 @@
 import pytest
+
 from app.territories.comun.plugin import CommonTerritory
 
 

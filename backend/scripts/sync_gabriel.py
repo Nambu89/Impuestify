@@ -2,9 +2,11 @@
 
 Usage: PYTHONUTF8=1 python scripts/sync_gabriel.py
 """
-import sys
+
 import asyncio
+import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent
@@ -14,7 +16,6 @@ load_dotenv(env_path)
 
 from app.database.turso_client import TursoClient
 from app.services.subscription_service import get_subscription_service
-
 
 GABRIEL_USER_ID = "969e2925-26fd-4465-9036-2b02d1f90212"
 GABRIEL_EMAIL = "gabriel.demacedo1@gmail.com"
@@ -31,9 +32,7 @@ async def main():
 
     client = TursoClient()
     await client.connect()
-    res = await client.execute(
-        "SELECT * FROM subscriptions WHERE user_id = ?", [GABRIEL_USER_ID]
-    )
+    res = await client.execute("SELECT * FROM subscriptions WHERE user_id = ?", [GABRIEL_USER_ID])
     print("\nDB state after sync:")
     if res.rows:
         for k, v in res.rows[0].items():

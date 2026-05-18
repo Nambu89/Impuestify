@@ -22,6 +22,7 @@ Diseno cero-hardcoded:
   paralelizacion segura del Grupo A (T1B-001..T1B-030) sin race conditions
   en el import order.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -80,7 +81,9 @@ def load_all() -> None:
                 importlib.import_module(full_name)
             except Exception as exc:  # pragma: no cover — defensa en profundidad
                 logger.error(
-                    "defensia_rules: fallo al importar %s: %s", full_name, exc,
+                    "defensia_rules: fallo al importar %s: %s",
+                    full_name,
+                    exc,
                 )
                 raise
 

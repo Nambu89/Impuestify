@@ -7,10 +7,13 @@ Estrategia de dos niveles:
 El clasificador devuelve siempre un ClassificationResult con la fuente
 (regex, gemini, fallback) para trazabilidad.
 """
+
 from __future__ import annotations
+
 import json
 import logging
 from dataclasses import dataclass
+
 from app.models.defensia import TipoDocumento
 from app.services.defensia_document_taxonomy import clasificar_por_texto
 
@@ -62,6 +65,7 @@ def _gemini_classify(texto: str) -> ClassificationResult:
     backend/app/services/invoice_ocr_service.py).
     """
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -85,13 +89,9 @@ class DocumentClassifier:
     def classify_text(self, texto: str) -> ClassificationResult:
         tipo_regex = clasificar_por_texto(texto)
         if tipo_regex != TipoDocumento.OTROS:
-            return ClassificationResult(
-                tipo=tipo_regex, confianza=0.95, fuente="regex"
-            )
+            return ClassificationResult(tipo=tipo_regex, confianza=0.95, fuente="regex")
         try:
             return _gemini_classify(texto)
         except Exception as exc:
             logger.warning("Gemini classification failed: %s", exc)
-            return ClassificationResult(
-                tipo=TipoDocumento.OTROS, confianza=0.0, fuente="fallback"
-            )
+            return ClassificationResult(tipo=TipoDocumento.OTROS, confianza=0.0, fuente="fallback")

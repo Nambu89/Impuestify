@@ -1,10 +1,18 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
+
 import pytest
 from pydantic import ValidationError
+
 from app.models.defensia import (
-    Tributo, Fase, TipoDocumento, EstadoExpediente,
-    ExpedienteEstructurado, DocumentoEstructurado, Brief,
-    ArgumentoCandidato, ArgumentoVerificado,
+    ArgumentoCandidato,
+    ArgumentoVerificado,
+    Brief,
+    DocumentoEstructurado,
+    EstadoExpediente,
+    ExpedienteEstructurado,
+    Fase,
+    TipoDocumento,
+    Tributo,
 )
 
 
@@ -33,7 +41,7 @@ def test_documento_estructurado_requires_tipo_y_fecha():
         id="d1",
         nombre_original="notif.pdf",
         tipo_documento=TipoDocumento.LIQUIDACION_PROVISIONAL,
-        fecha_acto=datetime(2026, 1, 30, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 30, tzinfo=UTC),
         datos={"referencia": "202410049560746N", "cuota": 6183.05},
     )
     assert doc.tipo_documento == TipoDocumento.LIQUIDACION_PROVISIONAL
@@ -46,14 +54,14 @@ def test_expediente_estructurado_timeline_orden_por_fecha():
             id="d2",
             nombre_original="liq.pdf",
             tipo_documento=TipoDocumento.LIQUIDACION_PROVISIONAL,
-            fecha_acto=datetime(2026, 1, 30, tzinfo=timezone.utc),
+            fecha_acto=datetime(2026, 1, 30, tzinfo=UTC),
             datos={},
         ),
         DocumentoEstructurado(
             id="d1",
             nombre_original="req.pdf",
             tipo_documento=TipoDocumento.REQUERIMIENTO,
-            fecha_acto=datetime(2025, 11, 3, tzinfo=timezone.utc),
+            fecha_acto=datetime(2025, 11, 3, tzinfo=UTC),
             datos={},
         ),
     ]

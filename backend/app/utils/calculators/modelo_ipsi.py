@@ -24,20 +24,20 @@ Usage:
         cuota_corrientes_interiores=300, quarter=2, year=2025
     )
 """
-from typing import Any, Dict
+
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
-
 
 # ---------------------------------------------------------------------------
 # IPSI rate constants (Ley 8/1991, art. 43 — rango legal vigente)
 # ---------------------------------------------------------------------------
-TIPO_MINIMO = 0.005       # 0.5%
-TIPO_REDUCIDO = 0.01      # 1%
-TIPO_BONIFICADO = 0.02    # 2%
-TIPO_GENERAL = 0.04       # 4%
+TIPO_MINIMO = 0.005  # 0.5%
+TIPO_REDUCIDO = 0.01  # 1%
+TIPO_BONIFICADO = 0.02  # 2%
+TIPO_GENERAL = 0.04  # 4%
 TIPO_INCREMENTADO = 0.08  # 8%
-TIPO_ESPECIAL = 0.10      # 10%
+TIPO_ESPECIAL = 0.10  # 10%
 
 
 class ModeloIpsiCalculator:
@@ -93,7 +93,7 @@ class ModeloIpsiCalculator:
         quarter: int = 1,
         year: int = 2025,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate the IPSI quarterly self-assessment.
 
@@ -163,7 +163,7 @@ class ModeloIpsiCalculator:
             2,
         )
 
-        desglose_devengado: Dict[str, Any] = {
+        desglose_devengado: dict[str, Any] = {
             "tipo_minimo_0_5": {
                 "base": round(base_0_5, 2),
                 "tipo": TIPO_MINIMO,
@@ -217,7 +217,7 @@ class ModeloIpsiCalculator:
         if regularizacion_prorrata and quarter != 4:
             raise ValueError(
                 "regularizacion_prorrata solo puede aplicarse en el 4T "
-                "(quarter=4). Recibido quarter={}.".format(quarter)
+                f"(quarter=4). Recibido quarter={quarter}."
             )
 
         total_deducible = round(
@@ -231,7 +231,7 @@ class ModeloIpsiCalculator:
             2,
         )
 
-        desglose_deducible: Dict[str, Any] = {
+        desglose_deducible: dict[str, Any] = {
             "cuota_corrientes_interiores": round(cuota_corrientes_interiores, 2),
             "cuota_inversion_interiores": round(cuota_inversion_interiores, 2),
             "cuota_importaciones_corrientes": round(cuota_importaciones_corrientes, 2),
@@ -253,9 +253,7 @@ class ModeloIpsiCalculator:
         )
 
         resultado_liquidacion = round(
-            resultado_regimen_general
-            - cuotas_compensar_aplicadas
-            + regularizacion_anual_aplicada,
+            resultado_regimen_general - cuotas_compensar_aplicadas + regularizacion_anual_aplicada,
             2,
         )
 
@@ -273,9 +271,7 @@ class ModeloIpsiCalculator:
             "cuotas_compensar_anteriores": cuotas_compensar_aplicadas,
             "regularizacion_anual": regularizacion_anual_aplicada,
             "resultado_liquidacion": resultado_liquidacion,
-            "resultado_anterior_complementaria": round(
-                float(resultado_anterior_complementaria), 2
-            ),
+            "resultado_anterior_complementaria": round(float(resultado_anterior_complementaria), 2),
             "cuota_diferencial_complementaria": cuota_diferencial_complementaria,
             "quarter": quarter,
             "year": year,

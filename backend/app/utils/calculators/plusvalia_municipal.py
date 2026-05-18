@@ -14,16 +14,16 @@ Exenciones (Art. 105 TRLRHL):
 - Dacion en pago de vivienda habitual
 - Aportaciones a sociedad conyugal
 """
-from typing import Dict, Any
+
 import logging
-import math
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Coeficientes maximos RDL 26/2021 actualizados 2024
 # Key = anos completos de tenencia, Value = coeficiente maximo
-COEFICIENTES_MAXIMOS: Dict[int, float] = {
-    0: 0.15,   # Menos de 1 ano
+COEFICIENTES_MAXIMOS: dict[int, float] = {
+    0: 0.15,  # Menos de 1 ano
     1: 0.15,
     2: 0.14,
     3: 0.15,
@@ -72,7 +72,7 @@ class PlusvaliaMunicipalCalculator:
         valor_catastral_suelo: float,
         anos_tenencia: int,
         tipo_impositivo: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Metodo objetivo (coeficientes).
 
@@ -100,7 +100,7 @@ class PlusvaliaMunicipalCalculator:
         valor_catastral_suelo: float,
         valor_catastral_total: float,
         tipo_impositivo: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Metodo real (plusvalia efectiva).
 
@@ -154,7 +154,7 @@ class PlusvaliaMunicipalCalculator:
         tipo_impositivo_municipal: float = 30.0,
         es_vivienda_habitual_dacion: bool = False,
         es_divorcio: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula el IIVTNU (plusvalia municipal) por ambos metodos
         y devuelve el mas favorable para el contribuyente.

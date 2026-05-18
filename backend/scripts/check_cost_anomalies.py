@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT.parent / ".env")
 except ImportError:
     pass
@@ -37,10 +38,12 @@ async def main():
     redis_client = None
     try:
         from app.upstash_init import upstash_client as _client  # type: ignore
+
         redis_client = _client
     except Exception:
         try:
             from app.utils.upstash import get_upstash_client
+
             redis_client = get_upstash_client()
         except Exception as e:
             logger.warning(f"Upstash client unavailable, dedupe disabled: {e}")
@@ -55,7 +58,11 @@ async def main():
     for h in hits:
         logger.warning(
             "  user=%s plan=%s today=$%.4f baseline=$%.4f/d ratio=%.2fx",
-            h.email or h.user_id, h.plan, h.today_cost_usd, h.baseline_avg_usd, h.multiplier,
+            h.email or h.user_id,
+            h.plan,
+            h.today_cost_usd,
+            h.baseline_avg_usd,
+            h.multiplier,
         )
 
     sent = await detector.alert_owner(hits, owner_email=owner_email)

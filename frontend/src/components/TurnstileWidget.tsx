@@ -63,7 +63,8 @@ export default function TurnstileWidget({ onVerify, onExpire, onError }: Turnsti
         const existingScript = document.querySelector('script[src*="turnstile"]')
         if (!existingScript) {
             const script = document.createElement('script')
-            script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad'
+            script.src =
+                'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad'
             script.async = true
             script.defer = true
             document.head.appendChild(script)

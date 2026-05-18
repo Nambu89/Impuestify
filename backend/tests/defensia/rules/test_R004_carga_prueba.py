@@ -18,6 +18,7 @@ La regla NO hardcodea la cita del articulo — solo emite una cita semantica
 ("Incumplimiento de la carga de la prueba por la Administracion") que el
 verificador RAG traducira al texto canonico correcto.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -50,6 +51,7 @@ def _registrar_r004(_aislar_registry):  # noqa: ARG001 — fuerza orden
     from app.services.defensia_rules.reglas_procedimentales import (
         R004_carga_prueba,
     )
+
     reset_registry()
     importlib.reload(R004_carga_prueba)
     yield
@@ -59,9 +61,8 @@ def _registrar_r004(_aislar_registry):  # noqa: ARG001 — fuerza orden
 # Positivo 1: deduccion denegada sin requerimiento previo
 # ---------------------------------------------------------------------------
 
-def test_R004_dispara_cuando_denegacion_sin_requerimiento_previo(
-    build_exp, build_doc, build_brief
-):
+
+def test_R004_dispara_cuando_denegacion_sin_requerimiento_previo(build_exp, build_doc, build_brief):
     """AEAT deniega deduccion en liquidacion provisional y nunca requirio docs."""
     liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -89,8 +90,12 @@ def test_R004_dispara_cuando_denegacion_sin_requerimiento_previo(
     assert "Art. 105.1" not in cita, f"cita no puede contener 'Art. 105.1' literal: {cita}"
     assert "articulo 105" not in cita.lower(), f"cita no puede hardcodear articulo: {cita}"
     assert "105.1 LGT" not in cita, f"cita no puede contener referencia canonica: {cita}"
-    assert "carga de la prueba" in cita.lower(), f"cita semantica debe mencionar carga probatoria: {cita}"
-    assert "administracion" in cita.lower(), f"cita semantica debe referirse a la Administracion: {cita}"
+    assert (
+        "carga de la prueba" in cita.lower()
+    ), f"cita semantica debe mencionar carga probatoria: {cita}"
+    assert (
+        "administracion" in cita.lower()
+    ), f"cita semantica debe referirse a la Administracion: {cita}"
 
     assert r004[0].datos_disparo.get("motivo") == "sin_requerimiento_previo"
 
@@ -99,9 +104,8 @@ def test_R004_dispara_cuando_denegacion_sin_requerimiento_previo(
 # Positivo 2: documentacion aportada pero denegacion no motivada
 # ---------------------------------------------------------------------------
 
-def test_R004_dispara_cuando_aportada_pero_no_motivada(
-    build_exp, build_doc, build_brief
-):
+
+def test_R004_dispara_cuando_aportada_pero_no_motivada(build_exp, build_doc, build_brief):
     """Contribuyente aporto pruebas, AEAT denego sin motivar la insuficiencia."""
     requerimiento = build_doc(
         TipoDocumento.REQUERIMIENTO,
@@ -138,6 +142,7 @@ def test_R004_dispara_cuando_aportada_pero_no_motivada(
 # ---------------------------------------------------------------------------
 # Negativo 1: requerimiento + respuesta + denegacion motivada
 # ---------------------------------------------------------------------------
+
 
 def test_R004_no_dispara_cuando_hay_requerimiento_y_denegacion_motivada(
     build_exp, build_doc, build_brief
@@ -178,9 +183,8 @@ def test_R004_no_dispara_cuando_hay_requerimiento_y_denegacion_motivada(
 # Negativo 2: solo correccion aritmetica (no hay denegacion de beneficio)
 # ---------------------------------------------------------------------------
 
-def test_R004_no_dispara_en_correccion_aritmetica(
-    build_exp, build_doc, build_brief
-):
+
+def test_R004_no_dispara_en_correccion_aritmetica(build_exp, build_doc, build_brief):
     """Si la liquidacion solo corrige un calculo aritmetico, R004 calla."""
     liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -210,6 +214,7 @@ def test_R004_no_dispara_en_correccion_aritmetica(
 # ---------------------------------------------------------------------------
 # Sanity check del registry (solo R004)
 # ---------------------------------------------------------------------------
+
 
 def test_R004_registrada_en_registry():
     """Al importar el modulo, R004 queda registrada con metadata correcta."""

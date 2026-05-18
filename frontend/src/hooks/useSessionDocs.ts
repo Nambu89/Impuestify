@@ -53,46 +53,49 @@ export function useSessionDocs(): UseSessionDocsReturn {
         saveToStorage(docs)
     }, [docs])
 
-    const uploadDoc = useCallback(async (file: File): Promise<SessionDoc | null> => {
-        if (docs.length >= MAX_DOCS) {
-            setUploadError(`Máximo ${MAX_DOCS} documentos por sesión`)
-            return null
-        }
-
-        setIsUploading(true)
-        setUploadError(null)
-
-        try {
-            const token = localStorage.getItem('access_token')
-            if (!token) throw new Error('No authentication token')
-
-            const formData = new FormData()
-            formData.append('file', file)
-
-            const response = await fetch(`${API_URL}/api/session-docs/upload`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData,
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}))
-                throw new Error(errorData.detail || `Error ${response.status}`)
+    const uploadDoc = useCallback(
+        async (file: File): Promise<SessionDoc | null> => {
+            if (docs.length >= MAX_DOCS) {
+                setUploadError(`Máximo ${MAX_DOCS} documentos por sesión`)
+                return null
             }
 
-            const doc: SessionDoc = await response.json()
-            setDocs(prev => [...prev, doc])
-            logger.debug('Session doc uploaded:', doc.doc_id, doc.filename)
-            return doc
-        } catch (err: any) {
-            const msg = err.message || 'Error al subir documento'
-            setUploadError(msg)
-            logger.error('Session doc upload failed:', err)
-            return null
-        } finally {
-            setIsUploading(false)
-        }
-    }, [docs.length])
+            setIsUploading(true)
+            setUploadError(null)
+
+            try {
+                const token = localStorage.getItem('access_token')
+                if (!token) throw new Error('No authentication token')
+
+                const formData = new FormData()
+                formData.append('file', file)
+
+                const response = await fetch(`${API_URL}/api/session-docs/upload`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` },
+                    body: formData,
+                })
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}))
+                    throw new Error(errorData.detail || `Error ${response.status}`)
+                }
+
+                const doc: SessionDoc = await response.json()
+                setDocs((prev) => [...prev, doc])
+                logger.debug('Session doc uploaded:', doc.doc_id, doc.filename)
+                return doc
+            } catch (err: any) {
+                const msg = err.message || 'Error al subir documento'
+                setUploadError(msg)
+                logger.error('Session doc upload failed:', err)
+                return null
+            } finally {
+                setIsUploading(false)
+            }
+        },
+        [docs.length],
+    )
 
     const removeDoc = useCallback(async (docId: string) => {
         try {
@@ -100,13 +103,13 @@ export function useSessionDocs(): UseSessionDocsReturn {
             if (token) {
                 await fetch(`${API_URL}/api/session-docs/${docId}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` },
+                    headers: { Authorization: `Bearer ${token}` },
                 })
             }
         } catch (err) {
             logger.warn('Failed to delete session doc from server:', err)
         }
-        setDocs(prev => prev.filter(d => d.doc_id !== docId))
+        setDocs((prev) => prev.filter((d) => d.doc_id !== docId))
     }, [])
 
     const clearAll = useCallback(() => {
@@ -116,7 +119,7 @@ export function useSessionDocs(): UseSessionDocsReturn {
 
     return {
         docs,
-        docIds: docs.map(d => d.doc_id),
+        docIds: docs.map((d) => d.doc_id),
         isUploading,
         uploadError,
         uploadDoc,

@@ -13,6 +13,7 @@ comillas (strings) o texto de plantilla Jinja (fuera de expresiones
 ``{{ ... }}``). Falsos positivos conocidos (identificadores de código,
 comentarios técnicos) se excluyen con un whitelist ``IGNORAR_SI_CONTIENE``.
 """
+
 from __future__ import annotations
 
 import re
@@ -93,11 +94,13 @@ IGNORAR_SI_CONTIENE: list[str] = [
     "from ",
     "def ",
     "class ",
-    "__",            # dunder, __init__, __name__...
-    "TipoDocumento.", "Tributo.", "Fase.",
+    "__",  # dunder, __init__, __name__...
+    "TipoDocumento.",
+    "Tributo.",
+    "Fase.",
     "regla_id",
     "REGISTRY",
-    "regla(",        # decorador
+    "regla(",  # decorador
     "nombre_original",
     "tipo_documento",
     "fase_detectada",
@@ -139,9 +142,7 @@ def _exclude_tests(paths: list[Path]) -> list[Path]:
     (``*.spec.tsx``, ``*.spec.ts``).
     """
     return [
-        p
-        for p in paths
-        if not p.name.endswith((".test.tsx", ".test.ts", ".spec.tsx", ".spec.ts"))
+        p for p in paths if not p.name.endswith((".test.tsx", ".test.ts", ".spec.tsx", ".spec.ts"))
     ]
 
 

@@ -13,11 +13,12 @@ Cubre:
     - Validación completa (validate_complete)
     - Robustez del lookup en build_from_303_quarterly
 """
+
 import pytest
 
 from app.utils.calculators.modelo_390 import (
-    Modelo390Calculator,
     UMBRAL_SII_EUR,
+    Modelo390Calculator,
 )
 
 
@@ -113,9 +114,7 @@ def test_sii_volumen_supera_umbral():
 
 
 def test_sii_volumen_justo_por_debajo():
-    res = Modelo390Calculator.check_exoneracion_sii(
-        volumen_operaciones_ano_anterior=UMBRAL_SII_EUR
-    )
+    res = Modelo390Calculator.check_exoneracion_sii(volumen_operaciones_ano_anterior=UMBRAL_SII_EUR)
     # > umbral, no >= → no exonerado en el límite exacto
     assert res["exonerado"] is False
 
@@ -130,9 +129,7 @@ def test_sii_voluntario():
 
 
 def test_sii_volumen_bajo_no_exonera():
-    res = Modelo390Calculator.check_exoneracion_sii(
-        volumen_operaciones_ano_anterior=50_000
-    )
+    res = Modelo390Calculator.check_exoneracion_sii(volumen_operaciones_ano_anterior=50_000)
     assert res["exonerado"] is False
 
 
@@ -281,8 +278,15 @@ def test_validate_multiples_exoneraciones_se_acumulan():
 
 
 def _t303(
-    cuota_21=0, cuota_10=0, cuota_4=0, intra=0, isp=0,
-    deducible_corr=0, deducible_inv=0, deducible_imp=0, deducible_intra=0,
+    cuota_21=0,
+    cuota_10=0,
+    cuota_4=0,
+    intra=0,
+    isp=0,
+    deducible_corr=0,
+    deducible_inv=0,
+    deducible_imp=0,
+    deducible_intra=0,
     resultado=0,
 ):
     """Construye un dict simulando salida de Modelo303Calculator (formato plano)."""

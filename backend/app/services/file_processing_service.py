@@ -5,25 +5,25 @@ Handles file uploads, classification, text extraction, and embeddings for Worksp
 Supports: PDF, DOCX, Excel, CSV, Images (JPG/PNG).
 Integrates specialized extractors for invoices and payslips.
 """
+
 import csv
 import io
 import json
 import logging
-import os
 import uuid
 from dataclasses import asdict
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import UploadFile
 
 from app.database.turso_client import get_db_client
 from app.security.document_integrity import document_integrity_scanner
 from app.utils.pdf_extractor import (
+    PDFExtractionResult,
+    extract_image_text,
     extract_pdf_text,
     extract_pdf_text_plain,
-    extract_image_text,
-    PDFExtractionResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -50,9 +50,9 @@ class FileProcessingService:
         self,
         workspace_id: str,
         file: UploadFile,
-        file_type_hint: Optional[str] = None,
-        user_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        file_type_hint: str | None = None,
+        user_id: str | None = None,
+    ) -> dict[str, Any]:
         """
         Process an uploaded file: save metadata, extract content, and generate embeddings.
 
@@ -90,7 +90,9 @@ class FileProcessingService:
                 # pymupdf4llm markdown mangles column layout making regex impossible.
                 # Use markdown for other docs (better structure for RAG).
                 if file_category in ("nomina", "factura"):
-                    result: PDFExtractionResult = await extract_pdf_text_plain(content, file.filename)
+                    result: PDFExtractionResult = await extract_pdf_text_plain(
+                        content, file.filename
+                    )
                 else:
                     result: PDFExtractionResult = await extract_pdf_text(content, file.filename)
 
@@ -133,7 +135,9 @@ class FileProcessingService:
                     logger.error(f"Image extraction failed: {img_result.error}")
 
             # Guard: empty extraction should not be marked as completed
-            if processing_status == "completed" and (not extracted_text or len(extracted_text.strip()) < 10):
+            if processing_status == "completed" and (
+                not extracted_text or len(extracted_text.strip()) < 10
+            ):
                 processing_status = "error"
                 extracted_data = {"error": "No se pudo extraer texto del documento"}
                 logger.warning(f"Empty extraction for {file.filename}, setting status=error")
@@ -143,8 +147,8 @@ class FileProcessingService:
             processing_status = "error"
 
         # Document Integrity Scan (Capa 13) — fail open: scanner errors never block processing
-        integrity_score: Optional[float] = None
-        integrity_findings: Optional[str] = None
+        integrity_score: float | None = None
+        integrity_findings: str | None = None
 
         if extracted_text:
             try:
@@ -157,18 +161,25 @@ class FileProcessingService:
                     if meta_findings:
                         scan_result.findings.extend(meta_findings)
                         from app.security.document_integrity import _compute_risk_score
+
                         scan_result.risk_score = round(_compute_risk_score(scan_result.findings), 4)
                         scan_result.is_safe = scan_result.risk_score < 0.3
 
                 integrity_score = scan_result.risk_score
-                integrity_findings = json.dumps([asdict(f) for f in scan_result.findings]) if scan_result.findings else None
+                integrity_findings = (
+                    json.dumps([asdict(f) for f in scan_result.findings])
+                    if scan_result.findings
+                    else None
+                )
 
                 if scan_result.risk_score > 0.8:
                     # BLOCK: do not pass to agents, do not generate embeddings
                     logger.error(
                         "Document integrity BLOCK: file=%s risk_score=%.2f findings=%d — "
                         "processing_status set to blocked_integrity",
-                        file.filename, scan_result.risk_score, len(scan_result.findings),
+                        file.filename,
+                        scan_result.risk_score,
+                        len(scan_result.findings),
                     )
                     processing_status = "blocked_integrity"
 
@@ -177,15 +188,20 @@ class FileProcessingService:
                     logger.warning(
                         "Document integrity SANITIZE: file=%s risk_score=%.2f — "
                         "sanitizing extracted text",
-                        file.filename, scan_result.risk_score,
+                        file.filename,
+                        scan_result.risk_score,
                     )
-                    extracted_text = document_integrity_scanner.sanitize(extracted_text, scan_result.findings)
+                    extracted_text = document_integrity_scanner.sanitize(
+                        extracted_text, scan_result.findings
+                    )
 
                 elif scan_result.risk_score >= 0.3:
                     # WARN: process normally but log
                     logger.warning(
                         "Document integrity WARN: file=%s risk_score=%.2f findings=%d",
-                        file.filename, scan_result.risk_score, len(scan_result.findings),
+                        file.filename,
+                        scan_result.risk_score,
+                        len(scan_result.findings),
                     )
                 # else: PASS — process normally, no log needed
 
@@ -193,12 +209,13 @@ class FileProcessingService:
                 # Fail open: log and continue without integrity data
                 logger.error(
                     "Document integrity scan failed for %s (fail-open): %s",
-                    file.filename, scan_exc,
+                    file.filename,
+                    scan_exc,
                 )
 
         # Save to Database
         db = await get_db_client()
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         await db.execute(
             """
@@ -217,12 +234,14 @@ class FileProcessingService:
                 file.content_type,
                 file_size,
                 extracted_text,
-                json.dumps(extracted_data) if isinstance(extracted_data, dict) and extracted_data else None,
+                json.dumps(extracted_data)
+                if isinstance(extracted_data, dict) and extracted_data
+                else None,
                 processing_status,
                 integrity_score,
                 integrity_findings,
-                now
-            ]
+                now,
+            ],
         )
 
         # Generate embeddings asynchronously (if enabled and extraction succeeded)
@@ -233,7 +252,7 @@ class FileProcessingService:
                 embedding_result = await self._generate_file_embeddings(
                     db, workspace_id, file_id, extracted_text, file.filename
                 )
-                embedding_status = "completed" if embedding_result.get('success') else "failed"
+                embedding_status = "completed" if embedding_result.get("success") else "failed"
             except Exception as e:
                 logger.error(f"Embedding generation failed for {file.filename}: {e}")
                 embedding_status = "error"
@@ -277,16 +296,26 @@ class FileProcessingService:
             return "factura"
 
         # Tax declaration patterns
-        if any(p in lower_name for p in [
-            "declaracion", "declaración", "modelo",
-            "303", "130", "420", "300",
-            "390", "100", "200",
-        ]):
+        if any(
+            p in lower_name
+            for p in [
+                "declaracion",
+                "declaración",
+                "modelo",
+                "303",
+                "130",
+                "420",
+                "300",
+                "390",
+                "100",
+                "200",
+            ]
+        ):
             return "declaracion"
 
         return "otro"
 
-    async def _extract_invoice_data(self, text: str) -> Dict[str, Any]:
+    async def _extract_invoice_data(self, text: str) -> dict[str, Any]:
         """Extract structured data from invoice text."""
         try:
             from app.services.invoice_extractor import get_invoice_extractor
@@ -295,8 +324,8 @@ class FileProcessingService:
             data = await extractor.extract_from_text(text)
 
             # Add summary
-            data['summary'] = extractor.generate_summary(data)
-            data['vat_breakdown'] = extractor.get_vat_breakdown(data)
+            data["summary"] = extractor.generate_summary(data)
+            data["vat_breakdown"] = extractor.get_vat_breakdown(data)
 
             return data
 
@@ -304,7 +333,7 @@ class FileProcessingService:
             logger.error(f"Invoice extraction failed: {e}")
             return {"error": str(e)}
 
-    async def _extract_payslip_data(self, text: str) -> Dict[str, Any]:
+    async def _extract_payslip_data(self, text: str) -> dict[str, Any]:
         """Extract structured data from payslip text."""
         try:
             from app.services.payslip_extractor import PayslipExtractor
@@ -313,8 +342,8 @@ class FileProcessingService:
             data = extractor._parse_payslip_data(text)
 
             # Add summary
-            data['summary'] = extractor.generate_summary(data)
-            data['stats'] = extractor.get_extraction_stats(data)
+            data["summary"] = extractor.generate_summary(data)
+            data["stats"] = extractor.get_extraction_stats(data)
 
             return data
 
@@ -406,7 +435,7 @@ class FileProcessingService:
             logger.error(f"CSV extraction failed for {filename}: {e}")
             return ""
 
-    def _extract_declaration_data(self, text: str) -> Dict[str, Any]:
+    def _extract_declaration_data(self, text: str) -> dict[str, Any]:
         """Extract structured data from tax declaration text (303/130/420)."""
         try:
             from app.services.declaration_extractor import DeclarationExtractor
@@ -435,7 +464,7 @@ class FileProcessingService:
         self,
         workspace_file_id: str,
         user_id: str,
-        extracted_data: Dict[str, Any],
+        extracted_data: dict[str, Any],
         db,
     ) -> None:
         """
@@ -443,8 +472,8 @@ class FileProcessingService:
         a libro_registro entry with clasificacion_confianza='pendiente_confirmacion'.
         """
         from app.config import settings
-        from app.services.invoice_classifier_service import InvoiceClassifierService
         from app.services.contabilidad_service import ContabilidadService
+        from app.services.invoice_classifier_service import InvoiceClassifierService
 
         if not settings.GOOGLE_GEMINI_API_KEY:
             logger.warning("Gemini API key not configured — skipping auto-classification")
@@ -478,7 +507,11 @@ class FileProcessingService:
             or base_imponible + cuota_iva
         )
         numero_factura = extracted_data.get("numero_factura") or extracted_data.get("numero") or ""
-        fecha_factura = extracted_data.get("fecha_factura") or extracted_data.get("fecha") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        fecha_factura = (
+            extracted_data.get("fecha_factura")
+            or extracted_data.get("fecha")
+            or datetime.now(UTC).strftime("%Y-%m-%d")
+        )
         emisor_nif = (
             extracted_data.get("emisor_nif")
             or extracted_data.get("emisor", {}).get("nif_cif", "")
@@ -497,13 +530,17 @@ class FileProcessingService:
             or extracted_data.get("empresa_receptora", "")
             or ""
         )
-        retencion_irpf = float(extracted_data.get("retencion_irpf") or extracted_data.get("irpf_retenido") or 0)
+        retencion_irpf = float(
+            extracted_data.get("retencion_irpf") or extracted_data.get("irpf_retenido") or 0
+        )
         retencion_irpf_pct = float(extracted_data.get("retencion_irpf_pct") or 0)
         tipo_re = float(extracted_data.get("tipo_re_pct") or extracted_data.get("tipo_re") or 0)
         cuota_re = float(extracted_data.get("cuota_re") or 0)
 
         if base_imponible <= 0:
-            logger.info("Skipping auto-classification: base_imponible is 0 for file %s", workspace_file_id)
+            logger.info(
+                "Skipping auto-classification: base_imponible is 0 for file %s", workspace_file_id
+            )
             return
 
         # Auto-detect tipo: compare emisor NIF with user's NIF from fiscal profile
@@ -518,10 +555,19 @@ class FileProcessingService:
                 user_rows = user_profile.rows if hasattr(user_profile, "rows") else user_profile
                 user_nif = ""
                 if user_rows and user_rows[0]:
-                    profile_data = user_rows[0].get("datos_fiscales") if hasattr(user_rows[0], "get") else user_rows[0][0]
+                    profile_data = (
+                        user_rows[0].get("datos_fiscales")
+                        if hasattr(user_rows[0], "get")
+                        else user_rows[0][0]
+                    )
                     if profile_data:
                         import json as _json
-                        pdata = _json.loads(profile_data) if isinstance(profile_data, str) else profile_data
+
+                        pdata = (
+                            _json.loads(profile_data)
+                            if isinstance(profile_data, str)
+                            else profile_data
+                        )
                         user_nif = (pdata.get("nif") or pdata.get("dni") or "").strip().upper()
 
                 if user_nif and emisor_nif:
@@ -558,14 +604,14 @@ class FileProcessingService:
             try:
                 fecha_dt = datetime.strptime(fecha_factura, "%d/%m/%Y")
             except ValueError:
-                fecha_dt = datetime.now(timezone.utc)
+                fecha_dt = datetime.now(UTC)
 
         year = fecha_dt.year
         trimestre = (fecha_dt.month - 1) // 3 + 1
 
         # Insert into libro_registro with pendiente_confirmacion
         invoice_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         raw_extraction_json = json.dumps(extracted_data, default=str)
 
         await db.execute(
@@ -636,25 +682,21 @@ class FileProcessingService:
 
         logger.info(
             "Auto-classified workspace file %s → cuenta %s (%s) for user %s",
-            workspace_file_id, clasificacion.cuenta_code, clasificacion.cuenta_nombre, user_id,
+            workspace_file_id,
+            clasificacion.cuenta_code,
+            clasificacion.cuenta_nombre,
+            user_id,
         )
 
     async def _generate_file_embeddings(
-        self,
-        db,
-        workspace_id: str,
-        file_id: str,
-        text: str,
-        filename: str
-    ) -> Dict[str, Any]:
+        self, db, workspace_id: str, file_id: str, text: str, filename: str
+    ) -> dict[str, Any]:
         """Generate embeddings for file content."""
         try:
             from app.services.workspace_embedding_service import get_workspace_embedding_service
 
             service = get_workspace_embedding_service()
-            result = await service.embed_workspace_file(
-                db, workspace_id, file_id, text, filename
-            )
+            result = await service.embed_workspace_file(db, workspace_id, file_id, text, filename)
 
             return result
 
@@ -665,7 +707,7 @@ class FileProcessingService:
             logger.error(f"Embedding generation failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def reprocess_file(self, file_id: str, user_id: str = None) -> Dict[str, Any]:
+    async def reprocess_file(self, file_id: str, user_id: str = None) -> dict[str, Any]:
         """
         Reprocess an existing file (re-extract and re-embed).
 
@@ -686,16 +728,13 @@ class FileProcessingService:
                 JOIN workspaces w ON wf.workspace_id = w.id
                 WHERE wf.id = ? AND w.user_id = ?
                 """,
-                [file_id, user_id]
+                [file_id, user_id],
             )
             if not ownership_result.rows:
                 raise ValueError("File not found or access denied")
 
         # Get file info
-        result = await db.execute(
-            "SELECT * FROM workspace_files WHERE id = ?",
-            [file_id]
-        )
+        result = await db.execute("SELECT * FROM workspace_files WHERE id = ?", [file_id])
 
         if not result.rows:
             raise ValueError("File not found or access denied")
@@ -703,9 +742,9 @@ class FileProcessingService:
         file_info = result.rows[0]
 
         # If we have extracted text, re-run specialized extractors
-        extracted_text = file_info.get('extracted_text', '')
-        file_category = file_info.get('file_type', 'otro')
-        workspace_id = file_info['workspace_id']
+        extracted_text = file_info.get("extracted_text", "")
+        file_category = file_info.get("file_type", "otro")
+        workspace_id = file_info["workspace_id"]
 
         extracted_data = {}
 
@@ -724,26 +763,28 @@ class FileProcessingService:
             SET extracted_data = ?, processing_status = 'completed'
             WHERE id = ?
             """,
-            [json.dumps(extracted_data) if isinstance(extracted_data, dict) and extracted_data else None, file_id]
+            [
+                json.dumps(extracted_data)
+                if isinstance(extracted_data, dict) and extracted_data
+                else None,
+                file_id,
+            ],
         )
 
         # Regenerate embeddings
         if self.ENABLE_EMBEDDINGS and extracted_text:
             # Delete old embeddings
             from app.services.workspace_embedding_service import get_workspace_embedding_service
+
             service = get_workspace_embedding_service()
             await service.delete_file_embeddings(db, file_id)
 
             # Generate new
             await self._generate_file_embeddings(
-                db, workspace_id, file_id, extracted_text, file_info['filename']
+                db, workspace_id, file_id, extracted_text, file_info["filename"]
             )
 
-        return {
-            "id": file_id,
-            "status": "reprocessed",
-            "extracted_data": extracted_data
-        }
+        return {"id": file_id, "status": "reprocessed", "extracted_data": extracted_data}
 
 
 # Global instance

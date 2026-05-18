@@ -4,17 +4,17 @@ Session Documents Router — Ephemeral document upload for chat context.
 Documents are extracted, anonymized, and cached in Redis (2h TTL).
 NOT stored in database. Cleared automatically or on browser session end.
 """
-import uuid
+
 import json
 import logging
-from typing import Optional, List
+import uuid
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
-from app.auth.jwt_handler import get_current_user, TokenData
-from app.services.payslip_extractor import PayslipExtractor
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.security.rate_limiter import limiter
+from app.services.payslip_extractor import PayslipExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -48,15 +48,24 @@ def _classify_file_type(filename: str, text: str = "") -> str:
         return "factura"
     if any(p in lower for p in ["declaracion", "declaración", "modelo", "303", "130", "420"]):
         return "declaracion"
-    if any(p in lower for p in ["notificacion", "notificación", "aeat", "requerimiento", "providencia"]):
+    if any(
+        p in lower for p in ["notificacion", "notificación", "aeat", "requerimiento", "providencia"]
+    ):
         return "notificacion"
 
     # Fallback: classify by content (when filename is generic like "002638_NAME.PDF")
     if text:
         text_upper = text.upper()
         # Payslip markers: SS contribution lines + IRPF withholding + net salary
-        payslip_markers = ["LIQUIDO A PERCIBIR", "COTIZACION CONT", "TRIBUTACION I.R.P.F",
-                           "T. DEVENGADO", "BASE S.S.", "DEVENGOS", "DEDUCCIONES"]
+        payslip_markers = [
+            "LIQUIDO A PERCIBIR",
+            "COTIZACION CONT",
+            "TRIBUTACION I.R.P.F",
+            "T. DEVENGADO",
+            "BASE S.S.",
+            "DEVENGOS",
+            "DEDUCCIONES",
+        ]
         if sum(1 for m in payslip_markers if m in text_upper) >= 3:
             return "nomina"
 
@@ -64,7 +73,10 @@ def _classify_file_type(filename: str, text: str = "") -> str:
         if sum(1 for m in invoice_markers if m in text_upper) >= 3:
             return "factura"
 
-        if any(m in text_upper for m in ["AGENCIA TRIBUTARIA", "NOTIFICACION", "REQUERIMIENTO", "PROVIDENCIA"]):
+        if any(
+            m in text_upper
+            for m in ["AGENCIA TRIBUTARIA", "NOTIFICACION", "REQUERIMIENTO", "PROVIDENCIA"]
+        ):
             return "notificacion"
 
     return "otro"
@@ -118,7 +130,9 @@ async def upload_session_doc(
     # Read and validate size
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(400, f"Archivo demasiado grande (max {MAX_FILE_SIZE // 1024 // 1024}MB)")
+        raise HTTPException(
+            400, f"Archivo demasiado grande (max {MAX_FILE_SIZE // 1024 // 1024}MB)"
+        )
 
     # Check Redis availability
     upstash = getattr(request.app.state, "upstash_client", None)
@@ -136,7 +150,7 @@ async def upload_session_doc(
     extracted_data = {}
 
     if file.content_type == "application/pdf":
-        from app.utils.pdf_extractor import extract_pdf_text, extract_pdf_text_plain
+        from app.utils.pdf_extractor import extract_pdf_text_plain
 
         # First pass: extract plain text (works for all PDFs, preserves tabular layout)
         result = await extract_pdf_text_plain(content, file.filename)
@@ -160,6 +174,7 @@ async def upload_session_doc(
     elif file_type == "factura":
         try:
             from app.services.invoice_extractor import get_invoice_extractor
+
             inv_extractor = get_invoice_extractor()
             extracted_data = await inv_extractor.extract_from_text(extracted_text)
         except Exception as e:
@@ -184,7 +199,9 @@ async def upload_session_doc(
     }
 
     await upstash.set(cache_key, json.dumps(cache_payload, ensure_ascii=False), ex=SESSION_DOC_TTL)
-    logger.info(f"Session doc cached: {doc_id} ({file_type}, {page_count} pages, {len(anonymized_text)} chars)")
+    logger.info(
+        f"Session doc cached: {doc_id} ({file_type}, {page_count} pages, {len(anonymized_text)} chars)"
+    )
 
     summary = _build_summary(file.filename, file_type, page_count, extracted_data)
 
@@ -217,7 +234,7 @@ async def delete_session_doc(
     return {"status": "deleted", "doc_id": doc_id}
 
 
-@router.get("/list", response_model=List[SessionDocResponse])
+@router.get("/list", response_model=list[SessionDocResponse])
 async def list_session_docs(
     request: Request,
     current_user: TokenData = Depends(get_current_user),
@@ -236,15 +253,19 @@ async def list_session_docs(
         raw = await upstash.get(key)
         if raw:
             data = json.loads(raw)
-            docs.append(SessionDocResponse(
-                doc_id=data["doc_id"],
-                filename=data["filename"],
-                file_type=data["file_type"],
-                summary=_build_summary(
-                    data["filename"], data["file_type"],
-                    data.get("page_count", 0), data.get("extracted_data", {})
-                ),
-                page_count=data.get("page_count", 0),
-            ))
+            docs.append(
+                SessionDocResponse(
+                    doc_id=data["doc_id"],
+                    filename=data["filename"],
+                    file_type=data["file_type"],
+                    summary=_build_summary(
+                        data["filename"],
+                        data["file_type"],
+                        data.get("page_count", 0),
+                        data.get("extracted_data", {}),
+                    ),
+                    page_count=data.get("page_count", 0),
+                )
+            )
 
     return docs

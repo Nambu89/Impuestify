@@ -38,10 +38,10 @@ Invariante #2 del plan Parte 2:
     juridico ("caducidad del procedimiento sancionador por exceso del
     plazo maximo legal de tramitacion").
 """
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 
@@ -55,14 +55,13 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # Meses calendario que marcan el plazo maximo legal del procedimiento
 # sancionador tributario (art. 211.2 LGT). Se expresa como constante local
 # para evitar numeros magicos en la logica de la regla.
 _PLAZO_MAX_MESES_SANCIONADOR = 6
 
 
-def _parse_fecha(valor) -> Optional[datetime]:
+def _parse_fecha(valor) -> datetime | None:
     """Convierte `valor` a datetime naive (sin tz) para calculos de plazo.
 
     Acepta:
@@ -88,9 +87,7 @@ def _parse_fecha(valor) -> Optional[datetime]:
     return None
 
 
-def _calcular_dias_exceso(
-    fecha_inicio: datetime, fecha_fin: datetime
-) -> int:
+def _calcular_dias_exceso(fecha_inicio: datetime, fecha_fin: datetime) -> int:
     """Devuelve dias transcurridos entre `fecha_fin` y el limite legal.
 
     El limite legal es ``fecha_inicio + relativedelta(months=6)``. Si la
@@ -105,7 +102,7 @@ def _calcular_dias_exceso(
 
 def _buscar_documento_sancion(
     expediente: ExpedienteEstructurado,
-) -> Optional[object]:
+) -> object | None:
     """Localiza el primer `ACUERDO_IMPOSICION_SANCION` del expediente.
 
     Si hay varios acuerdos de imposicion (caso raro en expedientes reales
@@ -142,9 +139,7 @@ def _buscar_documento_sancion(
         "a fecha"
     ),
 )
-def evaluar(
-    expediente: ExpedienteEstructurado, brief: Brief
-) -> Optional[ArgumentoCandidato]:
+def evaluar(expediente: ExpedienteEstructurado, brief: Brief) -> ArgumentoCandidato | None:
     """Evalua R009 sobre el expediente y devuelve un candidato si dispara.
 
     Algoritmo:
@@ -200,7 +195,6 @@ def evaluar(
             "dias_exceso": dias_exceso,
         },
         impacto_estimado=(
-            "caducidad del procedimiento sancionador con imposibilidad "
-            "de reiniciarlo"
+            "caducidad del procedimiento sancionador con imposibilidad " "de reiniciarlo"
         ),
     )

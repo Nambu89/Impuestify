@@ -23,8 +23,7 @@ import os
 import secrets
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import List, Optional
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -48,6 +47,7 @@ def _b64url_decode(data: str) -> bytes:
 def _rp_settings() -> tuple[str, str, list[str]]:
     """Resolve RP id, name, and accepted origins from app config + env."""
     from app.config import settings
+
     frontend_url = getattr(settings, "FRONTEND_URL", "https://impuestify.com")
     parsed = urlparse(frontend_url)
     rp_id = parsed.hostname or "impuestify.com"
@@ -66,7 +66,9 @@ def _challenge_key(scope: str, ident: str) -> str:
     return f"webauthn:{scope}:{ident}"
 
 
-def _store_challenge(redis, scope: str, ident: str, challenge: bytes, payload: Optional[dict] = None) -> None:
+def _store_challenge(
+    redis, scope: str, ident: str, challenge: bytes, payload: dict | None = None
+) -> None:
     if redis is None:
         return
     payload = payload or {}
@@ -81,7 +83,7 @@ def _store_challenge(redis, scope: str, ident: str, challenge: bytes, payload: O
         logger.warning(f"Could not store webauthn challenge: {e}")
 
 
-def _pop_challenge(redis, scope: str, ident: str) -> Optional[dict]:
+def _pop_challenge(redis, scope: str, ident: str) -> dict | None:
     if redis is None:
         return None
     try:
@@ -110,14 +112,14 @@ class RegistrationOptions:
     user_id_b64: str
     user_name: str
     challenge_b64: str
-    exclude_credentials: List[dict]
+    exclude_credentials: list[dict]
 
 
 @dataclass
 class AuthenticationOptions:
     rp_id: str
     challenge_b64: str
-    allow_credentials: List[dict]
+    allow_credentials: list[dict]
 
 
 class WebAuthnService:
@@ -131,6 +133,7 @@ class WebAuthnService:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -140,8 +143,8 @@ class WebAuthnService:
         from webauthn import generate_registration_options
         from webauthn.helpers.structs import (
             AuthenticatorSelectionCriteria,
-            UserVerificationRequirement,
             ResidentKeyRequirement,
+            UserVerificationRequirement,
         )
 
         rp_id, rp_name, _ = _rp_settings()
@@ -153,8 +156,7 @@ class WebAuthnService:
             [user_id],
         )
         exclude = [
-            {"id": row["credential_id"], "type": "public-key"}
-            for row in existing.rows or []
+            {"id": row["credential_id"], "type": "public-key"} for row in existing.rows or []
         ]
 
         opts = generate_registration_options(
@@ -171,7 +173,9 @@ class WebAuthnService:
 
         # Persist challenge so /complete can verify it
         _store_challenge(
-            self.redis, scope="register", ident=user_id,
+            self.redis,
+            scope="register",
+            ident=user_id,
             challenge=opts.challenge,
             payload={"user_id": user_id, "user_email": user_email},
         )
@@ -186,7 +190,7 @@ class WebAuthnService:
         )
 
     async def complete_registration(
-        self, user_id: str, credential_response: dict, label: Optional[str] = None
+        self, user_id: str, credential_response: dict, label: str | None = None
     ) -> str:
         from webauthn import verify_registration_response
 
@@ -223,7 +227,7 @@ class WebAuthnService:
                 int(verification.sign_count),
                 json.dumps(credential_response.get("response", {}).get("transports") or []),
                 label or "Passkey",
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
             ],
         )
         return row_id
@@ -245,17 +249,16 @@ class WebAuthnService:
             # Don't leak whether the email exists. Generate a random challenge
             # the client can complete with no credentials — verify will fail.
             challenge = secrets.token_bytes(32)
-            return AuthenticationOptions(rp_id=rp_id, challenge_b64=_b64url_encode(challenge), allow_credentials=[])
+            return AuthenticationOptions(
+                rp_id=rp_id, challenge_b64=_b64url_encode(challenge), allow_credentials=[]
+            )
 
         user_id = user_row.rows[0]["id"]
         creds = await db.execute(
             "SELECT credential_id FROM webauthn_credentials WHERE user_id = ?",
             [user_id],
         )
-        allow = [
-            {"id": row["credential_id"], "type": "public-key"}
-            for row in creds.rows or []
-        ]
+        allow = [{"id": row["credential_id"], "type": "public-key"} for row in creds.rows or []]
 
         opts = generate_authentication_options(
             rp_id=rp_id,
@@ -264,7 +267,9 @@ class WebAuthnService:
         )
 
         _store_challenge(
-            self.redis, scope="login", ident=user_email.lower(),
+            self.redis,
+            scope="login",
+            ident=user_email.lower(),
             challenge=opts.challenge,
             payload={"user_id": user_id, "user_email": user_email.lower()},
         )
@@ -317,7 +322,7 @@ class WebAuthnService:
             "UPDATE webauthn_credentials SET sign_count = ?, last_used_at = ? WHERE id = ?",
             [
                 int(verification.new_sign_count),
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
                 cred["id"],
             ],
         )
@@ -325,7 +330,7 @@ class WebAuthnService:
 
     # ── Management ─────────────────────────────────────────────────────────
 
-    async def list_credentials(self, user_id: str) -> List[dict]:
+    async def list_credentials(self, user_id: str) -> list[dict]:
         db = await self._get_db()
         result = await db.execute(
             "SELECT id, label, created_at, last_used_at "

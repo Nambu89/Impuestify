@@ -13,6 +13,7 @@ Base normativa (la resuelve el RAG verificador, no la regla — invariante #2):
     - STS Sala 3.ª 28-2-2024: admite nulidad radical de liquidaciones firmes
       dictadas fuera del plazo de 4 anos desde el devengo.
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -25,7 +26,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 _CITA_SEMANTICA = (
     "Prescripcion del derecho del Ayuntamiento a liquidar el Impuesto sobre "
@@ -91,11 +91,7 @@ def evaluar(
         return None
 
     doc = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDACION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDACION),
         None,
     )
     if doc is None:

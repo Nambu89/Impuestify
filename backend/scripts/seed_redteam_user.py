@@ -31,6 +31,7 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT.parent / ".env")
 except ImportError:
     pass
@@ -70,8 +71,8 @@ async def _ensure_active_subscription(db, user_id: str) -> None:
 
 
 async def main():
-    from app.database.turso_client import get_db_client
     from app.auth.password import hash_password as _hash_password
+    from app.database.turso_client import get_db_client
 
     db = await get_db_client()
 
@@ -95,9 +96,7 @@ async def main():
             )
             logger.info(f"Password rotated for {REDTEAM_EMAIL}")
         else:
-            logger.info(
-                f"User {REDTEAM_EMAIL} already exists. Use QA_REDTEAM_PASSWORD to rotate."
-            )
+            logger.info(f"User {REDTEAM_EMAIL} already exists. Use QA_REDTEAM_PASSWORD to rotate.")
         # Ensure subscription exists even if previous run left a partial state
         await _ensure_active_subscription(db, user_id)
         if os.getenv("QA_REDTEAM_PASSWORD") and not rotate_only:
@@ -121,7 +120,7 @@ async def main():
     if not rotate_only:
         print()
         print("=" * 70)
-        print(f"REDTEAM USER CREATED")
+        print("REDTEAM USER CREATED")
         print(f"  email:    {REDTEAM_EMAIL}")
         print(f"  password: {password}")
         print()

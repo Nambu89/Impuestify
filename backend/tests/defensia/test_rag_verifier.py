@@ -17,6 +17,7 @@ El objetivo es comprobar el contrato anti-alucinacion:
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2B-001/002/003
 Invariante #3 del plan v2 (umbral 0.7, no 0.6).
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -29,7 +30,6 @@ from app.services.defensia_rag_verifier import (
     CONFIANZA_MIN,
     DefensiaRagVerifier,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers: factories para candidatos y resultados del retriever

@@ -143,7 +143,14 @@ export interface IrpfEstimateResult {
     cuota_anualidades_alimentos?: number
     deduccion_doble_imposicion?: number
     // Fase 5: CCAA deductions
-    deducciones_autonomicas?: Array<{ code: string; name: string; amount: number; percentage?: number; max_amount?: number; fixed_amount?: number }>
+    deducciones_autonomicas?: Array<{
+        code: string
+        name: string
+        amount: number
+        percentage?: number
+        max_amount?: number
+        fixed_amount?: number
+    }>
     total_deducciones_autonomicas?: number
     trabajo?: {
         ingresos_brutos: number
@@ -179,67 +186,71 @@ export function useIrpfEstimator() {
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const abortRef = useRef<AbortController | null>(null)
 
-    const estimate = useCallback((input: IrpfEstimateInput) => {
-        // Must have at least CCAA to estimate
-        if (!input.comunidad_autonoma) {
-            setResult(null)
-            return
-        }
+    const estimate = useCallback(
+        (input: IrpfEstimateInput) => {
+            // Must have at least CCAA to estimate
+            if (!input.comunidad_autonoma) {
+                setResult(null)
+                return
+            }
 
-        // Must have some income to calculate (check both annual and monthly salary)
-        const platformTotal = Object.values(input.plataformas_ingresos || {}).reduce((a, b) => a + b, 0)
-        const hasIncome = (input.ingresos_trabajo || 0) > 0 ||
-            (input.salario_base_mensual || 0) > 0 ||
-            (input.ingresos_actividad || 0) > 0 ||
-            platformTotal > 0 ||
-            (input.intereses || 0) > 0 ||
-            (input.dividendos || 0) > 0 ||
-            (input.ganancias_fondos || 0) > 0 ||
-            (input.ingresos_alquiler || 0) > 0 ||
-            (input.cripto_ganancia_neta || 0) > 0 ||
-            (input.ganancias_acciones || 0) > 0 ||
-            (input.ganancias_reembolso_fondos || 0) > 0 ||
-            (input.ganancias_derivados || 0) > 0 ||
-            (input.premios_metalico_privados || 0) > 0 ||
-            (input.premios_metalico_publicos || 0) > 0
-        if (!hasIncome) {
-            setResult(null)
-            return
-        }
+            // Must have some income to calculate (check both annual and monthly salary)
+            const platformTotal = Object.values(input.plataformas_ingresos || {}).reduce(
+                (a, b) => a + b,
+                0,
+            )
+            const hasIncome =
+                (input.ingresos_trabajo || 0) > 0 ||
+                (input.salario_base_mensual || 0) > 0 ||
+                (input.ingresos_actividad || 0) > 0 ||
+                platformTotal > 0 ||
+                (input.intereses || 0) > 0 ||
+                (input.dividendos || 0) > 0 ||
+                (input.ganancias_fondos || 0) > 0 ||
+                (input.ingresos_alquiler || 0) > 0 ||
+                (input.cripto_ganancia_neta || 0) > 0 ||
+                (input.ganancias_acciones || 0) > 0 ||
+                (input.ganancias_reembolso_fondos || 0) > 0 ||
+                (input.ganancias_derivados || 0) > 0 ||
+                (input.premios_metalico_privados || 0) > 0 ||
+                (input.premios_metalico_publicos || 0) > 0
+            if (!hasIncome) {
+                setResult(null)
+                return
+            }
 
-        // Debounce
-        if (timerRef.current) clearTimeout(timerRef.current)
-        if (abortRef.current) abortRef.current.abort()
+            // Debounce
+            if (timerRef.current) clearTimeout(timerRef.current)
+            if (abortRef.current) abortRef.current.abort()
 
-        timerRef.current = setTimeout(async () => {
-            setLoading(true)
-            setError(null)
+            timerRef.current = setTimeout(async () => {
+                setLoading(true)
+                setError(null)
 
-            const controller = new AbortController()
-            abortRef.current = controller
+                const controller = new AbortController()
+                abortRef.current = controller
 
-            try {
-                const data = await apiRequest<IrpfEstimateResult>(
-                    '/api/irpf/estimate',
-                    {
+                try {
+                    const data = await apiRequest<IrpfEstimateResult>('/api/irpf/estimate', {
                         method: 'POST',
                         body: JSON.stringify(input),
                         signal: controller.signal,
+                    })
+                    if (!controller.signal.aborted) {
+                        setResult(data)
+                        if (!data.success) setError(data.error || 'Error en la estimación')
                     }
-                )
-                if (!controller.signal.aborted) {
-                    setResult(data)
-                    if (!data.success) setError(data.error || 'Error en la estimación')
+                } catch (err: any) {
+                    if (err.name !== 'AbortError' && !controller.signal.aborted) {
+                        setError(err.message)
+                    }
+                } finally {
+                    if (!controller.signal.aborted) setLoading(false)
                 }
-            } catch (err: any) {
-                if (err.name !== 'AbortError' && !controller.signal.aborted) {
-                    setError(err.message)
-                }
-            } finally {
-                if (!controller.signal.aborted) setLoading(false)
-            }
-        }, DEBOUNCE_MS)
-    }, [apiRequest])
+            }, DEBOUNCE_MS)
+        },
+        [apiRequest],
+    )
 
     const reset = useCallback(() => {
         if (timerRef.current) clearTimeout(timerRef.current)

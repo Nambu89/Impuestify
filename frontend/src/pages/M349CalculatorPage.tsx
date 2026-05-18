@@ -67,22 +67,30 @@ export default function M349CalculatorPage() {
     const { downloadPDF, isLoading: pdfLoading, error: pdfError } = useModeloPDF()
 
     function updateOp(index: number, field: keyof Operacion349, value: string | number) {
-        setOperaciones(prev => prev.map((op, i) => i === index ? { ...op, [field]: value } : op))
+        setOperaciones((prev) =>
+            prev.map((op, i) => (i === index ? { ...op, [field]: value } : op)),
+        )
     }
 
     function addOp() {
-        setOperaciones(prev => [...prev, emptyOp()])
+        setOperaciones((prev) => [...prev, emptyOp()])
     }
 
     function removeOp(index: number) {
-        setOperaciones(prev => prev.filter((_, i) => i !== index))
+        setOperaciones((prev) => prev.filter((_, i) => i !== index))
     }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        const ops = operaciones.filter(op => op.nif_operador.trim() && op.importe > 0)
+        const ops = operaciones.filter((op) => op.nif_operador.trim() && op.importe > 0)
         if (ops.length === 0) return
-        await calculate({ operaciones: ops, periodo, year, forzar_anual: false, validar_vies: false })
+        await calculate({
+            operaciones: ops,
+            periodo,
+            year,
+            forzar_anual: false,
+            validar_vies: false,
+        })
     }
 
     const hasResult = result && result.success
@@ -100,8 +108,8 @@ export default function M349CalculatorPage() {
                         Calculadora <span className="m130-title-highlight">Modelo 349</span>
                     </h1>
                     <p className="m130-subtitle">
-                        Declaracion recapitulativa de operaciones intracomunitarias.
-                        Mensual, trimestral o anual segun volumen.
+                        Declaracion recapitulativa de operaciones intracomunitarias. Mensual,
+                        trimestral o anual segun volumen.
                     </p>
                 </div>
 
@@ -111,20 +119,26 @@ export default function M349CalculatorPage() {
                             <div className="m130-fields-card">
                                 <h2 className="m130-fields-title">Periodo y ejercicio</h2>
                                 <div className="m130-field">
-                                    <label className="m130-label" htmlFor="periodo">Periodo</label>
+                                    <label className="m130-label" htmlFor="periodo">
+                                        Periodo
+                                    </label>
                                     <select
                                         id="periodo"
                                         className="m130-input"
                                         value={periodo}
-                                        onChange={e => setPeriodo(e.target.value)}
+                                        onChange={(e) => setPeriodo(e.target.value)}
                                     >
-                                        {PERIODOS.map(p => (
-                                            <option key={p.value} value={p.value}>{p.label}</option>
+                                        {PERIODOS.map((p) => (
+                                            <option key={p.value} value={p.value}>
+                                                {p.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
                                 <div className="m130-field">
-                                    <label className="m130-label" htmlFor="year">Ejercicio</label>
+                                    <label className="m130-label" htmlFor="year">
+                                        Ejercicio
+                                    </label>
                                     <input
                                         id="year"
                                         type="number"
@@ -132,7 +146,9 @@ export default function M349CalculatorPage() {
                                         min={2020}
                                         max={2030}
                                         value={year}
-                                        onChange={e => setYear(parseInt(e.target.value) || currentYear)}
+                                        onChange={(e) =>
+                                            setYear(parseInt(e.target.value) || currentYear)
+                                        }
                                     />
                                 </div>
                             </div>
@@ -140,57 +156,118 @@ export default function M349CalculatorPage() {
                             <div className="m130-fields-card">
                                 <h2 className="m130-fields-title">Operaciones intracomunitarias</h2>
                                 <p className="m130-field-hint" style={{ marginBottom: '1rem' }}>
-                                    Introduce una linea por cada operador comunitario con el que hayas operado en el periodo.
+                                    Introduce una linea por cada operador comunitario con el que
+                                    hayas operado en el periodo.
                                 </p>
 
                                 {operaciones.map((op, i) => (
-                                    <div key={i} style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none', paddingTop: i > 0 ? '1rem' : 0, marginBottom: '1rem' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>Operador {i + 1}</span>
+                                    <div
+                                        key={i}
+                                        style={{
+                                            borderTop:
+                                                i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                                            paddingTop: i > 0 ? '1rem' : 0,
+                                            marginBottom: '1rem',
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                marginBottom: '0.5rem',
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    color: 'rgba(255,255,255,0.5)',
+                                                    fontSize: '0.8rem',
+                                                }}
+                                            >
+                                                Operador {i + 1}
+                                            </span>
                                             {operaciones.length > 1 && (
-                                                <button type="button" onClick={() => removeOp(i)} style={{ background: 'none', border: 'none', color: 'rgba(239,68,68,0.8)', cursor: 'pointer', padding: '0.25rem' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeOp(i)}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: 'rgba(239,68,68,0.8)',
+                                                        cursor: 'pointer',
+                                                        padding: '0.25rem',
+                                                    }}
+                                                >
                                                     <Trash2 size={14} />
                                                 </button>
                                             )}
                                         </div>
                                         <div className="m130-field">
-                                            <label className="m130-label" htmlFor={`nif-${i}`}>NIF-IVA del operador</label>
+                                            <label className="m130-label" htmlFor={`nif-${i}`}>
+                                                NIF-IVA del operador
+                                            </label>
                                             <input
                                                 id={`nif-${i}`}
                                                 type="text"
                                                 className="m130-input"
                                                 placeholder="IE6388047V"
                                                 value={op.nif_operador}
-                                                onChange={e => updateOp(i, 'nif_operador', e.target.value)}
+                                                onChange={(e) =>
+                                                    updateOp(i, 'nif_operador', e.target.value)
+                                                }
                                             />
                                         </div>
                                         <div className="m130-field">
-                                            <label className="m130-label" htmlFor={`nombre-${i}`}>Razon social</label>
+                                            <label className="m130-label" htmlFor={`nombre-${i}`}>
+                                                Razon social
+                                            </label>
                                             <input
                                                 id={`nombre-${i}`}
                                                 type="text"
                                                 className="m130-input"
                                                 placeholder="Nombre del operador (opcional)"
                                                 value={op.nombre}
-                                                onChange={e => updateOp(i, 'nombre', e.target.value)}
+                                                onChange={(e) =>
+                                                    updateOp(i, 'nombre', e.target.value)
+                                                }
                                             />
                                         </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                        <div
+                                            style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: '1fr 1fr',
+                                                gap: '0.75rem',
+                                            }}
+                                        >
                                             <div className="m130-field">
-                                                <label className="m130-label" htmlFor={`clave-${i}`}>Clave</label>
+                                                <label
+                                                    className="m130-label"
+                                                    htmlFor={`clave-${i}`}
+                                                >
+                                                    Clave
+                                                </label>
                                                 <select
                                                     id={`clave-${i}`}
                                                     className="m130-input"
                                                     value={op.clave}
-                                                    onChange={e => updateOp(i, 'clave', e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateOp(i, 'clave', e.target.value)
+                                                    }
                                                 >
-                                                    {CLAVES.map(c => (
-                                                        <option key={c.value} value={c.value}>{c.value} — {c.label.split(' — ')[1]}</option>
+                                                    {CLAVES.map((c) => (
+                                                        <option key={c.value} value={c.value}>
+                                                            {c.value} — {c.label.split(' — ')[1]}
+                                                        </option>
                                                     ))}
                                                 </select>
                                             </div>
                                             <div className="m130-field">
-                                                <label className="m130-label" htmlFor={`importe-${i}`}>Importe (EUR)</label>
+                                                <label
+                                                    className="m130-label"
+                                                    htmlFor={`importe-${i}`}
+                                                >
+                                                    Importe (EUR)
+                                                </label>
                                                 <div className="m130-input-row">
                                                     <Euro size={14} className="m130-input-icon" />
                                                     <input
@@ -201,7 +278,13 @@ export default function M349CalculatorPage() {
                                                         step={0.01}
                                                         placeholder="0"
                                                         value={op.importe || ''}
-                                                        onChange={e => updateOp(i, 'importe', parseFloat(e.target.value) || 0)}
+                                                        onChange={(e) =>
+                                                            updateOp(
+                                                                i,
+                                                                'importe',
+                                                                parseFloat(e.target.value) || 0,
+                                                            )
+                                                        }
                                                     />
                                                 </div>
                                             </div>
@@ -213,11 +296,19 @@ export default function M349CalculatorPage() {
                                     type="button"
                                     onClick={addOp}
                                     style={{
-                                        display: 'flex', alignItems: 'center', gap: '0.4rem',
-                                        background: 'rgba(26,86,219,0.12)', border: '1px dashed rgba(26,86,219,0.4)',
-                                        borderRadius: '8px', color: 'var(--color-primary-light)',
-                                        padding: '0.5rem 1rem', cursor: 'pointer', fontSize: '0.85rem',
-                                        width: '100%', justifyContent: 'center', marginTop: '0.5rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.4rem',
+                                        background: 'rgba(26,86,219,0.12)',
+                                        border: '1px dashed rgba(26,86,219,0.4)',
+                                        borderRadius: '8px',
+                                        color: 'var(--color-primary-light)',
+                                        padding: '0.5rem 1rem',
+                                        cursor: 'pointer',
+                                        fontSize: '0.85rem',
+                                        width: '100%',
+                                        justifyContent: 'center',
+                                        marginTop: '0.5rem',
                                     }}
                                 >
                                     <Plus size={14} />
@@ -235,10 +326,20 @@ export default function M349CalculatorPage() {
                             <button
                                 type="submit"
                                 className="m130-cta-btn"
-                                style={{ width: '100%', justifyContent: 'center', border: 'none', marginTop: '1rem', cursor: loading ? 'wait' : 'pointer' }}
+                                style={{
+                                    width: '100%',
+                                    justifyContent: 'center',
+                                    border: 'none',
+                                    marginTop: '1rem',
+                                    cursor: loading ? 'wait' : 'pointer',
+                                }}
                                 disabled={loading}
                             >
-                                {loading ? <Loader2 size={16} className="spin" /> : <Calculator size={16} />}
+                                {loading ? (
+                                    <Loader2 size={16} className="spin" />
+                                ) : (
+                                    <Calculator size={16} />
+                                )}
                                 {loading ? 'Calculando...' : 'Calcular Modelo 349'}
                             </button>
 
@@ -246,9 +347,15 @@ export default function M349CalculatorPage() {
                                 <Info size={14} />
                                 <span>
                                     Esta calculadora es informativa. Presentacion oficial en{' '}
-                                    <a className="m130-link" href="https://sede.agenciatributaria.gob.es" target="_blank" rel="noopener noreferrer">
+                                    <a
+                                        className="m130-link"
+                                        href="https://sede.agenciatributaria.gob.es"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
                                         Sede Electronica AEAT
-                                    </a>.
+                                    </a>
+                                    .
                                 </span>
                             </div>
                         </form>
@@ -265,7 +372,9 @@ export default function M349CalculatorPage() {
                                     <span className="m130-result-currency">EUR</span>
                                 </div>
                                 <div className="m130-result-sub">
-                                    {result.operadores_unicos} operador{result.operadores_unicos !== 1 ? 'es' : ''} — {result.periodicidad}
+                                    {result.operadores_unicos} operador
+                                    {result.operadores_unicos !== 1 ? 'es' : ''} —{' '}
+                                    {result.periodicidad}
                                 </div>
                             </div>
 
@@ -281,13 +390,23 @@ export default function M349CalculatorPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {Object.entries(result.total_por_clave).map(([clave, total]) => (
-                                                <tr key={clave} className="m130-casilla-row">
-                                                    <td className="m130-casilla-num">{clave}</td>
-                                                    <td className="m130-casilla-label">{CLAVES.find(c => c.value === clave)?.label.split(' — ')[1] || clave}</td>
-                                                    <td className="m130-casilla-value">{formatEur(total)} EUR</td>
-                                                </tr>
-                                            ))}
+                                            {Object.entries(result.total_por_clave).map(
+                                                ([clave, total]) => (
+                                                    <tr key={clave} className="m130-casilla-row">
+                                                        <td className="m130-casilla-num">
+                                                            {clave}
+                                                        </td>
+                                                        <td className="m130-casilla-label">
+                                                            {CLAVES.find(
+                                                                (c) => c.value === clave,
+                                                            )?.label.split(' — ')[1] || clave}
+                                                        </td>
+                                                        <td className="m130-casilla-value">
+                                                            {formatEur(total)} EUR
+                                                        </td>
+                                                    </tr>
+                                                ),
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -297,27 +416,44 @@ export default function M349CalculatorPage() {
                                 <div className="m130-alert">
                                     <AlertTriangle size={16} />
                                     <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
-                                        {result.avisos.map((a, i) => <li key={i}>{a}</li>)}
+                                        {result.avisos.map((a, i) => (
+                                            <li key={i}>{a}</li>
+                                        ))}
                                     </ul>
                                 </div>
                             )}
 
                             <div className="m130-info-card m130-info-card--info">
                                 <Info size={16} />
-                                <p>Plazo: <strong>{result.plazo}</strong></p>
+                                <p>
+                                    Plazo: <strong>{result.plazo}</strong>
+                                </p>
                             </div>
 
                             <div className="m130-cta-card">
                                 <button
                                     className="m130-cta-btn"
-                                    style={{ width: '100%', justifyContent: 'center', border: 'none', cursor: pdfLoading ? 'wait' : 'pointer' }}
+                                    style={{
+                                        width: '100%',
+                                        justifyContent: 'center',
+                                        border: 'none',
+                                        cursor: pdfLoading ? 'wait' : 'pointer',
+                                    }}
                                     onClick={() => downloadPDF('349', { ...result }, periodo, year)}
                                     disabled={pdfLoading}
                                 >
-                                    {pdfLoading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
+                                    {pdfLoading ? (
+                                        <Loader2 size={16} className="spin" />
+                                    ) : (
+                                        <Download size={16} />
+                                    )}
                                     {pdfLoading ? 'Generando...' : 'Descargar PDF'}
                                 </button>
-                                {pdfError && <p className="m130-advanced-calc m130-advanced-calc--warn">{pdfError}</p>}
+                                {pdfError && (
+                                    <p className="m130-advanced-calc m130-advanced-calc--warn">
+                                        {pdfError}
+                                    </p>
+                                )}
                             </div>
                         </section>
                     )}

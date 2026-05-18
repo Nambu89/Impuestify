@@ -1,5 +1,7 @@
 """Tests for Modelo 303 (IVA) calculator."""
+
 import pytest
+
 from app.utils.calculators.modelo_303 import Modelo303Calculator
 
 
@@ -202,9 +204,9 @@ async def test_303_casilla_71_resultado_liquidacion():
     result = await calculate_modelo_303_tool(
         trimestre=2,
         year=2025,
-        base_21=10000,                            # devengado = 2100
-        iva_deducible_bienes_corrientes=500,      # deducible = 500
-        compensacion_periodos_anteriores=300,     # casilla 78
+        base_21=10000,  # devengado = 2100
+        iva_deducible_bienes_corrientes=500,  # deducible = 500
+        compensacion_periodos_anteriores=300,  # casilla 78
     )
     # Resultado regimen general = 2100 - 500 = 1600
     # Casilla 69 = 66 + 77 - 78 + 68 = 1600 + 0 - 300 + 0 = 1300
@@ -220,7 +222,7 @@ async def test_303_casilla_71_resultado_liquidacion():
 async def test_303_plazo_t4_30_enero_y_domiciliacion_dia_25():
     """BUG-303-02: plazo T4 SIEMPRE 30 enero (no 20 ni alternativo).
     Domiciliacion 5 dias antes (dia 25). Debe mencionar festivos."""
-    from app.tools.modelo_303_tool import calculate_modelo_303_tool, _format_plazo
+    from app.tools.modelo_303_tool import _format_plazo, calculate_modelo_303_tool
 
     # Helper directo
     plazo_t4 = _format_plazo(4, 2025)
@@ -262,16 +264,16 @@ async def test_303_casilla_45_total_deducible_suma_10_casillas():
     10 casillas (no las 5 que sumaba el tool reimplementado)."""
     calc = Modelo303Calculator(None)
     r = await calc.calculate(
-        cuota_corrientes_interiores=100,        # casilla 29
-        cuota_inversion_interiores=200,          # casilla 31
-        cuota_importaciones_corrientes=50,       # casilla 33
-        cuota_importaciones_inversion=25,        # casilla 35
-        cuota_intracom_corrientes=75,            # casilla 37
-        cuota_intracom_inversion=30,             # casilla 39
-        rectificacion_deducciones=10,            # casilla 41
-        compensacion_agricultura=15,             # casilla 42
-        regularizacion_inversion=-5,             # casilla 43
-        regularizacion_prorrata=20,              # casilla 44
+        cuota_corrientes_interiores=100,  # casilla 29
+        cuota_inversion_interiores=200,  # casilla 31
+        cuota_importaciones_corrientes=50,  # casilla 33
+        cuota_importaciones_inversion=25,  # casilla 35
+        cuota_intracom_corrientes=75,  # casilla 37
+        cuota_intracom_inversion=30,  # casilla 39
+        rectificacion_deducciones=10,  # casilla 41
+        compensacion_agricultura=15,  # casilla 42
+        regularizacion_inversion=-5,  # casilla 43
+        regularizacion_prorrata=20,  # casilla 44
     )
     expected_45 = 100 + 200 + 50 + 25 + 75 + 30 + 10 + 15 + (-5) + 20  # 520
     assert r["casilla_45"] == expected_45

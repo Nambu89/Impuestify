@@ -4,7 +4,9 @@ Tests for extended memory extraction patterns in UserMemoryService.
 Covers 9 new fiscal fact patterns: hipoteca, guarderia, plan_pensiones,
 donaciones, criptomonedas, alquiler, autonomo_gastos, discapacidad, familia_numerosa.
 """
+
 import pytest
+
 from app.services.user_memory_service import UserMemoryService
 
 
@@ -18,6 +20,7 @@ def _make_service() -> UserMemoryService:
 
 
 # === Hipoteca ===
+
 
 def test_extract_hipoteca():
     svc = _make_service()
@@ -33,6 +36,7 @@ def test_extract_hipoteca_prestamo():
 
 # === Guarderia ===
 
+
 def test_extract_guarderia():
     svc = _make_service()
     facts = svc.extract_facts_from_message("Mi hijo va a la guarderia desde septiembre")
@@ -46,6 +50,7 @@ def test_extract_guarderia_escuela_infantil():
 
 
 # === Plan de pensiones ===
+
 
 def test_extract_plan_pensiones():
     svc = _make_service()
@@ -61,6 +66,7 @@ def test_extract_plan_pensiones_aportacion():
 
 # === Donaciones ===
 
+
 def test_extract_donaciones():
     svc = _make_service()
     facts = svc.extract_facts_from_message("Hice donativos a una ONG por 500 euros")
@@ -74,6 +80,7 @@ def test_extract_donaciones_fundacion():
 
 
 # === Criptomonedas ===
+
 
 def test_extract_cripto():
     svc = _make_service()
@@ -89,6 +96,7 @@ def test_extract_cripto_generic():
 
 # === Alquiler ===
 
+
 def test_extract_alquiler():
     svc = _make_service()
     facts = svc.extract_facts_from_message("Pago un alquiler de 700 euros mensuales")
@@ -102,6 +110,7 @@ def test_extract_alquiler_inquilino():
 
 
 # === Autonomo gastos ===
+
 
 def test_extract_autonomo_gastos():
     svc = _make_service()
@@ -117,6 +126,7 @@ def test_extract_autonomo_gastos_coworking():
 
 # === Discapacidad ===
 
+
 def test_extract_discapacidad():
     svc = _make_service()
     facts = svc.extract_facts_from_message("Tengo un 33% de discapacidad reconocida")
@@ -130,6 +140,7 @@ def test_extract_discapacidad_minusvalia():
 
 
 # === Familia numerosa ===
+
 
 def test_extract_familia_numerosa():
     svc = _make_service()
@@ -145,12 +156,19 @@ def test_extract_familia_numerosa_titulo():
 
 # === False positives ===
 
+
 def test_no_false_positives_on_generic_text():
     svc = _make_service()
     facts = svc.extract_facts_from_message("Hola, quiero saber sobre la renta")
     extended_types = {
-        "hipoteca", "guarderia", "plan_pensiones", "donaciones",
-        "criptomonedas", "alquiler", "autonomo_gastos", "discapacidad",
+        "hipoteca",
+        "guarderia",
+        "plan_pensiones",
+        "donaciones",
+        "criptomonedas",
+        "alquiler",
+        "autonomo_gastos",
+        "discapacidad",
         "familia_numerosa",
     }
     for f in facts:
@@ -161,8 +179,14 @@ def test_no_false_positives_on_simple_question():
     svc = _make_service()
     facts = svc.extract_facts_from_message("Cual es el plazo para presentar el modelo 100?")
     extended_types = {
-        "hipoteca", "guarderia", "plan_pensiones", "donaciones",
-        "criptomonedas", "alquiler", "autonomo_gastos", "discapacidad",
+        "hipoteca",
+        "guarderia",
+        "plan_pensiones",
+        "donaciones",
+        "criptomonedas",
+        "alquiler",
+        "autonomo_gastos",
+        "discapacidad",
         "familia_numerosa",
     }
     for f in facts:

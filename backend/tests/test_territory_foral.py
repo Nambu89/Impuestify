@@ -1,9 +1,10 @@
 import pytest
-from app.territories.foral_vasco.plugin import ForalVascoTerritory
-from app.territories.foral_navarra.plugin import ForalNavarraTerritory
 
+from app.territories.foral_navarra.plugin import ForalNavarraTerritory
+from app.territories.foral_vasco.plugin import ForalVascoTerritory
 
 # --- Foral Vasco ---
+
 
 def test_foral_vasco_covers_3_territories():
     plugin = ForalVascoTerritory()
@@ -52,6 +53,7 @@ def test_foral_vasco_minimos_are_quota_deductions():
 
 
 # --- Foral Navarra ---
+
 
 def test_foral_navarra_covers_1_territory():
     plugin = ForalNavarraTerritory()

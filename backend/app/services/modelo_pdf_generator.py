@@ -7,15 +7,15 @@ Spanish tax form models (Modelos Tributarios).
 Fully implemented: 303, 130, 131, 200, 308, 349, 390, 720, 721, IPSI.
 Placeholder stubs (under development): 100, 309, 420, 450, 455.
 """
+
 import io
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
 # Modelo display names
-MODELO_NAMES: Dict[str, str] = {
+MODELO_NAMES: dict[str, str] = {
     "303": "Autoliquidación IVA",
     "130": "IRPF Pago Fraccionado — Estimación Directa",
     "200": "Impuesto sobre Sociedades",
@@ -35,7 +35,7 @@ MODELO_NAMES: Dict[str, str] = {
 }
 
 # Foral variant names
-FORAL_NAMES: Dict[str, str] = {
+FORAL_NAMES: dict[str, str] = {
     "300": "Modelo 300 — Autoliquidación IVA (Gipuzkoa)",
     "F69": "Modelo F69 — Autoliquidación IVA (Navarra)",
     "420": "Modelo 420 — Autoliquidación IGIC (Canarias)",
@@ -102,12 +102,10 @@ class ModeloPDFGenerator:
                 f"Valores válidos: {', '.join(sorted(VALID_MODELOS))}"
             )
 
+        from reportlab.lib.enums import TA_CENTER, TA_RIGHT  # noqa: F401
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.units import mm
-        from reportlab.lib.colors import HexColor
         from reportlab.platypus import SimpleDocTemplate, Spacer
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.enums import TA_CENTER, TA_RIGHT  # noqa: F401
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -168,7 +166,10 @@ class ModeloPDFGenerator:
 
         logger.info(
             "Modelo %s PDF generated: %d bytes, trimestre=%s, ejercicio=%d",
-            modelo_type, len(pdf_bytes), trimestre, ejercicio,
+            modelo_type,
+            len(pdf_bytes),
+            trimestre,
+            ejercicio,
         )
         return pdf_bytes
 
@@ -179,8 +180,8 @@ class ModeloPDFGenerator:
     def _setup_styles(self):
         """Initialize ReportLab styles (mirrors report_generator.py)."""
         from reportlab.lib.colors import HexColor
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+        from reportlab.lib.enums import TA_CENTER
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 
         self._primary = HexColor("#1a56db")
         self._dark = HexColor("#1f2937")
@@ -265,11 +266,12 @@ class ModeloPDFGenerator:
     ):
         """Render the document header with modelo name and period."""
         from reportlab.lib.units import mm
-        from reportlab.platypus import Paragraph, Spacer, HRFlowable
+        from reportlab.platypus import HRFlowable, Paragraph, Spacer
 
         # Check for foral variant
-        variante_foral = (user_info or {}).get("variante_foral") or \
-                         ({} if not isinstance(user_info, dict) else user_info).get("variante_foral")
+        variante_foral = (user_info or {}).get("variante_foral") or (
+            {} if not isinstance(user_info, dict) else user_info
+        ).get("variante_foral")
 
         if variante_foral and variante_foral in FORAL_NAMES:
             title_text = FORAL_NAMES[variante_foral]
@@ -279,19 +281,22 @@ class ModeloPDFGenerator:
 
         story.append(Paragraph("Impuestify", self._title_style))
         story.append(Paragraph(title_text, self._subtitle_style))
-        story.append(Paragraph(
-            f"Periodo: {trimestre} — Ejercicio {ejercicio}",
-            self._subtitle_style,
-        ))
+        story.append(
+            Paragraph(
+                f"Periodo: {trimestre} — Ejercicio {ejercicio}",
+                self._subtitle_style,
+            )
+        )
         story.append(Spacer(1, 4 * mm))
         story.append(HRFlowable(width="100%", thickness=1, color=self._primary))
         story.append(Spacer(1, 6 * mm))
 
     def _render_contribuyente(self, story: list, user_info: dict):
         """Render contributor data section."""
-        from reportlab.lib.units import mm
-        from reportlab.platypus import Paragraph, Table, TableStyle, Spacer
         from xml.sax.saxutils import escape
+
+        from reportlab.lib.units import mm
+        from reportlab.platypus import Paragraph, Spacer, Table
 
         if not user_info:
             return
@@ -317,8 +322,8 @@ class ModeloPDFGenerator:
     def _render_casillas_table(
         self,
         story: list,
-        casillas: List[Tuple[str, str, float]],
-        title: Optional[str] = None,
+        casillas: list[tuple[str, str, float]],
+        title: str | None = None,
     ):
         """
         Render a reusable table of casillas.
@@ -338,28 +343,35 @@ class ModeloPDFGenerator:
             rows.append([casilla_num, desc, _format_eur(amount)])
 
         t = Table(rows, colWidths=[20 * mm, 100 * mm, 40 * mm])
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), self._primary),
-            ("TEXTCOLOR", (0, 0), (-1, 0), self._white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
-            ("BACKGROUND", (0, 1), (-1, -1), self._light_bg),
-            ("GRID", (0, 0), (-1, -1), 0.5, self._gray),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-            ("ALIGN", (2, 0), (2, -1), "RIGHT"),
-            ("ALIGN", (0, 0), (0, -1), "CENTER"),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ]))
+        t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), self._primary),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), self._white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BACKGROUND", (0, 1), (-1, -1), self._light_bg),
+                    ("GRID", (0, 0), (-1, -1), 0.5, self._gray),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("ALIGN", (2, 0), (2, -1), "RIGHT"),
+                    ("ALIGN", (0, 0), (0, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ]
+            )
+        )
         story.append(t)
 
     def _render_resultado(self, story: list, label: str, amount: float):
         """Render a highlighted result box. Green if refund, red if pay."""
-        from reportlab.lib.units import mm
         from reportlab.lib.colors import HexColor
+        from reportlab.lib.units import mm
         from reportlab.platypus import (
-            Paragraph, Spacer, Table, TableStyle,
+            Paragraph,
+            Spacer,
+            Table,
+            TableStyle,
         )
 
         is_refund = amount <= 0
@@ -370,62 +382,71 @@ class ModeloPDFGenerator:
         cell = Paragraph(text, text_style)
 
         t = Table([[cell]], colWidths=[160 * mm])
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), bg_color),
-            ("TOPPADDING", (0, 0), (-1, -1), 10),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-            ("LEFTPADDING", (0, 0), (-1, -1), 10),
-            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ("BOX", (0, 0), (-1, -1), 1, self._green if is_refund else self._red),
-        ]))
+        t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), bg_color),
+                    ("TOPPADDING", (0, 0), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("BOX", (0, 0), (-1, -1), 1, self._green if is_refund else self._red),
+                ]
+            )
+        )
         story.append(Spacer(1, 4 * mm))
         story.append(t)
 
     def _render_disclaimer(self, story: list):
         """Render legal disclaimer at the bottom."""
         from reportlab.lib.units import mm
-        from reportlab.platypus import Paragraph, Spacer, HRFlowable
+        from reportlab.platypus import HRFlowable, Paragraph, Spacer
 
         story.append(HRFlowable(width="100%", thickness=0.5, color=self._gray))
         story.append(Spacer(1, 3 * mm))
-        story.append(Paragraph(
-            "AVISO LEGAL: Este documento ha sido generado automáticamente por Impuestify y tiene "
-            "carácter meramente orientativo e informativo. No constituye una declaración tributaria "
-            "oficial ni sustituye la presentación del modelo ante la AEAT o hacienda foral correspondiente. "
-            "Los cálculos se basan en la información proporcionada por el usuario y en la normativa fiscal "
-            "vigente. Impuestify no se responsabiliza de errores u omisiones en los datos proporcionados "
-            "ni de las decisiones tomadas en base a este documento.",
-            self._small_style,
-        ))
+        story.append(
+            Paragraph(
+                "AVISO LEGAL: Este documento ha sido generado automáticamente por Impuestify y tiene "
+                "carácter meramente orientativo e informativo. No constituye una declaración tributaria "
+                "oficial ni sustituye la presentación del modelo ante la AEAT o hacienda foral correspondiente. "
+                "Los cálculos se basan en la información proporcionada por el usuario y en la normativa fiscal "
+                "vigente. Impuestify no se responsabiliza de errores u omisiones en los datos proporcionados "
+                "ni de las decisiones tomadas en base a este documento.",
+                self._small_style,
+            )
+        )
         story.append(Spacer(1, 3 * mm))
-        now = datetime.now(timezone.utc)
-        story.append(Paragraph(
-            f"Generado el {now.strftime('%d/%m/%Y a las %H:%M')} UTC por Impuestify (impuestify.com)",
-            self._footer_style,
-        ))
+        now = datetime.now(UTC)
+        story.append(
+            Paragraph(
+                f"Generado el {now.strftime('%d/%m/%Y a las %H:%M')} UTC por Impuestify (impuestify.com)",
+                self._footer_style,
+            )
+        )
 
     def _header_table_style(self):
         """Standard header table style matching report_generator.py."""
-        from reportlab.lib.units import mm
         from reportlab.platypus import TableStyle
 
-        return TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), self._primary),
-            ("TEXTCOLOR", (0, 0), (-1, 0), self._white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
-            ("BACKGROUND", (0, 1), (-1, -1), self._light_bg),
-            ("GRID", (0, 0), (-1, -1), 0.5, self._gray),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ])
+        return TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), self._primary),
+                ("TEXTCOLOR", (0, 0), (-1, 0), self._white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("BACKGROUND", (0, 1), (-1, -1), self._light_bg),
+                ("GRID", (0, 0), (-1, -1), 0.5, self._gray),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
 
     def _simple_section_table(
         self,
         story: list,
         title: str,
-        rows_data: List[Tuple[str, str]],
+        rows_data: list[tuple[str, str]],
     ):
         """Render a simple two-column table (label, value) with a heading."""
         from reportlab.lib.units import mm
@@ -436,18 +457,22 @@ class ModeloPDFGenerator:
         rows.extend(list(rows_data))
 
         t = Table(rows, colWidths=[110 * mm, 50 * mm])
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), self._primary),
-            ("TEXTCOLOR", (0, 0), (-1, 0), self._white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
-            ("BACKGROUND", (0, 1), (-1, -1), self._light_bg),
-            ("GRID", (0, 0), (-1, -1), 0.5, self._gray),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-            ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-        ]))
+        t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), self._primary),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), self._white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BACKGROUND", (0, 1), (-1, -1), self._light_bg),
+                    ("GRID", (0, 0), (-1, -1), 0.5, self._gray),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                ]
+            )
+        )
         story.append(t)
 
     # ------------------------------------------------------------------ #
@@ -463,7 +488,7 @@ class ModeloPDFGenerator:
         casillas = data.get("casillas", {})
 
         # IVA Devengado
-        devengado_rows: List[Tuple[str, str, float]] = []
+        devengado_rows: list[tuple[str, str, float]] = []
         # Try structured data first, then flat casillas
         base_21 = iva_dev.get("cuota_21") or casillas.get("03", 0)
         base_10 = iva_dev.get("cuota_10") or casillas.get("06", 0)
@@ -484,7 +509,7 @@ class ModeloPDFGenerator:
         self._render_casillas_table(story, devengado_rows, "IVA Devengado (repercutido)")
 
         # IVA Deducible
-        deducible_rows: List[Tuple[str, str, float]] = []
+        deducible_rows: list[tuple[str, str, float]] = []
         bienes_corr = iva_ded.get("bienes_corrientes") or casillas.get("29", 0)
         bienes_inv = iva_ded.get("bienes_inversion") or casillas.get("31", 0)
         importaciones = iva_ded.get("importaciones") or casillas.get("33", 0)
@@ -511,7 +536,7 @@ class ModeloPDFGenerator:
         compensacion = resultado_data.get("compensacion_anterior") or casillas.get("71", 0)
         regimen_gen = resultado_data.get("regimen_general") or casillas.get("46", 0)
 
-        resultado_rows: List[Tuple[str, str, float]] = [
+        resultado_rows: list[tuple[str, str, float]] = [
             ("46", "Resultado régimen general", regimen_gen),
         ]
         if compensacion:
@@ -541,7 +566,7 @@ class ModeloPDFGenerator:
         seccion_i = data.get("seccion_i", {})
 
         # Section I
-        s1_rows: List[Tuple[str, str, float]] = [
+        s1_rows: list[tuple[str, str, float]] = [
             ("01", "Ingresos computables", seccion_i.get("ingresos_computables", 0)),
             ("02", "Gastos deducibles", seccion_i.get("gastos_deducibles", 0)),
             ("03", "Rendimiento neto", seccion_i.get("rendimiento_neto", 0)),
@@ -558,9 +583,7 @@ class ModeloPDFGenerator:
 
         s1_rows.append(("07", "Resultado sección I", seccion_i.get("resultado_seccion", 0)))
 
-        self._render_casillas_table(
-            story, s1_rows, "Sección I: Actividades en estimación directa"
-        )
+        self._render_casillas_table(story, s1_rows, "Sección I: Actividades en estimación directa")
 
         # Section IV — deduccion 80 bis
         deduccion = data.get("deduccion_80bis", 0)
@@ -579,7 +602,7 @@ class ModeloPDFGenerator:
     # Modelo 130 — Variantes Forales (Bizkaia / Gipuzkoa / Araba / Navarra)
     # ------------------------------------------------------------------ #
 
-    _FORAL_130_LABELS: Dict[str, str] = {
+    _FORAL_130_LABELS: dict[str, str] = {
         "130-bizkaia": "Modelo 130 Bizkaia",
         "130-gipuzkoa": "Modelo 130 Gipuzkoa",
         "130-araba": "Modelo 130 Araba/Álava",
@@ -588,7 +611,7 @@ class ModeloPDFGenerator:
 
     # Etiquetas humanas para las casillas devueltas por cada calculator foral.
     # Si una clave no aparece aquí, se muestra tal cual (con underscores).
-    _FORAL_130_CASILLA_LABELS: Dict[str, str] = {
+    _FORAL_130_CASILLA_LABELS: dict[str, str] = {
         # Bizkaia general / excepcional
         "01_base_calculo": "Base de cálculo",
         "02_tipo_aplicable_pct": "Tipo aplicable (%)",
@@ -665,7 +688,7 @@ class ModeloPDFGenerator:
             story.append(Paragraph(disclaimer, self._body_style))
             return
 
-        regimen_modalidad: List[str] = []
+        regimen_modalidad: list[str] = []
         if data.get("regimen"):
             regimen_modalidad.append(f"Régimen: <b>{data['regimen']}</b>")
         if data.get("modalidad"):
@@ -680,7 +703,7 @@ class ModeloPDFGenerator:
 
         # ---- Tabla de casillas ----
         casillas = data.get("casillas", {})
-        rows: List[Tuple[str, str, float]] = []
+        rows: list[tuple[str, str, float]] = []
         for key, value in casillas.items():
             # key formato "NN_descripcion" → numero + label legible
             num, _, _ = key.partition("_")
@@ -693,7 +716,9 @@ class ModeloPDFGenerator:
 
         if rows:
             self._render_casillas_table(
-                story, rows, f"{territorio_label} — Casillas",
+                story,
+                rows,
+                f"{territorio_label} — Casillas",
             )
 
         # ---- Resultado ----
@@ -704,10 +729,12 @@ class ModeloPDFGenerator:
         plazo = data.get("plazo")
         if plazo:
             story.append(Spacer(1, 3 * mm))
-            story.append(Paragraph(
-                f"Plazo de presentación: <b>{plazo}</b>.",
-                self._small_style,
-            ))
+            story.append(
+                Paragraph(
+                    f"Plazo de presentación: <b>{plazo}</b>.",
+                    self._small_style,
+                )
+            )
 
     # ------------------------------------------------------------------ #
     # Modelo 131 — Pago Fraccionado IRPF Estimación Objetiva (Módulos)
@@ -728,39 +755,51 @@ class ModeloPDFGenerator:
 
         # Sección I/II/III — cuotas
         if apartado == "I":
-            cuota_rows: List[Tuple[str, str, float]] = [
-                ("01", "Rendimiento neto previo módulos (anual)",
-                 casillas.get("01_rendimiento_neto_modulos", 0)),
-                ("02", "Tipo aplicable (%)",
-                 casillas.get("02_tipo_aplicable", 0)),
-                ("03", "Resultado actividades empresariales",
-                 casillas.get("03_resultado_empresarial", 0)),
+            cuota_rows: list[tuple[str, str, float]] = [
+                (
+                    "01",
+                    "Rendimiento neto previo módulos (anual)",
+                    casillas.get("01_rendimiento_neto_modulos", 0),
+                ),
+                ("02", "Tipo aplicable (%)", casillas.get("02_tipo_aplicable", 0)),
+                (
+                    "03",
+                    "Resultado actividades empresariales",
+                    casillas.get("03_resultado_empresarial", 0),
+                ),
             ]
             seccion_label = "Apartado I — Actividades empresariales en módulos"
         elif apartado == "III":
             cuota_rows = [
-                ("04", "Volumen ingresos agrario (trimestre)",
-                 casillas.get("04_volumen_ingresos_agrario", 0)),
-                ("05", "Cuota agraria 2%",
-                 casillas.get("05_cuota_agraria", 0)),
+                (
+                    "04",
+                    "Volumen ingresos agrario (trimestre)",
+                    casillas.get("04_volumen_ingresos_agrario", 0),
+                ),
+                ("05", "Cuota agraria 2%", casillas.get("05_cuota_agraria", 0)),
             ]
             seccion_label = (
                 "Apartado III — Actividades agrícolas / ganaderas / forestales / pesqueras"
             )
         else:  # II
             cuota_rows = [
-                ("01", "Volumen ingresos del trimestre",
-                 casillas.get("01_rendimiento_neto_modulos", 0)),
-                ("02", "Tipo aplicable (%)",
-                 casillas.get("02_tipo_aplicable", 0)),
-                ("03", "Resultado",
-                 casillas.get("03_resultado_empresarial", 0)),
+                (
+                    "01",
+                    "Volumen ingresos del trimestre",
+                    casillas.get("01_rendimiento_neto_modulos", 0),
+                ),
+                ("02", "Tipo aplicable (%)", casillas.get("02_tipo_aplicable", 0)),
+                ("03", "Resultado", casillas.get("03_resultado_empresarial", 0)),
             ]
             seccion_label = "Apartado II — Actividad empresarial sin datos-base"
 
-        cuota_rows.append((
-            "06", "Total cuotas", casillas.get("06_total_cuotas", 0),
-        ))
+        cuota_rows.append(
+            (
+                "06",
+                "Total cuotas",
+                casillas.get("06_total_cuotas", 0),
+            )
+        )
         self._render_casillas_table(story, cuota_rows, seccion_label)
 
         # Reducciones territoriales (Ceuta/Melilla, La Palma)
@@ -780,37 +819,46 @@ class ModeloPDFGenerator:
             )
 
         # Minoraciones (retenciones, pagos previos, complementaria)
-        minoracion_rows: List[Tuple[str, str]] = []
+        minoracion_rows: list[tuple[str, str]] = []
         if casillas.get("09_retenciones_trimestre", 0) > 0:
-            minoracion_rows.append((
-                "Retenciones del trimestre [09]",
-                _format_eur(casillas["09_retenciones_trimestre"]),
-            ))
+            minoracion_rows.append(
+                (
+                    "Retenciones del trimestre [09]",
+                    _format_eur(casillas["09_retenciones_trimestre"]),
+                )
+            )
         if casillas.get("10_pagos_anteriores", 0) > 0:
-            minoracion_rows.append((
-                "Pagos fraccionados anteriores [10]",
-                _format_eur(casillas["10_pagos_anteriores"]),
-            ))
+            minoracion_rows.append(
+                (
+                    "Pagos fraccionados anteriores [10]",
+                    _format_eur(casillas["10_pagos_anteriores"]),
+                )
+            )
         if casillas.get("11_complementaria", 0) > 0:
-            minoracion_rows.append((
-                "Resultado autoliquidación anterior [11]",
-                _format_eur(casillas["11_complementaria"]),
-            ))
+            minoracion_rows.append(
+                (
+                    "Resultado autoliquidación anterior [11]",
+                    _format_eur(casillas["11_complementaria"]),
+                )
+            )
         if apartado == "I":
             minoracion_brl = desglose.get("minoracion_rendimientos_bajos", 0)
             if minoracion_brl > 0:
-                minoracion_rows.append((
-                    "Minoración rendimientos bajos",
-                    _format_eur(minoracion_brl),
-                ))
+                minoracion_rows.append(
+                    (
+                        "Minoración rendimientos bajos",
+                        _format_eur(minoracion_brl),
+                    )
+                )
         if minoracion_rows:
             self._simple_section_table(
-                story, "Retenciones y minoraciones", minoracion_rows,
+                story,
+                "Retenciones y minoraciones",
+                minoracion_rows,
             )
 
         # Resultado final
-        resultado_final = casillas.get("12_resultado_final",
-                                       data.get("resultado_final", 0))
+        resultado_final = casillas.get("12_resultado_final", data.get("resultado_final", 0))
         self._render_resultado(story, "Resultado a ingresar [12]", resultado_final)
 
     # ------------------------------------------------------------------ #
@@ -824,7 +872,7 @@ class ModeloPDFGenerator:
         desglose_intra = intra.get("desglose", {})
 
         if intra.get("base_total", 0) > 0:
-            intra_rows: List[Tuple[str, str, float]] = []
+            intra_rows: list[tuple[str, str, float]] = []
             for rate_key, label in [("21", "21%"), ("10", "10%"), ("4", "4%")]:
                 base = desglose_intra.get(f"base_{rate_key}", 0)
                 iva = desglose_intra.get(f"iva_{rate_key}", 0)
@@ -842,25 +890,29 @@ class ModeloPDFGenerator:
         isp = data.get("inversion_sujeto_pasivo", {})
         if isp.get("base_total", 0) > 0:
             isp_desglose = isp.get("desglose", {})
-            isp_rows: List[Tuple[str, str, float]] = []
+            isp_rows: list[tuple[str, str, float]] = []
             for rate_key, label in [("21", "21%"), ("10", "10%"), ("4", "4%")]:
                 base = isp_desglose.get(f"base_{rate_key}", 0)
                 if base > 0:
                     isp_rows.append(("", f"Base ISP {label}", base))
-                    isp_rows.append(("", f"IVA ISP {label}", isp_desglose.get(f"iva_{rate_key}", 0)))
+                    isp_rows.append(
+                        ("", f"IVA ISP {label}", isp_desglose.get(f"iva_{rate_key}", 0))
+                    )
                     isp_rows.append(("", f"RE ISP {label}", isp_desglose.get(f"re_{rate_key}", 0)))
             self._render_casillas_table(story, isp_rows, "Inversión sujeto pasivo")
 
         # Exportaciones y transportes
         exports = data.get("exportaciones", {})
         if exports.get("base_exportaciones", 0) > 0 or exports.get("base_transporte", 0) > 0:
-            exp_rows: List[Tuple[str, str, float]] = []
+            exp_rows: list[tuple[str, str, float]] = []
             if exports.get("base_exportaciones", 0) > 0:
                 exp_rows.append(("", "Base exportaciones", exports["base_exportaciones"]))
                 exp_rows.append(("", "RE soportado exportaciones", exports.get("re_soportado", 0)))
             if exports.get("base_transporte", 0) > 0:
                 exp_rows.append(("", "Base transporte nuevo", exports["base_transporte"]))
-                exp_rows.append(("", "IVA soportado transporte", exports.get("iva_soportado_transporte", 0)))
+                exp_rows.append(
+                    ("", "IVA soportado transporte", exports.get("iva_soportado_transporte", 0))
+                )
             self._render_casillas_table(story, exp_rows, "Exportaciones y transportes")
 
         # Resultado
@@ -880,7 +932,7 @@ class ModeloPDFGenerator:
         ejercicio = data.get("ejercicio", "")
 
         if detalles:
-            rows_data: List[Tuple[str, str]] = []
+            rows_data: list[tuple[str, str]] = []
             for det in detalles:
                 cat_desc = det.get("descripcion", det.get("categoria", ""))
                 valor = det.get("valor_actual", 0)
@@ -896,7 +948,9 @@ class ModeloPDFGenerator:
 
         # Obligation summary
         obligado = data.get("obligado_720", False)
-        label = "OBLIGADO a presentar Modelo 720" if obligado else "No obligado a presentar Modelo 720"
+        label = (
+            "OBLIGADO a presentar Modelo 720" if obligado else "No obligado a presentar Modelo 720"
+        )
         story.append(Paragraph(f"<b>{label}</b>", self._body_style))
 
         plazo = data.get("plazo", "")
@@ -916,14 +970,14 @@ class ModeloPDFGenerator:
 
     def _render_721(self, story: list, data: dict):
         """Render Modelo 721 layout: Crypto foreign assets."""
-        from reportlab.platypus import Paragraph, Spacer
         from reportlab.lib.units import mm
+        from reportlab.platypus import Paragraph, Spacer
 
         ejercicio = data.get("ejercicio", "")
         valor = data.get("valor_crypto_extranjero", 0)
         obligado = data.get("obligado_721", False)
 
-        summary_rows: List[Tuple[str, str]] = [
+        summary_rows: list[tuple[str, str]] = [
             ("Valor criptomonedas en el extranjero", _format_eur(valor)),
         ]
 
@@ -945,7 +999,9 @@ class ModeloPDFGenerator:
             summary_rows,
         )
 
-        label = "OBLIGADO a presentar Modelo 721" if obligado else "No obligado a presentar Modelo 721"
+        label = (
+            "OBLIGADO a presentar Modelo 721" if obligado else "No obligado a presentar Modelo 721"
+        )
         story.append(Spacer(1, 4 * mm))
         story.append(Paragraph(f"<b>{label}</b>", self._body_style))
 
@@ -968,7 +1024,7 @@ class ModeloPDFGenerator:
         desglose = data.get("desglose_devengado", {})
 
         # IPSI Devengado
-        devengado_rows: List[Tuple[str, str, float]] = []
+        devengado_rows: list[tuple[str, str, float]] = []
         rate_map = [
             ("tipo_minimo_0_5", "Tipo 0,5%"),
             ("tipo_inferior_1", "Tipo 1%"),
@@ -992,7 +1048,7 @@ class ModeloPDFGenerator:
 
         # IPSI Deducible
         deducible = data.get("desglose_deducible", {})
-        ded_rows: List[Tuple[str, str, float]] = []
+        ded_rows: list[tuple[str, str, float]] = []
         for key, label in [
             ("cuota_corrientes_interiores", "Bienes y servicios corrientes"),
             ("cuota_inversion_interiores", "Bienes de inversión"),
@@ -1018,7 +1074,7 @@ class ModeloPDFGenerator:
         """Render Modelo 200 layout: IS liquidación completa."""
 
         # Base imponible section
-        bi_rows: List[Tuple[str, str, float]] = [
+        bi_rows: list[tuple[str, str, float]] = [
             ("552", "Base imponible", data.get("base_imponible", 0)),
         ]
 
@@ -1029,7 +1085,7 @@ class ModeloPDFGenerator:
         reserva_cap = data.get("reserva_capitalizacion", 0)
         compensacion_bins = data.get("compensacion_bins", 0)
 
-        detail_rows: List[Tuple[str, str, float]] = []
+        detail_rows: list[tuple[str, str, float]] = []
         if resultado_contable:
             detail_rows.append(("500", "Resultado contable", resultado_contable))
         if ajustes_positivos:
@@ -1042,9 +1098,7 @@ class ModeloPDFGenerator:
             detail_rows.append(("550", "Compensación BINs", -compensacion_bins))
 
         if detail_rows:
-            self._render_casillas_table(
-                story, detail_rows, "Determinación de la base imponible"
-            )
+            self._render_casillas_table(story, detail_rows, "Determinación de la base imponible")
 
         # Cuota section
         tipo_gravamen = data.get("tipo_gravamen_aplicado", "25%")
@@ -1055,7 +1109,7 @@ class ModeloPDFGenerator:
         retenciones = data.get("retenciones", 0)
         resultado_liquidacion = data.get("resultado_liquidacion", 0)
 
-        cuota_rows: List[Tuple[str, str, float]] = [
+        cuota_rows: list[tuple[str, str, float]] = [
             ("552", "Base imponible", data.get("base_imponible", 0)),
             ("558", f"Tipo gravamen ({tipo_gravamen})", cuota_integra),
             ("560", "Cuota íntegra", cuota_integra),
@@ -1090,8 +1144,8 @@ class ModeloPDFGenerator:
         tipo_efectivo = data.get("tipo_efectivo", 0)
         regimen = data.get("regimen", "")
         if tipo_efectivo or regimen:
-            from reportlab.platypus import Paragraph, Spacer
             from reportlab.lib.units import mm
+            from reportlab.platypus import Paragraph, Spacer
 
             info_parts = []
             if regimen:
@@ -1113,9 +1167,10 @@ class ModeloPDFGenerator:
         Acepta la salida de `calculate_modelo_390_tool` o de
         `Modelo390Calculator.calculate()`.
         """
+        from xml.sax.saxutils import escape
+
         from reportlab.lib.units import mm
         from reportlab.platypus import Paragraph, Spacer
-        from xml.sax.saxutils import escape
 
         territory_info = data.get("territory_info") or {}
         modelo = data.get("modelo")
@@ -1124,7 +1179,7 @@ class ModeloPDFGenerator:
         hacienda = data.get("hacienda") or territory_info.get("hacienda", "AEAT")
 
         # Cabecera con plazo y hacienda
-        cab_rows: List[Tuple[str, str]] = [
+        cab_rows: list[tuple[str, str]] = [
             ("Modelo aplicable", escape(str(modelo)) if modelo else "No aplica (IPSI)"),
             ("Plazo de presentacion", escape(str(plazo))),
             ("Hacienda", escape(str(hacienda))),
@@ -1138,13 +1193,17 @@ class ModeloPDFGenerator:
         # Exoneracion: mostrar motivo y salir
         if not obligado:
             story.append(Paragraph("Estado de la obligacion", self._heading_style))
-            motivo = data.get("motivo_exoneracion") or territory_info.get("nota") or (
-                "No tienes obligacion de presentar este modelo."
+            motivo = (
+                data.get("motivo_exoneracion")
+                or territory_info.get("nota")
+                or ("No tienes obligacion de presentar este modelo.")
             )
-            story.append(Paragraph(
-                f"<b>EXONERADO.</b> {escape(str(motivo))}",
-                self._body_style,
-            ))
+            story.append(
+                Paragraph(
+                    f"<b>EXONERADO.</b> {escape(str(motivo))}",
+                    self._body_style,
+                )
+            )
 
             chequeos = data.get("exoneraciones_aplicables") or []
             if chequeos:
@@ -1159,15 +1218,17 @@ class ModeloPDFGenerator:
         # Obligado: mostrar sumatorio anual si llega
         resumen = data.get("resumen_anual") or {}
         if not resumen:
-            story.append(Paragraph(
-                "Estas obligado a presentar este modelo. Para ver el sumatorio "
-                "anual con casillas, completa los 4 trimestres del Modelo 303.",
-                self._body_style,
-            ))
+            story.append(
+                Paragraph(
+                    "Estas obligado a presentar este modelo. Para ver el sumatorio "
+                    "anual con casillas, completa los 4 trimestres del Modelo 303.",
+                    self._body_style,
+                )
+            )
             return
 
         # IVA Devengado anual
-        devengado_rows: List[Tuple[str, str, float]] = []
+        devengado_rows: list[tuple[str, str, float]] = []
         if resumen.get("cuota_devengada_4"):
             devengado_rows.append(("", "Cuota IVA 4% anual", resumen["cuota_devengada_4"]))
         if resumen.get("cuota_devengada_10"):
@@ -1175,23 +1236,33 @@ class ModeloPDFGenerator:
         if resumen.get("cuota_devengada_21"):
             devengado_rows.append(("", "Cuota IVA 21% anual", resumen["cuota_devengada_21"]))
         if resumen.get("cuota_devengada_intra"):
-            devengado_rows.append(("", "Adquisiciones intracomunitarias", resumen["cuota_devengada_intra"]))
+            devengado_rows.append(
+                ("", "Adquisiciones intracomunitarias", resumen["cuota_devengada_intra"])
+            )
         if resumen.get("cuota_devengada_isp"):
             devengado_rows.append(("", "Inversion sujeto pasivo", resumen["cuota_devengada_isp"]))
-        devengado_rows.append(("", "Total IVA devengado anual", resumen.get("total_devengado_anual", 0)))
+        devengado_rows.append(
+            ("", "Total IVA devengado anual", resumen.get("total_devengado_anual", 0))
+        )
         self._render_casillas_table(story, devengado_rows, "IVA Devengado anual (sumatorio 303)")
 
         # IVA Deducible anual
-        deducible_rows: List[Tuple[str, str, float]] = []
+        deducible_rows: list[tuple[str, str, float]] = []
         if resumen.get("cuota_deducible_corrientes"):
-            deducible_rows.append(("", "Bienes y servicios corrientes", resumen["cuota_deducible_corrientes"]))
+            deducible_rows.append(
+                ("", "Bienes y servicios corrientes", resumen["cuota_deducible_corrientes"])
+            )
         if resumen.get("cuota_deducible_inversion"):
             deducible_rows.append(("", "Bienes de inversion", resumen["cuota_deducible_inversion"]))
         if resumen.get("cuota_deducible_importaciones"):
             deducible_rows.append(("", "Importaciones", resumen["cuota_deducible_importaciones"]))
         if resumen.get("cuota_deducible_intra"):
-            deducible_rows.append(("", "Adquisiciones intracomunitarias", resumen["cuota_deducible_intra"]))
-        deducible_rows.append(("", "Total IVA deducible anual", resumen.get("total_deducible_anual", 0)))
+            deducible_rows.append(
+                ("", "Adquisiciones intracomunitarias", resumen["cuota_deducible_intra"])
+            )
+        deducible_rows.append(
+            ("", "Total IVA deducible anual", resumen.get("total_deducible_anual", 0))
+        )
         self._render_casillas_table(story, deducible_rows, "IVA Deducible anual (sumatorio 303)")
 
         # Resultado liquidacion anual
@@ -1214,7 +1285,7 @@ class ModeloPDFGenerator:
         motivo = data.get("periodicidad_motivo", "")
         ccaa = data.get("ccaa") or "Territorio comun"
 
-        meta_rows: List[Tuple[str, str]] = [
+        meta_rows: list[tuple[str, str]] = [
             ("Periodicidad", str(periodicidad).capitalize()),
             ("Periodo declarado", str(periodo)),
             ("Plazo de presentacion", str(plazo)),
@@ -1227,23 +1298,43 @@ class ModeloPDFGenerator:
         # Totales agregados
         totales = data.get("totales", {})
         if totales:
-            tot_rows: List[Tuple[str, str, float]] = [
-                ("E+T+M+H", "Entregas intracomunitarias de bienes",
-                 float(totales.get("entregas_bienes", 0))),
-                ("A", "Adquisiciones intracomunitarias de bienes",
-                 float(totales.get("adquisiciones_bienes", 0))),
-                ("S", "Prestaciones intracomunitarias de servicios",
-                 float(totales.get("servicios_prestados", 0))),
-                ("I", "Adquisiciones intracomunitarias de servicios",
-                 float(totales.get("servicios_adquiridos", 0))),
-                ("R+D+C", "Operaciones de consignacion (call-off stock)",
-                 float(totales.get("consignacion", 0))),
-                ("N", "Rectificaciones de periodos anteriores",
-                 float(totales.get("rectificaciones", 0))),
-                ("", "Volumen relevante (umbral 50.000 EUR)",
-                 float(totales.get("volumen_relevante", 0))),
-                ("", "Total general (todas las claves)",
-                 float(totales.get("total_general", 0))),
+            tot_rows: list[tuple[str, str, float]] = [
+                (
+                    "E+T+M+H",
+                    "Entregas intracomunitarias de bienes",
+                    float(totales.get("entregas_bienes", 0)),
+                ),
+                (
+                    "A",
+                    "Adquisiciones intracomunitarias de bienes",
+                    float(totales.get("adquisiciones_bienes", 0)),
+                ),
+                (
+                    "S",
+                    "Prestaciones intracomunitarias de servicios",
+                    float(totales.get("servicios_prestados", 0)),
+                ),
+                (
+                    "I",
+                    "Adquisiciones intracomunitarias de servicios",
+                    float(totales.get("servicios_adquiridos", 0)),
+                ),
+                (
+                    "R+D+C",
+                    "Operaciones de consignacion (call-off stock)",
+                    float(totales.get("consignacion", 0)),
+                ),
+                (
+                    "N",
+                    "Rectificaciones de periodos anteriores",
+                    float(totales.get("rectificaciones", 0)),
+                ),
+                (
+                    "",
+                    "Volumen relevante (umbral 50.000 EUR)",
+                    float(totales.get("volumen_relevante", 0)),
+                ),
+                ("", "Total general (todas las claves)", float(totales.get("total_general", 0))),
             ]
             self._render_casillas_table(story, tot_rows, "Totales agregados por clave")
 
@@ -1266,15 +1357,17 @@ class ModeloPDFGenerator:
                 "C": "Sustitucion consignacion",
                 "N": "Rectificacion",
             }
-            detalle_rows: List[Tuple[str, str]] = []
+            detalle_rows: list[tuple[str, str]] = []
             for clave, info in por_clave.items():
                 if info.get("n_operaciones", 0) <= 0:
                     continue
-                detalle_rows.append((
-                    f"[{clave}] {_esc(labels.get(clave, clave))}",
-                    f"{info.get('importe', 0):,.2f} EUR — {info.get('n_operaciones', 0)} ops "
-                    f"/ {info.get('n_operadores', 0)} operadores",
-                ))
+                detalle_rows.append(
+                    (
+                        f"[{clave}] {_esc(labels.get(clave, clave))}",
+                        f"{info.get('importe', 0):,.2f} EUR — {info.get('n_operaciones', 0)} ops "
+                        f"/ {info.get('n_operadores', 0)} operadores",
+                    )
+                )
             if detalle_rows:
                 self._simple_section_table(story, "Detalle por clave de operacion", detalle_rows)
 
@@ -1285,11 +1378,13 @@ class ModeloPDFGenerator:
             story.append(Spacer(1, 4 * mm))
             story.append(Paragraph("Avisos sobre operadores", self._heading_style))
             for v in formato_inv:
-                story.append(Paragraph(
-                    f"- NIF-IVA con formato invalido: {v.get('nif_iva')} "
-                    f"({v.get('country') or 's/p'}): {v.get('motivo') or ''}",
-                    self._body_style,
-                ))
+                story.append(
+                    Paragraph(
+                        f"- NIF-IVA con formato invalido: {v.get('nif_iva')} "
+                        f"({v.get('country') or 's/p'}): {v.get('motivo') or ''}",
+                        self._body_style,
+                    )
+                )
             for w in vies_warnings:
                 story.append(Paragraph(f"- {w}", self._body_style))
 
@@ -1299,10 +1394,12 @@ class ModeloPDFGenerator:
             story.append(Spacer(1, 4 * mm))
             story.append(Paragraph("Cuadre 303 <-> 349", self._heading_style))
             if cuadre.get("cuadre_ok"):
-                story.append(Paragraph(
-                    "Cuadre OK (diferencias dentro de tolerancia 0,5 EUR).",
-                    self._body_style,
-                ))
+                story.append(
+                    Paragraph(
+                        "Cuadre OK (diferencias dentro de tolerancia 0,5 EUR).",
+                        self._body_style,
+                    )
+                )
             else:
                 for w in cuadre.get("warnings", []) or []:
                     story.append(Paragraph(f"- {w}", self._body_style))
@@ -1330,9 +1427,10 @@ class ModeloPDFGenerator:
         Includes header (already rendered upstream), basic user data,
         period info, and a clear "in development" notice with AEAT pointer.
         """
+        from xml.sax.saxutils import escape
+
         from reportlab.lib.units import mm
         from reportlab.platypus import Paragraph, Spacer
-        from xml.sax.saxutils import escape
 
         modelo_label = MODELO_NAMES.get(modelo_type, f"Modelo {modelo_type}")
 
@@ -1351,7 +1449,7 @@ class ModeloPDFGenerator:
         nif = escape((user_info or {}).get("nif", "") or "—")
         nombre = escape((user_info or {}).get("nombre", "") or "—")
 
-        rows_data: List[Tuple[str, str]] = [
+        rows_data: list[tuple[str, str]] = [
             ("Modelo", f"{escape(modelo_type.upper())} — {escape(modelo_label)}"),
             ("Nombre / Razón social", nombre),
             ("NIF / CIF", nif),
@@ -1370,10 +1468,12 @@ class ModeloPDFGenerator:
 
         # Nota técnica para el usuario
         story.append(Spacer(1, 6 * mm))
-        story.append(Paragraph(
-            "Este documento es un borrador placeholder generado por Impuestify mientras "
-            "se finaliza la implementación específica de este modelo. La estructura final "
-            "de casillas, casos especiales y validaciones será incorporada en próximas "
-            "versiones.",
-            self._small_style,
-        ))
+        story.append(
+            Paragraph(
+                "Este documento es un borrador placeholder generado por Impuestify mientras "
+                "se finaliza la implementación específica de este modelo. La estructura final "
+                "de casillas, casos especiales y validaciones será incorporada en próximas "
+                "versiones.",
+                self._small_style,
+            )
+        )

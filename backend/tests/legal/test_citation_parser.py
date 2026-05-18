@@ -1,4 +1,5 @@
 """Tests for the citation parser."""
+
 import pytest
 
 from app.services.legal.citation_parser import (
@@ -6,7 +7,6 @@ from app.services.legal.citation_parser import (
     parse_norm_citation,
     split_compound_article_citation,
 )
-
 
 # ── parse_article_citation ───────────────────────────────────────────────
 

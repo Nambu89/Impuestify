@@ -7,12 +7,11 @@ Uses Groq llama-3.1-8b-instant to classify whether a user query is on-scope
 Anything OFF-SCOPE must be rejected BEFORE reaching the main LLM.
 """
 
+import hashlib
 import json
 import logging
-import hashlib
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -33,19 +32,20 @@ class TopicContext:
       - recent_user_turns: previous user messages in the same thread
         (already passed prompt-injection layer 2/3, capped to 200 chars)
     """
-    workspace_name: Optional[str] = None
+
+    workspace_name: str | None = None
     workspace_doc_count: int = 0
-    workspace_file_types: List[str] = field(default_factory=list)
-    recent_user_turns: List[str] = field(default_factory=list)
+    workspace_file_types: list[str] = field(default_factory=list)
+    recent_user_turns: list[str] = field(default_factory=list)
 
 
 @dataclass
 class TopicCheckResult:
     is_fiscal: bool
-    confidence: float          # 0..1
-    reason: str                # short explanation in Spanish
-    classifier: str            # which classifier was used (groq | fallback)
-    error: Optional[str] = None
+    confidence: float  # 0..1
+    reason: str  # short explanation in Spanish
+    classifier: str  # which classifier was used (groq | fallback)
+    error: str | None = None
 
 
 class FiscalTopicClassifier:
@@ -125,6 +125,7 @@ Si tienes dudas y NO hay contexto → fiscal_es=false (regla por defecto).
                 Below this → reject. Higher = stricter.
         """
         from groq import Groq
+
         from app.config import settings
 
         self.sensitivity = sensitivity
@@ -140,7 +141,7 @@ Si tienes dudas y NO hay contexto → fiscal_es=false (regla por defecto).
         else:
             logger.warning("GROQ_API_KEY missing — Topic Classifier will FAIL CLOSED (reject all)")
 
-    def check(self, question: str, context: Optional[TopicContext] = None) -> TopicCheckResult:
+    def check(self, question: str, context: TopicContext | None = None) -> TopicCheckResult:
         """
         Classify a user question as fiscal (on-scope) or not (off-scope).
 
@@ -240,7 +241,7 @@ def _hash_question(question: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:32]
 
 
-def _context_hash(ctx: Optional[TopicContext]) -> str:
+def _context_hash(ctx: TopicContext | None) -> str:
     """Stable hash for a TopicContext.
 
     Normalises so semantically-equal contexts (different list order, casing,
@@ -258,7 +259,7 @@ def _context_hash(ctx: Optional[TopicContext]) -> str:
     return hashlib.sha256(repr(payload).encode("utf-8")).hexdigest()[:24]
 
 
-def _has_fiscal_signal(ctx: Optional[TopicContext]) -> bool:
+def _has_fiscal_signal(ctx: TopicContext | None) -> bool:
     """Heuristic: does the context look fiscal at all? Cheap pre-filter so we
     don't bloat the prompt for users without a workspace or fresh chats.
     """
@@ -271,7 +272,7 @@ def _has_fiscal_signal(ctx: Optional[TopicContext]) -> bool:
     return False
 
 
-def _build_user_message(question: str, ctx: Optional[TopicContext]) -> str:
+def _build_user_message(question: str, ctx: TopicContext | None) -> str:
     """Compose the classifier's user message. Context block only added when
     actually present — avoids polluting the prompt for stateless calls.
     """
@@ -284,7 +285,7 @@ def _build_user_message(question: str, ctx: Optional[TopicContext]) -> str:
         if ctx.workspace_file_types:
             types = f" ({'/'.join(t for t in ctx.workspace_file_types[:4] if t)})"
         lines.append(
-            f"- Workspace activo: \"{ctx.workspace_name}\" "
+            f'- Workspace activo: "{ctx.workspace_name}" '
             f"({ctx.workspace_doc_count} archivos{types})"
         )
     for i, turn in enumerate((ctx.recent_user_turns or [])[:3], start=1):
@@ -297,7 +298,9 @@ def _build_user_message(question: str, ctx: Optional[TopicContext]) -> str:
 
 
 @lru_cache(maxsize=1024)
-def _cached_check(question_hash: str, ctx_hash: str, question: str, _ctx_repr: str) -> TopicCheckResult:
+def _cached_check(
+    question_hash: str, ctx_hash: str, question: str, _ctx_repr: str
+) -> TopicCheckResult:
     """LRU cache keyed by (question_hash, ctx_hash).
 
     The classifier is invoked through the global ``fiscal_topic_classifier``.
@@ -320,7 +323,7 @@ def _cached_check(question_hash: str, ctx_hash: str, question: str, _ctx_repr: s
     return fiscal_topic_classifier.check(question, context=ctx)
 
 
-def check_fiscal_topic(question: str, context: Optional[TopicContext] = None) -> TopicCheckResult:
+def check_fiscal_topic(question: str, context: TopicContext | None = None) -> TopicCheckResult:
     """
     Public entry point with LRU cache (1024 entries) keyed by question hash
     AND context hash. Different contexts produce different cache keys, so a
@@ -334,10 +337,13 @@ def check_fiscal_topic(question: str, context: Optional[TopicContext] = None) ->
     if context is None:
         ctx_repr = ""
     else:
-        ctx_repr = json.dumps({
-            "workspace_name": context.workspace_name,
-            "workspace_doc_count": context.workspace_doc_count,
-            "workspace_file_types": list(context.workspace_file_types or []),
-            "recent_user_turns": list(context.recent_user_turns or [])[:3],
-        }, ensure_ascii=False)
+        ctx_repr = json.dumps(
+            {
+                "workspace_name": context.workspace_name,
+                "workspace_doc_count": context.workspace_doc_count,
+                "workspace_file_types": list(context.workspace_file_types or []),
+                "recent_user_turns": list(context.recent_user_turns or [])[:3],
+            },
+            ensure_ascii=False,
+        )
     return _cached_check(qh, ch, question, ctx_repr)

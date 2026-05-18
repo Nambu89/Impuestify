@@ -14,15 +14,16 @@ Usage:
   python backend/scripts/parse_aeat_docs.py xls
   python backend/scripts/parse_aeat_docs.py verifactu
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
-import xml.etree.ElementTree as ET
 
 # ---------------------------------------------------------------------------
 # Project paths
@@ -43,6 +44,7 @@ XS = f"{{{XS_NS}}}"
 # Helper: strip namespace from a tag
 # ---------------------------------------------------------------------------
 
+
 def _local(tag: str) -> str:
     """Return local name without namespace."""
     return tag.split("}")[-1] if "}" in tag else tag
@@ -51,6 +53,7 @@ def _local(tag: str) -> str:
 # ---------------------------------------------------------------------------
 # A. XSD → JSON (Renta2024.xsd)
 # ---------------------------------------------------------------------------
+
 
 def parse_xsd(xsd_path: Path, output_path: Path) -> dict[str, Any]:
     """
@@ -80,9 +83,7 @@ def parse_xsd(xsd_path: Path, output_path: Path) -> dict[str, Any]:
     lines = text.splitlines()
 
     # --- Step 1: locate <!-- Página N --> comment markers by line number ---
-    page_comment_re = re.compile(
-        r"<!--\s*P[aá]gina\s+(\d+)", re.IGNORECASE
-    )
+    page_comment_re = re.compile(r"<!--\s*P[aá]gina\s+(\d+)", re.IGNORECASE)
     # Map: line_index → section_label (e.g. "Pagina01")
     section_markers: list[tuple[int, str]] = []
     for idx, line in enumerate(lines):
@@ -159,8 +160,16 @@ def parse_xsd(xsd_path: Path, output_path: Path) -> dict[str, Any]:
             if enums:
                 restrictions["enumeration"] = enums
 
-            for facet in ["maxLength", "minLength", "pattern", "minInclusive",
-                          "maxInclusive", "fractionDigits", "totalDigits", "whiteSpace"]:
+            for facet in [
+                "maxLength",
+                "minLength",
+                "pattern",
+                "minInclusive",
+                "maxInclusive",
+                "fractionDigits",
+                "totalDigits",
+                "whiteSpace",
+            ]:
                 el = restr.find(f"{clark}{facet}")
                 if el is not None:
                     restrictions[facet] = el.get("value", "")
@@ -195,7 +204,9 @@ def parse_xsd(xsd_path: Path, output_path: Path) -> dict[str, Any]:
         entry = type_catalog.get(bare, {})
         return entry.get("restrictions", {})
 
-    def _collect_fields(ct_elem: ET.Element, path_prefix: str, depth: int = 0) -> list[dict[str, Any]]:
+    def _collect_fields(
+        ct_elem: ET.Element, path_prefix: str, depth: int = 0
+    ) -> list[dict[str, Any]]:
         """
         Recursively collect element declarations from a complexType element.
 
@@ -299,10 +310,12 @@ def parse_xsd(xsd_path: Path, output_path: Path) -> dict[str, Any]:
         all_element_count += len(fields)
 
         # Store the type definition
-        sections[section]["types"].append({
-            "name": ct_name,
-            "field_count": len(fields),
-        })
+        sections[section]["types"].append(
+            {
+                "name": ct_name,
+                "field_count": len(fields),
+            }
+        )
         sections[section]["fields"].extend(fields)
 
     # Also handle top-level element declarations
@@ -325,12 +338,14 @@ def parse_xsd(xsd_path: Path, output_path: Path) -> dict[str, Any]:
             }
         # Add as a top-level field
         type_ref = el.get("type", "complexType")
-        sections[section]["fields"].append({
-            "name": el_name,
-            "path": f"/Declaracion/{el_name}",
-            "type": type_ref.split(":")[-1],
-            "is_root_element": True,
-        })
+        sections[section]["fields"].append(
+            {
+                "name": el_name,
+                "path": f"/Declaracion/{el_name}",
+                "type": type_ref.split(":")[-1],
+                "is_root_element": True,
+            }
+        )
         all_element_count += 1
 
     # Sort sections
@@ -346,8 +361,12 @@ def parse_xsd(xsd_path: Path, output_path: Path) -> dict[str, Any]:
             name: {
                 "base": info["restrictions"].get("base", "string"),
                 "max_length": info["restrictions"].get("maxLength"),
-                "pattern": info["restrictions"].get("pattern", "")[:80] if info["restrictions"].get("pattern") else None,
-                "enumeration": info["restrictions"].get("enumeration", [])[:20] if "enumeration" in info["restrictions"] else None,
+                "pattern": info["restrictions"].get("pattern", "")[:80]
+                if info["restrictions"].get("pattern")
+                else None,
+                "enumeration": info["restrictions"].get("enumeration", [])[:20]
+                if "enumeration" in info["restrictions"]
+                else None,
                 "min": info["restrictions"].get("minInclusive"),
                 "max": info["restrictions"].get("maxInclusive"),
                 "description": info["documentation"][:150] if info["documentation"] else None,
@@ -374,6 +393,7 @@ def parse_xsd(xsd_path: Path, output_path: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # B. XLS/XLSX → JSON (Modelo 130 / 131)
 # ---------------------------------------------------------------------------
+
 
 def _parse_xls_sheet(ws: Any, sheet_name: str) -> dict[str, Any]:
     """
@@ -510,6 +530,7 @@ def parse_xls(
     print(f"  Reading {xls_path} (xlrd) ...")
     try:
         import xlrd  # type: ignore
+
         wb = xlrd.open_workbook(str(xls_path))
         pages_130: dict[str, Any] = {}
         version = "unknown"
@@ -563,6 +584,7 @@ def parse_xls(
     print(f"  Reading {xlsx_path} (openpyxl) ...")
     try:
         import openpyxl  # type: ignore
+
         wb2 = openpyxl.load_workbook(str(xlsx_path), data_only=True)
         pages_131: dict[str, Any] = {}
         version2 = "unknown"
@@ -617,6 +639,7 @@ def parse_xls(
 # ---------------------------------------------------------------------------
 # C. VeriFactu XSD/WSDL → human-readable .txt
 # ---------------------------------------------------------------------------
+
 
 def _extract_xsd_as_text(xsd_path: Path, summary: str) -> str:
     """
@@ -960,6 +983,7 @@ def parse_verifactu(verifactu_dir: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Main CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Entry point with argparse subcommands."""

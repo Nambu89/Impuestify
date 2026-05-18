@@ -35,6 +35,7 @@ solo R013 este en el REGISTRY durante estos tests.
 
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T1B-013
 """
+
 from __future__ import annotations
 
 import importlib
@@ -49,7 +50,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
-
 
 # ---------------------------------------------------------------------------
 # Aislamiento del REGISTRY — carga solo R013
@@ -84,6 +84,7 @@ def _recargar_R013():
 # Helpers locales
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear el articulo canonico.
 
@@ -110,6 +111,7 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
 # Test 1 — Positivo: gastos de adquisicion omitidos por AEAT
 # ---------------------------------------------------------------------------
 
+
 def test_R013_positivo_gastos_adquisicion_omitidos(build_exp, build_brief, build_doc):
     """AEAT no incluye los gastos de adquisicion (notaria, registro, ITP) que
     el contribuyente habia declarado y que forman parte del valor de
@@ -134,34 +136,32 @@ def test_R013_positivo_gastos_adquisicion_omitidos(build_exp, build_brief, build
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R013"
 
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
     assert "gastos" in arg.cita_normativa_propuesta.lower(), (
-        f"La cita semantica debe mencionar 'gastos', got: "
-        f"{arg.cita_normativa_propuesta!r}"
+        f"La cita semantica debe mencionar 'gastos', got: " f"{arg.cita_normativa_propuesta!r}"
     )
 
-    assert arg.datos_disparo.get("tipo") == "adquisicion", (
-        f"datos_disparo.tipo inesperado: {arg.datos_disparo!r}"
-    )
-    assert arg.datos_disparo.get("gastos_omitidos") == 15000, (
-        f"datos_disparo.gastos_omitidos inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("tipo") == "adquisicion"
+    ), f"datos_disparo.tipo inesperado: {arg.datos_disparo!r}"
+    assert (
+        arg.datos_disparo.get("gastos_omitidos") == 15000
+    ), f"datos_disparo.gastos_omitidos inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — Positivo: comision inmobiliaria en la transmision omitida
 # ---------------------------------------------------------------------------
 
-def test_R013_positivo_comision_inmobiliaria_transmision(
-    build_exp, build_brief, build_doc
-):
+
+def test_R013_positivo_comision_inmobiliaria_transmision(build_exp, build_brief, build_doc):
     """El vendedor pago 5.000 EUR de comision inmobiliaria para vender el
     inmueble. AEAT admite 0 EUR. DGT V2625-20: la comision inmobiliaria es
     gasto inherente a la transmision y minora el valor de transmision."""
@@ -185,28 +185,27 @@ def test_R013_positivo_comision_inmobiliaria_transmision(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R013"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
 
-    assert arg.datos_disparo.get("tipo") == "transmision_comision_inmobiliaria", (
-        f"datos_disparo.tipo inesperado: {arg.datos_disparo!r}"
-    )
-    assert arg.datos_disparo.get("gastos_omitidos") == 5000, (
-        f"datos_disparo.gastos_omitidos inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("tipo") == "transmision_comision_inmobiliaria"
+    ), f"datos_disparo.tipo inesperado: {arg.datos_disparo!r}"
+    assert (
+        arg.datos_disparo.get("gastos_omitidos") == 5000
+    ), f"datos_disparo.gastos_omitidos inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 3 — Positivo: plusvalia municipal satisfecha no deducida
 # ---------------------------------------------------------------------------
 
-def test_R013_positivo_plusvalia_municipal_no_computada(
-    build_exp, build_brief, build_doc
-):
+
+def test_R013_positivo_plusvalia_municipal_no_computada(build_exp, build_brief, build_doc):
     """El transmitente pago plusvalia municipal (IIVTNU) por importe de 3.000
     EUR. AEAT no la ha tenido en cuenta al minorar el valor de transmision.
     Tributo inherente a la transmision satisfecho por el transmitente ->
@@ -231,28 +230,27 @@ def test_R013_positivo_plusvalia_municipal_no_computada(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R013"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
 
-    assert arg.datos_disparo.get("tipo") == "transmision_plusvalia_municipal", (
-        f"datos_disparo.tipo inesperado: {arg.datos_disparo!r}"
-    )
-    assert arg.datos_disparo.get("gastos_omitidos") == 3000, (
-        f"datos_disparo.gastos_omitidos inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("tipo") == "transmision_plusvalia_municipal"
+    ), f"datos_disparo.tipo inesperado: {arg.datos_disparo!r}"
+    assert (
+        arg.datos_disparo.get("gastos_omitidos") == 3000
+    ), f"datos_disparo.gastos_omitidos inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 4 — Negativo: todos los gastos incluidos correctamente
 # ---------------------------------------------------------------------------
 
-def test_R013_negativo_todos_los_gastos_incluidos(
-    build_exp, build_brief, build_doc
-):
+
+def test_R013_negativo_todos_los_gastos_incluidos(build_exp, build_brief, build_doc):
     """Cuando AEAT ha computado correctamente gastos de adquisicion, comision
     inmobiliaria y plusvalia municipal, la regla NO debe disparar."""
     doc = build_doc(
@@ -276,8 +274,7 @@ def test_R013_negativo_todos_los_gastos_incluidos(
     candidatos = evaluar(exp, brief)
 
     assert candidatos == [], (
-        f"R013 no deberia disparar cuando todos los gastos estan "
-        f"computados, got: {candidatos}"
+        f"R013 no deberia disparar cuando todos los gastos estan " f"computados, got: {candidatos}"
     )
 
 
@@ -285,9 +282,8 @@ def test_R013_negativo_todos_los_gastos_incluidos(
 # Test 5 — Negativo: no hay ganancia patrimonial por inmueble
 # ---------------------------------------------------------------------------
 
-def test_R013_negativo_sin_ganancia_patrimonial_inmueble(
-    build_exp, build_brief, build_doc
-):
+
+def test_R013_negativo_sin_ganancia_patrimonial_inmueble(build_exp, build_brief, build_doc):
     """Si la liquidacion solo regulariza rendimientos del trabajo y no hay
     ganancia patrimonial por transmision de inmueble, R013 no aplica."""
     doc = build_doc(
@@ -303,21 +299,20 @@ def test_R013_negativo_sin_ganancia_patrimonial_inmueble(
         docs=[doc],
     )
     brief = build_brief(
-        "AEAT me ha regularizado los rendimientos del trabajo, nada que ver "
-        "con inmuebles."
+        "AEAT me ha regularizado los rendimientos del trabajo, nada que ver " "con inmuebles."
     )
 
     candidatos = evaluar(exp, brief)
 
     assert candidatos == [], (
-        f"R013 no deberia disparar sin ganancia patrimonial por inmueble, "
-        f"got: {candidatos}"
+        f"R013 no deberia disparar sin ganancia patrimonial por inmueble, " f"got: {candidatos}"
     )
 
 
 # ---------------------------------------------------------------------------
 # Test 6 — Invariante anti-hardcode de citas
 # ---------------------------------------------------------------------------
+
 
 def test_R013_cita_no_es_hardcoded(build_exp, build_brief, build_doc):
     """Invariante #2 del plan: la cita normativa propuesta NO puede contener
@@ -354,6 +349,7 @@ def test_R013_cita_no_es_hardcoded(build_exp, build_brief, build_doc):
 # Test 7 — Smoke de registro: R013 aparece en el REGISTRY y rango 0-30
 # ---------------------------------------------------------------------------
 
+
 def test_R013_registrada_en_registry():
     """Tras cargar solo R013 el REGISTRY debe contener exactamente esa clave,
     y el len debe estar dentro del rango [0, 30] del smoke global."""
@@ -366,6 +362,4 @@ def test_R013_registrada_en_registry():
     assert "LIQUIDACION_FIRME_PLAZO_RECURSO" in info["fases"]
     assert "TEAR_INTERPUESTA" in info["fases"]
     assert "TEAR_AMPLIACION_POSIBLE" in info["fases"]
-    assert 0 <= len(REGISTRY) <= 30, (
-        f"REGISTRY fuera del rango [0, 30], got {len(REGISTRY)}"
-    )
+    assert 0 <= len(REGISTRY) <= 30, f"REGISTRY fuera del rango [0, 30], got {len(REGISTRY)}"

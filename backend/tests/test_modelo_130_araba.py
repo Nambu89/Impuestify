@@ -1,4 +1,5 @@
 """Tests for Modelo 130 Araba/Álava (Pago Fraccionado IRPF foral)."""
+
 import pytest
 
 from app.utils.calculators.modelo_130_araba import Modelo130ArabaCalculator
@@ -12,6 +13,7 @@ def calc():
 # ===========================================================================
 # Cálculo básico (5 % sobre rendimiento neto trimestral)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_basico(calc):
@@ -84,7 +86,7 @@ async def test_minoraciones_superan_cuota(calc):
     r = await calc.calculate(
         quarter=2,
         ingresos_trimestre=4000,
-        gastos_trimestre=2000,    # rn 2.000, cuota 100
+        gastos_trimestre=2000,  # rn 2.000, cuota 100
         retenciones_trimestre=200,
         pagos_anteriores=100,
     )
@@ -94,6 +96,7 @@ async def test_minoraciones_superan_cuota(calc):
 # ===========================================================================
 # Plazos
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_plazos_los_cuatro_trimestres(calc):
@@ -115,6 +118,7 @@ async def test_plazos_los_cuatro_trimestres(calc):
 # ===========================================================================
 # Inputs negativos se clipan a 0
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_ingresos_negativos_se_clipan(calc):
@@ -152,6 +156,7 @@ async def test_retenciones_negativas_se_clipan(calc):
 # Validaciones
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_quarter_invalido_raise(calc):
     with pytest.raises(ValueError, match="Quarter"):
@@ -167,6 +172,7 @@ async def test_quarter_cero_raise(calc):
 # ===========================================================================
 # Estructura
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_estructura_respuesta_completa(calc):

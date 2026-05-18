@@ -7,14 +7,7 @@
  * Replaces the old ThinkingIndicator + ToolExecutionStatus combo.
  */
 import React from 'react'
-import {
-    Brain,
-    Wrench,
-    CheckCircle2,
-    XCircle,
-    PenLine,
-    Loader2
-} from 'lucide-react'
+import { Brain, Wrench, CheckCircle2, XCircle, PenLine, Loader2 } from 'lucide-react'
 import { TimelineStep } from '../hooks/useStreamingChat'
 import './StreamingTimeline.css'
 

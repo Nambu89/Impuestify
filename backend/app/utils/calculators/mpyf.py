@@ -7,7 +7,8 @@ Calculates the personal and family minimum that reduces the tax liability.
 Each CCAA may have different amounts (loaded from tax_parameters with
 jurisdiction fallback to Estatal).
 """
-from typing import Any, Dict, List, Optional
+
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -25,7 +26,7 @@ class MPYFCalculator:
         year: int = 2024,
         edad_contribuyente: int = 35,
         num_descendientes: int = 0,
-        anios_nacimiento_desc: Optional[List[int]] = None,
+        anios_nacimiento_desc: list[int] | None = None,
         custodia_compartida: bool = False,
         num_ascendientes_65: int = 0,
         num_ascendientes_75: int = 0,
@@ -37,7 +38,7 @@ class MPYFCalculator:
         num_ascendientes_discapacidad_33: int = 0,
         num_ascendientes_discapacidad_65: int = 0,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate MPYF for both state and autonomous level.
 
@@ -61,20 +62,34 @@ class MPYFCalculator:
         aut_params = await self._repo.get_with_fallback("mpyf", year, jurisdiction)
 
         mpyf_estatal = self._compute(
-            est_params, edad_contribuyente, num_descendientes,
-            anios_nacimiento_desc, custodia_compartida,
-            num_ascendientes_65, num_ascendientes_75,
-            discapacidad_contribuyente, year,
-            num_descendientes_discapacidad_33, num_descendientes_discapacidad_65,
-            num_ascendientes_discapacidad_33, num_ascendientes_discapacidad_65,
+            est_params,
+            edad_contribuyente,
+            num_descendientes,
+            anios_nacimiento_desc,
+            custodia_compartida,
+            num_ascendientes_65,
+            num_ascendientes_75,
+            discapacidad_contribuyente,
+            year,
+            num_descendientes_discapacidad_33,
+            num_descendientes_discapacidad_65,
+            num_ascendientes_discapacidad_33,
+            num_ascendientes_discapacidad_65,
         )
         mpyf_autonomico = self._compute(
-            aut_params, edad_contribuyente, num_descendientes,
-            anios_nacimiento_desc, custodia_compartida,
-            num_ascendientes_65, num_ascendientes_75,
-            discapacidad_contribuyente, year,
-            num_descendientes_discapacidad_33, num_descendientes_discapacidad_65,
-            num_ascendientes_discapacidad_33, num_ascendientes_discapacidad_65,
+            aut_params,
+            edad_contribuyente,
+            num_descendientes,
+            anios_nacimiento_desc,
+            custodia_compartida,
+            num_ascendientes_65,
+            num_ascendientes_75,
+            discapacidad_contribuyente,
+            year,
+            num_descendientes_discapacidad_33,
+            num_descendientes_discapacidad_65,
+            num_ascendientes_discapacidad_33,
+            num_ascendientes_discapacidad_65,
         )
 
         return {
@@ -84,10 +99,10 @@ class MPYFCalculator:
 
     @staticmethod
     def _compute(
-        params: Dict[str, float],
+        params: dict[str, float],
         edad: int,
         n_desc: int,
-        anios: Optional[List[int]],
+        anios: list[int] | None,
         custodia: bool,
         asc65: int,
         asc75: int,
@@ -141,8 +156,7 @@ class MPYFCalculator:
         minimo_discapacidad_desc = 0
         minimo_discapacidad_desc += n_desc_disc_33 * params.get("discapacidad_33_65", 3000)
         minimo_discapacidad_desc += n_desc_disc_65 * (
-            params.get("discapacidad_65_plus", 9000)
-            + params.get("gastos_asistencia", 3000)
+            params.get("discapacidad_65_plus", 9000) + params.get("gastos_asistencia", 3000)
         )
         total += minimo_discapacidad_desc
 
@@ -151,8 +165,7 @@ class MPYFCalculator:
         minimo_discapacidad_asc = 0
         minimo_discapacidad_asc += n_asc_disc_33 * params.get("discapacidad_33_65", 3000)
         minimo_discapacidad_asc += n_asc_disc_65 * (
-            params.get("discapacidad_65_plus", 9000)
-            + params.get("gastos_asistencia", 3000)
+            params.get("discapacidad_65_plus", 9000) + params.get("gastos_asistencia", 3000)
         )
         total += minimo_discapacidad_asc
 

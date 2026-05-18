@@ -1,0 +1,58 @@
+# Fast hooks only — pytest/vitest are too slow for pre-commit.
+# They run in CI (see .github/workflows/ci.yml).
+# Run manually: pre-commit run --all-files
+# Bypass for emergency commits (NEVER push without fixing): git commit --no-verify
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+        exclude: '\.(svg|png|jpg|webp|ico|woff2?)$'
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+        exclude: '^frontend/public/'
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        # --exit-zero: tolerate pre-existing baseline violations (~265) so `pre-commit run --all-files`
+        # doesn't block. Per-commit ruff still autofixes safe issues. Real cleanup target: GitHub issue
+        # tracking ruff baseline → 0 (separate from frontend eslint #14).
+        args: [--fix, --exit-zero]
+        files: ^backend/.*\.py$
+      - id: ruff-format
+        files: ^backend/.*\.py$
+
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (frontend)
+        entry: bash -c 'cd frontend && npx eslint --fix --max-warnings 9999'
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx)$
+        pass_filenames: false
+
+      - id: prettier
+        name: prettier (frontend)
+        # pass_filenames: false because `cd frontend` invalidates repo-relative paths
+        # that pre-commit would pass. Let prettier rediscover via its own glob.
+        entry: bash -c 'cd frontend && npx prettier --write "src/**/*.{ts,tsx,css,json}"'
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx|css|json)$
+        pass_filenames: false
+
+# Skip slow checks in pre-commit (run in CI):
+# - mypy: Phase 2 only
+# - pytest: too slow (~2080 tests)
+# - vitest: medium speed, candidate for pre-push hook in Phase 2
+# - tsc --noEmit: medium speed, candidate for pre-push hook in Phase 2

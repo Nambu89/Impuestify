@@ -9,6 +9,7 @@ TEAC RG 5642/2022, TEAC RG 3226/2023) NO se hardcodea en la regla — el RAG
 verificador la resuelve contra el corpus. La regla solo emite una cita
 semantica generica.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -23,14 +24,15 @@ from app.services.defensia_rules.reglas_procedimentales.R005_integra_regularizac
     evaluar as evaluar_r005,
 )
 
-
 # ---------------------------------------------------------------------------
 # Positivos
 # ---------------------------------------------------------------------------
 
 
 def test_R005_dispara_cuando_deniega_beneficio_sin_ajustes_compensatorios(
-    build_exp, build_brief, build_doc,
+    build_exp,
+    build_brief,
+    build_doc,
 ):
     """AEAT niega exencion/deduccion sin aplicar coeficientes reductores ni
     ajustar pagos a cuenta derivados del mismo hecho -> dispara R005.
@@ -56,20 +58,22 @@ def test_R005_dispara_cuando_deniega_beneficio_sin_ajustes_compensatorios(
     assert resultado.regla_id == "R005"
     # Cita semantica — NUNCA hardcodear STS/TEAC/RG.
     cita = resultado.cita_normativa_propuesta.lower()
-    assert "integra regularizacion" in cita or "integra regularización" in cita, (
-        "La cita debe referirse al principio de integra regularizacion"
-    )
+    assert (
+        "integra regularizacion" in cita or "integra regularización" in cita
+    ), "La cita debe referirse al principio de integra regularizacion"
     # Prohibiciones explicitas de hardcoding (invariante #2 anti-alucinacion).
     prohibidos = ["sts 2024", "rg 5642", "rg 3226", "teac rg", "sentencia"]
     for prohibido in prohibidos:
-        assert prohibido not in cita, (
-            f"La cita no debe hardcodear referencias jurisprudenciales concretas: '{prohibido}'"
-        )
+        assert (
+            prohibido not in cita
+        ), f"La cita no debe hardcodear referencias jurisprudenciales concretas: '{prohibido}'"
     assert resultado.datos_disparo.get("riesgo_alucinacion") == "MEDIO"
 
 
 def test_R005_dispara_cuando_iva_soportado_rechazado_sin_permitir_rectificar(
-    build_exp, build_brief, build_doc,
+    build_exp,
+    build_brief,
+    build_doc,
 ):
     """En IVA: AEAT rechaza IVA soportado sin permitir rectificar el IVA
     repercutido correlativo -> dispara R005 (caso paradigmatico STS IVA).
@@ -103,7 +107,9 @@ def test_R005_dispara_cuando_iva_soportado_rechazado_sin_permitir_rectificar(
 
 
 def test_R005_no_dispara_cuando_regularizacion_es_completa(
-    build_exp, build_brief, build_doc,
+    build_exp,
+    build_brief,
+    build_doc,
 ):
     """Si AEAT ya aplico los ajustes compensatorios favorables, el principio
     de integra regularizacion esta cumplido -> NO dispara.
@@ -124,13 +130,15 @@ def test_R005_no_dispara_cuando_regularizacion_es_completa(
 
     resultado = evaluar_r005(exp, brief)
 
-    assert resultado is None, (
-        "R005 no debe disparar cuando la regularizacion ya incluye ajustes favorables"
-    )
+    assert (
+        resultado is None
+    ), "R005 no debe disparar cuando la regularizacion ya incluye ajustes favorables"
 
 
 def test_R005_no_dispara_sin_regularizacion_a_favor_posible(
-    build_exp, build_brief, build_doc,
+    build_exp,
+    build_brief,
+    build_doc,
 ):
     """Si no hay denegacion de beneficio ni IVA soportado rechazado, no hay
     hecho del que derivar ajustes compensatorios -> NO dispara.
@@ -153,6 +161,6 @@ def test_R005_no_dispara_sin_regularizacion_a_favor_posible(
 
     resultado = evaluar_r005(exp, brief)
 
-    assert resultado is None, (
-        "R005 no debe disparar cuando no hay base para la regularizacion a favor"
-    )
+    assert (
+        resultado is None
+    ), "R005 no debe disparar cuando no hay base para la regularizacion a favor"

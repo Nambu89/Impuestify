@@ -33,6 +33,7 @@ La regla NO hardcodea los literales "Art. 64" ni "Art. 75 LIRPF" — solo
 emite una cita semantica ("anualidades por alimentos", "escalas separadas
 de gravamen") que el verificador RAG traducira al texto canonico correcto.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -48,10 +49,10 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 
-
 # ---------------------------------------------------------------------------
 # Aislamiento R012 — re-import del modulo tras el reset del conftest
 # ---------------------------------------------------------------------------
+
 
 def _cargar_solo_R012() -> None:
     """Fuerza la re-carga del modulo R012 para que el decorador se ejecute.
@@ -61,9 +62,7 @@ def _cargar_solo_R012() -> None:
     hay que reimportar el modulo para que la regla vuelva a aparecer.
     """
     reset_registry()
-    module_name = (
-        "app.services.defensia_rules.reglas_irpf.R012_anualidades_alimentos"
-    )
+    module_name = "app.services.defensia_rules.reglas_irpf.R012_anualidades_alimentos"
     if module_name in sys.modules:
         importlib.reload(sys.modules[module_name])
     else:
@@ -84,6 +83,7 @@ def _registrar_r012(_aislar_registry):  # noqa: ARG001 — fuerza orden
 # ---------------------------------------------------------------------------
 # Helper local — la cita NUNCA puede hardcodear articulos canonicos
 # ---------------------------------------------------------------------------
+
 
 def _assert_cita_no_hardcoded(cita: ArgumentoCandidato | str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica.
@@ -116,9 +116,8 @@ def _assert_cita_no_hardcoded(cita: ArgumentoCandidato | str) -> None:
 # Test 1 — Positivo caso David: liquidacion + sentencia modificacion medidas
 # ---------------------------------------------------------------------------
 
-def test_R012_positivo_caso_david_sentencia_modifica_medidas(
-    build_exp, build_brief, build_doc
-):
+
+def test_R012_positivo_caso_david_sentencia_modifica_medidas(build_exp, build_brief, build_doc):
     """Caso David Oliva: liquidacion provisional sin aplicar la
     especialidad de anualidades por alimentos + sentencia judicial que
     modifica las medidas familiares e incluye anualidades → dispara.
@@ -166,12 +165,10 @@ def test_R012_positivo_caso_david_sentencia_modifica_medidas(
     _assert_cita_no_hardcoded(arg)
     texto_cita = arg.cita_normativa_propuesta.lower()
     assert "anualidades" in texto_cita, (
-        f"La cita semantica debe mencionar 'anualidades', got: "
-        f"{arg.cita_normativa_propuesta!r}"
+        f"La cita semantica debe mencionar 'anualidades', got: " f"{arg.cita_normativa_propuesta!r}"
     )
     assert "alimentos" in texto_cita, (
-        f"La cita semantica debe mencionar 'alimentos', got: "
-        f"{arg.cita_normativa_propuesta!r}"
+        f"La cita semantica debe mencionar 'alimentos', got: " f"{arg.cita_normativa_propuesta!r}"
     )
 
     # datos_disparo debe exponer informacion util para el writer
@@ -184,9 +181,8 @@ def test_R012_positivo_caso_david_sentencia_modifica_medidas(
 # Test 2 — Positivo: progenitor no custodio sin escalas separadas
 # ---------------------------------------------------------------------------
 
-def test_R012_positivo_progenitor_no_custodio(
-    build_exp, build_brief, build_doc
-):
+
+def test_R012_positivo_progenitor_no_custodio(build_exp, build_brief, build_doc):
     """Si el expediente contiene una sentencia con anualidades por
     alimentos y la liquidacion marca al contribuyente como progenitor no
     custodio sin aplicar escalas separadas, dispara.
@@ -215,8 +211,7 @@ def test_R012_positivo_progenitor_no_custodio(
         docs=[sentencia, liquidacion],
     )
     brief = build_brief(
-        "Soy el progenitor no custodio y pago anualidades por alimentos "
-        "a mis hijos"
+        "Soy el progenitor no custodio y pago anualidades por alimentos " "a mis hijos"
     )
 
     candidatos = evaluar(exp, brief)
@@ -236,9 +231,8 @@ def test_R012_positivo_progenitor_no_custodio(
 # Test 3 — Negativo: sentencia sin anualidades por alimentos
 # ---------------------------------------------------------------------------
 
-def test_R012_negativo_sentencia_sin_anualidades(
-    build_exp, build_brief, build_doc
-):
+
+def test_R012_negativo_sentencia_sin_anualidades(build_exp, build_brief, build_doc):
     """Si la sentencia judicial NO incluye anualidades por alimentos (y
     tampoco modifica medidas familiares), la regla NO dispara aunque la
     liquidacion no aplique escalas separadas.
@@ -280,9 +274,8 @@ def test_R012_negativo_sentencia_sin_anualidades(
 # Test 4 — Negativo: escalas ya aplicadas correctamente
 # ---------------------------------------------------------------------------
 
-def test_R012_negativo_escalas_ya_aplicadas(
-    build_exp, build_brief, build_doc
-):
+
+def test_R012_negativo_escalas_ya_aplicadas(build_exp, build_brief, build_doc):
     """Si la liquidacion provisional ya aplica las escalas separadas de
     gravamen, la regla NO dispara — la especialidad ya esta reconocida
     por AEAT y no hay ajuste defensivo que reclamar.
@@ -316,8 +309,7 @@ def test_R012_negativo_escalas_ya_aplicadas(
 
     r012 = [c for c in candidatos if c.regla_id == "R012"]
     assert r012 == [], (
-        f"R012 NO debe disparar si AEAT ya aplica las escalas separadas, "
-        f"got {r012}"
+        f"R012 NO debe disparar si AEAT ya aplica las escalas separadas, " f"got {r012}"
     )
 
 
@@ -325,9 +317,8 @@ def test_R012_negativo_escalas_ya_aplicadas(
 # Test 5 — Anti-hardcode: la cita nunca referencia literales canonicos
 # ---------------------------------------------------------------------------
 
-def test_R012_cita_no_hardcodea_articulos(
-    build_exp, build_brief, build_doc
-):
+
+def test_R012_cita_no_hardcodea_articulos(build_exp, build_brief, build_doc):
     """Invariante #2 explicito: la cita semantica NUNCA puede contener
     los literales "Art. 64" ni "75 LIRPF" — esas referencias canonicas
     las resuelve el RAG verificador contra el corpus normativo.
@@ -380,20 +371,20 @@ def test_R012_cita_no_hardcodea_articulos(
 # Sanity check: la regla esta registrada con la metadata correcta
 # ---------------------------------------------------------------------------
 
+
 def test_R012_registrada_en_registry():
     """Tras importar el modulo, R012 debe estar en el REGISTRY con los
     tributos (solo IRPF) y las fases declaradas en el brief.
     """
     assert "R012" in REGISTRY, (
-        f"R012 no encontrada en REGISTRY. "
-        f"Keys actuales: {list(REGISTRY.keys())}"
+        f"R012 no encontrada en REGISTRY. " f"Keys actuales: {list(REGISTRY.keys())}"
     )
     info = REGISTRY["R012"]
 
     # R012 es una regla sustantiva IRPF — solo aplica a IRPF.
-    assert info["tributos"] == {"IRPF"}, (
-        f"R012 deberia aplicar solo a IRPF, tributos={info['tributos']}"
-    )
+    assert info["tributos"] == {
+        "IRPF"
+    }, f"R012 deberia aplicar solo a IRPF, tributos={info['tributos']}"
 
     # Fases exigidas por el brief de la tarea.
     fases_esperadas = {
@@ -405,6 +396,6 @@ def test_R012_registrada_en_registry():
         "TEAR_INTERPUESTA",
         "TEAR_AMPLIACION_POSIBLE",
     }
-    assert fases_esperadas.issubset(info["fases"]), (
-        f"R012 debe aplicar a {fases_esperadas}, fases={info['fases']}"
-    )
+    assert fases_esperadas.issubset(
+        info["fases"]
+    ), f"R012 debe aplicar a {fases_esperadas}, fases={info['fases']}"

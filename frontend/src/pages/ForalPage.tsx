@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
 import {
-    ArrowRight, CheckCircle, X, Map, Calculator,
-    FileText, Shield, Zap, ChevronLeft
+    ArrowRight,
+    CheckCircle,
+    X,
+    Map,
+    Calculator,
+    FileText,
+    Shield,
+    Zap,
+    ChevronLeft,
 } from 'lucide-react'
 import TerritoryCard from '../components/TerritoryCard'
 import FadeContent from '../components/reactbits/FadeContent'
@@ -76,9 +83,11 @@ const IRPF_TRAMOS = [
 export default function ForalPage() {
     useSEO({
         title: 'IRPF en País Vasco y Navarra — Impuestify',
-        description: 'Cómo tributar en territorios forales: tramos y deducciones de Araba, Bizkaia, Gipuzkoa y Navarra, con los modelos de cada hacienda foral.',
+        description:
+            'Cómo tributar en territorios forales: tramos y deducciones de Araba, Bizkaia, Gipuzkoa y Navarra, con los modelos de cada hacienda foral.',
         canonical: '/territorios-forales',
-        keywords: 'IRPF foral, País Vasco impuestos, Navarra IRPF, Bizkaia declaración renta, Gipuzkoa fiscal, Araba hacienda foral',
+        keywords:
+            'IRPF foral, País Vasco impuestos, Navarra IRPF, Bizkaia declaración renta, Gipuzkoa fiscal, Araba hacienda foral',
         schema: [
             {
                 '@context': 'https://schema.org',
@@ -122,8 +131,18 @@ export default function ForalPage() {
                 '@context': 'https://schema.org',
                 '@type': 'BreadcrumbList',
                 itemListElement: [
-                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
-                    { '@type': 'ListItem', position: 2, name: 'Territorios Forales', item: 'https://impuestify.com/territorios-forales' },
+                    {
+                        '@type': 'ListItem',
+                        position: 1,
+                        name: 'Inicio',
+                        item: 'https://impuestify.com',
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: 'Territorios Forales',
+                        item: 'https://impuestify.com/territorios-forales',
+                    },
                 ],
             },
         ],
@@ -162,11 +181,11 @@ export default function ForalPage() {
                             </GradientText>
                         </h1>
                         <p className="foral-hero__subtitle">
-                            País Vasco y Navarra tienen un sistema fiscal propio,
-                            completamente distinto al régimen común. Impuestify es la{' '}
-                            <strong>única herramienta digital con IA</strong> que
-                            integra las normativas forales de Araba, Bizkaia, Gipuzkoa
-                            y Navarra con sus deducciones y tramos específicos.
+                            País Vasco y Navarra tienen un sistema fiscal propio, completamente
+                            distinto al régimen común. Impuestify es la{' '}
+                            <strong>única herramienta digital con IA</strong> que integra las
+                            normativas forales de Araba, Bizkaia, Gipuzkoa y Navarra con sus
+                            deducciones y tramos específicos.
                         </p>
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
@@ -197,13 +216,10 @@ export default function ForalPage() {
             <section className="foral-why">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">
-                            ¿Por qué el régimen foral es diferente?
-                        </h2>
+                        <h2 className="section-title">¿Por qué el régimen foral es diferente?</h2>
                         <p className="section-subtitle">
-                            Los territorios forales no aplican la LIRPF estatal.
-                            Tienen su propia normativa, sus propias haciendas y sus
-                            propias deducciones.
+                            Los territorios forales no aplican la LIRPF estatal. Tienen su propia
+                            normativa, sus propias haciendas y sus propias deducciones.
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={500}>
@@ -217,9 +233,9 @@ export default function ForalPage() {
                                 </div>
                                 <h3>Normativa propia</h3>
                                 <p>
-                                    Normas forales propias (no la LIRPF). Araba, Bizkaia
-                                    y Gipuzkoa tienen normas distintas entre sí. Navarra
-                                    tiene su propio Decreto Foral Legislativo.
+                                    Normas forales propias (no la LIRPF). Araba, Bizkaia y Gipuzkoa
+                                    tienen normas distintas entre sí. Navarra tiene su propio
+                                    Decreto Foral Legislativo.
                                 </p>
                             </SpotlightCard>
                             <SpotlightCard
@@ -231,9 +247,9 @@ export default function ForalPage() {
                                 </div>
                                 <h3>Tramos y tipos distintos</h3>
                                 <p>
-                                    Los tramos del IRPF foral no coinciden con los del
-                                    régimen común. Tipos marginales, mínimos personales
-                                    y reducciones con valores diferentes.
+                                    Los tramos del IRPF foral no coinciden con los del régimen
+                                    común. Tipos marginales, mínimos personales y reducciones con
+                                    valores diferentes.
                                 </p>
                             </SpotlightCard>
                             <SpotlightCard
@@ -245,9 +261,8 @@ export default function ForalPage() {
                                 </div>
                                 <h3>Haciendas forales propias</h3>
                                 <p>
-                                    La gestión, liquidación y recaudación la realizan
-                                    las Diputaciones Forales y Hacienda Foral de
-                                    Navarra. No la AEAT.
+                                    La gestión, liquidación y recaudación la realizan las
+                                    Diputaciones Forales y Hacienda Foral de Navarra. No la AEAT.
                                 </p>
                             </SpotlightCard>
                         </div>
@@ -278,12 +293,10 @@ export default function ForalPage() {
             <section className="foral-tramos">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">
-                            Comparativa de tramos IRPF
-                        </h2>
+                        <h2 className="section-title">Comparativa de tramos IRPF</h2>
                         <p className="section-subtitle">
-                            Régimen común vs. País Vasco (valores orientativos, consultar
-                            normativa vigente de cada territorio)
+                            Régimen común vs. País Vasco (valores orientativos, consultar normativa
+                            vigente de cada territorio)
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -331,9 +344,7 @@ export default function ForalPage() {
             <section className="foral-comparison">
                 <div className="container">
                     <FadeContent delay={0} duration={500}>
-                        <h2 className="section-title">
-                            ¿Qué herramientas cubren tu territorio?
-                        </h2>
+                        <h2 className="section-title">¿Qué herramientas cubren tu territorio?</h2>
                         <p className="section-subtitle">
                             TaxDown, Taxfix y otros asistentes NO cubren los territorios forales
                         </p>
@@ -353,26 +364,44 @@ export default function ForalPage() {
                                 <tbody>
                                     <tr className="foral-comparison__row--highlight">
                                         <td>
-                                            <Zap size={16} className="foral-comparison__icon-brand" />
+                                            <Zap
+                                                size={16}
+                                                className="foral-comparison__icon-brand"
+                                            />
                                             <strong>Impuestify</strong>
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="foral-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="foral-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="foral-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="foral-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="foral-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="foral-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="foral-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="foral-comparison__icon-yes"
+                                            />
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>TaxDown</td>
                                         <td>
-                                            <CheckCircle size={18} className="foral-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="foral-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
                                             <X size={18} className="foral-comparison__icon-no" />
@@ -387,7 +416,10 @@ export default function ForalPage() {
                                     <tr>
                                         <td>Taxfix</td>
                                         <td>
-                                            <CheckCircle size={18} className="foral-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="foral-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
                                             <X size={18} className="foral-comparison__icon-no" />
@@ -402,7 +434,9 @@ export default function ForalPage() {
                                     <tr>
                                         <td>ChatGPT / IA genérica</td>
                                         <td>
-                                            <span className="foral-comparison__partial">Parcial</span>
+                                            <span className="foral-comparison__partial">
+                                                Parcial
+                                            </span>
                                         </td>
                                         <td>
                                             <X size={18} className="foral-comparison__icon-no" />
@@ -417,13 +451,22 @@ export default function ForalPage() {
                                     <tr>
                                         <td>Asesor tradicional</td>
                                         <td>
-                                            <CheckCircle size={18} className="foral-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="foral-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="foral-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="foral-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
-                                            <CheckCircle size={18} className="foral-comparison__icon-yes" />
+                                            <CheckCircle
+                                                size={18}
+                                                className="foral-comparison__icon-yes"
+                                            />
                                         </td>
                                         <td>
                                             <X size={18} className="foral-comparison__icon-no" />
@@ -446,47 +489,43 @@ export default function ForalPage() {
                         <div className="foral-faq__grid">
                             <div className="foral-faq__item">
                                 <h3>
-                                    ¿Los residentes en el País Vasco hacen la declaración
-                                    en la AEAT?
+                                    ¿Los residentes en el País Vasco hacen la declaración en la
+                                    AEAT?
                                 </h3>
                                 <p>
-                                    No. Los contribuyentes del País Vasco presentan su
-                                    declaración ante la Diputación Foral correspondiente
-                                    (Araba, Bizkaia o Gipuzkoa), no ante la AEAT. La
-                                    normativa aplicable es la foral, no la LIRPF estatal.
+                                    No. Los contribuyentes del País Vasco presentan su declaración
+                                    ante la Diputación Foral correspondiente (Araba, Bizkaia o
+                                    Gipuzkoa), no ante la AEAT. La normativa aplicable es la foral,
+                                    no la LIRPF estatal.
                                 </p>
                             </div>
                             <div className="foral-faq__item">
                                 <h3>
-                                    ¿Puedo aplicar las deducciones estatales si soy
-                                    residente foral?
+                                    ¿Puedo aplicar las deducciones estatales si soy residente foral?
                                 </h3>
                                 <p>
-                                    No directamente. Los territorios forales tienen su
-                                    propio catálogo de deducciones. Algunas son similares
-                                    a las estatales, pero otras son exclusivas del régimen
-                                    foral y no existen en el régimen común.
+                                    No directamente. Los territorios forales tienen su propio
+                                    catálogo de deducciones. Algunas son similares a las estatales,
+                                    pero otras son exclusivas del régimen foral y no existen en el
+                                    régimen común.
                                 </p>
                             </div>
                             <div className="foral-faq__item">
                                 <h3>¿Qué es el Concierto Económico?</h3>
                                 <p>
-                                    El Concierto Económico es el acuerdo que permite al
-                                    País Vasco recaudar y gestionar sus propios impuestos.
-                                    En Navarra existe el Convenio Económico. Ambos son
-                                    derechos históricos reconocidos por la Constitución.
+                                    El Concierto Económico es el acuerdo que permite al País Vasco
+                                    recaudar y gestionar sus propios impuestos. En Navarra existe el
+                                    Convenio Económico. Ambos son derechos históricos reconocidos
+                                    por la Constitución.
                                 </p>
                             </div>
                             <div className="foral-faq__item">
-                                <h3>
-                                    ¿Cómo me ayuda Impuestify con el IRPF foral?
-                                </h3>
+                                <h3>¿Cómo me ayuda Impuestify con el IRPF foral?</h3>
                                 <p>
-                                    Nuestro motor de IA tiene acceso a 37+ documentos de
-                                    las diputaciones forales, incluyendo normas forales,
-                                    instrucciones oficiales y modelos de declaración.
-                                    Puede calcular tu IRPF aplicando las deducciones y
-                                    tramos correctos de tu territorio.
+                                    Nuestro motor de IA tiene acceso a 37+ documentos de las
+                                    diputaciones forales, incluyendo normas forales, instrucciones
+                                    oficiales y modelos de declaración. Puede calcular tu IRPF
+                                    aplicando las deducciones y tramos correctos de tu territorio.
                                 </p>
                             </div>
                         </div>
@@ -504,16 +543,14 @@ export default function ForalPage() {
                             </div>
                             <h2>Calcula tu IRPF foral ahora</h2>
                             <p>
-                                La única IA fiscal que entiende tu normativa foral.
-                                Resultados personalizados con citas a la norma oficial.
+                                La única IA fiscal que entiende tu normativa foral. Resultados
+                                personalizados con citas a la norma oficial.
                             </p>
                             <Link to="/register" className="btn btn-primary btn-lg">
                                 Empieza ahora
                                 <ArrowRight size={20} />
                             </Link>
-                            <p className="foral-cta__note">
-                                Plan desde 5 €/mes. Sin permanencia.
-                            </p>
+                            <p className="foral-cta__note">Plan desde 5 €/mes. Sin permanencia.</p>
                         </div>
                     </FadeContent>
                 </div>

@@ -1,4 +1,5 @@
 """Tests for Modelo 130 Bizkaia (Pago Fraccionado IRPF foral)."""
+
 import pytest
 
 from app.utils.calculators.modelo_130_bizkaia import Modelo130BizkaiaCalculator
@@ -12,6 +13,7 @@ def calc():
 # ===========================================================================
 # Régimen general (≥ 3.er año, rend. neto penúltimo > 0)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_general_basico(calc):
@@ -51,8 +53,8 @@ async def test_general_minoracion_supera_cuota_se_clipa_a_cero(calc):
         quarter=3,
         anos_actividad=10,
         regimen="general",
-        rend_neto_penultimo=10000,        # cuota = 500
-        retenciones_penultimo=10000,      # 25% = 2.500 > 500
+        rend_neto_penultimo=10000,  # cuota = 500
+        retenciones_penultimo=10000,  # 25% = 2.500 > 500
     )
     assert r["resultado"] == 0
 
@@ -73,6 +75,7 @@ async def test_general_rend_negativo_clipa_base_a_cero(calc):
 # ===========================================================================
 # Régimen excepcional (rend. neto penúltimo ≤ 0 → usa volumen ventas)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_excepcional_basico(calc):
@@ -104,6 +107,7 @@ async def test_excepcional_con_retenciones(calc):
 # ===========================================================================
 # Primeros 2 años de actividad (anos_actividad < 3 → reglas Estatal)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_primeros_anos_basico(calc):
@@ -164,6 +168,7 @@ async def test_primeros_anos_year_3_pasa_a_general(calc):
 # Plazos (verificar los 4 trimestres)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_plazos_los_cuatro_trimestres(calc):
     plazos_esperados = {
@@ -185,6 +190,7 @@ async def test_plazos_los_cuatro_trimestres(calc):
 # ===========================================================================
 # Edge cases / validaciones
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_quarter_invalido_raise(calc):
@@ -280,6 +286,7 @@ async def test_redondeo_dos_decimales(calc):
 # ===========================================================================
 # Smoke test PDF render foral
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_pdf_render_foral_bizkaia_smoke(calc):

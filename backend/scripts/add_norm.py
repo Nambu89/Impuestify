@@ -28,6 +28,7 @@ Usage:
 Por seguridad NO sobrescribe entradas existentes. Si la sigla ya existe
 en norms.yaml → exit. Modifica el YAML manualmente para reemplazar.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -64,7 +65,7 @@ async def verify_boe(boe_id: str) -> dict:
     if "<code>200</code>" not in body:
         raise RuntimeError(f"{boe_id} no existe en BOE (status no 200 en body)")
 
-    def _x(tag: str) -> Optional[str]:
+    def _x(tag: str) -> str | None:
         m = re.search(rf"<{tag}>([^<]+)</{tag}>", body)
         return m.group(1).strip() if m else None
 
@@ -117,7 +118,7 @@ async def verify_url(url: str) -> dict:
     return {"url_html": url}
 
 
-def _parse_yyyymmdd(text: Optional[str]) -> Optional[str]:
+def _parse_yyyymmdd(text: str | None) -> str | None:
     if not text:
         return None
     try:
@@ -126,7 +127,7 @@ def _parse_yyyymmdd(text: Optional[str]) -> Optional[str]:
         return None
 
 
-def _iso_to_date(text: Optional[str]) -> Optional[str]:
+def _iso_to_date(text: str | None) -> str | None:
     if not text:
         return None
     try:
@@ -163,7 +164,7 @@ def _format_entry(entry: dict) -> str:
 
 def _q(s: str) -> str:
     """YAML-safe string quoting."""
-    if any(ch in s for ch in ":#\"\\\n"):
+    if any(ch in s for ch in ':#"\\\n'):
         return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
     return f'"{s}"'
 
@@ -186,8 +187,10 @@ def _sigla_exists(sigla: str) -> bool:
 
 async def main_async(args) -> int:
     if _sigla_exists(args.sigla):
-        print(f"ERROR: sigla '{args.sigla}' ya existe en norms.yaml. Edita manualmente o usa otra.",
-              file=sys.stderr)
+        print(
+            f"ERROR: sigla '{args.sigla}' ya existe en norms.yaml. Edita manualmente o usa otra.",
+            file=sys.stderr,
+        )
         return 2
 
     if args.boe:
@@ -213,8 +216,10 @@ async def main_async(args) -> int:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 3
         if not args.full_id or not args.name:
-            print("ERROR: --full-id y --name son obligatorios para BOPV (la API no devuelve full_id).",
-                  file=sys.stderr)
+            print(
+                "ERROR: --full-id y --name son obligatorios para BOPV (la API no devuelve full_id).",
+                file=sys.stderr,
+            )
             return 4
         entry = {
             "sigla": args.sigla,
@@ -234,8 +239,10 @@ async def main_async(args) -> int:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 3
         if not all([args.full_id, args.name, args.vigent_from, args.norm_type]):
-            print("ERROR: --full-id, --name, --vigent-from y --norm-type obligatorios para --url",
-                  file=sys.stderr)
+            print(
+                "ERROR: --full-id, --name, --vigent-from y --norm-type obligatorios para --url",
+                file=sys.stderr,
+            )
             return 4
         entry = {
             "sigla": args.sigla,
@@ -268,17 +275,25 @@ async def main_async(args) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--sigla", required=True, help="Identificador interno único en MAYÚSCULAS")
     src = parser.add_mutually_exclusive_group(required=True)
     src.add_argument("--boe", help="BOE-A-NNNN-NNNN")
     src.add_argument("--bopv", help="ID BOPV formato YYYY/MM/numOrder")
     src.add_argument("--url", help="URL completa (boletines sin API)")
     parser.add_argument("--full-id", help='"Tipo Numero/Año" — opcional para --boe (se infiere)')
-    parser.add_argument("--name", help="Nombre completo — opcional para --boe (se infiere del titulo)")
-    parser.add_argument("--norm-type", help="ley | rd | rd_legislativo | norma_foral | decreto_foral")
+    parser.add_argument(
+        "--name", help="Nombre completo — opcional para --boe (se infiere del titulo)"
+    )
+    parser.add_argument(
+        "--norm-type", help="ley | rd | rd_legislativo | norma_foral | decreto_foral"
+    )
     parser.add_argument("--vigent-from", help="YYYY-MM-DD — opcional para --boe (se infiere)")
-    parser.add_argument("--aliases", nargs="*", help="Alias adicionales por los que el LLM puede citarla")
+    parser.add_argument(
+        "--aliases", nargs="*", help="Alias adicionales por los que el LLM puede citarla"
+    )
     parser.add_argument("--yes", action="store_true", help="No pedir confirmación")
     args = parser.parse_args()
     return asyncio.run(main_async(args))

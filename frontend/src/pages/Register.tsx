@@ -1,10 +1,29 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FileText, Mail, Lock, User, Eye, EyeOff, Loader2, Calculator, Map, AlertCircle, CheckCircle, MapPin } from 'lucide-react'
+import {
+    FileText,
+    Mail,
+    Lock,
+    User,
+    Eye,
+    EyeOff,
+    Loader2,
+    Calculator,
+    Map,
+    AlertCircle,
+    CheckCircle,
+    MapPin,
+} from 'lucide-react'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../hooks/useAuth'
 import TurnstileWidget from '../components/TurnstileWidget'
-import { CCAA_OPTIONS_WITH_PLACEHOLDER, FORAL_CCAA, getCcaaLabel, isForal as isForalFn, isCeutaMelilla as isCeutaMelillaFn } from '../constants/ccaa'
+import {
+    CCAA_OPTIONS_WITH_PLACEHOLDER,
+    FORAL_CCAA,
+    getCcaaLabel,
+    isForal as isForalFn,
+    isCeutaMelilla as isCeutaMelillaFn,
+} from '../constants/ccaa'
 import './Auth.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -12,7 +31,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 const CCAA_OPTIONS = CCAA_OPTIONS_WITH_PLACEHOLDER
 
 const FORAL_NAMES: Record<string, string> = Object.fromEntries(
-    FORAL_CCAA.map(id => [id, getCcaaLabel(id)])
+    FORAL_CCAA.map((id) => [id, getCcaaLabel(id)]),
 )
 
 export default function Register() {
@@ -88,7 +107,8 @@ export default function Register() {
                 <h1 className="auth-brand__title">Tu asesor fiscal con IA</h1>
 
                 <p className="auth-brand__subtitle">
-                    El único asistente que cubre los 21 territorios de España con IA y fuentes oficiales.
+                    El único asistente que cubre los 21 territorios de España con IA y fuentes
+                    oficiales.
                 </p>
 
                 <div className="auth-brand__pills">
@@ -140,7 +160,9 @@ export default function Register() {
                                             navigate('/chat')
                                         } catch (err: any) {
                                             const detail = err?.response?.data?.detail
-                                            setError(detail || 'Error con Google. Inténtalo de nuevo.')
+                                            setError(
+                                                detail || 'Error con Google. Inténtalo de nuevo.',
+                                            )
                                         } finally {
                                             setIsLoading(false)
                                         }
@@ -152,7 +174,9 @@ export default function Register() {
                                     locale="es"
                                 />
                             </div>
-                            <div className="auth-divider"><span>o</span></div>
+                            <div className="auth-divider">
+                                <span>o</span>
+                            </div>
                         </>
                     )}
 
@@ -176,7 +200,10 @@ export default function Register() {
                         </div>
 
                         <div className="auth-input-group">
-                            <label htmlFor="ccaa">Comunidad Autónoma de residencia <span className="auth-required">*</span></label>
+                            <label htmlFor="ccaa">
+                                Comunidad Autónoma de residencia{' '}
+                                <span className="auth-required">*</span>
+                            </label>
                             <div className="auth-input-wrapper">
                                 <span className="auth-input-icon">
                                     <MapPin size={18} />
@@ -188,8 +215,10 @@ export default function Register() {
                                     onChange={(e) => setCcaa(e.target.value)}
                                     required
                                 >
-                                    {CCAA_OPTIONS.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    {CCAA_OPTIONS.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -250,7 +279,9 @@ export default function Register() {
                                     type="button"
                                     className="auth-input-toggle"
                                     onClick={() => setShowPassword((v) => !v)}
-                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                    aria-label={
+                                        showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                                    }
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -277,7 +308,11 @@ export default function Register() {
                                     type="button"
                                     className="auth-input-toggle"
                                     onClick={() => setShowConfirmPassword((v) => !v)}
-                                    aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                    aria-label={
+                                        showConfirmPassword
+                                            ? 'Ocultar contraseña'
+                                            : 'Mostrar contraseña'
+                                    }
                                 >
                                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -290,11 +325,7 @@ export default function Register() {
                             onError={() => setTurnstileToken('')}
                         />
 
-                        <button
-                            type="submit"
-                            className="auth-submit-btn"
-                            disabled={isLoading}
-                        >
+                        <button type="submit" className="auth-submit-btn" disabled={isLoading}>
                             {isLoading ? (
                                 <>
                                     <Loader2 size={18} className="animate-spin" />
@@ -310,15 +341,12 @@ export default function Register() {
                     </form>
 
                     <p className="auth-switch-link">
-                        ¿Ya tienes cuenta?{' '}
-                        <Link to="/login">Iniciar Sesión</Link>
+                        ¿Ya tienes cuenta? <Link to="/login">Iniciar Sesión</Link>
                     </p>
 
                     <p className="auth-legal">
-                        Al registrarte aceptas los{' '}
-                        <Link to="/terminos">Términos de Servicio</Link>
-                        {' '}y la{' '}
-                        <Link to="/privacidad">Política de Privacidad</Link>
+                        Al registrarte aceptas los <Link to="/terminos">Términos de Servicio</Link>{' '}
+                        y la <Link to="/privacidad">Política de Privacidad</Link>
                     </p>
                 </div>
             </div>

@@ -1,16 +1,19 @@
 """
 Test FTS5 search for tarifa plana content.
 """
+
 import asyncio
 import os
 import sys
-import pytest
 from pathlib import Path
+
+import pytest
 
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from dotenv import load_dotenv
+
 load_dotenv(backend_dir.parent / ".env")
 
 from app.database.turso_client import TursoClient
@@ -18,7 +21,7 @@ from app.database.turso_client import TursoClient
 
 async def _run_fts_search():
     """Internal helper: run FTS5 search against real Turso DB."""
-    db = TursoClient(os.getenv('TURSO_DATABASE_URL'), os.getenv('TURSO_AUTH_TOKEN'))
+    db = TursoClient(os.getenv("TURSO_DATABASE_URL"), os.getenv("TURSO_AUTH_TOKEN"))
     await db.connect()
 
     print("=" * 60)
@@ -68,30 +71,36 @@ async def _run_fts_search():
     if not result.rows:
         print("\nDocumento NO encontrado en tabla documents")
     else:
-        print(f"\nDocumento encontrado:")
+        print("\nDocumento encontrado:")
         for row in result.rows:
-            doc_id = row['id']
+            doc_id = row["id"]
             print(f"   ID: {doc_id}")
             print(f"   Filename: {row['filename']}")
             print(f"   Type: {row['document_type']}")
 
             # Check chunks
-            chunk_result = await db.execute("""
+            chunk_result = await db.execute(
+                """
                 SELECT COUNT(*) as count
                 FROM document_chunks
                 WHERE document_id = ?
-            """, [doc_id])
-            chunk_count = chunk_result.rows[0]['count']
+            """,
+                [doc_id],
+            )
+            chunk_count = chunk_result.rows[0]["count"]
             print(f"   Chunks: {chunk_count}")
 
             # Check if chunks are in FTS
-            fts_result = await db.execute("""
+            fts_result = await db.execute(
+                """
                 SELECT COUNT(*) as count
                 FROM document_chunks_fts fts
                 JOIN document_chunks dc ON fts.chunk_id = dc.id
                 WHERE dc.document_id = ?
-            """, [doc_id])
-            fts_count = fts_result.rows[0]['count']
+            """,
+                [doc_id],
+            )
+            fts_count = fts_result.rows[0]["count"]
             print(f"   Chunks en FTS5: {fts_count}")
 
     await db.disconnect()
@@ -101,7 +110,7 @@ async def _run_fts_search():
 @pytest.mark.asyncio
 @pytest.mark.skipif(
     not os.environ.get("TURSO_DATABASE_URL"),
-    reason="Requires TURSO_DATABASE_URL (integration test)"
+    reason="Requires TURSO_DATABASE_URL (integration test)",
 )
 async def test_fts_tarifa_plana():
     """Integration test: FTS5 search for tarifa plana (needs Turso credentials)."""

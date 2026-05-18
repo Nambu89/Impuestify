@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT.parent / ".env")
 except ImportError:
     pass
@@ -51,14 +52,19 @@ async def main() -> int:
 
     logger.info(
         "RAG metrics: faithfulness=%.3f answer=%.3f relevance=%.3f quality=%.3f",
-        faithfulness, answer_correctness, relevance, quality,
+        faithfulness,
+        answer_correctness,
+        relevance,
+        quality,
     )
 
     breaches = []
     if faithfulness < FAITHFULNESS_THRESHOLD:
         breaches.append(f"faithfulness {faithfulness:.3f} < {FAITHFULNESS_THRESHOLD}")
     if answer_correctness < ANSWER_CORRECTNESS_THRESHOLD:
-        breaches.append(f"answer_correctness {answer_correctness:.3f} < {ANSWER_CORRECTNESS_THRESHOLD}")
+        breaches.append(
+            f"answer_correctness {answer_correctness:.3f} < {ANSWER_CORRECTNESS_THRESHOLD}"
+        )
 
     if not breaches:
         logger.info("RAG quality OK")
@@ -91,6 +97,7 @@ async def main() -> int:
     )
     try:
         from app.services.email_service import EmailService
+
         email = EmailService()
         await email.send_email(
             to=owner_email,

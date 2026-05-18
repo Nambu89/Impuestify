@@ -4,8 +4,8 @@ REST endpoints for Modelo 720 (Bienes Extranjero) and Modelo 721 (Cripto Extranj
 Public endpoints (no auth required) — designed as lead magnet / free tool.
 Rate limited to prevent abuse.
 """
+
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
@@ -24,6 +24,7 @@ router = APIRouter(prefix="/api/modelos", tags=["modelos"])
 
 class Check720Request(BaseModel):
     """Body para evaluar obligacion Modelo 720."""
+
     cuentas_extranjero: float = Field(
         default=0,
         ge=0,
@@ -39,21 +40,21 @@ class Check720Request(BaseModel):
         ge=0,
         description="Valor adquisicion inmuebles en el extranjero (EUR)",
     )
-    ultimo_720_presentado: Optional[int] = Field(
+    ultimo_720_presentado: int | None = Field(
         default=None,
         description="Ano del ultimo Modelo 720 presentado (o null)",
     )
-    saldos_ultimo_720_cuentas: Optional[float] = Field(
+    saldos_ultimo_720_cuentas: float | None = Field(
         default=None,
         ge=0,
         description="Saldo cuentas declarado en ultimo 720 (EUR)",
     )
-    saldos_ultimo_720_valores: Optional[float] = Field(
+    saldos_ultimo_720_valores: float | None = Field(
         default=None,
         ge=0,
         description="Valor valores declarado en ultimo 720 (EUR)",
     )
-    saldos_ultimo_720_inmuebles: Optional[float] = Field(
+    saldos_ultimo_720_inmuebles: float | None = Field(
         default=None,
         ge=0,
         description="Valor inmuebles declarado en ultimo 720 (EUR)",
@@ -62,20 +63,21 @@ class Check720Request(BaseModel):
 
 class Check721Request(BaseModel):
     """Body para evaluar obligacion Modelo 721."""
+
     crypto_extranjero_valor: float = Field(
         default=0,
         ge=0,
         description="Valor mercado cripto en exchanges extranjeros a 31/dic (EUR)",
     )
-    exchanges_extranjeros: Optional[List[str]] = Field(
+    exchanges_extranjeros: list[str] | None = Field(
         default=None,
         description="Lista de exchanges extranjeros (ej: ['Binance', 'Coinbase'])",
     )
-    ultimo_721_presentado: Optional[int] = Field(
+    ultimo_721_presentado: int | None = Field(
         default=None,
         description="Ano del ultimo Modelo 721 presentado (o null)",
     )
-    valor_ultimo_721: Optional[float] = Field(
+    valor_ultimo_721: float | None = Field(
         default=None,
         ge=0,
         description="Valor total declarado en ultimo 721 (EUR)",

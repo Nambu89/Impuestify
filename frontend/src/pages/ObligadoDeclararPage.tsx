@@ -1,8 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-    CheckCircle, AlertCircle, ChevronDown, ChevronUp,
-    ArrowRight, Calculator, Users, Briefcase, Info
+    CheckCircle,
+    AlertCircle,
+    ChevronDown,
+    ChevronUp,
+    ArrowRight,
+    Calculator,
+    Users,
+    Briefcase,
+    Info,
 } from 'lucide-react'
 import Header from '../components/Header'
 import FadeContent from '../components/reactbits/FadeContent'
@@ -160,11 +167,7 @@ function FaqItem({ pregunta, respuesta }: { pregunta: string; respuesta: string 
 
     return (
         <div className={`od-faq-item ${open ? 'od-faq-item--open' : ''}`}>
-            <button
-                className="od-faq-trigger"
-                onClick={() => setOpen(!open)}
-                aria-expanded={open}
-            >
+            <button className="od-faq-trigger" onClick={() => setOpen(!open)} aria-expanded={open}>
                 <span>{pregunta}</span>
                 {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </button>
@@ -190,9 +193,11 @@ export default function ObligadoDeclararPage() {
 
     useSEO({
         title: '¿Estás obligado a declarar la renta 2026? — Impuestify',
-        description: 'Comprueba si tienes que presentar declaración en 2026 según ingresos, tipo de rendimientos, número de pagadores y situación como autónomo.',
+        description:
+            'Comprueba si tienes que presentar declaración en 2026 según ingresos, tipo de rendimientos, número de pagadores y situación como autónomo.',
         canonical: '/obligado-declarar',
-        keywords: 'obligado declarar renta 2026, umbrales declaración, límite rentas IRPF, dos pagadores renta, exento declaración',
+        keywords:
+            'obligado declarar renta 2026, umbrales declaración, límite rentas IRPF, dos pagadores renta, exento declaración',
         schema: [
             {
                 '@context': 'https://schema.org',
@@ -236,8 +241,18 @@ export default function ObligadoDeclararPage() {
                 '@context': 'https://schema.org',
                 '@type': 'BreadcrumbList',
                 itemListElement: [
-                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://impuestify.com' },
-                    { '@type': 'ListItem', position: 2, name: '¿Obligado a declarar?', item: 'https://impuestify.com/obligado-declarar' },
+                    {
+                        '@type': 'ListItem',
+                        position: 1,
+                        name: 'Inicio',
+                        item: 'https://impuestify.com',
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: '¿Obligado a declarar?',
+                        item: 'https://impuestify.com/obligado-declarar',
+                    },
                 ],
             },
         ],
@@ -256,9 +271,7 @@ export default function ObligadoDeclararPage() {
     }
 
     const checkerCompleto =
-        checker.pagadores !== '' &&
-        checker.ingresos !== '' &&
-        checker.autonomo !== ''
+        checker.pagadores !== '' && checker.ingresos !== '' && checker.autonomo !== ''
 
     return (
         <div className="od-page">
@@ -273,12 +286,13 @@ export default function ObligadoDeclararPage() {
                             <span>Renta 2025 — Campaña 2026</span>
                         </div>
                         <h1 className="od-hero-title">
-                            ¿Estás obligado a declarar<br />
+                            ¿Estás obligado a declarar
+                            <br />
                             la renta en 2026?
                         </h1>
                         <p className="od-hero-subtitle">
-                            Tres preguntas y lo sabes. Con los umbrales de la campaña 2025/2026, incluido
-                            el nuevo tope de 15.876 EUR para dos pagadores.
+                            Tres preguntas y lo sabes. Con los umbrales de la campaña 2025/2026,
+                            incluido el nuevo tope de 15.876 EUR para dos pagadores.
                         </p>
                     </FadeContent>
                 </div>
@@ -303,13 +317,17 @@ export default function ObligadoDeclararPage() {
                                 <div className="od-btn-group">
                                     <button
                                         className={`od-option-btn ${checker.pagadores === '1' ? 'od-option-btn--active' : ''}`}
-                                        onClick={() => setChecker(p => ({ ...p, pagadores: '1' }))}
+                                        onClick={() =>
+                                            setChecker((p) => ({ ...p, pagadores: '1' }))
+                                        }
                                     >
                                         Solo 1 pagador
                                     </button>
                                     <button
                                         className={`od-option-btn ${checker.pagadores === '2+' ? 'od-option-btn--active' : ''}`}
-                                        onClick={() => setChecker(p => ({ ...p, pagadores: '2+' }))}
+                                        onClick={() =>
+                                            setChecker((p) => ({ ...p, pagadores: '2+' }))
+                                        }
                                     >
                                         2 o más pagadores
                                     </button>
@@ -337,8 +355,8 @@ export default function ObligadoDeclararPage() {
                                         placeholder="Ej: 21500"
                                         value={checker.ingresos}
                                         min={0}
-                                        onChange={e =>
-                                            setChecker(p => ({ ...p, ingresos: e.target.value }))
+                                        onChange={(e) =>
+                                            setChecker((p) => ({ ...p, ingresos: e.target.value }))
                                         }
                                     />
                                     <span className="od-input-suffix">EUR brutos</span>
@@ -354,13 +372,17 @@ export default function ObligadoDeclararPage() {
                                 <div className="od-btn-group">
                                     <button
                                         className={`od-option-btn ${checker.autonomo === 'si' ? 'od-option-btn--active' : ''}`}
-                                        onClick={() => setChecker(p => ({ ...p, autonomo: 'si' }))}
+                                        onClick={() =>
+                                            setChecker((p) => ({ ...p, autonomo: 'si' }))
+                                        }
                                     >
                                         Sí, soy autónomo
                                     </button>
                                     <button
                                         className={`od-option-btn ${checker.autonomo === 'no' ? 'od-option-btn--active' : ''}`}
-                                        onClick={() => setChecker(p => ({ ...p, autonomo: 'no' }))}
+                                        onClick={() =>
+                                            setChecker((p) => ({ ...p, autonomo: 'no' }))
+                                        }
                                     >
                                         No, soy asalariado
                                     </button>
@@ -413,9 +435,9 @@ export default function ObligadoDeclararPage() {
                                             <div className="od-result-body">
                                                 <strong>No, no estás obligado a declarar</strong>
                                                 <p>
-                                                    Tus ingresos no llegan al umbral. Puede aun así compensarte
-                                                    presentarla si te retuvieron en nómina o tienes deducciones
-                                                    sin aplicar.
+                                                    Tus ingresos no llegan al umbral. Puede aun así
+                                                    compensarte presentarla si te retuvieron en
+                                                    nómina o tienes deducciones sin aplicar.
                                                 </p>
                                                 <Link to="/guia-fiscal" className="od-result-cta">
                                                     Mira si te sale a devolver
@@ -430,12 +452,15 @@ export default function ObligadoDeclararPage() {
                                                 <Info size={28} />
                                             </div>
                                             <div className="od-result-body">
-                                                <strong>Depende del importe del segundo pagador</strong>
+                                                <strong>
+                                                    Depende del importe del segundo pagador
+                                                </strong>
                                                 <p>
-                                                    Con 2 o más pagadores, el límite es 15.876 EUR solo si el
-                                                    segundo pagador te pagó más de 1.500 EUR. Si el segundo
-                                                    pagador no supera esa cifra, el límite es 22.000 EUR.
-                                                    Revisa tu situación exacta más abajo.
+                                                    Con 2 o más pagadores, el límite es 15.876 EUR
+                                                    solo si el segundo pagador te pagó más de 1.500
+                                                    EUR. Si el segundo pagador no supera esa cifra,
+                                                    el límite es 22.000 EUR. Revisa tu situación
+                                                    exacta más abajo.
                                                 </p>
                                                 <Link to="/guia-fiscal" className="od-result-cta">
                                                     Hacer simulación completa
@@ -455,8 +480,8 @@ export default function ObligadoDeclararPage() {
                             )}
 
                             <p className="od-checker-disclaimer">
-                                Resultado orientativo. Para inmuebles, cripto o herencias, tira de la guía
-                                fiscal completa o pregunta a un asesor.
+                                Resultado orientativo. Para inmuebles, cripto o herencias, tira de
+                                la guía fiscal completa o pregunta a un asesor.
                             </p>
                         </div>
                     </FadeContent>
@@ -471,7 +496,8 @@ export default function ObligadoDeclararPage() {
                             Límites de obligación de declarar — Renta 2025/2026
                         </h2>
                         <p className="od-section-desc">
-                            Ejercicio fiscal 2025. Campaña de declaración: del 2 de abril al 30 de junio de 2026.
+                            Ejercicio fiscal 2025. Campaña de declaración: del 2 de abril al 30 de
+                            junio de 2026.
                         </p>
 
                         <div className="od-table-wrap">
@@ -514,8 +540,8 @@ export default function ObligadoDeclararPage() {
                     <FadeContent direction="up" duration={600}>
                         <h2 className="od-section-title">Novedades 2025: ¿qué ha cambiado?</h2>
                         <p className="od-section-desc">
-                            Cambios que afectan a la obligación de declarar en la campaña de 2026 respecto
-                            al ejercicio anterior.
+                            Cambios que afectan a la obligación de declarar en la campaña de 2026
+                            respecto al ejercicio anterior.
                         </p>
 
                         <div className="od-novedades-grid">
@@ -540,8 +566,9 @@ export default function ObligadoDeclararPage() {
                             Aunque no estés obligado, te conviene declarar si...
                         </h2>
                         <p className="od-section-desc">
-                            No estar obligado no siempre es la mejor noticia. En estos casos, declarar
-                            voluntariamente puede suponer una devolución significativa de Hacienda.
+                            No estar obligado no siempre es la mejor noticia. En estos casos,
+                            declarar voluntariamente puede suponer una devolución significativa de
+                            Hacienda.
                         </p>
 
                         <div className="od-conviene-grid">
@@ -568,17 +595,17 @@ export default function ObligadoDeclararPage() {
                         <div className="od-cta-card">
                             <h2 className="od-cta-title">Calcula tu resultado en 2 minutos</h2>
                             <p className="od-cta-desc">
-                                La guía fiscal de Impuestify te muestra en tiempo real si tu declaración
-                                sale a devolver o a pagar. Sin registro. Sin esperas. Simulador IRPF
-                                basado en normativa oficial 2025.
+                                La guía fiscal de Impuestify te muestra en tiempo real si tu
+                                declaración sale a devolver o a pagar. Sin registro. Sin esperas.
+                                Simulador IRPF basado en normativa oficial 2025.
                             </p>
                             <Link to="/guia-fiscal" className="od-cta-btn">
                                 Ir a la guía fiscal
                                 <ArrowRight size={18} />
                             </Link>
                             <p className="od-cta-note">
-                                Cubre las 17 comunidades autónomas + País Vasco + Navarra + Canarias +
-                                Ceuta y Melilla
+                                Cubre las 17 comunidades autónomas + País Vasco + Navarra + Canarias
+                                + Ceuta y Melilla
                             </p>
                         </div>
                     </FadeContent>
@@ -592,13 +619,16 @@ export default function ObligadoDeclararPage() {
                         <h2 className="od-section-title">Preguntas frecuentes</h2>
                         <div className="od-faq-list">
                             {FAQS.map((faq, i) => (
-                                <FaqItem key={i} pregunta={faq.pregunta} respuesta={faq.respuesta} />
+                                <FaqItem
+                                    key={i}
+                                    pregunta={faq.pregunta}
+                                    respuesta={faq.respuesta}
+                                />
                             ))}
                         </div>
                     </FadeContent>
                 </div>
             </section>
-
         </div>
     )
 }

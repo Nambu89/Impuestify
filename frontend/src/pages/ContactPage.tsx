@@ -1,6 +1,16 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Send, ArrowLeft, CheckCircle, AlertCircle, Loader, Building2, Mail, UserCircle, MessageSquare } from 'lucide-react'
+import {
+    Send,
+    ArrowLeft,
+    CheckCircle,
+    AlertCircle,
+    Loader,
+    Building2,
+    Mail,
+    UserCircle,
+    MessageSquare,
+} from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useApi } from '../hooks/useApi'
 import Header from '../components/Header'
@@ -15,19 +25,20 @@ export default function ContactPage() {
     const [form, setForm] = useState({
         name: user?.name || '',
         email: user?.email || '',
-        subject: contactType === 'autonomo'
-            ? 'Interés en el plan para autónomos'
-            : '',
-        message: contactType === 'autonomo'
-            ? 'Me interesa el plan para autónomos. Avisadme cuando esté disponible.'
-            : '',
+        subject: contactType === 'autonomo' ? 'Interés en el plan para autónomos' : '',
+        message:
+            contactType === 'autonomo'
+                ? 'Me interesa el plan para autónomos. Avisadme cuando esté disponible.'
+                : '',
     })
 
     const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
     const [errorMsg, setErrorMsg] = useState('')
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    ) => {
+        setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -62,7 +73,8 @@ export default function ContactPage() {
                         <CheckCircle size={48} />
                         <h2>Mensaje enviado</h2>
                         <p>
-                            Nos ha llegado. Te respondemos a <strong>{form.email}</strong> en cuanto podamos.
+                            Nos ha llegado. Te respondemos a <strong>{form.email}</strong> en cuanto
+                            podamos.
                         </p>
                         <Link to="/" className="btn btn-primary">
                             Volver al inicio
@@ -92,8 +104,9 @@ export default function ContactPage() {
                             </div>
                             <h1>Plan para autónomos y profesionales</h1>
                             <p>
-                                Estamos cocinando un plan con herramientas pensadas para autónomos y profesionales
-                                por cuenta propia. Déjanos tu correo y te avisamos cuando esté listo.
+                                Estamos cocinando un plan con herramientas pensadas para autónomos y
+                                profesionales por cuenta propia. Déjanos tu correo y te avisamos
+                                cuando esté listo.
                             </p>
                         </>
                     ) : (
@@ -104,7 +117,8 @@ export default function ContactPage() {
                             </div>
                             <h1>Escríbenos</h1>
                             <p>
-                                Dudas, sugerencias, un bug que has encontrado. Rellena el formulario y te contestamos.
+                                Dudas, sugerencias, un bug que has encontrado. Rellena el formulario
+                                y te contestamos.
                             </p>
                         </>
                     )}

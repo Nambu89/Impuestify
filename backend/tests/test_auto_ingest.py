@@ -11,6 +11,7 @@ Tests cover:
 7. Malformed _pending_ingest.json -> handles gracefully
 8. Unsupported file type -> skip
 """
+
 import asyncio
 import hashlib
 import json
@@ -43,7 +44,10 @@ def tmp_docs(tmp_path):
     # Create a markdown file
     md_file = docs_dir / "Estatal" / "test_doc.md"
     md_file.parent.mkdir(parents=True, exist_ok=True)
-    md_file.write_text("# Test Document\n\nThis is test content for the markdown ingestion pipeline." * 5, encoding="utf-8")
+    md_file.write_text(
+        "# Test Document\n\nThis is test content for the markdown ingestion pipeline." * 5,
+        encoding="utf-8",
+    )
 
     return docs_dir
 
@@ -79,6 +83,7 @@ def _compute_sha256(filepath: Path) -> str:
 
 # ── Mock DB helper ──────────────────────────────────────────────
 
+
 def _make_mock_db(existing_hashes=None):
     """Create a mock TursoClient."""
     mock_db = AsyncMock()
@@ -106,6 +111,7 @@ def _make_mock_db(existing_hashes=None):
 
 
 # ── Mock chunker/extractor/embedder ────────────────────────────
+
 
 class MockChunk:
     def __init__(self, content, chunk_index=0, page_number=1):
@@ -145,7 +151,14 @@ def _mock_embedder():
 
 # ── Patch helper ────────────────────────────────────────────────
 
-def _patch_auto_ingest(tmp_docs, mock_db=None, mock_extractor_inst=None, mock_embedder_inst=None, mock_chunker_inst=None):
+
+def _patch_auto_ingest(
+    tmp_docs,
+    mock_db=None,
+    mock_extractor_inst=None,
+    mock_embedder_inst=None,
+    mock_chunker_inst=None,
+):
     """Return a dict of patches for auto_ingest module."""
     if mock_db is None:
         mock_db = _make_mock_db()
@@ -172,15 +185,16 @@ def _patch_auto_ingest(tmp_docs, mock_db=None, mock_extractor_inst=None, mock_em
 # TESTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestAutoIngestNoPending:
     """Test 1: No pending documents -> exit clean."""
 
     def test_no_pending_file(self, tmp_docs):
         """No _pending_ingest.json at all."""
-        from scripts.auto_ingest import load_pending, PENDING_INGEST
-
         # Temporarily override module-level constant
         import scripts.auto_ingest as mod
+        from scripts.auto_ingest import PENDING_INGEST, load_pending
+
         original = mod.PENDING_INGEST
         mod.PENDING_INGEST = tmp_docs / "_pending_ingest.json"
         # Remove file if it exists
@@ -197,6 +211,7 @@ class TestAutoIngestNoPending:
         """_pending_ingest.json exists but with empty files list."""
         import scripts.auto_ingest as mod
         from scripts.auto_ingest import load_pending
+
         original = mod.PENDING_INGEST
 
         pending_file = tmp_docs / "_pending_ingest.json"
@@ -213,6 +228,7 @@ class TestAutoIngestNoPending:
     def test_no_pending_returns_zero(self, tmp_docs):
         """auto_ingest() returns 0 when no pending docs."""
         import scripts.auto_ingest as mod
+
         original_pending = mod.PENDING_INGEST
         # Point to non-existent file
         mod.PENDING_INGEST = tmp_docs / "_nonexistent.json"
@@ -245,7 +261,7 @@ class TestAutoIngestProcessFile:
             # Check ingested log was written
             log_file = tmp_docs / "_ingested_log.json"
             assert log_file.exists()
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 log_entries = json.load(f)
             assert len(log_entries) >= 1
             assert log_entries[0]["status"] == "ingested"
@@ -254,7 +270,7 @@ class TestAutoIngestProcessFile:
             # Check pending was cleared (or file removed)
             pending_file = tmp_docs / "_pending_ingest.json"
             if pending_file.exists():
-                with open(pending_file, "r") as f:
+                with open(pending_file) as f:
                     data = json.load(f)
                 assert data.get("count", 0) == 0 or len(data.get("files", [])) == 0
         finally:
@@ -288,14 +304,15 @@ class TestAutoIngestDuplicateHash:
             # Check it was logged as skipped
             log_file = tmp_docs / "_ingested_log.json"
             assert log_file.exists()
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 log_entries = json.load(f)
             assert len(log_entries) >= 1
             assert log_entries[0]["status"] == "skipped_duplicate"
 
             # DB should NOT have received any INSERT INTO documents
             insert_calls = [
-                call for call in mock_db.execute.call_args_list
+                call
+                for call in mock_db.execute.call_args_list
                 if call.args and "INSERT INTO documents" in str(call.args[0])
             ]
             assert len(insert_calls) == 0
@@ -360,14 +377,14 @@ class TestAutoIngestDryRun:
 
         try:
             # Capture pending content before
-            with open(pending_json, "r") as f:
+            with open(pending_json) as f:
                 before = f.read()
 
             exit_code = asyncio.run(mod.auto_ingest(dry_run=True))
             assert exit_code == 0
 
             # Pending file should be unchanged
-            with open(pending_json, "r") as f:
+            with open(pending_json) as f:
                 after = f.read()
             assert before == after
 
@@ -401,8 +418,18 @@ class TestAutoIngestLimit:
             "generated_at": "2026-03-27T10:00:00+00:00",
             "count": 2,
             "files": [
-                {"path": "Madrid/doc1.pdf", "status": "new", "url": "https://example.com/1.pdf", "size": 100},
-                {"path": "Estatal/doc2.pdf", "status": "new", "url": "https://example.com/2.pdf", "size": 200},
+                {
+                    "path": "Madrid/doc1.pdf",
+                    "status": "new",
+                    "url": "https://example.com/1.pdf",
+                    "size": 100,
+                },
+                {
+                    "path": "Estatal/doc2.pdf",
+                    "status": "new",
+                    "url": "https://example.com/2.pdf",
+                    "size": 200,
+                },
             ],
         }
         pending_file = tmp_docs / "_pending_ingest.json"
@@ -424,7 +451,7 @@ class TestAutoIngestLimit:
             # Check that only 1 was ingested
             log_file = tmp_docs / "_ingested_log.json"
             assert log_file.exists()
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 log_entries = json.load(f)
             ingested = [e for e in log_entries if e["status"] == "ingested"]
             assert len(ingested) == 1
@@ -432,7 +459,7 @@ class TestAutoIngestLimit:
 
             # Check remaining pending has 1 entry
             if pending_file.exists():
-                with open(pending_file, "r") as f:
+                with open(pending_file) as f:
                     remaining = json.load(f)
                 assert len(remaining.get("files", [])) == 1
                 assert remaining["files"][0]["path"] == "Estatal/doc2.pdf"
@@ -476,7 +503,12 @@ class TestAutoIngestUnsupportedType:
             "generated_at": "2026-03-27T10:00:00+00:00",
             "count": 1,
             "files": [
-                {"path": "test.docx", "status": "new", "url": "https://example.com/test.docx", "size": 100},
+                {
+                    "path": "test.docx",
+                    "status": "new",
+                    "url": "https://example.com/test.docx",
+                    "size": 100,
+                },
             ],
         }
         pending_file = tmp_docs / "_pending_ingest.json"
@@ -528,7 +560,7 @@ class TestSavePending:
             remaining = [{"path": "test.pdf", "status": "new", "url": "", "size": 0}]
             mod.save_pending(remaining)
             assert pending_file.exists()
-            with open(pending_file, "r") as f:
+            with open(pending_file) as f:
                 data = json.load(f)
             assert data["count"] == 1
             assert len(data["files"]) == 1
@@ -550,7 +582,7 @@ class TestAppendIngestedLog:
         try:
             mod.append_ingested_log({"path": "test.pdf", "status": "ingested"})
             assert log_file.exists()
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 entries = json.load(f)
             assert len(entries) == 1
         finally:
@@ -567,7 +599,7 @@ class TestAppendIngestedLog:
         try:
             mod.append_ingested_log({"path": "a.pdf", "status": "ingested"})
             mod.append_ingested_log({"path": "b.pdf", "status": "ingested"})
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 entries = json.load(f)
             assert len(entries) == 2
         finally:

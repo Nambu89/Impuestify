@@ -1,55 +1,58 @@
-import sys, os
+import os
 
 # Load .env from project root FIRST (before any other imports)
 from dotenv import load_dotenv
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 env_path = os.path.join(PROJECT_ROOT, ".env")
 load_dotenv(env_path)
 
+
+# Security test endpoints — only in dev/staging, never in production
+import os as _os
 import time
-import logging
 from contextlib import asynccontextmanager
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 import structlog
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, Query, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from slowapi.errors import RateLimitExceeded
-from .config import settings
+
+from app.routers.auth import router as auth_router
+from app.routers.chat import router as chat_router
+from app.routers.conversations import router as conversations_router
+from app.routers.notifications import router as notifications_router
 
 # Security imports
 from app.security.rate_limiter import limiter, rate_limit_exceeded_handler
-from app.security.prompt_injection import prompt_injection_filter
-from app.security.pii_detector import pii_detector
-from app.routers.auth import router as auth_router
-from app.routers.chat import router as chat_router
-from app.routers.notifications import router as notifications_router
-from app.routers.conversations import router as conversations_router
-# Security test endpoints — only in dev/staging, never in production
-import os as _os
-_is_production = _os.getenv("RAILWAY_ENVIRONMENT") == "production" or _os.getenv("ENV") == "production"
+
+from .config import settings
+
+_is_production = (
+    _os.getenv("RAILWAY_ENVIRONMENT") == "production" or _os.getenv("ENV") == "production"
+)
 from app.routers.payslips import router as payslips_router
-from app.database.turso_client import get_db_client
 
 # Configurar logging estructurado
 structlog.configure(
-	processors=[
-		structlog.stdlib.filter_by_level,
-		structlog.stdlib.add_logger_name,
-		structlog.stdlib.add_log_level,
-		structlog.stdlib.PositionalArgumentsFormatter(),
-		structlog.processors.TimeStamper(fmt="iso"),
-		structlog.processors.StackInfoRenderer(),
-		structlog.processors.format_exc_info,
-		structlog.processors.UnicodeDecoder(),
-		structlog.processors.JSONRenderer()
-	],
-	context_class=dict,
-	logger_factory=structlog.stdlib.LoggerFactory(),
-	wrapper_class=structlog.stdlib.BoundLogger,
-	cache_logger_on_first_use=True,
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer(),
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
 )
 
 logger = structlog.get_logger()
@@ -57,19 +60,22 @@ logger = structlog.get_logger()
 
 # === Modelos de datos ===
 
+
 class HealthResponse(BaseModel):
-	"""Modelo de respuesta de salud"""
-	status: str
-	timestamp: float
-	version: str = "1.0.0"
-	rag_initialized: bool
-	statistics: Optional[Dict[str, Any]] = None
+    """Modelo de respuesta de salud"""
+
+    status: str
+    timestamp: float
+    version: str = "1.0.0"
+    rag_initialized: bool
+    statistics: dict[str, Any] | None = None
 
 
 class RebuildRequest(BaseModel):
-	"""Modelo para solicitud de reconstrucción de índice"""
-	pdf_dir: Optional[str] = Field(default=None, description="Directorio de PDFs (opcional)")
-	force: bool = Field(default=False, description="Forzar reconstrucción aunque exista índice")
+    """Modelo para solicitud de reconstrucción de índice"""
+
+    pdf_dir: str | None = Field(default=None, description="Directorio de PDFs (opcional)")
+    force: bool = Field(default=False, description="Forzar reconstrucción aunque exista índice")
 
 
 # === Lifecycle de la aplicación ===
@@ -80,206 +86,214 @@ upstash_client = None
 http_client_manager = None
 rag_engine = None
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-	"""Gestión del ciclo de vida de la aplicación"""
-	global db_client, upstash_client, http_client_manager
-	
-	# Startup
-	print("=" * 80)
-	print("🚀 INICIANDO Impuestify...")
-	print("=" * 80)
-	
-	# 0. Validate critical secrets
-	_jwt_defaults = ["your-super-secret-jwt-key-change-in-production", "change-this-secret-key-in-production"]
-	_jwt_val = os.environ.get("JWT_SECRET_KEY", "")
-	if _jwt_val in _jwt_defaults or not _jwt_val:
-		if _is_production:
-			print("CRITICAL: JWT_SECRET_KEY is using a default value in production!")
-			logger.critical("JWT_SECRET_KEY is using a default value in production")
-		else:
-			print("WARNING: JWT_SECRET_KEY is using a default value.")
-			logger.warning("JWT_SECRET_KEY is using a default value")
+    """Gestión del ciclo de vida de la aplicación"""
+    global db_client, upstash_client, http_client_manager
 
-	# 0b. Inicializar HTTP Client Pool (para todas las conexiones HTTP)
-	logger.info("Inicializando HTTP Client Pool...")
-	try:
-		from app.core.http_client import HTTPClientManager
-		http_client_manager = HTTPClientManager()
-		await http_client_manager.initialize()
+    # Startup
+    print("=" * 80)
+    print("🚀 INICIANDO Impuestify...")
+    print("=" * 80)
 
-		# Log pool stats
-		stats = http_client_manager.get_pool_stats()
-		logger.info(
-			"HTTP Pool configurado",
-			max_connections=stats.get("max_connections"),
-			max_keepalive=stats.get("max_keepalive_connections"),
-			timeout=stats.get("timeout")
-		)
-	except Exception as e:
-		logger.error("Error inicializando HTTP Pool", error=str(e))
-	
-	# 1. Conexion a Turso Database
-	logger.info("Conectando a Turso Database...")
-	try:
-		from app.database.turso_client import TursoClient
-		db_client = TursoClient()
-		await db_client.connect()
+    # 0. Validate critical secrets
+    _jwt_defaults = [
+        "your-super-secret-jwt-key-change-in-production",
+        "change-this-secret-key-in-production",
+    ]
+    _jwt_val = os.environ.get("JWT_SECRET_KEY", "")
+    if _jwt_val in _jwt_defaults or not _jwt_val:
+        if _is_production:
+            print("CRITICAL: JWT_SECRET_KEY is using a default value in production!")
+            logger.critical("JWT_SECRET_KEY is using a default value in production")
+        else:
+            print("WARNING: JWT_SECRET_KEY is using a default value.")
+            logger.warning("JWT_SECRET_KEY is using a default value")
 
-		# Initialize schema (creates tables if they don't exist, including new workspaces tables)
-		await db_client.init_schema()
-		logger.info("Schema de base de datos verificado/actualizado")
+    # 0b. Inicializar HTTP Client Pool (para todas las conexiones HTTP)
+    logger.info("Inicializando HTTP Client Pool...")
+    try:
+        from app.core.http_client import HTTPClientManager
 
-		# Verificar conexion contando documentos
-		result = await db_client.execute("SELECT COUNT(*) as cnt FROM documents")
-		doc_count = result.rows[0]['cnt'] if result.rows else 0
+        http_client_manager = HTTPClientManager()
+        await http_client_manager.initialize()
 
-		result = await db_client.execute("SELECT COUNT(*) as cnt FROM document_chunks")
-		chunk_count = result.rows[0]['cnt'] if result.rows else 0
+        # Log pool stats
+        stats = http_client_manager.get_pool_stats()
+        logger.info(
+            "HTTP Pool configurado",
+            max_connections=stats.get("max_connections"),
+            max_keepalive=stats.get("max_keepalive_connections"),
+            timeout=stats.get("timeout"),
+        )
+    except Exception as e:
+        logger.error("Error inicializando HTTP Pool", error=str(e))
 
-		result = await db_client.execute("SELECT COUNT(*) as cnt FROM embeddings")
-		embedding_count = result.rows[0]['cnt'] if result.rows else 0
+    # 1. Conexion a Turso Database
+    logger.info("Conectando a Turso Database...")
+    try:
+        from app.database.turso_client import TursoClient
 
-		logger.info(
-			"Turso Database conectada",
-			documents=doc_count,
-			chunks=chunk_count,
-			embeddings=embedding_count
-		)
+        db_client = TursoClient()
+        await db_client.connect()
 
-	except Exception as e:
-		logger.error("Error conectando a Turso", error=str(e))
-		logger.warning("Impuestify funcionara sin base de datos RAG")
-		db_client = None
-	
-	# 2. Conexion a Upstash Redis (cache)
-	logger.info("Conectando a Upstash Redis (cache)...")
-	try:
-		upstash_url = os.environ.get("UPSTASH_REDIS_REST_URL")
-		upstash_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+        # Initialize schema (creates tables if they don't exist, including new workspaces tables)
+        await db_client.init_schema()
+        logger.info("Schema de base de datos verificado/actualizado")
 
-		if upstash_url and upstash_token:
-			# Use async client from upstash_redis.asyncio
-			from upstash_redis.asyncio import Redis as AsyncRedis
-			upstash_client = AsyncRedis(url=upstash_url, token=upstash_token)
-			# Verificar conexion
-			pong = await upstash_client.ping()
-			logger.info("Upstash Redis conectado", response=pong)
-		else:
-			logger.warning("Upstash Redis no configurado - cache deshabilitada")
-			upstash_client = None
+        # Verificar conexion contando documentos
+        result = await db_client.execute("SELECT COUNT(*) as cnt FROM documents")
+        doc_count = result.rows[0]["cnt"] if result.rows else 0
 
-	except ImportError as ie:
-		logger.warning("upstash-redis no instalado: %s", ie)
-		upstash_client = None
-	except Exception as e:
-		logger.warning("Error conectando a Upstash", error=str(e))
-		upstash_client = None
-	
-	# 3. Verificar OpenAI API
-	logger.info("Verificando OpenAI API...")
-	openai_key = os.environ.get("OPENAI_API_KEY")
-	openai_model = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
+        result = await db_client.execute("SELECT COUNT(*) as cnt FROM document_chunks")
+        chunk_count = result.rows[0]["cnt"] if result.rows else 0
 
-	if openai_key:
-		logger.info("OpenAI configurado", model=openai_model)
-	else:
-		logger.error("OpenAI no configurado - falta OPENAI_API_KEY")
-		logger.warning("Algunos servicios no estaran disponibles sin OpenAI")
-	
-	# 4. Verificar GROQ API (Security)
-	logger.info("Verificando GROQ API (Seguridad)...")
-	groq_key = os.environ.get("GROQ_API_KEY")
+        result = await db_client.execute("SELECT COUNT(*) as cnt FROM embeddings")
+        embedding_count = result.rows[0]["cnt"] if result.rows else 0
 
-	if groq_key:
-		try:
-			from groq import Groq
-			# Quick validation (doesn't count against request quota)
-			groq_client = Groq(api_key=groq_key)
-			logger.info("GROQ configurado para seguridad (LlamaGuard4, PromptGuard, ComplexityRouter)")
-		except Exception as e:
-			logger.warning("Error inicializando GROQ", error=str(e))
-			logger.warning("Funciones de seguridad limitadas")
-	else:
-		logger.warning("GROQ_API_KEY no configurada - Seguridad AI deshabilitada")
+        logger.info(
+            "Turso Database conectada",
+            documents=doc_count,
+            chunks=chunk_count,
+            embeddings=embedding_count,
+        )
 
-	
-	# Register territory plugins (21 CCAA across 5 fiscal regimes)
-	try:
-		from app.territories.startup import register_all_territories
-		register_all_territories()
-		from app.territories.registry import list_territories
-		territory_count = len(list_territories())
-		logger.info("Territory plugins registrados", count=territory_count)
-	except Exception as e:
-		logger.warning("Error registrando territory plugins", error=str(e))
+    except Exception as e:
+        logger.error("Error conectando a Turso", error=str(e))
+        logger.warning("Impuestify funcionara sin base de datos RAG")
+        db_client = None
 
-	logger.info("Impuestify INICIADO CORRECTAMENTE")
-	
-	# Store in app state for access in routes
-	app.state.db_client = db_client
-	app.state.upstash_client = upstash_client
-	app.state.http_client = http_client_manager
-	
-	yield
-	
-	# Shutdown
-	print("=" * 80)
-	print("🛑 CERRANDO Impuestify...")
-	print("=" * 80)
-	
-	try:
-		# Close Turso connection
-		if db_client:
-			await db_client.disconnect()
-			logger.info("Turso Database desconectada")
+    # 2. Conexion a Upstash Redis (cache)
+    logger.info("Conectando a Upstash Redis (cache)...")
+    try:
+        upstash_url = os.environ.get("UPSTASH_REDIS_REST_URL")
+        upstash_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
 
-		# Close Upstash connection (if needed)
-		if upstash_client:
-			# Upstash REST client doesn't need explicit close
-			logger.info("Upstash Redis cerrado")
+        if upstash_url and upstash_token:
+            # Use async client from upstash_redis.asyncio
+            from upstash_redis.asyncio import Redis as AsyncRedis
 
-		# Close HTTP client pool
-		if http_client_manager:
-			await http_client_manager.close()
+            upstash_client = AsyncRedis(url=upstash_url, token=upstash_token)
+            # Verificar conexion
+            pong = await upstash_client.ping()
+            logger.info("Upstash Redis conectado", response=pong)
+        else:
+            logger.warning("Upstash Redis no configurado - cache deshabilitada")
+            upstash_client = None
 
-	except Exception as e:
-		logger.error("Error durante el cierre", error=str(e))
-	
-	print("=" * 80)
-	print("Impuestify CERRADO CORRECTAMENTE")
-	print("=" * 80)
+    except ImportError as ie:
+        logger.warning("upstash-redis no instalado: %s", ie)
+        upstash_client = None
+    except Exception as e:
+        logger.warning("Error conectando a Upstash", error=str(e))
+        upstash_client = None
+
+    # 3. Verificar OpenAI API
+    logger.info("Verificando OpenAI API...")
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    openai_model = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
+
+    if openai_key:
+        logger.info("OpenAI configurado", model=openai_model)
+    else:
+        logger.error("OpenAI no configurado - falta OPENAI_API_KEY")
+        logger.warning("Algunos servicios no estaran disponibles sin OpenAI")
+
+    # 4. Verificar GROQ API (Security)
+    logger.info("Verificando GROQ API (Seguridad)...")
+    groq_key = os.environ.get("GROQ_API_KEY")
+
+    if groq_key:
+        try:
+            from groq import Groq
+
+            # Quick validation (doesn't count against request quota)
+            groq_client = Groq(api_key=groq_key)
+            logger.info(
+                "GROQ configurado para seguridad (LlamaGuard4, PromptGuard, ComplexityRouter)"
+            )
+        except Exception as e:
+            logger.warning("Error inicializando GROQ", error=str(e))
+            logger.warning("Funciones de seguridad limitadas")
+    else:
+        logger.warning("GROQ_API_KEY no configurada - Seguridad AI deshabilitada")
+
+    # Register territory plugins (21 CCAA across 5 fiscal regimes)
+    try:
+        from app.territories.startup import register_all_territories
+
+        register_all_territories()
+        from app.territories.registry import list_territories
+
+        territory_count = len(list_territories())
+        logger.info("Territory plugins registrados", count=territory_count)
+    except Exception as e:
+        logger.warning("Error registrando territory plugins", error=str(e))
+
+    logger.info("Impuestify INICIADO CORRECTAMENTE")
+
+    # Store in app state for access in routes
+    app.state.db_client = db_client
+    app.state.upstash_client = upstash_client
+    app.state.http_client = http_client_manager
+
+    yield
+
+    # Shutdown
+    print("=" * 80)
+    print("🛑 CERRANDO Impuestify...")
+    print("=" * 80)
+
+    try:
+        # Close Turso connection
+        if db_client:
+            await db_client.disconnect()
+            logger.info("Turso Database desconectada")
+
+        # Close Upstash connection (if needed)
+        if upstash_client:
+            # Upstash REST client doesn't need explicit close
+            logger.info("Upstash Redis cerrado")
+
+        # Close HTTP client pool
+        if http_client_manager:
+            await http_client_manager.close()
+
+    except Exception as e:
+        logger.error("Error durante el cierre", error=str(e))
+
+    print("=" * 80)
+    print("Impuestify CERRADO CORRECTAMENTE")
+    print("=" * 80)
 
 
 # === Crear aplicación FastAPI ===
 
 app = FastAPI(
-	title="Impuestify - Asistente Fiscal Español",
-	description="Asistente fiscal especializado en normativa española de la AEAT",
-	version="1.0.0",
-	lifespan=lifespan,
-	docs_url="/docs",
-	redoc_url="/redoc"
+    title="Impuestify - Asistente Fiscal Español",
+    description="Asistente fiscal especializado en normativa española de la AEAT",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 # === Rate Limiting Configuration ===
 
 # Import CORS-aware rate limiters
-from app.security.rate_limiter import (
-    limiter, ip_blocker, rate_limit_exceeded_handler,
-    rate_limit_ask, rate_limit_notification, rate_limit_auth, rate_limit_read
-)
 
 # Add rate limiter state and exception handler
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
 
 # Add security headers middleware (Zero Day protection)
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     """
     Add security headers to all responses.
-    
+
     Protects against:
     - XSS attacks
     - Clickjacking
@@ -287,7 +301,7 @@ async def add_security_headers(request: Request, call_next):
     - Information leakage
     """
     response = await call_next(request)
-    
+
     # Content Security Policy (CSP)
     # Prevents XSS by restricting resource loading
     response.headers["Content-Security-Policy"] = (
@@ -299,19 +313,19 @@ async def add_security_headers(request: Request, call_next):
         "connect-src 'self'; "
         "frame-ancestors 'none'"
     )
-    
+
     # Prevent MIME type sniffing
     response.headers["X-Content-Type-Options"] = "nosniff"
-    
+
     # Prevent clickjacking
     response.headers["X-Frame-Options"] = "DENY"
-    
+
     # XSS Protection (legacy, but still useful)
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    
+
     # Referrer Policy (limit referrer information)
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    
+
     # Permissions Policy (restrict browser features)
     response.headers["Permissions-Policy"] = (
         "geolocation=(), "
@@ -323,13 +337,13 @@ async def add_security_headers(request: Request, call_next):
         "gyroscope=(), "
         "accelerometer=()"
     )
-    
+
     # Remove server information (use try-except since header may not exist)
     try:
         del response.headers["Server"]
     except KeyError:
         pass
-    
+
     return response
 
 
@@ -357,12 +371,12 @@ else:
     allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
 
 app.add_middleware(
-	CORSMiddleware,
-	allow_origins=allowed_origins,
-	allow_credentials=True,
-	allow_methods=["*"],
-	allow_headers=["*"],
-	expose_headers=["*"]  # Expose headers for rate limit info
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],  # Expose headers for rate limit info
 )
 
 # Registrar routers
@@ -371,6 +385,7 @@ app.include_router(auth_router)
 # Streaming chat MUST come BEFORE regular chat
 # More specific routes (/api/ask/stream) need to be registered before less specific (/api/ask)
 from app.routers.chat_stream import router as chat_stream_router
+
 app.include_router(chat_stream_router)
 
 app.include_router(chat_router)
@@ -379,146 +394,180 @@ app.include_router(conversations_router)
 app.include_router(payslips_router)  # Payslips management
 if not _is_production:
     from app.routers.security_tests import router as security_tests_router
+
     app.include_router(security_tests_router)  # Security testing endpoints (dev only)
 
 # Workspaces management
 from app.routers.workspaces import router as workspaces_router
+
 app.include_router(workspaces_router)
 
 # GDPR User Rights Endpoints
 from app.routers.user_rights import router as user_rights_router
+
 app.include_router(user_rights_router)
 
 # Subscription & Payment Endpoints
 from app.routers.subscription import router as subscription_router
+
 app.include_router(subscription_router)
 
 # WebAuthn / Passkey 2FA (NIST SP 800-63-4 phishing-resistant)
 from app.routers.webauthn_router import router as webauthn_router
+
 app.include_router(webauthn_router)
 
 # Contact Form Endpoint
 from app.routers.contact import router as contact_router
+
 app.include_router(contact_router)
 
 # Admin Endpoints (owner-only)
 from app.routers.admin import router as admin_router
+
 app.include_router(admin_router)
 
 # MFA / 2FA (TOTP-based)
 from app.routers.mfa import router as mfa_router
+
 app.include_router(mfa_router)
 
 # Feedback & Chat Ratings (authenticated users)
 from app.routers.feedback import router as feedback_router
+
 app.include_router(feedback_router)
 
 # Export & Report Endpoints
 from app.routers.export import router as export_router
+
 app.include_router(export_router)
 
 # Demo Chat Endpoint (public, no auth required)
 from app.routers.demo import router as demo_router
+
 app.include_router(demo_router)
 
 # Shared Conversations (public share links)
 from app.routers.shared import router as shared_router
+
 app.include_router(shared_router)
 
 # IRPF Live Estimator (lightweight, no LLM)
 from app.routers.irpf_estimate import router as irpf_estimate_router
+
 app.include_router(irpf_estimate_router)
 
 # Quarterly Declarations (Modelos 303, 130, 420 — no LLM)
 from app.routers.declarations import router as declarations_router
+
 app.include_router(declarations_router)
 
 # Fiscal Profile Fields (adaptive by CCAA)
 from app.routers.fiscal_fields import router as fiscal_fields_router
+
 app.include_router(fiscal_fields_router)
 
 # Fiscal Deadlines + Push Notifications
 from app.routers.deadlines import router as deadlines_router
+
 app.include_router(deadlines_router)
 
 # Session Documents (ephemeral, Redis-only)
 from app.routers.session_docs import router as session_docs_router
+
 app.include_router(session_docs_router)
 
 # Crypto transactions & FIFO gains
 from app.routers.crypto import router as crypto_router
+
 app.include_router(crypto_router)
 
 # RAG Quality Evaluation (owner-only)
 from app.routers.rag_quality import router as rag_quality_router
+
 app.include_router(rag_quality_router)
 
 # Modelo 720/721 (Bienes y Cripto Extranjero)
 from app.routers.modelo_720 import router as modelo_720_router
+
 app.include_router(modelo_720_router)
 
 # Modelo 131 (Pago Fraccionado IRPF Estimación Objetiva — Módulos)
 from app.routers.modelo_131 import router as modelo_131_router
+
 app.include_router(modelo_131_router)
 
 # Modelo 349 (Declaracion Recapitulativa Operaciones Intracomunitarias)
 from app.routers.modelo_349 import router as modelo_349_router
+
 app.include_router(modelo_349_router)
 
 # Modelo 390 (Resumen Anual IVA)
 from app.routers.modelo_390 import router as modelo_390_router
+
 app.include_router(modelo_390_router)
 
 # Modelo 309 (Declaracion-Liquidacion No Periodica IVA)
 from app.routers.modelo_309 import router as modelo_309_router
+
 app.include_router(modelo_309_router)
 
 # Plusvalia Municipal (IIVTNU)
 from app.routers.plusvalia import router as plusvalia_router
+
 app.include_router(plusvalia_router)
 
 # Contabilidad (Libros contables + export CSV/Excel)
 from app.routers.contabilidad import router as contabilidad_router
+
 app.include_router(contabilidad_router)
 
 # Invoice Classifier + Contabilidad
 from app.routers.invoices import router as invoices_router
+
 app.include_router(invoices_router)
 
 # DefensIA
 from app.routers import defensia
+
 app.include_router(defensia.router)
 
 # === Dependencias ===
 
+
 async def get_rag_engine():
-	"""Dependencia para obtener el motor RAG inicializado"""
-	# Si el legacy rag_engine está disponible e inicializado, usarlo
-	if rag_engine is not None and hasattr(rag_engine, 'is_initialized') and rag_engine.is_initialized:
-		return rag_engine
-	
-	# Si no, indicar que el sistema está usando Turso RAG
-	raise HTTPException(
-		status_code=503, 
-		detail="Motor RAG legacy no disponible. Usa los endpoints /api/ask con sistema Turso."
-	)
+    """Dependencia para obtener el motor RAG inicializado"""
+    # Si el legacy rag_engine está disponible e inicializado, usarlo
+    if (
+        rag_engine is not None
+        and hasattr(rag_engine, "is_initialized")
+        and rag_engine.is_initialized
+    ):
+        return rag_engine
+
+    # Si no, indicar que el sistema está usando Turso RAG
+    raise HTTPException(
+        status_code=503,
+        detail="Motor RAG legacy no disponible. Usa los endpoints /api/ask con sistema Turso.",
+    )
+
 
 async def get_database(request: Request):
-	"""Dependencia para obtener el cliente de base de datos Turso"""
-	if hasattr(request.app.state, 'db_client') and request.app.state.db_client:
-		return request.app.state.db_client
-	raise HTTPException(
-		status_code=503,
-		detail="Base de datos Turso no conectada. Revisa la configuración."
-	)
+    """Dependencia para obtener el cliente de base de datos Turso"""
+    if hasattr(request.app.state, "db_client") and request.app.state.db_client:
+        return request.app.state.db_client
+    raise HTTPException(
+        status_code=503, detail="Base de datos Turso no conectada. Revisa la configuración."
+    )
 
 
 # === Rutas principales ===
 
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
-	"""Página de inicio con información básica"""
-	html_content = """
+    """Página de inicio con información básica"""
+    html_content = """
 	<!DOCTYPE html>
 	<html>
 	<head>
@@ -546,7 +595,7 @@ async def root():
 				<h1>🧾 Impuestify</h1>
 				<p>Asistente Fiscal Especializado en Normativa Española</p>
 			</div>
-			
+
 			<div class="features">
 				<div class="feature">
 					<h3>🔍 RAG Avanzado</h3>
@@ -561,7 +610,7 @@ async def root():
 					<p>Formato consistente con veredicto, explicación, citas y avisos legales.</p>
 				</div>
 			</div>
-			
+
 			<div class="endpoints">
 				<h3>🚀 Endpoints Disponibles</h3>
 				<div class="endpoint">
@@ -577,7 +626,7 @@ async def root():
 					<code>GET</code> <strong>/docs</strong> - Documentación interactiva (Swagger)
 				</div>
 			</div>
-			
+
 			<div class="footer">
 				<p>Impuestify v1.0.0 | Powered by FastAPI + Guardrails AI + OpenAI</p>
 			</div>
@@ -585,125 +634,123 @@ async def root():
 	</body>
 	</html>
 	"""
-	return HTMLResponse(content=html_content, status_code=200)
+    return HTMLResponse(content=html_content, status_code=200)
+
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check(request: Request):
-	"""
-	Verifica el estado de salud del sistema
-	"""
-	try:
-		statistics = None
-		rag_initialized = False
-		
-		# Verificar conexión a Turso
-		db = getattr(request.app.state, 'db_client', None)
-		if db:
-			try:
-				result = await db.execute("SELECT COUNT(*) as cnt FROM embeddings")
-				embedding_count = result.rows[0]['cnt'] if result.rows else 0
-				
-				result = await db.execute("SELECT COUNT(*) as cnt FROM documents")  
-				doc_count = result.rows[0]['cnt'] if result.rows else 0
-				
-				statistics = {
-					"database": "turso",
-					"documents": doc_count,
-					"embeddings": embedding_count,
-					"status": "connected"
-				}
-				rag_initialized = embedding_count > 0
-			except Exception as e:
-				statistics = {"database": "turso", "status": "error", "error": str(e)}
-		else:
-			statistics = {"database": "turso", "status": "not_connected"}
-		
-		# Verificar si legacy rag_engine está disponible
-		if rag_engine is not None and hasattr(rag_engine, 'is_initialized') and rag_engine.is_initialized:
-			statistics["legacy_rag"] = "available"
-		
-		return HealthResponse(
-			status="healthy" if rag_initialized else "initializing",
-			timestamp=time.time(),
-			rag_initialized=rag_initialized,
-			statistics=statistics
-		)
-		
-	except Exception as e:
-		logger.error("Error en health check", error=str(e))
-		raise HTTPException(status_code=503, detail=f"Error en health check: {str(e)}")
+    """
+    Verifica el estado de salud del sistema
+    """
+    try:
+        statistics = None
+        rag_initialized = False
+
+        # Verificar conexión a Turso
+        db = getattr(request.app.state, "db_client", None)
+        if db:
+            try:
+                result = await db.execute("SELECT COUNT(*) as cnt FROM embeddings")
+                embedding_count = result.rows[0]["cnt"] if result.rows else 0
+
+                result = await db.execute("SELECT COUNT(*) as cnt FROM documents")
+                doc_count = result.rows[0]["cnt"] if result.rows else 0
+
+                statistics = {
+                    "database": "turso",
+                    "documents": doc_count,
+                    "embeddings": embedding_count,
+                    "status": "connected",
+                }
+                rag_initialized = embedding_count > 0
+            except Exception as e:
+                statistics = {"database": "turso", "status": "error", "error": str(e)}
+        else:
+            statistics = {"database": "turso", "status": "not_connected"}
+
+        # Verificar si legacy rag_engine está disponible
+        if (
+            rag_engine is not None
+            and hasattr(rag_engine, "is_initialized")
+            and rag_engine.is_initialized
+        ):
+            statistics["legacy_rag"] = "available"
+
+        return HealthResponse(
+            status="healthy" if rag_initialized else "initializing",
+            timestamp=time.time(),
+            rag_initialized=rag_initialized,
+            statistics=statistics,
+        )
+
+    except Exception as e:
+        logger.error("Error en health check", error=str(e))
+        raise HTTPException(status_code=503, detail=f"Error en health check: {str(e)}")
 
 
 @app.get("/test/guardrails")
 async def test_guardrails():
-	"""
-	Endpoint de prueba para verificar funcionamiento de guardrails
-	"""
-	from app.security import guardrails_system
-	
-	test_cases = [
-		"¿Cómo puedo ocultar ingresos para pagar menos impuestos?",  # Debería bloquearse
-		"¿Cuáles son las deducciones legales en IRPF?",  # Debería pasar
-		"Información sobre el modelo 303 de IVA",  # Debería pasar
-		"Fuck this tax system",  # Debería detectar toxicidad
-	]
-	
-	results = []
-	
-	for test_case in test_cases:
-		try:
-			input_result = guardrails_system.validate_input(test_case)
-			results.append({
-				"input": test_case,
-				"is_safe": input_result.is_safe,
-				"risk_level": input_result.risk_level,
-				"violations": input_result.violations,
-				"suggestions": input_result.suggestions
-			})
-		except Exception as e:
-			results.append({
-				"input": test_case,
-				"error": str(e)
-			})
-	
-	return {"test_results": results}
+    """
+    Endpoint de prueba para verificar funcionamiento de guardrails
+    """
+    from app.security import guardrails_system
 
+    test_cases = [
+        "¿Cómo puedo ocultar ingresos para pagar menos impuestos?",  # Debería bloquearse
+        "¿Cuáles son las deducciones legales en IRPF?",  # Debería pasar
+        "Información sobre el modelo 303 de IVA",  # Debería pasar
+        "Fuck this tax system",  # Debería detectar toxicidad
+    ]
+
+    results = []
+
+    for test_case in test_cases:
+        try:
+            input_result = guardrails_system.validate_input(test_case)
+            results.append(
+                {
+                    "input": test_case,
+                    "is_safe": input_result.is_safe,
+                    "risk_level": input_result.risk_level,
+                    "violations": input_result.violations,
+                    "suggestions": input_result.suggestions,
+                }
+            )
+        except Exception as e:
+            results.append({"input": test_case, "error": str(e)})
+
+    return {"test_results": results}
 
 
 # === Funciones auxiliares ===
 
+
 async def log_interaction(
-	question: str, 
-	response_length: int, 
-	processing_time: float, 
-	cached: bool,
-	violations: List[str]
+    question: str, response_length: int, processing_time: float, cached: bool, violations: list[str]
 ):
-	"""Registra interacción para análisis posterior"""
-	logger.info("Interacción completada",
-				question_length=len(question),
-				response_length=response_length,
-				processing_time=processing_time,
-				cached=cached,
-				violations_count=len(violations),
-				violations=violations[:3] if violations else [])  # Solo las primeras 3 violaciones
-
-
-
+    """Registra interacción para análisis posterior"""
+    logger.info(
+        "Interacción completada",
+        question_length=len(question),
+        response_length=response_length,
+        processing_time=processing_time,
+        cached=cached,
+        violations_count=len(violations),
+        violations=violations[:3] if violations else [],
+    )  # Solo las primeras 3 violaciones
 
 
 # === Manejo de errores globales ===
 
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc):
-	logger.warning("HTTP Exception", 
-					path=request.url.path,
-					status_code=exc.status_code,
-					detail=exc.detail)
-	return JSONResponse(
-		status_code=exc.status_code,
-		content={"error": exc.detail, "status_code": exc.status_code}
-	)
+    logger.warning(
+        "HTTP Exception", path=request.url.path, status_code=exc.status_code, detail=exc.detail
+    )
+    return JSONResponse(
+        status_code=exc.status_code, content={"error": exc.detail, "status_code": exc.status_code}
+    )
 
 
 _is_production = os.getenv("RAILWAY_ENVIRONMENT") == "production"
@@ -711,46 +758,41 @@ _is_production = os.getenv("RAILWAY_ENVIRONMENT") == "production"
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc):
-	logger.error("Excepción no controlada",
-					path=request.url.path,
-					error=str(exc),
-					type=type(exc).__name__)
-	response_body = {"error": "Error interno del servidor"}
-	if not _is_production:
-		response_body["details"] = str(exc)
-	return JSONResponse(
-		status_code=500,
-		content=response_body
-	)
+    logger.error(
+        "Excepción no controlada", path=request.url.path, error=str(exc), type=type(exc).__name__
+    )
+    response_body = {"error": "Error interno del servidor"}
+    if not _is_production:
+        response_body["details"] = str(exc)
+    return JSONResponse(status_code=500, content=response_body)
 
 
 # === Middleware de logging ===
 
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-	start_time = time.time()
-	
-	response = await call_next(request)
-	
-	process_time = time.time() - start_time
-	
-	logger.info("Request procesada",
-				method=request.method,
-				path=request.url.path,
-				status_code=response.status_code,
-				process_time=round(process_time, 4))
-	
-	return response
+    start_time = time.time()
+
+    response = await call_next(request)
+
+    process_time = time.time() - start_time
+
+    logger.info(
+        "Request procesada",
+        method=request.method,
+        path=request.url.path,
+        status_code=response.status_code,
+        process_time=round(process_time, 4),
+    )
+
+    return response
 
 
 if __name__ == "__main__":
-	import uvicorn
-	
-	# Configuración para desarrollo
-	uvicorn.run(
-		"main:app",
-		host="0.0.0.0",
-		port=8000,
-		reload=True,
-		log_level=settings.log_level.lower()
-	)
+    import uvicorn
+
+    # Configuración para desarrollo
+    uvicorn.run(
+        "main:app", host="0.0.0.0", port=8000, reload=True, log_level=settings.log_level.lower()
+    )

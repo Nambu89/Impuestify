@@ -6,14 +6,16 @@ re-running these tests confirms the existing calculation is unaffected.
 
 Tolerancia: +-1 EUR en cuota_diferencial (o cuota_total si no hay retenciones).
 """
+
 import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_db(scales: list[dict], params: dict | None = None):
     """
@@ -39,7 +41,8 @@ def _make_db(scales: list[dict], params: dict | None = None):
                 scale_type = "foral"
 
             rows = [
-                s for s in scales
+                s
+                for s in scales
                 if (jurisdiction is None or s.get("jurisdiction") == jurisdiction)
                 and (year is None or s.get("year") == year)
                 and (scale_type is None or s.get("scale_type") == scale_type)
@@ -74,18 +77,66 @@ def _make_db(scales: list[dict], params: dict | None = None):
 def _estatal_scale(year: int = 2024) -> list[dict]:
     """IRPF 2024 estatal scale (art. 63 LIRPF)."""
     return [
-        {"jurisdiction": "Estatal", "year": year, "scale_type": "general",
-         "tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
-        {"jurisdiction": "Estatal", "year": year, "scale_type": "general",
-         "tramo_num": 2, "base_hasta": 20200, "cuota_integra": 1182.75, "resto_base": 7750, "tipo_aplicable": 12.0},
-        {"jurisdiction": "Estatal", "year": year, "scale_type": "general",
-         "tramo_num": 3, "base_hasta": 35200, "cuota_integra": 2112.75, "resto_base": 15000, "tipo_aplicable": 15.0},
-        {"jurisdiction": "Estatal", "year": year, "scale_type": "general",
-         "tramo_num": 4, "base_hasta": 60000, "cuota_integra": 4362.75, "resto_base": 24800, "tipo_aplicable": 18.5},
-        {"jurisdiction": "Estatal", "year": year, "scale_type": "general",
-         "tramo_num": 5, "base_hasta": 300000, "cuota_integra": 8950.75, "resto_base": 240000, "tipo_aplicable": 22.5},
-        {"jurisdiction": "Estatal", "year": year, "scale_type": "general",
-         "tramo_num": 6, "base_hasta": None, "cuota_integra": 62950.75, "resto_base": None, "tipo_aplicable": 24.5},
+        {
+            "jurisdiction": "Estatal",
+            "year": year,
+            "scale_type": "general",
+            "tramo_num": 1,
+            "base_hasta": 12450,
+            "cuota_integra": 0,
+            "resto_base": 12450,
+            "tipo_aplicable": 9.5,
+        },
+        {
+            "jurisdiction": "Estatal",
+            "year": year,
+            "scale_type": "general",
+            "tramo_num": 2,
+            "base_hasta": 20200,
+            "cuota_integra": 1182.75,
+            "resto_base": 7750,
+            "tipo_aplicable": 12.0,
+        },
+        {
+            "jurisdiction": "Estatal",
+            "year": year,
+            "scale_type": "general",
+            "tramo_num": 3,
+            "base_hasta": 35200,
+            "cuota_integra": 2112.75,
+            "resto_base": 15000,
+            "tipo_aplicable": 15.0,
+        },
+        {
+            "jurisdiction": "Estatal",
+            "year": year,
+            "scale_type": "general",
+            "tramo_num": 4,
+            "base_hasta": 60000,
+            "cuota_integra": 4362.75,
+            "resto_base": 24800,
+            "tipo_aplicable": 18.5,
+        },
+        {
+            "jurisdiction": "Estatal",
+            "year": year,
+            "scale_type": "general",
+            "tramo_num": 5,
+            "base_hasta": 300000,
+            "cuota_integra": 8950.75,
+            "resto_base": 240000,
+            "tipo_aplicable": 22.5,
+        },
+        {
+            "jurisdiction": "Estatal",
+            "year": year,
+            "scale_type": "general",
+            "tramo_num": 6,
+            "base_hasta": None,
+            "cuota_integra": 62950.75,
+            "resto_base": None,
+            "tipo_aplicable": 24.5,
+        },
     ]
 
 
@@ -93,57 +144,209 @@ def _autonomica_scale(ccaa: str, year: int = 2024) -> list[dict]:
     """Generic autonómica scale similar to Madrid (one of the lowest)."""
     if ccaa == "Madrid":
         return [
-            {"jurisdiction": "Madrid", "year": year, "scale_type": "general",
-             "tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 8.5},
-            {"jurisdiction": "Madrid", "year": year, "scale_type": "general",
-             "tramo_num": 2, "base_hasta": 17707.2, "cuota_integra": 1058.25, "resto_base": 5257.2, "tipo_aplicable": 10.7},
-            {"jurisdiction": "Madrid", "year": year, "scale_type": "general",
-             "tramo_num": 3, "base_hasta": 33007.2, "cuota_integra": 1620.74, "resto_base": 15300, "tipo_aplicable": 12.8},
-            {"jurisdiction": "Madrid", "year": year, "scale_type": "general",
-             "tramo_num": 4, "base_hasta": 53407.2, "cuota_integra": 3578.94, "resto_base": 20400, "tipo_aplicable": 17.4},
-            {"jurisdiction": "Madrid", "year": year, "scale_type": "general",
-             "tramo_num": 5, "base_hasta": None, "cuota_integra": 7127.54, "resto_base": None, "tipo_aplicable": 20.5},
+            {
+                "jurisdiction": "Madrid",
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 1,
+                "base_hasta": 12450,
+                "cuota_integra": 0,
+                "resto_base": 12450,
+                "tipo_aplicable": 8.5,
+            },
+            {
+                "jurisdiction": "Madrid",
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 2,
+                "base_hasta": 17707.2,
+                "cuota_integra": 1058.25,
+                "resto_base": 5257.2,
+                "tipo_aplicable": 10.7,
+            },
+            {
+                "jurisdiction": "Madrid",
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 3,
+                "base_hasta": 33007.2,
+                "cuota_integra": 1620.74,
+                "resto_base": 15300,
+                "tipo_aplicable": 12.8,
+            },
+            {
+                "jurisdiction": "Madrid",
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 4,
+                "base_hasta": 53407.2,
+                "cuota_integra": 3578.94,
+                "resto_base": 20400,
+                "tipo_aplicable": 17.4,
+            },
+            {
+                "jurisdiction": "Madrid",
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 5,
+                "base_hasta": None,
+                "cuota_integra": 7127.54,
+                "resto_base": None,
+                "tipo_aplicable": 20.5,
+            },
         ]
     elif ccaa in ("Sevilla", "Andalucia", "Andalucía"):
         return [
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 2, "base_hasta": 20200, "cuota_integra": 1182.75, "resto_base": 7750, "tipo_aplicable": 12.0},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 3, "base_hasta": 35200, "cuota_integra": 2112.75, "resto_base": 15000, "tipo_aplicable": 14.0},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 4, "base_hasta": None, "cuota_integra": 4212.75, "resto_base": None, "tipo_aplicable": 18.5},
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 1,
+                "base_hasta": 12450,
+                "cuota_integra": 0,
+                "resto_base": 12450,
+                "tipo_aplicable": 9.5,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 2,
+                "base_hasta": 20200,
+                "cuota_integra": 1182.75,
+                "resto_base": 7750,
+                "tipo_aplicable": 12.0,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 3,
+                "base_hasta": 35200,
+                "cuota_integra": 2112.75,
+                "resto_base": 15000,
+                "tipo_aplicable": 14.0,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 4,
+                "base_hasta": None,
+                "cuota_integra": 4212.75,
+                "resto_base": None,
+                "tipo_aplicable": 18.5,
+            },
         ]
     elif ccaa in ("Valencia", "Comunitat Valenciana"):
         return [
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 2, "base_hasta": 20200, "cuota_integra": 1182.75, "resto_base": 7750, "tipo_aplicable": 12.0},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 3, "base_hasta": 35200, "cuota_integra": 2112.75, "resto_base": 15000, "tipo_aplicable": 15.0},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 4, "base_hasta": None, "cuota_integra": 4362.75, "resto_base": None, "tipo_aplicable": 18.5},
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 1,
+                "base_hasta": 12450,
+                "cuota_integra": 0,
+                "resto_base": 12450,
+                "tipo_aplicable": 9.5,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 2,
+                "base_hasta": 20200,
+                "cuota_integra": 1182.75,
+                "resto_base": 7750,
+                "tipo_aplicable": 12.0,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 3,
+                "base_hasta": 35200,
+                "cuota_integra": 2112.75,
+                "resto_base": 15000,
+                "tipo_aplicable": 15.0,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 4,
+                "base_hasta": None,
+                "cuota_integra": 4362.75,
+                "resto_base": None,
+                "tipo_aplicable": 18.5,
+            },
         ]
     elif ccaa in ("Barcelona", "Cataluna", "Cataluña"):
         return [
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 1, "base_hasta": 17707.2, "cuota_integra": 0, "resto_base": 17707.2, "tipo_aplicable": 10.5},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 2, "base_hasta": 33007.2, "cuota_integra": 1859.26, "resto_base": 15300, "tipo_aplicable": 12.5},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 3, "base_hasta": None, "cuota_integra": 3772.76, "resto_base": None, "tipo_aplicable": 21.5},
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 1,
+                "base_hasta": 17707.2,
+                "cuota_integra": 0,
+                "resto_base": 17707.2,
+                "tipo_aplicable": 10.5,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 2,
+                "base_hasta": 33007.2,
+                "cuota_integra": 1859.26,
+                "resto_base": 15300,
+                "tipo_aplicable": 12.5,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 3,
+                "base_hasta": None,
+                "cuota_integra": 3772.76,
+                "resto_base": None,
+                "tipo_aplicable": 21.5,
+            },
         ]
     else:
         # Generic fallback (same as estatal)
         return [
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 2, "base_hasta": 20200, "cuota_integra": 1182.75, "resto_base": 7750, "tipo_aplicable": 12.0},
-            {"jurisdiction": ccaa, "year": year, "scale_type": "general",
-             "tramo_num": 3, "base_hasta": None, "cuota_integra": 2112.75, "resto_base": None, "tipo_aplicable": 15.0},
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 1,
+                "base_hasta": 12450,
+                "cuota_integra": 0,
+                "resto_base": 12450,
+                "tipo_aplicable": 9.5,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 2,
+                "base_hasta": 20200,
+                "cuota_integra": 1182.75,
+                "resto_base": 7750,
+                "tipo_aplicable": 12.0,
+            },
+            {
+                "jurisdiction": ccaa,
+                "year": year,
+                "scale_type": "general",
+                "tramo_num": 3,
+                "base_hasta": None,
+                "cuota_integra": 2112.75,
+                "resto_base": None,
+                "tipo_aplicable": 15.0,
+            },
         ]
 
 
@@ -151,27 +354,99 @@ def _foral_scale(jurisdiction: str, year: int = 2024) -> list[dict]:
     """Simplified foral scale (7 tramos vasco / 11 navarra — using simplified here for tests)."""
     if jurisdiction in ("Bizkaia", "Araba", "Gipuzkoa"):
         return [
-            {"jurisdiction": jurisdiction, "year": year, "scale_type": "foral",
-             "tramo_num": 1, "base_hasta": 12500, "cuota_integra": 0, "resto_base": 12500, "tipo_aplicable": 23.0},
-            {"jurisdiction": jurisdiction, "year": year, "scale_type": "foral",
-             "tramo_num": 2, "base_hasta": 20000, "cuota_integra": 2875, "resto_base": 7500, "tipo_aplicable": 28.0},
-            {"jurisdiction": jurisdiction, "year": year, "scale_type": "foral",
-             "tramo_num": 3, "base_hasta": 30000, "cuota_integra": 4975, "resto_base": 10000, "tipo_aplicable": 35.0},
-            {"jurisdiction": jurisdiction, "year": year, "scale_type": "foral",
-             "tramo_num": 4, "base_hasta": 60000, "cuota_integra": 8475, "resto_base": 30000, "tipo_aplicable": 40.0},
-            {"jurisdiction": jurisdiction, "year": year, "scale_type": "foral",
-             "tramo_num": 5, "base_hasta": None, "cuota_integra": 20475, "resto_base": None, "tipo_aplicable": 49.0},
+            {
+                "jurisdiction": jurisdiction,
+                "year": year,
+                "scale_type": "foral",
+                "tramo_num": 1,
+                "base_hasta": 12500,
+                "cuota_integra": 0,
+                "resto_base": 12500,
+                "tipo_aplicable": 23.0,
+            },
+            {
+                "jurisdiction": jurisdiction,
+                "year": year,
+                "scale_type": "foral",
+                "tramo_num": 2,
+                "base_hasta": 20000,
+                "cuota_integra": 2875,
+                "resto_base": 7500,
+                "tipo_aplicable": 28.0,
+            },
+            {
+                "jurisdiction": jurisdiction,
+                "year": year,
+                "scale_type": "foral",
+                "tramo_num": 3,
+                "base_hasta": 30000,
+                "cuota_integra": 4975,
+                "resto_base": 10000,
+                "tipo_aplicable": 35.0,
+            },
+            {
+                "jurisdiction": jurisdiction,
+                "year": year,
+                "scale_type": "foral",
+                "tramo_num": 4,
+                "base_hasta": 60000,
+                "cuota_integra": 8475,
+                "resto_base": 30000,
+                "tipo_aplicable": 40.0,
+            },
+            {
+                "jurisdiction": jurisdiction,
+                "year": year,
+                "scale_type": "foral",
+                "tramo_num": 5,
+                "base_hasta": None,
+                "cuota_integra": 20475,
+                "resto_base": None,
+                "tipo_aplicable": 49.0,
+            },
         ]
     elif jurisdiction == "Navarra":
         return [
-            {"jurisdiction": "Navarra", "year": year, "scale_type": "foral",
-             "tramo_num": 1, "base_hasta": 12500, "cuota_integra": 0, "resto_base": 12500, "tipo_aplicable": 13.0},
-            {"jurisdiction": "Navarra", "year": year, "scale_type": "foral",
-             "tramo_num": 2, "base_hasta": 30000, "cuota_integra": 1625, "resto_base": 17500, "tipo_aplicable": 23.0},
-            {"jurisdiction": "Navarra", "year": year, "scale_type": "foral",
-             "tramo_num": 3, "base_hasta": 60000, "cuota_integra": 5650, "resto_base": 30000, "tipo_aplicable": 33.0},
-            {"jurisdiction": "Navarra", "year": year, "scale_type": "foral",
-             "tramo_num": 4, "base_hasta": None, "cuota_integra": 15550, "resto_base": None, "tipo_aplicable": 52.0},
+            {
+                "jurisdiction": "Navarra",
+                "year": year,
+                "scale_type": "foral",
+                "tramo_num": 1,
+                "base_hasta": 12500,
+                "cuota_integra": 0,
+                "resto_base": 12500,
+                "tipo_aplicable": 13.0,
+            },
+            {
+                "jurisdiction": "Navarra",
+                "year": year,
+                "scale_type": "foral",
+                "tramo_num": 2,
+                "base_hasta": 30000,
+                "cuota_integra": 1625,
+                "resto_base": 17500,
+                "tipo_aplicable": 23.0,
+            },
+            {
+                "jurisdiction": "Navarra",
+                "year": year,
+                "scale_type": "foral",
+                "tramo_num": 3,
+                "base_hasta": 60000,
+                "cuota_integra": 5650,
+                "resto_base": 30000,
+                "tipo_aplicable": 33.0,
+            },
+            {
+                "jurisdiction": "Navarra",
+                "year": year,
+                "scale_type": "foral",
+                "tramo_num": 4,
+                "base_hasta": None,
+                "cuota_integra": 15550,
+                "resto_base": None,
+                "tipo_aplicable": 52.0,
+            },
         ]
     return []
 
@@ -226,8 +501,8 @@ def _default_params() -> dict:
 
 async def _run_simulation(jurisdiction: str, year: int = 2024, **kwargs):
     """Run IRPFSimulator.simulate() with mocked DB + scales."""
-    from app.utils.irpf_simulator import IRPFSimulator
     from app.utils.ccaa_constants import normalize_ccaa
+    from app.utils.irpf_simulator import IRPFSimulator
 
     # Normalize jurisdiction so mock scale rows match what the simulator queries
     # (e.g. "Andalucia" → "Andalucía" with tilde)
@@ -263,14 +538,15 @@ TOLERANCE = 1.0  # EUR
 
 def _approx(expected: float, actual: float, label: str) -> None:
     diff = abs(actual - expected)
-    assert diff <= TOLERANCE, (
-        f"{label}: expected {expected:.2f}, got {actual:.2f}, diff={diff:.2f} > {TOLERANCE}"
-    )
+    assert (
+        diff <= TOLERANCE
+    ), f"{label}: expected {expected:.2f}, got {actual:.2f}, diff={diff:.2f} > {TOLERANCE}"
 
 
 # ---------------------------------------------------------------------------
 # Scenario tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_01_asalariado_madrid_30k_sin_deducciones():
@@ -283,7 +559,9 @@ async def test_01_asalariado_madrid_30k_sin_deducciones():
     # Store baseline on first run — assert correctness of calculation structure
     cuota_total = result["cuota_total"]
     assert cuota_total > 0, "cuota_total debe ser positiva"
-    assert result["base_imponible_general"] < 30000, "base debe ser menor que ingreso bruto (SS + gastos)"
+    assert (
+        result["base_imponible_general"] < 30000
+    ), "base debe ser menor que ingreso bruto (SS + gastos)"
     # No retenciones passed → cuota_diferencial == cuota_total
     assert abs(result["cuota_diferencial"] - cuota_total) < 0.01
     # Store for regression (fixed after first run)
@@ -309,9 +587,9 @@ async def test_02_asalariado_madrid_30k_2hijos_hipoteca():
     )
     assert result["success"] is True
     # With kids + hipoteca, cuota should be LOWER than without
-    assert result["cuota_total"] < result_base["cuota_total"], (
-        "Con hijos + hipoteca, cuota debe ser menor"
-    )
+    assert (
+        result["cuota_total"] < result_base["cuota_total"]
+    ), "Con hijos + hipoteca, cuota debe ser menor"
     assert result["deduccion_vivienda_pre2013"] > 0
     # MPYF should include 2 descendants
     assert result["mpyf"]["mpyf_estatal"] > result_base["mpyf"]["mpyf_estatal"]
@@ -516,6 +794,7 @@ async def test_12_conjunta_monoparental_andalucia():
 # ---------------------------------------------------------------------------
 # Quick sanity: regression snapshots (fixed expected values after first run)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_regression_snapshot_01_cuota_positiva():

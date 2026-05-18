@@ -2,9 +2,20 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
 import {
-    ArrowRight, CheckCircle, X, ChevronLeft, Zap,
-    FileText, Calculator, Shield, ChevronDown, Heart,
-    Building2, Award, Calendar, BookOpen
+    ArrowRight,
+    CheckCircle,
+    X,
+    ChevronLeft,
+    Zap,
+    FileText,
+    Calculator,
+    Shield,
+    ChevronDown,
+    Heart,
+    Building2,
+    Award,
+    Calendar,
+    BookOpen,
 } from 'lucide-react'
 import FadeContent from '../components/reactbits/FadeContent'
 import SpotlightCard from '../components/reactbits/SpotlightCard'
@@ -87,9 +98,11 @@ export default function FarmaciasPage() {
 
     useSEO({
         title: 'Fiscalidad para farmacias y farmacéuticos — Impuestify',
-        description: 'Cómo gestionar los impuestos de una farmacia: recargo de equivalencia, IRPF por estimación directa, amortización del fondo de comercio y gastos propios.',
+        description:
+            'Cómo gestionar los impuestos de una farmacia: recargo de equivalencia, IRPF por estimación directa, amortización del fondo de comercio y gastos propios.',
         canonical: '/farmacias',
-        keywords: 'impuestos farmacia, recargo equivalencia farmacia, IRPF farmacéutico, deducciones farmacia, IVA medicamentos',
+        keywords:
+            'impuestos farmacia, recargo equivalencia farmacia, IRPF farmacéutico, deducciones farmacia, IVA medicamentos',
         schema: {
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
@@ -98,8 +111,8 @@ export default function FarmaciasPage() {
             applicationCategory: 'FinanceApplication',
             operatingSystem: 'Web',
             offers: { '@type': 'Offer', price: '39', priceCurrency: 'EUR' },
-            author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' }
-        }
+            author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' },
+        },
     })
 
     return (
@@ -140,13 +153,16 @@ export default function FarmaciasPage() {
                             </GradientText>
                         </h1>
                         <p className="farmacias-hero__subtitle">
-                            Recargo de Equivalencia, IRPF y deducciones específicas de la oficina de farmacia
-                            en una sola herramienta.
+                            Recargo de Equivalencia, IRPF y deducciones específicas de la oficina de
+                            farmacia en una sola herramienta.
                         </p>
                     </FadeContent>
                     <FadeContent delay={200} duration={600}>
                         <div className="farmacias-hero__actions">
-                            <Link to="/register" className="btn btn-primary btn-lg farmacias-hero__cta">
+                            <Link
+                                to="/register"
+                                className="btn btn-primary btn-lg farmacias-hero__cta"
+                            >
                                 Empieza gratis
                                 <ArrowRight size={20} />
                             </Link>
@@ -164,7 +180,8 @@ export default function FarmaciasPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Lo que te ahorras</h2>
                         <p className="section-subtitle">
-                            La fiscalidad de la farmacia tiene matices que los asesores generalistas suelen pasar por alto.
+                            La fiscalidad de la farmacia tiene matices que los asesores generalistas
+                            suelen pasar por alto.
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -194,7 +211,8 @@ export default function FarmaciasPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Qué incluye</h2>
                         <p className="section-subtitle">
-                            Plan Autónomo, 39 EUR/mes con IVA. Lo que necesitas como titular de la oficina de farmacia.
+                            Plan Autónomo, 39 EUR/mes con IVA. Lo que necesitas como titular de la
+                            oficina de farmacia.
                         </p>
                     </FadeContent>
                     <div className="farmacias-features__grid">
@@ -225,7 +243,8 @@ export default function FarmaciasPage() {
                     <FadeContent delay={0} duration={500}>
                         <h2 className="section-title">Lo que cuesta una asesoría especializada</h2>
                         <p className="section-subtitle">
-                            Las asesorías especializadas en farmacia cobran entre 200 y 400 EUR al mes.
+                            Las asesorías especializadas en farmacia cobran entre 200 y 400 EUR al
+                            mes.
                         </p>
                     </FadeContent>
                     <FadeContent delay={100} duration={600}>
@@ -241,15 +260,36 @@ export default function FarmaciasPage() {
                                     <span className="farmacias-pricing__currency">EUR/mes</span>
                                 </div>
                                 <ul className="farmacias-pricing__list">
-                                    <li><X size={16} className="farmacias-pricing__icon-no" /><span>Horario de oficina</span></li>
-                                    <li><X size={16} className="farmacias-pricing__icon-no" /><span>Sin IA ni respuestas inmediatas</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-yes" /><span>Conocimiento fiscal farmacéutico</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-yes" /><span>Presentación de modelos</span></li>
+                                    <li>
+                                        <X size={16} className="farmacias-pricing__icon-no" />
+                                        <span>Horario de oficina</span>
+                                    </li>
+                                    <li>
+                                        <X size={16} className="farmacias-pricing__icon-no" />
+                                        <span>Sin IA ni respuestas inmediatas</span>
+                                    </li>
+                                    <li>
+                                        <CheckCircle
+                                            size={16}
+                                            className="farmacias-pricing__icon-yes"
+                                        />
+                                        <span>Conocimiento fiscal farmacéutico</span>
+                                    </li>
+                                    <li>
+                                        <CheckCircle
+                                            size={16}
+                                            className="farmacias-pricing__icon-yes"
+                                        />
+                                        <span>Presentación de modelos</span>
+                                    </li>
                                 </ul>
                             </div>
 
                             {/* Impuestify */}
-                            <SpotlightCard className="farmacias-pricing__card farmacias-pricing__card--impuestify" spotlightColor="rgba(5, 150, 105, 0.12)">
+                            <SpotlightCard
+                                className="farmacias-pricing__card farmacias-pricing__card--impuestify"
+                                spotlightColor="rgba(5, 150, 105, 0.12)"
+                            >
                                 <div className="farmacias-pricing__badge">
                                     <Zap size={13} />
                                     Recomendado
@@ -260,15 +300,53 @@ export default function FarmaciasPage() {
                                 </div>
                                 <div className="farmacias-pricing__amount">
                                     <span className="farmacias-pricing__value">39</span>
-                                    <span className="farmacias-pricing__currency">EUR/mes <small>IVA incl.</small></span>
+                                    <span className="farmacias-pricing__currency">
+                                        EUR/mes <small>IVA incl.</small>
+                                    </span>
                                 </div>
                                 <ul className="farmacias-pricing__list">
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Disponible 24/7</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>IA especializada en farmacias</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Recargo de Equivalencia automático</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Deducciones específicas farmacéuticas</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Simulador IRPF con fondo de comercio</span></li>
-                                    <li><CheckCircle size={16} className="farmacias-pricing__icon-highlight" /><span>Calendario fiscal personalizado</span></li>
+                                    <li>
+                                        <CheckCircle
+                                            size={16}
+                                            className="farmacias-pricing__icon-highlight"
+                                        />
+                                        <span>Disponible 24/7</span>
+                                    </li>
+                                    <li>
+                                        <CheckCircle
+                                            size={16}
+                                            className="farmacias-pricing__icon-highlight"
+                                        />
+                                        <span>IA especializada en farmacias</span>
+                                    </li>
+                                    <li>
+                                        <CheckCircle
+                                            size={16}
+                                            className="farmacias-pricing__icon-highlight"
+                                        />
+                                        <span>Recargo de Equivalencia automático</span>
+                                    </li>
+                                    <li>
+                                        <CheckCircle
+                                            size={16}
+                                            className="farmacias-pricing__icon-highlight"
+                                        />
+                                        <span>Deducciones específicas farmacéuticas</span>
+                                    </li>
+                                    <li>
+                                        <CheckCircle
+                                            size={16}
+                                            className="farmacias-pricing__icon-highlight"
+                                        />
+                                        <span>Simulador IRPF con fondo de comercio</span>
+                                    </li>
+                                    <li>
+                                        <CheckCircle
+                                            size={16}
+                                            className="farmacias-pricing__icon-highlight"
+                                        />
+                                        <span>Calendario fiscal personalizado</span>
+                                    </li>
                                 </ul>
                                 <Link to="/register" className="btn btn-lg farmacias-pricing__cta">
                                     Empieza por 39 EUR/mes
@@ -277,7 +355,8 @@ export default function FarmaciasPage() {
                             </SpotlightCard>
                         </div>
                         <p className="farmacias-pricing__savings">
-                            <strong>Ahorro de hasta 4.300 EUR al año</strong> frente a una asesoría especializada en farmacia.
+                            <strong>Ahorro de hasta 4.300 EUR al año</strong> frente a una asesoría
+                            especializada en farmacia.
                         </p>
                         <p className="farmacias-pricing__note">
                             Sin permanencia. Cancelas cuando quieras. Pago con Stripe.
@@ -334,10 +413,14 @@ export default function FarmaciasPage() {
                                 <BookOpen size={28} />
                             </div>
                             <div className="farmacias-re-info__content">
-                                <h3 className="farmacias-re-info__title">Recargo de Equivalencia en breve</h3>
+                                <h3 className="farmacias-re-info__title">
+                                    Recargo de Equivalencia en breve
+                                </h3>
                                 <p className="farmacias-re-info__desc">
-                                    Artículos 154-163 de la LIVA. El proveedor te cobra IVA más RE (0,5 % al 4 %, 1,4 % al 10 %, 5,2 % al 21 %).
-                                    Tú no presentas el 303 ni llevas libros registro de IVA. Sí presentas el 130/131 por IRPF.
+                                    Artículos 154-163 de la LIVA. El proveedor te cobra IVA más RE
+                                    (0,5 % al 4 %, 1,4 % al 10 %, 5,2 % al 21 %). Tú no presentas el
+                                    303 ni llevas libros registro de IVA. Sí presentas el 130/131
+                                    por IRPF.
                                 </p>
                             </div>
                         </div>
@@ -355,8 +438,8 @@ export default function FarmaciasPage() {
                             </div>
                             <h2>Prueba Impuestify en tu farmacia</h2>
                             <p>
-                                Asistente fiscal con IA que entiende el Recargo de Equivalencia, el fondo de comercio
-                                y las deducciones propias del sector farmacéutico.
+                                Asistente fiscal con IA que entiende el Recargo de Equivalencia, el
+                                fondo de comercio y las deducciones propias del sector farmacéutico.
                             </p>
                             <Link to="/register" className="btn btn-lg farmacias-cta__btn">
                                 Empieza gratis

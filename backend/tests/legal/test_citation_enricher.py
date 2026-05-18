@@ -3,6 +3,7 @@
 Critical regression: invented citations (NOT in registry) must NEVER
 produce a bogus link to BOE. They must stay as plain text.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -123,7 +124,7 @@ Texto despues Ley 37/1992 aqui."""
     # El de fuera SÍ se linkea; el de dentro de la fenced NO.
     assert out.count("[Ley 37/1992]") == 2  # antes y despues, NO dentro
     # El bloque de código sigue intacto.
-    assert '# Comentario con Ley 37/1992 dentro de codigo' in out
+    assert "# Comentario con Ley 37/1992 dentro de codigo" in out
     assert 'ley = "Ley 37/1992"' in out
 
 
@@ -144,6 +145,7 @@ def test_enricher_empty_text():
 
 def test_singleton_returns_same_instance():
     from app.services.legal.citation_enricher import reset_citation_enricher
+
     reset_citation_enricher()
     a = get_citation_enricher()
     b = get_citation_enricher()

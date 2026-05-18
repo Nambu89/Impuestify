@@ -14,6 +14,7 @@ Base normativa (resuelta por el RAG verificador, no por la regla — invariante
       metodo (objetivo y estimacion directa) tras la STC 182/2021 de 26 de
       octubre que declaro inconstitucional el metodo objetivo unico.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -24,7 +25,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 _CITA_SEMANTICA = (
     "Opcion del contribuyente por el metodo de determinacion de la base "
@@ -80,11 +80,7 @@ def evaluar(
         return None
 
     doc = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDACION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDACION),
         None,
     )
     if doc is None:

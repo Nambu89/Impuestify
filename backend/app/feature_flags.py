@@ -5,9 +5,10 @@ Simple JSON-based feature flags for local development.
 Reads from .feature_flags.json in the project root.
 In production (Railway), all flags default to True unless overridden by env vars.
 """
+
 import json
-import os
 import logging
+import os
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

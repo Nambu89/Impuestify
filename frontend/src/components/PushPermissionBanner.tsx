@@ -28,8 +28,8 @@ export default function PushPermissionBanner({ onDismiss }: PushPermissionBanner
             <div className="push-banner push-banner--denied">
                 <BellOff size={18} className="push-banner__icon" />
                 <p className="push-banner__text">
-                    Notificaciones bloqueadas. Activalas en los ajustes de tu navegador para
-                    recibir alertas de plazos fiscales.
+                    Notificaciones bloqueadas. Activalas en los ajustes de tu navegador para recibir
+                    alertas de plazos fiscales.
                 </p>
                 <button
                     className="push-banner__dismiss"
@@ -52,11 +52,7 @@ export default function PushPermissionBanner({ onDismiss }: PushPermissionBanner
                 </p>
                 {error && <p className="push-banner__error">{error}</p>}
             </div>
-            <button
-                className="push-banner__action"
-                onClick={() => subscribe()}
-                disabled={loading}
-            >
+            <button className="push-banner__action" onClick={() => subscribe()} disabled={loading}>
                 {loading ? 'Activando...' : 'Activar'}
             </button>
             <button

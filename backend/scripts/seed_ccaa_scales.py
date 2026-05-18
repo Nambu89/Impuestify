@@ -8,6 +8,7 @@ Sources:
 Usage:
     python scripts/seed_ccaa_scales.py
 """
+
 import asyncio
 import os
 import sys
@@ -18,10 +19,10 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from dotenv import load_dotenv
+
 load_dotenv(backend_dir.parent / ".env")
 
 from app.database.turso_client import TursoClient
-
 
 # Format: (tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable)
 
@@ -211,8 +212,17 @@ async def main():
                     "INSERT INTO irpf_scales (id, jurisdiction, year, scale_type, tramo_num, "
                     "base_hasta, cuota_integra, resto_base, tipo_aplicable) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    [str(uuid.uuid4()), ccaa, year, "general", tramo_num,
-                     base_hasta, cuota_integra, resto_base, tipo],
+                    [
+                        str(uuid.uuid4()),
+                        ccaa,
+                        year,
+                        "general",
+                        tramo_num,
+                        base_hasta,
+                        cuota_integra,
+                        resto_base,
+                        tipo,
+                    ],
                 )
                 total += 1
             print(f"  {ccaa:25s}: {len(tramos)} tramos ({tramos[0][4]}% - {tramos[-1][4]}%)")
@@ -230,14 +240,16 @@ async def main():
         "GROUP BY jurisdiction, year ORDER BY jurisdiction"
     )
     for row in result.rows:
-        print(f"  {row['jurisdiction']:25s}: {row['cnt']:>2d} tramos  ({row['min_rate']:.1f}% - {row['max_rate']:.1f}%)")
+        print(
+            f"  {row['jurisdiction']:25s}: {row['cnt']:>2d} tramos  ({row['min_rate']:.1f}% - {row['max_rate']:.1f}%)"
+        )
 
     # Quick sanity: Aragon base ~26540 should give ~3200 autonomous
     print("\nSanity check: Aragon base=26540 (Fernando's case)")
     # Tramo 1: 13072.50 × 9.5% = 1241.89
     # Tramo 2: 8137.50 × 12% = 976.50 → acum 2218.39
     # Tramo 3: 26540-21210 = 5330 × 15% = 799.50 → acum 3017.89
-    print(f"  Expected autonomous cuota: ~3,018 EUR")
+    print("  Expected autonomous cuota: ~3,018 EUR")
 
     await db.disconnect()
     print("\nDone!")

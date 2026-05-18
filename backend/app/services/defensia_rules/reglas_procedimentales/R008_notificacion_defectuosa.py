@@ -25,9 +25,10 @@ generico ("notificacion defectuosa por incumplimiento de requisitos formales
 esenciales"). El verificador RAG la traduce al texto normativo exacto contra
 el corpus indexado.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from app.models.defensia import (
     ArgumentoCandidato,
@@ -38,7 +39,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Cita semantica — describe el concepto juridico, nunca el articulo.
 # El RAG verificador la traducira a "Arts. 109-112 LGT + art. 41 Ley 39/2015
@@ -67,7 +67,7 @@ _TIPOS_ACTO_NOTIFICABLE: frozenset[TipoDocumento] = frozenset(
 )
 
 
-def _detecta_defecto(datos: dict[str, Any]) -> Optional[str]:
+def _detecta_defecto(datos: dict[str, Any]) -> str | None:
     """Inspecciona los `datos` de un documento y devuelve el codigo del
     defecto de notificacion detectado, o None si la notificacion es correcta.
 
@@ -90,11 +90,7 @@ def _detecta_defecto(datos: dict[str, Any]) -> Optional[str]:
     if canal == "POSTAL":
         intentos = datos.get("numero_intentos")
         acuse = datos.get("acuse_recibido")
-        if (
-            isinstance(intentos, int)
-            and intentos < 2
-            and acuse is False
-        ):
+        if isinstance(intentos, int) and intentos < 2 and acuse is False:
             return "postal_sin_segundo_intento"
 
     return None
@@ -159,7 +155,7 @@ def _descripcion_por_motivo(motivo: str) -> str:
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,  # noqa: ARG001 — brief no usado, la regla es puramente documental
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R008 sobre el expediente.
 
     Recorre el timeline buscando actos administrativos notificables con
@@ -185,15 +181,13 @@ def evaluar(
         # Anadimos solo los campos relevantes al motivo concreto para dar
         # contexto al escrito posterior sin inflar el payload.
         if motivo == "dehu_sin_puesta_disposicion_efectiva":
-            datos_disparo["puesta_disposicion_efectiva"] = (
-                datos.get("puesta_disposicion_efectiva")
-            )
+            datos_disparo["puesta_disposicion_efectiva"] = datos.get("puesta_disposicion_efectiva")
         elif motivo == "postal_sin_segundo_intento":
             datos_disparo["numero_intentos"] = datos.get("numero_intentos")
             datos_disparo["acuse_recibido"] = datos.get("acuse_recibido")
         elif motivo == "domicilio_no_coincide_con_registro":
-            datos_disparo["domicilio_coincide_con_registro"] = (
-                datos.get("domicilio_coincide_con_registro")
+            datos_disparo["domicilio_coincide_con_registro"] = datos.get(
+                "domicilio_coincide_con_registro"
             )
 
         return ArgumentoCandidato(

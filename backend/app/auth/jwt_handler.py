@@ -3,13 +3,14 @@ JWT Token Handler for Impuestify
 
 Implements JWT-based authentication with access and refresh tokens.
 """
-import os
+
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any
+import os
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
@@ -21,51 +22,50 @@ ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
+
 class TokenData(BaseModel):
     """Token payload data"""
+
     user_id: str
-    email: Optional[str] = None
-    exp: Optional[datetime] = None
-    jti: Optional[str] = None  # for refresh-token rotation tracking
+    email: str | None = None
+    exp: datetime | None = None
+    jti: str | None = None  # for refresh-token rotation tracking
 
 
 class TokenResponse(BaseModel):
     """Token response model"""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int
 
 
-def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     """
     Create a new access token.
-    
+
     Args:
         data: Payload data to encode in the token
         expires_delta: Custom expiration time
-        
+
     Returns:
         Encoded JWT token string
     """
     to_encode = data.copy()
-    
+
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.now(timezone.utc),
-        "type": "access"
-    })
-    
+        expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    to_encode.update({"exp": expire, "iat": datetime.now(UTC), "type": "access"})
+
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-def create_refresh_token(data: Dict[str, Any], jti: Optional[str] = None) -> str:
+def create_refresh_token(data: dict[str, Any], jti: str | None = None) -> str:
     """
     Create a new refresh token.
 
@@ -84,27 +84,29 @@ def create_refresh_token(data: Dict[str, Any], jti: Optional[str] = None) -> str
     import uuid as _uuid
 
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now(UTC) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.now(timezone.utc),
-        "type": "refresh",
-        "jti": jti or str(_uuid.uuid4()),
-    })
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": datetime.now(UTC),
+            "type": "refresh",
+            "jti": jti or str(_uuid.uuid4()),
+        }
+    )
 
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-def verify_token(token: str, token_type: str = "access") -> Optional[TokenData]:
+def verify_token(token: str, token_type: str = "access") -> TokenData | None:
     """
     Verify and decode a JWT token.
-    
+
     Args:
         token: JWT token string
         token_type: Expected token type ("access" or "refresh")
-        
+
     Returns:
         TokenData if valid, None otherwise
     """
@@ -139,30 +141,30 @@ def verify_token(token: str, token_type: str = "access") -> Optional[TokenData]:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())
+    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
 ) -> TokenData:
     """
     FastAPI dependency to get the current authenticated user (REQUIRED).
-    
+
     Args:
         credentials: HTTP Bearer credentials from the Authorization header
-        
+
     Returns:
         TokenData if authenticated
-        
+
     Raises:
         HTTPException 401: If token is missing, invalid or expired
     """
     token = credentials.credentials
     token_data = verify_token(token, token_type="access")
-    
+
     if token_data is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido o expirado",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     return token_data
 
 
@@ -190,8 +192,8 @@ def create_mfa_token(user_id: str, email: str) -> str:
             "sub": user_id,
             "email": email,
             "type": "mfa_pending",
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
-            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(UTC) + timedelta(minutes=5),
+            "iat": datetime.now(UTC),
         },
         SECRET_KEY,
         algorithm=ALGORITHM,
@@ -217,8 +219,8 @@ def create_reset_token(user_id: str, email: str) -> str:
             "sub": user_id,
             "email": email,
             "type": "reset",
-            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
-            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(UTC) + timedelta(hours=1),
+            "iat": datetime.now(UTC),
         },
         SECRET_KEY,
         algorithm=ALGORITHM,
@@ -253,6 +255,7 @@ async def issue_tokens_with_rotation(user_id: str, email: str) -> TokenResponse:
     rotation store so future /auth/refresh calls can detect reuse.
     """
     import uuid as _uuid
+
     from app.auth.refresh_token_store import refresh_token_store
 
     token_data = {"sub": user_id, "email": email}
@@ -261,7 +264,9 @@ async def issue_tokens_with_rotation(user_id: str, email: str) -> TokenResponse:
     refresh_token = create_refresh_token(token_data, jti=new_jti)
     try:
         await refresh_token_store.register(
-            jti=new_jti, user_id=user_id, raw_token=refresh_token,
+            jti=new_jti,
+            user_id=user_id,
+            raw_token=refresh_token,
             ttl_days=REFRESH_TOKEN_EXPIRE_DAYS,
         )
     except Exception as e:

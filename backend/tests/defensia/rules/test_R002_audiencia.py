@@ -20,9 +20,10 @@ Excepciones (NO dispara):
 Los tests usan las factories del `conftest.py` y el fixture autouse
 `_aislar_registry` garantiza que el REGISTRY global se limpia entre tests.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -34,11 +35,11 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar
 
-
 # ---------------------------------------------------------------------------
 # Helper: carga unicamente la regla R002 para aislar los tests del resto del
 # registry (R001, R003-R030 podrian no existir todavia en Wave 1B paralela).
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def _cargar_solo_r002():
@@ -63,9 +64,8 @@ def _cargar_solo_r002():
 # Tests positivos (la regla DEBE disparar)
 # ---------------------------------------------------------------------------
 
-def test_r002_positivo_salto_directo_requerimiento_a_liquidacion(
-    build_exp, build_brief, build_doc
-):
+
+def test_r002_positivo_salto_directo_requerimiento_a_liquidacion(build_exp, build_brief, build_doc):
     """Salto directo de requerimiento a liquidacion sin abrir audiencia.
 
     Expediente:
@@ -81,14 +81,14 @@ def test_r002_positivo_salto_directo_requerimiento_a_liquidacion(
         TipoDocumento.REQUERIMIENTO,
         doc_id="doc-req-001",
         nombre_original="requerimiento_aeat.pdf",
-        fecha_acto=datetime(2026, 1, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 10, tzinfo=UTC),
     )
     liq = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={"tramite_audiencia_abierto": False},
         doc_id="doc-liq-001",
         nombre_original="liquidacion_provisional.pdf",
-        fecha_acto=datetime(2026, 2, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 2, 10, tzinfo=UTC),
     )
 
     exp = build_exp(
@@ -101,9 +101,7 @@ def test_r002_positivo_salto_directo_requerimiento_a_liquidacion(
     candidatos = evaluar(exp, brief)
 
     r002 = [c for c in candidatos if c.regla_id == "R002"]
-    assert len(r002) == 1, (
-        f"R002 deberia disparar en salto directo req->liq, got {candidatos}"
-    )
+    assert len(r002) == 1, f"R002 deberia disparar en salto directo req->liq, got {candidatos}"
     arg = r002[0]
     assert isinstance(arg, ArgumentoCandidato)
     # Cita semantica — NUNCA hardcoded articulo concreto
@@ -116,9 +114,7 @@ def test_r002_positivo_salto_directo_requerimiento_a_liquidacion(
     assert "documento_id" in arg.datos_disparo or "motivo" in arg.datos_disparo
 
 
-def test_r002_positivo_propuesta_modificada_sin_reabrir_plazo(
-    build_exp, build_brief, build_doc
-):
+def test_r002_positivo_propuesta_modificada_sin_reabrir_plazo(build_exp, build_brief, build_doc):
     """Propuesta modificada con liquidacion posterior sin reabrir alegaciones.
 
     Expediente:
@@ -134,7 +130,7 @@ def test_r002_positivo_propuesta_modificada_sin_reabrir_plazo(
         datos={"tramite_audiencia_abierto": True},
         doc_id="doc-prop-001",
         nombre_original="propuesta_liquidacion.pdf",
-        fecha_acto=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 1, tzinfo=UTC),
     )
     liq = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -144,7 +140,7 @@ def test_r002_positivo_propuesta_modificada_sin_reabrir_plazo(
         },
         doc_id="doc-liq-002",
         nombre_original="liquidacion_provisional.pdf",
-        fecha_acto=datetime(2026, 1, 21, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 21, tzinfo=UTC),
     )
 
     exp = build_exp(
@@ -168,9 +164,8 @@ def test_r002_positivo_propuesta_modificada_sin_reabrir_plazo(
 # Tests negativos (la regla NO debe disparar)
 # ---------------------------------------------------------------------------
 
-def test_r002_negativo_audiencia_abierta_correctamente(
-    build_exp, build_brief, build_doc
-):
+
+def test_r002_negativo_audiencia_abierta_correctamente(build_exp, build_brief, build_doc):
     """Tramite de audiencia abierto y alegaciones presentadas.
 
     Expediente:
@@ -188,7 +183,7 @@ def test_r002_negativo_audiencia_abierta_correctamente(
         },
         doc_id="doc-prop-ok",
         nombre_original="propuesta_ok.pdf",
-        fecha_acto=datetime(2026, 1, 5, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 5, tzinfo=UTC),
     )
     liq = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -198,7 +193,7 @@ def test_r002_negativo_audiencia_abierta_correctamente(
         },
         doc_id="doc-liq-ok",
         nombre_original="liquidacion_ok.pdf",
-        fecha_acto=datetime(2026, 2, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 2, 1, tzinfo=UTC),
     )
 
     exp = build_exp(
@@ -211,9 +206,7 @@ def test_r002_negativo_audiencia_abierta_correctamente(
     candidatos = evaluar(exp, brief)
 
     r002 = [c for c in candidatos if c.regla_id == "R002"]
-    assert r002 == [], (
-        f"R002 NO debe disparar cuando la audiencia esta abierta, got {r002}"
-    )
+    assert r002 == [], f"R002 NO debe disparar cuando la audiencia esta abierta, got {r002}"
 
 
 def test_r002_negativo_acta_con_acuerdo(build_exp, build_brief, build_doc):
@@ -230,7 +223,7 @@ def test_r002_negativo_acta_con_acuerdo(build_exp, build_brief, build_doc):
         },
         doc_id="doc-acuerdo",
         nombre_original="liquidacion_acta_acuerdo.pdf",
-        fecha_acto=datetime(2026, 3, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 3, 1, tzinfo=UTC),
     )
 
     exp = build_exp(
@@ -253,11 +246,12 @@ def test_r002_negativo_acta_con_acuerdo(build_exp, build_brief, build_doc):
 # Sanity check: la regla esta registrada
 # ---------------------------------------------------------------------------
 
+
 def test_r002_registrada_en_registry():
     """Tras importar el modulo, R002 debe estar en el REGISTRY."""
-    assert "R002" in REGISTRY, (
-        f"R002 no encontrada en REGISTRY. Keys actuales: {list(REGISTRY.keys())}"
-    )
+    assert (
+        "R002" in REGISTRY
+    ), f"R002 no encontrada en REGISTRY. Keys actuales: {list(REGISTRY.keys())}"
     info = REGISTRY["R002"]
     assert "LIQUIDACION_FIRME_PLAZO_RECURSO" in info["fases"]
     assert "IRPF" in info["tributos"]

@@ -33,11 +33,12 @@ Invariantes
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2B-001/002/003
 Invariante #3 del plan v2 (umbral 0.7, no 0.6).
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from app.models.defensia import ArgumentoCandidato, ArgumentoVerificado
 
@@ -107,10 +108,10 @@ class DefensiaRagVerifier:
         self,
         candidato: ArgumentoCandidato,
         *,
-        expediente_id: Optional[str] = None,
+        expediente_id: str | None = None,
         top_k: int = 5,
-        territory_filter: Optional[str] = None,
-    ) -> Optional[ArgumentoVerificado]:
+        territory_filter: str | None = None,
+    ) -> ArgumentoVerificado | None:
         """Verifica UN candidato contra el corpus RAG.
 
         Args:
@@ -143,7 +144,8 @@ class DefensiaRagVerifier:
         except Exception as exc:
             logger.warning(
                 "RAG verifier: error en retriever para regla %s: %s",
-                candidato.regla_id, exc,
+                candidato.regla_id,
+                exc,
             )
             await self._log(
                 candidato,
@@ -184,9 +186,7 @@ class DefensiaRagVerifier:
         # Paso 3: aceptar. Extraemos cita + referencia canonica del chunk
         # top-1 y construimos el ArgumentoVerificado.
         cita_texto = str(best.get("text", "") or "")[:_MAX_CITA_VERIFICADA_CHARS]
-        referencia = str(
-            best.get("title") or best.get("source") or "sin_referencia"
-        )
+        referencia = str(best.get("title") or best.get("source") or "sin_referencia")
 
         # El rango de Pydantic para `confianza` es [0, 1]. Si por alguna
         # extraneza el retriever devuelve >1 (BM25 sin normalizar, p.ej.),
@@ -219,9 +219,9 @@ class DefensiaRagVerifier:
         self,
         candidatos: list[ArgumentoCandidato],
         *,
-        expediente_id: Optional[str] = None,
+        expediente_id: str | None = None,
         top_k: int = 5,
-        territory_filter: Optional[str] = None,
+        territory_filter: str | None = None,
     ) -> list[ArgumentoVerificado]:
         """Verifica una lista entera de candidatos.
 
@@ -261,7 +261,7 @@ class DefensiaRagVerifier:
         self,
         candidato: ArgumentoCandidato,
         *,
-        expediente_id: Optional[str],
+        expediente_id: str | None,
         soportado: bool,
         confianza: float,
         razonamiento: str,
@@ -297,7 +297,7 @@ class DefensiaRagVerifier:
             1 if soportado else 0,
             float(confianza),
             razonamiento_full,
-            datetime.now(timezone.utc).isoformat(),
+            datetime.now(UTC).isoformat(),
         ]
 
         try:
@@ -307,7 +307,9 @@ class DefensiaRagVerifier:
             logger.warning(
                 "RAG verifier: no se pudo loggear a defensia_rag_log "
                 "(regla=%s, soportado=%s): %s",
-                candidato.regla_id, soportado, exc,
+                candidato.regla_id,
+                soportado,
+                exc,
             )
 
 

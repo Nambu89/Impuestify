@@ -2,29 +2,35 @@
  * Privacy Policy Page
  * Displays PRIVACY_POLICY.md content
  */
-import { Link } from 'react-router-dom';
-import { LegalEntity } from '../components/legal/LegalEntity';
-import './LegalPage.css';
+import { Link } from 'react-router-dom'
+import { LegalEntity } from '../components/legal/LegalEntity'
+import './LegalPage.css'
 
 export default function PrivacyPolicyPage() {
     return (
         <div className="legal-page">
             <div className="legal-container">
-                <Link to="/" className="back-link">← Volver al inicio</Link>
+                <Link to="/" className="back-link">
+                    ← Volver al inicio
+                </Link>
 
                 <h1>Política de Privacidad</h1>
                 <p className="last-updated">Última actualización: 23 de abril de 2026</p>
 
-                <LegalEntity title="1. Información del Responsable del tratamiento" asDataController />
+                <LegalEntity
+                    title="1. Información del Responsable del tratamiento"
+                    asDataController
+                />
 
                 <section>
                     <h2>1 bis. Delegado de Protección de Datos</h2>
                     <p>
-                        Dado el volumen actual de tratamiento y la forma jurídica del titular del servicio,
-                        Impuestify no está obligado a designar un Delegado de Protección de Datos (DPD)
-                        conforme al artículo 37 del RGPD. No obstante, las consultas y el ejercicio de derechos
-                        de protección de datos se canalizan a través de la dirección
-                        {' '}<a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>, atendida
+                        Dado el volumen actual de tratamiento y la forma jurídica del titular del
+                        servicio, Impuestify no está obligado a designar un Delegado de Protección
+                        de Datos (DPD) conforme al artículo 37 del RGPD. No obstante, las consultas
+                        y el ejercicio de derechos de protección de datos se canalizan a través de
+                        la dirección{' '}
+                        <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>, atendida
                         directamente por el titular del servicio.
                     </p>
                 </section>
@@ -41,8 +47,13 @@ export default function PrivacyPolicyPage() {
 
                 <section>
                     <h2>3. Finalidad del Tratamiento</h2>
-                    <p>Procesamos sus datos para prestar el servicio de asistencia fiscal mediante IA.</p>
-                    <p><strong>Base legal</strong>: Ejecución de contrato (RGPD Art. 6.1.b)</p>
+                    <p>
+                        Procesamos sus datos para prestar el servicio de asistencia fiscal mediante
+                        IA.
+                    </p>
+                    <p>
+                        <strong>Base legal</strong>: Ejecución de contrato (RGPD Art. 6.1.b)
+                    </p>
                 </section>
 
                 <section>
@@ -84,43 +95,58 @@ export default function PrivacyPolicyPage() {
                         <li>✅ Portabilidad de datos</li>
                         <li>✅ Oposición al tratamiento</li>
                     </ul>
-                    <p><strong>Ejercer derechos</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a></p>
+                    <p>
+                        <strong>Ejercer derechos</strong>:{' '}
+                        <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>
+                    </p>
                 </section>
 
                 <section>
                     <h2>6. Conservación de Datos</h2>
-                    <p>Ver nuestra <Link to="/data-retention">Política de Retención de Datos</Link></p>
+                    <p>
+                        Ver nuestra <Link to="/data-retention">Política de Retención de Datos</Link>
+                    </p>
                 </section>
 
                 <section>
                     <h2>7. Cookies y almacenamiento local</h2>
                     <p>
-                        Para más información sobre las cookies y tecnologías de almacenamiento local que utilizamos,
-                        consulte nuestra <Link to="/politica-cookies">Política de Cookies</Link>.
+                        Para más información sobre las cookies y tecnologías de almacenamiento local
+                        que utilizamos, consulte nuestra{' '}
+                        <Link to="/politica-cookies">Política de Cookies</Link>.
                     </p>
                 </section>
 
                 <section>
                     <h2>8. Seguridad</h2>
-                    <p>Implementamos cifrado TLS, hashing seguro de contraseñas, rate limiting y auditoría.</p>
-                    <p>Ver nuestra <Link to="/security">Política de Seguridad</Link></p>
+                    <p>
+                        Implementamos cifrado TLS, hashing seguro de contraseñas, rate limiting y
+                        auditoría.
+                    </p>
+                    <p>
+                        Ver nuestra <Link to="/security">Política de Seguridad</Link>
+                    </p>
                 </section>
 
                 <section>
                     <h2>9. Autoridad de Control</h2>
                     <p>
-                        Agencia Española de Protección de Datos (AEPD)<br />
-                        Web: <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer">www.aepd.es</a>
+                        Agencia Española de Protección de Datos (AEPD)
+                        <br />
+                        Web:{' '}
+                        <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer">
+                            www.aepd.es
+                        </a>
                     </p>
                 </section>
 
                 <div className="legal-cta">
                     <p>
-                        Para cualquier consulta sobre privacidad,
-                        contacte con <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>
+                        Para cualquier consulta sobre privacidad, contacte con{' '}
+                        <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>
                     </p>
                 </div>
             </div>
         </div>
-    );
+    )
 }

@@ -1,9 +1,13 @@
 """Foral Vasco territory plugin -- Araba, Bizkaia, Gipuzkoa."""
-from typing import Any, Dict, List
+
+from typing import Any
 
 from app.territories.base import (
-    TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig,
-    ModelObligation, Deadline, DEADLINES_2026, _trimestral_deadlines,
+    MinimosConfig,
+    ModelObligation,
+    ScaleData,
+    SimulationResult,
+    TerritoryPlugin,
 )
 
 
@@ -19,14 +23,16 @@ class ForalVascoTerritory(TerritoryPlugin):
     EPSV: Replaces pension plan contributions.
     Minimos: Applied as direct quota deduction (EUR off the bill).
     """
+
     territories = ["Araba", "Bizkaia", "Gipuzkoa"]
     regime = "foral_vasco"
 
-    async def get_irpf_scales(self, year: int) -> List[ScaleData]:
+    async def get_irpf_scales(self, year: int) -> list[ScaleData]:
         return []  # Loaded from DB in simulate_irpf
 
-    async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
+    async def simulate_irpf(self, profile: dict[str, Any], db) -> SimulationResult:
         from app.utils.irpf_simulator import IRPFSimulator
+
         simulator = IRPFSimulator(db)
         result = await simulator.simulate(**profile)
         return SimulationResult(
@@ -39,8 +45,9 @@ class ForalVascoTerritory(TerritoryPlugin):
             desglose=result,
         )
 
-    async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
+    async def get_deductions(self, ccaa: str, year: int, db) -> list[dict[str, Any]]:
         from app.services.deduction_service import DeductionService
+
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 
@@ -74,7 +81,7 @@ class ForalVascoTerritory(TerritoryPlugin):
         mapping = {"Gipuzkoa": "DFG", "Bizkaia": "DFB", "Araba": "DFA"}
         return mapping.get(ccaa, "DFG")
 
-    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+    def get_model_obligations(self, profile: dict[str, Any]) -> list[ModelObligation]:
         """Foral Vasco: 300 (Gipuzkoa) or 303 (Bizkaia/Araba), 110 not 111,
         109 (Gipuzkoa) or 100, TicketBAI/Batuz mandatory."""
         ccaa = profile.get("ccaa", "Gipuzkoa")

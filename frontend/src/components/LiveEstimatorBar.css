@@ -7,7 +7,9 @@
     padding: var(--spacing-3) var(--spacing-4);
     border-radius: var(--radius-lg);
     font-family: var(--font-family);
-    transition: background var(--transition-base), box-shadow var(--transition-base);
+    transition:
+        background var(--transition-base),
+        box-shadow var(--transition-base);
 }
 
 /* Sticky bottom on mobile */
@@ -153,7 +155,9 @@
 
 /* Spin animation */
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 .spin {
     animation: spin 1s linear infinite;

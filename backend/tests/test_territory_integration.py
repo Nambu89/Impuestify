@@ -1,4 +1,5 @@
 import pytest
+
 from app.territories import get_territory, list_territories
 from app.territories.registry import _registry
 
@@ -7,6 +8,7 @@ def setup_function():
     """Ensure registry is loaded before each test."""
     _registry.clear()
     from app.territories.startup import register_all_territories
+
     register_all_territories()
 
 

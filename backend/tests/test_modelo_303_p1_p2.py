@@ -12,11 +12,13 @@ Cubre:
 NO sustituye a `test_modelo_303.py` — es un suite paralelo que valida solo
 los nuevos parametros sin afectar a la regresion existente.
 """
+
 import pytest
+
 from app.utils.calculators.modelo_303 import (
-    Modelo303Calculator,
     ISP_SUPUESTOS,
     RE_RATES_FULL,
+    Modelo303Calculator,
 )
 
 
@@ -63,10 +65,10 @@ async def test_recc_not_eligible_over_threshold(calc):
 async def test_recc_devengado_diferido_se_suma(calc):
     """Cobros materializados de devengo anterior suman al casilla 27."""
     r = await calc.calculate(
-        base_21=10000,                       # devengado periodo = 2100
+        base_21=10000,  # devengado periodo = 2100
         regimen_recc=True,
         volumen_ano_anterior=500_000,
-        cobros_pendientes_recc=420,          # cobro de venta T anterior
+        cobros_pendientes_recc=420,  # cobro de venta T anterior
     )
     # casilla 27 = 2100 (corriente) + 420 (RECC diferido) = 2520
     assert r["casilla_27"] == 2520.0
@@ -76,10 +78,10 @@ async def test_recc_devengado_diferido_se_suma(calc):
 async def test_recc_deducible_diferido_se_suma(calc):
     """Pagos materializados de deducciones anteriores suman al casilla 45."""
     r = await calc.calculate(
-        cuota_corrientes_interiores=100,     # deducible periodo
+        cuota_corrientes_interiores=100,  # deducible periodo
         regimen_recc=True,
         volumen_ano_anterior=500_000,
-        pagos_pendientes_recc=300,           # pago de compra T anterior
+        pagos_pendientes_recc=300,  # pago de compra T anterior
     )
     # casilla 45 = 100 + 300 (RECC) = 400
     assert r["casilla_45"] == 400.0
@@ -89,8 +91,10 @@ async def test_recc_deducible_diferido_se_suma(calc):
 async def test_recc_limite_temporal_year_plus_one(calc):
     """Limite temporal RECC: 31 dic ano siguiente al devengo."""
     r = await calc.calculate(
-        base_21=1000, regimen_recc=True,
-        volumen_ano_anterior=100_000, year=2025,
+        base_21=1000,
+        regimen_recc=True,
+        volumen_ano_anterior=100_000,
+        year=2025,
     )
     assert r["regimen_recc"]["limite_temporal_year"] == 2026
 
@@ -100,7 +104,7 @@ async def test_recc_disabled_no_extra_devengo(calc):
     """Si RECC desactivado, cobros pendientes NO se suman."""
     r = await calc.calculate(
         base_21=10000,
-        cobros_pendientes_recc=420,    # se ignora porque regimen_recc=False
+        cobros_pendientes_recc=420,  # se ignora porque regimen_recc=False
     )
     assert r["casilla_27"] == 2100.0
     assert r["regimen_recc"]["regimen_aplicado"] is False
@@ -205,8 +209,8 @@ async def test_isp_no_deducible(calc):
         bases_isp={"moviles": {"base": 5000, "tipo": 21}},
         isp_es_deducible=False,
     )
-    assert r["casilla_27"] == 1050.0       # devengado +1050
-    assert r["casilla_45"] == 0.0          # NO se suma a deducible
+    assert r["casilla_27"] == 1050.0  # devengado +1050
+    assert r["casilla_45"] == 0.0  # NO se suma a deducible
     assert r["resultado_liquidacion"] == 1050.0
 
 
@@ -262,7 +266,7 @@ async def test_mod_bases_envases_concurso(calc):
 async def test_mod_bases_se_suma_devengado(calc):
     """Cuota de modificaciones se suma al devengado total."""
     r = await calc.calculate(
-        base_21=10000,                                      # devengado base = 2100
+        base_21=10000,  # devengado base = 2100
         mods_bases={"incobrables": {"base": 1000, "tipo": 21}},  # +210
     )
     assert r["casilla_27"] == 2310.0
@@ -328,7 +332,7 @@ async def test_transitorios_2025_basicos_2(calc):
         year=2025,
         mes_inicio_periodo=4,
     )
-    assert r["tipos_transitorios"]["cuota_2"] == 60.0   # 3000 * 0.02
+    assert r["tipos_transitorios"]["cuota_2"] == 60.0  # 3000 * 0.02
 
 
 @pytest.mark.asyncio
@@ -364,9 +368,10 @@ async def test_transitorios_2026_todo_expirado(calc):
 async def test_transitorios_se_suman_devengado(calc):
     """Cuotas transitorias se suman a casilla 27."""
     r = await calc.calculate(
-        base_21=10000,                                  # +2100
-        bases_transitorias={"base_5": 2000},            # +100
-        year=2024, mes_inicio_periodo=3,
+        base_21=10000,  # +2100
+        bases_transitorias={"base_5": 2000},  # +100
+        year=2024,
+        mes_inicio_periodo=3,
     )
     assert r["casilla_27"] == 2200.0
 
@@ -432,7 +437,7 @@ async def test_re_sin_strict_block_calcula_pero_anota(calc):
         re_situacion_laboral="farmaceutico",
         re_strict_block=False,
     )
-    assert "casilla_27" in r       # calcula normal
+    assert "casilla_27" in r  # calcula normal
     assert r["recargo_equivalencia"]["detectado"] is True
     assert r["recargo_equivalencia"]["presenta_303"] is False
 
@@ -443,7 +448,7 @@ async def test_re_rates_full_constants():
     assert RE_RATES_FULL[21.0] == 5.2
     assert RE_RATES_FULL[10.0] == 1.4
     assert RE_RATES_FULL[4.0] == 0.5
-    assert RE_RATES_FULL[1.75] == 1.75   # tabaco
+    assert RE_RATES_FULL[1.75] == 1.75  # tabaco
 
 
 # =====================================================================
@@ -455,14 +460,14 @@ async def test_re_rates_full_constants():
 async def test_integracion_recc_isp_mods(calc):
     """Caso real: RECC + ISP construccion + modificaciones."""
     r = await calc.calculate(
-        base_21=20000,                                  # devengado base 4200
-        cuota_corrientes_interiores=500,                # deducible base 500
+        base_21=20000,  # devengado base 4200
+        cuota_corrientes_interiores=500,  # deducible base 500
         regimen_recc=True,
         volumen_ano_anterior=800_000,
-        cobros_pendientes_recc=210,                     # +210 devengado
-        pagos_pendientes_recc=100,                      # +100 deducible
+        cobros_pendientes_recc=210,  # +210 devengado
+        pagos_pendientes_recc=100,  # +100 deducible
         bases_isp={"construccion": {"base": 5000, "tipo": 21}},  # +1050 dev +1050 ded
-        mods_bases={"envases": {"base": -500, "tipo": 21}},      # -105 devengado
+        mods_bases={"envases": {"base": -500, "tipo": 21}},  # -105 devengado
     )
     # devengado = 4200 + 1050 (ISP) + (-105 mods) + 210 (RECC) = 5355
     assert r["casilla_27"] == 5355.0
@@ -479,9 +484,9 @@ async def test_integracion_warnings_aggregated(calc):
     r = await calc.calculate(
         base_21=1000,
         regimen_recc=True,
-        volumen_ano_anterior=10_000_000,    # supera RECC y dispara SII
+        volumen_ano_anterior=10_000_000,  # supera RECC y dispara SII
         bases_transitorias={"base_2": 100},
-        year=2026,                            # transitorios expirados
+        year=2026,  # transitorios expirados
     )
     # Esperamos al menos 3 warnings: RECC inelegible + SII obligatorio + tipo 2% expirado
     assert len(r["warnings"]) >= 3

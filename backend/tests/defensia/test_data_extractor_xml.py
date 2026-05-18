@@ -1,6 +1,6 @@
 """Tests para el extractor de XML/XSIG de notificaciones firmadas AEAT."""
-from app.services.defensia_data_extractor import extract_notificacion_xml
 
+from app.services.defensia_data_extractor import extract_notificacion_xml
 
 FAKE_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
 <notificacion>

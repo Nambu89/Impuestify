@@ -32,11 +32,12 @@ es SEMANTICA y libre. La cita canonica ("Art. 25 LIVA", "STJUE C-146/05
 Collee") la resuelve el ``defensia_rag_verifier`` contra el corpus
 normativo, nunca este modulo.
 """
+
 from __future__ import annotations
 
 import importlib
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -48,7 +49,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 
-
 # ---------------------------------------------------------------------------
 # Helper de aislamiento — carga solo R023 tras el reset del conftest
 # ---------------------------------------------------------------------------
@@ -58,13 +58,11 @@ from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 # el decorador `@regla`, hay que forzar un reload para re-registrar R023 en
 # el REGISTRY recien limpiado.
 
+
 def _cargar_solo_R023() -> None:
     """Limpia el REGISTRY y re-registra exclusivamente la regla R023."""
     reset_registry()
-    module_name = (
-        "app.services.defensia_rules."
-        "reglas_otros_tributos.R023_iva_intracomunitaria"
-    )
+    module_name = "app.services.defensia_rules." "reglas_otros_tributos.R023_iva_intracomunitaria"
     if module_name in sys.modules:
         importlib.reload(sys.modules[module_name])
     else:
@@ -82,6 +80,7 @@ def _recargar_R023():
 # Helpers locales
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica.
 
@@ -94,23 +93,16 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
         f"Cita hardcoded detectada: 'Art. 25' en '{cita}'. "
         "La cita canonica debe venir del RAG verificador."
     )
-    assert "TJUE" not in cita_upper, (
-        f"Cita hardcoded detectada: 'TJUE' en '{cita}'."
-    )
-    assert "C-146" not in cita, (
-        f"Cita hardcoded detectada: 'C-146' en '{cita}'."
-    )
-    assert "COLLEE" not in cita_upper, (
-        f"Cita hardcoded detectada: 'Collee' en '{cita}'."
-    )
-    assert "LIVA" not in cita_upper, (
-        f"Cita hardcoded detectada: 'LIVA' en '{cita}'."
-    )
+    assert "TJUE" not in cita_upper, f"Cita hardcoded detectada: 'TJUE' en '{cita}'."
+    assert "C-146" not in cita, f"Cita hardcoded detectada: 'C-146' en '{cita}'."
+    assert "COLLEE" not in cita_upper, f"Cita hardcoded detectada: 'Collee' en '{cita}'."
+    assert "LIVA" not in cita_upper, f"Cita hardcoded detectada: 'LIVA' en '{cita}'."
 
 
 # ---------------------------------------------------------------------------
 # Test 1 — Positivo: denegacion por NIF-VIES con transporte acreditado
 # ---------------------------------------------------------------------------
+
 
 def test_R023_positivo_denegacion_por_falta_nif_vies_con_transporte_acreditado(
     build_exp, build_brief, build_doc
@@ -134,7 +126,7 @@ def test_R023_positivo_denegacion_por_falta_nif_vies_con_transporte_acreditado(
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R023-001",
-        fecha_acto=datetime(2025, 5, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
@@ -149,9 +141,9 @@ def test_R023_positivo_denegacion_por_falta_nif_vies_con_transporte_acreditado(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R023"
@@ -159,9 +151,9 @@ def test_R023_positivo_denegacion_por_falta_nif_vies_con_transporte_acreditado(
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
 
     disparo = arg.datos_disparo
-    assert disparo.get("tipo") == "exencion_EIB_denegada_por_forma", (
-        f"datos_disparo.tipo inesperado: {disparo!r}"
-    )
+    assert (
+        disparo.get("tipo") == "exencion_EIB_denegada_por_forma"
+    ), f"datos_disparo.tipo inesperado: {disparo!r}"
     assert disparo.get("nif_vies_ausente") is True
     assert disparo.get("transporte_efectivo_acreditado") is True
     assert disparo.get("destinatario_empresario_UE") is True
@@ -170,6 +162,7 @@ def test_R023_positivo_denegacion_por_falta_nif_vies_con_transporte_acreditado(
 # ---------------------------------------------------------------------------
 # Test 2 — Positivo: error formal modelo 349 con requisitos materiales OK
 # ---------------------------------------------------------------------------
+
 
 def test_R023_positivo_error_modelo_349_con_requisitos_materiales_cumplidos(
     build_exp, build_brief, build_doc
@@ -195,7 +188,7 @@ def test_R023_positivo_error_modelo_349_con_requisitos_materiales_cumplidos(
             "ejercicio": 2024,
         },
         doc_id="doc-propuesta-R023-002",
-        fecha_acto=datetime(2025, 6, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 15, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
@@ -209,9 +202,7 @@ def test_R023_positivo_error_modelo_349_con_requisitos_materiales_cumplidos(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
-    )
+    assert len(candidatos) == 1, f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R023"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
@@ -225,9 +216,8 @@ def test_R023_positivo_error_modelo_349_con_requisitos_materiales_cumplidos(
 # Test 3 — Negativo: sin transporte efectivo acreditado
 # ---------------------------------------------------------------------------
 
-def test_R023_negativo_sin_transporte_efectivo_acreditado(
-    build_exp, build_brief, build_doc
-):
+
+def test_R023_negativo_sin_transporte_efectivo_acreditado(build_exp, build_brief, build_doc):
     """Transporte NO acreditado: la denegacion de AEAT es legitima.
 
     La doctrina Collee solo desactiva los defectos formales cuando los
@@ -246,16 +236,14 @@ def test_R023_negativo_sin_transporte_efectivo_acreditado(
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R023-003",
-        fecha_acto=datetime(2025, 5, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=[liquidacion],
     )
-    brief = build_brief(
-        "AEAT me deniega la exencion y no tengo CMR ni carta de porte."
-    )
+    brief = build_brief("AEAT me deniega la exencion y no tengo CMR ni carta de porte.")
 
     candidatos = evaluar(exp, brief)
 
@@ -269,9 +257,8 @@ def test_R023_negativo_sin_transporte_efectivo_acreditado(
 # Test 4 — Negativo: destinatario no es empresario UE
 # ---------------------------------------------------------------------------
 
-def test_R023_negativo_destinatario_no_es_empresario_UE(
-    build_exp, build_brief, build_doc
-):
+
+def test_R023_negativo_destinatario_no_es_empresario_UE(build_exp, build_brief, build_doc):
     """Destinatario NO empresario: decae la estructura B2B exigida.
 
     La exencion del art. 25 LIVA presupone que el adquirente es un
@@ -290,16 +277,14 @@ def test_R023_negativo_destinatario_no_es_empresario_UE(
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R023-004",
-        fecha_acto=datetime(2025, 5, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=[liquidacion],
     )
-    brief = build_brief(
-        "Vendi a un particular frances y me dicen que no es EIB."
-    )
+    brief = build_brief("Vendi a un particular frances y me dicen que no es EIB.")
 
     candidatos = evaluar(exp, brief)
 
@@ -313,9 +298,8 @@ def test_R023_negativo_destinatario_no_es_empresario_UE(
 # Test 5 — Negativo: exencion ya admitida, no hay denegacion
 # ---------------------------------------------------------------------------
 
-def test_R023_negativo_exencion_ya_admitida(
-    build_exp, build_brief, build_doc
-):
+
+def test_R023_negativo_exencion_ya_admitida(build_exp, build_brief, build_doc):
     """Si no hay denegacion de exencion, no hay conflicto que defender.
 
     Puede que la liquidacion trate de otra cuestion (p.ej. deduciblidad de
@@ -333,16 +317,14 @@ def test_R023_negativo_exencion_ya_admitida(
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R023-005",
-        fecha_acto=datetime(2025, 5, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=[liquidacion],
     )
-    brief = build_brief(
-        "La liquidacion no toca mis ventas intracomunitarias."
-    )
+    brief = build_brief("La liquidacion no toca mis ventas intracomunitarias.")
 
     candidatos = evaluar(exp, brief)
 
@@ -356,9 +338,8 @@ def test_R023_negativo_exencion_ya_admitida(
 # Test 6 — Anti-hardcode: asercion explicita sobre la cita semantica
 # ---------------------------------------------------------------------------
 
-def test_R023_cita_es_semantica_no_hardcoded(
-    build_exp, build_brief, build_doc
-):
+
+def test_R023_cita_es_semantica_no_hardcoded(build_exp, build_brief, build_doc):
     """Invariante #2: la cita normativa NO puede contener el articulo canonico."""
     liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -370,7 +351,7 @@ def test_R023_cita_es_semantica_no_hardcoded(
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R023-006",
-        fecha_acto=datetime(2025, 5, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
@@ -390,14 +371,13 @@ def test_R023_cita_es_semantica_no_hardcoded(
         and "TJUE" not in cita
         and "C-146" not in cita
         and "Collee" not in cita
-    ), (
-        f"La cita normativa debe ser semantica, got: {cita!r}"
-    )
+    ), f"La cita normativa debe ser semantica, got: {cita!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 7 — Smoke de registro: R023 aparece en el REGISTRY tras el reload
 # ---------------------------------------------------------------------------
+
 
 def test_R023_registrada_en_registry():
     """El reload del modulo R023 debe auto-registrar la regla en el REGISTRY."""
@@ -406,9 +386,7 @@ def test_R023_registrada_en_registry():
         f"Claves actuales: {sorted(REGISTRY.keys())}"
     )
     info = REGISTRY["R023"]
-    assert "IVA" in info["tributos"], (
-        f"R023 debe aplicar a IVA, tributos={info['tributos']}"
-    )
+    assert "IVA" in info["tributos"], f"R023 debe aplicar a IVA, tributos={info['tributos']}"
     # La regla de intracomunitaria es especifica de IVA — no se extiende a IRPF.
     assert "IRPF" not in info["tributos"]
     assert "LIQUIDACION_FIRME_PLAZO_RECURSO" in info["fases"]

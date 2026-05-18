@@ -8,6 +8,7 @@ Usage:
     python backend/scripts/crawl_aeat_html.py
     python backend/scripts/crawl_aeat_html.py --dry-run
 """
+
 import argparse
 import logging
 import sys
@@ -26,44 +27,97 @@ RATE_LIMIT = 4  # seconds between requests
 
 PAGES = [
     # (path, filename, subdir)
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/2-impuesto-sobre-actividades-economicas.html",
-     "AEAT-IAE-Cap2-Impuesto_Actividades_Economicas.md", "IAE"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/2-impuesto-sobre-actividades-economicas/2_1-modelos.html",
-     "AEAT-IAE-Cap2_1-Modelos.md", "IAE"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/2-impuesto-sobre-actividades-economicas/2_1-modelos/2_1_3-clasificacion-actividades.html",
-     "AEAT-IAE-Cap2_1_3-Clasificacion_Actividades.md", "IAE"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas.html",
-     "AEAT-ActEcon-Cap3-IRPF.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas/3_4-estimacion-directa-normal/3_4_1-calculo-rendimiento-neto.html",
-     "AEAT-ActEcon-Cap3_4_1-Calculo_Rendimiento_Neto.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas/3_5-estimacion-directa-simplificada.html",
-     "AEAT-ActEcon-Cap3_5-Estimacion_Directa_Simplificada.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas/3_6-estimacion-objetiva.html",
-     "AEAT-ActEcon-Cap3_6-Estimacion_Objetiva.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas/3_7-pagos-fraccionados.html",
-     "AEAT-ActEcon-Cap3_7-Pagos_Fraccionados.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/5-impuesto-sobre-valor-anadido.html",
-     "AEAT-ActEcon-Cap5-IVA.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/5-impuesto-sobre-valor-anadido/5_9-operaciones-intracomunitarias.html",
-     "AEAT-ActEcon-Cap5_9-Operaciones_Intracomunitarias.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/5-impuesto-sobre-valor-anadido/5_10-facturas.html",
-     "AEAT-ActEcon-Cap5_10-Facturas.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/5-impuesto-sobre-valor-anadido/5_12-veri-factu.html",
-     "AEAT-ActEcon-Cap5_12-VeriFactu.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/7-otras-obligaciones-fiscales-retenciones/7_1-cuadro-relacion-tipos-retencion-porcentaje.html",
-     "AEAT-ActEcon-Cap7_1-Cuadro_Tipos_Retencion.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/8-declaraciones-informativas.html",
-     "AEAT-ActEcon-Cap8-Declaraciones_Informativas.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/1-declaracion-censal.html",
-     "AEAT-ActEcon-Cap1-Declaracion_Censal_036.md", "ActividadesEconomicas"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/manual-especifico-personas-discapacidad.html",
-     "AEAT-Manual_Discapacidad.md", "Manuales"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/manual-especifico-irpf-2025-personas-anos.html",
-     "AEAT-Manual_Mayores_65_IRPF_2025.md", "Manuales"),
-    ("/Sede/Ayuda/guia-practica-declaracion-censal.html",
-     "AEAT-Guia_Modelo_036.md", "Manuales"),
-    ("/Sede/ayuda/manuales-videos-folletos/manuales-practicos/manual-tributacion-no-residentes.html",
-     "AEAT-Manual_No_Residentes.md", "Manuales"),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/2-impuesto-sobre-actividades-economicas.html",
+        "AEAT-IAE-Cap2-Impuesto_Actividades_Economicas.md",
+        "IAE",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/2-impuesto-sobre-actividades-economicas/2_1-modelos.html",
+        "AEAT-IAE-Cap2_1-Modelos.md",
+        "IAE",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/2-impuesto-sobre-actividades-economicas/2_1-modelos/2_1_3-clasificacion-actividades.html",
+        "AEAT-IAE-Cap2_1_3-Clasificacion_Actividades.md",
+        "IAE",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas.html",
+        "AEAT-ActEcon-Cap3-IRPF.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas/3_4-estimacion-directa-normal/3_4_1-calculo-rendimiento-neto.html",
+        "AEAT-ActEcon-Cap3_4_1-Calculo_Rendimiento_Neto.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas/3_5-estimacion-directa-simplificada.html",
+        "AEAT-ActEcon-Cap3_5-Estimacion_Directa_Simplificada.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas/3_6-estimacion-objetiva.html",
+        "AEAT-ActEcon-Cap3_6-Estimacion_Objetiva.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/3-impuesto-sobre-renta-personas-fisicas/3_7-pagos-fraccionados.html",
+        "AEAT-ActEcon-Cap3_7-Pagos_Fraccionados.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/5-impuesto-sobre-valor-anadido.html",
+        "AEAT-ActEcon-Cap5-IVA.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/5-impuesto-sobre-valor-anadido/5_9-operaciones-intracomunitarias.html",
+        "AEAT-ActEcon-Cap5_9-Operaciones_Intracomunitarias.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/5-impuesto-sobre-valor-anadido/5_10-facturas.html",
+        "AEAT-ActEcon-Cap5_10-Facturas.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/5-impuesto-sobre-valor-anadido/5_12-veri-factu.html",
+        "AEAT-ActEcon-Cap5_12-VeriFactu.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/7-otras-obligaciones-fiscales-retenciones/7_1-cuadro-relacion-tipos-retencion-porcentaje.html",
+        "AEAT-ActEcon-Cap7_1-Cuadro_Tipos_Retencion.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/8-declaraciones-informativas.html",
+        "AEAT-ActEcon-Cap8-Declaraciones_Informativas.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/folleto-actividades-economicas/1-declaracion-censal.html",
+        "AEAT-ActEcon-Cap1-Declaracion_Censal_036.md",
+        "ActividadesEconomicas",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/manual-especifico-personas-discapacidad.html",
+        "AEAT-Manual_Discapacidad.md",
+        "Manuales",
+    ),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/manual-especifico-irpf-2025-personas-anos.html",
+        "AEAT-Manual_Mayores_65_IRPF_2025.md",
+        "Manuales",
+    ),
+    ("/Sede/Ayuda/guia-practica-declaracion-censal.html", "AEAT-Guia_Modelo_036.md", "Manuales"),
+    (
+        "/Sede/ayuda/manuales-videos-folletos/manuales-practicos/manual-tributacion-no-residentes.html",
+        "AEAT-Manual_No_Residentes.md",
+        "Manuales",
+    ),
 ]
 
 
@@ -81,7 +135,14 @@ def fetch_with_browser(url: str, dest: Path) -> bool:
 
             # Try to get main content text
             text = ""
-            for selector in ["#contenido", "#textoContenido", ".contenido", "article", "main", "#mainContent"]:
+            for selector in [
+                "#contenido",
+                "#textoContenido",
+                ".contenido",
+                "article",
+                "main",
+                "#mainContent",
+            ]:
                 try:
                     el = page.query_selector(selector)
                     if el:
@@ -103,11 +164,20 @@ def fetch_with_browser(url: str, dest: Path) -> bool:
         for line in text.split("\n"):
             line = line.strip()
             if line and len(line) > 2 and line not in seen:
-                if any(skip in line.lower() for skip in [
-                    "saltar al contenido", "mapa web", "aviso legal",
-                    "accesibilidad", "sede electr", "javascript",
-                    "cookie", "proteccion de datos", "banner"
-                ]):
+                if any(
+                    skip in line.lower()
+                    for skip in [
+                        "saltar al contenido",
+                        "mapa web",
+                        "aviso legal",
+                        "accesibilidad",
+                        "sede electr",
+                        "javascript",
+                        "cookie",
+                        "proteccion de datos",
+                        "banner",
+                    ]
+                ):
                     continue
                 lines.append(line)
                 seen.add(line)
@@ -158,7 +228,9 @@ def main():
             stats["failed"] += 1
         time.sleep(RATE_LIMIT)
 
-    logger.info(f"\nRESUMEN: Nuevos={stats['new']} | Existentes={stats['skipped']} | Fallidos={stats['failed']}")
+    logger.info(
+        f"\nRESUMEN: Nuevos={stats['new']} | Existentes={stats['skipped']} | Fallidos={stats['failed']}"
+    )
 
 
 if __name__ == "__main__":

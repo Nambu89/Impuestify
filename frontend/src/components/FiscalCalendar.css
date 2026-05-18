@@ -32,7 +32,9 @@
 }
 
 @keyframes fc-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .fc-error {
@@ -132,7 +134,9 @@
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
-    transition: color 0.2s, background 0.2s;
+    transition:
+        color 0.2s,
+        background 0.2s;
     flex-shrink: 0;
 }
 
@@ -165,7 +169,9 @@
     border: none;
     border-radius: var(--radius-lg);
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition:
+        background 0.2s,
+        color 0.2s;
     color: rgba(255, 255, 255, 0.45);
 }
 
@@ -313,7 +319,9 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-xl);
     padding: var(--spacing-4);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
     position: relative;
     overflow: hidden;
 }
@@ -341,8 +349,13 @@
 }
 
 @keyframes fc-pulse-bar {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
 .fc-card--soon {
@@ -392,9 +405,18 @@
     flex-shrink: 0;
 }
 
-.fc-card--urgent .fc-card__icon { color: rgba(239, 68, 68, 0.8); background: rgba(239, 68, 68, 0.1); }
-.fc-card--soon .fc-card__icon { color: rgba(245, 158, 11, 0.8); background: rgba(245, 158, 11, 0.1); }
-.fc-card--normal .fc-card__icon { color: rgba(16, 185, 129, 0.8); background: rgba(16, 185, 129, 0.1); }
+.fc-card--urgent .fc-card__icon {
+    color: rgba(239, 68, 68, 0.8);
+    background: rgba(239, 68, 68, 0.1);
+}
+.fc-card--soon .fc-card__icon {
+    color: rgba(245, 158, 11, 0.8);
+    background: rgba(245, 158, 11, 0.1);
+}
+.fc-card--normal .fc-card__icon {
+    color: rgba(16, 185, 129, 0.8);
+    background: rgba(16, 185, 129, 0.1);
+}
 
 /* Card Body */
 .fc-card__body {
@@ -482,8 +504,13 @@
 }
 
 @keyframes fc-badge-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
 }
 
 .fc-card__badge--soon {

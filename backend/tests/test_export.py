@@ -1,12 +1,14 @@
 """
 Tests for export system: report generator, email service, and export endpoints.
 """
+
 import json
-import pytest
-import sys
 import os
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+
+import pytest
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent
@@ -26,6 +28,7 @@ sys.modules.setdefault("slowapi.errors", MagicMock())
 # ============================================================
 # REPORT GENERATOR TESTS
 # ============================================================
+
 
 class TestReportGenerator:
     """Tests for PDF report generation."""
@@ -126,8 +129,13 @@ class TestReportGenerator:
                 "tipo_efectivo": 21.0,
             },
             deductions=[
-                {"code": "EST-MAT-1200", "name": "Maternidad", "type": "deduccion",
-                 "category": "familia", "fixed_amount": 1200.0},
+                {
+                    "code": "EST-MAT-1200",
+                    "name": "Maternidad",
+                    "type": "deduccion",
+                    "category": "familia",
+                    "fixed_amount": 1200.0,
+                },
             ],
             fiscal_profile={"ccaa_residencia": "Cataluna"},
             estimated_savings=1200.0,
@@ -236,12 +244,13 @@ class TestMarkdownParser:
 # EMAIL SERVICE TESTS
 # ============================================================
 
+
 class TestEmailService:
     """Tests for email service."""
 
     def test_service_singleton(self):
         """get_email_service should return singleton."""
-        from app.services.email_service import get_email_service, _email_service
+        from app.services.email_service import _email_service, get_email_service
 
         svc1 = get_email_service()
         svc2 = get_email_service()
@@ -285,6 +294,7 @@ class TestEmailService:
 # ============================================================
 # EXPORT ROUTER TESTS
 # ============================================================
+
 
 class TestExportRouter:
     """Tests for export API endpoints."""
@@ -376,6 +386,7 @@ class TestExportRouter:
 # CONFIG TESTS
 # ============================================================
 
+
 class TestExportConfig:
     """Tests for Resend configuration in settings."""
 
@@ -415,12 +426,14 @@ class TestExportConfig:
 # DATABASE SCHEMA TESTS
 # ============================================================
 
+
 class TestDatabaseSchema:
     """Tests for new database tables."""
 
     def test_deductions_table_in_schema(self):
         """deductions table should be in schema_statements."""
         import inspect
+
         from app.database.turso_client import TursoClient
 
         source = inspect.getsource(TursoClient.init_schema)
@@ -432,6 +445,7 @@ class TestDatabaseSchema:
     def test_reports_table_in_schema(self):
         """reports table should be in schema_statements."""
         import inspect
+
         from app.database.turso_client import TursoClient
 
         source = inspect.getsource(TursoClient.init_schema)

@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FileText, Mail, Loader2, Calculator, Map, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
+import {
+    FileText,
+    Mail,
+    Loader2,
+    Calculator,
+    Map,
+    AlertCircle,
+    CheckCircle,
+    ArrowLeft,
+} from 'lucide-react'
 import { useApi } from '../hooks/useApi'
 import './Auth.css'
 
@@ -20,7 +29,7 @@ export default function ForgotPassword() {
         try {
             await apiRequest('/auth/forgot-password', {
                 method: 'POST',
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email }),
             })
             setSuccess(true)
         } catch {
@@ -43,7 +52,8 @@ export default function ForgotPassword() {
                 <h1 className="auth-brand__title">Tu asesor fiscal con IA</h1>
 
                 <p className="auth-brand__subtitle">
-                    El único asistente que cubre los 21 territorios de España con IA y fuentes oficiales.
+                    El único asistente que cubre los 21 territorios de España con IA y fuentes
+                    oficiales.
                 </p>
 
                 <div className="auth-brand__pills">
@@ -79,7 +89,8 @@ export default function ForgotPassword() {
                         <div className="auth-form">
                             <div className="auth-message auth-message--success">
                                 <CheckCircle size={16} />
-                                Si el email está registrado, recibirás un enlace para restablecer tu contraseña.
+                                Si el email está registrado, recibirás un enlace para restablecer tu
+                                contraseña.
                             </div>
                         </div>
                     ) : (
@@ -110,11 +121,7 @@ export default function ForgotPassword() {
                                 </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                className="auth-submit-btn"
-                                disabled={isLoading}
-                            >
+                            <button type="submit" className="auth-submit-btn" disabled={isLoading}>
                                 {isLoading ? (
                                     <>
                                         <Loader2 size={18} className="animate-spin" />
@@ -129,7 +136,10 @@ export default function ForgotPassword() {
 
                     <p className="auth-switch-link">
                         <Link to="/login">
-                            <ArrowLeft size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                            <ArrowLeft
+                                size={14}
+                                style={{ verticalAlign: 'middle', marginRight: 4 }}
+                            />
                             Volver al login
                         </Link>
                     </p>

@@ -3,10 +3,12 @@ Subscription Guard for TaxIA/Impuestify
 
 FastAPI dependencies for subscription-based access control.
 """
+
 import logging
 
 from fastapi import Depends, HTTPException, status
-from app.auth.jwt_handler import get_current_user, TokenData
+
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.services.subscription_service import (
     SubscriptionAccess,
     get_subscription_service,
@@ -25,9 +27,7 @@ async def require_active_subscription(
     Returns SubscriptionAccess with access details.
     """
     service = await get_subscription_service()
-    access = await service.check_access(
-        user_id=current_user.user_id, email=current_user.email
-    )
+    access = await service.check_access(user_id=current_user.user_id, email=current_user.email)
 
     if not access.has_access:
         raise HTTPException(
@@ -54,6 +54,4 @@ async def get_subscription_access(
     return a specific message instead of a 403).
     """
     service = await get_subscription_service()
-    return await service.check_access(
-        user_id=current_user.user_id, email=current_user.email
-    )
+    return await service.check_access(user_id=current_user.user_id, email=current_user.email)

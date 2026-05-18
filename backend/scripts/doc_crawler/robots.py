@@ -1,6 +1,7 @@
 """
 robots.txt checker — respects site crawling rules.
 """
+
 import logging
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser

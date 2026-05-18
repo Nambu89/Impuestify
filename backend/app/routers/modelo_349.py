@@ -7,8 +7,9 @@ POST /api/modelo-349/calculate
   - Rate limit: 60/min por IP.
   - Wrapper directo de `calculate_modelo_349_tool`.
 """
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -27,17 +28,19 @@ class Operacion349Input(BaseModel):
     nombre: str = Field(default="", description="Nombre/razon social del operador")
     clave: str = Field(..., description="Clave: E, A, T, S, I, M, H, R, D, C, N")
     importe: float = Field(..., description="Importe en EUR")
-    periodo_rectificado: Optional[str] = Field(None, description="Solo clave N/C")
-    base_anterior_declarada: Optional[float] = Field(None, description="Solo clave N")
+    periodo_rectificado: str | None = Field(None, description="Solo clave N/C")
+    base_anterior_declarada: float | None = Field(None, description="Solo clave N")
 
 
 class Modelo349Request(BaseModel):
-    operaciones: List[Operacion349Input] = Field(..., min_length=1)
-    periodo: str = Field(default="1T", description="'01'..'12' mensual, '1T'..'4T' trimestral, 'anual'")
-    year: Optional[int] = Field(None, description="Ejercicio fiscal")
-    ccaa: Optional[str] = Field(None, description="CCAA del declarante")
-    importes_4_trimestres_anteriores: Optional[List[float]] = Field(None)
-    casillas_303: Optional[Dict[str, float]] = Field(None, description="c60, c36, c38 del 303")
+    operaciones: list[Operacion349Input] = Field(..., min_length=1)
+    periodo: str = Field(
+        default="1T", description="'01'..'12' mensual, '1T'..'4T' trimestral, 'anual'"
+    )
+    year: int | None = Field(None, description="Ejercicio fiscal")
+    ccaa: str | None = Field(None, description="CCAA del declarante")
+    importes_4_trimestres_anteriores: list[float] | None = Field(None)
+    casillas_303: dict[str, float] | None = Field(None, description="c60, c36, c38 del 303")
     validar_vies: bool = Field(default=False)
     forzar_anual: bool = Field(default=False)
 
@@ -48,10 +51,10 @@ class Modelo349Response(BaseModel):
     year: int
     periodicidad: str
     operadores_unicos: int
-    total_por_clave: Dict[str, float]
+    total_por_clave: dict[str, float]
     total_general: float
-    cuadre_303: Optional[Dict[str, Any]]
-    avisos: List[str]
+    cuadre_303: dict[str, Any] | None
+    avisos: list[str]
     plazo: str
     formatted_response: str
 
@@ -82,14 +85,19 @@ async def calculate_modelo_349_endpoint(
         )
 
         if not result.get("success"):
-            raise HTTPException(status_code=400, detail=result.get("error") or result.get("formatted_response"))
+            raise HTTPException(
+                status_code=400, detail=result.get("error") or result.get("formatted_response")
+            )
 
         logger.info(
             "Modelo 349 endpoint: periodo=%s, year=%s, operadores=%s",
-            body.periodo, body.year, result.get("operadores_unicos", 0),
+            body.periodo,
+            body.year,
+            result.get("operadores_unicos", 0),
         )
 
         import datetime as _dt
+
         year_used = body.year or _dt.datetime.now().year
 
         return Modelo349Response(

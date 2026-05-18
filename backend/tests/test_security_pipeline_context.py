@@ -15,7 +15,7 @@ from unittest.mock import patch
 import pytest
 
 from app.security.security_pipeline import SecurityPipeline
-from app.security.topic_classifier import TopicContext, TopicCheckResult
+from app.security.topic_classifier import TopicCheckResult, TopicContext
 
 
 @pytest.fixture
@@ -58,9 +58,7 @@ def test_ambiguous_with_fiscal_workspace_passes(pipeline):
         workspace_file_types=["pdf", "xlsx"],
     )
     with _force_topic(True, reason="contexto fiscal claro"):
-        result = pipeline.check(
-            "evalua si mi declaracion es correcta", user_id="u1", context=ctx
-        )
+        result = pipeline.check("evalua si mi declaracion es correcta", user_id="u1", context=ctx)
     assert result.is_safe is True
     assert result.layer == "all_clear"
 
@@ -82,9 +80,7 @@ def test_offscope_with_fiscal_workspace_still_blocked(pipeline):
         workspace_doc_count=6,
     )
     with _force_topic(False, reason="receta de paella"):
-        result = pipeline.check(
-            "dame una receta de paella valenciana", user_id="u1", context=ctx
-        )
+        result = pipeline.check("dame una receta de paella valenciana", user_id="u1", context=ctx)
     assert result.is_safe is False
     assert result.layer == "topic_classifier"
 
@@ -114,9 +110,7 @@ def test_prompt_injection_blocked_even_with_workspace(pipeline):
 def test_sql_injection_blocked_even_with_workspace(pipeline):
     ctx = TopicContext(workspace_name="RENTA 2025", workspace_doc_count=6)
     with _force_topic(True):
-        result = pipeline.check(
-            "test'; DROP TABLE users--", user_id="u1", context=ctx
-        )
+        result = pipeline.check("test'; DROP TABLE users--", user_id="u1", context=ctx)
     # Either prompt_injection or sql_injection layer catches it; both before topic.
     assert result.is_safe is False
     assert result.layer != "topic_classifier"

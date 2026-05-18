@@ -7,12 +7,12 @@
  * - Granular category configuration
  * - 6-month consent cookie duration
  */
-import { useEffect } from 'react';
-import 'vanilla-cookieconsent/dist/cookieconsent.css';
-import * as CookieConsent from 'vanilla-cookieconsent';
+import { useEffect } from 'react'
+import 'vanilla-cookieconsent/dist/cookieconsent.css'
+import * as CookieConsent from 'vanilla-cookieconsent'
 
 export function showCookiePreferences() {
-    CookieConsent.showPreferences();
+    CookieConsent.showPreferences()
 }
 
 export default function CookieConsentBanner() {
@@ -89,19 +89,22 @@ export default function CookieConsentBanner() {
                                             {
                                                 name: 'cc_cookie',
                                                 domain: 'Impuestify',
-                                                description: 'Almacena tus preferencias de consentimiento de cookies.',
+                                                description:
+                                                    'Almacena tus preferencias de consentimiento de cookies.',
                                                 expiration: '6 meses',
                                             },
                                             {
                                                 name: 'access_token',
                                                 domain: 'Impuestify (localStorage)',
-                                                description: 'Token de autenticación para mantener tu sesión iniciada.',
+                                                description:
+                                                    'Token de autenticación para mantener tu sesión iniciada.',
                                                 expiration: 'Sesión',
                                             },
                                             {
                                                 name: 'refresh_token',
                                                 domain: 'Impuestify (localStorage)',
-                                                description: 'Token para renovar la sesión de forma segura.',
+                                                description:
+                                                    'Token para renovar la sesión de forma segura.',
                                                 expiration: '7 días',
                                             },
                                         ],
@@ -125,7 +128,8 @@ export default function CookieConsentBanner() {
                                             {
                                                 name: 'Ninguna actualmente',
                                                 domain: '-',
-                                                description: 'No se utilizan cookies analíticas en este momento.',
+                                                description:
+                                                    'No se utilizan cookies analíticas en este momento.',
                                                 expiration: '-',
                                             },
                                         ],
@@ -141,8 +145,8 @@ export default function CookieConsentBanner() {
                     },
                 },
             },
-        });
-    }, []);
+        })
+    }, [])
 
-    return null;
+    return null
 }

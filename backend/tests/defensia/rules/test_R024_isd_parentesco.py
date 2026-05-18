@@ -28,11 +28,12 @@ cita semanticas libres. La cita canonica ("Art. 20.2.a LISD",
 "Ley 29/1987", "Art. 20.2.a") la resuelve el ``defensia_rag_verifier``
 contra el corpus normativo, nunca este modulo.
 """
+
 from __future__ import annotations
 
 import importlib
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -44,7 +45,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import evaluar, reset_registry
 
-
 # ---------------------------------------------------------------------------
 # Helper de aislamiento — carga solo R024 tras el reset del conftest
 # ---------------------------------------------------------------------------
@@ -54,12 +54,12 @@ from app.services.defensia_rules_engine import evaluar, reset_registry
 # el decorador `@regla`, hay que forzar un reload para re-registrar R024 en
 # el REGISTRY recien limpiado.
 
+
 def _cargar_solo_R024() -> None:
     """Limpia el REGISTRY y re-registra exclusivamente la regla R024."""
     reset_registry()
     module_name = (
-        "app.services.defensia_rules.reglas_otros_tributos."
-        "R024_isd_reduccion_parentesco"
+        "app.services.defensia_rules.reglas_otros_tributos." "R024_isd_reduccion_parentesco"
     )
     if module_name in sys.modules:
         importlib.reload(sys.modules[module_name])
@@ -78,6 +78,7 @@ def _recargar_R024():
 # Helpers locales
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica.
 
@@ -89,21 +90,16 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
         f"Cita hardcoded detectada: 'Art. 20.2.a' en '{cita}'. "
         "La cita canonica debe venir del RAG verificador."
     )
-    assert "20.2.a LISD" not in cita, (
-        f"Cita hardcoded detectada: '20.2.a LISD' en '{cita}'."
-    )
-    assert "Ley 29/1987" not in cita, (
-        f"Cita hardcoded detectada: 'Ley 29/1987' en '{cita}'."
-    )
+    assert "20.2.a LISD" not in cita, f"Cita hardcoded detectada: '20.2.a LISD' en '{cita}'."
+    assert "Ley 29/1987" not in cita, f"Cita hardcoded detectada: 'Ley 29/1987' en '{cita}'."
 
 
 # ---------------------------------------------------------------------------
 # Test 1 — Positivo: grupo II sin reduccion estatal aplicada
 # ---------------------------------------------------------------------------
 
-def test_R024_positivo_grupo_II_sin_reduccion_estatal(
-    build_exp, build_brief, build_doc
-):
+
+def test_R024_positivo_grupo_II_sin_reduccion_estatal(build_exp, build_brief, build_doc):
     """Grupo II (descendiente +21, conyuge, ascendiente) sin reduccion estatal.
 
     Causahabiente perteneciente al grupo II (descendientes de 21 o mas anos,
@@ -121,7 +117,7 @@ def test_R024_positivo_grupo_II_sin_reduccion_estatal(
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-001",
-        fecha_acto=datetime(2025, 6, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -136,9 +132,9 @@ def test_R024_positivo_grupo_II_sin_reduccion_estatal(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R024"
@@ -154,9 +150,8 @@ def test_R024_positivo_grupo_II_sin_reduccion_estatal(
 # Test 2 — Positivo: grupo I (descendiente <21) sin reduccion estatal
 # ---------------------------------------------------------------------------
 
-def test_R024_positivo_grupo_I_sin_reduccion_estatal(
-    build_exp, build_brief, build_doc
-):
+
+def test_R024_positivo_grupo_I_sin_reduccion_estatal(build_exp, build_brief, build_doc):
     """Grupo I (descendiente o adoptado menor de 21 anos) sin reduccion estatal.
 
     El grupo I es el mas protegido por la normativa: descendientes y
@@ -174,7 +169,7 @@ def test_R024_positivo_grupo_I_sin_reduccion_estatal(
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-002",
-        fecha_acto=datetime(2025, 7, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 7, 1, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -189,9 +184,7 @@ def test_R024_positivo_grupo_I_sin_reduccion_estatal(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
-    )
+    assert len(candidatos) == 1, f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R024"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
@@ -205,9 +198,8 @@ def test_R024_positivo_grupo_I_sin_reduccion_estatal(
 # Test 3 — Positivo: estatal aplicada pero autonomica ignorada
 # ---------------------------------------------------------------------------
 
-def test_R024_positivo_bonificacion_autonomica_ignorada(
-    build_exp, build_brief, build_doc
-):
+
+def test_R024_positivo_bonificacion_autonomica_ignorada(build_exp, build_brief, build_doc):
     """Estatal aplicada pero bonificacion autonomica procedente no aplicada.
 
     Ejemplo clasico: causante con residencia habitual en Madrid. La
@@ -228,7 +220,7 @@ def test_R024_positivo_bonificacion_autonomica_ignorada(
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-003",
-        fecha_acto=datetime(2025, 5, 20, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 20, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -243,9 +235,7 @@ def test_R024_positivo_bonificacion_autonomica_ignorada(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
-    )
+    assert len(candidatos) == 1, f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R024"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
@@ -261,9 +251,8 @@ def test_R024_positivo_bonificacion_autonomica_ignorada(
 # Test 4 — Negativo: grupo III (hermanos, tios) — fuera de alcance v1
 # ---------------------------------------------------------------------------
 
-def test_R024_negativo_grupo_III_fuera_de_alcance(
-    build_exp, build_brief, build_doc
-):
+
+def test_R024_negativo_grupo_III_fuera_de_alcance(build_exp, build_brief, build_doc):
     """Grupo III (hermanos, sobrinos, tios): R024 NO debe disparar.
 
     Esta primera pasada de la regla cubre unicamente los grupos I y II, que
@@ -282,7 +271,7 @@ def test_R024_negativo_grupo_III_fuera_de_alcance(
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-004",
-        fecha_acto=datetime(2025, 8, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 8, 15, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -290,9 +279,7 @@ def test_R024_negativo_grupo_III_fuera_de_alcance(
         docs=[liquidacion],
         ccaa="Madrid",
     )
-    brief = build_brief(
-        "He heredado de mi hermano y creo que la liquidacion no es correcta."
-    )
+    brief = build_brief("He heredado de mi hermano y creo que la liquidacion no es correcta.")
 
     candidatos = evaluar(exp, brief)
 
@@ -306,9 +293,8 @@ def test_R024_negativo_grupo_III_fuera_de_alcance(
 # Test 5 — Negativo: todas las reducciones aplicadas
 # ---------------------------------------------------------------------------
 
-def test_R024_negativo_reducciones_correctamente_aplicadas(
-    build_exp, build_brief, build_doc
-):
+
+def test_R024_negativo_reducciones_correctamente_aplicadas(build_exp, build_brief, build_doc):
     """Liquidacion que aplica estatal + bonificacion autonomica: no dispara.
 
     Si la Administracion ha aplicado tanto la reduccion estatal por
@@ -328,7 +314,7 @@ def test_R024_negativo_reducciones_correctamente_aplicadas(
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-005",
-        fecha_acto=datetime(2025, 5, 20, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 20, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -350,9 +336,8 @@ def test_R024_negativo_reducciones_correctamente_aplicadas(
 # Test 6 — Anti-hardcode: la cita es semantica, no cita canonica
 # ---------------------------------------------------------------------------
 
-def test_R024_cita_es_semantica_no_hardcoded(
-    build_exp, build_brief, build_doc
-):
+
+def test_R024_cita_es_semantica_no_hardcoded(build_exp, build_brief, build_doc):
     """Invariante #2: la cita normativa NO puede contener el articulo canonico."""
     liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -363,7 +348,7 @@ def test_R024_cita_es_semantica_no_hardcoded(
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-006",
-        fecha_acto=datetime(2025, 5, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -380,11 +365,5 @@ def test_R024_cita_es_semantica_no_hardcoded(
 
     cita = arg.cita_normativa_propuesta
     assert (
-        "Art. 20.2.a" not in cita
-        and "20.2.a LISD" not in cita
-        and "Ley 29/1987" not in cita
-    ), (
-        f"La cita normativa debe ser semantica, got: {cita!r}"
-    )
-
-
+        "Art. 20.2.a" not in cita and "20.2.a LISD" not in cita and "Ley 29/1987" not in cita
+    ), f"La cita normativa debe ser semantica, got: {cita!r}"

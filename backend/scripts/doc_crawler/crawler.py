@@ -2,6 +2,7 @@
 Core download engine — download, validate, deduplicate documents.
 Uses Scrapling for anti-bot-detection HTTP requests.
 """
+
 import hashlib
 import logging
 import shutil
@@ -40,6 +41,7 @@ if _BACKEND_ROOT not in sys.path:
 
 try:
     from app.security.document_integrity import document_integrity_scanner as _dis
+
     _DIS_AVAILABLE = True
 except Exception as _dis_import_err:  # pragma: no cover
     logger_pre = logging.getLogger(__name__)
@@ -69,6 +71,7 @@ def extract_text_for_scan(filepath: Path) -> str:
     """
     try:
         import fitz  # PyMuPDF — already in requirements
+
         doc = fitz.open(str(filepath))
         text = "\n".join(page.get_text() for page in doc)
         doc.close()
@@ -165,7 +168,9 @@ def check_url_exists(url: str) -> dict:
         return {
             "reachable": reachable,
             "status_code": response.status,
-            "message": f"HTTP {response.status}" if reachable else f"HTTP {response.status} — URL no accesible",
+            "message": f"HTTP {response.status}"
+            if reachable
+            else f"HTTP {response.status} — URL no accesible",
         }
     except Exception as e:
         _domain_last_request[domain] = time.time()

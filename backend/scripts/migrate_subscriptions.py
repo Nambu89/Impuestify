@@ -12,11 +12,12 @@ Usage:
     cd backend
     python -m scripts.migrate_subscriptions
 """
+
 import asyncio
+import logging
 import os
 import sys
 import uuid
-import logging
 
 # Add backend to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -35,8 +36,8 @@ GRACE_PERIOD_END = "2026-12-31T23:59:59"
 
 
 async def migrate():
-    from app.database.turso_client import get_db_client
     from app.config import settings
+    from app.database.turso_client import get_db_client
 
     db = await get_db_client()
 
@@ -96,6 +97,7 @@ async def migrate():
     stripe_available = settings.is_stripe_configured
     if stripe_available:
         import stripe as _stripe
+
         _stripe.api_key = settings.STRIPE_SECRET_KEY
         logger.info("Step 5: Stripe configured — will create real customers")
     else:

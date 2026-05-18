@@ -5,13 +5,14 @@ Permite al usuario importar su historial de transacciones desde Binance,
 Coinbase, Kraken, KuCoin o Bitget directamente desde el chat, enviando
 el archivo en base64.
 """
+
 from __future__ import annotations
 
 import base64
 import binascii
 import logging
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +37,7 @@ CRYPTO_CSV_TOOL: dict = {
             "properties": {
                 "file_content_base64": {
                     "type": "string",
-                    "description": (
-                        "Contenido del archivo CSV o Excel codificado en base64."
-                    ),
+                    "description": ("Contenido del archivo CSV o Excel codificado en base64."),
                 },
                 "exchange": {
                     "type": "string",
@@ -50,9 +49,7 @@ CRYPTO_CSV_TOOL: dict = {
                 },
                 "file_format": {
                     "type": "string",
-                    "description": (
-                        "Formato del archivo: 'csv' (por defecto) o 'xlsx' (Excel)."
-                    ),
+                    "description": ("Formato del archivo: 'csv' (por defecto) o 'xlsx' (Excel)."),
                     "enum": ["csv", "xlsx"],
                 },
             },
@@ -71,9 +68,9 @@ _MAX_BASE64_BYTES = 70_000_000  # ~52 MB en base64 → ~40 MB raw → margen sob
 
 async def parse_crypto_csv_tool(
     file_content_base64: str,
-    exchange: Optional[str] = None,
+    exchange: str | None = None,
     file_format: str = "csv",
-    user_id: Optional[str] = None,
+    user_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Decodifica, parsea y guarda transacciones de criptomonedas desde un CSV/Excel.

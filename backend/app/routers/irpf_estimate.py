@@ -4,12 +4,13 @@ Lightweight IRPF estimation endpoint for the Tax Guide live estimator.
 Does NOT go through the LLM agent — directly calls IRPFSimulator for
 fast (~50-100ms) real-time estimates as users fill in the wizard.
 """
-import logging
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
-from fastapi import APIRouter, Depends, HTTPException, Request
 
-from app.auth.jwt_handler import get_current_user, TokenData
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
+
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.security.rate_limiter import limiter
 
 logger = logging.getLogger(__name__)
@@ -19,22 +20,24 @@ router = APIRouter(prefix="/api/irpf", tags=["irpf"])
 
 class VentaInmueble(BaseModel):
     """A single property sale for capital gains calculation (Art. 33-38 + DT 9a LIRPF)."""
+
     tipo: str = "otro"  # "vivienda_habitual" | "otro"
     precio_venta: float = 0
     precio_adquisicion: float = 0
-    fecha_adquisicion: Optional[str] = None  # YYYY-MM-DD
-    fecha_venta: Optional[str] = None  # YYYY-MM-DD
+    fecha_adquisicion: str | None = None  # YYYY-MM-DD
+    fecha_venta: str | None = None  # YYYY-MM-DD
     gastos_adquisicion: float = 0  # notaria, registro, ITP
     gastos_venta: float = 0  # plusvalia municipal, agencia
     mejoras: float = 0
     amortizaciones: float = 0  # si estuvo alquilado
     reinversion_vivienda_habitual: bool = False
     importe_reinversion: float = 0
-    fecha_nueva_adquisicion: Optional[str] = None  # YYYY-MM-DD (Art. 38.1: 24-month limit)
+    fecha_nueva_adquisicion: str | None = None  # YYYY-MM-DD (Art. 38.1: 24-month limit)
 
 
 class SegundoDeclarante(BaseModel):
     """Second declarant data for joint filing (Art. 82-84 LIRPF)."""
+
     ingresos_trabajo: float = 0
     ingresos_actividad: float = 0
     gastos_actividad: float = 0
@@ -46,13 +49,14 @@ class SegundoDeclarante(BaseModel):
     edad: int = 30
     discapacidad: int = 0  # 0, 33, 65
     aportaciones_plan_pensiones: float = 0
-    ventas_inmuebles: Optional[List[VentaInmueble]] = None  # GP inmuebles 2o declarante
+    ventas_inmuebles: list[VentaInmueble] | None = None  # GP inmuebles 2o declarante
 
 
 class PagadorItem(BaseModel):
     """A single employer/payer record (mirrors AEAT Datos Fiscales structure)."""
+
     nombre: str = ""
-    nif: Optional[str] = None
+    nif: str | None = None
     clave: str = "empleado"  # empleado|pensionista|desempleo|otro
     retribuciones_dinerarias: float = 0
     retenciones: float = 0
@@ -75,7 +79,7 @@ class IRPFEstimateRequest(BaseModel):
     valor_adquisicion_inmueble: float = 0
     edad_contribuyente: int = 35
     num_descendientes: int = 0
-    anios_nacimiento_desc: List[int] = Field(default_factory=list)
+    anios_nacimiento_desc: list[int] = Field(default_factory=list)
     custodia_compartida: bool = False
     num_ascendientes_65: int = 0
     num_ascendientes_75: int = 0
@@ -149,21 +153,21 @@ class IRPFEstimateRequest(BaseModel):
     obras_mejora_importe: float = 0
     cotizaciones_empleada_hogar: float = 0
     # Creator-specific fields
-    plataformas_ingresos: Optional[dict] = None  # {"youtube": 5000, "twitch": 2000, ...}
-    epigrafe_iae: Optional[str] = None  # "8690", "9020", "6010.1"
-    tiene_ingresos_intracomunitarios: Optional[bool] = False
-    ingresos_intracomunitarios: Optional[float] = 0
-    withholding_tax_pagado: Optional[float] = 0
-    gastos_equipo: Optional[float] = 0
-    gastos_software: Optional[float] = 0
-    gastos_coworking: Optional[float] = 0
-    gastos_transporte: Optional[float] = 0
-    gastos_formacion: Optional[float] = 0
+    plataformas_ingresos: dict | None = None  # {"youtube": 5000, "twitch": 2000, ...}
+    epigrafe_iae: str | None = None  # "8690", "9020", "6010.1"
+    tiene_ingresos_intracomunitarios: bool | None = False
+    ingresos_intracomunitarios: float | None = 0
+    withholding_tax_pagado: float | None = 0
+    gastos_equipo: float | None = 0
+    gastos_software: float | None = 0
+    gastos_coworking: float | None = 0
+    gastos_transporte: float | None = 0
+    gastos_formacion: float | None = 0
     # Multi-pagador support (AEAT Datos Fiscales)
-    pagadores: List[PagadorItem] = Field(default_factory=list)
+    pagadores: list[PagadorItem] = Field(default_factory=list)
     num_pagadores: int = 1
     # Renta imputada multi-inmueble (Art. 85 LIRPF)
-    inmuebles_imputacion: Optional[List[dict]] = None
+    inmuebles_imputacion: list[dict] | None = None
     # Session 20: XSD gaps (Art. 55, 64, 80, 60.2, 60.3 LIRPF)
     pension_compensatoria_exconyuge: float = 0
     anualidades_alimentos_hijos: float = 0
@@ -173,13 +177,13 @@ class IRPFEstimateRequest(BaseModel):
     num_ascendientes_discapacidad_33: int = 0
     num_ascendientes_discapacidad_65: int = 0
     # Compensacion perdidas anos anteriores (Art. 48-49 LIRPF)
-    perdidas_gp_ahorro_anteriores: Optional[Dict[int, float]] = None
-    perdidas_rcm_anteriores: Optional[Dict[int, float]] = None
-    perdidas_gp_general_anteriores: Optional[Dict[int, float]] = None
+    perdidas_gp_ahorro_anteriores: dict[int, float] | None = None
+    perdidas_rcm_anteriores: dict[int, float] | None = None
+    perdidas_gp_general_anteriores: dict[int, float] | None = None
     # Venta de inmuebles — GP transmision patrimonial (Art. 33-38 + DT 9a LIRPF)
-    ventas_inmuebles: Optional[List[VentaInmueble]] = None
+    ventas_inmuebles: list[VentaInmueble] | None = None
     # Segundo declarante para tributacion conjunta real (Art. 82-84 LIRPF)
-    segundo_declarante: Optional[SegundoDeclarante] = None
+    segundo_declarante: SegundoDeclarante | None = None
 
 
 class IRPFBreakdown(BaseModel):
@@ -237,21 +241,21 @@ class IRPFEstimateResponse(BaseModel):
     ganancias_juegos_netas: float = 0
     gravamen_especial_loterias: float = 0
     # Fase 5: Deducciones autonómicas
-    deducciones_autonomicas: List[dict] = Field(default_factory=list)
+    deducciones_autonomicas: list[dict] = Field(default_factory=list)
     total_deducciones_autonomicas: float = 0
     # GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF)
-    ganancias_inmuebles: Optional[dict] = None
-    trabajo: Optional[IRPFBreakdown] = None
-    actividad: Optional[ActivityBreakdown] = None
+    ganancias_inmuebles: dict | None = None
+    trabajo: IRPFBreakdown | None = None
+    actividad: ActivityBreakdown | None = None
     # Creator-specific response fields
-    plataformas_desglose: Optional[dict] = None
-    modelo_349_requerido: Optional[bool] = None
-    iae_seleccionado: Optional[str] = None
+    plataformas_desglose: dict | None = None
+    modelo_349_requerido: bool | None = None
+    iae_seleccionado: str | None = None
     # Obligacion de declarar (Art. 96 LIRPF)
-    obligacion_declarar: Optional[ObligacionDeclarar] = None
+    obligacion_declarar: ObligacionDeclarar | None = None
     # Segundo declarante desglose (Art. 82-84 LIRPF)
-    segundo_declarante_desglose: Optional[dict] = None
-    error: Optional[str] = None
+    segundo_declarante_desglose: dict | None = None
+    error: str | None = None
 
 
 # Limites obligacion declarar (Art. 96 LIRPF, actualizables por ejercicio)
@@ -319,11 +323,17 @@ def _calcular_obligacion_declarar(
     rendimientos_capital = body.intereses + body.dividendos + body.ganancias_fondos
     if rendimientos_capital > limites["rendimientos_capital"]:
         obligado = True
-        motivo = motivo or f"Rendimientos del capital superiores a {limites['rendimientos_capital']:,.0f} EUR"
+        motivo = (
+            motivo
+            or f"Rendimientos del capital superiores a {limites['rendimientos_capital']:,.0f} EUR"
+        )
 
     if body.ingresos_alquiler > limites["rentas_inmobiliarias"]:
         obligado = True
-        motivo = motivo or f"Rentas inmobiliarias superiores a {limites['rentas_inmobiliarias']:,.0f} EUR"
+        motivo = (
+            motivo
+            or f"Rentas inmobiliarias superiores a {limites['rentas_inmobiliarias']:,.0f} EUR"
+        )
 
     return {
         "obligado": obligado,
@@ -341,9 +351,9 @@ async def estimate_irpf(
 ):
     """Fast IRPF estimate for the interactive tax guide. No LLM involved."""
     try:
-        from app.utils.irpf_simulator import IRPFSimulator
-        from app.utils.ccaa_constants import normalize_ccaa
         from app.database.turso_client import get_db_client
+        from app.utils.ccaa_constants import normalize_ccaa
+        from app.utils.irpf_simulator import IRPFSimulator
 
         db = await get_db_client()
         ccaa = normalize_ccaa(body.comunidad_autonoma)
@@ -380,7 +390,8 @@ async def estimate_irpf(
         ingresos_actividad = body.ingresos_actividad
         if body.plataformas_ingresos:
             platform_total = sum(
-                v for v in body.plataformas_ingresos.values()
+                v
+                for v in body.plataformas_ingresos.values()
                 if isinstance(v, (int, float)) and v > 0
             )
             if platform_total > 0:
@@ -406,7 +417,7 @@ async def estimate_irpf(
         simulator = IRPFSimulator(db)
 
         # --- Compute CCAA deductions before simulation ---
-        from app.services.deduction_service import get_deduction_service, DeductionService
+        from app.services.deduction_service import DeductionService, get_deduction_service
 
         deduction_service = get_deduction_service()
         ccaa_deductions_list = []
@@ -550,9 +561,13 @@ async def estimate_irpf(
             num_ascendientes_discapacidad_33=body.num_ascendientes_discapacidad_33,
             num_ascendientes_discapacidad_65=body.num_ascendientes_discapacidad_65,
             # GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF)
-            ventas_inmuebles=[v.model_dump() for v in body.ventas_inmuebles] if body.ventas_inmuebles else None,
+            ventas_inmuebles=[v.model_dump() for v in body.ventas_inmuebles]
+            if body.ventas_inmuebles
+            else None,
             # Segundo declarante (Art. 82-84 LIRPF)
-            segundo_declarante=body.segundo_declarante.model_dump() if body.segundo_declarante else None,
+            segundo_declarante=body.segundo_declarante.model_dump()
+            if body.segundo_declarante
+            else None,
         )
 
         # Try requested year, fallback to year-1
@@ -596,10 +611,14 @@ async def estimate_irpf(
             deduccion_familia_numerosa=round(result.get("deduccion_familia_numerosa", 0), 2),
             deduccion_donativos=round(result.get("deduccion_donativos", 0), 2),
             total_deducciones_cuota=round(result.get("total_deducciones_cuota", 0), 2),
-            reduccion_tributacion_conjunta=round(result.get("reduccion_tributacion_conjunta", 0), 2),
+            reduccion_tributacion_conjunta=round(
+                result.get("reduccion_tributacion_conjunta", 0), 2
+            ),
             deduccion_alquiler_pre2015=round(result.get("deduccion_alquiler_pre2015", 0), 2),
             renta_imputada_inmuebles=round(result.get("renta_imputada_inmuebles", 0), 2),
-            reduccion_pension_compensatoria=round(result.get("reduccion_pension_compensatoria", 0), 2),
+            reduccion_pension_compensatoria=round(
+                result.get("reduccion_pension_compensatoria", 0), 2
+            ),
             cuota_anualidades_alimentos=round(result.get("cuota_anualidades_alimentos", 0), 2),
             deduccion_doble_imposicion=round(result.get("deduccion_doble_imposicion", 0), 2),
             ganancias_juegos_netas=round(result.get("ganancias_juegos_netas", 0), 2),
@@ -612,7 +631,9 @@ async def estimate_irpf(
                 gastos_deducibles=trabajo.get("gastos_deducibles", 0),
                 reduccion_trabajo=trabajo.get("reduccion_trabajo", 0),
                 rendimiento_neto=trabajo.get("rendimiento_neto_reducido", 0),
-            ) if trabajo else None,
+            )
+            if trabajo
+            else None,
             actividad=ActivityBreakdown(
                 ingresos_actividad=actividad.get("ingresos_actividad", 0),
                 total_gastos_deducibles=actividad.get("total_gastos_deducibles", 0),
@@ -622,12 +643,15 @@ async def estimate_irpf(
                 tipo_reduccion=actividad.get("tipo_reduccion", "ninguna"),
                 rendimiento_neto_reducido=actividad.get("rendimiento_neto_reducido", 0),
                 estimacion=actividad.get("estimacion", "directa_simplificada"),
-            ) if actividad else None,
+            )
+            if actividad
+            else None,
             # Creator-specific response fields
             plataformas_desglose=body.plataformas_ingresos if body.plataformas_ingresos else None,
             modelo_349_requerido=(
                 True
-                if body.tiene_ingresos_intracomunitarios and (body.ingresos_intracomunitarios or 0) > 0
+                if body.tiene_ingresos_intracomunitarios
+                and (body.ingresos_intracomunitarios or 0) > 0
                 else False
             ),
             iae_seleccionado=body.epigrafe_iae if body.epigrafe_iae else None,
@@ -645,6 +669,7 @@ async def estimate_irpf(
 
 # === Phase B: Deduction discovery (lightweight, no LLM) ===
 
+
 class DeductionDiscoverRequest(BaseModel):
     ccaa: str
     tax_year: int = 2025
@@ -656,31 +681,35 @@ class DeductionItem(BaseModel):
     name: str
     category: str
     description: str = ""
-    percentage: Optional[float] = None
-    max_amount: Optional[float] = None
-    fixed_amount: Optional[float] = None
+    percentage: float | None = None
+    max_amount: float | None = None
+    fixed_amount: float | None = None
     legal_reference: str = ""
 
 
 class DeductionDiscoverResponse(BaseModel):
     success: bool = True
-    eligible: List[DeductionItem] = []
-    maybe_eligible: List[DeductionItem] = []
+    eligible: list[DeductionItem] = []
+    maybe_eligible: list[DeductionItem] = []
     estimated_savings: float = 0
     total_deductions: int = 0
-    missing_questions: List[dict] = []
-
+    missing_questions: list[dict] = []
 
 
 # === Net Salary Calculator for Autonomos (lightweight, no LLM) ===
 
+
 class NetSalaryRequest(BaseModel):
     facturacion_bruta_mensual: float  # Lo que factura al mes (sin IVA/IGIC/IPSI)
-    tipo_iva: Optional[float] = None  # None = auto-detectar por CCAA (IVA 21%, IGIC 7%, IPSI 4%)
+    tipo_iva: float | None = None  # None = auto-detectar por CCAA (IVA 21%, IGIC 7%, IPSI 4%)
     retencion_irpf: float = 15.0  # % retencion IRPF en facturas (15% normal, 7% nuevos autonomos)
-    cuota_autonomo_mensual: Optional[float] = None  # None = auto-calcular por ingresos (cotizacion por ingresos reales 2025)
+    cuota_autonomo_mensual: float | None = (
+        None  # None = auto-calcular por ingresos (cotizacion por ingresos reales 2025)
+    )
     gastos_deducibles_mensual: float = 0  # Gastos mensuales deducibles
-    comunidad_autonoma: Optional[str] = None  # Para IRPF territorial + impuesto indirecto + deducciones
+    comunidad_autonoma: str | None = (
+        None  # Para IRPF territorial + impuesto indirecto + deducciones
+    )
     es_nuevo_autonomo: bool = False  # Primeros 2 anos: tipo reducido 7%
     tarifa_plana: bool = False  # Tarifa plana 80 EUR/mes (DA 52a LGSS, RDL 13/2022). Requisitos: no haber sido autonomo en 2 anos previos, no societario
 
@@ -707,21 +736,21 @@ class NetSalaryResponse(BaseModel):
     porcentaje_neto: float
     ahorro_retencion_vs_irpf: float
     # Territorial info
-    regimen_fiscal: Optional[str] = None  # comun, foral_vasco, foral_navarra, ceuta_melilla, canarias
-    impuesto_indirecto: Optional[str] = None  # IVA, IGIC, IPSI
-    tipo_impuesto_indirecto: Optional[float] = None  # 21%, 7%, 4%, etc.
-    deduccion_ceuta_melilla: Optional[float] = None  # 60% cuota IRPF
+    regimen_fiscal: str | None = None  # comun, foral_vasco, foral_navarra, ceuta_melilla, canarias
+    impuesto_indirecto: str | None = None  # IVA, IGIC, IPSI
+    tipo_impuesto_indirecto: float | None = None  # 21%, 7%, 4%, etc.
+    deduccion_ceuta_melilla: float | None = None  # 60% cuota IRPF
     disclaimer: str = "Estimación orientativa. El resultado real depende de tu situación personal, familiar y de tu comunidad autónoma."
-    error: Optional[str] = None
+    error: str | None = None
 
 
 # Tramos IRPF estatal 2025 (Art. 63 LIRPF)
 _TRAMOS_IRPF_2025 = [
-    (12450.0,   0.19),
-    (7750.0,    0.24),   # 20200 - 12450
-    (15000.0,   0.30),   # 35200 - 20200
-    (24800.0,   0.37),   # 60000 - 35200
-    (240000.0,  0.45),   # 300000 - 60000
+    (12450.0, 0.19),
+    (7750.0, 0.24),  # 20200 - 12450
+    (15000.0, 0.30),  # 35200 - 20200
+    (24800.0, 0.37),  # 60000 - 35200
+    (240000.0, 0.45),  # 300000 - 60000
     (float("inf"), 0.47),
 ]
 
@@ -729,20 +758,20 @@ _TRAMOS_IRPF_2025 = [
 # Cuota autonomos por tramos de ingresos reales 2025 (RDL 13/2022, tabla general)
 # Fuente: https://www.seg-social.es/wps/portal/wss/internet/Trabajadores/CotizacionRecaudacionTrabajadores/36537
 _CUOTAS_SS_2025 = [
-    (670,    225.0),   # Rendimiento neto mensual <= 670 EUR
-    (900,    250.0),
+    (670, 225.0),  # Rendimiento neto mensual <= 670 EUR
+    (900, 250.0),
     (1166.70, 267.0),
-    (1300,   291.0),
-    (1500,   294.0),
-    (1700,   294.0),
-    (1850,   310.0),
-    (2030,   315.0),
-    (2330,   320.0),
-    (2760,   330.0),
-    (3190,   350.0),
-    (3620,   370.0),
-    (4050,   390.0),
-    (6000,   400.0),
+    (1300, 291.0),
+    (1500, 294.0),
+    (1700, 294.0),
+    (1850, 310.0),
+    (2030, 315.0),
+    (2330, 320.0),
+    (2760, 330.0),
+    (3190, 350.0),
+    (3620, 370.0),
+    (4050, 390.0),
+    (6000, 400.0),
     (float("inf"), 530.0),  # > 6000 EUR/mes
 ]
 
@@ -762,25 +791,25 @@ def _cuota_autonomo_por_ingresos(facturacion_bruta_mensual: float) -> float:
 
 # Escala IRPF foral vasca 2025 (Bizkaia/Gipuzkoa/Araba) — 7 tramos
 _TRAMOS_FORAL_VASCO = [
-    (17360.0,  0.23),
-    (17360.0,  0.28),   # 34720 - 17360
-    (17360.0,  0.35),   # 52080 - 34720
-    (17360.0,  0.40),   # 69440 - 52080
-    (17360.0,  0.45),   # 86800 - 69440
-    (93200.0,  0.46),   # 180000 - 86800
+    (17360.0, 0.23),
+    (17360.0, 0.28),  # 34720 - 17360
+    (17360.0, 0.35),  # 52080 - 34720
+    (17360.0, 0.40),  # 69440 - 52080
+    (17360.0, 0.45),  # 86800 - 69440
+    (93200.0, 0.46),  # 180000 - 86800
     (float("inf"), 0.49),
 ]
 
 # Escala IRPF foral Navarra 2025 — 11 tramos (simplificada a principales)
 _TRAMOS_FORAL_NAVARRA = [
-    (4484.0,   0.13),
-    (4484.0,   0.2224),
-    (8969.0,   0.2576),
-    (12307.0,  0.3136),
-    (17913.0,  0.3552),
-    (23643.0,  0.3968),
-    (63434.0,  0.4384),
-    (99085.0,  0.468),
+    (4484.0, 0.13),
+    (4484.0, 0.2224),
+    (8969.0, 0.2576),
+    (12307.0, 0.3136),
+    (17913.0, 0.3552),
+    (23643.0, 0.3968),
+    (63434.0, 0.4384),
+    (99085.0, 0.468),
     (165808.0, 0.4976),
     (float("inf"), 0.528),
 ]
@@ -870,12 +899,14 @@ def _compute_net_salary(body: NetSalaryRequest) -> NetSalaryResponse:
     # Impuesto indirecto por territorio
     if body.tipo_iva is not None:
         tipo_indirecto = body.tipo_iva
-        nombre_indirecto = "IVA" if tipo_indirecto > 5 else ("IGIC" if tipo_indirecto == 7 else "IPSI")
+        nombre_indirecto = (
+            "IVA" if tipo_indirecto > 5 else ("IGIC" if tipo_indirecto == 7 else "IPSI")
+        )
     elif regime == "canarias":
-        tipo_indirecto = 7.0   # IGIC general
+        tipo_indirecto = 7.0  # IGIC general
         nombre_indirecto = "IGIC"
     elif regime == "ceuta_melilla":
-        tipo_indirecto = 4.0   # IPSI tipo general servicios
+        tipo_indirecto = 4.0  # IPSI tipo general servicios
         nombre_indirecto = "IPSI"
     else:
         tipo_indirecto = 21.0  # IVA general
@@ -935,14 +966,10 @@ def _compute_net_salary(body: NetSalaryRequest) -> NetSalaryResponse:
 
     # --- Resumen ---
     tipo_irpf_efectivo = (
-        round((irpf_estimado_anual / facturacion_anual) * 100, 2)
-        if facturacion_anual > 0
-        else 0.0
+        round((irpf_estimado_anual / facturacion_anual) * 100, 2) if facturacion_anual > 0 else 0.0
     )
     porcentaje_neto = (
-        round((neto_anual / facturacion_anual) * 100, 2)
-        if facturacion_anual > 0
-        else 0.0
+        round((neto_anual / facturacion_anual) * 100, 2) if facturacion_anual > 0 else 0.0
     )
 
     return NetSalaryResponse(
@@ -1055,7 +1082,7 @@ async def discover_deductions_endpoint(
             missing_questions=questions[:8],
         )
 
-    except Exception as e:
+    except Exception:
         return DeductionDiscoverResponse(success=False)
 
 
@@ -1063,9 +1090,10 @@ async def discover_deductions_endpoint(
 # POST /api/irpf/withholding — Calculadora de retenciones IRPF (PUBLICA)
 # =====================================================================
 
+
 class DescendienteRequest(BaseModel):
     ano_nacimiento: int = 2015
-    ano_adopcion: Optional[int] = None
+    ano_adopcion: int | None = None
     por_entero: bool = True
     discapacidad: str = "sin"  # sin | 33-65 | 65+
     movilidad_reducida: bool = False
@@ -1080,22 +1108,28 @@ class AscendienteRequest(BaseModel):
 
 class WithholdingRequest(BaseModel):
     retribucion_bruta_anual: float = Field(..., gt=0, description="Salario bruto anual en EUR")
-    situacion_familiar: str = Field("3", description="1=soltero con hijos | 2=casado conyuge <1500 | 3=resto")
+    situacion_familiar: str = Field(
+        "3", description="1=soltero con hijos | 2=casado conyuge <1500 | 3=resto"
+    )
     situacion_laboral: str = Field("activo", description="activo | pensionista | desempleado")
     tipo_contrato: str = Field("indefinido", description="indefinido | temporal")
     ano_nacimiento: int = Field(1990, description="Ano de nacimiento del perceptor")
     discapacidad: str = Field("sin", description="sin | 33-65 | 65+")
     movilidad_reducida: bool = False
-    descendientes: List[DescendienteRequest] = Field(default_factory=list)
-    ascendientes: List[AscendienteRequest] = Field(default_factory=list)
-    cotizaciones_ss: Optional[float] = Field(None, description="Si None, se estima al 6.35%")
+    descendientes: list[DescendienteRequest] = Field(default_factory=list)
+    ascendientes: list[AscendienteRequest] = Field(default_factory=list)
+    cotizaciones_ss: float | None = Field(None, description="Si None, se estima al 6.35%")
     pension_compensatoria: float = 0
     anualidades_alimentos: float = 0
     hipoteca_pre2013: bool = False
     movilidad_geografica: bool = False
     ceuta_melilla: bool = False
     num_pagas: int = Field(14, ge=1, le=18)
-    retribucion_en_especie: float = Field(0, ge=0, description="Retribucion en especie exenta (cheque restaurante, seguro medico, transporte, guarderia)")
+    retribucion_en_especie: float = Field(
+        0,
+        ge=0,
+        description="Retribucion en especie exenta (cheque restaurante, seguro medico, transporte, guarderia)",
+    )
 
 
 @router.post("/withholding")
@@ -1111,25 +1145,39 @@ async def calculate_withholding(
     """
     try:
         from app.utils.calculators.withholding_rate import (
-            calcular_retencion,
-            WithholdingInput,
+            Ascendiente,
+            Descendiente,
+            Discapacidad,
             SituacionFamiliar,
             SituacionLaboral,
             TipoContrato,
-            Discapacidad,
-            Descendiente,
-            Ascendiente,
+            WithholdingInput,
+            calcular_retencion,
         )
 
         # Map string inputs to enums
-        sit_fam_map = {"1": SituacionFamiliar.SITUACION1, "2": SituacionFamiliar.SITUACION2, "3": SituacionFamiliar.SITUACION3}
-        sit_lab_map = {"activo": SituacionLaboral.ACTIVO, "pensionista": SituacionLaboral.PENSIONISTA, "desempleado": SituacionLaboral.DESEMPLEADO}
+        sit_fam_map = {
+            "1": SituacionFamiliar.SITUACION1,
+            "2": SituacionFamiliar.SITUACION2,
+            "3": SituacionFamiliar.SITUACION3,
+        }
+        sit_lab_map = {
+            "activo": SituacionLaboral.ACTIVO,
+            "pensionista": SituacionLaboral.PENSIONISTA,
+            "desempleado": SituacionLaboral.DESEMPLEADO,
+        }
         contrato_map = {"indefinido": TipoContrato.INDEFINIDO, "temporal": TipoContrato.TEMPORAL}
-        disc_map = {"sin": Discapacidad.SIN, "33-65": Discapacidad.DE33A65, "65+": Discapacidad.DESDE65}
+        disc_map = {
+            "sin": Discapacidad.SIN,
+            "33-65": Discapacidad.DE33A65,
+            "65+": Discapacidad.DESDE65,
+        }
 
         inp = WithholdingInput(
             retribucion_bruta_anual=body.retribucion_bruta_anual,
-            situacion_familiar=sit_fam_map.get(body.situacion_familiar, SituacionFamiliar.SITUACION3),
+            situacion_familiar=sit_fam_map.get(
+                body.situacion_familiar, SituacionFamiliar.SITUACION3
+            ),
             situacion_laboral=sit_lab_map.get(body.situacion_laboral, SituacionLaboral.ACTIVO),
             tipo_contrato=contrato_map.get(body.tipo_contrato, TipoContrato.INDEFINIDO),
             ano_nacimiento=body.ano_nacimiento,
@@ -1180,8 +1228,10 @@ async def calculate_withholding(
 # Company Size / Accounting Thresholds Calculator (Phase 1B)
 # ---------------------------------------------------------------------------
 
+
 class CompanyYearData(BaseModel):
     """Financial data for one fiscal year."""
+
     activo: float = Field(..., ge=0, description="Total activo (EUR)")
     negocios: float = Field(..., ge=0, description="Cifra de negocios (EUR)")
     empleados: int = Field(..., ge=0, description="Numero medio de empleados")
@@ -1189,9 +1239,12 @@ class CompanyYearData(BaseModel):
 
 class CompanySizeRequest(BaseModel):
     """Request for company size classification."""
+
     year_1: CompanyYearData = Field(..., description="Datos del ejercicio N-1")
     year_2: CompanyYearData = Field(..., description="Datos del ejercicio N")
-    ejercicio: int = Field(2025, ge=2020, le=2030, description="Ejercicio de referencia para umbrales")
+    ejercicio: int = Field(
+        2025, ge=2020, le=2030, description="Ejercicio de referencia para umbrales"
+    )
 
 
 @router.post("/company-size")
@@ -1212,8 +1265,8 @@ async def calculate_company_size(
     """
     try:
         from app.utils.calculators.company_size import (
-            classify_company,
             YearData,
+            classify_company,
         )
 
         y1 = YearData(
@@ -1258,6 +1311,7 @@ async def calculate_company_size(
 
 class ModelObligationsRequest(BaseModel):
     """Request body for the model obligations advisor."""
+
     ccaa: str
     situacion_laboral: str = "particular"  # particular | autonomo | sociedad
     tiene_empleados: bool = False
@@ -1288,8 +1342,7 @@ async def get_model_obligations(
             plugin = get_territory(ccaa)
         except KeyError:
             raise HTTPException(
-                status_code=400,
-                detail=f"Comunidad autonoma no reconocida: '{body.ccaa}'"
+                status_code=400, detail=f"Comunidad autonoma no reconocida: '{body.ccaa}'"
             )
 
         profile = {

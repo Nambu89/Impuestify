@@ -18,11 +18,12 @@ Setup (Windows Task Scheduler):
 Or via schtasks CLI:
     schtasks /create /tn "TaxIA-DocCrawler" /tr "C:\\...\\venv\\Scripts\\python.exe -m backend.scripts.doc_crawler.scheduled_check" /sc weekly /d SUN /st 10:00 /f
 """
+
 import json
 import logging
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 # Ensure project root in path
@@ -32,6 +33,7 @@ if str(project_root) not in sys.path:
 
 from backend.scripts.doc_crawler.config import CRAWLER_REPORT, DOCS_DIR, PENDING_INGEST
 from backend.scripts.doc_crawler.crawler import download_document, reset_session_state
+from backend.scripts.doc_crawler.drift_analyzer import analyze_drift
 from backend.scripts.doc_crawler.inventory import (
     generate_report,
     get_relative_path,
@@ -40,7 +42,6 @@ from backend.scripts.doc_crawler.inventory import (
     update_document,
 )
 from backend.scripts.doc_crawler.notifier import append_log, write_pending_ingest
-from backend.scripts.doc_crawler.drift_analyzer import analyze_drift
 from backend.scripts.doc_crawler.watchlist import get_items, get_stats
 
 LOG_FILE = DOCS_DIR / "_crawler_scheduled.log"
@@ -149,17 +150,21 @@ def run_scheduled_check() -> dict:
 
     # Calculate summary
     summary = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "total_checked": len(results),
         "new": sum(1 for r in results if r.get("status") == "new"),
         "updated": sum(1 for r in results if r.get("status") == "updated"),
         "unchanged": sum(1 for r in results if r.get("status") == "unchanged"),
-        "failed": sum(1 for r in results if r.get("status") in ("failed", "invalid", "rate_limited")),
+        "failed": sum(
+            1 for r in results if r.get("status") in ("failed", "invalid", "rate_limited")
+        ),
     }
 
     logger.info("")
-    logger.info(f"Results: {summary['new']} new, {summary['updated']} updated, "
-                f"{summary['unchanged']} unchanged, {summary['failed']} failed")
+    logger.info(
+        f"Results: {summary['new']} new, {summary['updated']} updated, "
+        f"{summary['unchanged']} unchanged, {summary['failed']} failed"
+    )
 
     # Notify if there are new documents
     new_count = summary["new"] + summary["updated"]

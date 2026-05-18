@@ -17,7 +17,7 @@ import {
     Check,
     RefreshCw,
     BarChart3,
-    Sparkles
+    Sparkles,
 } from 'lucide-react'
 import Header from '../components/Header'
 import IntegrityBadge from '../components/IntegrityBadge'
@@ -64,7 +64,7 @@ const FILE_TYPE_ICONS: Record<string, React.ReactNode> = {
     nomina: <FileText size={20} />,
     factura: <Receipt size={20} />,
     declaracion: <FileSpreadsheet size={20} />,
-    otro: <File size={20} />
+    otro: <File size={20} />,
 }
 
 export default function WorkspacesPage() {
@@ -87,7 +87,7 @@ export default function WorkspacesPage() {
     const [formData, setFormData] = useState<CreateWorkspaceData>({
         name: '',
         description: '',
-        icon: '📁'
+        icon: '📁',
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formError, setFormError] = useState<string | null>(null)
@@ -119,7 +119,7 @@ export default function WorkspacesPage() {
             setIsLoading(false)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])  // Empty deps - apiRequest is stable enough
+    }, []) // Empty deps - apiRequest is stable enough
 
     const fetchWorkspaceFiles = useCallback(async (workspaceId: string) => {
         try {
@@ -132,7 +132,7 @@ export default function WorkspacesPage() {
             setFilesLoading(false)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])  // Empty deps - apiRequest is stable enough
+    }, []) // Empty deps - apiRequest is stable enough
 
     // Fetch workspaces only once on mount
     useEffect(() => {
@@ -166,8 +166,8 @@ export default function WorkspacesPage() {
                 body: JSON.stringify({
                     name: formData.name.trim(),
                     description: formData.description.trim() || null,
-                    icon: formData.icon
-                })
+                    icon: formData.icon,
+                }),
             })
 
             setShowCreateModal(false)
@@ -186,7 +186,7 @@ export default function WorkspacesPage() {
         try {
             setIsSubmitting(true)
             await apiRequest(`/api/workspaces/${workspaceToDelete.id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
             })
 
             setShowDeleteModal(false)
@@ -219,9 +219,9 @@ export default function WorkspacesPage() {
         try {
             setDeletingFileId(fileId)
             await apiRequest(`/api/workspaces/${selectedWorkspace.id}/files/${fileId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
             })
-            setWorkspaceFiles(prev => prev.filter(f => f.id !== fileId))
+            setWorkspaceFiles((prev) => prev.filter((f) => f.id !== fileId))
             fetchWorkspaces()
         } catch (err: any) {
             setError(err.message || 'Error al eliminar el archivo')
@@ -244,7 +244,7 @@ export default function WorkspacesPage() {
         try {
             await apiRequest(`/api/workspaces/${workspace.id}`, {
                 method: 'PATCH',
-                body: JSON.stringify({ name: trimmed })
+                body: JSON.stringify({ name: trimmed }),
             })
             fetchWorkspaces()
         } catch (err: any) {
@@ -277,7 +277,7 @@ export default function WorkspacesPage() {
                         ...(token && { Authorization: `Bearer ${token}` }),
                     },
                     body: JSON.stringify({}),
-                }
+                },
             )
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}))
@@ -319,7 +319,7 @@ export default function WorkspacesPage() {
                         nueva_cuenta_code: code,
                         nueva_cuenta_nombre: nombre,
                     }),
-                }
+                },
             )
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}))
@@ -343,7 +343,7 @@ export default function WorkspacesPage() {
         const response = await fetch(`${API_URL}/api/workspaces/${workspaceId}/files`, {
             method: 'POST',
             headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-            body: formDataObj
+            body: formDataObj,
         })
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}))
@@ -428,7 +428,7 @@ export default function WorkspacesPage() {
         }
 
         const accepted = ['.pdf', '.png', '.jpg', '.jpeg', '.doc', '.docx', '.xls', '.xlsx', '.csv']
-        const invalid = droppedFiles.filter(f => {
+        const invalid = droppedFiles.filter((f) => {
             const ext = '.' + f.name.split('.').pop()?.toLowerCase()
             return !accepted.includes(ext)
         })
@@ -465,7 +465,7 @@ export default function WorkspacesPage() {
         return new Date(dateString).toLocaleDateString('es-ES', {
             day: 'numeric',
             month: 'short',
-            year: 'numeric'
+            year: 'numeric',
         })
     }
 
@@ -480,7 +480,7 @@ export default function WorkspacesPage() {
             completed: { label: 'Procesado', className: 'status-success' },
             processing: { label: 'Procesando', className: 'status-warning' },
             pending: { label: 'Pendiente', className: 'status-pending' },
-            error: { label: 'Error', className: 'status-error' }
+            error: { label: 'Error', className: 'status-error' },
         }
         const config = statusConfig[status] || statusConfig.pending
         return <span className={`status-badge ${config.className}`}>{config.label}</span>
@@ -558,18 +558,20 @@ export default function WorkspacesPage() {
                                                 </div>
                                             )}
 
-                                            <div className="workspace-icon">
-                                                {workspace.icon}
-                                            </div>
+                                            <div className="workspace-icon">{workspace.icon}</div>
 
                                             <div className="workspace-content">
                                                 {renamingId === workspace.id ? (
                                                     <input
                                                         className="workspace-rename-input"
                                                         value={renamingValue}
-                                                        onChange={(e) => setRenamingValue(e.target.value)}
+                                                        onChange={(e) =>
+                                                            setRenamingValue(e.target.value)
+                                                        }
                                                         onBlur={() => commitRename(workspace)}
-                                                        onKeyDown={(e) => handleRenameKeyDown(e, workspace)}
+                                                        onKeyDown={(e) =>
+                                                            handleRenameKeyDown(e, workspace)
+                                                        }
                                                         onClick={(e) => e.stopPropagation()}
                                                         autoFocus
                                                         maxLength={50}
@@ -590,7 +592,9 @@ export default function WorkspacesPage() {
                                                     </div>
                                                     <div className="stat">
                                                         <Clock size={14} />
-                                                        <span>{formatDate(workspace.created_at)}</span>
+                                                        <span>
+                                                            {formatDate(workspace.created_at)}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -632,7 +636,13 @@ export default function WorkspacesPage() {
                                     onChange={handleFileUpload}
                                     accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.csv,image/*"
                                     multiple
-                                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden' }}
+                                    style={{
+                                        position: 'absolute',
+                                        opacity: 0,
+                                        width: 0,
+                                        height: 0,
+                                        overflow: 'hidden',
+                                    }}
                                 />
 
                                 {/* Drag overlay */}
@@ -647,7 +657,9 @@ export default function WorkspacesPage() {
                                     <>
                                         <div className="files-header">
                                             <div className="files-header-content">
-                                                <span className="files-workspace-icon">{selectedWorkspace.icon}</span>
+                                                <span className="files-workspace-icon">
+                                                    {selectedWorkspace.icon}
+                                                </span>
                                                 <h2>{selectedWorkspace.name}</h2>
                                             </div>
                                             <div className="files-header-actions">
@@ -662,10 +674,20 @@ export default function WorkspacesPage() {
                                                 <label
                                                     htmlFor="workspace-file-upload"
                                                     className="btn btn-primary btn-sm"
-                                                    style={{ cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.4 : 1 }}
+                                                    style={{
+                                                        cursor: uploading
+                                                            ? 'not-allowed'
+                                                            : 'pointer',
+                                                        opacity: uploading ? 0.4 : 1,
+                                                    }}
                                                 >
                                                     <Upload size={16} />
-                                                    <span>{uploadProgress || (uploading ? 'Subiendo...' : 'Subir archivos')}</span>
+                                                    <span>
+                                                        {uploadProgress ||
+                                                            (uploading
+                                                                ? 'Subiendo...'
+                                                                : 'Subir archivos')}
+                                                    </span>
                                                 </label>
                                             </div>
                                         </div>
@@ -688,7 +710,9 @@ export default function WorkspacesPage() {
                                         </div>
 
                                         {viewMode === 'dashboard' ? (
-                                            <WorkspaceDashboard workspaceId={selectedWorkspace.id} />
+                                            <WorkspaceDashboard
+                                                workspaceId={selectedWorkspace.id}
+                                            />
                                         ) : filesLoading ? (
                                             <div className="files-loading">
                                                 <div className="loading-spinner"></div>
@@ -705,95 +729,180 @@ export default function WorkspacesPage() {
                                                 {workspaceFiles.map((file) => (
                                                     <div key={file.id} className="file-item">
                                                         <div className="file-icon">
-                                                            {FILE_TYPE_ICONS[file.file_type] || FILE_TYPE_ICONS.otro}
+                                                            {FILE_TYPE_ICONS[file.file_type] ||
+                                                                FILE_TYPE_ICONS.otro}
                                                         </div>
                                                         <div className="file-info">
                                                             <div className="file-name-row">
-                                                                <span className="file-name">{file.filename}</span>
+                                                                <span className="file-name">
+                                                                    {file.filename}
+                                                                </span>
                                                                 <IntegrityBadge
-                                                                    score={file.integrity_score ?? null}
-                                                                    findings={file.integrity_findings ?? undefined}
+                                                                    score={
+                                                                        file.integrity_score ?? null
+                                                                    }
+                                                                    findings={
+                                                                        file.integrity_findings ??
+                                                                        undefined
+                                                                    }
                                                                     compact
                                                                 />
                                                             </div>
                                                             <span className="file-meta">
-                                                                {formatFileSize(file.file_size)} • {formatDate(file.created_at)}
+                                                                {formatFileSize(file.file_size)} •{' '}
+                                                                {formatDate(file.created_at)}
                                                             </span>
                                                             {/* PGC Classification badge for invoices */}
-                                                            {file.file_type === 'factura' && file.cuenta_pgc && (
-                                                                <div className="file-classification">
-                                                                    <span className={`classification-badge ${
-                                                                        file.clasificacion_confianza === 'confirmada' || file.clasificacion_confianza === 'manual'
-                                                                            ? 'classification-confirmed'
-                                                                            : 'classification-pending'
-                                                                    }`}>
-                                                                        {file.cuenta_pgc} — {file.cuenta_pgc_nombre}
-                                                                    </span>
-                                                                    {file.clasificacion_confianza === 'pendiente_confirmacion' && (
-                                                                        <span className="classification-status classification-status--pending">
-                                                                            Por confirmar
+                                                            {file.file_type === 'factura' &&
+                                                                file.cuenta_pgc && (
+                                                                    <div className="file-classification">
+                                                                        <span
+                                                                            className={`classification-badge ${
+                                                                                file.clasificacion_confianza ===
+                                                                                    'confirmada' ||
+                                                                                file.clasificacion_confianza ===
+                                                                                    'manual'
+                                                                                    ? 'classification-confirmed'
+                                                                                    : 'classification-pending'
+                                                                            }`}
+                                                                        >
+                                                                            {file.cuenta_pgc} —{' '}
+                                                                            {file.cuenta_pgc_nombre}
                                                                         </span>
-                                                                    )}
-                                                                    {(file.clasificacion_confianza === 'confirmada' || file.clasificacion_confianza === 'manual') && (
-                                                                        <span className="classification-status classification-status--confirmed">
-                                                                            {file.clasificacion_confianza === 'manual' ? 'Manual' : 'Confirmada'}
-                                                                        </span>
-                                                                    )}
-                                                                    {file.clasificacion_confianza === 'pendiente_confirmacion' && (
-                                                                        <div className="classification-actions">
-                                                                            <button
-                                                                                className="btn btn-ghost classification-action-btn classification-confirm-btn"
-                                                                                onClick={(e) => { e.stopPropagation(); handleConfirmClassification(file.id) }}
-                                                                                disabled={confirmingFileId === file.id}
-                                                                                title="Confirmar clasificacion"
-                                                                            >
-                                                                                <Check size={14} />
-                                                                            </button>
-                                                                            <button
-                                                                                className="btn btn-ghost classification-action-btn classification-reclassify-btn"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation()
-                                                                                    setReclassifyFileId(reclassifyFileId === file.id ? null : file.id)
-                                                                                    setReclassifyValue('')
-                                                                                }}
-                                                                                title="Reclasificar"
-                                                                            >
-                                                                                <RefreshCw size={14} />
-                                                                            </button>
-                                                                        </div>
-                                                                    )}
-                                                                    {reclassifyFileId === file.id && (
-                                                                        <div className="reclassify-input-row">
-                                                                            <input
-                                                                                className="reclassify-input"
-                                                                                type="text"
-                                                                                placeholder="600 — Compras"
-                                                                                value={reclassifyValue}
-                                                                                onChange={(e) => setReclassifyValue(e.target.value)}
-                                                                                onKeyDown={(e) => {
-                                                                                    if (e.key === 'Enter') { e.preventDefault(); handleReclassify(file.id) }
-                                                                                    if (e.key === 'Escape') { setReclassifyFileId(null); setReclassifyValue('') }
-                                                                                }}
-                                                                                autoFocus
-                                                                            />
-                                                                            <button
-                                                                                className="btn btn-primary btn-xs"
-                                                                                onClick={() => handleReclassify(file.id)}
-                                                                                disabled={!reclassifyValue.trim() || confirmingFileId === file.id}
-                                                                            >
-                                                                                Aplicar
-                                                                            </button>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
+                                                                        {file.clasificacion_confianza ===
+                                                                            'pendiente_confirmacion' && (
+                                                                            <span className="classification-status classification-status--pending">
+                                                                                Por confirmar
+                                                                            </span>
+                                                                        )}
+                                                                        {(file.clasificacion_confianza ===
+                                                                            'confirmada' ||
+                                                                            file.clasificacion_confianza ===
+                                                                                'manual') && (
+                                                                            <span className="classification-status classification-status--confirmed">
+                                                                                {file.clasificacion_confianza ===
+                                                                                'manual'
+                                                                                    ? 'Manual'
+                                                                                    : 'Confirmada'}
+                                                                            </span>
+                                                                        )}
+                                                                        {file.clasificacion_confianza ===
+                                                                            'pendiente_confirmacion' && (
+                                                                            <div className="classification-actions">
+                                                                                <button
+                                                                                    className="btn btn-ghost classification-action-btn classification-confirm-btn"
+                                                                                    onClick={(
+                                                                                        e,
+                                                                                    ) => {
+                                                                                        e.stopPropagation()
+                                                                                        handleConfirmClassification(
+                                                                                            file.id,
+                                                                                        )
+                                                                                    }}
+                                                                                    disabled={
+                                                                                        confirmingFileId ===
+                                                                                        file.id
+                                                                                    }
+                                                                                    title="Confirmar clasificacion"
+                                                                                >
+                                                                                    <Check
+                                                                                        size={14}
+                                                                                    />
+                                                                                </button>
+                                                                                <button
+                                                                                    className="btn btn-ghost classification-action-btn classification-reclassify-btn"
+                                                                                    onClick={(
+                                                                                        e,
+                                                                                    ) => {
+                                                                                        e.stopPropagation()
+                                                                                        setReclassifyFileId(
+                                                                                            reclassifyFileId ===
+                                                                                                file.id
+                                                                                                ? null
+                                                                                                : file.id,
+                                                                                        )
+                                                                                        setReclassifyValue(
+                                                                                            '',
+                                                                                        )
+                                                                                    }}
+                                                                                    title="Reclasificar"
+                                                                                >
+                                                                                    <RefreshCw
+                                                                                        size={14}
+                                                                                    />
+                                                                                </button>
+                                                                            </div>
+                                                                        )}
+                                                                        {reclassifyFileId ===
+                                                                            file.id && (
+                                                                            <div className="reclassify-input-row">
+                                                                                <input
+                                                                                    className="reclassify-input"
+                                                                                    type="text"
+                                                                                    placeholder="600 — Compras"
+                                                                                    value={
+                                                                                        reclassifyValue
+                                                                                    }
+                                                                                    onChange={(e) =>
+                                                                                        setReclassifyValue(
+                                                                                            e.target
+                                                                                                .value,
+                                                                                        )
+                                                                                    }
+                                                                                    onKeyDown={(
+                                                                                        e,
+                                                                                    ) => {
+                                                                                        if (
+                                                                                            e.key ===
+                                                                                            'Enter'
+                                                                                        ) {
+                                                                                            e.preventDefault()
+                                                                                            handleReclassify(
+                                                                                                file.id,
+                                                                                            )
+                                                                                        }
+                                                                                        if (
+                                                                                            e.key ===
+                                                                                            'Escape'
+                                                                                        ) {
+                                                                                            setReclassifyFileId(
+                                                                                                null,
+                                                                                            )
+                                                                                            setReclassifyValue(
+                                                                                                '',
+                                                                                            )
+                                                                                        }
+                                                                                    }}
+                                                                                    autoFocus
+                                                                                />
+                                                                                <button
+                                                                                    className="btn btn-primary btn-xs"
+                                                                                    onClick={() =>
+                                                                                        handleReclassify(
+                                                                                            file.id,
+                                                                                        )
+                                                                                    }
+                                                                                    disabled={
+                                                                                        !reclassifyValue.trim() ||
+                                                                                        confirmingFileId ===
+                                                                                            file.id
+                                                                                    }
+                                                                                >
+                                                                                    Aplicar
+                                                                                </button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
                                                         </div>
                                                         <div className="file-status">
                                                             {getStatusBadge(file.processing_status)}
                                                         </div>
                                                         <button
                                                             className="btn btn-ghost file-delete-btn"
-                                                            onClick={() => handleDeleteFile(file.id)}
+                                                            onClick={() =>
+                                                                handleDeleteFile(file.id)
+                                                            }
                                                             disabled={deletingFileId === file.id}
                                                         >
                                                             <Trash2 size={16} />
@@ -855,27 +964,38 @@ export default function WorkspacesPage() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="label" htmlFor="name">Nombre *</label>
+                                    <label className="label" htmlFor="name">
+                                        Nombre *
+                                    </label>
                                     <input
                                         type="text"
                                         id="name"
                                         className="input"
                                         placeholder="Ej: Declaraciones 2024"
                                         value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, name: e.target.value })
+                                        }
                                         maxLength={50}
                                         autoFocus
                                     />
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="label" htmlFor="description">Descripción</label>
+                                    <label className="label" htmlFor="description">
+                                        Descripción
+                                    </label>
                                     <textarea
                                         id="description"
                                         className="input textarea"
                                         placeholder="Descripción opcional del workspace"
                                         value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                description: e.target.value,
+                                            })
+                                        }
                                         rows={3}
                                         maxLength={200}
                                     />
@@ -931,8 +1051,8 @@ export default function WorkspacesPage() {
                                 <strong> "{workspaceToDelete.name}"</strong>?
                             </p>
                             <p className="delete-info">
-                                Esta acción eliminará {workspaceToDelete.file_count} archivo(s)
-                                y no se puede deshacer.
+                                Esta acción eliminará {workspaceToDelete.file_count} archivo(s) y no
+                                se puede deshacer.
                             </p>
                         </div>
 
