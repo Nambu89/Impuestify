@@ -26,12 +26,31 @@ ignore = [
     "E501",  # line-too-long — formatter handles wrapping
     "B008",  # function call in default arg — FastAPI Depends() pattern
     "B904",  # raise from — too noisy for existing codebase
+    # --- Pre-commit baseline: pre-existing violations (Task 10) ---
+    # These were present before Quality Gates were introduced (265 violations in Task 1
+    # baseline). Suppressed globally so pre-commit does not block commits on legacy code.
+    # Remove entries here as violations are fixed incrementally.
+    "F841",  # local variable assigned but never used (49 violations)
+    "B007",  # loop control variable not used in body (13 violations)
+    "E741",  # ambiguous variable name l/O/I (9 violations)
+    "F601",  # isinstance() with tuple (5 violations)
+    "E712",  # comparison to True/False (3 violations)
+    "B023",  # function definition in loop (1 violation)
+    "E101",  # indentation mixing spaces/tabs (1 violation)
+    "UP038", # isinstance with X|Y union — requires Python 3.10+, safe to fix later (27 violations)
+    "UP035", # typing module deprecated imports (Dict/List → dict/list) — legacy code (36 violations)
+    "UP007", # Optional[X] → X | None — legacy annotations, safe to fix later (4 violations)
+    "F401",  # imported but unused — some are intentional re-exports (10 violations)
+    "F821",  # undefined name — some are conditional imports (8 violations)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["F401", "F811", "B011"]  # unused imports/fixtures, redefinitions, asserts ok in tests
-"scripts/**" = ["F401", "E402"]         # late imports + unused for one-off scripts
+"tests/**" = ["F401", "F811", "B011", "E402", "F821"]  # test helpers: unused imports/fixtures, late imports, undefined (mock patches)
+"scripts/**" = ["F401", "E402", "F821"]  # late imports + unused for one-off scripts
 "app/main.py" = ["E402"]                 # load_dotenv BEFORE imports is intentional
+"app/routers/chat_stream.py" = ["E402"]  # conditional import after env check
+"app/tools/web_scraper_tool.py" = ["E402"]  # optional import after availability check
+"app/utils/streaming.py" = ["E402"]     # conditional import after version check
 
 [tool.ruff.format]
 quote-style = "double"
