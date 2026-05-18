@@ -166,7 +166,7 @@
     user-select: none;
 }
 
-.mo-checkbox-label input[type="checkbox"] {
+.mo-checkbox-label input[type='checkbox'] {
     accent-color: var(--color-primary-light);
     width: 18px;
     height: 18px;
@@ -211,7 +211,9 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
-    transition: border-color 0.2s, transform 0.2s;
+    transition:
+        border-color 0.2s,
+        transform 0.2s;
 }
 
 .mo-card:hover {

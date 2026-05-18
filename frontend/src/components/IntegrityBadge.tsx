@@ -12,8 +12,8 @@ interface Finding {
 
 interface IntegrityBadgeProps {
     score: number | null
-    findings?: string  // JSON string con array de Finding
-    compact?: boolean  // true = solo icono, false = icono + texto
+    findings?: string // JSON string con array de Finding
+    compact?: boolean // true = solo icono, false = icono + texto
 }
 
 function getBadgeConfig(score: number | null): {
@@ -27,7 +27,7 @@ function getBadgeConfig(score: number | null): {
             icon: <Shield size={12} />,
             label: 'Pendiente de escaneo',
             modifier: 'pending',
-            titlePrefix: 'Pendiente de escaneo'
+            titlePrefix: 'Pendiente de escaneo',
         }
     }
     if (score >= 0.7) {
@@ -35,7 +35,7 @@ function getBadgeConfig(score: number | null): {
             icon: <ShieldX size={12} />,
             label: 'Bloqueado',
             modifier: 'blocked',
-            titlePrefix: 'Contenido bloqueado'
+            titlePrefix: 'Contenido bloqueado',
         }
     }
     if (score >= 0.3) {
@@ -43,14 +43,14 @@ function getBadgeConfig(score: number | null): {
             icon: <ShieldAlert size={12} />,
             label: 'Advertencias',
             modifier: 'warn',
-            titlePrefix: 'Advertencias detectadas'
+            titlePrefix: 'Advertencias detectadas',
         }
     }
     return {
         icon: <ShieldCheck size={12} />,
         label: 'Verificado',
         modifier: 'clean',
-        titlePrefix: 'Documento verificado'
+        titlePrefix: 'Documento verificado',
     }
 }
 
@@ -63,7 +63,7 @@ function buildTooltip(titlePrefix: string, findings?: string): string {
 
         const lines = parsed
             .slice(0, 5)
-            .map(f => `• ${f.description}`)
+            .map((f) => `• ${f.description}`)
             .join('\n')
 
         const suffix = parsed.length > 5 ? `\n... y ${parsed.length - 5} hallazgos más` : ''

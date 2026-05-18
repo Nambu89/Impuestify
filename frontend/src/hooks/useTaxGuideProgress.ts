@@ -9,10 +9,10 @@ export interface TaxGuideData {
     edad_contribuyente: number
     ceuta_melilla: boolean
     tributacion_conjunta: boolean
-    tipo_unidad_familiar: string  // "matrimonio" | "monoparental"
-    situacion_laboral: string  // "asalariado" | "autonomo" | "pensionista" | "desempleado" | ""
+    tipo_unidad_familiar: string // "matrimonio" | "monoparental"
+    situacion_laboral: string // "asalariado" | "autonomo" | "pensionista" | "desempleado" | ""
     // Step 2: Trabajo
-    salary_input_mode: 'annual' | 'monthly'  // UI-only
+    salary_input_mode: 'annual' | 'monthly' // UI-only
     ingresos_trabajo: number
     ss_empleado: number
     retenciones_trabajo: number
@@ -27,7 +27,7 @@ export interface TaxGuideData {
     amortizaciones_actividad: number
     provisiones_actividad: number
     otros_gastos_actividad: number
-    estimacion_actividad: string  // "directa_simplificada" | "directa_normal" | "objetiva"
+    estimacion_actividad: string // "directa_simplificada" | "directa_normal" | "objetiva"
     inicio_actividad: boolean
     un_solo_cliente: boolean
     retenciones_actividad: number
@@ -259,10 +259,7 @@ export const STEP_LABELS_AUTONOMO = [
     'Resultado',
 ]
 
-export const QUICK_STEP_LABELS = [
-    'Datos básicos',
-    'Resultado',
-]
+export const QUICK_STEP_LABELS = ['Datos básicos', 'Resultado']
 
 function getStepLabelsByPlan(userPlan?: string): string[] {
     if (userPlan === 'particular') return STEP_LABELS_PARTICULAR
@@ -298,20 +295,23 @@ export function useTaxGuideProgress(userPlan?: string) {
     }, [step, data])
 
     const updateData = useCallback((partial: Partial<TaxGuideData>) => {
-        setData(prev => ({ ...prev, ...partial }))
+        setData((prev) => ({ ...prev, ...partial }))
     }, [])
 
     const nextStep = useCallback(() => {
-        setStep(prev => Math.min(prev + 1, stepLabels.length - 1))
+        setStep((prev) => Math.min(prev + 1, stepLabels.length - 1))
     }, [stepLabels.length])
 
     const prevStep = useCallback(() => {
-        setStep(prev => Math.max(prev - 1, 0))
+        setStep((prev) => Math.max(prev - 1, 0))
     }, [])
 
-    const goToStep = useCallback((s: number) => {
-        setStep(Math.max(0, Math.min(s, stepLabels.length - 1)))
-    }, [stepLabels.length])
+    const goToStep = useCallback(
+        (s: number) => {
+            setStep(Math.max(0, Math.min(s, stepLabels.length - 1)))
+        },
+        [stepLabels.length],
+    )
 
     const resetAll = useCallback(() => {
         setStep(0)

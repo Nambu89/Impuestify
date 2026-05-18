@@ -68,29 +68,32 @@ export function useWorkspaceDashboard(workspaceId: string | null, year?: number)
     const [error, setError] = useState<string | null>(null)
     const requestIdRef = useRef<number>(0)
 
-    const fetchDashboard = useCallback(async (wsId: string) => {
-        const requestId = ++requestIdRef.current
-        setLoading(true)
-        setError(null)
-        try {
-            const yearQuery = year ? `?year=${year}` : ''
-            const result = await apiRequest<WorkspaceDashboardData>(
-                `/api/workspaces/${wsId}/dashboard${yearQuery}`
-            )
-            if (requestId === requestIdRef.current) {
-                setData(result)
+    const fetchDashboard = useCallback(
+        async (wsId: string) => {
+            const requestId = ++requestIdRef.current
+            setLoading(true)
+            setError(null)
+            try {
+                const yearQuery = year ? `?year=${year}` : ''
+                const result = await apiRequest<WorkspaceDashboardData>(
+                    `/api/workspaces/${wsId}/dashboard${yearQuery}`,
+                )
+                if (requestId === requestIdRef.current) {
+                    setData(result)
+                }
+            } catch (err: any) {
+                if (requestId === requestIdRef.current) {
+                    setError(err.message || 'Error al cargar el dashboard')
+                    setData(null)
+                }
+            } finally {
+                if (requestId === requestIdRef.current) {
+                    setLoading(false)
+                }
             }
-        } catch (err: any) {
-            if (requestId === requestIdRef.current) {
-                setError(err.message || 'Error al cargar el dashboard')
-                setData(null)
-            }
-        } finally {
-            if (requestId === requestIdRef.current) {
-                setLoading(false)
-            }
-        }
-    }, [apiRequest, year])
+        },
+        [apiRequest, year],
+    )
 
     useEffect(() => {
         if (workspaceId) {

@@ -1,7 +1,16 @@
 import { useState, useMemo } from 'react'
 import {
-    Info, Euro, AlertTriangle, CheckCircle2, FileText,
-    Globe, ChevronDown, ChevronUp, Calculator, Plus, Trash2
+    Info,
+    Euro,
+    AlertTriangle,
+    CheckCircle2,
+    FileText,
+    Globe,
+    ChevronDown,
+    ChevronUp,
+    Calculator,
+    Plus,
+    Trash2,
 } from 'lucide-react'
 import Header from '../components/Header'
 import './IvaCreatorsPage.css'
@@ -115,17 +124,23 @@ const PLATFORMS: Platform[] = [
     },
 ]
 
-const PLATFORM_MAP = Object.fromEntries(PLATFORMS.map(p => [p.id, p]))
+const PLATFORM_MAP = Object.fromEntries(PLATFORMS.map((p) => [p.id, p]))
 
 // ── Zonas fiscales ────────────────────────────────────────────────────────────
 
 const TAX_ZONES = [
-    { id: 'peninsula', label: 'Península, Baleares y forales', tax: 'IVA', rate: 21, modelo: '303' },
+    {
+        id: 'peninsula',
+        label: 'Península, Baleares y forales',
+        tax: 'IVA',
+        rate: 21,
+        modelo: '303',
+    },
     { id: 'canarias', label: 'Canarias', tax: 'IGIC', rate: 7, modelo: '420' },
     { id: 'ceuta_melilla', label: 'Ceuta y Melilla', tax: 'IPSI', rate: 4, modelo: 'IPSI' },
 ] as const
 
-type TaxZone = typeof TAX_ZONES[number]
+type TaxZone = (typeof TAX_ZONES)[number]
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -156,7 +171,9 @@ function PlatformCard({ platform, selected, onClick }: PlatformCardProps) {
             <div className="ic-platform-icon">{platform.icon}</div>
             <div className="ic-platform-info">
                 <span className="ic-platform-name">{platform.name}</span>
-                <span className="ic-platform-country">{platform.flag} {platform.country}</span>
+                <span className="ic-platform-country">
+                    {platform.flag} {platform.country}
+                </span>
             </div>
             {selected && <CheckCircle2 size={18} className="ic-platform-check" />}
         </button>
@@ -177,7 +194,9 @@ function VatDetail({ platform, open, onToggle, taxZone }: VatDetailProps) {
     const modeloDecl = taxZone.modelo
 
     return (
-        <div className={`ic-vat-detail ${isIntra ? 'ic-vat-detail--intra' : 'ic-vat-detail--import'}`}>
+        <div
+            className={`ic-vat-detail ${isIntra ? 'ic-vat-detail--intra' : 'ic-vat-detail--import'}`}
+        >
             <button className="ic-vat-header" onClick={onToggle} type="button">
                 <div className="ic-vat-header-left">
                     <span className="ic-vat-platform-flag">{platform.flag}</span>
@@ -187,7 +206,9 @@ function VatDetail({ platform, open, onToggle, taxZone }: VatDetailProps) {
                     </div>
                 </div>
                 <div className="ic-vat-header-right">
-                    <span className={`ic-vat-badge ${isIntra ? 'ic-vat-badge--intra' : 'ic-vat-badge--import'}`}>
+                    <span
+                        className={`ic-vat-badge ${isIntra ? 'ic-vat-badge--intra' : 'ic-vat-badge--import'}`}
+                    >
                         {isIntra ? 'Intracomunitario' : 'Importación servicios'}
                     </span>
                     {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -214,32 +235,43 @@ function VatDetail({ platform, open, onToggle, taxZone }: VatDetailProps) {
                         <div className="ic-vat-rule">
                             <span className="ic-vat-rule-label">Inversión del sujeto pasivo</span>
                             <span className="ic-vat-rule-value">
-                                Tú eres quien declara y deduce el {taxRate} % de {taxName} en el Modelo {modeloDecl}.
-                                El importe se anota tanto en «{taxName} devengado» como en «{taxName} soportado», por lo que el
-                                impacto neto es 0 € si no tienes {taxName} soportado adicional.
+                                Tú eres quien declara y deduce el {taxRate} % de {taxName} en el
+                                Modelo {modeloDecl}. El importe se anota tanto en «{taxName}{' '}
+                                devengado» como en «{taxName} soportado», por lo que el impacto neto
+                                es 0 € si no tienes {taxName} soportado adicional.
                             </span>
                         </div>
                         <div className="ic-vat-rule">
                             <span className="ic-vat-rule-label">Modelos obligatorios</span>
                             <span className="ic-vat-rule-value">
-                                <strong>Modelo {modeloDecl}</strong> (trimestral){platform.modelo349 && taxZone.id !== 'canarias' && taxZone.id !== 'ceuta_melilla' ? <> + <strong>Modelo 349</strong> (declaración recapitulativa operaciones intracomunitarias)</> : null}
+                                <strong>Modelo {modeloDecl}</strong> (trimestral)
+                                {platform.modelo349 &&
+                                taxZone.id !== 'canarias' &&
+                                taxZone.id !== 'ceuta_melilla' ? (
+                                    <>
+                                        {' '}
+                                        + <strong>Modelo 349</strong> (declaración recapitulativa
+                                        operaciones intracomunitarias)
+                                    </>
+                                ) : null}
                             </span>
                         </div>
                         {platform.modelo349 && taxZone.id === 'peninsula' && (
                             <div className="ic-vat-rule">
                                 <span className="ic-vat-rule-label">NIF-UE (VIES)</span>
                                 <span className="ic-vat-rule-value">
-                                    Debes estar dado de alta en el ROI (Registro de Operadores Intracomunitarios)
-                                    antes de emitir la primera factura.
+                                    Debes estar dado de alta en el ROI (Registro de Operadores
+                                    Intracomunitarios) antes de emitir la primera factura.
                                 </span>
                             </div>
                         )}
                         <div className="ic-vat-rule">
                             <span className="ic-vat-rule-label">Retención IRPF</span>
                             <span className="ic-vat-rule-value">
-                                Las plataformas extranjeras <strong>NO aplican retención IRPF</strong>.
-                                Debes autoliquidar el 20 % de IRPF en el Modelo 130 (estimación directa) o
-                                incluirlo en tu declaración anual.
+                                Las plataformas extranjeras{' '}
+                                <strong>NO aplican retención IRPF</strong>. Debes autoliquidar el 20
+                                % de IRPF en el Modelo 130 (estimación directa) o incluirlo en tu
+                                declaración anual.
                             </span>
                         </div>
                     </div>
@@ -262,28 +294,28 @@ export default function IvaCreatorsPage() {
 
     // Toggle plataforma seleccionada para detalle informativo
     const handleSelectPlatform = (id: string) => {
-        setSelectedPlatformId(prev => (prev === id ? null : id))
+        setSelectedPlatformId((prev) => (prev === id ? null : id))
     }
 
     // Gestión de entradas de la calculadora
     const addEntry = () => {
-        setEntries(prev => [...prev, { platformId: '', ingresosMensuales: 0 }])
+        setEntries((prev) => [...prev, { platformId: '', ingresosMensuales: 0 }])
     }
 
     const removeEntry = (index: number) => {
-        setEntries(prev => prev.filter((_, i) => i !== index))
+        setEntries((prev) => prev.filter((_, i) => i !== index))
     }
 
     const updateEntry = (index: number, field: keyof PlatformEntry, value: string | number) => {
-        setEntries(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e))
+        setEntries((prev) => prev.map((e, i) => (i === index ? { ...e, [field]: value } : e)))
     }
 
     // Cálculos
     const results = useMemo(() => {
-        const valid = entries.filter(e => e.platformId && e.ingresosMensuales > 0)
+        const valid = entries.filter((e) => e.platformId && e.ingresosMensuales > 0)
         const taxRate = taxZone.rate / 100
 
-        const byPlatform = valid.map(e => {
+        const byPlatform = valid.map((e) => {
             const platform = PLATFORM_MAP[e.platformId]
             const mensual = e.ingresosMensuales
             const ivaBase = mensual * taxRate
@@ -301,12 +333,15 @@ export default function IvaCreatorsPage() {
         const totalMensual = byPlatform.reduce((s, r) => s + r.mensual, 0)
         const totalIvaBase = byPlatform.reduce((s, r) => s + r.ivaBase, 0)
         const totalIvaTrimestral = totalIvaBase * 3
-        const tieneIntracomunitarias = byPlatform.some(r => r.platform.vatType === 'intracomunitario')
-        const tieneImportacion = byPlatform.some(r => r.platform.vatType === 'importacion')
+        const tieneIntracomunitarias = byPlatform.some(
+            (r) => r.platform.vatType === 'intracomunitario',
+        )
+        const tieneImportacion = byPlatform.some((r) => r.platform.vatType === 'importacion')
         // En Canarias/Ceuta-Melilla no existe el Modelo 349 intracomunitario
-        const plataformasConModelo349 = taxZone.id === 'peninsula'
-            ? byPlatform.filter(r => r.platform.modelo349).map(r => r.platform.name)
-            : []
+        const plataformasConModelo349 =
+            taxZone.id === 'peninsula'
+                ? byPlatform.filter((r) => r.platform.modelo349).map((r) => r.platform.name)
+                : []
 
         return {
             byPlatform,
@@ -321,15 +356,15 @@ export default function IvaCreatorsPage() {
     }, [entries, taxZone])
 
     const toggleDetail = (id: string) => {
-        setOpenDetails(prev => ({ ...prev, [id]: !prev[id] }))
+        setOpenDetails((prev) => ({ ...prev, [id]: !prev[id] }))
     }
 
     const selectedPlatform = selectedPlatformId ? PLATFORM_MAP[selectedPlatformId] : null
 
     // Plataformas únicas seleccionadas en la calculadora (para mostrar detalles)
     const selectedInCalc = useMemo(() => {
-        const ids = new Set(entries.filter(e => e.platformId).map(e => e.platformId))
-        return PLATFORMS.filter(p => ids.has(p.id))
+        const ids = new Set(entries.filter((e) => e.platformId).map((e) => e.platformId))
+        return PLATFORMS.filter((p) => ids.has(p.id))
     }, [entries])
 
     return (
@@ -337,7 +372,6 @@ export default function IvaCreatorsPage() {
             <Header />
 
             <main className="ic-main">
-
                 {/* Hero */}
                 <div className="ic-hero">
                     <div className="ic-hero-badge">
@@ -354,10 +388,8 @@ export default function IvaCreatorsPage() {
                 </div>
 
                 <div className="ic-layout">
-
                     {/* Columna izquierda: selector + calculadora */}
                     <div className="ic-left">
-
                         {/* Selector de zona fiscal */}
                         <section className="ic-section">
                             <h2 className="ic-section-title">
@@ -365,11 +397,11 @@ export default function IvaCreatorsPage() {
                                 ¿Dónde está tu domicilio fiscal?
                             </h2>
                             <p className="ic-section-hint">
-                                El impuesto indirecto varía según tu territorio: IVA en Península y forales,
-                                IGIC en Canarias, IPSI en Ceuta y Melilla.
+                                El impuesto indirecto varía según tu territorio: IVA en Península y
+                                forales, IGIC en Canarias, IPSI en Ceuta y Melilla.
                             </p>
                             <div className="ic-zone-selector">
-                                {TAX_ZONES.map(zone => (
+                                {TAX_ZONES.map((zone) => (
                                     <button
                                         key={zone.id}
                                         className={`ic-zone-btn ${taxZone.id === zone.id ? 'ic-zone-btn--active' : ''}`}
@@ -378,7 +410,9 @@ export default function IvaCreatorsPage() {
                                         aria-pressed={taxZone.id === zone.id}
                                     >
                                         <span className="ic-zone-name">{zone.label}</span>
-                                        <span className="ic-zone-tax">{zone.tax} {zone.rate}%</span>
+                                        <span className="ic-zone-tax">
+                                            {zone.tax} {zone.rate}%
+                                        </span>
                                         <span className="ic-zone-modelo">Modelo {zone.modelo}</span>
                                     </button>
                                 ))}
@@ -395,7 +429,7 @@ export default function IvaCreatorsPage() {
                                 Pulsa una plataforma para ver su tratamiento fiscal detallado.
                             </p>
                             <div className="ic-platform-grid">
-                                {PLATFORMS.map(p => (
+                                {PLATFORMS.map((p) => (
                                     <PlatformCard
                                         key={p.id}
                                         platform={p}
@@ -411,16 +445,28 @@ export default function IvaCreatorsPage() {
                             <section className="ic-detail-section">
                                 <h3 className="ic-detail-title">
                                     {selectedPlatform.flag} {selectedPlatform.name}
-                                    <span className="ic-detail-company">{selectedPlatform.company}</span>
+                                    <span className="ic-detail-company">
+                                        {selectedPlatform.company}
+                                    </span>
                                 </h3>
-                                <p className="ic-detail-description">{selectedPlatform.description}</p>
+                                <p className="ic-detail-description">
+                                    {selectedPlatform.description}
+                                </p>
 
                                 <div className="ic-detail-tags">
-                                    <span className={`ic-tag ${selectedPlatform.eu ? 'ic-tag--eu' : 'ic-tag--noneu'}`}>
-                                        {selectedPlatform.eu ? '🇪🇺 Unión Europea' : '🌍 Fuera de la UE'}
+                                    <span
+                                        className={`ic-tag ${selectedPlatform.eu ? 'ic-tag--eu' : 'ic-tag--noneu'}`}
+                                    >
+                                        {selectedPlatform.eu
+                                            ? '🇪🇺 Unión Europea'
+                                            : '🌍 Fuera de la UE'}
                                     </span>
-                                    <span className={`ic-tag ${selectedPlatform.vatType === 'intracomunitario' ? 'ic-tag--intra' : 'ic-tag--import'}`}>
-                                        {selectedPlatform.vatType === 'intracomunitario' ? 'Inversión sujeto pasivo (UE)' : 'Inversión sujeto pasivo (3er país)'}
+                                    <span
+                                        className={`ic-tag ${selectedPlatform.vatType === 'intracomunitario' ? 'ic-tag--intra' : 'ic-tag--import'}`}
+                                    >
+                                        {selectedPlatform.vatType === 'intracomunitario'
+                                            ? 'Inversión sujeto pasivo (UE)'
+                                            : 'Inversión sujeto pasivo (3er país)'}
                                     </span>
                                     {selectedPlatform.modelo349 && (
                                         <span className="ic-tag ic-tag--m349">Modelo 349</span>
@@ -431,37 +477,45 @@ export default function IvaCreatorsPage() {
                                     <div className="ic-rule">
                                         <span className="ic-rule-icon ic-rule-icon--ok">✓</span>
                                         <div>
-                                            <strong>No repercutes IVA</strong> en tu factura a {selectedPlatform.name}.
-                                            El tipo aplicable es el 0 % para el pagador extranjero.
+                                            <strong>No repercutes IVA</strong> en tu factura a{' '}
+                                            {selectedPlatform.name}. El tipo aplicable es el 0 %
+                                            para el pagador extranjero.
                                         </div>
                                     </div>
                                     <div className="ic-rule">
                                         <span className="ic-rule-icon ic-rule-icon--warn">!</span>
                                         <div>
-                                            <strong>Sí declaras {taxZone.tax}</strong> mediante la técnica de
-                                            «inversión del sujeto pasivo»: anotas el {taxZone.rate} % como {taxZone.tax} devengado
-                                            y el mismo importe como {taxZone.tax} soportado en el Modelo {taxZone.modelo}. El
-                                            resultado neto suele ser 0 €, pero la obligación de declarar
-                                            existe igualmente.
+                                            <strong>Sí declaras {taxZone.tax}</strong> mediante la
+                                            técnica de «inversión del sujeto pasivo»: anotas el{' '}
+                                            {taxZone.rate} % como {taxZone.tax} devengado y el mismo
+                                            importe como {taxZone.tax} soportado en el Modelo{' '}
+                                            {taxZone.modelo}. El resultado neto suele ser 0 €, pero
+                                            la obligación de declarar existe igualmente.
                                         </div>
                                     </div>
                                     {selectedPlatform.modelo349 && (
                                         <div className="ic-rule">
-                                            <span className="ic-rule-icon ic-rule-icon--info">i</span>
+                                            <span className="ic-rule-icon ic-rule-icon--info">
+                                                i
+                                            </span>
                                             <div>
                                                 Al ser empresa de la UE, debes presentar el
-                                                <strong> Modelo 349</strong> trimestralmente e inscribirte
-                                                en el <strong>ROI (Registro de Operadores Intracomunitarios)</strong>
-                                                {' '}antes de la primera factura.
+                                                <strong> Modelo 349</strong> trimestralmente e
+                                                inscribirte en el{' '}
+                                                <strong>
+                                                    ROI (Registro de Operadores Intracomunitarios)
+                                                </strong>{' '}
+                                                antes de la primera factura.
                                             </div>
                                         </div>
                                     )}
                                     <div className="ic-rule">
                                         <span className="ic-rule-icon ic-rule-icon--alert">€</span>
                                         <div>
-                                            <strong>IRPF sin retención:</strong> {selectedPlatform.name} no
-                                            practica retención en origen. Debes provisionar el IRPF tú mismo
-                                            (modelo 130 o renta anual).
+                                            <strong>IRPF sin retención:</strong>{' '}
+                                            {selectedPlatform.name} no practica retención en origen.
+                                            Debes provisionar el IRPF tú mismo (modelo 130 o renta
+                                            anual).
                                         </div>
                                     </div>
                                 </div>
@@ -485,11 +539,13 @@ export default function IvaCreatorsPage() {
                                         <select
                                             className="ic-select"
                                             value={entry.platformId}
-                                            onChange={e => updateEntry(idx, 'platformId', e.target.value)}
+                                            onChange={(e) =>
+                                                updateEntry(idx, 'platformId', e.target.value)
+                                            }
                                             aria-label="Plataforma"
                                         >
                                             <option value="">— Selecciona plataforma —</option>
-                                            {PLATFORMS.map(p => (
+                                            {PLATFORMS.map((p) => (
                                                 <option key={p.id} value={p.id}>
                                                     {p.flag} {p.name}
                                                 </option>
@@ -505,7 +561,13 @@ export default function IvaCreatorsPage() {
                                                 min={0}
                                                 step={100}
                                                 value={entry.ingresosMensuales || ''}
-                                                onChange={e => updateEntry(idx, 'ingresosMensuales', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) =>
+                                                    updateEntry(
+                                                        idx,
+                                                        'ingresosMensuales',
+                                                        parseFloat(e.target.value) || 0,
+                                                    )
+                                                }
                                                 aria-label="Ingresos mensuales"
                                             />
                                             <span className="ic-amount-suffix">€/mes</span>
@@ -545,7 +607,6 @@ export default function IvaCreatorsPage() {
                     {/* Columna derecha: resultados */}
                     {results.hasData && (
                         <div className="ic-right" aria-live="polite">
-
                             {/* Resumen total */}
                             <div className="ic-total-card">
                                 <div className="ic-total-label">
@@ -563,16 +624,23 @@ export default function IvaCreatorsPage() {
 
                             {/* Impuesto a declarar */}
                             <div className="ic-iva-card">
-                                <h3 className="ic-iva-card-title">{taxZone.tax} — Modelo {taxZone.modelo} (trimestral)</h3>
+                                <h3 className="ic-iva-card-title">
+                                    {taxZone.tax} — Modelo {taxZone.modelo} (trimestral)
+                                </h3>
 
                                 <div className="ic-iva-row">
-                                    <span className="ic-iva-row-label">{taxZone.tax} devengado ({taxZone.rate} % inversión sujeto pasivo)</span>
+                                    <span className="ic-iva-row-label">
+                                        {taxZone.tax} devengado ({taxZone.rate} % inversión sujeto
+                                        pasivo)
+                                    </span>
                                     <span className="ic-iva-row-amount ic-iva-row-amount--devenged">
                                         {formatEur(results.totalIvaTrimestral)} €
                                     </span>
                                 </div>
                                 <div className="ic-iva-row">
-                                    <span className="ic-iva-row-label">{taxZone.tax} soportado (misma inversión, deducible)</span>
+                                    <span className="ic-iva-row-label">
+                                        {taxZone.tax} soportado (misma inversión, deducible)
+                                    </span>
                                     <span className="ic-iva-row-amount ic-iva-row-amount--supported">
                                         − {formatEur(results.totalIvaTrimestral)} €
                                     </span>
@@ -580,16 +648,19 @@ export default function IvaCreatorsPage() {
                                 <div className="ic-iva-divider" />
                                 <div className="ic-iva-row ic-iva-row--total">
                                     <span className="ic-iva-row-label">
-                                        <strong>{taxZone.tax} neto a ingresar (solo por inversión)</strong>
+                                        <strong>
+                                            {taxZone.tax} neto a ingresar (solo por inversión)
+                                        </strong>
                                     </span>
                                     <span className="ic-iva-row-amount ic-iva-row-amount--zero">
                                         0,00 €
                                     </span>
                                 </div>
                                 <p className="ic-iva-note">
-                                    Si tienes <strong>{taxZone.tax} soportado de gastos</strong> (hosting, equipos,
-                                    software...), ese importe adicional <em>sí reduce</em> tu cuota a
-                                    ingresar. Inclúyelo en el Modelo {taxZone.modelo} en la casilla de {taxZone.tax} deducible.
+                                    Si tienes <strong>{taxZone.tax} soportado de gastos</strong>{' '}
+                                    (hosting, equipos, software...), ese importe adicional{' '}
+                                    <em>sí reduce</em> tu cuota a ingresar. Inclúyelo en el Modelo{' '}
+                                    {taxZone.modelo} en la casilla de {taxZone.tax} deducible.
                                 </p>
                             </div>
 
@@ -599,24 +670,46 @@ export default function IvaCreatorsPage() {
                                 {results.byPlatform.map((r, i) => (
                                     <div key={i} className="ic-breakdown-row">
                                         <div className="ic-breakdown-row-header">
-                                            <span className="ic-breakdown-flag">{r.platform.flag}</span>
-                                            <span className="ic-breakdown-platform">{r.platform.name}</span>
-                                            <span className={`ic-breakdown-type ${r.platform.vatType === 'intracomunitario' ? 'ic-breakdown-type--intra' : 'ic-breakdown-type--import'}`}>
-                                                {r.platform.vatType === 'intracomunitario' ? 'UE' : 'No UE'}
+                                            <span className="ic-breakdown-flag">
+                                                {r.platform.flag}
+                                            </span>
+                                            <span className="ic-breakdown-platform">
+                                                {r.platform.name}
+                                            </span>
+                                            <span
+                                                className={`ic-breakdown-type ${r.platform.vatType === 'intracomunitario' ? 'ic-breakdown-type--intra' : 'ic-breakdown-type--import'}`}
+                                            >
+                                                {r.platform.vatType === 'intracomunitario'
+                                                    ? 'UE'
+                                                    : 'No UE'}
                                             </span>
                                         </div>
                                         <div className="ic-breakdown-row-nums">
-                                            <span className="ic-breakdown-num-label">Ingresos mes</span>
-                                            <span className="ic-breakdown-num">{formatEur(r.mensual)} €</span>
-                                            <span className="ic-breakdown-num-label">Base IVA trimestre</span>
-                                            <span className="ic-breakdown-num">{formatEur(r.mensual * 3)} €</span>
-                                            <span className="ic-breakdown-num-label">{taxZone.tax} devengado/deducible</span>
-                                            <span className="ic-breakdown-num ic-breakdown-neutral">{formatEur(r.ivaTrimestral)} €</span>
+                                            <span className="ic-breakdown-num-label">
+                                                Ingresos mes
+                                            </span>
+                                            <span className="ic-breakdown-num">
+                                                {formatEur(r.mensual)} €
+                                            </span>
+                                            <span className="ic-breakdown-num-label">
+                                                Base IVA trimestre
+                                            </span>
+                                            <span className="ic-breakdown-num">
+                                                {formatEur(r.mensual * 3)} €
+                                            </span>
+                                            <span className="ic-breakdown-num-label">
+                                                {taxZone.tax} devengado/deducible
+                                            </span>
+                                            <span className="ic-breakdown-num ic-breakdown-neutral">
+                                                {formatEur(r.ivaTrimestral)} €
+                                            </span>
                                         </div>
                                         <div className="ic-breakdown-track">
                                             <div
                                                 className="ic-breakdown-fill"
-                                                style={{ width: `${Math.min((r.mensual / results.totalMensual) * 100, 100)}%` }}
+                                                style={{
+                                                    width: `${Math.min((r.mensual / results.totalMensual) * 100, 100)}%`,
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -633,8 +726,9 @@ export default function IvaCreatorsPage() {
                                     <li className="ic-obligation ic-obligation--required">
                                         <CheckCircle2 size={15} />
                                         <span>
-                                            <strong>Modelo {taxZone.modelo}</strong> — Trimestral (abril, julio,
-                                            octubre, enero). Obligatorio aunque el resultado sea 0 €.
+                                            <strong>Modelo {taxZone.modelo}</strong> — Trimestral
+                                            (abril, julio, octubre, enero). Obligatorio aunque el
+                                            resultado sea 0 €.
                                         </span>
                                     </li>
                                     {results.plataformasConModelo349.length > 0 && (
@@ -652,9 +746,11 @@ export default function IvaCreatorsPage() {
                                         <li className="ic-obligation ic-obligation--info">
                                             <Info size={15} />
                                             <span>
-                                                <strong>ROI (Registro Operadores Intracomunitarios)</strong> —
-                                                Solicita el alta en la AEAT antes de facturar a empresas UE.
-                                                Se tramita con el Modelo 036.
+                                                <strong>
+                                                    ROI (Registro Operadores Intracomunitarios)
+                                                </strong>{' '}
+                                                — Solicita el alta en la AEAT antes de facturar a
+                                                empresas UE. Se tramita con el Modelo 036.
                                             </span>
                                         </li>
                                     )}
@@ -662,10 +758,11 @@ export default function IvaCreatorsPage() {
                                         <li className="ic-obligation ic-obligation--info">
                                             <Info size={15} />
                                             <span>
-                                                <strong>IGIC — Canarias</strong>: el tipo general aplicable
-                                                es el 7 %. Las operaciones intracomunitarias con plataformas
-                                                UE tributan por inversión del sujeto pasivo en el Modelo 420.
-                                                No aplica el Modelo 349 ni la inscripción en el ROI.
+                                                <strong>IGIC — Canarias</strong>: el tipo general
+                                                aplicable es el 7 %. Las operaciones
+                                                intracomunitarias con plataformas UE tributan por
+                                                inversión del sujeto pasivo en el Modelo 420. No
+                                                aplica el Modelo 349 ni la inscripción en el ROI.
                                             </span>
                                         </li>
                                     )}
@@ -673,9 +770,10 @@ export default function IvaCreatorsPage() {
                                         <li className="ic-obligation ic-obligation--info">
                                             <Info size={15} />
                                             <span>
-                                                <strong>IPSI — Ceuta y Melilla</strong>: el tipo general
-                                                es el 4 %. La IPSI es gestionada por las ciudades autónomas,
-                                                no por la AEAT. No aplica el Modelo 349 ni el IVA peninsular.
+                                                <strong>IPSI — Ceuta y Melilla</strong>: el tipo
+                                                general es el 4 %. La IPSI es gestionada por las
+                                                ciudades autónomas, no por la AEAT. No aplica el
+                                                Modelo 349 ni el IVA peninsular.
                                             </span>
                                         </li>
                                     )}
@@ -683,7 +781,8 @@ export default function IvaCreatorsPage() {
                                         <AlertTriangle size={15} />
                                         <span>
                                             <strong>Modelo 130</strong> — Pago fraccionado IRPF
-                                            trimestral. Las plataformas no retienen: debes ingresarlo tú.
+                                            trimestral. Las plataformas no retienen: debes
+                                            ingresarlo tú.
                                         </span>
                                     </li>
                                 </ul>
@@ -694,15 +793,19 @@ export default function IvaCreatorsPage() {
                                 <div className="ic-tech-section">
                                     <button
                                         className="ic-tech-toggle"
-                                        onClick={() => setShowExplanation(o => !o)}
+                                        onClick={() => setShowExplanation((o) => !o)}
                                         type="button"
                                     >
                                         <span>Explicación técnica por plataforma</span>
-                                        {showExplanation ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                        {showExplanation ? (
+                                            <ChevronUp size={16} />
+                                        ) : (
+                                            <ChevronDown size={16} />
+                                        )}
                                     </button>
                                     {showExplanation && (
                                         <div className="ic-tech-body">
-                                            {selectedInCalc.map(p => (
+                                            {selectedInCalc.map((p) => (
                                                 <VatDetail
                                                     key={p.id}
                                                     platform={p}
@@ -724,7 +827,9 @@ export default function IvaCreatorsPage() {
                             <div className="ic-empty-icon">
                                 <Calculator size={48} />
                             </div>
-                            <p className="ic-empty-title">Selecciona una plataforma e introduce tus ingresos</p>
+                            <p className="ic-empty-title">
+                                Selecciona una plataforma e introduce tus ingresos
+                            </p>
                             <p className="ic-empty-sub">
                                 Verás aquí el {taxZone.tax} a declarar, los modelos obligatorios y
                                 una guía paso a paso de lo que debes hacer.
@@ -742,25 +847,27 @@ export default function IvaCreatorsPage() {
                             <h3>Facturas sin {taxZone.tax} al extranjero</h3>
                             <p>
                                 Cuando facturas a YouTube (Irlanda), TikTok (UK) o Twitch (EE. UU.),
-                                <strong> no incluyes {taxZone.tax} en la factura</strong>. El tipo aplicado al
-                                pagador es 0 %.
+                                <strong> no incluyes {taxZone.tax} en la factura</strong>. El tipo
+                                aplicado al pagador es 0 %.
                             </p>
                         </div>
                         <div className="ic-edu-card">
                             <div className="ic-edu-card-num">02</div>
                             <h3>Tú asumes el rol de «recaudador»</h3>
                             <p>
-                                La administración tributaria considera que, al recibir el servicio, el pagador
-                                extranjero «invierte» la obligación: <strong>tú declaras y deduces</strong> el{' '}
-                                {taxZone.rate} % de {taxZone.tax} como si lo hubieras cobrado y pagado al mismo tiempo.
+                                La administración tributaria considera que, al recibir el servicio,
+                                el pagador extranjero «invierte» la obligación:{' '}
+                                <strong>tú declaras y deduces</strong> el {taxZone.rate} % de{' '}
+                                {taxZone.tax} como si lo hubieras cobrado y pagado al mismo tiempo.
                             </p>
                         </div>
                         <div className="ic-edu-card">
                             <div className="ic-edu-card-num">03</div>
                             <h3>Resultado neto: 0 €... normalmente</h3>
                             <p>
-                                En el Modelo {taxZone.modelo} el {taxZone.tax} devengado (lo que «cobras») y el{' '}
-                                {taxZone.tax} soportado (lo que «pagas») se compensan. El neto es 0 €, pero la
+                                En el Modelo {taxZone.modelo} el {taxZone.tax} devengado (lo que
+                                «cobras») y el {taxZone.tax} soportado (lo que «pagas») se
+                                compensan. El neto es 0 €, pero la
                                 <strong> obligación de declarar existe igualmente</strong>.
                             </p>
                         </div>
@@ -768,24 +875,25 @@ export default function IvaCreatorsPage() {
                             <div className="ic-edu-card-num">04</div>
                             <h3>El {taxZone.tax} de tus gastos sí cuenta</h3>
                             <p>
-                                Si tienes {taxZone.tax} soportado de gastos reales (cámara, micrófono, software,
-                                hosting...), ese importe <strong>reduce la cuota final</strong> que
-                                pagas a Hacienda. Guarda todas las facturas.
+                                Si tienes {taxZone.tax} soportado de gastos reales (cámara,
+                                micrófono, software, hosting...), ese importe{' '}
+                                <strong>reduce la cuota final</strong> que pagas a Hacienda. Guarda
+                                todas las facturas.
                             </p>
                         </div>
                         <div className="ic-edu-card">
                             <div className="ic-edu-card-num">05</div>
                             <h3>El tipo varía según tu territorio</h3>
                             <p>
-                                En la Península y territorios forales el impuesto es el <strong>IVA al 21 %</strong>.
-                                En Canarias se aplica el <strong>IGIC al 7 %</strong> (Modelo 420).
-                                En Ceuta y Melilla rige el <strong>IPSI al 4 %</strong>, gestionado por las
-                                ciudades autónomas, no por la AEAT.
+                                En la Península y territorios forales el impuesto es el{' '}
+                                <strong>IVA al 21 %</strong>. En Canarias se aplica el{' '}
+                                <strong>IGIC al 7 %</strong> (Modelo 420). En Ceuta y Melilla rige
+                                el <strong>IPSI al 4 %</strong>, gestionado por las ciudades
+                                autónomas, no por la AEAT.
                             </p>
                         </div>
                     </div>
                 </section>
-
             </main>
         </div>
     )

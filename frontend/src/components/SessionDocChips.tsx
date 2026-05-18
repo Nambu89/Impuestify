@@ -31,16 +31,12 @@ export function SessionDocChips({ docs, onRemove }: Props) {
 
     return (
         <div className="session-doc-chips">
-            {docs.map(doc => {
+            {docs.map((doc) => {
                 const Icon = typeIcons[doc.file_type] || File
                 const color = typeColors[doc.file_type] || '#6b7280'
 
                 return (
-                    <div
-                        key={doc.doc_id}
-                        className="session-doc-chip"
-                        title={doc.summary}
-                    >
+                    <div key={doc.doc_id} className="session-doc-chip" title={doc.summary}>
                         <Icon size={14} style={{ color, flexShrink: 0 }} />
                         <span className="session-doc-chip__name">
                             {doc.filename.length > 25

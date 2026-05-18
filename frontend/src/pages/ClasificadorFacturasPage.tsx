@@ -1,5 +1,20 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Search, ArrowLeft, FolderOpen } from 'lucide-react'
+import {
+    Upload,
+    FileText,
+    CheckCircle,
+    AlertTriangle,
+    XCircle,
+    Loader2,
+    Trash2,
+    Eye,
+    ChevronDown,
+    ChevronUp,
+    RefreshCw,
+    Search,
+    ArrowLeft,
+    FolderOpen,
+} from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useApi } from '../hooks/useApi'
 import { useWorkspaces } from '../hooks/useWorkspaces'
@@ -82,9 +97,9 @@ const MAX_BATCH = 10
 
 function ConfianzaBadge({ nivel }: { nivel: 'alta' | 'media' | 'baja' | 'manual' }) {
     const map = {
-        alta:  { label: 'Alta confianza',  cls: 'badge--green'  },
+        alta: { label: 'Alta confianza', cls: 'badge--green' },
         media: { label: 'Media confianza', cls: 'badge--yellow' },
-        baja:  { label: 'Baja confianza',  cls: 'badge--red'    },
+        baja: { label: 'Baja confianza', cls: 'badge--red' },
     }
     const { label, cls } = map[nivel]
     return <span className={`cf-badge ${cls}`}>{label}</span>
@@ -105,17 +120,26 @@ function formatDate(dateStr: string) {
 
 // ─── Upload Zone ──────────────────────────────────────────────────────────────
 
-function UploadZone({ onFiles, disabled }: { onFiles: (files: File[]) => void; disabled?: boolean }) {
+function UploadZone({
+    onFiles,
+    disabled,
+}: {
+    onFiles: (files: File[]) => void
+    disabled?: boolean
+}) {
     const [dragging, setDragging] = useState(false)
     const inputId = 'cf-file-upload'
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault()
-        setDragging(false)
-        if (disabled) return
-        const files = Array.from(e.dataTransfer.files)
-        if (files.length) onFiles(files)
-    }, [onFiles, disabled])
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault()
+            setDragging(false)
+            if (disabled) return
+            const files = Array.from(e.dataTransfer.files)
+            if (files.length) onFiles(files)
+        },
+        [onFiles, disabled],
+    )
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || [])
@@ -127,11 +151,17 @@ function UploadZone({ onFiles, disabled }: { onFiles: (files: File[]) => void; d
         <label
             htmlFor={inputId}
             className={`cf-upload-zone${dragging ? ' cf-upload-zone--dragging' : ''}${disabled ? ' cf-upload-zone--disabled' : ''}`}
-            onDragOver={e => { e.preventDefault(); if (!disabled) setDragging(true) }}
+            onDragOver={(e) => {
+                e.preventDefault()
+                if (!disabled) setDragging(true)
+            }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             tabIndex={0}
-            onKeyDown={e => { if (e.key === 'Enter') (e.currentTarget.querySelector('input') as HTMLInputElement)?.click() }}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter')
+                    (e.currentTarget.querySelector('input') as HTMLInputElement)?.click()
+            }}
             aria-label="Zona de carga de facturas"
         >
             <input
@@ -145,7 +175,9 @@ function UploadZone({ onFiles, disabled }: { onFiles: (files: File[]) => void; d
             />
             <Upload size={40} className="cf-upload-icon" />
             <p className="cf-upload-title">Arrastra tus facturas aquí</p>
-            <p className="cf-upload-subtitle">PDF, JPG o PNG · hasta {MAX_BATCH} a la vez · máximo 10 MB cada una</p>
+            <p className="cf-upload-subtitle">
+                PDF, JPG o PNG · hasta {MAX_BATCH} a la vez · máximo 10 MB cada una
+            </p>
             <span className="cf-upload-btn" role="button">
                 Seleccionar facturas
             </span>
@@ -158,23 +190,39 @@ function BatchQueue({ items }: { items: QueueItem[] }) {
     return (
         <div className="cf-queue">
             <div className="cf-queue__header">
-                <span className="cf-queue__title">Procesando {items.length} factura{items.length === 1 ? '' : 's'}</span>
+                <span className="cf-queue__title">
+                    Procesando {items.length} factura{items.length === 1 ? '' : 's'}
+                </span>
             </div>
             <ul className="cf-queue__list">
-                {items.map(item => (
+                {items.map((item) => (
                     <li key={item.id} className={`cf-queue__item cf-queue__item--${item.status}`}>
                         <span className="cf-queue__icon">
                             {item.status === 'pending' && <FileText size={16} />}
-                            {item.status === 'processing' && <Loader2 size={16} className="cf-progress__spinner" />}
+                            {item.status === 'processing' && (
+                                <Loader2 size={16} className="cf-progress__spinner" />
+                            )}
                             {item.status === 'success' && <CheckCircle size={16} />}
                             {item.status === 'error' && <XCircle size={16} />}
                         </span>
                         <div className="cf-queue__body">
                             <span className="cf-queue__name">{item.filename}</span>
-                            {item.status === 'pending' && <span className="cf-queue__status">En cola</span>}
-                            {item.status === 'processing' && <span className="cf-queue__status">Leyendo y clasificando...</span>}
-                            {item.status === 'success' && <span className="cf-queue__status cf-queue__status--ok">Clasificada</span>}
-                            {item.status === 'error' && <span className="cf-queue__status cf-queue__status--err">{item.error || 'Error'}</span>}
+                            {item.status === 'pending' && (
+                                <span className="cf-queue__status">En cola</span>
+                            )}
+                            {item.status === 'processing' && (
+                                <span className="cf-queue__status">Leyendo y clasificando...</span>
+                            )}
+                            {item.status === 'success' && (
+                                <span className="cf-queue__status cf-queue__status--ok">
+                                    Clasificada
+                                </span>
+                            )}
+                            {item.status === 'error' && (
+                                <span className="cf-queue__status cf-queue__status--err">
+                                    {item.error || 'Error'}
+                                </span>
+                            )}
                         </div>
                     </li>
                 ))}
@@ -187,15 +235,15 @@ function BatchQueue({ items }: { items: QueueItem[] }) {
 
 function UploadProgress({ step }: { step: UploadStep }) {
     const steps: Array<{ key: UploadStep; label: string }> = [
-        { key: 'extracting',  label: 'Leyendo la factura...'        },
-        { key: 'classifying', label: 'Buscando la cuenta PGC...'    },
-        { key: 'done',        label: 'Montando el asiento...'       },
+        { key: 'extracting', label: 'Leyendo la factura...' },
+        { key: 'classifying', label: 'Buscando la cuenta PGC...' },
+        { key: 'done', label: 'Montando el asiento...' },
     ]
     return (
         <div className="cf-progress">
             <Loader2 size={32} className="cf-progress__spinner" />
             <div className="cf-progress__steps">
-                {steps.map(s => (
+                {steps.map((s) => (
                     <span
                         key={s.key}
                         className={`cf-progress__step${step === s.key ? ' cf-progress__step--active' : ''}`}
@@ -226,7 +274,9 @@ function ExtractionCard({ data }: { data: InvoiceExtraction }) {
                     <div>
                         <strong>Revisa esto antes de guardar:</strong>
                         <ul className="cf-alert__list">
-                            {data.errores_validacion.map((e, i) => <li key={i}>{e}</li>)}
+                            {data.errores_validacion.map((e, i) => (
+                                <li key={i}>{e}</li>
+                            ))}
                         </ul>
                     </div>
                 </div>
@@ -236,12 +286,16 @@ function ExtractionCard({ data }: { data: InvoiceExtraction }) {
                 <div className="cf-field">
                     <span className="cf-field__label">Emisor</span>
                     <span className="cf-field__value">{data.emisor_nombre || '—'}</span>
-                    {data.emisor_nif && <span className="cf-field__sub">NIF: {data.emisor_nif}</span>}
+                    {data.emisor_nif && (
+                        <span className="cf-field__sub">NIF: {data.emisor_nif}</span>
+                    )}
                 </div>
                 <div className="cf-field">
                     <span className="cf-field__label">Receptor</span>
                     <span className="cf-field__value">{data.receptor_nombre || '—'}</span>
-                    {data.receptor_nif && <span className="cf-field__sub">NIF: {data.receptor_nif}</span>}
+                    {data.receptor_nif && (
+                        <span className="cf-field__sub">NIF: {data.receptor_nif}</span>
+                    )}
                 </div>
                 <div className="cf-field">
                     <span className="cf-field__label">Número de factura</span>
@@ -258,11 +312,13 @@ function ExtractionCard({ data }: { data: InvoiceExtraction }) {
                 <div className="cf-lines">
                     <button
                         className="cf-lines__toggle"
-                        onClick={() => setLinesOpen(v => !v)}
+                        onClick={() => setLinesOpen((v) => !v)}
                         aria-expanded={linesOpen}
                     >
                         {linesOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        {linesOpen ? 'Ocultar líneas' : `Ver ${data.lineas.length === 1 ? 'la línea' : `las ${data.lineas.length} líneas`} de detalle`}
+                        {linesOpen
+                            ? 'Ocultar líneas'
+                            : `Ver ${data.lineas.length === 1 ? 'la línea' : `las ${data.lineas.length} líneas`} de detalle`}
                     </button>
                     {linesOpen && (
                         <div className="cf-table-wrap">
@@ -280,7 +336,9 @@ function ExtractionCard({ data }: { data: InvoiceExtraction }) {
                                         <tr key={i}>
                                             <td>{l.concepto}</td>
                                             <td className="cf-table__num">{l.cantidad}</td>
-                                            <td className="cf-table__num">{formatEUR(l.precio_unitario)}</td>
+                                            <td className="cf-table__num">
+                                                {formatEUR(l.precio_unitario)}
+                                            </td>
                                             <td className="cf-table__num">{formatEUR(l.base)}</td>
                                         </tr>
                                     ))}
@@ -372,15 +430,19 @@ function ClassificationCard({ data, invoiceId, onReclassify, onConfirm }: Classi
                 <div className="cf-pgc-alternatives">
                     <p className="cf-pgc-alternatives__label">¿Encaja mejor otra cuenta?</p>
                     <div className="cf-pgc-alternatives__list">
-                        {data.alternativas.map(alt => (
+                        {data.alternativas.map((alt) => (
                             <button
                                 key={alt.cuenta_pgc}
                                 className="cf-pgc-alt-btn"
-                                onClick={() => handleAlternative(alt.cuenta_pgc, alt.cuenta_pgc_nombre)}
+                                onClick={() =>
+                                    handleAlternative(alt.cuenta_pgc, alt.cuenta_pgc_nombre)
+                                }
                                 disabled={saving}
                             >
                                 <span className="cf-pgc-alt-btn__code">{alt.cuenta_pgc}</span>
-                                <span className="cf-pgc-alt-btn__name">{alt.cuenta_pgc_nombre}</span>
+                                <span className="cf-pgc-alt-btn__name">
+                                    {alt.cuenta_pgc_nombre}
+                                </span>
                             </button>
                         ))}
                     </div>
@@ -395,7 +457,7 @@ function ClassificationCard({ data, invoiceId, onReclassify, onConfirm }: Classi
                             type="text"
                             placeholder="Código o nombre de la cuenta..."
                             value={searchVal}
-                            onChange={e => setSearchVal(e.target.value)}
+                            onChange={(e) => setSearchVal(e.target.value)}
                             className="cf-pgc-search__input"
                             autoFocus
                         />
@@ -409,7 +471,9 @@ function ClassificationCard({ data, invoiceId, onReclassify, onConfirm }: Classi
                         >
                             <CheckCircle size={16} /> Aplicar
                         </button>
-                        <button className="cf-btn cf-btn--ghost" onClick={() => setEditing(false)}>Cancelar</button>
+                        <button className="cf-btn cf-btn--ghost" onClick={() => setEditing(false)}>
+                            Cancelar
+                        </button>
                     </div>
                 </div>
             )}
@@ -426,7 +490,7 @@ function ClassificationCard({ data, invoiceId, onReclassify, onConfirm }: Classi
                         </button>
                         <button
                             className="cf-btn cf-btn--ghost"
-                            onClick={() => setEditing(v => !v)}
+                            onClick={() => setEditing((v) => !v)}
                             disabled={saving}
                         >
                             <RefreshCw size={16} /> Corregir
@@ -457,12 +521,12 @@ function InvoiceList({ invoices, onDelete, onView }: InvoiceListProps) {
     const [tipo, setTipo] = useState('todos')
 
     const years = Array.from(
-        new Set(invoices.map(inv => new Date(inv.fecha).getFullYear().toString()))
+        new Set(invoices.map((inv) => new Date(inv.fecha).getFullYear().toString())),
     ).sort((a, b) => Number(b) - Number(a))
 
     if (years.length === 0) years.push(new Date().getFullYear().toString())
 
-    const filtered = invoices.filter(inv => {
+    const filtered = invoices.filter((inv) => {
         const d = new Date(inv.fecha)
         const q = Math.ceil((d.getMonth() + 1) / 3)
         const yearMatch = d.getFullYear().toString() === year
@@ -478,15 +542,19 @@ function InvoiceList({ invoices, onDelete, onView }: InvoiceListProps) {
                 <div className="cf-list-filters">
                     <select
                         value={year}
-                        onChange={e => setYear(e.target.value)}
+                        onChange={(e) => setYear(e.target.value)}
                         className="cf-select"
                         aria-label="Filtrar por año"
                     >
-                        {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        {years.map((y) => (
+                            <option key={y} value={y}>
+                                {y}
+                            </option>
+                        ))}
                     </select>
                     <select
                         value={trimestre}
-                        onChange={e => setTrimestre(e.target.value)}
+                        onChange={(e) => setTrimestre(e.target.value)}
                         className="cf-select"
                         aria-label="Filtrar por trimestre"
                     >
@@ -498,7 +566,7 @@ function InvoiceList({ invoices, onDelete, onView }: InvoiceListProps) {
                     </select>
                     <select
                         value={tipo}
-                        onChange={e => setTipo(e.target.value)}
+                        onChange={(e) => setTipo(e.target.value)}
                         className="cf-select"
                         aria-label="Filtrar por tipo"
                     >
@@ -533,19 +601,27 @@ function InvoiceList({ invoices, onDelete, onView }: InvoiceListProps) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filtered.map(inv => (
+                                {filtered.map((inv) => (
                                     <tr key={inv.id}>
                                         <td>{formatDate(inv.fecha)}</td>
                                         <td>{inv.numero_factura}</td>
                                         <td>{inv.emisor_nombre || inv.receptor_nombre}</td>
-                                        <td className="cf-table__num">{formatEUR(inv.base_imponible)}</td>
-                                        <td className="cf-table__num">{formatEUR(inv.cuota_iva)}</td>
+                                        <td className="cf-table__num">
+                                            {formatEUR(inv.base_imponible)}
+                                        </td>
+                                        <td className="cf-table__num">
+                                            {formatEUR(inv.cuota_iva)}
+                                        </td>
                                         <td className="cf-table__num">{formatEUR(inv.total)}</td>
                                         <td>
                                             <span className="cf-pgc-tag">{inv.cuenta_pgc}</span>
-                                            <span className="cf-pgc-tag-name">{inv.cuenta_pgc_nombre}</span>
+                                            <span className="cf-pgc-tag-name">
+                                                {inv.cuenta_pgc_nombre}
+                                            </span>
                                         </td>
-                                        <td><ConfianzaBadge nivel={inv.confianza} /></td>
+                                        <td>
+                                            <ConfianzaBadge nivel={inv.confianza} />
+                                        </td>
                                         <td>
                                             <div className="cf-row-actions">
                                                 <button
@@ -572,7 +648,7 @@ function InvoiceList({ invoices, onDelete, onView }: InvoiceListProps) {
 
                     {/* Mobile cards */}
                     <div className="cf-mobile-cards">
-                        {filtered.map(inv => (
+                        {filtered.map((inv) => (
                             <div key={inv.id} className="cf-mobile-card">
                                 <div className="cf-mobile-card__row">
                                     <span className="cf-mobile-card__label">Fecha</span>
@@ -592,17 +668,25 @@ function InvoiceList({ invoices, onDelete, onView }: InvoiceListProps) {
                                 </div>
                                 <div className="cf-mobile-card__row">
                                     <span className="cf-mobile-card__label">Cuenta PGC</span>
-                                    <span>{inv.cuenta_pgc} — {inv.cuenta_pgc_nombre}</span>
+                                    <span>
+                                        {inv.cuenta_pgc} — {inv.cuenta_pgc_nombre}
+                                    </span>
                                 </div>
                                 <div className="cf-mobile-card__row">
                                     <span className="cf-mobile-card__label">Confianza</span>
                                     <ConfianzaBadge nivel={inv.confianza} />
                                 </div>
                                 <div className="cf-mobile-card__actions">
-                                    <button className="cf-btn cf-btn--ghost cf-btn--sm" onClick={() => onView(inv.id)}>
+                                    <button
+                                        className="cf-btn cf-btn--ghost cf-btn--sm"
+                                        onClick={() => onView(inv.id)}
+                                    >
                                         <Eye size={15} /> Ver
                                     </button>
-                                    <button className="cf-btn cf-btn--danger cf-btn--sm" onClick={() => onDelete(inv.id)}>
+                                    <button
+                                        className="cf-btn cf-btn--danger cf-btn--sm"
+                                        onClick={() => onDelete(inv.id)}
+                                    >
                                         <Trash2 size={15} /> Eliminar
                                     </button>
                                 </div>
@@ -628,7 +712,9 @@ export default function ClasificadorFacturasPage() {
     const [loadingList, setLoadingList] = useState(true)
     const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>('')
     const [queue, setQueue] = useState<QueueItem[]>([])
-    const [batchSummary, setBatchSummary] = useState<{ success: number; error: number } | null>(null)
+    const [batchSummary, setBatchSummary] = useState<{ success: number; error: number } | null>(
+        null,
+    )
 
     // Load invoice list + workspaces on mount
     useEffect(() => {
@@ -640,11 +726,11 @@ export default function ClasificadorFacturasPage() {
     useEffect(() => {
         if (selectedWorkspaceId || !workspaces.length) return
         const fromUrl = searchParams.get('workspace_id')
-        if (fromUrl && workspaces.some(w => w.id === fromUrl)) {
+        if (fromUrl && workspaces.some((w) => w.id === fromUrl)) {
             setSelectedWorkspaceId(fromUrl)
             return
         }
-        const def = workspaces.find(w => w.is_default) || workspaces[0]
+        const def = workspaces.find((w) => w.is_default) || workspaces[0]
         if (def) setSelectedWorkspaceId(def.id)
     }, [workspaces, searchParams, selectedWorkspaceId])
 
@@ -710,15 +796,19 @@ export default function ClasificadorFacturasPage() {
         if (!files.length) return
 
         if (files.length > MAX_BATCH) {
-            setUploadError(`Máximo ${MAX_BATCH} facturas a la vez. Has seleccionado ${files.length}.`)
+            setUploadError(
+                `Máximo ${MAX_BATCH} facturas a la vez. Has seleccionado ${files.length}.`,
+            )
             setUploadStep('error')
             return
         }
 
         // Validate sizes
-        const oversized = files.filter(f => f.size > 10 * 1024 * 1024)
+        const oversized = files.filter((f) => f.size > 10 * 1024 * 1024)
         if (oversized.length) {
-            setUploadError(`Estas facturas pesan más de 10 MB: ${oversized.map(f => f.name).join(', ')}`)
+            setUploadError(
+                `Estas facturas pesan más de 10 MB: ${oversized.map((f) => f.name).join(', ')}`,
+            )
             setUploadStep('error')
             return
         }
@@ -745,11 +835,11 @@ export default function ClasificadorFacturasPage() {
 
         try {
             const formData = new FormData()
-            files.forEach(f => formData.append('files', f))
+            files.forEach((f) => formData.append('files', f))
             if (selectedWorkspaceId) formData.append('workspace_id', selectedWorkspaceId)
 
             // Mark all as processing while server runs (server processes sequentially; we don't get per-file progress)
-            setQueue(prev => prev.map(it => ({ ...it, status: 'processing' })))
+            setQueue((prev) => prev.map((it) => ({ ...it, status: 'processing' })))
 
             const batchResult = await apiRequest('/api/invoices/upload-batch', {
                 method: 'POST',
@@ -759,14 +849,20 @@ export default function ClasificadorFacturasPage() {
 
             // Map results back to queue items by filename order (server preserves order)
             const serverResults: any[] = batchResult?.results || []
-            setQueue(prev => prev.map((it, idx) => {
-                const r = serverResults[idx]
-                if (!r) return { ...it, status: 'error', error: 'Sin respuesta del servidor' }
-                if (r.success) {
-                    return { ...it, status: 'success', invoiceId: r.data?.id }
-                }
-                return { ...it, status: 'error', error: typeof r.error === 'string' ? r.error : 'Error procesando' }
-            }))
+            setQueue((prev) =>
+                prev.map((it, idx) => {
+                    const r = serverResults[idx]
+                    if (!r) return { ...it, status: 'error', error: 'Sin respuesta del servidor' }
+                    if (r.success) {
+                        return { ...it, status: 'success', invoiceId: r.data?.id }
+                    }
+                    return {
+                        ...it,
+                        status: 'error',
+                        error: typeof r.error === 'string' ? r.error : 'Error procesando',
+                    }
+                }),
+            )
 
             setBatchSummary({
                 success: batchResult?.success_count || 0,
@@ -776,7 +872,11 @@ export default function ClasificadorFacturasPage() {
             await loadInvoices()
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'No hemos podido procesar el lote.'
-            setQueue(prev => prev.map(it => it.status === 'processing' ? { ...it, status: 'error', error: msg } : it))
+            setQueue((prev) =>
+                prev.map((it) =>
+                    it.status === 'processing' ? { ...it, status: 'error', error: msg } : it,
+                ),
+            )
             setUploadError(msg)
             setUploadStep('error')
         }
@@ -823,7 +923,7 @@ export default function ClasificadorFacturasPage() {
         if (!window.confirm('¿Eliminar esta factura? No se puede deshacer.')) return
         try {
             await apiRequest(`/api/invoices/${id}`, { method: 'DELETE' })
-            setInvoices(prev => prev.filter(inv => inv.id !== id))
+            setInvoices((prev) => prev.filter((inv) => inv.id !== id))
             if (result?.id === id) setResult(null)
         } catch {
             alert('No hemos podido eliminar la factura.')
@@ -840,10 +940,13 @@ export default function ClasificadorFacturasPage() {
             let rawExtraction: any = null
             if (inv.raw_extraction) {
                 try {
-                    rawExtraction = typeof inv.raw_extraction === 'string'
-                        ? JSON.parse(inv.raw_extraction)
-                        : inv.raw_extraction
-                } catch { /* ignore parse errors */ }
+                    rawExtraction =
+                        typeof inv.raw_extraction === 'string'
+                            ? JSON.parse(inv.raw_extraction)
+                            : inv.raw_extraction
+                } catch {
+                    /* ignore parse errors */
+                }
             }
 
             const mapped: InvoiceResult = {
@@ -888,7 +991,7 @@ export default function ClasificadorFacturasPage() {
 
     const isProcessing = uploadStep === 'extracting' || uploadStep === 'classifying'
     const isBatchMode = queue.length > 0
-    const selectedWorkspace = workspaces.find(w => w.id === selectedWorkspaceId)
+    const selectedWorkspace = workspaces.find((w) => w.id === selectedWorkspaceId)
 
     function resetUpload() {
         setUploadStep('idle')
@@ -913,7 +1016,8 @@ export default function ClasificadorFacturasPage() {
                     <div>
                         <h1 className="cf-page-header__title">Clasificador de facturas</h1>
                         <p className="cf-page-header__subtitle">
-                            Sube una factura: leemos los datos, buscamos la cuenta del PGC y dejamos el asiento hecho.
+                            Sube una factura: leemos los datos, buscamos la cuenta del PGC y dejamos
+                            el asiento hecho.
                         </p>
                     </div>
                 </div>
@@ -929,12 +1033,16 @@ export default function ClasificadorFacturasPage() {
                             id="cf-workspace-select"
                             className="cf-workspace-picker__select"
                             value={selectedWorkspaceId}
-                            onChange={e => setSelectedWorkspaceId(e.target.value)}
-                            disabled={isProcessing || isBatchMode && uploadStep !== 'done' && uploadStep !== 'error'}
+                            onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+                            disabled={
+                                isProcessing ||
+                                (isBatchMode && uploadStep !== 'done' && uploadStep !== 'error')
+                            }
                         >
-                            {workspaces.map(w => (
+                            {workspaces.map((w) => (
                                 <option key={w.id} value={w.id}>
-                                    {w.icon} {w.name}{w.is_default ? ' (Principal)' : ''}
+                                    {w.icon} {w.name}
+                                    {w.is_default ? ' (Principal)' : ''}
                                 </option>
                             ))}
                         </select>
@@ -987,7 +1095,9 @@ export default function ClasificadorFacturasPage() {
                         <div className="cf-upload-done-bar">
                             <CheckCircle size={18} className="cf-upload-done-bar__icon" />
                             <span>
-                                {batchSummary.success} factura{batchSummary.success === 1 ? '' : 's'} guardada{batchSummary.success === 1 ? '' : 's'}
+                                {batchSummary.success} factura
+                                {batchSummary.success === 1 ? '' : 's'} guardada
+                                {batchSummary.success === 1 ? '' : 's'}
                                 {batchSummary.error > 0 && ` · ${batchSummary.error} con error`}
                             </span>
                             <button
@@ -1031,7 +1141,8 @@ export default function ClasificadorFacturasPage() {
 
                 {/* Legal disclaimer */}
                 <p className="cf-disclaimer">
-                    Información orientativa. No sustituye el asesoramiento de un profesional contable.
+                    Información orientativa. No sustituye el asesoramiento de un profesional
+                    contable.
                 </p>
             </div>
         </div>

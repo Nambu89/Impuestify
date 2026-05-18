@@ -87,8 +87,14 @@
 }
 
 @keyframes afpSlideDown {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .admin-message.success {
@@ -122,8 +128,12 @@
 }
 
 @keyframes afpSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ========== STATS BAR ========== */
@@ -149,10 +159,18 @@
     flex-shrink: 0;
 }
 
-.afp-stat--bug svg { color: #fca5a5; }
-.afp-stat--feature svg { color: #fcd34d; }
-.afp-stat--new svg { color: var(--color-accent); }
-.afp-stat--total svg { color: rgba(255, 255, 255, 0.4); }
+.afp-stat--bug svg {
+    color: #fca5a5;
+}
+.afp-stat--feature svg {
+    color: #fcd34d;
+}
+.afp-stat--new svg {
+    color: var(--color-accent);
+}
+.afp-stat--total svg {
+    color: rgba(255, 255, 255, 0.4);
+}
 
 .afp-stat div {
     display: flex;
@@ -385,10 +403,18 @@
     border-radius: var(--radius-sm);
 }
 
-.afp-priority--critical { color: #fca5a5; }
-.afp-priority--high { color: #fcd34d; }
-.afp-priority--normal { color: rgba(255, 255, 255, 0.5); }
-.afp-priority--low { color: rgba(255, 255, 255, 0.3); }
+.afp-priority--critical {
+    color: #fca5a5;
+}
+.afp-priority--high {
+    color: #fcd34d;
+}
+.afp-priority--normal {
+    color: rgba(255, 255, 255, 0.5);
+}
+.afp-priority--low {
+    color: rgba(255, 255, 255, 0.3);
+}
 
 .afp-date {
     font-size: var(--font-size-xs);

@@ -54,7 +54,9 @@ interface UploadZoneProps {
 
 function UploadZone({ onUpload, uploading, error }: UploadZoneProps) {
     const [dragging, setDragging] = useState(false)
-    const [lastResult, setLastResult] = useState<{ imported: number; exchange: string } | null>(null)
+    const [lastResult, setLastResult] = useState<{ imported: number; exchange: string } | null>(
+        null,
+    )
     const inputRef = useRef<HTMLInputElement>(null)
 
     const handleDrop = useCallback(
@@ -64,7 +66,7 @@ function UploadZone({ onUpload, uploading, error }: UploadZoneProps) {
             const file = e.dataTransfer.files[0]
             if (file) await onUpload(file)
         },
-        [onUpload]
+        [onUpload],
     )
 
     const handleFileInput = useCallback(
@@ -74,7 +76,7 @@ function UploadZone({ onUpload, uploading, error }: UploadZoneProps) {
             // Reset so same file can be re-uploaded
             e.target.value = ''
         },
-        [onUpload]
+        [onUpload],
     )
 
     return (
@@ -86,14 +88,19 @@ function UploadZone({ onUpload, uploading, error }: UploadZoneProps) {
 
             <div
                 className={`crypto-dropzone ${dragging ? 'crypto-dropzone--dragging' : ''} ${uploading ? 'crypto-dropzone--loading' : ''}`}
-                onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+                onDragOver={(e) => {
+                    e.preventDefault()
+                    setDragging(true)
+                }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => !uploading && inputRef.current?.click()}
                 role="button"
                 tabIndex={0}
                 aria-label="Zona de arrastre para subir CSV"
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click() }}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click()
+                }}
             >
                 <input
                     ref={inputRef}
@@ -122,7 +129,10 @@ function UploadZone({ onUpload, uploading, error }: UploadZoneProps) {
                         <button
                             type="button"
                             className="crypto-btn crypto-btn--primary crypto-dropzone__btn"
-                            onClick={(e) => { e.stopPropagation(); inputRef.current?.click() }}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                inputRef.current?.click()
+                            }}
                         >
                             Seleccionar archivo
                         </button>
@@ -164,7 +174,15 @@ interface TransactionsTabProps {
     onDelete: (id: string) => void
 }
 
-function TransactionsTab({ transactions, total, page, loading, error, onPageChange, onDelete }: TransactionsTabProps) {
+function TransactionsTab({
+    transactions,
+    total,
+    page,
+    loading,
+    error,
+    onPageChange,
+    onDelete,
+}: TransactionsTabProps) {
     const PAGE_SIZE = 20
     const totalPages = Math.ceil(total / PAGE_SIZE)
 
@@ -228,10 +246,16 @@ function TransactionsTab({ transactions, total, page, loading, error, onPageChan
                                     {tx.amount.toFixed(8)}
                                 </td>
                                 <td className="crypto-table__right crypto-table__mono">
-                                    {(tx.price_eur ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {(tx.price_eur ?? 0).toLocaleString('es-ES', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
                                 </td>
                                 <td className="crypto-table__right crypto-table__mono">
-                                    {(tx.total_eur ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {(tx.total_eur ?? 0).toLocaleString('es-ES', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
                                 </td>
                                 <td className="crypto-table__exchange">{tx.exchange}</td>
                                 <td>
@@ -313,7 +337,9 @@ function PortfolioTab({ holdings, loading, error }: PortfolioTabProps) {
             <div className="crypto-empty">
                 <Wallet size={40} className="crypto-empty__icon" />
                 <p>No hay activos en cartera.</p>
-                <p className="crypto-empty__sub">Los activos aparecerán cuando importes transacciones.</p>
+                <p className="crypto-empty__sub">
+                    Los activos aparecerán cuando importes transacciones.
+                </p>
             </div>
         )
     }
@@ -336,13 +362,23 @@ function PortfolioTab({ holdings, loading, error }: PortfolioTabProps) {
                             <div className="crypto-holding-card__stat">
                                 <span className="crypto-holding-card__stat-label">Coste medio</span>
                                 <span className="crypto-holding-card__stat-value">
-                                    {h.avg_cost_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
+                                    {h.avg_cost_eur.toLocaleString('es-ES', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}{' '}
+                                    EUR
                                 </span>
                             </div>
                             <div className="crypto-holding-card__stat">
-                                <span className="crypto-holding-card__stat-label">Total invertido</span>
+                                <span className="crypto-holding-card__stat-label">
+                                    Total invertido
+                                </span>
                                 <span className="crypto-holding-card__stat-value crypto-holding-card__stat-value--accent">
-                                    {h.total_invested_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
+                                    {h.total_invested_eur.toLocaleString('es-ES', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}{' '}
+                                    EUR
                                 </span>
                             </div>
                         </div>
@@ -379,7 +415,9 @@ function GainsTab({ summary, selectedYear, loading, error, onYearChange }: Gains
         return (
             <>
                 <div className="crypto-year-selector">
-                    <label htmlFor="gains-year" className="crypto-year-label">Ejercicio fiscal:</label>
+                    <label htmlFor="gains-year" className="crypto-year-label">
+                        Ejercicio fiscal:
+                    </label>
                     <select
                         id="gains-year"
                         className="crypto-year-select"
@@ -387,7 +425,9 @@ function GainsTab({ summary, selectedYear, loading, error, onYearChange }: Gains
                         onChange={(e) => onYearChange(Number(e.target.value))}
                     >
                         {TAX_YEARS.map((y) => (
-                            <option key={y} value={y}>{y}</option>
+                            <option key={y} value={y}>
+                                {y}
+                            </option>
                         ))}
                     </select>
                 </div>
@@ -402,7 +442,9 @@ function GainsTab({ summary, selectedYear, loading, error, onYearChange }: Gains
     return (
         <div className="crypto-gains">
             <div className="crypto-year-selector">
-                <label htmlFor="gains-year" className="crypto-year-label">Ejercicio fiscal:</label>
+                <label htmlFor="gains-year" className="crypto-year-label">
+                    Ejercicio fiscal:
+                </label>
                 <select
                     id="gains-year"
                     className="crypto-year-select"
@@ -410,7 +452,9 @@ function GainsTab({ summary, selectedYear, loading, error, onYearChange }: Gains
                     onChange={(e) => onYearChange(Number(e.target.value))}
                 >
                     {TAX_YEARS.map((y) => (
-                        <option key={y} value={y}>{y}</option>
+                        <option key={y} value={y}>
+                            {y}
+                        </option>
                     ))}
                 </select>
             </div>
@@ -427,28 +471,46 @@ function GainsTab({ summary, selectedYear, loading, error, onYearChange }: Gains
                         <div className="crypto-gains__card crypto-gains__card--positive">
                             <TrendingUp size={20} className="crypto-gains__card-icon" />
                             <div>
-                                <span className="crypto-gains__card-label">Ganancias — Casilla 1814</span>
+                                <span className="crypto-gains__card-label">
+                                    Ganancias — Casilla 1814
+                                </span>
                                 <span className="crypto-gains__card-amount">
-                                    {summary.total_gains_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
+                                    {summary.total_gains_eur.toLocaleString('es-ES', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}{' '}
+                                    EUR
                                 </span>
                             </div>
                         </div>
                         <div className="crypto-gains__card crypto-gains__card--negative">
                             <TrendingDown size={20} className="crypto-gains__card-icon" />
                             <div>
-                                <span className="crypto-gains__card-label">Pérdidas — Casilla 1813</span>
+                                <span className="crypto-gains__card-label">
+                                    Pérdidas — Casilla 1813
+                                </span>
                                 <span className="crypto-gains__card-amount">
-                                    {summary.total_losses_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
+                                    {summary.total_losses_eur.toLocaleString('es-ES', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}{' '}
+                                    EUR
                                 </span>
                             </div>
                         </div>
-                        <div className={`crypto-gains__card ${summary.net_eur >= 0 ? 'crypto-gains__card--net-pos' : 'crypto-gains__card--net-neg'}`}>
+                        <div
+                            className={`crypto-gains__card ${summary.net_eur >= 0 ? 'crypto-gains__card--net-pos' : 'crypto-gains__card--net-neg'}`}
+                        >
                             <BarChart3 size={20} className="crypto-gains__card-icon" />
                             <div>
                                 <span className="crypto-gains__card-label">Neto a declarar</span>
                                 <span className="crypto-gains__card-amount">
                                     {summary.net_eur >= 0 ? '+' : ''}
-                                    {summary.net_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
+                                    {summary.net_eur.toLocaleString('es-ES', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}{' '}
+                                    EUR
                                 </span>
                             </div>
                         </div>
@@ -468,7 +530,9 @@ function GainsTab({ summary, selectedYear, loading, error, onYearChange }: Gains
                                             <th>Tipo</th>
                                             <th className="crypto-table__right">Adquisición</th>
                                             <th className="crypto-table__right">Transmisión</th>
-                                            <th className="crypto-table__right">Ganancia/Pérdida</th>
+                                            <th className="crypto-table__right">
+                                                Ganancia/Pérdida
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -478,22 +542,54 @@ function GainsTab({ summary, selectedYear, loading, error, onYearChange }: Gains
                                                 className={`crypto-table__row ${g.gain_loss_eur < 0 ? 'crypto-table__row--loss' : 'crypto-table__row--gain'}`}
                                             >
                                                 <td className="crypto-table__asset">{g.asset}</td>
-                                                <td>{new Date(g.date_acquisition).toLocaleDateString('es-ES')}</td>
-                                                <td>{new Date(g.date_transmission).toLocaleDateString('es-ES')}</td>
                                                 <td>
-                                                    <span className="crypto-badge crypto-badge--contraprestacion" title={CONTRAPRESTACION_LABELS[g.clave_contraprestacion] ?? g.clave_contraprestacion}>
+                                                    {new Date(
+                                                        g.date_acquisition,
+                                                    ).toLocaleDateString('es-ES')}
+                                                </td>
+                                                <td>
+                                                    {new Date(
+                                                        g.date_transmission,
+                                                    ).toLocaleDateString('es-ES')}
+                                                </td>
+                                                <td>
+                                                    <span
+                                                        className="crypto-badge crypto-badge--contraprestacion"
+                                                        title={
+                                                            CONTRAPRESTACION_LABELS[
+                                                                g.clave_contraprestacion
+                                                            ] ?? g.clave_contraprestacion
+                                                        }
+                                                    >
                                                         {g.clave_contraprestacion}
                                                     </span>
                                                 </td>
                                                 <td className="crypto-table__right crypto-table__mono">
-                                                    {g.acquisition_value_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    {g.acquisition_value_eur.toLocaleString(
+                                                        'es-ES',
+                                                        {
+                                                            minimumFractionDigits: 2,
+                                                            maximumFractionDigits: 2,
+                                                        },
+                                                    )}
                                                 </td>
                                                 <td className="crypto-table__right crypto-table__mono">
-                                                    {g.transmission_value_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    {g.transmission_value_eur.toLocaleString(
+                                                        'es-ES',
+                                                        {
+                                                            minimumFractionDigits: 2,
+                                                            maximumFractionDigits: 2,
+                                                        },
+                                                    )}
                                                 </td>
-                                                <td className={`crypto-table__right crypto-table__mono ${g.gain_loss_eur < 0 ? 'crypto-text--loss' : 'crypto-text--gain'}`}>
+                                                <td
+                                                    className={`crypto-table__right crypto-table__mono ${g.gain_loss_eur < 0 ? 'crypto-text--loss' : 'crypto-text--gain'}`}
+                                                >
                                                     {g.gain_loss_eur >= 0 ? '+' : ''}
-                                                    {g.gain_loss_eur.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    {g.gain_loss_eur.toLocaleString('es-ES', {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    })}
                                                 </td>
                                             </tr>
                                         ))}
@@ -522,15 +618,30 @@ type Tab = 'transactions' | 'portfolio' | 'gains'
 export default function CryptoPage() {
     const [activeTab, setActiveTab] = useState<Tab>('transactions')
     const [selectedGainsYear, setSelectedGainsYear] = useState(CURRENT_YEAR - 1)
-    const [uploadSuccess, setUploadSuccess] = useState<{ imported: number; exchange: string } | null>(null)
+    const [uploadSuccess, setUploadSuccess] = useState<{
+        imported: number
+        exchange: string
+    } | null>(null)
 
     const {
-        transactions, totalTransactions, currentPage,
-        holdings, gainsSummary,
-        loadingTransactions, loadingHoldings, loadingGains, uploading,
-        errorTransactions, errorHoldings, errorGains, errorUpload,
-        fetchTransactions, fetchHoldings, fetchGains,
-        uploadFile, deleteTransaction,
+        transactions,
+        totalTransactions,
+        currentPage,
+        holdings,
+        gainsSummary,
+        loadingTransactions,
+        loadingHoldings,
+        loadingGains,
+        uploading,
+        errorTransactions,
+        errorHoldings,
+        errorGains,
+        errorUpload,
+        fetchTransactions,
+        fetchHoldings,
+        fetchGains,
+        uploadFile,
+        deleteTransaction,
     } = useCrypto()
 
     // Load transactions on first render
@@ -538,35 +649,55 @@ export default function CryptoPage() {
         fetchTransactions(1)
     }, [fetchTransactions])
 
-    const handleTabChange = useCallback((tab: Tab) => {
-        setActiveTab(tab)
-        if (tab === 'portfolio' && holdings.length === 0 && !loadingHoldings) {
-            fetchHoldings()
-        }
-        if (tab === 'gains' && !gainsSummary && !loadingGains) {
-            fetchGains(selectedGainsYear)
-        }
-    }, [holdings.length, loadingHoldings, gainsSummary, loadingGains, selectedGainsYear, fetchHoldings, fetchGains])
+    const handleTabChange = useCallback(
+        (tab: Tab) => {
+            setActiveTab(tab)
+            if (tab === 'portfolio' && holdings.length === 0 && !loadingHoldings) {
+                fetchHoldings()
+            }
+            if (tab === 'gains' && !gainsSummary && !loadingGains) {
+                fetchGains(selectedGainsYear)
+            }
+        },
+        [
+            holdings.length,
+            loadingHoldings,
+            gainsSummary,
+            loadingGains,
+            selectedGainsYear,
+            fetchHoldings,
+            fetchGains,
+        ],
+    )
 
-    const handleUpload = useCallback(async (file: File) => {
-        const result = await uploadFile(file)
-        if (result?.success) {
-            setUploadSuccess({ imported: result.imported, exchange: result.exchange_detected })
-            // Refresh transactions after successful upload
-            fetchTransactions(1)
-            if (activeTab === 'portfolio') fetchHoldings()
-        }
-    }, [uploadFile, fetchTransactions, fetchHoldings, activeTab])
+    const handleUpload = useCallback(
+        async (file: File) => {
+            const result = await uploadFile(file)
+            if (result?.success) {
+                setUploadSuccess({ imported: result.imported, exchange: result.exchange_detected })
+                // Refresh transactions after successful upload
+                fetchTransactions(1)
+                if (activeTab === 'portfolio') fetchHoldings()
+            }
+        },
+        [uploadFile, fetchTransactions, fetchHoldings, activeTab],
+    )
 
-    const handleYearChange = useCallback((year: number) => {
-        setSelectedGainsYear(year)
-        fetchGains(year)
-    }, [fetchGains])
+    const handleYearChange = useCallback(
+        (year: number) => {
+            setSelectedGainsYear(year)
+            fetchGains(year)
+        },
+        [fetchGains],
+    )
 
-    const handleDelete = useCallback(async (id: string) => {
-        if (!window.confirm('¿Eliminar esta transacción?')) return
-        await deleteTransaction(id)
-    }, [deleteTransaction])
+    const handleDelete = useCallback(
+        async (id: string) => {
+            if (!window.confirm('¿Eliminar esta transacción?')) return
+            await deleteTransaction(id)
+        },
+        [deleteTransaction],
+    )
 
     return (
         <div className="crypto-page">
@@ -578,21 +709,20 @@ export default function CryptoPage() {
                     <Bitcoin size={28} />
                     <div>
                         <h1>Criptomonedas</h1>
-                        <p>Gestión fiscal de monedas virtuales — Casillas 1800-1814 del Modelo 100</p>
+                        <p>
+                            Gestión fiscal de monedas virtuales — Casillas 1800-1814 del Modelo 100
+                        </p>
                     </div>
                 </div>
 
                 {/* Upload zone */}
-                <UploadZone
-                    onUpload={handleUpload}
-                    uploading={uploading}
-                    error={errorUpload}
-                />
+                <UploadZone onUpload={handleUpload} uploading={uploading} error={errorUpload} />
 
                 {uploadSuccess && !errorUpload && (
                     <div className="crypto-alert crypto-alert--success">
                         <Info size={16} />
-                        {uploadSuccess.imported} transacciones importadas desde {uploadSuccess.exchange}
+                        {uploadSuccess.imported} transacciones importadas desde{' '}
+                        {uploadSuccess.exchange}
                     </div>
                 )}
 

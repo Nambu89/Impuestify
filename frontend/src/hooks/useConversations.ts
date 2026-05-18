@@ -45,7 +45,7 @@ export function useConversations() {
         setError(null)
         try {
             const data = await apiRequest<Conversation[]>('/api/conversations', {
-                method: 'GET'
+                method: 'GET',
             })
             logger.debug('Conversations fetched:', data.length)
             setConversations(data)
@@ -59,72 +59,93 @@ export function useConversations() {
         }
     }, [apiRequest])
 
-    const createConversation = useCallback(async (title?: string) => {
-        logger.debug('Creating conversation:', title)
-        setLoading(true)
-        setError(null)
-        try {
-            const data = await apiRequest<Conversation>('/api/conversations', {
-                method: 'POST',
-                body: JSON.stringify({ title })
-            })
-            logger.debug('Conversation created:', data.id)
-            setConversations(prev => [data, ...prev])
-            return data
-        } catch (err: any) {
-            logger.error('Error creating conversation:', err)
-            setError(err.message || 'Failed to create conversation')
-            throw err
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+    const createConversation = useCallback(
+        async (title?: string) => {
+            logger.debug('Creating conversation:', title)
+            setLoading(true)
+            setError(null)
+            try {
+                const data = await apiRequest<Conversation>('/api/conversations', {
+                    method: 'POST',
+                    body: JSON.stringify({ title }),
+                })
+                logger.debug('Conversation created:', data.id)
+                setConversations((prev) => [data, ...prev])
+                return data
+            } catch (err: any) {
+                logger.error('Error creating conversation:', err)
+                setError(err.message || 'Failed to create conversation')
+                throw err
+            } finally {
+                setLoading(false)
+            }
+        },
+        [apiRequest],
+    )
 
-    const getConversation = useCallback(async (conversationId: string) => {
-        logger.debug('Getting conversation:', conversationId)
-        setLoading(true)
-        setError(null)
-        try {
-            const data = await apiRequest<ConversationWithMessages>(`/api/conversations/${conversationId}`, {
-                method: 'GET'
-            })
-            logger.debug('Conversation loaded with', data.messages.length, 'messages')
-            return data
-        } catch (err: any) {
-            logger.error('Error getting conversation:', err)
-            setError(err.message || 'Failed to fetch conversation')
-            throw err
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+    const getConversation = useCallback(
+        async (conversationId: string) => {
+            logger.debug('Getting conversation:', conversationId)
+            setLoading(true)
+            setError(null)
+            try {
+                const data = await apiRequest<ConversationWithMessages>(
+                    `/api/conversations/${conversationId}`,
+                    {
+                        method: 'GET',
+                    },
+                )
+                logger.debug('Conversation loaded with', data.messages.length, 'messages')
+                return data
+            } catch (err: any) {
+                logger.error('Error getting conversation:', err)
+                setError(err.message || 'Failed to fetch conversation')
+                throw err
+            } finally {
+                setLoading(false)
+            }
+        },
+        [apiRequest],
+    )
 
-    const updateConversationTitle = useCallback(async (conversationId: string, title: string) => {
-        logger.debug('Updating conversation title:', conversationId)
-        setLoading(true)
-        setError(null)
-        try {
-            const data = await apiRequest<Conversation>(`/api/conversations/${conversationId}`, {
-                method: 'PATCH',
-                body: JSON.stringify({ title })
-            })
-            logger.debug('Conversation title updated')
-            setConversations(prev => prev.map(conv =>
-                conv.id === conversationId ? data : conv
-            ))
-            return data
-        } catch (err: any) {
-            logger.error('Error updating conversation:', err)
-            setError(err.message || 'Failed to update conversation')
-            throw err
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+    const updateConversationTitle = useCallback(
+        async (conversationId: string, title: string) => {
+            logger.debug('Updating conversation title:', conversationId)
+            setLoading(true)
+            setError(null)
+            try {
+                const data = await apiRequest<Conversation>(
+                    `/api/conversations/${conversationId}`,
+                    {
+                        method: 'PATCH',
+                        body: JSON.stringify({ title }),
+                    },
+                )
+                logger.debug('Conversation title updated')
+                setConversations((prev) =>
+                    prev.map((conv) => (conv.id === conversationId ? data : conv)),
+                )
+                return data
+            } catch (err: any) {
+                logger.error('Error updating conversation:', err)
+                setError(err.message || 'Failed to update conversation')
+                throw err
+            } finally {
+                setLoading(false)
+            }
+        },
+        [apiRequest],
+    )
 
-    const warmupChat = useCallback(async (): Promise<{ greeting: string; rag_preloaded: boolean } | null> => {
+    const warmupChat = useCallback(async (): Promise<{
+        greeting: string
+        rag_preloaded: boolean
+    } | null> => {
         try {
-            const response = await apiRequest<{ greeting: string; rag_preloaded: boolean }>('/api/chat/warmup', { method: 'POST' })
+            const response = await apiRequest<{ greeting: string; rag_preloaded: boolean }>(
+                '/api/chat/warmup',
+                { method: 'POST' },
+            )
             logger.debug('Warmup response:', response)
             return response
         } catch (e) {
@@ -133,24 +154,27 @@ export function useConversations() {
         }
     }, [apiRequest])
 
-    const deleteConversation = useCallback(async (conversationId: string) => {
-        logger.debug('Deleting conversation:', conversationId)
-        setLoading(true)
-        setError(null)
-        try {
-            await apiRequest(`/api/conversations/${conversationId}`, {
-                method: 'DELETE'
-            })
-            logger.debug('Conversation deleted')
-            setConversations(prev => prev.filter(conv => conv.id !== conversationId))
-        } catch (err: any) {
-            logger.error('Error deleting conversation:', err)
-            setError(err.message || 'Failed to delete conversation')
-            throw err
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+    const deleteConversation = useCallback(
+        async (conversationId: string) => {
+            logger.debug('Deleting conversation:', conversationId)
+            setLoading(true)
+            setError(null)
+            try {
+                await apiRequest(`/api/conversations/${conversationId}`, {
+                    method: 'DELETE',
+                })
+                logger.debug('Conversation deleted')
+                setConversations((prev) => prev.filter((conv) => conv.id !== conversationId))
+            } catch (err: any) {
+                logger.error('Error deleting conversation:', err)
+                setError(err.message || 'Failed to delete conversation')
+                throw err
+            } finally {
+                setLoading(false)
+            }
+        },
+        [apiRequest],
+    )
 
     return {
         conversations,
@@ -161,6 +185,6 @@ export function useConversations() {
         getConversation,
         updateConversationTitle,
         deleteConversation,
-        warmupChat
+        warmupChat,
     }
 }

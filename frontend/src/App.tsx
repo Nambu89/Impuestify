@@ -76,7 +76,13 @@ function AppFooter() {
 }
 
 // Protected route wrapper — requires auth + active subscription
-function ProtectedRoute({ children, requireSubscription = true }: { children: React.ReactNode; requireSubscription?: boolean }) {
+function ProtectedRoute({
+    children,
+    requireSubscription = true,
+}: {
+    children: React.ReactNode
+    requireSubscription?: boolean
+}) {
     const { isAuthenticated, isLoading } = useAuth()
     const { hasAccess, loading: subLoading } = useSubscription()
 
@@ -101,241 +107,244 @@ function App() {
             <ScrollToTop />
             <div className="app">
                 <Suspense fallback={<div className="loading-screen">Cargando...</div>}>
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/subscribe" element={<SubscribePage />} />
-                    <Route path="/contact" element={<ContactPage />} />
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/subscribe" element={<SubscribePage />} />
+                        <Route path="/contact" element={<ContactPage />} />
 
-                    {/* Public info pages */}
-                    <Route path="/sobre-mi" element={<SobreMiPage />} />
+                        {/* Public info pages */}
+                        <Route path="/sobre-mi" element={<SobreMiPage />} />
 
-                    {/* Legal Pages - Publicly Accessible */}
-                    <Route path="/aviso-legal" element={<AvisoLegalPage />} />
-                    <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-                    <Route path="/politica-privacidad" element={<PrivacyPolicyPage />} />
-                    <Route path="/ai-transparency" element={<AITransparencyPage />} />
-                    <Route path="/politica-cookies" element={<CookiePolicyPage />} />
-                    <Route path="/cookie-policy" element={<CookiePolicyPage />} />
-                    <Route path="/terms" element={<TermsPage />} />
-                    <Route path="/terms-of-service" element={<TermsPage />} />
-                    <Route path="/data-retention" element={<DataRetentionPage />} />
+                        {/* Legal Pages - Publicly Accessible */}
+                        <Route path="/aviso-legal" element={<AvisoLegalPage />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                        <Route path="/politica-privacidad" element={<PrivacyPolicyPage />} />
+                        <Route path="/ai-transparency" element={<AITransparencyPage />} />
+                        <Route path="/politica-cookies" element={<CookiePolicyPage />} />
+                        <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+                        <Route path="/terms" element={<TermsPage />} />
+                        <Route path="/terms-of-service" element={<TermsPage />} />
+                        <Route path="/data-retention" element={<DataRetentionPage />} />
 
-                    {/* SEO Landing Pages - Publicly Accessible */}
-                    <Route path="/territorios-forales" element={<ForalPage />} />
-                    <Route path="/ceuta-melilla" element={<CeutaMelillaPage />} />
-                    <Route path="/canarias" element={<CanariasPage />} />
-                    <Route path="/creadores-de-contenido" element={<CreatorsPage />} />
-                    <Route path="/checklist-borrador" element={<ChecklistBorradorPage />} />
-                    <Route path="/obligado-declarar" element={<ObligadoDeclararPage />} />
-                    <Route path="/modelos-obligatorios" element={<ModelObligationsPage />} />
-                    <Route path="/farmacias" element={<FarmaciasPage />} />
-                    <Route path="/modelo-200" element={<Modelo200Page />} />
-                    <Route path="/modelo-202" element={<Modelo202Page />} />
+                        {/* SEO Landing Pages - Publicly Accessible */}
+                        <Route path="/territorios-forales" element={<ForalPage />} />
+                        <Route path="/ceuta-melilla" element={<CeutaMelillaPage />} />
+                        <Route path="/canarias" element={<CanariasPage />} />
+                        <Route path="/creadores-de-contenido" element={<CreatorsPage />} />
+                        <Route path="/checklist-borrador" element={<ChecklistBorradorPage />} />
+                        <Route path="/obligado-declarar" element={<ObligadoDeclararPage />} />
+                        <Route path="/modelos-obligatorios" element={<ModelObligationsPage />} />
+                        <Route path="/farmacias" element={<FarmaciasPage />} />
+                        <Route path="/modelo-200" element={<Modelo200Page />} />
+                        <Route path="/modelo-202" element={<Modelo202Page />} />
 
-                    {/* Protected Routes (require auth + subscription) */}
-                    <Route
-                        path="/guia-fiscal"
-                        element={
-                            <ProtectedRoute>
-                                <TaxGuidePage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/modelos-trimestrales"
-                        element={
-                            <ProtectedRoute>
-                                <DeclarationsPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/calendario"
-                        element={
-                            <ProtectedRoute>
-                                <CalendarPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/calculadora-neto"
-                        element={
-                            <ProtectedRoute>
-                                <NetSalaryPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route path="/calculadora-retenciones" element={<CalculadoraRetencionesPage />} />
-                    <Route path="/calculadora-umbrales" element={<CalculadoraUmbralesPage />} />
-                    <Route path="/shared/:token" element={<SharedConversationPage />} />
-                    <Route
-                        path="/gastos-deducibles"
-                        element={
-                            <ProtectedRoute>
-                                <GastosDeduciblesPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/calculadora-m130"
-                        element={
-                            <ProtectedRoute>
-                                <M130CalculatorPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route path="/calculadora-modelo-131" element={<M131CalculatorPage />} />
-                    <Route path="/calculadora-modelo-309" element={<M309CalculatorPage />} />
-                    <Route
-                        path="/calculadora-modelo-349"
-                        element={
-                            <ProtectedRoute>
-                                <M349CalculatorPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/calculadora-modelo-390"
-                        element={
-                            <ProtectedRoute>
-                                <M390CalculatorPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/calculadora-iva-creadores"
-                        element={
-                            <ProtectedRoute>
-                                <IvaCreatorsPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/crypto"
-                        element={
-                            <ProtectedRoute>
-                                <CryptoPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/chat"
-                        element={
-                            <ProtectedRoute>
-                                <Chat />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/dashboard"
-                        element={
-                            <ProtectedRoute>
-                                <Dashboard />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/settings"
-                        element={
-                            <ProtectedRoute requireSubscription={false}>
-                                <SettingsPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/workspaces"
-                        element={
-                            <ProtectedRoute>
-                                <WorkspacesPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin"
-                        element={
-                            <ProtectedRoute requireSubscription={false}>
-                                <AdminDashboardPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/users"
-                        element={
-                            <ProtectedRoute requireSubscription={false}>
-                                <AdminUsersPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/feedback"
-                        element={
-                            <ProtectedRoute requireSubscription={false}>
-                                <AdminFeedbackPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/contact"
-                        element={
-                            <ProtectedRoute requireSubscription={false}>
-                                <AdminContactPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/rag-quality"
-                        element={
-                            <ProtectedRoute requireSubscription={false}>
-                                <AdminRagQualityPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/clasificador-facturas"
-                        element={
-                            <ProtectedRoute requireSubscription={true}>
-                                <ClasificadorFacturasPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/contabilidad"
-                        element={
-                            <ProtectedRoute requireSubscription={true}>
-                                <ContabilidadPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/defensia"
-                        element={
-                            <ProtectedRoute requireSubscription={true}>
-                                <DefensiaListPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/defensia/nuevo"
-                        element={
-                            <ProtectedRoute requireSubscription={true}>
-                                <DefensiaWizardPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/defensia/:id"
-                        element={
-                            <ProtectedRoute requireSubscription={true}>
-                                <DefensiaExpedientePage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                        {/* Protected Routes (require auth + subscription) */}
+                        <Route
+                            path="/guia-fiscal"
+                            element={
+                                <ProtectedRoute>
+                                    <TaxGuidePage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/modelos-trimestrales"
+                            element={
+                                <ProtectedRoute>
+                                    <DeclarationsPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/calendario"
+                            element={
+                                <ProtectedRoute>
+                                    <CalendarPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/calculadora-neto"
+                            element={
+                                <ProtectedRoute>
+                                    <NetSalaryPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/calculadora-retenciones"
+                            element={<CalculadoraRetencionesPage />}
+                        />
+                        <Route path="/calculadora-umbrales" element={<CalculadoraUmbralesPage />} />
+                        <Route path="/shared/:token" element={<SharedConversationPage />} />
+                        <Route
+                            path="/gastos-deducibles"
+                            element={
+                                <ProtectedRoute>
+                                    <GastosDeduciblesPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/calculadora-m130"
+                            element={
+                                <ProtectedRoute>
+                                    <M130CalculatorPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route path="/calculadora-modelo-131" element={<M131CalculatorPage />} />
+                        <Route path="/calculadora-modelo-309" element={<M309CalculatorPage />} />
+                        <Route
+                            path="/calculadora-modelo-349"
+                            element={
+                                <ProtectedRoute>
+                                    <M349CalculatorPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/calculadora-modelo-390"
+                            element={
+                                <ProtectedRoute>
+                                    <M390CalculatorPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/calculadora-iva-creadores"
+                            element={
+                                <ProtectedRoute>
+                                    <IvaCreatorsPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/crypto"
+                            element={
+                                <ProtectedRoute>
+                                    <CryptoPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/chat"
+                            element={
+                                <ProtectedRoute>
+                                    <Chat />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/dashboard"
+                            element={
+                                <ProtectedRoute>
+                                    <Dashboard />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/settings"
+                            element={
+                                <ProtectedRoute requireSubscription={false}>
+                                    <SettingsPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/workspaces"
+                            element={
+                                <ProtectedRoute>
+                                    <WorkspacesPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin"
+                            element={
+                                <ProtectedRoute requireSubscription={false}>
+                                    <AdminDashboardPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/users"
+                            element={
+                                <ProtectedRoute requireSubscription={false}>
+                                    <AdminUsersPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/feedback"
+                            element={
+                                <ProtectedRoute requireSubscription={false}>
+                                    <AdminFeedbackPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/contact"
+                            element={
+                                <ProtectedRoute requireSubscription={false}>
+                                    <AdminContactPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/rag-quality"
+                            element={
+                                <ProtectedRoute requireSubscription={false}>
+                                    <AdminRagQualityPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/clasificador-facturas"
+                            element={
+                                <ProtectedRoute requireSubscription={true}>
+                                    <ClasificadorFacturasPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/contabilidad"
+                            element={
+                                <ProtectedRoute requireSubscription={true}>
+                                    <ContabilidadPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/defensia"
+                            element={
+                                <ProtectedRoute requireSubscription={true}>
+                                    <DefensiaListPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/defensia/nuevo"
+                            element={
+                                <ProtectedRoute requireSubscription={true}>
+                                    <DefensiaWizardPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/defensia/:id"
+                            element={
+                                <ProtectedRoute requireSubscription={true}>
+                                    <DefensiaExpedientePage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
                 </Suspense>
 
                 {/* Cookie consent banner (LSSI-CE + RGPD) */}

@@ -598,7 +598,7 @@
 }
 
 .sources-block .source-item + .source-item::before {
-    content: ", ";
+    content: ', ';
     color: var(--color-gray-400);
 }
 
@@ -618,7 +618,7 @@
 }
 
 .message-text a.md-external-link::after {
-    content: " \2197"; /* arrow up-right indicador externo */
+    content: ' \2197'; /* arrow up-right indicador externo */
     font-size: 0.85em;
     opacity: 0.7;
     margin-left: 1px;
@@ -647,8 +647,13 @@
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
 }
 
 .message-error {
@@ -719,12 +724,16 @@
     border-radius: var(--radius-2xl);
     padding: 6px 6px 6px 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    transition: border-color var(--transition-base), box-shadow var(--transition-base);
+    transition:
+        border-color var(--transition-base),
+        box-shadow var(--transition-base);
 }
 
 .chat-form:focus-within {
     border-color: var(--color-primary-light);
-    box-shadow: 0 4px 20px rgba(26, 86, 219, 0.12), 0 0 0 3px rgba(26, 86, 219, 0.08);
+    box-shadow:
+        0 4px 20px rgba(26, 86, 219, 0.12),
+        0 0 0 3px rgba(26, 86, 219, 0.08);
 }
 
 .chat-input {
@@ -870,8 +879,12 @@
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ========== MODAL ========== */
@@ -1063,8 +1076,12 @@
 }
 
 @keyframes cursorBlink {
-    0%   { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
 /* ========== TABLET (768px+) ========== */

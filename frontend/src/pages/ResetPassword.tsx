@@ -39,7 +39,7 @@ export default function ResetPassword() {
         try {
             await apiRequest('/auth/reset-password', {
                 method: 'POST',
-                body: JSON.stringify({ token, new_password: newPassword })
+                body: JSON.stringify({ token, new_password: newPassword }),
             })
             setSuccess(true)
         } catch (err: any) {
@@ -70,14 +70,12 @@ export default function ResetPassword() {
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="auth-form">
-                            {error && (
-                                <div className="auth-error">
-                                    {error}
-                                </div>
-                            )}
+                            {error && <div className="auth-error">{error}</div>}
 
                             <div className="form-group">
-                                <label className="label" htmlFor="newPassword">Nueva contraseña</label>
+                                <label className="label" htmlFor="newPassword">
+                                    Nueva contraseña
+                                </label>
                                 <div className="input-with-icon">
                                     <Lock size={20} />
                                     <input
@@ -94,7 +92,9 @@ export default function ResetPassword() {
                             </div>
 
                             <div className="form-group">
-                                <label className="label" htmlFor="confirmPassword">Confirmar contraseña</label>
+                                <label className="label" htmlFor="confirmPassword">
+                                    Confirmar contraseña
+                                </label>
                                 <div className="input-with-icon">
                                     <Lock size={20} />
                                     <input

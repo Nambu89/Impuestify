@@ -13,7 +13,17 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Calculator, Lightbulb, CheckCircle2, AlertTriangle, MessageCircle, TrendingUp, Zap, Copy, Check } from 'lucide-react'
+import {
+    Calculator,
+    Lightbulb,
+    CheckCircle2,
+    AlertTriangle,
+    MessageCircle,
+    TrendingUp,
+    Zap,
+    Copy,
+    Check,
+} from 'lucide-react'
 import './FormattedMessage.css'
 
 interface FormattedMessageProps {
@@ -61,13 +71,13 @@ const CALLOUT_PATTERNS: {
     variant: CalloutBlock['variant']
     keywords: string[]
 }[] = [
-    { emoji: '\\u2705', variant: 'success', keywords: ['Resumen', 'directo', 'Al grano'] },          // ✅
-    { emoji: '\\u2714\\uFE0F', variant: 'success', keywords: ['recomiendo', 'Recomend'] },            // ✔
-    { emoji: '\\u{1F4A1}', variant: 'info', keywords: ['explicaci', 'Breve', 'Para que quede'] },     // 💡
-    { emoji: '\\u26A0\\uFE0F', variant: 'warning', keywords: ['Fuentes', 'aviso', 'Importante'] },    // ⚠️
-    { emoji: '\\u{1F4AC}', variant: 'question', keywords: ['Quieres', 'quieres'] },                   // 💬
-    { emoji: '\\u{1F4C8}', variant: 'tip', keywords: ['proyecci', 'estimaci'] },                      // 📈
-    { emoji: '\\u{1F4CB}', variant: 'info', keywords: ['Resumen', 'Detalle'] },                       // 📋
+    { emoji: '\\u2705', variant: 'success', keywords: ['Resumen', 'directo', 'Al grano'] }, // ✅
+    { emoji: '\\u2714\\uFE0F', variant: 'success', keywords: ['recomiendo', 'Recomend'] }, // ✔
+    { emoji: '\\u{1F4A1}', variant: 'info', keywords: ['explicaci', 'Breve', 'Para que quede'] }, // 💡
+    { emoji: '\\u26A0\\uFE0F', variant: 'warning', keywords: ['Fuentes', 'aviso', 'Importante'] }, // ⚠️
+    { emoji: '\\u{1F4AC}', variant: 'question', keywords: ['Quieres', 'quieres'] }, // 💬
+    { emoji: '\\u{1F4C8}', variant: 'tip', keywords: ['proyecci', 'estimaci'] }, // 📈
+    { emoji: '\\u{1F4CB}', variant: 'info', keywords: ['Resumen', 'Detalle'] }, // 📋
 ]
 
 // --- Parser ---
@@ -81,7 +91,7 @@ function stripJsonBlocks(text: string): string {
 function parseSimulationBlock(text: string): SimulationBlock | null {
     // Match "Simulación IRPF YYYY — CCAA" followed by structured lines
     const simMatch = text.match(
-        /(?:^|\n)(Simulaci[oó]n\s+IRPF\s+\d{4}\s*[—–-]\s*[^\n]+)\n([\s\S]+?)(?=\n\n|\n(?:[A-ZÁÉÍÓÚ])|$)/i
+        /(?:^|\n)(Simulaci[oó]n\s+IRPF\s+\d{4}\s*[—–-]\s*[^\n]+)\n([\s\S]+?)(?=\n\n|\n(?:[A-ZÁÉÍÓÚ])|$)/i,
     )
     if (!simMatch) return null
 
@@ -107,7 +117,9 @@ function parseSimulationBlock(text: string): SimulationBlock | null {
     return { type: 'simulation', title, rows }
 }
 
-function detectCalloutSection(text: string): { variant: CalloutBlock['variant']; title: string; content: string } | null {
+function detectCalloutSection(
+    text: string,
+): { variant: CalloutBlock['variant']; title: string; content: string } | null {
     // Match lines that start with emoji + bold title pattern
     // e.g., "Resumen directo ✅" or "✅ Resumen directo" or "**Resumen directo (al grano) ✅**"
     const firstLine = text.split('\n')[0]
@@ -124,10 +136,10 @@ function detectCalloutSection(text: string): { variant: CalloutBlock['variant'];
         if (/recomiendo|Recomend/i.test(firstLine)) variant = 'tip'
         else variant = 'success'
     }
-    if (/\u{1F4A1}/u.test(firstLine)) variant = 'info'      // 💡
-    if (/\u26A0/u.test(firstLine)) variant = 'warning'       // ⚠️
-    if (/\u{1F4AC}/u.test(firstLine)) variant = 'question'   // 💬
-    if (/\u{1F4C8}/u.test(firstLine)) variant = 'tip'        // 📈
+    if (/\u{1F4A1}/u.test(firstLine)) variant = 'info' // 💡
+    if (/\u26A0/u.test(firstLine)) variant = 'warning' // ⚠️
+    if (/\u{1F4AC}/u.test(firstLine)) variant = 'question' // 💬
+    if (/\u{1F4C8}/u.test(firstLine)) variant = 'tip' // 📈
 
     // Clean title: remove emojis, asterisks, extra whitespace
     const title = firstLine
@@ -150,10 +162,11 @@ function detectCalloutSection(text: string): { variant: CalloutBlock['variant'];
 //   "**Factura SIN IVA**. Cuando facturas..."
 //   "NO aplicas IVA español."
 //   "Sí, debes presentar Modelo 303."
-const VERDICT_KEYWORDS = '(?:NO\\s+aplicas|NO\\s+debes|Aplicas|Debes|Factura\\s+(?:SIN|CON)|S[ÍíIi],?|No,?|Exento|Sujet[oa])'
+const VERDICT_KEYWORDS =
+    '(?:NO\\s+aplicas|NO\\s+debes|Aplicas|Debes|Factura\\s+(?:SIN|CON)|S[ÍíIi],?|No,?|Exento|Sujet[oa])'
 const DIRECT_ANSWER_REGEX = new RegExp(
     `^\\*{0,2}(${VERDICT_KEYWORDS}[^\\n]{0,200}?)(?:[.:!?]|\\*{1,2})`,
-    'i'
+    'i',
 )
 
 function detectDirectAnswer(text: string): { verdict: string; rest: string } | null {
@@ -176,14 +189,18 @@ function detectDirectAnswer(text: string): { verdict: string; rest: string } | n
 // --- Pro tip detection ---
 // Detecta "Pro tip" / "Truco" en CUALQUIER parte del texto, incluso dentro
 // de bullet list ("- Pro tip: ..."). Extrae el contenido y lo separa.
-const PRO_TIP_LINE_REGEX = /^[\s>*+\-•]*\*{0,2}(?:Pro\s+tip|Truco|Pro\s+Tip|TRUCO)\*{0,2}\s*[:：]\s*(.+)$/im
+const PRO_TIP_LINE_REGEX =
+    /^[\s>*+\-•]*\*{0,2}(?:Pro\s+tip|Truco|Pro\s+Tip|TRUCO)\*{0,2}\s*[:：]\s*(.+)$/im
 
 function detectProTip(text: string): { content: string; textWithoutProTip: string } | null {
     const m = text.match(PRO_TIP_LINE_REGEX)
     if (!m) return null
     const proTipContent = m[1].trim()
     // Remove the entire matched line (including bullet prefix) from the original text
-    const textWithoutProTip = text.replace(m[0], '').replace(/\n{3,}/g, '\n\n').trim()
+    const textWithoutProTip = text
+        .replace(m[0], '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
     return { content: proTipContent, textWithoutProTip }
 }
 
@@ -194,21 +211,45 @@ function parseContent(rawContent: string): ContentBlock[] {
     let content = stripJsonBlocks(rawContent)
 
     // Step 1b: Strip leaked technical lines (invoke_*, tool_name, function_call, Calling ...)
-    content = content.replace(/^(?:invoke_\w+|tool_name|function_call|calling)\s*[:=]\s*\S+.*$/gim, '')
+    content = content.replace(
+        /^(?:invoke_\w+|tool_name|function_call|calling)\s*[:=]\s*\S+.*$/gim,
+        '',
+    )
     content = content.replace(/^Calling\s+\w+\s+with.*$/gim, '')
     // Strip ANY inline JSON objects (handles 1-level nested braces):
     // {"call":"project_annual_irpf","args":{}} or {"base_imponible": 30000}
     content = content.replace(/\{"[a-z_]+":(?:[^{}]|\{[^{}]*\})*\}/g, '')
     // Strip Spanish tool call phrases
-    content = content.replace(/\(?\s*(?:LLAMADA|llamada)\s+A\s+(?:HERRAMIENTA|herramienta)\s+\w+\s*\)?/gi, '')
-    content = content.replace(/Ahora\s+(?:hago|realizo|ejecuto)\s+el\s+c[aá]lculo\s+r[aá]pido\.?/gi, '')
+    content = content.replace(
+        /\(?\s*(?:LLAMADA|llamada)\s+A\s+(?:HERRAMIENTA|herramienta)\s+\w+\s*\)?/gi,
+        '',
+    )
+    content = content.replace(
+        /Ahora\s+(?:hago|realizo|ejecuto)\s+el\s+c[aá]lculo\s+r[aá]pido\.?/gi,
+        '',
+    )
     // Strip internal reasoning leaked from LLM (agent thinking, search narration)
-    content = content.replace(/(?:Llamo|Voy a (?:usar|llamar|ejecutar|utilizar|consultar|buscar|volver)|Utilizo|Uso|Ejecuto|Consulto)\s+(?:la |el |a la |al |en )?(?:herramienta|tool|funci[oó]n|c[aá]lculo|simulador|motor|cat[aá]logo|base de datos|b[uú]squeda)\b[^.!?\n]*[.!?]?\s*/gi, '')
-    content = content.replace(/(?:Calcular[eé]|Primero voy a|Ahora (?:hago|realizo|ejecuto|calculo|analizo|busco)|Realizando\s+(?:nueva\s+)?b[uú]squeda|Buscando\s+(?:en|con|informaci))\b[^.!?\n]*[.!?]?\s*/gi, '')
+    content = content.replace(
+        /(?:Llamo|Voy a (?:usar|llamar|ejecutar|utilizar|consultar|buscar|volver)|Utilizo|Uso|Ejecuto|Consulto)\s+(?:la |el |a la |al |en )?(?:herramienta|tool|funci[oó]n|c[aá]lculo|simulador|motor|cat[aá]logo|base de datos|b[uú]squeda)\b[^.!?\n]*[.!?]?\s*/gi,
+        '',
+    )
+    content = content.replace(
+        /(?:Calcular[eé]|Primero voy a|Ahora (?:hago|realizo|ejecuto|calculo|analizo|busco)|Realizando\s+(?:nueva\s+)?b[uú]squeda|Buscando\s+(?:en|con|informaci))\b[^.!?\n]*[.!?]?\s*/gi,
+        '',
+    )
     // Strip search narration patterns (agent describing its search process)
-    content = content.replace(/(?:Voy a (?:volver a |intentar |re)?\s*buscar)\b[^.!?\n]*[.!?]?\s*/gi, '')
-    content = content.replace(/(?:(?:No |no )?(?:he encontrado|encuentro|aparece)\s+(?:el |la |los |las |ningún|ninguna|resultados))\b[^.!?\n]*[.!?]?\s*/gi, '')
-    content = content.replace(/(?:Déjame|Permíteme|Voy a)\s+(?:verificar|comprobar|revisar|consultar|buscar)\b[^.!?\n]*[.!?]?\s*/gi, '')
+    content = content.replace(
+        /(?:Voy a (?:volver a |intentar |re)?\s*buscar)\b[^.!?\n]*[.!?]?\s*/gi,
+        '',
+    )
+    content = content.replace(
+        /(?:(?:No |no )?(?:he encontrado|encuentro|aparece)\s+(?:el |la |los |las |ningún|ninguna|resultados))\b[^.!?\n]*[.!?]?\s*/gi,
+        '',
+    )
+    content = content.replace(
+        /(?:Déjame|Permíteme|Voy a)\s+(?:verificar|comprobar|revisar|consultar|buscar)\b[^.!?\n]*[.!?]?\s*/gi,
+        '',
+    )
     // Strip broken source lines: "(pág. 0)" with no title
     content = content.replace(/^,?\s*\(p[aá]g\.\s*\d+\)\s*$/gm, '')
     content = content.replace(/^Fuentes:\s*\n(?:\s*,?\s*\(p[aá]g\.\s*\d+\)\s*\n?)+/gm, '')
@@ -220,7 +261,11 @@ function parseContent(rawContent: string): ContentBlock[] {
     let contentForSections = content
     const directAnswer = detectDirectAnswer(content)
     if (directAnswer) {
-        blocks.push({ type: 'direct_answer', verdict: directAnswer.verdict, rest: directAnswer.rest })
+        blocks.push({
+            type: 'direct_answer',
+            verdict: directAnswer.verdict,
+            rest: directAnswer.rest,
+        })
         // The rest will be processed as normal sections below
         contentForSections = directAnswer.rest
     }
@@ -275,7 +320,7 @@ function parseContent(rawContent: string): ContentBlock[] {
                 type: 'callout',
                 variant: callout.variant,
                 title: callout.title,
-                content: callout.content
+                content: callout.content,
             })
             continue
         }
@@ -299,7 +344,8 @@ function splitIntoSections(content: string): string[] {
     const sections: string[] = []
     let current: string[] = []
 
-    const sectionStartRegex = /^(?:#{1,4}\s|[\u2705\u2714\u26A0\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]|\*{1,2}[A-ZÁÉÍÓÚÑ])/u
+    const sectionStartRegex =
+        /^(?:#{1,4}\s|[\u2705\u2714\u26A0\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]|\*{1,2}[A-ZÁÉÍÓÚÑ])/u
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i]
@@ -352,7 +398,9 @@ function ProTipCard({ block }: { block: ProTipBlock }) {
                 <span>Pro tip fiscal</span>
             </div>
             <div className="fmt-pro-tip-body">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>{block.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+                    {block.content}
+                </ReactMarkdown>
             </div>
         </div>
     )
@@ -436,7 +484,7 @@ function MdBlockquote({ children, ...rest }: React.HTMLAttributes<HTMLQuoteEleme
             if (React.isValidElement(c)) {
                 const props = c.props as { children?: React.ReactNode }
                 return React.Children.toArray(props.children).map((cc) =>
-                    typeof cc === 'string' ? cc : ''
+                    typeof cc === 'string' ? cc : '',
                 )
             }
             return ['']
@@ -445,8 +493,12 @@ function MdBlockquote({ children, ...rest }: React.HTMLAttributes<HTMLQuoteEleme
     const childHtml = JSON.stringify(children)
     const isWarning = /⚠|⚠/.test(childText) || /⚠|\\u26a0/i.test(childHtml)
     // Legal/invoice template: long text without warning emoji
-    const isLegalText = !isWarning && childText.trim().length > 80 &&
-        /(?:Art[sí]?\.?\s*\d|Ley\s+\d|RD\s+\d|Directiva|sujeta|exenta|intracomun|IVA|IRPF)/i.test(childText)
+    const isLegalText =
+        !isWarning &&
+        childText.trim().length > 80 &&
+        /(?:Art[sí]?\.?\s*\d|Ley\s+\d|RD\s+\d|Directiva|sujeta|exenta|intracomun|IVA|IRPF)/i.test(
+            childText,
+        )
 
     if (isLegalText) {
         return (
@@ -478,7 +530,10 @@ function MdParagraph({ children, ...rest }: React.HTMLAttributes<HTMLParagraphEl
         .map((c) => (typeof c === 'string' ? c : ''))
         .join('')
     // Backend format: "\n\n📄 **Fuentes**: doc1 (pág X), doc2 (pág Y)"
-    if (/^\s*📄\s*\*?\*?Fuentes/i.test(childText) || /Fuentes\s*[:：]/i.test(childText.slice(0, 40))) {
+    if (
+        /^\s*📄\s*\*?\*?Fuentes/i.test(childText) ||
+        /Fuentes\s*[:：]/i.test(childText.slice(0, 40))
+    ) {
         return (
             <p {...rest} className="sources-block">
                 {children}
@@ -495,9 +550,15 @@ function MdParagraph({ children, ...rest }: React.HTMLAttributes<HTMLParagraphEl
  */
 function MdAnchor({ href, children, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
     const url = href || ''
-    const isExternal = /^https?:\/\//i.test(url) && !url.includes(typeof window !== 'undefined' ? window.location.host : '')
+    const isExternal =
+        /^https?:\/\//i.test(url) &&
+        !url.includes(typeof window !== 'undefined' ? window.location.host : '')
     if (!isExternal) {
-        return <a href={href} {...rest}>{children}</a>
+        return (
+            <a href={href} {...rest}>
+                {children}
+            </a>
+        )
     }
     return (
         <a
@@ -527,7 +588,9 @@ function CalloutBox({ block }: { block: CalloutBlock }) {
             </div>
             {block.content && (
                 <div className="fmt-callout-body">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>{block.content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+                        {block.content}
+                    </ReactMarkdown>
                 </div>
             )}
         </div>
@@ -564,7 +627,12 @@ export const FormattedMessage: React.FC<FormattedMessageProps> = ({ content }) =
                     case 'text':
                         return (
                             <div key={i} className="fmt-text">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>{block.content}</ReactMarkdown>
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={MARKDOWN_COMPONENTS}
+                                >
+                                    {block.content}
+                                </ReactMarkdown>
                             </div>
                         )
                 }

@@ -72,17 +72,13 @@ export function UpgradePlanModal({
                     <h3 className="upgrade-modal-title">Necesitas actualizar tu plan</h3>
 
                     <p className="upgrade-modal-plan-info">
-                        Tu plan actual <strong>{currentLabel}</strong> no incluye esta funcionalidad.
-                        Se requiere el plan <strong>{requiredLabel}</strong>.
+                        Tu plan actual <strong>{currentLabel}</strong> no incluye esta
+                        funcionalidad. Se requiere el plan <strong>{requiredLabel}</strong>.
                     </p>
 
-                    {message && (
-                        <p className="upgrade-modal-message">{message}</p>
-                    )}
+                    {message && <p className="upgrade-modal-message">{message}</p>}
 
-                    <p className="upgrade-modal-description">
-                        {getPlanDescription(requiredPlan)}
-                    </p>
+                    <p className="upgrade-modal-description">{getPlanDescription(requiredPlan)}</p>
 
                     {price && (
                         <div className="upgrade-modal-price">
@@ -93,11 +89,7 @@ export function UpgradePlanModal({
                 </div>
 
                 <div className="upgrade-modal-footer">
-                    <button
-                        type="button"
-                        className="upgrade-modal-btn-cancel"
-                        onClick={onClose}
-                    >
+                    <button type="button" className="upgrade-modal-btn-cancel" onClick={onClose}>
                         Cancelar
                     </button>
                     <button

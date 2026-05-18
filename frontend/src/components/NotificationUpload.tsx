@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 
 interface NotificationAnalysis {
     id: string
-    conversation_id?: string  // NEW: conversation ID from backend
+    conversation_id?: string // NEW: conversation ID from backend
     summary: string
     type: string
     deadlines: Array<{
@@ -35,9 +35,9 @@ export function NotificationUpload({ onAnalysisComplete }: NotificationUploadPro
     const handleDrag = useCallback((e: React.DragEvent) => {
         e.preventDefault()
         e.stopPropagation()
-        if (e.type === "dragenter" || e.type === "dragover") {
+        if (e.type === 'dragenter' || e.type === 'dragover') {
             setDragActive(true)
-        } else if (e.type === "dragleave") {
+        } else if (e.type === 'dragleave') {
             setDragActive(false)
         }
     }, [])
@@ -99,9 +99,9 @@ export function NotificationUpload({ onAnalysisComplete }: NotificationUploadPro
             const response = await fetch(`${API_URL}/notifications/analyze`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
-                body: formData
+                body: formData,
             })
 
             if (!response.ok) {
@@ -116,7 +116,9 @@ export function NotificationUpload({ onAnalysisComplete }: NotificationUploadPro
                     return
                 }
 
-                const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }))
+                const errorData = await response
+                    .json()
+                    .catch(() => ({ detail: 'Error desconocido' }))
                 throw new Error(errorData.detail || 'Error al analizar')
             }
 
@@ -161,8 +163,8 @@ export function NotificationUpload({ onAnalysisComplete }: NotificationUploadPro
                     <>
                         <div className="upload-icon">📎</div>
                         <p className="upload-text">
-                            Arrastra tu documento (PDF o imagen)<br />
-                            o haz clic para seleccionar
+                            Arrastra tu documento (PDF o imagen)
+                            <br />o haz clic para seleccionar
                         </p>
                         <input
                             type="file"
@@ -175,17 +177,10 @@ export function NotificationUpload({ onAnalysisComplete }: NotificationUploadPro
                 )}
             </div>
 
-            {error && (
-                <div className="error-message">
-                    ⚠️ {error}
-                </div>
-            )}
+            {error && <div className="error-message">⚠️ {error}</div>}
 
             {file && !uploading && (
-                <button
-                    className="upload-btn"
-                    onClick={handleUpload}
-                >
+                <button className="upload-btn" onClick={handleUpload}>
                     Analizar Notificación
                 </button>
             )}

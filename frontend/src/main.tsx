@@ -20,7 +20,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 // Register Service Worker (production only)
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker
+            .register('/sw.js')
             .then((reg) => {
                 console.log('[SW] Registered:', reg.scope)
                 reg.addEventListener('updatefound', () => {

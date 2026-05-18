@@ -69,7 +69,9 @@
     font-size: var(--font-size-sm);
     font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.2s;
+    transition:
+        opacity 0.2s,
+        transform 0.2s;
     white-space: nowrap;
 }
 
@@ -95,7 +97,9 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-md);
-    transition: color 0.2s, background 0.2s;
+    transition:
+        color 0.2s,
+        background 0.2s;
 }
 
 .push-banner__dismiss:hover {

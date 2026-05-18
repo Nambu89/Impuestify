@@ -1,37 +1,74 @@
-import { useWorkspaceDashboard, WorkspaceDashboardKPIs, ProveedorData, FacturaReciente, CuentaPGCData } from '../hooks/useWorkspaceDashboard'
+import {
+    useWorkspaceDashboard,
+    WorkspaceDashboardKPIs,
+    ProveedorData,
+    FacturaReciente,
+    CuentaPGCData,
+} from '../hooks/useWorkspaceDashboard'
 import CountUp from './reactbits/CountUp'
 import SpotlightCard from './reactbits/SpotlightCard'
 import {
-    BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+    BarChart,
+    Bar,
+    LineChart,
+    Line,
+    PieChart,
+    Pie,
+    Cell,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
 } from 'recharts'
 import {
-    TrendingUp, TrendingDown, Receipt, Banknote,
-    AlertCircle, BarChart3, RefreshCw, Loader2, Zap
+    TrendingUp,
+    TrendingDown,
+    Receipt,
+    Banknote,
+    AlertCircle,
+    BarChart3,
+    RefreshCw,
+    Loader2,
+    Zap,
 } from 'lucide-react'
 import { useState, useCallback } from 'react'
 import './WorkspaceDashboard.css'
 
-const PIE_COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#22c55e', '#ef4444', '#64748b']
+const PIE_COLORS = [
+    '#06b6d4',
+    '#3b82f6',
+    '#8b5cf6',
+    '#ec4899',
+    '#f59e0b',
+    '#22c55e',
+    '#ef4444',
+    '#64748b',
+]
 
 const formatEUR = (value: number | null | undefined): string => {
     if (value == null) return '0,00 EUR'
-    return new Intl.NumberFormat('es-ES', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(value) + ' EUR'
+    return (
+        new Intl.NumberFormat('es-ES', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(value) + ' EUR'
+    )
 }
 
 const formatEURShort = (value: number): string => {
     if (Math.abs(value) >= 1000) {
-        return new Intl.NumberFormat('es-ES', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 1
-        }).format(value / 1000) + 'k'
+        return (
+            new Intl.NumberFormat('es-ES', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 1,
+            }).format(value / 1000) + 'k'
+        )
     }
     return new Intl.NumberFormat('es-ES', {
         minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        maximumFractionDigits: 0,
     }).format(value)
 }
 
@@ -63,7 +100,9 @@ function KPICards({ kpis }: { kpis: WorkspaceDashboardKPIs }) {
                     <CountUp to={kpis.gastos_total} separator="." duration={1.5} />
                     <span className="ws-kpi-currency"> EUR</span>
                 </div>
-                <div className="ws-kpi-detail">IRPF retenido: {formatEUR(kpis.retencion_irpf_total)}</div>
+                <div className="ws-kpi-detail">
+                    IRPF retenido: {formatEUR(kpis.retencion_irpf_total)}
+                </div>
             </SpotlightCard>
 
             <SpotlightCard className="ws-kpi-card" spotlightColor="rgba(26, 86, 219, 0.15)">
@@ -76,15 +115,20 @@ function KPICards({ kpis }: { kpis: WorkspaceDashboardKPIs }) {
                     <span className="ws-kpi-currency"> EUR</span>
                 </div>
                 <div className="ws-kpi-detail">
-                    Repercutido: {formatEUR(kpis.iva_repercutido)} | Soportado: {formatEUR(kpis.iva_soportado)}
+                    Repercutido: {formatEUR(kpis.iva_repercutido)} | Soportado:{' '}
+                    {formatEUR(kpis.iva_soportado)}
                 </div>
             </SpotlightCard>
 
             <SpotlightCard
                 className="ws-kpi-card"
-                spotlightColor={resultadoPositivo ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)'}
+                spotlightColor={
+                    resultadoPositivo ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)'
+                }
             >
-                <div className={`ws-kpi-icon ${resultadoPositivo ? 'ws-kpi-icon--green' : 'ws-kpi-icon--negative'}`}>
+                <div
+                    className={`ws-kpi-icon ${resultadoPositivo ? 'ws-kpi-icon--green' : 'ws-kpi-icon--negative'}`}
+                >
                     <Banknote size={18} />
                 </div>
                 <div className="ws-kpi-label">Resultado neto</div>
@@ -104,7 +148,11 @@ function KPICards({ kpis }: { kpis: WorkspaceDashboardKPIs }) {
 
 // -- IVA Trimestral Bar Chart --
 
-function IVATrimestralChart({ data }: { data: Array<{ trimestre: string; iva_repercutido: number; iva_soportado: number }> }) {
+function IVATrimestralChart({
+    data,
+}: {
+    data: Array<{ trimestre: string; iva_repercutido: number; iva_soportado: number }>
+}) {
     if (!data || data.length === 0) return null
 
     return (
@@ -113,19 +161,44 @@ function IVATrimestralChart({ data }: { data: Array<{ trimestre: string; iva_rep
             <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={data} barGap={4}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="trimestre" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} />
-                    <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} tickFormatter={formatEURShort} />
+                    <XAxis
+                        dataKey="trimestre"
+                        tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                    />
+                    <YAxis
+                        tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }}
+                        tickFormatter={formatEURShort}
+                    />
                     <Tooltip
-                        formatter={(value: number, name: string) => [formatEUR(value), name === 'iva_repercutido' ? 'Repercutido' : 'Soportado']}
-                        contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                        formatter={(value: number, name: string) => [
+                            formatEUR(value),
+                            name === 'iva_repercutido' ? 'Repercutido' : 'Soportado',
+                        ]}
+                        contentStyle={{
+                            background: '#1e293b',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: 8,
+                        }}
                         labelStyle={{ color: 'rgba(255,255,255,0.8)' }}
                         itemStyle={{ color: 'rgba(255,255,255,0.7)' }}
                     />
                     <Legend
-                        formatter={(value: string) => value === 'iva_repercutido' ? 'Repercutido' : 'Soportado'}
+                        formatter={(value: string) =>
+                            value === 'iva_repercutido' ? 'Repercutido' : 'Soportado'
+                        }
                     />
-                    <Bar dataKey="iva_repercutido" fill="#06b6d4" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                    <Bar dataKey="iva_soportado" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                    <Bar
+                        dataKey="iva_repercutido"
+                        fill="#06b6d4"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={60}
+                    />
+                    <Bar
+                        dataKey="iva_soportado"
+                        fill="#ef4444"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={60}
+                    />
                 </BarChart>
             </ResponsiveContainer>
         </div>
@@ -134,7 +207,11 @@ function IVATrimestralChart({ data }: { data: Array<{ trimestre: string; iva_rep
 
 // -- Ingresos/Gastos Line Chart --
 
-function IngresosGastosChart({ data }: { data: Array<{ mes: string; ingresos: number; gastos: number }> }) {
+function IngresosGastosChart({
+    data,
+}: {
+    data: Array<{ mes: string; ingresos: number; gastos: number }>
+}) {
     if (!data || data.length === 0) return null
 
     return (
@@ -144,18 +221,44 @@ function IngresosGastosChart({ data }: { data: Array<{ mes: string; ingresos: nu
                 <LineChart data={data}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                     <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} />
-                    <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} tickFormatter={formatEURShort} />
+                    <YAxis
+                        tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }}
+                        tickFormatter={formatEURShort}
+                    />
                     <Tooltip
-                        formatter={(value: number, name: string) => [formatEUR(value), name === 'ingresos' ? 'Ingresos' : 'Gastos']}
-                        contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                        formatter={(value: number, name: string) => [
+                            formatEUR(value),
+                            name === 'ingresos' ? 'Ingresos' : 'Gastos',
+                        ]}
+                        contentStyle={{
+                            background: '#1e293b',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: 8,
+                        }}
                         labelStyle={{ color: 'rgba(255,255,255,0.8)' }}
                         itemStyle={{ color: 'rgba(255,255,255,0.7)' }}
                     />
                     <Legend
-                        formatter={(value: string) => value === 'ingresos' ? 'Ingresos' : 'Gastos'}
+                        formatter={(value: string) =>
+                            value === 'ingresos' ? 'Ingresos' : 'Gastos'
+                        }
                     />
-                    <Line type="monotone" dataKey="ingresos" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line type="monotone" dataKey="gastos" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line
+                        type="monotone"
+                        dataKey="ingresos"
+                        stroke="#06b6d4"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                    />
+                    <Line
+                        type="monotone"
+                        dataKey="gastos"
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                    />
                 </LineChart>
             </ResponsiveContainer>
         </div>
@@ -168,7 +271,7 @@ function PGCAccountsTable({ data }: { data: CuentaPGCData[] }) {
     if (!data || data.length === 0) return null
 
     const total = data.reduce((sum, d) => sum + Math.abs(d.total), 0)
-    const maxVal = Math.max(...data.map(d => Math.abs(d.total)))
+    const maxVal = Math.max(...data.map((d) => Math.abs(d.total)))
 
     return (
         <div className="ws-chart-card">
@@ -176,8 +279,8 @@ function PGCAccountsTable({ data }: { data: CuentaPGCData[] }) {
             <div className="ws-pgc-list">
                 {data.map((item, i) => {
                     const absTotal = Math.abs(item.total)
-                    const pct = total > 0 ? (absTotal / total * 100) : 0
-                    const barWidth = maxVal > 0 ? (absTotal / maxVal * 100) : 0
+                    const pct = total > 0 ? (absTotal / total) * 100 : 0
+                    const barWidth = maxVal > 0 ? (absTotal / maxVal) * 100 : 0
                     const isIngreso = item.tipo === 'ingreso'
 
                     return (
@@ -210,7 +313,7 @@ function PGCAccountsTable({ data }: { data: CuentaPGCData[] }) {
 function TopProveedores({ data }: { data: ProveedorData[] }) {
     if (!data || data.length === 0) return null
 
-    const maxTotal = Math.max(...data.map(p => p.total))
+    const maxTotal = Math.max(...data.map((p) => p.total))
 
     return (
         <div className="ws-chart-card">
@@ -222,11 +325,16 @@ function TopProveedores({ data }: { data: ProveedorData[] }) {
                             <span className="ws-proveedor-name">{prov.nombre}</span>
                             <span className="ws-proveedor-total">{formatEUR(prov.total)}</span>
                         </div>
-                        <span className="ws-proveedor-meta">{prov.nif} - {prov.facturas} facturas</span>
+                        <span className="ws-proveedor-meta">
+                            {prov.nif} - {prov.facturas} facturas
+                        </span>
                         <div className="ws-proveedor-bar-track">
                             <div
                                 className="ws-proveedor-bar-fill"
-                                style={{ width: maxTotal > 0 ? `${(prov.total / maxTotal) * 100}%` : '0%' }}
+                                style={{
+                                    width:
+                                        maxTotal > 0 ? `${(prov.total / maxTotal) * 100}%` : '0%',
+                                }}
                             />
                         </div>
                     </div>
@@ -246,11 +354,17 @@ function FacturasRecientesTable({ data }: { data: FacturaReciente[] }) {
             case 'pendiente_confirmacion':
                 return <span className="ws-estado-badge ws-estado-badge--pendiente">Pendiente</span>
             case 'confirmada':
-                return <span className="ws-estado-badge ws-estado-badge--confirmada">Confirmada</span>
+                return (
+                    <span className="ws-estado-badge ws-estado-badge--confirmada">Confirmada</span>
+                )
             case 'manual':
                 return <span className="ws-estado-badge ws-estado-badge--manual">Manual</span>
             default:
-                return <span className="ws-estado-badge ws-estado-badge--pendiente">{confianza || '-'}</span>
+                return (
+                    <span className="ws-estado-badge ws-estado-badge--pendiente">
+                        {confianza || '-'}
+                    </span>
+                )
         }
     }
 
@@ -258,7 +372,7 @@ function FacturasRecientesTable({ data }: { data: FacturaReciente[] }) {
         try {
             return new Date(dateStr).toLocaleDateString('es-ES', {
                 day: '2-digit',
-                month: 'short'
+                month: 'short',
             })
         } catch {
             return dateStr
@@ -280,7 +394,7 @@ function FacturasRecientesTable({ data }: { data: FacturaReciente[] }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {data.map(factura => (
+                        {data.map((factura) => (
                             <tr key={factura.id}>
                                 <td>{formatDate(factura.fecha)}</td>
                                 <td>{factura.emisor}</td>
@@ -321,7 +435,7 @@ export default function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardPr
             const token = localStorage.getItem(TOKEN_KEY)
             const res = await fetch(`${API_URL}/api/workspaces/${workspaceId}/classify-pending`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             })
             if (!res.ok) throw new Error('Error clasificando facturas')
             const result = await res.json()
@@ -349,7 +463,11 @@ export default function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardPr
                 <div className="ws-dashboard-error">
                     <AlertCircle size={18} />
                     <span>{error}</span>
-                    <button className="btn btn-ghost btn-sm" onClick={refresh} style={{ marginLeft: 'auto' }}>
+                    <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={refresh}
+                        style={{ marginLeft: 'auto' }}
+                    >
                         <RefreshCw size={14} /> Reintentar
                     </button>
                 </div>
@@ -366,7 +484,10 @@ export default function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardPr
         )
     }
 
-    const allZero = data.kpis.facturas_count === 0 && data.kpis.ingresos_total === 0 && data.kpis.gastos_total === 0
+    const allZero =
+        data.kpis.facturas_count === 0 &&
+        data.kpis.ingresos_total === 0 &&
+        data.kpis.gastos_total === 0
 
     return (
         <div className="ws-dashboard">
@@ -376,7 +497,10 @@ export default function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardPr
                         <Zap size={20} />
                         <div>
                             <strong>Facturas sin clasificar</strong>
-                            <p>Hay facturas procesadas que aún no están clasificadas contablemente. Clasifícalas para ver el dashboard financiero.</p>
+                            <p>
+                                Hay facturas procesadas que aún no están clasificadas contablemente.
+                                Clasifícalas para ver el dashboard financiero.
+                            </p>
                         </div>
                     </div>
                     <button
@@ -384,7 +508,15 @@ export default function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardPr
                         onClick={handleClassifyPending}
                         disabled={classifying}
                     >
-                        {classifying ? <><Loader2 size={14} className="spin" /> Clasificando...</> : <><Zap size={14} /> Clasificar facturas</>}
+                        {classifying ? (
+                            <>
+                                <Loader2 size={14} className="spin" /> Clasificando...
+                            </>
+                        ) : (
+                            <>
+                                <Zap size={14} /> Clasificar facturas
+                            </>
+                        )}
                     </button>
                     {classifyResult && <p className="ws-classify-result">{classifyResult}</p>}
                 </div>

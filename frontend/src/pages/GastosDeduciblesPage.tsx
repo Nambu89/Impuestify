@@ -67,7 +67,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Formación profesional',
             porcentaje: 100,
             limite: 'Sin límite',
-            consejo: 'Cursos, másters, certificaciones, libros técnicos relacionados con tu actividad.',
+            consejo:
+                'Cursos, másters, certificaciones, libros técnicos relacionados con tu actividad.',
         },
         {
             nombre: 'Coworking / oficina',
@@ -85,7 +86,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Internet y teléfono',
             porcentaje: 50,
             limite: 'Línea a tu nombre',
-            consejo: 'Si no tienes línea separada, Hacienda puede denegar el 100%. Recomendable: línea exclusiva.',
+            consejo:
+                'Si no tienes línea separada, Hacienda puede denegar el 100%. Recomendable: línea exclusiva.',
         },
         {
             nombre: 'Seguro de salud',
@@ -97,7 +99,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Comidas de trabajo',
             porcentaje: 100,
             limite: '26,67 EUR/día en España — 48,08 EUR en el extranjero',
-            consejo: 'Solo en desplazamiento. Pago electrónico obligatorio. No valen comidas "de oficina".',
+            consejo:
+                'Solo en desplazamiento. Pago electrónico obligatorio. No valen comidas "de oficina".',
             conflictivo: true,
         },
         {
@@ -116,14 +119,16 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Gastos de difícil justificación',
             porcentaje: 5,
             limite: 'Máximo 2.000 EUR/año',
-            consejo: 'Automático en estimación directa simplificada. Incompatible con reducción TRADE.',
+            consejo:
+                'Automático en estimación directa simplificada. Incompatible con reducción TRADE.',
         },
         {
             nombre: 'Vehículo (IRPF)',
             porcentaje: null,
             porcentajeTexto: '0% IRPF / 50% IVA',
             limite: 'No deducible en IRPF',
-            consejo: 'Hacienda deniega el vehículo en IRPF salvo actividades tasadas. El IVA sí puede deducirse al 50%.',
+            consejo:
+                'Hacienda deniega el vehículo en IRPF salvo actividades tasadas. El IVA sí puede deducirse al 50%.',
             conflictivo: true,
         },
     ],
@@ -138,7 +143,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Existencias y mercancías',
             porcentaje: 100,
             limite: 'Sin límite',
-            consejo: 'Coste de adquisición de productos para venta. Requiere control de inventario.',
+            consejo:
+                'Coste de adquisición de productos para venta. Requiere control de inventario.',
         },
         {
             nombre: 'Alquiler del local',
@@ -162,7 +168,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Vehículo de reparto propio',
             porcentaje: 100,
             limite: 'Uso exclusivo para reparto',
-            consejo: 'Si realizas reparto propio con vehículo afecto exclusivamente al negocio, deducible al 100%.',
+            consejo:
+                'Si realizas reparto propio con vehículo afecto exclusivamente al negocio, deducible al 100%.',
         },
         {
             nombre: 'Publicidad y marketing',
@@ -236,7 +243,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Formación y congresos sanitarios',
             porcentaje: 100,
             limite: 'Sin límite',
-            consejo: 'Cursos de especialización, congresos médicos, suscripciones a revistas científicas.',
+            consejo:
+                'Cursos de especialización, congresos médicos, suscripciones a revistas científicas.',
         },
         {
             nombre: 'Software de gestión clínica',
@@ -261,7 +269,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             porcentaje: null,
             porcentajeTexto: 'Atención',
             limite: 'Sin derecho a deducir IVA soportado',
-            consejo: 'Las actividades sanitarias están exentas de IVA. No repercutes IVA pero tampoco puedes deducir el IVA de tus compras.',
+            consejo:
+                'Las actividades sanitarias están exentas de IVA. No repercutes IVA pero tampoco puedes deducir el IVA de tus compras.',
             conflictivo: true,
         },
     ],
@@ -282,7 +291,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Iluminación y decorado',
             porcentaje: 100,
             limite: 'Amortizable si > 300 EUR',
-            consejo: 'Focos, difusores, pantallas, fondos. Uso exclusivo o mayoritariamente profesional.',
+            consejo:
+                'Focos, difusores, pantallas, fondos. Uso exclusivo o mayoritariamente profesional.',
         },
         {
             nombre: 'Software de edición',
@@ -306,14 +316,16 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Viajes y desplazamientos para contenido',
             porcentaje: 100,
             limite: '26,67 EUR/día dietas — transporte con factura',
-            consejo: 'Solo si el viaje está directamente vinculado a la creación de contenido. Documentar con vídeos/posts.',
+            consejo:
+                'Solo si el viaje está directamente vinculado a la creación de contenido. Documentar con vídeos/posts.',
             conflictivo: true,
         },
         {
             nombre: 'Formación (marketing, edición, SEO)',
             porcentaje: 100,
             limite: 'Sin límite',
-            consejo: 'Cursos de YouTube, TikTok, edición de vídeo, fotografía relacionados con tu actividad.',
+            consejo:
+                'Cursos de YouTube, TikTok, edición de vídeo, fotografía relacionados con tu actividad.',
         },
         {
             nombre: 'Publicidad y promoción',
@@ -331,7 +343,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Internet y teléfono',
             porcentaje: 50,
             limite: 'Línea a tu nombre',
-            consejo: 'Recomendable tener línea separada. Sin línea propia, Hacienda puede denegar el 100%.',
+            consejo:
+                'Recomendable tener línea separada. Sin línea propia, Hacienda puede denegar el 100%.',
         },
         {
             nombre: 'Gastos de difícil justificación',
@@ -344,7 +357,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             porcentaje: null,
             porcentajeTexto: '0% IRPF / 50% IVA',
             limite: 'No deducible en IRPF salvo excepciones',
-            consejo: 'Solo deducible si puedes demostrar uso exclusivo profesional o actividad de transporte.',
+            consejo:
+                'Solo deducible si puedes demostrar uso exclusivo profesional o actividad de transporte.',
             conflictivo: true,
         },
     ],
@@ -359,7 +373,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Materias primas y alimentos',
             porcentaje: 100,
             limite: 'Sin límite',
-            consejo: 'Coste de alimentos y bebidas para elaborar o vender. Con albaranes y facturas.',
+            consejo:
+                'Coste de alimentos y bebidas para elaborar o vender. Con albaranes y facturas.',
         },
         {
             nombre: 'Alquiler del local',
@@ -383,7 +398,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Uniformes y ropa de trabajo',
             porcentaje: 100,
             limite: 'Solo ropa con logo o EPI',
-            consejo: 'Uniformes con logo del establecimiento, EPIs. La ropa de calle NO es deducible aunque la uses en el trabajo.',
+            consejo:
+                'Uniformes con logo del establecimiento, EPIs. La ropa de calle NO es deducible aunque la uses en el trabajo.',
         },
         {
             nombre: 'Licencias y tasas municipales',
@@ -433,13 +449,15 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Vehículo (compra o leasing)',
             porcentaje: 100,
             limite: 'Uso exclusivo para la actividad',
-            consejo: 'Transportistas, repartidores, taxistas y VTC tienen deducción del 100% en IRPF e IVA. Es la única actividad con esta ventaja.',
+            consejo:
+                'Transportistas, repartidores, taxistas y VTC tienen deducción del 100% en IRPF e IVA. Es la única actividad con esta ventaja.',
         },
         {
             nombre: 'Combustible',
             porcentaje: 100,
             limite: 'Proporcional al uso profesional',
-            consejo: 'Gasolina, gasóleo, electricidad para el vehículo de trabajo. Con ticket de gasolinera.',
+            consejo:
+                'Gasolina, gasóleo, electricidad para el vehículo de trabajo. Con ticket de gasolinera.',
         },
         {
             nombre: 'Seguro del vehículo',
@@ -463,7 +481,8 @@ const GASTOS_POR_PERFIL: Record<PerfilId, GastoDeducible[]> = {
             nombre: 'Amortización del vehículo',
             porcentaje: 100,
             limite: '16% anual (camiones) / 20% anual (turismos empresa)',
-            consejo: 'Si el vehículo supera 300 EUR se amortiza. Coeficiente según tabla simplificada.',
+            consejo:
+                'Si el vehículo supera 300 EUR se amortiza. Coeficiente según tabla simplificada.',
         },
         {
             nombre: 'Licencia de transporte',
@@ -568,15 +587,15 @@ export default function GastosDeduciblesPage() {
     const [gastosInput, setGastosInput] = useState<string>('')
 
     const perfil = useMemo(
-        () => PERFILES.find(p => p.id === perfilSeleccionado) ?? null,
-        [perfilSeleccionado]
+        () => PERFILES.find((p) => p.id === perfilSeleccionado) ?? null,
+        [perfilSeleccionado],
     )
 
     const gastosAnuales = parseFloat(gastosInput.replace(',', '.')) || 0
     const ahorroEstimado = Math.round(gastosAnuales * 12 * 0.25)
 
     const handlePerfilClick = (id: PerfilId) => {
-        setPerfilSeleccionado(prev => (prev === id ? null : id))
+        setPerfilSeleccionado((prev) => (prev === id ? null : id))
         setGastosInput('')
     }
 
@@ -585,15 +604,15 @@ export default function GastosDeduciblesPage() {
             <Header />
 
             <main className="gd-main">
-
                 {/* ---- Hero ---- */}
                 <div className="gd-hero">
                     <h1 className="gd-title">
-                        <span className="gd-title-highlight">¿Qué gastos puedes deducir</span>
-                        {' '}como autónomo?
+                        <span className="gd-title-highlight">¿Qué gastos puedes deducir</span> como
+                        autónomo?
                     </h1>
                     <p className="gd-subtitle">
-                        Descubre los gastos deducibles de tu actividad — con límites exactos y consejos para evitar inspecciones
+                        Descubre los gastos deducibles de tu actividad — con límites exactos y
+                        consejos para evitar inspecciones
                     </p>
                 </div>
 
@@ -605,7 +624,7 @@ export default function GastosDeduciblesPage() {
                     </div>
 
                     <div className="gd-perfiles-grid">
-                        {PERFILES.map(p => {
+                        {PERFILES.map((p) => {
                             const Icon = p.icon
                             const activo = perfilSeleccionado === p.id
                             return (
@@ -637,7 +656,8 @@ export default function GastosDeduciblesPage() {
                         <div className="gd-step-header">
                             <span className="gd-step-badge">Paso 2</span>
                             <h2 className="gd-step-title">
-                                Gastos deducibles para: <span className="gd-step-perfil">{perfil.nombre}</span>
+                                Gastos deducibles para:{' '}
+                                <span className="gd-step-perfil">{perfil.nombre}</span>
                             </h2>
                         </div>
 
@@ -661,7 +681,9 @@ export default function GastosDeduciblesPage() {
                                         )}
                                         {gasto.nombre}
                                     </span>
-                                    <span className={`gd-col-pct gd-pct-badge ${getPorcentajeClass(gasto.porcentaje)}`}>
+                                    <span
+                                        className={`gd-col-pct gd-pct-badge ${getPorcentajeClass(gasto.porcentaje)}`}
+                                    >
                                         {getPorcentajeLabel(gasto)}
                                     </span>
                                     <span className="gd-col-limite">{gasto.limite}</span>
@@ -675,12 +697,16 @@ export default function GastosDeduciblesPage() {
                             <div className="gd-warning-card">
                                 <AlertTriangle size={18} className="gd-warning-icon" />
                                 <div>
-                                    <p className="gd-warning-title">El vehículo: el gasto más conflictivo con Hacienda</p>
+                                    <p className="gd-warning-title">
+                                        El vehículo: el gasto más conflictivo con Hacienda
+                                    </p>
                                     <p className="gd-warning-text">
-                                        En IRPF, el vehículo solo es deducible al 100% para actividades de transporte, reparto, taxi o
-                                        VTC. Para el resto de autónomos, Hacienda deniega la deducción en IRPF porque alega uso mixto.
-                                        El IVA sí puede deducirse al 50% si el vehículo es necesario para la actividad.
-                                        Es el gasto que genera más litigios en la AEAT.
+                                        En IRPF, el vehículo solo es deducible al 100% para
+                                        actividades de transporte, reparto, taxi o VTC. Para el
+                                        resto de autónomos, Hacienda deniega la deducción en IRPF
+                                        porque alega uso mixto. El IVA sí puede deducirse al 50% si
+                                        el vehículo es necesario para la actividad. Es el gasto que
+                                        genera más litigios en la AEAT.
                                     </p>
                                 </div>
                             </div>
@@ -691,12 +717,15 @@ export default function GastosDeduciblesPage() {
                             <div className="gd-info-card">
                                 <Info size={18} className="gd-info-icon" />
                                 <div>
-                                    <p className="gd-info-title">Actividad exenta de IVA (Art. 20 LIVA)</p>
+                                    <p className="gd-info-title">
+                                        Actividad exenta de IVA (Art. 20 LIVA)
+                                    </p>
                                     <p className="gd-info-text">
-                                        Las actividades sanitarias reconocidas están exentas de IVA. Esto significa que no
-                                        repercutes IVA en tus facturas, pero tampoco puedes deducir el IVA de tus gastos.
-                                        En IRPF, los gastos se deducen por su importe total (IVA incluido), lo que en
-                                        parte compensa.
+                                        Las actividades sanitarias reconocidas están exentas de IVA.
+                                        Esto significa que no repercutes IVA en tus facturas, pero
+                                        tampoco puedes deducir el IVA de tus gastos. En IRPF, los
+                                        gastos se deducen por su importe total (IVA incluido), lo
+                                        que en parte compensa.
                                     </p>
                                 </div>
                             </div>
@@ -724,7 +753,7 @@ export default function GastosDeduciblesPage() {
                                             min={0}
                                             step={50}
                                             value={gastosInput}
-                                            onChange={e => setGastosInput(e.target.value)}
+                                            onChange={(e) => setGastosInput(e.target.value)}
                                         />
                                         <span className="gd-ahorro-suffix">EUR / mes</span>
                                     </div>
@@ -737,21 +766,27 @@ export default function GastosDeduciblesPage() {
                                     <div className="gd-ahorro-resultado">
                                         <div className="gd-ahorro-card">
                                             <TrendingUp size={24} className="gd-ahorro-card-icon" />
-                                            <div className="gd-ahorro-card-label">Ahorro estimado en IRPF al año</div>
+                                            <div className="gd-ahorro-card-label">
+                                                Ahorro estimado en IRPF al año
+                                            </div>
                                             <div className="gd-ahorro-card-valor">
                                                 {formatEur(ahorroEstimado)}
                                                 <span className="gd-ahorro-card-eur">EUR</span>
                                             </div>
                                             <div className="gd-ahorro-card-base">
-                                                Sobre {formatEur(gastosAnuales * 12)} EUR anuales de gastos
+                                                Sobre {formatEur(gastosAnuales * 12)} EUR anuales de
+                                                gastos
                                             </div>
                                         </div>
                                         <div className="gd-ahorro-disclaimer">
                                             <Info size={13} />
                                             <span>
-                                                Estimación orientativa aplicando un tipo marginal medio del 25%.
-                                                Para un cálculo exacto, usa la{' '}
-                                                <a href="/guia-fiscal" className="gd-link">Guía Fiscal</a>.
+                                                Estimación orientativa aplicando un tipo marginal
+                                                medio del 25%. Para un cálculo exacto, usa la{' '}
+                                                <a href="/guia-fiscal" className="gd-link">
+                                                    Guía Fiscal
+                                                </a>
+                                                .
                                             </span>
                                         </div>
                                     </div>
@@ -769,7 +804,6 @@ export default function GastosDeduciblesPage() {
                                 <ChevronRight size={18} />
                             </a>
                         </div>
-
                     </section>
                 )}
 
@@ -780,11 +814,11 @@ export default function GastosDeduciblesPage() {
                             <Info size={32} />
                         </div>
                         <p className="gd-empty-text">
-                            Selecciona tu actividad para ver la checklist de gastos deducibles personalizada
+                            Selecciona tu actividad para ver la checklist de gastos deducibles
+                            personalizada
                         </p>
                     </div>
                 )}
-
             </main>
         </div>
     )

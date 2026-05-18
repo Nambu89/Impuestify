@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { Calendar, Receipt, FileText, AlertCircle, Clock, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+    Calendar,
+    Receipt,
+    FileText,
+    AlertCircle,
+    Clock,
+    Filter,
+    ChevronLeft,
+    ChevronRight,
+} from 'lucide-react'
 import { FiscalDeadline, UrgencyLevel } from '../hooks/useDeadlines'
 import './FiscalCalendar.css'
 
@@ -29,8 +38,17 @@ function getModelIcon(model: string) {
 
 function Calculator({ size }: { size: number }) {
     return (
-        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
             <rect x="4" y="2" width="16" height="20" rx="2" />
             <line x1="8" y1="6" x2="16" y2="6" />
             <line x1="8" y1="10" x2="10" y2="10" />
@@ -47,8 +65,18 @@ function Calculator({ size }: { size: number }) {
 }
 
 const MONTH_NAMES = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
 ]
 
 function formatDate(isoDate: string): string {
@@ -156,14 +184,20 @@ function Timeline({ deadlines, currentMonth, currentYear, onMonthChange }: Timel
     const prev = () => {
         let m = currentMonth - 1
         let y = currentYear
-        if (m < 0) { m = 11; y-- }
+        if (m < 0) {
+            m = 11
+            y--
+        }
         onMonthChange(m, y)
     }
 
     const next = () => {
         let m = currentMonth + 1
         let y = currentYear
-        if (m > 11) { m = 0; y++ }
+        if (m > 11) {
+            m = 0
+            y++
+        }
         onMonthChange(m, y)
     }
 
@@ -174,7 +208,7 @@ function Timeline({ deadlines, currentMonth, currentYear, onMonthChange }: Timel
             </button>
             <div className="fc-timeline__months">
                 {months.map(({ month, year }) => {
-                    const dotsCount = deadlines.filter(d => {
+                    const dotsCount = deadlines.filter((d) => {
                         const start = new Date(d.start_date)
                         const end = new Date(d.end_date)
                         const mStart = new Date(year, month, 1)
@@ -188,7 +222,9 @@ function Timeline({ deadlines, currentMonth, currentYear, onMonthChange }: Timel
                             className={`fc-timeline__month ${isActive ? 'active' : ''}`}
                             onClick={() => onMonthChange(month, year)}
                         >
-                            <span className="fc-timeline__month-name">{MONTH_NAMES[month].slice(0, 3)}</span>
+                            <span className="fc-timeline__month-name">
+                                {MONTH_NAMES[month].slice(0, 3)}
+                            </span>
                             {dotsCount > 0 && (
                                 <span className="fc-timeline__dots">
                                     {Array.from({ length: Math.min(dotsCount, 4) }).map((_, i) => (
@@ -219,13 +255,13 @@ function DeadlineCard({ deadline }: DeadlineCardProps) {
     const urgency = deadline.urgency as UrgencyLevel
     return (
         <div className={`fc-card fc-card--${urgency}`}>
-            <div className="fc-card__icon">
-                {getModelIcon(deadline.model)}
-            </div>
+            <div className="fc-card__icon">{getModelIcon(deadline.model)}</div>
             <div className="fc-card__body">
                 <div className="fc-card__header-row">
                     <span className="fc-card__model">{deadline.model}</span>
-                    <span className="fc-card__period">{deadline.period} {deadline.tax_year}</span>
+                    <span className="fc-card__period">
+                        {deadline.period} {deadline.tax_year}
+                    </span>
                 </div>
                 <h3 className="fc-card__name">{deadline.model_name}</h3>
                 {deadline.territory !== 'Estatal' && (
@@ -274,15 +310,17 @@ export default function FiscalCalendar({ deadlines, loading, error }: FiscalCale
     }
 
     // Filter by applies_to (past deadlines are kept — shown with atenuated style in past months)
-    const filtered = deadlines.filter(d => {
+    const filtered = deadlines.filter((d) => {
         if (activeFilter === 'todos') return true
-        if (activeFilter === 'autonomos') return d.applies_to === 'autonomos' || d.applies_to === 'todos'
-        if (activeFilter === 'particulares') return d.applies_to === 'particulares' || d.applies_to === 'todos'
+        if (activeFilter === 'autonomos')
+            return d.applies_to === 'autonomos' || d.applies_to === 'todos'
+        if (activeFilter === 'particulares')
+            return d.applies_to === 'particulares' || d.applies_to === 'todos'
         return true
     })
 
     // Filter by current month — show any deadline whose range overlaps with this month
-    const monthDeadlines = filtered.filter(d => {
+    const monthDeadlines = filtered.filter((d) => {
         const start = new Date(d.start_date)
         const end = new Date(d.end_date)
         const monthStart = new Date(currentYear, currentMonth, 1)
@@ -295,7 +333,7 @@ export default function FiscalCalendar({ deadlines, loading, error }: FiscalCale
 
     // Next upcoming deadline (not past)
     const upcoming = filtered
-        .filter(d => d.daysRemaining >= 0)
+        .filter((d) => d.daysRemaining >= 0)
         .sort((a, b) => a.daysRemaining - b.daysRemaining)[0]
 
     if (loading) {
@@ -332,7 +370,7 @@ export default function FiscalCalendar({ deadlines, loading, error }: FiscalCale
             {/* Filtros */}
             <div className="fc-filters" ref={timelineRef}>
                 <Filter size={16} className="fc-filters__icon" />
-                {FILTERS.map(f => (
+                {FILTERS.map((f) => (
                     <button
                         key={f.key}
                         className={`fc-filter-btn ${activeFilter === f.key ? 'active' : ''}`}
@@ -345,7 +383,9 @@ export default function FiscalCalendar({ deadlines, loading, error }: FiscalCale
 
             {/* Heading del mes */}
             <div className="fc-month-heading">
-                <h2>{MONTH_NAMES[currentMonth]} {currentYear}</h2>
+                <h2>
+                    {MONTH_NAMES[currentMonth]} {currentYear}
+                </h2>
                 <span className="fc-month-count">
                     {monthDeadlines.length} {monthDeadlines.length === 1 ? 'plazo' : 'plazos'}
                 </span>
@@ -359,7 +399,7 @@ export default function FiscalCalendar({ deadlines, loading, error }: FiscalCale
                 </div>
             ) : (
                 <div className="fc-grid">
-                    {monthDeadlines.map(d => (
+                    {monthDeadlines.map((d) => (
                         <DeadlineCard key={d.id} deadline={d} />
                     ))}
                 </div>

@@ -53,7 +53,9 @@
     text-decoration: none;
     font-size: var(--font-size-sm);
     margin-bottom: var(--spacing-8);
-    transition: color var(--transition-fast), transform var(--transition-fast);
+    transition:
+        color var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .subscribe-container .back-link:hover {
@@ -146,7 +148,10 @@
     width: 100%;
     min-width: 0;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
+    transition:
+        border-color var(--transition-base),
+        box-shadow var(--transition-base),
+        transform var(--transition-base);
 }
 
 .subscribe-plan:hover {
@@ -201,7 +206,8 @@
 }
 
 @keyframes creator-badge-pulse {
-    0%, 100% {
+    0%,
+    100% {
         box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
     }
     50% {
@@ -246,7 +252,10 @@
     color: white;
     font-weight: 700;
     box-shadow: 0 4px 20px rgba(139, 92, 246, 0.38);
-    transition: box-shadow var(--transition-base), transform var(--transition-fast), opacity var(--transition-fast);
+    transition:
+        box-shadow var(--transition-base),
+        transform var(--transition-fast),
+        opacity var(--transition-fast);
 }
 
 .subscribe-plan__cta--creator:hover:not(:disabled) {
@@ -309,7 +318,8 @@
 }
 
 @keyframes badge-pulse {
-    0%, 100% {
+    0%,
+    100% {
         box-shadow: 0 2px 12px rgba(26, 86, 219, 0.4);
     }
     50% {
@@ -468,11 +478,15 @@
     border: 1.5px solid rgba(255, 255, 255, 0.2);
     color: rgba(255, 255, 255, 0.7);
     font-weight: 600;
-    transition: border-color var(--transition-base), color var(--transition-base),
-                background var(--transition-base), box-shadow var(--transition-base);
+    transition:
+        border-color var(--transition-base),
+        color var(--transition-base),
+        background var(--transition-base),
+        box-shadow var(--transition-base);
 }
 
-.subscribe-plan:not(.subscribe-plan--popular) .subscribe-plan__cta.btn-secondary:hover:not(:disabled),
+.subscribe-plan:not(.subscribe-plan--popular)
+    .subscribe-plan__cta.btn-secondary:hover:not(:disabled),
 .subscribe-plan:not(.subscribe-plan--popular) a.btn-secondary.subscribe-plan__cta:hover {
     border-color: var(--color-primary-light);
     color: var(--color-white);
@@ -488,7 +502,10 @@
     color: white;
     font-weight: 700;
     box-shadow: 0 4px 20px rgba(26, 86, 219, 0.38);
-    transition: box-shadow var(--transition-base), transform var(--transition-fast), opacity var(--transition-fast);
+    transition:
+        box-shadow var(--transition-base),
+        transform var(--transition-fast),
+        opacity var(--transition-fast);
 }
 
 .subscribe-plan--popular .subscribe-plan__cta.btn-primary:hover:not(:disabled),

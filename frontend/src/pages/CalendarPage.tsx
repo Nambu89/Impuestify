@@ -35,11 +35,7 @@ export default function CalendarPage() {
             {/* Main content */}
             <div className="calendar-page__main">
                 <PushPermissionBanner />
-                <FiscalCalendar
-                    deadlines={deadlines}
-                    loading={loading}
-                    error={error}
-                />
+                <FiscalCalendar deadlines={deadlines} loading={loading} error={error} />
             </div>
         </div>
     )

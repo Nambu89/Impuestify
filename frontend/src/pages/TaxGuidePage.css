@@ -297,7 +297,9 @@
     backdrop-filter: blur(12px);
     border-radius: var(--radius-2xl);
     padding: var(--spacing-6);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.08);
     margin-bottom: var(--spacing-4);
     animation: tg-fadeIn 0.25s ease;
@@ -319,18 +321,34 @@
 }
 
 @keyframes tg-fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes tg-slideLeft {
-    from { opacity: 0; transform: translateX(40px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 @keyframes tg-slideRight {
-    from { opacity: 0; transform: translateX(-40px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(-40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 /* ====== Step content ====== */
@@ -395,7 +413,10 @@
     font-family: var(--font-family);
     color: var(--color-white);
     background: rgba(255, 255, 255, 0.07);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-fast);
     -webkit-appearance: none;
 }
 
@@ -445,7 +466,7 @@
     font-size: var(--font-size-sm);
 }
 
-.tg-field__checkbox-label input[type="checkbox"] {
+.tg-field__checkbox-label input[type='checkbox'] {
     width: 18px;
     height: 18px;
     accent-color: var(--color-primary-light);
@@ -573,7 +594,9 @@
     padding: var(--spacing-4);
     margin-bottom: var(--spacing-3);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+    transition:
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast);
     backdrop-filter: blur(8px);
 }
 
@@ -721,8 +744,12 @@
     margin-bottom: var(--spacing-2);
 }
 
-.tg-result-card--refund .tg-result-card__label { color: #6ee7b7; }
-.tg-result-card--payment .tg-result-card__label { color: #fca5a5; }
+.tg-result-card--refund .tg-result-card__label {
+    color: #6ee7b7;
+}
+.tg-result-card--payment .tg-result-card__label {
+    color: #fca5a5;
+}
 
 .tg-result-card__amount {
     font-size: var(--font-size-4xl);
@@ -730,8 +757,12 @@
     line-height: 1;
 }
 
-.tg-result-card--refund .tg-result-card__amount { color: #34d399; }
-.tg-result-card--payment .tg-result-card__amount { color: #f87171; }
+.tg-result-card--refund .tg-result-card__amount {
+    color: #34d399;
+}
+.tg-result-card--payment .tg-result-card__amount {
+    color: #f87171;
+}
 
 .tg-result-card__disclaimer {
     font-size: var(--font-size-xs);
@@ -941,7 +972,7 @@
     text-overflow: ellipsis;
 }
 
-.creator-platform-item input[type="number"] {
+.creator-platform-item input[type='number'] {
     width: 100px;
     text-align: right;
 }
@@ -1033,7 +1064,7 @@
         grid-template-columns: 1fr;
     }
 
-    .creator-platform-item input[type="number"] {
+    .creator-platform-item input[type='number'] {
         width: 80px;
     }
 }

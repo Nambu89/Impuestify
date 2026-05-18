@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { BookOpen, Download, ChevronDown, Loader2, TrendingUp, TrendingDown, Scale } from 'lucide-react'
+import {
+    BookOpen,
+    Download,
+    ChevronDown,
+    Loader2,
+    TrendingUp,
+    TrendingDown,
+    Scale,
+} from 'lucide-react'
 import { useApi } from '../hooks/useApi'
 import './ContabilidadPage.css'
 
@@ -80,10 +88,14 @@ function YearSelect({ value, onChange }: { value: string; onChange: (v: string) 
         <select
             className="cont-select"
             value={value}
-            onChange={e => onChange(e.target.value)}
+            onChange={(e) => onChange(e.target.value)}
             aria-label="Año"
         >
-            {years.map(y => <option key={y} value={y}>{y}</option>)}
+            {years.map((y) => (
+                <option key={y} value={y}>
+                    {y}
+                </option>
+            ))}
         </select>
     )
 }
@@ -93,7 +105,7 @@ function QuarterSelect({ value, onChange }: { value: string; onChange: (v: strin
         <select
             className="cont-select"
             value={value}
-            onChange={e => onChange(e.target.value)}
+            onChange={(e) => onChange(e.target.value)}
             aria-label="Trimestre"
         >
             <option value="todos">Todos los trimestres</option>
@@ -107,7 +119,15 @@ function QuarterSelect({ value, onChange }: { value: string; onChange: (v: strin
 
 // ─── Export button with dropdown ──────────────────────────────────────────────
 
-function ExportButton({ lib, year, trimestre }: { lib: ExportLib; year: string; trimestre?: string }) {
+function ExportButton({
+    lib,
+    year,
+    trimestre,
+}: {
+    lib: ExportLib
+    year: string
+    trimestre?: string
+}) {
     const [open, setOpen] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
     const { apiRequest } = useApi()
@@ -146,7 +166,7 @@ function ExportButton({ lib, year, trimestre }: { lib: ExportLib; year: string; 
         <div className="cont-export" ref={ref}>
             <button
                 className="cont-export__btn"
-                onClick={() => setOpen(v => !v)}
+                onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
                 aria-haspopup="true"
             >
@@ -182,15 +202,17 @@ function LibroDiario({ year, trimestre }: { year: string; trimestre: string }) {
         apiRequest(`/api/contabilidad/libro-diario?${qs}`)
             .then((data: any) => {
                 const raw = data?.entries || data?.asientos || []
-                setEntries(raw.map((e: any) => ({
-                    fecha: e.fecha || '',
-                    n_asiento: e.n_asiento ?? e.numero_asiento ?? 0,
-                    cuenta: e.cuenta || e.cuenta_code || '',
-                    nombre_cuenta: e.nombre_cuenta || e.cuenta_nombre || '',
-                    debe: e.debe || 0,
-                    haber: e.haber || 0,
-                    concepto: e.concepto || '',
-                })))
+                setEntries(
+                    raw.map((e: any) => ({
+                        fecha: e.fecha || '',
+                        n_asiento: e.n_asiento ?? e.numero_asiento ?? 0,
+                        cuenta: e.cuenta || e.cuenta_code || '',
+                        nombre_cuenta: e.nombre_cuenta || e.cuenta_nombre || '',
+                        debe: e.debe || 0,
+                        haber: e.haber || 0,
+                        concepto: e.concepto || '',
+                    })),
+                )
             })
             .catch(() => setEntries([]))
             .finally(() => setLoading(false))
@@ -201,7 +223,8 @@ function LibroDiario({ year, trimestre }: { year: string; trimestre: string }) {
 
     if (loading) return <LoadingRow />
 
-    if (entries.length === 0) return <EmptyState mensaje="No hay asientos para los filtros seleccionados." />
+    if (entries.length === 0)
+        return <EmptyState mensaje="No hay asientos para los filtros seleccionados." />
 
     return (
         <div className="cont-table-section">
@@ -224,19 +247,31 @@ function LibroDiario({ year, trimestre }: { year: string; trimestre: string }) {
                             <tr key={i}>
                                 <td>{formatDate(e.fecha)}</td>
                                 <td className="cont-table__num">{e.n_asiento}</td>
-                                <td><code className="cont-account-code">{e.cuenta}</code></td>
+                                <td>
+                                    <code className="cont-account-code">{e.cuenta}</code>
+                                </td>
                                 <td>{e.nombre_cuenta}</td>
-                                <td className="cont-table__num">{e.debe > 0 ? formatEUR(e.debe) : '—'}</td>
-                                <td className="cont-table__num">{e.haber > 0 ? formatEUR(e.haber) : '—'}</td>
+                                <td className="cont-table__num">
+                                    {e.debe > 0 ? formatEUR(e.debe) : '—'}
+                                </td>
+                                <td className="cont-table__num">
+                                    {e.haber > 0 ? formatEUR(e.haber) : '—'}
+                                </td>
                                 <td className="cont-table__concepto">{e.concepto}</td>
                             </tr>
                         ))}
                     </tbody>
                     <tfoot>
                         <tr className="cont-table__totals">
-                            <td colSpan={4}><strong>Totales</strong></td>
-                            <td className="cont-table__num"><strong>{formatEUR(totalDebe)}</strong></td>
-                            <td className="cont-table__num"><strong>{formatEUR(totalHaber)}</strong></td>
+                            <td colSpan={4}>
+                                <strong>Totales</strong>
+                            </td>
+                            <td className="cont-table__num">
+                                <strong>{formatEUR(totalDebe)}</strong>
+                            </td>
+                            <td className="cont-table__num">
+                                <strong>{formatEUR(totalHaber)}</strong>
+                            </td>
                             <td />
                         </tr>
                     </tfoot>
@@ -249,7 +284,9 @@ function LibroDiario({ year, trimestre }: { year: string; trimestre: string }) {
                     <div key={i} className="cont-mobile-card">
                         <div className="cont-mobile-card__row">
                             <span className="cont-mobile-card__label">Fecha / Asiento</span>
-                            <span>{formatDate(e.fecha)} · #{e.n_asiento}</span>
+                            <span>
+                                {formatDate(e.fecha)} · #{e.n_asiento}
+                            </span>
                         </div>
                         <div className="cont-mobile-card__row">
                             <span className="cont-mobile-card__label">Cuenta</span>
@@ -261,11 +298,15 @@ function LibroDiario({ year, trimestre }: { year: string; trimestre: string }) {
                         </div>
                         <div className="cont-mobile-card__row">
                             <span className="cont-mobile-card__label">Debe</span>
-                            <span className="cont-debit">{e.debe > 0 ? formatEUR(e.debe) : '—'}</span>
+                            <span className="cont-debit">
+                                {e.debe > 0 ? formatEUR(e.debe) : '—'}
+                            </span>
                         </div>
                         <div className="cont-mobile-card__row">
                             <span className="cont-mobile-card__label">Haber</span>
-                            <span className="cont-credit">{e.haber > 0 ? formatEUR(e.haber) : '—'}</span>
+                            <span className="cont-credit">
+                                {e.haber > 0 ? formatEUR(e.haber) : '—'}
+                            </span>
                         </div>
                         <div className="cont-mobile-card__row">
                             <span className="cont-mobile-card__label">Concepto</span>
@@ -274,8 +315,12 @@ function LibroDiario({ year, trimestre }: { year: string; trimestre: string }) {
                     </div>
                 ))}
                 <div className="cont-mobile-totals">
-                    <span>Total Debe: <strong>{formatEUR(totalDebe)}</strong></span>
-                    <span>Total Haber: <strong>{formatEUR(totalHaber)}</strong></span>
+                    <span>
+                        Total Debe: <strong>{formatEUR(totalDebe)}</strong>
+                    </span>
+                    <span>
+                        Total Haber: <strong>{formatEUR(totalHaber)}</strong>
+                    </span>
                 </div>
             </div>
         </div>
@@ -294,20 +339,23 @@ function LibroMayor({ year }: { year: string }) {
         apiRequest(`/api/contabilidad/libro-mayor?year=${year}`)
             .then((data: any) => {
                 const raw = data?.accounts || data?.cuentas || []
-                setAccounts(raw.map((acc: any) => ({
-                    cuenta: acc.cuenta || acc.cuenta_code || '',
-                    nombre: acc.nombre || acc.cuenta_nombre || '',
-                    total_debe: acc.total_debe || 0,
-                    total_haber: acc.total_haber || 0,
-                    saldo: acc.saldo || 0,
-                })))
+                setAccounts(
+                    raw.map((acc: any) => ({
+                        cuenta: acc.cuenta || acc.cuenta_code || '',
+                        nombre: acc.nombre || acc.cuenta_nombre || '',
+                        total_debe: acc.total_debe || 0,
+                        total_haber: acc.total_haber || 0,
+                        saldo: acc.saldo || 0,
+                    })),
+                )
             })
             .catch(() => setAccounts([]))
             .finally(() => setLoading(false))
     }, [year])
 
     if (loading) return <LoadingRow />
-    if (accounts.length === 0) return <EmptyState mensaje="No hay datos de mayor para el año seleccionado." />
+    if (accounts.length === 0)
+        return <EmptyState mensaje="No hay datos de mayor para el año seleccionado." />
 
     return (
         <div className="cont-table-section">
@@ -325,11 +373,15 @@ function LibroMayor({ year }: { year: string }) {
                     <tbody>
                         {accounts.map((acc, i) => (
                             <tr key={i}>
-                                <td><code className="cont-account-code">{acc.cuenta}</code></td>
+                                <td>
+                                    <code className="cont-account-code">{acc.cuenta}</code>
+                                </td>
                                 <td>{acc.nombre}</td>
                                 <td className="cont-table__num">{formatEUR(acc.total_debe)}</td>
                                 <td className="cont-table__num">{formatEUR(acc.total_haber)}</td>
-                                <td className={`cont-table__num cont-saldo${acc.saldo >= 0 ? '--pos' : '--neg'}`}>
+                                <td
+                                    className={`cont-table__num cont-saldo${acc.saldo >= 0 ? '--pos' : '--neg'}`}
+                                >
                                     {formatEUR(acc.saldo)}
                                 </td>
                             </tr>
@@ -359,7 +411,9 @@ function LibroMayor({ year }: { year: string }) {
                         </div>
                         <div className="cont-mobile-card__row">
                             <span className="cont-mobile-card__label">Saldo</span>
-                            <strong className={acc.saldo >= 0 ? 'cont-saldo--pos' : 'cont-saldo--neg'}>
+                            <strong
+                                className={acc.saldo >= 0 ? 'cont-saldo--pos' : 'cont-saldo--neg'}
+                            >
                                 {formatEUR(acc.saldo)}
                             </strong>
                         </div>
@@ -390,13 +444,15 @@ function Balance({ year }: { year: string }) {
                     total_haber: acc.total_haber || 0,
                     saldo: acc.saldo || 0,
                 }))
-                const total_debe = d.total_debe ?? accounts.reduce((s: number, a: any) => s + a.total_debe, 0)
-                const total_haber = d.total_haber ?? accounts.reduce((s: number, a: any) => s + a.total_haber, 0)
+                const total_debe =
+                    d.total_debe ?? accounts.reduce((s: number, a: any) => s + a.total_debe, 0)
+                const total_haber =
+                    d.total_haber ?? accounts.reduce((s: number, a: any) => s + a.total_haber, 0)
                 setData({
                     accounts,
                     total_debe,
                     total_haber,
-                    diferencia: d.diferencia ?? (total_debe - total_haber),
+                    diferencia: d.diferencia ?? total_debe - total_haber,
                 })
             })
             .catch(() => setData(null))
@@ -404,7 +460,8 @@ function Balance({ year }: { year: string }) {
     }, [year])
 
     if (loading) return <LoadingRow />
-    if (!data || data.accounts.length === 0) return <EmptyState mensaje="No hay datos de balance para el año seleccionado." />
+    if (!data || data.accounts.length === 0)
+        return <EmptyState mensaje="No hay datos de balance para el año seleccionado." />
 
     const cuadra = Math.abs(data.diferencia) < 0.01
 
@@ -424,11 +481,15 @@ function Balance({ year }: { year: string }) {
                     <tbody>
                         {data.accounts.map((acc, i) => (
                             <tr key={i}>
-                                <td><code className="cont-account-code">{acc.cuenta}</code></td>
+                                <td>
+                                    <code className="cont-account-code">{acc.cuenta}</code>
+                                </td>
                                 <td>{acc.nombre}</td>
                                 <td className="cont-table__num">{formatEUR(acc.total_debe)}</td>
                                 <td className="cont-table__num">{formatEUR(acc.total_haber)}</td>
-                                <td className={`cont-table__num cont-saldo${acc.saldo >= 0 ? '--pos' : '--neg'}`}>
+                                <td
+                                    className={`cont-table__num cont-saldo${acc.saldo >= 0 ? '--pos' : '--neg'}`}
+                                >
                                     {formatEUR(acc.saldo)}
                                 </td>
                             </tr>
@@ -436,9 +497,15 @@ function Balance({ year }: { year: string }) {
                     </tbody>
                     <tfoot>
                         <tr className="cont-table__totals">
-                            <td colSpan={2}><strong>Totales</strong></td>
-                            <td className="cont-table__num"><strong>{formatEUR(data.total_debe)}</strong></td>
-                            <td className="cont-table__num"><strong>{formatEUR(data.total_haber)}</strong></td>
+                            <td colSpan={2}>
+                                <strong>Totales</strong>
+                            </td>
+                            <td className="cont-table__num">
+                                <strong>{formatEUR(data.total_debe)}</strong>
+                            </td>
+                            <td className="cont-table__num">
+                                <strong>{formatEUR(data.total_haber)}</strong>
+                            </td>
                             <td />
                         </tr>
                     </tfoot>
@@ -458,7 +525,9 @@ function Balance({ year }: { year: string }) {
                         </div>
                         <div className="cont-mobile-card__row">
                             <span className="cont-mobile-card__label">Saldo</span>
-                            <strong className={acc.saldo >= 0 ? 'cont-saldo--pos' : 'cont-saldo--neg'}>
+                            <strong
+                                className={acc.saldo >= 0 ? 'cont-saldo--pos' : 'cont-saldo--neg'}
+                            >
                                 {formatEUR(acc.saldo)}
                             </strong>
                         </div>
@@ -466,12 +535,13 @@ function Balance({ year }: { year: string }) {
                 ))}
             </div>
 
-            <div className={`cont-balance-check${cuadra ? ' cont-balance-check--ok' : ' cont-balance-check--err'}`}>
+            <div
+                className={`cont-balance-check${cuadra ? ' cont-balance-check--ok' : ' cont-balance-check--err'}`}
+            >
                 <Scale size={18} />
                 {cuadra
                     ? 'El balance cuadra correctamente (Debe = Haber).'
-                    : `El balance no cuadra: diferencia de ${formatEUR(Math.abs(data.diferencia))}.`
-                }
+                    : `El balance no cuadra: diferencia de ${formatEUR(Math.abs(data.diferencia))}.`}
             </div>
         </div>
     )
@@ -488,11 +558,14 @@ function PyG({ year }: { year: string }) {
         setLoading(true)
         apiRequest(`/api/contabilidad/pyg?year=${year}`)
             .then((d: any) => {
-                const mapItems = (items: any[]) => (items || []).map((item: any) => ({
-                    cuenta: item.cuenta || item.cuenta_code || '',
-                    nombre: item.nombre || item.cuenta_nombre || '',
-                    importe: item.importe ?? Math.abs(item.saldo ?? item.total_haber ?? item.total_debe ?? 0),
-                }))
+                const mapItems = (items: any[]) =>
+                    (items || []).map((item: any) => ({
+                        cuenta: item.cuenta || item.cuenta_code || '',
+                        nombre: item.nombre || item.cuenta_nombre || '',
+                        importe:
+                            item.importe ??
+                            Math.abs(item.saldo ?? item.total_haber ?? item.total_debe ?? 0),
+                    }))
                 setData({
                     ingresos: mapItems(d?.ingresos),
                     gastos: mapItems(d?.gastos),
@@ -506,7 +579,10 @@ function PyG({ year }: { year: string }) {
     }, [year])
 
     if (loading) return <LoadingRow />
-    if (!data) return <EmptyState mensaje="No hay datos de pérdidas y ganancias para el año seleccionado." />
+    if (!data)
+        return (
+            <EmptyState mensaje="No hay datos de pérdidas y ganancias para el año seleccionado." />
+        )
 
     const esPositivo = data.resultado >= 0
 
@@ -533,9 +609,13 @@ function PyG({ year }: { year: string }) {
                         <tbody>
                             {data.ingresos.map((item, i) => (
                                 <tr key={i}>
-                                    <td><code className="cont-account-code">{item.cuenta}</code></td>
+                                    <td>
+                                        <code className="cont-account-code">{item.cuenta}</code>
+                                    </td>
                                     <td>{item.nombre}</td>
-                                    <td className="cont-table__num cont-pyg__ingreso">{formatEUR(item.importe)}</td>
+                                    <td className="cont-table__num cont-pyg__ingreso">
+                                        {formatEUR(item.importe)}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -564,9 +644,13 @@ function PyG({ year }: { year: string }) {
                         <tbody>
                             {data.gastos.map((item, i) => (
                                 <tr key={i}>
-                                    <td><code className="cont-account-code">{item.cuenta}</code></td>
+                                    <td>
+                                        <code className="cont-account-code">{item.cuenta}</code>
+                                    </td>
                                     <td>{item.nombre}</td>
-                                    <td className="cont-table__num cont-pyg__gasto">{formatEUR(item.importe)}</td>
+                                    <td className="cont-table__num cont-pyg__gasto">
+                                        {formatEUR(item.importe)}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -575,11 +659,15 @@ function PyG({ year }: { year: string }) {
             </div>
 
             {/* Resultado */}
-            <div className={`cont-pyg__resultado${esPositivo ? ' cont-pyg__resultado--pos' : ' cont-pyg__resultado--neg'}`}>
+            <div
+                className={`cont-pyg__resultado${esPositivo ? ' cont-pyg__resultado--pos' : ' cont-pyg__resultado--neg'}`}
+            >
                 <span className="cont-pyg__resultado-label">
                     {esPositivo ? 'Beneficio del ejercicio' : 'Pérdida del ejercicio'}
                 </span>
-                <span className="cont-pyg__resultado-value">{formatEUR(Math.abs(data.resultado))}</span>
+                <span className="cont-pyg__resultado-value">
+                    {formatEUR(Math.abs(data.resultado))}
+                </span>
             </div>
 
             <p className="cont-disclaimer">
@@ -612,10 +700,10 @@ function EmptyState({ mensaje }: { mensaje: string }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const TABS: Array<{ key: TabKey; label: string }> = [
-    { key: 'diario',  label: 'Libro Diario' },
-    { key: 'mayor',   label: 'Libro Mayor'  },
-    { key: 'balance', label: 'Balance'      },
-    { key: 'pyg',     label: 'Pérd. y Gan.' },
+    { key: 'diario', label: 'Libro Diario' },
+    { key: 'mayor', label: 'Libro Mayor' },
+    { key: 'balance', label: 'Balance' },
+    { key: 'pyg', label: 'Pérd. y Gan.' },
 ]
 
 export default function ContabilidadPage() {
@@ -655,7 +743,7 @@ export default function ContabilidadPage() {
 
                 {/* Tabs */}
                 <div className="cont-tabs" role="tablist">
-                    {TABS.map(tab => (
+                    {TABS.map((tab) => (
                         <button
                             key={tab.key}
                             role="tab"
@@ -670,16 +758,17 @@ export default function ContabilidadPage() {
 
                 {/* Tab panels */}
                 <div className="cont-panel" role="tabpanel">
-                    {activeTab === 'diario'  && <LibroDiario year={year} trimestre={trimestre} />}
-                    {activeTab === 'mayor'   && <LibroMayor year={year} />}
+                    {activeTab === 'diario' && <LibroDiario year={year} trimestre={trimestre} />}
+                    {activeTab === 'mayor' && <LibroMayor year={year} />}
                     {activeTab === 'balance' && <Balance year={year} />}
-                    {activeTab === 'pyg'     && <PyG year={year} />}
+                    {activeTab === 'pyg' && <PyG year={year} />}
                 </div>
 
                 {/* Disclaimer (global) */}
                 {activeTab !== 'pyg' && (
                     <p className="cont-disclaimer">
-                        Información orientativa. No sustituye el asesoramiento de un profesional contable.
+                        Información orientativa. No sustituye el asesoramiento de un profesional
+                        contable.
                     </p>
                 )}
             </div>

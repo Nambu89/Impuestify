@@ -8,7 +8,7 @@ import { useApi } from './useApi'
 export interface CryptoTransaction {
     id: string
     exchange: string
-    tx_type: string       // buy | sell | trade | transfer | staking | mining | fee
+    tx_type: string // buy | sell | trade | transfer | staking | mining | fee
     date_utc: string
     asset: string
     amount: number
@@ -30,7 +30,7 @@ export interface CryptoHolding {
 export interface CryptoGain {
     asset: string
     tx_type: string
-    clave_contraprestacion: string  // F | N | O | B
+    clave_contraprestacion: string // F | N | O | B
     date_acquisition: string
     date_transmission: string
     acquisition_value_eur: number
@@ -42,16 +42,16 @@ export interface CryptoGain {
 }
 
 interface GainsSummaryBackend {
-    casilla_1813: number  // perdidas
-    casilla_1814: number  // ganancias
+    casilla_1813: number // perdidas
+    casilla_1814: number // ganancias
     net: number
     total_transactions: number
 }
 
 export interface CryptoGainsSummary {
     tax_year: number
-    total_gains_eur: number      // Casilla 1814
-    total_losses_eur: number     // Casilla 1813 (positive value)
+    total_gains_eur: number // Casilla 1814
+    total_losses_eur: number // Casilla 1813 (positive value)
     net_eur: number
     gains: CryptoGain[]
 }
@@ -145,22 +145,25 @@ export function useCrypto(): UseCryptoResult {
 
     // -----------------------------------------------------------------------
 
-    const fetchTransactions = useCallback(async (page = 1) => {
-        setLoadingTransactions(true)
-        setErrorTransactions(null)
-        try {
-            const data = await apiRequest<TransactionsResponse>(
-                `/api/crypto/transactions?page=${page}&per_page=${PAGE_SIZE}`
-            )
-            setTransactions(data.transactions ?? [])
-            setTotalTransactions(data.total)
-            setCurrentPage(data.page)
-        } catch (err: any) {
-            setErrorTransactions(err.message || 'Error cargando transacciones')
-        } finally {
-            setLoadingTransactions(false)
-        }
-    }, [apiRequest])
+    const fetchTransactions = useCallback(
+        async (page = 1) => {
+            setLoadingTransactions(true)
+            setErrorTransactions(null)
+            try {
+                const data = await apiRequest<TransactionsResponse>(
+                    `/api/crypto/transactions?page=${page}&per_page=${PAGE_SIZE}`,
+                )
+                setTransactions(data.transactions ?? [])
+                setTotalTransactions(data.total)
+                setCurrentPage(data.page)
+            } catch (err: any) {
+                setErrorTransactions(err.message || 'Error cargando transacciones')
+            } finally {
+                setLoadingTransactions(false)
+            }
+        },
+        [apiRequest],
+    )
 
     const fetchHoldings = useCallback(async () => {
         setLoadingHoldings(true)
@@ -176,26 +179,29 @@ export function useCrypto(): UseCryptoResult {
         }
     }, [apiRequest])
 
-    const fetchGains = useCallback(async (taxYear: number) => {
-        setLoadingGains(true)
-        setErrorGains(null)
-        try {
-            const data = await apiRequest<GainsResponse>(
-                `/api/crypto/gains?tax_year=${taxYear}`
-            )
-            setGainsSummary({
-                tax_year: data.tax_year,
-                total_gains_eur: data.summary.casilla_1814,
-                total_losses_eur: Math.abs(data.summary.casilla_1813),
-                net_eur: data.summary.net,
-                gains: data.gains ?? [],
-            })
-        } catch (err: any) {
-            setErrorGains(err.message || 'Error cargando ganancias fiscales')
-        } finally {
-            setLoadingGains(false)
-        }
-    }, [apiRequest])
+    const fetchGains = useCallback(
+        async (taxYear: number) => {
+            setLoadingGains(true)
+            setErrorGains(null)
+            try {
+                const data = await apiRequest<GainsResponse>(
+                    `/api/crypto/gains?tax_year=${taxYear}`,
+                )
+                setGainsSummary({
+                    tax_year: data.tax_year,
+                    total_gains_eur: data.summary.casilla_1814,
+                    total_losses_eur: Math.abs(data.summary.casilla_1813),
+                    net_eur: data.summary.net,
+                    gains: data.gains ?? [],
+                })
+            } catch (err: any) {
+                setErrorGains(err.message || 'Error cargando ganancias fiscales')
+            } finally {
+                setLoadingGains(false)
+            }
+        },
+        [apiRequest],
+    )
 
     const uploadFile = useCallback(async (file: File): Promise<UploadResult | null> => {
         setUploading(true)
@@ -226,7 +232,7 @@ export function useCrypto(): UseCryptoResult {
                 throw new Error(err.detail || `Error ${response.status}`)
             }
 
-            const result = await response.json() as UploadResult
+            const result = (await response.json()) as UploadResult
             return result
         } catch (err: any) {
             setErrorUpload(err.message || 'Error subiendo archivo')
@@ -236,17 +242,20 @@ export function useCrypto(): UseCryptoResult {
         }
     }, [])
 
-    const deleteTransaction = useCallback(async (id: string): Promise<boolean> => {
-        try {
-            await apiRequest(`/api/crypto/transactions/${id}`, { method: 'DELETE' })
-            setTransactions((prev) => prev.filter((t) => t.id !== id))
-            setTotalTransactions((prev) => Math.max(0, prev - 1))
-            return true
-        } catch (err: any) {
-            setErrorTransactions(err.message || 'Error eliminando transaccion')
-            return false
-        }
-    }, [apiRequest])
+    const deleteTransaction = useCallback(
+        async (id: string): Promise<boolean> => {
+            try {
+                await apiRequest(`/api/crypto/transactions/${id}`, { method: 'DELETE' })
+                setTransactions((prev) => prev.filter((t) => t.id !== id))
+                setTotalTransactions((prev) => Math.max(0, prev - 1))
+                return true
+            } catch (err: any) {
+                setErrorTransactions(err.message || 'Error eliminando transaccion')
+                return false
+            }
+        },
+        [apiRequest],
+    )
 
     return {
         transactions,

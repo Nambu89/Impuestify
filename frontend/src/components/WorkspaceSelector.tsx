@@ -16,7 +16,7 @@ export function WorkspaceSelector({
     activeWorkspace,
     onWorkspaceChange,
     onCreateNew,
-    onRenameWorkspace
+    onRenameWorkspace,
 }: WorkspaceSelectorProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -171,4 +171,3 @@ export function WorkspaceSelector({
         </div>
     )
 }
-

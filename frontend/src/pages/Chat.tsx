@@ -1,5 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Loader2, FileText, Upload, Zap, Calculator, Search, Shield, Share2, X, BarChart3 } from 'lucide-react'
+import {
+    Send,
+    Loader2,
+    FileText,
+    Upload,
+    Zap,
+    Calculator,
+    Search,
+    Shield,
+    Share2,
+    X,
+    BarChart3,
+} from 'lucide-react'
 import ShareModal from '../components/ShareModal'
 import Header from '../components/Header'
 import AITransparencyModal from '../components/AITransparencyModal'
@@ -47,7 +59,14 @@ export default function Chat() {
     const { getConversation, warmupChat } = useConversations()
     const { workspaces, activeWorkspace, selectWorkspace, fetchWorkspaces } = useWorkspaces()
     const { streamState, isStreaming, sendStreamingMessage } = useStreamingChat()
-    const { docs: sessionDocs, docIds: sessionDocIds, isUploading: isDocUploading, uploadError: docUploadError, uploadDoc, removeDoc } = useSessionDocs()
+    const {
+        docs: sessionDocs,
+        docIds: sessionDocIds,
+        isUploading: isDocUploading,
+        uploadError: docUploadError,
+        uploadDoc,
+        removeDoc,
+    } = useSessionDocs()
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -57,8 +76,12 @@ export default function Chat() {
     const [showShareModal, setShowShareModal] = useState(false)
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [useStreaming] = useState(true)
-    const [onboardingDone, setOnboardingDone] = useState(() => !!localStorage.getItem('onboarding_seen'))
-    const [aiTransparencyDone, setAiTransparencyDone] = useState(() => !!localStorage.getItem('ai_transparency_accepted'))
+    const [onboardingDone, setOnboardingDone] = useState(
+        () => !!localStorage.getItem('onboarding_seen'),
+    )
+    const [aiTransparencyDone, setAiTransparencyDone] = useState(
+        () => !!localStorage.getItem('ai_transparency_accepted'),
+    )
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const chatMessagesRef = useRef<HTMLDivElement>(null)
     const userJustSentRef = useRef(false)
@@ -69,7 +92,7 @@ export default function Chat() {
         fetchWorkspaces()
         refreshFiscalProfile()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])  // Empty dependency array = run only once on mount
+    }, []) // Empty dependency array = run only once on mount
 
     // Warmup: fetch personalized greeting for new conversations
     useEffect(() => {
@@ -77,15 +100,17 @@ export default function Chat() {
             warmupAttemptedRef.current = true
             warmupChat().then((result) => {
                 if (result?.greeting) {
-                    setMessages([{
-                        id: 'warmup-greeting',
-                        role: 'assistant',
-                        content: result.greeting
-                    }])
+                    setMessages([
+                        {
+                            id: 'warmup-greeting',
+                            role: 'assistant',
+                            content: result.greeting,
+                        },
+                    ])
                 }
             })
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeConversationId])
 
     // Workspace change handler
@@ -119,16 +144,16 @@ export default function Chat() {
     const handleSelectConversation = async (conversationId: string) => {
         try {
             const data = await getConversation(conversationId)
-            const formattedMessages: Message[] = data.messages.map(msg => ({
+            const formattedMessages: Message[] = data.messages.map((msg) => ({
                 id: msg.id,
                 role: msg.role as 'user' | 'assistant',
                 content: msg.content,
-                sources: msg.metadata?.sources
+                sources: msg.metadata?.sources,
             }))
             setMessages(formattedMessages)
             setActiveConversationId(conversationId)
             setNotificationAnalysis(null)
-            selectWorkspace(null)  // Clear stale workspace context on conversation switch
+            selectWorkspace(null) // Clear stale workspace context on conversation switch
             setSidebarOpen(false) // ✅ NUEVO: Cerrar sidebar al seleccionar
         } catch (error) {
             logger.error('Error loading conversation:', error)
@@ -139,7 +164,7 @@ export default function Chat() {
         setMessages([])
         setActiveConversationId(null)
         setNotificationAnalysis(null)
-        selectWorkspace(null)  // Clear workspace context on new conversation
+        selectWorkspace(null) // Clear workspace context on new conversation
         setSidebarOpen(false) // ✅ NUEVO: Cerrar sidebar al crear nuevo
         // Reset warmup flag so the useEffect triggers for the new conversation
         warmupAttemptedRef.current = false
@@ -167,46 +192,58 @@ export default function Chat() {
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
-            content: input.trim()
+            content: input.trim(),
         }
 
         userJustSentRef.current = true
-        setMessages(prev => [...prev, userMessage])
+        setMessages((prev) => [...prev, userMessage])
         const questionText = input.trim()
         setInput('')
 
         // ✅ STREAMING MODE
         if (useStreaming) {
             try {
-                await sendStreamingMessage(questionText, activeConversationId || undefined, {
-                    onComplete: (response, convId) => {
-                        const assistantMessage: Message = {
-                            id: (Date.now() + 1).toString(),
-                            role: 'assistant',
-                            content: response
-                        }
-                        setMessages(prev => [...prev, assistantMessage])
+                await sendStreamingMessage(
+                    questionText,
+                    activeConversationId || undefined,
+                    {
+                        onComplete: (response, convId) => {
+                            const assistantMessage: Message = {
+                                id: (Date.now() + 1).toString(),
+                                role: 'assistant',
+                                content: response,
+                            }
+                            setMessages((prev) => [...prev, assistantMessage])
 
-                        if (convId && convId !== activeConversationId) {
-                            setActiveConversationId(convId)
-                        }
+                            if (convId && convId !== activeConversationId) {
+                                setActiveConversationId(convId)
+                            }
+                        },
+                        onError: (error) => {
+                            logger.error('Streaming error:', error)
+                            setMessages((prev) => [
+                                ...prev,
+                                {
+                                    id: (Date.now() + 1).toString(),
+                                    role: 'assistant',
+                                    content: `Error: ${error} `,
+                                },
+                            ])
+                        },
                     },
-                    onError: (error) => {
-                        logger.error('Streaming error:', error)
-                        setMessages(prev => [...prev, {
-                            id: (Date.now() + 1).toString(),
-                            role: 'assistant',
-                            content: `Error: ${error} `
-                        }])
-                    }
-                }, activeWorkspace?.id, sessionDocIds.length > 0 ? sessionDocIds : undefined)
+                    activeWorkspace?.id,
+                    sessionDocIds.length > 0 ? sessionDocIds : undefined,
+                )
             } catch (error: any) {
                 logger.error('Streaming fatal error:', error)
-                setMessages(prev => [...prev, {
-                    id: (Date.now() + 1).toString(),
-                    role: 'assistant',
-                    content: `Error: ${error.message || 'No se pudo obtener respuesta'} `
-                }])
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        id: (Date.now() + 1).toString(),
+                        role: 'assistant',
+                        content: `Error: ${error.message || 'No se pudo obtener respuesta'} `,
+                    },
+                ])
             }
             return
         }
@@ -216,26 +253,27 @@ export default function Chat() {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
             content: '',
-            loading: true
+            loading: true,
         }
 
-        setMessages(prev => [...prev, loadingMessage])
+        setMessages((prev) => [...prev, loadingMessage])
         setIsLoading(true)
 
         try {
-            const response = await askQuestion(
-                questionText,
-                activeConversationId || undefined
-            )
+            const response = await askQuestion(questionText, activeConversationId || undefined)
 
-            setMessages(prev => prev.map(msg =>
-                msg.loading ? {
-                    ...msg,
-                    content: response.answer,
-                    sources: response.sources,
-                    loading: false
-                } : msg
-            ))
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.loading
+                        ? {
+                              ...msg,
+                              content: response.answer,
+                              sources: response.sources,
+                              loading: false,
+                          }
+                        : msg,
+                ),
+            )
 
             // Update conversation ID if returned
             if (response.conversation_id) {
@@ -244,13 +282,17 @@ export default function Chat() {
             }
         } catch (error: any) {
             logger.error('Error in handleSubmit:', error)
-            setMessages(prev => prev.map(msg =>
-                msg.loading ? {
-                    ...msg,
-                    content: `Error: ${error.message || 'No se pudo obtener respuesta'} `,
-                    loading: false
-                } : msg
-            ))
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.loading
+                        ? {
+                              ...msg,
+                              content: `Error: ${error.message || 'No se pudo obtener respuesta'} `,
+                              loading: false,
+                          }
+                        : msg,
+                ),
+            )
         } finally {
             setIsLoading(false)
         }
@@ -268,10 +310,12 @@ export default function Chat() {
 
             {/* AI Act Art. 52: AI Transparency Modal — only after onboarding is done and not already accepted */}
             {onboardingDone && !aiTransparencyDone && (
-                <AITransparencyModal onAccept={() => {
-                    setAiTransparencyDone(true)
-                    logger.debug('AI Transparency accepted')
-                }} />
+                <AITransparencyModal
+                    onAccept={() => {
+                        setAiTransparencyDone(true)
+                        logger.debug('AI Transparency accepted')
+                    }}
+                />
             )}
 
             {/* ✅ NUEVO: Pasar props de sidebar open/close */}
@@ -285,10 +329,7 @@ export default function Chat() {
 
             {/* ✅ NUEVO: Overlay para cerrar sidebar en móvil */}
             {sidebarOpen && (
-                <div
-                    className="sidebar-overlay active"
-                    onClick={() => setSidebarOpen(false)}
-                />
+                <div className="sidebar-overlay active" onClick={() => setSidebarOpen(false)} />
             )}
 
             <main className="chat-main">
@@ -299,16 +340,17 @@ export default function Chat() {
                             <select
                                 value={activeWorkspace?.id || ''}
                                 onChange={(e) => {
-                                    const ws = workspaces.find(w => w.id === e.target.value)
+                                    const ws = workspaces.find((w) => w.id === e.target.value)
                                     selectWorkspace(ws || null)
                                 }}
                                 className="chat-workspace-select"
                                 aria-label="Seleccionar workspace"
                             >
                                 <option value="">Sin workspace (chat general)</option>
-                                {workspaces.map(ws => (
+                                {workspaces.map((ws) => (
                                     <option key={ws.id} value={ws.id}>
-                                        {ws.icon} {ws.name} ({ws.file_count} {ws.file_count === 1 ? 'archivo' : 'archivos'})
+                                        {ws.icon} {ws.name} ({ws.file_count}{' '}
+                                        {ws.file_count === 1 ? 'archivo' : 'archivos'})
                                     </option>
                                 ))}
                             </select>
@@ -325,7 +367,10 @@ export default function Chat() {
                         </div>
                         {activeWorkspace && (
                             <div className="chat-workspace-bar__indicator">
-                                <span>{activeWorkspace.icon} Conversando sobre: <strong>{activeWorkspace.name}</strong></span>
+                                <span>
+                                    {activeWorkspace.icon} Conversando sobre:{' '}
+                                    <strong>{activeWorkspace.name}</strong>
+                                </span>
                                 <a
                                     href="/workspaces"
                                     className="chat-workspace-bar__dashboard-link"
@@ -339,12 +384,15 @@ export default function Chat() {
                 )}
 
                 {/* Workspace quick-access cards: shown when user has workspaces but none selected */}
-                {workspaces && workspaces.length > 0 && !activeWorkspace && messages.length <= 1 && (
-                    <WorkspaceCards
-                        workspaces={workspaces}
-                        onSelectWorkspace={(ws) => selectWorkspace(ws)}
-                    />
-                )}
+                {workspaces &&
+                    workspaces.length > 0 &&
+                    !activeWorkspace &&
+                    messages.length <= 1 && (
+                        <WorkspaceCards
+                            workspaces={workspaces}
+                            onSelectWorkspace={(ws) => selectWorkspace(ws)}
+                        />
+                    )}
 
                 {/* AI disclosure banner — EU AI Act Art. 50 + AESIA Guides 13/14 */}
                 <div
@@ -354,55 +402,77 @@ export default function Chat() {
                 >
                     <span aria-hidden="true">ℹ️</span>
                     <span>
-                        Impuestify usa <strong>inteligencia artificial</strong>. Las respuestas
-                        son orientativas y no sustituyen al asesoramiento de un profesional
-                        colegiado. Verifica siempre las cifras y referencias normativas
-                        antes de actuar (Reglamento UE de IA, Art. 50).
+                        Impuestify usa <strong>inteligencia artificial</strong>. Las respuestas son
+                        orientativas y no sustituyen al asesoramiento de un profesional colegiado.
+                        Verifica siempre las cifras y referencias normativas antes de actuar
+                        (Reglamento UE de IA, Art. 50).
                     </span>
                 </div>
 
                 <div className="chat-container">
                     {messages.length === 0 ? (
                         <div className="chat-empty-state">
-                            <h2 className="chat-empty-state__title">
-                                ¿En qué puedo ayudarte?
-                            </h2>
+                            <h2 className="chat-empty-state__title">¿En qué puedo ayudarte?</h2>
                             <div className="chat-empty-state__suggestions">
                                 <button
                                     className="chat-suggestion-card"
-                                    onClick={() => handleSuggestionClick('Calcula mi IRPF en mi comunidad autónoma')}
+                                    onClick={() =>
+                                        handleSuggestionClick(
+                                            'Calcula mi IRPF en mi comunidad autónoma',
+                                        )
+                                    }
                                 >
                                     <div className="chat-suggestion-card__icon">
                                         <Calculator size={20} />
                                     </div>
-                                    <span className="chat-suggestion-card__text">Calcula mi IRPF</span>
+                                    <span className="chat-suggestion-card__text">
+                                        Calcula mi IRPF
+                                    </span>
                                 </button>
                                 <button
                                     className="chat-suggestion-card"
-                                    onClick={() => handleSuggestionClick('Analiza mi última nómina y dime si las retenciones son correctas')}
+                                    onClick={() =>
+                                        handleSuggestionClick(
+                                            'Analiza mi última nómina y dime si las retenciones son correctas',
+                                        )
+                                    }
                                 >
                                     <div className="chat-suggestion-card__icon">
                                         <FileText size={20} />
                                     </div>
-                                    <span className="chat-suggestion-card__text">Analiza mi nómina</span>
+                                    <span className="chat-suggestion-card__text">
+                                        Analiza mi nómina
+                                    </span>
                                 </button>
                                 <button
                                     className="chat-suggestion-card"
-                                    onClick={() => handleSuggestionClick('¿Qué deducciones fiscales puedo aplicar en mi declaración?')}
+                                    onClick={() =>
+                                        handleSuggestionClick(
+                                            '¿Qué deducciones fiscales puedo aplicar en mi declaración?',
+                                        )
+                                    }
                                 >
                                     <div className="chat-suggestion-card__icon">
                                         <Search size={20} />
                                     </div>
-                                    <span className="chat-suggestion-card__text">Deducciones disponibles</span>
+                                    <span className="chat-suggestion-card__text">
+                                        Deducciones disponibles
+                                    </span>
                                 </button>
                                 <button
                                     className="chat-suggestion-card"
-                                    onClick={() => handleSuggestionClick('He recibido una notificación de la AEAT, ¿qué debo hacer?')}
+                                    onClick={() =>
+                                        handleSuggestionClick(
+                                            'He recibido una notificación de la AEAT, ¿qué debo hacer?',
+                                        )
+                                    }
                                 >
                                     <div className="chat-suggestion-card__icon">
                                         <Shield size={20} />
                                     </div>
-                                    <span className="chat-suggestion-card__text">Notificación AEAT</span>
+                                    <span className="chat-suggestion-card__text">
+                                        Notificación AEAT
+                                    </span>
                                 </button>
                             </div>
                         </div>
@@ -413,7 +483,11 @@ export default function Chat() {
                                     key={message.id}
                                     className={`message ${message.role} `}
                                     role={message.role === 'assistant' ? 'note' : undefined}
-                                    aria-label={message.role === 'assistant' ? 'Respuesta generada por IA' : undefined}
+                                    aria-label={
+                                        message.role === 'assistant'
+                                            ? 'Respuesta generada por IA'
+                                            : undefined
+                                    }
                                 >
                                     {message.role === 'assistant' ? (
                                         <div className="message-avatar">
@@ -434,7 +508,9 @@ export default function Chat() {
                                             <>
                                                 <div className="message-text">
                                                     {message.role === 'assistant' ? (
-                                                        <FormattedMessage content={message.content} />
+                                                        <FormattedMessage
+                                                            content={message.content}
+                                                        />
                                                     ) : (
                                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                             {message.content}
@@ -442,35 +518,46 @@ export default function Chat() {
                                                     )}
                                                 </div>
                                                 {/* Fuentes sin bullets, formato inline */}
-                                                {message.sources && message.sources.filter(s => s.title).length > 0 && (
-                                                    <div className="message-sources">
-                                                        <p className="sources-title">
-                                                            <FileText size={14} />
-                                                            Fuentes: {message.sources.filter(s => s.title).map((source, idx) => (
-                                                                <span key={idx}>
-                                                                    {idx > 0 && ', '}
-                                                                    {source.title}{source.page > 0 ? ` (pág. ${source.page})` : ''}
-                                                                </span>
-                                                            ))}
-                                                        </p>
-                                                    </div>
-                                                )}
+                                                {message.sources &&
+                                                    message.sources.filter((s) => s.title).length >
+                                                        0 && (
+                                                        <div className="message-sources">
+                                                            <p className="sources-title">
+                                                                <FileText size={14} />
+                                                                Fuentes:{' '}
+                                                                {message.sources
+                                                                    .filter((s) => s.title)
+                                                                    .map((source, idx) => (
+                                                                        <span key={idx}>
+                                                                            {idx > 0 && ', '}
+                                                                            {source.title}
+                                                                            {source.page > 0
+                                                                                ? ` (pág. ${source.page})`
+                                                                                : ''}
+                                                                        </span>
+                                                                    ))}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 {/* Deduction cards for deduction results */}
-                                                {message.role === 'assistant' && hasDeductions(message.content) && (
-                                                    <DeductionCards content={message.content} />
-                                                )}
+                                                {message.role === 'assistant' &&
+                                                    hasDeductions(message.content) && (
+                                                        <DeductionCards content={message.content} />
+                                                    )}
                                                 {/* Report actions for IRPF simulation results */}
-                                                {message.role === 'assistant' && isIRPFSimulation(message.content) && (
-                                                    <ReportActions
-                                                        messageContent={message.content}
-                                                        previousUserMessage={
-                                                            index > 0 && messages[index - 1]?.role === 'user'
-                                                                ? messages[index - 1].content
-                                                                : undefined
-                                                        }
-                                                        fiscalProfile={fiscalProfile as any}
-                                                    />
-                                                )}
+                                                {message.role === 'assistant' &&
+                                                    isIRPFSimulation(message.content) && (
+                                                        <ReportActions
+                                                            messageContent={message.content}
+                                                            previousUserMessage={
+                                                                index > 0 &&
+                                                                messages[index - 1]?.role === 'user'
+                                                                    ? messages[index - 1].content
+                                                                    : undefined
+                                                            }
+                                                            fiscalProfile={fiscalProfile as any}
+                                                        />
+                                                    )}
                                             </>
                                         )}
                                     </div>
@@ -483,8 +570,16 @@ export default function Chat() {
                                     {/* Workspace context badge while streaming */}
                                     {activeWorkspace && (
                                         <div className="streaming-workspace-badge">
-                                            <span className="streaming-workspace-icon">{activeWorkspace.icon}</span>
-                                            <span>Consultando {activeWorkspace.file_count} {activeWorkspace.file_count === 1 ? 'documento' : 'documentos'} de <strong>{activeWorkspace.name}</strong></span>
+                                            <span className="streaming-workspace-icon">
+                                                {activeWorkspace.icon}
+                                            </span>
+                                            <span>
+                                                Consultando {activeWorkspace.file_count}{' '}
+                                                {activeWorkspace.file_count === 1
+                                                    ? 'documento'
+                                                    : 'documentos'}{' '}
+                                                de <strong>{activeWorkspace.name}</strong>
+                                            </span>
                                         </div>
                                     )}
 
@@ -506,7 +601,9 @@ export default function Chat() {
                                                 </div>
                                                 <div className="message-content">
                                                     <div className="message-text">
-                                                        <FormattedMessage content={streamState.response} />
+                                                        <FormattedMessage
+                                                            content={streamState.response}
+                                                        />
                                                         <span className="streaming-cursor" />
                                                     </div>
                                                 </div>
@@ -535,9 +632,7 @@ export default function Chat() {
 
                 {/* Session document chips */}
                 <SessionDocChips docs={sessionDocs} onRemove={removeDoc} />
-                {docUploadError && (
-                    <p className="session-doc-error">{docUploadError}</p>
-                )}
+                {docUploadError && <p className="session-doc-error">{docUploadError}</p>}
 
                 <form onSubmit={handleSubmit} className="chat-form">
                     {/* Workspace Selector */}
@@ -545,7 +640,7 @@ export default function Chat() {
                         workspaces={workspaces}
                         activeWorkspace={activeWorkspace}
                         onWorkspaceChange={handleWorkspaceChange}
-                        onCreateNew={() => window.location.href = '/workspaces'}
+                        onCreateNew={() => (window.location.href = '/workspaces')}
                     />
 
                     {/* Session Doc Upload (paperclip) */}
@@ -558,11 +653,13 @@ export default function Chat() {
                     <input
                         type="text"
                         className="chat-input"
-                        placeholder={sessionDocs.length > 0
-                            ? `Pregunta sobre tus ${sessionDocs.length} documento(s)...`
-                            : activeWorkspace
-                                ? `Pregunta sobre ${activeWorkspace.name}...`
-                                : "Escribe tu pregunta fiscal..."}
+                        placeholder={
+                            sessionDocs.length > 0
+                                ? `Pregunta sobre tus ${sessionDocs.length} documento(s)...`
+                                : activeWorkspace
+                                  ? `Pregunta sobre ${activeWorkspace.name}...`
+                                  : 'Escribe tu pregunta fiscal...'
+                        }
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         disabled={isLoading}
@@ -586,7 +683,8 @@ export default function Chat() {
                     </button>
                 )}
                 <p className="chat-disclaimer">
-                    Impuestify usa IA. Verifica siempre la información importante con un profesional.
+                    Impuestify usa IA. Verifica siempre la información importante con un
+                    profesional.
                 </p>
             </footer>
 
@@ -595,8 +693,17 @@ export default function Chat() {
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>📎 Analizar documento</h3>
-                            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px', lineHeight: '1.5', marginBottom: '12px' }}>
-                                Sube una nómina o una notificación de la AEAT (PDF o imagen) y te digo qué pone, qué plazos hay y qué toca hacer.
+                            <p
+                                style={{
+                                    fontSize: '14px',
+                                    color: '#6b7280',
+                                    marginTop: '8px',
+                                    lineHeight: '1.5',
+                                    marginBottom: '12px',
+                                }}
+                            >
+                                Sube una nómina o una notificación de la AEAT (PDF o imagen) y te
+                                digo qué pone, qué plazos hay y qué toca hacer.
                             </p>
                             <button
                                 className="modal-close"
@@ -610,15 +717,18 @@ export default function Chat() {
                                 const analysisMessage: Message = {
                                     id: Date.now().toString(),
                                     role: 'assistant',
-                                    content: `📋 ** Análisis de Notificación: ${analysis.type}**\n\n${analysis.summary} \n\n-- -\n\n💡 Pregúntame lo que quieras sobre esta notificación.`
+                                    content: `📋 ** Análisis de Notificación: ${analysis.type}**\n\n${analysis.summary} \n\n-- -\n\n💡 Pregúntame lo que quieras sobre esta notificación.`,
                                 }
 
-                                setMessages(prev => [...prev, analysisMessage])
+                                setMessages((prev) => [...prev, analysisMessage])
                                 setNotificationAnalysis(analysis)
                                 setShowNotificationModal(false)
 
                                 if (analysis.conversation_id) {
-                                    logger.debug('Notification conversation ID:', analysis.conversation_id)
+                                    logger.debug(
+                                        'Notification conversation ID:',
+                                        analysis.conversation_id,
+                                    )
                                     setActiveConversationId(analysis.conversation_id)
                                 }
                             }}
@@ -627,38 +737,41 @@ export default function Chat() {
                 </div>
             )}
 
-            {notificationAnalysis && !messages.some(m => m.content.includes('Análisis de Notificación')) && (
-                <div style={{
-                    position: 'fixed',
-                    top: '80px',
-                    right: '20px',
-                    maxWidth: '500px',
-                    zIndex: 1000,
-                    maxHeight: 'calc(100vh - 100px)',
-                    overflowY: 'auto'
-                }}>
-                    <button
-                        onClick={() => setNotificationAnalysis(null)}
+            {notificationAnalysis &&
+                !messages.some((m) => m.content.includes('Análisis de Notificación')) && (
+                    <div
                         style={{
-                            position: 'absolute',
-                            right: '10px',
-                            top: '10px',
-                            background: '#fc8181',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '30px',
-                            height: '30px',
-                            cursor: 'pointer',
-                            fontSize: '18px',
-                            zIndex: 10
+                            position: 'fixed',
+                            top: '80px',
+                            right: '20px',
+                            maxWidth: '500px',
+                            zIndex: 1000,
+                            maxHeight: 'calc(100vh - 100px)',
+                            overflowY: 'auto',
                         }}
                     >
-                        ✕
-                    </button>
-                    <NotificationAnalysisDisplay analysis={notificationAnalysis} />
-                </div>
-            )}
+                        <button
+                            onClick={() => setNotificationAnalysis(null)}
+                            style={{
+                                position: 'absolute',
+                                right: '10px',
+                                top: '10px',
+                                background: '#fc8181',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '30px',
+                                height: '30px',
+                                cursor: 'pointer',
+                                fontSize: '18px',
+                                zIndex: 10,
+                            }}
+                        >
+                            ✕
+                        </button>
+                        <NotificationAnalysisDisplay analysis={notificationAnalysis} />
+                    </div>
+                )}
 
             {showShareModal && activeConversationId && (
                 <ShareModal

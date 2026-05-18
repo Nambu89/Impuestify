@@ -1,5 +1,16 @@
 import { useState, useRef } from 'react'
-import { MessageSquarePlus, X, Bug, Lightbulb, MessageCircle, Send, Loader, CheckCircle, Paperclip, AlertCircle } from 'lucide-react'
+import {
+    MessageSquarePlus,
+    X,
+    Bug,
+    Lightbulb,
+    MessageCircle,
+    Send,
+    Loader,
+    CheckCircle,
+    Paperclip,
+    AlertCircle,
+} from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useLocation } from 'react-router-dom'
 import { useFeedback } from '../hooks/useFeedback'
@@ -7,9 +18,23 @@ import './FeedbackWidget.css'
 
 type FeedbackType = 'bug' | 'feature' | 'general'
 
-const PUBLIC_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/subscribe',
-    '/contact', '/privacy-policy', '/ai-transparency', '/politica-cookies', '/terms',
-    '/data-retention', '/territorios-forales', '/ceuta-melilla', '/canarias']
+const PUBLIC_PATHS = [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/subscribe',
+    '/contact',
+    '/privacy-policy',
+    '/ai-transparency',
+    '/politica-cookies',
+    '/terms',
+    '/data-retention',
+    '/territorios-forales',
+    '/ceuta-melilla',
+    '/canarias',
+]
 
 export default function FeedbackWidget() {
     const { isAuthenticated } = useAuth()
@@ -124,7 +149,7 @@ export default function FeedbackWidget() {
                 <div className="feedback-overlay" onClick={handleClose}>
                     <div
                         className="feedback-modal"
-                        onClick={e => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                         role="dialog"
                         aria-modal="true"
                         aria-label="Enviar feedback"
@@ -153,7 +178,7 @@ export default function FeedbackWidget() {
                             <form className="feedback-form" onSubmit={handleSubmit}>
                                 {/* Type selector */}
                                 <div className="feedback-type-group">
-                                    {typeOptions.map(opt => (
+                                    {typeOptions.map((opt) => (
                                         <button
                                             key={opt.value}
                                             type="button"
@@ -177,7 +202,7 @@ export default function FeedbackWidget() {
                                         className="feedback-input"
                                         placeholder="Resumen breve del problema o sugerencia"
                                         value={title}
-                                        onChange={e => setTitle(e.target.value.slice(0, 100))}
+                                        onChange={(e) => setTitle(e.target.value.slice(0, 100))}
                                         maxLength={100}
                                         required
                                     />
@@ -194,12 +219,16 @@ export default function FeedbackWidget() {
                                         className="feedback-textarea"
                                         placeholder="Describe con detalle lo que ocurrió o lo que necesitas..."
                                         value={description}
-                                        onChange={e => setDescription(e.target.value.slice(0, 2000))}
+                                        onChange={(e) =>
+                                            setDescription(e.target.value.slice(0, 2000))
+                                        }
                                         maxLength={2000}
                                         rows={4}
                                         required
                                     />
-                                    <span className="feedback-char-count">{description.length}/2000</span>
+                                    <span className="feedback-char-count">
+                                        {description.length}/2000
+                                    </span>
                                 </div>
 
                                 {/* Screenshot */}
@@ -209,7 +238,11 @@ export default function FeedbackWidget() {
                                             <img src={screenshotData} alt="Captura adjunta" />
                                             <div className="feedback-screenshot-info">
                                                 <span>{screenshotName}</span>
-                                                <button type="button" onClick={removeScreenshot} aria-label="Eliminar captura">
+                                                <button
+                                                    type="button"
+                                                    onClick={removeScreenshot}
+                                                    aria-label="Eliminar captura"
+                                                >
                                                     <X size={14} />
                                                 </button>
                                             </div>
@@ -253,9 +286,14 @@ export default function FeedbackWidget() {
                                     disabled={!title.trim() || !description.trim() || sending}
                                 >
                                     {sending ? (
-                                        <><Loader size={16} className="feedback-spin" /> Enviando...</>
+                                        <>
+                                            <Loader size={16} className="feedback-spin" />{' '}
+                                            Enviando...
+                                        </>
                                     ) : (
-                                        <><Send size={16} /> Enviar feedback</>
+                                        <>
+                                            <Send size={16} /> Enviar feedback
+                                        </>
                                     )}
                                 </button>
                             </form>

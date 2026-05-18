@@ -27,12 +27,10 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     const { apiRequest } = useApi()
 
     const isSupported =
-        typeof window !== 'undefined' &&
-        'PushManager' in window &&
-        'serviceWorker' in navigator
+        typeof window !== 'undefined' && 'PushManager' in window && 'serviceWorker' in navigator
 
     const [permission, setPermission] = useState<NotificationPermission>(
-        isSupported ? Notification.permission : 'denied'
+        isSupported ? Notification.permission : 'denied',
     )
     const [isSubscribed, setIsSubscribed] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -96,7 +94,9 @@ export function usePushNotifications(): UsePushNotificationsReturn {
                 })
 
                 if (pushPermState === 'denied') {
-                    setError('Las notificaciones push están bloqueadas en tu navegador. Revisa Configuración → Privacidad → Notificaciones.')
+                    setError(
+                        'Las notificaciones push están bloqueadas en tu navegador. Revisa Configuración → Privacidad → Notificaciones.',
+                    )
                     return
                 }
 
@@ -110,7 +110,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
                     })
                 } catch (firstErr: any) {
                     // Retry once after a brief pause — FCM can be flaky on first attempt
-                    await new Promise(r => setTimeout(r, 1500))
+                    await new Promise((r) => setTimeout(r, 1500))
                     subscription = await registration.pushManager.subscribe({
                         userVisibleOnly: true,
                         applicationServerKey: appServerKey,
@@ -136,13 +136,15 @@ export function usePushNotifications(): UsePushNotificationsReturn {
                 let userMessage: string
                 if (raw.includes('permission') || raw.includes('denied')) {
                     userMessage = 'Permiso de notificaciones denegado'
-                } else if (raw.includes('push service error') || raw.includes('Registration failed')) {
-                    userMessage = (
+                } else if (
+                    raw.includes('push service error') ||
+                    raw.includes('Registration failed')
+                ) {
+                    userMessage =
                         'No se pudo conectar con el servicio de notificaciones (FCM). ' +
                         'Prueba a: 1) Desactivar extensiones del navegador (MetaMask, ad blockers), ' +
                         '2) Comprobar que las notificaciones de Chrome están activadas en Windows (Configuración → Sistema → Notificaciones), ' +
                         '3) Intentarlo en una ventana sin extensiones.'
-                    )
                 } else {
                     userMessage = raw
                 }
@@ -151,7 +153,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
                 setLoading(false)
             }
         },
-        [isSupported, apiRequest]
+        [isSupported, apiRequest],
     )
 
     const unsubscribe = useCallback(async () => {

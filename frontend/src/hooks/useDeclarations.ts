@@ -176,57 +176,59 @@ export function useDeclarations() {
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const abortRef = useRef<AbortController | null>(null)
 
-    const calculate = useCallback((
-        modelo: ModeloType,
-        input: Calculate303Input | Calculate130Input | Calculate420Input | CalculateIpsiInput,
-    ) => {
-        if (timerRef.current) clearTimeout(timerRef.current)
-        if (abortRef.current) abortRef.current.abort()
+    const calculate = useCallback(
+        (
+            modelo: ModeloType,
+            input: Calculate303Input | Calculate130Input | Calculate420Input | CalculateIpsiInput,
+        ) => {
+            if (timerRef.current) clearTimeout(timerRef.current)
+            if (abortRef.current) abortRef.current.abort()
 
-        timerRef.current = setTimeout(async () => {
-            setLoading(true)
-            setError(null)
+            timerRef.current = setTimeout(async () => {
+                setLoading(true)
+                setError(null)
 
-            const controller = new AbortController()
-            abortRef.current = controller
+                const controller = new AbortController()
+                abortRef.current = controller
 
-            try {
-                const data = await apiRequest<CalculationResult>(
-                    `/api/declarations/${modelo}/calculate`,
-                    {
-                        method: 'POST',
-                        body: JSON.stringify(input),
-                        signal: controller.signal,
+                try {
+                    const data = await apiRequest<CalculationResult>(
+                        `/api/declarations/${modelo}/calculate`,
+                        {
+                            method: 'POST',
+                            body: JSON.stringify(input),
+                            signal: controller.signal,
+                        },
+                    )
+                    if (!controller.signal.aborted) {
+                        setCalcResult(data)
+                        if (!data.success) setError(data.error || 'Error en el cálculo')
                     }
-                )
-                if (!controller.signal.aborted) {
-                    setCalcResult(data)
-                    if (!data.success) setError(data.error || 'Error en el cálculo')
+                } catch (err: any) {
+                    if (err.name !== 'AbortError' && !controller.signal.aborted) {
+                        setError(err.message)
+                    }
+                } finally {
+                    if (!controller.signal.aborted) setLoading(false)
                 }
-            } catch (err: any) {
-                if (err.name !== 'AbortError' && !controller.signal.aborted) {
-                    setError(err.message)
-                }
-            } finally {
-                if (!controller.signal.aborted) setLoading(false)
-            }
-        }, DEBOUNCE_MS)
-    }, [apiRequest])
+            }, DEBOUNCE_MS)
+        },
+        [apiRequest],
+    )
 
-    const save = useCallback(async (
-        declarationType: ModeloType,
-        territory: string,
-        year: number,
-        quarter: number,
-        formData: Record<string, any>,
-        calculatedResult: Record<string, any>,
-    ) => {
-        setSaving(true)
-        setError(null)
-        try {
-            const data = await apiRequest<CalculationResult>(
-                '/api/declarations/save',
-                {
+    const save = useCallback(
+        async (
+            declarationType: ModeloType,
+            territory: string,
+            year: number,
+            quarter: number,
+            formData: Record<string, any>,
+            calculatedResult: Record<string, any>,
+        ) => {
+            setSaving(true)
+            setError(null)
+            try {
+                const data = await apiRequest<CalculationResult>('/api/declarations/save', {
                     method: 'POST',
                     body: JSON.stringify({
                         declaration_type: declarationType,
@@ -236,66 +238,73 @@ export function useDeclarations() {
                         form_data: formData,
                         calculated_result: calculatedResult,
                     }),
-                }
-            )
-            if (!data.success) setError(data.error || 'Error al guardar')
-            return data
-        } catch (err: any) {
-            setError(err.message)
-            return null
-        } finally {
-            setSaving(false)
-        }
-    }, [apiRequest])
+                })
+                if (!data.success) setError(data.error || 'Error al guardar')
+                return data
+            } catch (err: any) {
+                setError(err.message)
+                return null
+            } finally {
+                setSaving(false)
+            }
+        },
+        [apiRequest],
+    )
 
-    const loadYear = useCallback(async (year: number) => {
-        setLoading(true)
-        setError(null)
-        try {
-            const data = await apiRequest<{ declarations: DeclarationSummary[] }>(
-                `/api/declarations/${year}`
-            )
-            setDeclarations(data.declarations || [])
-        } catch (err: any) {
-            setError(err.message)
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+    const loadYear = useCallback(
+        async (year: number) => {
+            setLoading(true)
+            setError(null)
+            try {
+                const data = await apiRequest<{ declarations: DeclarationSummary[] }>(
+                    `/api/declarations/${year}`,
+                )
+                setDeclarations(data.declarations || [])
+            } catch (err: any) {
+                setError(err.message)
+            } finally {
+                setLoading(false)
+            }
+        },
+        [apiRequest],
+    )
 
-    const projectIrpf = useCallback(async (input: Record<string, any>) => {
-        setLoading(true)
-        setError(null)
-        try {
-            const data = await apiRequest<CalculationResult>(
-                '/api/declarations/projection',
-                {
+    const projectIrpf = useCallback(
+        async (input: Record<string, any>) => {
+            setLoading(true)
+            setError(null)
+            try {
+                const data = await apiRequest<CalculationResult>('/api/declarations/projection', {
                     method: 'POST',
                     body: JSON.stringify(input),
+                })
+                if (data.success) {
+                    setProjection(data.result as unknown as ProjectionResult)
+                } else {
+                    setError(data.error || 'Error en la proyeccion')
                 }
-            )
-            if (data.success) {
-                setProjection(data.result as unknown as ProjectionResult)
-            } else {
-                setError(data.error || 'Error en la proyeccion')
+            } catch (err: any) {
+                setError(err.message)
+            } finally {
+                setLoading(false)
             }
-        } catch (err: any) {
-            setError(err.message)
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+        },
+        [apiRequest],
+    )
 
-    const deleteDeclaration = useCallback(async (declarationId: string) => {
-        try {
-            await apiRequest(`/api/declarations/${declarationId}`, { method: 'DELETE' })
-            setDeclarations(prev => prev.filter(d => d.id !== declarationId))
-            return true
-        } catch (err: any) {
-            setError(err.message)
-            return false
-        }
-    }, [apiRequest])
+    const deleteDeclaration = useCallback(
+        async (declarationId: string) => {
+            try {
+                await apiRequest(`/api/declarations/${declarationId}`, { method: 'DELETE' })
+                setDeclarations((prev) => prev.filter((d) => d.id !== declarationId))
+                return true
+            } catch (err: any) {
+                setError(err.message)
+                return false
+            }
+        },
+        [apiRequest],
+    )
 
     const reset = useCallback(() => {
         if (timerRef.current) clearTimeout(timerRef.current)
@@ -306,8 +315,17 @@ export function useDeclarations() {
     }, [])
 
     return {
-        calcResult, declarations, projection,
-        loading, saving, error,
-        calculate, save, loadYear, projectIrpf, deleteDeclaration, reset,
+        calcResult,
+        declarations,
+        projection,
+        loading,
+        saving,
+        error,
+        calculate,
+        save,
+        loadYear,
+        projectIrpf,
+        deleteDeclaration,
+        reset,
     }
 }

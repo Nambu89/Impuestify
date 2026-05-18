@@ -58,9 +58,11 @@ function formatDate(dateStr: string): string {
 export default function ModelObligationsPage() {
     useSEO({
         title: 'Qué modelos fiscales te toca presentar — Impuestify',
-        description: 'Mira qué modelos AEAT aplican a tu actividad y territorio: 303, 130, 131, 390, 347, 349 y resumen anual, con sus plazos de presentación.',
+        description:
+            'Mira qué modelos AEAT aplican a tu actividad y territorio: 303, 130, 131, 390, 347, 349 y resumen anual, con sus plazos de presentación.',
         canonical: '/modelos-obligatorios',
-        keywords: 'modelos fiscales obligatorios, modelo 303, modelo 130, modelo 390, AEAT modelos, declaraciones trimestrales',
+        keywords:
+            'modelos fiscales obligatorios, modelo 303, modelo 130, modelo 390, AEAT modelos, declaraciones trimestrales',
         schema: {
             '@context': 'https://schema.org',
             '@type': 'WebApplication',
@@ -133,12 +135,10 @@ export default function ModelObligationsPage() {
                         <ClipboardList size={14} />
                         <span>Obligaciones fiscales</span>
                     </div>
-                    <h1 className="mo-hero-title">
-                        ¿Qué modelos tengo que presentar?
-                    </h1>
+                    <h1 className="mo-hero-title">¿Qué modelos tengo que presentar?</h1>
                     <p className="mo-hero-subtitle">
-                        Dinos cómo es tu actividad y te devolvemos la lista de modelos que te tocan, con fechas
-                        y enlace directo a la sede electrónica correspondiente.
+                        Dinos cómo es tu actividad y te devolvemos la lista de modelos que te tocan,
+                        con fechas y enlace directo a la sede electrónica correspondiente.
                     </p>
                 </div>
             </section>
@@ -154,10 +154,12 @@ export default function ModelObligationsPage() {
                                 <select
                                     className="mo-form-select"
                                     value={ccaa}
-                                    onChange={e => setCcaa(e.target.value)}
+                                    onChange={(e) => setCcaa(e.target.value)}
                                 >
-                                    {CCAA_OPTIONS_WITH_PLACEHOLDER.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    {CCAA_OPTIONS_WITH_PLACEHOLDER.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -168,9 +170,11 @@ export default function ModelObligationsPage() {
                                 <select
                                     className="mo-form-select"
                                     value={situacion}
-                                    onChange={e => setSituacion(e.target.value)}
+                                    onChange={(e) => setSituacion(e.target.value)}
                                 >
-                                    <option value="particular">Particular (asalariado/pensionista)</option>
+                                    <option value="particular">
+                                        Particular (asalariado/pensionista)
+                                    </option>
                                     <option value="autonomo">Autónomo</option>
                                     <option value="sociedad">Sociedad (SL/SA)</option>
                                 </select>
@@ -183,11 +187,17 @@ export default function ModelObligationsPage() {
                                     <select
                                         className="mo-form-select"
                                         value={estimacion}
-                                        onChange={e => setEstimacion(e.target.value)}
+                                        onChange={(e) => setEstimacion(e.target.value)}
                                     >
-                                        <option value="directa_simplificada">Estimación directa simplificada</option>
-                                        <option value="directa_normal">Estimación directa normal</option>
-                                        <option value="objetiva">Estimación objetiva (módulos)</option>
+                                        <option value="directa_simplificada">
+                                            Estimación directa simplificada
+                                        </option>
+                                        <option value="directa_normal">
+                                            Estimación directa normal
+                                        </option>
+                                        <option value="objetiva">
+                                            Estimación objetiva (módulos)
+                                        </option>
                                     </select>
                                 </div>
                             )}
@@ -201,7 +211,7 @@ export default function ModelObligationsPage() {
                                             <input
                                                 type="checkbox"
                                                 checked={empleados}
-                                                onChange={e => setEmpleados(e.target.checked)}
+                                                onChange={(e) => setEmpleados(e.target.checked)}
                                             />
                                             Tiene empleados
                                         </label>
@@ -209,7 +219,7 @@ export default function ModelObligationsPage() {
                                             <input
                                                 type="checkbox"
                                                 checked={alquileres}
-                                                onChange={e => setAlquileres(e.target.checked)}
+                                                onChange={(e) => setAlquileres(e.target.checked)}
                                             />
                                             Alquila inmuebles
                                         </label>
@@ -217,7 +227,7 @@ export default function ModelObligationsPage() {
                                             <input
                                                 type="checkbox"
                                                 checked={opsIntra}
-                                                onChange={e => setOpsIntra(e.target.checked)}
+                                                onChange={(e) => setOpsIntra(e.target.checked)}
                                             />
                                             Operaciones intracomunitarias
                                         </label>
@@ -225,7 +235,7 @@ export default function ModelObligationsPage() {
                                             <input
                                                 type="checkbox"
                                                 checked={opsTerceros}
-                                                onChange={e => setOpsTerceros(e.target.checked)}
+                                                onChange={(e) => setOpsTerceros(e.target.checked)}
                                             />
                                             Operaciones con terceros &gt;3.005 EUR
                                         </label>
@@ -234,7 +244,9 @@ export default function ModelObligationsPage() {
                                                 <input
                                                     type="checkbox"
                                                     checked={dividendos}
-                                                    onChange={e => setDividendos(e.target.checked)}
+                                                    onChange={(e) =>
+                                                        setDividendos(e.target.checked)
+                                                    }
                                                 />
                                                 Paga dividendos
                                             </label>
@@ -265,8 +277,18 @@ export default function ModelObligationsPage() {
                         </button>
 
                         {error && (
-                            <p style={{ color: '#f87171', marginTop: '12px', fontSize: '0.9rem', textAlign: 'center' }}>
-                                <AlertTriangle size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                            <p
+                                style={{
+                                    color: '#f87171',
+                                    marginTop: '12px',
+                                    fontSize: '0.9rem',
+                                    textAlign: 'center',
+                                }}
+                            >
+                                <AlertTriangle
+                                    size={14}
+                                    style={{ verticalAlign: 'middle', marginRight: 4 }}
+                                />
                                 {error}
                             </p>
                         )}
@@ -278,11 +300,10 @@ export default function ModelObligationsPage() {
             {result && result.modelos.length > 0 && (
                 <section className="mo-results">
                     <div className="mo-results-header">
-                        <h2 className="mo-results-title">
-                            Tus obligaciones fiscales
-                        </h2>
+                        <h2 className="mo-results-title">Tus obligaciones fiscales</h2>
                         <p className="mo-results-count">
-                            {result.total_modelos} modelo{result.total_modelos !== 1 ? 's' : ''} identificado{result.total_modelos !== 1 ? 's' : ''}
+                            {result.total_modelos} modelo{result.total_modelos !== 1 ? 's' : ''}{' '}
+                            identificado{result.total_modelos !== 1 ? 's' : ''}
                         </p>
                     </div>
 
@@ -293,7 +314,9 @@ export default function ModelObligationsPage() {
                                 <div key={`${m.modelo}-${i}`} className="mo-card">
                                     <div className="mo-card-header">
                                         <span className="mo-card-modelo">{m.modelo}</span>
-                                        <span className={`mo-card-periodicidad mo-card-periodicidad--${m.periodicidad}`}>
+                                        <span
+                                            className={`mo-card-periodicidad mo-card-periodicidad--${m.periodicidad}`}
+                                        >
                                             <Calendar size={12} />
                                             {m.periodicidad}
                                         </span>
@@ -320,13 +343,14 @@ export default function ModelObligationsPage() {
                                         </div>
                                     )}
 
-                                    {m.notas && (
-                                        <p className="mo-card-notas">{m.notas}</p>
-                                    )}
+                                    {m.notas && <p className="mo-card-notas">{m.notas}</p>}
 
                                     <div className="mo-card-footer">
                                         <span className="mo-card-organismo">
-                                            <FileText size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                                            <FileText
+                                                size={12}
+                                                style={{ verticalAlign: 'middle', marginRight: 4 }}
+                                            />
                                             {m.organismo}
                                         </span>
                                         <a
@@ -344,10 +368,13 @@ export default function ModelObligationsPage() {
                     </div>
 
                     <div className="mo-disclaimer">
-                        <AlertTriangle size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                        Listado orientativo. Confirma con tu asesor los modelos exactos que te aplican. Las fechas
-                        se trasladan al día hábil siguiente si caen en festivo. Datos del ejercicio 2025
-                        (presentación en 2026).
+                        <AlertTriangle
+                            size={14}
+                            style={{ verticalAlign: 'middle', marginRight: 6 }}
+                        />
+                        Listado orientativo. Confirma con tu asesor los modelos exactos que te
+                        aplican. Las fechas se trasladan al día hábil siguiente si caen en festivo.
+                        Datos del ejercicio 2025 (presentación en 2026).
                     </div>
                 </section>
             )}

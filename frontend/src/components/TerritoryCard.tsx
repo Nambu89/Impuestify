@@ -31,9 +31,7 @@ export default function TerritoryCard({
                     <h3 className="territory-card__name">{name}</h3>
                     <span className="territory-card__full-name">{fullName}</span>
                 </div>
-                {isForal && (
-                    <span className="territory-card__badge">Foral</span>
-                )}
+                {isForal && <span className="territory-card__badge">Foral</span>}
             </div>
 
             <p className="territory-card__description">{description}</p>
@@ -49,10 +47,7 @@ export default function TerritoryCard({
                 </div>
             </div>
 
-            <Link
-                to={`/register?territory=${slug}`}
-                className="territory-card__cta"
-            >
+            <Link to={`/register?territory=${slug}`} className="territory-card__cta">
                 Calcula tu IRPF en {name}
                 <ArrowRight size={16} />
             </Link>

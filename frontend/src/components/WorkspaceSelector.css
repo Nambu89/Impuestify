@@ -177,7 +177,9 @@
     cursor: pointer;
     padding: 0;
     opacity: 0;
-    transition: opacity var(--transition-fast), color var(--transition-fast);
+    transition:
+        opacity var(--transition-fast),
+        color var(--transition-fast);
 }
 
 .workspace-selector-option:hover .option-rename-btn {

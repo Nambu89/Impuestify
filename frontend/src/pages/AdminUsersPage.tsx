@@ -1,8 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
 import {
-    Users, RefreshCw, Shield, AlertCircle, CheckCircle,
-    Crown, ArrowUpDown, Loader, UserCheck, UserX
+    Users,
+    RefreshCw,
+    Shield,
+    AlertCircle,
+    CheckCircle,
+    Crown,
+    ArrowUpDown,
+    Loader,
+    UserCheck,
+    UserX,
 } from 'lucide-react'
 import { useApi } from '../hooks/useApi'
 import { useSubscription } from '../hooks/useSubscription'
@@ -63,9 +71,7 @@ export default function AdminUsersPage() {
 
     const handleChangePlan = async (userId: string, email: string, newPlan: string) => {
         const planLabel = newPlan === 'autonomo' ? 'Autónomo' : 'Particular'
-        const confirmed = window.confirm(
-            `Cambiar plan de ${email} a "${planLabel}"?`
-        )
+        const confirmed = window.confirm(`Cambiar plan de ${email} a "${planLabel}"?`)
         if (!confirmed) return
 
         try {
@@ -86,7 +92,7 @@ export default function AdminUsersPage() {
     const handleToggleBeta = async (userId: string, email: string, isActive: boolean) => {
         const action = isActive ? 'revocar' : 'activar'
         const confirmed = window.confirm(
-            `¿${isActive ? 'Revocar' : 'Activar'} acceso beta para ${email}?`
+            `¿${isActive ? 'Revocar' : 'Activar'} acceso beta para ${email}?`,
         )
         if (!confirmed) return
 
@@ -94,7 +100,10 @@ export default function AdminUsersPage() {
             setTogglingBeta(userId)
             const endpoint = isActive ? 'revoke-beta' : 'grant-beta'
             await apiRequest(`/api/admin/users/${userId}/${endpoint}`, { method: 'PUT' })
-            setMessage({ type: 'success', text: `Beta ${isActive ? 'revocado' : 'activado'} para ${email}` })
+            setMessage({
+                type: 'success',
+                text: `Beta ${isActive ? 'revocado' : 'activado'} para ${email}`,
+            })
             await fetchUsers()
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message || `Error al ${action} beta` })
@@ -107,7 +116,9 @@ export default function AdminUsersPage() {
         if (!dateStr) return '-'
         try {
             return new Date(dateStr).toLocaleDateString('es-ES', {
-                day: '2-digit', month: 'short', year: 'numeric'
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
             })
         } catch {
             return dateStr
@@ -116,28 +127,40 @@ export default function AdminUsersPage() {
 
     const getPlanBadgeClass = (planType: string | null) => {
         switch (planType) {
-            case 'owner': return 'badge-owner'
-            case 'autonomo': return 'badge-autonomo'
-            case 'particular': return 'badge-particular'
-            default: return 'badge-none'
+            case 'owner':
+                return 'badge-owner'
+            case 'autonomo':
+                return 'badge-autonomo'
+            case 'particular':
+                return 'badge-particular'
+            default:
+                return 'badge-none'
         }
     }
 
     const getStatusBadgeClass = (status: string | null) => {
         switch (status) {
-            case 'active': return 'badge-active'
-            case 'grace_period': return 'badge-grace'
-            case 'inactive': return 'badge-inactive'
-            default: return 'badge-none'
+            case 'active':
+                return 'badge-active'
+            case 'grace_period':
+                return 'badge-grace'
+            case 'inactive':
+                return 'badge-inactive'
+            default:
+                return 'badge-none'
         }
     }
 
     const getStatusLabel = (status: string | null) => {
         switch (status) {
-            case 'active': return 'Activo'
-            case 'grace_period': return 'Grace Period'
-            case 'inactive': return 'Inactivo'
-            default: return 'Sin suscripción'
+            case 'active':
+                return 'Activo'
+            case 'grace_period':
+                return 'Grace Period'
+            case 'inactive':
+                return 'Inactivo'
+            default:
+                return 'Sin suscripción'
         }
     }
 
@@ -149,7 +172,9 @@ export default function AdminUsersPage() {
                 <div className="admin-container">
                     <div className="admin-header">
                         <div className="admin-title-row">
-                            <h1><Shield size={28} /> Admin - Usuarios</h1>
+                            <h1>
+                                <Shield size={28} /> Admin - Usuarios
+                            </h1>
                             <button
                                 className="btn-refresh"
                                 onClick={fetchUsers}
@@ -166,10 +191,11 @@ export default function AdminUsersPage() {
 
                     {message && (
                         <div className={`admin-message ${message.type}`}>
-                            {message.type === 'success'
-                                ? <CheckCircle size={18} />
-                                : <AlertCircle size={18} />
-                            }
+                            {message.type === 'success' ? (
+                                <CheckCircle size={18} />
+                            ) : (
+                                <AlertCircle size={18} />
+                            )}
                             {message.text}
                         </div>
                     )}
@@ -183,24 +209,32 @@ export default function AdminUsersPage() {
                         <>
                             {/* Mobile: Cards layout */}
                             <div className="users-cards">
-                                {users.map(u => (
+                                {users.map((u) => (
                                     <div key={u.id} className="user-card">
                                         <div className="user-card-header">
                                             <div className="user-card-info">
                                                 <span className="user-card-email">
-                                                    {u.is_owner && <Crown size={14} className="owner-icon" />}
+                                                    {u.is_owner && (
+                                                        <Crown size={14} className="owner-icon" />
+                                                    )}
                                                     {u.email}
                                                 </span>
-                                                <span className="user-card-name">{u.name || '-'}</span>
+                                                <span className="user-card-name">
+                                                    {u.name || '-'}
+                                                </span>
                                             </div>
-                                            <span className={`plan-badge ${getPlanBadgeClass(u.plan_type)}`}>
+                                            <span
+                                                className={`plan-badge ${getPlanBadgeClass(u.plan_type)}`}
+                                            >
                                                 {u.plan_type || 'sin plan'}
                                             </span>
                                         </div>
                                         <div className="user-card-details">
                                             <div className="user-card-detail">
                                                 <span className="detail-label">Estado</span>
-                                                <span className={`status-badge ${getStatusBadgeClass(u.subscription_status)}`}>
+                                                <span
+                                                    className={`status-badge ${getStatusBadgeClass(u.subscription_status)}`}
+                                                >
                                                     {getStatusLabel(u.subscription_status)}
                                                 </span>
                                             </div>
@@ -214,40 +248,72 @@ export default function AdminUsersPage() {
                                                 {u.plan_type !== 'autonomo' ? (
                                                     <button
                                                         className="btn-plan btn-to-autonomo"
-                                                        onClick={() => handleChangePlan(u.id, u.email, 'autonomo')}
+                                                        onClick={() =>
+                                                            handleChangePlan(
+                                                                u.id,
+                                                                u.email,
+                                                                'autonomo',
+                                                            )
+                                                        }
                                                         disabled={changingPlan === u.id}
                                                     >
-                                                        {changingPlan === u.id
-                                                            ? <Loader size={14} className="animate-spin" />
-                                                            : <ArrowUpDown size={14} />
-                                                        }
+                                                        {changingPlan === u.id ? (
+                                                            <Loader
+                                                                size={14}
+                                                                className="animate-spin"
+                                                            />
+                                                        ) : (
+                                                            <ArrowUpDown size={14} />
+                                                        )}
                                                         Cambiar a Autónomo
                                                     </button>
                                                 ) : (
                                                     <button
                                                         className="btn-plan btn-to-particular"
-                                                        onClick={() => handleChangePlan(u.id, u.email, 'particular')}
+                                                        onClick={() =>
+                                                            handleChangePlan(
+                                                                u.id,
+                                                                u.email,
+                                                                'particular',
+                                                            )
+                                                        }
                                                         disabled={changingPlan === u.id}
                                                     >
-                                                        {changingPlan === u.id
-                                                            ? <Loader size={14} className="animate-spin" />
-                                                            : <ArrowUpDown size={14} />
-                                                        }
+                                                        {changingPlan === u.id ? (
+                                                            <Loader
+                                                                size={14}
+                                                                className="animate-spin"
+                                                            />
+                                                        ) : (
+                                                            <ArrowUpDown size={14} />
+                                                        )}
                                                         Cambiar a Particular
                                                     </button>
                                                 )}
                                                 <button
                                                     className={`btn-plan ${u.subscription_status === 'active' ? 'btn-revoke-beta' : 'btn-grant-beta'}`}
-                                                    onClick={() => handleToggleBeta(u.id, u.email, u.subscription_status === 'active')}
+                                                    onClick={() =>
+                                                        handleToggleBeta(
+                                                            u.id,
+                                                            u.email,
+                                                            u.subscription_status === 'active',
+                                                        )
+                                                    }
                                                     disabled={togglingBeta === u.id}
                                                 >
-                                                    {togglingBeta === u.id
-                                                        ? <Loader size={14} className="animate-spin" />
-                                                        : u.subscription_status === 'active'
-                                                            ? <UserX size={14} />
-                                                            : <UserCheck size={14} />
-                                                    }
-                                                    {u.subscription_status === 'active' ? 'Revocar beta' : 'Activar beta'}
+                                                    {togglingBeta === u.id ? (
+                                                        <Loader
+                                                            size={14}
+                                                            className="animate-spin"
+                                                        />
+                                                    ) : u.subscription_status === 'active' ? (
+                                                        <UserX size={14} />
+                                                    ) : (
+                                                        <UserCheck size={14} />
+                                                    )}
+                                                    {u.subscription_status === 'active'
+                                                        ? 'Revocar beta'
+                                                        : 'Activar beta'}
                                                 </button>
                                             </div>
                                         )}
@@ -269,24 +335,32 @@ export default function AdminUsersPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {users.map(u => (
+                                        {users.map((u) => (
                                             <tr key={u.id}>
                                                 <td className="cell-email">
-                                                    {u.is_owner && <Crown size={14} className="owner-icon" />}
+                                                    {u.is_owner && (
+                                                        <Crown size={14} className="owner-icon" />
+                                                    )}
                                                     {u.email}
                                                 </td>
                                                 <td>{u.name || '-'}</td>
                                                 <td>
-                                                    <span className={`plan-badge ${getPlanBadgeClass(u.plan_type)}`}>
+                                                    <span
+                                                        className={`plan-badge ${getPlanBadgeClass(u.plan_type)}`}
+                                                    >
                                                         {u.plan_type || 'sin plan'}
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <span className={`status-badge ${getStatusBadgeClass(u.subscription_status)}`}>
+                                                    <span
+                                                        className={`status-badge ${getStatusBadgeClass(u.subscription_status)}`}
+                                                    >
                                                         {getStatusLabel(u.subscription_status)}
                                                     </span>
                                                 </td>
-                                                <td className="cell-date">{formatDate(u.created_at)}</td>
+                                                <td className="cell-date">
+                                                    {formatDate(u.created_at)}
+                                                </td>
                                                 <td className="cell-actions">
                                                     {u.is_owner ? (
                                                         <span className="owner-label">Owner</span>
@@ -295,40 +369,74 @@ export default function AdminUsersPage() {
                                                             {u.plan_type !== 'autonomo' ? (
                                                                 <button
                                                                     className="btn-plan btn-to-autonomo"
-                                                                    onClick={() => handleChangePlan(u.id, u.email, 'autonomo')}
+                                                                    onClick={() =>
+                                                                        handleChangePlan(
+                                                                            u.id,
+                                                                            u.email,
+                                                                            'autonomo',
+                                                                        )
+                                                                    }
                                                                     disabled={changingPlan === u.id}
                                                                 >
-                                                                    {changingPlan === u.id
-                                                                        ? <Loader size={14} className="animate-spin" />
-                                                                        : <ArrowUpDown size={14} />
-                                                                    }
+                                                                    {changingPlan === u.id ? (
+                                                                        <Loader
+                                                                            size={14}
+                                                                            className="animate-spin"
+                                                                        />
+                                                                    ) : (
+                                                                        <ArrowUpDown size={14} />
+                                                                    )}
                                                                     Autónomo
                                                                 </button>
                                                             ) : (
                                                                 <button
                                                                     className="btn-plan btn-to-particular"
-                                                                    onClick={() => handleChangePlan(u.id, u.email, 'particular')}
+                                                                    onClick={() =>
+                                                                        handleChangePlan(
+                                                                            u.id,
+                                                                            u.email,
+                                                                            'particular',
+                                                                        )
+                                                                    }
                                                                     disabled={changingPlan === u.id}
                                                                 >
-                                                                    {changingPlan === u.id
-                                                                        ? <Loader size={14} className="animate-spin" />
-                                                                        : <ArrowUpDown size={14} />
-                                                                    }
+                                                                    {changingPlan === u.id ? (
+                                                                        <Loader
+                                                                            size={14}
+                                                                            className="animate-spin"
+                                                                        />
+                                                                    ) : (
+                                                                        <ArrowUpDown size={14} />
+                                                                    )}
                                                                     Particular
                                                                 </button>
                                                             )}
                                                             <button
                                                                 className={`btn-plan ${u.subscription_status === 'active' ? 'btn-revoke-beta' : 'btn-grant-beta'}`}
-                                                                onClick={() => handleToggleBeta(u.id, u.email, u.subscription_status === 'active')}
+                                                                onClick={() =>
+                                                                    handleToggleBeta(
+                                                                        u.id,
+                                                                        u.email,
+                                                                        u.subscription_status ===
+                                                                            'active',
+                                                                    )
+                                                                }
                                                                 disabled={togglingBeta === u.id}
                                                             >
-                                                                {togglingBeta === u.id
-                                                                    ? <Loader size={14} className="animate-spin" />
-                                                                    : u.subscription_status === 'active'
-                                                                        ? <UserX size={14} />
-                                                                        : <UserCheck size={14} />
-                                                                }
-                                                                {u.subscription_status === 'active' ? 'Revocar' : 'Beta'}
+                                                                {togglingBeta === u.id ? (
+                                                                    <Loader
+                                                                        size={14}
+                                                                        className="animate-spin"
+                                                                    />
+                                                                ) : u.subscription_status ===
+                                                                  'active' ? (
+                                                                    <UserX size={14} />
+                                                                ) : (
+                                                                    <UserCheck size={14} />
+                                                                )}
+                                                                {u.subscription_status === 'active'
+                                                                    ? 'Revocar'
+                                                                    : 'Beta'}
                                                             </button>
                                                         </>
                                                     )}

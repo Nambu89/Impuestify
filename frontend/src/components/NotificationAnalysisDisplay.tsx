@@ -27,7 +27,7 @@ export function NotificationAnalysisDisplay({ analysis }: NotificationAnalysisDi
     const severityColors = {
         low: { bg: '#f0fff4', border: '#9ae6b4', icon: '✅' },
         medium: { bg: '#fffaf0', border: '#fbd38d', icon: '⚠️' },
-        high: { bg: '#fff5f5', border: '#fc8181', icon: '🚨' }
+        high: { bg: '#fff5f5', border: '#fc8181', icon: '🚨' },
     }
 
     const colors = severityColors[analysis.severity]
@@ -38,16 +38,19 @@ export function NotificationAnalysisDisplay({ analysis }: NotificationAnalysisDi
         return date.toLocaleDateString('es-ES', {
             day: 'numeric',
             month: 'long',
-            year: 'numeric'
+            year: 'numeric',
         })
     }
 
     return (
         <div className="notification-analysis">
-            <div className="analysis-header" style={{
-                background: colors.bg,
-                borderLeft: `4px solid ${colors.border}`
-            }}>
+            <div
+                className="analysis-header"
+                style={{
+                    background: colors.bg,
+                    borderLeft: `4px solid ${colors.border}`,
+                }}
+            >
                 <span className="severity-icon">{colors.icon}</span>
                 <div>
                     <h3>{analysis.type}</h3>
@@ -81,7 +84,9 @@ export function NotificationAnalysisDisplay({ analysis }: NotificationAnalysisDi
                                 <div className="deadline-countdown">
                                     {deadline.days_remaining > 0 ? (
                                         <>
-                                            <span className="days-number">{deadline.days_remaining}</span>
+                                            <span className="days-number">
+                                                {deadline.days_remaining}
+                                            </span>
                                             <span className="days-label">días restantes</span>
                                         </>
                                     ) : (

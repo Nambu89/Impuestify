@@ -1,13 +1,30 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Navigate, Link } from 'react-router-dom'
 import {
-    Shield, RefreshCw, Users, CreditCard, Bug, ThumbsUp,
-    AlertCircle, Loader, ArrowRight, MessageCircle, Lightbulb,
-    Mail, ThumbsDown, DollarSign
+    Shield,
+    RefreshCw,
+    Users,
+    CreditCard,
+    Bug,
+    ThumbsUp,
+    AlertCircle,
+    Loader,
+    ArrowRight,
+    MessageCircle,
+    Lightbulb,
+    Mail,
+    ThumbsDown,
+    DollarSign,
 } from 'lucide-react'
 import { useApi } from '../hooks/useApi'
 import { useSubscription } from '../hooks/useSubscription'
-import { useFeedback, DashboardData, FeedbackItem, ContactRequest, ChatRatingItem } from '../hooks/useFeedback'
+import {
+    useFeedback,
+    DashboardData,
+    FeedbackItem,
+    ContactRequest,
+    ChatRatingItem,
+} from '../hooks/useFeedback'
 import Header from '../components/Header'
 import './AdminDashboardPage.css'
 
@@ -44,7 +61,8 @@ interface CostSummary {
 
 export default function AdminDashboardPage() {
     const { isOwner, loading: subLoading } = useSubscription()
-    const { adminGetDashboard, adminGetFeedback, adminGetContactRequests, adminGetChatRatings } = useFeedback()
+    const { adminGetDashboard, adminGetFeedback, adminGetContactRequests, adminGetChatRatings } =
+        useFeedback()
     const { apiRequest } = useApi()
 
     const [dashboard, setDashboard] = useState<DashboardData | null>(null)
@@ -85,7 +103,13 @@ export default function AdminDashboardPage() {
         } finally {
             setLoading(false)
         }
-    }, [adminGetDashboard, adminGetFeedback, adminGetContactRequests, adminGetChatRatings, apiRequest])
+    }, [
+        adminGetDashboard,
+        adminGetFeedback,
+        adminGetContactRequests,
+        adminGetChatRatings,
+        apiRequest,
+    ])
 
     useEffect(() => {
         if (isOwner) fetchAll()
@@ -94,7 +118,9 @@ export default function AdminDashboardPage() {
     const formatDate = (s: string) => {
         try {
             return new Date(s).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
-        } catch { return s }
+        } catch {
+            return s
+        }
     }
 
     if (subLoading) return <div className="loading-screen">Cargando...</div>
@@ -109,7 +135,9 @@ export default function AdminDashboardPage() {
                     {/* Page header */}
                     <div className="admin-header">
                         <div className="admin-title-row">
-                            <h1><Shield size={26} /> Admin — Dashboard</h1>
+                            <h1>
+                                <Shield size={26} /> Admin — Dashboard
+                            </h1>
                             <button
                                 className="btn-refresh"
                                 onClick={fetchAll}
@@ -143,7 +171,9 @@ export default function AdminDashboardPage() {
                                         <Users size={22} />
                                     </div>
                                     <div className="adp-kpi__content">
-                                        <span className="adp-kpi__value">{dashboard.users.total}</span>
+                                        <span className="adp-kpi__value">
+                                            {dashboard.users.total}
+                                        </span>
                                         <span className="adp-kpi__label">Usuarios totales</span>
                                         <span className="adp-kpi__sub">
                                             {dashboard.users.active_this_week} activos esta semana
@@ -156,10 +186,13 @@ export default function AdminDashboardPage() {
                                         <CreditCard size={22} />
                                     </div>
                                     <div className="adp-kpi__content">
-                                        <span className="adp-kpi__value">{dashboard.users.subscribers_paid}</span>
+                                        <span className="adp-kpi__value">
+                                            {dashboard.users.subscribers_paid}
+                                        </span>
                                         <span className="adp-kpi__label">Suscriptores de pago</span>
                                         <span className="adp-kpi__sub">
-                                            {dashboard.users.by_plan.particular} Particular · {dashboard.users.by_plan.autonomo} Autónomo
+                                            {dashboard.users.by_plan.particular} Particular ·{' '}
+                                            {dashboard.users.by_plan.autonomo} Autónomo
                                         </span>
                                     </div>
                                 </div>
@@ -169,10 +202,13 @@ export default function AdminDashboardPage() {
                                         <Bug size={22} />
                                     </div>
                                     <div className="adp-kpi__content">
-                                        <span className="adp-kpi__value">{dashboard.feedback.bugs_open}</span>
+                                        <span className="adp-kpi__value">
+                                            {dashboard.feedback.bugs_open}
+                                        </span>
                                         <span className="adp-kpi__label">Bugs abiertos</span>
                                         <span className="adp-kpi__sub">
-                                            {dashboard.feedback.features_pending} sugerencias pendientes
+                                            {dashboard.feedback.features_pending} sugerencias
+                                            pendientes
                                         </span>
                                     </div>
                                 </div>
@@ -187,9 +223,12 @@ export default function AdminDashboardPage() {
                                                 ? `${dashboard.ratings.positive_pct.toFixed(1)}%`
                                                 : '-'}
                                         </span>
-                                        <span className="adp-kpi__label">Valoraciones positivas</span>
+                                        <span className="adp-kpi__label">
+                                            Valoraciones positivas
+                                        </span>
                                         <span className="adp-kpi__sub">
-                                            {dashboard.ratings.total} valoraciones · tendencia {dashboard.ratings.trend_30d}
+                                            {dashboard.ratings.total} valoraciones · tendencia{' '}
+                                            {dashboard.ratings.trend_30d}
                                         </span>
                                     </div>
                                 </div>
@@ -203,9 +242,12 @@ export default function AdminDashboardPage() {
                                             <span className="adp-kpi__value">
                                                 {costData.total_cost_eur.toFixed(2)} EUR
                                             </span>
-                                            <span className="adp-kpi__label">Coste LLM este mes</span>
+                                            <span className="adp-kpi__label">
+                                                Coste LLM este mes
+                                            </span>
                                             <span className="adp-kpi__sub">
-                                                {costData.total_requests} peticiones · {(costData.total_tokens / 1000).toFixed(0)}K tokens
+                                                {costData.total_requests} peticiones ·{' '}
+                                                {(costData.total_tokens / 1000).toFixed(0)}K tokens
                                             </span>
                                         </div>
                                     </div>
@@ -229,17 +271,26 @@ export default function AdminDashboardPage() {
                                         <p className="adp-empty-text">Sin feedbacks recientes</p>
                                     ) : (
                                         <ul className="adp-list">
-                                            {recentFeedback.map(item => (
+                                            {recentFeedback.map((item) => (
                                                 <li key={item.id} className="adp-list-item">
                                                     <div className="adp-list-item__main">
-                                                        <span className={`adp-type-dot adp-type--${item.type}`} title={TYPE_LABELS[item.type]} />
-                                                        <span className="adp-list-item__title">{item.title}</span>
+                                                        <span
+                                                            className={`adp-type-dot adp-type--${item.type}`}
+                                                            title={TYPE_LABELS[item.type]}
+                                                        />
+                                                        <span className="adp-list-item__title">
+                                                            {item.title}
+                                                        </span>
                                                     </div>
                                                     <div className="adp-list-item__meta">
-                                                        <span className={`adp-status-mini adp-status--${item.status}`}>
+                                                        <span
+                                                            className={`adp-status-mini adp-status--${item.status}`}
+                                                        >
                                                             {STATUS_LABELS[item.status]}
                                                         </span>
-                                                        <span className="adp-date">{formatDate(item.created_at)}</span>
+                                                        <span className="adp-date">
+                                                            {formatDate(item.created_at)}
+                                                        </span>
                                                     </div>
                                                 </li>
                                             ))}
@@ -254,7 +305,9 @@ export default function AdminDashboardPage() {
                                             <Mail size={16} />
                                             Contactos pendientes
                                             {dashboard.contact_requests.pending > 0 && (
-                                                <span className="adp-badge">{dashboard.contact_requests.pending}</span>
+                                                <span className="adp-badge">
+                                                    {dashboard.contact_requests.pending}
+                                                </span>
                                             )}
                                         </h3>
                                         <Link to="/admin/contact" className="adp-section__link">
@@ -265,13 +318,17 @@ export default function AdminDashboardPage() {
                                         <p className="adp-empty-text">Sin solicitudes pendientes</p>
                                     ) : (
                                         <ul className="adp-list">
-                                            {pendingContacts.map(item => (
+                                            {pendingContacts.map((item) => (
                                                 <li key={item.id} className="adp-list-item">
                                                     <div className="adp-list-item__main">
-                                                        <span className="adp-list-item__email">{item.email}</span>
+                                                        <span className="adp-list-item__email">
+                                                            {item.email}
+                                                        </span>
                                                     </div>
                                                     <div className="adp-list-item__meta">
-                                                        <span className="adp-date">{formatDate(item.created_at)}</span>
+                                                        <span className="adp-date">
+                                                            {formatDate(item.created_at)}
+                                                        </span>
                                                     </div>
                                                 </li>
                                             ))}
@@ -291,20 +348,29 @@ export default function AdminDashboardPage() {
                                         </Link>
                                     </div>
                                     {negativeRatings.length === 0 ? (
-                                        <p className="adp-empty-text">Sin valoraciones negativas recientes</p>
+                                        <p className="adp-empty-text">
+                                            Sin valoraciones negativas recientes
+                                        </p>
                                     ) : (
                                         <ul className="adp-list">
-                                            {negativeRatings.map(item => (
+                                            {negativeRatings.map((item) => (
                                                 <li key={item.id} className="adp-list-item">
                                                     <div className="adp-list-item__main">
-                                                        <ThumbsDown size={12} className="adp-thumb-down" />
+                                                        <ThumbsDown
+                                                            size={12}
+                                                            className="adp-thumb-down"
+                                                        />
                                                         <span className="adp-list-item__comment">
                                                             {item.comment || 'Sin comentario'}
                                                         </span>
                                                     </div>
                                                     <div className="adp-list-item__meta">
-                                                        <span className="adp-list-item__email">{item.user_email || '-'}</span>
-                                                        <span className="adp-date">{formatDate(item.created_at)}</span>
+                                                        <span className="adp-list-item__email">
+                                                            {item.user_email || '-'}
+                                                        </span>
+                                                        <span className="adp-date">
+                                                            {formatDate(item.created_at)}
+                                                        </span>
                                                     </div>
                                                 </li>
                                             ))}
@@ -323,17 +389,24 @@ export default function AdminDashboardPage() {
                                         </div>
                                         <ul className="adp-list">
                                             {costData.top_users.slice(0, 5).map((user, idx) => (
-                                                <li key={user.user_id || idx} className="adp-list-item">
+                                                <li
+                                                    key={user.user_id || idx}
+                                                    className="adp-list-item"
+                                                >
                                                     <div className="adp-list-item__main">
                                                         <span className="adp-list-item__email">
-                                                            {user.email || user.user_id?.slice(0, 8)}
+                                                            {user.email ||
+                                                                user.user_id?.slice(0, 8)}
                                                         </span>
                                                     </div>
                                                     <div className="adp-list-item__meta">
                                                         <span className="adp-status-mini">
                                                             {user.subscription_plan || 'none'}
                                                         </span>
-                                                        <span className="adp-kpi__value" style={{ fontSize: '0.85rem' }}>
+                                                        <span
+                                                            className="adp-kpi__value"
+                                                            style={{ fontSize: '0.85rem' }}
+                                                        >
                                                             ${user.user_cost_usd?.toFixed(4)}
                                                         </span>
                                                         <span className="adp-date">

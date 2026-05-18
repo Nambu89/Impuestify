@@ -250,7 +250,9 @@
     border-radius: 10px;
     padding: 0 1rem;
     height: 44px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
 }
 
 .m130-input-row:focus-within {
@@ -338,7 +340,9 @@
     height: 14px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.5);
-    transition: transform 0.2s, background 0.2s;
+    transition:
+        transform 0.2s,
+        background 0.2s;
 }
 
 .m130-toggle-input:checked + .m130-toggle-track {
@@ -375,7 +379,9 @@
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
-    transition: color 0.2s, background 0.2s;
+    transition:
+        color 0.2s,
+        background 0.2s;
 }
 
 .m130-advanced-toggle:hover {
@@ -748,7 +754,9 @@
     color: var(--color-white);
     text-decoration: none;
     white-space: nowrap;
-    transition: opacity 0.2s, transform 0.2s;
+    transition:
+        opacity 0.2s,
+        transform 0.2s;
 }
 
 .m130-cta-btn:hover {

@@ -1,5 +1,15 @@
 import { useState, useRef, useCallback } from 'react'
-import { Upload, File, FileText, Receipt, FileSpreadsheet, X, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+import {
+    Upload,
+    File,
+    FileText,
+    Receipt,
+    FileSpreadsheet,
+    X,
+    AlertCircle,
+    CheckCircle,
+    Loader2,
+} from 'lucide-react'
 import './FileUploader.css'
 
 interface FileUploaderProps {
@@ -15,14 +25,14 @@ const FILE_TYPES: { value: FileType; label: string; icon: React.ReactNode }[] = 
     { value: 'nomina', label: 'Nómina', icon: <FileText size={16} /> },
     { value: 'factura', label: 'Factura', icon: <Receipt size={16} /> },
     { value: 'declaracion', label: 'Declaración', icon: <FileSpreadsheet size={16} /> },
-    { value: 'otro', label: 'Otro', icon: <File size={16} /> }
+    { value: 'otro', label: 'Otro', icon: <File size={16} /> },
 ]
 
 export function FileUploader({
     onUpload,
     accept = '.pdf,.xlsx,.xls,.csv',
     maxSizeMB = 10,
-    disabled = false
+    disabled = false,
 }: FileUploaderProps) {
     const [isDragging, setIsDragging] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -33,44 +43,56 @@ export function FileUploader({
 
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const validateFile = useCallback((file: File): string | null => {
-        // Check file size
-        const maxSize = maxSizeMB * 1024 * 1024
-        if (file.size > maxSize) {
-            return `El archivo excede el tamaño maximo de ${maxSizeMB}MB`
-        }
+    const validateFile = useCallback(
+        (file: File): string | null => {
+            // Check file size
+            const maxSize = maxSizeMB * 1024 * 1024
+            if (file.size > maxSize) {
+                return `El archivo excede el tamaño maximo de ${maxSizeMB}MB`
+            }
 
-        // Check file type
-        const allowedTypes = accept.split(',').map(t => t.trim().toLowerCase())
-        const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
-        const mimeType = file.type.toLowerCase()
+            // Check file type
+            const allowedTypes = accept.split(',').map((t) => t.trim().toLowerCase())
+            const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
+            const mimeType = file.type.toLowerCase()
 
-        const isValidExtension = allowedTypes.some(type =>
-            type === fileExtension ||
-            (type === '.pdf' && mimeType === 'application/pdf') ||
-            (type === '.xlsx' && mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') ||
-            (type === '.xls' && mimeType === 'application/vnd.ms-excel') ||
-            (type === '.csv' && (mimeType === 'text/csv' || mimeType === 'application/csv')) ||
-            (type === '.docx' && mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') ||
-            (type === '.jpg' && (mimeType === 'image/jpeg')) ||
-            (type === '.jpeg' && (mimeType === 'image/jpeg')) ||
-            (type === '.png' && mimeType === 'image/png')
-        )
+            const isValidExtension = allowedTypes.some(
+                (type) =>
+                    type === fileExtension ||
+                    (type === '.pdf' && mimeType === 'application/pdf') ||
+                    (type === '.xlsx' &&
+                        mimeType ===
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') ||
+                    (type === '.xls' && mimeType === 'application/vnd.ms-excel') ||
+                    (type === '.csv' &&
+                        (mimeType === 'text/csv' || mimeType === 'application/csv')) ||
+                    (type === '.docx' &&
+                        mimeType ===
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document') ||
+                    (type === '.jpg' && mimeType === 'image/jpeg') ||
+                    (type === '.jpeg' && mimeType === 'image/jpeg') ||
+                    (type === '.png' && mimeType === 'image/png'),
+            )
 
-        if (!isValidExtension) {
-            return `Tipo de archivo no permitido. Tipos aceptados: ${accept}`
-        }
+            if (!isValidExtension) {
+                return `Tipo de archivo no permitido. Tipos aceptados: ${accept}`
+            }
 
-        return null
-    }, [accept, maxSizeMB])
+            return null
+        },
+        [accept, maxSizeMB],
+    )
 
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        if (!disabled) {
-            setIsDragging(true)
-        }
-    }, [disabled])
+    const handleDragOver = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (!disabled) {
+                setIsDragging(true)
+            }
+        },
+        [disabled],
+    )
 
     const handleDragLeave = useCallback((e: React.DragEvent) => {
         e.preventDefault()
@@ -78,45 +100,51 @@ export function FileUploader({
         setIsDragging(false)
     }, [])
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        setIsDragging(false)
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setIsDragging(false)
 
-        if (disabled) return
+            if (disabled) return
 
-        const files = e.dataTransfer.files
-        if (files.length > 0) {
-            const file = files[0]
-            const error = validateFile(file)
-            if (error) {
-                setErrorMessage(error)
-                setUploadStatus('error')
-            } else {
-                setSelectedFile(file)
-                setErrorMessage(null)
-                setUploadStatus('idle')
-                autoDetectType(file)
+            const files = e.dataTransfer.files
+            if (files.length > 0) {
+                const file = files[0]
+                const error = validateFile(file)
+                if (error) {
+                    setErrorMessage(error)
+                    setUploadStatus('error')
+                } else {
+                    setSelectedFile(file)
+                    setErrorMessage(null)
+                    setUploadStatus('idle')
+                    autoDetectType(file)
+                }
             }
-        }
-    }, [disabled, validateFile])
+        },
+        [disabled, validateFile],
+    )
 
-    const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files
-        if (files && files.length > 0) {
-            const file = files[0]
-            const error = validateFile(file)
-            if (error) {
-                setErrorMessage(error)
-                setUploadStatus('error')
-            } else {
-                setSelectedFile(file)
-                setErrorMessage(null)
-                setUploadStatus('idle')
-                autoDetectType(file)
+    const handleFileSelect = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const files = e.target.files
+            if (files && files.length > 0) {
+                const file = files[0]
+                const error = validateFile(file)
+                if (error) {
+                    setErrorMessage(error)
+                    setUploadStatus('error')
+                } else {
+                    setSelectedFile(file)
+                    setErrorMessage(null)
+                    setUploadStatus('idle')
+                    autoDetectType(file)
+                }
             }
-        }
-    }, [validateFile])
+        },
+        [validateFile],
+    )
 
     const autoDetectType = (file: File) => {
         const name = file.name.toLowerCase()
@@ -124,7 +152,12 @@ export function FileUploader({
             setSelectedType('nomina')
         } else if (name.includes('factura') || name.includes('invoice')) {
             setSelectedType('factura')
-        } else if (name.includes('modelo') || name.includes('declaracion') || name.includes('303') || name.includes('390')) {
+        } else if (
+            name.includes('modelo') ||
+            name.includes('declaracion') ||
+            name.includes('303') ||
+            name.includes('390')
+        ) {
             setSelectedType('declaracion')
         } else {
             setSelectedType('otro')
@@ -194,9 +227,7 @@ export function FileUploader({
                         <p className="drop-zone-text">
                             Arrastra un archivo aquí o <span>haz clic para seleccionar</span>
                         </p>
-                        <p className="drop-zone-hint">
-                            PDF, Excel o CSV (max. {maxSizeMB}MB)
-                        </p>
+                        <p className="drop-zone-hint">PDF, Excel o CSV (max. {maxSizeMB}MB)</p>
                     </div>
                 ) : (
                     <div className="selected-file">
@@ -204,7 +235,9 @@ export function FileUploader({
                             <File size={24} />
                             <div className="file-details">
                                 <span className="file-name">{selectedFile.name}</span>
-                                <span className="file-size">{formatFileSize(selectedFile.size)}</span>
+                                <span className="file-size">
+                                    {formatFileSize(selectedFile.size)}
+                                </span>
                             </div>
                             <button
                                 type="button"

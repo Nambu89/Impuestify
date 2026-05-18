@@ -1,9 +1,20 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
 import {
-    Shield, RefreshCw, AlertCircle, CheckCircle, Loader, Play,
-    ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus,
-    BarChart2, FileQuestion, ListFilter
+    Shield,
+    RefreshCw,
+    AlertCircle,
+    CheckCircle,
+    Loader,
+    Play,
+    ChevronDown,
+    ChevronUp,
+    TrendingUp,
+    TrendingDown,
+    Minus,
+    BarChart2,
+    FileQuestion,
+    ListFilter,
 } from 'lucide-react'
 import { useSubscription } from '../hooks/useSubscription'
 import { useApi } from '../hooks/useApi'
@@ -58,7 +69,7 @@ interface HistoryEntry {
 
 function scoreClass(score: number): string {
     if (score >= 0.85) return 'score--good'
-    if (score >= 0.70) return 'score--warning'
+    if (score >= 0.7) return 'score--warning'
     return 'score--danger'
 }
 
@@ -86,21 +97,46 @@ function DeltaBadge({ current, prev }: { current: number; prev?: number }) {
     if (prev === undefined) return null
     const delta = current - prev
     const abs = Math.abs(delta * 100).toFixed(1)
-    if (Math.abs(delta) < 0.005) return <span className="rag-delta rag-delta--neutral"><Minus size={10} />{abs}%</span>
-    if (delta > 0) return <span className="rag-delta rag-delta--up"><TrendingUp size={10} />+{abs}%</span>
-    return <span className="rag-delta rag-delta--down"><TrendingDown size={10} />-{abs}%</span>
+    if (Math.abs(delta) < 0.005)
+        return (
+            <span className="rag-delta rag-delta--neutral">
+                <Minus size={10} />
+                {abs}%
+            </span>
+        )
+    if (delta > 0)
+        return (
+            <span className="rag-delta rag-delta--up">
+                <TrendingUp size={10} />+{abs}%
+            </span>
+        )
+    return (
+        <span className="rag-delta rag-delta--down">
+            <TrendingDown size={10} />-{abs}%
+        </span>
+    )
 }
 
 function formatDate(s: string) {
     try {
-        return new Date(s).toLocaleString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    } catch { return s }
+        return new Date(s).toLocaleString('es-ES', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        })
+    } catch {
+        return s
+    }
 }
 
 function formatShortDate(s: string) {
     try {
         return new Date(s).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
-    } catch { return s }
+    } catch {
+        return s
+    }
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -175,12 +211,20 @@ function QuestionRow({ q }: { q: QuestionResult }) {
         <>
             <tr
                 className={`rag-table__row ${expanded ? 'rag-table__row--expanded' : ''}`}
-                onClick={() => setExpanded(e => !e)}
+                onClick={() => setExpanded((e) => !e)}
             >
                 <td className="rag-cell-question">{q.question}</td>
-                <td><span className="rag-category-badge">{q.category}</span></td>
-                <td><span className={scoreClass(q.faithfulness)}>{scoreLabel(q.faithfulness)}</span></td>
-                <td><span className={scoreClass(q.answer_correctness)}>{scoreLabel(q.answer_correctness)}</span></td>
+                <td>
+                    <span className="rag-category-badge">{q.category}</span>
+                </td>
+                <td>
+                    <span className={scoreClass(q.faithfulness)}>{scoreLabel(q.faithfulness)}</span>
+                </td>
+                <td>
+                    <span className={scoreClass(q.answer_correctness)}>
+                        {scoreLabel(q.answer_correctness)}
+                    </span>
+                </td>
                 <td>
                     <span className={`rag-status-icon ${statusClass(worst)}`}>
                         {statusIcon(worst)}
@@ -195,19 +239,43 @@ function QuestionRow({ q }: { q: QuestionResult }) {
                     <td colSpan={6}>
                         <div className="rag-detail-panel">
                             <div className="rag-detail-panel__scores">
-                                <span>Fidelidad: <strong className={scoreClass(q.faithfulness)}>{scoreLabel(q.faithfulness)}</strong></span>
-                                <span>Relevancia ctx.: <strong className={scoreClass(q.context_relevance)}>{scoreLabel(q.context_relevance)}</strong></span>
-                                <span>Corrección: <strong className={scoreClass(q.answer_correctness)}>{scoreLabel(q.answer_correctness)}</strong></span>
-                                <span>Calidad: <strong className={scoreClass(q.response_quality)}>{scoreLabel(q.response_quality)}</strong></span>
+                                <span>
+                                    Fidelidad:{' '}
+                                    <strong className={scoreClass(q.faithfulness)}>
+                                        {scoreLabel(q.faithfulness)}
+                                    </strong>
+                                </span>
+                                <span>
+                                    Relevancia ctx.:{' '}
+                                    <strong className={scoreClass(q.context_relevance)}>
+                                        {scoreLabel(q.context_relevance)}
+                                    </strong>
+                                </span>
+                                <span>
+                                    Corrección:{' '}
+                                    <strong className={scoreClass(q.answer_correctness)}>
+                                        {scoreLabel(q.answer_correctness)}
+                                    </strong>
+                                </span>
+                                <span>
+                                    Calidad:{' '}
+                                    <strong className={scoreClass(q.response_quality)}>
+                                        {scoreLabel(q.response_quality)}
+                                    </strong>
+                                </span>
                             </div>
                             {q.expected && (
                                 <div className="rag-detail-panel__block">
-                                    <p className="rag-detail-panel__block-title">Respuesta esperada</p>
+                                    <p className="rag-detail-panel__block-title">
+                                        Respuesta esperada
+                                    </p>
                                     <p className="rag-detail-panel__block-text">{q.expected}</p>
                                 </div>
                             )}
                             <div className="rag-detail-panel__block">
-                                <p className="rag-detail-panel__block-title">Respuesta del sistema</p>
+                                <p className="rag-detail-panel__block-title">
+                                    Respuesta del sistema
+                                </p>
                                 <p className="rag-detail-panel__block-text">{q.response}</p>
                             </div>
                         </div>
@@ -237,8 +305,12 @@ export default function AdminRagQualityPage() {
         setError(null)
         try {
             const [latestData, historyData] = await Promise.all([
-                apiRequest<EvaluationResult | null>('/api/admin/rag-quality/results').catch(() => null),
-                apiRequest<{ evaluations: HistoryEntry[]; count: number }>('/api/admin/rag-quality/history').catch(() => ({ evaluations: [], count: 0 })),
+                apiRequest<EvaluationResult | null>('/api/admin/rag-quality/results').catch(
+                    () => null,
+                ),
+                apiRequest<{ evaluations: HistoryEntry[]; count: number }>(
+                    '/api/admin/rag-quality/history',
+                ).catch(() => ({ evaluations: [], count: 0 })),
             ])
             setLatest(latestData)
             setHistory(historyData?.evaluations || [])
@@ -290,11 +362,12 @@ export default function AdminRagQualityPage() {
 
             <main className="admin-main arqp-main">
                 <div className="admin-container arqp-container">
-
                     {/* Page header */}
                     <div className="admin-header">
                         <div className="admin-title-row">
-                            <h1><Shield size={26} /> Admin — Calidad RAG</h1>
+                            <h1>
+                                <Shield size={26} /> Admin — Calidad RAG
+                            </h1>
                             <button
                                 className="btn-refresh"
                                 onClick={fetchData}
@@ -304,7 +377,9 @@ export default function AdminRagQualityPage() {
                                 <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                             </button>
                         </div>
-                        <p className="admin-subtitle">Métricas de calidad del sistema RAG (fidelidad, relevancia, corrección)</p>
+                        <p className="admin-subtitle">
+                            Métricas de calidad del sistema RAG (fidelidad, relevancia, corrección)
+                        </p>
                     </div>
 
                     {/* Action bar */}
@@ -316,11 +391,14 @@ export default function AdminRagQualityPage() {
                                         Última evaluación: {formatDate(latest.evaluated_at)}
                                     </span>
                                     <span className="arqp-action-bar__count">
-                                        <FileQuestion size={14} /> {latest.total_questions} preguntas evaluadas
+                                        <FileQuestion size={14} /> {latest.total_questions}{' '}
+                                        preguntas evaluadas
                                     </span>
                                 </>
                             ) : (
-                                <span className="arqp-action-bar__last">Sin evaluaciones previas</span>
+                                <span className="arqp-action-bar__last">
+                                    Sin evaluaciones previas
+                                </span>
                             )}
                         </div>
                         <button
@@ -328,10 +406,15 @@ export default function AdminRagQualityPage() {
                             onClick={handleEvaluate}
                             disabled={evaluating}
                         >
-                            {evaluating
-                                ? <><Loader size={16} className="animate-spin" /> Evaluando...</>
-                                : <><Play size={16} /> Ejecutar evaluación</>
-                            }
+                            {evaluating ? (
+                                <>
+                                    <Loader size={16} className="animate-spin" /> Evaluando...
+                                </>
+                            ) : (
+                                <>
+                                    <Play size={16} /> Ejecutar evaluación
+                                </>
+                            )}
                         </button>
                     </div>
 
@@ -350,7 +433,11 @@ export default function AdminRagQualityPage() {
                     )}
                     {message && (
                         <div className={`admin-message ${message.type}`}>
-                            {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                            {message.type === 'success' ? (
+                                <CheckCircle size={18} />
+                            ) : (
+                                <AlertCircle size={18} />
+                            )}
                             {message.text}
                         </div>
                     )}
@@ -408,10 +495,11 @@ export default function AdminRagQualityPage() {
                             {history.length > 0 && (
                                 <div className="arqp-section">
                                     <h2 className="arqp-section__title">
-                                        <TrendingUp size={18} /> Tendencia — últimas {Math.min(history.length, 5)} evaluaciones
+                                        <TrendingUp size={18} /> Tendencia — últimas{' '}
+                                        {Math.min(history.length, 5)} evaluaciones
                                     </h2>
                                     <div className="arqp-trend">
-                                        {history.slice(0, 5).map(entry => (
+                                        {history.slice(0, 5).map((entry) => (
                                             <TrendRow key={entry.id} entry={entry} />
                                         ))}
                                     </div>
@@ -423,42 +511,70 @@ export default function AdminRagQualityPage() {
                                 <div className="arqp-section">
                                     <button
                                         className="arqp-collapsible"
-                                        onClick={() => setCategoriesOpen(o => !o)}
+                                        onClick={() => setCategoriesOpen((o) => !o)}
                                         aria-expanded={categoriesOpen}
                                     >
                                         <span>
                                             <ListFilter size={18} /> Desglose por categoría
                                         </span>
-                                        {categoriesOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                        {categoriesOpen ? (
+                                            <ChevronUp size={16} />
+                                        ) : (
+                                            <ChevronDown size={16} />
+                                        )}
                                     </button>
 
                                     {categoriesOpen && (
                                         <div className="arqp-categories">
-                                            {latest.categories.map(cat => {
-                                                const avg = (cat.faithfulness + cat.context_relevance + cat.answer_correctness + cat.response_quality) / 4
+                                            {latest.categories.map((cat) => {
+                                                const avg =
+                                                    (cat.faithfulness +
+                                                        cat.context_relevance +
+                                                        cat.answer_correctness +
+                                                        cat.response_quality) /
+                                                    4
                                                 return (
-                                                    <div key={cat.category} className="arqp-category-row">
+                                                    <div
+                                                        key={cat.category}
+                                                        className="arqp-category-row"
+                                                    >
                                                         <div className="arqp-category-row__header">
-                                                            <span className="arqp-category-name">{cat.category}</span>
-                                                            <span className="arqp-category-count">{cat.count} pregs.</span>
-                                                            <span className={`arqp-category-avg ${scoreClass(avg)}`}>{scoreLabel(avg)}</span>
+                                                            <span className="arqp-category-name">
+                                                                {cat.category}
+                                                            </span>
+                                                            <span className="arqp-category-count">
+                                                                {cat.count} pregs.
+                                                            </span>
+                                                            <span
+                                                                className={`arqp-category-avg ${scoreClass(avg)}`}
+                                                            >
+                                                                {scoreLabel(avg)}
+                                                            </span>
                                                         </div>
                                                         <div className="arqp-category-bars">
                                                             <div className="arqp-category-bar-item">
                                                                 <span>Fidelidad</span>
-                                                                <ProgressBar value={cat.faithfulness} />
+                                                                <ProgressBar
+                                                                    value={cat.faithfulness}
+                                                                />
                                                             </div>
                                                             <div className="arqp-category-bar-item">
                                                                 <span>Relevancia</span>
-                                                                <ProgressBar value={cat.context_relevance} />
+                                                                <ProgressBar
+                                                                    value={cat.context_relevance}
+                                                                />
                                                             </div>
                                                             <div className="arqp-category-bar-item">
                                                                 <span>Corrección</span>
-                                                                <ProgressBar value={cat.answer_correctness} />
+                                                                <ProgressBar
+                                                                    value={cat.answer_correctness}
+                                                                />
                                                             </div>
                                                             <div className="arqp-category-bar-item">
                                                                 <span>Calidad</span>
-                                                                <ProgressBar value={cat.response_quality} />
+                                                                <ProgressBar
+                                                                    value={cat.response_quality}
+                                                                />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -474,7 +590,9 @@ export default function AdminRagQualityPage() {
                                 <div className="arqp-section">
                                     <h2 className="arqp-section__title">
                                         <FileQuestion size={18} /> Detalle por pregunta
-                                        <span className="arqp-section__subtitle">ordenado por peor puntuación primero</span>
+                                        <span className="arqp-section__subtitle">
+                                            ordenado por peor puntuación primero
+                                        </span>
                                     </h2>
 
                                     {/* Desktop table */}
@@ -505,15 +623,39 @@ export default function AdminRagQualityPage() {
                                             return (
                                                 <div key={i} className="arqp-mobile-card">
                                                     <div className="arqp-mobile-card__top">
-                                                        <span className="rag-category-badge">{q.category}</span>
-                                                        <span className={`rag-status-icon ${statusClass(worst)}`}>
+                                                        <span className="rag-category-badge">
+                                                            {q.category}
+                                                        </span>
+                                                        <span
+                                                            className={`rag-status-icon ${statusClass(worst)}`}
+                                                        >
                                                             {statusIcon(worst)}
                                                         </span>
                                                     </div>
-                                                    <p className="arqp-mobile-card__question">{q.question}</p>
+                                                    <p className="arqp-mobile-card__question">
+                                                        {q.question}
+                                                    </p>
                                                     <div className="arqp-mobile-card__scores">
-                                                        <span>Fidelidad: <strong className={scoreClass(q.faithfulness)}>{scoreLabel(q.faithfulness)}</strong></span>
-                                                        <span>Corrección: <strong className={scoreClass(q.answer_correctness)}>{scoreLabel(q.answer_correctness)}</strong></span>
+                                                        <span>
+                                                            Fidelidad:{' '}
+                                                            <strong
+                                                                className={scoreClass(
+                                                                    q.faithfulness,
+                                                                )}
+                                                            >
+                                                                {scoreLabel(q.faithfulness)}
+                                                            </strong>
+                                                        </span>
+                                                        <span>
+                                                            Corrección:{' '}
+                                                            <strong
+                                                                className={scoreClass(
+                                                                    q.answer_correctness,
+                                                                )}
+                                                            >
+                                                                {scoreLabel(q.answer_correctness)}
+                                                            </strong>
+                                                        </span>
                                                     </div>
                                                 </div>
                                             )

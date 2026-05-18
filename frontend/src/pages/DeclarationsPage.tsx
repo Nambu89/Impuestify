@@ -1,7 +1,25 @@
 import { useState, useEffect, useMemo } from 'react'
-import { FileText, Calculator, TrendingUp, TrendingDown, Save, Loader2, ChevronDown, Trash2, BarChart3, Download } from 'lucide-react'
+import {
+    FileText,
+    Calculator,
+    TrendingUp,
+    TrendingDown,
+    Save,
+    Loader2,
+    ChevronDown,
+    Trash2,
+    BarChart3,
+    Download,
+} from 'lucide-react'
 import Header from '../components/Header'
-import { useDeclarations, type ModeloType, type Calculate303Input, type Calculate130Input, type Calculate420Input, type CalculateIpsiInput } from '../hooks/useDeclarations'
+import {
+    useDeclarations,
+    type ModeloType,
+    type Calculate303Input,
+    type Calculate130Input,
+    type Calculate420Input,
+    type CalculateIpsiInput,
+} from '../hooks/useDeclarations'
 import { useModeloPDF } from '../hooks/useModeloPDF'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
 import CountUp from '../components/reactbits/CountUp'
@@ -18,13 +36,22 @@ const QUARTERS = [
     { value: 4, label: '4T (Oct-Dic)' },
 ]
 
-const TERRITORIES_130 = [
-    'Comun', 'Araba', 'Gipuzkoa', 'Bizkaia', 'Navarra',
-]
+const TERRITORIES_130 = ['Comun', 'Araba', 'Gipuzkoa', 'Bizkaia', 'Navarra']
 
-function NumberInput({ label, value, onChange, suffix = '', help = '', step = 0.01 }: {
-    label: string; value: number; onChange: (v: number) => void
-    suffix?: string; help?: string; step?: number
+function NumberInput({
+    label,
+    value,
+    onChange,
+    suffix = '',
+    help = '',
+    step = 0.01,
+}: {
+    label: string
+    value: number
+    onChange: (v: number) => void
+    suffix?: string
+    help?: string
+    step?: number
 }) {
     return (
         <div className="decl-field">
@@ -34,7 +61,7 @@ function NumberInput({ label, value, onChange, suffix = '', help = '', step = 0.
                     type="number"
                     className="decl-field__input"
                     value={value || ''}
-                    onChange={e => onChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
                     step={step}
                     min={0}
                 />
@@ -45,12 +72,18 @@ function NumberInput({ label, value, onChange, suffix = '', help = '', step = 0.
     )
 }
 
-function CheckboxInput({ label, checked, onChange }: {
-    label: string; checked: boolean; onChange: (v: boolean) => void
+function CheckboxInput({
+    label,
+    checked,
+    onChange,
+}: {
+    label: string
+    checked: boolean
+    onChange: (v: boolean) => void
 }) {
     return (
         <label className="decl-checkbox">
-            <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
+            <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
             <span>{label}</span>
         </label>
     )
@@ -60,51 +93,139 @@ function CheckboxInput({ label, checked, onChange }: {
 // Modelo 303 Form
 // ---------------------------------------------------------------------------
 
-function Form303({ data, onChange, quarter }: {
-    data: Calculate303Input; onChange: (d: Calculate303Input) => void; quarter: number
+function Form303({
+    data,
+    onChange,
+    quarter,
+}: {
+    data: Calculate303Input
+    onChange: (d: Calculate303Input) => void
+    quarter: number
 }) {
     const u = (field: string, val: number) => onChange({ ...data, [field]: val, quarter })
     return (
         <div className="decl-form">
             <h3 className="decl-form__section">IVA Devengado (ventas)</h3>
             <div className="decl-form__grid">
-                <NumberInput label="Base imponible 4%" value={data.base_4 || 0} onChange={v => u('base_4', v)} suffix="EUR" />
-                <NumberInput label="Base imponible 10%" value={data.base_10 || 0} onChange={v => u('base_10', v)} suffix="EUR" />
-                <NumberInput label="Base imponible 21%" value={data.base_21 || 0} onChange={v => u('base_21', v)} suffix="EUR" />
+                <NumberInput
+                    label="Base imponible 4%"
+                    value={data.base_4 || 0}
+                    onChange={(v) => u('base_4', v)}
+                    suffix="EUR"
+                />
+                <NumberInput
+                    label="Base imponible 10%"
+                    value={data.base_10 || 0}
+                    onChange={(v) => u('base_10', v)}
+                    suffix="EUR"
+                />
+                <NumberInput
+                    label="Base imponible 21%"
+                    value={data.base_21 || 0}
+                    onChange={(v) => u('base_21', v)}
+                    suffix="EUR"
+                />
             </div>
 
             <details className="decl-form__details">
-                <summary><ChevronDown size={16} /> Operaciones avanzadas</summary>
+                <summary>
+                    <ChevronDown size={16} /> Operaciones avanzadas
+                </summary>
                 <div className="decl-form__grid">
-                    <NumberInput label="Base intracomunitarias" value={data.base_intracomunitarias || 0} onChange={v => u('base_intracomunitarias', v)} suffix="EUR" />
-                    <NumberInput label="Base inversion sujeto pasivo" value={data.base_inversion_sp || 0} onChange={v => u('base_inversion_sp', v)} suffix="EUR" />
-                    <NumberInput label="Modificacion cuotas" value={data.mod_cuotas || 0} onChange={v => u('mod_cuotas', v)} suffix="EUR" help="Rectificaciones +/-" />
+                    <NumberInput
+                        label="Base intracomunitarias"
+                        value={data.base_intracomunitarias || 0}
+                        onChange={(v) => u('base_intracomunitarias', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Base inversion sujeto pasivo"
+                        value={data.base_inversion_sp || 0}
+                        onChange={(v) => u('base_inversion_sp', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Modificacion cuotas"
+                        value={data.mod_cuotas || 0}
+                        onChange={(v) => u('mod_cuotas', v)}
+                        suffix="EUR"
+                        help="Rectificaciones +/-"
+                    />
                 </div>
             </details>
 
             <h3 className="decl-form__section">IVA Deducible (compras)</h3>
             <div className="decl-form__grid">
-                <NumberInput label="Cuota bienes/servicios corrientes" value={data.cuota_corrientes_interiores || 0} onChange={v => u('cuota_corrientes_interiores', v)} suffix="EUR" />
-                <NumberInput label="Cuota bienes de inversion" value={data.cuota_inversion_interiores || 0} onChange={v => u('cuota_inversion_interiores', v)} suffix="EUR" />
+                <NumberInput
+                    label="Cuota bienes/servicios corrientes"
+                    value={data.cuota_corrientes_interiores || 0}
+                    onChange={(v) => u('cuota_corrientes_interiores', v)}
+                    suffix="EUR"
+                />
+                <NumberInput
+                    label="Cuota bienes de inversion"
+                    value={data.cuota_inversion_interiores || 0}
+                    onChange={(v) => u('cuota_inversion_interiores', v)}
+                    suffix="EUR"
+                />
             </div>
 
             <details className="decl-form__details">
-                <summary><ChevronDown size={16} /> Mas deducciones</summary>
+                <summary>
+                    <ChevronDown size={16} /> Mas deducciones
+                </summary>
                 <div className="decl-form__grid">
-                    <NumberInput label="Cuota importaciones corrientes" value={data.cuota_importaciones_corrientes || 0} onChange={v => u('cuota_importaciones_corrientes', v)} suffix="EUR" />
-                    <NumberInput label="Cuota intracomunitarias" value={data.cuota_intracom_corrientes || 0} onChange={v => u('cuota_intracom_corrientes', v)} suffix="EUR" />
-                    <NumberInput label="Rectificacion deducciones" value={data.rectificacion_deducciones || 0} onChange={v => u('rectificacion_deducciones', v)} suffix="EUR" />
-                    <NumberInput label="Regularizacion inversion" value={data.regularizacion_inversion || 0} onChange={v => u('regularizacion_inversion', v)} suffix="EUR" />
+                    <NumberInput
+                        label="Cuota importaciones corrientes"
+                        value={data.cuota_importaciones_corrientes || 0}
+                        onChange={(v) => u('cuota_importaciones_corrientes', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Cuota intracomunitarias"
+                        value={data.cuota_intracom_corrientes || 0}
+                        onChange={(v) => u('cuota_intracom_corrientes', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Rectificacion deducciones"
+                        value={data.rectificacion_deducciones || 0}
+                        onChange={(v) => u('rectificacion_deducciones', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Regularizacion inversion"
+                        value={data.regularizacion_inversion || 0}
+                        onChange={(v) => u('regularizacion_inversion', v)}
+                        suffix="EUR"
+                    />
                 </div>
             </details>
 
             <h3 className="decl-form__section">Ajustes</h3>
             <div className="decl-form__grid">
-                <NumberInput label="Cuotas a compensar anteriores" value={data.cuotas_compensar_anteriores || 0} onChange={v => u('cuotas_compensar_anteriores', v)} suffix="EUR" />
+                <NumberInput
+                    label="Cuotas a compensar anteriores"
+                    value={data.cuotas_compensar_anteriores || 0}
+                    onChange={(v) => u('cuotas_compensar_anteriores', v)}
+                    suffix="EUR"
+                />
                 {quarter === 4 && (
-                    <NumberInput label="Regularizacion anual" value={data.regularizacion_anual || 0} onChange={v => u('regularizacion_anual', v)} suffix="EUR" />
+                    <NumberInput
+                        label="Regularizacion anual"
+                        value={data.regularizacion_anual || 0}
+                        onChange={(v) => u('regularizacion_anual', v)}
+                        suffix="EUR"
+                    />
                 )}
-                <NumberInput label="% Atribucion Estado" value={data.pct_atribucion_estado ?? 100} onChange={v => u('pct_atribucion_estado', v)} suffix="%" step={1} help="100% salvo operaciones forales" />
+                <NumberInput
+                    label="% Atribucion Estado"
+                    value={data.pct_atribucion_estado ?? 100}
+                    onChange={(v) => u('pct_atribucion_estado', v)}
+                    suffix="%"
+                    step={1}
+                    help="100% salvo operaciones forales"
+                />
             </div>
         </div>
     )
@@ -114,8 +235,14 @@ function Form303({ data, onChange, quarter }: {
 // Modelo 130 Form
 // ---------------------------------------------------------------------------
 
-function Form130({ data, onChange, territory }: {
-    data: Calculate130Input; onChange: (d: Calculate130Input) => void; territory: string
+function Form130({
+    data,
+    onChange,
+    territory,
+}: {
+    data: Calculate130Input
+    onChange: (d: Calculate130Input) => void
+    territory: string
 }) {
     const u = (field: string, val: any) => onChange({ ...data, [field]: val })
     const isComun = territory === 'Comun'
@@ -127,18 +254,56 @@ function Form130({ data, onChange, territory }: {
         <div className="decl-form">
             {isComun && (
                 <>
-                    <h3 className="decl-form__section">Sección I: Estimación directa (acumulado)</h3>
+                    <h3 className="decl-form__section">
+                        Sección I: Estimación directa (acumulado)
+                    </h3>
                     <div className="decl-form__grid">
-                        <NumberInput label="Ingresos acumulados" value={data.ingresos_acumulados || 0} onChange={v => u('ingresos_acumulados', v)} suffix="EUR" help="Desde 1 de enero" />
-                        <NumberInput label="Gastos acumulados" value={data.gastos_acumulados || 0} onChange={v => u('gastos_acumulados', v)} suffix="EUR" help="Desde 1 de enero" />
-                        <NumberInput label="Retenciones acumuladas" value={data.retenciones_acumuladas || 0} onChange={v => u('retenciones_acumuladas', v)} suffix="EUR" />
-                        <NumberInput label="Pagos fraccionados anteriores" value={data.pagos_anteriores || 0} onChange={v => u('pagos_anteriores', v)} suffix="EUR" />
+                        <NumberInput
+                            label="Ingresos acumulados"
+                            value={data.ingresos_acumulados || 0}
+                            onChange={(v) => u('ingresos_acumulados', v)}
+                            suffix="EUR"
+                            help="Desde 1 de enero"
+                        />
+                        <NumberInput
+                            label="Gastos acumulados"
+                            value={data.gastos_acumulados || 0}
+                            onChange={(v) => u('gastos_acumulados', v)}
+                            suffix="EUR"
+                            help="Desde 1 de enero"
+                        />
+                        <NumberInput
+                            label="Retenciones acumuladas"
+                            value={data.retenciones_acumuladas || 0}
+                            onChange={(v) => u('retenciones_acumuladas', v)}
+                            suffix="EUR"
+                        />
+                        <NumberInput
+                            label="Pagos fraccionados anteriores"
+                            value={data.pagos_anteriores || 0}
+                            onChange={(v) => u('pagos_anteriores', v)}
+                            suffix="EUR"
+                        />
                     </div>
                     <h3 className="decl-form__section">Deducciones</h3>
                     <div className="decl-form__grid">
-                        <NumberInput label="Rend. neto año anterior" value={data.rend_neto_anterior || 0} onChange={v => u('rend_neto_anterior', v)} suffix="EUR" help="Para Art. 80 bis" />
-                        <CheckboxInput label="Vivienda habitual (hipoteca)" checked={data.tiene_vivienda_habitual || false} onChange={v => u('tiene_vivienda_habitual', v)} />
-                        <CheckboxInput label="Residente Ceuta/Melilla" checked={data.ceuta_melilla || false} onChange={v => u('ceuta_melilla', v)} />
+                        <NumberInput
+                            label="Rend. neto año anterior"
+                            value={data.rend_neto_anterior || 0}
+                            onChange={(v) => u('rend_neto_anterior', v)}
+                            suffix="EUR"
+                            help="Para Art. 80 bis"
+                        />
+                        <CheckboxInput
+                            label="Vivienda habitual (hipoteca)"
+                            checked={data.tiene_vivienda_habitual || false}
+                            onChange={(v) => u('tiene_vivienda_habitual', v)}
+                        />
+                        <CheckboxInput
+                            label="Residente Ceuta/Melilla"
+                            checked={data.ceuta_melilla || false}
+                            onChange={(v) => u('ceuta_melilla', v)}
+                        />
                     </div>
                 </>
             )}
@@ -147,10 +312,30 @@ function Form130({ data, onChange, territory }: {
                 <>
                     <h3 className="decl-form__section">Datos del trimestre</h3>
                     <div className="decl-form__grid">
-                        <NumberInput label="Ingresos trimestre" value={data.ingresos_trimestre || 0} onChange={v => u('ingresos_trimestre', v)} suffix="EUR" />
-                        <NumberInput label="Gastos trimestre" value={data.gastos_trimestre || 0} onChange={v => u('gastos_trimestre', v)} suffix="EUR" />
-                        <NumberInput label="Retenciones trimestre" value={data.retenciones_trimestre || 0} onChange={v => u('retenciones_trimestre', v)} suffix="EUR" />
-                        <NumberInput label="Pagos anteriores" value={data.pagos_anteriores || 0} onChange={v => u('pagos_anteriores', v)} suffix="EUR" />
+                        <NumberInput
+                            label="Ingresos trimestre"
+                            value={data.ingresos_trimestre || 0}
+                            onChange={(v) => u('ingresos_trimestre', v)}
+                            suffix="EUR"
+                        />
+                        <NumberInput
+                            label="Gastos trimestre"
+                            value={data.gastos_trimestre || 0}
+                            onChange={(v) => u('gastos_trimestre', v)}
+                            suffix="EUR"
+                        />
+                        <NumberInput
+                            label="Retenciones trimestre"
+                            value={data.retenciones_trimestre || 0}
+                            onChange={(v) => u('retenciones_trimestre', v)}
+                            suffix="EUR"
+                        />
+                        <NumberInput
+                            label="Pagos anteriores"
+                            value={data.pagos_anteriores || 0}
+                            onChange={(v) => u('pagos_anteriores', v)}
+                            suffix="EUR"
+                        />
                     </div>
                 </>
             )}
@@ -158,31 +343,62 @@ function Form130({ data, onChange, territory }: {
             {isForal && (
                 <>
                     <h3 className="decl-form__section">
-                        {territory} - Régimen {data.regimen === 'excepcional' ? 'excepcional' : 'general'}
+                        {territory} - Régimen{' '}
+                        {data.regimen === 'excepcional' ? 'excepcional' : 'general'}
                     </h3>
                     <div className="decl-form__grid">
                         <div className="decl-field">
                             <label className="decl-field__label">Régimen</label>
-                            <select className="decl-field__input" value={data.regimen || 'general'} onChange={e => u('regimen', e.target.value)}>
+                            <select
+                                className="decl-field__input"
+                                value={data.regimen || 'general'}
+                                onChange={(e) => u('regimen', e.target.value)}
+                            >
                                 <option value="general">General (5% rend. penúltimo)</option>
                                 <option value="excepcional">Excepcional (1% volumen)</option>
                             </select>
                         </div>
                         {data.regimen !== 'excepcional' ? (
                             <>
-                                <NumberInput label="Rend. neto penultimo ano" value={data.rend_neto_penultimo || 0} onChange={v => u('rend_neto_penultimo', v)} suffix="EUR" />
-                                <NumberInput label="Retenciones penultimo ano" value={data.retenciones_penultimo || 0} onChange={v => u('retenciones_penultimo', v)} suffix="EUR" />
+                                <NumberInput
+                                    label="Rend. neto penultimo ano"
+                                    value={data.rend_neto_penultimo || 0}
+                                    onChange={(v) => u('rend_neto_penultimo', v)}
+                                    suffix="EUR"
+                                />
+                                <NumberInput
+                                    label="Retenciones penultimo ano"
+                                    value={data.retenciones_penultimo || 0}
+                                    onChange={(v) => u('retenciones_penultimo', v)}
+                                    suffix="EUR"
+                                />
                             </>
                         ) : (
                             <>
-                                <NumberInput label="Volumen operaciones trimestre" value={data.volumen_operaciones_trimestre || 0} onChange={v => u('volumen_operaciones_trimestre', v)} suffix="EUR" />
-                                <NumberInput label="Retenciones trimestre" value={data.retenciones_trimestre_gipuzkoa || 0} onChange={v => u('retenciones_trimestre_gipuzkoa', v)} suffix="EUR" />
+                                <NumberInput
+                                    label="Volumen operaciones trimestre"
+                                    value={data.volumen_operaciones_trimestre || 0}
+                                    onChange={(v) => u('volumen_operaciones_trimestre', v)}
+                                    suffix="EUR"
+                                />
+                                <NumberInput
+                                    label="Retenciones trimestre"
+                                    value={data.retenciones_trimestre_gipuzkoa || 0}
+                                    onChange={(v) => u('retenciones_trimestre_gipuzkoa', v)}
+                                    suffix="EUR"
+                                />
                             </>
                         )}
                     </div>
                     {territory === 'Bizkaia' && (
                         <div className="decl-form__grid">
-                            <NumberInput label="Años de actividad" value={data.anos_actividad || 3} onChange={v => u('anos_actividad', v)} step={1} help="Primeros 2 años: régimen especial" />
+                            <NumberInput
+                                label="Años de actividad"
+                                value={data.anos_actividad || 3}
+                                onChange={(v) => u('anos_actividad', v)}
+                                step={1}
+                                help="Primeros 2 años: régimen especial"
+                            />
                         </div>
                     )}
                 </>
@@ -194,7 +410,11 @@ function Form130({ data, onChange, territory }: {
                     <div className="decl-form__grid">
                         <div className="decl-field">
                             <label className="decl-field__label">Modalidad</label>
-                            <select className="decl-field__input" value={data.modalidad || 'segunda'} onChange={e => u('modalidad', e.target.value)}>
+                            <select
+                                className="decl-field__input"
+                                value={data.modalidad || 'segunda'}
+                                onChange={(e) => u('modalidad', e.target.value)}
+                            >
                                 <option value="primera">Primera (rend. penultimo)</option>
                                 <option value="segunda">Segunda (acumulado anualizado)</option>
                             </select>
@@ -202,15 +422,45 @@ function Form130({ data, onChange, territory }: {
                     </div>
                     {data.modalidad === 'primera' ? (
                         <div className="decl-form__grid">
-                            <NumberInput label="Rend. neto penultimo ano" value={data.rend_neto_penultimo || 0} onChange={v => u('rend_neto_penultimo', v)} suffix="EUR" />
-                            <NumberInput label="Retenciones penultimo ano" value={data.retenciones_penultimo || 0} onChange={v => u('retenciones_penultimo', v)} suffix="EUR" />
+                            <NumberInput
+                                label="Rend. neto penultimo ano"
+                                value={data.rend_neto_penultimo || 0}
+                                onChange={(v) => u('rend_neto_penultimo', v)}
+                                suffix="EUR"
+                            />
+                            <NumberInput
+                                label="Retenciones penultimo ano"
+                                value={data.retenciones_penultimo || 0}
+                                onChange={(v) => u('retenciones_penultimo', v)}
+                                suffix="EUR"
+                            />
                         </div>
                     ) : (
                         <div className="decl-form__grid">
-                            <NumberInput label="Ingresos acumulados" value={data.ingresos_acumulados || 0} onChange={v => u('ingresos_acumulados', v)} suffix="EUR" />
-                            <NumberInput label="Gastos acumulados" value={data.gastos_acumulados || 0} onChange={v => u('gastos_acumulados', v)} suffix="EUR" />
-                            <NumberInput label="Retenciones acumuladas" value={data.retenciones_acumuladas_navarra || 0} onChange={v => u('retenciones_acumuladas_navarra', v)} suffix="EUR" />
-                            <NumberInput label="Pagos anteriores" value={data.pagos_anteriores_navarra || 0} onChange={v => u('pagos_anteriores_navarra', v)} suffix="EUR" />
+                            <NumberInput
+                                label="Ingresos acumulados"
+                                value={data.ingresos_acumulados || 0}
+                                onChange={(v) => u('ingresos_acumulados', v)}
+                                suffix="EUR"
+                            />
+                            <NumberInput
+                                label="Gastos acumulados"
+                                value={data.gastos_acumulados || 0}
+                                onChange={(v) => u('gastos_acumulados', v)}
+                                suffix="EUR"
+                            />
+                            <NumberInput
+                                label="Retenciones acumuladas"
+                                value={data.retenciones_acumuladas_navarra || 0}
+                                onChange={(v) => u('retenciones_acumuladas_navarra', v)}
+                                suffix="EUR"
+                            />
+                            <NumberInput
+                                label="Pagos anteriores"
+                                value={data.pagos_anteriores_navarra || 0}
+                                onChange={(v) => u('pagos_anteriores_navarra', v)}
+                                suffix="EUR"
+                            />
                         </div>
                     )}
                 </>
@@ -223,57 +473,153 @@ function Form130({ data, onChange, territory }: {
 // IPSI Form (Ceuta/Melilla)
 // ---------------------------------------------------------------------------
 
-function FormIpsi({ data, onChange, quarter, territorio }: {
-    data: CalculateIpsiInput; onChange: (d: CalculateIpsiInput) => void; quarter: number; territorio: string
+function FormIpsi({
+    data,
+    onChange,
+    quarter,
+    territorio,
+}: {
+    data: CalculateIpsiInput
+    onChange: (d: CalculateIpsiInput) => void
+    quarter: number
+    territorio: string
 }) {
-    const u = (field: string, val: number) => onChange({ ...data, [field]: val, quarter, territorio })
+    const u = (field: string, val: number) =>
+        onChange({ ...data, [field]: val, quarter, territorio })
     return (
         <div className="decl-form">
             <h3 className="decl-form__section">IPSI Devengado (ventas)</h3>
             <div className="decl-form__grid">
-                <NumberInput label="Base tipo general (4%)" value={data.base_4 || 0} onChange={v => u('base_4', v)} suffix="EUR" />
-                <NumberInput label="Base tipo bonificado (2%)" value={data.base_2 || 0} onChange={v => u('base_2', v)} suffix="EUR" />
-                <NumberInput label="Base tipo incrementado (8%)" value={data.base_8 || 0} onChange={v => u('base_8', v)} suffix="EUR" />
+                <NumberInput
+                    label="Base tipo general (4%)"
+                    value={data.base_4 || 0}
+                    onChange={(v) => u('base_4', v)}
+                    suffix="EUR"
+                />
+                <NumberInput
+                    label="Base tipo bonificado (2%)"
+                    value={data.base_2 || 0}
+                    onChange={(v) => u('base_2', v)}
+                    suffix="EUR"
+                />
+                <NumberInput
+                    label="Base tipo incrementado (8%)"
+                    value={data.base_8 || 0}
+                    onChange={(v) => u('base_8', v)}
+                    suffix="EUR"
+                />
             </div>
 
             <details className="decl-form__details">
-                <summary><ChevronDown size={16} /> Otros tipos</summary>
+                <summary>
+                    <ChevronDown size={16} /> Otros tipos
+                </summary>
                 <div className="decl-form__grid">
-                    <NumberInput label="Base tipo minimo (0.5%)" value={data.base_0_5 || 0} onChange={v => u('base_0_5', v)} suffix="EUR" />
-                    <NumberInput label="Base tipo reducido (1%)" value={data.base_1 || 0} onChange={v => u('base_1', v)} suffix="EUR" />
-                    <NumberInput label="Base tipo especial (10%)" value={data.base_10 || 0} onChange={v => u('base_10', v)} suffix="EUR" />
+                    <NumberInput
+                        label="Base tipo minimo (0.5%)"
+                        value={data.base_0_5 || 0}
+                        onChange={(v) => u('base_0_5', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Base tipo reducido (1%)"
+                        value={data.base_1 || 0}
+                        onChange={(v) => u('base_1', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Base tipo especial (10%)"
+                        value={data.base_10 || 0}
+                        onChange={(v) => u('base_10', v)}
+                        suffix="EUR"
+                    />
                 </div>
             </details>
 
             <details className="decl-form__details">
-                <summary><ChevronDown size={16} /> Importaciones e ISP</summary>
+                <summary>
+                    <ChevronDown size={16} /> Importaciones e ISP
+                </summary>
                 <div className="decl-form__grid">
-                    <NumberInput label="Base importaciones" value={data.base_importaciones || 0} onChange={v => u('base_importaciones', v)} suffix="EUR" />
-                    <NumberInput label="Base inversion sujeto pasivo" value={data.base_inversion_sp || 0} onChange={v => u('base_inversion_sp', v)} suffix="EUR" />
-                    <NumberInput label="Modificacion cuotas" value={data.mod_cuotas || 0} onChange={v => u('mod_cuotas', v)} suffix="EUR" help="Rectificaciones +/-" />
+                    <NumberInput
+                        label="Base importaciones"
+                        value={data.base_importaciones || 0}
+                        onChange={(v) => u('base_importaciones', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Base inversion sujeto pasivo"
+                        value={data.base_inversion_sp || 0}
+                        onChange={(v) => u('base_inversion_sp', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Modificacion cuotas"
+                        value={data.mod_cuotas || 0}
+                        onChange={(v) => u('mod_cuotas', v)}
+                        suffix="EUR"
+                        help="Rectificaciones +/-"
+                    />
                 </div>
             </details>
 
             <h3 className="decl-form__section">IPSI Deducible (compras)</h3>
             <div className="decl-form__grid">
-                <NumberInput label="Cuota bienes/servicios corrientes" value={data.cuota_corrientes_interiores || 0} onChange={v => u('cuota_corrientes_interiores', v)} suffix="EUR" />
-                <NumberInput label="Cuota bienes de inversion" value={data.cuota_inversion_interiores || 0} onChange={v => u('cuota_inversion_interiores', v)} suffix="EUR" />
+                <NumberInput
+                    label="Cuota bienes/servicios corrientes"
+                    value={data.cuota_corrientes_interiores || 0}
+                    onChange={(v) => u('cuota_corrientes_interiores', v)}
+                    suffix="EUR"
+                />
+                <NumberInput
+                    label="Cuota bienes de inversion"
+                    value={data.cuota_inversion_interiores || 0}
+                    onChange={(v) => u('cuota_inversion_interiores', v)}
+                    suffix="EUR"
+                />
             </div>
 
             <details className="decl-form__details">
-                <summary><ChevronDown size={16} /> Mas deducciones</summary>
+                <summary>
+                    <ChevronDown size={16} /> Mas deducciones
+                </summary>
                 <div className="decl-form__grid">
-                    <NumberInput label="Cuota importaciones corrientes" value={data.cuota_importaciones_corrientes || 0} onChange={v => u('cuota_importaciones_corrientes', v)} suffix="EUR" />
-                    <NumberInput label="Cuota importaciones inversion" value={data.cuota_importaciones_inversion || 0} onChange={v => u('cuota_importaciones_inversion', v)} suffix="EUR" />
-                    <NumberInput label="Rectificacion deducciones" value={data.rectificacion_deducciones || 0} onChange={v => u('rectificacion_deducciones', v)} suffix="EUR" />
+                    <NumberInput
+                        label="Cuota importaciones corrientes"
+                        value={data.cuota_importaciones_corrientes || 0}
+                        onChange={(v) => u('cuota_importaciones_corrientes', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Cuota importaciones inversion"
+                        value={data.cuota_importaciones_inversion || 0}
+                        onChange={(v) => u('cuota_importaciones_inversion', v)}
+                        suffix="EUR"
+                    />
+                    <NumberInput
+                        label="Rectificacion deducciones"
+                        value={data.rectificacion_deducciones || 0}
+                        onChange={(v) => u('rectificacion_deducciones', v)}
+                        suffix="EUR"
+                    />
                 </div>
             </details>
 
             <h3 className="decl-form__section">Ajustes</h3>
             <div className="decl-form__grid">
-                <NumberInput label="Cuotas a compensar anteriores" value={data.cuotas_compensar_anteriores || 0} onChange={v => u('cuotas_compensar_anteriores', v)} suffix="EUR" />
+                <NumberInput
+                    label="Cuotas a compensar anteriores"
+                    value={data.cuotas_compensar_anteriores || 0}
+                    onChange={(v) => u('cuotas_compensar_anteriores', v)}
+                    suffix="EUR"
+                />
                 {quarter === 4 && (
-                    <NumberInput label="Regularizacion anual" value={data.regularizacion_anual || 0} onChange={v => u('regularizacion_anual', v)} suffix="EUR" />
+                    <NumberInput
+                        label="Regularizacion anual"
+                        value={data.regularizacion_anual || 0}
+                        onChange={(v) => u('regularizacion_anual', v)}
+                        suffix="EUR"
+                    />
                 )}
             </div>
         </div>
@@ -292,7 +638,9 @@ function ResultCard({ result, modelo }: { result: Record<string, any>; modelo: M
     const absResult = Math.abs(resultado)
 
     return (
-        <div className={`decl-result ${isNegative ? 'decl-result--negative' : 'decl-result--positive'}`}>
+        <div
+            className={`decl-result ${isNegative ? 'decl-result--negative' : 'decl-result--positive'}`}
+        >
             <div className="decl-result__header">
                 <span className="decl-result__icon">
                     {isNegative ? <TrendingDown size={24} /> : <TrendingUp size={24} />}
@@ -388,10 +736,8 @@ function ResultCard({ result, modelo }: { result: Record<string, any>; modelo: M
 
 export default function DeclarationsPage() {
     const { profile } = useFiscalProfile()
-    const {
-        calcResult, declarations, loading, saving, error,
-        calculate, save, loadYear, reset,
-    } = useDeclarations()
+    const { calcResult, declarations, loading, saving, error, calculate, save, loadYear, reset } =
+        useDeclarations()
     const { downloadPDF, isLoading: pdfLoading, error: pdfError } = useModeloPDF()
 
     const [modelo, setModelo] = useState<ModeloType>('303')
@@ -415,11 +761,19 @@ export default function DeclarationsPage() {
     const ccaaLower = userCcaa.toLowerCase()
     const isCeutaMelilla = ccaaLower.includes('ceuta') || ccaaLower.includes('melilla')
     const isCanarias = ccaaLower.includes('canarias')
-    const isGipuzkoa = ccaaLower.includes('gipuzkoa') || ccaaLower.includes('guipuzcoa') || ccaaLower.includes('guipúzcoa')
+    const isGipuzkoa =
+        ccaaLower.includes('gipuzkoa') ||
+        ccaaLower.includes('guipuzcoa') ||
+        ccaaLower.includes('guipúzcoa')
     const isNavarra = ccaaLower.includes('navarra')
-    const isAraba = ccaaLower.includes('araba') || ccaaLower.includes('álava') || ccaaLower.includes('alava')
+    const isAraba =
+        ccaaLower.includes('araba') || ccaaLower.includes('álava') || ccaaLower.includes('alava')
     const isBizkaia = ccaaLower.includes('bizkaia') || ccaaLower.includes('vizcaya')
-    const isPaisVascoGenerico = (ccaaLower.includes('vasco') || ccaaLower.includes('euskadi')) && !isAraba && !isBizkaia && !isGipuzkoa
+    const isPaisVascoGenerico =
+        (ccaaLower.includes('vasco') || ccaaLower.includes('euskadi')) &&
+        !isAraba &&
+        !isBizkaia &&
+        !isGipuzkoa
     const isForal = isGipuzkoa || isNavarra || isAraba || isBizkaia || isPaisVascoGenerico
     const ipsiTerritorio = ccaaLower.includes('melilla') ? 'Melilla' : 'Ceuta'
 
@@ -427,17 +781,31 @@ export default function DeclarationsPage() {
     // Para "País Vasco" sin diputación específica el usuario elige la diputación
     // en el selector de territory130; mostramos label genérico "300/303 IVA".
     const ivaModeloNum = isGipuzkoa ? '300' : isNavarra ? 'F-69' : '303'
-    const ivaModeloLabel = isGipuzkoa ? '300 IVA' : isNavarra ? 'F-69 IVA' : isPaisVascoGenerico ? 'IVA foral' : '303 IVA'
+    const ivaModeloLabel = isGipuzkoa
+        ? '300 IVA'
+        : isNavarra
+          ? 'F-69 IVA'
+          : isPaisVascoGenerico
+            ? 'IVA foral'
+            : '303 IVA'
 
     // Auto-detect territory from profile
     useEffect(() => {
         if (profile?.ccaa_residencia) {
             const ccaa = profile.ccaa_residencia.toLowerCase()
-            if (ccaa.includes('araba') || ccaa.includes('álava') || ccaa.includes('alava')) setTerritory130('Araba')
-            else if (ccaa.includes('gipuzkoa') || ccaa.includes('guipuzcoa') || ccaa.includes('guipúzcoa')) setTerritory130('Gipuzkoa')
-            else if (ccaa.includes('bizkaia') || ccaa.includes('vizcaya')) setTerritory130('Bizkaia')
+            if (ccaa.includes('araba') || ccaa.includes('álava') || ccaa.includes('alava'))
+                setTerritory130('Araba')
+            else if (
+                ccaa.includes('gipuzkoa') ||
+                ccaa.includes('guipuzcoa') ||
+                ccaa.includes('guipúzcoa')
+            )
+                setTerritory130('Gipuzkoa')
+            else if (ccaa.includes('bizkaia') || ccaa.includes('vizcaya'))
+                setTerritory130('Bizkaia')
             else if (ccaa.includes('navarra')) setTerritory130('Navarra')
-            else if (ccaa.includes('vasco') || ccaa.includes('euskadi')) setTerritory130('Bizkaia') // País Vasco sin diputación → default editable
+            else if (ccaa.includes('vasco') || ccaa.includes('euskadi'))
+                setTerritory130('Bizkaia') // País Vasco sin diputación → default editable
             else setTerritory130('Comun')
 
             // Default tab según el régimen del territorio
@@ -450,22 +818,46 @@ export default function DeclarationsPage() {
     useEffect(() => {
         setSaved(false)
         if (modelo === '303') {
-            const hasInput = (form303.base_4 || 0) + (form303.base_10 || 0) + (form303.base_21 || 0) +
-                (form303.cuota_corrientes_interiores || 0) > 0
+            const hasInput =
+                (form303.base_4 || 0) +
+                    (form303.base_10 || 0) +
+                    (form303.base_21 || 0) +
+                    (form303.cuota_corrientes_interiores || 0) >
+                0
             if (hasInput) calculate('303', { ...form303, quarter, year })
         } else if (modelo === '130') {
-            const hasInput = (form130.ingresos_acumulados || 0) + (form130.ingresos_trimestre || 0) +
-                (form130.rend_neto_penultimo || 0) > 0
+            const hasInput =
+                (form130.ingresos_acumulados || 0) +
+                    (form130.ingresos_trimestre || 0) +
+                    (form130.rend_neto_penultimo || 0) >
+                0
             if (hasInput) calculate('130', { ...form130, quarter, territory: territory130 })
         } else if (modelo === '420') {
-            const hasInput = (form420.base_7 || 0) + (form420.base_3 || 0) + (form420.base_0 || 0) > 0
+            const hasInput =
+                (form420.base_7 || 0) + (form420.base_3 || 0) + (form420.base_0 || 0) > 0
             if (hasInput) calculate('420', { ...form420, quarter })
         } else if (modelo === 'ipsi') {
-            const hasInput = (formIpsi.base_4 || 0) + (formIpsi.base_2 || 0) + (formIpsi.base_8 || 0) +
-                (formIpsi.cuota_corrientes_interiores || 0) > 0
-            if (hasInput) calculate('ipsi', { ...formIpsi, quarter, year, territorio: ipsiTerritorio })
+            const hasInput =
+                (formIpsi.base_4 || 0) +
+                    (formIpsi.base_2 || 0) +
+                    (formIpsi.base_8 || 0) +
+                    (formIpsi.cuota_corrientes_interiores || 0) >
+                0
+            if (hasInput)
+                calculate('ipsi', { ...formIpsi, quarter, year, territorio: ipsiTerritorio })
         }
-    }, [form303, form130, form420, formIpsi, modelo, quarter, year, territory130, ipsiTerritorio, calculate])
+    }, [
+        form303,
+        form130,
+        form420,
+        formIpsi,
+        modelo,
+        quarter,
+        year,
+        territory130,
+        ipsiTerritorio,
+        calculate,
+    ])
 
     // Load saved declarations
     useEffect(() => {
@@ -474,8 +866,22 @@ export default function DeclarationsPage() {
 
     const handleSave = async () => {
         if (!calcResult?.success || !calcResult.result) return
-        const formData = modelo === '303' ? form303 : modelo === '130' ? form130 : modelo === '420' ? form420 : formIpsi
-        const territory = modelo === '130' ? territory130 : modelo === '420' ? 'Canarias' : modelo === 'ipsi' ? ipsiTerritorio : 'comun'
+        const formData =
+            modelo === '303'
+                ? form303
+                : modelo === '130'
+                  ? form130
+                  : modelo === '420'
+                    ? form420
+                    : formIpsi
+        const territory =
+            modelo === '130'
+                ? territory130
+                : modelo === '420'
+                  ? 'Canarias'
+                  : modelo === 'ipsi'
+                    ? ipsiTerritorio
+                    : 'comun'
         const result = await save(modelo, territory, year, quarter, formData, calcResult.result)
         if (result?.success) {
             setSaved(true)
@@ -493,8 +899,10 @@ export default function DeclarationsPage() {
     }
 
     const modeloLabel = useMemo(() => {
-        if (modelo === '303') return `Modelo ${ivaModeloNum} - IVA${isForal ? ` (${territory130})` : ''}`
-        if (modelo === '130') return `Modelo 130 - Pago Fraccionado IRPF${isForal ? ` (${territory130})` : ''}`
+        if (modelo === '303')
+            return `Modelo ${ivaModeloNum} - IVA${isForal ? ` (${territory130})` : ''}`
+        if (modelo === '130')
+            return `Modelo 130 - Pago Fraccionado IRPF${isForal ? ` (${territory130})` : ''}`
         if (modelo === 'ipsi') return `IPSI - ${ipsiTerritorio}`
         return 'Modelo 420 - IGIC Canarias'
     }, [modelo, ipsiTerritorio, ivaModeloNum, isForal, territory130])
@@ -508,27 +916,59 @@ export default function DeclarationsPage() {
                     <FileText size={28} />
                     <div>
                         <h1>Modelos Trimestrales</h1>
-                        <p>Calcula y guarda tus declaraciones trimestrales{isCeutaMelilla ? ' de IPSI e IRPF' : isCanarias ? ' de IGIC e IRPF' : ' de IVA e IRPF'}{isForal ? ` — Hacienda Foral de ${territory130}` : ''}</p>
+                        <p>
+                            Calcula y guarda tus declaraciones trimestrales
+                            {isCeutaMelilla
+                                ? ' de IPSI e IRPF'
+                                : isCanarias
+                                  ? ' de IGIC e IRPF'
+                                  : ' de IVA e IRPF'}
+                            {isForal ? ` — Hacienda Foral de ${territory130}` : ''}
+                        </p>
                     </div>
                 </div>
 
                 {/* Selector tabs — show relevant models based on user territory */}
                 <div className="decl-tabs">
                     {!isCeutaMelilla && !isCanarias && (
-                        <button className={`decl-tab ${modelo === '303' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('303'); reset() }}>
+                        <button
+                            className={`decl-tab ${modelo === '303' ? 'decl-tab--active' : ''}`}
+                            onClick={() => {
+                                setModelo('303')
+                                reset()
+                            }}
+                        >
                             <Calculator size={16} /> {ivaModeloLabel}
                         </button>
                     )}
-                    <button className={`decl-tab ${modelo === '130' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('130'); reset() }}>
+                    <button
+                        className={`decl-tab ${modelo === '130' ? 'decl-tab--active' : ''}`}
+                        onClick={() => {
+                            setModelo('130')
+                            reset()
+                        }}
+                    >
                         <Calculator size={16} /> 130 IRPF
                     </button>
                     {isCanarias && (
-                        <button className={`decl-tab ${modelo === '420' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('420'); reset() }}>
+                        <button
+                            className={`decl-tab ${modelo === '420' ? 'decl-tab--active' : ''}`}
+                            onClick={() => {
+                                setModelo('420')
+                                reset()
+                            }}
+                        >
                             <Calculator size={16} /> 420 IGIC
                         </button>
                     )}
                     {isCeutaMelilla && (
-                        <button className={`decl-tab ${modelo === 'ipsi' ? 'decl-tab--active' : ''}`} onClick={() => { setModelo('ipsi'); reset() }}>
+                        <button
+                            className={`decl-tab ${modelo === 'ipsi' ? 'decl-tab--active' : ''}`}
+                            onClick={() => {
+                                setModelo('ipsi')
+                                reset()
+                            }}
+                        >
                             <Calculator size={16} /> IPSI
                         </button>
                     )}
@@ -540,52 +980,140 @@ export default function DeclarationsPage() {
                         <div className="decl-form-panel__header">
                             <h2>{modeloLabel}</h2>
                             <div className="decl-selectors">
-                                <select className="decl-select" value={quarter} onChange={e => setQuarter(Number(e.target.value))}>
-                                    {QUARTERS.map(q => (
-                                        <option key={q.value} value={q.value}>{q.label}</option>
+                                <select
+                                    className="decl-select"
+                                    value={quarter}
+                                    onChange={(e) => setQuarter(Number(e.target.value))}
+                                >
+                                    {QUARTERS.map((q) => (
+                                        <option key={q.value} value={q.value}>
+                                            {q.label}
+                                        </option>
                                     ))}
                                 </select>
-                                <select className="decl-select" value={year} onChange={e => setYear(Number(e.target.value))}>
-                                    {[2024, 2025, 2026].map(y => (
-                                        <option key={y} value={y}>{y}</option>
+                                <select
+                                    className="decl-select"
+                                    value={year}
+                                    onChange={(e) => setYear(Number(e.target.value))}
+                                >
+                                    {[2024, 2025, 2026].map((y) => (
+                                        <option key={y} value={y}>
+                                            {y}
+                                        </option>
                                     ))}
                                 </select>
                                 {modelo === '130' && (
-                                    <select className="decl-select" value={territory130} onChange={e => setTerritory130(e.target.value)}>
-                                        {TERRITORIES_130.map(t => (
-                                            <option key={t} value={t}>{t}</option>
+                                    <select
+                                        className="decl-select"
+                                        value={territory130}
+                                        onChange={(e) => setTerritory130(e.target.value)}
+                                    >
+                                        {TERRITORIES_130.map((t) => (
+                                            <option key={t} value={t}>
+                                                {t}
+                                            </option>
                                         ))}
                                     </select>
                                 )}
                             </div>
                         </div>
 
-                        {modelo === '303' && <Form303 data={form303} onChange={setForm303} quarter={quarter} />}
-                        {modelo === '130' && <Form130 data={form130} onChange={setForm130} territory={territory130} />}
+                        {modelo === '303' && (
+                            <Form303 data={form303} onChange={setForm303} quarter={quarter} />
+                        )}
+                        {modelo === '130' && (
+                            <Form130
+                                data={form130}
+                                onChange={setForm130}
+                                territory={territory130}
+                            />
+                        )}
                         {modelo === '420' && (
                             <div className="decl-form">
                                 <h3 className="decl-form__section">IGIC Devengado</h3>
                                 <div className="decl-form__grid">
-                                    <NumberInput label="Base tipo cero (0%)" value={form420.base_0 || 0} onChange={v => setForm420(p => ({ ...p, base_0: v }))} suffix="EUR" />
-                                    <NumberInput label="Base reducido (3%)" value={form420.base_3 || 0} onChange={v => setForm420(p => ({ ...p, base_3: v }))} suffix="EUR" />
-                                    <NumberInput label="Base general (7%)" value={form420.base_7 || 0} onChange={v => setForm420(p => ({ ...p, base_7: v }))} suffix="EUR" />
-                                    <NumberInput label="Base incrementado 1 (9.5%)" value={form420.base_9_5 || 0} onChange={v => setForm420(p => ({ ...p, base_9_5: v }))} suffix="EUR" />
-                                    <NumberInput label="Base incrementado 2 (13.5%)" value={form420.base_13_5 || 0} onChange={v => setForm420(p => ({ ...p, base_13_5: v }))} suffix="EUR" />
+                                    <NumberInput
+                                        label="Base tipo cero (0%)"
+                                        value={form420.base_0 || 0}
+                                        onChange={(v) => setForm420((p) => ({ ...p, base_0: v }))}
+                                        suffix="EUR"
+                                    />
+                                    <NumberInput
+                                        label="Base reducido (3%)"
+                                        value={form420.base_3 || 0}
+                                        onChange={(v) => setForm420((p) => ({ ...p, base_3: v }))}
+                                        suffix="EUR"
+                                    />
+                                    <NumberInput
+                                        label="Base general (7%)"
+                                        value={form420.base_7 || 0}
+                                        onChange={(v) => setForm420((p) => ({ ...p, base_7: v }))}
+                                        suffix="EUR"
+                                    />
+                                    <NumberInput
+                                        label="Base incrementado 1 (9.5%)"
+                                        value={form420.base_9_5 || 0}
+                                        onChange={(v) => setForm420((p) => ({ ...p, base_9_5: v }))}
+                                        suffix="EUR"
+                                    />
+                                    <NumberInput
+                                        label="Base incrementado 2 (13.5%)"
+                                        value={form420.base_13_5 || 0}
+                                        onChange={(v) =>
+                                            setForm420((p) => ({ ...p, base_13_5: v }))
+                                        }
+                                        suffix="EUR"
+                                    />
                                 </div>
                                 <h3 className="decl-form__section">IGIC Deducible</h3>
                                 <div className="decl-form__grid">
-                                    <NumberInput label="Cuota corrientes interiores" value={form420.cuota_corrientes_interiores || 0} onChange={v => setForm420(p => ({ ...p, cuota_corrientes_interiores: v }))} suffix="EUR" />
-                                    <NumberInput label="Cuota inversion interiores" value={form420.cuota_inversion_interiores || 0} onChange={v => setForm420(p => ({ ...p, cuota_inversion_interiores: v }))} suffix="EUR" />
+                                    <NumberInput
+                                        label="Cuota corrientes interiores"
+                                        value={form420.cuota_corrientes_interiores || 0}
+                                        onChange={(v) =>
+                                            setForm420((p) => ({
+                                                ...p,
+                                                cuota_corrientes_interiores: v,
+                                            }))
+                                        }
+                                        suffix="EUR"
+                                    />
+                                    <NumberInput
+                                        label="Cuota inversion interiores"
+                                        value={form420.cuota_inversion_interiores || 0}
+                                        onChange={(v) =>
+                                            setForm420((p) => ({
+                                                ...p,
+                                                cuota_inversion_interiores: v,
+                                            }))
+                                        }
+                                        suffix="EUR"
+                                    />
                                 </div>
                                 <h3 className="decl-form__section">Ajustes</h3>
                                 <div className="decl-form__grid">
-                                    <NumberInput label="Cuotas compensar anteriores" value={form420.cuotas_compensar_anteriores || 0} onChange={v => setForm420(p => ({ ...p, cuotas_compensar_anteriores: v }))} suffix="EUR" />
+                                    <NumberInput
+                                        label="Cuotas compensar anteriores"
+                                        value={form420.cuotas_compensar_anteriores || 0}
+                                        onChange={(v) =>
+                                            setForm420((p) => ({
+                                                ...p,
+                                                cuotas_compensar_anteriores: v,
+                                            }))
+                                        }
+                                        suffix="EUR"
+                                    />
                                 </div>
                             </div>
                         )}
 
                         {modelo === 'ipsi' && (
-                            <FormIpsi data={formIpsi} onChange={setFormIpsi} quarter={quarter} territorio={ipsiTerritorio} />
+                            <FormIpsi
+                                data={formIpsi}
+                                onChange={setFormIpsi}
+                                quarter={quarter}
+                                territorio={ipsiTerritorio}
+                            />
                         )}
 
                         <div className="decl-form-actions">
@@ -597,19 +1125,39 @@ export default function DeclarationsPage() {
                                 onClick={handleSave}
                                 disabled={!calcResult?.success || saving}
                             >
-                                {saving ? <Loader2 size={16} className="spin" /> : <Save size={16} />}
+                                {saving ? (
+                                    <Loader2 size={16} className="spin" />
+                                ) : (
+                                    <Save size={16} />
+                                )}
                                 {saved ? 'Guardado' : 'Guardar declaración'}
                             </button>
                             <button
                                 className="decl-btn decl-btn--secondary"
                                 onClick={() => {
-                                    const formData = modelo === '303' ? form303 : modelo === '130' ? form130 : modelo === '420' ? form420 : formIpsi
+                                    const formData =
+                                        modelo === '303'
+                                            ? form303
+                                            : modelo === '130'
+                                              ? form130
+                                              : modelo === '420'
+                                                ? form420
+                                                : formIpsi
                                     const trimestreLabel = `${quarter}T`
-                                    downloadPDF(modelo, { ...formData, ...(calcResult?.result || {}) }, trimestreLabel, year)
+                                    downloadPDF(
+                                        modelo,
+                                        { ...formData, ...(calcResult?.result || {}) },
+                                        trimestreLabel,
+                                        year,
+                                    )
                                 }}
                                 disabled={!calcResult?.success || pdfLoading}
                             >
-                                {pdfLoading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
+                                {pdfLoading ? (
+                                    <Loader2 size={16} className="spin" />
+                                ) : (
+                                    <Download size={16} />
+                                )}
                                 {pdfLoading ? 'Generando...' : 'Descargar PDF'}
                             </button>
                         </div>
@@ -633,14 +1181,22 @@ export default function DeclarationsPage() {
                         {/* Saved declarations */}
                         {declarations.length > 0 && (
                             <div className="decl-history">
-                                <h3><BarChart3 size={18} /> Declaraciones {year}</h3>
+                                <h3>
+                                    <BarChart3 size={18} /> Declaraciones {year}
+                                </h3>
                                 <div className="decl-history__list">
-                                    {declarations.map(d => (
+                                    {declarations.map((d) => (
                                         <div key={d.id} className="decl-history__item">
                                             <div className="decl-history__info">
-                                                <span className="decl-history__type">M{d.declaration_type}</span>
-                                                <span className="decl-history__quarter">{d.quarter}T</span>
-                                                <span className="decl-history__territory">{d.territory}</span>
+                                                <span className="decl-history__type">
+                                                    M{d.declaration_type}
+                                                </span>
+                                                <span className="decl-history__quarter">
+                                                    {d.quarter}T
+                                                </span>
+                                                <span className="decl-history__territory">
+                                                    {d.territory}
+                                                </span>
                                             </div>
                                             <div className="decl-history__amount">
                                                 {(d.tax_due || 0).toFixed(2)} EUR

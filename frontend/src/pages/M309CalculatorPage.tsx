@@ -1,13 +1,5 @@
 import { useState } from 'react'
-import {
-    Calculator,
-    Info,
-    AlertTriangle,
-    Euro,
-    Calendar,
-    Download,
-    Loader2,
-} from 'lucide-react'
+import { Calculator, Info, AlertTriangle, Euro, Calendar, Download, Loader2 } from 'lucide-react'
 import Header from '../components/Header'
 import { useM309 } from '../hooks/useM309'
 import { useModeloPDF } from '../hooks/useModeloPDF'
@@ -37,7 +29,9 @@ interface NumberFieldProps {
 function NumberField({ id, label, hint, value, onChange }: NumberFieldProps) {
     return (
         <div className="m130-field">
-            <label className="m130-label" htmlFor={id}>{label}</label>
+            <label className="m130-label" htmlFor={id}>
+                {label}
+            </label>
             <div className="m130-input-row">
                 <Euro size={16} className="m130-input-icon" />
                 <input
@@ -48,7 +42,7 @@ function NumberField({ id, label, hint, value, onChange }: NumberFieldProps) {
                     step={10}
                     placeholder="0"
                     value={value || ''}
-                    onChange={e => onChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
                 />
                 <span className="m130-input-suffix">EUR</span>
             </div>
@@ -76,10 +70,16 @@ export default function M309CalculatorPage() {
     const { result, loading, error, calculate } = useM309()
     const { downloadPDF, isLoading: pdfLoading, error: pdfError } = useModeloPDF()
 
-    const trimestreInfo = TRIMESTRES.find(t => t.value === trimestre)!
+    const trimestreInfo = TRIMESTRES.find((t) => t.value === trimestre)!
 
-    const hasData = baseIntra21 > 0 || baseIntra10 > 0 || baseIntra4 > 0 || baseIntraTabaco > 0
-        || baseISP21 > 0 || baseISP10 > 0 || baseISP4 > 0
+    const hasData =
+        baseIntra21 > 0 ||
+        baseIntra10 > 0 ||
+        baseIntra4 > 0 ||
+        baseIntraTabaco > 0 ||
+        baseISP21 > 0 ||
+        baseISP10 > 0 ||
+        baseISP4 > 0
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -121,9 +121,11 @@ export default function M309CalculatorPage() {
                 <div className="m130-alert">
                     <AlertTriangle size={16} />
                     <div>
-                        <strong>Cuando usar el Modelo 309:</strong> Si eres comerciante en Recargo de Equivalencia
-                        y compras mercancias a un proveedor de la Union Europea, o aplicas inversion del sujeto pasivo.
-                        <strong> No confundir con el Modelo 308</strong> (devoluciones a viajeros tax-free).
+                        <strong>Cuando usar el Modelo 309:</strong> Si eres comerciante en Recargo
+                        de Equivalencia y compras mercancias a un proveedor de la Union Europea, o
+                        aplicas inversion del sujeto pasivo.
+                        <strong> No confundir con el Modelo 308</strong> (devoluciones a viajeros
+                        tax-free).
                     </div>
                 </div>
 
@@ -137,7 +139,7 @@ export default function M309CalculatorPage() {
                                     Trimestre de la operacion
                                 </p>
                                 <div className="m130-trim-buttons">
-                                    {TRIMESTRES.map(t => (
+                                    {TRIMESTRES.map((t) => (
                                         <button
                                             type="button"
                                             key={t.value}
@@ -145,7 +147,9 @@ export default function M309CalculatorPage() {
                                             onClick={() => setTrimestre(t.value)}
                                         >
                                             <span className="m130-trim-btn-label">{t.label}</span>
-                                            <span className="m130-trim-btn-periodo">{t.periodo}</span>
+                                            <span className="m130-trim-btn-periodo">
+                                                {t.periodo}
+                                            </span>
                                         </button>
                                     ))}
                                 </div>
@@ -159,7 +163,9 @@ export default function M309CalculatorPage() {
                             <div className="m130-fields-card">
                                 <h2 className="m130-fields-title">Configuracion</h2>
                                 <div className="m130-field">
-                                    <label className="m130-label" htmlFor="year">Ejercicio fiscal</label>
+                                    <label className="m130-label" htmlFor="year">
+                                        Ejercicio fiscal
+                                    </label>
                                     <input
                                         id="year"
                                         type="number"
@@ -167,7 +173,9 @@ export default function M309CalculatorPage() {
                                         min={2020}
                                         max={2030}
                                         value={year}
-                                        onChange={e => setYear(parseInt(e.target.value) || currentYear)}
+                                        onChange={(e) =>
+                                            setYear(parseInt(e.target.value) || currentYear)
+                                        }
                                     />
                                 </div>
                                 <div className="m130-ceuta-row">
@@ -177,7 +185,7 @@ export default function M309CalculatorPage() {
                                             type="checkbox"
                                             className="m130-toggle-input"
                                             checked={aplicaRE}
-                                            onChange={e => setAplicaRE(e.target.checked)}
+                                            onChange={(e) => setAplicaRE(e.target.checked)}
                                         />
                                         <span className="m130-toggle-track" />
                                         <span className="m130-toggle-text">
@@ -260,10 +268,20 @@ export default function M309CalculatorPage() {
                             <button
                                 type="submit"
                                 className="m130-cta-btn"
-                                style={{ width: '100%', justifyContent: 'center', border: 'none', marginTop: '1rem', cursor: loading ? 'wait' : 'pointer' }}
+                                style={{
+                                    width: '100%',
+                                    justifyContent: 'center',
+                                    border: 'none',
+                                    marginTop: '1rem',
+                                    cursor: loading ? 'wait' : 'pointer',
+                                }}
                                 disabled={loading || !hasData}
                             >
-                                {loading ? <Loader2 size={16} className="spin" /> : <Calculator size={16} />}
+                                {loading ? (
+                                    <Loader2 size={16} className="spin" />
+                                ) : (
+                                    <Calculator size={16} />
+                                )}
                                 {loading ? 'Calculando...' : 'Calcular Modelo 309'}
                             </button>
 
@@ -277,9 +295,15 @@ export default function M309CalculatorPage() {
                                 <Info size={14} />
                                 <span>
                                     Esta calculadora es informativa. Presentacion oficial en{' '}
-                                    <a className="m130-link" href="https://sede.agenciatributaria.gob.es" target="_blank" rel="noopener noreferrer">
+                                    <a
+                                        className="m130-link"
+                                        href="https://sede.agenciatributaria.gob.es"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
                                         Sede Electronica AEAT
-                                    </a>.
+                                    </a>
+                                    .
                                 </span>
                             </div>
                         </form>
@@ -287,7 +311,9 @@ export default function M309CalculatorPage() {
 
                     {hasResult && (
                         <section className="m130-result-panel" aria-live="polite">
-                            <div className={`m130-result-card ${result.resultado === 0 ? 'm130-result-card--zero' : 'm130-result-card--pagar'}`}>
+                            <div
+                                className={`m130-result-card ${result.resultado === 0 ? 'm130-result-card--zero' : 'm130-result-card--pagar'}`}
+                            >
                                 <div className="m130-result-label">
                                     <Euro size={18} /> A ingresar — IVA + RE
                                 </div>
@@ -313,23 +339,34 @@ export default function M309CalculatorPage() {
                                             <tr>
                                                 <th className="m130-th-label">Tipo</th>
                                                 <th className="m130-th-value">IVA</th>
-                                                {result.aplica_re && <th className="m130-th-value">RE</th>}
+                                                {result.aplica_re && (
+                                                    <th className="m130-th-value">RE</th>
+                                                )}
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {Object.entries(result.desglose).map(([tipo, vals]: [string, any]) => (
-                                                <tr key={tipo} className="m130-casilla-row">
-                                                    <td className="m130-casilla-label">{tipo}</td>
-                                                    <td className="m130-casilla-value">
-                                                        {typeof vals?.cuota_iva === 'number' ? formatEur(vals.cuota_iva) + ' EUR' : '-'}
-                                                    </td>
-                                                    {result.aplica_re && (
-                                                        <td className="m130-casilla-value">
-                                                            {typeof vals?.cuota_re === 'number' ? formatEur(vals.cuota_re) + ' EUR' : '-'}
+                                            {Object.entries(result.desglose).map(
+                                                ([tipo, vals]: [string, any]) => (
+                                                    <tr key={tipo} className="m130-casilla-row">
+                                                        <td className="m130-casilla-label">
+                                                            {tipo}
                                                         </td>
-                                                    )}
-                                                </tr>
-                                            ))}
+                                                        <td className="m130-casilla-value">
+                                                            {typeof vals?.cuota_iva === 'number'
+                                                                ? formatEur(vals.cuota_iva) + ' EUR'
+                                                                : '-'}
+                                                        </td>
+                                                        {result.aplica_re && (
+                                                            <td className="m130-casilla-value">
+                                                                {typeof vals?.cuota_re === 'number'
+                                                                    ? formatEur(vals.cuota_re) +
+                                                                      ' EUR'
+                                                                    : '-'}
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                ),
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -338,22 +375,43 @@ export default function M309CalculatorPage() {
                             <div className="m130-info-card m130-info-card--info">
                                 <Info size={16} />
                                 <div>
-                                    <p>El Modelo 309 no tiene compensacion de periodos anteriores ni regimen de devolucion mensual.</p>
-                                    <p style={{ marginTop: '0.5rem' }}>Presenta un modelo separado por cada hecho imponible no periodico que genere autoliquidacion.</p>
+                                    <p>
+                                        El Modelo 309 no tiene compensacion de periodos anteriores
+                                        ni regimen de devolucion mensual.
+                                    </p>
+                                    <p style={{ marginTop: '0.5rem' }}>
+                                        Presenta un modelo separado por cada hecho imponible no
+                                        periodico que genere autoliquidacion.
+                                    </p>
                                 </div>
                             </div>
 
                             <div className="m130-cta-card">
                                 <button
                                     className="m130-cta-btn"
-                                    style={{ width: '100%', justifyContent: 'center', border: 'none', cursor: pdfLoading ? 'wait' : 'pointer' }}
-                                    onClick={() => downloadPDF('309', { ...result }, trimestre, year)}
+                                    style={{
+                                        width: '100%',
+                                        justifyContent: 'center',
+                                        border: 'none',
+                                        cursor: pdfLoading ? 'wait' : 'pointer',
+                                    }}
+                                    onClick={() =>
+                                        downloadPDF('309', { ...result }, trimestre, year)
+                                    }
                                     disabled={pdfLoading}
                                 >
-                                    {pdfLoading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
+                                    {pdfLoading ? (
+                                        <Loader2 size={16} className="spin" />
+                                    ) : (
+                                        <Download size={16} />
+                                    )}
                                     {pdfLoading ? 'Generando...' : 'Descargar PDF'}
                                 </button>
-                                {pdfError && <p className="m130-advanced-calc m130-advanced-calc--warn">{pdfError}</p>}
+                                {pdfError && (
+                                    <p className="m130-advanced-calc m130-advanced-calc--warn">
+                                        {pdfError}
+                                    </p>
+                                )}
                             </div>
                         </section>
                     )}

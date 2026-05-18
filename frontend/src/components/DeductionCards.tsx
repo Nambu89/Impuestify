@@ -1,4 +1,16 @@
-import { Home, Users, Heart, TrendingUp, Leaf, Briefcase, Globe, Shield, HelpCircle, Check, AlertCircle } from 'lucide-react'
+import {
+    Home,
+    Users,
+    Heart,
+    TrendingUp,
+    Leaf,
+    Briefcase,
+    Globe,
+    Shield,
+    HelpCircle,
+    Check,
+    AlertCircle,
+} from 'lucide-react'
 import CountUp from './reactbits/CountUp'
 import FadeContent from './reactbits/FadeContent'
 import './DeductionCards.css'
@@ -31,18 +43,43 @@ interface Deduction {
 function getCategoryIcon(category: string) {
     const lower = category.toLowerCase()
     if (lower.includes('vivienda') || lower.includes('alquiler')) return Home
-    if (lower.includes('familia') || lower.includes('hijo') || lower.includes('nacimiento') || lower.includes('descendiente')) return Users
+    if (
+        lower.includes('familia') ||
+        lower.includes('hijo') ||
+        lower.includes('nacimiento') ||
+        lower.includes('descendiente')
+    )
+        return Users
     if (lower.includes('donati') || lower.includes('donacion')) return Heart
-    if (lower.includes('inversion') || lower.includes('empresa') || lower.includes('i+d')) return TrendingUp
-    if (lower.includes('eficiencia') || lower.includes('electrico') || lower.includes('renovable') || lower.includes('sostenibilidad')) return Leaf
-    if (lower.includes('actividad') || lower.includes('autonomo') || lower.includes('profesional')) return Briefcase
-    if (lower.includes('ceuta') || lower.includes('melilla') || lower.includes('territorial') || lower.includes('internacional')) return Globe
-    if (lower.includes('discapacidad') || lower.includes('prevision') || lower.includes('segur')) return Shield
+    if (lower.includes('inversion') || lower.includes('empresa') || lower.includes('i+d'))
+        return TrendingUp
+    if (
+        lower.includes('eficiencia') ||
+        lower.includes('electrico') ||
+        lower.includes('renovable') ||
+        lower.includes('sostenibilidad')
+    )
+        return Leaf
+    if (lower.includes('actividad') || lower.includes('autonomo') || lower.includes('profesional'))
+        return Briefcase
+    if (
+        lower.includes('ceuta') ||
+        lower.includes('melilla') ||
+        lower.includes('territorial') ||
+        lower.includes('internacional')
+    )
+        return Globe
+    if (lower.includes('discapacidad') || lower.includes('prevision') || lower.includes('segur'))
+        return Shield
     return HelpCircle
 }
 
 /** Parse deduction markdown content into structured data */
-function parseDeductions(content: string): { eligible: Deduction[]; possible: Deduction[]; totalSavings: number } {
+function parseDeductions(content: string): {
+    eligible: Deduction[]
+    possible: Deduction[]
+    totalSavings: number
+} {
     const eligible: Deduction[] = []
     const possible: Deduction[] = []
     let totalSavings = 0
@@ -61,11 +98,19 @@ function parseDeductions(content: string): { eligible: Deduction[]; possible: De
         const lower = line.toLowerCase()
 
         // Detect section headers
-        if (lower.includes('deducciones a las que tienes derecho') || lower.includes('deducciones elegibles') || lower.includes('deducciones aplicables')) {
+        if (
+            lower.includes('deducciones a las que tienes derecho') ||
+            lower.includes('deducciones elegibles') ||
+            lower.includes('deducciones aplicables')
+        ) {
             currentStatus = 'eligible'
             continue
         }
-        if (lower.includes('deducciones posibles') || lower.includes('necesito más datos') || lower.includes('necesito mas datos')) {
+        if (
+            lower.includes('deducciones posibles') ||
+            lower.includes('necesito más datos') ||
+            lower.includes('necesito mas datos')
+        ) {
             currentStatus = 'possible'
             continue
         }
@@ -157,7 +202,11 @@ export function DeductionCards({ content }: DeductionCardsProps) {
                     </h4>
                     <div className="deduction-grid">
                         {possible.map((d, i) => (
-                            <FadeContent key={i} delay={eligible.length * 100 + i * 100} duration={400}>
+                            <FadeContent
+                                key={i}
+                                delay={eligible.length * 100 + i * 100}
+                                duration={400}
+                            >
                                 <DeductionCard deduction={d} />
                             </FadeContent>
                         ))}
@@ -173,7 +222,9 @@ function DeductionCard({ deduction }: { deduction: Deduction }) {
     const isEligible = deduction.status === 'eligible'
 
     return (
-        <div className={`deduction-card ${isEligible ? 'deduction-card-eligible' : 'deduction-card-possible'}`}>
+        <div
+            className={`deduction-card ${isEligible ? 'deduction-card-eligible' : 'deduction-card-possible'}`}
+        >
             <div className="deduction-card-header">
                 <div className="deduction-card-icon">
                     <Icon size={18} />
@@ -184,7 +235,9 @@ function DeductionCard({ deduction }: { deduction: Deduction }) {
                         <span className="deduction-card-amount">{deduction.amount}</span>
                     )}
                 </div>
-                <span className={`deduction-badge ${isEligible ? 'deduction-badge-eligible' : 'deduction-badge-possible'}`}>
+                <span
+                    className={`deduction-badge ${isEligible ? 'deduction-badge-eligible' : 'deduction-badge-possible'}`}
+                >
                     {isEligible ? 'Elegible' : 'Posible'}
                 </span>
             </div>

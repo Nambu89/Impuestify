@@ -97,7 +97,7 @@ export function useDeadlines(options: UseDeadlinesOptions = {}): UseDeadlinesRet
             } else {
                 // Authenticated endpoint
                 const data = await apiRequest<FiscalDeadlineRaw[]>(
-                    `/api/deadlines/upcoming?days=${days}`
+                    `/api/deadlines/upcoming?days=${days}`,
                 )
                 setDeadlines(enrichDeadlines(data || []))
             }

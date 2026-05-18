@@ -38,44 +38,49 @@ export function useDeductionDiscovery() {
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const abortRef = useRef<AbortController | null>(null)
 
-    const discover = useCallback((ccaa: string, answers: Record<string, any>, taxYear = 2025) => {
-        if (!ccaa) {
-            setResult(null)
-            setError(null)
-            return
-        }
-
-        if (timerRef.current) clearTimeout(timerRef.current)
-        if (abortRef.current) abortRef.current.abort()
-
-        timerRef.current = setTimeout(async () => {
-            setLoading(true)
-            setError(null)
-            const controller = new AbortController()
-            abortRef.current = controller
-
-            try {
-                const data = await apiRequest<DeductionDiscoveryResult>(
-                    '/api/irpf/deductions/discover',
-                    {
-                        method: 'POST',
-                        body: JSON.stringify({ ccaa, tax_year: taxYear, answers }),
-                        signal: controller.signal,
-                    }
-                )
-                if (!controller.signal.aborted) {
-                    setResult(data)
-                }
-            } catch (err: any) {
-                if (err.name !== 'AbortError' && !controller.signal.aborted) {
-                    setResult(null)
-                    setError('No se pudieron cargar las deducciones. Comprueba tu conexion e intentalo de nuevo.')
-                }
-            } finally {
-                if (!controller.signal.aborted) setLoading(false)
+    const discover = useCallback(
+        (ccaa: string, answers: Record<string, any>, taxYear = 2025) => {
+            if (!ccaa) {
+                setResult(null)
+                setError(null)
+                return
             }
-        }, DEBOUNCE_MS)
-    }, [apiRequest])
+
+            if (timerRef.current) clearTimeout(timerRef.current)
+            if (abortRef.current) abortRef.current.abort()
+
+            timerRef.current = setTimeout(async () => {
+                setLoading(true)
+                setError(null)
+                const controller = new AbortController()
+                abortRef.current = controller
+
+                try {
+                    const data = await apiRequest<DeductionDiscoveryResult>(
+                        '/api/irpf/deductions/discover',
+                        {
+                            method: 'POST',
+                            body: JSON.stringify({ ccaa, tax_year: taxYear, answers }),
+                            signal: controller.signal,
+                        },
+                    )
+                    if (!controller.signal.aborted) {
+                        setResult(data)
+                    }
+                } catch (err: any) {
+                    if (err.name !== 'AbortError' && !controller.signal.aborted) {
+                        setResult(null)
+                        setError(
+                            'No se pudieron cargar las deducciones. Comprueba tu conexion e intentalo de nuevo.',
+                        )
+                    }
+                } finally {
+                    if (!controller.signal.aborted) setLoading(false)
+                }
+            }, DEBOUNCE_MS)
+        },
+        [apiRequest],
+    )
 
     return { result, loading, error, discover }
 }

@@ -32,7 +32,7 @@ export function ShareReportModal({ reportId, onClose }: ShareReportModalProps) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token && { 'Authorization': `Bearer ${token}` }),
+                    ...(token && { Authorization: `Bearer ${token}` }),
                 },
                 body: JSON.stringify({
                     report_id: reportId,
@@ -42,7 +42,9 @@ export function ShareReportModal({ reportId, onClose }: ShareReportModalProps) {
             })
 
             if (response.status === 503) {
-                setError('El envío por email no está disponible ahora mismo. Descarga el PDF y mándalo tú.')
+                setError(
+                    'El envío por email no está disponible ahora mismo. Descarga el PDF y mándalo tú.',
+                )
                 return
             }
 
@@ -78,7 +80,9 @@ export function ShareReportModal({ reportId, onClose }: ShareReportModalProps) {
                     <div className="share-modal-body">
                         <div className="share-success">
                             <Check size={32} />
-                            <p>Informe enviado a <strong>{email}</strong></p>
+                            <p>
+                                Informe enviado a <strong>{email}</strong>
+                            </p>
                         </div>
                     </div>
                 ) : (
@@ -121,11 +125,7 @@ export function ShareReportModal({ reportId, onClose }: ShareReportModalProps) {
                         )}
 
                         <div className="share-modal-footer">
-                            <button
-                                type="button"
-                                className="share-btn-cancel"
-                                onClick={onClose}
-                            >
+                            <button type="button" className="share-btn-cancel" onClick={onClose}>
                                 Cancelar
                             </button>
                             <button

@@ -51,56 +51,67 @@ export function useMfa() {
         }
     }, [apiRequest])
 
-    const verify = useCallback(async (code: string): Promise<MfaVerifyResult> => {
-        setLoading(true)
-        try {
-            const data = await apiRequest<MfaVerifyResult>('/auth/mfa/verify', {
-                method: 'POST',
-                body: JSON.stringify({ code }),
-            })
-            if (data.success) {
-                setMfaEnabled(true)
+    const verify = useCallback(
+        async (code: string): Promise<MfaVerifyResult> => {
+            setLoading(true)
+            try {
+                const data = await apiRequest<MfaVerifyResult>('/auth/mfa/verify', {
+                    method: 'POST',
+                    body: JSON.stringify({ code }),
+                })
+                if (data.success) {
+                    setMfaEnabled(true)
+                }
+                return data
+            } catch (error: any) {
+                throw new Error(error.message || 'Código incorrecto. Inténtalo de nuevo.')
+            } finally {
+                setLoading(false)
             }
-            return data
-        } catch (error: any) {
-            throw new Error(error.message || 'Código incorrecto. Inténtalo de nuevo.')
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+        },
+        [apiRequest],
+    )
 
-    const disable = useCallback(async (code: string): Promise<boolean> => {
-        setLoading(true)
-        try {
-            const data = await apiRequest<{ success: boolean }>('/auth/mfa/disable', {
-                method: 'POST',
-                body: JSON.stringify({ code }),
-            })
-            if (data.success) {
-                setMfaEnabled(false)
+    const disable = useCallback(
+        async (code: string): Promise<boolean> => {
+            setLoading(true)
+            try {
+                const data = await apiRequest<{ success: boolean }>('/auth/mfa/disable', {
+                    method: 'POST',
+                    body: JSON.stringify({ code }),
+                })
+                if (data.success) {
+                    setMfaEnabled(false)
+                }
+                return data.success
+            } catch (error: any) {
+                throw new Error(
+                    error.message || 'Código incorrecto. No se ha podido desactivar el 2FA.',
+                )
+            } finally {
+                setLoading(false)
             }
-            return data.success
-        } catch (error: any) {
-            throw new Error(error.message || 'Código incorrecto. No se ha podido desactivar el 2FA.')
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+        },
+        [apiRequest],
+    )
 
-    const validateLogin = useCallback(async (mfaToken: string, code: string): Promise<MfaLoginResult> => {
-        setLoading(true)
-        try {
-            const data = await apiRequest<MfaLoginResult>('/auth/mfa/validate', {
-                method: 'POST',
-                body: JSON.stringify({ mfa_token: mfaToken, code }),
-            })
-            return data
-        } catch (error: any) {
-            throw new Error(error.message || 'Código incorrecto. Inténtalo de nuevo.')
-        } finally {
-            setLoading(false)
-        }
-    }, [apiRequest])
+    const validateLogin = useCallback(
+        async (mfaToken: string, code: string): Promise<MfaLoginResult> => {
+            setLoading(true)
+            try {
+                const data = await apiRequest<MfaLoginResult>('/auth/mfa/validate', {
+                    method: 'POST',
+                    body: JSON.stringify({ mfa_token: mfaToken, code }),
+                })
+                return data
+            } catch (error: any) {
+                throw new Error(error.message || 'Código incorrecto. Inténtalo de nuevo.')
+            } finally {
+                setLoading(false)
+            }
+        },
+        [apiRequest],
+    )
 
     return {
         mfaEnabled,

@@ -1,16 +1,30 @@
 /**
  * Legal Footer Component
- * 
+ *
  * GDPR-compliant footer with links to legal documentation
  * Best practices: Visible on all pages, accessible, clear links
  */
-import { Link } from 'react-router-dom';
-import { FileText, Scale, Bot, Database, Mail, Lock, Shield, CheckCircle, Cookie, Settings, Map, Gavel, User } from 'lucide-react';
-import { showCookiePreferences } from './CookieConsent';
-import './Footer.css';
+import { Link } from 'react-router-dom'
+import {
+    FileText,
+    Scale,
+    Bot,
+    Database,
+    Mail,
+    Lock,
+    Shield,
+    CheckCircle,
+    Cookie,
+    Settings,
+    Map,
+    Gavel,
+    User,
+} from 'lucide-react'
+import { showCookiePreferences } from './CookieConsent'
+import './Footer.css'
 
 export default function Footer() {
-    const currentYear = new Date().getFullYear();
+    const currentYear = new Date().getFullYear()
 
     return (
         <footer className="footer">
@@ -19,12 +33,10 @@ export default function Footer() {
                 <div className="footer-content">
                     <div className="footer-section">
                         <h3>Impuestify</h3>
-                        <p className="footer-tagline">
-                            Tu asistente fiscal con IA
-                        </p>
+                        <p className="footer-tagline">Tu asistente fiscal con IA</p>
                         <p className="footer-disclaimer">
-                            <Bot className="inline-icon" size={14} />
-                            {' '}Respuestas generadas con IA: son orientativas y no sustituyen al asesor fiscal.
+                            <Bot className="inline-icon" size={14} /> Respuestas generadas con IA:
+                            son orientativas y no sustituyen al asesor fiscal.
                         </p>
                         <ul className="footer-links footer-links--compact">
                             <li>
@@ -157,12 +169,9 @@ export default function Footer() {
                         </div>
                         <p className="footer-small">
                             Autoridad de control:
-                            <a
-                                href="https://www.aepd.es"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {' '}AEPD
+                            <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer">
+                                {' '}
+                                AEPD
                             </a>
                         </p>
                     </div>
@@ -170,11 +179,9 @@ export default function Footer() {
 
                 {/* Bottom Bar */}
                 <div className="footer-bottom">
-                    <p>
-                        © {currentYear} Impuestify. Todos los derechos reservados.
-                    </p>
+                    <p>© {currentYear} Impuestify. Todos los derechos reservados.</p>
                 </div>
             </div>
         </footer>
-    );
+    )
 }

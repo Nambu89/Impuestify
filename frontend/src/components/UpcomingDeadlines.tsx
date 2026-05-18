@@ -31,7 +31,10 @@ function getShortName(deadline: FiscalDeadline): string {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function UpcomingDeadlines({ isPublic = false, maxItems = 3 }: UpcomingDeadlinesProps) {
+export default function UpcomingDeadlines({
+    isPublic = false,
+    maxItems = 3,
+}: UpcomingDeadlinesProps) {
     const navigate = useNavigate()
     const { deadlines, loading, error } = useDeadlines({
         days: 60,
@@ -48,7 +51,7 @@ export default function UpcomingDeadlines({ isPublic = false, maxItems = 3 }: Up
 
     // Show only upcoming (not past), sorted by urgency then by days
     const upcoming = deadlines
-        .filter(d => d.urgency !== 'past')
+        .filter((d) => d.urgency !== 'past')
         .sort((a, b) => a.daysRemaining - b.daysRemaining)
         .slice(0, maxItems)
 
@@ -72,7 +75,7 @@ export default function UpcomingDeadlines({ isPublic = false, maxItems = 3 }: Up
                 <span>Próximos plazos</span>
             </div>
             <div className="ud-pills">
-                {upcoming.map(d => (
+                {upcoming.map((d) => (
                     <button
                         key={d.id}
                         className={`ud-pill ud-pill--${d.urgency}`}

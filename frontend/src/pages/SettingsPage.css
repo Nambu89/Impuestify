@@ -65,8 +65,14 @@
 }
 
 @keyframes bannerSlideIn {
-    from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .message-banner.success {
@@ -149,7 +155,9 @@
 }
 
 .settings-section:hover {
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.09), 0 1px 6px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.09),
+        0 1px 6px rgba(0, 0, 0, 0.05);
 }
 
 .section-header {
@@ -220,7 +228,9 @@
     font-family: inherit;
     color: var(--color-white);
     background: rgba(255, 255, 255, 0.08);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
     width: 100%;
     box-sizing: border-box;
 }
@@ -432,7 +442,7 @@ textarea.form-input {
     color: rgba(255, 255, 255, 0.7) !important;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
     width: 18px;
     height: 18px;
     min-width: 18px;
@@ -555,8 +565,14 @@ textarea.form-input {
 }
 
 @keyframes collapsibleReveal {
-    from { opacity: 0; transform: translateY(-8px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ========== GDPR ACTIONS ========== */
@@ -741,8 +757,12 @@ textarea.form-input {
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ========== TABLET (768px+) ========== */
@@ -899,7 +919,9 @@ textarea.form-input {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
     cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
+    transition:
+        background 0.2s,
+        border-color 0.2s;
 }
 
 .notification-day-label:hover {
@@ -949,7 +971,9 @@ textarea.form-input {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
     cursor: pointer;
-    transition: border-color var(--transition-fast), background var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        background var(--transition-fast);
     font-size: var(--font-size-sm);
     color: rgba(255, 255, 255, 0.75);
     font-weight: 400;
@@ -960,7 +984,7 @@ textarea.form-input {
     border-color: rgba(59, 130, 246, 0.3);
 }
 
-.fiscal-role-checkbox input[type="checkbox"] {
+.fiscal-role-checkbox input[type='checkbox'] {
     width: 18px;
     height: 18px;
     min-width: 18px;
@@ -1182,7 +1206,9 @@ textarea.form-input {
     border-radius: var(--radius-xl);
     color: var(--color-white);
     caret-color: var(--color-primary-light);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
     outline: none;
 }
 

@@ -15,7 +15,9 @@
     top: 0;
     z-index: var(--z-dropdown);
     border-right: 1px solid rgba(255, 255, 255, 0.06);
-    transition: transform var(--transition-slow), left var(--transition-slow);
+    transition:
+        transform var(--transition-slow),
+        left var(--transition-slow);
     flex-shrink: 0;
 }
 

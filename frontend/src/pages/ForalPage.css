@@ -41,11 +41,7 @@
     align-items: center;
     gap: var(--spacing-2);
     padding: var(--spacing-2) var(--spacing-4);
-    background: linear-gradient(
-        135deg,
-        rgba(26, 86, 219, 0.1) 0%,
-        rgba(6, 182, 212, 0.1) 100%
-    );
+    background: linear-gradient(135deg, rgba(26, 86, 219, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
     border-radius: var(--radius-full);
     color: var(--color-primary);
     font-size: var(--font-size-sm);
@@ -136,11 +132,7 @@
     justify-content: center;
     width: 56px;
     height: 56px;
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-accent) 100%
-    );
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     color: var(--color-white);
     border-radius: var(--radius-xl);
     margin-bottom: var(--spacing-4);
@@ -221,11 +213,7 @@
 }
 
 .foral-table thead {
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-primary-dark) 100%
-    );
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     color: var(--color-white);
 }
 
@@ -283,11 +271,7 @@
 }
 
 .foral-comparison__table thead {
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-primary-dark) 100%
-    );
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     color: var(--color-white);
 }
 
@@ -412,11 +396,7 @@
     margin: 0 auto;
     text-align: center;
     padding: var(--spacing-10) var(--spacing-6);
-    background: linear-gradient(
-        135deg,
-        var(--color-secondary) 0%,
-        var(--color-gray-800) 100%
-    );
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-gray-800) 100%);
     border-radius: var(--radius-2xl);
     color: var(--color-white);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -428,11 +408,7 @@
     justify-content: center;
     width: 72px;
     height: 72px;
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-accent) 100%
-    );
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     border-radius: var(--radius-2xl);
     margin-bottom: var(--spacing-6);
 }

@@ -2,14 +2,16 @@
  * Data Retention Policy Page
  * Full policy adapted from DATA_RETENTION.md
  */
-import { Link } from 'react-router-dom';
-import './LegalPage.css';
+import { Link } from 'react-router-dom'
+import './LegalPage.css'
 
 export default function DataRetentionPage() {
     return (
         <div className="legal-page">
             <div className="legal-container">
-                <Link to="/" className="back-link">&larr; Volver al inicio</Link>
+                <Link to="/" className="back-link">
+                    &larr; Volver al inicio
+                </Link>
 
                 <h1>Política de Retención de Datos</h1>
                 <p className="subtitle">Responsable: Impuestify</p>
@@ -20,9 +22,10 @@ export default function DataRetentionPage() {
                 <section>
                     <h2>1. Principio de Limitación</h2>
                     <p>
-                        Los datos personales se conservan <strong>únicamente durante el tiempo necesario</strong> para
-                        los fines para los que fueron recogidos, en cumplimiento del RGPD Art. 5.1.e
-                        (Limitación de conservación).
+                        Los datos personales se conservan{' '}
+                        <strong>únicamente durante el tiempo necesario</strong> para los fines para
+                        los que fueron recogidos, en cumplimiento del RGPD Art. 5.1.e (Limitación de
+                        conservación).
                     </p>
                 </section>
 
@@ -96,20 +99,24 @@ export default function DataRetentionPage() {
                         <tbody>
                             <tr>
                                 <td>Nominas</td>
-                                <td><strong>24 horas</strong></td>
+                                <td>
+                                    <strong>24 horas</strong>
+                                </td>
                                 <td>Eliminación automática</td>
                             </tr>
                             <tr>
                                 <td>Notificaciones AEAT</td>
-                                <td><strong>24 horas</strong></td>
+                                <td>
+                                    <strong>24 horas</strong>
+                                </td>
                                 <td>Eliminación automática</td>
                             </tr>
                         </tbody>
                     </table>
                     <p>
-                        <strong>Proceso</strong>: El usuario sube el PDF, el sistema extrae el texto,
-                        lo procesa con IA, y el PDF original se elimina tras 24h. El texto extraido
-                        queda en la conversacion hasta que el usuario la borre.
+                        <strong>Proceso</strong>: El usuario sube el PDF, el sistema extrae el
+                        texto, lo procesa con IA, y el PDF original se elimina tras 24h. El texto
+                        extraido queda en la conversacion hasta que el usuario la borre.
                     </p>
 
                     <h3>2.4 Logs de Seguridad</h3>
@@ -171,19 +178,22 @@ export default function DataRetentionPage() {
 
                 <section>
                     <h2>3. Excepciones Legales</h2>
-                    <p>En ciertos casos, podemos conservar datos más allá de los plazos indicados:</p>
+                    <p>
+                        En ciertos casos, podemos conservar datos más allá de los plazos indicados:
+                    </p>
                     <ul>
                         <li>
-                            <strong>Obligación Legal</strong>: Si existe obligación legal de conservar datos
-                            (ej: requerimiento judicial). Base legal: RGPD Art. 6.1.c
+                            <strong>Obligación Legal</strong>: Si existe obligación legal de
+                            conservar datos (ej: requerimiento judicial). Base legal: RGPD Art.
+                            6.1.c
                         </li>
                         <li>
-                            <strong>Litigios</strong>: Si hay litigio pendiente, los datos relacionados
-                            se conservan hasta resolución (RGPD Art. 17.3.e)
+                            <strong>Litigios</strong>: Si hay litigio pendiente, los datos
+                            relacionados se conservan hasta resolución (RGPD Art. 17.3.e)
                         </li>
                         <li>
-                            <strong>Datos Anonimizados</strong>: Los datos completamente anonimizados
-                            pueden conservarse indefinidamente para estadisticas
+                            <strong>Datos Anonimizados</strong>: Los datos completamente
+                            anonimizados pueden conservarse indefinidamente para estadisticas
                         </li>
                     </ul>
                 </section>
@@ -192,11 +202,16 @@ export default function DataRetentionPage() {
                     <h2>4. Proceso de Eliminación</h2>
                     <h3>4.1 Eliminación por Usuario (Derecho de Supresión)</h3>
                     <p>
-                        <strong>Cómo ejercerlo</strong>: Desde Configuración &gt; Eliminar cuenta,
-                        o enviando email a <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>.
+                        <strong>Cómo ejercerlo</strong>: Desde Configuración &gt; Eliminar cuenta, o
+                        enviando email a{' '}
+                        <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>.
                     </p>
-                    <p><strong>Plazo</strong>: Máximo 1 mes desde solicitud (RGPD Art. 12.3)</p>
-                    <p><strong>Qué se elimina</strong>:</p>
+                    <p>
+                        <strong>Plazo</strong>: Máximo 1 mes desde solicitud (RGPD Art. 12.3)
+                    </p>
+                    <p>
+                        <strong>Qué se elimina</strong>:
+                    </p>
                     <ul>
                         <li>Cuenta de usuario (email, contraseña hash)</li>
                         <li>Todas las conversaciones</li>
@@ -240,8 +255,8 @@ export default function DataRetentionPage() {
 
                     <h3>4.3 Eliminación Segura</h3>
                     <p>
-                        <strong>Método</strong>: Eliminación irreversible (DELETE sin backup).
-                        No aplicamos soft delete ni archivado a largo plazo.
+                        <strong>Método</strong>: Eliminación irreversible (DELETE sin backup). No
+                        aplicamos soft delete ni archivado a largo plazo.
                     </p>
                 </section>
 
@@ -252,17 +267,17 @@ export default function DataRetentionPage() {
                         <strong> Retención</strong>: 30 días. Después: eliminación permanente.
                     </p>
                     <p>
-                        Si un usuario solicita borrado, también se elimina de backups en el siguiente
-                        ciclo (máximo 30 días). RGPD Art. 17.1 aplica a backups.
+                        Si un usuario solicita borrado, también se elimina de backups en el
+                        siguiente ciclo (máximo 30 días). RGPD Art. 17.1 aplica a backups.
                     </p>
                 </section>
 
                 <section>
                     <h2>6. Notificaciones de Eliminación</h2>
                     <p>
-                        Enviamos email de confirmacion cuando el usuario elimina su cuenta o conversaciones.
-                        Si compartimos datos con terceros y el usuario solicita borrado, notificamos
-                        a esos terceros (RGPD Art. 19).
+                        Enviamos email de confirmacion cuando el usuario elimina su cuenta o
+                        conversaciones. Si compartimos datos con terceros y el usuario solicita
+                        borrado, notificamos a esos terceros (RGPD Art. 19).
                     </p>
                 </section>
 
@@ -272,33 +287,44 @@ export default function DataRetentionPage() {
                         Esta politica se revisa trimestralmente para asegurar plazos adecuados,
                         cumplir nueva normativa y ajustar según feedback de usuarios.
                     </p>
-                    <p><strong>Proxima revision</strong>: Marzo 2026</p>
+                    <p>
+                        <strong>Proxima revision</strong>: Marzo 2026
+                    </p>
                 </section>
 
                 <section>
                     <h2>8. Derecho a Solicitar Información</h2>
                     <p>
-                        Puede solicitar información sobre qué datos conservamos, cuándo serán eliminados
-                        y el motivo de conservación.
+                        Puede solicitar información sobre qué datos conservamos, cuándo serán
+                        eliminados y el motivo de conservación.
                     </p>
-                    <p><strong>Contacto</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a></p>
+                    <p>
+                        <strong>Contacto</strong>:{' '}
+                        <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>
+                    </p>
                 </section>
 
                 <section>
                     <h2>9. Contacto</h2>
                     <p>
-                        <strong>Dudas sobre retención</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a><br />
-                        <strong>Solicitar eliminación</strong>: <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a><br />
-                        <strong>Reportar problema</strong>: <a href="mailto:support@impuestify.com">support@impuestify.com</a>
+                        <strong>Dudas sobre retención</strong>:{' '}
+                        <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>
+                        <br />
+                        <strong>Solicitar eliminación</strong>:{' '}
+                        <a href="mailto:privacy@impuestify.com">privacy@impuestify.com</a>
+                        <br />
+                        <strong>Reportar problema</strong>:{' '}
+                        <a href="mailto:support@impuestify.com">support@impuestify.com</a>
                     </p>
                 </section>
 
                 <div className="legal-cta">
                     <p>
-                        Conservamos tus datos solo el tiempo imprescindible para prestar el servicio y cumplir la ley.
+                        Conservamos tus datos solo el tiempo imprescindible para prestar el servicio
+                        y cumplir la ley.
                     </p>
                 </div>
             </div>
         </div>
-    );
+    )
 }

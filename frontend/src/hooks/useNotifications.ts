@@ -35,7 +35,7 @@ export function useNotifications() {
 
     const uploadNotification = async (
         file: File,
-        notificationDate?: string
+        notificationDate?: string,
     ): Promise<NotificationAnalysis> => {
         setUploading(true)
         setError(null)
@@ -53,10 +53,10 @@ export function useNotifications() {
                 formData,
                 {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data'
-                    }
-                }
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    },
+                },
             )
 
             return response.data
@@ -72,14 +72,11 @@ export function useNotifications() {
     const getHistory = async (limit: number = 10) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await axios.get(
-                `${API_URL}/notifications/history?limit=${limit}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
-            )
+            const response = await axios.get(`${API_URL}/notifications/history?limit=${limit}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
             return response.data
         } catch (err: any) {
             throw new Error(err.response?.data?.detail || 'Error al obtener historial')
@@ -90,6 +87,6 @@ export function useNotifications() {
         uploadNotification,
         getHistory,
         uploading,
-        error
+        error,
     }
 }

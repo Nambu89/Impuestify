@@ -517,7 +517,9 @@
 }
 
 @keyframes cont-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .cont-empty {
