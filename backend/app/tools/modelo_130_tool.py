@@ -30,6 +30,7 @@ IMPORTANT: Section I (estimación directa) requires CUMULATIVE figures from
 January 1st. Section II requires QUARTERLY figures. The tool documents this
 in the OpenAI schema so the LLM picks the right inputs.
 """
+
 from typing import Any, Dict, Optional
 from datetime import datetime
 import logging
@@ -302,29 +303,21 @@ def _build_seccion_i_response(
     # name `05_retenciones_acumuladas` is misleading. After the C1 fix the
     # value at key `06_pagos_anteriores` IS retenciones, and `05_*` IS pagos
     # previos in the formatted output. We re-map here for clarity.
-    pagos_previos_05 = casillas["06_pagos_anteriores"]   # see fix below
+    pagos_previos_05 = casillas["06_pagos_anteriores"]  # see fix below
     retenciones_06 = casillas["05_retenciones_acumuladas"]
 
     if pagos_previos_05 > 0:
-        lines.append(
-            f"- Pagos fraccionados anteriores [05]: -{_fmt(pagos_previos_05)} EUR"
-        )
+        lines.append(f"- Pagos fraccionados anteriores [05]: -{_fmt(pagos_previos_05)} EUR")
     if retenciones_06 > 0:
-        lines.append(
-            f"- Retenciones e ingresos a cuenta [06]: -{_fmt(retenciones_06)} EUR"
-        )
+        lines.append(f"- Retenciones e ingresos a cuenta [06]: -{_fmt(retenciones_06)} EUR")
 
-    lines.append(
-        f"- **Resultado sección I [07]: {_fmt(casillas['07_resultado_seccion_I'])} EUR**"
-    )
+    lines.append(f"- **Resultado sección I [07]: {_fmt(casillas['07_resultado_seccion_I'])} EUR**")
     lines.append("")
 
     # Sección III
     lines.append("**Sección III — Liquidación**")
     if deduccion_80bis > 0:
-        lines.append(
-            f"- Deducción art. 80 bis (rentas bajas) [13]: -{_fmt(deduccion_80bis)} EUR"
-        )
+        lines.append(f"- Deducción art. 80 bis (rentas bajas) [13]: -{_fmt(deduccion_80bis)} EUR")
     if casillas.get("16_deduccion_vivienda", 0) > 0:
         lines.append(
             f"- Deducción vivienda habitual [16]: -{_fmt(casillas['16_deduccion_vivienda'])} EUR"
@@ -544,8 +537,7 @@ async def calculate_modelo_130_tool(
         )
 
         logger.info(
-            "Modelo 130 sección I: %s %s, ingresos=%s, gastos=%s, "
-            "neto=%s, resultado=%s",
+            "Modelo 130 sección I: %s %s, ingresos=%s, gastos=%s, " "neto=%s, resultado=%s",
             _TRIMESTRE_LABEL[trimestre],
             year,
             casillas["01_ingresos_acumulados"],

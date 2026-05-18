@@ -4,6 +4,7 @@ Tests para la calculadora de retenciones IRPF 2026.
 Casos verificados contra la calculadora oficial AEAT:
 https://www2.agenciatributaria.gob.es/wlpl/PRET-R200/R260/index.zul
 """
+
 import pytest
 from app.utils.calculators.withholding_rate import (
     calcular_retencion,

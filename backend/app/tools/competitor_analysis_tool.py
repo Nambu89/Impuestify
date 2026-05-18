@@ -4,6 +4,7 @@ Competitor Analysis Tools for Impuestify
 Provides structured competitive intelligence about the Spanish digital tax market.
 Tools for comparing features, identifying gaps, and suggesting improvements.
 """
+
 import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -23,10 +24,44 @@ COMPETITORS = {
         "trustpilot": "4.7/5 (6,500+ reviews)",
         "markets": ["Spain", "Mexico"],
         "pricing": {
-            "gratis": {"price": 0, "features": ["Guided app", "Result calculation/optimization", "Fiscal knowledge base", "AsesorIA chatbot"]},
-            "pro": {"price": 35, "features": ["Expert review", "AEAT submission", "Notification responses", "Year-round support", "24h email"]},
-            "live": {"price": 45, "features": ["Everything in PRO", "Direct chat with advisor", "WhatsApp support", "Model 030"]},
-            "full": {"price": 65, "features": ["Everything in LIVE", "Expert handles entire process", "Complex situations", "Beckham Law", "Non-residents"]},
+            "gratis": {
+                "price": 0,
+                "features": [
+                    "Guided app",
+                    "Result calculation/optimization",
+                    "Fiscal knowledge base",
+                    "AsesorIA chatbot",
+                ],
+            },
+            "pro": {
+                "price": 35,
+                "features": [
+                    "Expert review",
+                    "AEAT submission",
+                    "Notification responses",
+                    "Year-round support",
+                    "24h email",
+                ],
+            },
+            "live": {
+                "price": 45,
+                "features": [
+                    "Everything in PRO",
+                    "Direct chat with advisor",
+                    "WhatsApp support",
+                    "Model 030",
+                ],
+            },
+            "full": {
+                "price": 65,
+                "features": [
+                    "Everything in LIVE",
+                    "Expert handles entire process",
+                    "Complex situations",
+                    "Beckham Law",
+                    "Non-residents",
+                ],
+            },
         },
         "features": {
             "irpf_filing": True,
@@ -84,8 +119,14 @@ COMPETITORS = {
         "aeat_status": "Integrated",
         "markets": ["Spain"],
         "pricing": {
-            "basic": {"price_monthly": 70, "features": ["Invoicing", "Quarterly filings", "Annual Renta"]},
-            "advanced": {"price_monthly": 100, "features": ["Everything in Basic", "Dedicated advisor", "VeriFactu"]},
+            "basic": {
+                "price_monthly": 70,
+                "features": ["Invoicing", "Quarterly filings", "Annual Renta"],
+            },
+            "advanced": {
+                "price_monthly": 100,
+                "features": ["Everything in Basic", "Dedicated advisor", "VeriFactu"],
+            },
         },
         "features": {
             "irpf_filing": True,
@@ -137,11 +178,26 @@ COMPETITORS = {
         "aeat_status": "Integrated",
         "markets": ["Spain", "Germany", "UK", "Italy"],
         "pricing": {
-            "renta_individual": {"price": 69.90, "features": ["Personal IRPF filing", "Assigned advisor"]},
-            "renta_matrimonio": {"price": 109.80, "features": ["Couple filing", "Both declarations"]},
-            "autonomos_pro": {"price_monthly": 39.90, "features": ["Registration", "Quarterly/annual filings", "International invoicing"]},
-            "autonomos_premium": {"price_monthly": 59.90, "features": ["Pro + phone calls", "Advisor-prepared accounting"]},
-            "autonomos_total": {"price_monthly": 99.90, "features": ["Premium + payroll (up to 3 employees)"]},
+            "renta_individual": {
+                "price": 69.90,
+                "features": ["Personal IRPF filing", "Assigned advisor"],
+            },
+            "renta_matrimonio": {
+                "price": 109.80,
+                "features": ["Couple filing", "Both declarations"],
+            },
+            "autonomos_pro": {
+                "price_monthly": 39.90,
+                "features": ["Registration", "Quarterly/annual filings", "International invoicing"],
+            },
+            "autonomos_premium": {
+                "price_monthly": 59.90,
+                "features": ["Pro + phone calls", "Advisor-prepared accounting"],
+            },
+            "autonomos_total": {
+                "price_monthly": 99.90,
+                "features": ["Premium + payroll (up to 3 employees)"],
+            },
         },
         "features": {
             "irpf_filing": True,
@@ -191,9 +247,18 @@ COMPETITORS = {
         "markets": ["Spain", "Estonia", "Finland", "Portugal"],
         "pricing": {
             "lite": {"price_monthly": 15, "features": ["Invoice generator", "Expense management"]},
-            "starter": {"price_monthly": 49, "features": ["Free registration", "Spanish invoices", "Quarterly/annual filings"]},
-            "global": {"price_monthly": 59, "features": ["Starter + international invoices", "Multi-currency"]},
-            "premium": {"price_monthly": 99, "features": ["All features", "Priority 24h support", "Consulting hours"]},
+            "starter": {
+                "price_monthly": 49,
+                "features": ["Free registration", "Spanish invoices", "Quarterly/annual filings"],
+            },
+            "global": {
+                "price_monthly": 59,
+                "features": ["Starter + international invoices", "Multi-currency"],
+            },
+            "premium": {
+                "price_monthly": 99,
+                "features": ["All features", "Priority 24h support", "Consulting hours"],
+            },
         },
         "features": {
             "irpf_filing": True,
@@ -364,7 +429,13 @@ COMPARE_FEATURES_TOOL = {
                 "category": {
                     "type": "string",
                     "description": "Categoria especifica a comparar (optional). Si no se especifica, compara todas.",
-                    "enum": ["ai_technology", "tax_features", "user_experience", "business_model", "all"],
+                    "enum": [
+                        "ai_technology",
+                        "tax_features",
+                        "user_experience",
+                        "business_model",
+                        "all",
+                    ],
                 },
             },
             "required": ["competitor"],
@@ -402,7 +473,14 @@ SUGGEST_IMPROVEMENTS_TOOL = {
                 "area": {
                     "type": "string",
                     "description": "Area de mejora a explorar",
-                    "enum": ["ai_capabilities", "tax_features", "user_experience", "business_growth", "aeat_integration", "all"],
+                    "enum": [
+                        "ai_capabilities",
+                        "tax_features",
+                        "user_experience",
+                        "business_growth",
+                        "aeat_integration",
+                        "all",
+                    ],
                 },
                 "max_suggestions": {
                     "type": "integer",
@@ -444,7 +522,13 @@ AEAT_INTEGRATION_TOOL = {
                 "aspect": {
                     "type": "string",
                     "description": "Aspecto de la integracion AEAT a analizar",
-                    "enum": ["colaborador_social", "technical_requirements", "alternatives", "roadmap", "all"],
+                    "enum": [
+                        "colaborador_social",
+                        "technical_requirements",
+                        "alternatives",
+                        "roadmap",
+                        "all",
+                    ],
                 },
             },
             "required": ["aspect"],
@@ -464,21 +548,51 @@ COMPETITOR_TOOLS = [
 
 # ─── Tool Executor Functions ──────────────────────────────────────────────
 
+
 async def compare_features_tool(competitor: str, category: str = "all") -> Dict[str, Any]:
     """Compare Impuestify features with a specific competitor."""
     comp_key = competitor.lower().replace(" ", "")
     if comp_key not in COMPETITORS:
-        return {"success": False, "error": f"Competitor '{competitor}' not found. Available: {list(COMPETITORS.keys())}"}
+        return {
+            "success": False,
+            "error": f"Competitor '{competitor}' not found. Available: {list(COMPETITORS.keys())}",
+        }
 
     comp = COMPETITORS[comp_key]
     comp_features = comp["features"]
 
     # Build comparison
     categories = {
-        "ai_technology": ["ai_chatbot", "rag_documentation", "multi_agent_system", "semantic_cache", "ai_guardrails"],
-        "tax_features": ["irpf_filing", "quarterly_filing", "irpf_calculator", "autonomos_quotas", "payslip_analysis", "notification_analysis", "deduction_optimizer"],
-        "user_experience": ["mobile_app", "workspace_documents", "invoicing", "expense_tracking", "open_banking", "human_advisors"],
-        "business_model": ["b2b_enterprise", "gdpr_compliance", "aeat_data_import", "aeat_submission"],
+        "ai_technology": [
+            "ai_chatbot",
+            "rag_documentation",
+            "multi_agent_system",
+            "semantic_cache",
+            "ai_guardrails",
+        ],
+        "tax_features": [
+            "irpf_filing",
+            "quarterly_filing",
+            "irpf_calculator",
+            "autonomos_quotas",
+            "payslip_analysis",
+            "notification_analysis",
+            "deduction_optimizer",
+        ],
+        "user_experience": [
+            "mobile_app",
+            "workspace_documents",
+            "invoicing",
+            "expense_tracking",
+            "open_banking",
+            "human_advisors",
+        ],
+        "business_model": [
+            "b2b_enterprise",
+            "gdpr_compliance",
+            "aeat_data_import",
+            "aeat_submission",
+        ],
     }
 
     if category != "all" and category in categories:
@@ -508,12 +622,14 @@ async def compare_features_tool(competitor: str, category: str = "all") -> Dict[
         else:
             winner = "Ninguno"
 
-        comparison.append({
-            "feature": label,
-            "impuestify": imp_has,
-            "competitor": comp_has,
-            "winner": winner,
-        })
+        comparison.append(
+            {
+                "feature": label,
+                "impuestify": imp_has,
+                "competitor": comp_has,
+                "winner": winner,
+            }
+        )
 
     formatted = f"## Comparativa: Impuestify vs {comp['name']}\n\n"
     formatted += f"| Funcionalidad | Impuestify | {comp['name']} | Ventaja |\n"
@@ -583,38 +699,48 @@ async def analyze_gaps_tool(focus: str = "all") -> Dict[str, Any]:
         if not imp_has and competitors_with:
             difficulty = _estimate_difficulty(feat)
             impact = _estimate_impact(feat)
-            our_gaps.append({
-                "feature": label,
-                "key": feat,
-                "competitors_with_it": competitors_with,
-                "difficulty": difficulty,
-                "impact": impact,
-                "priority": _calculate_priority(impact, difficulty),
-            })
-
-        if imp_has and not competitors_with:
-            our_advantages.append({
-                "feature": label,
-                "key": feat,
-                "unique": True,
-                "competitive_moat": _estimate_moat(feat),
-            })
-        elif imp_has and len(competitors_with) < len(COMPETITORS):
-            missing_from = [c["name"] for k, c in COMPETITORS.items() if not c["features"].get(feat, False)]
-            if missing_from:
-                our_advantages.append({
+            our_gaps.append(
+                {
                     "feature": label,
                     "key": feat,
-                    "unique": False,
-                    "missing_from": missing_from,
+                    "competitors_with_it": competitors_with,
+                    "difficulty": difficulty,
+                    "impact": impact,
+                    "priority": _calculate_priority(impact, difficulty),
+                }
+            )
+
+        if imp_has and not competitors_with:
+            our_advantages.append(
+                {
+                    "feature": label,
+                    "key": feat,
+                    "unique": True,
                     "competitive_moat": _estimate_moat(feat),
-                })
+                }
+            )
+        elif imp_has and len(competitors_with) < len(COMPETITORS):
+            missing_from = [
+                c["name"] for k, c in COMPETITORS.items() if not c["features"].get(feat, False)
+            ]
+            if missing_from:
+                our_advantages.append(
+                    {
+                        "feature": label,
+                        "key": feat,
+                        "unique": False,
+                        "missing_from": missing_from,
+                        "competitive_moat": _estimate_moat(feat),
+                    }
+                )
 
     formatted = "## Analisis de Brechas Competitivas\n\n"
 
     if focus in ("our_gaps", "all"):
         # Sort gaps by priority
-        our_gaps.sort(key=lambda x: {"critica": 0, "alta": 1, "media": 2, "baja": 3}.get(x["priority"], 4))
+        our_gaps.sort(
+            key=lambda x: {"critica": 0, "alta": 1, "media": 2, "baja": 3}.get(x["priority"], 4)
+        )
 
         formatted += "### Lo que nos FALTA (Gaps)\n\n"
         formatted += "| Funcionalidad | Quien lo tiene | Impacto | Dificultad | Prioridad |\n"
@@ -630,7 +756,9 @@ async def analyze_gaps_tool(focus: str = "all") -> Dict[str, Any]:
         for adv in our_advantages:
             exclusive = "UNICO" if adv["unique"] else "Parcial"
             missing = ", ".join(adv.get("missing_from", ["Ninguno"]))
-            formatted += f"| {adv['feature']} | {exclusive} | {adv['competitive_moat']} | {missing} |\n"
+            formatted += (
+                f"| {adv['feature']} | {exclusive} | {adv['competitive_moat']} | {missing} |\n"
+            )
 
     formatted += "\n### Resumen Estrategico\n\n"
     formatted += f"- **Gaps criticos/altos**: {sum(1 for g in our_gaps if g['priority'] in ('critica', 'alta'))}\n"
@@ -650,7 +778,12 @@ async def suggest_improvements_tool(area: str = "all", max_suggestions: int = 10
     suggestions = _get_improvement_suggestions()
 
     area_mapping = {
-        "ai_capabilities": ["ai_chatbot_upgrade", "deduction_engine", "predictive_tax", "multi_language"],
+        "ai_capabilities": [
+            "ai_chatbot_upgrade",
+            "deduction_engine",
+            "predictive_tax",
+            "multi_language",
+        ],
         "tax_features": ["quarterly_filing", "deduction_optimizer", "tax_calendar", "modelo_720"],
         "user_experience": ["mobile_app", "onboarding_wizard", "dashboard_analytics", "dark_mode"],
         "business_growth": ["b2b_api", "affiliate_program", "freemium_plus", "partnerships"],
@@ -735,11 +868,36 @@ async def analyze_market_position_tool(analysis_type: str = "all") -> Dict[str, 
             "current_position": "AI-first free tax advisor (niche player)",
             "target_position": "The intelligent tax companion for Spanish taxpayers",
             "differentiation_axes": [
-                {"axis": "Tecnologia IA", "impuestify": "10/10", "taxdown": "4/10", "declarando": "1/10"},
-                {"axis": "Cobertura Fiscal", "impuestify": "5/10", "taxdown": "8/10", "declarando": "9/10"},
-                {"axis": "Precio/Valor", "impuestify": "9/10 (gratis)", "taxdown": "8/10", "declarando": "5/10"},
-                {"axis": "Confianza/Marca", "impuestify": "2/10", "taxdown": "9/10", "declarando": "6/10"},
-                {"axis": "AEAT Integration", "impuestify": "1/10", "taxdown": "9/10", "declarando": "8/10"},
+                {
+                    "axis": "Tecnologia IA",
+                    "impuestify": "10/10",
+                    "taxdown": "4/10",
+                    "declarando": "1/10",
+                },
+                {
+                    "axis": "Cobertura Fiscal",
+                    "impuestify": "5/10",
+                    "taxdown": "8/10",
+                    "declarando": "9/10",
+                },
+                {
+                    "axis": "Precio/Valor",
+                    "impuestify": "9/10 (gratis)",
+                    "taxdown": "8/10",
+                    "declarando": "5/10",
+                },
+                {
+                    "axis": "Confianza/Marca",
+                    "impuestify": "2/10",
+                    "taxdown": "9/10",
+                    "declarando": "6/10",
+                },
+                {
+                    "axis": "AEAT Integration",
+                    "impuestify": "1/10",
+                    "taxdown": "9/10",
+                    "declarando": "8/10",
+                },
             ],
             "recommended_tagline": "Tu asesor fiscal inteligente. Gratis. 24/7. Sin compromiso.",
         }
@@ -753,16 +911,34 @@ async def analyze_market_position_tool(analysis_type: str = "all") -> Dict[str, 
         formatted += "| Eje | Impuestify | TaxDown | Declarando |\n"
         formatted += "|---|---|---|---|\n"
         for d in positioning["differentiation_axes"]:
-            formatted += f"| {d['axis']} | {d['impuestify']} | {d['taxdown']} | {d['declarando']} |\n"
+            formatted += (
+                f"| {d['axis']} | {d['impuestify']} | {d['taxdown']} | {d['declarando']} |\n"
+            )
 
     if analysis_type in ("pricing_strategy", "all"):
         pricing = {
             "current": "Gratuito (sin modelo de monetizacion definido)",
             "recommended_tiers": [
-                {"tier": "Free", "price": "0 EUR", "features": "Chat IA ilimitado, IRPF simulator, cuotas autonomos, perfil fiscal"},
-                {"tier": "Pro", "price": "9.99 EUR/mes", "features": "Workspace documentos, analisis nominas, notificaciones AEAT, exportacion datos"},
-                {"tier": "Autonomo", "price": "19.99 EUR/mes", "features": "Pro + Modelo 303/130, calendario fiscal, alertas trimestrales"},
-                {"tier": "Enterprise", "price": "Custom", "features": "API white-label, integracion SSO, soporte dedicado"},
+                {
+                    "tier": "Free",
+                    "price": "0 EUR",
+                    "features": "Chat IA ilimitado, IRPF simulator, cuotas autonomos, perfil fiscal",
+                },
+                {
+                    "tier": "Pro",
+                    "price": "9.99 EUR/mes",
+                    "features": "Workspace documentos, analisis nominas, notificaciones AEAT, exportacion datos",
+                },
+                {
+                    "tier": "Autonomo",
+                    "price": "19.99 EUR/mes",
+                    "features": "Pro + Modelo 303/130, calendario fiscal, alertas trimestrales",
+                },
+                {
+                    "tier": "Enterprise",
+                    "price": "Custom",
+                    "features": "API white-label, integracion SSO, soporte dedicado",
+                },
             ],
             "competitive_advantage": "Significativamente mas barato que Declarando (70-100 EUR/mes) y comparable a TaxDown Pro (35 EUR anuales) pero con IA superior",
         }
@@ -845,7 +1021,9 @@ async def analyze_aeat_integration_tool(aspect: str = "all") -> Dict[str, Any]:
         formatted += f"**Portal de desarrolladores**: {cs['developer_portal']}\n"
         formatted += f"**Protocolo**: {cs['protocol']}\n"
         formatted += f"**Quien lo tiene**: {', '.join(cs['who_has_it'])}\n\n"
-        formatted += "**IMPORTANTE**: NO es una API REST moderna. Es SOAP/XML con certificados digitales. "
+        formatted += (
+            "**IMPORTANTE**: NO es una API REST moderna. Es SOAP/XML con certificados digitales. "
+        )
         formatted += "El proceso de certificacion puede tardar varios meses.\n"
         result["colaborador_social"] = cs
 
@@ -905,6 +1083,7 @@ async def analyze_aeat_integration_tool(aspect: str = "all") -> Dict[str, Any]:
 
 # ─── Helper Functions ─────────────────────────────────────────────────────
 
+
 def _estimate_difficulty(feature_key: str) -> str:
     """Estimate implementation difficulty for a feature."""
     difficulty_map = {
@@ -944,7 +1123,14 @@ def _estimate_impact(feature_key: str) -> str:
 def _calculate_priority(impact: str, difficulty: str) -> str:
     """Calculate priority based on impact and difficulty."""
     impact_score = {"muy alto": 4, "alto": 3, "medio": 2, "bajo": 1}.get(impact, 2)
-    diff_score = {"baja": 4, "media": 3, "media-alta": 2, "alta": 1, "muy alta": 0, "alta (contratacion)": 1}.get(difficulty, 2)
+    diff_score = {
+        "baja": 4,
+        "media": 3,
+        "media-alta": 2,
+        "alta": 1,
+        "muy alta": 0,
+        "alta (contratacion)": 1,
+    }.get(difficulty, 2)
     total = impact_score + diff_score
     if total >= 7:
         return "critica"

@@ -16,6 +16,7 @@ que usan todos los `test_R0xx_*.py`. Principios:
 
 No se hardcodea ninguna regla aqui — este archivo es puro scaffolding.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -39,6 +40,7 @@ from app.services.defensia_rules_engine import REGISTRY, reset_registry
 # Aislamiento del REGISTRY
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def _aislar_registry():
     """Limpia el REGISTRY antes y despues de CADA test de la carpeta rules/.
@@ -57,6 +59,7 @@ def _aislar_registry():
 # Helpers publicos
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def load_rules():
     """Fixture callable que importa todas las reglas R001-R030.
@@ -67,6 +70,7 @@ def load_rules():
             load_rules()
             # en este punto REGISTRY contiene todas las reglas descubiertas
     """
+
     def _loader() -> None:
         defensia_rules.load_all()
 
@@ -81,6 +85,7 @@ def build_doc():
 
         doc = build_doc(TipoDocumento.LIQUIDACION_PROVISIONAL, datos={"x": 1})
     """
+
     def _build(
         tipo: TipoDocumento,
         datos: Optional[dict[str, Any]] = None,
@@ -123,6 +128,7 @@ def build_exp():
             modelo actual NO tiene campo user_id — se ignora silenciosamente.
         exp_id: id del expediente. Default "exp-test-001".
     """
+
     def _build(
         tributo: Tributo = Tributo.IRPF,
         fase: Fase = Fase.INDETERMINADA,
@@ -153,6 +159,7 @@ def build_brief():
 
         brief = build_brief("AEAT me ha denegado la deduccion por vivienda")
     """
+
     def _build(
         texto: str = "",
         *,
@@ -189,6 +196,7 @@ def patch_hoy():
             wraps=datetime,
         ).now.return_value = fecha_congelada
     """
+
     def _patch(mocker, fecha: datetime, target: str = "datetime.datetime"):
         """Congela datetime.now() en el modulo especificado.
 

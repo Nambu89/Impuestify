@@ -10,6 +10,7 @@ Also provides:
 - Password change
 - Fiscal profile management (voluntary IRPF data)
 """
+
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,7 +24,10 @@ import logging
 from app.auth.jwt_handler import get_current_user, TokenData
 from app.auth.password import hash_password, verify_password
 from app.database.turso_client import get_db_client, TursoClient
-from app.services.subscription_service import get_subscription_service, validate_plan_role_compatibility
+from app.services.subscription_service import (
+    get_subscription_service,
+    validate_plan_role_compatibility,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -34,20 +38,24 @@ router = APIRouter(prefix="/api/users/me", tags=["user-rights"])
 # REQUEST/RESPONSE MODELS
 # ============================================
 
+
 class UserUpdateRequest(BaseModel):
     """Request model for updating user profile"""
+
     name: Optional[str] = None
     email: Optional[EmailStr] = None
 
 
 class PasswordChangeRequest(BaseModel):
     """Request model for changing password"""
+
     current_password: str
     new_password: str = Field(min_length=8, description="Min 8 characters")
 
 
 class FiscalProfileRequest(BaseModel):
     """Request model for updating fiscal profile (all fields optional)"""
+
     ccaa_residencia: Optional[str] = None
     fecha_nacimiento: Optional[str] = None
     situacion_laboral: Optional[str] = None
@@ -69,8 +77,12 @@ class FiscalProfileRequest(BaseModel):
     epigrafe_iae: Optional[str] = None
     tipo_actividad: Optional[str] = None  # "profesional" | "empresarial" | "artistica"
     fecha_alta_autonomo: Optional[str] = None  # ISO date "2024-03-15"
-    metodo_estimacion_irpf: Optional[str] = None  # "directa_normal" | "directa_simplificada" | "objetiva"
-    regimen_iva: Optional[str] = None  # "general" | "simplificado" | "recargo_equivalencia" | "exento" | "ipsi"
+    metodo_estimacion_irpf: Optional[str] = (
+        None  # "directa_normal" | "directa_simplificada" | "objetiva"
+    )
+    regimen_iva: Optional[str] = (
+        None  # "general" | "simplificado" | "recargo_equivalencia" | "exento" | "ipsi"
+    )
     rendimientos_netos_mensuales: Optional[float] = None
     base_cotizacion_reta: Optional[float] = None
     territorio_foral: Optional[bool] = None
@@ -78,7 +90,9 @@ class FiscalProfileRequest(BaseModel):
     tipo_retencion_facturas: Optional[float] = None  # 15.0 or 7.0
     tarifa_plana: Optional[bool] = None
     pluriactividad: Optional[bool] = None
-    ceuta_melilla: Optional[bool] = None  # Resident in Ceuta/Melilla (60% IRPF deduction + 50% SS bonus + IPSI)
+    ceuta_melilla: Optional[bool] = (
+        None  # Resident in Ceuta/Melilla (60% IRPF deduction + 50% SS bonus + IPSI)
+    )
     # --- Phase 1: IRPF deductions / reductions ---
     aportaciones_plan_pensiones: Optional[float] = None
     aportaciones_plan_pensiones_empresa: Optional[float] = None
@@ -146,7 +160,9 @@ class FiscalProfileRequest(BaseModel):
     amortizaciones_actividad: Optional[float] = None
     provisiones_actividad: Optional[float] = None
     otros_gastos_actividad: Optional[float] = None
-    estimacion_actividad: Optional[str] = None  # "directa_simplificada" | "directa_normal" | "objetiva"
+    estimacion_actividad: Optional[str] = (
+        None  # "directa_simplificada" | "directa_normal" | "objetiva"
+    )
     inicio_actividad: Optional[bool] = None
     un_solo_cliente: Optional[bool] = None
     retenciones_actividad: Optional[float] = None
@@ -185,7 +201,7 @@ class FiscalProfileRequest(BaseModel):
     perdidas_reembolso_fondos: Optional[float] = None
     tiene_acciones: Optional[bool] = None
     ganancias_acciones: Optional[float] = None  # ya existía, se mantiene
-    perdidas_acciones: Optional[float] = None   # ya existía, se mantiene
+    perdidas_acciones: Optional[float] = None  # ya existía, se mantiene
     tiene_derivados: Optional[bool] = None
     ganancias_derivados: Optional[float] = None
     perdidas_derivados: Optional[float] = None
@@ -196,6 +212,7 @@ class FiscalProfileRequest(BaseModel):
 
 class UserDataExport(BaseModel):
     """Complete user data export (GDPR Art. 15)"""
+
     export_date: str
     user: Dict[str, Any]
     conversations: List[Dict[str, Any]]
@@ -206,6 +223,7 @@ class UserDataExport(BaseModel):
 
 class DeleteAccountResponse(BaseModel):
     """Response after account deletion"""
+
     message: str
     user_id: str
     deleted_at: str
@@ -216,10 +234,10 @@ class DeleteAccountResponse(BaseModel):
 # GDPR ART. 15: RIGHT TO ACCESS (DATA EXPORT)
 # ============================================
 
+
 @router.get("/data", response_model=UserDataExport)
 async def export_user_data(
-    current_user: TokenData = Depends(get_current_user),
-    db: TursoClient = Depends(get_db_client)
+    current_user: TokenData = Depends(get_current_user), db: TursoClient = Depends(get_db_client)
 ):
     """
     Export all user data in JSON format.
@@ -231,7 +249,7 @@ async def export_user_data(
     # 1. Get user account data
     user_result = await db.execute(
         "SELECT id, email, name, is_admin, created_at, updated_at FROM users WHERE id = ?",
-        [user_id]
+        [user_id],
     )
 
     if not user_result.rows:
@@ -250,7 +268,7 @@ async def export_user_data(
         GROUP BY c.id
         ORDER BY c.created_at DESC
         """,
-        [user_id]
+        [user_id],
     )
 
     conversations_list = []
@@ -265,7 +283,7 @@ async def export_user_data(
             WHERE conversation_id = ?
             ORDER BY created_at ASC
             """,
-            [conv["id"]]
+            [conv["id"]],
         )
 
         messages = [
@@ -274,19 +292,21 @@ async def export_user_data(
                 "role": msg["role"],
                 "content": msg["content"],
                 "metadata": json.loads(msg["metadata"]) if msg.get("metadata") else None,
-                "created_at": msg["created_at"]
+                "created_at": msg["created_at"],
             }
             for msg in messages_result.rows
         ]
 
-        conversations_list.append({
-            "id": conv["id"],
-            "title": conv["title"],
-            "created_at": conv["created_at"],
-            "updated_at": conv["updated_at"],
-            "message_count": conv["message_count"] or 0,
-            "messages": messages
-        })
+        conversations_list.append(
+            {
+                "id": conv["id"],
+                "title": conv["title"],
+                "created_at": conv["created_at"],
+                "updated_at": conv["updated_at"],
+                "message_count": conv["message_count"] or 0,
+                "messages": messages,
+            }
+        )
 
         total_messages += len(messages)
 
@@ -299,12 +319,12 @@ async def export_user_data(
             "name": user_data["name"],
             "is_admin": bool(user_data["is_admin"]),
             "created_at": user_data["created_at"],
-            "updated_at": user_data["updated_at"]
+            "updated_at": user_data["updated_at"],
         },
         conversations=conversations_list,
         total_conversations=len(conversations_list),
         total_messages=total_messages,
-        account_created=user_data["created_at"]
+        account_created=user_data["created_at"],
     )
 
     return export
@@ -314,11 +334,12 @@ async def export_user_data(
 # GDPR ART. 16: RIGHT TO RECTIFICATION
 # ============================================
 
+
 @router.patch("", response_model=dict)
 async def update_user_profile(
     updates: UserUpdateRequest,
     current_user: TokenData = Depends(get_current_user),
-    db: TursoClient = Depends(get_db_client)
+    db: TursoClient = Depends(get_db_client),
 ):
     """
     Update user profile information.
@@ -329,23 +350,16 @@ async def update_user_profile(
 
     # Check if there's anything to update
     if not updates.name and not updates.email:
-        raise HTTPException(
-            status_code=400,
-            detail="No data provided for update"
-        )
+        raise HTTPException(status_code=400, detail="No data provided for update")
 
     # Check email uniqueness if email is being updated
     if updates.email:
         existing_user = await db.execute(
-            "SELECT id FROM users WHERE email = ? AND id != ?",
-            [updates.email, user_id]
+            "SELECT id FROM users WHERE email = ? AND id != ?", [updates.email, user_id]
         )
 
         if existing_user.rows:
-            raise HTTPException(
-                status_code=409,
-                detail="Email already in use"
-            )
+            raise HTTPException(status_code=409, detail="Email already in use")
 
     # Build UPDATE query dynamically
     update_fields = []
@@ -365,15 +379,12 @@ async def update_user_profile(
     # Execute update
     params.append(user_id)
 
-    await db.execute(
-        f"UPDATE users SET {', '.join(update_fields)} WHERE id = ?",
-        params
-    )
+    await db.execute(f"UPDATE users SET {', '.join(update_fields)} WHERE id = ?", params)
 
     # Fetch updated user
     updated_user = await db.execute(
         "SELECT id, email, name, is_admin, created_at, updated_at FROM users WHERE id = ?",
-        [user_id]
+        [user_id],
     )
 
     if not updated_user.rows:
@@ -389,8 +400,8 @@ async def update_user_profile(
             "name": user_data["name"],
             "is_admin": bool(user_data["is_admin"]),
             "created_at": user_data["created_at"],
-            "updated_at": user_data["updated_at"]
-        }
+            "updated_at": user_data["updated_at"],
+        },
     }
 
 
@@ -398,11 +409,12 @@ async def update_user_profile(
 # PASSWORD CHANGE
 # ============================================
 
+
 @router.put("/password")
 async def change_password(
     body: PasswordChangeRequest,
     current_user: TokenData = Depends(get_current_user),
-    db: TursoClient = Depends(get_db_client)
+    db: TursoClient = Depends(get_db_client),
 ):
     """
     Change user password.
@@ -413,10 +425,7 @@ async def change_password(
     user_id = current_user.user_id
 
     # 1. Get current password hash
-    user_result = await db.execute(
-        "SELECT password_hash FROM users WHERE id = ?",
-        [user_id]
-    )
+    user_result = await db.execute("SELECT password_hash FROM users WHERE id = ?", [user_id])
 
     if not user_result.rows:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -425,23 +434,17 @@ async def change_password(
 
     # 2. Verify current password
     if not verify_password(body.current_password, current_hash):
-        raise HTTPException(
-            status_code=400,
-            detail="La contraseña actual es incorrecta"
-        )
+        raise HTTPException(status_code=400, detail="La contraseña actual es incorrecta")
 
     # 3. Hash new password and update
     new_hash = hash_password(body.new_password)
     await db.execute(
         "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
-        [new_hash, user_id]
+        [new_hash, user_id],
     )
 
     # 4. Invalidate all sessions (force re-login on other devices)
-    await db.execute(
-        "DELETE FROM sessions WHERE user_id = ?",
-        [user_id]
-    )
+    await db.execute("DELETE FROM sessions WHERE user_id = ?", [user_id])
 
     logger.info("Password changed for user %s", user_id)
 
@@ -457,86 +460,160 @@ _PROFILE_COLUMNS = {"ccaa_residencia", "fecha_nacimiento", "situacion_laboral"}
 # All other FiscalProfileRequest fields go into datos_fiscales JSON
 _DATOS_FISCALES_KEYS = {
     "estado_civil",
-    "ingresos_trabajo", "ss_empleado", "num_descendientes",
-    "anios_nacimiento_desc", "custodia_compartida",
-    "num_ascendientes_65", "num_ascendientes_75",
-    "discapacidad_contribuyente", "intereses", "dividendos",
-    "ganancias_fondos", "ingresos_alquiler", "valor_adquisicion_inmueble",
+    "ingresos_trabajo",
+    "ss_empleado",
+    "num_descendientes",
+    "anios_nacimiento_desc",
+    "custodia_compartida",
+    "num_ascendientes_65",
+    "num_ascendientes_75",
+    "discapacidad_contribuyente",
+    "intereses",
+    "dividendos",
+    "ganancias_fondos",
+    "ingresos_alquiler",
+    "valor_adquisicion_inmueble",
     # Autonomo-specific
-    "epigrafe_iae", "tipo_actividad", "fecha_alta_autonomo",
-    "metodo_estimacion_irpf", "regimen_iva", "rendimientos_netos_mensuales",
-    "base_cotizacion_reta", "territorio_foral", "territorio_historico",
-    "tipo_retencion_facturas", "tarifa_plana", "pluriactividad",
+    "epigrafe_iae",
+    "tipo_actividad",
+    "fecha_alta_autonomo",
+    "metodo_estimacion_irpf",
+    "regimen_iva",
+    "rendimientos_netos_mensuales",
+    "base_cotizacion_reta",
+    "territorio_foral",
+    "territorio_historico",
+    "tipo_retencion_facturas",
+    "tarifa_plana",
+    "pluriactividad",
     "ceuta_melilla",
     # Phase 1: IRPF deductions / reductions
-    "aportaciones_plan_pensiones", "aportaciones_plan_pensiones_empresa",
-    "hipoteca_pre2013", "capital_amortizado_hipoteca", "intereses_hipoteca",
-    "madre_trabajadora_ss", "gastos_guarderia_anual",
-    "familia_numerosa", "tipo_familia_numerosa",
-    "donativos_ley_49_2002", "donativo_recurrente",
-    "retenciones_trabajo", "retenciones_alquiler", "retenciones_ahorro",
+    "aportaciones_plan_pensiones",
+    "aportaciones_plan_pensiones_empresa",
+    "hipoteca_pre2013",
+    "capital_amortizado_hipoteca",
+    "intereses_hipoteca",
+    "madre_trabajadora_ss",
+    "gastos_guarderia_anual",
+    "familia_numerosa",
+    "tipo_familia_numerosa",
+    "donativos_ley_49_2002",
+    "donativo_recurrente",
+    "retenciones_trabajo",
+    "retenciones_alquiler",
+    "retenciones_ahorro",
     # Phase 3: Payslip/salary fields
-    "num_pagas_anuales", "salario_base_mensual",
-    "complementos_salariales", "irpf_retenido_porcentaje",
+    "num_pagas_anuales",
+    "salario_base_mensual",
+    "complementos_salariales",
+    "irpf_retenido_porcentaje",
     # Sprint 1: Vivienda
-    "alquiler_vivienda_habitual", "importe_alquiler_anual",
-    "vivienda_habitual_propiedad", "rehabilitacion_vivienda",
-    "vivienda_rural", "dacion_pago_alquiler", "arrendador_vivienda_social",
+    "alquiler_vivienda_habitual",
+    "importe_alquiler_anual",
+    "vivienda_habitual_propiedad",
+    "rehabilitacion_vivienda",
+    "vivienda_rural",
+    "dacion_pago_alquiler",
+    "arrendador_vivienda_social",
     # Sprint 1: Familia
-    "nacimiento_adopcion_reciente", "adopcion_internacional",
-    "acogimiento_familiar", "familia_monoparental",
-    "hijos_escolarizados", "gastos_guarderia",
-    "ambos_progenitores_trabajan", "hijos_estudios_universitarios",
+    "nacimiento_adopcion_reciente",
+    "adopcion_internacional",
+    "acogimiento_familiar",
+    "familia_monoparental",
+    "hijos_escolarizados",
+    "gastos_guarderia",
+    "ambos_progenitores_trabajan",
+    "hijos_estudios_universitarios",
     # Sprint 1: Discapacidad
-    "descendiente_discapacidad", "ascendiente_discapacidad",
-    "ascendiente_a_cargo", "familiar_discapacitado_cargo", "empleada_hogar_cuidado",
+    "descendiente_discapacidad",
+    "ascendiente_discapacidad",
+    "ascendiente_a_cargo",
+    "familiar_discapacitado_cargo",
+    "empleada_hogar_cuidado",
     # Sprint 1: Donaciones
-    "donativo_entidad_autonomica", "donativo_investigacion",
-    "donativo_patrimonio", "donativo_fundacion_local",
+    "donativo_entidad_autonomica",
+    "donativo_investigacion",
+    "donativo_patrimonio",
+    "donativo_fundacion_local",
     # Sprint 1: Sostenibilidad
-    "vehiculo_electrico_nuevo", "obras_mejora_energetica", "instalacion_renovable",
+    "vehiculo_electrico_nuevo",
+    "obras_mejora_energetica",
+    "instalacion_renovable",
     # Sprint 1: Territorio
-    "municipio_despoblado", "inversion_empresa_nueva",
+    "municipio_despoblado",
+    "inversion_empresa_nueva",
     # Sprint 1: Foral
-    "epsv_aportaciones", "pension_viudedad",
-    "reduccion_jornada_cuidado", "cuenta_vivienda_aportaciones",
+    "epsv_aportaciones",
+    "pension_viudedad",
+    "reduccion_jornada_cuidado",
+    "cuenta_vivienda_aportaciones",
     # Activity income (autonomo IRPF)
-    "ingresos_actividad", "gastos_actividad", "cuota_autonomo_anual",
-    "amortizaciones_actividad", "provisiones_actividad", "otros_gastos_actividad",
-    "estimacion_actividad", "inicio_actividad", "un_solo_cliente",
-    "retenciones_actividad", "pagos_fraccionados_130",
+    "ingresos_actividad",
+    "gastos_actividad",
+    "cuota_autonomo_anual",
+    "amortizaciones_actividad",
+    "provisiones_actividad",
+    "otros_gastos_actividad",
+    "estimacion_actividad",
+    "inicio_actividad",
+    "un_solo_cliente",
+    "retenciones_actividad",
+    "pagos_fraccionados_130",
     # Phase 2: Tributación conjunta + alquiler pre-2015 + rentas imputadas
-    "tributacion_conjunta", "tipo_unidad_familiar",
-    "alquiler_habitual_pre2015", "alquiler_pagado_anual",
-    "valor_catastral_segundas_viviendas", "valor_catastral_revisado_post1994",
+    "tributacion_conjunta",
+    "tipo_unidad_familiar",
+    "alquiler_habitual_pre2015",
+    "alquiler_pagado_anual",
+    "valor_catastral_segundas_viviendas",
+    "valor_catastral_revisado_post1994",
     "gastos_alquiler_total",
     # Criptomonedas (casillas 1800-1814 Modelo 100)
-    "tiene_criptomonedas", "cripto_denominaciones", "cripto_clave_contraprestacion",
-    "cripto_valor_transmision_total", "cripto_valor_adquisicion_total",
-    "cripto_ganancia_neta", "cripto_perdida_neta",
-    "cripto_en_extranjero_50k", "tiene_staking_defi", "exchanges_utilizados",
+    "tiene_criptomonedas",
+    "cripto_denominaciones",
+    "cripto_clave_contraprestacion",
+    "cripto_valor_transmision_total",
+    "cripto_valor_adquisicion_total",
+    "cripto_ganancia_neta",
+    "cripto_perdida_neta",
+    "cripto_en_extranjero_50k",
+    "tiene_staking_defi",
+    "exchanges_utilizados",
     # Apuestas y juegos — privados (casillas 0281-0290)
-    "tiene_ganancias_juegos_privados", "premios_metalico_privados",
-    "premios_especie_privados", "perdidas_juegos_privados",
+    "tiene_ganancias_juegos_privados",
+    "premios_metalico_privados",
+    "premios_especie_privados",
+    "perdidas_juegos_privados",
     # Apuestas y juegos — loterías públicas (casillas 0291-0297)
-    "tiene_premios_loterias", "premios_metalico_publicos", "premios_especie_publicos",
+    "tiene_premios_loterias",
+    "premios_metalico_publicos",
+    "premios_especie_publicos",
     # Ganancias patrimoniales financieras (casillas 0316-0354)
-    "tiene_fondos_inversion", "ganancias_reembolso_fondos", "perdidas_reembolso_fondos",
-    "tiene_acciones", "ganancias_acciones", "perdidas_acciones",
-    "tiene_derivados", "ganancias_derivados", "perdidas_derivados",
+    "tiene_fondos_inversion",
+    "ganancias_reembolso_fondos",
+    "perdidas_reembolso_fondos",
+    "tiene_acciones",
+    "ganancias_acciones",
+    "perdidas_acciones",
+    "tiene_derivados",
+    "ganancias_derivados",
+    "perdidas_derivados",
     # Fase 5: Datos para deducciones autonómicas
-    "donativos_autonomicos", "gastos_educativos", "inversion_vivienda",
-    "instalacion_renovable_importe", "vehiculo_electrico_importe",
-    "obras_mejora_importe", "cotizaciones_empleada_hogar",
+    "donativos_autonomicos",
+    "gastos_educativos",
+    "inversion_vivienda",
+    "instalacion_renovable_importe",
+    "vehiculo_electrico_importe",
+    "obras_mejora_importe",
+    "cotizaciones_empleada_hogar",
     # Multi-pagador (AEAT Datos Fiscales)
-    "pagadores", "num_pagadores",
+    "pagadores",
+    "num_pagadores",
 }
 
 
 @router.get("/fiscal-profile")
 async def get_fiscal_profile(
-    current_user: TokenData = Depends(get_current_user),
-    db: TursoClient = Depends(get_db_client)
+    current_user: TokenData = Depends(get_current_user), db: TursoClient = Depends(get_db_client)
 ):
     """
     Get user's fiscal profile for IRPF calculation.
@@ -548,7 +625,7 @@ async def get_fiscal_profile(
     result = await db.execute(
         "SELECT ccaa_residencia, situacion_laboral, fecha_nacimiento, datos_fiscales "
         "FROM user_profiles WHERE user_id = ?",
-        [user_id]
+        [user_id],
     )
 
     if not result.rows:
@@ -604,7 +681,7 @@ async def get_fiscal_profile(
 async def update_fiscal_profile(
     body: FiscalProfileRequest,
     current_user: TokenData = Depends(get_current_user),
-    db: TursoClient = Depends(get_db_client)
+    db: TursoClient = Depends(get_db_client),
 ):
     """
     Save user's fiscal profile (manual entry).
@@ -617,8 +694,7 @@ async def update_fiscal_profile(
 
     # Check if profile exists
     existing = await db.execute(
-        "SELECT id, datos_fiscales FROM user_profiles WHERE user_id = ?",
-        [user_id]
+        "SELECT id, datos_fiscales FROM user_profiles WHERE user_id = ?", [user_id]
     )
 
     # Parse existing datos_fiscales
@@ -689,8 +765,7 @@ async def update_fiscal_profile(
 
         params.append(user_id)
         await db.execute(
-            f"UPDATE user_profiles SET {', '.join(update_fields)} WHERE user_id = ?",
-            params
+            f"UPDATE user_profiles SET {', '.join(update_fields)} WHERE user_id = ?", params
         )
     else:
         # INSERT new profile
@@ -700,7 +775,7 @@ async def update_fiscal_profile(
                (id, user_id, ccaa_residencia, situacion_laboral, fecha_nacimiento,
                 datos_fiscales, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            [profile_id, user_id, ccaa, situacion, fecha, datos_json, now, now]
+            [profile_id, user_id, ccaa, situacion, fecha, datos_json, now, now],
         )
 
     logger.info("Fiscal profile updated (manual) for user %s", user_id)
@@ -712,10 +787,10 @@ async def update_fiscal_profile(
 # GDPR ART. 17: RIGHT TO ERASURE
 # ============================================
 
+
 @router.delete("", response_model=DeleteAccountResponse)
 async def delete_user_account(
-    current_user: TokenData = Depends(get_current_user),
-    db: TursoClient = Depends(get_db_client)
+    current_user: TokenData = Depends(get_current_user), db: TursoClient = Depends(get_db_client)
 ):
     """
     Permanently delete user account and all associated data.
@@ -728,8 +803,7 @@ async def delete_user_account(
 
     # Count data before deletion (for confirmation)
     conversations_count_result = await db.execute(
-        "SELECT COUNT(*) as count FROM conversations WHERE user_id = ?",
-        [user_id]
+        "SELECT COUNT(*) as count FROM conversations WHERE user_id = ?", [user_id]
     )
     conversations_count = conversations_count_result.rows[0]["count"]
 
@@ -740,13 +814,12 @@ async def delete_user_account(
         JOIN conversations c ON m.conversation_id = c.id
         WHERE c.user_id = ?
         """,
-        [user_id]
+        [user_id],
     )
     messages_count = messages_count_result.rows[0]["count"]
 
     sessions_count_result = await db.execute(
-        "SELECT COUNT(*) as count FROM sessions WHERE user_id = ?",
-        [user_id]
+        "SELECT COUNT(*) as count FROM sessions WHERE user_id = ?", [user_id]
     )
     sessions_count = sessions_count_result.rows[0]["count"]
 
@@ -757,60 +830,36 @@ async def delete_user_account(
     await db.execute(
         """DELETE FROM messages WHERE conversation_id IN
            (SELECT id FROM conversations WHERE user_id = ?)""",
-        [user_id]
+        [user_id],
     )
 
     # Conversations
-    await db.execute(
-        "DELETE FROM conversations WHERE user_id = ?",
-        [user_id]
-    )
+    await db.execute("DELETE FROM conversations WHERE user_id = ?", [user_id])
 
     # User profiles
-    await db.execute(
-        "DELETE FROM user_profiles WHERE user_id = ?",
-        [user_id]
-    )
+    await db.execute("DELETE FROM user_profiles WHERE user_id = ?", [user_id])
 
     # Workspace embeddings → workspace files → workspaces
     await db.execute(
         """DELETE FROM workspace_file_embeddings WHERE workspace_id IN
            (SELECT id FROM workspaces WHERE user_id = ?)""",
-        [user_id]
+        [user_id],
     )
     await db.execute(
         """DELETE FROM workspace_files WHERE workspace_id IN
            (SELECT id FROM workspaces WHERE user_id = ?)""",
-        [user_id]
+        [user_id],
     )
-    await db.execute(
-        "DELETE FROM workspaces WHERE user_id = ?",
-        [user_id]
-    )
+    await db.execute("DELETE FROM workspaces WHERE user_id = ?", [user_id])
 
     # Crypto tables (GDPR: delete before user row due to FK constraints)
-    await db.execute(
-        "DELETE FROM crypto_gains WHERE user_id = ?",
-        [user_id]
-    )
-    await db.execute(
-        "DELETE FROM crypto_holdings WHERE user_id = ?",
-        [user_id]
-    )
-    await db.execute(
-        "DELETE FROM crypto_transactions WHERE user_id = ?",
-        [user_id]
-    )
+    await db.execute("DELETE FROM crypto_gains WHERE user_id = ?", [user_id])
+    await db.execute("DELETE FROM crypto_holdings WHERE user_id = ?", [user_id])
+    await db.execute("DELETE FROM crypto_transactions WHERE user_id = ?", [user_id])
 
     # Feedback & chat ratings (GDPR Art.17 — defense-in-depth, tables have ON DELETE CASCADE)
-    await db.execute(
-        "DELETE FROM feedback WHERE user_id = ?",
-        [user_id]
-    )
-    await db.execute(
-        "DELETE FROM chat_ratings WHERE user_id = ?",
-        [user_id]
-    )
+    await db.execute("DELETE FROM feedback WHERE user_id = ?", [user_id])
+    await db.execute("DELETE FROM chat_ratings WHERE user_id = ?", [user_id])
 
     # DefensIA (T3-003 GDPR cascade): eliminamos explicitamente las 7 tablas
     # defensia_* aunque la migracion declara FK con ON DELETE CASCADE. Es
@@ -826,16 +875,31 @@ async def delete_user_account(
     # migraciones es la primera linea de defensa; estos deletes son la
     # segunda. Si alguno falla, se loggea warning y se continua.
     _defensia_deletes = [
-        ("defensia_rag_log", """DELETE FROM defensia_rag_log WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
-        ("defensia_escritos", """DELETE FROM defensia_escritos WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
-        ("defensia_dictamenes", """DELETE FROM defensia_dictamenes WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
-        ("defensia_briefs", """DELETE FROM defensia_briefs WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
-        ("defensia_documentos", """DELETE FROM defensia_documentos WHERE expediente_id IN
-           (SELECT id FROM defensia_expedientes WHERE user_id = ?)"""),
+        (
+            "defensia_rag_log",
+            """DELETE FROM defensia_rag_log WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        ),
+        (
+            "defensia_escritos",
+            """DELETE FROM defensia_escritos WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        ),
+        (
+            "defensia_dictamenes",
+            """DELETE FROM defensia_dictamenes WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        ),
+        (
+            "defensia_briefs",
+            """DELETE FROM defensia_briefs WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        ),
+        (
+            "defensia_documentos",
+            """DELETE FROM defensia_documentos WHERE expediente_id IN
+           (SELECT id FROM defensia_expedientes WHERE user_id = ?)""",
+        ),
         ("defensia_expedientes", "DELETE FROM defensia_expedientes WHERE user_id = ?"),
         ("defensia_cuotas_mensuales", "DELETE FROM defensia_cuotas_mensuales WHERE user_id = ?"),
     ]
@@ -847,20 +911,16 @@ async def delete_user_account(
         except Exception as exc:
             logger.warning(
                 "GDPR cascade: fallo DELETE %s para user %s: %s",
-                table_name, user_id, exc,
+                table_name,
+                user_id,
+                exc,
             )
 
     # Sessions
-    await db.execute(
-        "DELETE FROM sessions WHERE user_id = ?",
-        [user_id]
-    )
+    await db.execute("DELETE FROM sessions WHERE user_id = ?", [user_id])
 
     # Finally, the user
-    await db.execute(
-        "DELETE FROM users WHERE id = ?",
-        [user_id]
-    )
+    await db.execute("DELETE FROM users WHERE id = ?", [user_id])
 
     logger.info("Account deleted (GDPR Art.17) for user %s", user_id)
 
@@ -872,6 +932,6 @@ async def delete_user_account(
             "conversations": conversations_count,
             "messages": messages_count,
             "sessions": sessions_count,
-            "user_account": 1
-        }
+            "user_account": 1,
+        },
     )

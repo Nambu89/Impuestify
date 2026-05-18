@@ -4,6 +4,7 @@ Database migration: Add payslips table.
 Run with:
     python scripts/add_payslips_table.py
 """
+
 import asyncio
 import os
 import sys
@@ -13,6 +14,7 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from dotenv import load_dotenv
+
 project_root = backend_dir.parent
 load_dotenv(project_root / ".env")
 
@@ -21,10 +23,10 @@ from app.database.turso_client import TursoClient
 
 async def add_payslips_table():
     print("📝 Añadiendo tabla payslips...")
-    
+
     db = TursoClient()
     await db.connect()
-    
+
     try:
         # Create table
         await db.execute("""
@@ -68,32 +70,32 @@ async def add_payslips_table():
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         """)
-        
+
         print("✅ Tabla creada")
-        
+
         # Create indexes
         await db.execute("""
             CREATE INDEX IF NOT EXISTS idx_payslips_user 
             ON payslips(user_id, created_at DESC)
         """)
-        
+
         await db.execute("""
             CREATE INDEX IF NOT EXISTS idx_payslips_period 
             ON payslips(period_year, period_month)
         """)
-        
+
         await db.execute("""
             CREATE INDEX IF NOT EXISTS idx_payslips_status 
             ON payslips(extraction_status)
         """)
-        
+
         print("✅ Índices creados")
         print("\n✅ Migración completada!")
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         raise
-    
+
     finally:
         await db.disconnect()
 

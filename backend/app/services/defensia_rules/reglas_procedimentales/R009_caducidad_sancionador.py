@@ -38,6 +38,7 @@ Invariante #2 del plan Parte 2:
     juridico ("caducidad del procedimiento sancionador por exceso del
     plazo maximo legal de tramitacion").
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -88,9 +89,7 @@ def _parse_fecha(valor) -> Optional[datetime]:
     return None
 
 
-def _calcular_dias_exceso(
-    fecha_inicio: datetime, fecha_fin: datetime
-) -> int:
+def _calcular_dias_exceso(fecha_inicio: datetime, fecha_fin: datetime) -> int:
     """Devuelve dias transcurridos entre `fecha_fin` y el limite legal.
 
     El limite legal es ``fecha_inicio + relativedelta(months=6)``. Si la
@@ -142,9 +141,7 @@ def _buscar_documento_sancion(
         "a fecha"
     ),
 )
-def evaluar(
-    expediente: ExpedienteEstructurado, brief: Brief
-) -> Optional[ArgumentoCandidato]:
+def evaluar(expediente: ExpedienteEstructurado, brief: Brief) -> Optional[ArgumentoCandidato]:
     """Evalua R009 sobre el expediente y devuelve un candidato si dispara.
 
     Algoritmo:
@@ -200,7 +197,6 @@ def evaluar(
             "dias_exceso": dias_exceso,
         },
         impacto_estimado=(
-            "caducidad del procedimiento sancionador con imposibilidad "
-            "de reiniciarlo"
+            "caducidad del procedimiento sancionador con imposibilidad " "de reiniciarlo"
         ),
     )

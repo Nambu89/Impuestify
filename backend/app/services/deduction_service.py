@@ -3,6 +3,7 @@ Deduction Service for TaxIA.
 
 Provides CRUD operations and eligibility evaluation for IRPF deductions.
 """
+
 import json
 import logging
 from typing import Any, Dict, List, Optional
@@ -20,6 +21,7 @@ class DeductionService:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -210,7 +212,11 @@ class DeductionService:
             skip = False
             for req_key, req_value in reqs.items():
                 user_answer = answers.get(req_key)
-                if user_answer is not None and isinstance(req_value, bool) and bool(user_answer) != req_value:
+                if (
+                    user_answer is not None
+                    and isinstance(req_value, bool)
+                    and bool(user_answer) != req_value
+                ):
                     skip = True
                     break
             if skip:
@@ -221,13 +227,15 @@ class DeductionService:
                 qkey = q.get("key")
                 if qkey and qkey not in answers and qkey not in seen_keys:
                     seen_keys.add(qkey)
-                    missing_questions.append({
-                        "key": qkey,
-                        "text": q.get("text", ""),
-                        "type": q.get("type", "bool"),
-                        "deduction_code": d["code"],
-                        "deduction_name": d["name"],
-                    })
+                    missing_questions.append(
+                        {
+                            "key": qkey,
+                            "text": q.get("text", ""),
+                            "type": q.get("type", "bool"),
+                            "deduction_code": d["code"],
+                            "deduction_name": d["name"],
+                        }
+                    )
 
         return missing_questions
 
@@ -306,8 +314,9 @@ class DeductionService:
             answers["deducia_antes_2013"] = True  # conservative assumption
 
         # Planes de pensiones
-        if (profile.get("aportaciones_plan_pensiones", 0) or 0) > 0 or \
-           (profile.get("aportaciones_plan_pensiones_empresa", 0) or 0) > 0:
+        if (profile.get("aportaciones_plan_pensiones", 0) or 0) > 0 or (
+            profile.get("aportaciones_plan_pensiones_empresa", 0) or 0
+        ) > 0:
             answers["aportaciones_planes_pensiones"] = True
 
         # Donativo
@@ -323,8 +332,9 @@ class DeductionService:
         # Criptomonedas (casillas 1800-1814)
         if profile.get("tiene_criptomonedas"):
             answers["tiene_criptomonedas"] = True
-        if (profile.get("cripto_ganancia_neta", 0) or 0) > 0 or \
-           (profile.get("cripto_perdida_neta", 0) or 0) > 0:
+        if (profile.get("cripto_ganancia_neta", 0) or 0) > 0 or (
+            profile.get("cripto_perdida_neta", 0) or 0
+        ) > 0:
             answers["tiene_ganancias_cripto"] = True
 
         # Ganancias patrimoniales financieras
@@ -469,7 +479,13 @@ class DeductionService:
                             amount = alquiler * pct / 100
 
                 # Housing investment / purchase
-                elif "VIV-JOVEN" in code or "VIV-HABITUAL" in code or "ADQUISICION-VIV" in code or "COMPRA-VIV" in code or "VIV-RURAL" in code:
+                elif (
+                    "VIV-JOVEN" in code
+                    or "VIV-HABITUAL" in code
+                    or "ADQUISICION-VIV" in code
+                    or "COMPRA-VIV" in code
+                    or "VIV-RURAL" in code
+                ):
                     if inversion_viv > 0:
                         base = min(inversion_viv, max_amt) if max_amt > 0 else inversion_viv
                         amount = base * pct / 100
@@ -552,14 +568,16 @@ class DeductionService:
             if amount <= 0:
                 continue
 
-            results.append({
-                "code": code,
-                "name": name,
-                "amount": round(amount, 2),
-                "percentage": pct,
-                "max_amount": max_amt,
-                "fixed_amount": fixed,
-            })
+            results.append(
+                {
+                    "code": code,
+                    "name": name,
+                    "amount": round(amount, 2),
+                    "percentage": pct,
+                    "max_amount": max_amt,
+                    "fixed_amount": fixed,
+                }
+            )
 
         return results
 

@@ -11,6 +11,7 @@ Covers:
 - Reducciones especiales: vivienda habitual (Art. 20.2.c), empresa familiar
 - Todos los grupos de parentesco (I, II, III, IV)
 """
+
 import pytest
 from app.tools.isd_calculator_tool import (
     calculate_isd,
@@ -25,6 +26,7 @@ from app.tools.isd_calculator_tool import (
 # ---------------------------------------------------------------------------
 # Unit tests — internal helpers
 # ---------------------------------------------------------------------------
+
 
 class TestTarifaEstatal:
     """Verify the state tariff table (Art. 21 Ley 29/1987)."""
@@ -158,6 +160,7 @@ class TestNormalizeCCAA:
 # Integration tests — calculate_isd async function
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_donacion_madrid_padre_hijo():
     """
@@ -290,8 +293,9 @@ async def test_sucesion_cataluna_conjuge_200k():
     bonificaciones = result["bonificaciones_ccaa"]
     assert len(bonificaciones) >= 1
     # Should have a Cataluña bonificación for grupo_ii
-    assert any("Cataluña" in b["nombre"] or "catalun" in b["normativa"].lower()
-               for b in bonificaciones)
+    assert any(
+        "Cataluña" in b["nombre"] or "catalun" in b["normativa"].lower() for b in bonificaciones
+    )
     assert result["cuota_a_pagar"] < result["cuota_tributaria"]
 
 
@@ -332,9 +336,7 @@ async def test_herencia_valencia_hijo_150k():
     pcts = [b["porcentaje"] for b in result["bonificaciones_ccaa"]]
     assert 75.0 in pcts
     # Cuota a pagar = 25% of cuota tributaria
-    assert result["cuota_a_pagar"] == pytest.approx(
-        result["cuota_tributaria"] * 0.25, abs=1.0
-    )
+    assert result["cuota_a_pagar"] == pytest.approx(result["cuota_tributaria"] * 0.25, abs=1.0)
 
 
 @pytest.mark.asyncio
@@ -354,9 +356,7 @@ async def test_donacion_ceuta_100k():
     # (normativa estatal Art. 23 bis applies; tool can return empty bonificaciones_ccaa)
     # The test verifies the calculation completes and produces a valid result
     assert result["cuota_a_pagar"] >= 0.0
-    assert result["base_liquidable"] == pytest.approx(
-        max(0.0, 100_000 - 15_956.87), abs=1.0
-    )
+    assert result["base_liquidable"] == pytest.approx(max(0.0, 100_000 - 15_956.87), abs=1.0)
 
 
 @pytest.mark.asyncio
@@ -601,11 +601,17 @@ async def test_empresa_familiar():
     assert result["success"] is True
     nombres = [r["nombre"] for r in result["reducciones"]]
     assert any("empresa" in n.lower() or "negocio" in n.lower() for n in nombres)
-    empresa_red = next(r for r in result["reducciones"] if "empresa" in r["nombre"].lower() or "negocio" in r["nombre"].lower())
+    empresa_red = next(
+        r
+        for r in result["reducciones"]
+        if "empresa" in r["nombre"].lower() or "negocio" in r["nombre"].lower()
+    )
     assert empresa_red["importe"] == pytest.approx(500_000 * 0.95, abs=0.02)
     # Note about requirements should be present
-    assert any("empresa familiar" in nota.lower() or "requisitos" in nota.lower()
-               for nota in result["notas"])
+    assert any(
+        "empresa familiar" in nota.lower() or "requisitos" in nota.lower()
+        for nota in result["notas"]
+    )
 
 
 @pytest.mark.asyncio
@@ -667,8 +673,9 @@ async def test_base_imponible_cero_despues_de_reducciones():
     assert result["base_liquidable"] == 0.0
     assert result["cuota_integra"] == 0.0
     assert result["cuota_a_pagar"] == 0.0
-    assert any("cero" in nota.lower() or "base liquidable" in nota.lower()
-               for nota in result["notas"])
+    assert any(
+        "cero" in nota.lower() or "base liquidable" in nota.lower() for nota in result["notas"]
+    )
 
 
 @pytest.mark.asyncio
@@ -833,6 +840,4 @@ async def test_output_structure_completa():
         "normativa_aplicable",
         "formatted_response",
     }
-    assert expected_keys.issubset(result.keys()), (
-        f"Missing keys: {expected_keys - result.keys()}"
-    )
+    assert expected_keys.issubset(result.keys()), f"Missing keys: {expected_keys - result.keys()}"

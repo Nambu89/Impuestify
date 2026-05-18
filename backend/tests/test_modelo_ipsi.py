@@ -3,6 +3,7 @@ Tests for IPSI Calculator (Ceuta/Melilla).
 
 Tests the ModeloIpsiCalculator and calculate_modelo_ipsi_tool.
 """
+
 import pytest
 
 from app.utils.calculators.modelo_ipsi import (
@@ -146,9 +147,7 @@ class TestIpsiCalculatorMultiRate:
     @pytest.mark.asyncio
     async def test_desglose_devengado_structure(self, calculator):
         """Verify desglose has all 6 rate entries plus extras."""
-        result = await calculator.calculate(
-            territorio="Ceuta", base_4=1000, quarter=1
-        )
+        result = await calculator.calculate(territorio="Ceuta", base_4=1000, quarter=1)
         desglose = result["desglose_devengado"]
         assert "tipo_minimo_0_5" in desglose
         assert "tipo_reducido_1" in desglose
@@ -300,9 +299,7 @@ class TestIpsiCalculatorDeducible:
     @pytest.mark.asyncio
     async def test_desglose_deducible_structure(self, calculator):
         """Verify desglose deducible has all fields."""
-        result = await calculator.calculate(
-            territorio="Melilla", base_4=1000, quarter=1
-        )
+        result = await calculator.calculate(territorio="Melilla", base_4=1000, quarter=1)
         desglose = result["desglose_deducible"]
         expected_keys = [
             "cuota_corrientes_interiores",
@@ -335,12 +332,8 @@ class TestIpsiCalculatorMetadata:
     @pytest.mark.asyncio
     async def test_ceuta_vs_melilla_same_calculation(self, calculator):
         """Same inputs should give same results regardless of territory."""
-        result_ceuta = await calculator.calculate(
-            territorio="Ceuta", base_4=10000, quarter=1
-        )
-        result_melilla = await calculator.calculate(
-            territorio="Melilla", base_4=10000, quarter=1
-        )
+        result_ceuta = await calculator.calculate(territorio="Ceuta", base_4=10000, quarter=1)
+        result_melilla = await calculator.calculate(territorio="Melilla", base_4=10000, quarter=1)
         assert result_ceuta["total_devengado"] == result_melilla["total_devengado"]
         assert result_ceuta["resultado_liquidacion"] == result_melilla["resultado_liquidacion"]
         assert result_ceuta["territorio"] == "Ceuta"
@@ -450,11 +443,13 @@ class TestIpsiToolDefinition:
 
     def test_tool_in_all_tools(self):
         from app.tools import ALL_TOOLS
+
         names = [t["function"]["name"] for t in ALL_TOOLS]
         assert "calculate_modelo_ipsi" in names
 
     def test_tool_in_executors(self):
         from app.tools import TOOL_EXECUTORS
+
         assert "calculate_modelo_ipsi" in TOOL_EXECUTORS
 
 
@@ -467,9 +462,7 @@ class TestIpsiBug97AuditFixes:
     # 1. regularizacion_prorrata solo Q4
     @pytest.mark.asyncio
     @pytest.mark.parametrize("trimestre", [1, 2, 3])
-    async def test_regularizacion_prorrata_raises_outside_q4(
-        self, calculator, trimestre
-    ):
+    async def test_regularizacion_prorrata_raises_outside_q4(self, calculator, trimestre):
         """En Q1/Q2/Q3, aplicar regularizacion_prorrata debe lanzar ValueError."""
         with pytest.raises(ValueError, match="regularizacion_prorrata"):
             await calculator.calculate(

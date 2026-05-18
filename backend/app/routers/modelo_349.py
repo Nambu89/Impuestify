@@ -7,6 +7,7 @@ POST /api/modelo-349/calculate
   - Rate limit: 60/min por IP.
   - Wrapper directo de `calculate_modelo_349_tool`.
 """
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -33,7 +34,9 @@ class Operacion349Input(BaseModel):
 
 class Modelo349Request(BaseModel):
     operaciones: List[Operacion349Input] = Field(..., min_length=1)
-    periodo: str = Field(default="1T", description="'01'..'12' mensual, '1T'..'4T' trimestral, 'anual'")
+    periodo: str = Field(
+        default="1T", description="'01'..'12' mensual, '1T'..'4T' trimestral, 'anual'"
+    )
     year: Optional[int] = Field(None, description="Ejercicio fiscal")
     ccaa: Optional[str] = Field(None, description="CCAA del declarante")
     importes_4_trimestres_anteriores: Optional[List[float]] = Field(None)
@@ -82,14 +85,19 @@ async def calculate_modelo_349_endpoint(
         )
 
         if not result.get("success"):
-            raise HTTPException(status_code=400, detail=result.get("error") or result.get("formatted_response"))
+            raise HTTPException(
+                status_code=400, detail=result.get("error") or result.get("formatted_response")
+            )
 
         logger.info(
             "Modelo 349 endpoint: periodo=%s, year=%s, operadores=%s",
-            body.periodo, body.year, result.get("operadores_unicos", 0),
+            body.periodo,
+            body.year,
+            result.get("operadores_unicos", 0),
         )
 
         import datetime as _dt
+
         year_used = body.year or _dt.datetime.now().year
 
         return Modelo349Response(

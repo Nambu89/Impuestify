@@ -22,8 +22,7 @@ except ImportError:  # pragma: no cover
 def _require_openpyxl() -> None:
     if not _HAS_OPENPYXL:
         raise ImportError(
-            "openpyxl is required for Excel exports. "
-            "Install it with: pip install openpyxl"
+            "openpyxl is required for Excel exports. " "Install it with: pip install openpyxl"
         )
 
 
@@ -32,39 +31,80 @@ def _require_openpyxl() -> None:
 # ---------------------------------------------------------------------------
 
 _DIARIO_HEADERS = [
-    "Fecha", "N Asiento", "Cuenta", "Nombre Cuenta",
-    "Debe", "Haber", "Concepto",
+    "Fecha",
+    "N Asiento",
+    "Cuenta",
+    "Nombre Cuenta",
+    "Debe",
+    "Haber",
+    "Concepto",
 ]
 
 _MAYOR_HEADERS = [
-    "Cuenta", "Nombre", "Total Debe", "Total Haber", "Saldo",
+    "Cuenta",
+    "Nombre",
+    "Total Debe",
+    "Total Haber",
+    "Saldo",
 ]
 
 _REGISTRO_HEADERS = [
-    "Fecha", "N Factura", "Tipo", "NIF Emisor", "Emisor",
-    "NIF Receptor", "Receptor", "Base Imponible", "Tipo IVA %",
-    "Cuota IVA", "Retencion IRPF", "Total", "Cuenta PGC", "Descripcion",
+    "Fecha",
+    "N Factura",
+    "Tipo",
+    "NIF Emisor",
+    "Emisor",
+    "NIF Receptor",
+    "Receptor",
+    "Base Imponible",
+    "Tipo IVA %",
+    "Cuota IVA",
+    "Retencion IRPF",
+    "Total",
+    "Cuenta PGC",
+    "Descripcion",
 ]
 
 _DIARIO_KEYS = [
-    "fecha", "num_asiento", "cuenta", "nombre_cuenta",
-    "debe", "haber", "concepto",
+    "fecha",
+    "num_asiento",
+    "cuenta",
+    "nombre_cuenta",
+    "debe",
+    "haber",
+    "concepto",
 ]
 
 _MAYOR_KEYS = [
-    "cuenta", "nombre", "total_debe", "total_haber", "saldo",
+    "cuenta",
+    "nombre",
+    "total_debe",
+    "total_haber",
+    "saldo",
 ]
 
 _REGISTRO_KEYS = [
-    "fecha_factura", "numero_factura", "tipo", "emisor_nif", "emisor_nombre",
-    "receptor_nif", "receptor_nombre", "base_imponible", "tipo_iva",
-    "cuota_iva", "retencion_irpf", "total", "cuenta_pgc", "concepto",
+    "fecha_factura",
+    "numero_factura",
+    "tipo",
+    "emisor_nif",
+    "emisor_nombre",
+    "receptor_nif",
+    "receptor_nombre",
+    "base_imponible",
+    "tipo_iva",
+    "cuota_iva",
+    "retencion_irpf",
+    "total",
+    "cuenta_pgc",
+    "concepto",
 ]
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _dicts_to_csv(
     rows: list[dict[str, Any]],
@@ -116,6 +156,7 @@ def _dicts_to_excel(
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 class ContabilidadExportService:
     """Static methods to export accounting data to CSV / Excel."""
@@ -170,15 +211,19 @@ class ContabilidadExportService:
 
         bold = Font(bold=True)
         bold_big = Font(bold=True, size=14)
-        currency_fmt = '#,##0.00 €'
+        currency_fmt = "#,##0.00 €"
         fill_header = PatternFill(
-            start_color="D9E1F2", end_color="D9E1F2", fill_type="solid",
+            start_color="D9E1F2",
+            end_color="D9E1F2",
+            fill_type="solid",
         )
 
         row = 1
 
         # Title
-        ws.cell(row=row, column=1, value=f"Cuenta de Perdidas y Ganancias {pyg.get('year', '')}").font = bold_big
+        ws.cell(
+            row=row, column=1, value=f"Cuenta de Perdidas y Ganancias {pyg.get('year', '')}"
+        ).font = bold_big
         row += 2  # blank row
 
         # --- INGRESOS ---

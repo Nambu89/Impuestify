@@ -1,6 +1,7 @@
 """
 Debug script to verify tool registration.
 """
+
 import sys
 from pathlib import Path
 
@@ -16,8 +17,8 @@ print("=" * 60)
 print(f"\n📋 Total de tools registradas: {len(ALL_TOOLS)}")
 print("\n🔧 Tools disponibles:")
 for i, tool in enumerate(ALL_TOOLS, 1):
-    tool_name = tool['function']['name']
-    tool_desc = tool['function']['description']
+    tool_name = tool["function"]["name"]
+    tool_desc = tool["function"]["description"]
     print(f"\n{i}. {tool_name}")
     print(f"   Descripción: {tool_desc[:100]}...")
 

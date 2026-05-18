@@ -4,6 +4,7 @@ Lightweight cost tracking service for Impuestify.
 Tracks token usage and estimated costs per user/endpoint in the usage_metrics table.
 Replaces Prometheus with simple DB-based tracking for admin dashboard.
 """
+
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -34,6 +35,7 @@ class CostTracker:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -68,18 +70,24 @@ class CostTracker:
                     model, input_tokens, output_tokens, cost_usd, created_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 [
-                    str(uuid.uuid4()), user_id, endpoint, total_tokens,
-                    processing_time, int(cached), model, input_tokens,
-                    output_tokens, cost_usd, datetime.now(timezone.utc).isoformat(),
+                    str(uuid.uuid4()),
+                    user_id,
+                    endpoint,
+                    total_tokens,
+                    processing_time,
+                    int(cached),
+                    model,
+                    input_tokens,
+                    output_tokens,
+                    cost_usd,
+                    datetime.now(timezone.utc).isoformat(),
                 ],
             )
         except Exception as e:
             # Never let cost tracking break the main request flow
             logger.error("CostTracker.track failed: %s", e)
 
-    async def get_user_summary(
-        self, user_id: str, period: str = "month"
-    ) -> Dict[str, Any]:
+    async def get_user_summary(self, user_id: str, period: str = "month") -> Dict[str, Any]:
         """Get usage summary for a specific user."""
         db = await self._get_db()
         since = self._period_start(period)
@@ -126,9 +134,7 @@ class CostTracker:
             "by_model": by_model,
         }
 
-    async def get_global_summary(
-        self, period: str = "month"
-    ) -> Dict[str, Any]:
+    async def get_global_summary(self, period: str = "month") -> Dict[str, Any]:
         """Get global usage summary for admin dashboard."""
         db = await self._get_db()
         since = self._period_start(period)

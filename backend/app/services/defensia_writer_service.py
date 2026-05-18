@@ -15,6 +15,7 @@ Referencias:
 - backend/app/templates/defensia/*.j2 (9 plantillas, T2B-005)
 - backend/app/services/defensia_export_service.py (consumidor, T2B-007/008)
 """
+
 from __future__ import annotations
 
 import logging
@@ -81,9 +82,7 @@ class DefensiaWriterService:
         if templates_dir is None:
             templates_dir = Path(__file__).parent.parent / "templates" / "defensia"
         if not templates_dir.exists():
-            raise RuntimeError(
-                f"DefensIA templates dir no encontrado: {templates_dir}"
-            )
+            raise RuntimeError(f"DefensIA templates dir no encontrado: {templates_dir}")
 
         # autoescape=False: el output es markdown legal, los inputs provienen
         # del RAG verifier (trusted pipeline) y no se renderiza HTML. Escapar
@@ -135,9 +134,7 @@ class DefensiaWriterService:
             return plantilla
 
         # Fallback genérico para fases fuera de alcance o indeterminadas.
-        logger.info(
-            "DefensIA writer fallback genérico para fase '%s'", fase_valor
-        )
+        logger.info("DefensIA writer fallback genérico para fase '%s'", fase_valor)
         return "escrito_generico.j2"
 
     # ------------------------------------------------------------------
@@ -160,9 +157,7 @@ class DefensiaWriterService:
         `_render` la generación del contenido. El resultado se pasa después
         a `DefensiaExportService` para conversión a DOCX/PDF.
         """
-        plantilla_nombre = self.seleccionar_plantilla(
-            expediente, cuota_estimada_eur
-        )
+        plantilla_nombre = self.seleccionar_plantilla(expediente, cuota_estimada_eur)
         return self._render(
             plantilla_nombre,
             expediente,

@@ -1,6 +1,7 @@
 """
 Tests for PDF Text Extractor using PyMuPDF4LLM
 """
+
 import pytest
 import asyncio
 from pathlib import Path
@@ -8,36 +9,32 @@ from pathlib import Path
 
 class TestPDFExtractor:
     """Tests for PDF text extraction"""
-    
+
     @pytest.mark.asyncio
     async def test_pdf_extractor_initialization(self):
         """Test that PDF extractor initializes correctly"""
         from app.utils.pdf_extractor import PDFTextExtractor, PYMUPDF4LLM_AVAILABLE
-        
+
         if not PYMUPDF4LLM_AVAILABLE:
             pytest.skip("pymupdf4llm not installed")
-        
-        extractor = PDFTextExtractor(
-            extract_images=False,
-            page_chunks=True,
-            dpi=150
-        )
-        
+
+        extractor = PDFTextExtractor(extract_images=False, page_chunks=True, dpi=150)
+
         assert extractor is not None
         assert extractor.extract_images == False
         assert extractor.page_chunks == True
         assert extractor.dpi == 150
-        
+
         print("\n[PASS] PDF Extractor: Initialized successfully")
-    
+
     @pytest.mark.asyncio
     async def test_pdf_extraction_simple(self):
         """Test extraction from a simple PDF"""
         from app.utils.pdf_extractor import get_pdf_extractor, PYMUPDF4LLM_AVAILABLE
-        
+
         if not PYMUPDF4LLM_AVAILABLE:
             pytest.skip("pymupdf4llm not installed")
-        
+
         # Create a minimal PDF for testing
         # This is a simple PDF with "Hello World"
         minimal_pdf = b"""%PDF-1.4
@@ -98,42 +95,49 @@ trailer
 startxref
 410
 %%EOF"""
-        
+
         extractor = get_pdf_extractor()
         result = await extractor.extract_from_bytes(minimal_pdf, "test.pdf")
-        
+
         assert result.success, f"Extraction failed: {result.error}"
         assert result.total_pages >= 1
         assert len(result.markdown_text) > 0
-        
-        print(f"\n[PASS] PDF Extractor: Extracted {result.total_chars} chars from {result.total_pages} pages")
-    
+
+        print(
+            f"\n[PASS] PDF Extractor: Extracted {result.total_chars} chars from {result.total_pages} pages"
+        )
+
     def test_pdf_extractor_summary(self):
         """Test summary generation"""
-        from app.utils.pdf_extractor import PDFTextExtractor, PDFExtractionResult, PDFPage, PYMUPDF4LLM_AVAILABLE
-        
+        from app.utils.pdf_extractor import (
+            PDFTextExtractor,
+            PDFExtractionResult,
+            PDFPage,
+            PYMUPDF4LLM_AVAILABLE,
+        )
+
         if not PYMUPDF4LLM_AVAILABLE:
             pytest.skip("pymupdf4llm not installed")
-        
+
         extractor = PDFTextExtractor()
-        
+
         # Create mock result
         result = PDFExtractionResult(
             success=True,
             pages=[
                 PDFPage(page_number=1, text="Page 1 content", metadata={}),
-                PDFPage(page_number=2, text="Page 2 content", metadata={})
+                PDFPage(page_number=2, text="Page 2 content", metadata={}),
             ],
             total_pages=2,
             total_chars=30,
-            markdown_text="# Test\n\nPage 1 content\n\nPage 2 content"
+            markdown_text="# Test\n\nPage 1 content\n\nPage 2 content",
         )
-        
+
         summary = extractor.get_summary(result)
-        
+
         assert "2 pages" in summary
         assert "30 characters" in summary
-        
+
         print(f"\n[PASS] PDF Extractor: Summary generation works")
 
 

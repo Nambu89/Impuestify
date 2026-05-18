@@ -123,8 +123,7 @@ def validate_iva_math(f: FacturaExtraida) -> list[str]:
     expected_iva = f.base_imponible_total * f.tipo_iva_pct / 100.0
     if abs(f.cuota_iva - expected_iva) > tolerance:
         errors.append(
-            f"Cuota IVA incorrecta: esperado {expected_iva:.2f}, "
-            f"encontrado {f.cuota_iva:.2f}"
+            f"Cuota IVA incorrecta: esperado {expected_iva:.2f}, " f"encontrado {f.cuota_iva:.2f}"
         )
 
     # Check total == base + iva + re - irpf
@@ -136,8 +135,7 @@ def validate_iva_math(f: FacturaExtraida) -> list[str]:
 
     if abs(f.total - expected_total) > tolerance:
         errors.append(
-            f"Total incorrecto: esperado {expected_total:.2f}, "
-            f"encontrado {f.total:.2f}"
+            f"Total incorrecto: esperado {expected_total:.2f}, " f"encontrado {f.total:.2f}"
         )
 
     return errors
@@ -187,8 +185,7 @@ class InvoiceOCRService:
     def __init__(self, api_key: str, model: str = "gemini-3-flash-preview"):
         if not GENAI_AVAILABLE:
             raise RuntimeError(
-                "google-genai no esta instalado. "
-                "Ejecuta: pip install google-genai"
+                "google-genai no esta instalado. " "Ejecuta: pip install google-genai"
             )
         self.model = model
         self.client = genai.Client(api_key=api_key)
@@ -239,9 +236,7 @@ class InvoiceOCRService:
         all_errors = math_errors + magnitude_warnings
 
         # Determine confidence
-        confianza = self._compute_confidence(
-            nif_emisor_ok, nif_receptor_ok, all_errors
-        )
+        confianza = self._compute_confidence(nif_emisor_ok, nif_receptor_ok, all_errors)
 
         # Force "baja" if magnitude warnings exist
         if magnitude_warnings and confianza != "baja":

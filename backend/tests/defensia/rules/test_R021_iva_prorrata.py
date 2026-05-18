@@ -29,6 +29,7 @@ Invariante #2 (anti-alucinacion): la regla devuelve una cita semantica libre.
 La cita canonica ("Art. 102 LIVA", "art. 106 LIVA") la resuelve el
 ``defensia_rag_verifier`` contra el corpus normativo, nunca este modulo.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -55,6 +56,7 @@ from app.services.defensia_rules_engine import evaluar, reset_registry
 # el decorador `@regla`, hay que forzar un reload para re-registrar R021 en
 # el REGISTRY recien limpiado.
 
+
 def _cargar_solo_R021() -> None:
     """Limpia el REGISTRY y re-registra exclusivamente la regla R021."""
     reset_registry()
@@ -76,26 +78,22 @@ def _recargar_R021():
 # Helpers locales
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica."""
-    assert "Art. 102" not in cita, (
-        f"Cita hardcoded detectada: 'Art. 102' en '{cita}'."
-    )
-    assert "art. 106 liva" not in cita.lower(), (
-        f"Cita hardcoded detectada: 'art. 106 liva' en '{cita}'."
-    )
-    assert "102 LIVA" not in cita.upper(), (
-        f"Cita hardcoded detectada: '102 LIVA' en '{cita}'."
-    )
+    assert "Art. 102" not in cita, f"Cita hardcoded detectada: 'Art. 102' en '{cita}'."
+    assert (
+        "art. 106 liva" not in cita.lower()
+    ), f"Cita hardcoded detectada: 'art. 106 liva' en '{cita}'."
+    assert "102 LIVA" not in cita.upper(), f"Cita hardcoded detectada: '102 LIVA' en '{cita}'."
 
 
 # ---------------------------------------------------------------------------
 # Test 1 — Positivo: especial obligatoria no aplicada (diff 20 % > 10 %)
 # ---------------------------------------------------------------------------
 
-def test_R021_positivo_especial_obligatoria_no_aplicada(
-    build_exp, build_brief, build_doc
-):
+
+def test_R021_positivo_especial_obligatoria_no_aplicada(build_exp, build_brief, build_doc):
     """Deduccion general 100.000 vs especial 80.000 — diff 25 % > 10 %.
 
     La AEAT ha aplicado la prorrata general cuando la deduccion resultante
@@ -127,9 +125,9 @@ def test_R021_positivo_especial_obligatoria_no_aplicada(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R021"
@@ -145,9 +143,8 @@ def test_R021_positivo_especial_obligatoria_no_aplicada(
 # Test 2 — Positivo: opcion especial denegada sin analizar obligatoriedad
 # ---------------------------------------------------------------------------
 
-def test_R021_positivo_opcion_especial_denegada_sin_analisis(
-    build_exp, build_brief, build_doc
-):
+
+def test_R021_positivo_opcion_especial_denegada_sin_analisis(build_exp, build_brief, build_doc):
     """AEAT deniega la opcion por prorrata especial sin analisis de obligatoriedad.
 
     El sujeto pasivo solicito la aplicacion de la prorrata especial, la AEAT
@@ -173,15 +170,12 @@ def test_R021_positivo_opcion_especial_denegada_sin_analisis(
         docs=[propuesta],
     )
     brief = build_brief(
-        "Pedi acogerme a la prorrata especial y me la denegaron sin mas "
-        "explicaciones."
+        "Pedi acogerme a la prorrata especial y me la denegaron sin mas " "explicaciones."
     )
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
-    )
+    assert len(candidatos) == 1, f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R021"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
@@ -196,9 +190,8 @@ def test_R021_positivo_opcion_especial_denegada_sin_analisis(
 # Test 3 — Negativo: general correctamente aplicada (diff 5 % < 10 %)
 # ---------------------------------------------------------------------------
 
-def test_R021_negativo_general_correcta_diferencia_bajo_umbral(
-    build_exp, build_brief, build_doc
-):
+
+def test_R021_negativo_general_correcta_diferencia_bajo_umbral(build_exp, build_brief, build_doc):
     """Deduccion general 100.000 vs especial 95.000 — diff 5 % < 10 %.
 
     La diferencia entre prorrata general y especial es inferior al umbral
@@ -236,9 +229,8 @@ def test_R021_negativo_general_correcta_diferencia_bajo_umbral(
 # Test 4 — Negativo: especial ya aplicada (no hay conflicto)
 # ---------------------------------------------------------------------------
 
-def test_R021_negativo_especial_ya_aplicada(
-    build_exp, build_brief, build_doc
-):
+
+def test_R021_negativo_especial_ya_aplicada(build_exp, build_brief, build_doc):
     """La prorrata especial ya esta aplicada: no hay controversia.
 
     Si la AEAT ha aplicado directamente la prorrata especial, no existe
@@ -267,8 +259,7 @@ def test_R021_negativo_especial_ya_aplicada(
     candidatos = evaluar(exp, brief)
 
     assert candidatos == [], (
-        f"R021 NO deberia disparar cuando la especial ya esta aplicada, "
-        f"got: {candidatos}"
+        f"R021 NO deberia disparar cuando la especial ya esta aplicada, " f"got: {candidatos}"
     )
 
 
@@ -276,9 +267,8 @@ def test_R021_negativo_especial_ya_aplicada(
 # Test 5 — Negativo: tributo distinto de IVA
 # ---------------------------------------------------------------------------
 
-def test_R021_negativo_tributo_no_es_iva(
-    build_exp, build_brief, build_doc
-):
+
+def test_R021_negativo_tributo_no_es_iva(build_exp, build_brief, build_doc):
     """Expediente IRPF: la regla R021 solo aplica a IVA.
 
     El motor filtra por tributo antes de invocar la regla, de modo que un
@@ -306,18 +296,17 @@ def test_R021_negativo_tributo_no_es_iva(
 
     candidatos = evaluar(exp, brief)
 
-    assert candidatos == [], (
-        f"R021 NO deberia disparar cuando el tributo no es IVA, got: {candidatos}"
-    )
+    assert (
+        candidatos == []
+    ), f"R021 NO deberia disparar cuando el tributo no es IVA, got: {candidatos}"
 
 
 # ---------------------------------------------------------------------------
 # Test 6 — Anti-hardcode: asercion explicita sobre la cita semantica
 # ---------------------------------------------------------------------------
 
-def test_R021_cita_es_semantica_no_hardcoded(
-    build_exp, build_brief, build_doc
-):
+
+def test_R021_cita_es_semantica_no_hardcoded(build_exp, build_brief, build_doc):
     """Invariante #2: la cita normativa NO puede contener el articulo canonico."""
     liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -349,8 +338,4 @@ def test_R021_cita_es_semantica_no_hardcoded(
         "Art. 102" not in cita
         and "art. 106 liva" not in cita.lower()
         and "102 LIVA" not in cita.upper()
-    ), (
-        f"La cita normativa debe ser semantica, got: {cita!r}"
-    )
-
-
+    ), f"La cita normativa debe ser semantica, got: {cita!r}"

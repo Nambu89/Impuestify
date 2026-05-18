@@ -1,6 +1,7 @@
 """
 Simple script to run extract_pdfs_v2.py on data/lgt/ folder specifically.
 """
+
 import subprocess
 import sys
 from pathlib import Path

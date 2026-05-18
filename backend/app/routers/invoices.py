@@ -51,6 +51,7 @@ ALLOWED_PLANS = {"autonomo", "creator"}
 # Request / Response models
 # ---------------------------------------------------------------------------
 
+
 class ReclassifyRequest(BaseModel):
     cuenta_pgc: str
     cuenta_pgc_nombre: str
@@ -59,6 +60,7 @@ class ReclassifyRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _parse_trimestre(month: int) -> int:
     """Return trimestre 1-4 from month 1-12."""
@@ -77,11 +79,11 @@ def _validate_file(file_bytes: bytes, content_type: str | None) -> str:
         raise HTTPException(
             status_code=400,
             detail=f"Tipo de archivo no soportado: {content_type}. "
-                   f"Se aceptan: {', '.join(ALLOWED_MIME_TYPES.keys())}",
+            f"Se aceptan: {', '.join(ALLOWED_MIME_TYPES.keys())}",
         )
 
     expected_magic = ALLOWED_MIME_TYPES[content_type]
-    if not file_bytes[:len(expected_magic)] == expected_magic:
+    if not file_bytes[: len(expected_magic)] == expected_magic:
         raise HTTPException(
             status_code=400,
             detail="El contenido del archivo no coincide con el tipo declarado.",
@@ -94,6 +96,7 @@ def _validate_file(file_bytes: bytes, content_type: str | None) -> str:
 # POST /upload
 # ---------------------------------------------------------------------------
 
+
 async def _resolve_workspace_id(db, user_id: str, requested: Optional[str]) -> Optional[str]:
     """Validate workspace ownership or fallback to user's default workspace. Returns None if user has no workspaces."""
     if requested:
@@ -103,7 +106,9 @@ async def _resolve_workspace_id(db, user_id: str, requested: Optional[str]) -> O
         )
         if result.rows:
             return requested
-        logger.warning(f"User {user_id} requested workspace {requested} not owned; falling back to default")
+        logger.warning(
+            f"User {user_id} requested workspace {requested} not owned; falling back to default"
+        )
 
     result = await db.execute(
         "SELECT id FROM workspaces WHERE user_id = ? AND is_default = 1 LIMIT 1",
@@ -131,7 +136,9 @@ async def _process_single_invoice(
     if not settings.GOOGLE_GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="Servicio OCR no configurado.")
 
-    ocr_service = InvoiceOCRService(api_key=settings.GOOGLE_GEMINI_API_KEY, model=settings.GEMINI_MODEL)
+    ocr_service = InvoiceOCRService(
+        api_key=settings.GOOGLE_GEMINI_API_KEY, model=settings.GEMINI_MODEL
+    )
     try:
         extraction = await ocr_service.extract_from_bytes(file_bytes, mime_type)
     except Exception as exc:
@@ -145,7 +152,9 @@ async def _process_single_invoice(
         db=db,
         model=settings.GEMINI_MODEL,
     )
-    concepto = ", ".join(l.concepto for l in factura.lineas) if factura.lineas else factura.numero_factura
+    concepto = (
+        ", ".join(l.concepto for l in factura.lineas) if factura.lineas else factura.numero_factura
+    )
     try:
         clasificacion = await classifier.classify(
             concepto=concepto,
@@ -185,16 +194,31 @@ async def _process_single_invoice(
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
-            invoice_id, user_id, factura.tipo, factura.numero_factura,
-            factura.fecha_factura, factura.fecha_operacion,
-            factura.emisor.nif_cif, factura.emisor.nombre,
-            factura.receptor.nif_cif, factura.receptor.nombre,
-            factura.base_imponible_total, factura.tipo_iva_pct, factura.cuota_iva,
-            factura.tipo_re_pct, factura.cuota_re,
-            factura.retencion_irpf_pct, factura.retencion_irpf,
-            factura.total, clasificacion.cuenta_code, clasificacion.cuenta_nombre,
-            clasificacion.confianza, raw_extraction_json,
-            year, trimestre, now_iso,
+            invoice_id,
+            user_id,
+            factura.tipo,
+            factura.numero_factura,
+            factura.fecha_factura,
+            factura.fecha_operacion,
+            factura.emisor.nif_cif,
+            factura.emisor.nombre,
+            factura.receptor.nif_cif,
+            factura.receptor.nombre,
+            factura.base_imponible_total,
+            factura.tipo_iva_pct,
+            factura.cuota_iva,
+            factura.tipo_re_pct,
+            factura.cuota_re,
+            factura.retencion_irpf_pct,
+            factura.retencion_irpf,
+            factura.total,
+            clasificacion.cuenta_code,
+            clasificacion.cuenta_nombre,
+            clasificacion.confianza,
+            raw_extraction_json,
+            year,
+            trimestre,
+            now_iso,
         ],
     )
 
@@ -210,8 +234,14 @@ async def _process_single_invoice(
                 VALUES (?, ?, ?, 'factura', ?, ?, ?, ?, 'completed', ?)
                 """,
                 [
-                    workspace_file_id, workspace_id, filename, mime_type,
-                    len(file_bytes), concepto, raw_extraction_json, now_iso,
+                    workspace_file_id,
+                    workspace_id,
+                    filename,
+                    mime_type,
+                    len(file_bytes),
+                    concepto,
+                    raw_extraction_json,
+                    now_iso,
                 ],
             )
         except Exception as exc:
@@ -348,7 +378,13 @@ async def upload_invoices_batch(
             error_count += 1
         except Exception as exc:
             logger.error(f"Unexpected error processing {filename}", exc_info=exc)
-            results.append({"filename": filename, "success": False, "error": "Error inesperado procesando la factura."})
+            results.append(
+                {
+                    "filename": filename,
+                    "success": False,
+                    "error": "Error inesperado procesando la factura.",
+                }
+            )
             error_count += 1
 
     return {
@@ -363,6 +399,7 @@ async def upload_invoices_batch(
 # ---------------------------------------------------------------------------
 # GET / — List invoices
 # ---------------------------------------------------------------------------
+
 
 @router.get("")
 async def list_invoices(
@@ -398,6 +435,7 @@ async def list_invoices(
 # ---------------------------------------------------------------------------
 # GET /{invoice_id} — Invoice detail + asiento
 # ---------------------------------------------------------------------------
+
 
 @router.get("/{invoice_id}")
 async def get_invoice(
@@ -436,6 +474,7 @@ async def get_invoice(
 # ---------------------------------------------------------------------------
 # PUT /{invoice_id}/reclassify — Manual reclassification
 # ---------------------------------------------------------------------------
+
 
 @router.put("/{invoice_id}/reclassify")
 async def reclassify_invoice(
@@ -512,6 +551,7 @@ async def reclassify_invoice(
 # ---------------------------------------------------------------------------
 # DELETE /{invoice_id} — Delete invoice + asientos (GDPR cascade)
 # ---------------------------------------------------------------------------
+
 
 @router.delete("/{invoice_id}")
 async def delete_invoice(

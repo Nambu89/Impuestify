@@ -4,6 +4,7 @@ Turso Database Client for TaxIA
 Uses the new libsql SDK (June 2025) for connecting to Turso.
 Replaces deprecated libsql-client package.
 """
+
 import os
 import re
 import logging
@@ -21,6 +22,7 @@ _ALTER_ADD_COL_RE = re.compile(
 # New Turso SDK (libsql)
 try:
     import libsql
+
     LIBSQL_AVAILABLE = True
 except ImportError:
     LIBSQL_AVAILABLE = False
@@ -32,17 +34,17 @@ logger = logging.getLogger(__name__)
 class TursoClient:
     """
     Client for interacting with Turso database.
-    
+
     Turso is a SQLite-compatible edge database that provides
     low-latency access from anywhere.
-    
+
     Now uses the official libsql SDK (June 2025+).
     """
-    
+
     def __init__(self, url: Optional[str] = None, auth_token: Optional[str] = None):
         """
         Initialize Turso client.
-        
+
         Args:
             url: Turso database URL (libsql://...)
             auth_token: Authentication token
@@ -50,57 +52,54 @@ class TursoClient:
         self.url = url or os.environ.get("TURSO_DATABASE_URL")
         self.auth_token = auth_token or os.environ.get("TURSO_AUTH_TOKEN")
         self._conn = None
-        
+
         if not self.url:
             logger.warning("TURSO_DATABASE_URL not configured")
-        
+
         if not LIBSQL_AVAILABLE:
             logger.warning("libsql package not installed. Run: pip install libsql")
-    
+
     async def connect(self):
         """Establish connection to Turso database."""
         if not LIBSQL_AVAILABLE:
             raise RuntimeError("libsql package is not installed")
-        
+
         if not self.url:
             raise ValueError("TURSO_DATABASE_URL is required")
-        
+
         try:
             # New libsql SDK API
-            self._conn = libsql.connect(
-                self.url,
-                auth_token=self.auth_token
-            )
-            
+            self._conn = libsql.connect(self.url, auth_token=self.auth_token)
+
             # Enable foreign key constraints (disabled by default in SQLite/libSQL)
             self._conn.execute("PRAGMA foreign_keys = ON")
-            
+
             logger.info("Connected to Turso database (foreign keys enabled)")
         except Exception as e:
             logger.error(f"Failed to connect to Turso: {e}")
             raise
-    
+
     async def disconnect(self):
         """Close database connection."""
         if self._conn:
             self._conn.close()
             self._conn = None
             logger.info("Disconnected from Turso database")
-    
+
     async def execute(self, sql: str, params: Optional[List[Any]] = None) -> Any:
         """
         Execute a SQL query.
-        
+
         Args:
             sql: SQL query string
             params: Query parameters (for parameterized queries)
-            
+
         Returns:
             Query result with rows attribute
         """
         if not self._conn:
             await self.connect()
-        
+
         max_retries = 2
         for attempt in range(max_retries + 1):
             try:
@@ -108,16 +107,20 @@ class TursoClient:
                     result = self._conn.execute(sql, params)
                 else:
                     result = self._conn.execute(sql)
-                
+
                 # Auto-commit for write operations
-                if sql.strip().upper().startswith(('INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER')):
+                if (
+                    sql.strip()
+                    .upper()
+                    .startswith(("INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER"))
+                ):
                     self._conn.commit()
-                
+
                 # Wrap result to have consistent interface
                 return QueryResult(result)
             except Exception as e:
                 error_msg = str(e).lower()
-                if 'stream not found' in error_msg or 'connection' in error_msg:
+                if "stream not found" in error_msg or "connection" in error_msg:
                     if attempt < max_retries:
                         logger.warning(f"Connection issue, reconnecting... (attempt {attempt + 1})")
                         await self.disconnect()
@@ -125,18 +128,18 @@ class TursoClient:
                         continue
                 logger.error(f"Database query failed: {e}")
                 raise
-    
+
     async def execute_many(self, sql: str, params_list: List[List[Any]]) -> None:
         """
         Execute a SQL statement with multiple parameter sets.
-        
+
         Args:
             sql: SQL query string
             params_list: List of parameter sets
         """
         if not self._conn:
             await self.connect()
-        
+
         try:
             for params in params_list:
                 self._conn.execute(sql, params)
@@ -144,18 +147,17 @@ class TursoClient:
         except Exception as e:
             logger.error(f"Execute many failed: {e}")
             raise
-    
+
     async def init_schema(self):
         """
         Initialize database schema.
-        
+
         Creates all required tables if they don't exist.
         """
         schema_statements = [
             # =============================================
             # USER & AUTH TABLES
             # =============================================
-            
             # Users table
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -169,7 +171,6 @@ class TursoClient:
                 updated_at TEXT DEFAULT (datetime('now'))
             )
             """,
-            
             # Sessions table (for refresh tokens)
             """
             CREATE TABLE IF NOT EXISTS sessions (
@@ -181,11 +182,9 @@ class TursoClient:
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
-            
             # =============================================
             # USER PROFILES TABLE (Long-term Memory)
             # =============================================
-            
             # User profiles table - stores persistent user information
             """
             CREATE TABLE IF NOT EXISTS user_profiles (
@@ -202,11 +201,9 @@ class TursoClient:
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
-            
             # =============================================
             # DOCUMENT & RAG TABLES
             # =============================================
-            
             # Documents table - stores PDF metadata
             """
             CREATE TABLE IF NOT EXISTS documents (
@@ -229,7 +226,6 @@ class TursoClient:
                 integrity_findings TEXT DEFAULT NULL
             )
             """,
-            
             # Document sections - hierarchical structure
             """
             CREATE TABLE IF NOT EXISTS document_sections (
@@ -246,7 +242,6 @@ class TursoClient:
                 FOREIGN KEY (parent_section_id) REFERENCES document_sections(id) ON DELETE SET NULL
             )
             """,
-            
             # Document chunks - text segments for RAG
             """
             CREATE TABLE IF NOT EXISTS document_chunks (
@@ -266,7 +261,6 @@ class TursoClient:
                 FOREIGN KEY (section_id) REFERENCES document_sections(id) ON DELETE SET NULL
             )
             """,
-            
             # Embeddings table - vector storage for semantic search
             # Note: Turso supports F32_BLOB for vector embeddings
             """
@@ -280,7 +274,6 @@ class TursoClient:
                 FOREIGN KEY (chunk_id) REFERENCES document_chunks(id) ON DELETE CASCADE
             )
             """,
-            
             # Tax categories for document classification
             """
             CREATE TABLE IF NOT EXISTS tax_categories (
@@ -292,7 +285,6 @@ class TursoClient:
                 FOREIGN KEY (parent_id) REFERENCES tax_categories(id) ON DELETE SET NULL
             )
             """,
-            
             # Document-category mapping
             """
             CREATE TABLE IF NOT EXISTS document_categories (
@@ -304,11 +296,9 @@ class TursoClient:
                 FOREIGN KEY (category_id) REFERENCES tax_categories(id) ON DELETE CASCADE
             )
             """,
-            
             # =============================================
             # CONVERSATION & CHAT TABLES
             # =============================================
-            
             # Conversations table
             """
             CREATE TABLE IF NOT EXISTS conversations (
@@ -320,7 +310,6 @@ class TursoClient:
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
-            
             # Messages table
             """
             CREATE TABLE IF NOT EXISTS messages (
@@ -333,7 +322,6 @@ class TursoClient:
                 FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
             )
             """,
-            
             # Message sources - links messages to source chunks
             """
             CREATE TABLE IF NOT EXISTS message_sources (
@@ -346,11 +334,9 @@ class TursoClient:
                 FOREIGN KEY (chunk_id) REFERENCES document_chunks(id) ON DELETE CASCADE
             )
             """,
-            
             # =============================================
             # ANALYTICS & METRICS TABLES
             # =============================================
-            
             # Usage metrics table
             """
             CREATE TABLE IF NOT EXISTS usage_metrics (
@@ -368,7 +354,6 @@ class TursoClient:
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
             )
             """,
-            
             # BOE API cache — verificacion vigencia de leyes/RDs contra
             # API Datos Abiertos del BOE. TTL 30 dias (la vigencia cambia
             # poco). UPSERT en escrituras (ON CONFLICT) para race-condition
@@ -384,7 +369,6 @@ class TursoClient:
             """
             CREATE INDEX IF NOT EXISTS idx_boe_cache_expires ON boe_cache(expires_at)
             """,
-
             # Search analytics
             """
             CREATE TABLE IF NOT EXISTS search_analytics (
@@ -399,11 +383,9 @@ class TursoClient:
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
             )
             """,
-            
             # =============================================
             # INDEXES FOR PERFORMANCE
             # =============================================
-            
             "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)",
             "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_user_profiles_user ON user_profiles(user_id)",
@@ -417,11 +399,9 @@ class TursoClient:
             "CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id)",
             "CREATE INDEX IF NOT EXISTS idx_sources_message ON message_sources(message_id)",
-            
             # =============================================
             # WORKSPACE TABLES
             # =============================================
-            
             # Workspaces table
             """
             CREATE TABLE IF NOT EXISTS workspaces (
@@ -438,7 +418,6 @@ class TursoClient:
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
-            
             # Workspace files table
             """
             CREATE TABLE IF NOT EXISTS workspace_files (
@@ -459,16 +438,13 @@ class TursoClient:
                 FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
             )
             """,
-            
             # Workspace indexes
             "CREATE INDEX IF NOT EXISTS idx_workspaces_user ON workspaces(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_workspace_files_workspace ON workspace_files(workspace_id)",
             "CREATE INDEX IF NOT EXISTS idx_workspace_files_type ON workspace_files(file_type)",
-
             # =============================================
             # WORKSPACE EMBEDDINGS TABLE
             # =============================================
-
             # Workspace file embeddings - vector storage for semantic search
             """
             CREATE TABLE IF NOT EXISTS workspace_file_embeddings (
@@ -485,15 +461,12 @@ class TursoClient:
                 FOREIGN KEY (file_id) REFERENCES workspace_files(id) ON DELETE CASCADE
             )
             """,
-
             # Workspace embedding indexes
             "CREATE INDEX IF NOT EXISTS idx_ws_embeddings_workspace ON workspace_file_embeddings(workspace_id)",
             "CREATE INDEX IF NOT EXISTS idx_ws_embeddings_file ON workspace_file_embeddings(file_id)",
-
             # =============================================
             # TAX PARAMETERS TABLE (data-driven tax config)
             # =============================================
-
             """
             CREATE TABLE IF NOT EXISTS tax_parameters (
                 id TEXT PRIMARY KEY,
@@ -508,13 +481,10 @@ class TursoClient:
                 UNIQUE(category, param_key, year, jurisdiction)
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_tax_params_lookup ON tax_parameters(category, year, jurisdiction)",
-
             # =============================================
             # SUBSCRIPTION & PAYMENT TABLES
             # =============================================
-
             # Subscriptions table - Stripe subscription state per user
             """
             CREATE TABLE IF NOT EXISTS subscriptions (
@@ -532,7 +502,6 @@ class TursoClient:
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
-
             # Contact requests table - form submissions (e.g. autonomo interest)
             """
             CREATE TABLE IF NOT EXISTS contact_requests (
@@ -547,17 +516,14 @@ class TursoClient:
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
             )
             """,
-
             # Subscription indexes
             "CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer ON subscriptions(stripe_customer_id)",
             "CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)",
             "CREATE INDEX IF NOT EXISTS idx_contact_requests_user ON contact_requests(user_id)",
-
             # =============================================
             # DEDUCTIONS REGISTRY
             # =============================================
-
             """
             CREATE TABLE IF NOT EXISTS deductions (
                 id TEXT PRIMARY KEY,
@@ -579,15 +545,12 @@ class TursoClient:
                 UNIQUE(code, tax_year, territory)
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_deductions_territory_year ON deductions(territory, tax_year)",
             "CREATE INDEX IF NOT EXISTS idx_deductions_type ON deductions(type)",
             "CREATE INDEX IF NOT EXISTS idx_deductions_category ON deductions(category)",
-
             # =============================================
             # EXPORT REPORTS
             # =============================================
-
             """
             CREATE TABLE IF NOT EXISTS reports (
                 id TEXT PRIMARY KEY,
@@ -603,14 +566,11 @@ class TursoClient:
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_reports_user ON reports(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_reports_share_token ON reports(share_token)",
-
             # =============================================
             # QUARTERLY DECLARATIONS (Modelos 303, 130, 420)
             # =============================================
-
             # Quarterly declarations (Modelos 303, 130, 420)
             """
             CREATE TABLE IF NOT EXISTS quarterly_declarations (
@@ -639,7 +599,6 @@ class TursoClient:
             """,
             "CREATE INDEX IF NOT EXISTS idx_declarations_user_year ON quarterly_declarations(user_id, year, quarter)",
             "CREATE INDEX IF NOT EXISTS idx_declarations_type ON quarterly_declarations(declaration_type, territory)",
-
             # Annual IRPF projections (cache)
             """
             CREATE TABLE IF NOT EXISTS annual_projections (
@@ -661,11 +620,9 @@ class TursoClient:
                 UNIQUE(user_id, year, quarters_available)
             )
             """,
-
             # =============================================
             # IRPF CASILLAS (Model 100 field dictionary)
             # =============================================
-
             """
             CREATE TABLE IF NOT EXISTS irpf_casillas (
                 id TEXT PRIMARY KEY,
@@ -677,10 +634,8 @@ class TursoClient:
                 year INTEGER DEFAULT 2024
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_casillas_num ON irpf_casillas(casilla_num)",
             "CREATE INDEX IF NOT EXISTS idx_casillas_desc ON irpf_casillas(description)",
-
             # ML fiscal features (future ML training data)
             """
             CREATE TABLE IF NOT EXISTS ml_fiscal_features (
@@ -706,11 +661,9 @@ class TursoClient:
                 UNIQUE(user_id, year, quarter)
             )
             """,
-
             # =============================================
             # FISCAL CALENDAR TABLES
             # =============================================
-
             # Fiscal deadlines - tax presentation deadlines by territory
             """
             CREATE TABLE IF NOT EXISTS fiscal_deadlines (
@@ -731,11 +684,9 @@ class TursoClient:
                 updated_at TEXT DEFAULT (datetime('now'))
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_deadlines_territory ON fiscal_deadlines(territory)",
             "CREATE INDEX IF NOT EXISTS idx_deadlines_end_date ON fiscal_deadlines(end_date)",
             "CREATE INDEX IF NOT EXISTS idx_deadlines_model ON fiscal_deadlines(model)",
-
             # Push subscriptions - Web Push API subscriptions per user device
             """
             CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -750,9 +701,7 @@ class TursoClient:
                 UNIQUE(user_id, endpoint)
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id)",
-
             # Notification log - tracks sent push notifications (idempotency)
             """
             CREATE TABLE IF NOT EXISTS notification_log (
@@ -764,13 +713,10 @@ class TursoClient:
                 UNIQUE(user_id, deadline_id, alert_type)
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_notif_log_user ON notification_log(user_id)",
-
             # =============================================
             # CRYPTOCURRENCY TABLES
             # =============================================
-
             # Crypto transactions - raw transaction log per user
             """
             CREATE TABLE IF NOT EXISTS crypto_transactions (
@@ -791,9 +737,7 @@ class TursoClient:
                 created_at TEXT DEFAULT (datetime('now'))
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_crypto_tx_user ON crypto_transactions(user_id, date_utc)",
-
             # Crypto holdings - aggregated per asset (calculated cache, avg_cost for UI only)
             """
             CREATE TABLE IF NOT EXISTS crypto_holdings (
@@ -809,7 +753,6 @@ class TursoClient:
                 UNIQUE(user_id, asset)
             )
             """,
-
             # Crypto gains - FIFO-calculated gains/losses per tax year
             """
             CREATE TABLE IF NOT EXISTS crypto_gains (
@@ -831,13 +774,10 @@ class TursoClient:
                 created_at TEXT DEFAULT (datetime('now'))
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_crypto_gains_user_year ON crypto_gains(user_id, tax_year)",
-
             # =============================================
             # FEEDBACK & CHAT RATINGS TABLES
             # =============================================
-
             # Feedback table — bug reports, feature requests, general comments
             """
             CREATE TABLE IF NOT EXISTS feedback (
@@ -855,11 +795,9 @@ class TursoClient:
                 updated_at TEXT DEFAULT (datetime('now'))
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)",
             "CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback(type)",
-
             # Chat ratings — thumbs up/down per assistant message
             """
             CREATE TABLE IF NOT EXISTS chat_ratings (
@@ -872,15 +810,12 @@ class TursoClient:
                 created_at TEXT DEFAULT (datetime('now'))
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_ratings_user ON chat_ratings(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_ratings_message ON chat_ratings(message_id)",
             "CREATE INDEX IF NOT EXISTS idx_ratings_rating ON chat_ratings(rating)",
-
             # =============================================
             # MFA / 2FA TABLE
             # =============================================
-
             """
             CREATE TABLE IF NOT EXISTS user_mfa (
                 user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -891,7 +826,6 @@ class TursoClient:
                 updated_at TEXT DEFAULT (datetime('now'))
             )
             """,
-
             # Shared conversations (public share links)
             """
             CREATE TABLE IF NOT EXISTS shared_conversations (
@@ -906,11 +840,9 @@ class TursoClient:
                 view_count INTEGER DEFAULT 0
             )
             """,
-
             # =============================================
             # --- Phase 3: Contabilidad ---
             # =============================================
-
             # PGC accounts — Plan General Contable
             """
             CREATE TABLE IF NOT EXISTS pgc_accounts (
@@ -926,9 +858,7 @@ class TursoClient:
                 is_active BOOLEAN DEFAULT 1
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_pgc_code ON pgc_accounts(code)",
-
             # Libro registro — Invoice registry (emitidas + recibidas)
             """
             CREATE TABLE IF NOT EXISTS libro_registro (
@@ -962,9 +892,7 @@ class TursoClient:
                 updated_at TEXT DEFAULT (datetime('now'))
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_libro_user_year ON libro_registro(user_id, year)",
-
             # Asientos contables — Journal entries (double-entry accounting)
             """
             CREATE TABLE IF NOT EXISTS asientos_contables (
@@ -983,10 +911,9 @@ class TursoClient:
                 created_at TEXT DEFAULT (datetime('now'))
             )
             """,
-
             "CREATE INDEX IF NOT EXISTS idx_asientos_user_year ON asientos_contables(user_id, year)",
         ]
-        
+
         try:
             for sql in schema_statements:
                 await self.execute(sql)
@@ -1015,8 +942,12 @@ class TursoClient:
             # Add cost tracking columns to usage_metrics if they don't exist
             result = await self.execute("PRAGMA table_info(usage_metrics)")
             um_columns = {row["name"] for row in result.rows}
-            for col, coltype in [("model", "TEXT"), ("input_tokens", "INTEGER DEFAULT 0"),
-                                  ("output_tokens", "INTEGER DEFAULT 0"), ("cost_usd", "REAL DEFAULT 0.0")]:
+            for col, coltype in [
+                ("model", "TEXT"),
+                ("input_tokens", "INTEGER DEFAULT 0"),
+                ("output_tokens", "INTEGER DEFAULT 0"),
+                ("cost_usd", "REAL DEFAULT 0.0"),
+            ]:
                 col_name = col.split()[0]  # just the column name
                 if col_name not in um_columns:
                     try:
@@ -1030,9 +961,7 @@ class TursoClient:
             conv_columns = {row["name"] for row in result.rows}
             if "workspace_id" not in conv_columns:
                 try:
-                    await self.execute(
-                        "ALTER TABLE conversations ADD COLUMN workspace_id TEXT"
-                    )
+                    await self.execute("ALTER TABLE conversations ADD COLUMN workspace_id TEXT")
                     logger.info("Added workspace_id column to conversations table")
                 except Exception:
                     pass  # column already exists
@@ -1063,9 +992,7 @@ class TursoClient:
             ]:
                 if col not in session_columns:
                     try:
-                        await self.execute(
-                            f"ALTER TABLE sessions ADD COLUMN {col} {coltype}"
-                        )
+                        await self.execute(f"ALTER TABLE sessions ADD COLUMN {col} {coltype}")
                         logger.info(f"Added {col} column to sessions table")
                     except Exception:
                         pass
@@ -1124,6 +1051,7 @@ class TursoClient:
 
             # --- DefensIA tables (spec plans/2026-04-13-defensia-design.md §7.4) ---
             from pathlib import Path as _Path
+
             _migration_path = _Path(__file__).parent / "migrations" / "20260413_defensia_tables.sql"
             if _migration_path.exists():
                 _sql = _migration_path.read_text(encoding="utf-8")
@@ -1196,9 +1124,7 @@ class TursoClient:
         existe — evita el log ruidoso del driver Hrana al re-arrancar.
         """
         if not migration_path.exists():
-            logger.warning(
-                "DefensIA %s migration file not found: %s", label, migration_path
-            )
+            logger.warning("DefensIA %s migration file not found: %s", label, migration_path)
             return
 
         sql_text = migration_path.read_text(encoding="utf-8")
@@ -1242,11 +1168,11 @@ class TursoClient:
 
 class QueryResult:
     """Wrapper for query results to provide consistent interface."""
-    
+
     def __init__(self, cursor):
         self._cursor = cursor
         self._rows = None
-    
+
     @property
     def rows(self) -> List[dict]:
         """Get rows as list of dictionaries."""
@@ -1254,7 +1180,7 @@ class QueryResult:
             try:
                 # Try to fetch all rows and convert to dicts
                 rows = self._cursor.fetchall()
-                if rows and hasattr(self._cursor, 'description') and self._cursor.description:
+                if rows and hasattr(self._cursor, "description") and self._cursor.description:
                     columns = [desc[0] for desc in self._cursor.description]
                     self._rows = [dict(zip(columns, row)) for row in rows]
                 else:
@@ -1262,7 +1188,7 @@ class QueryResult:
             except Exception:
                 self._rows = []
         return self._rows
-    
+
     @property
     def rowcount(self) -> int:
         """Get number of affected rows."""
@@ -1279,16 +1205,16 @@ _db_client: Optional[TursoClient] = None
 async def get_db_client() -> TursoClient:
     """
     Get the global database client instance.
-    
+
     Returns:
         TursoClient instance
     """
     global _db_client
-    
+
     if _db_client is None:
         _db_client = TursoClient()
         await _db_client.connect()
-    
+
     return _db_client
 
 
@@ -1296,7 +1222,7 @@ async def get_db_client() -> TursoClient:
 async def get_db_connection():
     """
     Context manager for database connections.
-    
+
     Yields:
         TursoClient instance
     """

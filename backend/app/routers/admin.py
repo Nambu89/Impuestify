@@ -16,6 +16,7 @@ Provides:
 - GET  /api/admin/chat-ratings               — List chat ratings
 - GET  /api/admin/chat-ratings/stats         — Rating stats (% positive, trend)
 """
+
 import logging
 import json
 import uuid
@@ -40,6 +41,7 @@ VALID_PLAN_TYPES = {"particular", "autonomo"}
 
 # ---- Models ----
 
+
 class ChangePlanRequest(BaseModel):
     plan_type: str  # "particular" | "autonomo"
 
@@ -55,6 +57,7 @@ class UserListItem(BaseModel):
 
 
 # ---- Endpoints ----
+
 
 @router.get("/users", response_model=list[UserListItem])
 async def list_users(
@@ -74,15 +77,17 @@ async def list_users(
 
     users = []
     for row in result.rows:
-        users.append(UserListItem(
-            id=row["id"],
-            email=row["email"],
-            name=row.get("name"),
-            is_owner=bool(row.get("is_owner")),
-            plan_type=row.get("plan_type"),
-            subscription_status=row.get("subscription_status"),
-            created_at=row.get("created_at"),
-        ))
+        users.append(
+            UserListItem(
+                id=row["id"],
+                email=row["email"],
+                name=row.get("name"),
+                is_owner=bool(row.get("is_owner")),
+                plan_type=row.get("plan_type"),
+                subscription_status=row.get("subscription_status"),
+                created_at=row.get("created_at"),
+            )
+        )
     return users
 
 
@@ -105,9 +110,7 @@ async def change_user_plan(
         )
 
     # Verify user exists
-    user_result = await db.execute(
-        "SELECT id, email FROM users WHERE id = ?", [user_id]
-    )
+    user_result = await db.execute("SELECT id, email FROM users WHERE id = ?", [user_id])
     if not user_result.rows:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
@@ -115,9 +118,7 @@ async def change_user_plan(
     now = datetime.now(timezone.utc).isoformat()
 
     # Update or create subscription row
-    sub_result = await db.execute(
-        "SELECT id FROM subscriptions WHERE user_id = ?", [user_id]
-    )
+    sub_result = await db.execute("SELECT id FROM subscriptions WHERE user_id = ?", [user_id])
     if sub_result.rows:
         await db.execute(
             "UPDATE subscriptions SET plan_type = ?, updated_at = ? WHERE user_id = ?",
@@ -161,7 +162,10 @@ async def change_user_plan(
 
     logger.info(
         "Admin plan change: user=%s email=%s plan=%s by=%s",
-        user_id, user_email, request.plan_type, owner.email,
+        user_id,
+        user_email,
+        request.plan_type,
+        owner.email,
     )
 
     return {
@@ -178,9 +182,7 @@ async def grant_beta_access(
     db: TursoClient = Depends(get_db_client),
 ):
     """Grant free beta access to a user (active until 31/12/2026, no Stripe)."""
-    user_result = await db.execute(
-        "SELECT id, email FROM users WHERE id = ?", [user_id]
-    )
+    user_result = await db.execute("SELECT id, email FROM users WHERE id = ?", [user_id])
     if not user_result.rows:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
@@ -188,9 +190,7 @@ async def grant_beta_access(
     now = datetime.now(timezone.utc).isoformat()
     beta_end = "2026-12-31T23:59:59"
 
-    sub_result = await db.execute(
-        "SELECT id FROM subscriptions WHERE user_id = ?", [user_id]
-    )
+    sub_result = await db.execute("SELECT id FROM subscriptions WHERE user_id = ?", [user_id])
     if sub_result.rows:
         await db.execute(
             """UPDATE subscriptions
@@ -204,13 +204,15 @@ async def grant_beta_access(
                (id, user_id, stripe_customer_id, plan_type, status,
                 current_period_start, current_period_end, created_at, updated_at)
                VALUES (?, ?, ?, 'particular', 'active', ?, ?, ?, ?)""",
-            [str(uuid.uuid4()), user_id, f"beta_{user_id[:8]}",
-             now, beta_end, now, now],
+            [str(uuid.uuid4()), user_id, f"beta_{user_id[:8]}", now, beta_end, now, now],
         )
 
     logger.info(
         "Admin grant beta: user=%s email=%s until=%s by=%s",
-        user_id, user_email, beta_end, owner.email,
+        user_id,
+        user_email,
+        beta_end,
+        owner.email,
     )
 
     return {
@@ -227,9 +229,7 @@ async def sync_user_from_stripe(
     db: TursoClient = Depends(get_db_client),
 ):
     """Reconcile a user's subscription with Stripe (recover from missed webhooks)."""
-    user_result = await db.execute(
-        "SELECT id, email FROM users WHERE id = ?", [user_id]
-    )
+    user_result = await db.execute("SELECT id, email FROM users WHERE id = ?", [user_id])
     if not user_result.rows:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
@@ -238,7 +238,9 @@ async def sync_user_from_stripe(
 
     logger.info(
         "Admin sync-stripe: user=%s by=%s result=%s",
-        user_id, owner.email, summary,
+        user_id,
+        owner.email,
+        summary,
     )
     return summary
 
@@ -250,9 +252,7 @@ async def revoke_beta_access(
     db: TursoClient = Depends(get_db_client),
 ):
     """Revoke beta access (set subscription to inactive)."""
-    user_result = await db.execute(
-        "SELECT id, email FROM users WHERE id = ?", [user_id]
-    )
+    user_result = await db.execute("SELECT id, email FROM users WHERE id = ?", [user_id])
     if not user_result.rows:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
@@ -266,7 +266,9 @@ async def revoke_beta_access(
 
     logger.info(
         "Admin revoke beta: user=%s email=%s by=%s",
-        user_id, user_email, owner.email,
+        user_id,
+        user_email,
+        owner.email,
     )
 
     return {
@@ -279,6 +281,7 @@ async def revoke_beta_access(
 # ============================================================
 # DASHBOARD METRICS
 # ============================================================
+
 
 @router.get("/dashboard")
 async def get_dashboard(
@@ -411,6 +414,7 @@ async def get_dashboard(
 # COST TRACKING
 # ============================================================
 
+
 @router.get("/costs")
 async def get_cost_dashboard(
     request: Request,
@@ -428,6 +432,7 @@ async def get_cost_dashboard(
 # IMPORTANT: /feedback/stats MUST come before /feedback/{id}
 # so FastAPI does not interpret "stats" as an ID.
 # ============================================================
+
 
 class FeedbackUpdateRequest(BaseModel):
     status: Optional[str] = None
@@ -450,9 +455,7 @@ async def get_feedback_stats(
     flat counters (bugs_open, features_pending, new_count, total) consumed
     by the admin frontend stats panel.
     """
-    by_type_result = await db.execute(
-        "SELECT type, COUNT(*) as cnt FROM feedback GROUP BY type"
-    )
+    by_type_result = await db.execute("SELECT type, COUNT(*) as cnt FROM feedback GROUP BY type")
     by_status_result = await db.execute(
         "SELECT status, COUNT(*) as cnt FROM feedback GROUP BY status"
     )
@@ -468,9 +471,7 @@ async def get_feedback_stats(
         "SELECT COUNT(*) as cnt FROM feedback "
         "WHERE type = 'feature' AND status NOT IN ('done', 'wont_fix')"
     )
-    new_count_result = await db.execute(
-        "SELECT COUNT(*) as cnt FROM feedback WHERE status = 'new'"
-    )
+    new_count_result = await db.execute("SELECT COUNT(*) as cnt FROM feedback WHERE status = 'new'")
     total_result = await db.execute("SELECT COUNT(*) as cnt FROM feedback")
 
     return {
@@ -478,7 +479,9 @@ async def get_feedback_stats(
         "by_status": {row["status"]: row["cnt"] for row in by_status_result.rows},
         "by_priority": {row["priority"]: row["cnt"] for row in by_priority_result.rows},
         "bugs_open": bugs_open_result.rows[0]["cnt"] if bugs_open_result.rows else 0,
-        "features_pending": features_pending_result.rows[0]["cnt"] if features_pending_result.rows else 0,
+        "features_pending": features_pending_result.rows[0]["cnt"]
+        if features_pending_result.rows
+        else 0,
         "new_count": new_count_result.rows[0]["cnt"] if new_count_result.rows else 0,
         "total": total_result.rows[0]["cnt"] if total_result.rows else 0,
     }
@@ -539,19 +542,21 @@ async def list_feedback(
 
     items = []
     for row in result.rows:
-        items.append({
-            "id": row["id"],
-            "type": row["type"],
-            "title": row["title"],
-            "description": row["description"],
-            "page_url": row.get("page_url"),
-            "status": row["status"],
-            "priority": row["priority"],
-            "admin_notes": row.get("admin_notes"),
-            "user_email": row.get("user_email"),
-            "created_at": row["created_at"],
-            "updated_at": row["updated_at"],
-        })
+        items.append(
+            {
+                "id": row["id"],
+                "type": row["type"],
+                "title": row["title"],
+                "description": row["description"],
+                "page_url": row.get("page_url"),
+                "status": row["status"],
+                "priority": row["priority"],
+                "admin_notes": row.get("admin_notes"),
+                "user_email": row.get("user_email"),
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+            }
+        )
     return {"items": items, "total": total}
 
 
@@ -599,9 +604,7 @@ async def update_feedback(
     db: TursoClient = Depends(get_db_client),
 ):
     """Update a feedback item's status, priority and/or admin notes (owner-only)."""
-    existing = await db.execute(
-        "SELECT id FROM feedback WHERE id = ?", [feedback_id]
-    )
+    existing = await db.execute("SELECT id FROM feedback WHERE id = ?", [feedback_id])
     if not existing.rows:
         raise HTTPException(status_code=404, detail="Feedback no encontrado")
 
@@ -649,6 +652,7 @@ async def update_feedback(
 # CONTACT REQUESTS MANAGEMENT
 # ============================================================
 
+
 @router.get("/contact-requests")
 async def list_contact_requests(
     status: Optional[str] = Query(None),
@@ -687,16 +691,18 @@ async def list_contact_requests(
 
     items = []
     for row in result.rows:
-        items.append({
-            "id": row["id"],
-            "user_id": row.get("user_id"),
-            "email": row["email"],
-            "name": row.get("name"),
-            "message": row.get("message"),
-            "request_type": row.get("request_type"),
-            "status": row["status"],
-            "created_at": row["created_at"],
-        })
+        items.append(
+            {
+                "id": row["id"],
+                "user_id": row.get("user_id"),
+                "email": row["email"],
+                "name": row.get("name"),
+                "message": row.get("message"),
+                "request_type": row.get("request_type"),
+                "status": row["status"],
+                "created_at": row["created_at"],
+            }
+        )
     return {"items": items, "total": total}
 
 
@@ -721,9 +727,7 @@ async def update_contact_request(
             detail=f"status invalido. Valores permitidos: {', '.join(sorted(VALID_CONTACT_STATUSES))}",
         )
 
-    existing = await db.execute(
-        "SELECT id FROM contact_requests WHERE id = ?", [request_id]
-    )
+    existing = await db.execute("SELECT id FROM contact_requests WHERE id = ?", [request_id])
     if not existing.rows:
         raise HTTPException(status_code=404, detail="Solicitud de contacto no encontrada")
 
@@ -732,7 +736,9 @@ async def update_contact_request(
         [body.status, request_id],
     )
 
-    logger.info("Admin updated contact request %s to %s by %s", request_id, body.status, owner.email)
+    logger.info(
+        "Admin updated contact request %s to %s by %s", request_id, body.status, owner.email
+    )
     return {"message": f"Solicitud marcada como '{body.status}'", "id": request_id}
 
 
@@ -740,6 +746,7 @@ async def update_contact_request(
 # CHAT RATINGS MANAGEMENT
 # IMPORTANT: /chat-ratings/stats MUST come before /chat-ratings
 # ============================================================
+
 
 @router.get("/chat-ratings/stats")
 async def get_chat_ratings_stats(
@@ -750,9 +757,7 @@ async def get_chat_ratings_stats(
     total_result = await db.execute("SELECT COUNT(*) as cnt FROM chat_ratings")
     total = total_result.rows[0]["cnt"] if total_result.rows else 0
 
-    positive_result = await db.execute(
-        "SELECT COUNT(*) as cnt FROM chat_ratings WHERE rating = 1"
-    )
+    positive_result = await db.execute("SELECT COUNT(*) as cnt FROM chat_ratings WHERE rating = 1")
     positive = positive_result.rows[0]["cnt"] if positive_result.rows else 0
 
     positive_pct = round(positive / total * 100, 1) if total > 0 else 0.0
@@ -839,16 +844,18 @@ async def list_chat_ratings(
 
     items = []
     for row in result.rows:
-        items.append({
-            "id": row["id"],
-            "user_id": row.get("user_id"),
-            "user_email": row.get("user_email"),
-            "message_id": row["message_id"],
-            "conversation_id": row.get("conversation_id"),
-            "rating": row["rating"],
-            "comment": row.get("comment"),
-            "created_at": row["created_at"],
-        })
+        items.append(
+            {
+                "id": row["id"],
+                "user_id": row.get("user_id"),
+                "user_email": row.get("user_email"),
+                "message_id": row["message_id"],
+                "conversation_id": row.get("conversation_id"),
+                "rating": row["rating"],
+                "comment": row.get("comment"),
+                "created_at": row["created_at"],
+            }
+        )
     return {"items": items, "total": total}
 
 
@@ -871,6 +878,7 @@ async def purge_semantic_cache_by_key(
 async def _do_purge_cache():
     try:
         from app.security.semantic_cache import get_semantic_cache
+
         cache = get_semantic_cache()
         if not cache.enabled:
             return {"status": "disabled", "message": "Semantic cache is not enabled"}

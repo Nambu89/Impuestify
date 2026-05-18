@@ -14,6 +14,7 @@ Converts old naming conventions to canonical short names with correct accents:
 
 Safe to run multiple times (idempotent).
 """
+
 import asyncio
 import sys
 import os
@@ -21,6 +22,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 from app.utils.ccaa_constants import DB_MIGRATION_MAP
@@ -37,6 +39,7 @@ TABLES_AND_COLUMNS = [
 
 async def migrate():
     from app.database.turso_client import get_db_client
+
     db = await get_db_client()
 
     print("=" * 60)
@@ -73,7 +76,9 @@ async def migrate():
                     if dupe_ids:
                         for did in dupe_ids:
                             await db.execute("DELETE FROM deductions WHERE id = ?", [did])
-                        print(f"  '{old_name}': {len(dupe_ids)} duplicate rows deleted (already exist as '{new_name}')")
+                        print(
+                            f"  '{old_name}': {len(dupe_ids)} duplicate rows deleted (already exist as '{new_name}')"
+                        )
                         # Update remaining (non-duplicate) rows
                         remaining = await db.execute(
                             f"SELECT COUNT(*) as cnt FROM {table} WHERE {column} = ?",
@@ -114,9 +119,7 @@ async def migrate():
     print(f"\nVerification — distinct values per table:")
 
     for table, column in TABLES_AND_COLUMNS:
-        result = await db.execute(
-            f"SELECT DISTINCT {column} FROM {table} ORDER BY {column}"
-        )
+        result = await db.execute(f"SELECT DISTINCT {column} FROM {table} ORDER BY {column}")
         values = [row[column] for row in result.rows if row[column]]
         print(f"  {table}.{column}: {len(values)} distinct values")
         # Flag any remaining old-convention names

@@ -7,6 +7,7 @@ Covers:
 3. DeductionService.build_answers_from_profile with partial profiles
 4. discover_deductions_tool merges profile answers correctly
 """
+
 import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -17,6 +18,7 @@ from app.utils.regime_classifier import classify_regime, is_foral
 # =============================================================================
 # 1. classify_regime
 # =============================================================================
+
 
 class TestClassifyRegime:
     def test_araba_is_foral_vasco(self):
@@ -75,6 +77,7 @@ class TestClassifyRegime:
 # 2. GET /api/fiscal-profile/fields  — router-level tests (mocked DB)
 # =============================================================================
 
+
 def _make_mock_db(rows=None):
     """Create an async mock DB client that returns empty rows by default."""
     mock_result = MagicMock()
@@ -103,7 +106,11 @@ class TestFiscalFieldsEndpoint:
 
         mock_user = _make_mock_user(user_id)
         # Patch workspace_service to return empty summary
-        with patch.object(workspace_service, "get_fiscal_summary_from_workspace", new=AsyncMock(return_value={"has_data": False})):
+        with patch.object(
+            workspace_service,
+            "get_fiscal_summary_from_workspace",
+            new=AsyncMock(return_value={"has_data": False}),
+        ):
             return await get_fiscal_profile_fields(
                 ccaa=ccaa,
                 situacion_laboral=situacion_laboral,
@@ -138,9 +145,19 @@ class TestFiscalFieldsEndpoint:
     async def test_base_sections_always_present(self):
         resp = await self._call_endpoint(ccaa="Madrid")
         section_ids = [s["id"] for s in resp["sections"]]
-        for expected in ("datos_personales", "rendimientos_trabajo", "rendimientos_ahorro",
-                         "inmuebles", "familia", "discapacidad", "reducciones",
-                         "vivienda", "sostenibilidad", "donaciones", "territorio"):
+        for expected in (
+            "datos_personales",
+            "rendimientos_trabajo",
+            "rendimientos_ahorro",
+            "inmuebles",
+            "familia",
+            "discapacidad",
+            "reducciones",
+            "vivienda",
+            "sostenibilidad",
+            "donaciones",
+            "territorio",
+        ):
             assert expected in section_ids, f"Missing section: {expected}"
 
     async def test_foral_vasco_includes_prevision_section(self):
@@ -170,16 +187,24 @@ class TestFiscalFieldsEndpoint:
 
     async def test_deducciones_autonomicas_built_from_db(self):
         """When DB has deduction rows with questions_json, a section is built."""
-        db = _make_mock_db(rows=[
-            {
-                "name": "Deduccion vivienda",
-                "category": "vivienda",
-                "requirements_json": '{"alquiler_vivienda_habitual": true}',
-                "questions_json": json.dumps([
-                    {"key": "alquiler_vivienda_habitual", "text": "Paga alquiler?", "type": "bool"}
-                ]),
-            }
-        ])
+        db = _make_mock_db(
+            rows=[
+                {
+                    "name": "Deduccion vivienda",
+                    "category": "vivienda",
+                    "requirements_json": '{"alquiler_vivienda_habitual": true}',
+                    "questions_json": json.dumps(
+                        [
+                            {
+                                "key": "alquiler_vivienda_habitual",
+                                "text": "Paga alquiler?",
+                                "type": "bool",
+                            }
+                        ]
+                    ),
+                }
+            ]
+        )
         resp = await self._call_endpoint(ccaa="Madrid", db=db)
         section_ids = [s["id"] for s in resp["sections"]]
         assert "deducciones_autonomicas" in section_ids
@@ -211,11 +236,13 @@ class TestFiscalFieldsEndpoint:
 # 3. build_answers_from_profile
 # =============================================================================
 
+
 class TestBuildAnswersFromProfile:
     """Unit tests for DeductionService.build_answers_from_profile()."""
 
     def _build(self, profile: dict, ccaa: str = "") -> dict:
         from app.services.deduction_service import DeductionService
+
         return DeductionService.build_answers_from_profile(profile, ccaa)
 
     def test_empty_profile_returns_empty_dict(self):
@@ -276,7 +303,9 @@ class TestBuildAnswersFromProfile:
         assert result.get("donativo_a_entidad_acogida") is True
 
     def test_autonomo_directa_maps(self):
-        result = self._build({"situacion_laboral": "autonomo", "metodo_estimacion_irpf": "directa_simplificada"})
+        result = self._build(
+            {"situacion_laboral": "autonomo", "metodo_estimacion_irpf": "directa_simplificada"}
+        )
         assert result.get("autonomo_estimacion_directa") is True
 
     def test_direct_bool_field_vehiculo_electrico(self):
@@ -310,6 +339,7 @@ class TestBuildAnswersFromProfile:
 # 4. discover_deductions merges profile answers
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestDiscoverDeductionsProfileMerge:
     """Verify that discover_deductions_tool merges profile-derived answers correctly."""
@@ -325,9 +355,15 @@ class TestDiscoverDeductionsProfileMerge:
         mock_profile_row = {
             "ccaa_residencia": "Madrid",
             "situacion_laboral": "empleado",
-            "datos_fiscales": json.dumps({
-                "familia_numerosa": {"value": True, "_source": "manual", "_updated": "2026-01-01"},
-            }),
+            "datos_fiscales": json.dumps(
+                {
+                    "familia_numerosa": {
+                        "value": True,
+                        "_source": "manual",
+                        "_updated": "2026-01-01",
+                    },
+                }
+            ),
         }
 
         mock_db_result = MagicMock()
@@ -340,15 +376,27 @@ class TestDiscoverDeductionsProfileMerge:
         async def mock_evaluate_eligibility(self_or_tax_year=None, **kwargs):
             # Called as service.evaluate_eligibility(...) so self is the service instance
             captured_answers.update(kwargs.get("answers", {}))
-            return {"eligible": [], "maybe_eligible": [], "not_eligible": [], "estimated_savings": 0.0, "total_deductions": 0}
+            return {
+                "eligible": [],
+                "maybe_eligible": [],
+                "not_eligible": [],
+                "estimated_savings": 0.0,
+                "total_deductions": 0,
+            }
 
         async def mock_missing(self_or_tax_year=None, **kwargs):
             return []
 
         # get_db_client is a lazy import inside the function — patch at the DB module level
         with patch("app.database.turso_client.get_db_client", new=AsyncMock(return_value=mock_db)):
-            with patch("app.services.deduction_service.DeductionService.evaluate_eligibility", new=mock_evaluate_eligibility):
-                with patch("app.services.deduction_service.DeductionService.get_missing_questions", new=mock_missing):
+            with patch(
+                "app.services.deduction_service.DeductionService.evaluate_eligibility",
+                new=mock_evaluate_eligibility,
+            ):
+                with patch(
+                    "app.services.deduction_service.DeductionService.get_missing_questions",
+                    new=mock_missing,
+                ):
                     await discover_deductions_tool(
                         ccaa="Madrid",
                         answers={"familia_numerosa": False},
@@ -368,9 +416,15 @@ class TestDiscoverDeductionsProfileMerge:
         mock_profile_row = {
             "ccaa_residencia": "Madrid",
             "situacion_laboral": "empleado",
-            "datos_fiscales": json.dumps({
-                "vehiculo_electrico_nuevo": {"value": True, "_source": "manual", "_updated": "2026-01-01"},
-            }),
+            "datos_fiscales": json.dumps(
+                {
+                    "vehiculo_electrico_nuevo": {
+                        "value": True,
+                        "_source": "manual",
+                        "_updated": "2026-01-01",
+                    },
+                }
+            ),
         }
 
         mock_db_result = MagicMock()
@@ -382,14 +436,26 @@ class TestDiscoverDeductionsProfileMerge:
 
         async def mock_evaluate_eligibility(self_or_tax_year=None, **kwargs):
             captured_answers.update(kwargs.get("answers", {}))
-            return {"eligible": [], "maybe_eligible": [], "not_eligible": [], "estimated_savings": 0.0, "total_deductions": 0}
+            return {
+                "eligible": [],
+                "maybe_eligible": [],
+                "not_eligible": [],
+                "estimated_savings": 0.0,
+                "total_deductions": 0,
+            }
 
         async def mock_missing(self_or_tax_year=None, **kwargs):
             return []
 
         with patch("app.database.turso_client.get_db_client", new=AsyncMock(return_value=mock_db)):
-            with patch("app.services.deduction_service.DeductionService.evaluate_eligibility", new=mock_evaluate_eligibility):
-                with patch("app.services.deduction_service.DeductionService.get_missing_questions", new=mock_missing):
+            with patch(
+                "app.services.deduction_service.DeductionService.evaluate_eligibility",
+                new=mock_evaluate_eligibility,
+            ):
+                with patch(
+                    "app.services.deduction_service.DeductionService.get_missing_questions",
+                    new=mock_missing,
+                ):
                     await discover_deductions_tool(
                         ccaa="Madrid",
                         answers={},
@@ -406,13 +472,25 @@ class TestDiscoverDeductionsProfileMerge:
 
         async def mock_evaluate_eligibility(self_or_tax_year=None, **kwargs):
             captured_answers.update(kwargs.get("answers", {}))
-            return {"eligible": [], "maybe_eligible": [], "not_eligible": [], "estimated_savings": 0.0, "total_deductions": 0}
+            return {
+                "eligible": [],
+                "maybe_eligible": [],
+                "not_eligible": [],
+                "estimated_savings": 0.0,
+                "total_deductions": 0,
+            }
 
         async def mock_missing(self_or_tax_year=None, **kwargs):
             return []
 
-        with patch("app.services.deduction_service.DeductionService.evaluate_eligibility", new=mock_evaluate_eligibility):
-            with patch("app.services.deduction_service.DeductionService.get_missing_questions", new=mock_missing):
+        with patch(
+            "app.services.deduction_service.DeductionService.evaluate_eligibility",
+            new=mock_evaluate_eligibility,
+        ):
+            with patch(
+                "app.services.deduction_service.DeductionService.get_missing_questions",
+                new=mock_missing,
+            ):
                 await discover_deductions_tool(
                     ccaa="Estatal",
                     answers={"donativo_a_entidad_acogida": True},

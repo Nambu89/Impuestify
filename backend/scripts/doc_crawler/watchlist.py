@@ -3,20 +3,21 @@ URL registry — all monitored documents organized by territory and priority.
 
 Sources: 12 crawl sessions (docs/_inventario.md), docscrawler.md URLs, AEAT portals.
 """
+
 from dataclasses import dataclass, field
 
 
 @dataclass
 class WatchItem:
     url: str
-    dest: str                           # Relative to docs/
-    file_type: str = "pdf"              # pdf, xlsx, xls
-    priority: str = "high"              # high, medium, low
+    dest: str  # Relative to docs/
+    file_type: str = "pdf"  # pdf, xlsx, xls
+    priority: str = "high"  # high, medium, low
     territory: str = ""
     description: str = ""
-    status: str = "active"              # active, future, html_only, deprecated
-    pattern: str = ""                   # URL template for future docs
-    notes: str = ""                     # Audit notes (TIPO A/B/C/D classification)
+    status: str = "active"  # active, future, html_only, deprecated
+    pattern: str = ""  # URL template for future docs
+    notes: str = ""  # Audit notes (TIPO A/B/C/D classification)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -66,7 +67,6 @@ AEAT_ITEMS = [
         territory="AEAT",
         description="Manual Practico Patrimonio 2024",
     ),
-
     # ── Retenciones IRPF ──
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Retenciones/2025/Cuadro_tipos_retenciones_2025.pdf",
@@ -84,7 +84,6 @@ AEAT_ITEMS = [
         status="future",
         notes="Pendiente publicacion AEAT",
     ),
-
     # ── Algoritmo retenciones ──
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Retenciones/2025/Algoritmo_2025.pdf",
@@ -102,7 +101,6 @@ AEAT_ITEMS = [
         status="future",
         notes="Pendiente publicacion AEAT",
     ),
-
     # ── Instrucciones Modelos ──
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo303/2025/Instrucciones_Modelo303_2025.pdf",
@@ -548,7 +546,6 @@ SS_ITEMS = [
 CREATORS_ITEMS = [
     # ── Estatuto del Trabajo Autonomo (base legal autonomos/emprendedores) ──
     # Ya en BOE_ITEMS como Ley 20/2007 — no duplicar
-
     # ── Ley de Emprendedores ──
     WatchItem(
         url="https://www.boe.es/buscar/pdf/2013/BOE-A-2013-10074-consolidado.pdf",
@@ -556,7 +553,6 @@ CREATORS_ITEMS = [
         territory="Estatal",
         description="Ley 14/2013 de apoyo a emprendedores consolidado",
     ),
-
     # ── Ley Startups (Ley 28/2022 Crea y Crece) ──
     WatchItem(
         url="https://www.boe.es/buscar/pdf/2022/BOE-A-2022-21739-consolidado.pdf",
@@ -564,7 +560,6 @@ CREATORS_ITEMS = [
         territory="Estatal",
         description="Ley 28/2022 startups y emprendimiento consolidado",
     ),
-
     # ── Ley Crea y Crece (facturacion electronica obligatoria) ──
     WatchItem(
         url="https://www.boe.es/buscar/pdf/2022/BOE-A-2022-15818-consolidado.pdf",
@@ -572,7 +567,6 @@ CREATORS_ITEMS = [
         territory="Estatal",
         description="Ley 18/2022 Crea y Crece (facturacion electronica) consolidado",
     ),
-
     # ── Modelo 720 — Declaracion bienes en el extranjero ──
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo720/Instrucciones_Modelo720.pdf",
@@ -583,7 +577,6 @@ CREATORS_ITEMS = [
         status="active",
         notes="TIPO A: Pendiente publicacion AEAT en pagina actualizada",
     ),
-
     # ── Modelo 349 — Operaciones intracomunitarias (facturacion a Google/Meta/ByteDance) ──
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo349/Instrucciones_Modelo349.pdf",
@@ -594,7 +587,6 @@ CREATORS_ITEMS = [
         status="active",
         notes="TIPO A: Pendiente publicacion AEAT en pagina actualizada",
     ),
-
     # ── Modelo 036/037 — Alta censal autonomos / IAE ──
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_Ayuda/Modelo036_037/Instrucciones_Modelo036.pdf",
@@ -605,7 +597,6 @@ CREATORS_ITEMS = [
         status="active",
         notes="TIPO A: Pendiente publicacion AEAT en pagina actualizada",
     ),
-
     # ── Convenios doble imposicion (principales para plataformas digitales) ──
     # Irlanda (Google, Meta, Apple)
     WatchItem(
@@ -641,7 +632,6 @@ CREATORS_ITEMS = [
         description="Convenio doble imposicion Espana-EEUU (YouTube, Amazon, Twitch)",
         priority="high",
     ),
-
     # ── Reglamento VeriFactu (facturacion electronica obligatoria) ──
     WatchItem(
         url="https://www.boe.es/buscar/pdf/2024/BOE-A-2024-22138-consolidado.pdf",
@@ -652,7 +642,6 @@ CREATORS_ITEMS = [
         status="future",
         notes="TIPO A/B: PDF consolidado puede no estar disponible en BOE",
     ),
-
     # ── IAE — Tarifas (epigrafes para creadores de contenido) ──
     WatchItem(
         url="https://www.boe.es/buscar/pdf/1990/BOE-A-1990-23930-consolidado.pdf",
@@ -661,10 +650,8 @@ CREATORS_ITEMS = [
         description="RDLeg 1175/1990 Tarifas IAE consolidado (epigrafes creadores)",
         priority="high",
     ),
-
     # ── Ley IVA servicios digitales / reglas de localizacion ──
     # Ya en BOE_ITEMS como Ley 37/1992 — no duplicar
-
     # ── Canarias — ZEC para emprendedores digitales ──
     WatchItem(
         url="https://www.boe.es/buscar/pdf/2008/BOE-A-2008-745-consolidado.pdf",
@@ -724,7 +711,6 @@ INFLUENCERS_ITEMS = [
         description="RD 1065/2007 Reglamento General Gestion e Inspeccion (includes DAC7/Modelo 238)",
         priority="high",
     ),
-
     # ── Forales: guias autonomos / creadores (deprecated — URLs no existen como PDF) ──
     WatchItem(
         url="https://www.bizkaia.eus/fitxategiak/4/Ogasuna/Guia_actividades_economicas.pdf",
@@ -766,7 +752,6 @@ INFLUENCERS_ITEMS = [
         status="deprecated",
         notes="URL 403. Guia no disponible como PDF en portal Gobierno Canarias",
     ),
-
     # ── CCAA: Guias autonomos (deprecated — URLs no existen como PDF descargable) ──
     WatchItem(
         url="https://www.comunidad.madrid/sites/default/files/doc/hacienda/guia_fiscal_autonomos.pdf",
@@ -808,7 +793,6 @@ INFLUENCERS_ITEMS = [
         status="deprecated",
         notes="URL 404. Portal Tributos Ceuta no tiene esta guia",
     ),
-
     # ── Articulos/guias de referencia (HTML→PDF no viable, status html_only) ──
     # AEAT — Regimenes estimacion directa
     WatchItem(
@@ -900,50 +884,74 @@ FARMACIA_ITEMS = [
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/Sede/iva/regimenes-tributacion-iva/regimen-especial-recargo-equivalencia.html",
         dest="AEAT/Farmacias/AEAT-RE_Indice.html",
-        file_type="html", priority="high", territory="AEAT", status="active",
+        file_type="html",
+        priority="high",
+        territory="AEAT",
+        status="active",
         description="Regimen especial recargo de equivalencia - indice",
     ),
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/Sede/iva/regimenes-tributacion-iva/regimen-especial-recargo-equivalencia/que-consiste-regimen-especial-recargo-equivalencia.html",
         dest="AEAT/Farmacias/AEAT-RE_En_Que_Consiste.html",
-        file_type="html", priority="high", territory="AEAT", status="active",
+        file_type="html",
+        priority="high",
+        territory="AEAT",
+        status="active",
         description="En que consiste el RE - explicacion detallada",
     ),
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/Sede/ayuda/manuales-videos-folletos/manuales-practicos/manual-iva-2025/capitulo-06-regimenes-especiales-iva/regimen-especial-recargo-equivalencia/tipos-recargo-equivalencia.html",
         dest="AEAT/Farmacias/AEAT-RE_Tipos_2025.html",
-        file_type="html", priority="high", territory="AEAT", status="active",
+        file_type="html",
+        priority="high",
+        territory="AEAT",
+        status="active",
         description="Tipos RE 2025: 5.2% (21%), 1.4% (10%), 0.5% (4%)",
     ),
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/Sede/iva/regimenes-tributacion-iva/regimen-especial-recargo-equivalencia/obligaciones-facturacion.html",
         dest="AEAT/Farmacias/AEAT-RE_Obligaciones_Facturacion.html",
-        file_type="html", priority="high", territory="AEAT", status="active",
+        file_type="html",
+        priority="high",
+        territory="AEAT",
+        status="active",
         description="Obligaciones facturacion bajo RE",
     ),
     WatchItem(
         url="https://sede.agenciatributaria.gob.es/static_files/Sede/Procedimiento_ayuda/G403/instr_mod308.pdf",
         dest="AEAT/Farmacias/AEAT-Modelo_308_Instrucciones.pdf",
-        file_type="pdf", priority="high", territory="AEAT", status="active",
+        file_type="pdf",
+        priority="high",
+        territory="AEAT",
+        status="active",
         description="Modelo 308 instrucciones - solicitud devolucion RE",
     ),
     # Guias fiscales farmacia (terceros institucionales)
     WatchItem(
         url="https://www.arquia.com/media/11090/guiairpfq2023digital.pdf",
         dest="Farmacias/TAXFARMA-Guia_IRPF_Farmacia_2023.pdf",
-        file_type="pdf", priority="high", territory="AEAT", status="active",
+        file_type="pdf",
+        priority="high",
+        territory="AEAT",
+        status="active",
         description="Guia IRPF farmaceuticos 2023 - TAXFARMA/Arquia (fondo comercio, RE, deducciones)",
     ),
     WatchItem(
         url="https://cofalicante.com/rep/9be0/pdf/343502/21/fiscalidad-de-farmacias?d=1",
         dest="Farmacias/COF_Alicante-Fiscalidad_Farmacias.pdf",
-        file_type="pdf", priority="high", territory="AEAT", status="active",
+        file_type="pdf",
+        priority="high",
+        territory="AEAT",
+        status="active",
         description="Fiscalidad farmacias - COF Alicante (IRPF, IVA, RE, amortizaciones)",
     ),
     WatchItem(
         url="https://www2.agenciatributaria.gob.es/ADUA/internet/es/aeat/dit/adu/adws/certificados/Tabla_de_epigrafes_IAE.pdf",
         dest="AEAT/Farmacias/AEAT-Tarifas_IAE_Completas.pdf",
-        file_type="pdf", priority="high", territory="AEAT", status="active",
+        file_type="pdf",
+        priority="high",
+        territory="AEAT",
+        status="active",
         description="Tarifas IAE completas - epigrafe 652.1 Farmacias",
     ),
 ]

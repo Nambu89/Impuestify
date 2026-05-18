@@ -7,6 +7,7 @@ def setup_function():
     """Ensure registry is loaded before each test."""
     _registry.clear()
     from app.territories.startup import register_all_territories
+
     register_all_territories()
 
 

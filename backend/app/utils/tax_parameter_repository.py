@@ -7,6 +7,7 @@ Caches results in memory to avoid repeated DB queries within the same request.
 Follows Dependency Inversion: calculators depend on this abstraction,
 not on SQL queries directly.
 """
+
 from typing import Dict, Optional
 import logging
 
@@ -59,7 +60,10 @@ class TaxParameterRepository:
         if not params and year > 2023:
             logger.info(
                 "No tax_parameters for %s/%d/%s — falling back to %d",
-                category, year, jurisdiction, year - 1,
+                category,
+                year,
+                jurisdiction,
+                year - 1,
             )
             result = await self._db.execute(
                 "SELECT param_key, value FROM tax_parameters "

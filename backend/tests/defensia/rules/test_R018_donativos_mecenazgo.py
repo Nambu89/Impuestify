@@ -36,6 +36,7 @@ Triggers soportados:
 La regla NO hardcodea la cita del articulo — solo emite una cita semantica
 que el RAG verificador traducira al texto canonico correcto.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -81,6 +82,7 @@ def _registrar_r018(_aislar_registry):  # noqa: ARG001 — fuerza orden
 # Helper local — la cita NUNCA puede hardcodear articulos canonicos
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica.
 
@@ -102,9 +104,8 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
 # Test 1 — Positivo: donativo 500 EUR con certificado, AEAT deniega
 # ---------------------------------------------------------------------------
 
-def test_R018_positivo_donativo_denegado_con_certificado(
-    build_exp, build_brief, build_doc
-):
+
+def test_R018_positivo_donativo_denegado_con_certificado(build_exp, build_brief, build_doc):
     """Si el contribuyente declaro un donativo con certificado valido y AEAT
     lo deniega integramente (deduccion admitida = 0), R018 debe disparar.
     """
@@ -133,8 +134,7 @@ def test_R018_positivo_donativo_denegado_con_certificado(
 
     r018 = [c for c in candidatos if c.regla_id == "R018"]
     assert len(r018) == 1, (
-        f"R018 deberia disparar con donativo denegado + certificado, "
-        f"got {candidatos}"
+        f"R018 deberia disparar con donativo denegado + certificado, " f"got {candidatos}"
     )
 
     arg = r018[0]
@@ -147,9 +147,9 @@ def test_R018_positivo_donativo_denegado_con_certificado(
         f"got: {arg.cita_normativa_propuesta!r}"
     )
 
-    assert arg.datos_disparo.get("donativo_negado") == 500.0, (
-        f"datos_disparo.donativo_negado inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("donativo_negado") == 500.0
+    ), f"datos_disparo.donativo_negado inesperado: {arg.datos_disparo!r}"
     assert arg.datos_disparo.get("tiene_certificado") is True
 
 
@@ -157,9 +157,8 @@ def test_R018_positivo_donativo_denegado_con_certificado(
 # Test 2 — Positivo: admision parcial del donativo
 # ---------------------------------------------------------------------------
 
-def test_R018_positivo_donativo_parcialmente_admitido(
-    build_exp, build_brief, build_doc
-):
+
+def test_R018_positivo_donativo_parcialmente_admitido(build_exp, build_brief, build_doc):
     """Si la deduccion admitida es estrictamente inferior a la teorica
     calculada desde el donativo declarado, R018 debe disparar con delta.
     """
@@ -190,18 +189,16 @@ def test_R018_positivo_donativo_parcialmente_admitido(
     candidatos = evaluar(exp, brief)
 
     r018 = [c for c in candidatos if c.regla_id == "R018"]
-    assert len(r018) == 1, (
-        f"R018 deberia disparar con admision parcial, got {candidatos}"
-    )
+    assert len(r018) == 1, f"R018 deberia disparar con admision parcial, got {candidatos}"
 
     arg = r018[0]
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
 
     # El delta entre teorica y admitida debe viajar en datos_disparo
     delta = arg.datos_disparo.get("delta_deduccion")
-    assert delta == pytest.approx(160.0), (
-        f"delta_deduccion esperado 160.0, got {delta} ({arg.datos_disparo!r})"
-    )
+    assert delta == pytest.approx(
+        160.0
+    ), f"delta_deduccion esperado 160.0, got {delta} ({arg.datos_disparo!r})"
     assert arg.datos_disparo.get("tiene_certificado") is True
 
 
@@ -209,9 +206,8 @@ def test_R018_positivo_donativo_parcialmente_admitido(
 # Test 3 — Positivo: donacion recurrente 3 anos, 45% no aplicado
 # ---------------------------------------------------------------------------
 
-def test_R018_positivo_donacion_recurrente_sin_elevacion_45(
-    build_exp, build_brief, build_doc
-):
+
+def test_R018_positivo_donacion_recurrente_sin_elevacion_45(build_exp, build_brief, build_doc):
     """Si la donacion es recurrente (3 anos consecutivos a la misma entidad)
     y la Administracion aplica el 40% sobre el exceso de 250 EUR en lugar
     del 45% incrementado, R018 debe disparar.
@@ -242,8 +238,7 @@ def test_R018_positivo_donacion_recurrente_sin_elevacion_45(
 
     r018 = [c for c in candidatos if c.regla_id == "R018"]
     assert len(r018) == 1, (
-        f"R018 deberia disparar con recurrencia + 40% mal aplicado, "
-        f"got {candidatos}"
+        f"R018 deberia disparar con recurrencia + 40% mal aplicado, " f"got {candidatos}"
     )
 
     arg = r018[0]
@@ -256,9 +251,8 @@ def test_R018_positivo_donacion_recurrente_sin_elevacion_45(
 # Test 4 — Negativo: sin certificado no dispara (requisito formal)
 # ---------------------------------------------------------------------------
 
-def test_R018_negativo_sin_certificado(
-    build_exp, build_brief, build_doc
-):
+
+def test_R018_negativo_sin_certificado(build_exp, build_brief, build_doc):
     """Si el contribuyente no aporta certificado de la entidad donataria,
     la regla NO debe disparar: el certificado es requisito formal
     constitutivo de la deduccion.
@@ -283,18 +277,15 @@ def test_R018_negativo_sin_certificado(
     candidatos = evaluar(exp, brief)
 
     r018 = [c for c in candidatos if c.regla_id == "R018"]
-    assert r018 == [], (
-        f"R018 NO debe disparar sin certificado (requisito formal), got {r018}"
-    )
+    assert r018 == [], f"R018 NO debe disparar sin certificado (requisito formal), got {r018}"
 
 
 # ---------------------------------------------------------------------------
 # Test 5 — Negativo: deduccion correcta aplicada
 # ---------------------------------------------------------------------------
 
-def test_R018_negativo_deduccion_correcta(
-    build_exp, build_brief, build_doc
-):
+
+def test_R018_negativo_deduccion_correcta(build_exp, build_brief, build_doc):
     """Si la deduccion admitida coincide con la teorica y no hay indicios
     de recurrencia mal aplicada, la regla NO debe disparar.
     """
@@ -320,14 +311,13 @@ def test_R018_negativo_deduccion_correcta(
     candidatos = evaluar(exp, brief)
 
     r018 = [c for c in candidatos if c.regla_id == "R018"]
-    assert r018 == [], (
-        f"R018 NO debe disparar si la deduccion esta bien aplicada, got {r018}"
-    )
+    assert r018 == [], f"R018 NO debe disparar si la deduccion esta bien aplicada, got {r018}"
 
 
 # ---------------------------------------------------------------------------
 # Test 6 — Anti-hardcode de citas canonicas
 # ---------------------------------------------------------------------------
+
 
 def test_R018_cita_no_hardcoded(build_exp, build_brief, build_doc):
     """La cita normativa emitida por R018 debe ser semantica, NUNCA
@@ -364,17 +354,16 @@ def test_R018_cita_no_hardcoded(build_exp, build_brief, build_doc):
 # Sanity checks: la regla esta registrada con metadata correcta
 # ---------------------------------------------------------------------------
 
+
 def test_R018_registrada_en_registry():
     """Tras importar el modulo, R018 debe estar en el REGISTRY con la
     metadata correcta (IRPF, fases de liquidacion + recurso).
     """
-    assert "R018" in REGISTRY, (
-        f"R018 no encontrada en REGISTRY. Keys actuales: {list(REGISTRY.keys())}"
-    )
+    assert (
+        "R018" in REGISTRY
+    ), f"R018 no encontrada en REGISTRY. Keys actuales: {list(REGISTRY.keys())}"
     info = REGISTRY["R018"]
-    assert "IRPF" in info["tributos"], (
-        f"R018 deberia aplicar a IRPF, tributos={info['tributos']}"
-    )
+    assert "IRPF" in info["tributos"], f"R018 deberia aplicar a IRPF, tributos={info['tributos']}"
     # Fases aplicables
     fases_esperadas = {
         "LIQUIDACION_FIRME_PLAZO_RECURSO",
@@ -385,6 +374,4 @@ def test_R018_registrada_en_registry():
         "TEAR_AMPLIACION_POSIBLE",
     }
     for fase in fases_esperadas:
-        assert fase in info["fases"], (
-            f"R018 deberia aplicar a {fase}, fases={info['fases']}"
-        )
+        assert fase in info["fases"], f"R018 deberia aplicar a {fase}, fases={info['fases']}"

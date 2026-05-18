@@ -17,6 +17,7 @@ cumplan el contrato pasaran a verde sin editar el fichero.
 
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2B-013..T2B-018
 """
+
 from __future__ import annotations
 
 import importlib
@@ -318,9 +319,7 @@ def test_crear_expediente_201(client: TestClient, fake_db: MagicMock):
     assert fake_db.execute.await_count >= 1
 
 
-def test_listar_expedientes_devuelve_items(
-    client: TestClient, fake_db: MagicMock
-):
+def test_listar_expedientes_devuelve_items(client: TestClient, fake_db: MagicMock):
     _require_deps()
     fake_db.execute.return_value = _row_result(
         [
@@ -390,9 +389,7 @@ def test_detalle_expediente_ok(client: TestClient, fake_db: MagicMock):
     assert ("expediente" in data) or ("id" in data)
 
 
-def test_detalle_expediente_not_found(
-    client: TestClient, fake_db: MagicMock
-):
+def test_detalle_expediente_not_found(client: TestClient, fake_db: MagicMock):
     _require_deps()
     fake_db.execute.return_value = _row_result([])  # no existe
     response = client.get("/api/defensia/expedientes/no-existe")
@@ -404,9 +401,7 @@ def test_detalle_expediente_not_found(
 # ===========================================================================
 
 
-def test_ownership_check_404_si_otro_user(
-    client: TestClient, fake_db: MagicMock
-):
+def test_ownership_check_404_si_otro_user(client: TestClient, fake_db: MagicMock):
     """H3: si el expediente pertenece a otro user_id debemos devolver 404,
     NO 403, para no filtrar existencia."""
     _require_deps()
@@ -419,9 +414,7 @@ def test_ownership_check_404_si_otro_user(
     assert response.status_code != 403
 
 
-def test_delete_expediente_cascade(
-    client: TestClient, fake_db: MagicMock
-):
+def test_delete_expediente_cascade(client: TestClient, fake_db: MagicMock):
     _require_deps()
     # Primero devolvemos el expediente (existe y es del user), luego el
     # DELETE no devuelve filas.
@@ -480,9 +473,7 @@ def test_upload_documento_storage_enabled_201(
         [],  # INSERT defensia_documentos
     )
     files = {"file": ("liquidacion.pdf", b"%PDF-1.4 fake", "application/pdf")}
-    response = client.post(
-        "/api/defensia/expedientes/exp-1/documentos", files=files
-    )
+    response = client.post("/api/defensia/expedientes/exp-1/documentos", files=files)
     assert response.status_code == 201, response.text
     # storage.cifrar fue llamado
     fake_storage.cifrar.assert_called()
@@ -495,9 +486,7 @@ def test_upload_documento_storage_disabled_503(
 ):
     _require_deps()
     fake_storage.is_enabled = False
-    fake_storage.cifrar.side_effect = DefensiaStorageUnavailable(
-        "storage key not set"
-    )
+    fake_storage.cifrar.side_effect = DefensiaStorageUnavailable("storage key not set")
     fake_db.execute.return_value = _row_result(
         [
             {
@@ -515,9 +504,7 @@ def test_upload_documento_storage_disabled_503(
         ]
     )
     files = {"file": ("x.pdf", b"%PDF", "application/pdf")}
-    response = client.post(
-        "/api/defensia/expedientes/exp-1/documentos", files=files
-    )
+    response = client.post("/api/defensia/expedientes/exp-1/documentos", files=files)
     assert response.status_code == 503
 
 
@@ -575,6 +562,7 @@ def test_upload_dispara_fase1_auto_extraccion(
         class _R:
             full_text = "Liquidacion provisional IRPF fake text"
             success = True
+
         return _R()
 
     import app.utils.pdf_extractor as _pdf_mod
@@ -635,9 +623,7 @@ def test_upload_dispara_fase1_auto_extraccion(
             "application/pdf",
         )
     }
-    response = client.post(
-        "/api/defensia/expedientes/exp-1/documentos", files=files
-    )
+    response = client.post("/api/defensia/expedientes/exp-1/documentos", files=files)
     assert response.status_code == 201, response.text
 
     body = response.json()
@@ -650,8 +636,7 @@ def test_upload_dispara_fase1_auto_extraccion(
 
     # Se hizo al menos un UPDATE a defensia_documentos con tipo_documento
     all_sql = " ".join(
-        str(call.args[0]) if call.args else ""
-        for call in fake_db.execute.await_args_list
+        str(call.args[0]) if call.args else "" for call in fake_db.execute.await_args_list
     ).lower()
     assert "update defensia_documentos" in all_sql
     assert "tipo_documento" in all_sql
@@ -684,34 +669,38 @@ def test_upload_fase1_resiliente_si_gemini_falla(
         class _R:
             full_text = "Algun texto"
             success = True
+
         return _R()
 
     import app.utils.pdf_extractor as _pdf_mod
+
     monkeypatch.setattr(_pdf_mod, "extract_pdf_text_plain", _fake_extract_pdf)
 
     fake_db.execute.side_effect = _side_effect_rows(
-        [{
-            "id": "exp-1",
-            "user_id": "u-test",
-            "nombre": "exp",
-            "tributo": "IRPF",
-            "ccaa": "Madrid",
-            "tipo_procedimiento_declarado": "LIQUIDACION",
-            "estado": "borrador",
-            "fase_detectada": None,
-            "created_at": "2026-04-14T00:00:00Z",
-            "updated_at": "2026-04-14T00:00:00Z",
-        }],
-        [], [], [],  # INSERT + 2 UPDATEs
+        [
+            {
+                "id": "exp-1",
+                "user_id": "u-test",
+                "nombre": "exp",
+                "tributo": "IRPF",
+                "ccaa": "Madrid",
+                "tipo_procedimiento_declarado": "LIQUIDACION",
+                "estado": "borrador",
+                "fase_detectada": None,
+                "created_at": "2026-04-14T00:00:00Z",
+                "updated_at": "2026-04-14T00:00:00Z",
+            }
+        ],
+        [],
+        [],
+        [],  # INSERT + 2 UPDATEs
         [{"tributo": "IRPF", "ccaa": "Madrid"}],  # SELECT recompute
         [],  # SELECT docs (empty, ningun doc clasificado)
         [],  # UPDATE fase
     )
 
     files = {"file": ("x.pdf", b"%PDF", "application/pdf")}
-    response = client.post(
-        "/api/defensia/expedientes/exp-1/documentos", files=files
-    )
+    response = client.post("/api/defensia/expedientes/exp-1/documentos", files=files)
     assert response.status_code == 201
     body = response.json()
     # Sin classifier funcional, tipo queda None/null
@@ -751,8 +740,7 @@ def test_upload_documento_no_crea_dictamen_ni_escrito(
 
     # Ninguna query debe mencionar defensia_dictamenes o defensia_escritos.
     all_sql = " ".join(
-        str(call.args[0]) if call.args else ""
-        for call in fake_db.execute.await_args_list
+        str(call.args[0]) if call.args else "" for call in fake_db.execute.await_args_list
     ).lower()
     assert "defensia_dictamenes" not in all_sql
     assert "defensia_escritos" not in all_sql
@@ -792,9 +780,7 @@ def test_crear_brief_201(client: TestClient, fake_db: MagicMock):
     assert data.get("texto") or "texto" in data
 
 
-def test_get_brief_devuelve_ultimo(
-    client: TestClient, fake_db: MagicMock
-):
+def test_get_brief_devuelve_ultimo(client: TestClient, fake_db: MagicMock):
     _require_deps()
     fake_db.execute.side_effect = _side_effect_rows(
         [
@@ -944,9 +930,7 @@ def test_analyze_sse_quota_excedida_402(
             }
         ],
     )
-    fake_service.analizar_expediente.side_effect = QuotaExcedida(
-        "Cuota mensual agotada"
-    )
+    fake_service.analizar_expediente.side_effect = QuotaExcedida("Cuota mensual agotada")
     with client.stream(
         "POST",
         "/api/defensia/expedientes/exp-1/analyze",
@@ -965,9 +949,7 @@ def test_analyze_sse_quota_excedida_402(
     )
 
 
-def test_analyze_sse_rechaza_si_no_brief(
-    client: TestClient, fake_db: MagicMock
-):
+def test_analyze_sse_rechaza_si_no_brief(client: TestClient, fake_db: MagicMock):
     """Regla #1: el analisis requiere brief. Si no hay brief, el endpoint
     debe rechazar. Si la implementacion no chequea esto explicitamente
     (lo delega al service via Brief obligatorio en el modelo), el test
@@ -1138,9 +1120,7 @@ def test_export_pdf_devuelve_bytes(
 # ===========================================================================
 
 
-def test_patch_escrito_incrementa_version(
-    client: TestClient, fake_db: MagicMock
-):
+def test_patch_escrito_incrementa_version(client: TestClient, fake_db: MagicMock):
     _require_deps()
     fake_db.execute.side_effect = _side_effect_rows(
         [
@@ -1180,8 +1160,7 @@ def test_patch_escrito_incrementa_version(
     # El SQL de UPDATE debe tocar `version` (incrementar) y
     # `editado_por_usuario`.
     all_sql = " ".join(
-        str(call.args[0]) if call.args else ""
-        for call in fake_db.execute.await_args_list
+        str(call.args[0]) if call.args else "" for call in fake_db.execute.await_args_list
     ).lower()
     assert "update" in all_sql and "version" in all_sql
 

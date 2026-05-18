@@ -4,6 +4,7 @@ Tests for ISD (Impuesto sobre Sucesiones y Donaciones) — 21/21 CCAA coverage.
 Verifies the 12 newly added CCAA bonificaciones plus a final coverage check
 ensuring all 21 territories (15 CCAA + 4 forales + Ceuta + Melilla) are handled.
 """
+
 import pytest
 from app.tools.isd_calculator_tool import calculate_isd, _normalize_ccaa
 
@@ -11,6 +12,7 @@ from app.tools.isd_calculator_tool import calculate_isd, _normalize_ccaa
 # ---------------------------------------------------------------------------
 # 1. Galicia — 99% sucesiones <= 400K, 99% donaciones <= 200K
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_galicia_sucesion_grupo_ii_bajo_400k():
@@ -59,6 +61,7 @@ async def test_galicia_donacion_bajo_200k():
 # 2. Castilla y Leon — 99% sucesiones y donaciones Grupos I-II
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_castilla_y_leon_sucesion_grupo_ii():
     """CyL: 99% bonificacion sucesiones Grupos I-II sin limite de base."""
@@ -93,6 +96,7 @@ async def test_castilla_y_leon_donacion_grupo_i():
 # 3. Castilla-La Mancha — 100% sucesiones y donaciones Grupos I-II (2024+)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_castilla_la_mancha_sucesion_grupo_ii():
     """CLM: 100% bonificacion sucesiones Grupos I-II desde 2024."""
@@ -125,6 +129,7 @@ async def test_castilla_la_mancha_donacion_grupo_ii():
 # ---------------------------------------------------------------------------
 # 4. Extremadura — 99% sucesiones Y donaciones con limites por grupo
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_extremadura_sucesion_grupo_i_bajo_limite():
@@ -217,6 +222,7 @@ async def test_extremadura_donacion_grupo_ii_sobre_limite():
 # 5. Murcia — 99% sucesiones y donaciones Grupos I-II
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_murcia_sucesion_grupo_ii():
     """Murcia: 99% bonificacion sucesiones Grupos I-II."""
@@ -249,6 +255,7 @@ async def test_murcia_donacion_grupo_i():
 # ---------------------------------------------------------------------------
 # 6. Canarias — 99.9% sucesiones y donaciones Grupos I-II
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_canarias_sucesion_grupo_ii():
@@ -284,6 +291,7 @@ async def test_canarias_donacion_grupo_i():
 # ---------------------------------------------------------------------------
 # 7. Asturias — escalonada: 100% <=300K, 95% <=450K, 90% <=600K (Grupo II)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_asturias_grupo_i_100pct():
@@ -365,6 +373,7 @@ async def test_asturias_grupo_i_donacion():
 # 8. Cantabria — 100% sucesiones y donaciones Grupos I-II (2024+)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_cantabria_sucesion_grupo_ii():
     """Cantabria: 100% bonificacion sucesiones Grupos I-II desde 2024."""
@@ -397,6 +406,7 @@ async def test_cantabria_donacion_grupo_ii():
 # ---------------------------------------------------------------------------
 # 9. La Rioja — 99% sucesiones y donaciones Grupos I-II
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_la_rioja_sucesion_grupo_ii():
@@ -431,6 +441,7 @@ async def test_la_rioja_donacion_grupo_i():
 # 10. Baleares — 99% sucesiones <= 3M, 75% donaciones
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_baleares_sucesion_grupo_ii():
     """Baleares: 99% bonificacion sucesiones Grupos I-II si base <= 3M EUR."""
@@ -463,6 +474,7 @@ async def test_baleares_donacion_grupo_ii():
 # 11. Ceuta — 50% bonificacion general (Art. 23 bis)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_ceuta_sucesion_grupo_ii():
     """Ceuta: 50% bonificacion general Art. 23 bis Ley 29/1987."""
@@ -476,9 +488,7 @@ async def test_ceuta_sucesion_grupo_ii():
     pcts = [b["porcentaje"] for b in result["bonificaciones_ccaa"]]
     assert 50.0 in pcts
     # Cuota a pagar = 50% of cuota tributaria
-    assert result["cuota_a_pagar"] == pytest.approx(
-        result["cuota_tributaria"] * 0.50, abs=1.0
-    )
+    assert result["cuota_a_pagar"] == pytest.approx(result["cuota_tributaria"] * 0.50, abs=1.0)
 
 
 @pytest.mark.asyncio
@@ -498,6 +508,7 @@ async def test_ceuta_donacion_grupo_iv():
 # ---------------------------------------------------------------------------
 # 12. Melilla — 50% bonificacion general (Art. 23 bis)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_melilla_sucesion_grupo_ii():
@@ -532,11 +543,27 @@ async def test_melilla_donacion_grupo_iii():
 # ---------------------------------------------------------------------------
 
 ALL_CCAA = [
-    "Madrid", "Andalucía", "Cataluña", "Valencia", "Aragón",
-    "Araba", "Bizkaia", "Gipuzkoa", "Navarra",
-    "Galicia", "Castilla y León", "Castilla-La Mancha", "Extremadura",
-    "Murcia", "Canarias", "Asturias", "Cantabria", "La Rioja",
-    "Baleares", "Ceuta", "Melilla",
+    "Madrid",
+    "Andalucía",
+    "Cataluña",
+    "Valencia",
+    "Aragón",
+    "Araba",
+    "Bizkaia",
+    "Gipuzkoa",
+    "Navarra",
+    "Galicia",
+    "Castilla y León",
+    "Castilla-La Mancha",
+    "Extremadura",
+    "Murcia",
+    "Canarias",
+    "Asturias",
+    "Cantabria",
+    "La Rioja",
+    "Baleares",
+    "Ceuta",
+    "Melilla",
 ]
 
 
@@ -592,9 +619,9 @@ async def test_todas_las_ccaa_tienen_bonificacion():
             ccaa_sin_bonificacion_especifica.add(ccaa)
 
     # All 21 CCAA should have at least one bonificacion for 100K sucesion grupo_ii
-    assert len(ccaa_sin_bonificacion_especifica) == 0, (
-        f"CCAA sin bonificacion para 100K sucesion grupo_ii: {ccaa_sin_bonificacion_especifica}"
-    )
+    assert (
+        len(ccaa_sin_bonificacion_especifica) == 0
+    ), f"CCAA sin bonificacion para 100K sucesion grupo_ii: {ccaa_sin_bonificacion_especifica}"
 
 
 @pytest.mark.asyncio
@@ -626,6 +653,6 @@ async def test_normativa_nueva_ccaa_incluida():
         )
         assert result["success"] is True
         normativa = result["normativa_aplicable"]
-        assert expected_fragment in normativa, (
-            f"Normativa for {ccaa} does not contain '{expected_fragment}': {normativa}"
-        )
+        assert (
+            expected_fragment in normativa
+        ), f"Normativa for {ccaa} does not contain '{expected_fragment}': {normativa}"

@@ -7,6 +7,7 @@ individuales) y recomienda la opcion mas favorable.
 El tool llama a IRPFSimulator.simulate() como usuario externo, sin
 modificar ninguna logica interna del simulador.
 """
+
 import logging
 from typing import Any, Dict
 
@@ -32,86 +33,87 @@ JOINT_COMPARISON_TOOL = {
             "properties": {
                 "ingresos_declarante": {
                     "type": "number",
-                    "description": "Ingresos brutos anuales del declarante principal (trabajo, actividad...)"
+                    "description": "Ingresos brutos anuales del declarante principal (trabajo, actividad...)",
                 },
                 "ingresos_conyuge": {
                     "type": "number",
-                    "description": "Ingresos brutos anuales del conyuge/pareja"
+                    "description": "Ingresos brutos anuales del conyuge/pareja",
                 },
                 "ccaa": {
                     "type": "string",
-                    "description": "CCAA de residencia (ej: Madrid, Cataluna, Andalucia)"
+                    "description": "CCAA de residencia (ej: Madrid, Cataluna, Andalucia)",
                 },
                 "num_descendientes": {
                     "type": "integer",
                     "description": "Numero de hijos/descendientes a cargo. Default 0.",
-                    "default": 0
+                    "default": 0,
                 },
                 "num_descendientes_menores_3": {
                     "type": "integer",
                     "description": "Hijos menores de 3 anos (para deduccion maternidad). Default 0.",
-                    "default": 0
+                    "default": 0,
                 },
                 "edad_declarante": {
                     "type": "integer",
                     "description": "Edad del declarante principal. Default 35.",
-                    "default": 35
+                    "default": 35,
                 },
                 "aportaciones_plan_pensiones": {
                     "type": "number",
                     "description": "Aportaciones anuales a planes de pensiones del declarante. Default 0.",
-                    "default": 0
+                    "default": 0,
                 },
                 "aportaciones_plan_pensiones_conyuge": {
                     "type": "number",
                     "description": "Aportaciones anuales a planes de pensiones del conyuge. Default 0.",
-                    "default": 0
+                    "default": 0,
                 },
                 "hipoteca_pre2013": {
                     "type": "boolean",
                     "description": "Tiene hipoteca anterior a 2013. Default false.",
-                    "default": False
+                    "default": False,
                 },
                 "capital_amortizado_hipoteca": {
                     "type": "number",
                     "description": "Capital amortizado de hipoteca en el ano (principal + intereses). Default 0.",
-                    "default": 0
+                    "default": 0,
                 },
                 "donativos": {
                     "type": "number",
                     "description": "Donativos a ONGs (Ley 49/2002) del declarante. Default 0.",
-                    "default": 0
+                    "default": 0,
                 },
                 "donativos_conyuge": {
                     "type": "number",
                     "description": "Donativos a ONGs del conyuge. Default 0.",
-                    "default": 0
+                    "default": 0,
                 },
                 "retenciones_declarante": {
                     "type": "number",
                     "description": "Retenciones IRPF del declarante (aparece en nomina/certificado retenciones). Default 0.",
-                    "default": 0
+                    "default": 0,
                 },
                 "retenciones_conyuge": {
                     "type": "number",
                     "description": "Retenciones IRPF del conyuge. Default 0.",
-                    "default": 0
+                    "default": 0,
                 },
                 "madre_trabajadora_ss": {
                     "type": "boolean",
                     "description": "La madre es trabajadora con SS (para deduccion maternidad 1200 EUR/hijo). Default false.",
-                    "default": False
-                }
+                    "default": False,
+                },
             },
-            "required": ["ingresos_declarante", "ingresos_conyuge", "ccaa"]
-        }
-    }
+            "required": ["ingresos_declarante", "ingresos_conyuge", "ccaa"],
+        },
+    },
 }
 
 
 # ---------------------------------------------------------------------------
 # Executor
 # ---------------------------------------------------------------------------
+
 
 async def compare_joint_individual_executor(
     ingresos_declarante: float,
@@ -291,21 +293,27 @@ async def compare_joint_individual_executor(
             "ingresos_conjuntos": ingresos_declarante + ingresos_conyuge,
             "cuota_diferencial": round(cuota_conjunta_mat, 2),
             "tipo_efectivo": r_conjunta_matrimonio.get("tipo_efectivo_total", 0.0),
-            "reduccion_aplicada": r_conjunta_matrimonio.get("reduccion_tributacion_conjunta", 3400.0),
+            "reduccion_aplicada": r_conjunta_matrimonio.get(
+                "reduccion_tributacion_conjunta", 3400.0
+            ),
             "segundo_declarante": r_conjunta_matrimonio.get("segundo_declarante_desglose"),
         },
         "escenario_conjunta_monoparental": {
             "ingresos_declarante": ingresos_declarante,
             "cuota_diferencial": round(cuota_conjunta_mono, 2),
             "tipo_efectivo": r_conjunta_monoparental.get("tipo_efectivo_total", 0.0),
-            "reduccion_aplicada": r_conjunta_monoparental.get("reduccion_tributacion_conjunta", 2150.0),
+            "reduccion_aplicada": r_conjunta_monoparental.get(
+                "reduccion_tributacion_conjunta", 2150.0
+            ),
         },
         # Backwards compatibility: escenario_conjunta = matrimonio
         "escenario_conjunta": {
             "ingresos_conjuntos": ingresos_declarante + ingresos_conyuge,
             "cuota_diferencial": round(cuota_conjunta_mat, 2),
             "tipo_efectivo": r_conjunta_matrimonio.get("tipo_efectivo_total", 0.0),
-            "reduccion_aplicada": r_conjunta_matrimonio.get("reduccion_tributacion_conjunta", 3400.0),
+            "reduccion_aplicada": r_conjunta_matrimonio.get(
+                "reduccion_tributacion_conjunta", 3400.0
+            ),
         },
         "diferencia": round(cuota_conjunta_mat - total_individual, 2),
         "recomendacion": recomendacion,

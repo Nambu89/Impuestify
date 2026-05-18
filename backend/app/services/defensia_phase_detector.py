@@ -18,10 +18,14 @@ TEAR_INTERPUESTA (fase activa, ampliación urgente). Pasados 30 días entra en
 TEAR_AMPLIACION_POSIBLE (ampliación todavía posible pero menos urgente,
 siempre que el TEAR no haya resuelto).
 """
+
 from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from app.models.defensia import (
-    ExpedienteEstructurado, TipoDocumento, Fase, DocumentoEstructurado,
+    ExpedienteEstructurado,
+    TipoDocumento,
+    Fase,
+    DocumentoEstructurado,
 )
 
 
@@ -78,9 +82,7 @@ def detect_fase(
     # naive→UTC sin mutar los documentos (Copilot round 6 + 7).
     timeline = expediente.timeline_ordenado()
 
-    escritos_usuario = [
-        d for d in timeline if d.tipo_documento in _ESCRITOS_USUARIO
-    ]
+    escritos_usuario = [d for d in timeline if d.tipo_documento in _ESCRITOS_USUARIO]
     ultimo_escrito_usuario = escritos_usuario[-1] if escritos_usuario else None
 
     actos_aeat = [d for d in timeline if d.tipo_documento in _ACTOS_AEAT]
@@ -106,9 +108,7 @@ def _as_aware_utc(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc)
 
 
-def _es_tear_reciente(
-    escrito_tear: DocumentoEstructurado, hoy: datetime
-) -> bool:
+def _es_tear_reciente(escrito_tear: DocumentoEstructurado, hoy: datetime) -> bool:
     """True si el escrito TEAR se presentó hace menos de 30 días.
 
     Durante esa ventana el expediente está en fase activa TEAR_INTERPUESTA
@@ -120,9 +120,7 @@ def _es_tear_reciente(
     return (_as_aware_utc(hoy) - _as_aware_utc(escrito_tear.fecha_acto)) < _TEAR_VENTANA_RECIENTE
 
 
-def _fase_tras_tear(
-    escrito_tear: DocumentoEstructurado, hoy: datetime
-) -> Fase:
+def _fase_tras_tear(escrito_tear: DocumentoEstructurado, hoy: datetime) -> Fase:
     return (
         Fase.TEAR_INTERPUESTA
         if _es_tear_reciente(escrito_tear, hoy)
@@ -141,8 +139,7 @@ def _mapear_acto_a_fase(
         ultimo_escrito_usuario is not None
         and ultimo_escrito_usuario.fecha_acto is not None
         and ultimo_acto.fecha_acto is not None
-        and _as_aware_utc(ultimo_escrito_usuario.fecha_acto)
-        > _as_aware_utc(ultimo_acto.fecha_acto)
+        and _as_aware_utc(ultimo_escrito_usuario.fecha_acto) > _as_aware_utc(ultimo_acto.fecha_acto)
     )
 
     if tipo == TipoDocumento.REQUERIMIENTO:

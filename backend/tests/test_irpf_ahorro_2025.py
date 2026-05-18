@@ -17,6 +17,7 @@ Estos tests verifican:
 Sin dependencias DB: el cálculo se prueba con `SavingsIncomeCalculator._apply_scale`
 y las constantes del módulo `populate_tax_parameters`.
 """
+
 from __future__ import annotations
 
 import sys
@@ -30,26 +31,87 @@ sys.path.insert(0, str(backend_dir))
 
 # Escala AEAT del ahorro 2024 (Manual Renta 2024, Art. 66.1 LIRPF redacción Ley 11/2020)
 AHORRO_2024 = [
-    {"tramo_num": 1, "base_hasta": 6000, "cuota_integra": 0, "resto_base": 6000, "tipo_aplicable": 9.5},
-    {"tramo_num": 2, "base_hasta": 50000, "cuota_integra": 570, "resto_base": 44000, "tipo_aplicable": 10.5},
-    {"tramo_num": 3, "base_hasta": 200000, "cuota_integra": 5190, "resto_base": 150000, "tipo_aplicable": 11.5},
-    {"tramo_num": 4, "base_hasta": 300000, "cuota_integra": 22440, "resto_base": 100000, "tipo_aplicable": 13.5},
-    {"tramo_num": 5, "base_hasta": 999999, "cuota_integra": 35940, "resto_base": 699999, "tipo_aplicable": 14},
+    {
+        "tramo_num": 1,
+        "base_hasta": 6000,
+        "cuota_integra": 0,
+        "resto_base": 6000,
+        "tipo_aplicable": 9.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 50000,
+        "cuota_integra": 570,
+        "resto_base": 44000,
+        "tipo_aplicable": 10.5,
+    },
+    {
+        "tramo_num": 3,
+        "base_hasta": 200000,
+        "cuota_integra": 5190,
+        "resto_base": 150000,
+        "tipo_aplicable": 11.5,
+    },
+    {
+        "tramo_num": 4,
+        "base_hasta": 300000,
+        "cuota_integra": 22440,
+        "resto_base": 100000,
+        "tipo_aplicable": 13.5,
+    },
+    {
+        "tramo_num": 5,
+        "base_hasta": 999999,
+        "cuota_integra": 35940,
+        "resto_base": 699999,
+        "tipo_aplicable": 14,
+    },
 ]
 
 # Escala AEAT del ahorro 2025 (Ley 7/2024, AEAT INFORMA enero 2025)
 AHORRO_2025 = [
-    {"tramo_num": 1, "base_hasta": 6000, "cuota_integra": 0, "resto_base": 6000, "tipo_aplicable": 9.5},
-    {"tramo_num": 2, "base_hasta": 50000, "cuota_integra": 570, "resto_base": 44000, "tipo_aplicable": 10.5},
-    {"tramo_num": 3, "base_hasta": 200000, "cuota_integra": 5190, "resto_base": 150000, "tipo_aplicable": 11.5},
-    {"tramo_num": 4, "base_hasta": 300000, "cuota_integra": 22440, "resto_base": 100000, "tipo_aplicable": 13.5},
-    {"tramo_num": 5, "base_hasta": 999999, "cuota_integra": 35940, "resto_base": 699999, "tipo_aplicable": 15},
+    {
+        "tramo_num": 1,
+        "base_hasta": 6000,
+        "cuota_integra": 0,
+        "resto_base": 6000,
+        "tipo_aplicable": 9.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 50000,
+        "cuota_integra": 570,
+        "resto_base": 44000,
+        "tipo_aplicable": 10.5,
+    },
+    {
+        "tramo_num": 3,
+        "base_hasta": 200000,
+        "cuota_integra": 5190,
+        "resto_base": 150000,
+        "tipo_aplicable": 11.5,
+    },
+    {
+        "tramo_num": 4,
+        "base_hasta": 300000,
+        "cuota_integra": 22440,
+        "resto_base": 100000,
+        "tipo_aplicable": 13.5,
+    },
+    {
+        "tramo_num": 5,
+        "base_hasta": 999999,
+        "cuota_integra": 35940,
+        "resto_base": 699999,
+        "tipo_aplicable": 15,
+    },
 ]
 
 
 # ─────────────────────────────────────────────────────────────
 # 1. Caso AEAT — BLG 23.900 Aragón (validación analítica estatal)
 # ─────────────────────────────────────────────────────────────
+
 
 def test_caso_aeat_blg_23900_estatal_general():
     """
@@ -93,6 +155,7 @@ def test_caso_aeat_blg_23900_estatal_general():
 # ─────────────────────────────────────────────────────────────
 # 2. Diferencia paramétrica 2024 vs 2025 — bases >300K EUR
 # ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.parametrize(
     "base, cuota_2024_esperada, cuota_2025_esperada",
@@ -144,6 +207,7 @@ def test_ahorro_2024_vs_2025_misma_cuota_si_base_le_300k():
 # 3. La constante del seed populate_tax_parameters carga el 15%
 # ─────────────────────────────────────────────────────────────
 
+
 def test_populate_tax_parameters_ahorro_2025_top_bracket_es_15pct():
     """
     `populate_tax_parameters.py` debe definir la escala del ahorro 2025
@@ -163,9 +227,9 @@ def test_populate_tax_parameters_ahorro_2025_top_bracket_es_15pct():
         "Bug 98: escala estatal del ahorro 2025 último tramo debe ser 15% "
         "(Ley 7/2024, AEAT INFORMA enero 2025)"
     )
-    assert AHORRO_AUTONOMICO_2025[-1][-1] == 15, (
-        "Bug 98: escala autonómica complementaria del ahorro 2025 último tramo debe ser 15%"
-    )
+    assert (
+        AHORRO_AUTONOMICO_2025[-1][-1] == 15
+    ), "Bug 98: escala autonómica complementaria del ahorro 2025 último tramo debe ser 15%"
 
     # Tramos 1-4 no han cambiado
     for tramo_2024, tramo_2025 in zip(AHORRO_ESTATAL_2024[:-1], AHORRO_ESTATAL_2025[:-1]):

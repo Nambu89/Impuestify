@@ -7,6 +7,7 @@ Covers:
 - Obligacion de declarar (Art. 96 LIRPF)
 - Retrocompatibility (empty pagadores → existing behavior)
 """
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -22,6 +23,7 @@ from app.routers.irpf_estimate import (
 # ============================================================
 # PagadorItem model tests
 # ============================================================
+
 
 class TestPagadorItem:
     """Tests for PagadorItem Pydantic model."""
@@ -71,6 +73,7 @@ class TestPagadorItem:
 # IRPFEstimateRequest multi-pagador tests
 # ============================================================
 
+
 class TestIRPFEstimateRequestMultiPagador:
     """Tests for multi-pagador fields in IRPFEstimateRequest."""
 
@@ -81,8 +84,18 @@ class TestIRPFEstimateRequestMultiPagador:
 
     def test_with_pagadores(self):
         pagadores = [
-            PagadorItem(nombre="Empresa A", retribuciones_dinerarias=20000, retenciones=3000, gastos_deducibles=1200),
-            PagadorItem(nombre="Empresa B", retribuciones_dinerarias=10000, retenciones=1500, gastos_deducibles=600),
+            PagadorItem(
+                nombre="Empresa A",
+                retribuciones_dinerarias=20000,
+                retenciones=3000,
+                gastos_deducibles=1200,
+            ),
+            PagadorItem(
+                nombre="Empresa B",
+                retribuciones_dinerarias=10000,
+                retenciones=1500,
+                gastos_deducibles=600,
+            ),
         ]
         req = IRPFEstimateRequest(
             comunidad_autonoma="Madrid",
@@ -107,6 +120,7 @@ class TestIRPFEstimateRequestMultiPagador:
 # ============================================================
 # Aggregation logic tests
 # ============================================================
+
 
 class TestMultiPagadorAggregation:
     """Tests for aggregating pagador totals."""
@@ -133,9 +147,24 @@ class TestMultiPagadorAggregation:
     def test_three_pagadores(self):
         """Real case from AEAT screenshots: 3 employers."""
         pagadores = [
-            PagadorItem(nombre="DEVOTEAM DRAGO SAU", retribuciones_dinerarias=22300.99, retenciones=4046.27, gastos_deducibles=1445.00),
-            PagadorItem(nombre="SVAN TRADING SL", retribuciones_dinerarias=8535.74, retenciones=1114.78, gastos_deducibles=553.67),
-            PagadorItem(nombre="PAGADURIA HABERES MDE", retribuciones_dinerarias=2.81, retenciones=0.42, gastos_deducibles=0.07),
+            PagadorItem(
+                nombre="DEVOTEAM DRAGO SAU",
+                retribuciones_dinerarias=22300.99,
+                retenciones=4046.27,
+                gastos_deducibles=1445.00,
+            ),
+            PagadorItem(
+                nombre="SVAN TRADING SL",
+                retribuciones_dinerarias=8535.74,
+                retenciones=1114.78,
+                gastos_deducibles=553.67,
+            ),
+            PagadorItem(
+                nombre="PAGADURIA HABERES MDE",
+                retribuciones_dinerarias=2.81,
+                retenciones=0.42,
+                gastos_deducibles=0.07,
+            ),
         ]
         ingresos, retenciones, ss = self._aggregate(pagadores)
         assert round(ingresos, 2) == 30839.54
@@ -145,7 +174,12 @@ class TestMultiPagadorAggregation:
     def test_pagadores_con_especie(self):
         """Pagadores with retribuciones en especie (company car, insurance, etc.)."""
         pagadores = [
-            PagadorItem(retribuciones_dinerarias=25000, retribuciones_especie=3000, retenciones=4200, gastos_deducibles=1600),
+            PagadorItem(
+                retribuciones_dinerarias=25000,
+                retribuciones_especie=3000,
+                retenciones=4200,
+                gastos_deducibles=1600,
+            ),
             PagadorItem(retribuciones_dinerarias=5000, retenciones=750, gastos_deducibles=300),
         ]
         ingresos, retenciones, ss = self._aggregate(pagadores)
@@ -163,6 +197,7 @@ class TestMultiPagadorAggregation:
 # ============================================================
 # Obligacion de declarar tests (Art. 96 LIRPF)
 # ============================================================
+
 
 class TestObligacionDeclarar:
     """Tests for _calcular_obligacion_declarar function."""
@@ -185,7 +220,11 @@ class TestObligacionDeclarar:
         body = self._make_body()
         result = _calcular_obligacion_declarar(body, ingresos_trabajo=25000, num_pagadores=1)
         assert result["obligado"] is True
-        assert "22.000" in result["motivo"] or "22,000" in result["motivo"] or "22000" in result["motivo"]
+        assert (
+            "22.000" in result["motivo"]
+            or "22,000" in result["motivo"]
+            or "22000" in result["motivo"]
+        )
 
     def test_dos_pagadores_segundo_mayor_1500_obligado(self):
         """2 pagadores, 2o > 1.500 EUR, total > 15.876 → obligado."""
@@ -267,6 +306,7 @@ class TestObligacionDeclarar:
 # ============================================================
 # ObligacionDeclarar response model tests
 # ============================================================
+
 
 class TestObligacionDeclarModel:
     """Tests for ObligacionDeclarar Pydantic model."""

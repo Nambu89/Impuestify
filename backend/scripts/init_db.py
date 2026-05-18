@@ -4,6 +4,7 @@ Script para inicializar el esquema de la base de datos Turso.
 Ejecutar desde el directorio backend:
     python scripts/init_db.py
 """
+
 import asyncio
 import os
 import sys
@@ -14,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
-env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
 load_dotenv(env_path)
 
 from app.database.turso_client import TursoClient
@@ -25,25 +26,25 @@ async def init_database():
     print("=" * 60)
     print("TaxIA - Inicialización de Base de Datos Turso")
     print("=" * 60)
-    
+
     # Verificar variables de entorno
     url = os.environ.get("TURSO_DATABASE_URL")
     token = os.environ.get("TURSO_AUTH_TOKEN")
-    
+
     if not url:
         print("❌ ERROR: TURSO_DATABASE_URL no está configurada")
         print("   Añade la variable en el archivo .env")
         return False
-    
+
     if not token:
         print("❌ ERROR: TURSO_AUTH_TOKEN no está configurado")
         print("   Añade la variable en el archivo .env")
         return False
-    
+
     print(f"✓ URL: {url[:50]}...")
     print(f"✓ Token: {'*' * 20}...")
     print()
-    
+
     try:
         # Conectar a Turso
         print("📡 Conectando a Turso...")
@@ -51,45 +52,48 @@ async def init_database():
         await client.connect()
         print("✓ Conexión establecida")
         print()
-        
+
         # Inicializar esquema
         print("🏗️  Creando tablas...")
         await client.init_schema()
         print("✓ Esquema inicializado correctamente")
         print()
-        
+
         # Verificar tablas creadas
         print("📋 Verificando tablas creadas...")
         result = await client.execute(
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
         )
-        
-        tables = [row.get('name', row[0] if isinstance(row, (list, tuple)) else 'unknown') 
-                  for row in result.rows]
-        
+
+        tables = [
+            row.get("name", row[0] if isinstance(row, (list, tuple)) else "unknown")
+            for row in result.rows
+        ]
+
         print(f"   Tablas encontradas: {len(tables)}")
         for table in tables:
-            if not table.startswith('sqlite_'):
+            if not table.startswith("sqlite_"):
                 print(f"   ✓ {table}")
-        
+
         print()
-        
+
         # Insertar categorías fiscales base
         print("📁 Insertando categorías fiscales base...")
         await insert_tax_categories(client)
         print("✓ Categorías insertadas")
-        
+
         print()
         print("=" * 60)
         print("✅ BASE DE DATOS INICIALIZADA CORRECTAMENTE")
         print("=" * 60)
-        
+
         await client.disconnect()
         return True
-        
+
     except Exception as e:
         print(f"❌ ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -97,7 +101,7 @@ async def init_database():
 async def insert_tax_categories(client: TursoClient):
     """Inserta las categorías fiscales principales de España."""
     import uuid
-    
+
     categories = [
         ("IRPF", "IRPF", "Impuesto sobre la Renta de las Personas Físicas", None),
         ("IVA", "IVA", "Impuesto sobre el Valor Añadido", None),
@@ -113,7 +117,7 @@ async def insert_tax_categories(client: TursoClient):
         ("FACTURACION", "FAC", "Facturación y Verifactu", None),
         ("ADUANAS", "ADU", "Aduanas e Impuestos Especiales", None),
     ]
-    
+
     for name, code, description, parent_id in categories:
         try:
             cat_id = str(uuid.uuid4())
@@ -122,7 +126,7 @@ async def insert_tax_categories(client: TursoClient):
                 INSERT OR IGNORE INTO tax_categories (id, code, name, description, parent_id)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                [cat_id, code, name, description, parent_id]
+                [cat_id, code, name, description, parent_id],
             )
         except Exception as e:
             # Ignorar si ya existe

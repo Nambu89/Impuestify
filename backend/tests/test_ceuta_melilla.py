@@ -9,6 +9,7 @@ Tests cover:
 - Content restriction keywords (IPSI)
 - Agent label_map includes ceuta_melilla
 """
+
 import sys
 import json
 import pytest
@@ -19,6 +20,7 @@ from unittest.mock import MagicMock
 # before importing any app modules.
 # ---------------------------------------------------------------------------
 
+
 def _ensure_mock(module_name, **attrs):
     """Insert a MagicMock into sys.modules if the real module is absent."""
     if module_name not in sys.modules:
@@ -26,6 +28,7 @@ def _ensure_mock(module_name, **attrs):
         for k, v in attrs.items():
             setattr(mock, k, v)
         sys.modules[module_name] = mock
+
 
 # jose / bcrypt / slowapi are optional in unit-test environments
 _ensure_mock("jose")
@@ -52,6 +55,7 @@ from app.tools.web_scraper_tool import normalize_ccaa_name, CCAA_NORMALIZATION  
 # ---------------------------------------------------------------------------
 # Tests: FiscalProfileRequest — ceuta_melilla field
 # ---------------------------------------------------------------------------
+
 
 class TestCeutaMelillaField:
     """Verify ceuta_melilla field in FiscalProfileRequest."""
@@ -104,6 +108,7 @@ class TestCeutaMelillaField:
 # Tests: CCAA Normalization
 # ---------------------------------------------------------------------------
 
+
 class TestCCAANormalization:
     """Verify Ceuta/Melilla in CCAA normalization."""
 
@@ -130,6 +135,7 @@ class TestCCAANormalization:
 # Tests: Content Restriction — IPSI keywords
 # ---------------------------------------------------------------------------
 
+
 class TestIPSIContentRestriction:
     """Verify IPSI is NOT blocked as autonomo (it applies to all Ceuta/Melilla residents)."""
 
@@ -150,6 +156,7 @@ class TestIPSIContentRestriction:
 # ---------------------------------------------------------------------------
 # Tests: IRPF Simulator — 60% deduction
 # ---------------------------------------------------------------------------
+
 
 class TestIRPFCeutaMelillaDeduction:
     """Test the 60% Ceuta/Melilla deduction in IRPFSimulator."""
@@ -244,7 +251,9 @@ class TestIRPFCeutaMelillaDeduction:
         assert deduccion == 12000.0
 
         remaining = deduccion
-        cuota_liquida_general = max(0, cuota_liquida_general - min(remaining, cuota_liquida_general))
+        cuota_liquida_general = max(
+            0, cuota_liquida_general - min(remaining, cuota_liquida_general)
+        )
         remaining -= 5000.0
         cuota_ahorro = max(0, cuota_ahorro - min(remaining, cuota_ahorro))
 
@@ -255,6 +264,7 @@ class TestIRPFCeutaMelillaDeduction:
 # ---------------------------------------------------------------------------
 # Tests: Agent label_map includes ceuta_melilla
 # ---------------------------------------------------------------------------
+
 
 class TestAgentLabelMap:
     """Verify ceuta_melilla appears in agent label_maps."""
@@ -301,6 +311,7 @@ class TestAgentLabelMap:
 # Tests: Datos fiscales round-trip with ceuta_melilla
 # ---------------------------------------------------------------------------
 
+
 class TestDatosFiscalesRoundTrip:
     """Test ceuta_melilla field save/load in datos_fiscales JSON."""
 
@@ -337,10 +348,12 @@ class TestDatosFiscalesRoundTrip:
 
     def test_extract_ceuta_melilla_from_wrapped(self):
         """Extract plain ceuta_melilla value from wrapped format."""
-        raw = json.dumps({
-            "ceuta_melilla": {"value": True, "_source": "manual", "_updated": "2026-03-04"},
-            "regimen_iva": {"value": "ipsi", "_source": "manual", "_updated": "2026-03-04"},
-        })
+        raw = json.dumps(
+            {
+                "ceuta_melilla": {"value": True, "_source": "manual", "_updated": "2026-03-04"},
+                "regimen_iva": {"value": "ipsi", "_source": "manual", "_updated": "2026-03-04"},
+            }
+        )
 
         datos = json.loads(raw)
         fiscal_profile = {}
@@ -357,43 +370,57 @@ class TestDatosFiscalesRoundTrip:
 # Tests: ESTATAL_SCALE_JURISDICTIONS and auto-detection
 # ---------------------------------------------------------------------------
 
+
 class TestEstatalScaleJurisdictions:
     """Verify Ceuta/Melilla are recognized as Estatal-scale jurisdictions."""
 
     def test_ceuta_in_estatal_jurisdictions(self):
         from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+
         assert "ceuta" in ESTATAL_SCALE_JURISDICTIONS
 
     def test_melilla_in_estatal_jurisdictions(self):
         from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+
         assert "melilla" in ESTATAL_SCALE_JURISDICTIONS
 
     def test_madrid_not_in_estatal_jurisdictions(self):
         from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+
         assert "madrid" not in ESTATAL_SCALE_JURISDICTIONS
 
     def test_irpf_calculator_resolves_ceuta_to_estatal(self):
         """IRPFCalculator should map Ceuta to Estatal scale key."""
         from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+
         jurisdiction = "Ceuta"
-        ccaa_key = "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
+        ccaa_key = (
+            "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
+        )
         assert ccaa_key == "Estatal"
 
     def test_irpf_calculator_resolves_melilla_to_estatal(self):
         from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+
         jurisdiction = "Melilla"
-        ccaa_key = "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
+        ccaa_key = (
+            "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
+        )
         assert ccaa_key == "Estatal"
 
     def test_irpf_calculator_leaves_madrid_unchanged(self):
         from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+
         jurisdiction = "Madrid"
-        ccaa_key = "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
+        ccaa_key = (
+            "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
+        )
         assert ccaa_key == "Madrid"
 
     def test_simulator_auto_detects_ceuta_melilla(self):
         """IRPFSimulator should auto-detect ceuta_melilla from jurisdiction."""
         from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+
         # Simulate the auto-detection logic from IRPFSimulator.simulate()
         ceuta_melilla = False
         jurisdiction = "Melilla"
@@ -403,6 +430,7 @@ class TestEstatalScaleJurisdictions:
 
     def test_simulator_no_autodetect_for_madrid(self):
         from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+
         ceuta_melilla = False
         jurisdiction = "Madrid"
         if not ceuta_melilla and jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS:
@@ -412,6 +440,7 @@ class TestEstatalScaleJurisdictions:
     def test_simulator_respects_explicit_ceuta_melilla_true(self):
         """If ceuta_melilla is already True, auto-detection should not change it."""
         from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS
+
         ceuta_melilla = True
         jurisdiction = "Ceuta"
         if not ceuta_melilla and jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS:

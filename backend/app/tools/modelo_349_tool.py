@@ -12,6 +12,7 @@ Wraps `Modelo349Calculator`:
 
 NO genera fichero AEAT, NO presenta. Solo computa y avisa.
 """
+
 from __future__ import annotations
 
 import logging
@@ -210,8 +211,18 @@ def _periodo_label(periodicidad: str, periodo: str, year: int) -> str:
         try:
             mes = int(periodo)
             meses = [
-                "enero", "febrero", "marzo", "abril", "mayo", "junio",
-                "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+                "enero",
+                "febrero",
+                "marzo",
+                "abril",
+                "mayo",
+                "junio",
+                "julio",
+                "agosto",
+                "septiembre",
+                "octubre",
+                "noviembre",
+                "diciembre",
             ]
             return f"{meses[mes - 1].capitalize()} {year}"
         except (ValueError, IndexError):
@@ -291,13 +302,15 @@ async def calculate_modelo_349_tool(
         nif_validations: List[Dict[str, Any]] = []
         for op in ops:
             ok_format, country, motivo = calc.validate_nif_iva_format(op.nif_operador)
-            nif_validations.append({
-                "nif_iva": calc.normalize_nif_iva(op.nif_operador),
-                "country": country,
-                "format_ok": ok_format,
-                "motivo": motivo,
-                "vies": None,
-            })
+            nif_validations.append(
+                {
+                    "nif_iva": calc.normalize_nif_iva(op.nif_operador),
+                    "country": country,
+                    "format_ok": ok_format,
+                    "motivo": motivo,
+                    "vies": None,
+                }
+            )
 
         # ----- Validacion VIES opcional -----
         vies_warnings: List[str] = []
@@ -350,7 +363,9 @@ async def calculate_modelo_349_tool(
         por_clave = resumen["por_clave"]
 
         lines: List[str] = []
-        lines.append(f"**Modelo 349 — Declaracion recapitulativa intracomunitaria — {periodo_label}**")
+        lines.append(
+            f"**Modelo 349 — Declaracion recapitulativa intracomunitaria — {periodo_label}**"
+        )
         lines.append(f"Periodicidad detectada: **{periodicidad}** ({periodicidad_info['motivo']})")
         lines.append(f"Plazo de presentacion: {plazo}")
         if ccaa_canonical:
@@ -385,7 +400,9 @@ async def calculate_modelo_349_tool(
         lines.append(f"- Adquisiciones bienes (A): {totales['adquisiciones_bienes']:,.2f} EUR")
         lines.append(f"- Servicios prestados (S): {totales['servicios_prestados']:,.2f} EUR")
         lines.append(f"- Servicios adquiridos (I): {totales['servicios_adquiridos']:,.2f} EUR")
-        lines.append(f"- Volumen relevante (umbral 50.000 EUR): {totales['volumen_relevante']:,.2f} EUR")
+        lines.append(
+            f"- Volumen relevante (umbral 50.000 EUR): {totales['volumen_relevante']:,.2f} EUR"
+        )
         lines.append(f"- Total general (todas las claves): {totales['total_general']:,.2f} EUR")
         lines.append(f"- Operadores unicos: {resumen['operadores_unicos']}")
         lines.append(f"- Operaciones declaradas: {resumen['operaciones_count']}")
@@ -428,8 +445,12 @@ async def calculate_modelo_349_tool(
         logger.info(
             "Modelo 349 calculated: periodicidad=%s, periodo=%s %s, ops=%d, "
             "operadores=%d, volumen_relevante=%.2f, cuadre_ok=%s",
-            periodicidad, periodo, year, resumen["operaciones_count"],
-            resumen["operadores_unicos"], totales["volumen_relevante"],
+            periodicidad,
+            periodo,
+            year,
+            resumen["operaciones_count"],
+            resumen["operadores_unicos"],
+            totales["volumen_relevante"],
             cuadre_dict["cuadre_ok"] if cuadre_dict else "n/a",
         )
 

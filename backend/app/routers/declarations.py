@@ -4,6 +4,7 @@ Quarterly Declarations REST API — Modelos 303, 130, 420.
 Lightweight endpoints that calculate and persist quarterly tax declarations.
 No LLM involved — direct calculator calls for fast (~50ms) responses.
 """
+
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/api/declarations", tags=["declarations"])
 
 
 # === Request/Response Models ===
+
 
 class Calculate303Request(BaseModel):
     # IVA devengado
@@ -214,6 +216,7 @@ class DeclarationDetailResponse(BaseModel):
 
 # === Endpoints ===
 
+
 @router.post("/303/calculate", response_model=CalculationResponse)
 @limiter.limit("30/minute")
 async def calculate_303(
@@ -224,6 +227,7 @@ async def calculate_303(
     """Calculate Modelo 303 (IVA) — no LLM, direct calculator."""
     try:
         from app.utils.calculators.modelo_303 import Modelo303Calculator
+
         calc = Modelo303Calculator(None)
         result = await calc.calculate(**body.model_dump())
         return CalculationResponse(result=result)
@@ -241,6 +245,7 @@ async def calculate_130(
     """Calculate Modelo 130 (Pago Fraccionado IRPF) — no LLM, direct calculator."""
     try:
         from app.utils.calculators.modelo_130 import Modelo130Calculator
+
         calc = Modelo130Calculator(None)
         result = await calc.calculate(**body.model_dump())
         return CalculationResponse(result=result)
@@ -258,6 +263,7 @@ async def calculate_420(
     """Calculate Modelo 420 (IGIC Canarias) — no LLM, direct calculator."""
     try:
         from app.utils.calculators.modelo_420 import Modelo420Calculator
+
         calc = Modelo420Calculator(None)
         result = await calc.calculate(**body.model_dump())
         return CalculationResponse(result=result)
@@ -275,6 +281,7 @@ async def calculate_ipsi(
     """Calculate IPSI (Ceuta/Melilla) — no LLM, direct calculator."""
     try:
         from app.utils.calculators.modelo_ipsi import ModeloIpsiCalculator
+
         calc = ModeloIpsiCalculator(None)
         result = await calc.calculate(**body.model_dump())
         return CalculationResponse(result=result)
@@ -414,7 +421,9 @@ async def delete_declaration(
         service = DeclarationService(db)
         deleted = await service.delete(current_user.user_id, declaration_id)
         if not deleted:
-            raise HTTPException(status_code=404, detail="Declaration not found or already presented")
+            raise HTTPException(
+                status_code=404, detail="Declaration not found or already presented"
+            )
         return {"success": True}
     except HTTPException:
         raise

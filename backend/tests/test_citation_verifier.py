@@ -37,9 +37,9 @@ from app.security.citation_verifier import (
 def test_extract_single_citation(text, expected_label):
     cites = extract_citations(text)
     assert cites, f"No citation extracted from {text!r}"
-    assert any(c.label == expected_label for c in cites), (
-        f"Expected label {expected_label} for {text!r}, got {[c.label for c in cites]}"
-    )
+    assert any(
+        c.label == expected_label for c in cites
+    ), f"Expected label {expected_label} for {text!r}, got {[c.label for c in cites]}"
 
 
 def test_extract_multiple_unique():
@@ -80,7 +80,10 @@ def test_normalize_strips_accents():
 def test_verify_all_present():
     response = "Según Art. 68.4 LIRPF y Ley 22/2009 se aplica deducción del 60%."
     chunks = [
-        {"id": "c1", "text": "El artículo 68.4 LIRPF regula la deducción por residencia en Ceuta y Melilla"},
+        {
+            "id": "c1",
+            "text": "El artículo 68.4 LIRPF regula la deducción por residencia en Ceuta y Melilla",
+        },
         {"id": "c2", "text": "La Ley 22/2009 cede tributos a las CCAA"},
     ]
     result = verify_citations(response, chunks)
@@ -235,9 +238,9 @@ def test_canonical_article_70_liva_whitelisted():
     result = verify_citations(response, chunks)
     art_cites = [c for c in result.citations if c.label == "art_law"]
     assert art_cites
-    assert all(c.verified for c in art_cites), (
-        f"Canonical articles should be verified: {[(c.text, c.verified) for c in art_cites]}"
-    )
+    assert all(
+        c.verified for c in art_cites
+    ), f"Canonical articles should be verified: {[(c.text, c.verified) for c in art_cites]}"
 
 
 def test_canonical_article_21_liva_whitelisted():

@@ -42,6 +42,7 @@ Calcula:
   IGIC deducible (input) por concepto y total deducible.
   Resultado del regimen general, ajustes y resultado final de liquidacion.
 """
+
 from typing import Any, Dict
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
@@ -68,13 +69,13 @@ TIPO_ESPECIAL = 0.20
 IGIC_RATES_BY_YEAR: Dict[int, Dict[str, float]] = {
     2024: {
         "cero": 0.00,
-        "energeticos": 0.01,        # ya existia parcialmente
-        "superreducido": 0.03,      # antes "reducido"
-        "reducido": 0.05,           # ya existia
+        "energeticos": 0.01,  # ya existia parcialmente
+        "superreducido": 0.03,  # antes "reducido"
+        "reducido": 0.05,  # ya existia
         "general": 0.07,
         "incrementado_1": 0.095,
-        "incrementado_2": 0.135,    # DEROGADO 2025
-        "especial": 0.20,           # tabaco negro
+        "incrementado_2": 0.135,  # DEROGADO 2025
+        "especial": 0.20,  # tabaco negro
         "especial_tabaco_rubio_legacy": 0.35,  # DEROGADO 2025
     },
     2025: {
@@ -84,8 +85,8 @@ IGIC_RATES_BY_YEAR: Dict[int, Dict[str, float]] = {
         "reducido": 0.05,
         "general": 0.07,
         "incrementado_1": 0.095,
-        "incrementado_2": 0.15,     # NUEVO 2025
-        "especial": 0.20,           # tabaco unificado
+        "incrementado_2": 0.15,  # NUEVO 2025
+        "especial": 0.20,  # tabaco unificado
     },
     2026: {
         "cero": 0.00,
@@ -171,13 +172,13 @@ class Modelo420Calculator:
         base_incrementado_2: float = 0.0,
         base_especial: float = 0.0,
         # --- Aliases legacy (retro-compat con callers anteriores al refactor) ---
-        base_0: float = 0.0,    # alias base_cero
-        base_3: float = 0.0,    # alias base_superreducido
-        base_7: float = 0.0,    # alias base_general
+        base_0: float = 0.0,  # alias base_cero
+        base_3: float = 0.0,  # alias base_superreducido
+        base_7: float = 0.0,  # alias base_general
         base_9_5: float = 0.0,  # alias base_incrementado_1
-        base_13_5: float = 0.0, # alias base_incrementado_2 (year=2024)
-        base_20: float = 0.0,   # alias base_especial
-        base_35: float = 0.0,   # alias base_especial con tabaco_rubio_legacy=True
+        base_13_5: float = 0.0,  # alias base_incrementado_2 (year=2024)
+        base_20: float = 0.0,  # alias base_especial
+        base_35: float = 0.0,  # alias base_especial con tabaco_rubio_legacy=True
         # Adquisiciones extracanarias (equiv. intracomunitarias en IVA)
         base_extracanarias: float = 0.0,
         tipo_extracanarias: float = TIPO_GENERAL,
@@ -244,9 +245,7 @@ class Modelo420Calculator:
         }
         for name, val in bases.items():
             if val < 0:
-                raise ValueError(
-                    f"La base imponible '{name}' no puede ser negativa: {val}"
-                )
+                raise ValueError(f"La base imponible '{name}' no puede ser negativa: {val}")
 
         if quarter not in (1, 2, 3, 4):
             raise ValueError(f"quarter debe estar entre 1 y 4, recibido: {quarter}")
@@ -385,9 +384,7 @@ class Modelo420Calculator:
         # -------------------------------------------------------------------
         resultado_regimen_general = round(total_devengado - total_deducible, 2)
 
-        cuotas_compensar_aplicadas = max(
-            0.0, round(float(cuotas_compensar_anteriores), 2)
-        )
+        cuotas_compensar_aplicadas = max(0.0, round(float(cuotas_compensar_anteriores), 2))
 
         # Regularizacion anual exclusiva del 4T (TR Decreto Legislativo 1/2025).
         regularizacion_anual_aplicada = (
@@ -395,9 +392,7 @@ class Modelo420Calculator:
         )
 
         resultado_liquidacion = round(
-            resultado_regimen_general
-            - cuotas_compensar_aplicadas
-            + regularizacion_anual_aplicada,
+            resultado_regimen_general - cuotas_compensar_aplicadas + regularizacion_anual_aplicada,
             2,
         )
 
@@ -429,9 +424,7 @@ class Modelo420Calculator:
             "cuotas_compensar_anteriores": cuotas_compensar_aplicadas,
             "regularizacion_anual": regularizacion_anual_aplicada,
             "resultado_liquidacion": resultado_liquidacion,
-            "resultado_anterior_complementaria": round(
-                float(resultado_anterior_complementaria), 2
-            ),
+            "resultado_anterior_complementaria": round(float(resultado_anterior_complementaria), 2),
             "cuota_diferencial_complementaria": cuota_diferencial_complementaria,
             "quarter": quarter,
             "year": year_resolved,

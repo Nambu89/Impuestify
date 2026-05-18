@@ -33,6 +33,7 @@ class ReasoningTrailRecorder:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -41,24 +42,28 @@ class ReasoningTrailRecorder:
         """Compact chunk metadata to keep DB rows small (no full text)."""
         out = []
         for c in chunks or []:
-            out.append({
-                "id": c.get("id"),
-                "source": c.get("title") or c.get("source"),
-                "page": c.get("page"),
-                "trust_level": c.get("trust_level"),
-                "similarity": round(c.get("similarity", 0) or 0, 4),
-            })
+            out.append(
+                {
+                    "id": c.get("id"),
+                    "source": c.get("title") or c.get("source"),
+                    "page": c.get("page"),
+                    "trust_level": c.get("trust_level"),
+                    "similarity": round(c.get("similarity", 0) or 0, 4),
+                }
+            )
         return out
 
     @staticmethod
     def _summarize_tools(tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         out = []
         for t in tool_calls or []:
-            out.append({
-                "name": t.get("name") or t.get("tool"),
-                "args_keys": sorted(list((t.get("arguments") or t.get("args") or {}).keys())),
-                "ok": t.get("ok", True),
-            })
+            out.append(
+                {
+                    "name": t.get("name") or t.get("tool"),
+                    "args_keys": sorted(list((t.get("arguments") or t.get("args") or {}).keys())),
+                    "ok": t.get("ok", True),
+                }
+            )
         return out
 
     async def record(
@@ -78,16 +83,24 @@ class ReasoningTrailRecorder:
             trail_id = str(uuid.uuid4())
 
             # Defensive: anything we don't recognize gets serialized as best-effort
-            chunks_json = json.dumps(self._summarize_chunks(rag_chunks or []), default=str, ensure_ascii=False)
-            tools_json = json.dumps(self._summarize_tools(tools_called or []), default=str, ensure_ascii=False)
+            chunks_json = json.dumps(
+                self._summarize_chunks(rag_chunks or []), default=str, ensure_ascii=False
+            )
+            tools_json = json.dumps(
+                self._summarize_tools(tools_called or []), default=str, ensure_ascii=False
+            )
             sec_json = json.dumps({"layer": security_layer or "all_clear"}, ensure_ascii=False)
 
             # Fiscal profile snapshot — only safe keys, no full object dump
             safe_profile = {}
             if fiscal_profile:
                 safe_keys = (
-                    "ccaa_residencia", "situacion_laboral", "tipo_actividad",
-                    "regimen_estimacion", "edad_contribuyente", "tributacion_conjunta",
+                    "ccaa_residencia",
+                    "situacion_laboral",
+                    "tipo_actividad",
+                    "regimen_estimacion",
+                    "edad_contribuyente",
+                    "tributacion_conjunta",
                     "roles_adicionales",
                 )
                 for k in safe_keys:
@@ -104,9 +117,15 @@ class ReasoningTrailRecorder:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
-                    trail_id, message_id, user_id, conversation_id,
-                    chunks_json, tools_json, sec_json,
-                    profile_json, model or "gpt-5-mini",
+                    trail_id,
+                    message_id,
+                    user_id,
+                    conversation_id,
+                    chunks_json,
+                    tools_json,
+                    sec_json,
+                    profile_json,
+                    model or "gpt-5-mini",
                     datetime.now(timezone.utc).isoformat(),
                 ],
             )

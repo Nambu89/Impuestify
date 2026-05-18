@@ -27,6 +27,7 @@ resuelve el ``defensia_rag_verifier`` contra el corpus normativo. Por eso
 aqui no aparecen literales del articulado — solo terminos descriptivos del
 supuesto.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -48,12 +49,12 @@ from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 # Helper de aislamiento — carga solo R022 tras el reset del conftest
 # ---------------------------------------------------------------------------
 
+
 def _cargar_solo_R022() -> None:
     """Limpia el REGISTRY y re-registra exclusivamente la regla R022."""
     reset_registry()
     module_name = (
-        "app.services.defensia_rules.reglas_otros_tributos."
-        "R022_iva_inversion_sujeto_pasivo"
+        "app.services.defensia_rules.reglas_otros_tributos." "R022_iva_inversion_sujeto_pasivo"
     )
     if module_name in sys.modules:
         importlib.reload(sys.modules[module_name])
@@ -72,6 +73,7 @@ def _recargar_R022():
 # Helpers locales
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica.
 
@@ -83,21 +85,18 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
         f"Cita hardcoded detectada: 'Art. 84' en '{cita}'. "
         "La cita canonica debe venir del RAG verificador."
     )
-    assert "84.Uno.2" not in cita, (
-        f"Cita hardcoded detectada: '84.Uno.2' en '{cita}'."
-    )
-    assert "art. 84 liva" not in cita.lower(), (
-        f"Cita hardcoded detectada: 'art. 84 liva' en '{cita}'."
-    )
+    assert "84.Uno.2" not in cita, f"Cita hardcoded detectada: '84.Uno.2' en '{cita}'."
+    assert (
+        "art. 84 liva" not in cita.lower()
+    ), f"Cita hardcoded detectada: 'art. 84 liva' en '{cita}'."
 
 
 # ---------------------------------------------------------------------------
 # Test 1 — Positivo: ejecucion de garantia inmobiliaria sin ISP
 # ---------------------------------------------------------------------------
 
-def test_R022_positivo_ejecucion_garantia_inmobiliaria(
-    build_exp, build_brief, build_doc
-):
+
+def test_R022_positivo_ejecucion_garantia_inmobiliaria(build_exp, build_brief, build_doc):
     """AEAT liquida IVA al transmitente en ejecucion de garantia inmobiliaria.
 
     Supuesto tipico: dacion en pago / adjudicacion en subasta de un inmueble
@@ -128,9 +127,9 @@ def test_R022_positivo_ejecucion_garantia_inmobiliaria(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R022"
@@ -145,9 +144,8 @@ def test_R022_positivo_ejecucion_garantia_inmobiliaria(
 # Test 2 — Positivo: renuncia a exencion del art. 20 sin ISP
 # ---------------------------------------------------------------------------
 
-def test_R022_positivo_renuncia_exencion_inmobiliaria(
-    build_exp, build_brief, build_doc
-):
+
+def test_R022_positivo_renuncia_exencion_inmobiliaria(build_exp, build_brief, build_doc):
     """AEAT liquida IVA al transmitente en renuncia a exencion inmobiliaria.
 
     Cuando el transmitente renuncia a la exencion del art. 20 LIVA (segundas
@@ -179,9 +177,7 @@ def test_R022_positivo_renuncia_exencion_inmobiliaria(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
-    )
+    assert len(candidatos) == 1, f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R022"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
@@ -194,9 +190,8 @@ def test_R022_positivo_renuncia_exencion_inmobiliaria(
 # Test 3 — Positivo: entrega en procedimiento concursal sin ISP
 # ---------------------------------------------------------------------------
 
-def test_R022_positivo_entrega_concurso(
-    build_exp, build_brief, build_doc
-):
+
+def test_R022_positivo_entrega_concurso(build_exp, build_brief, build_doc):
     """AEAT liquida IVA al transmitente en entrega realizada en concurso.
 
     En las entregas de bienes y prestaciones de servicios realizadas por un
@@ -227,9 +222,7 @@ def test_R022_positivo_entrega_concurso(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
-    )
+    assert len(candidatos) == 1, f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R022"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
@@ -242,9 +235,8 @@ def test_R022_positivo_entrega_concurso(
 # Test 4 — Negativo: ISP correctamente aplicado
 # ---------------------------------------------------------------------------
 
-def test_R022_negativo_isp_aplicado(
-    build_exp, build_brief, build_doc
-):
+
+def test_R022_negativo_isp_aplicado(build_exp, build_brief, build_doc):
     """Si el contribuyente ya aplico ISP correctamente, R022 NO dispara.
 
     La regla solo defiende al contribuyente cuando la Administracion ha
@@ -272,8 +264,7 @@ def test_R022_negativo_isp_aplicado(
     candidatos = evaluar(exp, brief)
 
     assert candidatos == [], (
-        f"R022 NO deberia disparar cuando la ISP esta correctamente "
-        f"aplicada, got: {candidatos}"
+        f"R022 NO deberia disparar cuando la ISP esta correctamente " f"aplicada, got: {candidatos}"
     )
 
 
@@ -281,9 +272,8 @@ def test_R022_negativo_isp_aplicado(
 # Test 5 — Negativo: operacion ordinaria no sujeta a ISP
 # ---------------------------------------------------------------------------
 
-def test_R022_negativo_operacion_ordinaria(
-    build_exp, build_brief, build_doc
-):
+
+def test_R022_negativo_operacion_ordinaria(build_exp, build_brief, build_doc):
     """Operaciones ordinarias (venta regular B2B/B2C) NO estan sujetas a ISP.
 
     Las ventas ordinarias siguen el regimen general de IVA: el transmitente
@@ -322,9 +312,8 @@ def test_R022_negativo_operacion_ordinaria(
 # Test 6 — Anti-hardcode: la cita es semantica
 # ---------------------------------------------------------------------------
 
-def test_R022_cita_es_semantica_no_hardcoded(
-    build_exp, build_brief, build_doc
-):
+
+def test_R022_cita_es_semantica_no_hardcoded(build_exp, build_brief, build_doc):
     """Invariante #2: la cita normativa NO puede contener el articulo canonico.
 
     El RAG verificador resuelve la cita canonica a posteriori contra el
@@ -356,9 +345,5 @@ def test_R022_cita_es_semantica_no_hardcoded(
 
     cita = arg.cita_normativa_propuesta
     assert (
-        "Art. 84" not in cita
-        and "84.Uno.2" not in cita
-        and "art. 84 liva" not in cita.lower()
-    ), (
-        f"La cita normativa debe ser semantica, got: {cita!r}"
-    )
+        "Art. 84" not in cita and "84.Uno.2" not in cita and "art. 84 liva" not in cita.lower()
+    ), f"La cita normativa debe ser semantica, got: {cita!r}"

@@ -9,6 +9,7 @@ Covers:
 - Edge cases (tenencia 0, 20+, valor catastral suelo = 0)
 - STC 182/2021 (no plusvalia → no se paga)
 """
+
 import pytest
 import asyncio
 from app.utils.calculators.plusvalia_municipal import (
@@ -25,6 +26,7 @@ def calculator():
 # ---------------------------------------------------------------------------
 # 1. Metodo objetivo basico (5 anos tenencia, tipo 30%)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_metodo_objetivo_basico(calculator):
@@ -49,6 +51,7 @@ async def test_metodo_objetivo_basico(calculator):
 # ---------------------------------------------------------------------------
 # 2. Metodo real basico (ganancia positiva)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_metodo_real_basico(calculator):
@@ -79,6 +82,7 @@ async def test_metodo_real_basico(calculator):
 # 3. Metodo real sin plusvalia (perdida → exento STC 182/2021)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_metodo_real_sin_plusvalia(calculator):
     """Venta con perdida → exento por STC 182/2021."""
@@ -99,6 +103,7 @@ async def test_metodo_real_sin_plusvalia(calculator):
 # ---------------------------------------------------------------------------
 # 4. Comparacion ambos metodos → elige menor
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_elige_metodo_menor(calculator):
@@ -140,6 +145,7 @@ async def test_elige_metodo_menor(calculator):
 # 5. Tenencia < 1 ano
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_tenencia_menos_1_ano(calculator):
     """Tenencia 0 anos (menos de 1 ano), coeficiente 0.15."""
@@ -160,6 +166,7 @@ async def test_tenencia_menos_1_ano(calculator):
 # ---------------------------------------------------------------------------
 # 6. Tenencia 20+ anos (coeficiente maximo)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_tenencia_20_plus(calculator):
@@ -193,6 +200,7 @@ async def test_tenencia_20_plus(calculator):
 # 7. Tipo municipal diferente a 30% (ej: Madrid 29%)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_tipo_municipal_madrid_29(calculator):
     """Madrid aplica 29% en lugar del maximo 30%."""
@@ -218,6 +226,7 @@ async def test_tipo_municipal_madrid_29(calculator):
 # 8. Exencion por dacion en pago
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_exencion_dacion_pago(calculator):
     """Dacion en pago de vivienda habitual → exento."""
@@ -239,6 +248,7 @@ async def test_exencion_dacion_pago(calculator):
 # 9. Exencion por divorcio
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_exencion_divorcio(calculator):
     """Transmision entre conyuges por divorcio → exento."""
@@ -253,12 +263,16 @@ async def test_exencion_divorcio(calculator):
     assert result["success"] is True
     assert result["exento"] is True
     assert result["cuota_final"] == 0.0
-    assert "divorcio" in result["motivo_exencion"].lower() or "matrimonial" in result["motivo_exencion"].lower()
+    assert (
+        "divorcio" in result["motivo_exencion"].lower()
+        or "matrimonial" in result["motivo_exencion"].lower()
+    )
 
 
 # ---------------------------------------------------------------------------
 # 10. Edge: valor catastral suelo = 0
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_valor_catastral_suelo_cero(calculator):
@@ -281,6 +295,7 @@ async def test_valor_catastral_suelo_cero(calculator):
 # 11. Edge: anos tenencia = 0
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_anos_tenencia_cero(calculator):
     """0 anos de tenencia (compra-venta inmediata), coef 0.15."""
@@ -301,14 +316,31 @@ async def test_anos_tenencia_cero(calculator):
 # 12. Todos los coeficientes maximos del RDL 26/2021 (2024)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_coeficientes_tabla_completa(calculator):
     """Verifica que todos los coeficientes maximos son correctos."""
     expected = {
-        0: 0.15, 1: 0.15, 2: 0.14, 3: 0.15, 4: 0.17,
-        5: 0.20, 6: 0.20, 7: 0.20, 8: 0.22, 9: 0.22,
-        10: 0.22, 11: 0.22, 12: 0.23, 13: 0.26, 14: 0.36,
-        15: 0.45, 16: 0.52, 17: 0.60, 18: 0.60, 19: 0.60,
+        0: 0.15,
+        1: 0.15,
+        2: 0.14,
+        3: 0.15,
+        4: 0.17,
+        5: 0.20,
+        6: 0.20,
+        7: 0.20,
+        8: 0.22,
+        9: 0.22,
+        10: 0.22,
+        11: 0.22,
+        12: 0.23,
+        13: 0.26,
+        14: 0.36,
+        15: 0.45,
+        16: 0.52,
+        17: 0.60,
+        18: 0.60,
+        19: 0.60,
         20: 0.60,
     }
     for anos, coef in expected.items():
@@ -321,6 +353,7 @@ async def test_coeficientes_tabla_completa(calculator):
 # ---------------------------------------------------------------------------
 # 13. Tipo impositivo clamped al maximo legal
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_tipo_impositivo_clamped(calculator):
@@ -341,6 +374,7 @@ async def test_tipo_impositivo_clamped(calculator):
 # 14. Validacion: tipo impositivo <= 0
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_tipo_impositivo_cero(calculator):
     """Tipo impositivo 0 o negativo → error."""
@@ -359,6 +393,7 @@ async def test_tipo_impositivo_cero(calculator):
 # ---------------------------------------------------------------------------
 # 15. Formatted response presente
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_formatted_response(calculator):
@@ -382,6 +417,7 @@ async def test_formatted_response(calculator):
 # 16. Validacion: valores catastrales negativos
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_valores_catastrales_negativos(calculator):
     """Valores catastrales negativos → error."""
@@ -398,6 +434,7 @@ async def test_valores_catastrales_negativos(calculator):
 # ---------------------------------------------------------------------------
 # 17. Valor catastral total = 0 (edge case para metodo real)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_valor_catastral_total_cero(calculator):

@@ -1,4 +1,5 @@
 """Tests for IRPFProjector -- annual IRPF projection from quarterly data."""
+
 import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock
@@ -11,16 +12,31 @@ from app.utils.calculators.irpf_projector import IRPFProjector
 # Mock infrastructure (shared with test_irpf_simulator.py patterns)
 # -----------------------------------------------------------------------
 
+
 @dataclass
 class MockRow:
     data: Dict[str, Any]
-    def __getitem__(self, key): return self.data[key]
-    def get(self, key, default=None): return self.data.get(key, default)
-    def keys(self): return self.data.keys()
-    def values(self): return self.data.values()
-    def items(self): return self.data.items()
-    def __iter__(self): return iter(self.data)
-    def __len__(self): return len(self.data)
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def get(self, key, default=None):
+        return self.data.get(key, default)
+
+    def keys(self):
+        return self.data.keys()
+
+    def values(self):
+        return self.data.values()
+
+    def items(self):
+        return self.data.items()
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data)
 
 
 @dataclass
@@ -30,47 +46,132 @@ class MockResult:
 
 # Minimal IRPF scales for Madrid (enough for simulator to work)
 ESTATAL_SCALE = [
-    {"tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
-    {"tramo_num": 2, "base_hasta": 20200, "cuota_integra": 1182.75, "resto_base": 7750, "tipo_aplicable": 12},
-    {"tramo_num": 3, "base_hasta": 35200, "cuota_integra": 2112.75, "resto_base": 15000, "tipo_aplicable": 15},
-    {"tramo_num": 4, "base_hasta": 60000, "cuota_integra": 4362.75, "resto_base": 24800, "tipo_aplicable": 18.5},
-    {"tramo_num": 5, "base_hasta": 300000, "cuota_integra": 8952.75, "resto_base": 240000, "tipo_aplicable": 22.5},
+    {
+        "tramo_num": 1,
+        "base_hasta": 12450,
+        "cuota_integra": 0,
+        "resto_base": 12450,
+        "tipo_aplicable": 9.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 20200,
+        "cuota_integra": 1182.75,
+        "resto_base": 7750,
+        "tipo_aplicable": 12,
+    },
+    {
+        "tramo_num": 3,
+        "base_hasta": 35200,
+        "cuota_integra": 2112.75,
+        "resto_base": 15000,
+        "tipo_aplicable": 15,
+    },
+    {
+        "tramo_num": 4,
+        "base_hasta": 60000,
+        "cuota_integra": 4362.75,
+        "resto_base": 24800,
+        "tipo_aplicable": 18.5,
+    },
+    {
+        "tramo_num": 5,
+        "base_hasta": 300000,
+        "cuota_integra": 8952.75,
+        "resto_base": 240000,
+        "tipo_aplicable": 22.5,
+    },
 ]
 
 MADRID_SCALE = [
-    {"tramo_num": 1, "base_hasta": 12961.49, "cuota_integra": 0, "resto_base": 12961.49, "tipo_aplicable": 8.5},
-    {"tramo_num": 2, "base_hasta": 18612.43, "cuota_integra": 1101.73, "resto_base": 5650.94, "tipo_aplicable": 10.7},
-    {"tramo_num": 3, "base_hasta": 35200.42, "cuota_integra": 1706.38, "resto_base": 16588.00, "tipo_aplicable": 12.8},
-    {"tramo_num": 4, "base_hasta": 55000.42, "cuota_integra": 3829.64, "resto_base": 19800.00, "tipo_aplicable": 17.4},
-    {"tramo_num": 5, "base_hasta": 999999, "cuota_integra": 7274.84, "resto_base": 944998.58, "tipo_aplicable": 20.5},
+    {
+        "tramo_num": 1,
+        "base_hasta": 12961.49,
+        "cuota_integra": 0,
+        "resto_base": 12961.49,
+        "tipo_aplicable": 8.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 18612.43,
+        "cuota_integra": 1101.73,
+        "resto_base": 5650.94,
+        "tipo_aplicable": 10.7,
+    },
+    {
+        "tramo_num": 3,
+        "base_hasta": 35200.42,
+        "cuota_integra": 1706.38,
+        "resto_base": 16588.00,
+        "tipo_aplicable": 12.8,
+    },
+    {
+        "tramo_num": 4,
+        "base_hasta": 55000.42,
+        "cuota_integra": 3829.64,
+        "resto_base": 19800.00,
+        "tipo_aplicable": 17.4,
+    },
+    {
+        "tramo_num": 5,
+        "base_hasta": 999999,
+        "cuota_integra": 7274.84,
+        "resto_base": 944998.58,
+        "tipo_aplicable": 20.5,
+    },
 ]
 
 MOCK_MPYF = {
-    "contribuyente": 5550, "contribuyente_65": 6700, "contribuyente_75": 8100,
-    "descendiente_1": 2400, "descendiente_2": 2700, "descendiente_3": 4000,
-    "descendiente_4_plus": 4500, "descendiente_menor_3": 2800,
-    "ascendiente_65": 1150, "ascendiente_75": 2550,
-    "discapacidad_33_65": 3000, "discapacidad_65_plus": 9000, "gastos_asistencia": 3000,
+    "contribuyente": 5550,
+    "contribuyente_65": 6700,
+    "contribuyente_75": 8100,
+    "descendiente_1": 2400,
+    "descendiente_2": 2700,
+    "descendiente_3": 4000,
+    "descendiente_4_plus": 4500,
+    "descendiente_menor_3": 2800,
+    "ascendiente_65": 1150,
+    "ascendiente_75": 2550,
+    "discapacidad_33_65": 3000,
+    "discapacidad_65_plus": 9000,
+    "gastos_asistencia": 3000,
 }
 
 MOCK_TRABAJO = {
-    "otros_gastos": 2000, "reduccion_max": 7302, "reduccion_rend_min": 14852,
-    "reduccion_rend_mid": 17673.52, "reduccion_rend_max": 19747.5,
-    "reduccion_factor_1": 1.75, "reduccion_factor_2": 1.14,
-    "reduccion_mid_value": 2364.34, "cuotas_colegio_max": 500,
-    "defensa_juridica_max": 300, "ss_empleado_pct": 6.35,
+    "otros_gastos": 2000,
+    "reduccion_max": 7302,
+    "reduccion_rend_min": 14852,
+    "reduccion_rend_mid": 17673.52,
+    "reduccion_rend_max": 19747.5,
+    "reduccion_factor_1": 1.75,
+    "reduccion_factor_2": 1.14,
+    "reduccion_mid_value": 2364.34,
+    "cuotas_colegio_max": 500,
+    "defensa_juridica_max": 300,
+    "ss_empleado_pct": 6.35,
 }
 
 MOCK_INMUEBLES = {"reduccion_alquiler_vivienda": 60, "amortizacion_pct": 3}
 
 AHORRO_SCALE = [
-    {"tramo_num": 1, "base_hasta": 6000, "cuota_integra": 0, "resto_base": 6000, "tipo_aplicable": 9.5},
-    {"tramo_num": 2, "base_hasta": 50000, "cuota_integra": 570, "resto_base": 44000, "tipo_aplicable": 10.5},
+    {
+        "tramo_num": 1,
+        "base_hasta": 6000,
+        "cuota_integra": 0,
+        "resto_base": 6000,
+        "tipo_aplicable": 9.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 50000,
+        "cuota_integra": 570,
+        "resto_base": 44000,
+        "tipo_aplicable": 10.5,
+    },
 ]
 
 
-def build_projector_db(declarations_130=None, declarations_303=None,
-                       declarations_420=None):
+def build_projector_db(declarations_130=None, declarations_303=None, declarations_420=None):
     """Build mock DB that serves both declarations AND irpf_scales/tax_parameters."""
     declarations_130 = declarations_130 or []
     declarations_303 = declarations_303 or []
@@ -129,8 +230,9 @@ def build_projector_db(declarations_130=None, declarations_303=None,
     return db
 
 
-def _make_130_row(quarter, ingresos_acum, gastos_acum, retenciones_acum=0,
-                  tax_due=500, territory="Comun"):
+def _make_130_row(
+    quarter, ingresos_acum, gastos_acum, retenciones_acum=0, tax_due=500, territory="Comun"
+):
     """Mock Modelo 130 quarterly_declarations row."""
     return {
         "quarter": quarter,
@@ -138,12 +240,14 @@ def _make_130_row(quarter, ingresos_acum, gastos_acum, retenciones_acum=0,
         "tax_due": tax_due,
         "total_income": ingresos_acum,
         "total_expenses": gastos_acum,
-        "form_data": json.dumps({
-            "ingresos_acumulados": ingresos_acum,
-            "gastos_acumulados": gastos_acum,
-            "retenciones_acumuladas": retenciones_acum,
-            "territory": territory,
-        }),
+        "form_data": json.dumps(
+            {
+                "ingresos_acumulados": ingresos_acum,
+                "gastos_acumulados": gastos_acum,
+                "retenciones_acumuladas": retenciones_acum,
+                "territory": territory,
+            }
+        ),
         "calculated_result": json.dumps({"resultado": tax_due}),
     }
 
@@ -157,16 +261,19 @@ def _make_303_row(quarter, total_devengado=2100, total_deducible=700):
         "total_income": 10000,
         "total_expenses": 0,
         "form_data": json.dumps({"base_21": 10000}),
-        "calculated_result": json.dumps({
-            "total_devengado": total_devengado,
-            "total_deducible": total_deducible,
-        }),
+        "calculated_result": json.dumps(
+            {
+                "total_devengado": total_devengado,
+                "total_deducible": total_deducible,
+            }
+        ),
     }
 
 
 # ===========================================================================
 # Unit tests: aggregation
 # ===========================================================================
+
 
 def test_aggregate_activity_comun_accumulated():
     """Comun territory uses accumulated figures from last quarter."""
@@ -186,14 +293,20 @@ def test_aggregate_activity_araba_per_quarter():
     projector = IRPFProjector(None)
     data = [
         {
-            "quarter": 1, "territory": "Araba", "tax_due": 250,
-            "total_income": 8000, "total_expenses": 3000,
+            "quarter": 1,
+            "territory": "Araba",
+            "tax_due": 250,
+            "total_income": 8000,
+            "total_expenses": 3000,
             "form_data": {"ingresos_trimestre": 8000, "gastos_trimestre": 3000},
             "calculated_result": {},
         },
         {
-            "quarter": 2, "territory": "Araba", "tax_due": 300,
-            "total_income": 10000, "total_expenses": 4000,
+            "quarter": 2,
+            "territory": "Araba",
+            "tax_due": 300,
+            "total_income": 10000,
+            "total_expenses": 4000,
             "form_data": {"ingresos_trimestre": 10000, "gastos_trimestre": 4000},
             "calculated_result": {},
         },
@@ -215,11 +328,17 @@ def test_aggregate_activity_empty():
 # Unit tests: annualization
 # ===========================================================================
 
+
 def test_annualize_1_quarter():
     """1 quarter: factor x4."""
     projector = IRPFProjector(None)
-    activity = {"ingresos": 10000, "gastos": 3000, "rendimiento_neto": 7000,
-                "cuota_autonomo_anual": 0, "num_quarters": 1}
+    activity = {
+        "ingresos": 10000,
+        "gastos": 3000,
+        "rendimiento_neto": 7000,
+        "cuota_autonomo_anual": 0,
+        "num_quarters": 1,
+    }
     result = projector._annualize(activity, 1)
     assert result["ingresos"] == 40000
     assert result["gastos"] == 12000
@@ -229,8 +348,13 @@ def test_annualize_1_quarter():
 def test_annualize_2_quarters():
     """2 quarters: factor x2."""
     projector = IRPFProjector(None)
-    activity = {"ingresos": 20000, "gastos": 6000, "rendimiento_neto": 14000,
-                "cuota_autonomo_anual": 0, "num_quarters": 2}
+    activity = {
+        "ingresos": 20000,
+        "gastos": 6000,
+        "rendimiento_neto": 14000,
+        "cuota_autonomo_anual": 0,
+        "num_quarters": 2,
+    }
     result = projector._annualize(activity, 2)
     assert result["ingresos"] == 40000
     assert result["factor"] == 2.0
@@ -239,8 +363,13 @@ def test_annualize_2_quarters():
 def test_annualize_3_quarters():
     """3 quarters: factor x4/3."""
     projector = IRPFProjector(None)
-    activity = {"ingresos": 30000, "gastos": 9000, "rendimiento_neto": 21000,
-                "cuota_autonomo_anual": 0, "num_quarters": 3}
+    activity = {
+        "ingresos": 30000,
+        "gastos": 9000,
+        "rendimiento_neto": 21000,
+        "cuota_autonomo_anual": 0,
+        "num_quarters": 3,
+    }
     result = projector._annualize(activity, 3)
     assert result["ingresos"] == 40000
     assert result["factor"] == round(4 / 3, 4)
@@ -249,8 +378,13 @@ def test_annualize_3_quarters():
 def test_annualize_4_quarters():
     """4 quarters: factor x1."""
     projector = IRPFProjector(None)
-    activity = {"ingresos": 40000, "gastos": 12000, "rendimiento_neto": 28000,
-                "cuota_autonomo_anual": 0, "num_quarters": 4}
+    activity = {
+        "ingresos": 40000,
+        "gastos": 12000,
+        "rendimiento_neto": 28000,
+        "cuota_autonomo_anual": 0,
+        "num_quarters": 4,
+    }
     result = projector._annualize(activity, 4)
     assert result["ingresos"] == 40000
     assert result["factor"] == 1.0
@@ -259,8 +393,13 @@ def test_annualize_4_quarters():
 def test_annualize_0_quarters():
     """0 quarters: all zeros."""
     projector = IRPFProjector(None)
-    activity = {"ingresos": 0, "gastos": 0, "rendimiento_neto": 0,
-                "cuota_autonomo_anual": 0, "num_quarters": 0}
+    activity = {
+        "ingresos": 0,
+        "gastos": 0,
+        "rendimiento_neto": 0,
+        "cuota_autonomo_anual": 0,
+        "num_quarters": 0,
+    }
     result = projector._annualize(activity, 0)
     assert result["ingresos"] == 0
     assert result["factor"] == 0
@@ -269,6 +408,7 @@ def test_annualize_0_quarters():
 # ===========================================================================
 # Unit tests: IVA aggregation
 # ===========================================================================
+
 
 def test_aggregate_iva_303():
     """IVA aggregation from Modelo 303."""
@@ -294,6 +434,7 @@ def test_aggregate_iva_empty():
 # Integration tests: full projection (mock DB + real IRPFSimulator)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_project_2_quarters_comun():
     """Full projection from 2 quarters of Modelo 130 data (Comun)."""
@@ -307,7 +448,8 @@ async def test_project_2_quarters_comun():
     projector = IRPFProjector(db)
 
     result = await projector.project(
-        user_id="test-user", year=2025,
+        user_id="test-user",
+        year=2025,
         jurisdiction="Comunidad de Madrid",
         save_projection=False,
     )
@@ -333,7 +475,8 @@ async def test_project_no_data():
     projector = IRPFProjector(db)
 
     result = await projector.project(
-        user_id="test-user", year=2025,
+        user_id="test-user",
+        year=2025,
         jurisdiction="Comunidad de Madrid",
         save_projection=False,
     )
@@ -358,7 +501,8 @@ async def test_project_4_quarters_high_confidence():
     projector = IRPFProjector(db)
 
     result = await projector.project(
-        user_id="test-user", year=2025,
+        user_id="test-user",
+        year=2025,
         jurisdiction="Comunidad de Madrid",
         save_projection=False,
     )
@@ -378,7 +522,8 @@ async def test_project_with_work_income():
     projector = IRPFProjector(db)
 
     result = await projector.project(
-        user_id="test-user", year=2025,
+        user_id="test-user",
+        year=2025,
         jurisdiction="Comunidad de Madrid",
         ingresos_trabajo=30000,
         save_projection=False,
@@ -398,7 +543,8 @@ async def test_iva_summary_in_projection():
     projector = IRPFProjector(db)
 
     result = await projector.project(
-        user_id="test-user", year=2025,
+        user_id="test-user",
+        year=2025,
         jurisdiction="Comunidad de Madrid",
         save_projection=False,
     )
@@ -428,7 +574,8 @@ async def test_project_saves_to_db():
     db.execute = tracking_execute
 
     result = await projector.project(
-        user_id="test-user", year=2025,
+        user_id="test-user",
+        year=2025,
         jurisdiction="Comunidad de Madrid",
         save_projection=True,
     )

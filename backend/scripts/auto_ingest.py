@@ -18,6 +18,7 @@ Usage:
     # Combine
     python -m backend.scripts.auto_ingest --dry-run --limit 3
 """
+
 import argparse
 import asyncio
 import hashlib
@@ -34,6 +35,7 @@ project_root = backend_dir.parent
 sys.path.insert(0, str(backend_dir))
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 # Re-use classes from the existing ingest_documents pipeline
@@ -64,6 +66,7 @@ logger = logging.getLogger("auto_ingest")
 
 
 # ── Helpers ─────────────────────────────────────────────────────
+
 
 def compute_sha256(filepath: Path) -> str:
     """Compute SHA-256 hash of a file."""
@@ -125,6 +128,7 @@ def append_ingested_log(entry: dict) -> None:
 
 
 # ── Main pipeline ───────────────────────────────────────────────
+
 
 async def auto_ingest(
     dry_run: bool = False,
@@ -232,12 +236,14 @@ async def auto_ingest(
         if file_hash in existing_hashes:
             print(f"  SKIP: ya indexado (mismo hash SHA-256)", flush=True)
             stats["skipped_hash"] += 1
-            processed_entries.append({
-                "path": rel_path,
-                "hash": file_hash,
-                "status": "skipped_duplicate",
-                "ingested_at": datetime.now(timezone.utc).isoformat(),
-            })
+            processed_entries.append(
+                {
+                    "path": rel_path,
+                    "hash": file_hash,
+                    "status": "skipped_duplicate",
+                    "ingested_at": datetime.now(timezone.utc).isoformat(),
+                }
+            )
             continue
 
         if dry_run:
@@ -382,15 +388,17 @@ async def auto_ingest(
             stats["processed"] += 1
             stats["chunks"] += len(chunks)
 
-            processed_entries.append({
-                "path": rel_path,
-                "hash": file_hash,
-                "doc_id": doc_id,
-                "chunks": len(chunks),
-                "territory": territory,
-                "status": "ingested",
-                "ingested_at": datetime.now(timezone.utc).isoformat(),
-            })
+            processed_entries.append(
+                {
+                    "path": rel_path,
+                    "hash": file_hash,
+                    "doc_id": doc_id,
+                    "chunks": len(chunks),
+                    "territory": territory,
+                    "status": "ingested",
+                    "ingested_at": datetime.now(timezone.utc).isoformat(),
+                }
+            )
 
             print(f"  OK: {len(chunks)} chunks indexados", flush=True)
 
@@ -458,17 +466,20 @@ async def auto_ingest(
 
 # ── CLI ─────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="TaxIA -- Auto-Ingesta RAG: procesa documentos pendientes del crawler",
     )
     parser.add_argument(
-        "--dry-run", "-n",
+        "--dry-run",
+        "-n",
         action="store_true",
         help="Mostrar que se procesaria sin modificar la DB",
     )
     parser.add_argument(
-        "--limit", "-l",
+        "--limit",
+        "-l",
         type=int,
         default=None,
         help="Maximo N documentos por ejecucion",

@@ -8,6 +8,7 @@ patrimoniales derivadas de la transmision de monedas virtuales, segun:
   dentro de 2 meses para valores cotizados / 1 ano para no cotizados)
 - Casillas 1813 (perdidas) y 1814 (ganancias) del Modelo 100 IRPF
 """
+
 from __future__ import annotations
 
 import logging
@@ -289,10 +290,10 @@ def calculate_fifo_gains(
             counterpart_amount = tx.counterpart_amount
             if counterpart_amount > 0 and counterpart not in FIAT_CURRENCIES:
                 # El coste del activo recibido es el valor de transmision del entregado
-                recv_total_eur = tx.total_eur or (
-                    (tx.price_eur or 0) * tx.amount
+                recv_total_eur = tx.total_eur or ((tx.price_eur or 0) * tx.amount)
+                recv_cost_per_unit = (
+                    recv_total_eur / counterpart_amount if counterpart_amount > 0 else 0.0
                 )
-                recv_cost_per_unit = recv_total_eur / counterpart_amount if counterpart_amount > 0 else 0.0
                 pool[counterpart].append(
                     _Lot(
                         amount=counterpart_amount,
@@ -317,7 +318,9 @@ def calculate_fifo_gains(
             else:
                 logger.warning(
                     "Transmision sin precio en EUR: %s %s %s",
-                    tx.asset, tx.amount, tx.date_utc,
+                    tx.asset,
+                    tx.amount,
+                    tx.date_utc,
                 )
                 transmission_total = 0.0
 
@@ -376,7 +379,9 @@ def calculate_fifo_gains(
             if remaining_to_sell > 1e-8:
                 logger.warning(
                     "Pool FIFO insuficiente para %s: faltan %.8f unidades en %s",
-                    tx.asset, remaining_to_sell, tx.date_utc,
+                    tx.asset,
+                    remaining_to_sell,
+                    tx.date_utc,
                 )
 
     # Aplicar regla antiaplicacion a las perdidas

@@ -1,6 +1,7 @@
 """
 Logging and notifications — crawler log + pending ingest flag.
 """
+
 import json
 import logging
 from datetime import datetime, timezone
@@ -55,10 +56,7 @@ def write_pending_ingest(results: list[dict]) -> None:
     Write list of new/updated files to _pending_ingest.json.
     This serves as a flag for the RAG ingestion pipeline.
     """
-    actionable = [
-        r for r in results
-        if r.get("status") in ("new", "updated") and r.get("success")
-    ]
+    actionable = [r for r in results if r.get("status") in ("new", "updated") and r.get("success")]
 
     if not actionable:
         # Remove stale pending file if no new docs

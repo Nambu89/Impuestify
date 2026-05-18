@@ -6,6 +6,7 @@ Art. 49 LIRPF: Base del ahorro (GP ahorro + RCM).
 
 Plazo: 4 anos. Cross-compensation limit: 25% of the positive balance.
 """
+
 from typing import Dict
 
 
@@ -38,11 +39,7 @@ class LossCompensationCalculator:
     ) -> Dict[int, float]:
         """Filter out losses older than MAX_CARRYFORWARD_YEARS and ensure positive values."""
         min_year = year - MAX_CARRYFORWARD_YEARS
-        return {
-            y: abs(v)
-            for y, v in perdidas.items()
-            if y >= min_year and y < year and v != 0
-        }
+        return {y: abs(v) for y, v in perdidas.items() if y >= min_year and y < year and v != 0}
 
     def compensar_ahorro(
         self,
@@ -174,9 +171,7 @@ class LossCompensationCalculator:
         Returns:
             Dict with compensated base general and tracking info.
         """
-        perdidas_gp = self._filter_valid_losses(
-            perdidas_gp_general_anteriores or {}, year
-        )
+        perdidas_gp = self._filter_valid_losses(perdidas_gp_general_anteriores or {}, year)
 
         rend = rendimientos_netos
         gp = gp_general_ejercicio

@@ -2,6 +2,7 @@
 
 Spec: plans/2026-04-13-defensia-design.md §5.2, §7.4
 """
+
 from __future__ import annotations
 from datetime import datetime
 from enum import Enum

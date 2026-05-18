@@ -33,6 +33,7 @@ Invariantes
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2B-001/002/003
 Invariante #3 del plan v2 (umbral 0.7, no 0.6).
 """
+
 from __future__ import annotations
 
 import logging
@@ -143,7 +144,8 @@ class DefensiaRagVerifier:
         except Exception as exc:
             logger.warning(
                 "RAG verifier: error en retriever para regla %s: %s",
-                candidato.regla_id, exc,
+                candidato.regla_id,
+                exc,
             )
             await self._log(
                 candidato,
@@ -184,9 +186,7 @@ class DefensiaRagVerifier:
         # Paso 3: aceptar. Extraemos cita + referencia canonica del chunk
         # top-1 y construimos el ArgumentoVerificado.
         cita_texto = str(best.get("text", "") or "")[:_MAX_CITA_VERIFICADA_CHARS]
-        referencia = str(
-            best.get("title") or best.get("source") or "sin_referencia"
-        )
+        referencia = str(best.get("title") or best.get("source") or "sin_referencia")
 
         # El rango de Pydantic para `confianza` es [0, 1]. Si por alguna
         # extraneza el retriever devuelve >1 (BM25 sin normalizar, p.ej.),
@@ -307,7 +307,9 @@ class DefensiaRagVerifier:
             logger.warning(
                 "RAG verifier: no se pudo loggear a defensia_rag_log "
                 "(regla=%s, soportado=%s): %s",
-                candidato.regla_id, soportado, exc,
+                candidato.regla_id,
+                soportado,
+                exc,
             )
 
 

@@ -4,6 +4,7 @@ MFA (Multi-Factor Authentication) Router for Impuestify
 Provides TOTP-based 2FA: setup, verify, disable, status, and login validation.
 Uses pyotp for TOTP generation/verification and qrcode for QR code generation.
 """
+
 import io
 import json
 import base64
@@ -39,8 +40,10 @@ router = APIRouter(prefix="/auth/mfa", tags=["MFA"])
 # Request / Response models
 # ---------------------------------------------------------------------------
 
+
 class MFASetupResponse(BaseModel):
     """Response for MFA setup — contains QR code and backup codes."""
+
     qr_code_base64: str
     secret: str
     backup_codes: List[str]
@@ -49,33 +52,39 @@ class MFASetupResponse(BaseModel):
 
 class MFAVerifyRequest(BaseModel):
     """Request to verify a TOTP code and enable MFA."""
+
     code: str = Field(..., min_length=6, max_length=6)
 
 
 class MFAVerifyResponse(BaseModel):
     """Response after MFA verification succeeds."""
+
     success: bool
     backup_codes: List[str]
 
 
 class MFADisableRequest(BaseModel):
     """Request to disable MFA."""
+
     code: str = Field(..., min_length=6, max_length=10)
 
 
 class MFAStatusResponse(BaseModel):
     """Current MFA status for the authenticated user."""
+
     enabled: bool
 
 
 class MFAValidateRequest(BaseModel):
     """Request to validate MFA during login flow."""
+
     mfa_token: str
     code: str = Field(..., min_length=6, max_length=10)
 
 
 class MFALoginResponse(BaseModel):
     """Response after successful MFA login validation."""
+
     user: dict
     tokens: TokenResponse
 
@@ -83,6 +92,7 @@ class MFALoginResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Helper utilities
 # ---------------------------------------------------------------------------
+
 
 def _generate_backup_codes(count: int = 10) -> List[str]:
     """Generate a list of random backup codes."""
@@ -137,6 +147,7 @@ def _generate_qr_base64(uri: str) -> str:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.post("/setup", response_model=MFASetupResponse)
 async def setup_mfa(current_user: TokenData = Depends(get_current_user_required)):

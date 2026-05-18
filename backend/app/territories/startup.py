@@ -1,4 +1,5 @@
 """Register all territory plugins at application startup."""
+
 from app.territories.registry import register_territory
 from app.territories.comun.plugin import CommonTerritory
 from app.territories.foral_vasco.plugin import ForalVascoTerritory

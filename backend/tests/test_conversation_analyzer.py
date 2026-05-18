@@ -1,6 +1,7 @@
 """
 Tests for ConversationAnalyzer — LLM post-conversation fiscal fact extraction.
 """
+
 import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -21,10 +22,14 @@ def analyzer(mock_db):
 @pytest.mark.asyncio
 async def test_skip_short_conversations(analyzer):
     """Conversations with < 3 messages should not be analyzed."""
-    with patch.object(analyzer, '_get_messages', return_value=[
-        {"role": "user", "content": "Hola"},
-        {"role": "assistant", "content": "Hola!"},
-    ]):
+    with patch.object(
+        analyzer,
+        "_get_messages",
+        return_value=[
+            {"role": "user", "content": "Hola"},
+            {"role": "assistant", "content": "Hola!"},
+        ],
+    ):
         result = await analyzer.analyze("conv123", "user456")
         assert result == {}
 
@@ -32,9 +37,13 @@ async def test_skip_short_conversations(analyzer):
 @pytest.mark.asyncio
 async def test_skip_single_message(analyzer):
     """A single message should not be analyzed."""
-    with patch.object(analyzer, '_get_messages', return_value=[
-        {"role": "user", "content": "Hola"},
-    ]):
+    with patch.object(
+        analyzer,
+        "_get_messages",
+        return_value=[
+            {"role": "user", "content": "Hola"},
+        ],
+    ):
         result = await analyzer.analyze("conv123", "user456")
         assert result == {}
 
@@ -42,7 +51,7 @@ async def test_skip_single_message(analyzer):
 @pytest.mark.asyncio
 async def test_skip_empty_conversation(analyzer):
     """An empty conversation should not be analyzed."""
-    with patch.object(analyzer, '_get_messages', return_value=[]):
+    with patch.object(analyzer, "_get_messages", return_value=[]):
         result = await analyzer.analyze("conv123", "user456")
         assert result == {}
 
@@ -56,17 +65,19 @@ async def test_analyze_extracts_facts(analyzer):
         {"role": "user", "content": "Tengo 2 hijos y pago hipoteca de 900 euros"},
         {"role": "assistant", "content": "Perfecto, tomo nota."},
     ]
-    mock_llm_response = json.dumps({
-        "ccaa": "Madrid",
-        "situacion_laboral": "autonomo",
-        "hijos": 2,
-        "hipoteca_activa": True,
-        "importe_hipoteca": 900,
-    })
+    mock_llm_response = json.dumps(
+        {
+            "ccaa": "Madrid",
+            "situacion_laboral": "autonomo",
+            "hijos": 2,
+            "hipoteca_activa": True,
+            "importe_hipoteca": 900,
+        }
+    )
 
-    with patch.object(analyzer, '_get_messages', return_value=messages):
-        with patch.object(analyzer, '_call_llm', return_value=mock_llm_response):
-            with patch.object(analyzer, '_merge_facts', new_callable=AsyncMock):
+    with patch.object(analyzer, "_get_messages", return_value=messages):
+        with patch.object(analyzer, "_call_llm", return_value=mock_llm_response):
+            with patch.object(analyzer, "_merge_facts", new_callable=AsyncMock):
                 result = await analyzer.analyze("conv123", "user456")
                 assert result["ccaa"] == "Madrid"
                 assert result["hijos"] == 2
@@ -85,9 +96,9 @@ async def test_analyze_calls_merge(analyzer):
     ]
     extracted = {"ccaa": "Cataluna", "situacion_laboral": "asalariado"}
 
-    with patch.object(analyzer, '_get_messages', return_value=messages):
-        with patch.object(analyzer, '_call_llm', return_value=json.dumps(extracted)):
-            with patch.object(analyzer, '_merge_facts', new_callable=AsyncMock) as mock_merge:
+    with patch.object(analyzer, "_get_messages", return_value=messages):
+        with patch.object(analyzer, "_call_llm", return_value=json.dumps(extracted)):
+            with patch.object(analyzer, "_merge_facts", new_callable=AsyncMock) as mock_merge:
                 await analyzer.analyze("conv123", "user456")
                 mock_merge.assert_called_once_with("user456", extracted)
 
@@ -101,8 +112,8 @@ async def test_analyze_handles_invalid_json(analyzer):
         {"role": "user", "content": "Pregunta"},
     ]
 
-    with patch.object(analyzer, '_get_messages', return_value=messages):
-        with patch.object(analyzer, '_call_llm', return_value="not valid json {{{"):
+    with patch.object(analyzer, "_get_messages", return_value=messages):
+        with patch.object(analyzer, "_call_llm", return_value="not valid json {{{"):
             result = await analyzer.analyze("conv123", "user456")
             assert result == {}
 
@@ -116,8 +127,8 @@ async def test_analyze_handles_non_dict_json(analyzer):
         {"role": "user", "content": "Pregunta"},
     ]
 
-    with patch.object(analyzer, '_get_messages', return_value=messages):
-        with patch.object(analyzer, '_call_llm', return_value='["not", "a", "dict"]'):
+    with patch.object(analyzer, "_get_messages", return_value=messages):
+        with patch.object(analyzer, "_call_llm", return_value='["not", "a", "dict"]'):
             result = await analyzer.analyze("conv123", "user456")
             assert result == {}
 
@@ -131,8 +142,8 @@ async def test_analyze_handles_llm_exception(analyzer):
         {"role": "user", "content": "Pregunta"},
     ]
 
-    with patch.object(analyzer, '_get_messages', return_value=messages):
-        with patch.object(analyzer, '_call_llm', side_effect=Exception("API error")):
+    with patch.object(analyzer, "_get_messages", return_value=messages):
+        with patch.object(analyzer, "_call_llm", side_effect=Exception("API error")):
             result = await analyzer.analyze("conv123", "user456")
             assert result == {}
 
@@ -196,9 +207,9 @@ async def test_analyze_strips_markdown_fences(analyzer):
     ]
     fenced_response = '```json\n{"ccaa": "Valencia", "hijos": 1}\n```'
 
-    with patch.object(analyzer, '_get_messages', return_value=messages):
-        with patch.object(analyzer, '_call_llm', return_value=fenced_response):
-            with patch.object(analyzer, '_merge_facts', new_callable=AsyncMock):
+    with patch.object(analyzer, "_get_messages", return_value=messages):
+        with patch.object(analyzer, "_call_llm", return_value=fenced_response):
+            with patch.object(analyzer, "_merge_facts", new_callable=AsyncMock):
                 result = await analyzer.analyze("conv123", "user456")
                 assert result["ccaa"] == "Valencia"
                 assert result["hijos"] == 1

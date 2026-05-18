@@ -34,6 +34,7 @@ SEMANTICA y libre. La cita canonica (arts. 102 a 106 LIVA) la resuelve el
 aparecen literales como "Art. 102 LIVA" ni "art. 106 LIVA" — solo terminos
 semanticos descriptivos del supuesto.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -80,6 +81,7 @@ _TIPOS_LIQUIDACION = (
 # ---------------------------------------------------------------------------
 # Regla
 # ---------------------------------------------------------------------------
+
 
 @regla(
     id="R021",
@@ -128,11 +130,7 @@ def evaluar(
         return None
 
     doc_liquidacion = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDACION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDACION),
         None,
     )
     if doc_liquidacion is None:

@@ -9,6 +9,7 @@ Covers:
 - 2025 vs 2026 thresholds
 - Edge cases
 """
+
 import pytest
 from app.utils.calculators.company_size import (
     classify_company,
@@ -26,6 +27,7 @@ from app.utils.calculators.company_size import (
 # Helper
 # ---------------------------------------------------------------------------
 
+
 def make_year(activo: float, negocios: float, empleados: int) -> YearData:
     return YearData(activo=activo, negocios=negocios, empleados=empleados)
 
@@ -33,6 +35,7 @@ def make_year(activo: float, negocios: float, empleados: int) -> YearData:
 # ---------------------------------------------------------------------------
 # Classification tests (2025 thresholds)
 # ---------------------------------------------------------------------------
+
 
 class TestMicroCompany:
     """Micro: activo <= 350K, negocios <= 700K, empleados <= 10."""
@@ -112,6 +115,7 @@ class TestLargeCompany:
 # 2-year consecutive rule
 # ---------------------------------------------------------------------------
 
+
 class TestTwoYearRule:
     """The company only loses its category if it exceeds 2/3 in BOTH years."""
 
@@ -147,6 +151,7 @@ class TestTwoYearRule:
 # ---------------------------------------------------------------------------
 # Audit obligation
 # ---------------------------------------------------------------------------
+
 
 class TestAuditObligation:
     """Art. 263 LSC: audit if exceeds 2 of 3 audit thresholds in both years."""
@@ -188,8 +193,8 @@ class TestAuditObligation:
 # Balance abreviado / PyG abreviada
 # ---------------------------------------------------------------------------
 
-class TestAbbreviatedAccounts:
 
+class TestAbbreviatedAccounts:
     def test_small_company_gets_all_abbreviated(self):
         y1 = make_year(2_000_000, 4_000_000, 30)
         y2 = make_year(2_500_000, 5_000_000, 35)
@@ -218,6 +223,7 @@ class TestAbbreviatedAccounts:
 # ---------------------------------------------------------------------------
 # 2026 thresholds
 # ---------------------------------------------------------------------------
+
 
 class TestThresholds2026:
     """Verify that 2026 thresholds (EU Directive) are higher."""
@@ -260,8 +266,8 @@ class TestThresholds2026:
 # Threshold detail / progress bars
 # ---------------------------------------------------------------------------
 
-class TestThresholdDetails:
 
+class TestThresholdDetails:
     def test_umbrales_contain_all_keys(self):
         y1 = make_year(1_000_000, 3_000_000, 20)
         y2 = make_year(1_500_000, 3_500_000, 25)
@@ -286,8 +292,8 @@ class TestThresholdDetails:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-class TestInternalHelpers:
 
+class TestInternalHelpers:
     def test_count_exceeded_zero(self):
         data = make_year(100_000, 200_000, 5)
         assert _count_exceeded(data, THRESHOLDS_2025["micro"]) == 0
@@ -315,8 +321,8 @@ class TestInternalHelpers:
 # Disclaimer
 # ---------------------------------------------------------------------------
 
-class TestDisclaimer:
 
+class TestDisclaimer:
     def test_disclaimer_present(self):
         y1 = make_year(200_000, 400_000, 5)
         y2 = make_year(200_000, 400_000, 5)

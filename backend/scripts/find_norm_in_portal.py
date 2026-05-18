@@ -19,6 +19,7 @@ Uso:
 Output: lista de URLs candidatas verificadas HTTP 200 con contexto.
 NO escribe a norms.yaml. Solo investiga + reporta para PM.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -104,17 +105,13 @@ def search_bizkaia(query: str) -> List[dict]:
             url = href if href.startswith("http") else base + href
             st, body = _fetch(url)
             # Extrae primera referencia a NF X/AAAA
-            nf_refs = re.findall(
-                r"(Norma\s+Foral\s+\d+/\d{4}[^<\.]{0,120})", body
-            )
+            nf_refs = re.findall(r"(Norma\s+Foral\s+\d+/\d{4}[^<\.]{0,120})", body)
             pdf_links = re.findall(r'href="([^"]+\.pdf)"', body)
             found.append(
                 {
                     "category_url": url,
                     "norma_refs": nf_refs[:5],
-                    "pdf_links": [
-                        (p if p.startswith("http") else base + p) for p in pdf_links[:5]
-                    ],
+                    "pdf_links": [(p if p.startswith("http") else base + p) for p in pdf_links[:5]],
                 }
             )
     return found
@@ -147,9 +144,7 @@ def search_boe(query: str) -> List[dict]:
     found: List[dict] = []
     base = "https://www.boe.es"
     # BOE buscar tiene query params
-    search_url = (
-        f"{base}/buscar/legislacion.php?campo[1]=NOTOID&dato[1]={query}"
-    )
+    search_url = f"{base}/buscar/legislacion.php?campo[1]=NOTOID&dato[1]={query}"
     status, body = _fetch(search_url, timeout=20)
     if status != 200:
         return found

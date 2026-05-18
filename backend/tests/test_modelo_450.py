@@ -8,6 +8,7 @@ Norma vigente:
   Texto Refundido IGIC + AIEM.
 - Tipos AIEM 2025+: 5 % / 10 % / 15 % / 25 %.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -94,11 +95,13 @@ class TestModelo450Basic:
     async def test_single_bien_tipo_general(self, calc):
         """Productor canario factura 10.000 EUR de hormigon (tipo general 15%)."""
         r = await calc.calculate(
-            bienes_producidos=[{
-                "epigrafe_iae": "243",
-                "descripcion": "Hormigon",
-                "base_imponible": 10000,
-            }],
+            bienes_producidos=[
+                {
+                    "epigrafe_iae": "243",
+                    "descripcion": "Hormigon",
+                    "base_imponible": 10000,
+                }
+            ],
             quarter=1,
         )
         assert r["total_base_imponible"] == 10000.0
@@ -113,11 +116,13 @@ class TestModelo450Basic:
     async def test_tipo_aiem_manual_override(self, calc):
         """Si el usuario indica tipo_aiem explicito, se usa (no el lookup)."""
         r = await calc.calculate(
-            bienes_producidos=[{
-                "epigrafe_iae": "1500",  # tabaco → lookup 25%
-                "base_imponible": 10000,
-                "tipo_aiem": 0.05,        # override manual a 5%
-            }],
+            bienes_producidos=[
+                {
+                    "epigrafe_iae": "1500",  # tabaco → lookup 25%
+                    "base_imponible": 10000,
+                    "tipo_aiem": 0.05,  # override manual a 5%
+                }
+            ],
             quarter=2,
         )
         # 10.000 * 0.05 = 500 (NO 2500 que seria el lookup)
@@ -128,11 +133,13 @@ class TestModelo450Basic:
     async def test_bien_sin_tipo_ni_lookup_genera_warning(self, calc):
         """Bien sin tipo_aiem y epigrafe desconocido → warning, cuota 0."""
         r = await calc.calculate(
-            bienes_producidos=[{
-                "epigrafe_iae": "8430",  # servicios — NO esta en lista AIEM
-                "descripcion": "Servicios profesionales",
-                "base_imponible": 10000,
-            }],
+            bienes_producidos=[
+                {
+                    "epigrafe_iae": "8430",  # servicios — NO esta en lista AIEM
+                    "descripcion": "Servicios profesionales",
+                    "base_imponible": 10000,
+                }
+            ],
             quarter=1,
         )
         assert r["total_cuota_devengada"] == 0.0
@@ -144,10 +151,12 @@ class TestModelo450Basic:
     async def test_lookup_aplica_si_no_hay_tipo_manual(self, calc):
         """Sin tipo_aiem pero con epigrafe conocido → lookup."""
         r = await calc.calculate(
-            bienes_producidos=[{
-                "epigrafe_iae": "1500",  # tabaco
-                "base_imponible": 1000,
-            }],
+            bienes_producidos=[
+                {
+                    "epigrafe_iae": "1500",  # tabaco
+                    "base_imponible": 1000,
+                }
+            ],
             quarter=1,
         )
         # 1000 * 0.25 = 250
@@ -163,10 +172,10 @@ class TestModelo450MultiBien:
     async def test_varios_bienes_distintos_tipos(self, calc):
         r = await calc.calculate(
             bienes_producidos=[
-                {"epigrafe_iae": "243", "base_imponible": 10000},   # 15%  → 1500
-                {"epigrafe_iae": "1500", "base_imponible": 5000},   # 25%  → 1250
-                {"epigrafe_iae": "433", "base_imponible": 8000},    # 10%  → 800
-                {"epigrafe_iae": "493", "base_imponible": 2000},    #  5%  → 100
+                {"epigrafe_iae": "243", "base_imponible": 10000},  # 15%  → 1500
+                {"epigrafe_iae": "1500", "base_imponible": 5000},  # 25%  → 1250
+                {"epigrafe_iae": "433", "base_imponible": 8000},  # 10%  → 800
+                {"epigrafe_iae": "493", "base_imponible": 2000},  #  5%  → 100
             ],
             quarter=2,
         )
@@ -390,6 +399,7 @@ class TestModelo450Tool:
     @pytest.mark.asyncio
     async def test_tool_basico(self):
         from app.tools.modelo_450_tool import calculate_modelo_450_tool
+
         r = await calculate_modelo_450_tool(
             trimestre=1,
             bienes_producidos=[
@@ -405,6 +415,7 @@ class TestModelo450Tool:
     @pytest.mark.asyncio
     async def test_tool_trimestre_invalido(self):
         from app.tools.modelo_450_tool import calculate_modelo_450_tool
+
         r = await calculate_modelo_450_tool(
             trimestre=5,
             bienes_producidos=[
@@ -417,6 +428,7 @@ class TestModelo450Tool:
     @pytest.mark.asyncio
     async def test_tool_bienes_vacios(self):
         from app.tools.modelo_450_tool import calculate_modelo_450_tool
+
         r = await calculate_modelo_450_tool(
             trimestre=1,
             bienes_producidos=[],
@@ -427,6 +439,7 @@ class TestModelo450Tool:
     @pytest.mark.asyncio
     async def test_tool_restricted_mode(self):
         from app.tools.modelo_450_tool import calculate_modelo_450_tool
+
         r = await calculate_modelo_450_tool(
             trimestre=1,
             bienes_producidos=[{"epigrafe_iae": "243", "base_imponible": 1000}],
@@ -438,13 +451,16 @@ class TestModelo450Tool:
     @pytest.mark.asyncio
     async def test_tool_warning_se_propaga_a_formatted_response(self):
         from app.tools.modelo_450_tool import calculate_modelo_450_tool
+
         r = await calculate_modelo_450_tool(
             trimestre=1,
-            bienes_producidos=[{
-                "epigrafe_iae": "8430",
-                "descripcion": "Asesoria",
-                "base_imponible": 5000,
-            }],
+            bienes_producidos=[
+                {
+                    "epigrafe_iae": "8430",
+                    "descripcion": "Asesoria",
+                    "base_imponible": 5000,
+                }
+            ],
         )
         assert r["success"] is True
         assert "Avisos" in r["formatted_response"]
@@ -457,11 +473,13 @@ class TestModelo450Tool:
 class TestModelo450Registration:
     def test_tool_in_all_tools(self):
         from app.tools import ALL_TOOLS
+
         names = [t["function"]["name"] for t in ALL_TOOLS]
         assert "calculate_modelo_450" in names
 
     def test_tool_in_executors(self):
         from app.tools import TOOL_EXECUTORS
+
         assert "calculate_modelo_450" in TOOL_EXECUTORS
 
 
@@ -471,31 +489,40 @@ class TestModelo450Registration:
 class TestCanariasPluginAIEM:
     def test_plugin_anyade_modelo_450_si_produce_aiem(self):
         from app.territories.canarias.plugin import CanariasTerritory
+
         plugin = CanariasTerritory()
-        obs = plugin.get_model_obligations({
-            "situacion_laboral": "autonomo",
-            "produce_bienes_aiem": True,
-        })
+        obs = plugin.get_model_obligations(
+            {
+                "situacion_laboral": "autonomo",
+                "produce_bienes_aiem": True,
+            }
+        )
         modelos = [o.modelo for o in obs]
         assert "450" in modelos
 
     def test_plugin_no_anyade_450_si_no_produce_aiem(self):
         from app.territories.canarias.plugin import CanariasTerritory
+
         plugin = CanariasTerritory()
-        obs = plugin.get_model_obligations({
-            "situacion_laboral": "autonomo",
-            "produce_bienes_aiem": False,
-        })
+        obs = plugin.get_model_obligations(
+            {
+                "situacion_laboral": "autonomo",
+                "produce_bienes_aiem": False,
+            }
+        )
         modelos = [o.modelo for o in obs]
         assert "450" not in modelos
 
     def test_plugin_detecta_aiem_por_epigrafe_iae(self):
         from app.territories.canarias.plugin import CanariasTerritory
+
         plugin = CanariasTerritory()
-        obs = plugin.get_model_obligations({
-            "situacion_laboral": "autonomo",
-            "epigrafes_iae": ["243"],  # hormigon → AIEM 15%
-        })
+        obs = plugin.get_model_obligations(
+            {
+                "situacion_laboral": "autonomo",
+                "epigrafes_iae": ["243"],  # hormigon → AIEM 15%
+            }
+        )
         modelos = [o.modelo for o in obs]
         assert "450" in modelos
 
@@ -506,9 +533,9 @@ class TestCanariasPluginAIEM:
 class TestAIEMTiposTabla:
     def test_todos_los_tipos_son_validos(self):
         for epi, tipo in AIEM_TIPOS_POR_EPIGRAFE.items():
-            assert tipo in ALLOWED_AIEM_RATES, (
-                f"Epigrafe {epi} tiene tipo {tipo} fuera de la lista oficial."
-            )
+            assert (
+                tipo in ALLOWED_AIEM_RATES
+            ), f"Epigrafe {epi} tiene tipo {tipo} fuera de la lista oficial."
 
     def test_tabla_no_vacia(self):
         assert len(AIEM_TIPOS_POR_EPIGRAFE) > 10

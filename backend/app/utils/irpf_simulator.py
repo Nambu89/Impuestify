@@ -17,6 +17,7 @@ Foral dispatch:
     the cuota (not reductions from the base) in the foral regime.
   - EPSV contributions replace pension plan reductions in foral territories.
 """
+
 from typing import Any, Dict, List, Optional
 import logging
 
@@ -45,23 +46,23 @@ logger = logging.getLogger(__name__)
 FORAL_MINIMOS: Dict[str, Dict[str, float]] = {
     # Pais Vasco (identical for Araba, Bizkaia, Gipuzkoa per JA Normativa)
     "foral_vasco": {
-        "contribuyente":        5472.00,
-        "descendiente_1":       2808.00,
-        "descendiente_2":       3432.00,
-        "descendiente_3":       5040.00,
-        "descendiente_4_plus":  5040.00,
-        "ascendiente_65":       2040.00,
-        "ascendiente_75":       4080.00,  # includes the 65 amount (cumulative)
+        "contribuyente": 5472.00,
+        "descendiente_1": 2808.00,
+        "descendiente_2": 3432.00,
+        "descendiente_3": 5040.00,
+        "descendiente_4_plus": 5040.00,
+        "ascendiente_65": 2040.00,
+        "ascendiente_75": 4080.00,  # includes the 65 amount (cumulative)
     },
     # Navarra (LF 22/1998, cuantia unica directa sobre cuota)
     "foral_navarra": {
-        "contribuyente":        1084.00,
-        "descendiente_1":        600.00,
-        "descendiente_2":        750.00,
-        "descendiente_3":       1200.00,
-        "descendiente_4_plus":  1350.00,
-        "ascendiente_65":        450.00,
-        "ascendiente_75":        900.00,
+        "contribuyente": 1084.00,
+        "descendiente_1": 600.00,
+        "descendiente_2": 750.00,
+        "descendiente_3": 1200.00,
+        "descendiente_4_plus": 1350.00,
+        "ascendiente_65": 450.00,
+        "ascendiente_75": 900.00,
     },
 }
 
@@ -267,11 +268,7 @@ class IRPFSimulator:
             rend_inmuebles = inmuebles_result["rendimiento_neto_reducido"]
 
         # --- 3. Base imponible general ---
-        bi_general = (
-            trabajo_result["rendimiento_neto_reducido"]
-            + rend_actividad
-            + rend_inmuebles
-        )
+        bi_general = trabajo_result["rendimiento_neto_reducido"] + rend_actividad + rend_inmuebles
 
         # --- 3b. EPSV / prevision social reduction (replaces pension plans) ---
         reduccion_epsv = 0.0
@@ -284,9 +281,13 @@ class IRPFSimulator:
 
         # --- 4. Savings income (including all ganancias patrimoniales) ---
         _has_ahorro_foral = (
-            intereses > 0 or dividendos > 0 or ganancias_fondos > 0
-            or ganancias_acciones > 0 or ganancias_reembolso_fondos > 0
-            or ganancias_derivados > 0 or cripto_ganancia_neta > 0
+            intereses > 0
+            or dividendos > 0
+            or ganancias_fondos > 0
+            or ganancias_acciones > 0
+            or ganancias_reembolso_fondos > 0
+            or ganancias_derivados > 0
+            or cripto_ganancia_neta > 0
         )
         ahorro_result = None
         if _has_ahorro_foral:
@@ -320,9 +321,7 @@ class IRPFSimulator:
 
         # --- 5. Apply foral unified scale to base imponible general ---
         foral_scale = await self._get_foral_scale(jurisdiction, year)
-        cuota_general, breakdown_foral = self._irpf_calc._apply_scale(
-            bi_general, foral_scale
-        )
+        cuota_general, breakdown_foral = self._irpf_calc._apply_scale(bi_general, foral_scale)
 
         # Savings: use the common savings scale (foral territories also apply
         # escalas del ahorro similar to comun; use SavingsIncomeCalculator result)
@@ -332,7 +331,11 @@ class IRPFSimulator:
                 ahorro_scale_est = await self.savings._get_ahorro_scale("Estatal", year)
                 ahorro_scale_aut = await self.savings._get_ahorro_scale(jurisdiction, year)
                 cuota_ahorro_est, _ = self.savings._apply_scale(base_ahorro, ahorro_scale_est)
-                cuota_ahorro_aut, _ = self.savings._apply_scale(base_ahorro, ahorro_scale_aut) if ahorro_scale_aut else (0.0, [])
+                cuota_ahorro_aut, _ = (
+                    self.savings._apply_scale(base_ahorro, ahorro_scale_aut)
+                    if ahorro_scale_aut
+                    else (0.0, [])
+                )
                 cuota_ahorro = round(cuota_ahorro_est + cuota_ahorro_aut, 2)
             else:
                 cuota_ahorro = 0.0
@@ -768,7 +771,12 @@ class IRPFSimulator:
         # --- 1b. Activity income (autonomos) ---
         actividad_result = None
         rend_actividad = 0.0
-        if ingresos_actividad > 0 or ingresos_ventas > 0 or ingresos_derechos_autor > 0 or modulos_rendimiento_neto > 0:
+        if (
+            ingresos_actividad > 0
+            or ingresos_ventas > 0
+            or ingresos_derechos_autor > 0
+            or modulos_rendimiento_neto > 0
+        ):
             actividad_result = await self.activity.calculate(
                 ingresos_actividad=ingresos_actividad,
                 gastos_actividad=gastos_actividad,
@@ -814,9 +822,12 @@ class IRPFSimulator:
         if ingresos_alquiler > 0:
             # Use granular rental expenses if provided; otherwise fall back to gastos_alquiler_total
             _rental_granulares_sum = (
-                gastos_financiacion_alquiler + gastos_reparacion_alquiler
-                + gastos_comunidad_alquiler + ibi_alquiler
-                + gastos_seguros_alquiler + gastos_suministros_alquiler
+                gastos_financiacion_alquiler
+                + gastos_reparacion_alquiler
+                + gastos_comunidad_alquiler
+                + ibi_alquiler
+                + gastos_seguros_alquiler
+                + gastos_suministros_alquiler
             )
             if _rental_granulares_sum > 0:
                 inmuebles_result = await self.rental.calculate(
@@ -1002,15 +1013,22 @@ class IRPFSimulator:
             }
             logger.info(
                 "2o declarante: BI general=%.2f, ahorro=%.2f (incl GP inmuebles=%.2f), edad=%d",
-                sd_bi_general, sd_ahorro_extra, sd_gp_inmuebles_neta, sd_edad,
+                sd_bi_general,
+                sd_ahorro_extra,
+                sd_gp_inmuebles_neta,
+                sd_edad,
             )
 
         # --- 4. Savings income (if any) ---
         # Includes rendimientos del capital mobiliario AND ganancias patrimoniales del ahorro
         _has_ahorro = (
-            intereses > 0 or dividendos > 0 or ganancias_fondos > 0
-            or ganancias_acciones > 0 or ganancias_reembolso_fondos > 0
-            or ganancias_derivados > 0 or cripto_ganancia_neta > 0
+            intereses > 0
+            or dividendos > 0
+            or ganancias_fondos > 0
+            or ganancias_acciones > 0
+            or ganancias_reembolso_fondos > 0
+            or ganancias_derivados > 0
+            or cripto_ganancia_neta > 0
         )
         ahorro_result = None
         if _has_ahorro:
@@ -1053,6 +1071,7 @@ class IRPFSimulator:
         loss_general_result = None
         if perdidas_gp_general_anteriores:
             from app.utils.calculators.loss_compensation import LossCompensationCalculator
+
             loss_calc = LossCompensationCalculator()
             loss_general_result = loss_calc.compensar_general(
                 rendimientos_netos=bi_general,
@@ -1117,24 +1136,19 @@ class IRPFSimulator:
                 segundo_declarante_desglose["mpyf_personal_autonomico"] = round(sd_mpyf_aut, 2)
             logger.info(
                 "2o declarante MPYF: estatal=+%.2f, autonomico=+%.2f",
-                sd_mpyf_est, sd_mpyf_aut,
+                sd_mpyf_est,
+                sd_mpyf_aut,
             )
 
         # --- 7. Apply MPYF: subtract MPYF quota from cuota íntegra ---
         state_scale = await self._irpf_calc._get_scale("Estatal", year)
         ccaa_key = (
-            "Estatal"
-            if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS
-            else jurisdiction
+            "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction
         )
         ccaa_scale = await self._irpf_calc._get_scale(ccaa_key, year)
 
-        cuota_mpyf_est, _ = self._irpf_calc._apply_scale(
-            mpyf_result["mpyf_estatal"], state_scale
-        )
-        cuota_mpyf_aut, _ = self._irpf_calc._apply_scale(
-            mpyf_result["mpyf_autonomico"], ccaa_scale
-        )
+        cuota_mpyf_est, _ = self._irpf_calc._apply_scale(mpyf_result["mpyf_estatal"], state_scale)
+        cuota_mpyf_aut, _ = self._irpf_calc._apply_scale(mpyf_result["mpyf_autonomico"], ccaa_scale)
 
         cuota_liquida_est = max(0, general_result["cuota_estatal"] - cuota_mpyf_est)
         cuota_liquida_aut = max(0, general_result["cuota_autonomica"] - cuota_mpyf_aut)
@@ -1150,11 +1164,17 @@ class IRPFSimulator:
             if base_ahorro > 0:
                 ahorro_scale_est = await self.savings._get_ahorro_scale("Estatal", year)
                 ahorro_scale_aut = await self.savings._get_ahorro_scale(
-                    "Estatal" if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS else jurisdiction,
+                    "Estatal"
+                    if jurisdiction.lower() in ESTATAL_SCALE_JURISDICTIONS
+                    else jurisdiction,
                     year,
                 )
                 cuota_ahorro_est, _ = self.savings._apply_scale(base_ahorro, ahorro_scale_est)
-                cuota_ahorro_aut, _ = self.savings._apply_scale(base_ahorro, ahorro_scale_aut) if ahorro_scale_aut else (0.0, [])
+                cuota_ahorro_aut, _ = (
+                    self.savings._apply_scale(base_ahorro, ahorro_scale_aut)
+                    if ahorro_scale_aut
+                    else (0.0, [])
+                )
                 cuota_ahorro = round(cuota_ahorro_est + cuota_ahorro_aut, 2)
             else:
                 cuota_ahorro = 0.0
@@ -1181,7 +1201,8 @@ class IRPFSimulator:
                 cuota_liquida_aut = 0.0
             logger.info(
                 "Ceuta/Melilla deduction applied: -%.2f€ (60%% of %.2f€ cuota íntegra)",
-                deduccion_ceuta_melilla, cuota_integra_total,
+                deduccion_ceuta_melilla,
+                cuota_integra_total,
             )
 
         # --- 9. Deductions on cuota (applied after MPYF, before final) ---
@@ -1254,7 +1275,7 @@ class IRPFSimulator:
         # --- 10. Total (before refundable deductions) ---
         cuota_total = cuota_liquida_general + cuota_ahorro
         # Maternidad + familia numerosa are refundable (can make cuota negative)
-        cuota_total -= (deduccion_maternidad + deduccion_familia_numerosa)
+        cuota_total -= deduccion_maternidad + deduccion_familia_numerosa
 
         # --- 3y. Anualidades por alimentos a hijos (Art. 64 LIRPF, casillas 0476-0478) ---
         # Child support payments are taxed SEPARATELY at the general scale (more favorable
@@ -1300,9 +1321,7 @@ class IRPFSimulator:
             + retenciones_actividad
             + pagos_fraccionados_130
         )
-        cuota_diferencial = round(
-            cuota_total + gravamen_especial_loterias - total_retenciones, 2
-        )
+        cuota_diferencial = round(cuota_total + gravamen_especial_loterias - total_retenciones, 2)
         tipo_resultado = "a_pagar" if cuota_diferencial > 0 else "a_devolver"
 
         return {
@@ -1345,10 +1364,14 @@ class IRPFSimulator:
             "deduccion_donativos": round(deduccion_donativos, 2),
             "deducciones_autonomicas_total": round(deducciones_autonomicas_total, 2),
             "total_deducciones_cuota": round(
-                deduccion_vivienda_pre2013 + deduccion_maternidad
-                + deduccion_familia_numerosa + deduccion_donativos
-                + deduccion_alquiler_pre2015 + deducciones_autonomicas_total
-                + deduccion_doble_imposicion, 2
+                deduccion_vivienda_pre2013
+                + deduccion_maternidad
+                + deduccion_familia_numerosa
+                + deduccion_donativos
+                + deduccion_alquiler_pre2015
+                + deducciones_autonomicas_total
+                + deduccion_doble_imposicion,
+                2,
             ),
             # XSD gaps: new reductions/deductions
             "reduccion_pension_compensatoria": round(reduccion_pension_compensatoria, 2),

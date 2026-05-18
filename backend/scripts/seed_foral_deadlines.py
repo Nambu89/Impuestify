@@ -13,6 +13,7 @@ Idempotent via INSERT ... ON CONFLICT(id) DO UPDATE.
 Usage:
     python -m backend.scripts.seed_foral_deadlines [--year 2026] [--dry-run]
 """
+
 import sys
 import os
 import asyncio
@@ -25,6 +26,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
 sys.path.insert(0, BACKEND_ROOT)
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from app.database.turso_client import TursoClient
@@ -36,6 +38,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 def _make_id(model: str, territory: str, period: str, tax_year: int) -> str:
     """Build deterministic ID matching the pattern used in sync_fiscal_calendar."""
     import re
+
     territory_slug = re.sub(r"[^a-z0-9]", "_", territory.lower()).strip("_")
     period_slug = period.lower().replace(" ", "_")
     model_slug = model.lower().replace(" ", "_")
@@ -189,7 +192,6 @@ def build_foral_deadlines_2026(tax_year: int = 2026) -> list[dict]:
             "source_url": "https://www.gipuzkoa.eus/es/web/ogasuna/calendario-fiscal",
             "is_active": 1,
         },
-
         # =============================================
         # BIZKAIA
         # =============================================
@@ -273,7 +275,6 @@ def build_foral_deadlines_2026(tax_year: int = 2026) -> list[dict]:
             "source_url": "https://www.bizkaia.eus/eu/home/ogasun/fiskalitate/tributu-egutegi",
             "is_active": 1,
         },
-
         # =============================================
         # ARABA
         # =============================================
@@ -357,7 +358,6 @@ def build_foral_deadlines_2026(tax_year: int = 2026) -> list[dict]:
             "source_url": "https://www.araba.eus/es/web/ogasuna/calendario-fiscal",
             "is_active": 1,
         },
-
         # =============================================
         # NAVARRA
         # =============================================
@@ -520,10 +520,19 @@ async def upsert_deadlines(db: TursoClient, deadlines: list[dict]) -> int:
                 updated_at = datetime('now')
             """,
             [
-                d["id"], d["model"], d["model_name"], d["territory"],
-                d["period"], d["tax_year"], d["start_date"], d["end_date"],
-                d["domiciliation_date"], d["applies_to"], d["description"],
-                d["source_url"], d["is_active"],
+                d["id"],
+                d["model"],
+                d["model_name"],
+                d["territory"],
+                d["period"],
+                d["tax_year"],
+                d["start_date"],
+                d["end_date"],
+                d["domiciliation_date"],
+                d["applies_to"],
+                d["description"],
+                d["source_url"],
+                d["is_active"],
             ],
         )
         count += 1
@@ -537,7 +546,9 @@ async def main(year: int, dry_run: bool) -> None:
 
     if dry_run:
         for d in deadlines:
-            logger.info(f"[DRY-RUN] {d['id']} | {d['model_name']} | {d['period']} | {d['end_date']}")
+            logger.info(
+                f"[DRY-RUN] {d['id']} | {d['model_name']} | {d['period']} | {d['end_date']}"
+            )
         logger.info("[DRY-RUN] No database writes performed")
         return
 
@@ -553,7 +564,9 @@ async def main(year: int, dry_run: bool) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Seed foral fiscal deadlines")
     parser.add_argument("--year", type=int, default=2026, help="Tax year to seed (default: 2026)")
-    parser.add_argument("--dry-run", action="store_true", help="Print deadlines without writing to DB")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print deadlines without writing to DB"
+    )
     args = parser.parse_args()
 
     asyncio.run(main(args.year, args.dry_run))

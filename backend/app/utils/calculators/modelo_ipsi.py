@@ -24,6 +24,7 @@ Usage:
         cuota_corrientes_interiores=300, quarter=2, year=2025
     )
 """
+
 from typing import Any, Dict
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
@@ -32,12 +33,12 @@ from app.utils.tax_parameter_repository import TaxParameterRepository
 # ---------------------------------------------------------------------------
 # IPSI rate constants (Ley 8/1991, art. 43 — rango legal vigente)
 # ---------------------------------------------------------------------------
-TIPO_MINIMO = 0.005       # 0.5%
-TIPO_REDUCIDO = 0.01      # 1%
-TIPO_BONIFICADO = 0.02    # 2%
-TIPO_GENERAL = 0.04       # 4%
+TIPO_MINIMO = 0.005  # 0.5%
+TIPO_REDUCIDO = 0.01  # 1%
+TIPO_BONIFICADO = 0.02  # 2%
+TIPO_GENERAL = 0.04  # 4%
 TIPO_INCREMENTADO = 0.08  # 8%
-TIPO_ESPECIAL = 0.10      # 10%
+TIPO_ESPECIAL = 0.10  # 10%
 
 
 class ModeloIpsiCalculator:
@@ -253,9 +254,7 @@ class ModeloIpsiCalculator:
         )
 
         resultado_liquidacion = round(
-            resultado_regimen_general
-            - cuotas_compensar_aplicadas
-            + regularizacion_anual_aplicada,
+            resultado_regimen_general - cuotas_compensar_aplicadas + regularizacion_anual_aplicada,
             2,
         )
 
@@ -273,9 +272,7 @@ class ModeloIpsiCalculator:
             "cuotas_compensar_anteriores": cuotas_compensar_aplicadas,
             "regularizacion_anual": regularizacion_anual_aplicada,
             "resultado_liquidacion": resultado_liquidacion,
-            "resultado_anterior_complementaria": round(
-                float(resultado_anterior_complementaria), 2
-            ),
+            "resultado_anterior_complementaria": round(float(resultado_anterior_complementaria), 2),
             "cuota_diferencial_complementaria": cuota_diferencial_complementaria,
             "quarter": quarter,
             "year": year,

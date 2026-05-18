@@ -12,6 +12,7 @@ as modulos_rendimiento_neto. This module handles what comes AFTER that figure.
 XSD Modelo 100 casillas: 0218-0280 (estimacion objetiva).
 Quarterly pre-payment: Modelo 131 (not 130 which is for ED).
 """
+
 from typing import Any, Dict
 
 

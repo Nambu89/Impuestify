@@ -3,6 +3,7 @@
 Los encabezados usados en estos tests corresponden a documentos reales del caso
 David Oliva (expediente IRPF 2024 Madrid) como ground truth del caso primigenio.
 """
+
 from app.models.defensia import TipoDocumento
 from app.services.defensia_document_taxonomy import clasificar_por_texto
 

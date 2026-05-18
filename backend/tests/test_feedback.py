@@ -5,6 +5,7 @@ All tests run without a real database or real auth — everything is mocked
 via FastAPI dependency_overrides (the correct approach for Depends() injection).
 Tests cover: creation, listing, rate limiting, duplicate rating, validation.
 """
+
 import asyncio
 import base64
 import pytest
@@ -16,6 +17,7 @@ from fastapi import FastAPI, HTTPException
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def valid_png_b64():
@@ -40,12 +42,14 @@ def valid_jpeg_b64():
 @pytest.fixture
 def mock_user():
     from app.auth.jwt_handler import TokenData
+
     return TokenData(user_id="user-test-001", email="user@example.com")
 
 
 # ---------------------------------------------------------------------------
 # Build a wired app with dependency overrides
 # ---------------------------------------------------------------------------
+
 
 def _make_app(mock_user_obj, mock_db_obj):
     """
@@ -85,13 +89,14 @@ def _make_db(count: int = 0, rows=None):
 # POST /api/feedback — happy path
 # ---------------------------------------------------------------------------
 
+
 class TestCreateFeedback:
     def test_create_bug_report_returns_201(self, mock_user, valid_png_b64):
         db = _make_db(count=0)
         # First call returns count=0 (rate limit check), second call is INSERT (no rows needed)
         db.execute.side_effect = [
             MagicMock(rows=[{"cnt": 0}]),  # rate limit SELECT
-            MagicMock(rows=[]),             # INSERT
+            MagicMock(rows=[]),  # INSERT
         ]
         app = _make_app(mock_user, db)
         client = TestClient(app)
@@ -144,6 +149,7 @@ class TestCreateFeedback:
 # ---------------------------------------------------------------------------
 # POST /api/feedback — validation errors (Pydantic, no DB calls needed)
 # ---------------------------------------------------------------------------
+
 
 class TestCreateFeedbackValidation:
     def test_invalid_type_returns_422(self, mock_user):
@@ -257,6 +263,7 @@ class TestCreateFeedbackValidation:
 # POST /api/feedback — rate limiting (10/day)
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackRateLimit:
     def test_rate_limit_exceeded_returns_429(self, mock_user):
         db = AsyncMock()
@@ -295,21 +302,24 @@ class TestFeedbackRateLimit:
 # GET /api/feedback/my
 # ---------------------------------------------------------------------------
 
+
 class TestListMyFeedback:
     def test_returns_own_feedbacks(self, mock_user):
-        db = _make_db(rows=[
-            {
-                "id": "fb-001",
-                "type": "bug",
-                "title": "Error en calculo",
-                "description": "Calculo incorrecto de IRPF.",
-                "page_url": None,
-                "status": "new",
-                "priority": "normal",
-                "created_at": "2026-03-16T10:00:00",
-                "updated_at": "2026-03-16T10:00:00",
-            }
-        ])
+        db = _make_db(
+            rows=[
+                {
+                    "id": "fb-001",
+                    "type": "bug",
+                    "title": "Error en calculo",
+                    "description": "Calculo incorrecto de IRPF.",
+                    "page_url": None,
+                    "status": "new",
+                    "priority": "normal",
+                    "created_at": "2026-03-16T10:00:00",
+                    "updated_at": "2026-03-16T10:00:00",
+                }
+            ]
+        )
         app = _make_app(mock_user, db)
         client = TestClient(app)
         resp = client.get("/api/feedback/my")
@@ -333,6 +343,7 @@ class TestListMyFeedback:
 # ---------------------------------------------------------------------------
 # POST /api/chat-rating
 # ---------------------------------------------------------------------------
+
 
 class TestChatRating:
     def test_thumbs_up_returns_201(self, mock_user):
@@ -401,6 +412,7 @@ class TestChatRating:
 # Authentication guard: unauthenticated users get 401
 # ---------------------------------------------------------------------------
 
+
 class TestAuthRequired:
     def test_feedback_requires_auth(self):
         from app.routers.feedback import router
@@ -418,7 +430,11 @@ class TestAuthRequired:
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.post(
             "/api/feedback",
-            json={"type": "bug", "title": "Test titulo aqui", "description": "Descripcion larga aqui."},
+            json={
+                "type": "bug",
+                "title": "Test titulo aqui",
+                "description": "Descripcion larga aqui.",
+            },
         )
         assert resp.status_code == 401
 

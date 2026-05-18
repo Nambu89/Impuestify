@@ -32,6 +32,7 @@ P1/P2 extensions (audit 2026-05, sesion 40):
 - RE (Recargo Equivalencia, Art. 154-163 LIVA): detector ampliado +
   flag `bloqueo_re` que indica que el sujeto NO presenta 303.
 """
+
 from typing import Any, Dict, List, Optional
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
@@ -44,11 +45,11 @@ _TIPO_SUPERREDUCIDO: float = 4.0
 # Tipos transitorios alimentacion / aceites (RDL 20/2022 + RDL 4/2024 + RDL 9/2024)
 _TIPO_TRANSITORIO_0: float = 0.0
 _TIPO_TRANSITORIO_5: float = 5.0
-_TIPO_TRANSITORIO_2: float = 2.0   # 2025 productos basicos hasta 30 sept 2025
+_TIPO_TRANSITORIO_2: float = 2.0  # 2025 productos basicos hasta 30 sept 2025
 _TIPO_TRANSITORIO_75: float = 7.5  # 2024 aceites/pasta tras subida 1 oct 2024
 
 # Umbrales regimenes especiales
-_UMBRAL_RECC: float = 2_000_000.0          # Art. 163 decies LIVA
+_UMBRAL_RECC: float = 2_000_000.0  # Art. 163 decies LIVA
 _UMBRAL_SII_OBLIGATORIO: float = 6_010_121.04  # Art. 62.6 RIVA
 
 # CNAE / IAE patterns para detector RE ampliado
@@ -56,17 +57,32 @@ _UMBRAL_SII_OBLIGATORIO: float = 6_010_121.04  # Art. 62.6 RIVA
 # CNAE 47.x = comercio al por menor (excluyendo 47.3 vehiculos motor)
 # IAE 64x-65x = comercio menor (epigrafes 1992)
 _RE_CNAE_PREFIXES = ("47.1", "47.2", "47.4", "47.5", "47.6", "47.7", "47.8", "47.9")
-_RE_IAE_PREFIXES = ("641", "642", "643", "644", "645", "646", "647", "651", "652", "653", "654", "656", "657", "659")
+_RE_IAE_PREFIXES = (
+    "641",
+    "642",
+    "643",
+    "644",
+    "645",
+    "646",
+    "647",
+    "651",
+    "652",
+    "653",
+    "654",
+    "656",
+    "657",
+    "659",
+)
 
 # Tipos RE actuales (Art. 161 LIVA)
 RE_RATES_FULL: Dict[float, float] = {
-    21.0: 5.2,    # general
-    10.0: 1.4,    # reducido
-    5.0: 0.62,    # transitorio aceites/pasta (proporcional)
-    4.0: 0.5,     # superreducido
-    2.0: 0.26,    # transitorio basicos 2025 (proporcional)
-    1.75: 1.75,   # tabaco/labores (categoria propia)
-    0.0: 0.0,     # transitorio basicos 0%
+    21.0: 5.2,  # general
+    10.0: 1.4,  # reducido
+    5.0: 0.62,  # transitorio aceites/pasta (proporcional)
+    4.0: 0.5,  # superreducido
+    2.0: 0.26,  # transitorio basicos 2025 (proporcional)
+    1.75: 1.75,  # tabaco/labores (categoria propia)
+    0.0: 0.0,  # transitorio basicos 0%
 }
 
 # Supuestos ISP comunes (Art. 84.uno.2 LIVA) — informativo
@@ -92,9 +108,9 @@ class Modelo303Calculator:
     # Recargo de Equivalencia rates (Art. 154-163 LIVA)
     # Applies to retail traders who are personas fisicas (e.g. pharmacies, CNAE 47.73)
     RE_RATES = {
-        21: 5.2,   # IVA general 21% -> RE 5.2%
-        10: 1.4,   # IVA reducido 10% -> RE 1.4%
-        4: 0.5,    # IVA superreducido 4% -> RE 0.5%
+        21: 5.2,  # IVA general 21% -> RE 5.2%
+        10: 1.4,  # IVA reducido 10% -> RE 1.4%
+        4: 0.5,  # IVA superreducido 4% -> RE 0.5%
     }
 
     def __init__(self, repo: TaxParameterRepository) -> None:
@@ -172,7 +188,9 @@ class Modelo303Calculator:
         return 0 <= volumen_ano_anterior <= _UMBRAL_RECC
 
     @staticmethod
-    def requiere_sii(volumen_ano_anterior: float, redeme: bool = False, grupo_iva: bool = False) -> bool:
+    def requiere_sii(
+        volumen_ano_anterior: float, redeme: bool = False, grupo_iva: bool = False
+    ) -> bool:
         """Check SII obligation (Art. 62.6 RIVA + Art. 30 RD 1065/2007).
 
         Obligatorio si:
@@ -200,25 +218,49 @@ class Modelo303Calculator:
         """
         # Cierre normativo: desde 1 oct 2025, vuelve a tipos normales
         if year > 2025:
-            return {"tipo_0_vigente": False, "tipo_5_vigente": False,
-                    "tipo_2_vigente": False, "tipo_75_vigente": False}
+            return {
+                "tipo_0_vigente": False,
+                "tipo_5_vigente": False,
+                "tipo_2_vigente": False,
+                "tipo_75_vigente": False,
+            }
         if year == 2025 and mes >= 10:
-            return {"tipo_0_vigente": False, "tipo_5_vigente": False,
-                    "tipo_2_vigente": False, "tipo_75_vigente": False}
+            return {
+                "tipo_0_vigente": False,
+                "tipo_5_vigente": False,
+                "tipo_2_vigente": False,
+                "tipo_75_vigente": False,
+            }
         if year == 2025:
             # Ene-sept 2025: basicos 2% + aceites 7.5%
-            return {"tipo_0_vigente": False, "tipo_5_vigente": False,
-                    "tipo_2_vigente": True, "tipo_75_vigente": True}
+            return {
+                "tipo_0_vigente": False,
+                "tipo_5_vigente": False,
+                "tipo_2_vigente": True,
+                "tipo_75_vigente": True,
+            }
         if year == 2024:
             # 2024 mixto: 0% basicos casi todo el ano, 5%/7.5% aceites
-            return {"tipo_0_vigente": True, "tipo_5_vigente": mes <= 6,
-                    "tipo_2_vigente": False, "tipo_75_vigente": mes >= 7}
+            return {
+                "tipo_0_vigente": True,
+                "tipo_5_vigente": mes <= 6,
+                "tipo_2_vigente": False,
+                "tipo_75_vigente": mes >= 7,
+            }
         if year == 2023:
-            return {"tipo_0_vigente": True, "tipo_5_vigente": True,
-                    "tipo_2_vigente": False, "tipo_75_vigente": False}
+            return {
+                "tipo_0_vigente": True,
+                "tipo_5_vigente": True,
+                "tipo_2_vigente": False,
+                "tipo_75_vigente": False,
+            }
         # Antes de 2023: no aplican
-        return {"tipo_0_vigente": False, "tipo_5_vigente": False,
-                "tipo_2_vigente": False, "tipo_75_vigente": False}
+        return {
+            "tipo_0_vigente": False,
+            "tipo_5_vigente": False,
+            "tipo_2_vigente": False,
+            "tipo_75_vigente": False,
+        }
 
     def _calc_transitorios(
         self,
@@ -344,7 +386,13 @@ class Modelo303Calculator:
         total_cuota_mod = 0.0
         desglose: Dict[str, Dict[str, float]] = {}
 
-        for concepto in ("envases", "oferta_anulada", "concurso", "incobrables", "rappels_descuentos"):
+        for concepto in (
+            "envases",
+            "oferta_anulada",
+            "concurso",
+            "incobrables",
+            "rappels_descuentos",
+        ):
             entry = mods.get(concepto)
             if not entry:
                 continue
@@ -422,13 +470,13 @@ class Modelo303Calculator:
         base_21: float = 0.0,
         # Adquisiciones intracomunitarias de bienes / servicios (casillas 10-12)
         base_intracomunitarias: float = 0.0,
-        tipo_intracomunitarias: float = 0.0,   # variable %, e.g. 21.0
+        tipo_intracomunitarias: float = 0.0,  # variable %, e.g. 21.0
         # Inversion del sujeto pasivo — ISP (casillas 13-14)
         base_inversion_sp: float = 0.0,
-        tipo_inversion_sp: float = 21.0,       # normally 21% unless service is reduced
+        tipo_inversion_sp: float = 21.0,  # normally 21% unless service is reduced
         # Modificacion de bases y cuotas de periodos anteriores (casillas 15-16)
         mod_bases: float = 0.0,
-        mod_cuotas: float = 0.0,               # signed: negative = rectification in favour
+        mod_cuotas: float = 0.0,  # signed: negative = rectification in favour
         # --- IVA DEDUCIBLE (input tax) ---
         # Corrientes interiores (casillas 28-29): base informativa + deductible quota
         base_corrientes_interiores: float = 0.0,
@@ -473,8 +521,8 @@ class Modelo303Calculator:
         # RECC — Regimen Especial Criterio de Caja (Art. 163 decies LIVA)
         regimen_recc: bool = False,
         volumen_ano_anterior: float = 0.0,
-        cobros_pendientes_recc: float = 0.0,    # cobros materializados de devengo anterior
-        pagos_pendientes_recc: float = 0.0,     # pagos materializados de deducciones anteriores
+        cobros_pendientes_recc: float = 0.0,  # cobros materializados de devengo anterior
+        pagos_pendientes_recc: float = 0.0,  # pagos materializados de deducciones anteriores
         # SII — Suministro Inmediato Informacion (Art. 62.6 RIVA)
         en_sii: bool = False,
         redeme: bool = False,
@@ -486,7 +534,7 @@ class Modelo303Calculator:
         mods_bases: Optional[Dict[str, Dict[str, float]]] = None,
         # Tipos transitorios alimentacion / aceites (RDL 4/2022 + RDL 9/2024)
         bases_transitorias: Optional[Dict[str, float]] = None,
-        mes_inicio_periodo: int = 1,   # para validar vigencia tipos transitorios
+        mes_inicio_periodo: int = 1,  # para validar vigencia tipos transitorios
         # RE — Recargo Equivalencia detector (devuelve bloqueo si aplica)
         re_situacion_laboral: str = "",
         re_cnae: str = "",
@@ -495,7 +543,7 @@ class Modelo303Calculator:
         re_es_minorista: bool = False,
         re_strict_block: bool = False,  # si True y RE detectado, devuelve solo el bloqueo
         # Metadata
-        quarter: int = 1,         # 1-4
+        quarter: int = 1,  # 1-4
         year: int = 2025,
         territory: str = "comun",  # 'comun' | 'araba' | 'bizkaia' | 'gipuzkoa' | 'navarra'
         **kwargs: Any,
@@ -614,7 +662,9 @@ class Modelo303Calculator:
         )
 
         # 0.c SII: detectar obligacion / aviso plazo mensual
-        sii_obligatorio = self.requiere_sii(volumen_ano_anterior, redeme=redeme, grupo_iva=grupo_iva)
+        sii_obligatorio = self.requiere_sii(
+            volumen_ano_anterior, redeme=redeme, grupo_iva=grupo_iva
+        )
         sii_aplicado = bool(en_sii or sii_obligatorio)
         sii_info = {
             "obligatorio": sii_obligatorio,
@@ -627,7 +677,9 @@ class Modelo303Calculator:
             "warning": (
                 "SII: presentacion mensual obligatoria (30 dias naturales del mes "
                 "siguiente; agosto excluido)."
-            ) if sii_aplicado else None,
+            )
+            if sii_aplicado
+            else None,
         }
 
         # 0.d ISP por supuesto: genera devengado y (opcionalmente) deducible
@@ -706,31 +758,31 @@ class Modelo303Calculator:
         # ------------------------------------------------------------------
 
         # Casillas 28-29: bienes/servicios corrientes interiores
-        casilla_28 = round(base_corrientes_interiores, 2)       # informative base
+        casilla_28 = round(base_corrientes_interiores, 2)  # informative base
         casilla_29 = round(cuota_corrientes_interiores, 2)
 
         # Casillas 30-31: bienes de inversion interiores
-        casilla_30 = round(base_inversion_interiores, 2)        # informative base
+        casilla_30 = round(base_inversion_interiores, 2)  # informative base
         casilla_31 = round(cuota_inversion_interiores, 2)
 
         # Casillas 32-33: importaciones corrientes
-        casilla_32 = round(base_importaciones_corrientes, 2)    # informative base
+        casilla_32 = round(base_importaciones_corrientes, 2)  # informative base
         casilla_33 = round(cuota_importaciones_corrientes, 2)
 
         # Casillas 34-35: importaciones de bienes de inversion
-        casilla_34 = round(base_importaciones_inversion, 2)     # informative base
+        casilla_34 = round(base_importaciones_inversion, 2)  # informative base
         casilla_35 = round(cuota_importaciones_inversion, 2)
 
         # Casillas 36-37: adquisiciones intracomunitarias corrientes
-        casilla_36 = round(base_intracom_corrientes, 2)         # informative base
+        casilla_36 = round(base_intracom_corrientes, 2)  # informative base
         casilla_37 = round(cuota_intracom_corrientes, 2)
 
         # Casillas 38-39: adquisiciones intracomunitarias de inversion
-        casilla_38 = round(base_intracom_inversion, 2)          # informative base
+        casilla_38 = round(base_intracom_inversion, 2)  # informative base
         casilla_39 = round(cuota_intracom_inversion, 2)
 
         # Casillas 40-41: rectificacion de deducciones (+/-)
-        casilla_40 = round(base_rectificacion_deducciones, 2)   # informative base
+        casilla_40 = round(base_rectificacion_deducciones, 2)  # informative base
         casilla_41 = round(rectificacion_deducciones, 2)
 
         # Casilla 42: compensaciones regimen especial agricultura

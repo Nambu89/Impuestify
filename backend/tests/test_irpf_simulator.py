@@ -12,6 +12,7 @@ Tests the complete data-driven IRPF simulation pipeline:
 
 All tests use mocked DB responses — no live Turso connection required.
 """
+
 import pytest
 import asyncio
 import sys
@@ -30,9 +31,11 @@ sys.path.insert(0, str(backend_dir))
 # Mock DB helper
 # ─────────────────────────────────────────────────────────────
 
+
 @dataclass
 class MockRow:
     """Simulates a Turso result row (dict-like access, supports dict() conversion)."""
+
     data: Dict[str, Any]
 
     def __getitem__(self, key):
@@ -60,6 +63,7 @@ class MockRow:
 @dataclass
 class MockResult:
     """Simulates a Turso execute() result."""
+
     rows: List[MockRow]
 
 
@@ -117,29 +121,125 @@ MOCK_INMUEBLES_PARAMS = {
 
 # Ahorro scale (estatal)
 MOCK_AHORRO_SCALE = [
-    {"tramo_num": 1, "base_hasta": 6000, "cuota_integra": 0, "resto_base": 6000, "tipo_aplicable": 9.5},
-    {"tramo_num": 2, "base_hasta": 50000, "cuota_integra": 570, "resto_base": 44000, "tipo_aplicable": 10.5},
-    {"tramo_num": 3, "base_hasta": 200000, "cuota_integra": 5190, "resto_base": 150000, "tipo_aplicable": 11.5},
-    {"tramo_num": 4, "base_hasta": 300000, "cuota_integra": 22440, "resto_base": 100000, "tipo_aplicable": 13.5},
-    {"tramo_num": 5, "base_hasta": 999999, "cuota_integra": 35940, "resto_base": 699999, "tipo_aplicable": 14},
+    {
+        "tramo_num": 1,
+        "base_hasta": 6000,
+        "cuota_integra": 0,
+        "resto_base": 6000,
+        "tipo_aplicable": 9.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 50000,
+        "cuota_integra": 570,
+        "resto_base": 44000,
+        "tipo_aplicable": 10.5,
+    },
+    {
+        "tramo_num": 3,
+        "base_hasta": 200000,
+        "cuota_integra": 5190,
+        "resto_base": 150000,
+        "tipo_aplicable": 11.5,
+    },
+    {
+        "tramo_num": 4,
+        "base_hasta": 300000,
+        "cuota_integra": 22440,
+        "resto_base": 100000,
+        "tipo_aplicable": 13.5,
+    },
+    {
+        "tramo_num": 5,
+        "base_hasta": 999999,
+        "cuota_integra": 35940,
+        "resto_base": 699999,
+        "tipo_aplicable": 14,
+    },
 ]
 
 # General IRPF scale (estatal, 2024)
 MOCK_GENERAL_SCALE_ESTATAL = [
-    {"tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
-    {"tramo_num": 2, "base_hasta": 20200, "cuota_integra": 1182.75, "resto_base": 7750, "tipo_aplicable": 12},
-    {"tramo_num": 3, "base_hasta": 35200, "cuota_integra": 2112.75, "resto_base": 15000, "tipo_aplicable": 15},
-    {"tramo_num": 4, "base_hasta": 60000, "cuota_integra": 4362.75, "resto_base": 24800, "tipo_aplicable": 18.5},
-    {"tramo_num": 5, "base_hasta": 300000, "cuota_integra": 8952.75, "resto_base": 240000, "tipo_aplicable": 22.5},
-    {"tramo_num": 6, "base_hasta": 999999, "cuota_integra": 62952.75, "resto_base": 699999, "tipo_aplicable": 24.5},
+    {
+        "tramo_num": 1,
+        "base_hasta": 12450,
+        "cuota_integra": 0,
+        "resto_base": 12450,
+        "tipo_aplicable": 9.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 20200,
+        "cuota_integra": 1182.75,
+        "resto_base": 7750,
+        "tipo_aplicable": 12,
+    },
+    {
+        "tramo_num": 3,
+        "base_hasta": 35200,
+        "cuota_integra": 2112.75,
+        "resto_base": 15000,
+        "tipo_aplicable": 15,
+    },
+    {
+        "tramo_num": 4,
+        "base_hasta": 60000,
+        "cuota_integra": 4362.75,
+        "resto_base": 24800,
+        "tipo_aplicable": 18.5,
+    },
+    {
+        "tramo_num": 5,
+        "base_hasta": 300000,
+        "cuota_integra": 8952.75,
+        "resto_base": 240000,
+        "tipo_aplicable": 22.5,
+    },
+    {
+        "tramo_num": 6,
+        "base_hasta": 999999,
+        "cuota_integra": 62952.75,
+        "resto_base": 699999,
+        "tipo_aplicable": 24.5,
+    },
 ]
 
 MOCK_GENERAL_SCALE_MADRID = [
-    {"tramo_num": 1, "base_hasta": 12961.49, "cuota_integra": 0, "resto_base": 12961.49, "tipo_aplicable": 8.5},
-    {"tramo_num": 2, "base_hasta": 18612.43, "cuota_integra": 1101.73, "resto_base": 5650.94, "tipo_aplicable": 10.7},
-    {"tramo_num": 3, "base_hasta": 35200.42, "cuota_integra": 1706.38, "resto_base": 16588.00, "tipo_aplicable": 12.8},
-    {"tramo_num": 4, "base_hasta": 55000.42, "cuota_integra": 3829.64, "resto_base": 19800.00, "tipo_aplicable": 17.4},
-    {"tramo_num": 5, "base_hasta": 999999, "cuota_integra": 7274.84, "resto_base": 944998.58, "tipo_aplicable": 20.5},
+    {
+        "tramo_num": 1,
+        "base_hasta": 12961.49,
+        "cuota_integra": 0,
+        "resto_base": 12961.49,
+        "tipo_aplicable": 8.5,
+    },
+    {
+        "tramo_num": 2,
+        "base_hasta": 18612.43,
+        "cuota_integra": 1101.73,
+        "resto_base": 5650.94,
+        "tipo_aplicable": 10.7,
+    },
+    {
+        "tramo_num": 3,
+        "base_hasta": 35200.42,
+        "cuota_integra": 1706.38,
+        "resto_base": 16588.00,
+        "tipo_aplicable": 12.8,
+    },
+    {
+        "tramo_num": 4,
+        "base_hasta": 55000.42,
+        "cuota_integra": 3829.64,
+        "resto_base": 19800.00,
+        "tipo_aplicable": 17.4,
+    },
+    {
+        "tramo_num": 5,
+        "base_hasta": 999999,
+        "cuota_integra": 7274.84,
+        "resto_base": 944998.58,
+        "tipo_aplicable": 20.5,
+    },
 ]
 
 
@@ -198,6 +298,7 @@ def build_mock_db():
 # ─────────────────────────────────────────────────────────────
 # Tests: TaxParameterRepository
 # ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_repo_get_params():
@@ -258,6 +359,7 @@ async def test_repo_ccaa_override():
 # ─────────────────────────────────────────────────────────────
 # Tests: WorkIncomeCalculator
 # ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_work_income_basic():
@@ -326,6 +428,7 @@ async def test_work_income_with_explicit_ss():
 # Tests: MPYFCalculator
 # ─────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_mpyf_single_taxpayer():
     """Single taxpayer, 35 years, no dependents → minimum personal."""
@@ -352,9 +455,7 @@ async def test_mpyf_over_65():
     repo = TaxParameterRepository(db)
     calc = MPYFCalculator(repo)
 
-    result = await calc.calculate(
-        jurisdiction="Estatal", year=2024, edad_contribuyente=68
-    )
+    result = await calc.calculate(jurisdiction="Estatal", year=2024, edad_contribuyente=68)
     assert result["mpyf_estatal"] == 6700
 
 
@@ -368,9 +469,7 @@ async def test_mpyf_over_75():
     repo = TaxParameterRepository(db)
     calc = MPYFCalculator(repo)
 
-    result = await calc.calculate(
-        jurisdiction="Estatal", year=2024, edad_contribuyente=78
-    )
+    result = await calc.calculate(jurisdiction="Estatal", year=2024, edad_contribuyente=78)
     assert result["mpyf_estatal"] == 8100
 
 
@@ -430,9 +529,7 @@ async def test_mpyf_valencia_override():
     repo = TaxParameterRepository(db)
     calc = MPYFCalculator(repo)
 
-    result = await calc.calculate(
-        jurisdiction="Comunitat Valenciana", year=2024
-    )
+    result = await calc.calculate(jurisdiction="Comunitat Valenciana", year=2024)
 
     assert result["mpyf_estatal"] == 5550
     assert result["mpyf_autonomico"] == 6105  # Valencia override
@@ -449,21 +546,18 @@ async def test_mpyf_disability():
     calc = MPYFCalculator(repo)
 
     # 33% disability
-    result = await calc.calculate(
-        jurisdiction="Estatal", year=2024, discapacidad_contribuyente=33
-    )
+    result = await calc.calculate(jurisdiction="Estatal", year=2024, discapacidad_contribuyente=33)
     assert result["mpyf_estatal"] == 5550 + 3000  # +discapacidad_33_65
 
     # 65% disability
-    result = await calc.calculate(
-        jurisdiction="Estatal", year=2024, discapacidad_contribuyente=65
-    )
+    result = await calc.calculate(jurisdiction="Estatal", year=2024, discapacidad_contribuyente=65)
     assert result["mpyf_estatal"] == 5550 + 9000 + 3000  # +discapacidad_65_plus + gastos_asistencia
 
 
 # ─────────────────────────────────────────────────────────────
 # Tests: SavingsIncomeCalculator
 # ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_savings_basic():
@@ -475,9 +569,7 @@ async def test_savings_basic():
     repo = TaxParameterRepository(db)
     calc = SavingsIncomeCalculator(repo, db)
 
-    result = await calc.calculate(
-        intereses=500, dividendos=1200, year=2024, jurisdiction="Estatal"
-    )
+    result = await calc.calculate(intereses=500, dividendos=1200, year=2024, jurisdiction="Estatal")
 
     assert result["base_ahorro"] == 1700
     # 1700 in first tramo (0-6000) at 9.5% = 161.5 per scale (estatal + autonomico)
@@ -504,6 +596,7 @@ async def test_savings_zero():
 # ─────────────────────────────────────────────────────────────
 # Tests: RentalIncomeCalculator
 # ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_rental_basic():
@@ -560,6 +653,7 @@ async def test_rental_expenses_capped():
 # ─────────────────────────────────────────────────────────────
 # Tests: IRPFSimulator (orchestrator)
 # ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_simulator_basic():
@@ -685,6 +779,7 @@ async def test_simulator_zero_income():
 # ─────────────────────────────────────────────────────────────
 # Tests: Tool definition and formatting
 # ─────────────────────────────────────────────────────────────
+
 
 def test_tool_definition_valid():
     """IRPF_SIMULATOR_TOOL has valid OpenAI function calling schema."""
@@ -874,6 +969,7 @@ async def test_activity_income_negative():
 # Tests: No hardcoded values in calculators
 # ─────────────────────────────────────────────────────────────
 
+
 def test_no_hardcoded_values_in_calculators():
     """Verify calculators don't contain hardcoded fiscal values."""
     import importlib
@@ -888,13 +984,13 @@ def test_no_hardcoded_values_in_calculators():
 
     # Fiscal values that should NOT appear hardcoded
     forbidden_values = [
-        "5550",   # MPYF contribuyente
-        "6700",   # MPYF 65+
-        "8100",   # MPYF 75+
-        "2400",   # descendiente 1
-        "2700",   # descendiente 2
-        "2800",   # descendiente <3
-        "6498",   # reduccion max trabajo
+        "5550",  # MPYF contribuyente
+        "6700",  # MPYF 65+
+        "8100",  # MPYF 75+
+        "2400",  # descendiente 1
+        "2700",  # descendiente 2
+        "2800",  # descendiente <3
+        "6498",  # reduccion max trabajo
         "14852",  # rend_min for reduction
     ]
 
@@ -905,16 +1001,24 @@ def test_no_hardcoded_values_in_calculators():
         for val in forbidden_values:
             # Allow the value in comments and docstrings, but not as literals
             # Simple heuristic: check if the value appears as a standalone number assignment
-            lines = source.split('\n')
+            lines = source.split("\n")
             for line_num, line in enumerate(lines, 1):
                 stripped = line.strip()
                 # Skip comments, docstrings, and imports
-                if stripped.startswith('#') or stripped.startswith('"""') or stripped.startswith("'''"):
+                if (
+                    stripped.startswith("#")
+                    or stripped.startswith('"""')
+                    or stripped.startswith("'''")
+                ):
                     continue
-                if stripped.startswith('from ') or stripped.startswith('import '):
+                if stripped.startswith("from ") or stripped.startswith("import "):
                     continue
                 # Check for hardcoded assignment like `= 5550` or `= 6498`
-                if f"= {val}" in stripped and "params" not in stripped and "default" not in stripped:
+                if (
+                    f"= {val}" in stripped
+                    and "params" not in stripped
+                    and "default" not in stripped
+                ):
                     pytest.fail(
                         f"Hardcoded value {val} found in {mod_name} line {line_num}: {stripped}"
                     )
@@ -923,6 +1027,7 @@ def test_no_hardcoded_values_in_calculators():
 # ─────────────────────────────────────────────────────────────
 # Tests: Backward compatibility
 # ─────────────────────────────────────────────────────────────
+
 
 def test_old_calculator_still_importable():
     """IRPFCalculator and calculate_irpf_tool still exist (backward compat)."""
@@ -949,6 +1054,7 @@ def test_both_tools_in_registry():
 # CCAA DEDUCTIONS IN SIMULATOR
 # ─────────────────────────────────────────────────────────────
 
+
 class TestCCAADeductionsInSimulator:
     """Tests for the new deducciones_autonomicas_total parameter."""
 
@@ -961,11 +1067,15 @@ class TestCCAADeductionsInSimulator:
         sim = IRPFSimulator(db)
         # Without CCAA deductions
         r1 = await sim.simulate(
-            jurisdiction="Madrid", year=2024, ingresos_trabajo=40000,
+            jurisdiction="Madrid",
+            year=2024,
+            ingresos_trabajo=40000,
         )
         # With 500 EUR CCAA deductions
         r2 = await sim.simulate(
-            jurisdiction="Madrid", year=2024, ingresos_trabajo=40000,
+            jurisdiction="Madrid",
+            year=2024,
+            ingresos_trabajo=40000,
             deducciones_autonomicas_total=500,
         )
         assert r2["cuota_liquida_autonomica"] == r1["cuota_liquida_autonomica"] - 500
@@ -981,7 +1091,9 @@ class TestCCAADeductionsInSimulator:
         sim = IRPFSimulator(db)
         # Low income → small cuota_liquida_aut
         r = await sim.simulate(
-            jurisdiction="Madrid", year=2024, ingresos_trabajo=15000,
+            jurisdiction="Madrid",
+            year=2024,
+            ingresos_trabajo=15000,
             deducciones_autonomicas_total=99999,
         )
         assert r["cuota_liquida_autonomica"] == 0
@@ -996,7 +1108,9 @@ class TestCCAADeductionsInSimulator:
         db = build_mock_db()
         sim = IRPFSimulator(db)
         r = await sim.simulate(
-            jurisdiction="Madrid", year=2024, ingresos_trabajo=30000,
+            jurisdiction="Madrid",
+            year=2024,
+            ingresos_trabajo=30000,
         )
         assert r["deducciones_autonomicas_total"] == 0
 
@@ -1008,7 +1122,9 @@ class TestCCAADeductionsInSimulator:
         db = build_mock_db()
         sim = IRPFSimulator(db)
         r = await sim.simulate(
-            jurisdiction="Madrid", year=2024, ingresos_trabajo=40000,
+            jurisdiction="Madrid",
+            year=2024,
+            ingresos_trabajo=40000,
             deducciones_autonomicas_total=300,
         )
         assert r["deducciones_autonomicas_total"] == 300

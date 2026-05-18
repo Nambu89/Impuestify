@@ -6,6 +6,7 @@ Provides:
 - GET  /api/admin/rag-quality/results   — Latest evaluation results
 - GET  /api/admin/rag-quality/history   — Last 20 evaluations (summary)
 """
+
 import json
 import logging
 from typing import Optional
@@ -24,6 +25,7 @@ router = APIRouter(prefix="/api/admin/rag-quality", tags=["rag-quality"])
 # ---- Schema init ----
 
 _TABLE_CREATED = False
+
 
 async def _ensure_table(db: TursoClient) -> None:
     """Create rag_evaluations table if it does not exist (idempotent)."""
@@ -48,6 +50,7 @@ async def _ensure_table(db: TursoClient) -> None:
 
 
 # ---- Endpoints ----
+
 
 @router.post("/evaluate")
 async def run_evaluation(
@@ -154,29 +157,41 @@ async def get_latest_results(
     # Map details to frontend QuestionResult[] format
     questions = []
     for d in details:
-        questions.append({
-            "question": d.get("question", ""),
-            "category": d.get("category", "general"),
-            "faithfulness": d.get("faithfulness", 0),
-            "context_relevance": d.get("context_relevance", 0),
-            "answer_correctness": d.get("answer_correctness", 0),
-            "response_quality": d.get("response_quality", 0),
-            "response": d.get("response", ""),
-            "expected": d.get("expected", None),
-        })
+        questions.append(
+            {
+                "question": d.get("question", ""),
+                "category": d.get("category", "general"),
+                "faithfulness": d.get("faithfulness", 0),
+                "context_relevance": d.get("context_relevance", 0),
+                "answer_correctness": d.get("answer_correctness", 0),
+                "response_quality": d.get("response_quality", 0),
+                "response": d.get("response", ""),
+                "expected": d.get("expected", None),
+            }
+        )
 
     # Map category_scores dict to frontend CategoryScore[] format
     categories = []
     if isinstance(category_scores, dict):
         for cat_name, scores in category_scores.items():
-            categories.append({
-                "category": cat_name,
-                "faithfulness": scores.get("faithfulness", 0) if isinstance(scores, dict) else 0,
-                "context_relevance": scores.get("context_relevance", 0) if isinstance(scores, dict) else 0,
-                "answer_correctness": scores.get("answer_correctness", 0) if isinstance(scores, dict) else 0,
-                "response_quality": scores.get("response_quality", 0) if isinstance(scores, dict) else 0,
-                "count": scores.get("count", 0) if isinstance(scores, dict) else 0,
-            })
+            categories.append(
+                {
+                    "category": cat_name,
+                    "faithfulness": scores.get("faithfulness", 0)
+                    if isinstance(scores, dict)
+                    else 0,
+                    "context_relevance": scores.get("context_relevance", 0)
+                    if isinstance(scores, dict)
+                    else 0,
+                    "answer_correctness": scores.get("answer_correctness", 0)
+                    if isinstance(scores, dict)
+                    else 0,
+                    "response_quality": scores.get("response_quality", 0)
+                    if isinstance(scores, dict)
+                    else 0,
+                    "count": scores.get("count", 0) if isinstance(scores, dict) else 0,
+                }
+            )
 
     return {
         "id": str(row["id"]),
@@ -211,14 +226,16 @@ async def get_evaluation_history(
 
     history = []
     for row in result.rows:
-        history.append({
-            "id": str(row["id"]),
-            "evaluated_at": row["timestamp"],
-            "avg_faithfulness": row["faithfulness"],
-            "avg_context_relevance": row["context_relevance"],
-            "avg_answer_correctness": row["answer_correctness"],
-            "avg_response_quality": row["response_quality"],
-            "total_questions": row["num_questions"],
-        })
+        history.append(
+            {
+                "id": str(row["id"]),
+                "evaluated_at": row["timestamp"],
+                "avg_faithfulness": row["faithfulness"],
+                "avg_context_relevance": row["context_relevance"],
+                "avg_answer_correctness": row["answer_correctness"],
+                "avg_response_quality": row["response_quality"],
+                "total_questions": row["num_questions"],
+            }
+        )
 
     return {"evaluations": history, "count": len(history)}

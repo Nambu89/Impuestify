@@ -34,6 +34,7 @@ Relevancia caso David (ground truth del producto):
     exclusiva del usuario, el minimo debe aplicarse al 100% al custodio —
     si AEAT no lo hace, la regla tambien dispara.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -78,11 +79,7 @@ def _buscar_doc_liquidativo(
     expediente, no hay nada sobre lo que evaluar.
     """
     return next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDATIVOS
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDATIVOS),
         None,
     )
 
@@ -98,10 +95,7 @@ def _hay_sentencia_modificacion_medidas(
     caso David muestra que el usuario sube la sentencia precisamente por
     su impacto sobre el minimo por descendientes.
     """
-    return any(
-        d.tipo_documento == TipoDocumento.SENTENCIA_JUDICIAL
-        for d in expediente.documentos
-    )
+    return any(d.tipo_documento == TipoDocumento.SENTENCIA_JUDICIAL for d in expediente.documentos)
 
 
 @regla(
@@ -117,8 +111,7 @@ def _hay_sentencia_modificacion_medidas(
         Fase.TEAR_AMPLIACION_POSIBLE.value,
     ],
     descripcion=(
-        "Aplicacion incorrecta o ausencia del minimo personal y familiar "
-        "segun arts. 56-61 LIRPF"
+        "Aplicacion incorrecta o ausencia del minimo personal y familiar " "segun arts. 56-61 LIRPF"
     ),
 )
 def evaluar(
@@ -163,9 +156,7 @@ def evaluar(
     # Motivo 1 — custodia compartida sin prorrateo 50/50
     # ---------------------------------------------------------------
     custodia = str(datos.get("custodia") or "").lower()
-    aplicado_proporcional = datos.get(
-        "minimo_descendientes_aplicado_proporcional"
-    )
+    aplicado_proporcional = datos.get("minimo_descendientes_aplicado_proporcional")
     if (
         custodia == "compartida"
         and aplicado_proporcional is False
@@ -221,9 +212,7 @@ def evaluar(
     # ---------------------------------------------------------------
     # Motivo 3 — minimo por discapacidad no aplicado
     # ---------------------------------------------------------------
-    tiene_discapacidad = bool(
-        datos.get("tiene_discapacidad_33_por_ciento", False)
-    )
+    tiene_discapacidad = bool(datos.get("tiene_discapacidad_33_por_ciento", False))
     minimo_discapacidad_aplicado = datos.get("minimo_discapacidad_aplicado")
     if (
         tiene_discapacidad
@@ -242,9 +231,7 @@ def evaluar(
                 "motivo": "discapacidad_sin_minimo",
                 "documento_id": doc.id,
                 "tipo_documento": doc.tipo_documento.value,
-                "grado_discapacidad_declarado": datos.get(
-                    "grado_discapacidad"
-                ),
+                "grado_discapacidad_declarado": datos.get("grado_discapacidad"),
             },
             impacto_estimado="medio",
         )

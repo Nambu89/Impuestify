@@ -174,9 +174,7 @@ def _sort_by_date(txs: list[CryptoTransaction]) -> list[CryptoTransaction]:
 
 def _check_row_limit(row_count: int) -> None:
     if row_count > MAX_ROWS:
-        raise ValueError(
-            f"CSV exceeds maximum allowed rows ({MAX_ROWS}). Got {row_count} rows."
-        )
+        raise ValueError(f"CSV exceeds maximum allowed rows ({MAX_ROWS}). Got {row_count} rows.")
 
 
 # ---------------------------------------------------------------------------
@@ -561,9 +559,7 @@ def parse_csv(
     for row in reader:
         rows.append(dict(row))
         if len(rows) > MAX_ROWS:
-            raise ValueError(
-                f"CSV exceeds maximum allowed rows ({MAX_ROWS})."
-            )
+            raise ValueError(f"CSV exceeds maximum allowed rows ({MAX_ROWS}).")
 
     if not rows:
         logger.info("crypto_parser.empty_file")
@@ -617,13 +613,10 @@ def parse_excel(
     """
     if not _OPENPYXL_AVAILABLE:
         raise ImportError(
-            "openpyxl is required to parse Excel files. "
-            "Install it with: pip install openpyxl"
+            "openpyxl is required to parse Excel files. " "Install it with: pip install openpyxl"
         )
 
-    workbook = openpyxl.load_workbook(
-        io.BytesIO(file_content), read_only=True, data_only=True
-    )
+    workbook = openpyxl.load_workbook(io.BytesIO(file_content), read_only=True, data_only=True)
     sheet = workbook.active
 
     output = io.StringIO()
@@ -635,9 +628,7 @@ def parse_excel(
         writer.writerow(cells)
         row_count += 1
         if row_count > MAX_ROWS + 1:  # +1 for header
-            raise ValueError(
-                f"Excel file exceeds maximum allowed rows ({MAX_ROWS})."
-            )
+            raise ValueError(f"Excel file exceeds maximum allowed rows ({MAX_ROWS}).")
 
     workbook.close()
 

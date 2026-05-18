@@ -16,6 +16,7 @@ Supports:
 - Usage filtering (only "disposicion" properties impute income)
 - Legacy single-value path for backwards compatibility
 """
+
 import calendar
 from typing import Any, Dict, List, Optional
 
@@ -157,14 +158,16 @@ class ImputedIncomeCalculator:
                 2,
             )
 
-            detalle.append({
-                "indice": idx,
-                "valor_catastral": valor_catastral,
-                "porcentaje_aplicado": round(rate * 100, 1),
-                "dias_disposicion": dias_disposicion,
-                "porcentaje_titularidad": porcentaje_titularidad,
-                "renta_imputada": renta,
-            })
+            detalle.append(
+                {
+                    "indice": idx,
+                    "valor_catastral": valor_catastral,
+                    "porcentaje_aplicado": round(rate * 100, 1),
+                    "dias_disposicion": dias_disposicion,
+                    "porcentaje_titularidad": porcentaje_titularidad,
+                    "renta_imputada": renta,
+                }
+            )
             total += renta
 
         return {

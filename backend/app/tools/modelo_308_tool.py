@@ -26,6 +26,7 @@ NO confundir con el Modelo 309 (autoliquidacion no periodica), que es el
 modelo correcto cuando un comerciante en RE realiza adquisiciones
 intracomunitarias, importaciones o ISP.
 """
+
 from typing import Dict, Any, Optional
 from datetime import datetime
 import logging
@@ -34,9 +35,9 @@ logger = logging.getLogger(__name__)
 
 # Casos legitimos del Modelo 308 (Art. 7 Orden EHA/3786/2008)
 CASOS_VALIDOS = {
-    "transporte_ocasional",   # Sujeto ocasional — medio de transporte nuevo
+    "transporte_ocasional",  # Sujeto ocasional — medio de transporte nuevo
     "transportista_simplificado",  # Transportista en regimen simplificado
-    "re_viajeros",            # RE — devoluciones a viajeros (tax-free)
+    "re_viajeros",  # RE — devoluciones a viajeros (tax-free)
 }
 
 MODELO_308_TOOL = {
@@ -124,6 +125,7 @@ def _calc_plazo_transporte_ocasional(fecha_entrega: Optional[str]) -> str:
     try:
         f = datetime.strptime(fecha_entrega, "%Y-%m-%d").date()
         from datetime import timedelta
+
         deadline = f + timedelta(days=30)
         return f"hasta el {deadline.strftime('%d/%m/%Y')} (30 dias naturales desde la entrega)."
     except ValueError:
@@ -133,10 +135,7 @@ def _calc_plazo_transporte_ocasional(fecha_entrega: Optional[str]) -> str:
 def _calc_plazo_transportista(fecha_adq: Optional[str]) -> str:
     """Plazo: 20 primeros dias naturales del mes siguiente al de la adquisicion."""
     if not fecha_adq:
-        return (
-            "20 primeros dias naturales del mes siguiente al de la "
-            "adquisicion del vehiculo."
-        )
+        return "20 primeros dias naturales del mes siguiente al de la " "adquisicion del vehiculo."
     try:
         f = datetime.strptime(fecha_adq, "%Y-%m-%d").date()
         # Primer dia del mes siguiente
@@ -147,13 +146,11 @@ def _calc_plazo_transportista(fecha_adq: Optional[str]) -> str:
             year_next = f.year
             month_next = f.month + 1
         from datetime import date
+
         deadline = date(year_next, month_next, 20)
         return f"hasta el {deadline.strftime('%d/%m/%Y')} (20 primeros dias del mes siguiente)."
     except ValueError:
-        return (
-            "20 primeros dias naturales del mes siguiente al de la "
-            "adquisicion del vehiculo."
-        )
+        return "20 primeros dias naturales del mes siguiente al de la " "adquisicion del vehiculo."
 
 
 def _plazo_re_viajeros(periodo: str) -> str:
@@ -183,6 +180,7 @@ async def calculate_modelo_308_tool(
     """
     if restricted_mode:
         from app.security.content_restriction import get_autonomo_block_response
+
         logger.warning("calculate_modelo_308 called in restricted_mode — blocking")
         return {
             "success": False,
@@ -199,8 +197,7 @@ async def calculate_modelo_308_tool(
             return {
                 "success": False,
                 "error": (
-                    f"Caso invalido: '{caso}'. Debe ser uno de: "
-                    f"{sorted(CASOS_VALIDOS)}."
+                    f"Caso invalido: '{caso}'. Debe ser uno de: " f"{sorted(CASOS_VALIDOS)}."
                 ),
                 "formatted_response": (
                     "El Modelo 308 solo cubre tres supuestos: sujeto ocasional "
@@ -220,8 +217,7 @@ async def calculate_modelo_308_tool(
                     "success": False,
                     "error": "iva_soportado_transporte_nuevo no puede ser negativo",
                     "formatted_response": (
-                        "El IVA soportado en el medio de transporte no puede "
-                        "ser negativo."
+                        "El IVA soportado en el medio de transporte no puede " "ser negativo."
                     ),
                 }
             cuota_devolver = round(iva_soportado_transporte_nuevo, 2)
@@ -263,8 +259,7 @@ async def calculate_modelo_308_tool(
                     "success": False,
                     "error": "iva_soportado_vehiculo_simplificado no puede ser negativo",
                     "formatted_response": (
-                        "El IVA soportado en la adquisicion del vehiculo no "
-                        "puede ser negativo."
+                        "El IVA soportado en la adquisicion del vehiculo no " "puede ser negativo."
                     ),
                 }
             cuota_devolver = round(iva_soportado_vehiculo_simplificado, 2)
@@ -305,9 +300,7 @@ async def calculate_modelo_308_tool(
                 return {
                     "success": False,
                     "error": "iva_devuelto_a_viajeros no puede ser negativo",
-                    "formatted_response": (
-                        "El IVA reembolsado a viajeros no puede ser negativo."
-                    ),
+                    "formatted_response": ("El IVA reembolsado a viajeros no puede ser negativo."),
                 }
             periodos_validos = {"1T", "2T", "3T", "4T"}
             periodo_upper = (periodo or "").upper().strip()

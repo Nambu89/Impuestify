@@ -24,6 +24,7 @@ Usage:
     ../venv/Scripts/python.exe scripts/seed_casillas.py
     ../venv/Scripts/python.exe scripts/seed_casillas.py --dry-run
 """
+
 import argparse
 import asyncio
 import os
@@ -260,6 +261,7 @@ def merge_entries(
 # DB seeding
 # ---------------------------------------------------------------------------
 
+
 async def seed(dry_run: bool = False) -> None:
     from app.database.turso_client import TursoClient
 
@@ -301,8 +303,12 @@ async def seed(dry_run: bool = False) -> None:
                 year INTEGER DEFAULT 2024
             )
         """)
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_casillas_num ON irpf_casillas(casilla_num)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_casillas_desc ON irpf_casillas(description)")
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_casillas_num ON irpf_casillas(casilla_num)"
+        )
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_casillas_desc ON irpf_casillas(description)"
+        )
 
         # Idempotent: delete existing rows for year=2024 then re-insert
         print("Deleting existing rows for year=2024 ...")
@@ -314,15 +320,18 @@ async def seed(dry_run: bool = False) -> None:
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """
         for row in rows:
-            await db.execute(sql, [
-                str(uuid.uuid4()),
-                row["casilla_num"],
-                row["description"],
-                row.get("xsd_path"),
-                row.get("section"),
-                row["source"],
-                2024,
-            ])
+            await db.execute(
+                sql,
+                [
+                    str(uuid.uuid4()),
+                    row["casilla_num"],
+                    row["description"],
+                    row.get("xsd_path"),
+                    row.get("section"),
+                    row["source"],
+                    2024,
+                ],
+            )
 
         # Verify
         result = await db.execute(

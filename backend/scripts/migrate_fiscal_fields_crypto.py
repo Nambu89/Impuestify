@@ -8,6 +8,7 @@ Ejecutar:
     python backend/scripts/migrate_fiscal_fields_crypto.py
     python backend/scripts/migrate_fiscal_fields_crypto.py --dry-run
 """
+
 import argparse
 import asyncio
 import json
@@ -41,10 +42,10 @@ MIGRATION_MAP: dict[str, str] = {
 
 # Keys a ELIMINAR sin sustituto (calculadas automáticamente o ya no necesarias)
 KEYS_TO_DELETE: list[str] = [
-    "tiene_premios_exentos",   # se calcula: exento si premios_metalico_publicos < 40.000
-    "tiene_acciones_fondos",   # reemplazado por tiene_acciones + tiene_fondos_inversion + tiene_derivados
-    "mineria_cripto",          # fusionado con tiene_staking_defi
-    "tiene_nfts",              # cubierto por cripto_clave_contraprestacion = "O"
+    "tiene_premios_exentos",  # se calcula: exento si premios_metalico_publicos < 40.000
+    "tiene_acciones_fondos",  # reemplazado por tiene_acciones + tiene_fondos_inversion + tiene_derivados
+    "mineria_cripto",  # fusionado con tiene_staking_defi
+    "tiene_nfts",  # cubierto por cripto_clave_contraprestacion = "O"
 ]
 
 
@@ -86,16 +87,16 @@ async def migrate(dry_run: bool = False) -> None:
         for old_key, new_key in MIGRATION_MAP.items():
             if old_key in datos and new_key not in datos:
                 datos[new_key] = datos.pop(old_key)
-                logger.info(
-                    "user_id=%s — %s → %s", user_id, old_key, new_key
-                )
+                logger.info("user_id=%s — %s → %s", user_id, old_key, new_key)
                 changed = True
             elif old_key in datos and new_key in datos:
                 # Nueva key ya existe: solo eliminar la vieja
                 del datos[old_key]
                 logger.info(
                     "user_id=%s — eliminando %s (nueva key %s ya existe)",
-                    user_id, old_key, new_key,
+                    user_id,
+                    old_key,
+                    new_key,
                 )
                 changed = True
 
@@ -129,7 +130,10 @@ async def migrate(dry_run: bool = False) -> None:
     mode = "DRY-RUN" if dry_run else "REAL"
     logger.info(
         "[%s] Migracion completada — actualizados: %d | sin cambios: %d | total: %d",
-        mode, updated_count, skipped_count, len(rows),
+        mode,
+        updated_count,
+        skipped_count,
+        len(rows),
     )
 
 

@@ -14,6 +14,7 @@ Covers:
 
 All tests mock IRPFSimulator internals so no live Turso/DB connection is required.
 """
+
 import asyncio
 import sys
 from pathlib import Path
@@ -35,6 +36,7 @@ from app.routers.irpf_estimate import (
 # ---------------------------------------------------------------------------
 # SegundoDeclarante model tests
 # ---------------------------------------------------------------------------
+
 
 class TestSegundoDeclaranteModel:
     """Tests for the SegundoDeclarante Pydantic model."""
@@ -128,37 +130,122 @@ class TestIRPFEstimateRequestSegundoDeclarante:
 # Simulator integration tests (mock DB, real simulator logic)
 # ---------------------------------------------------------------------------
 
+
 def _make_mock_db():
     """Create a mock database that returns valid scale data."""
     mock_db = AsyncMock()
 
     # Estatal scale (simplified 2-tramo)
     estatal_rows = [
-        {"tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 9.5},
-        {"tramo_num": 2, "base_hasta": 20200, "cuota_integra": 1182.75, "resto_base": 7750, "tipo_aplicable": 12.0},
-        {"tramo_num": 3, "base_hasta": 35200, "cuota_integra": 2112.75, "resto_base": 15000, "tipo_aplicable": 15.0},
-        {"tramo_num": 4, "base_hasta": 60000, "cuota_integra": 4362.75, "resto_base": 24800, "tipo_aplicable": 18.5},
-        {"tramo_num": 5, "base_hasta": 300000, "cuota_integra": 8950.75, "resto_base": 240000, "tipo_aplicable": 22.5},
+        {
+            "tramo_num": 1,
+            "base_hasta": 12450,
+            "cuota_integra": 0,
+            "resto_base": 12450,
+            "tipo_aplicable": 9.5,
+        },
+        {
+            "tramo_num": 2,
+            "base_hasta": 20200,
+            "cuota_integra": 1182.75,
+            "resto_base": 7750,
+            "tipo_aplicable": 12.0,
+        },
+        {
+            "tramo_num": 3,
+            "base_hasta": 35200,
+            "cuota_integra": 2112.75,
+            "resto_base": 15000,
+            "tipo_aplicable": 15.0,
+        },
+        {
+            "tramo_num": 4,
+            "base_hasta": 60000,
+            "cuota_integra": 4362.75,
+            "resto_base": 24800,
+            "tipo_aplicable": 18.5,
+        },
+        {
+            "tramo_num": 5,
+            "base_hasta": 300000,
+            "cuota_integra": 8950.75,
+            "resto_base": 240000,
+            "tipo_aplicable": 22.5,
+        },
     ]
 
     # Madrid autonomous scale (simplified)
     madrid_rows = [
-        {"tramo_num": 1, "base_hasta": 12450, "cuota_integra": 0, "resto_base": 12450, "tipo_aplicable": 8.5},
-        {"tramo_num": 2, "base_hasta": 17707.2, "cuota_integra": 1058.25, "resto_base": 5257.2, "tipo_aplicable": 10.7},
-        {"tramo_num": 3, "base_hasta": 33007.2, "cuota_integra": 1620.77, "resto_base": 15300, "tipo_aplicable": 12.8},
-        {"tramo_num": 4, "base_hasta": 53407.2, "cuota_integra": 3579.17, "resto_base": 20400, "tipo_aplicable": 17.4},
-        {"tramo_num": 5, "base_hasta": 300000, "cuota_integra": 7128.77, "resto_base": 246592.8, "tipo_aplicable": 20.5},
+        {
+            "tramo_num": 1,
+            "base_hasta": 12450,
+            "cuota_integra": 0,
+            "resto_base": 12450,
+            "tipo_aplicable": 8.5,
+        },
+        {
+            "tramo_num": 2,
+            "base_hasta": 17707.2,
+            "cuota_integra": 1058.25,
+            "resto_base": 5257.2,
+            "tipo_aplicable": 10.7,
+        },
+        {
+            "tramo_num": 3,
+            "base_hasta": 33007.2,
+            "cuota_integra": 1620.77,
+            "resto_base": 15300,
+            "tipo_aplicable": 12.8,
+        },
+        {
+            "tramo_num": 4,
+            "base_hasta": 53407.2,
+            "cuota_integra": 3579.17,
+            "resto_base": 20400,
+            "tipo_aplicable": 17.4,
+        },
+        {
+            "tramo_num": 5,
+            "base_hasta": 300000,
+            "cuota_integra": 7128.77,
+            "resto_base": 246592.8,
+            "tipo_aplicable": 20.5,
+        },
     ]
 
     # Ahorro scales
     ahorro_estatal_rows = [
-        {"tramo_num": 1, "base_hasta": 6000, "cuota_integra": 0, "resto_base": 6000, "tipo_aplicable": 9.5},
-        {"tramo_num": 2, "base_hasta": 50000, "cuota_integra": 570, "resto_base": 44000, "tipo_aplicable": 10.5},
+        {
+            "tramo_num": 1,
+            "base_hasta": 6000,
+            "cuota_integra": 0,
+            "resto_base": 6000,
+            "tipo_aplicable": 9.5,
+        },
+        {
+            "tramo_num": 2,
+            "base_hasta": 50000,
+            "cuota_integra": 570,
+            "resto_base": 44000,
+            "tipo_aplicable": 10.5,
+        },
     ]
 
     ahorro_madrid_rows = [
-        {"tramo_num": 1, "base_hasta": 6000, "cuota_integra": 0, "resto_base": 6000, "tipo_aplicable": 9.5},
-        {"tramo_num": 2, "base_hasta": 50000, "cuota_integra": 570, "resto_base": 44000, "tipo_aplicable": 10.5},
+        {
+            "tramo_num": 1,
+            "base_hasta": 6000,
+            "cuota_integra": 0,
+            "resto_base": 6000,
+            "tipo_aplicable": 9.5,
+        },
+        {
+            "tramo_num": 2,
+            "base_hasta": 50000,
+            "cuota_integra": 570,
+            "resto_base": 44000,
+            "tipo_aplicable": 10.5,
+        },
     ]
 
     # MPYF params (column is 'value' not 'param_value')
@@ -284,6 +371,7 @@ def event_loop():
 # ---------------------------------------------------------------------------
 # Simulator-level tests
 # ---------------------------------------------------------------------------
+
 
 class TestSegundoDeclaranteSimulator:
     """Tests that exercise the real IRPFSimulator with segundo_declarante."""

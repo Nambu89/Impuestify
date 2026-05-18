@@ -14,6 +14,7 @@ These tests cover the gaps documented in the audit
 The tool is now a thin wrapper around `Modelo130Calculator` so the numeric
 results match exactly the (already tested) calculator service.
 """
+
 import pytest
 
 from app.tools.modelo_130_tool import calculate_modelo_130_tool
@@ -111,7 +112,9 @@ async def test_caso_aeat_5_ceuta_melilla_8pct():
     )
     assert result["success"] is True
     assert result["resultado_final"] == 800.0
-    assert "Ceuta" in result["formatted_response"] or "ceuta" in result["formatted_response"].lower()
+    assert (
+        "Ceuta" in result["formatted_response"] or "ceuta" in result["formatted_response"].lower()
+    )
 
 
 # ===========================================================================
@@ -304,9 +307,11 @@ async def test_a2_dispensa_70pct_comun():
     # Tool debe alertar y NO devolver "a ingresar" como cifra principal
     assert result["success"] is True
     assert result.get("dispensado") is True
-    assert "no obligado" in result["formatted_response"].lower() or \
-           "no estás obligado" in result["formatted_response"].lower() or \
-           "dispensa" in result["formatted_response"].lower()
+    assert (
+        "no obligado" in result["formatted_response"].lower()
+        or "no estás obligado" in result["formatted_response"].lower()
+        or "dispensa" in result["formatted_response"].lower()
+    )
 
 
 @pytest.mark.asyncio

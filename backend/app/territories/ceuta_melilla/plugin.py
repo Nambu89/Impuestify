@@ -1,9 +1,16 @@
 """Ceuta/Melilla territory plugin -- IPSI + 60% deduction."""
+
 from typing import Any, Dict, List
 
 from app.territories.base import (
-    TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig,
-    ModelObligation, Deadline, DEADLINES_2026, _trimestral_deadlines,
+    TerritoryPlugin,
+    ScaleData,
+    SimulationResult,
+    MinimosConfig,
+    ModelObligation,
+    Deadline,
+    DEADLINES_2026,
+    _trimestral_deadlines,
 )
 
 
@@ -17,12 +24,13 @@ class CeutaMelillaTerritory(TerritoryPlugin):
     Indirect tax: IPSI -- Ceuta Modelo 001 (general 3%), Melilla Modelo 420 (general 4%).
     IPSI rate tiers: 0.5%, 1%, 2%, 4% (Ceuta 3%), 8%, 10%.
     """
+
     territories = ["Ceuta", "Melilla"]
     regime = "ceuta_melilla"
 
     # IPSI general rates per city
     IPSI_RATES = {
-        "Ceuta": 0.03,    # 3% general
+        "Ceuta": 0.03,  # 3% general
         "Melilla": 0.04,  # 4% general
     }
 
@@ -31,6 +39,7 @@ class CeutaMelillaTerritory(TerritoryPlugin):
 
     async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
         from app.utils.irpf_simulator import IRPFSimulator
+
         simulator = IRPFSimulator(db)
         result = await simulator.simulate(**profile)
         return SimulationResult(
@@ -45,6 +54,7 @@ class CeutaMelillaTerritory(TerritoryPlugin):
 
     async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
         from app.services.deduction_service import DeductionService
+
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 

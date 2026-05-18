@@ -7,6 +7,7 @@ Estrategia de dos niveles:
 El clasificador devuelve siempre un ClassificationResult con la fuente
 (regex, gemini, fallback) para trazabilidad.
 """
+
 from __future__ import annotations
 import json
 import logging
@@ -85,13 +86,9 @@ class DocumentClassifier:
     def classify_text(self, texto: str) -> ClassificationResult:
         tipo_regex = clasificar_por_texto(texto)
         if tipo_regex != TipoDocumento.OTROS:
-            return ClassificationResult(
-                tipo=tipo_regex, confianza=0.95, fuente="regex"
-            )
+            return ClassificationResult(tipo=tipo_regex, confianza=0.95, fuente="regex")
         try:
             return _gemini_classify(texto)
         except Exception as exc:
             logger.warning("Gemini classification failed: %s", exc)
-            return ClassificationResult(
-                tipo=TipoDocumento.OTROS, confianza=0.0, fuente="fallback"
-            )
+            return ClassificationResult(tipo=TipoDocumento.OTROS, confianza=0.0, fuente="fallback")

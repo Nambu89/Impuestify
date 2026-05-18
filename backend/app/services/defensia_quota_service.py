@@ -44,6 +44,7 @@ supervivencia cross-restart — marcado como TODO en el plan.
 Reservas huerfanas (reserva sin commit/release tras >10 min) se limpian
 via cron fuera del scope v1 — marcado como TODO en el plan.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -177,8 +178,7 @@ class DefensiaQuotaService:
             rowcount = getattr(result, "rowcount", None)
             if rowcount == 0:
                 raise QuotaExcedida(
-                    f"Cuota mensual agotada para plan {plan_key}: "
-                    f"{limite} expediente(s)/mes"
+                    f"Cuota mensual agotada para plan {plan_key}: " f"{limite} expediente(s)/mes"
                 )
 
             reserva_id = f"res_{secrets.token_urlsafe(12)}"
@@ -233,9 +233,7 @@ class DefensiaQuotaService:
                 "WHERE user_id = ? AND ano_mes = ?",
                 [stored_user, ano_mes],
             )
-        logger.info(
-            "defensia quota commit user=%s reserva=%s", stored_user, reserva_id
-        )
+        logger.info("defensia quota commit user=%s reserva=%s", stored_user, reserva_id)
 
     async def release(self, user_id: str, reserva_id: str) -> None:
         """Libera la reserva sin confirmarla (analyze fallo antes de dictar).
@@ -270,6 +268,4 @@ class DefensiaQuotaService:
                 "WHERE user_id = ? AND ano_mes = ?",
                 [stored_user, ano_mes],
             )
-        logger.info(
-            "defensia quota release user=%s reserva=%s", stored_user, reserva_id
-        )
+        logger.info("defensia quota release user=%s reserva=%s", stored_user, reserva_id)

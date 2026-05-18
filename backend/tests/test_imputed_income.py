@@ -13,6 +13,7 @@ Covers:
 9. Mixed: vivienda_habitual + disposicion (only disposicion imputes)
 10. Edge case: 0 valor catastral AND 0 valor adquisicion -> 0
 """
+
 import pytest
 
 from app.utils.calculators.imputed_income import ImputedIncomeCalculator
@@ -29,11 +30,13 @@ def calc():
 def test_single_property_with_revision(calc):
     """200,000 EUR catastral revisado -> 200000 * 0.011 = 2,200 EUR."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 200_000,
-            "revision_catastral": True,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 200_000,
+                "revision_catastral": True,
+                "uso": "disposicion",
+            }
+        ],
         year=2024,
     )
     assert result["renta_imputada_total"] == 2200.0
@@ -50,11 +53,13 @@ def test_single_property_with_revision(calc):
 def test_single_property_without_revision(calc):
     """150,000 EUR catastral no revisado -> 150000 * 0.02 = 3,000 EUR."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 150_000,
-            "revision_catastral": False,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 150_000,
+                "revision_catastral": False,
+                "uso": "disposicion",
+            }
+        ],
         year=2024,
     )
     assert result["renta_imputada_total"] == 3000.0
@@ -68,11 +73,13 @@ def test_single_property_without_revision(calc):
 def test_no_valor_catastral_uses_adquisicion(calc):
     """No catastral, adquisicion 300,000 -> 50% * 300000 * 0.011 = 1,650 EUR."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 0,
-            "valor_adquisicion": 300_000,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 0,
+                "valor_adquisicion": 300_000,
+                "uso": "disposicion",
+            }
+        ],
         year=2024,
     )
     assert result["renta_imputada_total"] == 1650.0
@@ -86,12 +93,14 @@ def test_no_valor_catastral_uses_adquisicion(calc):
 def test_prorrateo_by_days(calc):
     """100,000 * 0.011 * (306/365) = 921.86 EUR (rounded)."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 100_000,
-            "revision_catastral": True,
-            "dias_disposicion": 306,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 100_000,
+                "revision_catastral": True,
+                "dias_disposicion": 306,
+                "uso": "disposicion",
+            }
+        ],
         year=2025,  # 2025 is not a leap year, 365 days
     )
     expected = round(100_000 * 0.011 * (306 / 365), 2)
@@ -105,12 +114,14 @@ def test_prorrateo_by_days(calc):
 def test_prorrateo_by_titularidad(calc):
     """200,000 * 0.011 * 50% = 1,100 EUR."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 200_000,
-            "revision_catastral": True,
-            "porcentaje_titularidad": 50,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 200_000,
+                "revision_catastral": True,
+                "porcentaje_titularidad": 50,
+                "uso": "disposicion",
+            }
+        ],
         year=2024,
     )
     assert result["renta_imputada_total"] == 1100.0
@@ -122,12 +133,14 @@ def test_prorrateo_by_titularidad(calc):
 def test_nudo_propietario_no_imputation(calc):
     """Nudo propietario (es_usufructuario=False) should NOT impute."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 200_000,
-            "revision_catastral": True,
-            "es_usufructuario": False,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 200_000,
+                "revision_catastral": True,
+                "es_usufructuario": False,
+                "uso": "disposicion",
+            }
+        ],
         year=2024,
     )
     assert result["renta_imputada_total"] == 0.0
@@ -217,11 +230,13 @@ def test_mixed_uso_only_disposicion_imputes(calc):
 def test_arrendado_does_not_impute(calc):
     """Rented property should not generate imputed income."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 200_000,
-            "revision_catastral": True,
-            "uso": "arrendado",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 200_000,
+                "revision_catastral": True,
+                "uso": "arrendado",
+            }
+        ],
         year=2024,
     )
     assert result["renta_imputada_total"] == 0.0
@@ -231,10 +246,12 @@ def test_arrendado_does_not_impute(calc):
 def test_afecto_does_not_impute(calc):
     """Property used in economic activity should not impute."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 200_000,
-            "uso": "afecto",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 200_000,
+                "uso": "afecto",
+            }
+        ],
         year=2024,
     )
     assert result["renta_imputada_total"] == 0.0
@@ -243,10 +260,12 @@ def test_afecto_does_not_impute(calc):
 def test_en_construccion_does_not_impute(calc):
     """Property under construction should not impute."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 200_000,
-            "uso": "en_construccion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 200_000,
+                "uso": "en_construccion",
+            }
+        ],
         year=2024,
     )
     assert result["renta_imputada_total"] == 0.0
@@ -258,11 +277,13 @@ def test_en_construccion_does_not_impute(calc):
 def test_zero_catastral_and_zero_adquisicion(calc):
     """Both values zero -> base is 0, renta is 0."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 0,
-            "valor_adquisicion": 0,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 0,
+                "valor_adquisicion": 0,
+                "uso": "disposicion",
+            }
+        ],
         year=2024,
     )
     assert result["renta_imputada_total"] == 0.0
@@ -283,12 +304,14 @@ def test_empty_inmuebles_and_no_legacy(calc):
 def test_leap_year_affects_day_prorrateo(calc):
     """2024 is a leap year (366 days), prorrateo should use 366."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 100_000,
-            "revision_catastral": True,
-            "dias_disposicion": 183,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 100_000,
+                "revision_catastral": True,
+                "dias_disposicion": 183,
+                "uso": "disposicion",
+            }
+        ],
         year=2024,
     )
     expected = round(100_000 * 0.011 * (183 / 366), 2)
@@ -298,11 +321,13 @@ def test_leap_year_affects_day_prorrateo(calc):
 def test_inmuebles_takes_priority_over_legacy(calc):
     """If inmuebles is provided, legacy valor_catastral_total is ignored."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 50_000,
-            "revision_catastral": True,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 50_000,
+                "revision_catastral": True,
+                "uso": "disposicion",
+            }
+        ],
         valor_catastral_total=999_999,
         year=2024,
     )
@@ -313,13 +338,15 @@ def test_inmuebles_takes_priority_over_legacy(calc):
 def test_combined_prorrateo_days_and_titularidad(calc):
     """200,000 * 0.011 * (183/366) * (25/100) = 137.50."""
     result = calc.calculate(
-        inmuebles=[{
-            "valor_catastral": 200_000,
-            "revision_catastral": True,
-            "dias_disposicion": 183,
-            "porcentaje_titularidad": 25,
-            "uso": "disposicion",
-        }],
+        inmuebles=[
+            {
+                "valor_catastral": 200_000,
+                "revision_catastral": True,
+                "dias_disposicion": 183,
+                "porcentaje_titularidad": 25,
+                "uso": "disposicion",
+            }
+        ],
         year=2024,  # leap year
     )
     expected = round(200_000 * 0.011 * (183 / 366) * (25 / 100), 2)

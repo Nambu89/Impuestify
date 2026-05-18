@@ -18,6 +18,7 @@ Contrato:
 - Error handling: cualquier excepción de OpenAI se atrapa y yields un mensaje
   técnico en español — nunca crashea el stream.
 """
+
 from __future__ import annotations
 
 import logging
@@ -130,8 +131,7 @@ class DefensiaAgent:
         resolved_key = api_key or settings.OPENAI_API_KEY
         if not resolved_key:
             logger.warning(
-                "DefensiaAgent inicializado sin OPENAI_API_KEY — llamadas "
-                "al LLM fallarán."
+                "DefensiaAgent inicializado sin OPENAI_API_KEY — llamadas " "al LLM fallarán."
             )
         self._client = AsyncOpenAI(api_key=resolved_key)
 
@@ -139,9 +139,7 @@ class DefensiaAgent:
     # Guardrails pipeline
     # ------------------------------------------------------------------
 
-    def _check_input_safety(
-        self, user_message: str
-    ) -> tuple[bool, Optional[str]]:
+    def _check_input_safety(self, user_message: str) -> tuple[bool, Optional[str]]:
         """Ejecuta el pipeline de guardrails sobre el mensaje del usuario.
 
         Bloquea únicamente risk_level ``high`` y ``critical`` — niveles
@@ -161,9 +159,7 @@ class DefensiaAgent:
                 violation = result.violations[0] if result.violations else "unsafe"
                 return False, f"guardrails_{result.risk_level}: {violation}"
         except Exception as exc:  # noqa: BLE001 — fail-open deliberado
-            logger.warning(
-                "Error en guardrails_system.validate_input — fail-open: %s", exc
-            )
+            logger.warning("Error en guardrails_system.validate_input — fail-open: %s", exc)
         return True, None
 
     # ------------------------------------------------------------------
@@ -199,9 +195,7 @@ class DefensiaAgent:
             return
 
         # 2. Construir mensajes
-        messages: list[dict[str, str]] = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ]
+        messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
         if chat_history:
             messages.extend(chat_history)
         messages.append({"role": "user", "content": message})

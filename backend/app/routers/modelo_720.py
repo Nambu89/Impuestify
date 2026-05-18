@@ -4,6 +4,7 @@ REST endpoints for Modelo 720 (Bienes Extranjero) and Modelo 721 (Cripto Extranj
 Public endpoints (no auth required) — designed as lead magnet / free tool.
 Rate limited to prevent abuse.
 """
+
 import logging
 from typing import List, Optional
 
@@ -24,6 +25,7 @@ router = APIRouter(prefix="/api/modelos", tags=["modelos"])
 
 class Check720Request(BaseModel):
     """Body para evaluar obligacion Modelo 720."""
+
     cuentas_extranjero: float = Field(
         default=0,
         ge=0,
@@ -62,6 +64,7 @@ class Check720Request(BaseModel):
 
 class Check721Request(BaseModel):
     """Body para evaluar obligacion Modelo 721."""
+
     crypto_extranjero_valor: float = Field(
         default=0,
         ge=0,

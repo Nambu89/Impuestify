@@ -34,6 +34,7 @@ La regla NO hardcodea la cita del articulo — solo emite una cita semantica
 ("Falta de tipicidad estricta...") que el verificador RAG traducira al
 texto canonico correcto.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -68,6 +69,7 @@ def _registrar_r010(_aislar_registry):  # noqa: ARG001 — fuerza orden
     from app.services.defensia_rules.reglas_procedimentales import (
         R010_falta_tipicidad,
     )
+
     reset_registry()
     importlib.reload(R010_falta_tipicidad)
     yield
@@ -76,6 +78,7 @@ def _registrar_r010(_aislar_registry):  # noqa: ARG001 — fuerza orden
 # ---------------------------------------------------------------------------
 # Helper local — la cita NUNCA puede hardcodear articulos canonicos
 # ---------------------------------------------------------------------------
+
 
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica.
@@ -110,9 +113,8 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
 # Test 1 — Positivo: conducta no encaja en el tipo infractor citado
 # ---------------------------------------------------------------------------
 
-def test_R010_positivo_conducta_no_encaja_en_tipo(
-    build_exp, build_brief, build_doc
-):
+
+def test_R010_positivo_conducta_no_encaja_en_tipo(build_exp, build_brief, build_doc):
     """Si el acuerdo sancionador imputa una conducta que no encaja en el
     tipo infractor citado (arts. 191-206 LGT), dispara R010.
     """
@@ -140,8 +142,7 @@ def test_R010_positivo_conducta_no_encaja_en_tipo(
 
     r010 = [c for c in candidatos if c.regla_id == "R010"]
     assert len(r010) == 1, (
-        f"R010 deberia disparar cuando la conducta no encaja en el tipo, "
-        f"got {candidatos}"
+        f"R010 deberia disparar cuando la conducta no encaja en el tipo, " f"got {candidatos}"
     )
 
     arg = r010[0]
@@ -150,26 +151,25 @@ def test_R010_positivo_conducta_no_encaja_en_tipo(
     # La cita debe ser semantica — NUNCA hardcoded
     cita = arg.cita_normativa_propuesta
     _assert_cita_no_hardcoded(cita)
-    assert "tipicidad" in cita.lower(), (
-        f"La cita semantica debe mencionar 'tipicidad', got: {cita!r}"
-    )
-    assert "infraccion" in cita.lower(), (
-        f"La cita semantica debe mencionar 'infraccion', got: {cita!r}"
-    )
+    assert (
+        "tipicidad" in cita.lower()
+    ), f"La cita semantica debe mencionar 'tipicidad', got: {cita!r}"
+    assert (
+        "infraccion" in cita.lower()
+    ), f"La cita semantica debe mencionar 'infraccion', got: {cita!r}"
 
     # datos_disparo debe exponer el motivo para que el writer lo use
-    assert arg.datos_disparo.get("motivo") == "conducta_no_encaja_en_tipo", (
-        f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("motivo") == "conducta_no_encaja_en_tipo"
+    ), f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — Positivo: aplicacion analogica de un tipo sancionador
 # ---------------------------------------------------------------------------
 
-def test_R010_positivo_aplicacion_analogica(
-    build_exp, build_brief, build_doc
-):
+
+def test_R010_positivo_aplicacion_analogica(build_exp, build_brief, build_doc):
     """Si se aplica analogicamente un tipo sancionador, dispara R010.
 
     La jurisprudencia constitucional prohibe expresamente la analogia in
@@ -191,16 +191,14 @@ def test_R010_positivo_aplicacion_analogica(
         docs=[doc],
     )
     brief = build_brief(
-        "Me han sancionado aplicando el tipo por analogia a un supuesto "
-        "que la ley no preve"
+        "Me han sancionado aplicando el tipo por analogia a un supuesto " "que la ley no preve"
     )
 
     candidatos = evaluar(exp, brief)
 
     r010 = [c for c in candidatos if c.regla_id == "R010"]
     assert len(r010) == 1, (
-        f"R010 deberia disparar cuando hay aplicacion analogica, "
-        f"got {candidatos}"
+        f"R010 deberia disparar cuando hay aplicacion analogica, " f"got {candidatos}"
     )
 
     arg = r010[0]
@@ -212,18 +210,17 @@ def test_R010_positivo_aplicacion_analogica(
         f"{arg.cita_normativa_propuesta!r}"
     )
 
-    assert arg.datos_disparo.get("motivo") == "aplicacion_analogica", (
-        f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("motivo") == "aplicacion_analogica"
+    ), f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 3 — Negativo: tipo infractor encaja y sin analogia
 # ---------------------------------------------------------------------------
 
-def test_R010_negativo_tipo_encaja_sin_analogia(
-    build_exp, build_brief, build_doc
-):
+
+def test_R010_negativo_tipo_encaja_sin_analogia(build_exp, build_brief, build_doc):
     """Si la conducta encaja en el tipo y no hay aplicacion analogica,
     la regla NO dispara.
     """
@@ -248,8 +245,7 @@ def test_R010_negativo_tipo_encaja_sin_analogia(
 
     r010 = [c for c in candidatos if c.regla_id == "R010"]
     assert r010 == [], (
-        f"R010 NO debe disparar cuando el tipo encaja y no hay analogia, "
-        f"got {r010}"
+        f"R010 NO debe disparar cuando el tipo encaja y no hay analogia, " f"got {r010}"
     )
 
 
@@ -257,9 +253,8 @@ def test_R010_negativo_tipo_encaja_sin_analogia(
 # Test 4 — Negativo: expediente no esta en fase sancionadora
 # ---------------------------------------------------------------------------
 
-def test_R010_negativo_fase_no_sancionadora(
-    build_exp, build_brief, build_doc
-):
+
+def test_R010_negativo_fase_no_sancionadora(build_exp, build_brief, build_doc):
     """Si el expediente esta en fase de liquidacion (no sancionadora),
     la regla NO dispara aunque los flags esten activos — R010 solo
     aplica al procedimiento sancionador.
@@ -284,8 +279,7 @@ def test_R010_negativo_fase_no_sancionadora(
 
     r010 = [c for c in candidatos if c.regla_id == "R010"]
     assert r010 == [], (
-        f"R010 NO debe disparar en fase de liquidacion (no sancionadora), "
-        f"got {r010}"
+        f"R010 NO debe disparar en fase de liquidacion (no sancionadora), " f"got {r010}"
     )
 
 
@@ -293,19 +287,20 @@ def test_R010_negativo_fase_no_sancionadora(
 # Sanity check: la regla esta registrada tras el import
 # ---------------------------------------------------------------------------
 
+
 def test_R010_registrada_en_registry():
     """Tras importar el modulo, R010 debe estar en el REGISTRY con la
     metadata correcta (tributos transversales, fases sancionador/recurso).
     """
-    assert "R010" in REGISTRY, (
-        f"R010 no encontrada en REGISTRY. Keys actuales: {list(REGISTRY.keys())}"
-    )
+    assert (
+        "R010" in REGISTRY
+    ), f"R010 no encontrada en REGISTRY. Keys actuales: {list(REGISTRY.keys())}"
     info = REGISTRY["R010"]
     # Transversal sancionador — aplica a los 5 tributos del scope DefensIA
     for tributo in ("IRPF", "IVA", "ISD", "ITP", "PLUSVALIA"):
-        assert tributo in info["tributos"], (
-            f"R010 deberia aplicar a {tributo}, tributos={info['tributos']}"
-        )
+        assert (
+            tributo in info["tributos"]
+        ), f"R010 deberia aplicar a {tributo}, tributos={info['tributos']}"
     # Fases sancionador + vias de recurso
     assert "SANCIONADOR_IMPUESTA" in info["fases"]
     assert "REPOSICION_INTERPUESTA" in info["fases"]

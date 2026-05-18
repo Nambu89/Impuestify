@@ -12,6 +12,7 @@ Architecture:
 Usage:
   python -m backend.scripts.doc_crawler.drift_analyzer [--dry-run] [--skip-llm]
 """
+
 import json
 import logging
 import subprocess
@@ -106,6 +107,7 @@ def extract_territory(file_path: str) -> str:
 
 # ── Layer 2: Claude headless analysis (cheap) ────────────────────
 
+
 def build_analysis_prompt(changes: list[dict]) -> str:
     """Build the prompt for Claude headless analysis."""
     files_summary = "\n".join(
@@ -150,10 +152,14 @@ def run_claude_analysis(prompt: str, dry_run: bool = False) -> dict | None:
     try:
         cmd = [
             "claude",
-            "-p", prompt,
-            "--model", CLAUDE_MODEL,
-            "--max-turns", str(CLAUDE_MAX_TURNS),
-            "--output-format", "json",
+            "-p",
+            prompt,
+            "--model",
+            CLAUDE_MODEL,
+            "--max-turns",
+            str(CLAUDE_MAX_TURNS),
+            "--output-format",
+            "json",
         ]
 
         logger.info(f"Invoking Claude headless (model={CLAUDE_MODEL}, budget=${MAX_BUDGET_USD})")
@@ -205,7 +211,9 @@ def run_claude_analysis(prompt: str, dry_run: bool = False) -> dict | None:
         logger.error("Claude CLI timed out after 120s")
         return None
     except FileNotFoundError:
-        logger.error("Claude CLI not found — install with: npm install -g @anthropic-ai/claude-code")
+        logger.error(
+            "Claude CLI not found — install with: npm install -g @anthropic-ai/claude-code"
+        )
         return None
     except Exception as e:
         logger.error(f"Claude analysis failed: {e}")
@@ -213,6 +221,7 @@ def run_claude_analysis(prompt: str, dry_run: bool = False) -> dict | None:
 
 
 # ── Report generation ────────────────────────────────────────────
+
 
 def generate_drift_report(
     changes: list[dict],
@@ -289,6 +298,7 @@ def generate_drift_report(
 
 
 # ── Email notification via Resend ─────────────────────────────────
+
 
 def send_drift_email(changes: list[dict], analysis: dict | None, report_path: Path) -> bool:
     """
@@ -378,12 +388,14 @@ def send_drift_email(changes: list[dict], analysis: dict | None, report_path: Pa
         </div>
         """
 
-        result = resend.Emails.send({
-            "from_": from_email,
-            "to": [to_email],
-            "subject": subject,
-            "html": html,
-        })
+        result = resend.Emails.send(
+            {
+                "from_": from_email,
+                "to": [to_email],
+                "subject": subject,
+                "html": html,
+            }
+        )
 
         logger.info(f"Drift alert email sent to {to_email} (id: {getattr(result, 'id', result)})")
         return True
@@ -397,6 +409,7 @@ def send_drift_email(changes: list[dict], analysis: dict | None, report_path: Pa
 
 
 # ── Main entry point ─────────────────────────────────────────────
+
 
 def analyze_drift(dry_run: bool = False, skip_llm: bool = False) -> dict:
     """
@@ -434,20 +447,24 @@ def analyze_drift(dry_run: bool = False, skip_llm: bool = False) -> dict:
         path = file_info.get("path", "")
         priority, reason = classify_file(path)
         territory = extract_territory(path)
-        changes.append({
-            "path": path,
-            "territory": territory,
-            "status": file_info.get("status", "unknown"),
-            "size": file_info.get("size", 0),
-            "priority": priority,
-            "reason": reason,
-        })
+        changes.append(
+            {
+                "path": path,
+                "territory": territory,
+                "status": file_info.get("status", "unknown"),
+                "size": file_info.get("size", 0),
+                "priority": priority,
+                "reason": reason,
+            }
+        )
 
     high_count = sum(1 for c in changes if c["priority"] == "high")
     medium_count = sum(1 for c in changes if c["priority"] == "medium")
     low_count = sum(1 for c in changes if c["priority"] == "low")
 
-    logger.info(f"Classification: {high_count} high, {medium_count} medium, {low_count} low priority")
+    logger.info(
+        f"Classification: {high_count} high, {medium_count} medium, {low_count} low priority"
+    )
 
     # Step 3: Claude analysis (Layer 2 — only for high/medium priority)
     analysis = None

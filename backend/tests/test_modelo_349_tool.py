@@ -11,6 +11,7 @@ Cubrimos:
 - Validacion VIES opcional (mockeada).
 - Tool registry: el tool esta registrado en ALL_TOOLS y TOOL_EXECUTORS.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -381,10 +382,20 @@ class TestOutputStructure:
             year=2026,
         )
         for key in (
-            "success", "modelo", "periodicidad", "periodicidad_motivo",
-            "periodo", "year", "plazo", "resumen", "totales",
-            "nif_validations", "formato_invalidos", "vies_warnings",
-            "errores_parse", "formatted_response",
+            "success",
+            "modelo",
+            "periodicidad",
+            "periodicidad_motivo",
+            "periodo",
+            "year",
+            "plazo",
+            "resumen",
+            "totales",
+            "nif_validations",
+            "formato_invalidos",
+            "vies_warnings",
+            "errores_parse",
+            "formatted_response",
         ):
             assert key in result, f"Missing key: {key}"
 

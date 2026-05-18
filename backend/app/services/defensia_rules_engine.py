@@ -8,13 +8,18 @@ candidatos.
 Cero LLM en esta capa — Python puro y determinista. La verificación de citas
 normativas se hace después en ``defensia_rag_verifier.py`` (Parte 2).
 """
+
 from __future__ import annotations
 import logging
 from enum import Enum
 from typing import Callable, Iterable, Optional, Union
 
 from app.models.defensia import (
-    ExpedienteEstructurado, Brief, ArgumentoCandidato, Tributo, Fase,
+    ExpedienteEstructurado,
+    Brief,
+    ArgumentoCandidato,
+    Tributo,
+    Fase,
 )
 
 logger = logging.getLogger(__name__)
@@ -74,6 +79,7 @@ def regla(
             ...
             return ArgumentoCandidato(...)  # o None si no dispara
     """
+
     def wrapper(fn: ReglaFunc) -> ReglaFunc:
         if id in REGISTRY:
             raise ValueError(f"Regla duplicada en el registry: {id}")
@@ -85,6 +91,7 @@ def regla(
             "fn": fn,
         }
         return fn
+
     return wrapper
 
 
@@ -93,9 +100,7 @@ def reset_registry() -> None:
     REGISTRY.clear()
 
 
-def evaluar(
-    expediente: ExpedienteEstructurado, brief: Brief
-) -> list[ArgumentoCandidato]:
+def evaluar(expediente: ExpedienteEstructurado, brief: Brief) -> list[ArgumentoCandidato]:
     """Ejecuta todas las reglas aplicables y devuelve los candidatos.
 
     Filtra por tributo y fase antes de ejecutar la función de la regla.
@@ -126,7 +131,8 @@ def evaluar(
         except Exception as exc:
             logger.warning(
                 "Regla %s lanzó excepción durante evaluación: %s",
-                info["id"], exc,
+                info["id"],
+                exc,
             )
             continue
         if resultado is not None:

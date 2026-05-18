@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT.parent / ".env")
 except ImportError:
     pass

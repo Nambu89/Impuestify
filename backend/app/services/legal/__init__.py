@@ -16,6 +16,7 @@ Public API:
 
 See `models.py`, `loader.py`, `registry.py`, `citation_parser.py`.
 """
+
 from app.services.legal.registry import (
     LegalNormsRegistry,
     YamlLegalNormsRegistry,

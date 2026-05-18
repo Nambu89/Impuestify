@@ -15,6 +15,7 @@ de auto-descubrimiento funciona:
 4. `load_all()` es idempotente: invocarlo dos veces tras un `reset_registry()`
    intermedio produce el mismo numero de reglas.
 """
+
 from __future__ import annotations
 
 from app.services import defensia_rules
@@ -56,16 +57,16 @@ def test_smoke_load_all_es_idempotente():
     defensia_rules.load_all()
     segunda_cuenta = len(REGISTRY)
 
-    assert primera_cuenta == segunda_cuenta, (
-        f"load_all() no es idempotente: {primera_cuenta} vs {segunda_cuenta}"
-    )
+    assert (
+        primera_cuenta == segunda_cuenta
+    ), f"load_all() no es idempotente: {primera_cuenta} vs {segunda_cuenta}"
 
 
 def test_smoke_paquete_importable():
     """El paquete `app.services.defensia_rules` debe importarse sin errores."""
     # El import en si mismo ya se ha ejecutado al cargar este modulo; solo
     # comprobamos que el atributo `load_all` existe y es callable.
-    assert hasattr(defensia_rules, "load_all"), (
-        "defensia_rules debe exponer una funcion `load_all()` auto-descubridora"
-    )
+    assert hasattr(
+        defensia_rules, "load_all"
+    ), "defensia_rules debe exponer una funcion `load_all()` auto-descubridora"
     assert callable(defensia_rules.load_all)

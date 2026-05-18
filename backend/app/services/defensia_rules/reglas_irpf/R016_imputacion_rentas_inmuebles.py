@@ -43,6 +43,7 @@ aparecen literales como "Art. 85 LIRPF" ni variantes — solo terminos
 semanticos ("imputacion", "rentas inmobiliarias", "vivienda habitual",
 "prorrateo", "dias de disposicion").
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -144,9 +145,7 @@ def evaluar(
     # hay menos de 365 dias a disposicion (caso contrario, aunque el flag
     # este a False, el prorrateo seria innecesario y no hay agravio).
     try:
-        dias_a_disposicion_int = (
-            int(dias_a_disposicion) if dias_a_disposicion is not None else None
-        )
+        dias_a_disposicion_int = int(dias_a_disposicion) if dias_a_disposicion is not None else None
     except (TypeError, ValueError):
         dias_a_disposicion_int = None
 
@@ -174,9 +173,7 @@ def evaluar(
     else:
         motivo = "sin_prorrateo_por_dias"
         datos_disparo["dias_a_disposicion"] = dias_a_disposicion_int
-        datos_disparo["dias_no_prorrateados"] = (
-            _DIAS_EJERCICIO - dias_a_disposicion_int
-        )
+        datos_disparo["dias_no_prorrateados"] = _DIAS_EJERCICIO - dias_a_disposicion_int
 
     datos_disparo["motivo"] = motivo
 

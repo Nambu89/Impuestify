@@ -9,6 +9,7 @@ Verifica:
 5. Loterías públicas → gravamen especial 20% sobre exceso de 40.000 EUR
 6. Backward compatibility: parámetros sin nuevos campos = mismo resultado que antes
 """
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -17,8 +18,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 class _DictRow(dict):
     """Dict subclass that also supports attribute access — mimics Turso row objects."""
+
     pass
 
 
@@ -35,17 +38,65 @@ def mock_db():
 
     # IRPF general scale (Estatal/CCAA 2024, simplified 4 tramos)
     estatal_general = [
-        {"tramo_num": 1, "base_hasta": 12450.0,  "cuota_integra": 0.0,     "resto_base": 12450.0, "tipo_aplicable": 9.5},
-        {"tramo_num": 2, "base_hasta": 20200.0,  "cuota_integra": 1182.75, "resto_base": 7750.0,  "tipo_aplicable": 12.0},
-        {"tramo_num": 3, "base_hasta": 35200.0,  "cuota_integra": 2112.75, "resto_base": 15000.0, "tipo_aplicable": 15.0},
-        {"tramo_num": 4, "base_hasta": 999999.0, "cuota_integra": 4362.75, "resto_base": 999999.0,"tipo_aplicable": 18.5},
+        {
+            "tramo_num": 1,
+            "base_hasta": 12450.0,
+            "cuota_integra": 0.0,
+            "resto_base": 12450.0,
+            "tipo_aplicable": 9.5,
+        },
+        {
+            "tramo_num": 2,
+            "base_hasta": 20200.0,
+            "cuota_integra": 1182.75,
+            "resto_base": 7750.0,
+            "tipo_aplicable": 12.0,
+        },
+        {
+            "tramo_num": 3,
+            "base_hasta": 35200.0,
+            "cuota_integra": 2112.75,
+            "resto_base": 15000.0,
+            "tipo_aplicable": 15.0,
+        },
+        {
+            "tramo_num": 4,
+            "base_hasta": 999999.0,
+            "cuota_integra": 4362.75,
+            "resto_base": 999999.0,
+            "tipo_aplicable": 18.5,
+        },
     ]
     # Ahorro scale (Estatal 2024)
     ahorro_scale = [
-        {"tramo_num": 1, "base_hasta": 6000.0,   "cuota_integra": 0.0,    "resto_base": 6000.0,  "tipo_aplicable": 19.0},
-        {"tramo_num": 2, "base_hasta": 50000.0,  "cuota_integra": 1140.0, "resto_base": 44000.0, "tipo_aplicable": 21.0},
-        {"tramo_num": 3, "base_hasta": 200000.0, "cuota_integra": 10380.0,"resto_base": 150000.0,"tipo_aplicable": 23.0},
-        {"tramo_num": 4, "base_hasta": 999999.0, "cuota_integra": 44880.0,"resto_base": 999999.0,"tipo_aplicable": 27.0},
+        {
+            "tramo_num": 1,
+            "base_hasta": 6000.0,
+            "cuota_integra": 0.0,
+            "resto_base": 6000.0,
+            "tipo_aplicable": 19.0,
+        },
+        {
+            "tramo_num": 2,
+            "base_hasta": 50000.0,
+            "cuota_integra": 1140.0,
+            "resto_base": 44000.0,
+            "tipo_aplicable": 21.0,
+        },
+        {
+            "tramo_num": 3,
+            "base_hasta": 200000.0,
+            "cuota_integra": 10380.0,
+            "resto_base": 150000.0,
+            "tipo_aplicable": 23.0,
+        },
+        {
+            "tramo_num": 4,
+            "base_hasta": 999999.0,
+            "cuota_integra": 44880.0,
+            "resto_base": 999999.0,
+            "tipo_aplicable": 27.0,
+        },
     ]
 
     def db_side_effect(query, params):
@@ -72,6 +123,7 @@ def mock_db():
 # ---------------------------------------------------------------------------
 # SavingsIncomeCalculator unit tests
 # ---------------------------------------------------------------------------
+
 
 class TestSavingsIncomeCalculatorNewParams:
     """Unit tests for SavingsIncomeCalculator with patrimonial gains."""
@@ -233,11 +285,13 @@ class TestSavingsIncomeCalculatorNewParams:
 # IRPFSimulator integration tests
 # ---------------------------------------------------------------------------
 
+
 class TestIRPFSimulatorCryptoIntegration:
     """Integration tests: new params flow through simulate() correctly."""
 
     def _make_simulator(self, mock_db):
         from app.utils.irpf_simulator import IRPFSimulator
+
         return IRPFSimulator(mock_db)
 
     @pytest.mark.asyncio
@@ -292,10 +346,7 @@ class TestIRPFSimulatorCryptoIntegration:
         )
 
         # Base general debe ser mayor con juegos (neto = 4000)
-        diferencia = (
-            result_juegos["base_imponible_general"]
-            - result_base["base_imponible_general"]
-        )
+        diferencia = result_juegos["base_imponible_general"] - result_base["base_imponible_general"]
         assert abs(diferencia - 4000.0) < 0.01
 
         # Base del ahorro no debe verse afectada por juegos
@@ -423,12 +474,12 @@ class TestIRPFSimulatorCryptoIntegration:
             year=2024,
             ingresos_trabajo=35000.0,
             cripto_ganancia_neta=8000.0,
-            cripto_perdida_neta=2000.0,       # neto cripto = 6000
+            cripto_perdida_neta=2000.0,  # neto cripto = 6000
             ganancias_acciones=5000.0,
-            perdidas_acciones=1000.0,          # neto acciones = 4000
+            perdidas_acciones=1000.0,  # neto acciones = 4000
             premios_metalico_privados=3000.0,
-            perdidas_juegos_privados=500.0,    # neto juegos = 2500 → base general
-            premios_metalico_publicos=50000.0, # gravamen = (50000-40000)*0.20 = 2000
+            perdidas_juegos_privados=500.0,  # neto juegos = 2500 → base general
+            premios_metalico_publicos=50000.0,  # gravamen = (50000-40000)*0.20 = 2000
         )
 
         assert result["success"] is True

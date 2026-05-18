@@ -6,6 +6,7 @@ Tests cover:
 - PUT /api/admin/users/{id}/plan (change plan)
 - Owner-only access enforcement
 """
+
 import sys
 import os
 import pytest
@@ -19,6 +20,7 @@ from app.routers.admin import ChangePlanRequest, VALID_PLAN_TYPES
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 class FakeRow(dict):
     pass
 
@@ -31,6 +33,7 @@ class FakeResult:
 # ---------------------------------------------------------------------------
 # Tests for admin.py models and validation
 # ---------------------------------------------------------------------------
+
 
 class TestChangePlanRequest:
     """Test the ChangePlanRequest Pydantic model."""
@@ -97,32 +100,29 @@ class TestChangePlanLogic:
         db = AsyncMock()
 
         # User exists
-        db.execute = AsyncMock(side_effect=[
-            FakeResult([{"id": "user-1", "email": "test@test.com"}]),  # user lookup
-            FakeResult([{"id": "sub-1"}]),  # subscription exists
-            FakeResult(),  # UPDATE
-            FakeResult([{"id": "prof-1"}]),  # profile exists
-            FakeResult(),  # UPDATE profile
-        ])
+        db.execute = AsyncMock(
+            side_effect=[
+                FakeResult([{"id": "user-1", "email": "test@test.com"}]),  # user lookup
+                FakeResult([{"id": "sub-1"}]),  # subscription exists
+                FakeResult(),  # UPDATE
+                FakeResult([{"id": "prof-1"}]),  # profile exists
+                FakeResult(),  # UPDATE profile
+            ]
+        )
 
         # Simulate the logic
         user_id = "user-1"
         plan_type = "autonomo"
 
-        user_result = await db.execute(
-            "SELECT id, email FROM users WHERE id = ?", [user_id]
-        )
+        user_result = await db.execute("SELECT id, email FROM users WHERE id = ?", [user_id])
         assert user_result.rows[0]["email"] == "test@test.com"
 
-        sub_result = await db.execute(
-            "SELECT id FROM subscriptions WHERE user_id = ?", [user_id]
-        )
+        sub_result = await db.execute("SELECT id FROM subscriptions WHERE user_id = ?", [user_id])
         assert len(sub_result.rows) == 1  # has existing subscription
 
         # Would UPDATE subscription
         await db.execute(
-            "UPDATE subscriptions SET plan_type = ? WHERE user_id = ?",
-            [plan_type, user_id]
+            "UPDATE subscriptions SET plan_type = ? WHERE user_id = ?", [plan_type, user_id]
         )
 
         # Would UPDATE profile
@@ -132,8 +132,7 @@ class TestChangePlanLogic:
         assert len(profile_result.rows) == 1
 
         await db.execute(
-            "UPDATE user_profiles SET situacion_laboral = 'autonomo' WHERE user_id = ?",
-            [user_id]
+            "UPDATE user_profiles SET situacion_laboral = 'autonomo' WHERE user_id = ?", [user_id]
         )
 
         assert db.execute.call_count == 5
@@ -143,24 +142,22 @@ class TestChangePlanLogic:
         """If user has no subscription row, INSERT one."""
         db = AsyncMock()
 
-        db.execute = AsyncMock(side_effect=[
-            FakeResult([{"id": "user-2", "email": "new@test.com"}]),  # user lookup
-            FakeResult([]),  # NO subscription
-            FakeResult(),  # INSERT subscription
-            FakeResult([]),  # NO profile
-            FakeResult(),  # INSERT profile
-        ])
+        db.execute = AsyncMock(
+            side_effect=[
+                FakeResult([{"id": "user-2", "email": "new@test.com"}]),  # user lookup
+                FakeResult([]),  # NO subscription
+                FakeResult(),  # INSERT subscription
+                FakeResult([]),  # NO profile
+                FakeResult(),  # INSERT profile
+            ]
+        )
 
         user_id = "user-2"
 
-        user_result = await db.execute(
-            "SELECT id, email FROM users WHERE id = ?", [user_id]
-        )
+        user_result = await db.execute("SELECT id, email FROM users WHERE id = ?", [user_id])
         assert user_result.rows[0]["email"] == "new@test.com"
 
-        sub_result = await db.execute(
-            "SELECT id FROM subscriptions WHERE user_id = ?", [user_id]
-        )
+        sub_result = await db.execute("SELECT id FROM subscriptions WHERE user_id = ?", [user_id])
         assert len(sub_result.rows) == 0  # no subscription
 
         await db.execute(
@@ -172,9 +169,7 @@ class TestChangePlanLogic:
         )
         assert len(profile_result.rows) == 0
 
-        await db.execute(
-            "INSERT INTO user_profiles ...", ["prof-id", user_id]
-        )
+        await db.execute("INSERT INTO user_profiles ...", ["prof-id", user_id])
 
         assert db.execute.call_count == 5
 

@@ -56,6 +56,7 @@ Invariantes de test (test_defensia_service.py)
 
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2B-009
 """
+
 from __future__ import annotations
 
 import json
@@ -214,7 +215,9 @@ class DefensiaService:
                 expediente.fase_confianza = confianza
                 logger.info(
                     "DefensIA: fase auto-detectada para %s -> %s (%.2f)",
-                    expediente.id, nueva_fase.value, confianza,
+                    expediente.id,
+                    nueva_fase.value,
+                    confianza,
                 )
 
             # 3. Rules engine -> lista de candidatos deterministas.
@@ -257,9 +260,7 @@ class DefensiaService:
                 brief,
                 cuota_estimada_eur=cuota_estimada,
             )
-            dictamen_md: str = self.writer.render_dictamen(
-                expediente, verificados, brief
-            )
+            dictamen_md: str = self.writer.render_dictamen(expediente, verificados, brief)
 
             # 6. Persistir dictamen PRIMERO (el escrito lo referencia por FK).
             dictamen_id = await self._persistir_dictamen(
@@ -353,18 +354,20 @@ class DefensiaService:
         params = [
             dictamen_id,
             expediente.id,
-            None,            # brief_id (v1: no enlazado)
+            None,  # brief_id (v1: no enlazado)
             fase_str,
             argumentos_json,
-            dictamen_md,     # resumen_caso: guardamos markdown del dictamen
+            dictamen_md,  # resumen_caso: guardamos markdown del dictamen
             now_iso,
-            "gpt-5-mini",    # modelo_llm (default backend)
-            None,            # tokens_consumidos (v1: pendiente)
+            "gpt-5-mini",  # modelo_llm (default backend)
+            None,  # tokens_consumidos (v1: pendiente)
         ]
         await self.db.execute(sql, params)
         logger.info(
             "DefensIA: dictamen persistido id=%s expediente=%s argumentos=%d",
-            dictamen_id, expediente.id, len(verificados),
+            dictamen_id,
+            expediente.id,
+            len(verificados),
         )
         return dictamen_id
 
@@ -387,9 +390,7 @@ class DefensiaService:
         encargara de incrementar la version y marcar el flag.
         """
         escrito_id = f"esc_{secrets.token_urlsafe(12)}"
-        tipo_escrito = _TIPO_ESCRITO_POR_FASE.get(
-            expediente.fase_detectada, "alegaciones_generico"
-        )
+        tipo_escrito = _TIPO_ESCRITO_POR_FASE.get(expediente.fase_detectada, "alegaciones_generico")
         now_iso = datetime.now(timezone.utc).isoformat()
 
         sql = (
@@ -404,15 +405,17 @@ class DefensiaService:
             dictamen_id,
             tipo_escrito,
             contenido_md,
-            1,     # version inicial
-            0,     # editado_por_usuario: false en la primera escritura
+            1,  # version inicial
+            0,  # editado_por_usuario: false en la primera escritura
             now_iso,
             now_iso,
         ]
         await self.db.execute(sql, params)
         logger.info(
             "DefensIA: escrito persistido id=%s tipo=%s expediente=%s",
-            escrito_id, tipo_escrito, expediente.id,
+            escrito_id,
+            tipo_escrito,
+            expediente.id,
         )
         return escrito_id
 

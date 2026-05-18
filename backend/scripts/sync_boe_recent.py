@@ -22,6 +22,7 @@ Exit codes:
 
 Future evolution: open an automated PR with proposed YAML changes.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -66,10 +67,12 @@ async def fetch_recent_updates(days: int) -> list[dict]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--days", type=int, default=7,
-                        help="Ventana en días hacia atrás (default: 7)")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--days", type=int, default=7, help="Ventana en días hacia atrás (default: 7)"
+    )
     args = parser.parse_args()
 
     catalog = load_norms()

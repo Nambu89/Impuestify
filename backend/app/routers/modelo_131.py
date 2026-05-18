@@ -9,6 +9,7 @@ POST /api/modelo-131/calculate
 
 Wrapper directo de `Modelo131Calculator` — coherente con el tool LLM.
 """
+
 import logging
 from typing import Any, Dict, Literal, Optional
 
@@ -27,9 +28,7 @@ class Modelo131Request(BaseModel):
     """Parámetros del cálculo del Modelo 131."""
 
     trimestre: int = Field(..., ge=1, le=4, description="Trimestre 1-4")
-    actividad_tipo: Literal["empresarial", "sin_datos_base", "agraria"] = (
-        "empresarial"
-    )
+    actividad_tipo: Literal["empresarial", "sin_datos_base", "agraria"] = "empresarial"
 
     # Apartado I — empresarial
     rendimiento_neto_modulos_anual: float = 0.0
@@ -96,7 +95,9 @@ async def calculate_modelo_131_endpoint(
 
         logger.info(
             "Modelo 131 endpoint: apartado=%s, trimestre=%s, resultado=%s",
-            result["apartado"], body.trimestre, result["resultado"],
+            result["apartado"],
+            body.trimestre,
+            result["resultado"],
         )
 
         return Modelo131Response(

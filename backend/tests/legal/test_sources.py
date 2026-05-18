@@ -3,6 +3,7 @@
 Covers the BOPV plugin (api.euskadi.eus), the static_url fallback, and
 the dispatcher routing.
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -82,8 +83,9 @@ def _mock_transport(routes: dict[str, tuple[int, dict | str]]) -> httpx.MockTran
         for path, (status, body) in routes.items():
             if path in full:
                 if isinstance(body, dict):
-                    return httpx.Response(status, text=_json.dumps(body),
-                                          headers={"content-type": "application/json"})
+                    return httpx.Response(
+                        status, text=_json.dumps(body), headers={"content-type": "application/json"}
+                    )
                 return httpx.Response(status, text=body)
         return httpx.Response(404, text="not in mock")
 
@@ -187,6 +189,7 @@ def test_registry_get_url_html_for_static_url_norm():
     """
     from app.services.legal.models import LegalNorm
     from app.services.legal.sources import get_legal_source_dispatcher
+
     norm = LegalNorm(
         sigla="TEST_STATIC",
         full_id="Test 1/2099",
@@ -205,6 +208,7 @@ def test_registry_get_url_html_for_static_url_norm():
 def test_registry_get_url_html_for_boe_norm():
     """A norm with implicit source_id=boe still resolves correctly."""
     from app.services.legal.registry import YamlLegalNormsRegistry
+
     reg = YamlLegalNormsRegistry.from_directory()
     norm = reg.get_norm("Ley 37/1992")
     assert norm is not None

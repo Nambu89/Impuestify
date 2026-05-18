@@ -8,6 +8,7 @@ Pin exacto: reportlab + DejaVuSans TTFont. NO weasyprint (L4 del plan-checker).
 Si la fuente DejaVuSans no está disponible, fallback a Helvetica builtin
 (soporta Latin-1, cubre las tildes castellanas y la eñe).
 """
+
 from __future__ import annotations
 
 import io
@@ -55,9 +56,7 @@ class DefensiaExportService:
             from docx import Document
             from docx.shared import Pt
         except ImportError as e:
-            raise RuntimeError(
-                "python-docx no disponible. Instala python-docx>=1.1.2"
-            ) from e
+            raise RuntimeError("python-docx no disponible. Instala python-docx>=1.1.2") from e
 
         doc = Document()
 
@@ -136,9 +135,7 @@ class DefensiaExportService:
             from reportlab.lib.units import mm
             from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
         except ImportError as e:
-            raise RuntimeError(
-                "reportlab no disponible. Instala reportlab>=4.0"
-            ) from e
+            raise RuntimeError("reportlab no disponible. Instala reportlab>=4.0") from e
 
         # Registrar fuente Unicode (DejaVuSans o fallback Helvetica)
         font_name = self._registrar_fuente_unicode()
@@ -205,17 +202,11 @@ class DefensiaExportService:
         for linea in markdown_text.split("\n"):
             linea_stripped = linea.strip()
             if linea_stripped.startswith("# "):
-                story.append(
-                    Paragraph(self._escape_xml(linea_stripped[2:]), style_h1)
-                )
+                story.append(Paragraph(self._escape_xml(linea_stripped[2:]), style_h1))
             elif linea_stripped.startswith("## "):
-                story.append(
-                    Paragraph(self._escape_xml(linea_stripped[3:]), style_h2)
-                )
+                story.append(Paragraph(self._escape_xml(linea_stripped[3:]), style_h2))
             elif linea_stripped.startswith("### "):
-                story.append(
-                    Paragraph(self._escape_xml(linea_stripped[4:]), style_h3)
-                )
+                story.append(Paragraph(self._escape_xml(linea_stripped[4:]), style_h3))
             elif linea_stripped.startswith("- "):
                 story.append(
                     Paragraph(
@@ -224,9 +215,7 @@ class DefensiaExportService:
                     )
                 )
             elif linea_stripped:
-                story.append(
-                    Paragraph(self._escape_xml(linea_stripped), style_body)
-                )
+                story.append(Paragraph(self._escape_xml(linea_stripped), style_body))
             else:
                 story.append(Spacer(1, 3 * mm))
 
@@ -244,11 +233,7 @@ class DefensiaExportService:
     @staticmethod
     def _escape_xml(text: str) -> str:
         """Escape de caracteres XML especiales para reportlab Paragraph."""
-        return (
-            text.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-        )
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     def _registrar_fuente_unicode(self) -> str:
         """Registra DejaVuSans si está disponible, sino fallback a Helvetica.
@@ -264,9 +249,7 @@ class DefensiaExportService:
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFont
         except ImportError:
-            logger.warning(
-                "reportlab pdfmetrics no disponible, usando Helvetica builtin"
-            )
+            logger.warning("reportlab pdfmetrics no disponible, usando Helvetica builtin")
             return "Helvetica"
 
         # Si ya está registrada (ej. en una llamada previa), devolver directo
@@ -290,9 +273,7 @@ class DefensiaExportService:
                     pdfmetrics.registerFont(TTFont("DejaVuSans", path))
                     return "DejaVuSans"
             except Exception as e:
-                logger.warning(
-                    "Error registrando DejaVuSans desde %s: %s", path, e
-                )
+                logger.warning("Error registrando DejaVuSans desde %s: %s", path, e)
                 continue
 
         logger.info(

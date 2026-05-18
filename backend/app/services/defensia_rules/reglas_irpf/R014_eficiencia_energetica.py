@@ -25,6 +25,7 @@ plan Parte 2, anti-alucinacion).
 
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T1B-014
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -76,6 +77,7 @@ _TIPOS_LIQUIDACION: frozenset[TipoDocumento] = frozenset(
 # ---------------------------------------------------------------------------
 # Helpers privados
 # ---------------------------------------------------------------------------
+
 
 def _to_float(valor: Any) -> Optional[float]:
     """Convierte un valor numerico a float de forma defensiva.
@@ -190,6 +192,7 @@ def _documento_dispara(doc: DocumentoEstructurado) -> Optional[tuple[str, dict]]
 # Regla principal
 # ---------------------------------------------------------------------------
 
+
 @regla(
     id="R014",
     tributos=[Tributo.IRPF.value],
@@ -207,7 +210,8 @@ def _documento_dispara(doc: DocumentoEstructurado) -> Optional[tuple[str, dict]]
     ),
 )
 def evaluar(
-    expediente: ExpedienteEstructurado, brief: Brief  # noqa: ARG001 — brief no usado
+    expediente: ExpedienteEstructurado,
+    brief: Brief,  # noqa: ARG001 — brief no usado
 ) -> Optional[ArgumentoCandidato]:
     """Evalua R014 sobre el expediente.
 

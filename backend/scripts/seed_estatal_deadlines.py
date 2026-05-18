@@ -33,6 +33,7 @@ Idempotent via INSERT ... ON CONFLICT(id) DO UPDATE.
 
 Source: https://sede.agenciatributaria.gob.es/Sede/calendario-contribuyente.html
 """
+
 import sys
 import os
 import asyncio
@@ -45,6 +46,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
 sys.path.insert(0, BACKEND_ROOT)
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from app.database.turso_client import TursoClient
@@ -59,6 +61,7 @@ TERRITORY = "Estatal"
 def _make_id(model: str, territory: str, period: str, tax_year: int) -> str:
     """Build deterministic ID matching the pattern used in sync_fiscal_calendar."""
     import re
+
     territory_slug = re.sub(r"[^a-z0-9]", "_", territory.lower()).strip("_")
     period_slug = period.lower().replace(" ", "_")
     model_slug = model.lower().replace(" ", "_")
@@ -80,12 +83,10 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
     y = tax_year
 
     deadlines = [
-
         # =============================================
         # ENERO — 4T del ejercicio anterior
         # Deadline falls in January of `y`; period labelled "4T"
         # =============================================
-
         # Modelo 303 IVA — 4T
         {
             "id": _make_id("303", TERRITORY, "4T", y),
@@ -105,7 +106,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 130 IRPF pagos fraccionados (estimacion directa) — 4T
         {
             "id": _make_id("130", TERRITORY, "4T", y),
@@ -125,7 +125,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 131 IRPF pagos fraccionados (estimacion objetiva) — 4T
         # FIX audit modelo_131_validation_2026-05: plazo 4T es 1-30 enero
         # (NO 1-20 como en otros 4T trimestrales). Art. 110.2 RIRPF.
@@ -147,7 +146,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 111 Retenciones trabajo — 4T
         {
             "id": _make_id("111", TERRITORY, "4T", y),
@@ -168,7 +166,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 115 Retenciones arrendamientos — 4T
         {
             "id": _make_id("115", TERRITORY, "4T", y),
@@ -189,7 +186,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 180 Resumen anual retenciones arrendamientos — anual
         {
             "id": _make_id("180", TERRITORY, "anual", y),
@@ -209,7 +205,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 390 Resumen anual IVA — anual
         {
             "id": _make_id("390", TERRITORY, "anual", y),
@@ -223,13 +218,11 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "domiciliation_date": None,
             "applies_to": "autonomos",
             "description": (
-                f"Declaracion-resumen anual del IVA del ejercicio {y - 1}. "
-                "Plazo: 1-30 de enero."
+                f"Declaracion-resumen anual del IVA del ejercicio {y - 1}. " "Plazo: 1-30 de enero."
             ),
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 190 Resumen anual retenciones trabajo — anual
         {
             "id": _make_id("190", TERRITORY, "anual", y),
@@ -250,11 +243,9 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # =============================================
         # FEBRERO — Resumen operaciones con terceros
         # =============================================
-
         # Modelo 347 Operaciones con terceros — anual
         {
             "id": _make_id("347", TERRITORY, "anual", y),
@@ -275,11 +266,9 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # =============================================
         # MARZO — Bienes en el extranjero
         # =============================================
-
         # Modelo 720 Bienes en el extranjero — anual
         {
             "id": _make_id("720", TERRITORY, "anual", y),
@@ -299,11 +288,9 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # =============================================
         # ABRIL — 1T + Inicio Campana Renta
         # =============================================
-
         # Modelo 303 IVA — 1T
         {
             "id": _make_id("303", TERRITORY, "1T", y),
@@ -323,7 +310,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 130 IRPF pagos fraccionados — 1T
         {
             "id": _make_id("130", TERRITORY, "1T", y),
@@ -337,13 +323,11 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "domiciliation_date": None,
             "applies_to": "autonomos",
             "description": (
-                f"Pago fraccionado IRPF (estimacion directa) 1T {y}. "
-                "Plazo: 1-20 de abril."
+                f"Pago fraccionado IRPF (estimacion directa) 1T {y}. " "Plazo: 1-20 de abril."
             ),
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 131 IRPF pagos fraccionados (objetiva) — 1T
         {
             "id": _make_id("131", TERRITORY, "1T", y),
@@ -363,7 +347,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 111 Retenciones trabajo — 1T
         {
             "id": _make_id("111", TERRITORY, "1T", y),
@@ -383,7 +366,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 115 Retenciones arrendamientos — 1T
         {
             "id": _make_id("115", TERRITORY, "1T", y),
@@ -403,7 +385,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 100 Campana Renta — anual (online desde 8 abril, fin 30 junio)
         {
             "id": _make_id("100", TERRITORY, "anual", y),
@@ -425,11 +406,9 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # =============================================
         # JULIO — 2T + Impuesto Sociedades
         # =============================================
-
         # Modelo 303 IVA — 2T
         {
             "id": _make_id("303", TERRITORY, "2T", y),
@@ -449,7 +428,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 130 IRPF pagos fraccionados — 2T
         {
             "id": _make_id("130", TERRITORY, "2T", y),
@@ -463,13 +441,11 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "domiciliation_date": None,
             "applies_to": "autonomos",
             "description": (
-                f"Pago fraccionado IRPF (estimacion directa) 2T {y}. "
-                "Plazo: 1-20 de julio."
+                f"Pago fraccionado IRPF (estimacion directa) 2T {y}. " "Plazo: 1-20 de julio."
             ),
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 131 IRPF pagos fraccionados (objetiva) — 2T
         {
             "id": _make_id("131", TERRITORY, "2T", y),
@@ -489,7 +465,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 111 Retenciones trabajo — 2T
         {
             "id": _make_id("111", TERRITORY, "2T", y),
@@ -509,7 +484,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 115 Retenciones arrendamientos — 2T
         {
             "id": _make_id("115", TERRITORY, "2T", y),
@@ -529,7 +503,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 200 Impuesto Sociedades — anual
         {
             "id": _make_id("200", TERRITORY, "anual", y),
@@ -549,11 +522,9 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # =============================================
         # OCTUBRE — 3T
         # =============================================
-
         # Modelo 303 IVA — 3T
         {
             "id": _make_id("303", TERRITORY, "3T", y),
@@ -573,7 +544,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 130 IRPF pagos fraccionados — 3T
         {
             "id": _make_id("130", TERRITORY, "3T", y),
@@ -587,13 +557,11 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "domiciliation_date": None,
             "applies_to": "autonomos",
             "description": (
-                f"Pago fraccionado IRPF (estimacion directa) 3T {y}. "
-                "Plazo: 1-20 de octubre."
+                f"Pago fraccionado IRPF (estimacion directa) 3T {y}. " "Plazo: 1-20 de octubre."
             ),
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 131 IRPF pagos fraccionados (objetiva) — 3T
         {
             "id": _make_id("131", TERRITORY, "3T", y),
@@ -613,7 +581,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 111 Retenciones trabajo — 3T
         {
             "id": _make_id("111", TERRITORY, "3T", y),
@@ -633,7 +600,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 115 Retenciones arrendamientos — 3T
         {
             "id": _make_id("115", TERRITORY, "3T", y),
@@ -653,11 +619,9 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # =============================================
         # NOVIEMBRE — Segundo plazo Renta
         # =============================================
-
         # Modelo 100 Segundo plazo — fraccionamiento
         {
             "id": _make_id("100", TERRITORY, "segundo_plazo", y),
@@ -678,13 +642,11 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # =============================================
         # INFORMATIVOS PARTICULARES — applies_to = "todos"
         # Plazos reales que afectan a cualquier contribuyente
         # (no solo autonomos), incluyendo asalariados y pensionistas.
         # =============================================
-
         # Modelo 721 — Monedas virtuales en el extranjero (anual, enero-marzo)
         {
             "id": _make_id("721", TERRITORY, "anual", y),
@@ -705,7 +667,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 714 — Impuesto sobre el Patrimonio (campana Renta, abril-junio)
         {
             "id": _make_id("714", TERRITORY, "anual", y),
@@ -727,7 +688,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 100 — Cita previa atencion telefonica (referencia informativa)
         {
             "id": _make_id("100", TERRITORY, "cita_telefonica", y),
@@ -747,7 +707,6 @@ def build_estatal_deadlines(tax_year: int = 2026) -> list[dict]:
             "source_url": SOURCE_URL,
             "is_active": 1,
         },
-
         # Modelo 100 — Atencion presencial en oficinas AEAT (referencia informativa)
         {
             "id": _make_id("100", TERRITORY, "atencion_presencial", y),
@@ -800,10 +759,19 @@ async def upsert_deadlines(db: TursoClient, deadlines: list[dict]) -> int:
                 updated_at = datetime('now')
             """,
             [
-                d["id"], d["model"], d["model_name"], d["territory"],
-                d["period"], d["tax_year"], d["start_date"], d["end_date"],
-                d["domiciliation_date"], d["applies_to"], d["description"],
-                d["source_url"], d["is_active"],
+                d["id"],
+                d["model"],
+                d["model_name"],
+                d["territory"],
+                d["period"],
+                d["tax_year"],
+                d["start_date"],
+                d["end_date"],
+                d["domiciliation_date"],
+                d["applies_to"],
+                d["description"],
+                d["source_url"],
+                d["is_active"],
             ],
         )
         count += 1
@@ -836,7 +804,9 @@ async def main(year: int, dry_run: bool) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Seed AEAT estatal fiscal deadlines")
     parser.add_argument("--year", type=int, default=2026, help="Tax year to seed (default: 2026)")
-    parser.add_argument("--dry-run", action="store_true", help="Print deadlines without writing to DB")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print deadlines without writing to DB"
+    )
     args = parser.parse_args()
 
     asyncio.run(main(args.year, args.dry_run))

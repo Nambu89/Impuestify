@@ -7,6 +7,7 @@ Tests cover:
 - Fiscal profile round-trip (save → load) logic
 - Fiscal profile formatting for agent prompts
 """
+
 import sys
 import pytest
 from unittest.mock import MagicMock
@@ -18,6 +19,7 @@ import json
 # before importing any app modules.
 # ---------------------------------------------------------------------------
 
+
 def _ensure_mock(module_name, **attrs):
     """Insert a MagicMock into sys.modules if the real module is absent."""
     if module_name not in sys.modules:
@@ -25,6 +27,7 @@ def _ensure_mock(module_name, **attrs):
         for k, v in attrs.items():
             setattr(mock, k, v)
         sys.modules[module_name] = mock
+
 
 # jose / bcrypt / slowapi are optional in unit-test environments
 _ensure_mock("jose")
@@ -78,8 +81,9 @@ class TestFiscalProfileRequest:
         """All autonomo fields should be Optional (can construct with empty body)."""
         req = FiscalProfileRequest()
         for field in AUTONOMO_FIELDS:
-            assert getattr(req, field) is None or getattr(req, field) is False, \
-                f"Field {field} should default to None or False"
+            assert (
+                getattr(req, field) is None or getattr(req, field) is False
+            ), f"Field {field} should default to None or False"
 
     def test_full_autonomo_profile(self):
         """Can construct with all 12 autonomo fields populated."""
@@ -145,11 +149,19 @@ class TestDatosFiscalesKeys:
     def test_original_keys_still_present(self):
         """The original 13 keys must still be present (no regression)."""
         original_keys = {
-            "ingresos_trabajo", "ss_empleado", "num_descendientes",
-            "anios_nacimiento_desc", "custodia_compartida",
-            "num_ascendientes_65", "num_ascendientes_75",
-            "discapacidad_contribuyente", "intereses", "dividendos",
-            "ganancias_fondos", "ingresos_alquiler", "valor_adquisicion_inmueble",
+            "ingresos_trabajo",
+            "ss_empleado",
+            "num_descendientes",
+            "anios_nacimiento_desc",
+            "custodia_compartida",
+            "num_ascendientes_65",
+            "num_ascendientes_75",
+            "discapacidad_contribuyente",
+            "intereses",
+            "dividendos",
+            "ganancias_fondos",
+            "ingresos_alquiler",
+            "valor_adquisicion_inmueble",
         }
         for key in original_keys:
             assert key in _DATOS_FISCALES_KEYS, f"Missing original key: {key}"
@@ -165,8 +177,9 @@ class TestFiscalProfileSaveLogic:
     def test_autonomo_fields_go_to_datos_fiscales(self):
         """Autonomo fields should NOT be in _PROFILE_COLUMNS (go to JSON)."""
         for field in AUTONOMO_FIELDS:
-            assert field not in _PROFILE_COLUMNS, \
-                f"{field} should be in datos_fiscales, not a column"
+            assert (
+                field not in _PROFILE_COLUMNS
+            ), f"{field} should be in datos_fiscales, not a column"
 
     def test_datos_fiscales_json_structure(self):
         """Simulate the save logic: fields get {value, _source, _updated} wrapper."""
@@ -291,12 +304,18 @@ class TestFiscalProfileForAgents:
 
     def test_extract_plain_values_from_wrapped_format(self):
         """The chat_stream.py logic extracts plain values from wrapped format."""
-        raw_datos = json.dumps({
-            "epigrafe_iae": {"value": "861", "_source": "manual", "_updated": "2026-03-03"},
-            "regimen_iva": {"value": "general", "_source": "manual", "_updated": "2026-03-03"},
-            "tarifa_plana": {"value": True, "_source": "manual", "_updated": "2026-03-03"},
-            "ingresos_trabajo": {"value": 30000, "_source": "conversation", "_updated": "2026-01-01"},
-        })
+        raw_datos = json.dumps(
+            {
+                "epigrafe_iae": {"value": "861", "_source": "manual", "_updated": "2026-03-03"},
+                "regimen_iva": {"value": "general", "_source": "manual", "_updated": "2026-03-03"},
+                "tarifa_plana": {"value": True, "_source": "manual", "_updated": "2026-03-03"},
+                "ingresos_trabajo": {
+                    "value": 30000,
+                    "_source": "conversation",
+                    "_updated": "2026-01-01",
+                },
+            }
+        )
 
         datos = json.loads(raw_datos)
         fiscal_profile = {}

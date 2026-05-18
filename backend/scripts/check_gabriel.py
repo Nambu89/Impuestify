@@ -1,4 +1,5 @@
 """Quick diagnostic: check gabriel.demacedo1@gmail.com user + subscription + activity + bug count."""
+
 import sys
 import asyncio
 from pathlib import Path
@@ -34,9 +35,7 @@ async def main():
         print(f"  {k}: {v}")
 
     print("\n=== SUBSCRIPTIONS ROW ===")
-    sub_res = await client.execute(
-        "SELECT * FROM subscriptions WHERE user_id = ?", [user_id]
-    )
+    sub_res = await client.execute("SELECT * FROM subscriptions WHERE user_id = ?", [user_id])
     if not sub_res.rows:
         print("  NO subscriptions row for this user_id")
     else:
@@ -81,8 +80,10 @@ async def main():
     )
     print(f"  Total rows en feedback: {len(fb_all.rows)}")
     for r in fb_all.rows:
-        print(f"  [{r['type']}/{r['status']}/{r['priority']}] {r['created_at']} | "
-              f"user={r['user_id']} | {r['title'][:60] if r['title'] else ''}")
+        print(
+            f"  [{r['type']}/{r['status']}/{r['priority']}] {r['created_at']} | "
+            f"user={r['user_id']} | {r['title'][:60] if r['title'] else ''}"
+        )
 
     print("\n=== DASHBOARD COUNTERS (same query as backend) ===")
     bugs_open = await client.execute(

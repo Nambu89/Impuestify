@@ -6,6 +6,7 @@ Endpoints:
 - GET  /api/shared/{token}            — View shared conversation (public)
 - DELETE /api/conversations/{id}/share — Revoke share link (auth required)
 """
+
 import json
 import logging
 import re
@@ -40,23 +41,32 @@ class ShareResponse(BaseModel):
 
 _PII_PATTERNS = [
     # DNI/NIE
-    (re.compile(r'\b[0-9]{8}[A-Z]\b'), '[DNI]'),
-    (re.compile(r'\b[XYZ][0-9]{7}[A-Z]\b'), '[NIE]'),
+    (re.compile(r"\b[0-9]{8}[A-Z]\b"), "[DNI]"),
+    (re.compile(r"\b[XYZ][0-9]{7}[A-Z]\b"), "[NIE]"),
     # Phone numbers (Spanish)
-    (re.compile(r'\b(?:\+34|0034)?[6789]\d{8}\b'), '[TELEFONO]'),
+    (re.compile(r"\b(?:\+34|0034)?[6789]\d{8}\b"), "[TELEFONO]"),
     # Email addresses
-    (re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'), '[EMAIL]'),
+    (re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"), "[EMAIL]"),
     # IBAN
-    (re.compile(r'\b[A-Z]{2}\d{2}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b'), '[IBAN]'),
+    (
+        re.compile(r"\b[A-Z]{2}\d{2}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"),
+        "[IBAN]",
+    ),
     # Credit card numbers
-    (re.compile(r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b'), '[TARJETA]'),
+    (re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"), "[TARJETA]"),
     # Specific salary amounts (>1000 with EUR/euros)
-    (re.compile(r'\b(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*(?:EUR|euros?|€)\b', re.IGNORECASE), '[IMPORTE] EUR'),
+    (
+        re.compile(r"\b(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*(?:EUR|euros?|€)\b", re.IGNORECASE),
+        "[IMPORTE] EUR",
+    ),
 ]
 
 # Names are harder — we anonymize common patterns like "Sr./Sra. Nombre"
 _NAME_PATTERNS = [
-    (re.compile(r'\b(?:Sr\.|Sra\.|Don|Doña)\s+[A-Z][a-záéíóú]+(?:\s+[A-Z][a-záéíóú]+){0,2}\b'), '[NOMBRE]'),
+    (
+        re.compile(r"\b(?:Sr\.|Sra\.|Don|Doña)\s+[A-Z][a-záéíóú]+(?:\s+[A-Z][a-záéíóú]+){0,2}\b"),
+        "[NOMBRE]",
+    ),
 ]
 
 
@@ -83,6 +93,7 @@ def _anonymize_messages(messages: list) -> list:
 # =====================================================================
 # POST /api/conversations/{id}/share — Create share link
 # =====================================================================
+
 
 @router.post("/api/conversations/{conversation_id}/share", response_model=ShareResponse)
 async def create_share_link(
@@ -140,8 +151,15 @@ async def create_share_link(
         await db.execute(
             """INSERT INTO shared_conversations (id, share_token, user_id, conversation_id, title, messages, anonymized)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            [share_id, share_token, current_user.user_id, conversation_id, title,
-             json.dumps(messages, ensure_ascii=False), body.anonymize],
+            [
+                share_id,
+                share_token,
+                current_user.user_id,
+                conversation_id,
+                title,
+                json.dumps(messages, ensure_ascii=False),
+                body.anonymize,
+            ],
         )
 
     return ShareResponse(
@@ -155,6 +173,7 @@ async def create_share_link(
 # =====================================================================
 # GET /api/shared/{token} — View shared conversation (PUBLIC)
 # =====================================================================
+
 
 @router.get("/api/shared/{token}")
 async def get_shared_conversation(
@@ -196,6 +215,7 @@ async def get_shared_conversation(
 # =====================================================================
 # DELETE /api/conversations/{id}/share — Revoke share link
 # =====================================================================
+
 
 @router.delete("/api/conversations/{conversation_id}/share")
 async def revoke_share_link(

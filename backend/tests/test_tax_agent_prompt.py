@@ -20,6 +20,7 @@ os.environ.setdefault("OPENAI_API_KEY", "sk-test-not-used")
 @pytest.fixture(scope="module")
 def agent():
     from app.agents.tax_agent import TaxAgent
+
     return TaxAgent()
 
 
@@ -60,17 +61,18 @@ def test_prompt_cites_correct_articles_for_services_no_eu():
     YAML, no hardcoded — buscamos la base legal correcta en el render."""
     from app.agents.tax_agent import TaxAgent
     from app.services.legal import get_legal_registry
+
     prompt = TaxAgent()._get_system_prompt()
     # The B2B-to-non-EU template must reference Art. 69 LIVA.
     registry = get_legal_registry()
     b2b_tpl = registry.get_invoice_template("b2b_servicios_no_ue")
     assert b2b_tpl is not None, "Template b2b_servicios_no_ue should exist in YAML"
-    assert "69" in b2b_tpl.legal_basis, (
-        f"B2B template should cite Art. 69, got: {b2b_tpl.legal_basis}"
-    )
-    assert "21" not in b2b_tpl.legal_basis.split(")")[0], (
-        "B2B services template must NOT cite Art. 21 (that's for goods)"
-    )
+    assert (
+        "69" in b2b_tpl.legal_basis
+    ), f"B2B template should cite Art. 69, got: {b2b_tpl.legal_basis}"
+    assert (
+        "21" not in b2b_tpl.legal_basis.split(")")[0]
+    ), "B2B services template must NOT cite Art. 21 (that's for goods)"
     # Y la plantilla aparece renderizada en el prompt.
     assert "fuera de la Comunidad" in prompt
 
@@ -101,7 +103,11 @@ def test_build_prompt_creator_hint_when_no_iae(agent):
     """When the user mentions YouTube/Twitch/etc but has no IAE in profile,
     inject a hint about saving IAE 8690."""
     query = "Soy creador en YouTube. ¿Cómo facturo a Google Ireland?"
-    fiscal_profile = {"situacion_laboral": "autonomo", "ccaa_residencia": "Madrid", "epigrafe_iae": ""}
+    fiscal_profile = {
+        "situacion_laboral": "autonomo",
+        "ccaa_residencia": "Madrid",
+        "epigrafe_iae": "",
+    }
     built = agent._build_prompt(query, fiscal_profile=fiscal_profile)
     assert "epígrafe IAE" in built or "epigrafe IAE" in built
     assert "8690" in built

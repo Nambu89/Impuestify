@@ -8,6 +8,7 @@ Calculates:
 - Work income reduction (art. 20 LIRPF)
 - Net reduced income (rendimiento neto reducido del trabajo)
 """
+
 from typing import Any, Dict
 
 from app.utils.tax_parameter_repository import TaxParameterRepository

@@ -14,6 +14,7 @@ Exenciones (Art. 105 TRLRHL):
 - Dacion en pago de vivienda habitual
 - Aportaciones a sociedad conyugal
 """
+
 from typing import Dict, Any
 import logging
 import math
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 # Coeficientes maximos RDL 26/2021 actualizados 2024
 # Key = anos completos de tenencia, Value = coeficiente maximo
 COEFICIENTES_MAXIMOS: Dict[int, float] = {
-    0: 0.15,   # Menos de 1 ano
+    0: 0.15,  # Menos de 1 ano
     1: 0.15,
     2: 0.14,
     3: 0.15,

@@ -4,6 +4,7 @@ Deduction Discovery Tool for TaxIA.
 Allows the TaxAgent to discover IRPF deductions the user may be eligible for,
 evaluate eligibility based on collected answers, and identify missing information.
 """
+
 import logging
 from typing import Any, Dict, Optional
 
@@ -38,12 +39,9 @@ IMPORTANTE: Pasa en 'answers' toda la información que ya conozcas del usuario
 - 'Estatal': solo deducciones estatales (default si no se conoce la CCAA)
 - Territorios forales (Araba, Bizkaia, Gipuzkoa, Navarra): devuelve SOLO deducciones forales (sistema IRPF propio)
 - Cualquier otra CCAA: devuelve deducciones Estatal + autonómicas combinadas
-Usar el nombre tal como aparece en el perfil fiscal del usuario (ej: 'Aragon', 'Castilla y Leon')."""
+Usar el nombre tal como aparece en el perfil fiscal del usuario (ej: 'Aragon', 'Castilla y Leon').""",
                 },
-                "tax_year": {
-                    "type": "integer",
-                    "description": "Año fiscal. Default: 2025."
-                },
+                "tax_year": {"type": "integer", "description": "Año fiscal. Default: 2025."},
                 "answers": {
                     "type": "object",
                     "description": """Respuestas del usuario para evaluar elegibilidad. Claves comunes:
@@ -63,12 +61,12 @@ Usar el nombre tal como aparece en el perfil fiscal del usuario (ej: 'Aragon', '
 - vehiculo_electrico_nuevo (bool): Compró vehículo eléctrico
 - obras_mejora_energetica (bool): Hizo obras de eficiencia energética
 - rentas_extranjero (bool): Tiene rentas del extranjero""",
-                    "additionalProperties": True
-                }
+                    "additionalProperties": True,
+                },
             },
-            "required": []
-        }
-    }
+            "required": [],
+        },
+    },
 }
 
 
@@ -116,7 +114,9 @@ async def discover_deductions_tool(
                 _datos: Dict[str, Any] = {}
                 if _datos_raw:
                     try:
-                        _parsed = _json.loads(_datos_raw) if isinstance(_datos_raw, str) else _datos_raw
+                        _parsed = (
+                            _json.loads(_datos_raw) if isinstance(_datos_raw, str) else _datos_raw
+                        )
                         # datos_fiscales stores entries as {value: X, _source: ...} or plain values
                         for _k, _v in _parsed.items():
                             if isinstance(_v, dict) and "value" in _v:
@@ -136,6 +136,7 @@ async def discover_deductions_tool(
                     ccaa = _profile_ccaa
 
                 from app.services.deduction_service import DeductionService
+
                 _auto_answers = DeductionService.build_answers_from_profile(_datos, ccaa)
                 # Merge: explicit answers passed by caller override auto-generated ones
                 merged = {**_auto_answers, **answers}
@@ -154,19 +155,27 @@ async def discover_deductions_tool(
         # - Unknown CCAA: returns Estatal only (no CCAA rows found)
         # No allowlist needed — the service queries the DB dynamically
         result = await service.evaluate_eligibility(
-            tax_year=tax_year, answers=answers, ccaa=ccaa if ccaa != "Estatal" else None,
+            tax_year=tax_year,
+            answers=answers,
+            ccaa=ccaa if ccaa != "Estatal" else None,
         )
         missing = await service.get_missing_questions(
-            tax_year=tax_year, answers=answers, ccaa=ccaa if ccaa != "Estatal" else None,
+            tax_year=tax_year,
+            answers=answers,
+            ccaa=ccaa if ccaa != "Estatal" else None,
         )
 
         # Build formatted response
         lines = []
         territory_label = ccaa
-        lines.append(f"## Deducciones IRPF {tax_year} ({territory_label}) — Análisis personalizado\n")
+        lines.append(
+            f"## Deducciones IRPF {tax_year} ({territory_label}) — Análisis personalizado\n"
+        )
 
         if result["eligible"]:
-            lines.append(f"### ✅ Deducciones a las que tienes derecho ({len(result['eligible'])})\n")
+            lines.append(
+                f"### ✅ Deducciones a las que tienes derecho ({len(result['eligible'])})\n"
+            )
             for d in result["eligible"]:
                 amount_str = ""
                 if d.get("fixed_amount"):
@@ -184,7 +193,9 @@ async def discover_deductions_tool(
             lines.append(f"**💰 Ahorro estimado: {result['estimated_savings']:,.0f}€**\n")
 
         if result["maybe_eligible"]:
-            lines.append(f"### 🔍 Deducciones posibles — necesito más datos ({len(result['maybe_eligible'])})\n")
+            lines.append(
+                f"### 🔍 Deducciones posibles — necesito más datos ({len(result['maybe_eligible'])})\n"
+            )
             for d in result["maybe_eligible"]:
                 lines.append(f"- **{d['name']}**: {d.get('description', '')}")
             lines.append("")
@@ -200,8 +211,12 @@ async def discover_deductions_tool(
             lines.append("")
 
         if not result["eligible"] and not result["maybe_eligible"]:
-            lines.append("No se han encontrado deducciones aplicables con la información proporcionada.")
-            lines.append("Responde a las preguntas anteriores para que pueda buscar más opciones de ahorro.")
+            lines.append(
+                "No se han encontrado deducciones aplicables con la información proporcionada."
+            )
+            lines.append(
+                "Responde a las preguntas anteriores para que pueda buscar más opciones de ahorro."
+            )
 
         formatted = "\n".join(lines)
 

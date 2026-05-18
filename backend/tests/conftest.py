@@ -3,6 +3,7 @@ TaxIA Test Configuration
 
 Pytest fixtures and configuration for testing.
 """
+
 import pytest
 import os
 import sys
@@ -59,17 +60,10 @@ def sample_injection_attempts():
 @pytest.fixture
 def sample_user_data():
     """Sample user data for testing"""
-    return {
-        "email": "test@example.com",
-        "password": "SecurePassword123!",
-        "name": "Test User"
-    }
+    return {"email": "test@example.com", "password": "SecurePassword123!", "name": "Test User"}
 
 
 @pytest.fixture
 def sample_tokens():
     """Sample token data for testing"""
-    return {
-        "user_id": "user-123-456",
-        "email": "test@example.com"
-    }
+    return {"user_id": "user-123-456", "email": "test@example.com"}

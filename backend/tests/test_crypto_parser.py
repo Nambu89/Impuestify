@@ -5,6 +5,7 @@ Cubre: helpers, deteccion de exchange, parsers por exchange
 (Binance, Coinbase, Kraken, KuCoin, Bitget), parser generico,
 parse_csv (integracion) y parse_excel.
 """
+
 from __future__ import annotations
 
 import csv
@@ -31,6 +32,7 @@ from app.services.crypto_parser import (
 # Helpers de fabricacion de CSVs
 # ---------------------------------------------------------------------------
 
+
 def _make_csv(headers: list[str], rows: list[list[str]]) -> bytes:
     """Construye CSV en memoria como bytes."""
     output = io.StringIO()
@@ -44,6 +46,7 @@ def _make_csv(headers: list[str], rows: list[list[str]]) -> bytes:
 # ---------------------------------------------------------------------------
 # T1: _sanitize_str
 # ---------------------------------------------------------------------------
+
 
 def test_sanitize_str_removes_equals_prefix():
     """Quita prefijo = (inyeccion CSV formula)."""
@@ -78,6 +81,7 @@ def test_sanitize_str_no_prefix_unchanged():
 # ---------------------------------------------------------------------------
 # T2: _parse_float
 # ---------------------------------------------------------------------------
+
 
 def test_parse_float_plain_number():
     """Parsea un numero simple."""
@@ -117,6 +121,7 @@ def test_parse_float_invalid_string_returns_fallback():
 # ---------------------------------------------------------------------------
 # T3: _parse_date
 # ---------------------------------------------------------------------------
+
 
 def test_parse_date_iso_with_time():
     """Parsea formato ISO con hora."""
@@ -162,6 +167,7 @@ def test_parse_date_invalid_returns_none():
 # T4: _normalise_asset
 # ---------------------------------------------------------------------------
 
+
 def test_normalise_asset_uppercase():
     """Convierte a mayusculas."""
     assert _normalise_asset("btc") == "BTC"
@@ -180,6 +186,7 @@ def test_normalise_asset_none_returns_empty():
 # ---------------------------------------------------------------------------
 # T5: _kraken_normalise_asset
 # ---------------------------------------------------------------------------
+
 
 def test_kraken_normalise_xxbt_to_btc():
     """XXBT se mapea a BTC."""
@@ -216,6 +223,7 @@ def test_kraken_normalise_short_unknown_unchanged():
 # T6: detect_exchange
 # ---------------------------------------------------------------------------
 
+
 def test_detect_exchange_binance():
     """Detecta Binance por sus headers caracteristicos."""
     headers = ["User_ID", "UTC_Time", "Operation", "Coin", "Change", "Remark"]
@@ -224,8 +232,16 @@ def test_detect_exchange_binance():
 
 def test_detect_exchange_coinbase():
     """Detecta Coinbase por sus headers."""
-    headers = ["Timestamp", "Transaction Type", "Asset", "Quantity Transacted",
-               "Spot Price at Transaction", "Subtotal", "Fees and/or Spread", "Notes"]
+    headers = [
+        "Timestamp",
+        "Transaction Type",
+        "Asset",
+        "Quantity Transacted",
+        "Spot Price at Transaction",
+        "Subtotal",
+        "Fees and/or Spread",
+        "Notes",
+    ]
     assert detect_exchange(headers) == "coinbase"
 
 
@@ -256,6 +272,7 @@ def test_detect_exchange_unknown():
 # ---------------------------------------------------------------------------
 # T7: Binance parser
 # ---------------------------------------------------------------------------
+
 
 def test_binance_buy_operation_parsed_correctly():
     """Una operacion buy de Binance produce CryptoTransaction con tx_type=buy."""
@@ -299,7 +316,7 @@ def test_binance_ignores_rows_without_date():
     csv_bytes = _make_csv(
         ["User_ID", "UTC_Time", "Operation", "Coin", "Change", "Remark"],
         [
-            ["123", "", "Buy", "BTC", "0.5", ""],          # sin fecha
+            ["123", "", "Buy", "BTC", "0.5", ""],  # sin fecha
             ["123", "2024-01-15 10:00:00", "Buy", "BTC", "1.0", ""],
         ],
     )
@@ -325,13 +342,21 @@ def test_binance_ignores_fiat_assets():
 # T8: Coinbase parser
 # ---------------------------------------------------------------------------
 
+
 def test_coinbase_buy_parsed_correctly():
     """Buy de Coinbase extrae precio, total y fee correctamente."""
     csv_bytes = _make_csv(
-        ["Timestamp", "Transaction Type", "Asset", "Quantity Transacted",
-         "Spot Price at Transaction", "Subtotal", "Fees and/or Spread", "Notes"],
-        [["2024-01-10T09:00:00Z", "Buy", "BTC", "0.1",
-          "40000", "4000", "50", ""]],
+        [
+            "Timestamp",
+            "Transaction Type",
+            "Asset",
+            "Quantity Transacted",
+            "Spot Price at Transaction",
+            "Subtotal",
+            "Fees and/or Spread",
+            "Notes",
+        ],
+        [["2024-01-10T09:00:00Z", "Buy", "BTC", "0.1", "40000", "4000", "50", ""]],
     )
     txs = parse_csv(csv_bytes)
     assert len(txs) == 1
@@ -347,10 +372,17 @@ def test_coinbase_buy_parsed_correctly():
 def test_coinbase_sell_parsed_correctly():
     """Sell de Coinbase produce tx_type=sell."""
     csv_bytes = _make_csv(
-        ["Timestamp", "Transaction Type", "Asset", "Quantity Transacted",
-         "Spot Price at Transaction", "Subtotal", "Fees and/or Spread", "Notes"],
-        [["2024-06-01T10:00:00Z", "Sell", "ETH", "2.0",
-          "3000", "6000", "30", ""]],
+        [
+            "Timestamp",
+            "Transaction Type",
+            "Asset",
+            "Quantity Transacted",
+            "Spot Price at Transaction",
+            "Subtotal",
+            "Fees and/or Spread",
+            "Notes",
+        ],
+        [["2024-06-01T10:00:00Z", "Sell", "ETH", "2.0", "3000", "6000", "30", ""]],
     )
     txs = parse_csv(csv_bytes)
     assert len(txs) == 1
@@ -360,10 +392,28 @@ def test_coinbase_sell_parsed_correctly():
 def test_coinbase_convert_is_swap():
     """Convert de Coinbase produce tx_type=swap."""
     csv_bytes = _make_csv(
-        ["Timestamp", "Transaction Type", "Asset", "Quantity Transacted",
-         "Spot Price at Transaction", "Subtotal", "Fees and/or Spread", "Notes"],
-        [["2024-03-01T10:00:00Z", "Convert", "BTC", "0.5",
-          "50000", "25000", "10", "Converted to ETH"]],
+        [
+            "Timestamp",
+            "Transaction Type",
+            "Asset",
+            "Quantity Transacted",
+            "Spot Price at Transaction",
+            "Subtotal",
+            "Fees and/or Spread",
+            "Notes",
+        ],
+        [
+            [
+                "2024-03-01T10:00:00Z",
+                "Convert",
+                "BTC",
+                "0.5",
+                "50000",
+                "25000",
+                "10",
+                "Converted to ETH",
+            ]
+        ],
     )
     txs = parse_csv(csv_bytes)
     assert len(txs) == 1
@@ -373,10 +423,17 @@ def test_coinbase_convert_is_swap():
 def test_coinbase_receive_zero_subtotal_is_airdrop():
     """Receive con Subtotal=0 se clasifica como airdrop (heuristica)."""
     csv_bytes = _make_csv(
-        ["Timestamp", "Transaction Type", "Asset", "Quantity Transacted",
-         "Spot Price at Transaction", "Subtotal", "Fees and/or Spread", "Notes"],
-        [["2024-04-01T00:00:00Z", "Receive", "SOL", "10",
-          "0", "0", "0", "airdrop"]],
+        [
+            "Timestamp",
+            "Transaction Type",
+            "Asset",
+            "Quantity Transacted",
+            "Spot Price at Transaction",
+            "Subtotal",
+            "Fees and/or Spread",
+            "Notes",
+        ],
+        [["2024-04-01T00:00:00Z", "Receive", "SOL", "10", "0", "0", "0", "airdrop"]],
     )
     txs = parse_csv(csv_bytes)
     assert len(txs) == 1
@@ -386,10 +443,17 @@ def test_coinbase_receive_zero_subtotal_is_airdrop():
 def test_coinbase_staking_income_parsed():
     """Staking Income de Coinbase produce tx_type=staking_reward."""
     csv_bytes = _make_csv(
-        ["Timestamp", "Transaction Type", "Asset", "Quantity Transacted",
-         "Spot Price at Transaction", "Subtotal", "Fees and/or Spread", "Notes"],
-        [["2024-05-01T00:00:00Z", "Staking Income", "ETH", "0.05",
-          "3000", "150", "0", ""]],
+        [
+            "Timestamp",
+            "Transaction Type",
+            "Asset",
+            "Quantity Transacted",
+            "Spot Price at Transaction",
+            "Subtotal",
+            "Fees and/or Spread",
+            "Notes",
+        ],
+        [["2024-05-01T00:00:00Z", "Staking Income", "ETH", "0.05", "3000", "150", "0", ""]],
     )
     txs = parse_csv(csv_bytes)
     assert len(txs) == 1
@@ -399,6 +463,7 @@ def test_coinbase_staking_income_parsed():
 # ---------------------------------------------------------------------------
 # T9: Kraken parser
 # ---------------------------------------------------------------------------
+
 
 def test_kraken_trade_positive_amount_is_buy():
     """Trade de Kraken con amount positivo produce tx_type=buy."""
@@ -463,6 +528,7 @@ def test_kraken_deposit_is_transfer():
 # T10: KuCoin parser
 # ---------------------------------------------------------------------------
 
+
 def test_kucoin_buy_pair_parsed():
     """KuCoin extrae asset del par BTC-USDT correctamente."""
     csv_bytes = _make_csv(
@@ -505,6 +571,7 @@ def test_kucoin_fee_and_price_extracted():
 # T11: Bitget parser
 # ---------------------------------------------------------------------------
 
+
 def test_bitget_detected_and_parsed():
     """Bitget se detecta correctamente y parsea el par con amount y precio."""
     csv_bytes = _make_csv(
@@ -521,6 +588,7 @@ def test_bitget_detected_and_parsed():
 # ---------------------------------------------------------------------------
 # T12: Generic parser
 # ---------------------------------------------------------------------------
+
 
 def test_generic_columns_case_insensitive():
     """El parser generico acepta columnas en cualquier capitalizacion."""
@@ -561,7 +629,7 @@ def test_generic_ignores_rows_without_date():
     csv_bytes = _make_csv(
         ["date", "type", "asset", "amount"],
         [
-            ["", "buy", "BTC", "0.5"],         # sin fecha
+            ["", "buy", "BTC", "0.5"],  # sin fecha
             ["2024-10-01", "buy", "ETH", "1.0"],
         ],
     )
@@ -575,7 +643,7 @@ def test_generic_ignores_rows_without_asset():
     csv_bytes = _make_csv(
         ["date", "type", "asset", "amount"],
         [
-            ["2024-10-01", "buy", "", "0.5"],       # sin asset
+            ["2024-10-01", "buy", "", "0.5"],  # sin asset
             ["2024-10-02", "buy", "BTC", "1.0"],
         ],
     )
@@ -587,6 +655,7 @@ def test_generic_ignores_rows_without_asset():
 # ---------------------------------------------------------------------------
 # T13: parse_csv — integracion
 # ---------------------------------------------------------------------------
+
 
 def test_parse_csv_autodetects_binance():
     """parse_csv detecta automaticamente Binance y usa su parser."""
@@ -649,6 +718,7 @@ def test_parse_csv_exchange_override():
 # T14: parse_excel
 # ---------------------------------------------------------------------------
 
+
 def test_parse_excel_converts_to_csv_internally():
     """parse_excel convierte el xlsx a CSV y devuelve transacciones correctas."""
     pytest.importorskip("openpyxl")
@@ -664,6 +734,7 @@ def test_parse_excel_converts_to_csv_internally():
     excel_bytes = buf.getvalue()
 
     from app.services.crypto_parser import parse_excel
+
     txs = parse_excel(excel_bytes)
     assert len(txs) == 1
     assert txs[0].asset == "BTC"

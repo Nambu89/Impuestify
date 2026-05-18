@@ -25,6 +25,7 @@ Field mapping (BOPV JSON → NormaSourceMetadata):
 
 Authentication: none. Rate limits: not documented; cache aggressively.
 """
+
 from __future__ import annotations
 
 import json
@@ -205,16 +206,20 @@ class BopvApiSource(LegalSource):
 
 
 def _metadata_to_json(meta: NormaSourceMetadata) -> str:
-    return json.dumps({
-        "source_id": meta.source_id,
-        "norm_id": meta.norm_id,
-        "titulo": meta.titulo,
-        "is_vigent": meta.is_vigent,
-        "url_html": meta.url_html,
-        "fecha_disposicion": meta.fecha_disposicion.isoformat() if meta.fecha_disposicion else None,
-        "fecha_vigencia": meta.fecha_vigencia.isoformat() if meta.fecha_vigencia else None,
-        "extra": meta.extra or {},
-    })
+    return json.dumps(
+        {
+            "source_id": meta.source_id,
+            "norm_id": meta.norm_id,
+            "titulo": meta.titulo,
+            "is_vigent": meta.is_vigent,
+            "url_html": meta.url_html,
+            "fecha_disposicion": meta.fecha_disposicion.isoformat()
+            if meta.fecha_disposicion
+            else None,
+            "fecha_vigencia": meta.fecha_vigencia.isoformat() if meta.fecha_vigencia else None,
+            "extra": meta.extra or {},
+        }
+    )
 
 
 def _metadata_from_json(blob: str) -> NormaSourceMetadata:
@@ -225,7 +230,9 @@ def _metadata_from_json(blob: str) -> NormaSourceMetadata:
         titulo=d.get("titulo", ""),
         is_vigent=d.get("is_vigent"),
         url_html=d.get("url_html"),
-        fecha_disposicion=date.fromisoformat(d["fecha_disposicion"]) if d.get("fecha_disposicion") else None,
+        fecha_disposicion=date.fromisoformat(d["fecha_disposicion"])
+        if d.get("fecha_disposicion")
+        else None,
         fecha_vigencia=date.fromisoformat(d["fecha_vigencia"]) if d.get("fecha_vigencia") else None,
         extra=d.get("extra"),
     )

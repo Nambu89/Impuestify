@@ -15,6 +15,7 @@ Patron de aislamiento: se recarga unicamente el modulo de R028 antes de cada
 test para garantizar que el REGISTRY contiene solo esta regla y que ningun
 side-effect de otros tests contamina el resultado.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -36,6 +37,7 @@ from app.services.defensia_rules_engine import REGISTRY, reset_registry
 # Patron de aislamiento: cargar solo R028
 # ---------------------------------------------------------------------------
 
+
 def _cargar_solo_R028() -> None:
     """Recarga unicamente el modulo de R028 para aislar el test del REGISTRY.
 
@@ -46,10 +48,7 @@ def _cargar_solo_R028() -> None:
     no se re-ejecutaria).
     """
     reset_registry()
-    module_name = (
-        "app.services.defensia_rules.reglas_otros_tributos."
-        "R028_plusvalia_prescripcion"
-    )
+    module_name = "app.services.defensia_rules.reglas_otros_tributos." "R028_plusvalia_prescripcion"
     if module_name in sys.modules:
         importlib.reload(sys.modules[module_name])
     else:
@@ -60,16 +59,14 @@ def _cargar_solo_R028() -> None:
 def r028_module():
     """Carga R028 de forma aislada y devuelve el modulo importado."""
     _cargar_solo_R028()
-    module_name = (
-        "app.services.defensia_rules.reglas_otros_tributos."
-        "R028_plusvalia_prescripcion"
-    )
+    module_name = "app.services.defensia_rules.reglas_otros_tributos." "R028_plusvalia_prescripcion"
     return sys.modules[module_name]
 
 
 # ---------------------------------------------------------------------------
 # Positivos
 # ---------------------------------------------------------------------------
+
 
 def test_r028_positivo_liquidacion_2026_sobre_devengo_2021(
     r028_module, build_exp, build_doc, build_brief
@@ -95,9 +92,7 @@ def test_r028_positivo_liquidacion_2026_sobre_devengo_2021(
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=[doc_liquidacion],
     )
-    brief = build_brief(
-        "El ayuntamiento me liquida ahora una plusvalia de hace 5 anos"
-    )
+    brief = build_brief("El ayuntamiento me liquida ahora una plusvalia de hace 5 anos")
 
     resultado = r028_module.evaluar(exp, brief)
 
@@ -108,9 +103,7 @@ def test_r028_positivo_liquidacion_2026_sobre_devengo_2021(
     assert resultado.datos_disparo["anos_transcurridos"] == 5
 
 
-def test_r028_positivo_limite_4_anos_mas_un_dia(
-    r028_module, build_exp, build_doc, build_brief
-):
+def test_r028_positivo_limite_4_anos_mas_un_dia(r028_module, build_exp, build_doc, build_brief):
     """Devengo 2020-04-01, notificacion 2024-04-02 -> dispara.
 
     Exactamente 4 anos y 1 dia desde el devengo: fuera del plazo de 4 anos
@@ -144,9 +137,8 @@ def test_r028_positivo_limite_4_anos_mas_un_dia(
 # Negativos
 # ---------------------------------------------------------------------------
 
-def test_r028_negativo_dentro_del_plazo(
-    r028_module, build_exp, build_doc, build_brief
-):
+
+def test_r028_negativo_dentro_del_plazo(r028_module, build_exp, build_doc, build_brief):
     """Devengo 2023-01-01, notificacion 2025-06-01 -> NO dispara.
 
     Aproximadamente 2,5 anos, claramente dentro del plazo de 4 anos.
@@ -174,9 +166,7 @@ def test_r028_negativo_dentro_del_plazo(
     assert resultado is None
 
 
-def test_r028_negativo_interrupcion_previa(
-    r028_module, build_exp, build_doc, build_brief
-):
+def test_r028_negativo_interrupcion_previa(r028_module, build_exp, build_doc, build_brief):
     """Aunque los 4 anos hayan transcurrido, `hubo_interrupcion=True` evita disparo."""
     doc_liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -201,9 +191,7 @@ def test_r028_negativo_interrupcion_previa(
     assert resultado is None
 
 
-def test_r028_negativo_tributo_no_plusvalia(
-    r028_module, build_exp, build_doc, build_brief
-):
+def test_r028_negativo_tributo_no_plusvalia(r028_module, build_exp, build_doc, build_brief):
     """La regla no debe disparar si el tributo del expediente no es PLUSVALIA."""
     doc_liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -232,9 +220,8 @@ def test_r028_negativo_tributo_no_plusvalia(
 # Anti-hardcode
 # ---------------------------------------------------------------------------
 
-def test_r028_cita_no_hardcoded(
-    r028_module, build_exp, build_doc, build_brief
-):
+
+def test_r028_cita_no_hardcoded(r028_module, build_exp, build_doc, build_brief):
     """La cita normativa debe ser SEMANTICA, no hardcoded con textos legales.
 
     El RAG verificador es quien proporcionara la cita verbatim en Parte 2. La

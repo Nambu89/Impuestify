@@ -7,6 +7,7 @@ Covers:
   - Tool executor: numeric lookup, text search, empty results, restricted mode
   - Tool registration in __init__
 """
+
 import asyncio
 import sys
 import os
@@ -41,6 +42,7 @@ from app.tools.casilla_lookup_tool import (
 # ===========================================================================
 # Parser unit tests (no I/O required — uses in-memory data)
 # ===========================================================================
+
 
 class TestParseCasillaNum:
     def test_star_four_digits(self):
@@ -199,6 +201,7 @@ class TestMergeEntries:
 # Tool helper unit tests
 # ===========================================================================
 
+
 class TestIsNumericQuery:
     def test_pure_digits_1_to_4(self):
         assert _is_numeric_query("1") is True
@@ -239,7 +242,13 @@ class TestFormatResults:
         assert "0505" in result
 
     def test_single_result(self):
-        rows = [{"casilla_num": "0505", "description": "Cuota integra estatal", "section": "Cuota integra"}]
+        rows = [
+            {
+                "casilla_num": "0505",
+                "description": "Cuota integra estatal",
+                "section": "Cuota integra",
+            }
+        ]
         result = _format_results(rows, "0505")
         assert "0505" in result
         assert "Cuota integra estatal" in result
@@ -258,6 +267,7 @@ class TestFormatResults:
 # Tool executor integration tests (mock DB)
 # ===========================================================================
 
+
 def _make_mock_db(rows: list[dict]):
     """Create a mock TursoClient that returns the given rows from execute()."""
     mock_result = MagicMock()
@@ -270,7 +280,14 @@ def _make_mock_db(rows: list[dict]):
 
 @pytest.mark.asyncio
 async def test_executor_numeric_exact_hit():
-    rows = [{"casilla_num": "0505", "description": "Cuota integra estatal", "section": "Cuota", "source": "xsd"}]
+    rows = [
+        {
+            "casilla_num": "0505",
+            "description": "Cuota integra estatal",
+            "section": "Cuota",
+            "source": "xsd",
+        }
+    ]
     mock_db = _make_mock_db(rows)
 
     with patch("app.tools.casilla_lookup_tool._get_db", AsyncMock(return_value=mock_db)):
@@ -289,7 +306,12 @@ async def test_executor_numeric_no_exact_falls_back_to_prefix():
     empty_result.rows = []
 
     prefix_rows = [
-        {"casilla_num": "0500", "description": "Base imponible general", "section": "Base", "source": "xsd"},
+        {
+            "casilla_num": "0500",
+            "description": "Base imponible general",
+            "section": "Base",
+            "source": "xsd",
+        },
     ]
     prefix_result = MagicMock()
     prefix_result.rows = prefix_rows
@@ -308,7 +330,12 @@ async def test_executor_numeric_no_exact_falls_back_to_prefix():
 @pytest.mark.asyncio
 async def test_executor_text_search():
     rows = [
-        {"casilla_num": "0020", "description": "Reduccion rendimientos netos trabajo", "section": "Trabajo", "source": "xsd"},
+        {
+            "casilla_num": "0020",
+            "description": "Reduccion rendimientos netos trabajo",
+            "section": "Trabajo",
+            "source": "xsd",
+        },
     ]
     mock_db = _make_mock_db(rows)
 
@@ -360,14 +387,17 @@ async def test_executor_db_error_returns_failure():
 # Tool registration tests
 # ===========================================================================
 
+
 class TestToolRegistration:
     def test_tool_in_all_tools(self):
         from app.tools import ALL_TOOLS
+
         names = [t["function"]["name"] for t in ALL_TOOLS]
         assert "lookup_casilla" in names
 
     def test_executor_in_tool_executors(self):
         from app.tools import TOOL_EXECUTORS
+
         assert "lookup_casilla" in TOOL_EXECUTORS
         assert callable(TOOL_EXECUTORS["lookup_casilla"])
 
@@ -380,5 +410,6 @@ class TestToolRegistration:
 
     def test_casilla_lookup_tool_in_all(self):
         from app.tools import __all__
+
         assert "CASILLA_LOOKUP_TOOL" in __all__
         assert "lookup_casilla_tool" in __all__

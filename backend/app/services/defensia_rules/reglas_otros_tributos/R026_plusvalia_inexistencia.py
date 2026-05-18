@@ -10,6 +10,7 @@ Invariante #2 (anti-alucinacion): la cita normativa devuelta por la regla es
 semantica libre. La cita canonica (art. 104.5 TRLHL, STC 59/2017, RDL 26/2021
 y STS 28-2-2024) la resuelve el ``defensia_rag_verifier`` contra el corpus.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -69,11 +70,7 @@ def evaluar(
         return None
 
     doc = next(
-        (
-            d
-            for d in expediente.documentos
-            if d.tipo_documento in _TIPOS_LIQUIDACION
-        ),
+        (d for d in expediente.documentos if d.tipo_documento in _TIPOS_LIQUIDACION),
         None,
     )
     if doc is None:

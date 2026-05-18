@@ -39,6 +39,7 @@ aqui no aparecen literales como "Art. 179.2.d LGT" ni "STS 21-9-2020" — solo
 terminos semanticos ("culpabilidad", "motivacion especifica", "interpretacion
 razonable").
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (

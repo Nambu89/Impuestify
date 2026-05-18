@@ -21,6 +21,7 @@ NOTA: Álava NO distingue régimen general / excepcional como Bizkaia o Gipuzkoa
 — aplica un único 5 % sobre el rendimiento neto del trimestre. Los primeros
 años de actividad usan las mismas reglas (cifras trimestrales).
 """
+
 from typing import Any, Dict, Optional
 
 
@@ -65,9 +66,7 @@ class Modelo130ArabaCalculator:
             casillas, desglose, plazo.
         """
         if quarter not in (1, 2, 3, 4):
-            raise ValueError(
-                f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4."
-            )
+            raise ValueError(f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4.")
 
         tipo_pct = self._TIPO_PCT
 

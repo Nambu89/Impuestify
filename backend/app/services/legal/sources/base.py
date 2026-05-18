@@ -8,6 +8,7 @@ that sources without a vigencia endpoint can answer `None` (unknown)
 without lying. Callers treat `None` as "assume vigente" to avoid
 false-positive derogation warnings.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -20,10 +21,10 @@ class NormaSourceMetadata:
     """Source-agnostic snapshot of a norm. Fields beyond the essentials
     are stored in `extra` so each source can attach what it needs."""
 
-    source_id: str                       # "boe", "bopv", "static_url", ...
-    norm_id: str                         # the source-specific identifier
+    source_id: str  # "boe", "bopv", "static_url", ...
+    norm_id: str  # the source-specific identifier
     titulo: str
-    is_vigent: Optional[bool]            # True / False / None (unknown)
+    is_vigent: Optional[bool]  # True / False / None (unknown)
     url_html: Optional[str]
     fecha_disposicion: Optional[date] = None
     fecha_vigencia: Optional[date] = None

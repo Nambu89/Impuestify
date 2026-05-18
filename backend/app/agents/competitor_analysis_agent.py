@@ -6,6 +6,7 @@ Compares features, identifies gaps, suggests improvements, and analyzes AEAT int
 
 This agent is designed for internal/product use, not end-user facing.
 """
+
 import os
 import json
 import logging
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AgentResponse:
     """Response from the competitor analysis agent"""
+
     content: str
     sources: List[Dict[str, Any]]
     metadata: Dict[str, Any]
@@ -51,9 +53,10 @@ class CompetitorAnalysisAgent:
         self,
         name: str = "CompetitorAnalysisAgent",
         model: Optional[str] = None,
-        api_key: Optional[str] = None
+        api_key: Optional[str] = None,
     ):
         from app.config import settings
+
         self.name = name
         self.model = model or settings.OPENAI_MODEL
         self.api_key = api_key or settings.OPENAI_API_KEY
@@ -122,7 +125,7 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
         sources: Optional[List[Dict[str, Any]]] = None,
         conversation_history: Optional[List[Dict[str, str]]] = None,
         progress_callback=None,
-        **kwargs
+        **kwargs,
     ) -> AgentResponse:
         """
         Run the competitor analysis agent.
@@ -146,16 +149,17 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
 
             if conversation_history:
                 for msg in conversation_history[-10:]:
-                    messages.append({
-                        "role": msg.get("role", "user"),
-                        "content": msg.get("content", "")
-                    })
+                    messages.append(
+                        {"role": msg.get("role", "user"), "content": msg.get("content", "")}
+                    )
 
             if context:
-                messages.append({
-                    "role": "user",
-                    "content": f"Contexto adicional:\n{context}\n\n---\n\nPregunta: {query}"
-                })
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f"Contexto adicional:\n{context}\n\n---\n\nPregunta: {query}",
+                    }
+                )
             else:
                 messages.append({"role": "user", "content": query})
 
@@ -169,7 +173,7 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
                     tool_choice="auto",
                     temperature=1,
                 ),
-                timeout=60.0
+                timeout=60.0,
             )
 
             message = response.choices[0].message
@@ -188,14 +192,17 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
 
                     logger.info(
                         f"CompetitorAnalysisAgent tool call: {function_name}",
-                        extra={"args": function_args}
+                        extra={"args": function_args},
                     )
 
                     if progress_callback:
-                        await progress_callback("tool_call", {
-                            "function_name": function_name,
-                            "args": function_args,
-                        })
+                        await progress_callback(
+                            "tool_call",
+                            {
+                                "function_name": function_name,
+                                "args": function_args,
+                            },
+                        )
 
                     # Execute tool
                     tool_executor = COMPETITOR_TOOL_EXECUTORS.get(function_name)
@@ -205,18 +212,25 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
                         tool_result = {"success": False, "error": f"Unknown tool: {function_name}"}
 
                     if progress_callback:
-                        await progress_callback("tool_result", {
-                            "function_name": function_name,
-                            "success": tool_result.get("success", False),
-                        })
+                        await progress_callback(
+                            "tool_result",
+                            {
+                                "function_name": function_name,
+                                "success": tool_result.get("success", False),
+                            },
+                        )
 
                     # Add tool result to messages
-                    result_content = tool_result.get("formatted_response", json.dumps(tool_result, ensure_ascii=False))
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": result_content,
-                    })
+                    result_content = tool_result.get(
+                        "formatted_response", json.dumps(tool_result, ensure_ascii=False)
+                    )
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": result_content,
+                        }
+                    )
 
                 # Get next response
                 response = await asyncio.wait_for(
@@ -228,7 +242,7 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
                         tool_choice="auto",
                         temperature=1,
                     ),
-                    timeout=60.0
+                    timeout=60.0,
                 )
                 message = response.choices[0].message
 

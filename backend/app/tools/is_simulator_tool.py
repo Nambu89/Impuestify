@@ -4,6 +4,7 @@ IS Simulator Tool for TaxIA.
 Provides function calling capability for the LLM to run a complete
 Impuesto sobre Sociedades simulation (Modelo 200).
 """
+
 from typing import Any, Dict
 import logging
 
@@ -27,101 +28,101 @@ Solo para sociedades mercantiles (SL, SLP, SA, cooperativas).""",
             "properties": {
                 "resultado_contable": {
                     "type": "number",
-                    "description": "Resultado contable del ejercicio (ingresos - gastos según contabilidad). Puede ser negativo."
+                    "description": "Resultado contable del ejercicio (ingresos - gastos según contabilidad). Puede ser negativo.",
                 },
                 "territorio": {
                     "type": "string",
-                    "description": "Territorio fiscal: Madrid, Barcelona, Bizkaia, Gipuzkoa, Araba, Navarra, Canarias, Ceuta, Melilla, etc."
+                    "description": "Territorio fiscal: Madrid, Barcelona, Bizkaia, Gipuzkoa, Araba, Navarra, Canarias, Ceuta, Melilla, etc.",
                 },
                 "tipo_entidad": {
                     "type": "string",
                     "enum": ["sl", "slp", "sa", "nueva_creacion"],
-                    "description": "Tipo de entidad: sl (Sociedad Limitada), slp (Sociedad Limitada Profesional), sa (Sociedad Anónima), nueva_creacion (primeros ejercicios con BI positiva)."
+                    "description": "Tipo de entidad: sl (Sociedad Limitada), slp (Sociedad Limitada Profesional), sa (Sociedad Anónima), nueva_creacion (primeros ejercicios con BI positiva).",
                 },
                 "facturacion_anual": {
                     "type": "number",
-                    "description": "Facturación anual de la empresa. Si <1M → tramos pyme (23%+25% común). Si >10M → pago fraccionado al 24%."
+                    "description": "Facturación anual de la empresa. Si <1M → tramos pyme (23%+25% común). Si >10M → pago fraccionado al 24%.",
                 },
                 "ejercicios_con_bi_positiva": {
                     "type": "integer",
-                    "description": "Número de ejercicios con base imponible positiva. Si <=2 y tipo_entidad='nueva_creacion' → tipo reducido 15%/20%."
+                    "description": "Número de ejercicios con base imponible positiva. Si <=2 y tipo_entidad='nueva_creacion' → tipo reducido 15%/20%.",
                 },
                 "gastos_no_deducibles": {
                     "type": "number",
-                    "description": "Gastos contabilizados que no son deducibles fiscalmente (multas, sanciones, liberalidades, etc.)."
+                    "description": "Gastos contabilizados que no son deducibles fiscalmente (multas, sanciones, liberalidades, etc.).",
                 },
                 "ajustes_negativos": {
                     "type": "number",
-                    "description": "Ajustes extracontables negativos (ingresos contabilizados no imputables fiscalmente)."
+                    "description": "Ajustes extracontables negativos (ingresos contabilizados no imputables fiscalmente).",
                 },
                 "amortizacion_contable": {
                     "type": "number",
-                    "description": "Amortización registrada en contabilidad."
+                    "description": "Amortización registrada en contabilidad.",
                 },
                 "amortizacion_fiscal": {
                     "type": "number",
-                    "description": "Amortización según tablas fiscales. Si > contable → ajuste positivo."
+                    "description": "Amortización según tablas fiscales. Si > contable → ajuste positivo.",
                 },
                 "bins_pendientes": {
                     "type": "number",
-                    "description": "Bases imponibles negativas de ejercicios anteriores pendientes de compensar."
+                    "description": "Bases imponibles negativas de ejercicios anteriores pendientes de compensar.",
                 },
                 "gasto_id": {
                     "type": "number",
-                    "description": "Gasto en I+D del ejercicio (Art. 35.1 LIS). Deducción del 25%."
+                    "description": "Gasto en I+D del ejercicio (Art. 35.1 LIS). Deducción del 25%.",
                 },
                 "gasto_it": {
                     "type": "number",
-                    "description": "Gasto en innovación tecnológica (Art. 35.2 LIS). Deducción del 12%."
+                    "description": "Gasto en innovación tecnológica (Art. 35.2 LIS). Deducción del 12%.",
                 },
                 "incremento_ffpp": {
                     "type": "number",
-                    "description": "Incremento de fondos propios para reserva de capitalización (Art. 25 LIS)."
+                    "description": "Incremento de fondos propios para reserva de capitalización (Art. 25 LIS).",
                 },
                 "donativos": {
                     "type": "number",
-                    "description": "Donativos a entidades acogidas a la Ley 49/2002 (mecenazgo). Deducción del 35%."
+                    "description": "Donativos a entidades acogidas a la Ley 49/2002 (mecenazgo). Deducción del 35%.",
                 },
                 "empleados_discapacidad_33": {
                     "type": "integer",
-                    "description": "Número de empleados con discapacidad >=33%. Deducción de 9.000 EUR/empleado."
+                    "description": "Número de empleados con discapacidad >=33%. Deducción de 9.000 EUR/empleado.",
                 },
                 "empleados_discapacidad_65": {
                     "type": "integer",
-                    "description": "Número de empleados con discapacidad >=65%. Deducción de 12.000 EUR/empleado."
+                    "description": "Número de empleados con discapacidad >=65%. Deducción de 12.000 EUR/empleado.",
                 },
                 "dotacion_ric": {
                     "type": "number",
-                    "description": "Dotación a la Reserva para Inversiones en Canarias (RIC). Reduce la BI."
+                    "description": "Dotación a la Reserva para Inversiones en Canarias (RIC). Reduce la BI.",
                 },
                 "es_zec": {
                     "type": "boolean",
-                    "description": "true si la empresa está inscrita en la Zona Especial Canaria (ZEC). Tipo del 4%."
+                    "description": "true si la empresa está inscrita en la Zona Especial Canaria (ZEC). Tipo del 4%.",
                 },
                 "rentas_ceuta_melilla": {
                     "type": "number",
-                    "description": "Rentas obtenidas en Ceuta o Melilla para bonificación del 50% (Art. 33.6 LIS)."
+                    "description": "Rentas obtenidas en Ceuta o Melilla para bonificación del 50% (Art. 33.6 LIS).",
                 },
                 "retenciones_ingresos_cuenta": {
                     "type": "number",
-                    "description": "Retenciones e ingresos a cuenta soportados durante el ejercicio."
+                    "description": "Retenciones e ingresos a cuenta soportados durante el ejercicio.",
                 },
                 "pagos_fraccionados_realizados": {
                     "type": "number",
-                    "description": "Pagos fraccionados del Modelo 202 realizados durante el ejercicio."
+                    "description": "Pagos fraccionados del Modelo 202 realizados durante el ejercicio.",
                 },
                 "ingresos_explotacion": {
                     "type": "number",
-                    "description": "Ingresos totales de explotación (alternativa a resultado_contable)."
+                    "description": "Ingresos totales de explotación (alternativa a resultado_contable).",
                 },
                 "gastos_explotacion": {
                     "type": "number",
-                    "description": "Gastos totales de explotación (alternativa a resultado_contable)."
+                    "description": "Gastos totales de explotación (alternativa a resultado_contable).",
                 },
             },
-            "required": ["territorio"]
-        }
-    }
+            "required": ["territorio"],
+        },
+    },
 }
 
 
@@ -159,7 +160,9 @@ async def simulate_is_tool(
 
         logger.info(
             "Simulating IS: resultado_contable=%s, territorio=%s, tipo=%s",
-            resultado_contable, ccaa, tipo_entidad,
+            resultado_contable,
+            ccaa,
+            tipo_entidad,
         )
 
         inp = ISInput(
@@ -194,7 +197,8 @@ async def simulate_is_tool(
         r202_art40_2 = ISSimulator.calcular_202(
             modalidad="art40_2",
             cuota_integra_ultimo=result.cuota_integra,
-            deducciones_bonificaciones_ultimo=result.deducciones_total + result.bonificaciones_total,
+            deducciones_bonificaciones_ultimo=result.deducciones_total
+            + result.bonificaciones_total,
             retenciones_ultimo=result.retenciones,
         )
         r202_art40_3 = ISSimulator.calcular_202(

@@ -7,6 +7,7 @@ and merge them into the user's profile. Runs as a background task.
 Priority: manual > llm > regex (check _source field)
 Skips conversations with < 3 messages.
 """
+
 import json
 import logging
 from typing import Any, Dict, List, Optional
@@ -55,6 +56,7 @@ class ConversationAnalyzer:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -75,9 +77,7 @@ class ConversationAnalyzer:
     async def _call_llm(self, messages: List[Dict[str, str]]) -> str:
         """Call gpt-5-mini with the extraction prompt."""
         client = self._get_client()
-        conversation_text = "\n".join(
-            f"{m['role']}: {m['content']}" for m in messages
-        )
+        conversation_text = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
         response = await client.chat.completions.create(
             model="gpt-5-mini",
             messages=[
@@ -137,6 +137,7 @@ class ConversationAnalyzer:
         else:
             # No profile yet - create one (unlikely but safe)
             import uuid
+
             profile_id = str(uuid.uuid4())
             await db.execute(
                 """INSERT INTO user_profiles (id, user_id, datos_fiscales, created_at, updated_at)
@@ -173,7 +174,9 @@ class ConversationAnalyzer:
 
             logger.info(
                 "Extracted %d fiscal facts from conversation %s for user %s",
-                len(extracted), conversation_id, user_id,
+                len(extracted),
+                conversation_id,
+                user_id,
             )
             return extracted
 

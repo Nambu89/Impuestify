@@ -18,6 +18,7 @@ Graceful degradation: any network or parsing error returns `None` to
 callers. The chat pipeline assumes "vigente" on missing data — better to
 ship an unverified-but-likely-correct citation than to break the chat.
 """
+
 from __future__ import annotations
 
 import json
@@ -49,14 +50,14 @@ class NormaBoeMetadata:
     fields the verifier and enricher need; the API returns many more.
     """
 
-    boe_id: str                          # `<identificador>`
-    titulo: str                          # `<titulo>`
-    fecha_disposicion: Optional[date]    # `<fecha_disposicion>` YYYYMMDD
-    fecha_vigencia: Optional[date]       # `<fecha_vigencia>` YYYYMMDD
-    estatus_derogacion: bool             # `<estatus_derogacion>` (S/N) → bool
-    vigencia_agotada: bool               # `<vigencia_agotada>` (S/N) → bool
+    boe_id: str  # `<identificador>`
+    titulo: str  # `<titulo>`
+    fecha_disposicion: Optional[date]  # `<fecha_disposicion>` YYYYMMDD
+    fecha_vigencia: Optional[date]  # `<fecha_vigencia>` YYYYMMDD
+    estatus_derogacion: bool  # `<estatus_derogacion>` (S/N) → bool
+    vigencia_agotada: bool  # `<vigencia_agotada>` (S/N) → bool
     url_html_consolidada: Optional[str]  # `<url_html_consolidada>`
-    url_eli: Optional[str]               # `<url_eli>` (European Legislation Id.)
+    url_eli: Optional[str]  # `<url_eli>` (European Legislation Id.)
 
     @property
     def is_vigent(self) -> bool:
@@ -127,16 +128,20 @@ class _CacheEntry:
 
 
 def _metadata_to_json(meta: NormaBoeMetadata) -> str:
-    return json.dumps({
-        "boe_id": meta.boe_id,
-        "titulo": meta.titulo,
-        "fecha_disposicion": meta.fecha_disposicion.isoformat() if meta.fecha_disposicion else None,
-        "fecha_vigencia": meta.fecha_vigencia.isoformat() if meta.fecha_vigencia else None,
-        "estatus_derogacion": meta.estatus_derogacion,
-        "vigencia_agotada": meta.vigencia_agotada,
-        "url_html_consolidada": meta.url_html_consolidada,
-        "url_eli": meta.url_eli,
-    })
+    return json.dumps(
+        {
+            "boe_id": meta.boe_id,
+            "titulo": meta.titulo,
+            "fecha_disposicion": meta.fecha_disposicion.isoformat()
+            if meta.fecha_disposicion
+            else None,
+            "fecha_vigencia": meta.fecha_vigencia.isoformat() if meta.fecha_vigencia else None,
+            "estatus_derogacion": meta.estatus_derogacion,
+            "vigencia_agotada": meta.vigencia_agotada,
+            "url_html_consolidada": meta.url_html_consolidada,
+            "url_eli": meta.url_eli,
+        }
+    )
 
 
 def _metadata_from_json(blob: str) -> NormaBoeMetadata:
@@ -144,7 +149,9 @@ def _metadata_from_json(blob: str) -> NormaBoeMetadata:
     return NormaBoeMetadata(
         boe_id=d["boe_id"],
         titulo=d["titulo"],
-        fecha_disposicion=date.fromisoformat(d["fecha_disposicion"]) if d.get("fecha_disposicion") else None,
+        fecha_disposicion=date.fromisoformat(d["fecha_disposicion"])
+        if d.get("fecha_disposicion")
+        else None,
         fecha_vigencia=date.fromisoformat(d["fecha_vigencia"]) if d.get("fecha_vigencia") else None,
         estatus_derogacion=bool(d.get("estatus_derogacion", False)),
         vigencia_agotada=bool(d.get("vigencia_agotada", False)),

@@ -23,6 +23,7 @@ Notes:
   The document is NOT excluded from RAG searches (trust defaults to 1.0).
 - PyMuPDF (fitz) must be installed: pip install PyMuPDF
 """
+
 import sys
 import os
 import asyncio
@@ -37,6 +38,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
 sys.path.insert(0, BACKEND_ROOT)
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from app.database.turso_client import TursoClient
@@ -92,6 +94,7 @@ def _extract_text(pdf_path: Path) -> str:
     """Extract plain text from a PDF using PyMuPDF. Returns empty string on error."""
     try:
         import fitz  # PyMuPDF
+
         doc = fitz.open(str(pdf_path))
         pages_text = []
         for page in doc:
@@ -153,19 +156,24 @@ async def scan_documents(dry_run: bool = False, limit: int | None = None) -> Non
                         stats["blocked"] += 1
                         logger.warning(
                             "  BLOCKED risk=%.2f findings=%d — %s",
-                            scan_result.risk_score, len(scan_result.findings), filename,
+                            scan_result.risk_score,
+                            len(scan_result.findings),
+                            filename,
                         )
                     elif scan_result.risk_score >= 0.3:
                         stats["warn"] += 1
                         logger.warning(
                             "  WARN    risk=%.2f findings=%d — %s",
-                            scan_result.risk_score, len(scan_result.findings), filename,
+                            scan_result.risk_score,
+                            len(scan_result.findings),
+                            filename,
                         )
                     else:
                         stats["clean"] += 1
                         logger.info(
                             "  clean   risk=%.2f — %s",
-                            scan_result.risk_score, filename,
+                            scan_result.risk_score,
+                            filename,
                         )
 
             # Write results to DB (unless dry-run)

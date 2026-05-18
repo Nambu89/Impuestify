@@ -8,6 +8,7 @@ Best practices from research applied:
 - Client disconnection detection
 - Graceful error handling
 """
+
 from fastapi import APIRouter, HTTPException, Depends, Request
 from sse_starlette.sse import EventSourceResponse
 from pydantic import BaseModel, Field
@@ -62,6 +63,8 @@ def _filter_permission_asking(content: str) -> str:
             "Si me das más contexto sobre tu actividad, puedo ayudarte a identificar el epígrafe más probable."
         )
     return content
+
+
 from app.utils.followup_detector import classify_followup
 from app.utils.query_contextualizer import contextualize_query
 
@@ -72,20 +75,25 @@ router = APIRouter(prefix="/api", tags=["chat-streaming"])
 
 # === Models ===
 
+
 class StreamQuestionRequest(BaseModel):
     """Request for streaming chat"""
+
     question: str = Field(..., min_length=1, max_length=1000)
     conversation_id: Optional[str] = None
     workspace_id: Optional[str] = Field(default=None, description="Active workspace ID for context")
-    session_doc_ids: Optional[list] = Field(default=None, description="Session document IDs for ephemeral context")
+    session_doc_ids: Optional[list] = Field(
+        default=None, description="Session document IDs for ephemeral context"
+    )
     k: Optional[int] = Field(default=5, ge=1, le=10)
 
 
 # === Dependencies ===
 
+
 async def get_db(request: Request) -> TursoClient:
     """Get database client"""
-    if hasattr(request.app.state, 'db_client') and request.app.state.db_client:
+    if hasattr(request.app.state, "db_client") and request.app.state.db_client:
         return request.app.state.db_client
     raise HTTPException(status_code=503, detail="Database not connected")
 
@@ -132,7 +140,9 @@ async def _build_pipeline_context(
             if rows:
                 row = rows[0]
                 ctx.workspace_name = row.get("ws_name") if hasattr(row, "get") else row[0]
-                ctx.workspace_doc_count = (row.get("file_count") if hasattr(row, "get") else row[1]) or 0
+                ctx.workspace_doc_count = (
+                    row.get("file_count") if hasattr(row, "get") else row[1]
+                ) or 0
                 types_raw = (row.get("file_types") if hasattr(row, "get") else row[2]) or ""
                 ctx.workspace_file_types = [t for t in types_raw.split(",") if t]
         except Exception as e:
@@ -150,8 +160,7 @@ async def _build_pipeline_context(
             )
             rows = getattr(msg_result, "rows", None) or []
             ctx.recent_user_turns = [
-                ((r.get("content") if hasattr(r, "get") else r[0]) or "")[:200]
-                for r in rows
+                ((r.get("content") if hasattr(r, "get") else r[0]) or "")[:200] for r in rows
             ]
         except Exception as e:
             logger.warning(f"_build_pipeline_context messages query failed: {e}")
@@ -163,17 +172,18 @@ async def _build_pipeline_context(
 
 # === Routes ===
 
+
 @router.post("/ask/stream")
 async def ask_question_stream(
     req: Request,
     request: StreamQuestionRequest,
     db: TursoClient = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
-    access: SubscriptionAccess = Depends(require_active_subscription)
+    access: SubscriptionAccess = Depends(require_active_subscription),
 ):
     """
     Stream AI responses with chain-of-thought display.
-    
+
     Returns Server-Sent Events with:
     - thinking: AI reasoning steps
     - tool_call: Tool execution events
@@ -181,10 +191,10 @@ async def ask_question_stream(
     - content: Final response text
     - done: Stream complete
     - error: Error occurred
-    
+
     Compatible with Railway's timeout limits via heartbeats.
     """
-    
+
     # === Restore workspace_id from stored conversation BEFORE pipeline check ===
     # If the user is following up in an existing conversation that already has
     # a workspace attached, we need that metadata for the topic classifier
@@ -220,14 +230,20 @@ async def ask_question_stream(
         async def rejection_stream():
             yield {
                 "event": "content",
-                "data": pipeline_result.rejection_message or
-                        "Solo respondo preguntas de fiscalidad española. Reformula tu pregunta dentro de este ámbito.",
+                "data": pipeline_result.rejection_message
+                or "Solo respondo preguntas de fiscalidad española. Reformula tu pregunta dentro de este ámbito.",
             }
-            yield {"event": "done", "data": json.dumps({
-                "blocked": True,
-                "layer": pipeline_result.layer,
-                "reason": pipeline_result.reason,
-            })}
+            yield {
+                "event": "done",
+                "data": json.dumps(
+                    {
+                        "blocked": True,
+                        "layer": pipeline_result.layer,
+                        "reason": pipeline_result.reason,
+                    }
+                ),
+            }
+
         return EventSourceResponse(rejection_stream())
 
     # Replace the original question with the sanitized version for downstream logic
@@ -240,13 +256,24 @@ async def ask_question_stream(
         request=req,
     )
     if not velocity_result.allowed:
+
         async def velocity_block_stream():
-            yield {"event": "content", "data": velocity_result.reason or "Demasiadas peticiones repetidas. Espera un momento."}
-            yield {"event": "done", "data": json.dumps({
-                "blocked": True,
-                "reason": "velocity_throttle",
-                "repeat_count": velocity_result.repeat_count,
-            })}
+            yield {
+                "event": "content",
+                "data": velocity_result.reason
+                or "Demasiadas peticiones repetidas. Espera un momento.",
+            }
+            yield {
+                "event": "done",
+                "data": json.dumps(
+                    {
+                        "blocked": True,
+                        "reason": "velocity_throttle",
+                        "repeat_count": velocity_result.repeat_count,
+                    }
+                ),
+            }
+
         return EventSourceResponse(velocity_block_stream())
 
     # === TOKEN BUDGET: daily LLM consumption cap per user (LLM10 Unbounded Consumption) ===
@@ -257,6 +284,7 @@ async def ask_question_stream(
         request=req,
     )
     if not budget_status.allowed:
+
         async def budget_block_stream():
             limit_kt = budget_status.limit // 1000
             yield {
@@ -268,20 +296,32 @@ async def ask_question_stream(
                     f"Si necesitas más capacidad de forma habitual, considera el plan Autónomo o Creator."
                 ),
             }
-            yield {"event": "done", "data": json.dumps({
-                "blocked": True,
-                "reason": "daily_token_budget_exceeded",
-                "used": budget_status.used,
-                "limit": budget_status.limit,
-                "reset_at": budget_status.reset_at,
-            })}
+            yield {
+                "event": "done",
+                "data": json.dumps(
+                    {
+                        "blocked": True,
+                        "reason": "daily_token_budget_exceeded",
+                        "used": budget_status.used,
+                        "limit": budget_status.limit,
+                        "reset_at": budget_status.reset_at,
+                    }
+                ),
+            }
+
         return EventSourceResponse(budget_block_stream())
-    
+
     # === CONTENT RESTRICTION: Autonomo detection (only block "particular" plan) ===
-    if not access.is_owner and access.plan_type not in ("autonomo", "creator") and detect_autonomo_query(request.question):
+    if (
+        not access.is_owner
+        and access.plan_type not in ("autonomo", "creator")
+        and detect_autonomo_query(request.question)
+    ):
+
         async def autonomo_block_stream():
             yield {"event": "content", "data": get_autonomo_block_response()}
             yield {"event": "done", "data": ""}
+
         return EventSourceResponse(autonomo_block_stream())
 
     # === Conversation setup ===
@@ -297,7 +337,7 @@ async def ask_question_stream(
         conversation = await conv_service.create_conversation(
             user_id=current_user.user_id,
             workspace_id=request.workspace_id,
-            title=request.question[:50] + "..." if len(request.question) > 50 else request.question
+            title=request.question[:50] + "..." if len(request.question) > 50 else request.question,
         )
         conversation_id = conversation["id"]
     else:
@@ -309,44 +349,46 @@ async def ask_question_stream(
             conversation = await conv_service.create_conversation(
                 user_id=current_user.user_id,
                 workspace_id=request.workspace_id,
-                title=request.question[:50] + "..." if len(request.question) > 50 else request.question
+                title=request.question[:50] + "..."
+                if len(request.question) > 50
+                else request.question,
             )
             # Update the conversation_id to the newly created one
             conversation_id = conversation["id"]
             logger.info(f"Created new conversation with ID: {conversation_id}")
-    
+
     # === Greeting detection (fast path) ===
     if guardrails_system.is_greeting(request.question.strip()):
+
         async def greeting_stream():
             greeting = (
-                "¡Hola! 👋 Soy Impuestify, tu asistente fiscal.\n\n"
-                "¿En qué puedo ayudarte hoy?"
+                "¡Hola! 👋 Soy Impuestify, tu asistente fiscal.\n\n" "¿En qué puedo ayudarte hoy?"
             )
             yield {"event": "content", "data": greeting}
             yield {"event": "done", "data": json.dumps({"conversation_id": conversation_id})}
 
         return EventSourceResponse(greeting_stream())
-    
+
     # === Main streaming logic ===
     async def event_stream():
         logger.debug("event_stream() started")
         callback = ProgressCallback()
-        
+
         try:
             # Check if client is still connected (Railway best practice)
             if await req.is_disconnected():
                 logger.info("Client disconnected before processing")
                 callback.close()
                 return
-            
+
             # Load conversation history (cache-first)
-            upstash_client = getattr(req.app.state, 'upstash_client', None)
+            upstash_client = getattr(req.app.state, "upstash_client", None)
             cache = ConversationCache(upstash_client)
             cached_context = await cache.get_context(conversation_id)
-            
+
             conversation_history = []
             notification_context = ""
-            
+
             if cached_context:
                 conversation_history = cached_context.get("recent_messages", [])
                 notification_context = cached_context.get("notification_content", "")
@@ -355,6 +397,7 @@ async def ask_question_stream(
                 # Semantic window: select messages by relevance instead of fixed limit
                 try:
                     from app.services.semantic_window import SemanticWindow
+
                     semantic_window = SemanticWindow(max_messages=15, recent_guaranteed=5)
                     conversation_history = await semantic_window.select(
                         conversation_id, request.question
@@ -364,28 +407,39 @@ async def ask_question_stream(
                         f"for conversation {conversation_id}"
                     )
                 except Exception as sw_err:
-                    logger.warning(f"SemanticWindow failed, falling back to recent messages: {sw_err}")
-                    conversation_history = await conv_service.get_recent_messages(conversation_id, limit=20)
+                    logger.warning(
+                        f"SemanticWindow failed, falling back to recent messages: {sw_err}"
+                    )
+                    conversation_history = await conv_service.get_recent_messages(
+                        conversation_id, limit=20
+                    )
 
             # === Multi-turn trajectory check (Crescendo / Echo Chamber defense) ===
             # We are inside the event_stream generator so we yield the
             # rejection events directly instead of returning a new response.
             try:
                 from app.security.trajectory_analyzer import analyze_trajectory
+
                 user_turns = [
-                    msg.get("content", "") for msg in (conversation_history or [])
+                    msg.get("content", "")
+                    for msg in (conversation_history or [])
                     if msg.get("role") == "user"
                 ]
                 user_turns.append(request.question)
                 traj = analyze_trajectory(user_turns)
                 if not traj.is_safe:
                     yield {"event": "content", "data": traj.reason}
-                    yield {"event": "done", "data": json.dumps({
-                        "blocked": True,
-                        "reason": "trajectory_drift",
-                        "drift_turns": traj.drift_turns,
-                        "window_size": traj.window_size,
-                    })}
+                    yield {
+                        "event": "done",
+                        "data": json.dumps(
+                            {
+                                "blocked": True,
+                                "reason": "trajectory_drift",
+                                "drift_turns": traj.drift_turns,
+                                "window_size": traj.window_size,
+                            }
+                        ),
+                    }
                     return
             except Exception as e:
                 logger.warning(f"Trajectory analyzer failed (non-blocking): {e}")
@@ -399,7 +453,7 @@ async def ask_question_stream(
                     # Verify workspace ownership
                     ws_result = await db.execute(
                         "SELECT id, name FROM workspaces WHERE id = ? AND user_id = ?",
-                        [request.workspace_id, current_user.user_id]
+                        [request.workspace_id, current_user.user_id],
                     )
                     if ws_result.rows:
                         # Load workspace files — prefer structured data over raw text
@@ -409,17 +463,17 @@ async def ask_question_stream(
                             FROM workspace_files
                             WHERE workspace_id = ? AND processing_status = 'completed'
                             """,
-                            [request.workspace_id]
+                            [request.workspace_id],
                         )
 
                         if files_result.rows:
                             from app.services.payslip_extractor import PayslipExtractor
+
                             docs_context = []
                             for f in files_result.rows:
-                                workspace_files_info.append({
-                                    "filename": f["filename"],
-                                    "file_type": f["file_type"]
-                                })
+                                workspace_files_info.append(
+                                    {"filename": f["filename"], "file_type": f["file_type"]}
+                                )
 
                                 # Prefer structured extracted_data (already parsed)
                                 extracted = f.get("extracted_data")
@@ -434,21 +488,35 @@ async def ask_question_stream(
                                     # Use structured data — much more efficient for the LLM
                                     lines = [f"--- {f['filename']} ({f['file_type']}) ---"]
                                     for key, val in extracted.items():
-                                        if key in ("full_text", "file_hash", "extraction_status", "raw_text"):
+                                        if key in (
+                                            "full_text",
+                                            "file_hash",
+                                            "extraction_status",
+                                            "raw_text",
+                                        ):
                                             continue
                                         label = key.replace("_", " ").capitalize()
                                         lines.append(f"  {label}: {val}")
                                     docs_context.append("\n".join(lines))
                                 elif f.get("extracted_text"):
                                     # Fallback to raw text (truncated)
-                                    raw_text = f['extracted_text'][:3000]
-                                    if f.get('file_type') in ('nomina', 'payslip', 'factura', 'declaracion'):
+                                    raw_text = f["extracted_text"][:3000]
+                                    if f.get("file_type") in (
+                                        "nomina",
+                                        "payslip",
+                                        "factura",
+                                        "declaracion",
+                                    ):
                                         raw_text = PayslipExtractor.anonymize_text(raw_text)
-                                    docs_context.append(f"--- {f['filename']} ({f['file_type']}) ---\n{raw_text}")
+                                    docs_context.append(
+                                        f"--- {f['filename']} ({f['file_type']}) ---\n{raw_text}"
+                                    )
 
                             if docs_context:
                                 workspace_context = "\n\n".join(docs_context)
-                                logger.info(f"Loaded {len(docs_context)} documents from workspace (PII anonymized)")
+                                logger.info(
+                                    f"Loaded {len(docs_context)} documents from workspace (PII anonymized)"
+                                )
                 except Exception as e:
                     logger.error(f"Error loading workspace context: {e}")
 
@@ -482,7 +550,9 @@ async def ask_question_stream(
                                 session_docs_context += f"\nTEXTO DEL DOCUMENTO:\n{text}\n"
 
                     if session_docs_context:
-                        logger.info(f"Loaded {len(request.session_doc_ids)} session docs for context")
+                        logger.info(
+                            f"Loaded {len(request.session_doc_ids)} session docs for context"
+                        )
                 except Exception as e:
                     logger.warning(f"Error loading session docs: {e}")
 
@@ -498,16 +568,21 @@ async def ask_question_stream(
                 # SKIP RAG — reuse cached chunks from previous turn
                 relevant_chunks = cached_rag_chunks
                 rag_query_used = cached_rag_query
-                logger.info("RAG SKIP (clarification) — reusing %d cached chunks", len(relevant_chunks))
+                logger.info(
+                    "RAG SKIP (clarification) — reusing %d cached chunks", len(relevant_chunks)
+                )
             else:
                 # Run RAG (normal or with expanded query)
                 if followup_type == "modification":
                     rag_query_used = contextualize_query(
                         request.question, conversation_history, cached_rag_query
                     )
-                    logger.info("RAG CONTEXTUALIZED: '%s' -> '%s'", request.question, rag_query_used)
+                    logger.info(
+                        "RAG CONTEXTUALIZED: '%s' -> '%s'", request.question, rag_query_used
+                    )
 
                 from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
+
                 retriever = HybridRetriever(db_client=db)
 
                 # Send early SSE event to keep connection alive during RAG search
@@ -530,21 +605,36 @@ async def ask_question_stream(
                     "La Rioja": "La Rioja",
                 }
                 # Foral territories: use province (Bizkaia/Gipuzkoa/Araba) not "País Vasco"
-                _FORAL_PROVINCES = {"bizkaia", "vizcaya", "gipuzkoa", "guipúzcoa", "guipuzkoa", "araba", "álava", "alava"}
+                _FORAL_PROVINCES = {
+                    "bizkaia",
+                    "vizcaya",
+                    "gipuzkoa",
+                    "guipúzcoa",
+                    "guipuzkoa",
+                    "araba",
+                    "álava",
+                    "alava",
+                }
                 _PROVINCE_TO_DB = {
-                    "bizkaia": "Bizkaia", "vizcaya": "Bizkaia",
-                    "gipuzkoa": "Gipuzkoa", "guipúzcoa": "Gipuzkoa", "guipuzkoa": "Gipuzkoa",
-                    "araba": "Araba", "álava": "Araba", "alava": "Araba",
+                    "bizkaia": "Bizkaia",
+                    "vizcaya": "Bizkaia",
+                    "gipuzkoa": "Gipuzkoa",
+                    "guipúzcoa": "Gipuzkoa",
+                    "guipuzkoa": "Gipuzkoa",
+                    "araba": "Araba",
+                    "álava": "Araba",
+                    "alava": "Araba",
                 }
 
                 ccaa_for_rag = None
                 try:
                     # 1. Detect CCAA mentioned in the question (takes priority)
                     from app.utils.region_detector import RegionDetector
+
                     region_info = RegionDetector().detect_from_text(rag_query_used)
-                    if region_info.get('confidence') in ('high', 'medium'):
-                        detected_region = region_info['region']
-                        detected_province = (region_info.get('province') or '').lower()
+                    if region_info.get("confidence") in ("high", "medium"):
+                        detected_region = region_info["region"]
+                        detected_province = (region_info.get("province") or "").lower()
                         # For foral territories, use the specific province name
                         if detected_province in _FORAL_PROVINCES:
                             ccaa_for_rag = _PROVINCE_TO_DB.get(detected_province, detected_region)
@@ -553,8 +643,14 @@ async def ask_question_stream(
                             ccaa_for_rag = None
                         else:
                             # Normalize long CCAA names to DB source values
-                            ccaa_for_rag = _REGION_TO_DB_SOURCE.get(detected_region, detected_region)
-                        logger.debug("RAG territory from question: %s -> DB filter: %s", detected_region, ccaa_for_rag)
+                            ccaa_for_rag = _REGION_TO_DB_SOURCE.get(
+                                detected_region, detected_region
+                            )
+                        logger.debug(
+                            "RAG territory from question: %s -> DB filter: %s",
+                            detected_region,
+                            ccaa_for_rag,
+                        )
                 except Exception as e:
                     logger.warning("RegionDetector error: %s", e)
 
@@ -563,7 +659,7 @@ async def ask_question_stream(
                         # 2. Fallback to user profile CCAA
                         fp_rag_result = await db.execute(
                             "SELECT ccaa_residencia FROM user_profiles WHERE user_id = ?",
-                            [current_user.user_id]
+                            [current_user.user_id],
                         )
                         if fp_rag_result.rows and fp_rag_result.rows[0].get("ccaa_residencia"):
                             ccaa_for_rag = fp_rag_result.rows[0]["ccaa_residencia"]
@@ -571,7 +667,9 @@ async def ask_question_stream(
                         logger.debug(f"Could not pre-fetch CCAA for RAG filter: {_rag_ccaa_err}")
 
                 # First search WITH territory filter
-                logger.debug("RAG search: query='%s', territory=%s", rag_query_used[:60], ccaa_for_rag)
+                logger.debug(
+                    "RAG search: query='%s', territory=%s", rag_query_used[:60], ccaa_for_rag
+                )
                 try:
                     relevant_chunks = await retriever.search(
                         query=rag_query_used,
@@ -581,7 +679,9 @@ async def ask_question_stream(
                     )
                     logger.debug("RAG results with filter: %d chunks", len(relevant_chunks))
                 except Exception as rag_err:
-                    logger.error("RAG search failed: %s: %s", type(rag_err).__name__, rag_err, exc_info=True)
+                    logger.error(
+                        "RAG search failed: %s: %s", type(rag_err).__name__, rag_err, exc_info=True
+                    )
                     relevant_chunks = []
 
                 # If no results with filter, retry WITHOUT filter (broader search)
@@ -600,6 +700,7 @@ async def ask_question_stream(
             if request.workspace_id and followup_type != "clarification":
                 try:
                     from app.services.workspace_embedding_service import WorkspaceEmbeddingService
+
                     ws_search = WorkspaceEmbeddingService()
                     ws_results = await ws_search.search_workspace(
                         db=db,
@@ -609,10 +710,9 @@ async def ask_question_stream(
                         similarity_threshold=0.5,
                     )
                     if ws_results:
-                        workspace_rag_context = "\n\n".join([
-                            f"📄 Tu documento: {r.filename}\n{r.chunk_text}"
-                            for r in ws_results
-                        ])
+                        workspace_rag_context = "\n\n".join(
+                            [f"📄 Tu documento: {r.filename}\n{r.chunk_text}" for r in ws_results]
+                        )
                         logger.debug("Workspace RAG: %d chunks from user docs", len(ws_results))
                     else:
                         logger.debug("Workspace RAG: 0 results from user docs")
@@ -640,18 +740,18 @@ async def ask_question_stream(
                     body = body.replace("</RAG_DOC>", "</RAG_DOC_>")
                     return (
                         f'<RAG_DOC trust="{trust}" source="{title}"{page_attr}>\n'
-                        f'{body}\n'
-                        f'</RAG_DOC>'
+                        f"{body}\n"
+                        f"</RAG_DOC>"
                     )
 
                 rag_context = "\n\n".join(_spotlight_chunk(c) for c in valid_chunks)
                 sources_data = [
                     {
-                        "id": chunk['id'],
-                        "source": chunk['source'],
-                        "page": chunk['page'],
-                        "title": chunk['title'],
-                        "score": chunk['similarity']
+                        "id": chunk["id"],
+                        "source": chunk["source"],
+                        "page": chunk["page"],
+                        "title": chunk["title"],
+                        "score": chunk["similarity"],
                     }
                     for chunk in valid_chunks
                 ]
@@ -659,9 +759,13 @@ async def ask_question_stream(
             else:
                 has_internal_context = bool(conversation_history)
                 if not has_internal_context:
-                    logger.info("No RAG chunks and no conversation history - will attempt general answer")
+                    logger.info(
+                        "No RAG chunks and no conversation history - will attempt general answer"
+                    )
                 else:
-                    logger.info(f"No RAG chunks but have {len(conversation_history)} conversation messages - will use memory")
+                    logger.info(
+                        f"No RAG chunks but have {len(conversation_history)} conversation messages - will use memory"
+                    )
                 rag_context = ""
                 sources_data = []
 
@@ -690,7 +794,7 @@ async def ask_question_stream(
                 fp_result = await db.execute(
                     "SELECT datos_fiscales, ccaa_residencia, situacion_laboral "
                     "FROM user_profiles WHERE user_id = ?",
-                    [current_user.user_id]
+                    [current_user.user_id],
                 )
                 if fp_result.rows:
                     row = fp_result.rows[0]
@@ -701,7 +805,9 @@ async def ask_question_stream(
                         for k, v in datos.items():
                             if k.startswith("_"):
                                 continue
-                            fiscal_profile[k] = v["value"] if isinstance(v, dict) and "value" in v else v
+                            fiscal_profile[k] = (
+                                v["value"] if isinstance(v, dict) and "value" in v else v
+                            )
                     if row.get("ccaa_residencia"):
                         fiscal_profile["ccaa_residencia"] = row["ccaa_residencia"]
                     if row.get("situacion_laboral"):
@@ -715,16 +821,22 @@ async def ask_question_stream(
             async def run_agent():
                 done_emitted = False
                 try:
-                    restricted_mode = not access.is_owner and access.plan_type not in ("autonomo", "creator")
+                    restricted_mode = not access.is_owner and access.plan_type not in (
+                        "autonomo",
+                        "creator",
+                    )
 
                     if use_workspace_agent:
                         # Use WorkspaceAgent for workspace/session-doc queries
                         from app.agents.workspace_agent import get_workspace_agent
+
                         agent = get_workspace_agent()
                         # Combine workspace + session docs context
                         agent_doc_context = workspace_context or ""
                         if session_docs_context:
-                            agent_doc_context = (agent_doc_context + "\n\n" + session_docs_context).strip()
+                            agent_doc_context = (
+                                agent_doc_context + "\n\n" + session_docs_context
+                            ).strip()
                         response = await agent.run(
                             query=request.question,
                             context=agent_doc_context,
@@ -735,7 +847,7 @@ async def ask_question_stream(
                             workspace_id=request.workspace_id,
                             progress_callback=callback,
                             restricted_mode=restricted_mode,
-                            fiscal_profile=fiscal_profile
+                            fiscal_profile=fiscal_profile,
                         )
                     else:
                         # Use TaxAgent for general tax queries
@@ -750,9 +862,9 @@ async def ask_question_stream(
                             progress_callback=callback,
                             db_client=db,  # Pass database client for user memory
                             restricted_mode=restricted_mode,
-                            fiscal_profile=fiscal_profile
+                            fiscal_profile=fiscal_profile,
                         )
-                    
+
                     # Filter JSON from final content
                     clean_content = filter_json_from_content(response.content)
 
@@ -765,6 +877,7 @@ async def ask_question_stream(
                     # both the claim and the warning).
                     try:
                         from app.security.citation_verifier import verify_citations
+
                         verification = verify_citations(
                             response_text=clean_content,
                             rag_chunks=[
@@ -788,6 +901,7 @@ async def ask_question_stream(
                     # dejan intactas. Vease backend/app/services/legal/.
                     try:
                         from app.services.legal.citation_enricher import get_citation_enricher
+
                         enricher = get_citation_enricher()
                         clean_content = enricher.enrich_markdown(clean_content)
                     except Exception as e:
@@ -815,14 +929,14 @@ async def ask_question_stream(
 
                     # Stream final content
                     await callback.content(clean_content)
-                    
+
                     # Save messages to database
                     await conv_service.add_message(conversation_id, "user", request.question)
                     assistant_msg = await conv_service.add_message(
                         conversation_id,
                         "assistant",
                         clean_content,
-                        metadata={"sources": sources_data}
+                        metadata={"sources": sources_data},
                     )
                     await conv_service.add_message_sources(assistant_msg["id"], sources_data)
 
@@ -831,9 +945,14 @@ async def ask_question_stream(
                     # decisions led to this response. Non-blocking on failure.
                     try:
                         from app.services.reasoning_trail import reasoning_trail_recorder
+
                         tools_used = []
                         if hasattr(response, "metadata") and response.metadata:
-                            tools_used = response.metadata.get("tool_calls") or response.metadata.get("tools_called") or []
+                            tools_used = (
+                                response.metadata.get("tool_calls")
+                                or response.metadata.get("tools_called")
+                                or []
+                            )
                         await reasoning_trail_recorder.record(
                             message_id=assistant_msg["id"],
                             user_id=current_user.user_id,
@@ -846,19 +965,24 @@ async def ask_question_stream(
                         )
                     except Exception as e:
                         logger.warning(f"reasoning_trail recording failed (non-blocking): {e}")
-                    
+
                     # Update cache (include RAG chunks for follow-up optimization)
-                    updated_history = await conv_service.get_recent_messages(conversation_id, limit=20)
-                    await cache.set_context(conversation_id, {
-                        "notification_content": notification_context,
-                        "recent_messages": updated_history,
-                        "last_rag_chunks": relevant_chunks[:5],
-                        "last_rag_query": rag_query_used,
-                    })
-                    
+                    updated_history = await conv_service.get_recent_messages(
+                        conversation_id, limit=20
+                    )
+                    await cache.set_context(
+                        conversation_id,
+                        {
+                            "notification_content": notification_context,
+                            "recent_messages": updated_history,
+                            "last_rag_chunks": relevant_chunks[:5],
+                            "last_rag_query": rag_query_used,
+                        },
+                    )
+
                     await callback.done(conversation_id=conversation_id)
                     done_emitted = True
-                    
+
                 except Exception as e:
                     logger.error(f"Agent error: {e}", exc_info=True)
                     await callback.error(f"Error procesando la consulta: {str(e)}")
@@ -872,10 +996,10 @@ async def ask_question_stream(
                             await callback.done(conversation_id=conversation_id)
                         except Exception as e:
                             logger.error(f"Failed to emit done in finally: {e}")
-            
+
             # Start agent task
             agent_task = asyncio.create_task(run_agent())
-            
+
             # Stream events from callback with heartbeats (Railway best practice)
             async for event_dict in sse_generator(callback):
                 # Check if client disconnected (save resources)
@@ -884,12 +1008,12 @@ async def ask_question_stream(
                     agent_task.cancel()
                     callback.close()
                     break
-                
+
                 yield event_dict
-            
+
             # Wait for agent to finish
             await agent_task
-            
+
         except asyncio.CancelledError:
             logger.info("Stream cancelled by client")
             callback.close()
@@ -899,7 +1023,7 @@ async def ask_question_stream(
             yield {"event": "done", "data": ""}
         finally:
             callback.close()
-    
+
     # Return SSE response (sse-starlette handles formatting)
     return EventSourceResponse(
         event_stream(),
@@ -907,5 +1031,5 @@ async def ask_question_stream(
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",  # Disable nginx buffering
-        }
+        },
     )

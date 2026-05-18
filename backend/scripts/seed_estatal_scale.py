@@ -8,6 +8,7 @@ Usage:
     cd backend
     python scripts/seed_estatal_scale.py
 """
+
 import asyncio
 import os
 import sys
@@ -62,7 +63,13 @@ async def seed_estatal_scale():
                 [year],
             )
 
-        for tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable in ESTATAL_GENERAL_SCALE:
+        for (
+            tramo_num,
+            base_hasta,
+            cuota_integra,
+            resto_base,
+            tipo_aplicable,
+        ) in ESTATAL_GENERAL_SCALE:
             await db.execute(
                 """INSERT INTO irpf_scales
                    (id, jurisdiction, year, scale_type, tramo_num,
@@ -92,7 +99,9 @@ async def seed_estatal_scale():
         )
         print(f"  {year}: {len(result.rows)} tramos")
         for row in result.rows:
-            print(f"    Tramo {row['tramo_num']}: hasta {row['base_hasta']:,.2f} EUR al {row['tipo_aplicable']}%")
+            print(
+                f"    Tramo {row['tramo_num']}: hasta {row['base_hasta']:,.2f} EUR al {row['tipo_aplicable']}%"
+            )
 
     await db.disconnect()
     print("\nDone!")

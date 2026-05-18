@@ -27,6 +27,7 @@ una cita SEMANTICA que describe el concepto juridico ("Incumplimiento de la
 carga de la prueba por la Administracion"). El RAG verificador la traduce al
 texto canonico exacto contra el corpus indexado.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -79,10 +80,7 @@ def _hay_requerimiento_previo(expediente: ExpedienteEstructurado) -> bool:
     requerimiento siempre precede a la liquidacion provisional; cuando no hay
     fechas fiables usamos la mera existencia del documento como proxy.
     """
-    return any(
-        doc.tipo_documento == TipoDocumento.REQUERIMIENTO
-        for doc in expediente.documentos
-    )
+    return any(doc.tipo_documento == TipoDocumento.REQUERIMIENTO for doc in expediente.documentos)
 
 
 @regla(
@@ -115,7 +113,8 @@ def _hay_requerimiento_previo(expediente: ExpedienteEstructurado) -> bool:
     ),
 )
 def evaluar(
-    expediente: ExpedienteEstructurado, brief: Brief  # noqa: ARG001 — brief no usado
+    expediente: ExpedienteEstructurado,
+    brief: Brief,  # noqa: ARG001 — brief no usado
 ) -> Optional[ArgumentoCandidato]:
     """Evalua R004 sobre el expediente.
 

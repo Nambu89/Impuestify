@@ -9,6 +9,7 @@ Usage:
     python scripts/seed_deductions_pharmacy.py
     python scripts/seed_deductions_pharmacy.py --dry-run
 """
+
 import argparse
 import asyncio
 import json
@@ -39,13 +40,21 @@ PHARMACY_DEDUCTIONS = [
         "fixed_amount": None,
         "percentage": 100.0,
         "description": "Cuota colegial obligatoria para el ejercicio de la profesion farmaceutica (IAE 652.1)",
-        "requirements_json": json.dumps({
-            "situacion_laboral": "farmaceutico",
-            "iae": "652.1",
-        }),
-        "questions_json": json.dumps([
-            {"key": "es_farmaceutico_colegiado", "text": "Estas colegiado en un Colegio Oficial de Farmaceuticos?", "type": "boolean"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "situacion_laboral": "farmaceutico",
+                "iae": "652.1",
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "es_farmaceutico_colegiado",
+                    "text": "Estas colegiado en un Colegio Oficial de Farmaceuticos?",
+                    "type": "boolean",
+                },
+            ]
+        ),
         "legal_reference": "Art. 28.1 LIRPF - gastos deducibles de rendimientos de actividades economicas",
     },
     {
@@ -58,13 +67,21 @@ PHARMACY_DEDUCTIONS = [
         "fixed_amount": None,
         "percentage": 100.0,
         "description": "Seguro RC obligatorio para el ejercicio de la actividad farmaceutica",
-        "requirements_json": json.dumps({
-            "situacion_laboral": "farmaceutico",
-            "iae": "652.1",
-        }),
-        "questions_json": json.dumps([
-            {"key": "tiene_seguro_rc", "text": "Tienes contratado un seguro de responsabilidad civil profesional?", "type": "boolean"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "situacion_laboral": "farmaceutico",
+                "iae": "652.1",
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "tiene_seguro_rc",
+                    "text": "Tienes contratado un seguro de responsabilidad civil profesional?",
+                    "type": "boolean",
+                },
+            ]
+        ),
         "legal_reference": "Art. 28.1 LIRPF - gastos deducibles de rendimientos de actividades economicas",
     },
     {
@@ -77,13 +94,21 @@ PHARMACY_DEDUCTIONS = [
         "fixed_amount": None,
         "percentage": 100.0,
         "description": "Cursos, congresos y formacion continua relacionada con la actividad farmaceutica",
-        "requirements_json": json.dumps({
-            "situacion_laboral": "farmaceutico",
-            "iae": "652.1",
-        }),
-        "questions_json": json.dumps([
-            {"key": "gastos_formacion", "text": "Has realizado gastos en formacion continua relacionada con la farmacia?", "type": "boolean"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "situacion_laboral": "farmaceutico",
+                "iae": "652.1",
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "gastos_formacion",
+                    "text": "Has realizado gastos en formacion continua relacionada con la farmacia?",
+                    "type": "boolean",
+                },
+            ]
+        ),
         "legal_reference": "Art. 28.1 LIRPF - gastos deducibles de rendimientos de actividades economicas",
     },
     {
@@ -96,15 +121,27 @@ PHARMACY_DEDUCTIONS = [
         "fixed_amount": None,
         "percentage": 5.0,
         "description": "Amortizacion del fondo de comercio adquirido en la compra de la farmacia. Maximo 5% anual (20 anos)",
-        "requirements_json": json.dumps({
-            "situacion_laboral": "farmaceutico",
-            "iae": "652.1",
-            "tiene_fondo_comercio": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "compro_farmacia", "text": "Adquiriste la farmacia mediante compra (con fondo de comercio)?", "type": "boolean"},
-            {"key": "importe_fondo_comercio", "text": "Importe del fondo de comercio de la compra", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "situacion_laboral": "farmaceutico",
+                "iae": "652.1",
+                "tiene_fondo_comercio": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "compro_farmacia",
+                    "text": "Adquiriste la farmacia mediante compra (con fondo de comercio)?",
+                    "type": "boolean",
+                },
+                {
+                    "key": "importe_fondo_comercio",
+                    "text": "Importe del fondo de comercio de la compra",
+                    "type": "number",
+                },
+            ]
+        ),
         "legal_reference": "Art. 12.6 LIS (aplicable via art. 28 LIRPF) - amortizacion fondo de comercio",
     },
     {
@@ -117,13 +154,22 @@ PHARMACY_DEDUCTIONS = [
         "fixed_amount": None,
         "percentage": 100.0,
         "description": "Alquiler del local o amortizacion si es en propiedad. Proporcional al uso afecto a la actividad",
-        "requirements_json": json.dumps({
-            "situacion_laboral": "farmaceutico",
-            "iae": "652.1",
-        }),
-        "questions_json": json.dumps([
-            {"key": "tipo_local", "text": "El local de la farmacia es alquilado o en propiedad?", "type": "select", "options": ["alquilado", "propiedad"]},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "situacion_laboral": "farmaceutico",
+                "iae": "652.1",
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "tipo_local",
+                    "text": "El local de la farmacia es alquilado o en propiedad?",
+                    "type": "select",
+                    "options": ["alquilado", "propiedad"],
+                },
+            ]
+        ),
         "legal_reference": "Art. 28.1 LIRPF - gastos deducibles de rendimientos de actividades economicas",
     },
     {
@@ -136,14 +182,22 @@ PHARMACY_DEDUCTIONS = [
         "fixed_amount": None,
         "percentage": 50.0,
         "description": "Gastos de vehiculo utilizado para reparto domiciliario. Presuncion del 50% de afectacion a la actividad",
-        "requirements_json": json.dumps({
-            "situacion_laboral": "farmaceutico",
-            "iae": "652.1",
-            "reparto_domiciliario": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "hace_reparto", "text": "Realizas reparto domiciliario de medicamentos?", "type": "boolean"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "situacion_laboral": "farmaceutico",
+                "iae": "652.1",
+                "reparto_domiciliario": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "hace_reparto",
+                    "text": "Realizas reparto domiciliario de medicamentos?",
+                    "type": "boolean",
+                },
+            ]
+        ),
         "legal_reference": "Art. 22.4 RIRPF - presuncion de afectacion parcial de vehiculos",
     },
 ]

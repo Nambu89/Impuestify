@@ -23,6 +23,7 @@ Coverage:
   consolidated text contains all articles; deeper anchor fragments could
   be added if BOE exposes them in metadata — they don't for now).
 """
+
 from __future__ import annotations
 
 import logging
@@ -154,6 +155,7 @@ def get_citation_enricher() -> CitationEnricher:
     global _enricher
     if _enricher is None:
         from app.services.legal import get_legal_registry
+
         _enricher = CitationEnricher(get_legal_registry())
     return _enricher
 

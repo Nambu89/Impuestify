@@ -1,4 +1,5 @@
 """Test IRPF Calculator"""
+
 import asyncio
 import sys
 import os
@@ -19,29 +20,23 @@ from app.utils.irpf_calculator import IRPFCalculator
 async def test():
     """Test IRPF calculator with Zaragoza example."""
     calc = IRPFCalculator()
-    
+
     try:
         print("\n🧪 TEST: Zaragoza, 35,000€ brutos\n")
-        
-        result = await calc.calculate_irpf(
-            base_liquidable=35000,
-            jurisdiction='Aragón',
-            year=2024
-        )
-        
+
+        result = await calc.calculate_irpf(base_liquidable=35000, jurisdiction="Aragón", year=2024)
+
         print(calc.format_result(result))
-        
+
         # Also test with Madrid for comparison
         print("\n\n🧪 COMPARACIÓN: Madrid, 35,000€ brutos\n")
-        
+
         result_madrid = await calc.calculate_irpf(
-            base_liquidable=35000,
-            jurisdiction='Comunidad de Madrid',
-            year=2024
+            base_liquidable=35000, jurisdiction="Comunidad de Madrid", year=2024
         )
-        
+
         print(calc.format_result(result_madrid))
-        
+
     finally:
         await calc.disconnect()
 

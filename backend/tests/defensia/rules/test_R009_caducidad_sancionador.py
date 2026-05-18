@@ -23,6 +23,7 @@ Invariante #2 del plan Parte 2: la regla NUNCA hardcodea citas canonicas
 ("Art. 211.2 LGT"). La cita la resuelve el RAG verificador en una fase
 posterior del pipeline. Aqui solo devolvemos descripciones semanticas.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -42,6 +43,7 @@ from app.services.defensia_rules_engine import REGISTRY, evaluar
 # Helper: carga unicamente la regla R009 (aislamiento respecto a R001-R030
 # que podrian no existir en Wave 1B en paralelo).
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def _cargar_solo_r009():
@@ -64,6 +66,7 @@ def _cargar_solo_r009():
 # ---------------------------------------------------------------------------
 # Guard invariante #2 — cita nunca hardcoded a un articulo concreto.
 # ---------------------------------------------------------------------------
+
 
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """La cita semantica NO puede contener referencias literales al articulo.
@@ -91,6 +94,7 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
 # Test 1 — Positivo: tramitacion de 7 meses (claramente fuera de plazo).
 # ---------------------------------------------------------------------------
 
+
 def test_R009_positivo_siete_meses_tramitacion(build_exp, build_brief, build_doc):
     """Sancion iniciada 2025-01-15 y notificada 2025-08-20 -> dispara.
 
@@ -114,15 +118,13 @@ def test_R009_positivo_siete_meses_tramitacion(build_exp, build_brief, build_doc
         fase=Fase.SANCIONADOR_IMPUESTA,
         docs=[sancion],
     )
-    brief = build_brief(
-        "Me han notificado la sancion mas de 7 meses despues del acuerdo de inicio"
-    )
+    brief = build_brief("Me han notificado la sancion mas de 7 meses despues del acuerdo de inicio")
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R009"
@@ -130,29 +132,27 @@ def test_R009_positivo_siete_meses_tramitacion(build_exp, build_brief, build_doc
     # Cita semantica, nunca hardcoded.
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
     assert "caducidad" in arg.cita_normativa_propuesta.lower(), (
-        f"La cita semantica debe mencionar 'caducidad', got: "
-        f"{arg.cita_normativa_propuesta!r}"
+        f"La cita semantica debe mencionar 'caducidad', got: " f"{arg.cita_normativa_propuesta!r}"
     )
     assert "sancionador" in arg.cita_normativa_propuesta.lower(), (
-        f"La cita semantica debe mencionar 'sancionador', got: "
-        f"{arg.cita_normativa_propuesta!r}"
+        f"La cita semantica debe mencionar 'sancionador', got: " f"{arg.cita_normativa_propuesta!r}"
     )
 
     # datos_disparo.dias_exceso debe indicar el exceso sobre los 6 meses.
     dias_exceso = arg.datos_disparo.get("dias_exceso")
-    assert dias_exceso is not None, (
-        f"datos_disparo debe exponer 'dias_exceso', got: {arg.datos_disparo!r}"
-    )
+    assert (
+        dias_exceso is not None
+    ), f"datos_disparo debe exponer 'dias_exceso', got: {arg.datos_disparo!r}"
     # 2025-01-15 + 6 meses = 2025-07-15. 2025-08-20 - 2025-07-15 = 36 dias.
     assert dias_exceso == 36, (
-        f"dias_exceso esperado ~36 (2025-07-15 -> 2025-08-20), "
-        f"got {dias_exceso}"
+        f"dias_exceso esperado ~36 (2025-07-15 -> 2025-08-20), " f"got {dias_exceso}"
     )
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — Positivo: limite exacto + 1 dia (6 meses + 1 dia).
 # ---------------------------------------------------------------------------
+
 
 def test_R009_positivo_limite_mas_un_dia(build_exp, build_brief, build_doc):
     """Sancion iniciada 2025-01-01 y notificada 2025-07-02 -> dispara.
@@ -187,14 +187,15 @@ def test_R009_positivo_limite_mas_un_dia(build_exp, build_brief, build_doc):
     )
     arg = candidatos[0]
     assert arg.regla_id == "R009"
-    assert arg.datos_disparo.get("dias_exceso") == 1, (
-        f"dias_exceso en el borde debe ser 1, got {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("dias_exceso") == 1
+    ), f"dias_exceso en el borde debe ser 1, got {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 3 — Negativo: dentro del plazo de 6 meses.
 # ---------------------------------------------------------------------------
+
 
 def test_R009_negativo_dentro_de_plazo(build_exp, build_brief, build_doc):
     """Sancion iniciada 2025-01-15 y notificada 2025-05-10 -> NO dispara.
@@ -221,14 +222,15 @@ def test_R009_negativo_dentro_de_plazo(build_exp, build_brief, build_doc):
 
     candidatos = evaluar(exp, brief)
 
-    assert candidatos == [], (
-        f"R009 NO deberia disparar dentro del plazo de 6 meses, got: {candidatos}"
-    )
+    assert (
+        candidatos == []
+    ), f"R009 NO deberia disparar dentro del plazo de 6 meses, got: {candidatos}"
 
 
 # ---------------------------------------------------------------------------
 # Test 4 — Negativo: no es sancion (fase de liquidacion).
 # ---------------------------------------------------------------------------
+
 
 def test_R009_negativo_fase_no_sancionadora(build_exp, build_brief, build_doc):
     """Expediente en fase `LIQUIDACION_FIRME_PLAZO_RECURSO` -> NO dispara.
@@ -259,27 +261,26 @@ def test_R009_negativo_fase_no_sancionadora(build_exp, build_brief, build_doc):
 
     candidatos = evaluar(exp, brief)
 
-    assert candidatos == [], (
-        f"R009 NO deberia disparar fuera de fase sancionadora, got: {candidatos}"
-    )
+    assert (
+        candidatos == []
+    ), f"R009 NO deberia disparar fuera de fase sancionadora, got: {candidatos}"
 
 
 # ---------------------------------------------------------------------------
 # Test 5 — Smoke de registro en el REGISTRY.
 # ---------------------------------------------------------------------------
 
+
 def test_R009_registrada_en_registry():
     """Tras el import autouse, R009 debe estar en el REGISTRY con metadata OK."""
-    assert "R009" in REGISTRY, (
-        f"R009 no aparece en el REGISTRY. Claves: {sorted(REGISTRY.keys())}"
-    )
+    assert "R009" in REGISTRY, f"R009 no aparece en el REGISTRY. Claves: {sorted(REGISTRY.keys())}"
     info = REGISTRY["R009"]
 
     # Tributo transversal: el sancionador aplica a los 5 tributos del scope.
     for tributo in ("IRPF", "IVA", "ISD", "ITP", "PLUSVALIA"):
-        assert tributo in info["tributos"], (
-            f"R009 debe aplicar a {tributo}, tributos={info['tributos']}"
-        )
+        assert (
+            tributo in info["tributos"]
+        ), f"R009 debe aplicar a {tributo}, tributos={info['tributos']}"
 
     # Fases aplicables: todas las fases sancionadoras + recurso + TEAR.
     fases_esperadas = {
@@ -291,6 +292,4 @@ def test_R009_registrada_en_registry():
         "TEAR_AMPLIACION_POSIBLE",
     }
     for fase in fases_esperadas:
-        assert fase in info["fases"], (
-            f"R009 debe incluir fase {fase}, fases={info['fases']}"
-        )
+        assert fase in info["fases"], f"R009 debe incluir fase {fase}, fases={info['fases']}"

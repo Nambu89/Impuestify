@@ -1,4 +1,5 @@
 """Tests para el extractor de requerimiento."""
+
 from unittest.mock import patch
 from app.services.defensia_data_extractor import extract_requerimiento
 

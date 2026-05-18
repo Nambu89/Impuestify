@@ -1,8 +1,10 @@
 """Tests para DocumentClassifier — usa fast-path regex + fallback Gemini."""
+
 from unittest.mock import patch
 from app.models.defensia import TipoDocumento
 from app.services.defensia_document_classifier import (
-    DocumentClassifier, ClassificationResult,
+    DocumentClassifier,
+    ClassificationResult,
 )
 
 

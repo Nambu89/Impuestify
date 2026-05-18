@@ -7,6 +7,7 @@ them with the current query to produce a better RAG search query.
 
 Heuristic-only, no LLM calls.
 """
+
 import re
 from typing import List, Dict
 
@@ -18,7 +19,7 @@ _CCAA_PATTERN = re.compile(
     r"ceuta|melilla|galicia|asturias|cantabria|murcia|extremadura|"
     r"castilla[- ]la mancha|castilla[- ]león|castilla[- ]leon|"
     r"baleares|canarias|rioja|país vasco|pais vasco|euskadi)\b",
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 _FISCAL_CONCEPT_PATTERN = re.compile(
     r"\b(irpf|iva|renta|nómina|nomina|autónomo|autonomo|"
@@ -27,7 +28,7 @@ _FISCAL_CONCEPT_PATTERN = re.compile(
     r"base\s*imponible|rendimiento|actividad\s*económica|actividad\s*economica|"
     r"ingresos|gastos|vivienda\s*habitual|"
     r"plan\s*de\s*pensiones|seguridad\s*social|cuenta\s*ahorro)\b",
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 
 

@@ -4,6 +4,7 @@ Workspace Embedding Service for TaxIA
 Generates and manages embeddings for workspace documents using OpenAI Ada 3 Large.
 Enables semantic search within user workspaces.
 """
+
 import logging
 import hashlib
 import uuid
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 # OpenAI client
 try:
     from openai import AsyncOpenAI
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -26,6 +28,7 @@ except ImportError:
 @dataclass
 class EmbeddingResult:
     """Result of embedding generation."""
+
     success: bool
     embedding: Optional[List[float]] = None
     dimensions: int = 0
@@ -36,6 +39,7 @@ class EmbeddingResult:
 @dataclass
 class SearchResult:
     """Result of semantic search."""
+
     file_id: str
     filename: str
     chunk_text: str
@@ -92,10 +96,7 @@ class WorkspaceEmbeddingService:
             EmbeddingResult with vector
         """
         if not OPENAI_AVAILABLE or not self.api_key:
-            return EmbeddingResult(
-                success=False,
-                error="OpenAI not configured"
-            )
+            return EmbeddingResult(success=False, error="OpenAI not configured")
 
         try:
             # Truncate text if too long (model limit is ~8191 tokens)
@@ -105,9 +106,7 @@ class WorkspaceEmbeddingService:
                 logger.warning(f"Text truncated to {max_chars} characters")
 
             response = await self.client.embeddings.create(
-                model=self.EMBEDDING_MODEL,
-                input=text,
-                encoding_format="float"
+                model=self.EMBEDDING_MODEL, input=text, encoding_format="float"
             )
 
             embedding = response.data[0].embedding
@@ -116,15 +115,12 @@ class WorkspaceEmbeddingService:
                 success=True,
                 embedding=embedding,
                 dimensions=len(embedding),
-                model=self.EMBEDDING_MODEL
+                model=self.EMBEDDING_MODEL,
             )
 
         except Exception as e:
             logger.error(f"Embedding generation failed: {e}")
-            return EmbeddingResult(
-                success=False,
-                error=str(e)
-            )
+            return EmbeddingResult(success=False, error=str(e))
 
     def chunk_text(self, text: str) -> List[Dict[str, Any]]:
         """
@@ -146,7 +142,7 @@ class WorkspaceEmbeddingService:
             # Try to break at sentence boundary
             if end < len(text):
                 # Look for sentence end within last 100 chars
-                for punct in ['. ', '.\n', '? ', '!\n']:
+                for punct in [". ", ".\n", "? ", "!\n"]:
                     last_punct = text[start:end].rfind(punct)
                     if last_punct > self.CHUNK_SIZE - 150:
                         end = start + last_punct + len(punct)
@@ -155,13 +151,15 @@ class WorkspaceEmbeddingService:
             chunk_text = text[start:end].strip()
 
             if chunk_text:
-                chunks.append({
-                    'text': chunk_text,
-                    'chunk_index': chunk_index,
-                    'start_char': start,
-                    'end_char': end,
-                    'char_count': len(chunk_text)
-                })
+                chunks.append(
+                    {
+                        "text": chunk_text,
+                        "chunk_index": chunk_index,
+                        "start_char": start,
+                        "end_char": end,
+                        "char_count": len(chunk_text),
+                    }
+                )
                 chunk_index += 1
 
             # Move start with overlap
@@ -170,12 +168,7 @@ class WorkspaceEmbeddingService:
         return chunks
 
     async def embed_workspace_file(
-        self,
-        db,
-        workspace_id: str,
-        file_id: str,
-        text: str,
-        filename: str
+        self, db, workspace_id: str, file_id: str, text: str, filename: str
     ) -> Dict[str, Any]:
         """
         Generate and store embeddings for a workspace file.
@@ -200,7 +193,7 @@ class WorkspaceEmbeddingService:
 
             for chunk in chunks:
                 # Generate embedding
-                result = await self.generate_embedding(chunk['text'])
+                result = await self.generate_embedding(chunk["text"])
 
                 if not result.success:
                     failed += 1
@@ -211,7 +204,8 @@ class WorkspaceEmbeddingService:
 
                 # Convert embedding to bytes for BLOB storage
                 import struct
-                embedding_blob = struct.pack(f'{len(result.embedding)}f', *result.embedding)
+
+                embedding_blob = struct.pack(f"{len(result.embedding)}f", *result.embedding)
 
                 await db.execute(
                     """
@@ -226,12 +220,12 @@ class WorkspaceEmbeddingService:
                         embedding_id,
                         workspace_id,
                         file_id,
-                        chunk['chunk_index'],
-                        chunk['text'][:2000],  # Store truncated for reference
+                        chunk["chunk_index"],
+                        chunk["text"][:2000],  # Store truncated for reference
                         embedding_blob,
                         result.model,
-                        result.dimensions
-                    ]
+                        result.dimensions,
+                    ],
                 )
 
                 successful += 1
@@ -239,27 +233,19 @@ class WorkspaceEmbeddingService:
             logger.info(f"Embedded {successful}/{len(chunks)} chunks for {filename}")
 
             return {
-                'success': True,
-                'total_chunks': len(chunks),
-                'successful': successful,
-                'failed': failed,
-                'model': self.EMBEDDING_MODEL
+                "success": True,
+                "total_chunks": len(chunks),
+                "successful": successful,
+                "failed": failed,
+                "model": self.EMBEDDING_MODEL,
             }
 
         except Exception as e:
             logger.error(f"Failed to embed file {filename}: {e}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     async def search_workspace(
-        self,
-        db,
-        workspace_id: str,
-        query: str,
-        top_k: int = 5,
-        similarity_threshold: float = 0.7
+        self, db, workspace_id: str, query: str, top_k: int = 5, similarity_threshold: float = 0.7
     ) -> List[SearchResult]:
         """
         Semantic search within a workspace.
@@ -295,7 +281,7 @@ class WorkspaceEmbeddingService:
                 JOIN workspace_files f ON e.file_id = f.id
                 WHERE e.workspace_id = ?
                 """,
-                [workspace_id]
+                [workspace_id],
             )
 
             if not result.rows:
@@ -303,28 +289,28 @@ class WorkspaceEmbeddingService:
 
             # Calculate similarities
             import struct
+
             results = []
 
             for row in result.rows:
                 # Decode embedding from BLOB
-                embedding_blob = row['embedding']
+                embedding_blob = row["embedding"]
                 num_floats = len(embedding_blob) // 4
-                stored_embedding = list(struct.unpack(f'{num_floats}f', embedding_blob))
+                stored_embedding = list(struct.unpack(f"{num_floats}f", embedding_blob))
 
                 # Calculate cosine similarity
-                similarity = self._cosine_similarity(
-                    query_result.embedding,
-                    stored_embedding
-                )
+                similarity = self._cosine_similarity(query_result.embedding, stored_embedding)
 
                 if similarity >= similarity_threshold:
-                    results.append(SearchResult(
-                        file_id=row['file_id'],
-                        filename=row['filename'],
-                        chunk_text=row['chunk_text'],
-                        similarity=similarity,
-                        metadata={'embedding_id': row['id']}
-                    ))
+                    results.append(
+                        SearchResult(
+                            file_id=row["file_id"],
+                            filename=row["filename"],
+                            chunk_text=row["chunk_text"],
+                            similarity=similarity,
+                            metadata={"embedding_id": row["id"]},
+                        )
+                    )
 
             # Sort by similarity and limit
             results.sort(key=lambda x: x.similarity, reverse=True)
@@ -359,10 +345,7 @@ class WorkspaceEmbeddingService:
             True if successful
         """
         try:
-            await db.execute(
-                "DELETE FROM workspace_file_embeddings WHERE file_id = ?",
-                [file_id]
-            )
+            await db.execute("DELETE FROM workspace_file_embeddings WHERE file_id = ?", [file_id])
             return True
         except Exception as e:
             logger.error(f"Failed to delete embeddings for file {file_id}: {e}")
@@ -389,23 +372,23 @@ class WorkspaceEmbeddingService:
                 FROM workspace_file_embeddings
                 WHERE workspace_id = ?
                 """,
-                [workspace_id]
+                [workspace_id],
             )
 
             if result.rows:
                 return {
-                    'total_embeddings': result.rows[0]['total_embeddings'],
-                    'files_embedded': result.rows[0]['files_embedded'],
-                    'last_updated': result.rows[0]['last_updated'],
-                    'model': self.EMBEDDING_MODEL,
-                    'dimensions': self.EMBEDDING_DIMENSIONS
+                    "total_embeddings": result.rows[0]["total_embeddings"],
+                    "files_embedded": result.rows[0]["files_embedded"],
+                    "last_updated": result.rows[0]["last_updated"],
+                    "model": self.EMBEDDING_MODEL,
+                    "dimensions": self.EMBEDDING_DIMENSIONS,
                 }
 
-            return {'total_embeddings': 0, 'files_embedded': 0}
+            return {"total_embeddings": 0, "files_embedded": 0}
 
         except Exception as e:
             logger.error(f"Failed to get workspace stats: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
 
 # Global instance

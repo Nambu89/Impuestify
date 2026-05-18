@@ -28,6 +28,7 @@ samente sin llegar al usuario. Esta regla solo emite la etiqueta semantica
 "principio de integra regularizacion tributaria" para que el retriever pueda
 localizar la cita canonica adecuada al caso concreto (IVA vs IRPF vs otros).
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -88,9 +89,7 @@ def _dispara_iva_sin_rectificacion(datos: dict) -> bool:
         "(doctrina TS y TEAC consolidada)"
     ),
 )
-def evaluar(
-    expediente: ExpedienteEstructurado, brief: Brief
-) -> Optional[ArgumentoCandidato]:
+def evaluar(expediente: ExpedienteEstructurado, brief: Brief) -> Optional[ArgumentoCandidato]:
     """Evalua si el expediente presenta un supuesto de regularizacion
     incompleta que justifique invocar el principio de integra regularizacion.
 

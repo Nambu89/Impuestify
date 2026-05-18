@@ -3,6 +3,7 @@ Workspace Service for TaxIA
 
 Handles workspace management operations with Turso database.
 """
+
 import uuid
 import logging
 from typing import List, Optional, Dict, Any
@@ -13,12 +14,13 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
+
 class Workspace(BaseModel):
     id: str
     user_id: str
     name: str
     description: Optional[str] = None
-    icon: str = '📁'
+    icon: str = "📁"
     is_default: bool = False
     max_files: int = 50
     max_size_mb: int = 100
@@ -26,34 +28,36 @@ class Workspace(BaseModel):
     updated_at: datetime
     file_count: Optional[int] = 0
 
+
 class WorkspaceCreate(BaseModel):
     name: str
     description: Optional[str] = None
-    icon: Optional[str] = '📁'
+    icon: Optional[str] = "📁"
+
 
 class WorkspaceService:
     """Service for workspace management operations."""
-    
+
     async def create_workspace(self, user_id: str, workspace_data: WorkspaceCreate) -> Workspace:
         """
         Create a new workspace for a user.
-        
+
         Args:
             user_id: ID of the user creating the workspace
             workspace_data: Workspace creation data
-            
+
         Returns:
             Created Workspace object
         """
         db = await get_db_client()
-        
+
         workspace_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
-        
+
         # Check if this is the first workspace for the user (to make it default)
         workspaces = await self.get_user_workspaces(user_id)
         is_default = len(workspaces) == 0
-        
+
         await db.execute(
             """
             INSERT INTO workspaces (
@@ -63,44 +67,44 @@ class WorkspaceService:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
-                workspace_id, 
-                user_id, 
-                workspace_data.name, 
-                workspace_data.description, 
-                workspace_data.icon or '📁',
+                workspace_id,
+                user_id,
+                workspace_data.name,
+                workspace_data.description,
+                workspace_data.icon or "📁",
                 is_default,
                 50,  # Default limits
-                100, # Default limits
-                now, 
-                now
-            ]
+                100,  # Default limits
+                now,
+                now,
+            ],
         )
-        
+
         logger.info(f"Created workspace '{workspace_data.name}' for user {user_id}")
-        
+
         return Workspace(
             id=workspace_id,
             user_id=user_id,
             name=workspace_data.name,
             description=workspace_data.description,
-            icon=workspace_data.icon or '📁',
+            icon=workspace_data.icon or "📁",
             is_default=is_default,
             created_at=datetime.fromisoformat(now),
-            updated_at=datetime.fromisoformat(now)
+            updated_at=datetime.fromisoformat(now),
         )
-    
+
     async def get_user_workspaces(self, user_id: str) -> List[Workspace]:
         """
         Get all workspaces for a user.
-        
+
         Args:
             user_id: User ID
-            
+
         Returns:
             List of Workspace objects
         """
         db = await get_db_client()
-        
+
         # Query to get workspaces with file count
         query = """
             SELECT w.*, COUNT(wf.id) as file_count 
@@ -110,40 +114,42 @@ class WorkspaceService:
             GROUP BY w.id
             ORDER BY w.is_default DESC, w.created_at DESC
         """
-        
+
         result = await db.execute(query, [user_id])
-        
+
         workspaces = []
         for row in result.rows:
-            workspaces.append(Workspace(
-                id=row["id"],
-                user_id=row["user_id"],
-                name=row["name"],
-                description=row["description"],
-                icon=row["icon"],
-                is_default=bool(row["is_default"]),
-                max_files=row["max_files"],
-                max_size_mb=row["max_size_mb"],
-                created_at=datetime.fromisoformat(row["created_at"]),
-                updated_at=datetime.fromisoformat(row["updated_at"]),
-                file_count=row["file_count"]
-            ))
-            
+            workspaces.append(
+                Workspace(
+                    id=row["id"],
+                    user_id=row["user_id"],
+                    name=row["name"],
+                    description=row["description"],
+                    icon=row["icon"],
+                    is_default=bool(row["is_default"]),
+                    max_files=row["max_files"],
+                    max_size_mb=row["max_size_mb"],
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                    updated_at=datetime.fromisoformat(row["updated_at"]),
+                    file_count=row["file_count"],
+                )
+            )
+
         return workspaces
-    
+
     async def get_workspace(self, workspace_id: str, user_id: str) -> Optional[Workspace]:
         """
         Get a specific workspace by ID, ensuring ownership.
-        
+
         Args:
             workspace_id: Workspace ID
             user_id: User ID (for security verification)
-            
+
         Returns:
             Workspace object if found and owned by user, None otherwise
         """
         db = await get_db_client()
-        
+
         query = """
             SELECT w.*, COUNT(wf.id) as file_count 
             FROM workspaces w
@@ -151,9 +157,9 @@ class WorkspaceService:
             WHERE w.id = ? AND w.user_id = ?
             GROUP BY w.id
         """
-        
+
         result = await db.execute(query, [workspace_id, user_id])
-        
+
         if result.rows:
             row = result.rows[0]
             return Workspace(
@@ -167,19 +173,19 @@ class WorkspaceService:
                 max_size_mb=row["max_size_mb"],
                 created_at=datetime.fromisoformat(row["created_at"]),
                 updated_at=datetime.fromisoformat(row["updated_at"]),
-                file_count=row["file_count"]
+                file_count=row["file_count"],
             )
-            
+
         return None
-    
+
     async def delete_workspace(self, workspace_id: str, user_id: str) -> bool:
         """
         Delete a workspace and all its files.
-        
+
         Args:
             workspace_id: Workspace ID
             user_id: User ID (for security)
-            
+
         Returns:
             True if deleted, False if not found or not owned by user
         """
@@ -187,15 +193,12 @@ class WorkspaceService:
         workspace = await self.get_workspace(workspace_id, user_id)
         if not workspace:
             return False
-            
+
         db = await get_db_client()
-        
+
         # Foreign key CASCADE will handle deleting files
-        await db.execute(
-            "DELETE FROM workspaces WHERE id = ?",
-            [workspace_id]
-        )
-        
+        await db.execute("DELETE FROM workspaces WHERE id = ?", [workspace_id])
+
         logger.info(f"Deleted workspace {workspace_id} for user {user_id}")
         return True
 
@@ -254,23 +257,35 @@ class WorkspaceService:
             try:
                 data = _json.loads(raw) if isinstance(raw, str) else raw
             except (TypeError, ValueError, _json.JSONDecodeError):
-                logger.warning(f"Invalid JSON in extracted_data for file: {row.get('filename', '?')}")
+                logger.warning(
+                    f"Invalid JSON in extracted_data for file: {row.get('filename', '?')}"
+                )
                 continue
 
             if not isinstance(data, dict):
                 continue
 
             # Aggregate numeric fields
-            summary["ingresos_actividad"] += float(data.get("ingresos_actividad") or data.get("total_ingresos") or 0)
-            summary["gastos_actividad"] += float(data.get("gastos_actividad") or data.get("total_gastos") or 0)
-            summary["iva_repercutido"] += float(data.get("iva_repercutido") or data.get("iva_cobrado") or 0)
-            summary["iva_soportado"] += float(data.get("iva_soportado") or data.get("iva_pagado") or 0)
+            summary["ingresos_actividad"] += float(
+                data.get("ingresos_actividad") or data.get("total_ingresos") or 0
+            )
+            summary["gastos_actividad"] += float(
+                data.get("gastos_actividad") or data.get("total_gastos") or 0
+            )
+            summary["iva_repercutido"] += float(
+                data.get("iva_repercutido") or data.get("iva_cobrado") or 0
+            )
+            summary["iva_soportado"] += float(
+                data.get("iva_soportado") or data.get("iva_pagado") or 0
+            )
 
-            summary["files"].append({
-                "filename": row.get("filename", ""),
-                "tipo": row.get("file_type", ""),
-                "period": data.get("periodo") or data.get("period") or "",
-            })
+            summary["files"].append(
+                {
+                    "filename": row.get("filename", ""),
+                    "tipo": row.get("file_type", ""),
+                    "period": data.get("periodo") or data.get("period") or "",
+                }
+            )
             summary["file_count"] += 1
 
         if summary["file_count"] > 0:

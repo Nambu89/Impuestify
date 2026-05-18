@@ -4,6 +4,7 @@ Contact Router for TaxIA/Impuestify
 Handles contact form submissions (e.g. autonomo service interest).
 Submissions are stored in DB for the owner to review.
 """
+
 import uuid
 import logging
 

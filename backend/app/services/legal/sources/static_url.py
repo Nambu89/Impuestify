@@ -10,6 +10,7 @@ The URL itself is supplied by the registry (from `norms.yaml::url_html_consolida
 NOT hardcoded here. This source is just an adapter; the URLs themselves
 remain data-driven.
 """
+
 from __future__ import annotations
 
 from typing import Optional

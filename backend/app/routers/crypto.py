@@ -11,6 +11,7 @@ Endpoints:
   GET  /api/crypto/gains           — Ganancias/perdidas FIFO por ejercicio
   DELETE /api/crypto/transactions/{id} — Eliminar transaccion (ownership check)
 """
+
 import io
 import logging
 import uuid

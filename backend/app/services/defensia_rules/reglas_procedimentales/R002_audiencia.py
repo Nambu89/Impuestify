@@ -35,6 +35,7 @@ lenguaje natural), nunca hardcodeada con numeros de articulo. La
 verificacion contra BOE/TEAC es responsabilidad del `defensia_rag_verifier`
 en la fase posterior del pipeline.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -133,8 +134,7 @@ def _detectar_propuesta_modificada_sin_reabrir(
             ):
                 return (
                     doc.id,
-                    "propuesta de liquidacion modificada sin reabrir plazo "
-                    "de alegaciones",
+                    "propuesta de liquidacion modificada sin reabrir plazo " "de alegaciones",
                 )
     return None
 
@@ -162,9 +162,7 @@ def _detectar_propuesta_modificada_sin_reabrir(
         "sin reabrir plazo de alegaciones"
     ),
 )
-def evaluar(
-    expediente: ExpedienteEstructurado, brief: Brief
-) -> Optional[ArgumentoCandidato]:
+def evaluar(expediente: ExpedienteEstructurado, brief: Brief) -> Optional[ArgumentoCandidato]:
     """Evalua R002 sobre el expediente y devuelve un candidato si dispara.
 
     Orden de evaluacion:

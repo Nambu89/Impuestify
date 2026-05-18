@@ -6,6 +6,7 @@ callers depend on the Protocol.
 
 Thread-safe: singleton via `lru_cache`. Reload via `reset_legal_registry()`.
 """
+
 from __future__ import annotations
 
 import logging
@@ -62,7 +63,9 @@ class LegalNormsRegistry(Protocol):
         """Return the LegalNorm matching by sigla, full_id, or alias."""
         ...
 
-    def get_article(self, law: str, article: str, subarticle: Optional[str] = None) -> Optional[CanonicalArticle]:
+    def get_article(
+        self, law: str, article: str, subarticle: Optional[str] = None
+    ) -> Optional[CanonicalArticle]:
         """Return the canonical article if present."""
         ...
 
@@ -152,7 +155,9 @@ class YamlLegalNormsRegistry:
     def get_norm(self, sigla_or_id: str) -> Optional[LegalNorm]:
         return self._resolve_norm(sigla_or_id)
 
-    def get_article(self, law: str, article: str, subarticle: Optional[str] = None) -> Optional[CanonicalArticle]:
+    def get_article(
+        self, law: str, article: str, subarticle: Optional[str] = None
+    ) -> Optional[CanonicalArticle]:
         return self._articles_index.get((law.upper(), article, subarticle))
 
     def get_invoice_template(self, key: str) -> Optional[InvoiceTemplate]:
@@ -169,6 +174,7 @@ class YamlLegalNormsRegistry:
         if norm.url_html_consolidada:
             return norm.url_html_consolidada
         from app.services.legal.sources import get_legal_source_dispatcher
+
         dispatcher = get_legal_source_dispatcher()
         source_id = norm.effective_source_id()
         norm_id = norm.effective_source_norm_id()
@@ -267,6 +273,7 @@ def _empty_registry() -> "YamlLegalNormsRegistry":
         InvoiceTemplatesCatalog,
         NormsCatalog,
     )
+
     return YamlLegalNormsRegistry(
         NormsCatalog(norms=[]),
         ArticlesCatalog(articles=[]),

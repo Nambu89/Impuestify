@@ -88,6 +88,7 @@ def _is_known_legal_reference(citation: "Citation") -> bool:
     in the legal registry (data-driven via YAML)."""
     # Lazy import avoids circular dependency at module load time.
     from app.services.legal import get_legal_registry
+
     registry = get_legal_registry()
 
     if citation.label in ("ley", "rd", "real_decreto"):
@@ -114,10 +115,12 @@ def _check_derogated_norms(citations: Iterable["Citation"]) -> List["Citation"]:
     derogated when BOE is unreachable.
     """
     import os
+
     if os.environ.get("BOE_VERIFY_VIGENCIA", "false").lower() not in ("1", "true", "yes"):
         return []
 
     from app.services.legal import get_legal_registry
+
     registry = get_legal_registry()
 
     derogated: List["Citation"] = []
@@ -130,6 +133,7 @@ def _check_derogated_norms(citations: Iterable["Citation"]) -> List["Citation"]:
         try:
             # Async call from sync context — only runs when env-gated.
             import asyncio
+
             vigent = asyncio.run(_check_vigencia_async(norm.boe_id))
         except Exception as exc:
             logger.debug("Vigencia check failed for %s: %s — assuming vigent", norm.boe_id, exc)
@@ -143,6 +147,7 @@ async def _check_vigencia_async(boe_id: str) -> Optional[bool]:
     """Helper: instantiate BoeApiClient and check vigencia. None on error."""
     from app.services.legal.boe_client import BoeApiClient
     from app.database.turso_client import get_turso_client
+
     db = None
     try:
         db = await get_turso_client()
@@ -180,9 +185,9 @@ def _normalize(text: str) -> str:
 
 @dataclass
 class Citation:
-    text: str           # the original matched substring (for display)
-    label: str          # category: art_law, ley, rd, etc.
-    normalized: str     # normalized form for matching
+    text: str  # the original matched substring (for display)
+    label: str  # category: art_law, ley, rd, etc.
+    normalized: str  # normalized form for matching
     verified: bool = False
     matched_chunk_id: Optional[str] = None
 
@@ -289,8 +294,9 @@ def verify_citations(
         # Append to annotated_response too if it exists, otherwise create.
         annotated = (response_text + warning_footer) if response_text else None
         has_unverified = True  # surface derogated as a warning
-        logger.warning("BOE API flagged %d derogated norm(s): %s",
-                       len(derogated), [c.text for c in derogated])
+        logger.warning(
+            "BOE API flagged %d derogated norm(s): %s", len(derogated), [c.text for c in derogated]
+        )
     else:
         annotated = _annotate_response(response_text, unverified) if has_unverified else None
 

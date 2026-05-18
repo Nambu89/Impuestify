@@ -2,6 +2,7 @@
 Servicio para extraer datos de facturas españolas en PDF
 Usa el módulo centralizado pdf_extractor para extracción de texto
 """
+
 import re
 import hashlib
 from typing import Dict, Optional, List
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class InvoiceData:
     """Datos estructurados de una factura española."""
+
     # Identificación
     invoice_number: Optional[str] = None
     invoice_date: Optional[str] = None
@@ -66,81 +68,70 @@ class InvoiceExtractor:
         """Patrones regex para extraer campos de facturas españolas."""
         return {
             # Número de factura
-            'invoice_number': re.compile(
-                r'(?:n[úu]mero?\s*(?:de\s*)?factura|factura\s*n[°ºo]?|n[°ºo]?\s*factura)[\s:]*([A-Z0-9\-/]+)',
-                re.IGNORECASE
+            "invoice_number": re.compile(
+                r"(?:n[úu]mero?\s*(?:de\s*)?factura|factura\s*n[°ºo]?|n[°ºo]?\s*factura)[\s:]*([A-Z0-9\-/]+)",
+                re.IGNORECASE,
             ),
-
             # Fechas
-            'invoice_date': re.compile(
-                r'(?:fecha\s*(?:de\s*)?(?:factura|emisi[óo]n)|fecha)[\s:]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',
-                re.IGNORECASE
+            "invoice_date": re.compile(
+                r"(?:fecha\s*(?:de\s*)?(?:factura|emisi[óo]n)|fecha)[\s:]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})",
+                re.IGNORECASE,
             ),
-            'due_date': re.compile(
-                r'(?:fecha\s*(?:de\s*)?vencimiento|vencimiento)[\s:]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',
-                re.IGNORECASE
+            "due_date": re.compile(
+                r"(?:fecha\s*(?:de\s*)?vencimiento|vencimiento)[\s:]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})",
+                re.IGNORECASE,
             ),
-
             # NIF/CIF (emisor y receptor)
-            'nif_cif': re.compile(
-                r'(?:NIF|CIF|N\.I\.F\.|C\.I\.F\.)[\s:]*([A-Z]?\d{7,8}[A-Z]?)',
-                re.IGNORECASE
+            "nif_cif": re.compile(
+                r"(?:NIF|CIF|N\.I\.F\.|C\.I\.F\.)[\s:]*([A-Z]?\d{7,8}[A-Z]?)", re.IGNORECASE
             ),
-
             # Bases imponibles por tipo de IVA
-            'base_21': re.compile(
-                r'(?:base\s*(?:imponible)?[\s:]*)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?\s*(?:21\s*%|IVA\s*21)',
-                re.IGNORECASE
+            "base_21": re.compile(
+                r"(?:base\s*(?:imponible)?[\s:]*)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?\s*(?:21\s*%|IVA\s*21)",
+                re.IGNORECASE,
             ),
-            'base_10': re.compile(
-                r'(?:base\s*(?:imponible)?[\s:]*)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?\s*(?:10\s*%|IVA\s*10)',
-                re.IGNORECASE
+            "base_10": re.compile(
+                r"(?:base\s*(?:imponible)?[\s:]*)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?\s*(?:10\s*%|IVA\s*10)",
+                re.IGNORECASE,
             ),
-            'base_4': re.compile(
-                r'(?:base\s*(?:imponible)?[\s:]*)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?\s*(?:4\s*%|IVA\s*4)',
-                re.IGNORECASE
+            "base_4": re.compile(
+                r"(?:base\s*(?:imponible)?[\s:]*)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?\s*(?:4\s*%|IVA\s*4)",
+                re.IGNORECASE,
             ),
-
             # Base imponible general (cuando no está desglosada)
-            'base_imponible': re.compile(
-                r'(?:base\s*imponible|subtotal|importe\s*neto)[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?',
-                re.IGNORECASE
+            "base_imponible": re.compile(
+                r"(?:base\s*imponible|subtotal|importe\s*neto)[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?",
+                re.IGNORECASE,
             ),
-
             # Cuotas IVA
-            'cuota_iva_21': re.compile(
-                r'(?:cuota\s*)?IVA\s*21\s*%?[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?',
-                re.IGNORECASE
+            "cuota_iva_21": re.compile(
+                r"(?:cuota\s*)?IVA\s*21\s*%?[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?",
+                re.IGNORECASE,
             ),
-            'cuota_iva_10': re.compile(
-                r'(?:cuota\s*)?IVA\s*10\s*%?[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?',
-                re.IGNORECASE
+            "cuota_iva_10": re.compile(
+                r"(?:cuota\s*)?IVA\s*10\s*%?[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?",
+                re.IGNORECASE,
             ),
-            'cuota_iva_4': re.compile(
-                r'(?:cuota\s*)?IVA\s*4\s*%?[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?',
-                re.IGNORECASE
+            "cuota_iva_4": re.compile(
+                r"(?:cuota\s*)?IVA\s*4\s*%?[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?",
+                re.IGNORECASE,
             ),
-
             # IVA general (cuando no está desglosado)
-            'iva_total': re.compile(
-                r'(?:total\s*)?IVA[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?',
-                re.IGNORECASE
+            "iva_total": re.compile(
+                r"(?:total\s*)?IVA[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?", re.IGNORECASE
             ),
-
             # Total factura
-            'total_factura': re.compile(
-                r'(?:total\s*(?:factura)?|importe\s*total|total\s*a\s*pagar)[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?',
-                re.IGNORECASE
+            "total_factura": re.compile(
+                r"(?:total\s*(?:factura)?|importe\s*total|total\s*a\s*pagar)[\s:]*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?",
+                re.IGNORECASE,
             ),
-
             # Retención IRPF (para autónomos)
-            'retencion_irpf': re.compile(
-                r'(?:retenci[óo]n\s*(?:IRPF)?|IRPF)[\s:]*-?\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?',
-                re.IGNORECASE
+            "retencion_irpf": re.compile(
+                r"(?:retenci[óo]n\s*(?:IRPF)?|IRPF)[\s:]*-?\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?",
+                re.IGNORECASE,
             ),
-            'porcentaje_retencion': re.compile(
-                r'(?:retenci[óo]n|IRPF).*?(\d{1,2}(?:,\d{1,2})?)\s*%',
-                re.IGNORECASE
+            "porcentaje_retencion": re.compile(
+                r"(?:retenci[óo]n|IRPF).*?(\d{1,2}(?:,\d{1,2})?)\s*%", re.IGNORECASE
             ),
         }
 
@@ -167,34 +158,36 @@ class InvoiceExtractor:
 
             if not result.success:
                 return {
-                    'extraction_status': 'failed',
-                    'error': result.error,
-                    'full_text': None,
-                    'file_hash': None
+                    "extraction_status": "failed",
+                    "error": result.error,
+                    "full_text": None,
+                    "file_hash": None,
                 }
 
             # Parsear datos estructurados
             extracted_data = self._parse_invoice_data(result.markdown_text)
 
             # Añadir metadata
-            extracted_data['full_text'] = result.markdown_text
-            extracted_data['file_hash'] = file_hash
-            extracted_data['extraction_status'] = 'completed'
-            extracted_data['total_pages'] = result.total_pages
+            extracted_data["full_text"] = result.markdown_text
+            extracted_data["file_hash"] = file_hash
+            extracted_data["extraction_status"] = "completed"
+            extracted_data["total_pages"] = result.total_pages
 
             # Calcular score de confianza
-            extracted_data['confidence_score'] = self._calculate_confidence(extracted_data)
+            extracted_data["confidence_score"] = self._calculate_confidence(extracted_data)
 
-            logger.info(f"Extracción completada: confianza={extracted_data['confidence_score']:.2f}")
+            logger.info(
+                f"Extracción completada: confianza={extracted_data['confidence_score']:.2f}"
+            )
             return extracted_data
 
         except Exception as e:
             logger.error(f"Error extrayendo factura: {e}", exc_info=True)
             return {
-                'extraction_status': 'failed',
-                'error': str(e),
-                'full_text': None,
-                'file_hash': None
+                "extraction_status": "failed",
+                "error": str(e),
+                "full_text": None,
+                "file_hash": None,
             }
 
     async def extract_from_text(self, text: str) -> Dict:
@@ -208,8 +201,8 @@ class InvoiceExtractor:
             Dict con datos extraídos
         """
         extracted_data = self._parse_invoice_data(text)
-        extracted_data['extraction_status'] = 'completed'
-        extracted_data['confidence_score'] = self._calculate_confidence(extracted_data)
+        extracted_data["extraction_status"] = "completed"
+        extracted_data["confidence_score"] = self._calculate_confidence(extracted_data)
         return extracted_data
 
     def _calculate_file_hash(self, pdf_path: str) -> str:
@@ -225,76 +218,78 @@ class InvoiceExtractor:
         data = {}
 
         # Extraer número de factura
-        match = self.patterns['invoice_number'].search(text)
+        match = self.patterns["invoice_number"].search(text)
         if match:
-            data['invoice_number'] = match.group(1).strip()
+            data["invoice_number"] = match.group(1).strip()
 
         # Extraer fechas
-        match = self.patterns['invoice_date'].search(text)
+        match = self.patterns["invoice_date"].search(text)
         if match:
-            data['invoice_date'] = match.group(1)
+            data["invoice_date"] = match.group(1)
 
-        match = self.patterns['due_date'].search(text)
+        match = self.patterns["due_date"].search(text)
         if match:
-            data['due_date'] = match.group(1)
+            data["due_date"] = match.group(1)
 
         # Extraer NIFs (primero emisor, segundo receptor típicamente)
-        nif_matches = self.patterns['nif_cif'].findall(text)
+        nif_matches = self.patterns["nif_cif"].findall(text)
         if len(nif_matches) >= 1:
-            data['issuer_nif'] = nif_matches[0]
+            data["issuer_nif"] = nif_matches[0]
         if len(nif_matches) >= 2:
-            data['recipient_nif'] = nif_matches[1]
+            data["recipient_nif"] = nif_matches[1]
 
         # Extraer bases imponibles por tipo
-        match = self.patterns['base_21'].search(text)
+        match = self.patterns["base_21"].search(text)
         if match:
-            data['base_imponible_21'] = self._parse_spanish_number(match.group(1))
+            data["base_imponible_21"] = self._parse_spanish_number(match.group(1))
 
-        match = self.patterns['base_10'].search(text)
+        match = self.patterns["base_10"].search(text)
         if match:
-            data['base_imponible_10'] = self._parse_spanish_number(match.group(1))
+            data["base_imponible_10"] = self._parse_spanish_number(match.group(1))
 
-        match = self.patterns['base_4'].search(text)
+        match = self.patterns["base_4"].search(text)
         if match:
-            data['base_imponible_4'] = self._parse_spanish_number(match.group(1))
+            data["base_imponible_4"] = self._parse_spanish_number(match.group(1))
 
         # Base imponible general (si no hay desglose)
-        if not any(k in data for k in ['base_imponible_21', 'base_imponible_10', 'base_imponible_4']):
-            match = self.patterns['base_imponible'].search(text)
+        if not any(
+            k in data for k in ["base_imponible_21", "base_imponible_10", "base_imponible_4"]
+        ):
+            match = self.patterns["base_imponible"].search(text)
             if match:
-                data['total_base_imponible'] = self._parse_spanish_number(match.group(1))
+                data["total_base_imponible"] = self._parse_spanish_number(match.group(1))
 
         # Extraer cuotas IVA
-        match = self.patterns['cuota_iva_21'].search(text)
+        match = self.patterns["cuota_iva_21"].search(text)
         if match:
-            data['cuota_iva_21'] = self._parse_spanish_number(match.group(1))
+            data["cuota_iva_21"] = self._parse_spanish_number(match.group(1))
 
-        match = self.patterns['cuota_iva_10'].search(text)
+        match = self.patterns["cuota_iva_10"].search(text)
         if match:
-            data['cuota_iva_10'] = self._parse_spanish_number(match.group(1))
+            data["cuota_iva_10"] = self._parse_spanish_number(match.group(1))
 
-        match = self.patterns['cuota_iva_4'].search(text)
+        match = self.patterns["cuota_iva_4"].search(text)
         if match:
-            data['cuota_iva_4'] = self._parse_spanish_number(match.group(1))
+            data["cuota_iva_4"] = self._parse_spanish_number(match.group(1))
 
         # IVA total
-        match = self.patterns['iva_total'].search(text)
+        match = self.patterns["iva_total"].search(text)
         if match:
-            data['total_iva'] = self._parse_spanish_number(match.group(1))
+            data["total_iva"] = self._parse_spanish_number(match.group(1))
 
         # Total factura
-        match = self.patterns['total_factura'].search(text)
+        match = self.patterns["total_factura"].search(text)
         if match:
-            data['total_factura'] = self._parse_spanish_number(match.group(1))
+            data["total_factura"] = self._parse_spanish_number(match.group(1))
 
         # Retención IRPF
-        match = self.patterns['retencion_irpf'].search(text)
+        match = self.patterns["retencion_irpf"].search(text)
         if match:
-            data['retencion_irpf'] = self._parse_spanish_number(match.group(1))
+            data["retencion_irpf"] = self._parse_spanish_number(match.group(1))
 
-        match = self.patterns['porcentaje_retencion'].search(text)
+        match = self.patterns["porcentaje_retencion"].search(text)
         if match:
-            data['porcentaje_retencion'] = float(match.group(1).replace(',', '.'))
+            data["porcentaje_retencion"] = float(match.group(1).replace(",", "."))
 
         # Calcular totales si faltan
         self._calculate_totals(data)
@@ -304,7 +299,7 @@ class InvoiceExtractor:
     def _parse_spanish_number(self, num_str: str) -> Optional[float]:
         """Convierte número español (1.234,56) a float."""
         try:
-            clean = num_str.replace('.', '').replace(',', '.')
+            clean = num_str.replace(".", "").replace(",", ".")
             return float(clean)
         except Exception as e:
             logger.warning(f"Error parseando número '{num_str}': {e}")
@@ -313,39 +308,39 @@ class InvoiceExtractor:
     def _calculate_totals(self, data: Dict):
         """Calcula totales si no fueron extraídos directamente."""
         # Total base imponible
-        if 'total_base_imponible' not in data:
+        if "total_base_imponible" not in data:
             bases = [
-                data.get('base_imponible_21', 0) or 0,
-                data.get('base_imponible_10', 0) or 0,
-                data.get('base_imponible_4', 0) or 0,
-                data.get('base_imponible_0', 0) or 0,
+                data.get("base_imponible_21", 0) or 0,
+                data.get("base_imponible_10", 0) or 0,
+                data.get("base_imponible_4", 0) or 0,
+                data.get("base_imponible_0", 0) or 0,
             ]
             if any(b > 0 for b in bases):
-                data['total_base_imponible'] = sum(bases)
+                data["total_base_imponible"] = sum(bases)
 
         # Total IVA
-        if 'total_iva' not in data:
+        if "total_iva" not in data:
             cuotas = [
-                data.get('cuota_iva_21', 0) or 0,
-                data.get('cuota_iva_10', 0) or 0,
-                data.get('cuota_iva_4', 0) or 0,
+                data.get("cuota_iva_21", 0) or 0,
+                data.get("cuota_iva_10", 0) or 0,
+                data.get("cuota_iva_4", 0) or 0,
             ]
             if any(c > 0 for c in cuotas):
-                data['total_iva'] = sum(cuotas)
+                data["total_iva"] = sum(cuotas)
 
         # Calcular cuotas IVA si tenemos bases pero no cuotas
         # Rate derived from field name (base_imponible_XX → XX%), no hardcoded values
         for iva_rate in [21, 10, 4]:
-            base_key = f'base_imponible_{iva_rate}'
-            cuota_key = f'cuota_iva_{iva_rate}'
+            base_key = f"base_imponible_{iva_rate}"
+            cuota_key = f"cuota_iva_{iva_rate}"
             if data.get(base_key) and not data.get(cuota_key):
                 data[cuota_key] = round(data[base_key] * (iva_rate / 100), 2)
 
     def _calculate_confidence(self, data: Dict) -> float:
         """Calcula un score de confianza basado en campos extraídos."""
-        critical_fields = ['total_factura', 'total_base_imponible', 'invoice_number']
-        important_fields = ['invoice_date', 'issuer_nif', 'total_iva']
-        optional_fields = ['recipient_nif', 'due_date', 'retencion_irpf']
+        critical_fields = ["total_factura", "total_base_imponible", "invoice_number"]
+        important_fields = ["invoice_date", "issuer_nif", "total_iva"]
+        optional_fields = ["recipient_nif", "due_date", "retencion_irpf"]
 
         score = 0.0
 
@@ -370,22 +365,22 @@ class InvoiceExtractor:
         """Genera un resumen legible de la factura."""
         parts = []
 
-        if data.get('invoice_number'):
+        if data.get("invoice_number"):
             parts.append(f"Factura: {data['invoice_number']}")
 
-        if data.get('invoice_date'):
+        if data.get("invoice_date"):
             parts.append(f"Fecha: {data['invoice_date']}")
 
-        if data.get('total_base_imponible'):
+        if data.get("total_base_imponible"):
             parts.append(f"Base: {data['total_base_imponible']:.2f}€")
 
-        if data.get('total_iva'):
+        if data.get("total_iva"):
             parts.append(f"IVA: {data['total_iva']:.2f}€")
 
-        if data.get('total_factura'):
+        if data.get("total_factura"):
             parts.append(f"Total: {data['total_factura']:.2f}€")
 
-        if data.get('retencion_irpf'):
+        if data.get("retencion_irpf"):
             parts.append(f"Ret. IRPF: -{data['retencion_irpf']:.2f}€")
 
         return " | ".join(parts) if parts else "Sin datos extraídos"
@@ -394,29 +389,26 @@ class InvoiceExtractor:
         """Obtiene desglose de IVA por tipos."""
         breakdown = {}
 
-        if data.get('base_imponible_21') or data.get('cuota_iva_21'):
-            breakdown['21%'] = {
-                'base': data.get('base_imponible_21', 0) or 0,
-                'cuota': data.get('cuota_iva_21', 0) or 0
+        if data.get("base_imponible_21") or data.get("cuota_iva_21"):
+            breakdown["21%"] = {
+                "base": data.get("base_imponible_21", 0) or 0,
+                "cuota": data.get("cuota_iva_21", 0) or 0,
             }
 
-        if data.get('base_imponible_10') or data.get('cuota_iva_10'):
-            breakdown['10%'] = {
-                'base': data.get('base_imponible_10', 0) or 0,
-                'cuota': data.get('cuota_iva_10', 0) or 0
+        if data.get("base_imponible_10") or data.get("cuota_iva_10"):
+            breakdown["10%"] = {
+                "base": data.get("base_imponible_10", 0) or 0,
+                "cuota": data.get("cuota_iva_10", 0) or 0,
             }
 
-        if data.get('base_imponible_4') or data.get('cuota_iva_4'):
-            breakdown['4%'] = {
-                'base': data.get('base_imponible_4', 0) or 0,
-                'cuota': data.get('cuota_iva_4', 0) or 0
+        if data.get("base_imponible_4") or data.get("cuota_iva_4"):
+            breakdown["4%"] = {
+                "base": data.get("base_imponible_4", 0) or 0,
+                "cuota": data.get("cuota_iva_4", 0) or 0,
             }
 
-        if data.get('base_imponible_0'):
-            breakdown['0% (exento)'] = {
-                'base': data.get('base_imponible_0', 0) or 0,
-                'cuota': 0
-            }
+        if data.get("base_imponible_0"):
+            breakdown["0% (exento)"] = {"base": data.get("base_imponible_0", 0) or 0, "cuota": 0}
 
         return breakdown
 

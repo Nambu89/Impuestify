@@ -8,6 +8,7 @@ Loads + validates the YAML data files under `backend/data/legal/`:
 Validation errors are raised as `LegalDataError` so callers can decide
 whether to fail-fast (production) or degrade gracefully (tests).
 """
+
 from __future__ import annotations
 
 import logging
@@ -50,7 +51,7 @@ def _read_yaml(path: Path) -> dict:
 
 def load_norms(path: Path | None = None) -> NormsCatalog:
     """Load and validate norms.yaml."""
-    file = (path or _DEFAULT_DATA_DIR / "norms.yaml")
+    file = path or _DEFAULT_DATA_DIR / "norms.yaml"
     raw = _read_yaml(file)
     try:
         return NormsCatalog.model_validate(raw)
@@ -60,7 +61,7 @@ def load_norms(path: Path | None = None) -> NormsCatalog:
 
 def load_articles(path: Path | None = None) -> ArticlesCatalog:
     """Load and validate articles.yaml."""
-    file = (path or _DEFAULT_DATA_DIR / "articles.yaml")
+    file = path or _DEFAULT_DATA_DIR / "articles.yaml"
     raw = _read_yaml(file)
     try:
         return ArticlesCatalog.model_validate(raw)
@@ -70,7 +71,7 @@ def load_articles(path: Path | None = None) -> ArticlesCatalog:
 
 def load_invoice_templates(path: Path | None = None) -> InvoiceTemplatesCatalog:
     """Load and validate invoice_templates.yaml."""
-    file = (path or _DEFAULT_DATA_DIR / "invoice_templates.yaml")
+    file = path or _DEFAULT_DATA_DIR / "invoice_templates.yaml"
     raw = _read_yaml(file)
     try:
         return InvoiceTemplatesCatalog.model_validate(raw)
@@ -78,7 +79,9 @@ def load_invoice_templates(path: Path | None = None) -> InvoiceTemplatesCatalog:
         raise LegalDataError(f"Validation failed for {file.name}: {exc}") from exc
 
 
-def load_all(data_dir: Path | None = None) -> Tuple[NormsCatalog, ArticlesCatalog, InvoiceTemplatesCatalog]:
+def load_all(
+    data_dir: Path | None = None,
+) -> Tuple[NormsCatalog, ArticlesCatalog, InvoiceTemplatesCatalog]:
     """Convenience: load the three catalogs from one directory.
 
     Raises:

@@ -12,6 +12,7 @@ References:
 - https://ragaboutit.com/azure-document-intelligence-chunking-strategies/
 - https://learn.microsoft.com/azure/ai-services/document-intelligence/
 """
+
 import re
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ from dataclasses import dataclass
 @dataclass
 class ExtractedChunk:
     """Chunk extracted from a document."""
+
     content: str
     page_number: int
     chunk_index: int
@@ -40,11 +42,11 @@ class DocumentLayoutChunker:
     """
 
     # Sentence-ending pattern: period/question/exclamation followed by space or EOL
-    _SENTENCE_END_RAW = re.compile(r'[.!?](?:\s+|$)')
+    _SENTENCE_END_RAW = re.compile(r"[.!?](?:\s+|$)")
 
     # Spanish abbreviations commonly found in fiscal documents — NOT sentence ends
     _ABBREVIATIONS = re.compile(
-        r'\b(?:art|núm|num|pág|pag|cap|sec|inc|ej|etc|nº|Sr|Sra|Dr|Dra|Dña|apdo|op|cit|vid|cfr)\.\s*$'
+        r"\b(?:art|núm|num|pág|pag|cap|sec|inc|ej|etc|nº|Sr|Sra|Dr|Dra|Dña|apdo|op|cit|vid|cfr)\.\s*$"
     )
 
     def __init__(
@@ -52,7 +54,7 @@ class DocumentLayoutChunker:
         max_chunk_size: int = 1500,
         min_chunk_size: int = 100,
         overlap_size: int = 150,
-        preserve_tables: bool = True
+        preserve_tables: bool = True,
     ):
         """
         Args:
@@ -67,18 +69,16 @@ class DocumentLayoutChunker:
         self.preserve_tables = preserve_tables
 
         # Regex for detecting paragraph boundaries
-        self.paragraph_pattern = re.compile(r'\n\s*\n+')
+        self.paragraph_pattern = re.compile(r"\n\s*\n+")
 
         # Regex for detecting Markdown tables
-        self.table_pattern = re.compile(r'^\|.+\|$', re.MULTILINE)
+        self.table_pattern = re.compile(r"^\|.+\|$", re.MULTILINE)
 
         # Regex for Markdown headings (## or ###)
-        self.heading_pattern = re.compile(r'^#{1,4}\s+.+$', re.MULTILINE)
+        self.heading_pattern = re.compile(r"^#{1,4}\s+.+$", re.MULTILINE)
 
     def chunk_document(
-        self,
-        pages: List[Dict[str, Any]],
-        tables: Optional[List[Any]] = None
+        self, pages: List[Dict[str, Any]], tables: Optional[List[Any]] = None
     ) -> List[ExtractedChunk]:
         """
         Chunk a document page by page.
@@ -105,32 +105,36 @@ class DocumentLayoutChunker:
 
             # Strategy 1: Page fits in one chunk - preserve entirely
             if len(page_content) <= self.max_chunk_size:
-                raw_chunks.append(ExtractedChunk(
-                    content=page_content,
-                    page_number=page_number,
-                    chunk_index=chunk_index,
-                    metadata={
-                        'type': 'full_page',
-                        'has_tables': has_tables,
-                        'char_count': len(page_content)
-                    }
-                ))
+                raw_chunks.append(
+                    ExtractedChunk(
+                        content=page_content,
+                        page_number=page_number,
+                        chunk_index=chunk_index,
+                        metadata={
+                            "type": "full_page",
+                            "has_tables": has_tables,
+                            "char_count": len(page_content),
+                        },
+                    )
+                )
                 chunk_index += 1
 
             # Strategy 2: Page too large - split at semantic boundaries
             else:
                 page_chunks = self._split_page_semantically(page_content, page_number)
                 for chunk_content in page_chunks:
-                    raw_chunks.append(ExtractedChunk(
-                        content=chunk_content,
-                        page_number=page_number,
-                        chunk_index=chunk_index,
-                        metadata={
-                            'type': 'partial_page',
-                            'has_tables': self._contains_table(chunk_content),
-                            'char_count': len(chunk_content)
-                        }
-                    ))
+                    raw_chunks.append(
+                        ExtractedChunk(
+                            content=chunk_content,
+                            page_number=page_number,
+                            chunk_index=chunk_index,
+                            metadata={
+                                "type": "partial_page",
+                                "has_tables": self._contains_table(chunk_content),
+                                "char_count": len(chunk_content),
+                            },
+                        )
+                    )
                     chunk_index += 1
 
         # Apply overlap between consecutive chunks on the same page
@@ -160,8 +164,9 @@ class DocumentLayoutChunker:
                 continue
 
             # Don't overlap into/from table chunks
-            if (prev.metadata and prev.metadata.get('has_tables')) or \
-               (curr.metadata and curr.metadata.get('has_tables')):
+            if (prev.metadata and prev.metadata.get("has_tables")) or (
+                curr.metadata and curr.metadata.get("has_tables")
+            ):
                 result.append(curr)
                 continue
 
@@ -176,9 +181,9 @@ class DocumentLayoutChunker:
                     chunk_index=curr.chunk_index,
                     metadata={
                         **(curr.metadata or {}),
-                        'has_overlap': True,
-                        'char_count': len(new_content)
-                    }
+                        "has_overlap": True,
+                        "char_count": len(new_content),
+                    },
                 )
 
             result.append(curr)
@@ -193,7 +198,7 @@ class DocumentLayoutChunker:
         results = []
         for m in self._SENTENCE_END_RAW.finditer(text):
             # Check if this period is part of an abbreviation
-            prefix = text[:m.start() + 1]  # include the period
+            prefix = text[: m.start() + 1]  # include the period
             if self._ABBREVIATIONS.search(prefix):
                 continue  # skip — it's an abbreviation like "art."
             results.append(m)
@@ -207,7 +212,7 @@ class DocumentLayoutChunker:
         if len(text) <= self.overlap_size:
             return ""
 
-        tail = text[-self.overlap_size:]
+        tail = text[-self.overlap_size :]
 
         # Find the first sentence boundary in the tail
         matches = self._find_sentence_ends(tail)
@@ -218,7 +223,7 @@ class DocumentLayoutChunker:
                 return tail[start:].strip()
 
         # Fallback: find the first newline
-        nl_pos = tail.find('\n')
+        nl_pos = tail.find("\n")
         if nl_pos >= 0 and nl_pos < len(tail) - 10:
             return tail[nl_pos:].strip()
 
@@ -229,11 +234,7 @@ class DocumentLayoutChunker:
         """Check if text contains a Markdown table."""
         return bool(self.table_pattern.search(text))
 
-    def _split_page_semantically(
-        self,
-        page_content: str,
-        page_number: int
-    ) -> List[str]:
+    def _split_page_semantically(self, page_content: str, page_number: int) -> List[str]:
         """
         Split a long page at semantic boundaries.
 
@@ -272,7 +273,7 @@ class DocumentLayoutChunker:
 
         # Text before the first heading
         if matches[0].start() > 0:
-            pre = text[:matches[0].start()].strip()
+            pre = text[: matches[0].start()].strip()
             if pre:
                 sections.append(pre)
 
@@ -414,7 +415,7 @@ class DocumentLayoutChunker:
                 start = best_end
             else:
                 # No sentence boundary found within limit — force split at max
-                chunk = text[start:start + self.max_chunk_size].strip()
+                chunk = text[start : start + self.max_chunk_size].strip()
                 if chunk:
                     chunks.append(chunk)
                 start += self.max_chunk_size
@@ -423,7 +424,7 @@ class DocumentLayoutChunker:
 
     def _split_at_line_breaks(self, text: str) -> List[str]:
         """Last-resort: split at line breaks when no sentence boundaries exist."""
-        lines = text.split('\n')
+        lines = text.split("\n")
         chunks = []
         current_chunk = ""
 
@@ -433,9 +434,9 @@ class DocumentLayoutChunker:
                     chunks.append(current_chunk.strip())
                     current_chunk = line
                 else:
-                    current_chunk += '\n' + line
+                    current_chunk += "\n" + line
             else:
-                current_chunk += '\n' + line if current_chunk else line
+                current_chunk += "\n" + line if current_chunk else line
 
         if current_chunk and len(current_chunk.strip()) >= self.min_chunk_size:
             chunks.append(current_chunk.strip())
@@ -452,14 +453,14 @@ class DocumentLayoutChunker:
         3. Split text segments with sentence-aware logic
         """
         chunks = []
-        lines = page_content.split('\n')
+        lines = page_content.split("\n")
 
         current_chunk = ""
         in_table = False
         table_buffer = []
 
         for line in lines:
-            is_table_line = line.strip().startswith('|')
+            is_table_line = line.strip().startswith("|")
 
             if is_table_line:
                 if not in_table:
@@ -468,9 +469,7 @@ class DocumentLayoutChunker:
                         # Split the text portion with sentence awareness
                         text_part = current_chunk.strip()
                         if len(text_part) > self.max_chunk_size:
-                            chunks.extend(
-                                self._split_by_paragraphs_and_sentences(text_part)
-                            )
+                            chunks.extend(self._split_by_paragraphs_and_sentences(text_part))
                         else:
                             chunks.append(text_part)
                         current_chunk = ""
@@ -479,13 +478,13 @@ class DocumentLayoutChunker:
             else:
                 if in_table:
                     # Ending a table - save it as a chunk
-                    table_text = '\n'.join(table_buffer)
+                    table_text = "\n".join(table_buffer)
                     if len(table_text) > self.max_chunk_size:
                         chunks.extend(self._split_large_table(table_text))
                     else:
                         # Try to keep table with preceding context text
                         if current_chunk:
-                            combined = current_chunk.strip() + '\n\n' + table_text
+                            combined = current_chunk.strip() + "\n\n" + table_text
                             if len(combined) <= self.max_chunk_size:
                                 chunks.append(combined)
                                 current_chunk = ""
@@ -502,22 +501,20 @@ class DocumentLayoutChunker:
                         chunks.append(current_chunk.strip())
                         current_chunk = line
                     else:
-                        current_chunk += '\n' + line
+                        current_chunk += "\n" + line
                 else:
-                    current_chunk += '\n' + line if current_chunk else line
+                    current_chunk += "\n" + line if current_chunk else line
 
         # Handle final table if any
         if table_buffer:
-            table_text = '\n'.join(table_buffer)
+            table_text = "\n".join(table_buffer)
             chunks.append(table_text)
 
         # Handle final text chunk
         if current_chunk and len(current_chunk.strip()) >= self.min_chunk_size:
             text_part = current_chunk.strip()
             if len(text_part) > self.max_chunk_size:
-                chunks.extend(
-                    self._split_by_paragraphs_and_sentences(text_part)
-                )
+                chunks.extend(self._split_by_paragraphs_and_sentences(text_part))
             else:
                 chunks.append(text_part)
 
@@ -528,12 +525,12 @@ class DocumentLayoutChunker:
         Split a very large table into row groups.
         Preserves header row in each chunk for context.
         """
-        lines = table_text.split('\n')
+        lines = table_text.split("\n")
         if len(lines) < 3:
             return [table_text]
 
         # Assume first 2 lines are header + separator
-        header = '\n'.join(lines[:2])
+        header = "\n".join(lines[:2])
         data_rows = lines[2:]
 
         chunks = []
@@ -543,7 +540,7 @@ class DocumentLayoutChunker:
         for row in data_rows:
             if current_size + len(row) + 1 > self.max_chunk_size and current_rows:
                 # Save current chunk
-                chunk = header + '\n' + '\n'.join(current_rows)
+                chunk = header + "\n" + "\n".join(current_rows)
                 chunks.append(chunk)
                 current_rows = [row]
                 current_size = len(header) + len(row)
@@ -553,7 +550,7 @@ class DocumentLayoutChunker:
 
         # Add final chunk
         if current_rows:
-            chunk = header + '\n' + '\n'.join(current_rows)
+            chunk = header + "\n" + "\n".join(current_rows)
             chunks.append(chunk)
 
         return chunks

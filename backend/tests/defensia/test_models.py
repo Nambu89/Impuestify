@@ -2,9 +2,15 @@ from datetime import datetime, timezone
 import pytest
 from pydantic import ValidationError
 from app.models.defensia import (
-    Tributo, Fase, TipoDocumento, EstadoExpediente,
-    ExpedienteEstructurado, DocumentoEstructurado, Brief,
-    ArgumentoCandidato, ArgumentoVerificado,
+    Tributo,
+    Fase,
+    TipoDocumento,
+    EstadoExpediente,
+    ExpedienteEstructurado,
+    DocumentoEstructurado,
+    Brief,
+    ArgumentoCandidato,
+    ArgumentoVerificado,
 )
 
 

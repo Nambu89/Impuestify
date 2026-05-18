@@ -8,6 +8,7 @@ REPEP (umbral 30.000 EUR) gestionado en plugin Canarias, no en calculator.
 Audit: docs/audits/modelo_420_validation_2026-05.md
 Fuente normativa: BOC nº 207 (2025-10-20), vigor 2025-10-21.
 """
+
 import pytest
 
 from app.utils.calculators.modelo_420 import (

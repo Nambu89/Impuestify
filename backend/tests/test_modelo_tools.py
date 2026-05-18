@@ -3,6 +3,7 @@ Test suite for Modelo 303 (IVA) and Modelo 130 (Pago Fraccionado IRPF) tools.
 
 Verifica que las herramientas calculan correctamente las casillas principales.
 """
+
 import asyncio
 import sys
 from pathlib import Path
@@ -16,6 +17,7 @@ sys.path.insert(0, str(backend_dir))
 # MODELO 303 TESTS
 # ============================================================
 
+
 async def test_303_basic_21():
     """Test 1: Calculo basico solo 21%"""
     print("\n" + "=" * 60)
@@ -25,14 +27,13 @@ async def test_303_basic_21():
     from app.tools.modelo_303_tool import calculate_modelo_303_tool
 
     result = await calculate_modelo_303_tool(
-        trimestre=1,
-        year=2025,
-        base_21=10000,
-        iva_deducible_bienes_corrientes=500
+        trimestre=1, year=2025, base_21=10000, iva_deducible_bienes_corrientes=500
     )
 
     assert result["success"], f"Expected success, got: {result}"
-    assert result["iva_devengado"]["cuota_21"] == 2100.0, f"Expected 2100, got {result['iva_devengado']['cuota_21']}"
+    assert (
+        result["iva_devengado"]["cuota_21"] == 2100.0
+    ), f"Expected 2100, got {result['iva_devengado']['cuota_21']}"
     assert result["iva_devengado"]["total_devengado"] == 2100.0
     assert result["iva_deducible"]["total_deducible"] == 500.0
     assert result["resultado"]["resultado_final"] == 1600.0
@@ -41,7 +42,9 @@ async def test_303_basic_21():
     print(f"  Devengado 21%: {result['iva_devengado']['cuota_21']} EUR")
     print(f"  Total devengado: {result['iva_devengado']['total_devengado']} EUR")
     print(f"  Total deducible: {result['iva_deducible']['total_deducible']} EUR")
-    print(f"  Resultado: {result['resultado']['resultado_final']} EUR ({result['resultado']['tipo']})")
+    print(
+        f"  Resultado: {result['resultado']['resultado_final']} EUR ({result['resultado']['tipo']})"
+    )
     print("  PASS")
     return True
 
@@ -60,13 +63,13 @@ async def test_303_mixed_rates():
         base_21=5000,
         base_10=3000,
         base_4=2000,
-        iva_deducible_bienes_corrientes=800
+        iva_deducible_bienes_corrientes=800,
     )
 
     assert result["success"]
-    assert result["iva_devengado"]["cuota_21"] == 1050.0   # 5000 * 0.21
-    assert result["iva_devengado"]["cuota_10"] == 300.0     # 3000 * 0.10
-    assert result["iva_devengado"]["cuota_4"] == 80.0       # 2000 * 0.04
+    assert result["iva_devengado"]["cuota_21"] == 1050.0  # 5000 * 0.21
+    assert result["iva_devengado"]["cuota_10"] == 300.0  # 3000 * 0.10
+    assert result["iva_devengado"]["cuota_4"] == 80.0  # 2000 * 0.04
     total_devengado = 1050.0 + 300.0 + 80.0
     assert result["iva_devengado"]["total_devengado"] == total_devengado
     assert result["resultado"]["resultado_final"] == total_devengado - 800.0
@@ -93,7 +96,7 @@ async def test_303_negative_t1_t3_compensar():
         year=2025,
         base_21=1000,
         iva_deducible_bienes_corrientes=500,
-        iva_deducible_bienes_inversion=200
+        iva_deducible_bienes_inversion=200,
     )
 
     assert result["success"]
@@ -103,7 +106,9 @@ async def test_303_negative_t1_t3_compensar():
     assert result["resultado"]["resultado_final"] == -490.0
     assert result["resultado"]["tipo"] == "A compensar"
 
-    print(f"  Resultado: {result['resultado']['resultado_final']} EUR ({result['resultado']['tipo']})")
+    print(
+        f"  Resultado: {result['resultado']['resultado_final']} EUR ({result['resultado']['tipo']})"
+    )
     print("  PASS")
     return True
 
@@ -121,14 +126,16 @@ async def test_303_negative_t4_devolver():
         year=2025,
         base_21=1000,
         iva_deducible_bienes_corrientes=500,
-        iva_deducible_bienes_inversion=200
+        iva_deducible_bienes_inversion=200,
     )
 
     assert result["success"]
     assert result["resultado"]["resultado_final"] == -490.0
     assert result["resultado"]["tipo"] == "A devolver"
 
-    print(f"  Resultado: {result['resultado']['resultado_final']} EUR ({result['resultado']['tipo']})")
+    print(
+        f"  Resultado: {result['resultado']['resultado_final']} EUR ({result['resultado']['tipo']})"
+    )
     print("  PASS")
     return True
 
@@ -146,7 +153,7 @@ async def test_303_compensacion_anterior():
         year=2025,
         base_21=10000,
         iva_deducible_bienes_corrientes=500,
-        compensacion_periodos_anteriores=300
+        compensacion_periodos_anteriores=300,
     )
 
     assert result["success"]
@@ -178,7 +185,7 @@ async def test_303_intracomunitarias():
         base_adquisiciones_intra=2000,
         tipo_adquisiciones_intra=21,
         iva_deducible_bienes_corrientes=300,
-        iva_deducible_intracomunitarias=420
+        iva_deducible_intracomunitarias=420,
     )
 
     assert result["success"]
@@ -205,10 +212,7 @@ async def test_303_zero_activity():
     from app.tools.modelo_303_tool import calculate_modelo_303_tool
 
     result = await calculate_modelo_303_tool(
-        trimestre=1,
-        year=2025,
-        base_21=0,
-        iva_deducible_bienes_corrientes=0
+        trimestre=1, year=2025, base_21=0, iva_deducible_bienes_corrientes=0
     )
 
     assert result["success"]
@@ -217,7 +221,9 @@ async def test_303_zero_activity():
     assert result["resultado"]["resultado_final"] == 0.0
     assert result["resultado"]["tipo"] == "Sin actividad"
 
-    print(f"  Resultado: {result['resultado']['resultado_final']} EUR ({result['resultado']['tipo']})")
+    print(
+        f"  Resultado: {result['resultado']['resultado_final']} EUR ({result['resultado']['tipo']})"
+    )
     print("  PASS")
     return True
 
@@ -235,12 +241,15 @@ async def test_303_restricted_mode():
         year=2025,
         base_21=10000,
         iva_deducible_bienes_corrientes=500,
-        restricted_mode=True
+        restricted_mode=True,
     )
 
     assert not result["success"]
     assert result["error"] == "restricted"
-    assert "autónomos" in result["formatted_response"].lower() or "cuenta ajena" in result["formatted_response"].lower()
+    assert (
+        "autónomos" in result["formatted_response"].lower()
+        or "cuenta ajena" in result["formatted_response"].lower()
+    )
 
     print(f"  Blocked as expected: error={result['error']}")
     print("  PASS")
@@ -251,6 +260,7 @@ async def test_303_restricted_mode():
 # MODELO 130 TESTS
 # ============================================================
 
+
 async def test_130_basic():
     """Test 1: Calculo basico"""
     print("\n" + "=" * 60)
@@ -260,10 +270,7 @@ async def test_130_basic():
     from app.tools.modelo_130_tool import calculate_modelo_130_tool
 
     result = await calculate_modelo_130_tool(
-        trimestre=1,
-        year=2025,
-        ingresos_computables=15000,
-        gastos_deducibles=5000
+        trimestre=1, year=2025, ingresos_computables=15000, gastos_deducibles=5000
     )
 
     assert result["success"], f"Expected success, got: {result}"
@@ -295,7 +302,7 @@ async def test_130_with_retenciones_and_pagos():
         ingresos_computables=30000,
         gastos_deducibles=10000,
         retenciones_ingresos_cuenta=1500,
-        pagos_fraccionados_anteriores=800
+        pagos_fraccionados_anteriores=800,
     )
 
     assert result["success"]
@@ -332,7 +339,7 @@ async def test_130_t2_accumulated():
         year=2025,
         ingresos_computables=22000,
         gastos_deducibles=7000,
-        pagos_fraccionados_anteriores=1400
+        pagos_fraccionados_anteriores=1400,
     )
 
     assert result["success"]
@@ -361,7 +368,7 @@ async def test_130_deduccion_80bis_low():
         year=2025,
         ingresos_computables=5000,
         gastos_deducibles=1000,
-        rendimiento_neto_previo_anual=8000  # <= 9000 → 100 EUR deduccion
+        rendimiento_neto_previo_anual=8000,  # <= 9000 → 100 EUR deduccion
     )
 
     assert result["success"]
@@ -392,7 +399,7 @@ async def test_130_deduccion_80bis_graduated():
         year=2025,
         ingresos_computables=5000,
         gastos_deducibles=1000,
-        rendimiento_neto_previo_anual=9500
+        rendimiento_neto_previo_anual=9500,
     )
 
     assert result["success"]
@@ -411,7 +418,7 @@ async def test_130_deduccion_80bis_graduated():
         year=2025,
         ingresos_computables=5000,
         gastos_deducibles=1000,
-        rendimiento_neto_previo_anual=11500
+        rendimiento_neto_previo_anual=11500,
     )
 
     assert result2["success"]
@@ -435,7 +442,7 @@ async def test_130_no_deduccion_80bis():
         year=2025,
         ingresos_computables=15000,
         gastos_deducibles=5000,
-        rendimiento_neto_previo_anual=25000  # > 12000 → sin deduccion
+        rendimiento_neto_previo_anual=25000,  # > 12000 → sin deduccion
     )
 
     assert result["success"]
@@ -461,7 +468,7 @@ async def test_130_negative_net():
         trimestre=1,
         year=2025,
         ingresos_computables=3000,
-        gastos_deducibles=5000  # Gastos > Ingresos
+        gastos_deducibles=5000,  # Gastos > Ingresos
     )
 
     assert result["success"]
@@ -489,12 +496,15 @@ async def test_130_restricted_mode():
         year=2025,
         ingresos_computables=15000,
         gastos_deducibles=5000,
-        restricted_mode=True
+        restricted_mode=True,
     )
 
     assert not result["success"]
     assert result["error"] == "restricted"
-    assert "autónomos" in result["formatted_response"].lower() or "cuenta ajena" in result["formatted_response"].lower()
+    assert (
+        "autónomos" in result["formatted_response"].lower()
+        or "cuenta ajena" in result["formatted_response"].lower()
+    )
 
     print(f"  Blocked as expected: error={result['error']}")
     print("  PASS")
@@ -504,6 +514,7 @@ async def test_130_restricted_mode():
 # ============================================================
 # REGISTRATION TEST
 # ============================================================
+
 
 async def test_tools_registration():
     """Verifica que ambas herramientas estan registradas"""
@@ -531,6 +542,7 @@ async def test_tools_registration():
 # ============================================================
 # MAIN
 # ============================================================
+
 
 async def main():
     """Run all tests"""

@@ -1,4 +1,5 @@
 """Diagnostic: list all users in DB to confirm we're connected to prod."""
+
 import sys
 import asyncio
 import os

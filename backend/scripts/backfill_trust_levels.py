@@ -11,6 +11,7 @@ Heuristic by filepath / source / filename:
 
 Run once after adding the column. Safe to re-run (idempotent).
 """
+
 import asyncio
 import logging
 import sys
@@ -22,6 +23,7 @@ sys.path.insert(0, str(ROOT))
 # Load .env from repo root (TURSO_DATABASE_URL etc.)
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT.parent / ".env")
 except ImportError:
     pass
@@ -37,13 +39,41 @@ def classify_trust(filepath: str, source: str, filename: str) -> str:
 
     haystack = " ".join([fp, src, fn])
 
-    if any(tok in haystack for tok in ("/aeat/", "aeat", "agencia tributaria", "manual_renta", "manual renta")):
+    if any(
+        tok in haystack
+        for tok in ("/aeat/", "aeat", "agencia tributaria", "manual_renta", "manual renta")
+    ):
         return "official_aeat"
     if any(tok in haystack for tok in ("/boe/", "boe", "boletin oficial", "boletín oficial")):
         return "official_boe"
-    if any(tok in haystack for tok in ("/foral", "foral", "bizkaia", "gipuzkoa", "araba", "navarra", "diputacion", "diputación")):
+    if any(
+        tok in haystack
+        for tok in (
+            "/foral",
+            "foral",
+            "bizkaia",
+            "gipuzkoa",
+            "araba",
+            "navarra",
+            "diputacion",
+            "diputación",
+        )
+    ):
         return "official_foral"
-    if any(tok in haystack for tok in ("/ccaa/", "comunidad autonom", "comunidad autónom", "boja", "bocm", "boc", "bocl", "boa", "dogc")):
+    if any(
+        tok in haystack
+        for tok in (
+            "/ccaa/",
+            "comunidad autonom",
+            "comunidad autónom",
+            "boja",
+            "bocm",
+            "boc",
+            "bocl",
+            "boa",
+            "dogc",
+        )
+    ):
         return "official_ccaa"
     return "crawled_third_party"
 
@@ -53,14 +83,18 @@ async def main():
 
     db = await get_db_client()
 
-    result = await db.execute(
-        "SELECT id, filename, filepath, source, trust_level FROM documents"
-    )
+    result = await db.execute("SELECT id, filename, filepath, source, trust_level FROM documents")
     rows = result.rows or []
     logger.info(f"Found {len(rows)} documents")
 
-    counts = {"official_aeat": 0, "official_boe": 0, "official_foral": 0,
-              "official_ccaa": 0, "crawled_third_party": 0, "skipped": 0}
+    counts = {
+        "official_aeat": 0,
+        "official_boe": 0,
+        "official_foral": 0,
+        "official_ccaa": 0,
+        "crawled_third_party": 0,
+        "skipped": 0,
+    }
 
     for row in rows:
         current = (row.get("trust_level") or "").strip()

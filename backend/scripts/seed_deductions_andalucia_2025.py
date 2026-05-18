@@ -12,6 +12,7 @@ Usage:
     python scripts/seed_deductions_andalucia_2025.py
     python scripts/seed_deductions_andalucia_2025.py --dry-run
 """
+
 import argparse
 import asyncio
 import json
@@ -53,14 +54,26 @@ ANDALUCIA_2025: list[dict] = [
             "BI general + ahorro <= 25.000 EUR individual / 30.000 EUR conjunta. "
             "Solo desde 01/01/2003 si es vivienda protegida."
         ),
-        "requirements_json": json.dumps({
-            "vivienda_habitual_propiedad": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "vivienda_habitual_propiedad", "text": "Tienes vivienda protegida o eres menor de 35 con hipoteca?", "type": "bool"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 anos?", "type": "bool"},
-            {"key": "importe_hipoteca_anual", "text": "Cuanto has pagado de hipoteca este ano?", "type": "number"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "vivienda_habitual_propiedad": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "vivienda_habitual_propiedad",
+                    "text": "Tienes vivienda protegida o eres menor de 35 con hipoteca?",
+                    "type": "bool",
+                },
+                {"key": "menor_35_anos", "text": "Tienes menos de 35 anos?", "type": "bool"},
+                {
+                    "key": "importe_hipoteca_anual",
+                    "text": "Cuanto has pagado de hipoteca este ano?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 2. Alquiler de vivienda habitual (Art. 10)
@@ -80,15 +93,27 @@ ANDALUCIA_2025: list[dict] = [
             "o terrorismo. "
             "BI general + ahorro <= 25.000 EUR individual / 30.000 EUR conjunta."
         ),
-        "requirements_json": json.dumps({
-            "alquiler_vivienda_habitual": True,
-        }),
-        "questions_json": json.dumps([
-            {"key": "alquiler_vivienda_habitual", "text": "Vives de alquiler en tu vivienda habitual?", "type": "bool"},
-            {"key": "importe_alquiler_anual", "text": "Cuanto pagas de alquiler al ano?", "type": "number"},
-            {"key": "menor_35_anos", "text": "Tienes menos de 35 anos?", "type": "bool"},
-            {"key": "mayor_65_anos", "text": "Tienes 65 o mas anos?", "type": "bool"},
-        ]),
+        "requirements_json": json.dumps(
+            {
+                "alquiler_vivienda_habitual": True,
+            }
+        ),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "alquiler_vivienda_habitual",
+                    "text": "Vives de alquiler en tu vivienda habitual?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_alquiler_anual",
+                    "text": "Cuanto pagas de alquiler al ano?",
+                    "type": "number",
+                },
+                {"key": "menor_35_anos", "text": "Tienes menos de 35 anos?", "type": "bool"},
+                {"key": "mayor_65_anos", "text": "Tienes 65 o mas anos?", "type": "bool"},
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 3. Nacimiento, adopcion o acogimiento familiar de menores (Art. 11)
@@ -108,11 +133,25 @@ ANDALUCIA_2025: list[dict] = [
             "Incompatible con la deduccion por familia numerosa."
         ),
         "requirements_json": json.dumps({"nacimiento_adopcion_reciente": True}),
-        "questions_json": json.dumps([
-            {"key": "nacimiento_adopcion_reciente", "text": "Has tenido un hijo, adoptado o acogido este ano?", "type": "bool"},
-            {"key": "municipio_pequeno", "text": "Resides en un municipio de menos de 3.000 habitantes?", "type": "bool"},
-            {"key": "num_hijos_recientes", "text": "Cuantos hijos/acogidos este ano?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "nacimiento_adopcion_reciente",
+                    "text": "Has tenido un hijo, adoptado o acogido este ano?",
+                    "type": "bool",
+                },
+                {
+                    "key": "municipio_pequeno",
+                    "text": "Resides en un municipio de menos de 3.000 habitantes?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_hijos_recientes",
+                    "text": "Cuantos hijos/acogidos este ano?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 4. Adopcion internacional (Art. 12)
@@ -131,10 +170,20 @@ ANDALUCIA_2025: list[dict] = [
             "BI general + ahorro <= 25.000 EUR individual / 30.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"adopcion_internacional": True}),
-        "questions_json": json.dumps([
-            {"key": "adopcion_internacional", "text": "Has realizado una adopcion internacional este ano?", "type": "bool"},
-            {"key": "num_adopciones_internacionales", "text": "Cuantas adopciones internacionales?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "adopcion_internacional",
+                    "text": "Has realizado una adopcion internacional este ano?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_adopciones_internacionales",
+                    "text": "Cuantas adopciones internacionales?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 5. Familia monoparental y ascendientes mayores de 75 anos (Art. 13)
@@ -155,11 +204,25 @@ ANDALUCIA_2025: list[dict] = [
             "BI general + ahorro <= 25.000 EUR individual / 30.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"familia_monoparental_o_ascendiente_75": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_monoparental", "text": "Eres familia monoparental (soltero/a, viudo/a, separado/a con hijos a cargo)?", "type": "bool"},
-            {"key": "ascendiente_mayor_75", "text": "Convives con ascendientes mayores de 75 anos?", "type": "bool"},
-            {"key": "num_ascendientes_75", "text": "Cuantos ascendientes mayores de 75 conviven contigo?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_monoparental",
+                    "text": "Eres familia monoparental (soltero/a, viudo/a, separado/a con hijos a cargo)?",
+                    "type": "bool",
+                },
+                {
+                    "key": "ascendiente_mayor_75",
+                    "text": "Convives con ascendientes mayores de 75 anos?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_ascendientes_75",
+                    "text": "Cuantos ascendientes mayores de 75 conviven contigo?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 6. Familia numerosa (Art. 14)
@@ -178,10 +241,20 @@ ANDALUCIA_2025: list[dict] = [
             "Incompatible con la deduccion por nacimiento/adopcion/acogimiento (Art. 11)."
         ),
         "requirements_json": json.dumps({"familia_numerosa": True}),
-        "questions_json": json.dumps([
-            {"key": "familia_numerosa", "text": "Tienes titulo de familia numerosa?", "type": "bool"},
-            {"key": "familia_numerosa_especial", "text": "Es de categoria especial?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "familia_numerosa",
+                    "text": "Tienes titulo de familia numerosa?",
+                    "type": "bool",
+                },
+                {
+                    "key": "familia_numerosa_especial",
+                    "text": "Es de categoria especial?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 7. Gastos educativos (Art. 15)
@@ -203,11 +276,25 @@ ANDALUCIA_2025: list[dict] = [
             "BI general + ahorro <= 80.000 EUR individual / 100.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"gastos_educativos_idiomas_informatica": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_educativos_idiomas_informatica", "text": "Has pagado clases de idiomas o informatica para tus hijos?", "type": "bool"},
-            {"key": "importe_gastos_educativos", "text": "Cuanto has gastado en idiomas o informatica este ano?", "type": "number"},
-            {"key": "num_hijos_beneficiarios", "text": "Cuantos hijos se benefician de estas clases?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "gastos_educativos_idiomas_informatica",
+                    "text": "Has pagado clases de idiomas o informatica para tus hijos?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_gastos_educativos",
+                    "text": "Cuanto has gastado en idiomas o informatica este ano?",
+                    "type": "number",
+                },
+                {
+                    "key": "num_hijos_beneficiarios",
+                    "text": "Cuantos hijos se benefician de estas clases?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 8. Discapacidad del contribuyente (Art. 16)
@@ -224,10 +311,20 @@ ANDALUCIA_2025: list[dict] = [
             "BI general + ahorro <= 25.000 EUR individual / 30.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"discapacidad_reconocida": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_reconocida", "text": "Tienes un grado de discapacidad reconocida >= 33%?", "type": "bool"},
-            {"key": "grado_discapacidad", "text": "Que grado de discapacidad tienes?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "discapacidad_reconocida",
+                    "text": "Tienes un grado de discapacidad reconocida >= 33%?",
+                    "type": "bool",
+                },
+                {
+                    "key": "grado_discapacidad",
+                    "text": "Que grado de discapacidad tienes?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 9. Discapacidad del conyuge o pareja de hecho (Art. 17)
@@ -246,10 +343,20 @@ ANDALUCIA_2025: list[dict] = [
             "BI general + ahorro <= 25.000 EUR individual / 30.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"discapacidad_conyuge": True}),
-        "questions_json": json.dumps([
-            {"key": "discapacidad_conyuge", "text": "Tu conyuge o pareja de hecho tiene discapacidad >= 33%?", "type": "bool"},
-            {"key": "rentas_conyuge_max_8000", "text": "Las rentas anuales de tu conyuge son inferiores a 8.000 EUR?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "discapacidad_conyuge",
+                    "text": "Tu conyuge o pareja de hecho tiene discapacidad >= 33%?",
+                    "type": "bool",
+                },
+                {
+                    "key": "rentas_conyuge_max_8000",
+                    "text": "Las rentas anuales de tu conyuge son inferiores a 8.000 EUR?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 10. Asistencia a personas con discapacidad (Art. 18)
@@ -270,11 +377,25 @@ ANDALUCIA_2025: list[dict] = [
             "Incompatible con la deduccion por ayuda domestica para el mismo empleado."
         ),
         "requirements_json": json.dumps({"persona_discapacitada_a_cargo": True}),
-        "questions_json": json.dumps([
-            {"key": "persona_discapacitada_a_cargo", "text": "Tienes personas con discapacidad a tu cargo (descendientes o ascendientes)?", "type": "bool"},
-            {"key": "num_personas_discapacitadas", "text": "Cuantas personas con discapacidad tienes a tu cargo?", "type": "number"},
-            {"key": "necesita_ayuda_terceros", "text": "Alguna necesita ayuda de terceros y tienes empleado del hogar para ello?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "persona_discapacitada_a_cargo",
+                    "text": "Tienes personas con discapacidad a tu cargo (descendientes o ascendientes)?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_personas_discapacitadas",
+                    "text": "Cuantas personas con discapacidad tienes a tu cargo?",
+                    "type": "number",
+                },
+                {
+                    "key": "necesita_ayuda_terceros",
+                    "text": "Alguna necesita ayuda de terceros y tienes empleado del hogar para ello?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 11. Enfermedad celiaca (Art. 18 bis)
@@ -293,10 +414,20 @@ ANDALUCIA_2025: list[dict] = [
             "BI general + ahorro <= 25.000 EUR individual / 30.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"enfermedad_celiaca": True}),
-        "questions_json": json.dumps([
-            {"key": "enfermedad_celiaca", "text": "Tu o alguno de tus hijos a cargo tiene diagnostico de enfermedad celiaca?", "type": "bool"},
-            {"key": "num_celiacos", "text": "Cuantas personas celiacas hay en tu unidad familiar?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "enfermedad_celiaca",
+                    "text": "Tu o alguno de tus hijos a cargo tiene diagnostico de enfermedad celiaca?",
+                    "type": "bool",
+                },
+                {
+                    "key": "num_celiacos",
+                    "text": "Cuantas personas celiacas hay en tu unidad familiar?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 12. Ayuda domestica (Art. 19)
@@ -320,11 +451,25 @@ ANDALUCIA_2025: list[dict] = [
             "el mismo empleado."
         ),
         "requirements_json": json.dumps({"empleada_hogar_cuidado": True}),
-        "questions_json": json.dumps([
-            {"key": "empleada_hogar_cuidado", "text": "Tienes contratada a una persona empleada del hogar?", "type": "bool"},
-            {"key": "cotizaciones_ss_hogar", "text": "Cuanto pagas en cotizaciones SS del empleado del hogar al ano?", "type": "number"},
-            {"key": "ambos_progenitores_trabajan", "text": "Ambos progenitores trabajan o tienen actividad economica?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "empleada_hogar_cuidado",
+                    "text": "Tienes contratada a una persona empleada del hogar?",
+                    "type": "bool",
+                },
+                {
+                    "key": "cotizaciones_ss_hogar",
+                    "text": "Cuanto pagas en cotizaciones SS del empleado del hogar al ano?",
+                    "type": "number",
+                },
+                {
+                    "key": "ambos_progenitores_trabajan",
+                    "text": "Ambos progenitores trabajan o tienen actividad economica?",
+                    "type": "bool",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 13. Inversion en acciones y participaciones de entidades nuevas (Art. 20)
@@ -346,10 +491,16 @@ ANDALUCIA_2025: list[dict] = [
             "creacion (< 5 anos)."
         ),
         "requirements_json": json.dumps({"inversion_empresa_nueva": True}),
-        "questions_json": json.dumps([
-            {"key": "inversion_empresa_nueva", "text": "Has invertido en acciones o participaciones de una empresa nueva en Andalucia?", "type": "bool"},
-            {"key": "importe_inversion", "text": "Cuanto has invertido?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "inversion_empresa_nueva",
+                    "text": "Has invertido en acciones o participaciones de una empresa nueva en Andalucia?",
+                    "type": "bool",
+                },
+                {"key": "importe_inversion", "text": "Cuanto has invertido?", "type": "number"},
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 14. Defensa juridica de la relacion laboral (Art. 21)
@@ -370,10 +521,20 @@ ANDALUCIA_2025: list[dict] = [
             "BI general + ahorro <= 25.000 EUR individual / 30.000 EUR conjunta."
         ),
         "requirements_json": json.dumps({"gastos_defensa_laboral": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_defensa_laboral", "text": "Has tenido gastos de abogado por un procedimiento laboral?", "type": "bool"},
-            {"key": "importe_defensa_laboral", "text": "Cuanto has gastado en defensa juridica laboral?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "gastos_defensa_laboral",
+                    "text": "Has tenido gastos de abogado por un procedimiento laboral?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_defensa_laboral",
+                    "text": "Cuanto has gastado en defensa juridica laboral?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 15. Donativos con finalidad ecologica (Art. 22)
@@ -393,10 +554,20 @@ ANDALUCIA_2025: list[dict] = [
             "Limite: 10% de la cuota integra autonomica."
         ),
         "requirements_json": json.dumps({"donativo_ecologico": True}),
-        "questions_json": json.dumps([
-            {"key": "donativo_ecologico", "text": "Has hecho donativos a entidades ecologicas reconocidas en Andalucia?", "type": "bool"},
-            {"key": "importe_donativo_ecologico", "text": "Cuanto has donado?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "donativo_ecologico",
+                    "text": "Has hecho donativos a entidades ecologicas reconocidas en Andalucia?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_donativo_ecologico",
+                    "text": "Cuanto has donado?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 16. Fomento del ejercicio fisico y la practica deportiva (Art. 22 bis)
@@ -417,10 +588,20 @@ ANDALUCIA_2025: list[dict] = [
             "Aplicable desde 01/01/2023."
         ),
         "requirements_json": json.dumps({"gastos_deporte": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_deporte", "text": "Has pagado cuotas de gimnasio o actividades deportivas?", "type": "bool"},
-            {"key": "importe_gastos_deporte", "text": "Cuanto has gastado en total en actividades deportivas?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "gastos_deporte",
+                    "text": "Has pagado cuotas de gimnasio o actividades deportivas?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_gastos_deporte",
+                    "text": "Cuanto has gastado en total en actividades deportivas?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
     # -------------------------------------------------------------------------
     # 17. Gastos veterinarios de animales de compania (Art. 22 ter)
@@ -442,10 +623,20 @@ ANDALUCIA_2025: list[dict] = [
             "Aplicable desde 01/01/2023."
         ),
         "requirements_json": json.dumps({"gastos_veterinarios": True}),
-        "questions_json": json.dumps([
-            {"key": "gastos_veterinarios", "text": "Has tenido gastos veterinarios por animales de compania?", "type": "bool"},
-            {"key": "importe_gastos_veterinarios", "text": "Cuanto has gastado en veterinario este ano?", "type": "number"},
-        ]),
+        "questions_json": json.dumps(
+            [
+                {
+                    "key": "gastos_veterinarios",
+                    "text": "Has tenido gastos veterinarios por animales de compania?",
+                    "type": "bool",
+                },
+                {
+                    "key": "importe_gastos_veterinarios",
+                    "text": "Cuanto has gastado en veterinario este ano?",
+                    "type": "number",
+                },
+            ]
+        ),
     },
 ]
 
@@ -454,8 +645,15 @@ ANDALUCIA_2025: list[dict] = [
 # Validation
 # =============================================================================
 VALID_CATEGORIES: set[str] = {
-    "familia", "vivienda", "educacion", "donativos", "emprendimiento",
-    "trabajo", "discapacidad", "salud", "otros",
+    "familia",
+    "vivienda",
+    "educacion",
+    "donativos",
+    "emprendimiento",
+    "trabajo",
+    "discapacidad",
+    "salud",
+    "otros",
 }
 
 
@@ -471,8 +669,16 @@ def validate_deductions(dry_run: bool = False) -> list[str]:
             errors.append(f"DUPLICATE code: {code}")
         seen_codes.add(code)
 
-        for field in ("code", "name", "type", "category", "description",
-                      "legal_reference", "requirements_json", "questions_json"):
+        for field in (
+            "code",
+            "name",
+            "type",
+            "category",
+            "description",
+            "legal_reference",
+            "requirements_json",
+            "questions_json",
+        ):
             if not d.get(field):
                 errors.append(f"MISSING {field}: {code}")
 

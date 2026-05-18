@@ -14,6 +14,7 @@ Norma:
     Art. 71.7 RIVA — exoneracion.
     Plazo: 1 al 30 de enero del año siguiente.
 """
+
 from __future__ import annotations
 
 import logging
@@ -157,6 +158,7 @@ async def calculate_modelo_390_tool(
     """
     if restricted_mode:
         from app.security.content_restriction import get_autonomo_block_response
+
         logger.warning("calculate_modelo_390 called in restricted_mode — blocking")
         return {
             "success": False,
@@ -328,9 +330,7 @@ def _format_response(
     # Caso 3: foral o comun, exonerado
     if not result["obligado"]:
         modelo_label = f"Modelo {modelo}"
-        lines.append(
-            f"**EXONERADO — {modelo_label} (resumen anual IVA) — Ejercicio {year}**"
-        )
+        lines.append(f"**EXONERADO — {modelo_label} (resumen anual IVA) — Ejercicio {year}**")
         lines.append(f"Hacienda: {hacienda}")
         lines.append("")
         lines.append("**No tienes que presentar el Modelo 390 (ni equivalente).**")
@@ -356,7 +356,9 @@ def _format_response(
     lines.append("")
     lines.append("**Estas OBLIGADO a presentar el resumen anual.**")
     lines.append("")
-    lines.append(f"- Volumen operaciones año anterior: {volumen_operaciones_ano_anterior:,.2f} EUR (umbral SII: {UMBRAL_SII_EUR:,.2f} EUR)")
+    lines.append(
+        f"- Volumen operaciones año anterior: {volumen_operaciones_ano_anterior:,.2f} EUR (umbral SII: {UMBRAL_SII_EUR:,.2f} EUR)"
+    )
     lines.append(f"- En REDEME: {'Si' if en_redeme else 'No'}")
     lines.append(f"- En grupo IVA: {'Si' if en_grupo_iva else 'No'}")
     lines.append(f"- Regimen IVA: {regimen_especial}")
@@ -375,17 +377,14 @@ def _format_response(
             lines.append(f"- Cuota 21% anual: {resumen['cuota_devengada_21']:,.2f} EUR")
         if resumen["cuota_devengada_intra"]:
             lines.append(
-                f"- Cuota adq. intracomunitarias: "
-                f"{resumen['cuota_devengada_intra']:,.2f} EUR"
+                f"- Cuota adq. intracomunitarias: " f"{resumen['cuota_devengada_intra']:,.2f} EUR"
             )
         if resumen["cuota_devengada_isp"]:
             lines.append(
-                f"- Cuota inversion sujeto pasivo: "
-                f"{resumen['cuota_devengada_isp']:,.2f} EUR"
+                f"- Cuota inversion sujeto pasivo: " f"{resumen['cuota_devengada_isp']:,.2f} EUR"
             )
         lines.append(
-            f"- **Total devengado anual: "
-            f"{resumen['total_devengado_anual']:,.2f} EUR**"
+            f"- **Total devengado anual: " f"{resumen['total_devengado_anual']:,.2f} EUR**"
         )
         lines.append("")
         lines.append("**IVA deducible anual**")
@@ -396,13 +395,11 @@ def _format_response(
             )
         if resumen["cuota_deducible_inversion"]:
             lines.append(
-                f"- Bienes de inversion: "
-                f"{resumen['cuota_deducible_inversion']:,.2f} EUR"
+                f"- Bienes de inversion: " f"{resumen['cuota_deducible_inversion']:,.2f} EUR"
             )
         if resumen["cuota_deducible_importaciones"]:
             lines.append(
-                f"- Importaciones: "
-                f"{resumen['cuota_deducible_importaciones']:,.2f} EUR"
+                f"- Importaciones: " f"{resumen['cuota_deducible_importaciones']:,.2f} EUR"
             )
         if resumen["cuota_deducible_intra"]:
             lines.append(
@@ -410,8 +407,7 @@ def _format_response(
                 f"{resumen['cuota_deducible_intra']:,.2f} EUR"
             )
         lines.append(
-            f"- **Total deducible anual: "
-            f"{resumen['total_deducible_anual']:,.2f} EUR**"
+            f"- **Total deducible anual: " f"{resumen['total_deducible_anual']:,.2f} EUR**"
         )
         lines.append("")
         lines.append(

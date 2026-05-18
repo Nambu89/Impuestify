@@ -1,6 +1,7 @@
 """
 Tests for the Deductions system: DeductionService + discover_deductions tool + seed data.
 """
+
 import json
 import pytest
 import sys
@@ -27,6 +28,7 @@ sys.modules.setdefault("slowapi.errors", MagicMock())
 # SEED DATA TESTS
 # ============================================================
 
+
 class TestSeedData:
     """Tests for seed_deductions.py data integrity."""
 
@@ -34,6 +36,7 @@ class TestSeedData:
         """Seed script should be importable."""
         sys.path.insert(0, str(backend_dir / "scripts"))
         from seed_deductions import DEDUCTIONS_2025
+
         assert len(DEDUCTIONS_2025) == 16
 
     def test_all_deductions_have_required_fields(self):
@@ -46,7 +49,9 @@ class TestSeedData:
             assert "name" in d, f"Missing name in {d.get('code', '???')}"
             assert "type" in d, f"Missing type in {d['code']}"
             assert "category" in d, f"Missing category in {d['code']}"
-            assert d["code"].startswith("EST-"), f"State deductions must start with EST-: {d['code']}"
+            assert d["code"].startswith(
+                "EST-"
+            ), f"State deductions must start with EST-: {d['code']}"
 
     def test_all_codes_unique(self):
         """All deduction codes must be unique."""
@@ -54,7 +59,9 @@ class TestSeedData:
         from seed_deductions import DEDUCTIONS_2025
 
         codes = [d["code"] for d in DEDUCTIONS_2025]
-        assert len(codes) == len(set(codes)), f"Duplicate codes found: {[c for c in codes if codes.count(c) > 1]}"
+        assert len(codes) == len(
+            set(codes)
+        ), f"Duplicate codes found: {[c for c in codes if codes.count(c) > 1]}"
 
     def test_requirements_json_valid(self):
         """requirements_json must be valid JSON."""
@@ -85,12 +92,20 @@ class TestSeedData:
         from seed_deductions import DEDUCTIONS_2025
 
         valid_categories = {
-            "vivienda", "donativos", "familia", "prevision_social",
-            "actividad_economica", "territorial", "internacional",
-            "sostenibilidad", "general",
+            "vivienda",
+            "donativos",
+            "familia",
+            "prevision_social",
+            "actividad_economica",
+            "territorial",
+            "internacional",
+            "sostenibilidad",
+            "general",
         }
         for d in DEDUCTIONS_2025:
-            assert d["category"] in valid_categories, f"Unknown category '{d['category']}' in {d['code']}"
+            assert (
+                d["category"] in valid_categories
+            ), f"Unknown category '{d['category']}' in {d['code']}"
 
     def test_types_valid(self):
         """Types should be 'deduccion' or 'reduccion'."""
@@ -98,12 +113,16 @@ class TestSeedData:
         from seed_deductions import DEDUCTIONS_2025
 
         for d in DEDUCTIONS_2025:
-            assert d["type"] in ("deduccion", "reduccion"), f"Invalid type '{d['type']}' in {d['code']}"
+            assert d["type"] in (
+                "deduccion",
+                "reduccion",
+            ), f"Invalid type '{d['type']}' in {d['code']}"
 
 
 # ============================================================
 # DEDUCTION SERVICE TESTS
 # ============================================================
+
 
 def _make_mock_db(rows):
     """Create a mock DB client that returns given rows."""
@@ -130,10 +149,13 @@ def _sample_deduction_row(code="EST-MAT-1200", category="familia", reqs=None, qu
         "legal_reference": "Art. 81 LIRPF",
         "description": "Test deduction",
         "requirements_json": json.dumps(reqs or {"madre_trabajadora": True, "hijo_menor_3": True}),
-        "questions_json": json.dumps(questions or [
-            {"key": "madre_trabajadora", "text": "Es madre trabajadora?", "type": "bool"},
-            {"key": "hijo_menor_3", "text": "Tiene hijos <3?", "type": "bool"},
-        ]),
+        "questions_json": json.dumps(
+            questions
+            or [
+                {"key": "madre_trabajadora", "text": "Es madre trabajadora?", "type": "bool"},
+                {"key": "hijo_menor_3", "text": "Tiene hijos <3?", "type": "bool"},
+            ]
+        ),
         "is_active": 1,
     }
 
@@ -178,7 +200,8 @@ class TestDeductionService:
         service = DeductionService(db)
 
         result = await service.evaluate_eligibility(
-            "Estatal", 2025,
+            "Estatal",
+            2025,
             answers={"madre_trabajadora": True, "hijo_menor_3": True},
         )
         assert len(result["eligible"]) == 1
@@ -194,7 +217,8 @@ class TestDeductionService:
         service = DeductionService(db)
 
         result = await service.evaluate_eligibility(
-            "Estatal", 2025,
+            "Estatal",
+            2025,
             answers={"madre_trabajadora": False, "hijo_menor_3": True},
         )
         assert len(result["eligible"]) == 0
@@ -209,7 +233,8 @@ class TestDeductionService:
         service = DeductionService(db)
 
         result = await service.evaluate_eligibility(
-            "Estatal", 2025,
+            "Estatal",
+            2025,
             answers={"madre_trabajadora": True},  # hijo_menor_3 not answered
         )
         assert len(result["maybe_eligible"]) == 1
@@ -250,7 +275,8 @@ class TestDeductionService:
 
         # madre_trabajadora=False rules out this deduction
         missing = await service.get_missing_questions(
-            "Estatal", 2025,
+            "Estatal",
+            2025,
             answers={"madre_trabajadora": False},
         )
         assert len(missing) == 0
@@ -271,7 +297,8 @@ class TestDeductionService:
         service = DeductionService(db)
 
         result = await service.evaluate_eligibility(
-            "Estatal", 2025,
+            "Estatal",
+            2025,
             answers={"test_req": True},
         )
         assert result["estimated_savings"] == 9040.0 * 15.0 / 100
@@ -280,6 +307,7 @@ class TestDeductionService:
 # ============================================================
 # DISCOVER DEDUCTIONS TOOL TESTS
 # ============================================================
+
 
 class TestDiscoverDeductionsTool:
     """Tests for the discover_deductions tool."""
@@ -309,14 +337,23 @@ class TestDiscoverDeductionsTool:
 
         with patch("app.services.deduction_service.get_deduction_service") as mock_svc:
             svc = AsyncMock()
-            svc.evaluate_eligibility = AsyncMock(return_value={
-                "eligible": [{"code": "EST-MAT-1200", "name": "Test", "type": "deduccion",
-                              "category": "familia", "fixed_amount": 1200}],
-                "maybe_eligible": [],
-                "not_eligible": [],
-                "estimated_savings": 1200.0,
-                "total_deductions": 16,
-            })
+            svc.evaluate_eligibility = AsyncMock(
+                return_value={
+                    "eligible": [
+                        {
+                            "code": "EST-MAT-1200",
+                            "name": "Test",
+                            "type": "deduccion",
+                            "category": "familia",
+                            "fixed_amount": 1200,
+                        }
+                    ],
+                    "maybe_eligible": [],
+                    "not_eligible": [],
+                    "estimated_savings": 1200.0,
+                    "total_deductions": 16,
+                }
+            )
             svc.get_missing_questions = AsyncMock(return_value=[])
             mock_svc.return_value = svc
 
@@ -347,6 +384,7 @@ class TestDiscoverDeductionsTool:
 # INTEGRATION: SERVICE + TOOL
 # ============================================================
 
+
 class TestDeductionIntegration:
     """Integration tests with multiple deductions."""
 
@@ -356,24 +394,32 @@ class TestDeductionIntegration:
         from app.services.deduction_service import DeductionService
 
         rows = [
-            _sample_deduction_row("EST-MAT-1200", "familia",
-                                  {"madre_trabajadora": True, "hijo_menor_3": True}),
-            _sample_deduction_row("EST-DONAT-GEN", "donativos",
-                                  {"donativo_a_entidad_acogida": True},
-                                  [{"key": "donativo_a_entidad_acogida", "text": "Donas?", "type": "bool"}]),
-            _sample_deduction_row("EST-VIV-HAB", "vivienda",
-                                  {"adquisicion_antes_2013": True, "deducia_antes_2013": True},
-                                  [{"key": "adquisicion_antes_2013", "text": "Compra antes 2013?", "type": "bool"}]),
+            _sample_deduction_row(
+                "EST-MAT-1200", "familia", {"madre_trabajadora": True, "hijo_menor_3": True}
+            ),
+            _sample_deduction_row(
+                "EST-DONAT-GEN",
+                "donativos",
+                {"donativo_a_entidad_acogida": True},
+                [{"key": "donativo_a_entidad_acogida", "text": "Donas?", "type": "bool"}],
+            ),
+            _sample_deduction_row(
+                "EST-VIV-HAB",
+                "vivienda",
+                {"adquisicion_antes_2013": True, "deducia_antes_2013": True},
+                [{"key": "adquisicion_antes_2013", "text": "Compra antes 2013?", "type": "bool"}],
+            ),
         ]
 
         db = _make_mock_db(rows)
         service = DeductionService(db)
 
         result = await service.evaluate_eligibility(
-            "Estatal", 2025,
+            "Estatal",
+            2025,
             answers={
                 "madre_trabajadora": True,
-                "hijo_menor_3": True,       # → eligible for EST-MAT-1200
+                "hijo_menor_3": True,  # → eligible for EST-MAT-1200
                 "donativo_a_entidad_acogida": False,  # → not eligible for EST-DONAT-GEN
                 # adquisicion_antes_2013 not answered → maybe for EST-VIV-HAB
             },
@@ -392,8 +438,14 @@ class TestDeductionIntegration:
 
         service = DeductionService()
         eligible = [
-            {"code": "MAD-NACIMIENTO", "name": "Nacimiento Madrid", "scope": "territorial",
-             "fixed_amount": 721.70, "percentage": None, "max_amount": None},
+            {
+                "code": "MAD-NACIMIENTO",
+                "name": "Nacimiento Madrid",
+                "scope": "territorial",
+                "fixed_amount": 721.70,
+                "percentage": None,
+                "max_amount": None,
+            },
         ]
         result = service.compute_ccaa_deduction_amounts(eligible, {})
         assert len(result) == 1
@@ -406,8 +458,14 @@ class TestDeductionIntegration:
 
         service = DeductionService()
         eligible = [
-            {"code": "MAD-ALQUILER-VIV", "name": "Alquiler Madrid", "scope": "territorial",
-             "fixed_amount": None, "percentage": 30.0, "max_amount": 1237.20},
+            {
+                "code": "MAD-ALQUILER-VIV",
+                "name": "Alquiler Madrid",
+                "scope": "territorial",
+                "fixed_amount": None,
+                "percentage": 30.0,
+                "max_amount": 1237.20,
+            },
         ]
         user_data = {"alquiler_pagado_anual": 9600}  # 800/month
         result = service.compute_ccaa_deduction_amounts(eligible, user_data)
@@ -421,8 +479,14 @@ class TestDeductionIntegration:
 
         service = DeductionService()
         eligible = [
-            {"code": "AND-ALQUILER-VIV", "name": "Alquiler Andalucia", "scope": "territorial",
-             "fixed_amount": None, "percentage": 15.0, "max_amount": 600.0},
+            {
+                "code": "AND-ALQUILER-VIV",
+                "name": "Alquiler Andalucia",
+                "scope": "territorial",
+                "fixed_amount": None,
+                "percentage": 15.0,
+                "max_amount": 600.0,
+            },
         ]
         user_data = {"alquiler_pagado_anual": 3000}  # 250/month
         result = service.compute_ccaa_deduction_amounts(eligible, user_data)
@@ -436,10 +500,22 @@ class TestDeductionIntegration:
 
         service = DeductionService()
         eligible = [
-            {"code": "EST-MAT-1200", "name": "Maternidad", "scope": "Estatal",
-             "fixed_amount": 1200, "percentage": None, "max_amount": None},
-            {"code": "MAD-NACIMIENTO", "name": "Nacimiento Madrid", "scope": "territorial",
-             "fixed_amount": 721.70, "percentage": None, "max_amount": None},
+            {
+                "code": "EST-MAT-1200",
+                "name": "Maternidad",
+                "scope": "Estatal",
+                "fixed_amount": 1200,
+                "percentage": None,
+                "max_amount": None,
+            },
+            {
+                "code": "MAD-NACIMIENTO",
+                "name": "Nacimiento Madrid",
+                "scope": "territorial",
+                "fixed_amount": 721.70,
+                "percentage": None,
+                "max_amount": None,
+            },
         ]
         result = service.compute_ccaa_deduction_amounts(eligible, {})
         assert len(result) == 1
@@ -451,12 +527,30 @@ class TestDeductionIntegration:
 
         service = DeductionService()
         eligible = [
-            {"code": "VAL-NACIMIENTO", "name": "Nacimiento Valencia", "scope": "territorial",
-             "fixed_amount": 300.0, "percentage": None, "max_amount": None},
-            {"code": "VAL-ALQUILER-VIV", "name": "Alquiler Valencia", "scope": "territorial",
-             "fixed_amount": None, "percentage": 20.0, "max_amount": 950.0},
-            {"code": "VAL-GUARDERIA", "name": "Guarderia Valencia", "scope": "territorial",
-             "fixed_amount": 298.0, "percentage": None, "max_amount": None},
+            {
+                "code": "VAL-NACIMIENTO",
+                "name": "Nacimiento Valencia",
+                "scope": "territorial",
+                "fixed_amount": 300.0,
+                "percentage": None,
+                "max_amount": None,
+            },
+            {
+                "code": "VAL-ALQUILER-VIV",
+                "name": "Alquiler Valencia",
+                "scope": "territorial",
+                "fixed_amount": None,
+                "percentage": 20.0,
+                "max_amount": 950.0,
+            },
+            {
+                "code": "VAL-GUARDERIA",
+                "name": "Guarderia Valencia",
+                "scope": "territorial",
+                "fixed_amount": 298.0,
+                "percentage": None,
+                "max_amount": None,
+            },
         ]
         user_data = {"alquiler_pagado_anual": 7200}
         result = service.compute_ccaa_deduction_amounts(eligible, user_data)
@@ -471,8 +565,14 @@ class TestDeductionIntegration:
 
         service = DeductionService()
         eligible = [
-            {"code": "GAL-ALQUILER-VIV", "name": "Alquiler Galicia", "scope": "territorial",
-             "fixed_amount": None, "percentage": 10.0, "max_amount": 300.0},
+            {
+                "code": "GAL-ALQUILER-VIV",
+                "name": "Alquiler Galicia",
+                "scope": "territorial",
+                "fixed_amount": None,
+                "percentage": 10.0,
+                "max_amount": 300.0,
+            },
         ]
         result = service.compute_ccaa_deduction_amounts(eligible, {})
         assert len(result) == 0  # No rent data → no deduction

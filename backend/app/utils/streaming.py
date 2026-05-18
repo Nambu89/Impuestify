@@ -6,6 +6,7 @@ AI reasoning progress in real-time, ChatGPT/Claude style.
 
 Uses sse-starlette format: yields dict with 'event' and 'data' keys
 """
+
 import json
 import time
 import asyncio
@@ -72,12 +73,23 @@ class ProgressCallback:
     async def tool_call(self, tool_name: str, args: Dict[str, Any]):
         """AI is calling a tool — emits friendly name for UI"""
         names = TOOL_DISPLAY_NAMES.get(tool_name, (tool_name, tool_name))
-        await self.emit("tool_call", {"tool": tool_name, "display_name": names[0], "done_name": names[1], "args": args})
+        await self.emit(
+            "tool_call",
+            {"tool": tool_name, "display_name": names[0], "done_name": names[1], "args": args},
+        )
 
     async def tool_result(self, tool_name: str, success: bool):
         """Tool execution completed"""
         names = TOOL_DISPLAY_NAMES.get(tool_name, (tool_name, tool_name))
-        await self.emit("tool_result", {"tool": tool_name, "display_name": names[0], "done_name": names[1], "success": success})
+        await self.emit(
+            "tool_result",
+            {
+                "tool": tool_name,
+                "display_name": names[0],
+                "done_name": names[1],
+                "success": success,
+            },
+        )
 
     async def content_chunk(self, text: str):
         """Stream a single chunk/token of the response (for real-time typing effect)"""
@@ -106,32 +118,31 @@ class ProgressCallback:
 
 
 async def sse_generator(
-    callback: ProgressCallback,
-    timeout: float = MAX_STREAM_DURATION
+    callback: ProgressCallback, timeout: float = MAX_STREAM_DURATION
 ) -> AsyncGenerator[Dict[str, str], None]:
     """
     Generate SSE events from a ProgressCallback.
-    
+
     Implements Railway-compatible streaming with:
     - Heartbeat comments every 15s
     - Timeout protection
     - Graceful error handling
-    
+
     IMPORTANT: Yields dict format for sse-starlette:
     {"event": "event_name", "data": "data_string"}
-    
+
     Args:
         callback: Progress callback with event queue
         timeout: Maximum stream duration in seconds
-        
+
     Yields:
         Dict with 'event' and 'data' keys (sse-starlette format)
     """
     start_time = time.time()
     last_heartbeat = time.time()
-    
+
     logger.info("SSE generator started")
-    
+
     try:
         while True:
             # Check timeout
@@ -141,26 +152,26 @@ async def sse_generator(
                 yield {"event": "error", "data": "Stream timeout - processing took too long"}
                 yield {"event": "done", "data": ""}
                 break
-            
+
             # Send heartbeat if needed (Railway requirement)
             current_time = time.time()
             if current_time - last_heartbeat > HEARTBEAT_INTERVAL:
                 # sse-starlette uses 'comment' key for SSE comments
                 yield {"comment": "heartbeat"}
                 last_heartbeat = current_time
-            
+
             # Get next event (with timeout)
             try:
                 event_dict = await asyncio.wait_for(
                     callback.events.get(),
-                    timeout=1.0  # Check heartbeat every second
+                    timeout=1.0,  # Check heartbeat every second
                 )
-                
-                logger.info("SSE yielding: %s", event_dict.get('event', 'unknown'))
-                
+
+                logger.info("SSE yielding: %s", event_dict.get("event", "unknown"))
+
                 # Yield event dict (sse-starlette handles formatting)
                 yield event_dict
-                
+
                 # Check if done
                 if event_dict.get("event") == "done":
                     # Drain any remaining events that were queued before done
@@ -173,11 +184,11 @@ async def sse_generator(
                             break
                     logger.info("Stream completed in %.1fs", elapsed)
                     break
-                    
+
             except asyncio.TimeoutError:
                 # No event available, continue to check heartbeat
                 continue
-                
+
     except asyncio.CancelledError:
         # Client disconnected
         logger.info("Client disconnected from stream")
@@ -196,11 +207,11 @@ import re
 
 # Patterns that indicate a chunk is technical/internal and should not be shown
 _TECHNICAL_PATTERNS = re.compile(
-    r'(?:invoke_\w+\s*[:=]|tool_name\s*[:=]|function_call\s*[:=]|'
-    r'Calling\s+\w+\s+with|'
-    r'LLAMADA\s+A\s+HERRAMIENTA|'
+    r"(?:invoke_\w+\s*[:=]|tool_name\s*[:=]|function_call\s*[:=]|"
+    r"Calling\s+\w+\s+with|"
+    r"LLAMADA\s+A\s+HERRAMIENTA|"
     r'\{["\'](?:base_imponible|formatted_response|query|tool)["\'])',
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 
 
@@ -212,15 +223,15 @@ def _is_technical_chunk(text: str) -> bool:
 def filter_json_from_content(content: str) -> str:
     """
     Remove technical JSON artifacts from LLM responses.
-    
+
     Filters out:
     - Tool call JSON like {"base_imponible":...}
     - formatted_response JSON objects
     - Internal reasoning JSON
-    
+
     Args:
         content: Raw LLM response
-        
+
     Returns:
         Cleaned content suitable for user display
     """
@@ -228,39 +239,55 @@ def filter_json_from_content(content: str) -> str:
 
     # Remove ANY standalone JSON objects (handles 1-level nested braces):
     # {"call":"project_annual_irpf","args":{}} or {"base_imponible": 30000}
-    content = re.sub(r'\{["\'][a-z_]+["\']:(?:[^{}]|\{[^{}]*\})*\}', '', content)
+    content = re.sub(r'\{["\'][a-z_]+["\']:(?:[^{}]|\{[^{}]*\})*\}', "", content)
 
     # Remove JSON in code blocks
-    content = re.sub(r'```json\s*\{[^`]+\}\s*```', '', content)
+    content = re.sub(r"```json\s*\{[^`]+\}\s*```", "", content)
 
     # Remove technical key-value lines leaked from tool calls
-    content = re.sub(r'^(?:invoke_\w+|tool_name|function_call|calling)\s*[:=]\s*\S+.*$', '', content, flags=re.MULTILINE | re.IGNORECASE)
+    content = re.sub(
+        r"^(?:invoke_\w+|tool_name|function_call|calling)\s*[:=]\s*\S+.*$",
+        "",
+        content,
+        flags=re.MULTILINE | re.IGNORECASE,
+    )
 
     # Remove lines starting with "Calling " followed by a function name
-    content = re.sub(r'^Calling\s+\w+\s+with.*$', '', content, flags=re.MULTILINE)
+    content = re.sub(r"^Calling\s+\w+\s+with.*$", "", content, flags=re.MULTILINE)
 
     # Remove Spanish internal reasoning / planning phrases (thinking leaked into content)
     # "Llamo a la herramienta de...", "Voy a usar/llamar/ejecutar...", "Utilizo la herramienta..."
     content = re.sub(
-        r'(?:Llamo|Voy a (?:usar|llamar|ejecutar|utilizar|consultar)|Utilizo|Uso|Ejecuto|Consulto)'
-        r'\s+(?:la |el |a la |al )?(?:herramienta|tool|función|cálculo|simulador|motor)\b[^.!?\n]*[.!?]?\s*',
-        '', content, flags=re.IGNORECASE
+        r"(?:Llamo|Voy a (?:usar|llamar|ejecutar|utilizar|consultar)|Utilizo|Uso|Ejecuto|Consulto)"
+        r"\s+(?:la |el |a la |al )?(?:herramienta|tool|función|cálculo|simulador|motor)\b[^.!?\n]*[.!?]?\s*",
+        "",
+        content,
+        flags=re.IGNORECASE,
     )
     # "Calcularé estimación para...", "Primero voy a analizar..."
     content = re.sub(
-        r'(?:Calcular[eé]|Primero voy a|Ahora (?:hago|realizo|ejecuto|calculo|analizo))\b[^.!?\n]*[.!?]?\s*',
-        '', content, flags=re.IGNORECASE
+        r"(?:Calcular[eé]|Primero voy a|Ahora (?:hago|realizo|ejecuto|calculo|analizo))\b[^.!?\n]*[.!?]?\s*",
+        "",
+        content,
+        flags=re.IGNORECASE,
     )
 
     # Remove Spanish technical phrases about tool calls
-    content = re.sub(r'\(?\s*(?:LLAMADA|llamada)\s+A\s+(?:HERRAMIENTA|herramienta)\s+\w+\s*\)?', '', content, flags=re.IGNORECASE)
+    content = re.sub(
+        r"\(?\s*(?:LLAMADA|llamada)\s+A\s+(?:HERRAMIENTA|herramienta)\s+\w+\s*\)?",
+        "",
+        content,
+        flags=re.IGNORECASE,
+    )
 
     # Remove broken source lines: empty titles with just "(pág. N)"
-    content = re.sub(r'^,?\s*\(p[aá]g\.\s*\d+\)\s*$', '', content, flags=re.MULTILINE)
+    content = re.sub(r"^,?\s*\(p[aá]g\.\s*\d+\)\s*$", "", content, flags=re.MULTILINE)
     # Remove "Fuentes:" section if all sources are empty
-    content = re.sub(r'^Fuentes:\s*\n(?:\s*,?\s*\(p[aá]g\.\s*\d+\)\s*\n?)+', '', content, flags=re.MULTILINE)
+    content = re.sub(
+        r"^Fuentes:\s*\n(?:\s*,?\s*\(p[aá]g\.\s*\d+\)\s*\n?)+", "", content, flags=re.MULTILINE
+    )
 
     # Clean up multiple newlines
-    content = re.sub(r'\n{3,}', '\n\n', content)
+    content = re.sub(r"\n{3,}", "\n\n", content)
 
     return content.strip()

@@ -1,6 +1,7 @@
 """
 Inventory management — JSON index + human-readable report.
 """
+
 import json
 import logging
 from datetime import datetime, timezone
@@ -68,7 +69,9 @@ def generate_report(results: list[dict]) -> str:
     updated = [r for r in results if r.get("status") == "updated"]
     unchanged = [r for r in results if r.get("status") == "unchanged"]
     failed = [r for r in results if r.get("status") in ("failed", "invalid", "rate_limited")]
-    blocked = [r for r in results if r.get("status") in ("blocked", "robots_blocked", "limit_reached")]
+    blocked = [
+        r for r in results if r.get("status") in ("blocked", "robots_blocked", "limit_reached")
+    ]
     skipped = [r for r in results if r.get("status") in ("would_download", "would_skip")]
 
     lines = [

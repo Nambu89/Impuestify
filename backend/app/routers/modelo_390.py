@@ -6,6 +6,7 @@ POST /api/modelo-390/calculate
   - Rate limit: 60/min por IP.
   - Wrapper directo de `calculate_modelo_390_tool`.
 """
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/api/modelo-390", tags=["modelo-390"])
 
 class Trimestre303Input(BaseModel):
     """Datos minimos de un trimestre 303 para el resumen anual."""
+
     casilla_03: float = Field(default=0.0, description="Cuota IVA devengado 4%")
     casilla_06: float = Field(default=0.0, description="Cuota IVA devengado 10%")
     casilla_09: float = Field(default=0.0, description="Cuota IVA devengado 21%")
@@ -42,7 +44,9 @@ class Modelo390Request(BaseModel):
     en_redeme: bool = Field(default=False)
     en_grupo_iva: bool = Field(default=False)
     sii_voluntario: bool = Field(default=False)
-    regimen_especial: Optional[str] = Field(None, description="simplificado | recargo_equivalencia | general")
+    regimen_especial: Optional[str] = Field(
+        None, description="simplificado | recargo_equivalencia | general"
+    )
     trimestres_303: Optional[List[Trimestre303Input]] = Field(
         None,
         description="Exactamente 4 trimestres del 303 para calcular resumen anual",
@@ -91,14 +95,19 @@ async def calculate_modelo_390_endpoint(
         )
 
         if not result.get("success"):
-            raise HTTPException(status_code=400, detail=result.get("error") or result.get("formatted_response"))
+            raise HTTPException(
+                status_code=400, detail=result.get("error") or result.get("formatted_response")
+            )
 
         import datetime as _dt
+
         year_used = body.year if body.year else (_dt.datetime.now().year - 1)
 
         logger.info(
             "Modelo 390 endpoint: year=%s, obligado=%s, modelo=%s",
-            year_used, result.get("obligado"), result.get("modelo"),
+            year_used,
+            result.get("obligado"),
+            result.get("modelo"),
         )
 
         return Modelo390Response(

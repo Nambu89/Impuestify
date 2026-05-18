@@ -26,6 +26,7 @@ El argumento devuelto rellena `datos_disparo` con el subset de datos relevantes
 para trazabilidad: que doc lo disparo y que infracciones se detectaron. Esto
 permite al writer posterior citar fuente sin volver a inspeccionar el expediente.
 """
+
 from __future__ import annotations
 
 from typing import Any, Iterable, Optional
@@ -44,6 +45,7 @@ from app.services.defensia_rules_engine import regla
 # ---------------------------------------------------------------------------
 # Helpers de deteccion
 # ---------------------------------------------------------------------------
+
 
 def _normalizar_tipo(valor: Any) -> Optional[str]:
     """Extrae la parte numerica principal de un identificador de infraccion.
@@ -118,11 +120,7 @@ def _doc_dispara(doc: DocumentoEstructurado) -> tuple[bool, dict[str, Any]]:
     # (el extractor canonico ya lo hubiera marcado True).
     base_191 = datos.get("base_sancion_191")
     base_194 = datos.get("base_sancion_194")
-    if (
-        flag is not False
-        and base_191 not in (None, 0, 0.0)
-        and base_194 not in (None, 0, 0.0)
-    ):
+    if flag is not False and base_191 not in (None, 0, 0.0) and base_194 not in (None, 0, 0.0):
         return True, {
             "fuente": "bases_sancion",
             "base_sancion_191": base_191,
@@ -168,12 +166,12 @@ _CITA_SEMANTICA = (
         Fase.TEAR_AMPLIACION_POSIBLE.value,
     ],
     descripcion=(
-        "Concurrencia de infracciones 191 y 194 sobre los mismos hechos "
-        "(non bis in idem)"
+        "Concurrencia de infracciones 191 y 194 sobre los mismos hechos " "(non bis in idem)"
     ),
 )
 def evaluar_R006(
-    expediente: ExpedienteEstructurado, brief: Brief,
+    expediente: ExpedienteEstructurado,
+    brief: Brief,
 ) -> Optional[ArgumentoCandidato]:
     """Dispara cuando algun documento sancionador acredita doble tipicidad."""
     del brief  # no se usa — la regla es puramente estructural

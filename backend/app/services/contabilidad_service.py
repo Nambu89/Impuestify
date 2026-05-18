@@ -7,6 +7,7 @@ balance de sumas y saldos, cuenta de PyG).
 
 PGC (Plan General Contable) compliant.
 """
+
 import uuid
 import logging
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AsientoLine:
     """A single line in a double-entry journal entry."""
+
     cuenta_code: str
     cuenta_nombre: str
     debe: float
@@ -85,22 +87,26 @@ class ContabilidadService:
             # Debe: 472 IVA soportado (cuota_iva) — if > 0
             # Haber: 400 Proveedores or 410 Acreedores (total)
             # ----------------------------------------------------------
-            lines.append(AsientoLine(
-                cuenta_code=cuenta_pgc_code,
-                cuenta_nombre=cuenta_pgc_nombre,
-                debe=base_imponible,
-                haber=0.0,
-                concepto=concepto,
-            ))
-
-            if cuota_iva > 0:
-                lines.append(AsientoLine(
-                    cuenta_code="472",
-                    cuenta_nombre="HP IVA soportado",
-                    debe=cuota_iva,
+            lines.append(
+                AsientoLine(
+                    cuenta_code=cuenta_pgc_code,
+                    cuenta_nombre=cuenta_pgc_nombre,
+                    debe=base_imponible,
                     haber=0.0,
                     concepto=concepto,
-                ))
+                )
+            )
+
+            if cuota_iva > 0:
+                lines.append(
+                    AsientoLine(
+                        cuenta_code="472",
+                        cuenta_nombre="HP IVA soportado",
+                        debe=cuota_iva,
+                        haber=0.0,
+                        concepto=concepto,
+                    )
+                )
 
             # 400 for compras (cuenta starts with "60"), 410 otherwise
             if cuenta_pgc_code.startswith("60"):
@@ -110,13 +116,15 @@ class ContabilidadService:
                 contrapartida_code = "410"
                 contrapartida_nombre = "Acreedores por prestaciones de servicios"
 
-            lines.append(AsientoLine(
-                cuenta_code=contrapartida_code,
-                cuenta_nombre=contrapartida_nombre,
-                debe=0.0,
-                haber=total,
-                concepto=concepto,
-            ))
+            lines.append(
+                AsientoLine(
+                    cuenta_code=contrapartida_code,
+                    cuenta_nombre=contrapartida_nombre,
+                    debe=0.0,
+                    haber=total,
+                    concepto=concepto,
+                )
+            )
 
         elif tipo == "emitida":
             # ----------------------------------------------------------
@@ -126,39 +134,47 @@ class ContabilidadService:
             # Haber: cuenta ingreso (base_imponible)
             # Haber: 477 IVA repercutido (cuota_iva) — if > 0
             # ----------------------------------------------------------
-            lines.append(AsientoLine(
-                cuenta_code="430",
-                cuenta_nombre="Clientes",
-                debe=total,
-                haber=0.0,
-                concepto=concepto,
-            ))
-
-            if retencion_irpf > 0:
-                lines.append(AsientoLine(
-                    cuenta_code="473",
-                    cuenta_nombre="HP retenciones y pagos a cuenta",
-                    debe=retencion_irpf,
+            lines.append(
+                AsientoLine(
+                    cuenta_code="430",
+                    cuenta_nombre="Clientes",
+                    debe=total,
                     haber=0.0,
                     concepto=concepto,
-                ))
+                )
+            )
 
-            lines.append(AsientoLine(
-                cuenta_code=cuenta_pgc_code,
-                cuenta_nombre=cuenta_pgc_nombre,
-                debe=0.0,
-                haber=base_imponible,
-                concepto=concepto,
-            ))
+            if retencion_irpf > 0:
+                lines.append(
+                    AsientoLine(
+                        cuenta_code="473",
+                        cuenta_nombre="HP retenciones y pagos a cuenta",
+                        debe=retencion_irpf,
+                        haber=0.0,
+                        concepto=concepto,
+                    )
+                )
+
+            lines.append(
+                AsientoLine(
+                    cuenta_code=cuenta_pgc_code,
+                    cuenta_nombre=cuenta_pgc_nombre,
+                    debe=0.0,
+                    haber=base_imponible,
+                    concepto=concepto,
+                )
+            )
 
             if cuota_iva > 0:
-                lines.append(AsientoLine(
-                    cuenta_code="477",
-                    cuenta_nombre="HP IVA repercutido",
-                    debe=0.0,
-                    haber=cuota_iva,
-                    concepto=concepto,
-                ))
+                lines.append(
+                    AsientoLine(
+                        cuenta_code="477",
+                        cuenta_nombre="HP IVA repercutido",
+                        debe=0.0,
+                        haber=cuota_iva,
+                        concepto=concepto,
+                    )
+                )
 
         else:
             raise ValueError(f"Tipo de factura no soportado: {tipo}. Usar 'recibida' o 'emitida'.")
@@ -226,7 +242,11 @@ class ContabilidadService:
 
         logger.info(
             "Saved asiento #%d with %d lines for user %s (year=%d, T%d)",
-            numero_asiento, len(lines), user_id, year, trimestre,
+            numero_asiento,
+            len(lines),
+            user_id,
+            year,
+            trimestre,
         )
         return created_ids
 

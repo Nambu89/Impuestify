@@ -48,6 +48,7 @@ def _b64url_decode(data: str) -> bytes:
 def _rp_settings() -> tuple[str, str, list[str]]:
     """Resolve RP id, name, and accepted origins from app config + env."""
     from app.config import settings
+
     frontend_url = getattr(settings, "FRONTEND_URL", "https://impuestify.com")
     parsed = urlparse(frontend_url)
     rp_id = parsed.hostname or "impuestify.com"
@@ -66,7 +67,9 @@ def _challenge_key(scope: str, ident: str) -> str:
     return f"webauthn:{scope}:{ident}"
 
 
-def _store_challenge(redis, scope: str, ident: str, challenge: bytes, payload: Optional[dict] = None) -> None:
+def _store_challenge(
+    redis, scope: str, ident: str, challenge: bytes, payload: Optional[dict] = None
+) -> None:
     if redis is None:
         return
     payload = payload or {}
@@ -131,6 +134,7 @@ class WebAuthnService:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -153,8 +157,7 @@ class WebAuthnService:
             [user_id],
         )
         exclude = [
-            {"id": row["credential_id"], "type": "public-key"}
-            for row in existing.rows or []
+            {"id": row["credential_id"], "type": "public-key"} for row in existing.rows or []
         ]
 
         opts = generate_registration_options(
@@ -171,7 +174,9 @@ class WebAuthnService:
 
         # Persist challenge so /complete can verify it
         _store_challenge(
-            self.redis, scope="register", ident=user_id,
+            self.redis,
+            scope="register",
+            ident=user_id,
             challenge=opts.challenge,
             payload={"user_id": user_id, "user_email": user_email},
         )
@@ -245,17 +250,16 @@ class WebAuthnService:
             # Don't leak whether the email exists. Generate a random challenge
             # the client can complete with no credentials — verify will fail.
             challenge = secrets.token_bytes(32)
-            return AuthenticationOptions(rp_id=rp_id, challenge_b64=_b64url_encode(challenge), allow_credentials=[])
+            return AuthenticationOptions(
+                rp_id=rp_id, challenge_b64=_b64url_encode(challenge), allow_credentials=[]
+            )
 
         user_id = user_row.rows[0]["id"]
         creds = await db.execute(
             "SELECT credential_id FROM webauthn_credentials WHERE user_id = ?",
             [user_id],
         )
-        allow = [
-            {"id": row["credential_id"], "type": "public-key"}
-            for row in creds.rows or []
-        ]
+        allow = [{"id": row["credential_id"], "type": "public-key"} for row in creds.rows or []]
 
         opts = generate_authentication_options(
             rp_id=rp_id,
@@ -264,7 +268,9 @@ class WebAuthnService:
         )
 
         _store_challenge(
-            self.redis, scope="login", ident=user_email.lower(),
+            self.redis,
+            scope="login",
+            ident=user_email.lower(),
             challenge=opts.challenge,
             payload={"user_id": user_id, "user_email": user_email.lower()},
         )

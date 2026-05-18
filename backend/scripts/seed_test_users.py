@@ -15,6 +15,7 @@ Usage:
     cd backend
     python scripts/seed_test_users.py
 """
+
 import asyncio
 import json
 import os
@@ -53,21 +54,23 @@ PROFILE_PARTICULAR = {
     "tiene_vivienda": 1,
     "primera_vivienda": 0,
     "fecha_nacimiento": "1988-06-15",
-    "datos_fiscales": json.dumps({
-        "ingresos_trabajo": 35000.0,
-        "ss_empleado": 2205.0,
-        "num_descendientes": 1,
-        "anios_nacimiento_desc": [2019],
-        "custodia_compartida": False,
-        "num_ascendientes_65": 0,
-        "num_ascendientes_75": 0,
-        "discapacidad_contribuyente": None,
-        "intereses": 150.0,
-        "dividendos": 300.0,
-        "ganancias_fondos": 0.0,
-        "ingresos_alquiler": 0.0,
-        "valor_adquisicion_inmueble": 220000.0,
-    }),
+    "datos_fiscales": json.dumps(
+        {
+            "ingresos_trabajo": 35000.0,
+            "ss_empleado": 2205.0,
+            "num_descendientes": 1,
+            "anios_nacimiento_desc": [2019],
+            "custodia_compartida": False,
+            "num_ascendientes_65": 0,
+            "num_ascendientes_75": 0,
+            "discapacidad_contribuyente": None,
+            "intereses": 150.0,
+            "dividendos": 300.0,
+            "ganancias_fondos": 0.0,
+            "ingresos_alquiler": 0.0,
+            "valor_adquisicion_inmueble": 220000.0,
+        }
+    ),
 }
 
 SUB_PARTICULAR = {
@@ -94,34 +97,36 @@ PROFILE_AUTONOMO = {
     "tiene_vivienda": 1,
     "primera_vivienda": 1,
     "fecha_nacimiento": "1992-11-03",
-    "datos_fiscales": json.dumps({
-        "ingresos_trabajo": 0.0,
-        "ss_empleado": 0.0,
-        "num_descendientes": 0,
-        "anios_nacimiento_desc": [],
-        "custodia_compartida": False,
-        "num_ascendientes_65": 1,
-        "num_ascendientes_75": 0,
-        "discapacidad_contribuyente": None,
-        "intereses": 50.0,
-        "dividendos": 0.0,
-        "ganancias_fondos": 0.0,
-        "ingresos_alquiler": 0.0,
-        "valor_adquisicion_inmueble": 180000.0,
-        "epigrafe_iae": "844",
-        "tipo_actividad": "profesional",
-        "fecha_alta_autonomo": "2023-01-10",
-        "metodo_estimacion_irpf": "directa_simplificada",
-        "regimen_iva": "general",
-        "rendimientos_netos_mensuales": 3500.0,
-        "base_cotizacion_reta": 1200.0,
-        "territorio_foral": False,
-        "territorio_historico": None,
-        "tipo_retencion_facturas": 15.0,
-        "tarifa_plana": False,
-        "pluriactividad": False,
-        "ceuta_melilla": False,
-    }),
+    "datos_fiscales": json.dumps(
+        {
+            "ingresos_trabajo": 0.0,
+            "ss_empleado": 0.0,
+            "num_descendientes": 0,
+            "anios_nacimiento_desc": [],
+            "custodia_compartida": False,
+            "num_ascendientes_65": 1,
+            "num_ascendientes_75": 0,
+            "discapacidad_contribuyente": None,
+            "intereses": 50.0,
+            "dividendos": 0.0,
+            "ganancias_fondos": 0.0,
+            "ingresos_alquiler": 0.0,
+            "valor_adquisicion_inmueble": 180000.0,
+            "epigrafe_iae": "844",
+            "tipo_actividad": "profesional",
+            "fecha_alta_autonomo": "2023-01-10",
+            "metodo_estimacion_irpf": "directa_simplificada",
+            "regimen_iva": "general",
+            "rendimientos_netos_mensuales": 3500.0,
+            "base_cotizacion_reta": 1200.0,
+            "territorio_foral": False,
+            "territorio_historico": None,
+            "tipo_retencion_facturas": 15.0,
+            "tarifa_plana": False,
+            "pluriactividad": False,
+            "ceuta_melilla": False,
+        }
+    ),
 }
 
 SUB_AUTONOMO = {
@@ -148,36 +153,38 @@ PROFILE_CREATOR = {
     "tiene_vivienda": 0,
     "primera_vivienda": 0,
     "fecha_nacimiento": "1996-04-22",
-    "datos_fiscales": json.dumps({
-        "ingresos_trabajo": 0.0,
-        "ss_empleado": 0.0,
-        "num_descendientes": 0,
-        "anios_nacimiento_desc": [],
-        "custodia_compartida": False,
-        "num_ascendientes_65": 0,
-        "num_ascendientes_75": 0,
-        "discapacidad_contribuyente": None,
-        "intereses": 0.0,
-        "dividendos": 0.0,
-        "ganancias_fondos": 0.0,
-        "ingresos_alquiler": 0.0,
-        "valor_adquisicion_inmueble": 0.0,
-        "epigrafe_iae": "8690",
-        "tipo_actividad": "profesional",
-        "fecha_alta_autonomo": "2025-06-01",
-        "metodo_estimacion_irpf": "directa_simplificada",
-        "regimen_iva": "general",
-        "rendimientos_netos_mensuales": 4200.0,
-        "base_cotizacion_reta": 960.0,
-        "territorio_foral": False,
-        "territorio_historico": None,
-        "tipo_retencion_facturas": 7.0,
-        "tarifa_plana": True,
-        "pluriactividad": False,
-        "ceuta_melilla": False,
-        "plataformas": ["instagram", "youtube", "tiktok"],
-        "cnae": "6039",
-    }),
+    "datos_fiscales": json.dumps(
+        {
+            "ingresos_trabajo": 0.0,
+            "ss_empleado": 0.0,
+            "num_descendientes": 0,
+            "anios_nacimiento_desc": [],
+            "custodia_compartida": False,
+            "num_ascendientes_65": 0,
+            "num_ascendientes_75": 0,
+            "discapacidad_contribuyente": None,
+            "intereses": 0.0,
+            "dividendos": 0.0,
+            "ganancias_fondos": 0.0,
+            "ingresos_alquiler": 0.0,
+            "valor_adquisicion_inmueble": 0.0,
+            "epigrafe_iae": "8690",
+            "tipo_actividad": "profesional",
+            "fecha_alta_autonomo": "2025-06-01",
+            "metodo_estimacion_irpf": "directa_simplificada",
+            "regimen_iva": "general",
+            "rendimientos_netos_mensuales": 4200.0,
+            "base_cotizacion_reta": 960.0,
+            "territorio_foral": False,
+            "territorio_historico": None,
+            "tipo_retencion_facturas": 7.0,
+            "tarifa_plana": True,
+            "pluriactividad": False,
+            "ceuta_melilla": False,
+            "plataformas": ["instagram", "youtube", "tiktok"],
+            "cnae": "6039",
+        }
+    ),
 }
 
 SUB_CREATOR = {
@@ -204,10 +211,17 @@ async def seed_test_users():
             user_id = result.rows[0]["id"]
             # Delete in dependency order
             for table in [
-                "subscriptions", "user_profiles", "messages",
-                "conversations", "payslips", "reports",
-                "workspace_file_embeddings", "workspace_files",
-                "workspaces", "sessions", "usage_metrics",
+                "subscriptions",
+                "user_profiles",
+                "messages",
+                "conversations",
+                "payslips",
+                "reports",
+                "workspace_file_embeddings",
+                "workspace_files",
+                "workspaces",
+                "sessions",
+                "usage_metrics",
             ]:
                 try:
                     await db.execute(f"DELETE FROM {table} WHERE user_id = ?", [user_id])
@@ -255,7 +269,9 @@ async def seed_test_users():
                 profile["datos_fiscales"],
             ],
         )
-        print(f"  Created profile: {user_data['email']} ({profile['situacion_laboral']}, {profile['ccaa_residencia']})")
+        print(
+            f"  Created profile: {user_data['email']} ({profile['situacion_laboral']}, {profile['ccaa_residencia']})"
+        )
 
     # Insert subscriptions
     for user_data, sub in [
@@ -279,7 +295,9 @@ async def seed_test_users():
                 sub["current_period_end"],
             ],
         )
-        print(f"  Created subscription: {user_data['email']} (plan={sub['plan_type']}, status={sub['status']})")
+        print(
+            f"  Created subscription: {user_data['email']} (plan={sub['plan_type']}, status={sub['status']})"
+        )
 
     await db.disconnect()
     print("\nDone! Test users ready for QA.")

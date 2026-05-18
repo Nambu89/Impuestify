@@ -46,6 +46,7 @@ Cuadre 303 <-> 349 (causa nº1 de requerimientos AEAT):
     deberian coincidir con suma 349 de clave A.
     Diferencias > 0,5 EUR generan paralela.
 """
+
 from __future__ import annotations
 
 import logging
@@ -62,7 +63,17 @@ logger = logging.getLogger(__name__)
 
 # Claves validas (Art. 4 Orden EHA/769/2010)
 CLAVES_VALIDAS: Tuple[str, ...] = (
-    "E", "A", "T", "S", "I", "M", "H", "R", "D", "C", "N",
+    "E",
+    "A",
+    "T",
+    "S",
+    "I",
+    "M",
+    "H",
+    "R",
+    "D",
+    "C",
+    "N",
 )
 
 # Subconjuntos para calculos de umbral y cuadre 303
@@ -83,9 +94,33 @@ CUADRE_TOLERANCIA_EUR: float = 0.5
 
 # Codigos ISO de los Estados miembro de la UE (al 2026, Brexit ya aplicado)
 EU_COUNTRY_CODES: Tuple[str, ...] = (
-    "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES",
-    "FI", "FR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT",
-    "NL", "PL", "PT", "RO", "SE", "SI", "SK",
+    "AT",
+    "BE",
+    "BG",
+    "CY",
+    "CZ",
+    "DE",
+    "DK",
+    "EE",
+    "EL",
+    "ES",
+    "FI",
+    "FR",
+    "HR",
+    "HU",
+    "IE",
+    "IT",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "PL",
+    "PT",
+    "RO",
+    "SE",
+    "SI",
+    "SK",
     # XI = Irlanda del Norte (acuerdo bienes post-Brexit, no servicios)
     "XI",
 )
@@ -152,7 +187,8 @@ class Operacion349:
         if self.clave not in CLAVES_VALIDAS:
             logger.warning(
                 "Operacion349 con clave invalida '%s' (operador=%s)",
-                self.clave, self.nif_operador,
+                self.clave,
+                self.nif_operador,
             )
 
 
@@ -160,9 +196,9 @@ class Operacion349:
 class CuadreResult:
     """Resultado del cuadre 303 <-> 349 para un periodo."""
 
-    diff_entregas_bienes: float = 0.0     # 303 c.60 vs sum(E+T+M+H)
+    diff_entregas_bienes: float = 0.0  # 303 c.60 vs sum(E+T+M+H)
     diff_adquisiciones_bienes: float = 0.0  # 303 c.36+38 vs sum(A)
-    diff_servicios_prestados: float = 0.0   # info, no hay casilla 303 explicita
+    diff_servicios_prestados: float = 0.0  # info, no hay casilla 303 explicita
     diff_servicios_adquiridos: float = 0.0  # info, no hay casilla 303 explicita
     warnings: List[str] = field(default_factory=list)
     cuadre_ok: bool = True
@@ -187,9 +223,7 @@ class Modelo349Calculator:
     # Tamano maximo del cache VIES per-instance (LRU manual).
     _VIES_CACHE_MAX: int = 2048
     _VIES_TIMEOUT_SECONDS: float = 5.0
-    _VIES_ENDPOINT: str = (
-        "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number"
-    )
+    _VIES_ENDPOINT: str = "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number"
 
     def __init__(self, repo: Any = None) -> None:
         # `repo` se acepta por consistencia con el resto de calculadoras pero
@@ -421,9 +455,13 @@ class Modelo349Calculator:
         volumen_anterior_max = max(anteriores) if anteriores else 0.0
 
         # Mensual si el trimestre actual o cualquiera de los 4 anteriores supera 50.000 EUR
-        if volumen_actual > UMBRAL_MENSUAL_TRIMESTRE or volumen_anterior_max > UMBRAL_MENSUAL_TRIMESTRE:
+        if (
+            volumen_actual > UMBRAL_MENSUAL_TRIMESTRE
+            or volumen_anterior_max > UMBRAL_MENSUAL_TRIMESTRE
+        ):
             motivo_origen = (
-                "trimestre actual" if volumen_actual > UMBRAL_MENSUAL_TRIMESTRE
+                "trimestre actual"
+                if volumen_actual > UMBRAL_MENSUAL_TRIMESTRE
                 else "alguno de los 4 trimestres anteriores"
             )
             return {
@@ -443,7 +481,8 @@ class Modelo349Calculator:
             ops_anuales = list(operaciones_anuales)
             volumen_anual_total = cls._volumen_relevante(ops_anuales)
             volumen_entregas_anual = cls._volumen_por_claves(
-                ops_anuales, ENTREGAS_BIENES_CLAVES + ENTREGAS_SERVICIOS_CLAVES,
+                ops_anuales,
+                ENTREGAS_BIENES_CLAVES + ENTREGAS_SERVICIOS_CLAVES,
             )
             if (
                 volumen_anual_total <= UMBRAL_ANUAL_TOTAL
@@ -499,9 +538,7 @@ class Modelo349Calculator:
             if mes_int == 7:
                 return f"1 al 20 de agosto de {year} (mes 7 {year})."
             siguiente = mes_int + 1
-            return (
-                f"1 al 20 del mes {siguiente:02d}/{year} (mes {mes_int:02d} {year})."
-            )
+            return f"1 al 20 del mes {siguiente:02d}/{year} (mes {mes_int:02d} {year})."
 
         if periodicidad == "trimestral":
             mapa = {
@@ -553,9 +590,7 @@ class Modelo349Calculator:
         for op in ops:
             clave = (op.clave or "").upper()
             if clave not in CLAVES_VALIDAS:
-                errores.append(
-                    f"Clave invalida '{op.clave}' en operador {op.nif_operador}"
-                )
+                errores.append(f"Clave invalida '{op.clave}' en operador {op.nif_operador}")
                 continue
             por_clave[clave]["importe"] += float(op.importe or 0.0)
             por_clave[clave]["n_operaciones"] += 1

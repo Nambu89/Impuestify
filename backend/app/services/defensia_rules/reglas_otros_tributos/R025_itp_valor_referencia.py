@@ -42,6 +42,7 @@ hardcoded article references en este modulo.
 
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2-R025
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -72,6 +73,7 @@ _CITA_SEMANTICA = (
 # ---------------------------------------------------------------------------
 # Detectores individuales — cada uno analiza un sub-patron
 # ---------------------------------------------------------------------------
+
 
 def _extraer_valor_referencia(datos: dict) -> Optional[float]:
     """Devuelve el valor de referencia catastral declarado como base imponible
@@ -134,9 +136,7 @@ def _detectar_tasacion_pericial_contradictoria(
     }
 
 
-def _detectar_informe_tecnico_discrepante(
-    datos: dict, valor_referencia: float
-) -> Optional[dict]:
+def _detectar_informe_tecnico_discrepante(datos: dict, valor_referencia: float) -> Optional[dict]:
     """Patron 2: informe tecnico cualificado con valor inferior.
 
     Dispara cuando `informe_tecnico_discrepante` es True y existe un
@@ -166,6 +166,7 @@ def _detectar_informe_tecnico_discrepante(
 # ---------------------------------------------------------------------------
 # Registro de la regla
 # ---------------------------------------------------------------------------
+
 
 @regla(
     id="R025",

@@ -7,6 +7,7 @@ Maps VEVENT records to fiscal_deadlines rows with deterministic IDs.
 Usage:
     python -m backend.scripts.sync_fiscal_calendar [--year 2026] [--dry-run]
 """
+
 import sys
 import os
 import re
@@ -23,11 +24,14 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
 sys.path.insert(0, BACKEND_ROOT)
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 import httpx
+
 try:
     from icalendar import Calendar
+
     ICALENDAR_AVAILABLE = True
 except ImportError:
     ICALENDAR_AVAILABLE = False
@@ -52,20 +56,50 @@ AEAT_ICAL_URLS = [
 # -----------------------------------------------------------------
 MODEL_PATTERNS = [
     # IRPF pagos fraccionados (MUST be before generic IRPF to avoid false match on \birpf\b)
-    (r"modelo\s*130\b|pago.*fraccionado.*irpf|irpf.*pago.*fraccionado", "130", "IRPF pagos fraccionados", "autonomos"),
+    (
+        r"modelo\s*130\b|pago.*fraccionado.*irpf|irpf.*pago.*fraccionado",
+        "130",
+        "IRPF pagos fraccionados",
+        "autonomos",
+    ),
     (r"modelo\s*131\b", "131", "IRPF estimacion objetiva", "autonomos"),
     # IRPF / Renta (generic — after specific IRPF models)
-    (r"\brenta\b|modelo\s*100\b|campa[nñ]a.*irpf|irpf.*anual|declaracion.*irpf", "100", "IRPF Renta anual", "todos"),
+    (
+        r"\brenta\b|modelo\s*100\b|campa[nñ]a.*irpf|irpf.*anual|declaracion.*irpf",
+        "100",
+        "IRPF Renta anual",
+        "todos",
+    ),
     # IVA
     (r"modelo\s*303\b|iva.*trimest|trimest.*iva", "303", "IVA trimestral", "autonomos"),
     (r"modelo\s*390\b|iva.*anual|resumen.*iva", "390", "IVA resumen anual", "autonomos"),
-    (r"modelo\s*349\b|declaracion.*recapitulativa|operaciones.*intracom", "349", "IVA operaciones intracomunitarias", "autonomos"),
+    (
+        r"modelo\s*349\b|declaracion.*recapitulativa|operaciones.*intracom",
+        "349",
+        "IVA operaciones intracomunitarias",
+        "autonomos",
+    ),
     # Retenciones
-    (r"modelo\s*111\b|retenciones.*trabajo|trabajo.*retenciones", "111", "Retenciones rendimientos trabajo", "autonomos"),
-    (r"modelo\s*115\b|retenciones.*arrendamiento|arrendamiento.*retenciones", "115", "Retenciones arrendamientos", "autonomos"),
+    (
+        r"modelo\s*111\b|retenciones.*trabajo|trabajo.*retenciones",
+        "111",
+        "Retenciones rendimientos trabajo",
+        "autonomos",
+    ),
+    (
+        r"modelo\s*115\b|retenciones.*arrendamiento|arrendamiento.*retenciones",
+        "115",
+        "Retenciones arrendamientos",
+        "autonomos",
+    ),
     (r"modelo\s*123\b", "123", "Retenciones capital mobiliario", "autonomos"),
     # Declaraciones informativas
-    (r"modelo\s*347\b|operaciones.*terceros|terceros.*operaciones", "347", "Operaciones con terceros", "autonomos"),
+    (
+        r"modelo\s*347\b|operaciones.*terceros|terceros.*operaciones",
+        "347",
+        "Operaciones con terceros",
+        "autonomos",
+    ),
     (r"modelo\s*180\b", "180", "Resumen anual retenciones arrendamientos", "autonomos"),
     (r"modelo\s*190\b", "190", "Resumen anual retenciones trabajo", "autonomos"),
     (r"modelo\s*200\b|impuesto.*sociedades", "200", "Impuesto sobre Sociedades", "autonomos"),
@@ -193,7 +227,9 @@ def parse_ical_content(ical_bytes: bytes, tax_year: int, dry_run: bool = False) 
         deadlines.append(deadline)
 
         if dry_run:
-            logger.info(f"[DRY-RUN] Would upsert: {deadline_id} | {model_name} | {period} | {dtend}")
+            logger.info(
+                f"[DRY-RUN] Would upsert: {deadline_id} | {model_name} | {period} | {dtend}"
+            )
 
     return deadlines
 
@@ -208,7 +244,11 @@ async def download_ical(year: int) -> Optional[bytes]:
                 response = await client.get(url)
                 if response.status_code == 200:
                     content_type = response.headers.get("content-type", "")
-                    if "text" in content_type or "calendar" in content_type or len(response.content) > 500:
+                    if (
+                        "text" in content_type
+                        or "calendar" in content_type
+                        or len(response.content) > 500
+                    ):
                         logger.info(f"Downloaded {len(response.content)} bytes from {url}")
                         return response.content
                     logger.warning(f"Unexpected content-type {content_type} from {url}")
@@ -246,10 +286,19 @@ async def upsert_deadlines(db: TursoClient, deadlines: list[dict]) -> int:
                 updated_at = datetime('now')
             """,
             [
-                d["id"], d["model"], d["model_name"], d["territory"],
-                d["period"], d["tax_year"], d["start_date"], d["end_date"],
-                d["domiciliation_date"], d["applies_to"], d["description"],
-                d["source_url"], d["is_active"],
+                d["id"],
+                d["model"],
+                d["model_name"],
+                d["territory"],
+                d["period"],
+                d["tax_year"],
+                d["start_date"],
+                d["end_date"],
+                d["domiciliation_date"],
+                d["applies_to"],
+                d["description"],
+                d["source_url"],
+                d["is_active"],
             ],
         )
         count += 1

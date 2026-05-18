@@ -14,6 +14,7 @@ Usage:
     python scripts/migrate_fix_deduction_spelling.py
     python scripts/migrate_fix_deduction_spelling.py --dry-run
 """
+
 import argparse
 import asyncio
 import json
@@ -156,7 +157,9 @@ async def migrate(dry_run: bool = False) -> None:
                     [new_name, new_desc, new_questions, row_id],
                 )
 
-    print(f"\nTotal: {updated} deductions {'would be ' if dry_run else ''}updated out of {len(result.rows)}")
+    print(
+        f"\nTotal: {updated} deductions {'would be ' if dry_run else ''}updated out of {len(result.rows)}"
+    )
 
     await db.disconnect()
     print("Done!")

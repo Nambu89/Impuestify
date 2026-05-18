@@ -6,6 +6,7 @@ the re-sync would flip him to 'canceled'. This script writes a fixed
 period_end one month from today and tags `stripe_customer_id` with a
 sentinel so the sync skips him.
 """
+
 import sys
 import asyncio
 from datetime import datetime, timedelta, timezone
@@ -44,9 +45,7 @@ async def main():
         [period_start, period_end, GABRIEL_USER_ID],
     )
 
-    res = await client.execute(
-        "SELECT * FROM subscriptions WHERE user_id = ?", [GABRIEL_USER_ID]
-    )
+    res = await client.execute("SELECT * FROM subscriptions WHERE user_id = ?", [GABRIEL_USER_ID])
     print("Gabriel subscription after grant:")
     for k, v in res.rows[0].items():
         print(f"  {k}: {v}")

@@ -8,6 +8,7 @@ POST /api/modelo-309/calculate
 
 Wrapper directo de `calculate_modelo_309_tool` — coherente con el tool LLM.
 """
+
 import logging
 from typing import Optional
 
@@ -29,10 +30,18 @@ class Modelo309Request(BaseModel):
     year: Optional[int] = Field(None, description="Ejercicio fiscal")
 
     # Adquisiciones intracomunitarias
-    base_intracomunitarias_21: float = Field(default=0.0, ge=0, description="Base adq. intracom. tipo general 21%")
-    base_intracomunitarias_10: float = Field(default=0.0, ge=0, description="Base adq. intracom. tipo reducido 10%")
-    base_intracomunitarias_4: float = Field(default=0.0, ge=0, description="Base adq. intracom. tipo superreducido 4%")
-    base_intracomunitarias_tabaco: float = Field(default=0.0, ge=0, description="Base adq. intracom. labores del tabaco (21% + RE 1,75%)")
+    base_intracomunitarias_21: float = Field(
+        default=0.0, ge=0, description="Base adq. intracom. tipo general 21%"
+    )
+    base_intracomunitarias_10: float = Field(
+        default=0.0, ge=0, description="Base adq. intracom. tipo reducido 10%"
+    )
+    base_intracomunitarias_4: float = Field(
+        default=0.0, ge=0, description="Base adq. intracom. tipo superreducido 4%"
+    )
+    base_intracomunitarias_tabaco: float = Field(
+        default=0.0, ge=0, description="Base adq. intracom. labores del tabaco (21% + RE 1,75%)"
+    )
 
     # Inversion del sujeto pasivo
     base_isp_21: float = Field(default=0.0, ge=0, description="Base ISP tipo general 21%")
@@ -91,11 +100,14 @@ async def calculate_modelo_309_endpoint(
             )
 
         import datetime as _dt
+
         year_used = body.year or _dt.datetime.now().year
 
         logger.info(
             "Modelo 309 endpoint: periodo=%s, year=%s, resultado=%s",
-            body.periodo, year_used, result.get("resultado", 0),
+            body.periodo,
+            year_used,
+            result.get("resultado", 0),
         )
 
         return Modelo309Response(

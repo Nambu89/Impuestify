@@ -1,7 +1,12 @@
 """Tests para el detector de fase procesal (12-state automaton)."""
+
 from datetime import datetime, timezone
 from app.models.defensia import (
-    Tributo, Fase, TipoDocumento, DocumentoEstructurado, ExpedienteEstructurado,
+    Tributo,
+    Fase,
+    TipoDocumento,
+    DocumentoEstructurado,
+    ExpedienteEstructurado,
 )
 from app.services.defensia_phase_detector import detect_fase
 
@@ -18,7 +23,10 @@ def _doc(tipo, fecha, id_="d"):
 
 def _exp(docs):
     return ExpedienteEstructurado(
-        id="e1", tributo=Tributo.IRPF, ccaa="Madrid", documentos=docs,
+        id="e1",
+        tributo=Tributo.IRPF,
+        ccaa="Madrid",
+        documentos=docs,
     )
 
 
@@ -30,30 +38,36 @@ def test_solo_requerimiento_fase_comprobacion_requerimiento():
 
 
 def test_propuesta_sin_alegaciones_fase_comprobacion_propuesta():
-    exp = _exp([
-        _doc(TipoDocumento.REQUERIMIENTO, "2025-11-03", "d1"),
-        _doc(TipoDocumento.PROPUESTA_LIQUIDACION, "2025-12-10", "d2"),
-    ])
+    exp = _exp(
+        [
+            _doc(TipoDocumento.REQUERIMIENTO, "2025-11-03", "d1"),
+            _doc(TipoDocumento.PROPUESTA_LIQUIDACION, "2025-12-10", "d2"),
+        ]
+    )
     fase, _ = detect_fase(exp)
     assert fase == Fase.COMPROBACION_PROPUESTA
 
 
 def test_liquidacion_dictada_fase_liquidacion_firme():
-    exp = _exp([
-        _doc(TipoDocumento.PROPUESTA_LIQUIDACION, "2025-12-10", "d1"),
-        _doc(TipoDocumento.ESCRITO_ALEGACIONES_USUARIO, "2025-12-22", "d2"),
-        _doc(TipoDocumento.LIQUIDACION_PROVISIONAL, "2026-01-30", "d3"),
-    ])
+    exp = _exp(
+        [
+            _doc(TipoDocumento.PROPUESTA_LIQUIDACION, "2025-12-10", "d1"),
+            _doc(TipoDocumento.ESCRITO_ALEGACIONES_USUARIO, "2025-12-22", "d2"),
+            _doc(TipoDocumento.LIQUIDACION_PROVISIONAL, "2026-01-30", "d3"),
+        ]
+    )
     fase, _ = detect_fase(exp)
     assert fase == Fase.LIQUIDACION_FIRME_PLAZO_RECURSO
 
 
 def test_reclamacion_tear_reciente_fase_tear_interpuesta():
     """TEAR interpuesto hace <30 días = fase activa TEAR_INTERPUESTA."""
-    exp = _exp([
-        _doc(TipoDocumento.LIQUIDACION_PROVISIONAL, "2026-01-30", "d1"),
-        _doc(TipoDocumento.ESCRITO_RECLAMACION_TEAR_USUARIO, "2026-02-01", "d2"),
-    ])
+    exp = _exp(
+        [
+            _doc(TipoDocumento.LIQUIDACION_PROVISIONAL, "2026-01-30", "d1"),
+            _doc(TipoDocumento.ESCRITO_RECLAMACION_TEAR_USUARIO, "2026-02-01", "d2"),
+        ]
+    )
     # hoy = 10 días después → dentro de la ventana reciente
     hoy = datetime(2026, 2, 11, tzinfo=timezone.utc)
     fase, _ = detect_fase(exp, hoy=hoy)
@@ -62,10 +76,12 @@ def test_reclamacion_tear_reciente_fase_tear_interpuesta():
 
 def test_reclamacion_tear_antigua_fase_tear_ampliacion_posible():
     """TEAR interpuesto hace >30 días = fase TEAR_AMPLIACION_POSIBLE."""
-    exp = _exp([
-        _doc(TipoDocumento.LIQUIDACION_PROVISIONAL, "2026-01-30", "d1"),
-        _doc(TipoDocumento.ESCRITO_RECLAMACION_TEAR_USUARIO, "2026-02-01", "d2"),
-    ])
+    exp = _exp(
+        [
+            _doc(TipoDocumento.LIQUIDACION_PROVISIONAL, "2026-01-30", "d1"),
+            _doc(TipoDocumento.ESCRITO_RECLAMACION_TEAR_USUARIO, "2026-02-01", "d2"),
+        ]
+    )
     # hoy = 60 días después → fuera de la ventana reciente
     hoy = datetime(2026, 4, 2, tzinfo=timezone.utc)
     fase, _ = detect_fase(exp, hoy=hoy)
@@ -73,10 +89,12 @@ def test_reclamacion_tear_antigua_fase_tear_ampliacion_posible():
 
 
 def test_acuerdo_sancion_fase_sancionador_impuesta():
-    exp = _exp([
-        _doc(TipoDocumento.ACUERDO_INICIO_SANCIONADOR, "2026-02-02", "d1"),
-        _doc(TipoDocumento.ACUERDO_IMPOSICION_SANCION, "2026-04-07", "d2"),
-    ])
+    exp = _exp(
+        [
+            _doc(TipoDocumento.ACUERDO_INICIO_SANCIONADOR, "2026-02-02", "d1"),
+            _doc(TipoDocumento.ACUERDO_IMPOSICION_SANCION, "2026-04-07", "d2"),
+        ]
+    )
     fase, _ = detect_fase(exp)
     assert fase == Fase.SANCIONADOR_IMPUESTA
 
@@ -120,6 +138,7 @@ def test_propuesta_sancion_mas_alegaciones_mantiene_propuesta_no_impuesta():
     en tramite como sancion firme.
     """
     from datetime import datetime as _dt, timezone as _tz
+
     exp = ExpedienteEstructurado(
         id="e-regresion-copilot-2",
         tributo=Tributo.IRPF,
@@ -149,6 +168,7 @@ def test_fecha_acto_naive_no_crashea_en_tear_reciente():
     TypeError 'naive vs aware'.
     """
     from datetime import datetime as _dt, timezone as _tz
+
     exp = ExpedienteEstructurado(
         id="e-regresion-copilot-3",
         tributo=Tributo.IRPF,

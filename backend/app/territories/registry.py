@@ -1,4 +1,5 @@
 """Territory plugin registry -- maps CCAA names to their TerritoryPlugin."""
+
 from typing import Dict, List
 from app.territories.base import TerritoryPlugin
 
@@ -17,6 +18,7 @@ def get_territory(ccaa: str) -> TerritoryPlugin:
         return _registry[ccaa]
     # Normalize via ccaa_constants before giving up
     from app.utils.ccaa_constants import normalize_ccaa
+
     canonical = normalize_ccaa(ccaa)
     if canonical in _registry:
         return _registry[canonical]

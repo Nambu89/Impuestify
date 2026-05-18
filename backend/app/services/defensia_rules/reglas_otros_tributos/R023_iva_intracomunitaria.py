@@ -36,6 +36,7 @@ resuelve el ``defensia_rag_verifier`` contra el corpus normativo. Por eso
 aqui no aparecen literales como "Art. 25 LIVA", "STJUE C-146/05" ni
 "Collee" — solo terminos semanticos descriptivos del supuesto.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -71,6 +72,7 @@ _TIPOS_LIQUIDACION = (
 # ---------------------------------------------------------------------------
 # Regla
 # ---------------------------------------------------------------------------
+
 
 @regla(
     id="R023",

@@ -29,6 +29,7 @@ Uso:
     # Solo Markdown files
     python scripts/ingest_documents.py --dir backend/data/knowledge_updates --type md
 """
+
 import asyncio
 import argparse
 import hashlib
@@ -48,11 +49,13 @@ sys.path.insert(0, str(backend_dir))
 project_root = backend_dir.parent
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 # Import TursoClient directly (bypass app.database.__init__ which
 # imports pydantic models requiring email_validator).
 import importlib.util
+
 _turso_spec = importlib.util.spec_from_file_location(
     "turso_client",
     backend_dir / "app" / "database" / "turso_client.py",
@@ -83,6 +86,7 @@ logger = logging.getLogger("ingest")
 # ─────────────────────────────────────────────
 # Azure Document Intelligence Extractor
 # ─────────────────────────────────────────────
+
 
 class AzureDocumentExtractor:
     """
@@ -159,7 +163,9 @@ class AzureDocumentExtractor:
             )
         except TypeError:
             # Fallback: older SDK versions may not support output_content_format
-            logger.warning("Markdown output not supported in this SDK version, falling back to standard extraction")
+            logger.warning(
+                "Markdown output not supported in this SDK version, falling back to standard extraction"
+            )
             poller = client.begin_analyze_document(
                 model_id="prebuilt-layout",
                 body=AnalyzeDocumentRequest(bytes_source=base64_content),
@@ -177,10 +183,12 @@ class AzureDocumentExtractor:
                 page_text = ""
                 if hasattr(page, "lines") and page.lines:
                     page_text = "\n".join(line.content for line in page.lines)
-                pages.append({
-                    "page_number": page.page_number,
-                    "content": page_text,
-                })
+                pages.append(
+                    {
+                        "page_number": page.page_number,
+                        "content": page_text,
+                    }
+                )
 
         # If we didn't get markdown content, build from pages
         if not full_content:
@@ -200,7 +208,9 @@ class AzureDocumentExtractor:
                         full_content += "|" + " --- |" * table.column_count + "\n"
 
                     for row_idx in sorted(rows.keys())[1:]:
-                        row_data = " | ".join(rows[row_idx].get(i, "") for i in range(table.column_count))
+                        row_data = " | ".join(
+                            rows[row_idx].get(i, "") for i in range(table.column_count)
+                        )
                         full_content += f"| {row_data} |\n"
 
         tables_count = len(result.tables) if hasattr(result, "tables") and result.tables else 0
@@ -218,6 +228,7 @@ class AzureDocumentExtractor:
 # OpenAI Embedding Generator
 # ─────────────────────────────────────────────
 
+
 class OpenAIEmbeddingGenerator:
     """
     Generate embeddings using OpenAI text-embedding-3-large (3072 dims).
@@ -226,7 +237,9 @@ class OpenAIEmbeddingGenerator:
     """
 
     MODEL = "text-embedding-3-large"
-    DIMENSIONS = int(os.environ.get("EMBEDDING_DIMENSIONS", 1536))  # 1536 = existing data, 3072 = max
+    DIMENSIONS = int(
+        os.environ.get("EMBEDDING_DIMENSIONS", 1536)
+    )  # 1536 = existing data, 3072 = max
     BATCH_SIZE = 20  # texts per API call
 
     def __init__(self):
@@ -235,6 +248,7 @@ class OpenAIEmbeddingGenerator:
             raise ValueError("OPENAI_API_KEY not configured in .env")
 
         from openai import OpenAI
+
         self._client = OpenAI(api_key=self.api_key)
 
     def generate(self, texts: List[str]) -> List[List[float]]:
@@ -281,28 +295,64 @@ class OpenAIEmbeddingGenerator:
 
 # Territory detection from file path
 TERRITORY_MAP = {
-    "bizkaia": "Bizkaia", "gipuzkoa": "Gipuzkoa", "araba": "Araba",
-    "alava": "Araba", "álava": "Araba", "navarra": "Navarra",
-    "aeat": "AEAT", "madrid": "Madrid", "cataluña": "Cataluña",
-    "cataluna": "Cataluña", "andalucia": "Andalucía", "andalucía": "Andalucía",
-    "valencia": "Valencia", "aragon": "Aragón", "aragón": "Aragón",
-    "galicia": "Galicia", "asturias": "Asturias", "baleares": "Baleares",
-    "canarias": "Canarias", "cantabria": "Cantabria", "extremadura": "Extremadura",
-    "murcia": "Murcia", "rioja": "La Rioja", "larioja": "La Rioja",
-    "castillalamancha": "Castilla-La Mancha", "castillayleon": "Castilla y León",
-    "castillayleon": "Castilla y León", "ceuta": "Ceuta", "melilla": "Melilla",
-    "estatal": "Estatal", "boe": "Estatal",
+    "bizkaia": "Bizkaia",
+    "gipuzkoa": "Gipuzkoa",
+    "araba": "Araba",
+    "alava": "Araba",
+    "álava": "Araba",
+    "navarra": "Navarra",
+    "aeat": "AEAT",
+    "madrid": "Madrid",
+    "cataluña": "Cataluña",
+    "cataluna": "Cataluña",
+    "andalucia": "Andalucía",
+    "andalucía": "Andalucía",
+    "valencia": "Valencia",
+    "aragon": "Aragón",
+    "aragón": "Aragón",
+    "galicia": "Galicia",
+    "asturias": "Asturias",
+    "baleares": "Baleares",
+    "canarias": "Canarias",
+    "cantabria": "Cantabria",
+    "extremadura": "Extremadura",
+    "murcia": "Murcia",
+    "rioja": "La Rioja",
+    "larioja": "La Rioja",
+    "castillalamancha": "Castilla-La Mancha",
+    "castillayleon": "Castilla y León",
+    "castillayleon": "Castilla y León",
+    "ceuta": "Ceuta",
+    "melilla": "Melilla",
+    "estatal": "Estatal",
+    "boe": "Estatal",
 }
 
 # Tax type detection from filename
 TAX_TYPE_MAP = {
-    "irpf": "IRPF", "renta": "IRPF", "iva": "IVA", "igic": "IGIC",
-    "sociedades": "IS", "patrimonio": "IP", "sucesiones": "ISD",
-    "donaciones": "ISD", "isd": "ISD", "itp": "ITP-AJD", "ajd": "ITP-AJD",
-    "retenciones": "RET", "calendario": "CAL", "factura": "FAC",
-    "verifactu": "FAC", "batuz": "BATUZ", "ticketbai": "BATUZ",
-    "lroe": "BATUZ", "autonomo": "AUTONOMOS", "autónomo": "AUTONOMOS",
-    "reta": "AUTONOMOS", "modulo": "MODULOS", "estimacion": "MODULOS",
+    "irpf": "IRPF",
+    "renta": "IRPF",
+    "iva": "IVA",
+    "igic": "IGIC",
+    "sociedades": "IS",
+    "patrimonio": "IP",
+    "sucesiones": "ISD",
+    "donaciones": "ISD",
+    "isd": "ISD",
+    "itp": "ITP-AJD",
+    "ajd": "ITP-AJD",
+    "retenciones": "RET",
+    "calendario": "CAL",
+    "factura": "FAC",
+    "verifactu": "FAC",
+    "batuz": "BATUZ",
+    "ticketbai": "BATUZ",
+    "lroe": "BATUZ",
+    "autonomo": "AUTONOMOS",
+    "autónomo": "AUTONOMOS",
+    "reta": "AUTONOMOS",
+    "modulo": "MODULOS",
+    "estimacion": "MODULOS",
 }
 
 
@@ -333,6 +383,7 @@ def extract_year(filename: str) -> Optional[int]:
 # ─────────────────────────────────────────────
 # Main Ingestion Pipeline
 # ─────────────────────────────────────────────
+
 
 async def ingest(
     directories: List[Path],
@@ -433,8 +484,9 @@ async def ingest(
         purge_docs = await db.execute("DELETE FROM documents WHERE processed = 0")
         purged_count = getattr(purge_docs, "rowcount", 0) or 0
         if purged_count > 0:
-            print(f"🧹 Purgados {purged_count} docs huérfanos (processed=0) "
-                  f"+ chunks asociados\n")
+            print(
+                f"🧹 Purgados {purged_count} docs huérfanos (processed=0) " f"+ chunks asociados\n"
+            )
 
         result = await db.execute("SELECT hash, filename FROM documents")
         for row in result.rows:
@@ -525,6 +577,7 @@ async def ingest(
             # Classify trust level by filepath/source (defense vs PoisonedRAG)
             try:
                 from scripts.backfill_trust_levels import classify_trust
+
                 trust_level = classify_trust(str(filepath), territory or "", filepath.name)
             except Exception:
                 trust_level = "unknown"
@@ -651,11 +704,13 @@ async def ingest(
     print(f"   Saltados:    {stats['skipped']}")
     print(f"   Errores:     {stats['errors']}")
     print(f"   Chunks:      {stats['chunks']}")
-    print(f"   Modelo:      {OpenAIEmbeddingGenerator.MODEL} ({OpenAIEmbeddingGenerator.DIMENSIONS}d)")
+    print(
+        f"   Modelo:      {OpenAIEmbeddingGenerator.MODEL} ({OpenAIEmbeddingGenerator.DIMENSIONS}d)"
+    )
     print("=" * 60)
 
     # ── Auto-rebuild FTS5 if new chunks were added ──
-    if stats['chunks'] > 0 and not dry_run:
+    if stats["chunks"] > 0 and not dry_run:
         print("\nReconstruyendo indice FTS5...")
         try:
             db2 = TursoClient()
@@ -672,7 +727,7 @@ async def ingest(
                 SELECT id, content FROM document_chunks
             """)
             r = await db2.execute("SELECT COUNT(*) as cnt FROM document_chunks")
-            count = r.rows[0]['cnt']
+            count = r.rows[0]["cnt"]
             print(f"FTS5 reconstruido: {count} chunks indexados")
             await db2.disconnect()
         except Exception as e:
@@ -725,20 +780,33 @@ async def _reembed_existing(dry_run: bool = False):
                 # Update existing
                 await db.execute(
                     "UPDATE embeddings SET embedding = ?, model_name = ?, dimensions = ? WHERE id = ?",
-                    [embedding_blob, OpenAIEmbeddingGenerator.MODEL, OpenAIEmbeddingGenerator.DIMENSIONS, chunk_row["emb_id"]],
+                    [
+                        embedding_blob,
+                        OpenAIEmbeddingGenerator.MODEL,
+                        OpenAIEmbeddingGenerator.DIMENSIONS,
+                        chunk_row["emb_id"],
+                    ],
                 )
             else:
                 # Insert new
                 emb_id = str(uuid.uuid4())
                 await db.execute(
                     "INSERT INTO embeddings (id, chunk_id, embedding, model_name, dimensions) VALUES (?, ?, ?, ?, ?)",
-                    [emb_id, chunk_row["id"], embedding_blob, OpenAIEmbeddingGenerator.MODEL, OpenAIEmbeddingGenerator.DIMENSIONS],
+                    [
+                        emb_id,
+                        chunk_row["id"],
+                        embedding_blob,
+                        OpenAIEmbeddingGenerator.MODEL,
+                        OpenAIEmbeddingGenerator.DIMENSIONS,
+                    ],
                 )
 
             updated += 1
 
     await db.disconnect()
-    print(f"\n✅ Re-embedding completado: {updated} chunks actualizados al modelo {OpenAIEmbeddingGenerator.MODEL}")
+    print(
+        f"\n✅ Re-embedding completado: {updated} chunks actualizados al modelo {OpenAIEmbeddingGenerator.MODEL}"
+    )
 
 
 def _discover_files(
@@ -800,8 +868,14 @@ Ejemplos:
     parser.add_argument("--dir", type=str, help="Directorio específico a procesar")
     parser.add_argument("--file", type=str, help="Archivo específico a procesar")
     parser.add_argument("--dry-run", action="store_true", help="Test sin escribir a DB")
-    parser.add_argument("--reembed", action="store_true", help="Re-generar embeddings con nuevo modelo")
-    parser.add_argument("--force", action="store_true", help="Eliminar todos los datos existentes y re-procesar desde cero")
+    parser.add_argument(
+        "--reembed", action="store_true", help="Re-generar embeddings con nuevo modelo"
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Eliminar todos los datos existentes y re-procesar desde cero",
+    )
     parser.add_argument(
         "--type",
         type=str,

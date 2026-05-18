@@ -20,6 +20,7 @@ from app.services.invoice_ocr_service import (
 # validate_nif
 # ---------------------------------------------------------------------------
 
+
 class TestValidateNif:
     """NIF/CIF/NIE validation tests."""
 
@@ -71,6 +72,7 @@ class TestValidateNif:
 # ---------------------------------------------------------------------------
 # validate_iva_math
 # ---------------------------------------------------------------------------
+
 
 class TestValidateIvaMath:
     """IVA arithmetic validation tests."""
@@ -148,6 +150,7 @@ class TestValidateIvaMath:
 # ---------------------------------------------------------------------------
 # validate_amount_magnitude
 # ---------------------------------------------------------------------------
+
 
 class TestValidateAmountMagnitude:
     """Thousand-separator misread detection tests."""
@@ -273,6 +276,7 @@ class TestValidateAmountMagnitude:
 # InvoiceOCRService.extract_from_bytes
 # ---------------------------------------------------------------------------
 
+
 class TestInvoiceOCRService:
     """Integration-style tests with mocked Gemini client."""
 
@@ -386,5 +390,7 @@ class TestInvoiceOCRService:
             await service.extract_from_bytes(b"data", "application/pdf")
 
             call_kwargs = mock_client.models.generate_content.call_args
-            assert call_kwargs.kwargs.get("model") == "gemini-2.5-flash" or \
-                   call_kwargs[1].get("model") == "gemini-2.5-flash"
+            assert (
+                call_kwargs.kwargs.get("model") == "gemini-2.5-flash"
+                or call_kwargs[1].get("model") == "gemini-2.5-flash"
+            )

@@ -36,6 +36,7 @@ es SEMANTICA y libre. La cita canonica (art. + ley) la resuelve el
 aparecen literales como "Art. 84 LIVA" ni "84.Uno.2.o" — solo terminos
 semanticos descriptivos del supuesto.
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (
@@ -89,6 +90,7 @@ _TIPOS_LIQUIDACION = (
 # Regla
 # ---------------------------------------------------------------------------
 
+
 @regla(
     id="R022",
     tributos=[Tributo.IVA.value],
@@ -100,10 +102,7 @@ _TIPOS_LIQUIDACION = (
         Fase.TEAR_INTERPUESTA.value,
         Fase.TEAR_AMPLIACION_POSIBLE.value,
     ],
-    descripcion=(
-        "Inversion del sujeto pasivo en IVA no aplicada cuando procede "
-        "legalmente"
-    ),
+    descripcion=("Inversion del sujeto pasivo en IVA no aplicada cuando procede " "legalmente"),
 )
 def evaluar(
     expediente: ExpedienteEstructurado,
@@ -141,12 +140,8 @@ def evaluar(
         # donde el contribuyente no se dio cuenta de que procedia ISP) o
         # bien AEAT liquida IVA no repercutido. Cualquiera de las dos
         # senales basta para disparar.
-        iva_repercutido = bool(
-            datos.get("iva_repercutido_por_transmitente", False)
-        )
-        aeat_liquida = bool(
-            datos.get("aeat_liquida_iva_no_repercutido", False)
-        )
+        iva_repercutido = bool(datos.get("iva_repercutido_por_transmitente", False))
+        aeat_liquida = bool(datos.get("aeat_liquida_iva_no_repercutido", False))
         if not (iva_repercutido or aeat_liquida):
             continue
 

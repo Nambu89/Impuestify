@@ -15,6 +15,7 @@ Casos de uso:
 NOTE: el Modelo 130 estatal (territorio común + Ceuta/Melilla) sigue
 disponible en `modelo_130_tool.py`. Este wrapper foral NO lo reemplaza.
 """
+
 from datetime import datetime
 from typing import Any, Dict, Optional
 import logging
@@ -107,15 +108,13 @@ MODELO_130_FORAL_TOOL = {
                 "volumen_operaciones_trimestre": {
                     "type": "number",
                     "description": (
-                        "Gipuzkoa régimen excepcional: volumen de operaciones "
-                        "del trimestre."
+                        "Gipuzkoa régimen excepcional: volumen de operaciones " "del trimestre."
                     ),
                 },
                 "retenciones_trimestre": {
                     "type": "number",
                     "description": (
-                        "Retenciones del TRIMESTRE. Necesario en Gipuzkoa "
-                        "excepcional y Araba."
+                        "Retenciones del TRIMESTRE. Necesario en Gipuzkoa " "excepcional y Araba."
                     ),
                 },
                 # Araba (datos trimestrales)
@@ -177,8 +176,7 @@ MODELO_130_FORAL_TOOL = {
                 "actividad_agraria": {
                     "type": "boolean",
                     "description": (
-                        "Gipuzkoa: True si actividad agrícola/ganadera. "
-                        "Dispensa ≥ 70 %."
+                        "Gipuzkoa: True si actividad agrícola/ganadera. " "Dispensa ≥ 70 %."
                     ),
                 },
                 "pct_retencion_anio_anterior": {
@@ -225,10 +223,7 @@ def _normalize_territory(territory: str) -> str:
     # Strip accents (Álava → alava, etc.)
     import unicodedata
 
-    key = "".join(
-        c for c in unicodedata.normalize("NFD", key)
-        if unicodedata.category(c) != "Mn"
-    )
+    key = "".join(c for c in unicodedata.normalize("NFD", key) if unicodedata.category(c) != "Mn")
     if key not in _TERRITORY_ALIASES:
         raise ValueError(
             f"Territorio '{territory}' no soportado por el wrapper foral. "
@@ -357,9 +352,7 @@ async def calculate_modelo_130_foral_tool(
     if restricted_mode:
         from app.security.content_restriction import get_autonomo_block_response
 
-        logger.warning(
-            "calculate_modelo_130_foral called in restricted_mode — blocking"
-        )
+        logger.warning("calculate_modelo_130_foral called in restricted_mode — blocking")
         return {
             "success": False,
             "error": "restricted",
@@ -388,8 +381,11 @@ async def calculate_modelo_130_foral_tool(
         # ---------------------------------------------------------------
         # Gipuzkoa: dispensa por retención (Norma Foral)
         # ---------------------------------------------------------------
-        if territory_key == "gipuzkoa" and (es_profesional or actividad_agraria) \
-                and pct_retencion_anio_anterior > 0:
+        if (
+            territory_key == "gipuzkoa"
+            and (es_profesional or actividad_agraria)
+            and pct_retencion_anio_anterior > 0
+        ):
             dispensado = Modelo130GipuzkoaCalculator.is_dispensado_por_retencion(
                 es_profesional=es_profesional,
                 actividad_agraria=actividad_agraria,

@@ -13,6 +13,7 @@ Usage:
 
 Safe to run multiple times. Already-existing columns produce a WARNING, not an error.
 """
+
 import sys
 import os
 import asyncio
@@ -24,6 +25,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
 sys.path.insert(0, BACKEND_ROOT)
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from app.database.turso_client import TursoClient

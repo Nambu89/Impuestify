@@ -9,6 +9,7 @@ Designed for:
 - Idempotency via notification_log UNIQUE(user_id, deadline_id, alert_type)
 - Auto-cleanup of expired subscriptions (HTTP 410)
 """
+
 import json
 import uuid
 import logging
@@ -30,12 +31,15 @@ ALERT_DAY_OPTIONS = {15, 5, 1}
 def _pywebpush_available() -> bool:
     try:
         import pywebpush  # noqa: F401
+
         return True
     except ImportError:
         return False
 
 
-def _build_payload(title: str, body: str, url: str = "/calendario", tag: str = "fiscal-deadline") -> str:
+def _build_payload(
+    title: str, body: str, url: str = "/calendario", tag: str = "fiscal-deadline"
+) -> str:
     """Build JSON payload string for Web Push (max 4KB)."""
     payload = {
         "title": title,
@@ -199,7 +203,9 @@ async def send_deadline_alerts(db: Optional[TursoClient] = None) -> dict:
             user_id = sub["user_id"]
             alert_days_str = sub.get("alert_days") or "15,5,1"
             try:
-                user_alert_days = {int(d.strip()) for d in alert_days_str.split(",") if d.strip().isdigit()}
+                user_alert_days = {
+                    int(d.strip()) for d in alert_days_str.split(",") if d.strip().isdigit()
+                }
             except Exception:
                 user_alert_days = {15, 5, 1}
 
@@ -501,8 +507,7 @@ async def send_deadline_email_alerts(db: Optional[TursoClient] = None) -> dict:
                 )
             else:
                 subject = (
-                    f"Recordatorio: {len(new_deadlines)} plazos fiscales "
-                    f"vencen el {target_str}"
+                    f"Recordatorio: {len(new_deadlines)} plazos fiscales " f"vencen el {target_str}"
                 )
 
             html = _build_deadline_email_html(new_deadlines, frontend_url)
@@ -546,9 +551,7 @@ async def send_deadline_email_alerts(db: Optional[TursoClient] = None) -> dict:
                     stats["errors"] += 1
 
             stats["emails_sent"] += 1
-            logger.info(
-                f"Email reminder sent to {user_email} for {len(new_deadlines)} deadline(s)"
-            )
+            logger.info(f"Email reminder sent to {user_email} for {len(new_deadlines)} deadline(s)")
 
     except Exception as exc:
         logger.error(f"send_deadline_email_alerts failed: {exc}")

@@ -3,6 +3,7 @@ Tests for MFA (Multi-Factor Authentication) — TOTP-based 2FA.
 
 Covers: setup, verify, disable, status, login flow with MFA, backup codes.
 """
+
 import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -12,9 +13,11 @@ import pyotp
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_token_data(user_id="user-mfa-test", email="mfa@test.com"):
     """Build a mock TokenData."""
     from app.auth.jwt_handler import TokenData
+
     return TokenData(user_id=user_id, email=email)
 
 
@@ -48,6 +51,7 @@ def _make_access():
 # test_setup_mfa_generates_qr
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_setup_mfa_generates_qr():
     """POST /api/auth/mfa/setup should generate QR code, secret, and backup codes."""
@@ -56,9 +60,10 @@ async def test_setup_mfa_generates_qr():
     token_data = _make_token_data()
     user = _make_user()
 
-    with patch("app.routers.mfa.get_db_client") as mock_db, \
-         patch("app.routers.mfa.user_service") as mock_us:
-
+    with (
+        patch("app.routers.mfa.get_db_client") as mock_db,
+        patch("app.routers.mfa.user_service") as mock_us,
+    ):
         db = AsyncMock()
         # First call: check if MFA already enabled — not found
         db.execute.return_value = _make_db_result([])
@@ -80,6 +85,7 @@ async def test_setup_mfa_generates_qr():
 # test_verify_mfa_with_valid_code
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_verify_mfa_with_valid_code():
     """POST /api/auth/mfa/verify should enable MFA when given a valid TOTP code."""
@@ -92,11 +98,15 @@ async def test_verify_mfa_with_valid_code():
 
     with patch("app.routers.mfa.get_db_client") as mock_db:
         db = AsyncMock()
-        db.execute.return_value = _make_db_result([{
-            "totp_secret": secret,
-            "is_enabled": 0,
-            "backup_codes": "[]",
-        }])
+        db.execute.return_value = _make_db_result(
+            [
+                {
+                    "totp_secret": secret,
+                    "is_enabled": 0,
+                    "backup_codes": "[]",
+                }
+            ]
+        )
         mock_db.return_value = db
 
         req = MFAVerifyRequest(code=valid_code)
@@ -112,6 +122,7 @@ async def test_verify_mfa_with_valid_code():
 # test_verify_mfa_with_invalid_code
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_verify_mfa_with_invalid_code():
     """POST /api/auth/mfa/verify should reject an invalid TOTP code."""
@@ -123,11 +134,15 @@ async def test_verify_mfa_with_invalid_code():
 
     with patch("app.routers.mfa.get_db_client") as mock_db:
         db = AsyncMock()
-        db.execute.return_value = _make_db_result([{
-            "totp_secret": secret,
-            "is_enabled": 0,
-            "backup_codes": "[]",
-        }])
+        db.execute.return_value = _make_db_result(
+            [
+                {
+                    "totp_secret": secret,
+                    "is_enabled": 0,
+                    "backup_codes": "[]",
+                }
+            ]
+        )
         mock_db.return_value = db
 
         req = MFAVerifyRequest(code="000000")
@@ -143,6 +158,7 @@ async def test_verify_mfa_with_invalid_code():
 # test_login_with_mfa_returns_mfa_required
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_login_with_mfa_returns_mfa_required():
     """Login should return mfa_required=True when user has MFA enabled."""
@@ -157,11 +173,12 @@ async def test_login_with_mfa_returns_mfa_required():
     mock_request.url = MagicMock()
     mock_request.url.path = "/api/auth/login"
 
-    with patch("app.routers.auth.user_service") as mock_us, \
-         patch("app.routers.auth.get_db_client") as mock_db, \
-         patch("app.routers.auth.verify_turnstile", return_value=True), \
-         patch("app.routers.auth.settings") as mock_settings:
-
+    with (
+        patch("app.routers.auth.user_service") as mock_us,
+        patch("app.routers.auth.get_db_client") as mock_db,
+        patch("app.routers.auth.verify_turnstile", return_value=True),
+        patch("app.routers.auth.settings") as mock_settings,
+    ):
         mock_settings.TURNSTILE_SECRET_KEY = None
         mock_us.authenticate_user = AsyncMock(return_value=user)
 
@@ -181,6 +198,7 @@ async def test_login_with_mfa_returns_mfa_required():
 # test_validate_mfa_with_valid_code_returns_jwt
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_validate_mfa_with_valid_code_returns_jwt():
     """POST /api/auth/mfa/validate should return full JWT on valid TOTP code."""
@@ -193,16 +211,21 @@ async def test_validate_mfa_with_valid_code_returns_jwt():
     valid_code = totp.now()
     mfa_token = create_mfa_token(user.id, user.email)
 
-    with patch("app.routers.mfa.get_db_client") as mock_db, \
-         patch("app.routers.mfa.user_service") as mock_us, \
-         patch("app.routers.mfa.get_subscription_service") as mock_sub:
-
+    with (
+        patch("app.routers.mfa.get_db_client") as mock_db,
+        patch("app.routers.mfa.user_service") as mock_us,
+        patch("app.routers.mfa.get_subscription_service") as mock_sub,
+    ):
         db = AsyncMock()
-        db.execute.return_value = _make_db_result([{
-            "totp_secret": secret,
-            "is_enabled": 1,
-            "backup_codes": "[]",
-        }])
+        db.execute.return_value = _make_db_result(
+            [
+                {
+                    "totp_secret": secret,
+                    "is_enabled": 1,
+                    "backup_codes": "[]",
+                }
+            ]
+        )
         mock_db.return_value = db
         mock_us.get_user_by_id = AsyncMock(return_value=user)
 
@@ -226,6 +249,7 @@ async def test_validate_mfa_with_valid_code_returns_jwt():
 # test_validate_mfa_with_backup_code
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_validate_mfa_with_backup_code():
     """POST /api/auth/mfa/validate should accept a valid backup code."""
@@ -241,16 +265,21 @@ async def test_validate_mfa_with_backup_code():
 
     mfa_token = create_mfa_token(user.id, user.email)
 
-    with patch("app.routers.mfa.get_db_client") as mock_db, \
-         patch("app.routers.mfa.user_service") as mock_us, \
-         patch("app.routers.mfa.get_subscription_service") as mock_sub:
-
+    with (
+        patch("app.routers.mfa.get_db_client") as mock_db,
+        patch("app.routers.mfa.user_service") as mock_us,
+        patch("app.routers.mfa.get_subscription_service") as mock_sub,
+    ):
         db = AsyncMock()
-        db.execute.return_value = _make_db_result([{
-            "totp_secret": secret,
-            "is_enabled": 1,
-            "backup_codes": hashed_codes_json,
-        }])
+        db.execute.return_value = _make_db_result(
+            [
+                {
+                    "totp_secret": secret,
+                    "is_enabled": 1,
+                    "backup_codes": hashed_codes_json,
+                }
+            ]
+        )
         mock_db.return_value = db
         mock_us.get_user_by_id = AsyncMock(return_value=user)
 
@@ -268,8 +297,7 @@ async def test_validate_mfa_with_backup_code():
     assert resp["user"]["id"] == user.id
     # Verify that the backup code was marked as used (UPDATE call)
     update_calls = [
-        c for c in db.execute.call_args_list
-        if "UPDATE user_mfa SET backup_codes" in str(c)
+        c for c in db.execute.call_args_list if "UPDATE user_mfa SET backup_codes" in str(c)
     ]
     assert len(update_calls) == 1
 
@@ -277,6 +305,7 @@ async def test_validate_mfa_with_backup_code():
 # ---------------------------------------------------------------------------
 # test_disable_mfa
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_disable_mfa():
@@ -290,11 +319,15 @@ async def test_disable_mfa():
 
     with patch("app.routers.mfa.get_db_client") as mock_db:
         db = AsyncMock()
-        db.execute.return_value = _make_db_result([{
-            "totp_secret": secret,
-            "is_enabled": 1,
-            "backup_codes": "[]",
-        }])
+        db.execute.return_value = _make_db_result(
+            [
+                {
+                    "totp_secret": secret,
+                    "is_enabled": 1,
+                    "backup_codes": "[]",
+                }
+            ]
+        )
         mock_db.return_value = db
 
         req = MFADisableRequest(code=valid_code)
@@ -309,6 +342,7 @@ async def test_disable_mfa():
 # ---------------------------------------------------------------------------
 # test_mfa_status
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_mfa_status_enabled():

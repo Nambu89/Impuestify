@@ -6,6 +6,7 @@ Test completo del sistema RAG de TaxIA.
 3. Pasa el contexto al LLM
 4. Devuelve respuesta con fuentes
 """
+
 import asyncio
 import json
 import os
@@ -16,7 +17,8 @@ from typing import List, Dict, Any
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
-env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
 load_dotenv(env_path)
 
 # sentence_transformers pulls in bs4 which may be a mock in unit-test environments,
@@ -24,6 +26,7 @@ load_dotenv(env_path)
 # succeeds even when the package or its deps are absent.
 try:
     from sentence_transformers import SentenceTransformer
+
     _SENTENCE_TRANSFORMERS_AVAILABLE = True
 except (ImportError, ValueError):
     SentenceTransformer = None  # type: ignore
@@ -86,7 +89,7 @@ class RAGSearch:
         for row in result.rows:
             try:
                 # Parsear embedding JSON - rows are dicts
-                stored_embedding = json.loads(row['embedding'])
+                stored_embedding = json.loads(row["embedding"])
 
                 # Calcular cosine similarity
                 query_vec = np.array(query_embedding)
@@ -96,15 +99,17 @@ class RAGSearch:
                     np.linalg.norm(query_vec) * np.linalg.norm(stored_vec)
                 )
 
-                candidates.append({
-                    "chunk_id": row['chunk_id'],
-                    "content": row['content'],
-                    "page_number": row['page_number'],
-                    "filename": row['filename'],
-                    "title": row['title'],
-                    "document_type": row['document_type'],
-                    "similarity": float(similarity)
-                })
+                candidates.append(
+                    {
+                        "chunk_id": row["chunk_id"],
+                        "content": row["content"],
+                        "page_number": row["page_number"],
+                        "filename": row["filename"],
+                        "title": row["title"],
+                        "document_type": row["document_type"],
+                        "similarity": float(similarity),
+                    }
+                )
             except Exception:
                 continue
 
@@ -144,10 +149,12 @@ async def _run_rag_test(query: str):
         print()
 
     # 2. Construir contexto
-    context = "\n\n---\n\n".join([
-        f"**Documento:** {r['filename']} (Pagina {r['page_number']})\n\n{r['content']}"
-        for r in results
-    ])
+    context = "\n\n---\n\n".join(
+        [
+            f"**Documento:** {r['filename']} (Pagina {r['page_number']})\n\n{r['content']}"
+            for r in results
+        ]
+    )
 
     sources = [
         {"filename": r["filename"], "page": r["page_number"], "similarity": r["similarity"]}
@@ -177,7 +184,7 @@ async def _run_rag_test(query: str):
 @pytest.mark.asyncio
 @pytest.mark.skipif(
     not os.environ.get("TURSO_DATABASE_URL") or not _SENTENCE_TRANSFORMERS_AVAILABLE,
-    reason="Requires TURSO_DATABASE_URL and sentence_transformers (integration test)"
+    reason="Requires TURSO_DATABASE_URL and sentence_transformers (integration test)",
 )
 async def test_rag():
     """Integration test: full RAG pipeline (needs Turso credentials)."""

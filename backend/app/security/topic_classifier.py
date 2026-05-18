@@ -33,6 +33,7 @@ class TopicContext:
       - recent_user_turns: previous user messages in the same thread
         (already passed prompt-injection layer 2/3, capped to 200 chars)
     """
+
     workspace_name: Optional[str] = None
     workspace_doc_count: int = 0
     workspace_file_types: List[str] = field(default_factory=list)
@@ -42,9 +43,9 @@ class TopicContext:
 @dataclass
 class TopicCheckResult:
     is_fiscal: bool
-    confidence: float          # 0..1
-    reason: str                # short explanation in Spanish
-    classifier: str            # which classifier was used (groq | fallback)
+    confidence: float  # 0..1
+    reason: str  # short explanation in Spanish
+    classifier: str  # which classifier was used (groq | fallback)
     error: Optional[str] = None
 
 
@@ -284,7 +285,7 @@ def _build_user_message(question: str, ctx: Optional[TopicContext]) -> str:
         if ctx.workspace_file_types:
             types = f" ({'/'.join(t for t in ctx.workspace_file_types[:4] if t)})"
         lines.append(
-            f"- Workspace activo: \"{ctx.workspace_name}\" "
+            f'- Workspace activo: "{ctx.workspace_name}" '
             f"({ctx.workspace_doc_count} archivos{types})"
         )
     for i, turn in enumerate((ctx.recent_user_turns or [])[:3], start=1):
@@ -297,7 +298,9 @@ def _build_user_message(question: str, ctx: Optional[TopicContext]) -> str:
 
 
 @lru_cache(maxsize=1024)
-def _cached_check(question_hash: str, ctx_hash: str, question: str, _ctx_repr: str) -> TopicCheckResult:
+def _cached_check(
+    question_hash: str, ctx_hash: str, question: str, _ctx_repr: str
+) -> TopicCheckResult:
     """LRU cache keyed by (question_hash, ctx_hash).
 
     The classifier is invoked through the global ``fiscal_topic_classifier``.
@@ -334,10 +337,13 @@ def check_fiscal_topic(question: str, context: Optional[TopicContext] = None) ->
     if context is None:
         ctx_repr = ""
     else:
-        ctx_repr = json.dumps({
-            "workspace_name": context.workspace_name,
-            "workspace_doc_count": context.workspace_doc_count,
-            "workspace_file_types": list(context.workspace_file_types or []),
-            "recent_user_turns": list(context.recent_user_turns or [])[:3],
-        }, ensure_ascii=False)
+        ctx_repr = json.dumps(
+            {
+                "workspace_name": context.workspace_name,
+                "workspace_doc_count": context.workspace_doc_count,
+                "workspace_file_types": list(context.workspace_file_types or []),
+                "recent_user_turns": list(context.recent_user_turns or [])[:3],
+            },
+            ensure_ascii=False,
+        )
     return _cached_check(qh, ch, question, ctx_repr)

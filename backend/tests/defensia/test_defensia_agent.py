@@ -12,6 +12,7 @@ Cubre:
 No hitea OpenAI real: usamos AsyncMock en AsyncOpenAI client + mocks
 monkeypatch sobre guardrails_system.validate_input.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -148,9 +149,7 @@ async def test_chat_stream_pasa_guardrails():
         "app.agents.defensia_agent.guardrails_system.validate_input",
         return_value=_make_guardrails_result(is_safe=True, risk_level="none"),
     ):
-        result = await _collect(
-            agent.chat_stream("Hola, tengo un requerimiento de Hacienda")
-        )
+        result = await _collect(agent.chat_stream("Hola, tengo un requerimiento de Hacienda"))
 
     assert result == "respuesta ok"
     assert create_mock.call_count == 1

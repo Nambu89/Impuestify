@@ -14,9 +14,9 @@ PHARMACY_ACTIVITY = (
 # Recargo de Equivalencia rates (Art. 154-163 LIVA)
 # Key = IVA rate (%), Value = RE rate (%)
 RE_RATES = {
-    21: 5.2,   # IVA general 21% -> RE 5.2%
-    10: 1.4,   # IVA reducido 10% -> RE 1.4%
-    4: 0.5,    # IVA superreducido 4% -> RE 0.5%
+    21: 5.2,  # IVA general 21% -> RE 5.2%
+    10: 1.4,  # IVA reducido 10% -> RE 1.4%
+    4: 0.5,  # IVA superreducido 4% -> RE 0.5%
 }
 
 # Pharmacy-specific deductions

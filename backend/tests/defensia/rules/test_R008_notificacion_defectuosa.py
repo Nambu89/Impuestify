@@ -21,6 +21,7 @@ La regla NO hardcodea la cita canonica — emite una cita SEMANTICA que
 describe el defecto formal, y el verificador RAG la traduce al texto
 normativo exacto contra el corpus indexado.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -55,6 +56,7 @@ def _registrar_r008(_aislar_registry):  # noqa: ARG001 — fuerza orden
     from app.services.defensia_rules.reglas_procedimentales import (
         R008_notificacion_defectuosa,
     )
+
     reset_registry()
     importlib.reload(R008_notificacion_defectuosa)
     yield
@@ -63,6 +65,7 @@ def _registrar_r008(_aislar_registry):  # noqa: ARG001 — fuerza orden
 # ---------------------------------------------------------------------------
 # Positivo 1: DEHu sin puesta a disposicion efectiva
 # ---------------------------------------------------------------------------
+
 
 def test_R008_dispara_cuando_dehu_sin_puesta_disposicion_efectiva(
     build_exp, build_doc, build_brief
@@ -83,9 +86,7 @@ def test_R008_dispara_cuando_dehu_sin_puesta_disposicion_efectiva(
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=[liquidacion],
     )
-    brief = build_brief(
-        "Me ha llegado una liquidacion por DEHu que nunca pude leer"
-    )
+    brief = build_brief("Me ha llegado una liquidacion por DEHu que nunca pude leer")
 
     candidatos = evaluar(exp, brief)
 
@@ -100,12 +101,10 @@ def test_R008_dispara_cuando_dehu_sin_puesta_disposicion_efectiva(
 
     cita = arg.cita_normativa_propuesta
     # Cita SEMANTICA — nunca articulo concreto hardcoded.
-    assert "notificacion" in cita.lower(), (
-        f"cita semantica debe mencionar notificacion, got: {cita}"
-    )
-    assert "defectuosa" in cita.lower(), (
-        f"cita semantica debe mencionar defecto, got: {cita}"
-    )
+    assert (
+        "notificacion" in cita.lower()
+    ), f"cita semantica debe mencionar notificacion, got: {cita}"
+    assert "defectuosa" in cita.lower(), f"cita semantica debe mencionar defecto, got: {cita}"
     # No debe contener referencias canonicas literales.
     assert "109" not in cita, f"cita no puede hardcodear articulo 109: {cita}"
     assert "Ley 39/2015" not in cita, f"cita no puede hardcodear ley: {cita}"
@@ -120,9 +119,8 @@ def test_R008_dispara_cuando_dehu_sin_puesta_disposicion_efectiva(
 # Positivo 2: Postal con un solo intento y sin acuse
 # ---------------------------------------------------------------------------
 
-def test_R008_dispara_cuando_postal_sin_segundo_intento(
-    build_exp, build_doc, build_brief
-):
+
+def test_R008_dispara_cuando_postal_sin_segundo_intento(build_exp, build_doc, build_brief):
     """Notificacion por correo postal con un solo intento fallido y sin acuse."""
     liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -140,16 +138,12 @@ def test_R008_dispara_cuando_postal_sin_segundo_intento(
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=[liquidacion],
     )
-    brief = build_brief(
-        "Dicen que el cartero vino una vez y ya dieron por notificado"
-    )
+    brief = build_brief("Dicen que el cartero vino una vez y ya dieron por notificado")
 
     candidatos = evaluar(exp, brief)
 
     r008 = [c for c in candidatos if c.regla_id == "R008"]
-    assert len(r008) == 1, (
-        f"R008 deberia disparar con postal+1 intento+sin acuse, got {r008}"
-    )
+    assert len(r008) == 1, f"R008 deberia disparar con postal+1 intento+sin acuse, got {r008}"
 
     arg = r008[0]
     datos = arg.datos_disparo
@@ -162,9 +156,8 @@ def test_R008_dispara_cuando_postal_sin_segundo_intento(
 # Positivo 3: Domicilio que no coincide con el declarado
 # ---------------------------------------------------------------------------
 
-def test_R008_dispara_cuando_domicilio_incorrecto(
-    build_exp, build_doc, build_brief
-):
+
+def test_R008_dispara_cuando_domicilio_incorrecto(build_exp, build_doc, build_brief):
     """Notificacion practicada en domicilio no coincidente con el del Censo."""
     liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -181,16 +174,13 @@ def test_R008_dispara_cuando_domicilio_incorrecto(
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=[liquidacion],
     )
-    brief = build_brief(
-        "La carta la mandaron a mi antiguo piso, no donde vivo ahora"
-    )
+    brief = build_brief("La carta la mandaron a mi antiguo piso, no donde vivo ahora")
 
     candidatos = evaluar(exp, brief)
 
     r008 = [c for c in candidatos if c.regla_id == "R008"]
     assert len(r008) == 1, (
-        f"R008 deberia disparar cuando domicilio no coincide con registro, "
-        f"got {r008}"
+        f"R008 deberia disparar cuando domicilio no coincide con registro, " f"got {r008}"
     )
 
     datos = r008[0].datos_disparo
@@ -202,9 +192,8 @@ def test_R008_dispara_cuando_domicilio_incorrecto(
 # Negativo: notificacion valida (canal + puesta disposicion + acuse OK)
 # ---------------------------------------------------------------------------
 
-def test_R008_no_dispara_cuando_notificacion_valida(
-    build_exp, build_doc, build_brief
-):
+
+def test_R008_no_dispara_cuando_notificacion_valida(build_exp, build_doc, build_brief):
     """Canal valido, puesta a disposicion efectiva, acuse correcto y domicilio OK."""
     liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -228,20 +217,17 @@ def test_R008_no_dispara_cuando_notificacion_valida(
     candidatos = evaluar(exp, brief)
 
     r008 = [c for c in candidatos if c.regla_id == "R008"]
-    assert r008 == [], (
-        f"R008 NO debe disparar cuando la notificacion es valida, got {r008}"
-    )
+    assert r008 == [], f"R008 NO debe disparar cuando la notificacion es valida, got {r008}"
 
 
 # ---------------------------------------------------------------------------
 # Sanity check del registry
 # ---------------------------------------------------------------------------
 
+
 def test_R008_registrada_en_registry():
     """Al importar el modulo, R008 queda registrada con metadata correcta."""
-    assert "R008" in REGISTRY, (
-        f"R008 no registrada. Keys: {list(REGISTRY.keys())}"
-    )
+    assert "R008" in REGISTRY, f"R008 no registrada. Keys: {list(REGISTRY.keys())}"
     info = REGISTRY["R008"]
 
     # Tributos: los 5 cubiertos por DefensIA v1.

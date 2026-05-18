@@ -23,6 +23,7 @@ Usage:
     python scripts/seed_isd_knowledge.py
     python scripts/seed_isd_knowledge.py --dry-run
 """
+
 import argparse
 import asyncio
 import hashlib
@@ -59,7 +60,6 @@ ISD_DOCUMENT = {
 # ---------------------------------------------------------------------------
 
 ISD_CHUNKS = [
-
     # ------------------------------------------------------------------
     # 1. Introduccion y ambito de aplicacion
     # ------------------------------------------------------------------
@@ -86,7 +86,6 @@ ISD_CHUNKS = [
             "source": "Ley 29/1987",
         },
     },
-
     # ------------------------------------------------------------------
     # 2. Tarifa estatal — Art. 21 Ley 29/1987
     # ------------------------------------------------------------------
@@ -123,7 +122,6 @@ ISD_CHUNKS = [
             "source": "Art. 21 Ley 29/1987",
         },
     },
-
     # ------------------------------------------------------------------
     # 3. Reducciones estatales por parentesco — Art. 20.2.a) Ley 29/1987
     # ------------------------------------------------------------------
@@ -155,7 +153,6 @@ ISD_CHUNKS = [
             "source": "Art. 20.2.a) Ley 29/1987",
         },
     },
-
     # ------------------------------------------------------------------
     # 4. Coeficientes multiplicadores — Art. 22 Ley 29/1987
     # ------------------------------------------------------------------
@@ -184,7 +181,6 @@ ISD_CHUNKS = [
             "source": "Art. 22 Ley 29/1987",
         },
     },
-
     # ------------------------------------------------------------------
     # 5. Reducciones especiales: discapacidad
     # ------------------------------------------------------------------
@@ -208,7 +204,6 @@ ISD_CHUNKS = [
             "source": "Art. 20.2.a) Ley 29/1987",
         },
     },
-
     # ------------------------------------------------------------------
     # 6. Reduccion vivienda habitual y empresa familiar
     # ------------------------------------------------------------------
@@ -238,7 +233,6 @@ ISD_CHUNKS = [
             "source": "Art. 20.2.c) Ley 29/1987",
         },
     },
-
     # ------------------------------------------------------------------
     # 7. Plazos de presentacion
     # ------------------------------------------------------------------
@@ -270,7 +264,6 @@ ISD_CHUNKS = [
             "source": "Arts. 67-68 RISD (RD 1629/1991)",
         },
     },
-
     # ------------------------------------------------------------------
     # 8. CCAA Madrid
     # ------------------------------------------------------------------
@@ -299,7 +292,6 @@ ISD_CHUNKS = [
             "source": "Art. 22 DL 1/2010 Madrid",
         },
     },
-
     # ------------------------------------------------------------------
     # 9. CCAA Andalucia
     # ------------------------------------------------------------------
@@ -326,7 +318,6 @@ ISD_CHUNKS = [
             "source": "Art. 22 quinquies DL 1/2018 Andalucia",
         },
     },
-
     # ------------------------------------------------------------------
     # 10. CCAA Valencia
     # ------------------------------------------------------------------
@@ -353,7 +344,6 @@ ISD_CHUNKS = [
             "source": "Ley 13/1997 Valencia, mod. Ley 8/2022",
         },
     },
-
     # ------------------------------------------------------------------
     # 11. CCAA Aragon
     # ------------------------------------------------------------------
@@ -379,7 +369,6 @@ ISD_CHUNKS = [
             "source": "DL 1/2005 Aragon, mod. Ley 10/2021",
         },
     },
-
     # ------------------------------------------------------------------
     # 12. CCAA Cataluna
     # ------------------------------------------------------------------
@@ -409,7 +398,6 @@ ISD_CHUNKS = [
             "source": "Ley 19/2010 Cataluna",
         },
     },
-
     # ------------------------------------------------------------------
     # 13. Territorios Forales: Araba, Bizkaia, Gipuzkoa
     # ------------------------------------------------------------------
@@ -439,7 +427,6 @@ ISD_CHUNKS = [
             "source": "NF 11/2005 Araba / NF 4/2015 Bizkaia / NF 3/1990 Gipuzkoa",
         },
     },
-
     # ------------------------------------------------------------------
     # 14. Navarra
     # ------------------------------------------------------------------
@@ -469,7 +456,6 @@ ISD_CHUNKS = [
             "source": "Ley Foral 11/2022 Navarra",
         },
     },
-
     # ------------------------------------------------------------------
     # 15. Canarias
     # ------------------------------------------------------------------
@@ -497,7 +483,6 @@ ISD_CHUNKS = [
             "source": "DL 1/2009 Canarias",
         },
     },
-
     # ------------------------------------------------------------------
     # 16. Ceuta y Melilla
     # ------------------------------------------------------------------
@@ -526,13 +511,12 @@ ISD_CHUNKS = [
             "source": "DA 14.a Ley 50/1998",
         },
     },
-
     # ------------------------------------------------------------------
     # 17. CCAA sin bonificacion relevante o con cargas altas
     # ------------------------------------------------------------------
     {
         "title": "ISD — CCAA sin bonificaciones destacadas: Castilla-La Mancha, Extremadura, "
-                 "Murcia, La Rioja, Cantabria, Asturias",
+        "Murcia, La Rioja, Cantabria, Asturias",
         "content": (
             "Varias Comunidades Autonomas no han aprobado bonificaciones equivalentes a las de "
             "Madrid, Andalucia o Canarias. En estas CCAA, las herencias y donaciones entre "
@@ -560,7 +544,6 @@ ISD_CHUNKS = [
             "source": "Normativas autonomicas vigentes 2025",
         },
     },
-
     # ------------------------------------------------------------------
     # 18. Diferencias clave: sucesion vs donacion
     # ------------------------------------------------------------------
@@ -600,7 +583,6 @@ ISD_CHUNKS = [
             "source": "Ley 29/1987 Arts. 3, 5, 24, 67 RISD",
         },
     },
-
     # ------------------------------------------------------------------
     # 19. Preguntas frecuentes y casos practicos
     # ------------------------------------------------------------------
@@ -643,6 +625,7 @@ ISD_CHUNKS = [
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _content_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
@@ -655,6 +638,7 @@ def _doc_hash(title: str) -> str:
 # Main seed function
 # ---------------------------------------------------------------------------
 
+
 async def seed_isd_knowledge(dry_run: bool = False) -> None:
     """Insert ISD knowledge document and chunks into the RAG database."""
     print(f"ISD Knowledge Seed — {'DRY RUN' if dry_run else 'PRODUCTION'}")
@@ -664,8 +648,10 @@ async def seed_isd_knowledge(dry_run: bool = False) -> None:
     if dry_run:
         for i, chunk in enumerate(ISD_CHUNKS):
             print(f"  [{i:02d}] {chunk['title']}")
-            print(f"       territory={chunk['metadata']['territory']}, "
-                  f"subtopic={chunk['metadata']['subtopic']}")
+            print(
+                f"       territory={chunk['metadata']['territory']}, "
+                f"subtopic={chunk['metadata']['subtopic']}"
+            )
         print(f"\nTotal: {len(ISD_CHUNKS)} chunks | Dry run complete. Nothing written.")
         return
 
@@ -679,9 +665,7 @@ async def seed_isd_knowledge(dry_run: bool = False) -> None:
     doc_hash = _doc_hash(ISD_DOCUMENT["title"])
     doc_id = str(uuid.uuid4())
 
-    existing_doc = await db.execute(
-        "SELECT id FROM documents WHERE hash = ?", [doc_hash]
-    )
+    existing_doc = await db.execute("SELECT id FROM documents WHERE hash = ?", [doc_hash])
     if existing_doc.rows:
         doc_id = existing_doc.rows[0]["id"]
         print(f"Document already exists (id={doc_id}), reusing it.")
@@ -699,7 +683,7 @@ async def seed_isd_knowledge(dry_run: bool = False) -> None:
                 ISD_DOCUMENT["document_type"],
                 ISD_DOCUMENT["year"],
                 ISD_DOCUMENT["source"],
-                1,           # processed = true (no PDF, direct text)
+                1,  # processed = true (no PDF, direct text)
                 "complete",
                 doc_hash,
             ],

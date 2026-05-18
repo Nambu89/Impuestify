@@ -35,6 +35,7 @@ anti-alucinacion).
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T1B-011
 Caso ground truth: memory/project_session32_defensia_part1.md (David Oliva)
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime

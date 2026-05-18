@@ -32,6 +32,7 @@ la resuelve el ``defensia_rag_verifier`` contra el corpus normativo. Por
 eso aqui no aparecen literales como "Art. 183.1 LGT" ni "STC 2/2003" —
 solo terminos semanticos ("tipicidad", "infraccion", "predeterminacion").
 """
+
 from __future__ import annotations
 
 from app.models.defensia import (

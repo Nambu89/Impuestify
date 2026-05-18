@@ -1,4 +1,5 @@
 """Tests for DeclarationExtractor -- extraction of Modelo 303/130/420 from PDF text."""
+
 import pytest
 from app.services.declaration_extractor import (
     DeclarationExtractor,
@@ -12,6 +13,7 @@ from app.services.declaration_extractor import (
 # ===========================================================================
 # Spanish number parsing
 # ===========================================================================
+
 
 class TestParseSpanishNumber:
     def test_spanish_format(self):
@@ -44,6 +46,7 @@ class TestParseSpanishNumber:
 # Model detection
 # ===========================================================================
 
+
 class TestDetectModelo:
     def test_detect_303(self):
         assert detect_modelo("MODELO 303 - IVA Autoliquidacion") == "303"
@@ -74,6 +77,7 @@ class TestDetectModelo:
 # ===========================================================================
 # Metadata extraction
 # ===========================================================================
+
 
 class TestExtractMetadata:
     def test_nif(self):
@@ -108,6 +112,7 @@ class TestExtractMetadata:
 # ===========================================================================
 # Generic casilla extraction
 # ===========================================================================
+
 
 class TestExtractCasillasGeneric:
     def test_bracket_format(self):
@@ -313,6 +318,7 @@ class TestExtract420:
 # Edge cases
 # ===========================================================================
 
+
 class TestEdgeCases:
     def setup_method(self):
         self.extractor = DeclarationExtractor()
@@ -329,7 +335,9 @@ class TestEdgeCases:
 
     def test_explicit_modelo_hint(self):
         """Can force modelo via hint even if auto-detect would fail."""
-        text = "[07] 10.000,00\n[09] 2.100,00\n[27] 2.100,00\n[45] 0,00\n[71] 2.100,00\n" + "x " * 30
+        text = (
+            "[07] 10.000,00\n[09] 2.100,00\n[27] 2.100,00\n[45] 0,00\n[71] 2.100,00\n" + "x " * 30
+        )
         result = self.extractor.extract(text, modelo="303")
         assert result.success is True
         assert result.modelo == "303"
@@ -337,13 +345,16 @@ class TestEdgeCases:
 
     def test_modelo_with_label_fallback(self):
         """Label-based extraction as fallback when casillas not found."""
-        text = """Modelo 303
+        text = (
+            """Modelo 303
         Ejercicio: 2025
         Periodo: 1T
         Total IVA devengado: 3.500,00
         Total a deducir: 1.200,00
         Resultado de la liquidacion: 2.300,00
-        """ + "padding " * 10
+        """
+            + "padding " * 10
+        )
         result = self.extractor.extract(text)
         assert result.success is True
         assert result.fields.get("total_devengado") == 3500.0

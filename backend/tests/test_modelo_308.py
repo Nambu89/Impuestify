@@ -10,6 +10,7 @@ Three legitimate cases ONLY:
 NOTE: cases related to RE intra-community acquisitions, ISP or imports were
 moved to test_modelo_309.py — those are Modelo 309, not 308.
 """
+
 import pytest
 from datetime import datetime
 
@@ -113,7 +114,10 @@ class TestModelo308CasoREViajeros:
         assert result["caso"] == "re_viajeros"
         assert result["periodo"] == "2T"
         assert result["iva_a_devolver"] == 84.0
-        assert "tax-free" in result["formatted_response"].lower() or "viajeros" in result["formatted_response"].lower()
+        assert (
+            "tax-free" in result["formatted_response"].lower()
+            or "viajeros" in result["formatted_response"].lower()
+        )
 
     @pytest.mark.asyncio
     async def test_re_viajeros_plazo_4t_30_enero(self):
@@ -135,7 +139,10 @@ class TestModelo308CasoREViajeros:
             iva_devuelto_a_viajeros=50.0,
         )
         assert result["success"] is False
-        assert "trimestre" in result["formatted_response"].lower() or "1T" in result["formatted_response"]
+        assert (
+            "trimestre" in result["formatted_response"].lower()
+            or "1T" in result["formatted_response"]
+        )
 
 
 class TestModelo308CasoInvalido:
@@ -188,15 +195,18 @@ class TestModelo308DefaultYear:
 class TestModelo308ToolRegistration:
     def test_tool_in_all_tools(self):
         from app.tools import ALL_TOOLS
+
         names = [t["function"]["name"] for t in ALL_TOOLS]
         assert "calculate_modelo_308" in names
 
     def test_tool_in_executors(self):
         from app.tools import TOOL_EXECUTORS
+
         assert "calculate_modelo_308" in TOOL_EXECUTORS
 
     def test_tool_definition_structure(self):
         from app.tools.modelo_308_tool import MODELO_308_TOOL
+
         assert MODELO_308_TOOL["type"] == "function"
         func = MODELO_308_TOOL["function"]
         assert func["name"] == "calculate_modelo_308"

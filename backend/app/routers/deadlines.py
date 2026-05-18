@@ -9,6 +9,7 @@ Endpoints:
 - DELETE /api/push/unsubscribe  — remove push subscription (auth)
 - GET /api/push/vapid-key       — return VAPID public key (no auth)
 """
+
 import uuid
 import logging
 from datetime import date, datetime, timedelta
@@ -28,6 +29,7 @@ router = APIRouter(tags=["deadlines"])
 
 
 # ---- Pydantic models ---- #
+
 
 class FiscalDeadlineOut(BaseModel):
     id: str
@@ -49,7 +51,9 @@ class PushSubscribeRequest(BaseModel):
     endpoint: str = Field(..., min_length=10)
     p256dh: str = Field(..., min_length=10)
     auth: str = Field(..., min_length=4)
-    alert_days: Optional[str] = Field(default="15,5,1", description="Comma-separated days, e.g. '15,5,1'")
+    alert_days: Optional[str] = Field(
+        default="15,5,1", description="Comma-separated days, e.g. '15,5,1'"
+    )
     user_agent: Optional[str] = None
 
 
@@ -126,8 +130,11 @@ async def _get_user_territory(user_id: str, db: TursoClient) -> tuple[str, list[
     datos_fiscales = profile.get("datos_fiscales")
     if datos_fiscales:
         import json as _json
+
         try:
-            datos = _json.loads(datos_fiscales) if isinstance(datos_fiscales, str) else datos_fiscales
+            datos = (
+                _json.loads(datos_fiscales) if isinstance(datos_fiscales, str) else datos_fiscales
+            )
             roles = datos.get("roles_adicionales", [])
             if isinstance(roles, str):
                 roles = _json.loads(roles)
@@ -142,12 +149,17 @@ async def _get_user_territory(user_id: str, db: TursoClient) -> tuple[str, list[
 
 # ---- Endpoints ---- #
 
+
 @router.get("/api/deadlines", response_model=List[FiscalDeadlineOut])
 async def list_deadlines(
-    territory: Optional[str] = Query(None, description="Filter by territory (e.g. Madrid, Gipuzkoa)"),
+    territory: Optional[str] = Query(
+        None, description="Filter by territory (e.g. Madrid, Gipuzkoa)"
+    ),
     month: Optional[int] = Query(None, ge=1, le=12, description="Filter by end_date month"),
     year: Optional[int] = Query(None, ge=2024, le=2030, description="Filter by tax_year"),
-    applies_to: Optional[str] = Query(None, description="Filter: 'todos', 'autonomos', 'particulares'"),
+    applies_to: Optional[str] = Query(
+        None, description="Filter: 'todos', 'autonomos', 'particulares'"
+    ),
     current_user: TokenData = Depends(get_current_user),
     db: TursoClient = Depends(get_db_client),
 ) -> List[FiscalDeadlineOut]:
@@ -351,6 +363,7 @@ async def toggle_email_alerts(
     if not rows:
         # No profile yet — create a minimal one with email alerts enabled
         import uuid as _uuid
+
         await db.execute(
             """
             INSERT INTO user_profiles (id, user_id, deadline_email_alerts)

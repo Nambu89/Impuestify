@@ -29,12 +29,14 @@ except ImportError:
 
 class AlternativaPGC(BaseModel):
     """Una cuenta PGC alternativa sugerida por el clasificador."""
+
     code: str
     nombre: str
 
 
 class ClasificacionPGC(BaseModel):
     """Resultado de la clasificacion PGC de una factura."""
+
     cuenta_code: str
     cuenta_nombre: str
     confianza: str  # "alta", "media", "baja"
@@ -172,13 +174,15 @@ class InvoiceClassifierService:
         if cnae:
             prompt_lines.append(f"- CNAE: {cnae}")
 
-        prompt_lines.extend([
-            "",
-            "Cuentas PGC candidatas:",
-            candidates_text,
-            "",
-            'Elige la cuenta mas apropiada. Si no estas seguro, indica confianza "media" o "baja" y da alternativas.',
-        ])
+        prompt_lines.extend(
+            [
+                "",
+                "Cuentas PGC candidatas:",
+                candidates_text,
+                "",
+                'Elige la cuenta mas apropiada. Si no estas seguro, indica confianza "media" o "baja" y da alternativas.',
+            ]
+        )
 
         prompt = "\n".join(prompt_lines)
 

@@ -39,6 +39,7 @@ hardcoded article references en este modulo.
 
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T1B-013
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -70,6 +71,7 @@ _CITA_SEMANTICA = (
 # ---------------------------------------------------------------------------
 # Detectores individuales — cada uno analiza un sub-patron
 # ---------------------------------------------------------------------------
+
 
 def _detectar_gastos_adquisicion_omitidos(datos: dict) -> Optional[dict]:
     """Patron 1: gastos de adquisicion declarados pero no computados.
@@ -134,6 +136,7 @@ def _detectar_plusvalia_municipal_no_computada(datos: dict) -> Optional[dict]:
 # ---------------------------------------------------------------------------
 # Registro de la regla
 # ---------------------------------------------------------------------------
+
 
 @regla(
     id="R013",

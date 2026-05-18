@@ -3,6 +3,7 @@ Subscription Service for TaxIA/Impuestify
 
 Handles Stripe integration, subscription lifecycle, and access control.
 """
+
 import uuid
 import logging
 from dataclasses import dataclass
@@ -22,6 +23,7 @@ def _get_stripe():
     global stripe
     if stripe is None:
         import stripe as _stripe
+
         _stripe.api_key = settings.STRIPE_SECRET_KEY
         stripe = _stripe
     return stripe
@@ -30,6 +32,7 @@ def _get_stripe():
 @dataclass
 class SubscriptionAccess:
     """Result of a subscription access check."""
+
     has_access: bool
     is_owner: bool
     plan_type: Optional[str] = None
@@ -49,6 +52,7 @@ class SubscriptionService:
         if self.db:
             return self.db
         from app.database.turso_client import get_db_client
+
         return await get_db_client()
 
     # ------------------------------------------------------------------
@@ -84,7 +88,9 @@ class SubscriptionService:
             name=name,
             metadata={"user_id": user_id},
         )
-        logger.info("Stripe customer created", extra={"user_id": user_id, "customer_id": customer.id})
+        logger.info(
+            "Stripe customer created", extra={"user_id": user_id, "customer_id": customer.id}
+        )
 
         if existing.rows:
             # Row exists but stripe_customer_id was NULL (grace_period/beta users)
@@ -114,8 +120,7 @@ class SubscriptionService:
     # ------------------------------------------------------------------
 
     async def create_checkout_session(
-        self, user_id: str, success_url: str, cancel_url: str,
-        plan_type: str = "particular"
+        self, user_id: str, success_url: str, cancel_url: str, plan_type: str = "particular"
     ) -> Optional[str]:
         """
         Create a Stripe Checkout Session.
@@ -139,9 +144,7 @@ class SubscriptionService:
 
         # If no customer ID yet (grace_period/beta users), create one now
         if not customer_id:
-            user_result = await db.execute(
-                "SELECT email, name FROM users WHERE id = ?", [user_id]
-            )
+            user_result = await db.execute("SELECT email, name FROM users WHERE id = ?", [user_id])
             if not user_result.rows:
                 raise ValueError("Usuario no encontrado.")
 
@@ -228,9 +231,7 @@ class SubscriptionService:
 
         # Verify webhook signature (only this raises to caller)
         try:
-            event = s.Webhook.construct_event(
-                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-            )
+            event = s.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
         except s.error.SignatureVerificationError:
             logger.warning("Webhook signature verification failed")
             raise ValueError("Invalid signature")
@@ -352,13 +353,11 @@ class SubscriptionService:
         # not on the root subscription object. Fall back to root for older payloads.
         items = (subscription.get("items") or {}).get("data") or []
         first_item = items[0] if items else {}
-        period_start_ts = (
-            first_item.get("current_period_start")
-            or subscription.get("current_period_start")
+        period_start_ts = first_item.get("current_period_start") or subscription.get(
+            "current_period_start"
         )
-        period_end_ts = (
-            first_item.get("current_period_end")
-            or subscription.get("current_period_end")
+        period_end_ts = first_item.get("current_period_end") or subscription.get(
+            "current_period_end"
         )
         period_start_str = self._ts_to_iso(period_start_ts)
         period_end_str = self._ts_to_iso(period_end_ts)
@@ -411,7 +410,9 @@ class SubscriptionService:
         db = await self._get_db()
         customer_id = invoice.get("customer")
         subscription_id = invoice.get("subscription")
-        period_end = invoice.get("period_end") or invoice.get("lines", {}).get("data", [{}])[0].get("period", {}).get("end")
+        period_end = invoice.get("period_end") or invoice.get("lines", {}).get("data", [{}])[0].get(
+            "period", {}
+        ).get("end")
         period_end_str = self._ts_to_iso(period_end)
 
         if not customer_id:
@@ -557,9 +558,7 @@ class SubscriptionService:
         )
 
         if not result.rows:
-            return SubscriptionAccess(
-                has_access=False, is_owner=False, reason="user_not_found"
-            )
+            return SubscriptionAccess(has_access=False, is_owner=False, reason="user_not_found")
 
         row = result.rows[0]
 
@@ -614,9 +613,7 @@ class SubscriptionService:
     async def get_subscription(self, user_id: str) -> Optional[dict]:
         """Get subscription record for a user."""
         db = await self._get_db()
-        result = await db.execute(
-            "SELECT * FROM subscriptions WHERE user_id = ?", [user_id]
-        )
+        result = await db.execute("SELECT * FROM subscriptions WHERE user_id = ?", [user_id])
         return result.rows[0] if result.rows else None
 
     async def sync_from_stripe(self, user_id: str) -> dict:
@@ -645,7 +642,11 @@ class SubscriptionService:
         s = _get_stripe()
 
         subs = s.Subscription.list(customer=customer_id, status="all", limit=10)
-        items = list(subs.auto_paging_iter()) if hasattr(subs, "auto_paging_iter") else (subs.data or [])
+        items = (
+            list(subs.auto_paging_iter())
+            if hasattr(subs, "auto_paging_iter")
+            else (subs.data or [])
+        )
 
         if not items:
             return {
@@ -654,8 +655,15 @@ class SubscriptionService:
                 "customer_id": customer_id,
             }
 
-        priority = {"active": 0, "trialing": 1, "past_due": 2, "unpaid": 3,
-                    "incomplete": 4, "canceled": 5, "incomplete_expired": 6}
+        priority = {
+            "active": 0,
+            "trialing": 1,
+            "past_due": 2,
+            "unpaid": 3,
+            "incomplete": 4,
+            "canceled": 5,
+            "incomplete_expired": 6,
+        }
         items.sort(key=lambda sub: priority.get(getattr(sub, "status", "incomplete"), 99))
         chosen = items[0]
         chosen_dict = chosen.to_dict() if hasattr(chosen, "to_dict") else dict(chosen)

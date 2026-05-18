@@ -7,6 +7,7 @@ el tipo de retencion a cuenta del IRPF sobre rendimientos del trabajo.
 Referencia: AEAT-Algoritmo_Retenciones_2026.pdf (47 paginas)
 Normativa: Ley 35/2006 LIRPF + RD 439/2007 RIRPF (Arts. 80-89)
 """
+
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from enum import Enum
@@ -15,6 +16,7 @@ import math
 
 class SituacionFamiliar(str, Enum):
     """Art. 81 RIRPF — Situacion familiar del perceptor."""
+
     SITUACION1 = "1"  # Soltero/viudo/divorciado con hijos a cargo
     SITUACION2 = "2"  # Casado, conyuge con rentas < 1.500 EUR
     SITUACION3 = "3"  # Resto (soltero sin hijos, casado conyuge con rentas > 1.500)
@@ -57,6 +59,7 @@ class Ascendiente:
 @dataclass
 class WithholdingInput:
     """Datos de entrada para el calculo de retenciones."""
+
     retribucion_bruta_anual: float
     situacion_familiar: SituacionFamiliar = SituacionFamiliar.SITUACION3
     situacion_laboral: SituacionLaboral = SituacionLaboral.ACTIVO
@@ -89,6 +92,7 @@ class WithholdingInput:
 @dataclass
 class WithholdingResult:
     """Resultado del calculo de retenciones."""
+
     tipo_retencion: float  # % de retencion (redondeado a 2 decimales)
     cuota_anual: float
     retencion_mensual: float

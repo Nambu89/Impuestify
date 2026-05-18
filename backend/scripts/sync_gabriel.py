@@ -2,6 +2,7 @@
 
 Usage: PYTHONUTF8=1 python scripts/sync_gabriel.py
 """
+
 import sys
 import asyncio
 from pathlib import Path
@@ -31,9 +32,7 @@ async def main():
 
     client = TursoClient()
     await client.connect()
-    res = await client.execute(
-        "SELECT * FROM subscriptions WHERE user_id = ?", [GABRIEL_USER_ID]
-    )
+    res = await client.execute("SELECT * FROM subscriptions WHERE user_id = ?", [GABRIEL_USER_ID])
     print("\nDB state after sync:")
     if res.rows:
         for k, v in res.rows[0].items():

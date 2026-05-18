@@ -20,6 +20,7 @@ Usage:
     result = extractor.extract(text, modelo="303")
     # result = {"modelo": "303", "casillas": {...}, "metadata": {...}, ...}
 """
+
 import re
 import logging
 from typing import Any, Dict, List, Optional, Tuple
@@ -31,6 +32,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Spanish number parsing
 # ---------------------------------------------------------------------------
+
 
 def _parse_spanish_number(s: str) -> Optional[float]:
     """
@@ -100,9 +102,7 @@ def detect_modelo(text: str) -> Optional[str]:
 
 _RE_NIF = re.compile(r"(?:NIF|N\.I\.F\.)[\s:]*([A-Z0-9]\d{7}[A-Z0-9])", re.IGNORECASE)
 _RE_EJERCICIO = re.compile(r"(?:ejercicio|a[ñn]o)[\s:]*(\d{4})", re.IGNORECASE)
-_RE_PERIODO = re.compile(
-    r"(?:per[ií]odo|trimestre)[\s:]*([1-4])\s*[TtºQq]", re.IGNORECASE
-)
+_RE_PERIODO = re.compile(r"(?:per[ií]odo|trimestre)[\s:]*([1-4])\s*[TtºQq]", re.IGNORECASE)
 _RE_PERIODO_ALT = re.compile(r"\b([1-4])\s*[Tt](?:rimestre)?", re.IGNORECASE)
 _RE_COMPLEMENTARIA = re.compile(r"complementaria", re.IGNORECASE)
 _RE_NOMBRE = re.compile(
@@ -188,13 +188,14 @@ def _extract_casillas_generic(text: str) -> Dict[str, float]:
 # Label-based extraction (contextual)
 # ---------------------------------------------------------------------------
 
+
 def _find_amount_after(text: str, pattern: re.Pattern) -> Optional[float]:
     """Find the first number after a regex pattern match."""
     m = pattern.search(text)
     if not m:
         return None
     # Look for a number within 100 chars after the match
-    rest = text[m.end():m.end() + 100]
+    rest = text[m.end() : m.end() + 100]
     num_match = re.search(r"(-?\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€?", rest)
     if num_match:
         return _parse_spanish_number(num_match.group(1))
@@ -215,7 +216,9 @@ _303_LABEL_PATTERNS = {
     "total_devengado": re.compile(r"total\s*(?:IVA\s*)?devengado", re.IGNORECASE),
     "total_deducible": re.compile(r"total\s*a\s*deducir", re.IGNORECASE),
     "resultado_regimen_general": re.compile(r"resultado\s*r[eé]gimen\s*general", re.IGNORECASE),
-    "resultado_liquidacion": re.compile(r"resultado\s*(?:de\s*la\s*)?liquidaci[oó]n", re.IGNORECASE),
+    "resultado_liquidacion": re.compile(
+        r"resultado\s*(?:de\s*la\s*)?liquidaci[oó]n", re.IGNORECASE
+    ),
     "atribucion_estado": re.compile(r"atribuible\s*(?:al\s*)?estado", re.IGNORECASE),
     "cuotas_compensar": re.compile(r"cuotas\s*a\s*compensar", re.IGNORECASE),
 }
@@ -227,11 +230,16 @@ def _extract_303(text: str, casillas: Dict[str, float]) -> Dict[str, Any]:
 
     # Map casillas to field names
     casilla_map = {
-        "1": "base_4", "3": "cuota_4",
-        "4": "base_10", "6": "cuota_10",
-        "7": "base_21", "9": "cuota_21",
-        "10": "base_intracomunitarias", "12": "cuota_intracomunitarias",
-        "13": "base_inversion_sp", "14": "cuota_inversion_sp",
+        "1": "base_4",
+        "3": "cuota_4",
+        "4": "base_10",
+        "6": "cuota_10",
+        "7": "base_21",
+        "9": "cuota_21",
+        "10": "base_intracomunitarias",
+        "12": "cuota_intracomunitarias",
+        "13": "base_inversion_sp",
+        "14": "cuota_inversion_sp",
         "27": "total_devengado",
         "45": "total_deducible",
         "46": "resultado_regimen_general",
@@ -270,10 +278,16 @@ _130_LABEL_PATTERNS = {
     ),
     "gastos_acumulados": re.compile(r"gastos\s*(?:fiscalmente\s*)?deducibles", re.IGNORECASE),
     "rendimiento_neto": re.compile(r"rendimiento\s*neto", re.IGNORECASE),
-    "retenciones_acumuladas": re.compile(r"retenciones?\s*(?:e\s*ingresos\s*a\s*cuenta)?", re.IGNORECASE),
+    "retenciones_acumuladas": re.compile(
+        r"retenciones?\s*(?:e\s*ingresos\s*a\s*cuenta)?", re.IGNORECASE
+    ),
     "pagos_anteriores": re.compile(r"pagos\s*fraccionados\s*anteriores", re.IGNORECASE),
-    "resultado": re.compile(r"resultado\s*(?:de\s*la\s*)?(?:autoliquidaci[oó]n|liquidaci[oó]n)", re.IGNORECASE),
-    "deduccion_art80bis": re.compile(r"art[ií]culo\s*80\s*bis|deducci[oó]n.*80\s*bis", re.IGNORECASE),
+    "resultado": re.compile(
+        r"resultado\s*(?:de\s*la\s*)?(?:autoliquidaci[oó]n|liquidaci[oó]n)", re.IGNORECASE
+    ),
+    "deduccion_art80bis": re.compile(
+        r"art[ií]culo\s*80\s*bis|deducci[oó]n.*80\s*bis", re.IGNORECASE
+    ),
     "deduccion_vivienda": re.compile(r"deducci[oó]n.*vivienda\s*habitual", re.IGNORECASE),
 }
 
@@ -337,7 +351,9 @@ _420_LABEL_PATTERNS = {
     "base_7": re.compile(r"tipo\s*general|7\s*%.*base", re.IGNORECASE),
     "total_devengado": re.compile(r"total\s*(?:IGIC\s*)?devengado", re.IGNORECASE),
     "total_deducible": re.compile(r"total\s*a\s*deducir", re.IGNORECASE),
-    "resultado_liquidacion": re.compile(r"resultado\s*(?:de\s*la\s*)?liquidaci[oó]n", re.IGNORECASE),
+    "resultado_liquidacion": re.compile(
+        r"resultado\s*(?:de\s*la\s*)?liquidaci[oó]n", re.IGNORECASE
+    ),
 }
 
 
@@ -366,9 +382,11 @@ def _extract_420(text: str, casillas: Dict[str, float]) -> Dict[str, Any]:
 # Main extractor class
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ExtractionResult:
     """Result of extracting data from a declaration PDF."""
+
     success: bool
     modelo: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -450,7 +468,10 @@ class DeclarationExtractor:
 
         logger.info(
             "Extracted %s: %d fields, %d raw casillas, confidence=%.2f",
-            modelo, len(fields), len(casillas), confidence,
+            modelo,
+            len(fields),
+            len(casillas),
+            confidence,
         )
 
         return ExtractionResult(
@@ -473,18 +494,25 @@ class DeclarationExtractor:
         """
         if modelo == "303":
             key_fields = [
-                "base_21", "cuota_21", "total_devengado",
-                "total_deducible", "resultado_liquidacion",
+                "base_21",
+                "cuota_21",
+                "total_devengado",
+                "total_deducible",
+                "resultado_liquidacion",
             ]
         elif modelo == "130":
             key_fields = [
-                "ingresos_acumulados", "gastos_acumulados",
-                "rendimiento_neto", "resultado_final",
+                "ingresos_acumulados",
+                "gastos_acumulados",
+                "rendimiento_neto",
+                "resultado_final",
             ]
         elif modelo == "420":
             key_fields = [
-                "base_7", "total_devengado",
-                "total_deducible", "resultado_liquidacion",
+                "base_7",
+                "total_devengado",
+                "total_deducible",
+                "resultado_liquidacion",
             ]
         else:
             return 0.0

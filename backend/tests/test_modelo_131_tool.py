@@ -13,6 +13,7 @@ match exactly the (already tested) calculator service. These tests verify:
   - Schema OpenAI function-calling exporta los campos esperados.
   - Respuesta formateada incluye casillas y plazo.
 """
+
 import pytest
 
 from app.tools.modelo_131_tool import (
@@ -24,6 +25,7 @@ from app.tools.modelo_131_tool import (
 # ===========================================================================
 # Casos AEAT del audit
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_caso_a_bar_pequeno_madrid():
@@ -80,6 +82,7 @@ async def test_caso_e_bar_ceuta():
 # Restricted mode (bloqueo plan Particular)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_restricted_mode_bloquea():
     """restricted_mode=True devuelve error y NO calcula."""
@@ -98,6 +101,7 @@ async def test_restricted_mode_bloquea():
 # ===========================================================================
 # Validación de inputs
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_trimestre_invalido():
@@ -134,6 +138,7 @@ async def test_actividad_tipo_invalido():
 # Plazo 4T (fix audit: 1-30 enero NO 1-20)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_plazo_4t_es_30_enero():
     """Plazo 4T = 1-30 enero del año siguiente."""
@@ -162,6 +167,7 @@ async def test_plazo_1t_es_20_abril():
 # Schema OpenAI function-calling
 # ===========================================================================
 
+
 def test_schema_tiene_nombre_correcto():
     assert MODELO_131_TOOL["function"]["name"] == "calculate_modelo_131"
 
@@ -189,6 +195,7 @@ def test_schema_ceuta_melilla_y_la_palma_disponibles():
 # ===========================================================================
 # Formatted response
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_formatted_response_incluye_casillas():
@@ -235,13 +242,16 @@ async def test_formatted_response_resultado_cero_indica_presentar():
     )
     assert result["success"] is True
     assert result["resultado_final"] == 0
-    assert "presentar" in result["formatted_response"].lower() or \
-        "sin ingreso" in result["formatted_response"].lower()
+    assert (
+        "presentar" in result["formatted_response"].lower()
+        or "sin ingreso" in result["formatted_response"].lower()
+    )
 
 
 # ===========================================================================
 # La Palma reduction (caller debe verificar vigencia)
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_la_palma_reduccion_aplicada():
@@ -262,6 +272,7 @@ async def test_la_palma_reduccion_aplicada():
 # ===========================================================================
 # Routing apartado correcto
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_routing_empresarial_a_apartado_i():
@@ -297,13 +308,17 @@ async def test_routing_agraria_a_apartado_iii():
 # Tipo según asalariados (4/3/2%)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
-@pytest.mark.parametrize("num_asalariados,tipo_esperado", [
-    (0, 2.0),
-    (1, 3.0),
-    (2, 4.0),
-    (5, 4.0),
-])
+@pytest.mark.parametrize(
+    "num_asalariados,tipo_esperado",
+    [
+        (0, 2.0),
+        (1, 3.0),
+        (2, 4.0),
+        (5, 4.0),
+    ],
+)
 async def test_tipo_segun_asalariados(num_asalariados, tipo_esperado):
     result = await calculate_modelo_131_tool(
         trimestre=1,

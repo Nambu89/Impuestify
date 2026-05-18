@@ -4,6 +4,7 @@ Contabilidad Router for TaxIA (Impuestify)
 Provides endpoints for querying accounting books (libro diario, libro mayor,
 balance de sumas y saldos, PyG) and exporting them as CSV or Excel.
 """
+
 import io
 import logging
 from typing import Optional
@@ -29,6 +30,7 @@ MEDIA_EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 # GET /libro-diario
 # ---------------------------------------------------------------------------
 
+
 @router.get("/libro-diario")
 async def get_libro_diario(
     request: Request,
@@ -51,6 +53,7 @@ async def get_libro_diario(
 # GET /libro-mayor
 # ---------------------------------------------------------------------------
 
+
 @router.get("/libro-mayor")
 async def get_libro_mayor(
     request: Request,
@@ -71,6 +74,7 @@ async def get_libro_mayor(
 # GET /balance
 # ---------------------------------------------------------------------------
 
+
 @router.get("/balance")
 async def get_balance(
     request: Request,
@@ -89,6 +93,7 @@ async def get_balance(
 # ---------------------------------------------------------------------------
 # GET /pyg
 # ---------------------------------------------------------------------------
+
 
 @router.get("/pyg")
 async def get_pyg(
@@ -143,7 +148,9 @@ async def export_libro(
 
     if libro == "libro-diario":
         entries = await service.get_libro_diario(
-            user_id=current_user.user_id, year=year, trimestre=trimestre,
+            user_id=current_user.user_id,
+            year=year,
+            trimestre=trimestre,
         )
         content = (
             export.libro_diario_to_csv(entries)
@@ -153,7 +160,8 @@ async def export_libro(
 
     elif libro == "libro-mayor":
         accounts = await service.get_libro_mayor(
-            user_id=current_user.user_id, year=year,
+            user_id=current_user.user_id,
+            year=year,
         )
         content = (
             export.libro_mayor_to_csv(accounts)
@@ -184,28 +192,34 @@ async def export_libro(
 
     elif libro == "pyg":
         pyg_data = await service.get_pyg(
-            user_id=current_user.user_id, year=year,
+            user_id=current_user.user_id,
+            year=year,
         )
         if format == "csv":
             # PyG only has Excel exporter; for CSV, build a simple fallback
             import csv as csv_mod
+
             buf = io.StringIO()
             writer = csv_mod.writer(buf)
             writer.writerow(["Concepto", "Importe"])
             writer.writerow(["--- INGRESOS ---", ""])
             for item in pyg_data.get("ingresos", []):
-                writer.writerow([
-                    item.get("cuenta_nombre", ""),
-                    item.get("total_haber", 0) - item.get("total_debe", 0),
-                ])
+                writer.writerow(
+                    [
+                        item.get("cuenta_nombre", ""),
+                        item.get("total_haber", 0) - item.get("total_debe", 0),
+                    ]
+                )
             writer.writerow(["Total Ingresos", pyg_data.get("total_ingresos", 0)])
             writer.writerow([])
             writer.writerow(["--- GASTOS ---", ""])
             for item in pyg_data.get("gastos", []):
-                writer.writerow([
-                    item.get("cuenta_nombre", ""),
-                    item.get("total_debe", 0) - item.get("total_haber", 0),
-                ])
+                writer.writerow(
+                    [
+                        item.get("cuenta_nombre", ""),
+                        item.get("total_debe", 0) - item.get("total_haber", 0),
+                    ]
+                )
             writer.writerow(["Total Gastos", pyg_data.get("total_gastos", 0)])
             writer.writerow([])
             writer.writerow(["RESULTADO", pyg_data.get("resultado", 0)])

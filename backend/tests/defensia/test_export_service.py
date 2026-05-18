@@ -4,6 +4,7 @@ Cubre export markdown → DOCX (python-docx) y markdown → PDF (reportlab + Dej
 Verifica disclaimer en header y footer, preservación de tildes, niveles de headings,
 fallback Helvetica si DejaVuSans no está disponible.
 """
+
 from __future__ import annotations
 
 import io
@@ -95,12 +96,12 @@ def test_docx_incluye_disclaimer_header_y_footer(service, markdown_basico):
     header_texts = [p.text for p in section.header.paragraphs]
     footer_texts = [p.text for p in section.footer.paragraphs]
 
-    assert any(DISCLAIMER_CANONICO in t for t in header_texts), (
-        f"Disclaimer no encontrado en header. Textos: {header_texts}"
-    )
-    assert any(DISCLAIMER_CANONICO in t for t in footer_texts), (
-        f"Disclaimer no encontrado en footer. Textos: {footer_texts}"
-    )
+    assert any(
+        DISCLAIMER_CANONICO in t for t in header_texts
+    ), f"Disclaimer no encontrado en header. Textos: {header_texts}"
+    assert any(
+        DISCLAIMER_CANONICO in t for t in footer_texts
+    ), f"Disclaimer no encontrado en footer. Textos: {footer_texts}"
 
 
 def test_docx_preserva_tildes(service, markdown_con_tildes):
@@ -243,6 +244,7 @@ def test_pdf_disclaimer_custom(service, markdown_basico):
 
 def test_pdf_builtin_helvetica_fallback(service, markdown_basico, monkeypatch):
     """Si DejaVuSans no está disponible, el PDF debe generarse con Helvetica sin crash."""
+
     # Forzar que el método interno de registro devuelva Helvetica
     def _fake_registrar(self):
         return "Helvetica"

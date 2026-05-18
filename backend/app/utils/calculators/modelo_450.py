@@ -55,6 +55,7 @@ Estructura del Modelo 450 (resumen):
 NO existe IVA/IGIC soportado deducible en el Modelo 450 — el AIEM funciona
 como impuesto monofasico sobre el productor, no es un impuesto en cadena.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -65,10 +66,10 @@ from app.utils.tax_parameter_repository import TaxParameterRepository
 # ---------------------------------------------------------------------------
 # Constantes — tipos vigentes 2025+ (TR Decreto Legislativo 1/2025)
 # ---------------------------------------------------------------------------
-TIPO_AIEM_REDUCIDO = 0.05      # 5 %  — bienes industriales menores
-TIPO_AIEM_INTERMEDIO = 0.10    # 10 % — textiles, calzado, quimicos ligeros
-TIPO_AIEM_GENERAL = 0.15       # 15 % — tipo general (mayoria de bienes)
-TIPO_AIEM_ESPECIAL = 0.25      # 25 % — labores del tabaco
+TIPO_AIEM_REDUCIDO = 0.05  # 5 %  — bienes industriales menores
+TIPO_AIEM_INTERMEDIO = 0.10  # 10 % — textiles, calzado, quimicos ligeros
+TIPO_AIEM_GENERAL = 0.15  # 15 % — tipo general (mayoria de bienes)
+TIPO_AIEM_ESPECIAL = 0.25  # 25 % — labores del tabaco
 
 ALLOWED_AIEM_RATES = (
     TIPO_AIEM_REDUCIDO,
@@ -95,15 +96,15 @@ AIEM_TIPOS_POR_EPIGRAFE: Dict[str, float] = {
     "1501": TIPO_AIEM_ESPECIAL,
     "1502": TIPO_AIEM_ESPECIAL,
     # Bebidas alcoholicas / refrescos — tipo general
-    "4258": TIPO_AIEM_GENERAL,   # Cerveza
-    "4252": TIPO_AIEM_GENERAL,   # Vinos
-    "4259": TIPO_AIEM_GENERAL,   # Bebidas no alcoholicas
+    "4258": TIPO_AIEM_GENERAL,  # Cerveza
+    "4252": TIPO_AIEM_GENERAL,  # Vinos
+    "4259": TIPO_AIEM_GENERAL,  # Bebidas no alcoholicas
     # Conservas, alimentacion industrial — tipo general 15 %
-    "411": TIPO_AIEM_GENERAL,    # Industrias lacteas
-    "413": TIPO_AIEM_GENERAL,    # Sacrificio ganado, conservas carnicas
-    "414": TIPO_AIEM_GENERAL,    # Industria lactea (sub)
-    "415": TIPO_AIEM_GENERAL,    # Conservas vegetales
-    "416": TIPO_AIEM_GENERAL,    # Pescado y conservas pescado
+    "411": TIPO_AIEM_GENERAL,  # Industrias lacteas
+    "413": TIPO_AIEM_GENERAL,  # Sacrificio ganado, conservas carnicas
+    "414": TIPO_AIEM_GENERAL,  # Industria lactea (sub)
+    "415": TIPO_AIEM_GENERAL,  # Conservas vegetales
+    "416": TIPO_AIEM_GENERAL,  # Pescado y conservas pescado
     # Textil, confeccion, calzado — tipo intermedio 10 %
     "433": TIPO_AIEM_INTERMEDIO,
     "439": TIPO_AIEM_INTERMEDIO,
@@ -198,7 +199,7 @@ class Modelo450Calculator:
         quarter: int = 1,
         year: Optional[int] = None,
         periodicidad: str = "trimestral",  # 'trimestral' | 'mensual'
-        mes: Optional[int] = None,         # solo si periodicidad = 'mensual'
+        mes: Optional[int] = None,  # solo si periodicidad = 'mensual'
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
@@ -232,19 +233,15 @@ class Modelo450Calculator:
         # -------------------------------------------------------------------
         if periodicidad not in ("trimestral", "mensual"):
             raise ValueError(
-                f"periodicidad debe ser 'trimestral' o 'mensual', recibido: "
-                f"{periodicidad!r}"
+                f"periodicidad debe ser 'trimestral' o 'mensual', recibido: " f"{periodicidad!r}"
             )
         if periodicidad == "trimestral":
             if quarter not in (1, 2, 3, 4):
-                raise ValueError(
-                    f"quarter debe estar entre 1 y 4, recibido: {quarter}"
-                )
+                raise ValueError(f"quarter debe estar entre 1 y 4, recibido: {quarter}")
         else:
             if mes is None or mes not in range(1, 13):
                 raise ValueError(
-                    "Para periodicidad mensual, 'mes' debe estar entre 1 y 12. "
-                    f"Recibido: {mes}"
+                    "Para periodicidad mensual, 'mes' debe estar entre 1 y 12. " f"Recibido: {mes}"
                 )
 
         year_resolved = _resolve_year(year)
@@ -276,8 +273,7 @@ class Modelo450Calculator:
             base = float(bien.get("base_imponible", 0.0))
             if base < 0:
                 raise ValueError(
-                    f"bienes_producidos[{idx - 1}].base_imponible no puede "
-                    f"ser negativa: {base}"
+                    f"bienes_producidos[{idx - 1}].base_imponible no puede " f"ser negativa: {base}"
                 )
 
             epigrafe = str(bien.get("epigrafe_iae", "") or "").strip()
@@ -305,16 +301,18 @@ class Modelo450Calculator:
                     "lookup conservador. Indica tipo_aiem manualmente "
                     "consultando el Anexo IV TR Decreto Legislativo 1/2025."
                 )
-                desglose_bienes.append({
-                    "indice": idx,
-                    "epigrafe_iae": epigrafe or None,
-                    "descripcion": descripcion or None,
-                    "base_imponible": round(base, 2),
-                    "tipo_aiem": None,
-                    "cuota_aiem": 0.0,
-                    "origen_tipo": "desconocido",
-                    "warning": True,
-                })
+                desglose_bienes.append(
+                    {
+                        "indice": idx,
+                        "epigrafe_iae": epigrafe or None,
+                        "descripcion": descripcion or None,
+                        "base_imponible": round(base, 2),
+                        "tipo_aiem": None,
+                        "cuota_aiem": 0.0,
+                        "origen_tipo": "desconocido",
+                        "warning": True,
+                    }
+                )
                 continue
 
             # Clamp tipo a [0, 1] por defensa (evita inputs maliciosos)
@@ -330,16 +328,18 @@ class Modelo450Calculator:
             total_base += base
             total_cuota += cuota
 
-            desglose_bienes.append({
-                "indice": idx,
-                "epigrafe_iae": epigrafe or None,
-                "descripcion": descripcion or None,
-                "base_imponible": round(base, 2),
-                "tipo_aiem": round(tipo_clamped, 4),
-                "cuota_aiem": cuota,
-                "origen_tipo": origen_tipo,
-                "warning": False,
-            })
+            desglose_bienes.append(
+                {
+                    "indice": idx,
+                    "epigrafe_iae": epigrafe or None,
+                    "descripcion": descripcion or None,
+                    "base_imponible": round(base, 2),
+                    "tipo_aiem": round(tipo_clamped, 4),
+                    "cuota_aiem": cuota,
+                    "origen_tipo": origen_tipo,
+                    "warning": False,
+                }
+            )
 
         total_base = round(total_base, 2)
         total_cuota = round(total_cuota, 2)
@@ -350,13 +350,9 @@ class Modelo450Calculator:
         rectificacion_bases = round(float(rectificacion_bases), 2)
         rectificacion_cuotas = round(float(rectificacion_cuotas), 2)
 
-        cuota_devengada_ajustada = round(
-            total_cuota + rectificacion_cuotas, 2
-        )
+        cuota_devengada_ajustada = round(total_cuota + rectificacion_cuotas, 2)
 
-        cuotas_compensar_aplicadas = max(
-            0.0, round(float(cuotas_compensar_anteriores), 2)
-        )
+        cuotas_compensar_aplicadas = max(0.0, round(float(cuotas_compensar_anteriores), 2))
 
         # Regularizacion anual exclusiva del 4T (igual que Modelo 420).
         if periodicidad == "trimestral":
@@ -369,9 +365,7 @@ class Modelo450Calculator:
             regularizacion_anual_aplicada = 0.0
 
         resultado_liquidacion = round(
-            cuota_devengada_ajustada
-            - cuotas_compensar_aplicadas
-            + regularizacion_anual_aplicada,
+            cuota_devengada_ajustada - cuotas_compensar_aplicadas + regularizacion_anual_aplicada,
             2,
         )
 
@@ -396,7 +390,20 @@ class Modelo450Calculator:
             # Mensual: del 1 al 20 del mes siguiente
             mes_siguiente = mes + 1 if mes < 12 else 1
             anio_siguiente = mes == 12
-            mes_siguiente_label = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][mes_siguiente - 1]
+            mes_siguiente_label = [
+                "enero",
+                "febrero",
+                "marzo",
+                "abril",
+                "mayo",
+                "junio",
+                "julio",
+                "agosto",
+                "septiembre",
+                "octubre",
+                "noviembre",
+                "diciembre",
+            ][mes_siguiente - 1]
             plazo_str = f"del 1 al 20 de {mes_siguiente_label}"
             if anio_siguiente:
                 plazo_str += f" de {year_resolved + 1}"
@@ -421,9 +428,7 @@ class Modelo450Calculator:
             "cuotas_compensar_anteriores": cuotas_compensar_aplicadas,
             "regularizacion_anual": regularizacion_anual_aplicada,
             "resultado_liquidacion": resultado_liquidacion,
-            "resultado_anterior_complementaria": round(
-                float(resultado_anterior_complementaria), 2
-            ),
+            "resultado_anterior_complementaria": round(float(resultado_anterior_complementaria), 2),
             "cuota_diferencial_complementaria": cuota_diferencial_complementaria,
             "warnings": warnings,
             "aiem_rates": {

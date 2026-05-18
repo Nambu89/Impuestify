@@ -3,6 +3,7 @@ Database Models for TaxIA
 
 Pydantic models for database entities.
 """
+
 import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
@@ -16,17 +17,20 @@ def generate_uuid() -> str:
 
 class UserBase(BaseModel):
     """Base user model"""
+
     email: EmailStr
     name: Optional[str] = None
 
 
 class UserCreate(UserBase):
     """User creation model"""
+
     password: str = Field(..., min_length=8)
 
 
 class User(UserBase):
     """User model with all fields"""
+
     id: str = Field(default_factory=generate_uuid)
     is_active: bool = True
     is_admin: bool = False
@@ -40,67 +44,76 @@ class User(UserBase):
 
 class UserInDB(User):
     """User model as stored in database"""
+
     password_hash: str
 
 
 class Session(BaseModel):
     """Session model for refresh tokens"""
+
     id: str = Field(default_factory=generate_uuid)
     user_id: str
     refresh_token_hash: str
     expires_at: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         from_attributes = True
 
 
 class ConversationBase(BaseModel):
     """Base conversation model"""
+
     title: Optional[str] = None
 
 
 class ConversationCreate(ConversationBase):
     """Conversation creation model"""
+
     pass
 
 
 class Conversation(ConversationBase):
     """Conversation model with all fields"""
+
     id: str = Field(default_factory=generate_uuid)
     user_id: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         from_attributes = True
 
 
 class MessageBase(BaseModel):
     """Base message model"""
+
     role: str  # "user", "assistant", "system"
     content: str
 
 
 class MessageCreate(MessageBase):
     """Message creation model"""
+
     conversation_id: str
     metadata: Optional[Dict[str, Any]] = None
 
 
 class Message(MessageBase):
     """Message model with all fields"""
+
     id: str = Field(default_factory=generate_uuid)
     conversation_id: str
     metadata: Optional[Dict[str, Any]] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         from_attributes = True
 
 
 class UsageMetric(BaseModel):
     """Usage metrics model"""
+
     id: str = Field(default_factory=generate_uuid)
     user_id: Optional[str] = None
     endpoint: str
@@ -108,13 +121,14 @@ class UsageMetric(BaseModel):
     processing_time: Optional[float] = None
     cached: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         from_attributes = True
 
 
 class PayslipBase(BaseModel):
     """Base payslip model"""
+
     filename: str
     file_path: str
     file_size: int
@@ -138,6 +152,7 @@ class PayslipBase(BaseModel):
 
 class PayslipCreate(PayslipBase):
     """Payslip creation model"""
+
     user_id: str
     extraction_status: str = "pending"
     extracted_data: Optional[str] = None  # JSON string
@@ -147,6 +162,7 @@ class PayslipCreate(PayslipBase):
 
 class Payslip(PayslipBase):
     """Payslip model with all fields"""
+
     id: str = Field(default_factory=generate_uuid)
     user_id: str
     upload_date: datetime = Field(default_factory=datetime.utcnow)
@@ -156,13 +172,14 @@ class Payslip(PayslipBase):
     error_message: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         from_attributes = True
 
 
 class PayslipInDB(Payslip):
     """Payslip model as stored in database"""
+
     pass
 
 
@@ -170,8 +187,10 @@ class PayslipInDB(Payslip):
 # SUBSCRIPTION & PAYMENT MODELS
 # =============================================
 
+
 class Subscription(BaseModel):
     """Subscription model for Stripe integration"""
+
     id: str = Field(default_factory=generate_uuid)
     user_id: str
     stripe_customer_id: str
@@ -190,6 +209,7 @@ class Subscription(BaseModel):
 
 class ContactRequest(BaseModel):
     """Contact form submission model"""
+
     id: str = Field(default_factory=generate_uuid)
     user_id: Optional[str] = None
     email: str

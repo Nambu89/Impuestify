@@ -3,6 +3,7 @@ TaxIA Configuration
 
 Unified settings using Pydantic with Open AI services support.
 """
+
 import os
 from typing import Optional, List
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -13,35 +14,28 @@ class Settings(BaseSettings):
     # -------------------------------
     # 🤖 OpenAI API (Primary LLM)
     # -------------------------------
-    OPENAI_API_KEY: Optional[str] = Field(
-        default=None,
-        description="OpenAI API key"
-    )
+    OPENAI_API_KEY: Optional[str] = Field(default=None, description="OpenAI API key")
     OPENAI_MODEL: Optional[str] = Field(
         default="gpt-5-mini",
-        description="OpenAI model to use (gpt-5-mini, gpt-5, gpt-5.1, gpt-5.2)"
+        description="OpenAI model to use (gpt-5-mini, gpt-5, gpt-5.1, gpt-5.2)",
     )
-    
+
     # -------------------------------
     # 🔐 Open AI Foundry (Optional Fallback)
     # -------------------------------
     AZURE_OPENAI_API_KEY: Optional[str] = Field(
-        default=None,
-        validation_alias=AliasChoices("AZURE_OPENAI_API_KEY")
+        default=None, validation_alias=AliasChoices("AZURE_OPENAI_API_KEY")
     )
     AZURE_OPENAI_ENDPOINT: Optional[str] = Field(
-        default=None,
-        validation_alias=AliasChoices("AZURE_OPENAI_ENDPOINT")
+        default=None, validation_alias=AliasChoices("AZURE_OPENAI_ENDPOINT")
     )
     AZURE_OPENAI_DEPLOYMENT: Optional[str] = Field(
-        default=None,
-        validation_alias=AliasChoices("AZURE_OPENAI_DEPLOYMENT")
+        default=None, validation_alias=AliasChoices("AZURE_OPENAI_DEPLOYMENT")
     )
     AZURE_OPENAI_API_VERSION: Optional[str] = Field(
-        default=None,
-        validation_alias=AliasChoices("AZURE_OPENAI_API_VERSION")
+        default=None, validation_alias=AliasChoices("AZURE_OPENAI_API_VERSION")
     )
-    
+
     # -------------------------------
     # 📄 Azure Document Intelligence
     # -------------------------------
@@ -53,8 +47,7 @@ class Settings(BaseSettings):
     # -------------------------------
     GOOGLE_GEMINI_API_KEY: Optional[str] = Field(default=None)
     GEMINI_MODEL: str = Field(
-        default="gemini-3-flash-preview",
-        description="Gemini model for invoice OCR"
+        default="gemini-3-flash-preview", description="Gemini model for invoice OCR"
     )
 
     # -------------------------------
@@ -74,7 +67,7 @@ class Settings(BaseSettings):
     # -------------------------------
     JWT_SECRET_KEY: str = Field(
         default="change-this-secret-key-in-production",
-        validation_alias=AliasChoices("JWT_SECRET_KEY")
+        validation_alias=AliasChoices("JWT_SECRET_KEY"),
     )
     JWT_ALGORITHM: str = Field(default="HS256")
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
@@ -95,11 +88,9 @@ class Settings(BaseSettings):
     # -------------------------------
     EMBEDDING_MODEL: str = Field(
         default="mixedbread-ai/mxbai-embed-large-v1",
-        validation_alias=AliasChoices("EMBEDDING_MODEL", "EMB_MODEL_NAME")
+        validation_alias=AliasChoices("EMBEDDING_MODEL", "EMB_MODEL_NAME"),
     )
-    RERANKING_MODEL: str = Field(
-        default="cross-encoder/ms-marco-MiniLM-L-6-v2"
-    )
+    RERANKING_MODEL: str = Field(default="cross-encoder/ms-marco-MiniLM-L-6-v2")
 
     # -------------------------------
     # ⚙️ Parámetros de inferencia
@@ -132,12 +123,14 @@ class Settings(BaseSettings):
     # -------------------------------
     GROQ_API_KEY: Optional[str] = Field(default=None)
     GROQ_MODEL: str = Field(default="openai/gpt-oss-safeguard-20b")
-    
+
     # Specialized Groq Models (v2.8 Security Upgrade)
     GROQ_MODEL_ROUTER: str = Field(default="llama-3.1-8b-instant")
     GROQ_MODEL_PROMPT_GUARD: str = Field(default="meta-llama/llama-prompt-guard-2-86m")
-    GROQ_MODEL_SAFETY: str = Field(default="openai/gpt-oss-safeguard-20b")  # For SQLi (S14) & PII (S7)
-    
+    GROQ_MODEL_SAFETY: str = Field(
+        default="openai/gpt-oss-safeguard-20b"
+    )  # For SQLi (S14) & PII (S7)
+
     ENABLE_CONTENT_MODERATION: bool = Field(default=True)
 
     # -------------------------------
@@ -201,15 +194,14 @@ class Settings(BaseSettings):
     TURNSTILE_SECRET_KEY: Optional[str] = Field(default=None)
     TURNSTILE_TEST_MODE: bool = Field(
         default=False,
-        description="Set True in QA/staging to accept Cloudflare's official test token"
+        description="Set True in QA/staging to accept Cloudflare's official test token",
     )
 
     # -------------------------------
     # 🔑 Google OAuth (SSO)
     # -------------------------------
     GOOGLE_CLIENT_ID: Optional[str] = Field(
-        default=None,
-        description="Google OAuth Client ID for SSO login/register"
+        default=None, description="Google OAuth Client ID for SSO login/register"
     )
 
     # -------------------------------
@@ -234,19 +226,25 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file="../.env",  # .env is in project root, parent of backend
         env_file_encoding="utf-8",
-        extra="ignore"
+        extra="ignore",
     )
 
     # -------------------------------
     # 🧹 Validadores
     # -------------------------------
     @field_validator(
-        "OPENAI_API_KEY", "AZURE_OPENAI_API_KEY", "JWT_SECRET_KEY",
-        "ADMIN_API_KEY", "TURSO_AUTH_TOKEN", "UPSTASH_REDIS_REST_TOKEN",
-        "GROQ_API_KEY", "UPSTASH_VECTOR_REST_TOKEN",
-        "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET",
+        "OPENAI_API_KEY",
+        "AZURE_OPENAI_API_KEY",
+        "JWT_SECRET_KEY",
+        "ADMIN_API_KEY",
+        "TURSO_AUTH_TOKEN",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "GROQ_API_KEY",
+        "UPSTASH_VECTOR_REST_TOKEN",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
         "RESEND_API_KEY",
-        mode="before"
+        mode="before",
     )
     @classmethod
     def strip_quotes(cls, v):
@@ -260,42 +258,44 @@ class Settings(BaseSettings):
     def valid_topics_list(self) -> List[str]:
         """Get valid topics as list"""
         return [t.strip() for t in self.VALID_TOPICS.split(",")]
-    
+
     @property
     def invalid_topics_list(self) -> List[str]:
         """Get invalid topics as list"""
         return [t.strip() for t in self.INVALID_TOPICS.split(",")]
-    
+
     @property
     def competitors_list(self) -> List[str]:
         """Get competitors as list"""
         return [c.strip() for c in self.COMPETITORS.split(",")]
-    
+
     @property
     def is_llm_configured(self) -> bool:
         """Check if LLM (OpenAI or Azure) is configured"""
-        return bool(self.OPENAI_API_KEY or (self.AZURE_OPENAI_API_KEY and self.AZURE_OPENAI_ENDPOINT))
-    
+        return bool(
+            self.OPENAI_API_KEY or (self.AZURE_OPENAI_API_KEY and self.AZURE_OPENAI_ENDPOINT)
+        )
+
     @property
     def is_azure_configured(self) -> bool:
         """Check if Azure OpenAI is configured"""
         return bool(self.AZURE_OPENAI_API_KEY and self.AZURE_OPENAI_ENDPOINT)
-    
+
     @property
     def is_turso_configured(self) -> bool:
         """Check if Turso is configured"""
         return bool(self.TURSO_DATABASE_URL and self.TURSO_AUTH_TOKEN)
-    
+
     @property
     def is_upstash_configured(self) -> bool:
         """Check if Upstash Redis is configured"""
         return bool(self.UPSTASH_REDIS_REST_URL and self.UPSTASH_REDIS_REST_TOKEN)
-    
+
     @property
     def is_groq_configured(self) -> bool:
         """Check if Groq (Llama Guard) is configured"""
         return bool(self.GROQ_API_KEY)
-    
+
     @property
     def is_upstash_vector_configured(self) -> bool:
         """Check if Upstash Vector (Semantic Cache) is configured"""

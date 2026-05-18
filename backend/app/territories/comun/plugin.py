@@ -1,8 +1,14 @@
 """Common regime territory plugin -- covers 15 CCAA under standard IRPF system."""
+
 from typing import Any, Dict, List
 
 from app.territories.base import (
-    TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig, Deadline, ModelObligation,
+    TerritoryPlugin,
+    ScaleData,
+    SimulationResult,
+    MinimosConfig,
+    Deadline,
+    ModelObligation,
 )
 
 
@@ -10,9 +16,20 @@ from app.territories.base import (
 # Note: Canarias uses common IRPF but IGIC instead of IVA.
 # CanariasTerritory plugin overrides it in the registry for indirect tax handling.
 COMUN_TERRITORIES = [
-    "Andalucía", "Aragón", "Asturias", "Baleares", "Cantabria",
-    "Castilla-La Mancha", "Castilla y León", "Cataluña", "Extremadura",
-    "Galicia", "La Rioja", "Madrid", "Murcia", "Valencia",
+    "Andalucía",
+    "Aragón",
+    "Asturias",
+    "Baleares",
+    "Cantabria",
+    "Castilla-La Mancha",
+    "Castilla y León",
+    "Cataluña",
+    "Extremadura",
+    "Galicia",
+    "La Rioja",
+    "Madrid",
+    "Murcia",
+    "Valencia",
     "Canarias",
 ]
 
@@ -26,6 +43,7 @@ class CommonTerritory(TerritoryPlugin):
     Indirect tax: IVA (Modelo 303).
     Minimos: Applied as base reduction (not quota deduction).
     """
+
     territories = COMUN_TERRITORIES
     regime = "comun"
 
@@ -37,6 +55,7 @@ class CommonTerritory(TerritoryPlugin):
     async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
         """Delegate to existing IRPFSimulator._simulate_common logic."""
         from app.utils.irpf_simulator import IRPFSimulator
+
         simulator = IRPFSimulator(db)
         result = await simulator.simulate(**profile)
         return SimulationResult(
@@ -52,6 +71,7 @@ class CommonTerritory(TerritoryPlugin):
     async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
         """Delegate to existing DeductionService -- returns estatal + territorial."""
         from app.services.deduction_service import DeductionService
+
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 

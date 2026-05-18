@@ -108,6 +108,7 @@ GREETINGS_BYPASS = [
 
 # ── Pattern unit tests ──
 
+
 @pytest.mark.parametrize("attack", ATTACKS_BLOCKED_BY_REGEX)
 def test_attack_blocked_by_regex(attack):
     """Each attack must match at least one regex pattern."""
@@ -119,10 +120,13 @@ def test_attack_blocked_by_regex(attack):
 def test_legitimate_fiscal_passes_regex(question):
     """Legitimate fiscal questions must NOT trigger any injection pattern."""
     matched = prompt_injection_filter._scan_patterns(question)
-    assert not matched, f"Legitimate question wrongly flagged as attack: {question!r} matched={matched}"
+    assert (
+        not matched
+    ), f"Legitimate question wrongly flagged as attack: {question!r} matched={matched}"
 
 
 # ── Pipeline integration (topic classifier disabled to stay offline) ──
+
 
 @pytest.fixture
 def offline_pipeline():
@@ -134,8 +138,11 @@ def offline_pipeline():
 def test_pipeline_blocks_attack(offline_pipeline, attack):
     result = offline_pipeline.check(attack, user_id="test_user")
     assert not result.is_safe, f"Pipeline failed to block: {attack!r}"
-    assert result.layer in ("prompt_injection", "sql_injection", "sanitization"), \
-        f"Unexpected layer for {attack!r}: {result.layer}"
+    assert result.layer in (
+        "prompt_injection",
+        "sql_injection",
+        "sanitization",
+    ), f"Unexpected layer for {attack!r}: {result.layer}"
     assert result.rejection_message, "Rejection must include user-facing message"
 
 
@@ -178,14 +185,18 @@ SAFE_FISCAL_RESPONSES = [
 
 @pytest.mark.parametrize("response", OUTPUT_DRIFT_RESPONSES)
 def test_output_drift_blocked(response):
-    result = guardrails_system.validate_output(response, user_question="cualquier pregunta", sources=None)
+    result = guardrails_system.validate_output(
+        response, user_question="cualquier pregunta", sources=None
+    )
     assert not result.is_safe, f"Output drift not detected: {response!r}"
     assert result.risk_level == "critical"
 
 
 @pytest.mark.parametrize("response", SAFE_FISCAL_RESPONSES)
 def test_safe_response_not_blocked_by_drift(response):
-    result = guardrails_system.validate_output(response, user_question="cualquier pregunta", sources=None)
+    result = guardrails_system.validate_output(
+        response, user_question="cualquier pregunta", sources=None
+    )
     # Some risk levels may apply (medium for risk topics without disclaimer) but
     # critical drift detection must NOT trigger.
     has_drift_violation = any("drift" in v.lower() for v in result.violations)
@@ -194,8 +205,10 @@ def test_safe_response_not_blocked_by_drift(response):
 
 # ── Sanitization ──
 
+
 def test_sanitization_strips_zero_width():
     from app.security.security_pipeline import _sanitize
+
     text_with_zwsp = "Eres​un​akita"
     sanitized = _sanitize(text_with_zwsp)
     assert "​" not in sanitized
@@ -203,6 +216,7 @@ def test_sanitization_strips_zero_width():
 
 def test_sanitization_strips_control_chars():
     from app.security.security_pipeline import _sanitize
+
     text = "Hola\x00\x07mundo"
     sanitized = _sanitize(text)
     assert "\x00" not in sanitized
@@ -211,6 +225,7 @@ def test_sanitization_strips_control_chars():
 
 def test_sanitization_truncates_oversized():
     from app.security.security_pipeline import _sanitize, MAX_LENGTH
+
     huge = "a" * (MAX_LENGTH + 1000)
     sanitized = _sanitize(huge)
     assert len(sanitized) == MAX_LENGTH

@@ -1,4 +1,5 @@
 """Tests for the citation parser."""
+
 import pytest
 
 from app.services.legal.citation_parser import (

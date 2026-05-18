@@ -45,6 +45,7 @@ NOTA SOBRE LA PALMA:
   pero el caller DEBE verificar su vigencia para el ejercicio concreto antes
   de activarla (Orden HAC/1425/2025 para 2026).
 """
+
 from typing import Any, Dict, Optional
 
 
@@ -68,17 +69,17 @@ class Modelo131Calculator:
     _TIPO_SIN_DATOS_BASE = 2.0
 
     # Reducciones territoriales (Art. 110.2 RIRPF)
-    _REDUCCION_CEUTA_MELILLA = 0.60   # 60%
-    _REDUCCION_LA_PALMA = 0.60        # 60% — verificar vigencia con Orden anual
+    _REDUCCION_CEUTA_MELILLA = 0.60  # 60%
+    _REDUCCION_LA_PALMA = 0.60  # 60% — verificar vigencia con Orden anual
 
     # Tabla de minoración por rendimientos bajos (escalonada plana, NO lineal).
     # Ámbito: análoga al art. 80 bis LIRPF aplicada al 131. Tramos discretos
     # publicados en el Anexo de la Orden anual de módulos.
     _MINORACION_TABLA = [
-        (9_000.0,  100.0),   # ≤ 9.000
-        (10_000.0,  75.0),   # 9.001-10.000
-        (11_000.0,  50.0),   # 10.001-11.000
-        (12_000.0,  25.0),   # 11.001-12.000
+        (9_000.0, 100.0),  # ≤ 9.000
+        (10_000.0, 75.0),  # 9.001-10.000
+        (11_000.0, 50.0),  # 10.001-11.000
+        (12_000.0, 25.0),  # 11.001-12.000
     ]
 
     # Plazos AEAT
@@ -148,9 +149,7 @@ class Modelo131Calculator:
             ValueError: Si quarter o actividad_tipo no son válidos.
         """
         if quarter not in (1, 2, 3, 4):
-            raise ValueError(
-                f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4."
-            )
+            raise ValueError(f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4.")
 
         actividad_norm = (actividad_tipo or "").strip().lower()
         if actividad_norm not in {"empresarial", "sin_datos_base", "agraria"}:
@@ -239,7 +238,8 @@ class Modelo131Calculator:
 
         # Reducción territorial
         reduccion_pct, reduccion_label = self._reduccion_territorial(
-            ceuta_melilla=ceuta_melilla, la_palma=la_palma,
+            ceuta_melilla=ceuta_melilla,
+            la_palma=la_palma,
         )
         casilla_07 = round(casilla_06 * reduccion_pct, 2)
         casilla_08 = round(max(0.0, casilla_06 - casilla_07), 2)
@@ -325,7 +325,8 @@ class Modelo131Calculator:
         casilla_06 = round(casilla_03 + casilla_05, 2)
 
         reduccion_pct, reduccion_label = self._reduccion_territorial(
-            ceuta_melilla=ceuta_melilla, la_palma=la_palma,
+            ceuta_melilla=ceuta_melilla,
+            la_palma=la_palma,
         )
         casilla_07 = round(casilla_06 * reduccion_pct, 2)
         casilla_08 = round(max(0.0, casilla_06 - casilla_07), 2)
@@ -407,7 +408,8 @@ class Modelo131Calculator:
         casilla_06 = round(casilla_03 + casilla_05, 2)
 
         reduccion_pct, reduccion_label = self._reduccion_territorial(
-            ceuta_melilla=ceuta_melilla, la_palma=la_palma,
+            ceuta_melilla=ceuta_melilla,
+            la_palma=la_palma,
         )
         casilla_07 = round(casilla_06 * reduccion_pct, 2)
         casilla_08 = round(max(0.0, casilla_06 - casilla_07), 2)
@@ -449,8 +451,7 @@ class Modelo131Calculator:
                 "ceuta_melilla": ceuta_melilla,
                 "la_palma": la_palma,
                 "nota": (
-                    "Apartado II — sin datos-base: 2% sobre volumen de "
-                    "ingresos del trimestre."
+                    "Apartado II — sin datos-base: 2% sobre volumen de " "ingresos del trimestre."
                 ),
             },
             "plazo": self._PLAZOS[quarter],
@@ -469,9 +470,7 @@ class Modelo131Calculator:
             0 asalariados    → 2%
         """
         if num_asalariados < 0:
-            raise ValueError(
-                f"num_asalariados '{num_asalariados}' no puede ser negativo."
-            )
+            raise ValueError(f"num_asalariados '{num_asalariados}' no puede ser negativo.")
         if num_asalariados >= 2:
             return self._TIPO_MAS_DE_UN_ASALARIADO
         if num_asalariados == 1:
@@ -487,7 +486,10 @@ class Modelo131Calculator:
         return "Sin asalariados a 1 enero → 2%"
 
     def _reduccion_territorial(
-        self, *, ceuta_melilla: bool, la_palma: bool,
+        self,
+        *,
+        ceuta_melilla: bool,
+        la_palma: bool,
     ) -> tuple[float, str]:
         """
         Devuelve (porcentaje_decimal, etiqueta) de reducción territorial.

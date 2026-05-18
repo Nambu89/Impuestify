@@ -38,6 +38,7 @@ Triggers soportados:
 La regla NO hardcodea la cita canonica (`Art. 85 LIRPF`) — solo emite una
 cita semantica que el verificador RAG traducira al texto legal correcto.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -58,6 +59,7 @@ from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 # Aislamiento del modulo R016 — patron autocontenido
 # ---------------------------------------------------------------------------
 
+
 def _cargar_solo_R016() -> None:
     """Limpia el REGISTRY y re-importa unicamente el modulo R016.
 
@@ -67,10 +69,7 @@ def _cargar_solo_R016() -> None:
     cacheado en ``sys.modules``.
     """
     reset_registry()
-    module_name = (
-        "app.services.defensia_rules.reglas_irpf."
-        "R016_imputacion_rentas_inmuebles"
-    )
+    module_name = "app.services.defensia_rules.reglas_irpf." "R016_imputacion_rentas_inmuebles"
     if module_name in sys.modules:
         importlib.reload(sys.modules[module_name])
     else:
@@ -87,6 +86,7 @@ def _registrar_r016(_aislar_registry):  # noqa: ARG001 — fuerza orden
 # ---------------------------------------------------------------------------
 # Helper local — la cita NUNCA puede hardcodear el articulo canonico
 # ---------------------------------------------------------------------------
+
 
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica.
@@ -105,9 +105,8 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
 # Test 1 — Positivo: el inmueble fue vivienda habitual en el periodo
 # ---------------------------------------------------------------------------
 
-def test_R016_positivo_vivienda_habitual_en_periodo(
-    build_exp, build_brief, build_doc
-):
+
+def test_R016_positivo_vivienda_habitual_en_periodo(build_exp, build_brief, build_doc):
     """Si el inmueble fue vivienda habitual durante el periodo y AEAT aun
     asi imputa renta, la regla dispara — el art. 85 LIRPF excluye la
     vivienda habitual de la imputacion.
@@ -127,8 +126,7 @@ def test_R016_positivo_vivienda_habitual_en_periodo(
         docs=[doc],
     )
     brief = build_brief(
-        "AEAT me imputa renta por una vivienda que fue mi habitual durante "
-        "parte del periodo"
+        "AEAT me imputa renta por una vivienda que fue mi habitual durante " "parte del periodo"
     )
 
     candidatos = evaluar(exp, brief)
@@ -143,8 +141,7 @@ def test_R016_positivo_vivienda_habitual_en_periodo(
     assert isinstance(arg, ArgumentoCandidato)
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
     assert "imputacion" in arg.cita_normativa_propuesta.lower(), (
-        f"La cita semantica debe mencionar 'imputacion', "
-        f"got: {arg.cita_normativa_propuesta!r}"
+        f"La cita semantica debe mencionar 'imputacion', " f"got: {arg.cita_normativa_propuesta!r}"
     )
     assert arg.datos_disparo.get("motivo") == "vivienda_habitual_en_periodo"
 
@@ -153,9 +150,8 @@ def test_R016_positivo_vivienda_habitual_en_periodo(
 # Test 2 — Positivo: inmueble afecto a una actividad economica
 # ---------------------------------------------------------------------------
 
-def test_R016_positivo_afecto_actividad_economica(
-    build_exp, build_brief, build_doc
-):
+
+def test_R016_positivo_afecto_actividad_economica(build_exp, build_brief, build_doc):
     """Si el inmueble esta afecto a una actividad economica, el art. 85
     LIRPF tambien lo excluye expresamente de la imputacion. R016 dispara.
     """
@@ -173,16 +169,13 @@ def test_R016_positivo_afecto_actividad_economica(
         fase=Fase.COMPROBACION_PROPUESTA,
         docs=[doc],
     )
-    brief = build_brief(
-        "Me imputan renta sobre un local afecto a mi actividad economica"
-    )
+    brief = build_brief("Me imputan renta sobre un local afecto a mi actividad economica")
 
     candidatos = evaluar(exp, brief)
 
     r016 = [c for c in candidatos if c.regla_id == "R016"]
     assert len(r016) == 1, (
-        f"R016 deberia disparar cuando el inmueble esta afecto a actividad, "
-        f"got {candidatos}"
+        f"R016 deberia disparar cuando el inmueble esta afecto a actividad, " f"got {candidatos}"
     )
 
     arg = r016[0]
@@ -194,9 +187,8 @@ def test_R016_positivo_afecto_actividad_economica(
 # Test 3 — Positivo: imputacion sin prorratear por dias a disposicion
 # ---------------------------------------------------------------------------
 
-def test_R016_positivo_sin_prorrateo_por_dias(
-    build_exp, build_brief, build_doc
-):
+
+def test_R016_positivo_sin_prorrateo_por_dias(build_exp, build_brief, build_doc):
     """Si AEAT imputa una renta completa sin prorratear por los dias que el
     inmueble estuvo a disposicion del titular, R016 dispara y expone en
     ``datos_disparo`` el numero de dias no prorrateados (365 - dias a
@@ -228,8 +220,7 @@ def test_R016_positivo_sin_prorrateo_por_dias(
 
     r016 = [c for c in candidatos if c.regla_id == "R016"]
     assert len(r016) == 1, (
-        f"R016 deberia disparar cuando no se prorratea por dias, "
-        f"got {candidatos}"
+        f"R016 deberia disparar cuando no se prorratea por dias, " f"got {candidatos}"
     )
 
     arg = r016[0]
@@ -242,8 +233,7 @@ def test_R016_positivo_sin_prorrateo_por_dias(
     )
     assert arg.datos_disparo.get("motivo") == "sin_prorrateo_por_dias"
     assert arg.datos_disparo.get("dias_no_prorrateados") == 185, (
-        f"datos_disparo.dias_no_prorrateados deberia ser 365-180=185, "
-        f"got {arg.datos_disparo!r}"
+        f"datos_disparo.dias_no_prorrateados deberia ser 365-180=185, " f"got {arg.datos_disparo!r}"
     )
 
 
@@ -251,9 +241,8 @@ def test_R016_positivo_sin_prorrateo_por_dias(
 # Test 4 — Negativo: imputacion correcta (prorrateo aplicado, no excluido)
 # ---------------------------------------------------------------------------
 
-def test_R016_negativo_imputacion_correcta(
-    build_exp, build_brief, build_doc
-):
+
+def test_R016_negativo_imputacion_correcta(build_exp, build_brief, build_doc):
     """Si AEAT imputa correctamente (prorrateo aplicado y el inmueble no
     esta excluido por ser vivienda habitual ni estar afecto a actividad),
     la regla NO dispara.
@@ -280,18 +269,15 @@ def test_R016_negativo_imputacion_correcta(
     candidatos = evaluar(exp, brief)
 
     r016 = [c for c in candidatos if c.regla_id == "R016"]
-    assert r016 == [], (
-        f"R016 NO debe disparar si la imputacion es correcta, got {r016}"
-    )
+    assert r016 == [], f"R016 NO debe disparar si la imputacion es correcta, got {r016}"
 
 
 # ---------------------------------------------------------------------------
 # Test 5 — Negativo: AEAT no imputa renta en absoluto
 # ---------------------------------------------------------------------------
 
-def test_R016_negativo_sin_imputacion(
-    build_exp, build_brief, build_doc
-):
+
+def test_R016_negativo_sin_imputacion(build_exp, build_brief, build_doc):
     """Si el acto administrativo no contiene imputacion de renta
     inmobiliaria, la regla NO dispara aunque haya datos colaterales.
     """
@@ -319,14 +305,13 @@ def test_R016_negativo_sin_imputacion(
     candidatos = evaluar(exp, brief)
 
     r016 = [c for c in candidatos if c.regla_id == "R016"]
-    assert r016 == [], (
-        f"R016 NO debe disparar si no hay imputacion de renta, got {r016}"
-    )
+    assert r016 == [], f"R016 NO debe disparar si no hay imputacion de renta, got {r016}"
 
 
 # ---------------------------------------------------------------------------
 # Test 6 — Anti-hardcode: la cita semantica no menciona el articulo canonico
 # ---------------------------------------------------------------------------
+
 
 def test_R016_cita_no_hardcoded(build_exp, build_brief, build_doc):
     """Verifica de forma explicita que la cita propuesta por R016 NO
@@ -365,18 +350,17 @@ def test_R016_cita_no_hardcoded(build_exp, build_brief, build_doc):
 # Sanity check: la regla esta registrada tras el import
 # ---------------------------------------------------------------------------
 
+
 def test_R016_registrada_en_registry():
     """Tras cargar el modulo, R016 debe estar en el REGISTRY con la
     metadata correcta: solo IRPF y fases de liquidacion/recurso.
     """
-    assert "R016" in REGISTRY, (
-        f"R016 no encontrada en REGISTRY. Keys: {list(REGISTRY.keys())}"
-    )
+    assert "R016" in REGISTRY, f"R016 no encontrada en REGISTRY. Keys: {list(REGISTRY.keys())}"
     info = REGISTRY["R016"]
     # Solo IRPF — la imputacion de rentas inmobiliarias es especifica de IRPF
-    assert info["tributos"] == {"IRPF"}, (
-        f"R016 solo debe aplicar a IRPF, got tributos={info['tributos']}"
-    )
+    assert info["tributos"] == {
+        "IRPF"
+    }, f"R016 solo debe aplicar a IRPF, got tributos={info['tributos']}"
     # Fases de liquidacion y recurso
     assert "LIQUIDACION_FIRME_PLAZO_RECURSO" in info["fases"]
     assert "COMPROBACION_PROPUESTA" in info["fases"]

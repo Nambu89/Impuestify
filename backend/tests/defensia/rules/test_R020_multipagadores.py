@@ -31,6 +31,7 @@ Invariante #2 (anti-alucinacion): la regla devuelve una descripcion semantica
 libre. La cita canonica ("Art. 96 LIRPF", "RDL 4/2024") la resuelve el
 ``defensia_rag_verifier`` contra el corpus normativo, nunca este modulo.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -57,6 +58,7 @@ from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 # el decorador `@regla`, hay que forzar un reload para re-registrar R020 en
 # el REGISTRY recien limpiado.
 
+
 def _cargar_solo_R020() -> None:
     """Limpia el REGISTRY y re-registra exclusivamente la regla R020."""
     reset_registry()
@@ -78,6 +80,7 @@ def _recargar_R020():
 # Helpers locales
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la regla NUNCA puede hardcodear la cita canonica.
 
@@ -90,24 +93,17 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
         f"Cita hardcoded detectada: 'Art. 96' en '{cita}'. "
         "La cita canonica debe venir del RAG verificador."
     )
-    assert "RDL 4/2024" not in cita, (
-        f"Cita hardcoded detectada: 'RDL 4/2024' en '{cita}'."
-    )
-    assert "96 LIRPF" not in cita_upper, (
-        f"Cita hardcoded detectada: '96 LIRPF' en '{cita}'."
-    )
-    assert "LIRPF" not in cita_upper, (
-        f"Cita hardcoded detectada: 'LIRPF' en '{cita}'."
-    )
+    assert "RDL 4/2024" not in cita, f"Cita hardcoded detectada: 'RDL 4/2024' en '{cita}'."
+    assert "96 LIRPF" not in cita_upper, f"Cita hardcoded detectada: '96 LIRPF' en '{cita}'."
+    assert "LIRPF" not in cita_upper, f"Cita hardcoded detectada: 'LIRPF' en '{cita}'."
 
 
 # ---------------------------------------------------------------------------
 # Test 1 — Positivo: AEAT usa limite 22.000 cuando procede 15.876
 # ---------------------------------------------------------------------------
 
-def test_R020_positivo_limite_multipagadores_mal_aplicado(
-    build_exp, build_brief, build_doc
-):
+
+def test_R020_positivo_limite_multipagadores_mal_aplicado(build_exp, build_brief, build_doc):
     """AEAT aplica el limite 22.000 EUR cuando debia aplicar el de 15.876 EUR.
 
     Contribuyente con dos pagadores, ingresos totales 18.000 EUR. AEAT
@@ -141,9 +137,9 @@ def test_R020_positivo_limite_multipagadores_mal_aplicado(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
-    )
+    assert (
+        len(candidatos) == 1
+    ), f"Se esperaba 1 argumento candidato, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert isinstance(arg, ArgumentoCandidato)
     assert arg.regla_id == "R020"
@@ -151,18 +147,17 @@ def test_R020_positivo_limite_multipagadores_mal_aplicado(
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
 
     disparo = arg.datos_disparo
-    assert disparo.get("tipo") == "limite_multipagadores_mal_aplicado", (
-        f"datos_disparo.tipo inesperado: {disparo!r}"
-    )
+    assert (
+        disparo.get("tipo") == "limite_multipagadores_mal_aplicado"
+    ), f"datos_disparo.tipo inesperado: {disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — Positivo: sancion por no declarar debajo del umbral real
 # ---------------------------------------------------------------------------
 
-def test_R020_positivo_sancion_por_no_declarar_bajo_umbral(
-    build_exp, build_brief, build_doc
-):
+
+def test_R020_positivo_sancion_por_no_declarar_bajo_umbral(build_exp, build_brief, build_doc):
     """Sancion por no declarar a un contribuyente con ingresos < 15.876 EUR.
 
     Si la AEAT sanciona por falta de presentacion pero los ingresos del
@@ -185,15 +180,11 @@ def test_R020_positivo_sancion_por_no_declarar_bajo_umbral(
         fase=Fase.SANCIONADOR_IMPUESTA,
         docs=[acuerdo_sancion],
     )
-    brief = build_brief(
-        "Me sancionan por no presentar la renta pero yo no llegaba al limite."
-    )
+    brief = build_brief("Me sancionan por no presentar la renta pero yo no llegaba al limite.")
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
-    )
+    assert len(candidatos) == 1, f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R020"
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
@@ -207,6 +198,7 @@ def test_R020_positivo_sancion_por_no_declarar_bajo_umbral(
 # ---------------------------------------------------------------------------
 # Test 3 — Positivo: limite 22.000 con segundo pagador > 1.500
 # ---------------------------------------------------------------------------
+
 
 def test_R020_positivo_limite_general_con_segundo_pagador_sobre_umbral(
     build_exp, build_brief, build_doc
@@ -241,9 +233,7 @@ def test_R020_positivo_limite_general_con_segundo_pagador_sobre_umbral(
 
     candidatos = evaluar(exp, brief)
 
-    assert len(candidatos) == 1, (
-        f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
-    )
+    assert len(candidatos) == 1, f"Se esperaba 1 argumento, got {len(candidatos)}: {candidatos}"
     arg = candidatos[0]
     assert arg.regla_id == "R020"
 
@@ -258,9 +248,8 @@ def test_R020_positivo_limite_general_con_segundo_pagador_sobre_umbral(
 # Test 4 — Negativo: limite 22.000 correctamente aplicado
 # ---------------------------------------------------------------------------
 
-def test_R020_negativo_segundo_pagador_bajo_umbral(
-    build_exp, build_brief, build_doc
-):
+
+def test_R020_negativo_segundo_pagador_bajo_umbral(build_exp, build_brief, build_doc):
     """Segundo pagador <= 1.500 EUR: el limite 22.000 EUR es correcto.
 
     Si el importe del segundo pagador no supera los 1.500 EUR, la condicion
@@ -296,9 +285,8 @@ def test_R020_negativo_segundo_pagador_bajo_umbral(
 # Test 5 — Negativo: ingresos > 22.000 (obligado con cualquier limite)
 # ---------------------------------------------------------------------------
 
-def test_R020_negativo_ingresos_superan_limite_general(
-    build_exp, build_brief, build_doc
-):
+
+def test_R020_negativo_ingresos_superan_limite_general(build_exp, build_brief, build_doc):
     """Ingresos > 22.000 EUR: obligado a declarar con cualquier limite.
 
     Si los ingresos totales superan incluso el limite general (22.000 EUR),
@@ -337,9 +325,8 @@ def test_R020_negativo_ingresos_superan_limite_general(
 # Test 6 — Anti-hardcode: asercion explicita sobre la cita semantica
 # ---------------------------------------------------------------------------
 
-def test_R020_cita_es_semantica_no_hardcoded(
-    build_exp, build_brief, build_doc
-):
+
+def test_R020_cita_es_semantica_no_hardcoded(build_exp, build_brief, build_doc):
     """Invariante #2: la cita normativa NO puede contener el articulo canonico."""
     liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -367,17 +354,14 @@ def test_R020_cita_es_semantica_no_hardcoded(
 
     cita = arg.cita_normativa_propuesta
     assert (
-        "Art. 96" not in cita
-        and "RDL 4/2024" not in cita
-        and "96 LIRPF" not in cita.upper()
-    ), (
-        f"La cita normativa debe ser semantica, got: {cita!r}"
-    )
+        "Art. 96" not in cita and "RDL 4/2024" not in cita and "96 LIRPF" not in cita.upper()
+    ), f"La cita normativa debe ser semantica, got: {cita!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 7 — Smoke de registro: R020 aparece en el REGISTRY tras el reload
 # ---------------------------------------------------------------------------
+
 
 def test_R020_registrada_en_registry():
     """El reload del modulo R020 debe auto-registrar la regla en el REGISTRY."""
@@ -386,9 +370,7 @@ def test_R020_registrada_en_registry():
         f"Claves actuales: {sorted(REGISTRY.keys())}"
     )
     info = REGISTRY["R020"]
-    assert "IRPF" in info["tributos"], (
-        f"R020 debe aplicar a IRPF, tributos={info['tributos']}"
-    )
+    assert "IRPF" in info["tributos"], f"R020 debe aplicar a IRPF, tributos={info['tributos']}"
     # Obligacion de declarar es especifica de IRPF, no se extiende a otros tributos.
     assert "IVA" not in info["tributos"]
     assert "LIQUIDACION_FIRME_PLAZO_RECURSO" in info["fases"]

@@ -3,6 +3,7 @@ Subscription Router for TaxIA/Impuestify
 
 Handles Stripe Checkout, Customer Portal, subscription status, and webhooks.
 """
+
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -21,6 +22,7 @@ router = APIRouter(prefix="/subscription", tags=["subscription"])
 # ------------------------------------------------------------------
 # Request / Response models
 # ------------------------------------------------------------------
+
 
 class CheckoutRequest(BaseModel):
     success_url: str
@@ -52,6 +54,7 @@ class SubscriptionStatusResponse(BaseModel):
 # ------------------------------------------------------------------
 # Endpoints
 # ------------------------------------------------------------------
+
 
 @router.post("/create-checkout", response_model=CheckoutResponse)
 async def create_checkout(
@@ -94,9 +97,7 @@ async def get_status(
     Get the current subscription status for the authenticated user.
     """
     service = await get_subscription_service()
-    access = await service.check_access(
-        user_id=current_user.user_id, email=current_user.email
-    )
+    access = await service.check_access(user_id=current_user.user_id, email=current_user.email)
 
     sub = await service.get_subscription(current_user.user_id)
 

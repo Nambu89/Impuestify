@@ -21,6 +21,7 @@ Usage:
     python backend/scripts/purge_semantic_cache.py             # selective delete
     python backend/scripts/purge_semantic_cache.py --force     # full reset (dangerous)
 """
+
 import os
 import sys
 import argparse
@@ -37,6 +38,7 @@ sys.path.insert(0, str(backend_dir))
 project_root = backend_dir.parent
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 try:
@@ -54,13 +56,18 @@ MAX_SAFE_CACHE_SIZE = 1000
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stats", action="store_true",
-                        help="Show stats only, no destructive action.")
-    parser.add_argument("--force", action="store_true",
-                        help="Override the RAG safety check. DANGEROUS — only "
-                             "use if you're sure the index has no RAG vectors.")
-    parser.add_argument("--pattern", default=None,
-                        help="Substring match against stored query metadata.")
+    parser.add_argument(
+        "--stats", action="store_true", help="Show stats only, no destructive action."
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Override the RAG safety check. DANGEROUS — only "
+        "use if you're sure the index has no RAG vectors.",
+    )
+    parser.add_argument(
+        "--pattern", default=None, help="Substring match against stored query metadata."
+    )
     args = parser.parse_args()
 
     url = os.getenv("UPSTASH_VECTOR_REST_URL")

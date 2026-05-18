@@ -43,6 +43,7 @@ Plazos (verificados en navarra.es, 2026-05):
   - Q3: 1 al 20 de octubre
   - Q4: 1 al 31 de enero del año siguiente
 """
+
 from typing import Any, Dict, Optional
 
 
@@ -105,15 +106,11 @@ class Modelo130NavarraCalculator:
             (sólo en modalidad primera).
         """
         if quarter not in (1, 2, 3, 4):
-            raise ValueError(
-                f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4."
-            )
+            raise ValueError(f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4.")
 
         modalidad_norm = (modalidad or "").strip().lower()
         if modalidad_norm not in {"primera", "segunda"}:
-            raise ValueError(
-                f"modalidad '{modalidad}' invalid. Valid: 'primera', 'segunda'."
-            )
+            raise ValueError(f"modalidad '{modalidad}' invalid. Valid: 'primera', 'segunda'.")
 
         if modalidad_norm == "primera":
             return self._calculate_primera(

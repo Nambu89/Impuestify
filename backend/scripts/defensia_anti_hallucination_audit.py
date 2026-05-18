@@ -26,6 +26,7 @@ Uso:
     python backend/scripts/defensia_anti_hallucination_audit.py
     -> exit 0 si OK, exit 1 con listado de hits si detecta citas hardcoded.
 """
+
 from __future__ import annotations
 
 import re
@@ -43,7 +44,9 @@ ROOT = Path(__file__).parent.parent.parent  # TaxIA/
 # narrativo del escrito.
 PATRONES_CITA = [
     # Art. 102.2.c, Art. 41 bis, art. 16, Articulo 9.3
-    re.compile(r"\b[Aa]rt(?:[íi]culo|\.)?\s+\d+(?:[.,]\d+)*(?:\s*(?:bis|ter|quater))?", re.IGNORECASE),
+    re.compile(
+        r"\b[Aa]rt(?:[íi]culo|\.)?\s+\d+(?:[.,]\d+)*(?:\s*(?:bis|ter|quater))?", re.IGNORECASE
+    ),
     # STS 1234/2023, SAN 56/2022, STJUE C-146/05, STSJ ... (sentencias)
     re.compile(r"\b(?:STS|SAN|STJUE|STSJ|STC)\s+(?:C-)?\d+/\d{2,4}\b"),
     # Ley 58/2003, Ley 35/2006 (leyes con numero/año)

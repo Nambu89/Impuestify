@@ -10,6 +10,7 @@ Supports:
 When PyMuPDF returns <50 chars per page, the Vision OCR fallback
 renders each page as a 200-DPI PNG and sends it to GPT-4o-mini.
 """
+
 import asyncio
 import base64
 import logging
@@ -29,6 +30,7 @@ MIN_CHARS_PER_PAGE = 50
 # Try to import pymupdf4llm
 try:
     import pymupdf4llm
+
     PYMUPDF4LLM_AVAILABLE = True
 except ImportError:
     PYMUPDF4LLM_AVAILABLE = False
@@ -38,6 +40,7 @@ except ImportError:
 @dataclass
 class PDFPage:
     """Represents a single page from a PDF."""
+
     page_number: int
     text: str
     metadata: Dict[str, Any]
@@ -46,6 +49,7 @@ class PDFPage:
 @dataclass
 class PDFExtractionResult:
     """Result of PDF text extraction."""
+
     success: bool
     pages: List[PDFPage]
     total_pages: int
@@ -57,23 +61,18 @@ class PDFExtractionResult:
 class PDFTextExtractor:
     """
     Extract text from PDFs optimized for LLM processing.
-    
+
     Uses PyMuPDF4LLM for:
     - Markdown conversion (preserves structure)
     - Table detection
     - Multi-column support
     - Header/footer detection
     """
-    
-    def __init__(
-        self,
-        extract_images: bool = False,
-        page_chunks: bool = True,
-        dpi: int = 150
-    ):
+
+    def __init__(self, extract_images: bool = False, page_chunks: bool = True, dpi: int = 150):
         """
         Initialize PDF text extractor.
-        
+
         Args:
             extract_images: Whether to extract images (default: False for speed)
             page_chunks: Return text as page chunks (default: True)
@@ -81,87 +80,74 @@ class PDFTextExtractor:
         """
         if not PYMUPDF4LLM_AVAILABLE:
             raise ImportError("pymupdf4llm is required. Install with: pip install pymupdf4llm")
-        
+
         self.extract_images = extract_images
         self.page_chunks = page_chunks
         self.dpi = dpi
-    
+
     async def extract_from_bytes(
-        self,
-        pdf_bytes: bytes,
-        filename: str = "document.pdf"
+        self, pdf_bytes: bytes, filename: str = "document.pdf"
     ) -> PDFExtractionResult:
         """
         Extract text from PDF bytes.
-        
+
         Args:
             pdf_bytes: PDF file content as bytes
             filename: Original filename (for logging)
-            
+
         Returns:
             PDFExtractionResult with extracted text
         """
         import tempfile
         import os
-        
+
         try:
             # PyMuPDF4LLM requires a file path, not BytesIO
             # Create a temporary file (don't delete automatically on Windows)
-            tmp_fd, tmp_path = tempfile.mkstemp(suffix='.pdf')
-            
+            tmp_fd, tmp_path = tempfile.mkstemp(suffix=".pdf")
+
             try:
                 # Write PDF bytes to temp file
                 os.write(tmp_fd, pdf_bytes)
                 os.close(tmp_fd)  # Close file descriptor before pymupdf4llm uses it
-                
+
                 # Extract markdown text
                 if self.page_chunks:
                     # Extract as page chunks (list of dicts)
                     result = pymupdf4llm.to_markdown(
-                        tmp_path,
-                        page_chunks=True,
-                        write_images=self.extract_images,
-                        dpi=self.dpi
+                        tmp_path, page_chunks=True, write_images=self.extract_images, dpi=self.dpi
                     )
-                    
+
                     # Process page chunks
                     pages = []
                     full_markdown = []
-                    
+
                     for idx, page_data in enumerate(result):
                         page_text = page_data.get("text", "")
                         page_metadata = page_data.get("metadata", {})
-                        
-                        pages.append(PDFPage(
-                            page_number=idx + 1,
-                            text=page_text,
-                            metadata=page_metadata
-                        ))
-                        
+
+                        pages.append(
+                            PDFPage(page_number=idx + 1, text=page_text, metadata=page_metadata)
+                        )
+
                         full_markdown.append(f"## Página {idx + 1}\n\n{page_text}")
-                    
+
                     markdown_text = "\n\n".join(full_markdown)
                     total_pages = len(pages)
                     total_chars = sum(len(p.text) for p in pages)
-                    
+
                 else:
                     # Extract as single markdown string
                     markdown_text = pymupdf4llm.to_markdown(
-                        tmp_path,
-                        write_images=self.extract_images,
-                        dpi=self.dpi
+                        tmp_path, write_images=self.extract_images, dpi=self.dpi
                     )
-                    
+
                     # Create single page
-                    pages = [PDFPage(
-                        page_number=1,
-                        text=markdown_text,
-                        metadata={}
-                    )]
-                    
+                    pages = [PDFPage(page_number=1, text=markdown_text, metadata={})]
+
                     total_pages = 1
                     total_chars = len(markdown_text)
-                
+
                 logger.info(f"Extracted {total_chars} chars from {total_pages} pages: {filename}")
 
                 # Check if text is too empty (scanned PDF) — fallback to Vision OCR
@@ -176,7 +162,7 @@ class PDFTextExtractor:
                     pages=pages,
                     total_pages=total_pages,
                     total_chars=total_chars,
-                    markdown_text=markdown_text
+                    markdown_text=markdown_text,
                 )
 
             finally:
@@ -186,7 +172,7 @@ class PDFTextExtractor:
                         os.unlink(tmp_path)
                 except Exception as cleanup_error:
                     logger.warning(f"Could not delete temp file {tmp_path}: {cleanup_error}")
-            
+
         except Exception as e:
             logger.error(f"❌ PDF extraction failed for {filename}: {e}")
             return PDFExtractionResult(
@@ -195,29 +181,26 @@ class PDFTextExtractor:
                 total_pages=0,
                 total_chars=0,
                 markdown_text="",
-                error=str(e)
+                error=str(e),
             )
-    
-    async def extract_from_file(
-        self,
-        file_path: str
-    ) -> PDFExtractionResult:
+
+    async def extract_from_file(self, file_path: str) -> PDFExtractionResult:
         """
         Extract text from PDF file.
-        
+
         Args:
             file_path: Path to PDF file
-            
+
         Returns:
             PDFExtractionResult with extracted text
         """
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 pdf_bytes = f.read()
-            
+
             filename = Path(file_path).name
             return await self.extract_from_bytes(pdf_bytes, filename)
-            
+
         except Exception as e:
             logger.error(f"❌ Failed to read PDF file {file_path}: {e}")
             return PDFExtractionResult(
@@ -226,17 +209,17 @@ class PDFTextExtractor:
                 total_pages=0,
                 total_chars=0,
                 markdown_text="",
-                error=str(e)
+                error=str(e),
             )
-    
+
     def get_page_text(self, result: PDFExtractionResult, page_number: int) -> Optional[str]:
         """
         Get text from a specific page.
-        
+
         Args:
             result: PDFExtractionResult from extraction
             page_number: Page number (1-indexed)
-            
+
         Returns:
             Page text or None if page not found
         """
@@ -244,24 +227,21 @@ class PDFTextExtractor:
             if page.page_number == page_number:
                 return page.text
         return None
-    
+
     def get_summary(self, result: PDFExtractionResult) -> str:
         """
         Get a summary of the extraction result.
-        
+
         Args:
             result: PDFExtractionResult from extraction
-            
+
         Returns:
             Human-readable summary
         """
         if not result.success:
             return f"❌ Extraction failed: {result.error}"
-        
-        return (
-            f"✅ Extracted {result.total_pages} pages, "
-            f"{result.total_chars:,} characters"
-        )
+
+        return f"✅ Extracted {result.total_pages} pages, " f"{result.total_chars:,} characters"
 
 
 # Global extractor instance
@@ -274,8 +254,8 @@ def get_pdf_extractor() -> PDFTextExtractor:
     if _pdf_extractor is None:
         _pdf_extractor = PDFTextExtractor(
             extract_images=False,  # Faster, images not needed for AEAT docs
-            page_chunks=True,      # Better for LLM context
-            dpi=150                # Good balance of quality/speed
+            page_chunks=True,  # Better for LLM context
+            dpi=150,  # Good balance of quality/speed
         )
     return _pdf_extractor
 
@@ -295,7 +275,9 @@ async def extract_pdf_text(pdf_bytes: bytes, filename: str = "document.pdf") -> 
     return await extractor.extract_from_bytes(pdf_bytes, filename)
 
 
-async def extract_pdf_text_plain(pdf_bytes: bytes, filename: str = "document.pdf") -> PDFExtractionResult:
+async def extract_pdf_text_plain(
+    pdf_bytes: bytes, filename: str = "document.pdf"
+) -> PDFExtractionResult:
     """
     Extract PDF text using PyMuPDF plain text mode (page.get_text('text')).
 
@@ -315,11 +297,7 @@ async def extract_pdf_text_plain(pdf_bytes: bytes, filename: str = "document.pdf
 
         for i, page in enumerate(doc):
             text = page.get_text("text")
-            pages.append(PDFPage(
-                page_number=i + 1,
-                text=text,
-                metadata={}
-            ))
+            pages.append(PDFPage(page_number=i + 1, text=text, metadata={}))
             full_text_parts.append(f"=== PAGINA {i + 1} ===\n{text}")
 
         doc.close()
@@ -327,11 +305,15 @@ async def extract_pdf_text_plain(pdf_bytes: bytes, filename: str = "document.pdf
         full_text = "\n\n".join(full_text_parts)
         total_chars = sum(len(p.text) for p in pages)
 
-        logger.info(f"Extracted {total_chars} chars (plain text) from {len(pages)} pages: {filename}")
+        logger.info(
+            f"Extracted {total_chars} chars (plain text) from {len(pages)} pages: {filename}"
+        )
 
         # Check if text is too empty (scanned PDF) — fallback to Vision OCR
         if _is_text_empty(pages):
-            logger.warning(f"Text empty/minimal for {filename} ({total_chars} chars), trying Vision OCR")
+            logger.warning(
+                f"Text empty/minimal for {filename} ({total_chars} chars), trying Vision OCR"
+            )
             ocr_result = await extract_with_vision_ocr(pdf_bytes, filename)
             if ocr_result.success and ocr_result.total_chars > 0:
                 return ocr_result
@@ -342,18 +324,13 @@ async def extract_pdf_text_plain(pdf_bytes: bytes, filename: str = "document.pdf
             pages=pages,
             total_pages=len(pages),
             total_chars=total_chars,
-            markdown_text=full_text
+            markdown_text=full_text,
         )
 
     except Exception as e:
         logger.error(f"Plain text PDF extraction failed for {filename}: {e}")
         return PDFExtractionResult(
-            success=False,
-            pages=[],
-            total_pages=0,
-            total_chars=0,
-            markdown_text="",
-            error=str(e)
+            success=False, pages=[], total_pages=0, total_chars=0, markdown_text="", error=str(e)
         )
 
 
@@ -383,8 +360,12 @@ async def extract_with_vision_ocr(
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
             return PDFExtractionResult(
-                success=False, pages=[], total_pages=0, total_chars=0,
-                markdown_text="", error="OPENAI_API_KEY not configured for Vision OCR"
+                success=False,
+                pages=[],
+                total_pages=0,
+                total_chars=0,
+                markdown_text="",
+                error="OPENAI_API_KEY not configured for Vision OCR",
             )
 
         client = AsyncOpenAI(api_key=api_key)
@@ -402,23 +383,28 @@ async def extract_with_vision_ocr(
 
             response = await client.chat.completions.create(
                 model="gpt-5-mini",
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": (
-                                "Extrae TODO el texto visible de esta imagen de documento fiscal español. "
-                                "Mantén la estructura de tablas usando separadores |. "
-                                "Responde SOLO con el texto extraído, sin explicaciones."
-                            ),
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/png;base64,{b64_image}", "detail": "high"},
-                        },
-                    ],
-                }],
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": (
+                                    "Extrae TODO el texto visible de esta imagen de documento fiscal español. "
+                                    "Mantén la estructura de tablas usando separadores |. "
+                                    "Responde SOLO con el texto extraído, sin explicaciones."
+                                ),
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{b64_image}",
+                                    "detail": "high",
+                                },
+                            },
+                        ],
+                    }
+                ],
                 max_completion_tokens=4096,
             )
 
@@ -429,9 +415,7 @@ async def extract_with_vision_ocr(
         pages: List[PDFPage] = []
         for batch_start in range(0, num_pages, 5):
             batch_end = min(batch_start + 5, num_pages)
-            batch = await asyncio.gather(
-                *[_ocr_page(i) for i in range(batch_start, batch_end)]
-            )
+            batch = await asyncio.gather(*[_ocr_page(i) for i in range(batch_start, batch_end)])
             pages.extend(batch)
 
         doc.close()
@@ -453,12 +437,18 @@ async def extract_with_vision_ocr(
     except Exception as e:
         logger.error(f"Vision OCR failed for {filename}: {e}")
         return PDFExtractionResult(
-            success=False, pages=[], total_pages=0, total_chars=0,
-            markdown_text="", error=f"Vision OCR: {e}"
+            success=False,
+            pages=[],
+            total_pages=0,
+            total_chars=0,
+            markdown_text="",
+            error=f"Vision OCR: {e}",
         )
 
 
-async def extract_image_text(image_bytes: bytes, filename: str = "image.jpg") -> PDFExtractionResult:
+async def extract_image_text(
+    image_bytes: bytes, filename: str = "image.jpg"
+) -> PDFExtractionResult:
     """
     Extract text from an image (JPG/PNG) using OpenAI Vision API.
 
@@ -470,8 +460,12 @@ async def extract_image_text(image_bytes: bytes, filename: str = "image.jpg") ->
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
             return PDFExtractionResult(
-                success=False, pages=[], total_pages=0, total_chars=0,
-                markdown_text="", error="OPENAI_API_KEY not configured for Vision OCR"
+                success=False,
+                pages=[],
+                total_pages=0,
+                total_chars=0,
+                markdown_text="",
+                error="OPENAI_API_KEY not configured for Vision OCR",
             )
 
         # Detect mime type from extension
@@ -483,23 +477,28 @@ async def extract_image_text(image_bytes: bytes, filename: str = "image.jpg") ->
 
         response = await client.chat.completions.create(
             model="gpt-5-mini",
-            messages=[{
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": (
-                            "Extrae TODO el texto visible de esta imagen de documento fiscal español. "
-                            "Mantén la estructura de tablas usando separadores |. "
-                            "Responde SOLO con el texto extraído, sin explicaciones."
-                        ),
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:{mime};base64,{b64_image}", "detail": "high"},
-                    },
-                ],
-            }],
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "Extrae TODO el texto visible de esta imagen de documento fiscal español. "
+                                "Mantén la estructura de tablas usando separadores |. "
+                                "Responde SOLO con el texto extraído, sin explicaciones."
+                            ),
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime};base64,{b64_image}",
+                                "detail": "high",
+                            },
+                        },
+                    ],
+                }
+            ],
             max_completion_tokens=4096,
         )
 
@@ -519,6 +518,10 @@ async def extract_image_text(image_bytes: bytes, filename: str = "image.jpg") ->
     except Exception as e:
         logger.error(f"Image text extraction failed for {filename}: {e}")
         return PDFExtractionResult(
-            success=False, pages=[], total_pages=0, total_chars=0,
-            markdown_text="", error=f"Image OCR: {e}"
+            success=False,
+            pages=[],
+            total_pages=0,
+            total_chars=0,
+            markdown_text="",
+            error=f"Image OCR: {e}",
         )

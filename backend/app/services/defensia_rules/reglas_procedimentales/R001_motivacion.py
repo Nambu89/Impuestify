@@ -22,6 +22,7 @@ semantica libre (invariante #2 del plan Parte 2, anti-alucinacion).
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T1B-001
 Research: C:/tmp/research.md §R001
 """
+
 from __future__ import annotations
 
 from typing import Optional

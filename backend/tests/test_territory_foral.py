@@ -5,6 +5,7 @@ from app.territories.foral_navarra.plugin import ForalNavarraTerritory
 
 # --- Foral Vasco ---
 
+
 def test_foral_vasco_covers_3_territories():
     plugin = ForalVascoTerritory()
     assert set(plugin.territories) == {"Araba", "Bizkaia", "Gipuzkoa"}
@@ -52,6 +53,7 @@ def test_foral_vasco_minimos_are_quota_deductions():
 
 
 # --- Foral Navarra ---
+
 
 def test_foral_navarra_covers_1_territory():
     plugin = ForalNavarraTerritory()

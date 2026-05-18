@@ -6,6 +6,7 @@ New income types can be added without modifying existing ones (Open/Closed).
 All calculators follow the same interface (Liskov/Interface Segregation).
 Calculators depend on TaxParameterRepository, not SQL (Dependency Inversion).
 """
+
 from typing import Protocol, Dict, Any
 
 

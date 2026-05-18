@@ -1,6 +1,7 @@
 """
 Tests for export system: report generator, email service, and export endpoints.
 """
+
 import json
 import pytest
 import sys
@@ -26,6 +27,7 @@ sys.modules.setdefault("slowapi.errors", MagicMock())
 # ============================================================
 # REPORT GENERATOR TESTS
 # ============================================================
+
 
 class TestReportGenerator:
     """Tests for PDF report generation."""
@@ -126,8 +128,13 @@ class TestReportGenerator:
                 "tipo_efectivo": 21.0,
             },
             deductions=[
-                {"code": "EST-MAT-1200", "name": "Maternidad", "type": "deduccion",
-                 "category": "familia", "fixed_amount": 1200.0},
+                {
+                    "code": "EST-MAT-1200",
+                    "name": "Maternidad",
+                    "type": "deduccion",
+                    "category": "familia",
+                    "fixed_amount": 1200.0,
+                },
             ],
             fiscal_profile={"ccaa_residencia": "Cataluna"},
             estimated_savings=1200.0,
@@ -236,6 +243,7 @@ class TestMarkdownParser:
 # EMAIL SERVICE TESTS
 # ============================================================
 
+
 class TestEmailService:
     """Tests for email service."""
 
@@ -285,6 +293,7 @@ class TestEmailService:
 # ============================================================
 # EXPORT ROUTER TESTS
 # ============================================================
+
 
 class TestExportRouter:
     """Tests for export API endpoints."""
@@ -376,6 +385,7 @@ class TestExportRouter:
 # CONFIG TESTS
 # ============================================================
 
+
 class TestExportConfig:
     """Tests for Resend configuration in settings."""
 
@@ -414,6 +424,7 @@ class TestExportConfig:
 # ============================================================
 # DATABASE SCHEMA TESTS
 # ============================================================
+
 
 class TestDatabaseSchema:
     """Tests for new database tables."""

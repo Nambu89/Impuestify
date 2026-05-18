@@ -4,6 +4,7 @@ Tests para la calculadora FIFO de criptomonedas.
 Cubre: FIFO basico, crypto-to-crypto, antiaplicacion,
 multiples activos, perdidas, staking/airdrop, casos borde.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -21,7 +22,10 @@ from app.utils.calculators.crypto_fifo import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _buy(asset: str, amount: float, date: str, price_eur: float, fee: float = 0.0) -> CryptoTransaction:
+
+def _buy(
+    asset: str, amount: float, date: str, price_eur: float, fee: float = 0.0
+) -> CryptoTransaction:
     return CryptoTransaction(
         tx_type="buy",
         date_utc=date,
@@ -34,7 +38,9 @@ def _buy(asset: str, amount: float, date: str, price_eur: float, fee: float = 0.
     )
 
 
-def _sell(asset: str, amount: float, date: str, price_eur: float, fee: float = 0.0) -> CryptoTransaction:
+def _sell(
+    asset: str, amount: float, date: str, price_eur: float, fee: float = 0.0
+) -> CryptoTransaction:
     return CryptoTransaction(
         tx_type="sell",
         date_utc=date,
@@ -69,7 +75,9 @@ def _swap(
     )
 
 
-def _staking(asset: str, amount: float, date: str, price_eur: float | None = None) -> CryptoTransaction:
+def _staking(
+    asset: str, amount: float, date: str, price_eur: float | None = None
+) -> CryptoTransaction:
     return CryptoTransaction(
         tx_type="staking_reward",
         date_utc=date,
@@ -98,6 +106,7 @@ def _airdrop(asset: str, amount: float, date: str) -> CryptoTransaction:
 # ---------------------------------------------------------------------------
 # T1: FIFO basico — una compra, una venta
 # ---------------------------------------------------------------------------
+
 
 def test_fifo_basic_gain():
     """Compra 1 BTC a 10.000, vende a 15.000 -> ganancia 5.000."""
@@ -154,6 +163,7 @@ def test_fifo_partial_sell():
 # ---------------------------------------------------------------------------
 # T2: FIFO con multiples lotes
 # ---------------------------------------------------------------------------
+
 
 def test_fifo_two_lots_ordered():
     """
@@ -221,6 +231,7 @@ def test_fifo_cross_year_no_filter():
 # T3: Multiples activos independientes
 # ---------------------------------------------------------------------------
 
+
 def test_fifo_multiple_assets_independent():
     """
     BTC y ETH tienen pools independientes. No se mezclan.
@@ -245,14 +256,19 @@ def test_fifo_multiple_assets_independent():
 # T4: Swap (cripto a cripto)
 # ---------------------------------------------------------------------------
 
+
 def test_swap_clave_N():
     """Swap BTC -> ETH genera clave N (otra moneda virtual)."""
     txs = [
         _buy("BTC", 1.0, "2024-01-01T10:00:00", 10_000.0),
-        _swap("BTC", 1.0, "2024-06-01T10:00:00",
-              total_eur=15_000.0,
-              counterpart_asset="ETH",
-              counterpart_amount=8.0),
+        _swap(
+            "BTC",
+            1.0,
+            "2024-06-01T10:00:00",
+            total_eur=15_000.0,
+            counterpart_asset="ETH",
+            counterpart_amount=8.0,
+        ),
     ]
     result = calculate_fifo_gains(txs, tax_year=2024)
     assert len(result.gains) == 1
@@ -268,10 +284,14 @@ def test_swap_received_asset_enters_pool():
     """
     txs = [
         _buy("BTC", 1.0, "2024-01-01T10:00:00", 10_000.0),
-        _swap("BTC", 1.0, "2024-06-01T10:00:00",
-              total_eur=15_000.0,
-              counterpart_asset="ETH",
-              counterpart_amount=10.0),
+        _swap(
+            "BTC",
+            1.0,
+            "2024-06-01T10:00:00",
+            total_eur=15_000.0,
+            counterpart_asset="ETH",
+            counterpart_amount=10.0,
+        ),
         _sell("ETH", 10.0, "2024-12-01T10:00:00", 2_000.0),
     ]
     result = calculate_fifo_gains(txs, tax_year=2024)
@@ -301,6 +321,7 @@ def test_swap_clave_F_when_receiving_fiat():
 # T5: Staking y airdrop
 # ---------------------------------------------------------------------------
 
+
 def test_staking_reward_enters_pool():
     """Staking reward de 0.1 ETH a precio 2.000 -> entra al pool a coste 200."""
     txs = [
@@ -329,14 +350,15 @@ def test_airdrop_zero_cost():
 # T6: Regla antiaplicacion (Art. 33.5.f LIRPF)
 # ---------------------------------------------------------------------------
 
+
 def test_anti_aplicacion_triggered():
     """
     Venta con perdida seguida de recompra dentro de 2 meses -> anti_aplicacion=True.
     """
     txs = [
         _buy("BTC", 1.0, "2024-01-01T10:00:00", 10_000.0),
-        _sell("BTC", 1.0, "2024-03-01T10:00:00", 8_000.0),   # perdida -2.000
-        _buy("BTC", 1.0, "2024-03-15T10:00:00", 8_500.0),    # recompra 14 dias despues
+        _sell("BTC", 1.0, "2024-03-01T10:00:00", 8_000.0),  # perdida -2.000
+        _buy("BTC", 1.0, "2024-03-15T10:00:00", 8_500.0),  # recompra 14 dias despues
     ]
     result = calculate_fifo_gains(txs, tax_year=2024)
     # Debe haber una ganancia con perdida marcada como anti_aplicacion
@@ -376,13 +398,14 @@ def test_anti_aplicacion_only_affects_losses():
 # T7: Summary y casillas AEAT
 # ---------------------------------------------------------------------------
 
+
 def test_summary_casillas():
     """El resumen contiene casillas 1813 y 1814 con valores correctos."""
     txs = [
         _buy("BTC", 1.0, "2024-01-01T10:00:00", 10_000.0),
         _sell("BTC", 0.5, "2024-06-01T10:00:00", 15_000.0),  # ganancia 2.500
         _buy("ETH", 5.0, "2024-01-01T10:00:00", 2_000.0),
-        _sell("ETH", 5.0, "2024-07-01T10:00:00", 1_500.0),   # perdida -2.500
+        _sell("ETH", 5.0, "2024-07-01T10:00:00", 1_500.0),  # perdida -2.500
     ]
     result = calculate_fifo_gains(txs, tax_year=2024)
     s = result.summary
@@ -415,6 +438,7 @@ def test_summary_assets_involved():
 # ---------------------------------------------------------------------------
 # T8: Casos borde
 # ---------------------------------------------------------------------------
+
 
 def test_empty_transactions():
     """Lista vacia devuelve FIFOResult vacio."""
@@ -450,7 +474,7 @@ def test_date_ordering_respected():
     """
     txs = [
         _sell("BTC", 1.0, "2024-06-01T10:00:00", 15_000.0),  # pasa primero
-        _buy("BTC", 1.0, "2024-01-01T10:00:00", 10_000.0),    # pero es anterior
+        _buy("BTC", 1.0, "2024-01-01T10:00:00", 10_000.0),  # pero es anterior
     ]
     result = calculate_fifo_gains(txs, tax_year=2024)
     assert len(result.gains) == 1

@@ -11,6 +11,7 @@ The citation_verifier extracts citations with a regex and produces a
 This module turns those strings into structured tuples that the
 registry can look up. Pure function, no side effects, easy to test.
 """
+
 from __future__ import annotations
 
 import re
@@ -27,9 +28,9 @@ from typing import Optional, Tuple
 # The "art " prefix is optional because the citation extractor may
 # capture compound forms ("69 y 70 liva") yielding just "70 liva".
 _ART_LAW_RE = re.compile(
-    r"^(?:art\s+)?"                              # optional "art "
+    r"^(?:art\s+)?"  # optional "art "
     r"(?P<article>\d+(?:\s*bis|\s*ter|\s*quater|\s*quinquies)?)"
-    r"(?:\.(?P<subarticle>[^\s]+))?"             # optional .uno.2 / .dos.d / .6
+    r"(?:\.(?P<subarticle>[^\s]+))?"  # optional .uno.2 / .dos.d / .6
     r"\s+"
     r"(?P<law>lirpf|liva|lgt|lis|lisd|lisyd|lip|liiee|lmv|lfte|"
     r"trlitpajd|trlrhl|trlirnr|livmdh|ligic|"
@@ -54,8 +55,8 @@ class ParsedArticleCitation:
     Example: "art 69.dos.d liva" → law='LIVA' article='69' subarticle='Dos.d'
     """
 
-    law: str          # uppercase sigla
-    article: str      # numeric part, e.g. "69"
+    law: str  # uppercase sigla
+    article: str  # numeric part, e.g. "69"
     subarticle: Optional[str]  # canonical case, e.g. "Dos.d", "Uno.1", "6"
 
 
@@ -66,7 +67,7 @@ class ParsedNormCitation:
     Example: "ley 37/1992" → norm_type='ley' number=37 year=1992
     """
 
-    norm_type: str   # 'ley', 'rd', 'rd_legislativo', 'norma_foral', etc.
+    norm_type: str  # 'ley', 'rd', 'rd_legislativo', 'norma_foral', etc.
     number: int
     year: int
 

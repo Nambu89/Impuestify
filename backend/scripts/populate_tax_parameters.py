@@ -10,6 +10,7 @@ Data sources:
 - LGSS (cotizaciones SS empleado)
 - Normativa autonómica (MPYF overrides por CCAA)
 """
+
 import asyncio
 import os
 import sys
@@ -20,6 +21,7 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from dotenv import load_dotenv
+
 project_root = backend_dir.parent
 load_dotenv(project_root / ".env")
 
@@ -56,6 +58,7 @@ MPYF_ESTATAL = {
 #   - La Rioja: solo modifica discapacidad descendientes (necesita estructura diferente)
 #   - Cantabria, Castilla-La Mancha, Extremadura, Aragón, Murcia: no regulan MPYF
 
+
 # Helper para CCAAs que aplican +10% máximo a TODOS los mínimos
 def _mpyf_max_10pct(legal_ref_base):
     """Genera dict MPYF con todos los valores al máximo permitido (+10%)."""
@@ -78,13 +81,8 @@ def _mpyf_max_10pct(legal_ref_base):
 
 MPYF_CCAA_OVERRIDES = {
     # --- CCAAs al máximo +10% (Asturias, Valencia) ---
-    "Comunitat Valenciana": _mpyf_max_10pct(
-        "Ley 13/1997 GV art.2bis (DL 14/2022)"
-    ),
-    "Asturias": _mpyf_max_10pct(
-        "DLeg 2/2014 Asturias arts.2bis-2quinquies (Ley 3/2025)"
-    ),
-
+    "Comunitat Valenciana": _mpyf_max_10pct("Ley 13/1997 GV art.2bis (DL 14/2022)"),
+    "Asturias": _mpyf_max_10pct("DLeg 2/2014 Asturias arts.2bis-2quinquies (Ley 3/2025)"),
     # --- Galicia: ~+4.3% todos los mínimos ---
     "Galicia": {
         "contribuyente": (5789, "DLeg 1/2011 Galicia art.4bis"),
@@ -101,7 +99,6 @@ MPYF_CCAA_OVERRIDES = {
         "discapacidad_65_plus": (9387, "DLeg 1/2011 Galicia art.4bis"),
         "gastos_asistencia": (3129, "DLeg 1/2011 Galicia art.4bis"),
     },
-
     # --- Andalucía: ~+4.3% todos los mínimos ---
     "Andalucía": {
         "contribuyente": (5790, "Ley 5/2021 Andalucía art.23bis"),
@@ -118,7 +115,6 @@ MPYF_CCAA_OVERRIDES = {
         "discapacidad_65_plus": (9390, "Ley 5/2021 Andalucía art.23bis"),
         "gastos_asistencia": (3130, "Ley 5/2021 Andalucía art.23bis"),
     },
-
     # --- Canarias: ~+1% todos los mínimos ---
     "Canarias": {
         "contribuyente": (5606, "DLeg 1/2009 Canarias art.18quater"),
@@ -135,7 +131,6 @@ MPYF_CCAA_OVERRIDES = {
         "discapacidad_65_plus": (9090, "DLeg 1/2009 Canarias art.18quater"),
         "gastos_asistencia": (3030, "DLeg 1/2009 Canarias art.18quater"),
     },
-
     # --- Illes Balears: +10% selectivo (no base, no desc_1, no menor_3) ---
     "Illes Balears": {
         "contribuyente": (5550, "DLeg 1/2014 Baleares art.2"),
@@ -152,7 +147,6 @@ MPYF_CCAA_OVERRIDES = {
         "discapacidad_65_plus": (9900, "DLeg 1/2014 Baleares art.2"),
         "gastos_asistencia": (3300, "DLeg 1/2014 Baleares art.2"),
     },
-
     # --- Madrid: ~+7.33% (con desc_3 y desc_4+ al máximo +10%) ---
     "Comunidad de Madrid": {
         "contribuyente": (5956.65, "DLeg 1/2010 Madrid art.2"),
@@ -306,7 +300,7 @@ async def populate():
         await db.execute(
             "INSERT INTO tax_parameters (id, category, param_key, year, jurisdiction, value, legal_ref) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [str(uuid.uuid4()), "mpyf", key, year, "Estatal", value, ref]
+            [str(uuid.uuid4()), "mpyf", key, year, "Estatal", value, ref],
         )
         inserted += 1
     print(f"  ✓ {len(MPYF_ESTATAL)} parámetros MPYF estatal")
@@ -318,7 +312,7 @@ async def populate():
             await db.execute(
                 "INSERT INTO tax_parameters (id, category, param_key, year, jurisdiction, value, legal_ref) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [str(uuid.uuid4()), "mpyf", key, year, ccaa, value, ref]
+                [str(uuid.uuid4()), "mpyf", key, year, ccaa, value, ref],
             )
             inserted += 1
         print(f"  ✓ {len(overrides)} overrides para {ccaa}")
@@ -329,7 +323,7 @@ async def populate():
         await db.execute(
             "INSERT INTO tax_parameters (id, category, param_key, year, jurisdiction, value, legal_ref) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [str(uuid.uuid4()), "trabajo", key, year, "Estatal", value, ref]
+            [str(uuid.uuid4()), "trabajo", key, year, "Estatal", value, ref],
         )
         inserted += 1
     print(f"  ✓ {len(TRABAJO_PARAMS)} parámetros trabajo")
@@ -340,7 +334,7 @@ async def populate():
         await db.execute(
             "INSERT INTO tax_parameters (id, category, param_key, year, jurisdiction, value, legal_ref) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [str(uuid.uuid4()), "inmuebles", key, year, "Estatal", value, ref]
+            [str(uuid.uuid4()), "inmuebles", key, year, "Estatal", value, ref],
         )
         inserted += 1
     print(f"  ✓ {len(INMUEBLES_PARAMS)} parámetros inmuebles")
@@ -351,7 +345,7 @@ async def populate():
         await db.execute(
             "INSERT INTO tax_parameters (id, category, param_key, year, jurisdiction, value, legal_ref) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [str(uuid.uuid4()), "iva", key, year, "Estatal", value, ref]
+            [str(uuid.uuid4()), "iva", key, year, "Estatal", value, ref],
         )
         inserted += 1
     print(f"  ✓ {len(IVA_PARAMS)} parámetros IVA")
@@ -359,10 +353,7 @@ async def populate():
     # --- Tarifa del Ahorro ---
     print("\n📊 Inserting tarifa del ahorro (irpf_scales)...")
     # Clear existing ahorro scales
-    await db.execute(
-        "DELETE FROM irpf_scales WHERE year = ? AND scale_type = 'ahorro'",
-        [year]
-    )
+    await db.execute("DELETE FROM irpf_scales WHERE year = ? AND scale_type = 'ahorro'", [year])
 
     ahorro_inserted = 0
     # Estatal ahorro
@@ -371,17 +362,37 @@ async def populate():
             "INSERT INTO irpf_scales (id, jurisdiction, year, scale_type, tramo_num, "
             "base_hasta, cuota_integra, resto_base, tipo_aplicable) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [str(uuid.uuid4()), "Estatal", year, "ahorro", tramo_num,
-             base_hasta, cuota_integra, resto_base, tipo]
+            [
+                str(uuid.uuid4()),
+                "Estatal",
+                year,
+                "ahorro",
+                tramo_num,
+                base_hasta,
+                cuota_integra,
+                resto_base,
+                tipo,
+            ],
         )
         ahorro_inserted += 1
 
     # Autonómico ahorro (escala complementaria estándar para CCAAs régimen común)
     ccaa_regimen_comun = [
-        "Andalucía", "Aragón", "Asturias", "Baleares", "Canarias",
-        "Cantabria", "Castilla y León", "Castilla-La Mancha",
-        "Cataluña", "Extremadura", "Galicia", "La Rioja",
-        "Comunidad de Madrid", "Murcia", "Comunitat Valenciana",
+        "Andalucía",
+        "Aragón",
+        "Asturias",
+        "Baleares",
+        "Canarias",
+        "Cantabria",
+        "Castilla y León",
+        "Castilla-La Mancha",
+        "Cataluña",
+        "Extremadura",
+        "Galicia",
+        "La Rioja",
+        "Comunidad de Madrid",
+        "Murcia",
+        "Comunitat Valenciana",
     ]
     for ccaa in ccaa_regimen_comun:
         for tramo_num, base_hasta, cuota_integra, resto_base, tipo in AHORRO_AUTONOMICO_2024:
@@ -389,8 +400,17 @@ async def populate():
                 "INSERT INTO irpf_scales (id, jurisdiction, year, scale_type, tramo_num, "
                 "base_hasta, cuota_integra, resto_base, tipo_aplicable) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                [str(uuid.uuid4()), ccaa, year, "ahorro", tramo_num,
-                 base_hasta, cuota_integra, resto_base, tipo]
+                [
+                    str(uuid.uuid4()),
+                    ccaa,
+                    year,
+                    "ahorro",
+                    tramo_num,
+                    base_hasta,
+                    cuota_integra,
+                    resto_base,
+                    tipo,
+                ],
             )
             ahorro_inserted += 1
 
@@ -401,14 +421,14 @@ async def populate():
     print("🔍 Verificación:")
     result = await db.execute(
         "SELECT category, COUNT(*) as cnt FROM tax_parameters WHERE year = ? GROUP BY category",
-        [year]
+        [year],
     )
     for row in result.rows:
         print(f"  tax_parameters/{row['category']}: {row['cnt']} registros")
 
     result = await db.execute(
         "SELECT scale_type, COUNT(*) as cnt FROM irpf_scales WHERE year = ? GROUP BY scale_type",
-        [year]
+        [year],
     )
     for row in result.rows:
         print(f"  irpf_scales/{row['scale_type']}: {row['cnt']} registros")
@@ -420,7 +440,7 @@ async def populate():
     print("\n🧪 Test: MPYF contribuyente Estatal...")
     result = await db.execute(
         "SELECT value FROM tax_parameters WHERE category='mpyf' AND param_key='contribuyente' AND year=? AND jurisdiction='Estatal'",
-        [year]
+        [year],
     )
     if result.rows:
         print(f"  ✓ contribuyente = {result.rows[0]['value']}€")
@@ -429,7 +449,7 @@ async def populate():
     for ccaa in ["Comunitat Valenciana", "Comunidad de Madrid", "Galicia", "Andalucía", "Canarias"]:
         result = await db.execute(
             "SELECT value FROM tax_parameters WHERE category='mpyf' AND param_key='contribuyente' AND year=? AND jurisdiction=?",
-            [year, ccaa]
+            [year, ccaa],
         )
         if result.rows:
             print(f"  ✓ {ccaa}: contribuyente = {result.rows[0]['value']}€")
@@ -437,7 +457,7 @@ async def populate():
     print("\n🧪 Test: Total overrides por CCAA...")
     result = await db.execute(
         "SELECT jurisdiction, COUNT(*) as cnt FROM tax_parameters WHERE category='mpyf' AND year=? AND jurisdiction != 'Estatal' GROUP BY jurisdiction",
-        [year]
+        [year],
     )
     for row in result.rows:
         print(f"  ✓ {row['jurisdiction']}: {row['cnt']} parámetros")
@@ -445,7 +465,7 @@ async def populate():
     print("\n🧪 Test: Tarifa ahorro estatal tramo 1...")
     result = await db.execute(
         "SELECT tipo_aplicable FROM irpf_scales WHERE jurisdiction='Estatal' AND year=? AND scale_type='ahorro' AND tramo_num=1",
-        [year]
+        [year],
     )
     if result.rows:
         print(f"  ✓ tipo_aplicable = {result.rows[0]['tipo_aplicable']}%")
@@ -475,8 +495,17 @@ async def populate():
             "INSERT INTO irpf_scales (id, jurisdiction, year, scale_type, tramo_num, "
             "base_hasta, cuota_integra, resto_base, tipo_aplicable) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [str(uuid.uuid4()), "Estatal", 2025, "ahorro", tramo_num,
-             base_hasta, cuota_integra, resto_base, tipo]
+            [
+                str(uuid.uuid4()),
+                "Estatal",
+                2025,
+                "ahorro",
+                tramo_num,
+                base_hasta,
+                cuota_integra,
+                resto_base,
+                tipo,
+            ],
         )
         ahorro_2025_inserted += 1
     for ccaa in ccaa_regimen_comun:
@@ -485,11 +514,22 @@ async def populate():
                 "INSERT INTO irpf_scales (id, jurisdiction, year, scale_type, tramo_num, "
                 "base_hasta, cuota_integra, resto_base, tipo_aplicable) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                [str(uuid.uuid4()), ccaa, 2025, "ahorro", tramo_num,
-                 base_hasta, cuota_integra, resto_base, tipo]
+                [
+                    str(uuid.uuid4()),
+                    ccaa,
+                    2025,
+                    "ahorro",
+                    tramo_num,
+                    base_hasta,
+                    cuota_integra,
+                    resto_base,
+                    tipo,
+                ],
             )
             ahorro_2025_inserted += 1
-    print(f"  ✓ {ahorro_2025_inserted} filas ahorro 2025 (estatal + {len(ccaa_regimen_comun)} CCAAs) — top bracket 15%")
+    print(
+        f"  ✓ {ahorro_2025_inserted} filas ahorro 2025 (estatal + {len(ccaa_regimen_comun)} CCAAs) — top bracket 15%"
+    )
 
     await db.disconnect()
     print(f"\n{'='*60}")

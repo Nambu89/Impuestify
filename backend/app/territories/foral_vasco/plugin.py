@@ -1,9 +1,16 @@
 """Foral Vasco territory plugin -- Araba, Bizkaia, Gipuzkoa."""
+
 from typing import Any, Dict, List
 
 from app.territories.base import (
-    TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig,
-    ModelObligation, Deadline, DEADLINES_2026, _trimestral_deadlines,
+    TerritoryPlugin,
+    ScaleData,
+    SimulationResult,
+    MinimosConfig,
+    ModelObligation,
+    Deadline,
+    DEADLINES_2026,
+    _trimestral_deadlines,
 )
 
 
@@ -19,6 +26,7 @@ class ForalVascoTerritory(TerritoryPlugin):
     EPSV: Replaces pension plan contributions.
     Minimos: Applied as direct quota deduction (EUR off the bill).
     """
+
     territories = ["Araba", "Bizkaia", "Gipuzkoa"]
     regime = "foral_vasco"
 
@@ -27,6 +35,7 @@ class ForalVascoTerritory(TerritoryPlugin):
 
     async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
         from app.utils.irpf_simulator import IRPFSimulator
+
         simulator = IRPFSimulator(db)
         result = await simulator.simulate(**profile)
         return SimulationResult(
@@ -41,6 +50,7 @@ class ForalVascoTerritory(TerritoryPlugin):
 
     async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
         from app.services.deduction_service import DeductionService
+
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 

@@ -27,6 +27,7 @@ OUT OF SCOPE en esta versión:
     (signos, índices) — el caller debe pasarlo ya calculado vía
     `ModularIncomeCalculator` o input del usuario.
 """
+
 from datetime import datetime
 from typing import Any, Dict, Optional
 import logging
@@ -127,8 +128,7 @@ del frontend.""",
                 "retenciones_trimestre": {
                     "type": "number",
                     "description": (
-                        "CASILLA 09 — Retenciones e ingresos a cuenta del "
-                        "TRIMESTRE."
+                        "CASILLA 09 — Retenciones e ingresos a cuenta del " "TRIMESTRE."
                     ),
                 },
                 "pagos_anteriores": {
@@ -216,30 +216,35 @@ def _build_response(
 
     if apartado == "I":
         criterio = desglose.get("criterio_tipo", "")
-        lines.extend([
-            "**Apartado I — Actividades empresariales en módulos**",
-            f"- Rendimiento neto previo módulos anual [01]: "
-            f"{_fmt(casillas['01_rendimiento_neto_modulos'])} EUR",
-            f"- Tipo aplicable [02]: {casillas['02_tipo_aplicable']:.1f}% "
-            f"({criterio})",
-            f"- Resultado actividades empresariales [03]: "
-            f"{_fmt(casillas['03_resultado_empresarial'])} EUR",
-        ])
+        lines.extend(
+            [
+                "**Apartado I — Actividades empresariales en módulos**",
+                f"- Rendimiento neto previo módulos anual [01]: "
+                f"{_fmt(casillas['01_rendimiento_neto_modulos'])} EUR",
+                f"- Tipo aplicable [02]: {casillas['02_tipo_aplicable']:.1f}% " f"({criterio})",
+                f"- Resultado actividades empresariales [03]: "
+                f"{_fmt(casillas['03_resultado_empresarial'])} EUR",
+            ]
+        )
     elif apartado == "III":
-        lines.extend([
-            "**Apartado III — Actividades agrícolas / ganaderas / forestales / pesqueras**",
-            f"- Volumen de ingresos del trimestre [04]: "
-            f"{_fmt(casillas['04_volumen_ingresos_agrario'])} EUR",
-            f"- Cuota 2% [05]: {_fmt(casillas['05_cuota_agraria'])} EUR",
-        ])
+        lines.extend(
+            [
+                "**Apartado III — Actividades agrícolas / ganaderas / forestales / pesqueras**",
+                f"- Volumen de ingresos del trimestre [04]: "
+                f"{_fmt(casillas['04_volumen_ingresos_agrario'])} EUR",
+                f"- Cuota 2% [05]: {_fmt(casillas['05_cuota_agraria'])} EUR",
+            ]
+        )
     else:  # apartado II
-        lines.extend([
-            "**Apartado II — Actividad empresarial sin datos-base**",
-            f"- Volumen de ingresos del trimestre [01]: "
-            f"{_fmt(casillas['01_rendimiento_neto_modulos'])} EUR",
-            f"- Tipo aplicable [02]: {casillas['02_tipo_aplicable']:.1f}%",
-            f"- Resultado [03]: {_fmt(casillas['03_resultado_empresarial'])} EUR",
-        ])
+        lines.extend(
+            [
+                "**Apartado II — Actividad empresarial sin datos-base**",
+                f"- Volumen de ingresos del trimestre [01]: "
+                f"{_fmt(casillas['01_rendimiento_neto_modulos'])} EUR",
+                f"- Tipo aplicable [02]: {casillas['02_tipo_aplicable']:.1f}%",
+                f"- Resultado [03]: {_fmt(casillas['03_resultado_empresarial'])} EUR",
+            ]
+        )
 
     lines.append("")
     lines.append(f"**Total cuotas [06]: {_fmt(casillas['06_total_cuotas'])} EUR**")
@@ -289,9 +294,7 @@ def _build_response(
             "Domiciliación bancaria hasta 5 días antes del vencimiento."
         )
     else:
-        lines.append(
-            f"- Resultado [12]: **{_fmt(resultado)} EUR (sin ingreso)**"
-        )
+        lines.append(f"- Resultado [12]: **{_fmt(resultado)} EUR (sin ingreso)**")
         lines.append("")
         lines.append(
             f"Aunque el resultado sea 0, debes presentar el modelo igualmente "
@@ -357,8 +360,7 @@ async def calculate_modelo_131_tool(
                     "Valores: 'empresarial', 'sin_datos_base', 'agraria'."
                 ),
                 "formatted_response": (
-                    "El tipo de actividad debe ser 'empresarial', "
-                    "'sin_datos_base' o 'agraria'."
+                    "El tipo de actividad debe ser 'empresarial', " "'sin_datos_base' o 'agraria'."
                 ),
             }
 

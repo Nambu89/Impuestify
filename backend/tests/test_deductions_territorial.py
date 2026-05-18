@@ -8,6 +8,7 @@ Covers:
 - Eligibility evaluation with territorial deductions
 - Discovery tool with CCAA parameter
 """
+
 import json
 import pytest
 import sys
@@ -34,18 +35,28 @@ sys.modules.setdefault("slowapi.errors", MagicMock())
 # SEED DATA INTEGRITY TESTS
 # ============================================================
 
+
 class TestTerritorialSeedData:
     """Tests that seed data is well-formed for all territories."""
 
     def _get_all_territorial(self):
         from scripts.seed_deductions_territorial import ALL_TERRITORIAL
+
         return ALL_TERRITORIAL
 
     def test_all_territories_present(self):
         """Should have exactly 8 territories."""
         territories = self._get_all_territorial()
-        expected = {"Araba", "Bizkaia", "Gipuzkoa", "Navarra",
-                    "Madrid", "Cataluña", "Andalucía", "Valencia"}
+        expected = {
+            "Araba",
+            "Bizkaia",
+            "Gipuzkoa",
+            "Navarra",
+            "Madrid",
+            "Cataluña",
+            "Andalucía",
+            "Valencia",
+        }
         assert set(territories.keys()) == expected
 
     def test_foral_territories_have_deductions(self):
@@ -71,8 +82,9 @@ class TestTerritorialSeedData:
         territories = self._get_all_territorial()
         for territory_name, deductions in territories.items():
             codes = [d["code"] for d in deductions]
-            assert len(codes) == len(set(codes)), \
-                f"Duplicate codes in {territory_name}: {[c for c in codes if codes.count(c) > 1]}"
+            assert len(codes) == len(
+                set(codes)
+            ), f"Duplicate codes in {territory_name}: {[c for c in codes if codes.count(c) > 1]}"
 
     def test_all_codes_globally_unique(self):
         """Deduction codes should be globally unique across all territories."""
@@ -86,21 +98,35 @@ class TestTerritorialSeedData:
         """Deduction codes should use correct territory prefix."""
         territories = self._get_all_territorial()
         prefix_map = {
-            "Araba": "ARA-", "Bizkaia": "BIZ-", "Gipuzkoa": "GIP-",
-            "Navarra": "NAV-", "Madrid": "MAD-", "Cataluña": "CAT-",
-            "Andalucía": "AND-", "Valencia": "VAL-",
+            "Araba": "ARA-",
+            "Bizkaia": "BIZ-",
+            "Gipuzkoa": "GIP-",
+            "Navarra": "NAV-",
+            "Madrid": "MAD-",
+            "Cataluña": "CAT-",
+            "Andalucía": "AND-",
+            "Valencia": "VAL-",
         }
         for territory_name, deductions in territories.items():
             expected_prefix = prefix_map[territory_name]
             for d in deductions:
-                assert d["code"].startswith(expected_prefix), \
-                    f"{d['code']} doesn't start with {expected_prefix}"
+                assert d["code"].startswith(
+                    expected_prefix
+                ), f"{d['code']} doesn't start with {expected_prefix}"
 
     def test_required_fields_present(self):
         """Every deduction should have all required fields."""
         territories = self._get_all_territorial()
-        required = {"code", "name", "type", "category", "legal_reference",
-                    "description", "requirements_json", "questions_json"}
+        required = {
+            "code",
+            "name",
+            "type",
+            "category",
+            "legal_reference",
+            "description",
+            "requirements_json",
+            "questions_json",
+        }
         for territory_name, deductions in territories.items():
             for d in deductions:
                 for field in required:
@@ -152,11 +178,13 @@ class TestTerritorialSeedData:
 # FORAL TERRITORY SPECIFIC TESTS
 # ============================================================
 
+
 class TestForalTerritories:
     """Tests specific to Basque Country and Navarra foral deductions."""
 
     def _get_territory(self, name):
         from scripts.seed_deductions_territorial import ALL_TERRITORIAL
+
         return ALL_TERRITORIAL[name]
 
     def test_araba_has_vivienda_compra(self):
@@ -220,11 +248,13 @@ class TestForalTerritories:
 # RÉGIMEN COMÚN SPECIFIC TESTS
 # ============================================================
 
+
 class TestRegimenComun:
     """Tests specific to régimen común CCAA deductions."""
 
     def _get_territory(self, name):
         from scripts.seed_deductions_territorial import ALL_TERRITORIAL
+
         return ALL_TERRITORIAL[name]
 
     def test_madrid_has_gastos_educativos(self):
@@ -262,6 +292,7 @@ class TestRegimenComun:
 # ============================================================
 # DEDUCTION SERVICE COMBINED QUERY TESTS
 # ============================================================
+
 
 class TestDeductionServiceCombined:
     """Tests for combined Estatal + CCAA deduction queries."""
@@ -306,10 +337,12 @@ class TestDeductionServiceCombined:
         """Should combine Estatal + CCAA deductions for régimen común."""
         from app.services.deduction_service import DeductionService
 
-        mock_db = self._make_mock_db({
-            "Estatal": [self._make_row("EST-1", "Estatal"), self._make_row("EST-2", "Estatal")],
-            "Madrid": [self._make_row("MAD-1", "Madrid")],
-        })
+        mock_db = self._make_mock_db(
+            {
+                "Estatal": [self._make_row("EST-1", "Estatal"), self._make_row("EST-2", "Estatal")],
+                "Madrid": [self._make_row("MAD-1", "Madrid")],
+            }
+        )
         service = DeductionService(db_client=mock_db)
         result = await service.get_all_deductions("Madrid")
         assert len(result) == 3
@@ -319,10 +352,12 @@ class TestDeductionServiceCombined:
         """Foral territories should NOT include Estatal deductions."""
         from app.services.deduction_service import DeductionService
 
-        mock_db = self._make_mock_db({
-            "Estatal": [self._make_row("EST-1", "Estatal")],
-            "Araba": [self._make_row("ARA-1", "Araba"), self._make_row("ARA-2", "Araba")],
-        })
+        mock_db = self._make_mock_db(
+            {
+                "Estatal": [self._make_row("EST-1", "Estatal")],
+                "Araba": [self._make_row("ARA-1", "Araba"), self._make_row("ARA-2", "Araba")],
+            }
+        )
         service = DeductionService(db_client=mock_db)
         result = await service.get_all_deductions("Araba")
         # Should only have Araba deductions, NOT Estatal
@@ -334,10 +369,12 @@ class TestDeductionServiceCombined:
         """Should evaluate combined deductions when ccaa is provided."""
         from app.services.deduction_service import DeductionService
 
-        mock_db = self._make_mock_db({
-            "Estatal": [self._make_row("EST-1", "Estatal", fixed_amount=200.0)],
-            "Madrid": [self._make_row("MAD-1", "Madrid", fixed_amount=300.0)],
-        })
+        mock_db = self._make_mock_db(
+            {
+                "Estatal": [self._make_row("EST-1", "Estatal", fixed_amount=200.0)],
+                "Madrid": [self._make_row("MAD-1", "Madrid", fixed_amount=300.0)],
+            }
+        )
         service = DeductionService(db_client=mock_db)
         result = await service.evaluate_eligibility(ccaa="Madrid", answers={})
         # Both should be maybe_eligible (no requirements)
@@ -351,20 +388,26 @@ class TestDeductionServiceCombined:
 
         estatal_row = self._make_row("EST-1", "Estatal")
         estatal_row["requirements_json"] = json.dumps({"req_a": True})
-        estatal_row["questions_json"] = json.dumps([
-            {"key": "req_a", "text": "Question A?", "type": "bool"},
-        ])
+        estatal_row["questions_json"] = json.dumps(
+            [
+                {"key": "req_a", "text": "Question A?", "type": "bool"},
+            ]
+        )
 
         ccaa_row = self._make_row("MAD-1", "Madrid")
         ccaa_row["requirements_json"] = json.dumps({"req_b": True})
-        ccaa_row["questions_json"] = json.dumps([
-            {"key": "req_b", "text": "Question B?", "type": "bool"},
-        ])
+        ccaa_row["questions_json"] = json.dumps(
+            [
+                {"key": "req_b", "text": "Question B?", "type": "bool"},
+            ]
+        )
 
-        mock_db = self._make_mock_db({
-            "Estatal": [estatal_row],
-            "Madrid": [ccaa_row],
-        })
+        mock_db = self._make_mock_db(
+            {
+                "Estatal": [estatal_row],
+                "Madrid": [ccaa_row],
+            }
+        )
         service = DeductionService(db_client=mock_db)
         missing = await service.get_missing_questions(ccaa="Madrid", answers={})
         keys = [q["key"] for q in missing]
@@ -379,10 +422,12 @@ class TestDeductionServiceCombined:
         estatal_row = self._make_row("EST-1", "Estatal")
         navarra_row = self._make_row("NAV-1", "Navarra", fixed_amount=500.0)
 
-        mock_db = self._make_mock_db({
-            "Estatal": [estatal_row],
-            "Navarra": [navarra_row],
-        })
+        mock_db = self._make_mock_db(
+            {
+                "Estatal": [estatal_row],
+                "Navarra": [navarra_row],
+            }
+        )
         service = DeductionService(db_client=mock_db)
         result = await service.evaluate_eligibility(ccaa="Navarra", answers={})
         # Should only have Navarra deductions
@@ -394,6 +439,7 @@ class TestDeductionServiceCombined:
 # DISCOVERY TOOL TERRITORIAL TESTS
 # ============================================================
 
+
 class TestDiscoveryToolTerritorial:
     """Tests for deduction discovery tool with territorial support."""
 
@@ -403,9 +449,17 @@ class TestDiscoveryToolTerritorial:
         from app.tools.deduction_discovery_tool import discover_deductions_tool
 
         mock_result = {
-            "eligible": [{"code": "MAD-1", "name": "Test", "type": "deduccion",
-                         "category": "familia", "description": "Test", "legal_reference": "Art. 1",
-                         "fixed_amount": 500.0}],
+            "eligible": [
+                {
+                    "code": "MAD-1",
+                    "name": "Test",
+                    "type": "deduccion",
+                    "category": "familia",
+                    "description": "Test",
+                    "legal_reference": "Art. 1",
+                    "fixed_amount": 500.0,
+                }
+            ],
             "maybe_eligible": [],
             "not_eligible": [],
             "estimated_savings": 500.0,
@@ -516,11 +570,13 @@ class TestDiscoveryToolTerritorial:
 # CROSS-TERRITORY COMPARISON TESTS
 # ============================================================
 
+
 class TestCrossTerritoryComparison:
     """Tests that verify strategic differences between territories."""
 
     def _get_territory(self, name):
         from scripts.seed_deductions_territorial import ALL_TERRITORIAL
+
         return ALL_TERRITORIAL[name]
 
     def test_basque_alquiler_more_generous_than_common(self):
@@ -550,6 +606,7 @@ class TestCrossTerritoryComparison:
     def test_every_territory_has_vivienda_category(self):
         """Every territory should have at least one vivienda deduction."""
         from scripts.seed_deductions_territorial import ALL_TERRITORIAL
+
         for name, deductions in ALL_TERRITORIAL.items():
             has_vivienda = any(d["category"] == "vivienda" for d in deductions)
             assert has_vivienda, f"{name} has no vivienda deduction"
@@ -557,6 +614,7 @@ class TestCrossTerritoryComparison:
     def test_every_territory_has_familia_category(self):
         """Every territory should have at least one familia deduction."""
         from scripts.seed_deductions_territorial import ALL_TERRITORIAL
+
         for name, deductions in ALL_TERRITORIAL.items():
             has_familia = any(d["category"] == "familia" for d in deductions)
             assert has_familia, f"{name} has no familia deduction"

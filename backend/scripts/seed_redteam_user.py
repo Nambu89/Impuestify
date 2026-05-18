@@ -31,6 +31,7 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT.parent / ".env")
 except ImportError:
     pass
@@ -95,9 +96,7 @@ async def main():
             )
             logger.info(f"Password rotated for {REDTEAM_EMAIL}")
         else:
-            logger.info(
-                f"User {REDTEAM_EMAIL} already exists. Use QA_REDTEAM_PASSWORD to rotate."
-            )
+            logger.info(f"User {REDTEAM_EMAIL} already exists. Use QA_REDTEAM_PASSWORD to rotate.")
         # Ensure subscription exists even if previous run left a partial state
         await _ensure_active_subscription(db, user_id)
         if os.getenv("QA_REDTEAM_PASSWORD") and not rotate_only:

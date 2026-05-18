@@ -8,6 +8,7 @@ transcurrido mas de 4 anos desde el fin del plazo voluntario de declaracion
 
 Absorbe el sub-caso "calculo de plazos" (R008 del plan v1 descartada).
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -27,9 +28,8 @@ from app.services.defensia_rules.reglas_procedimentales import R003_prescripcion
 # Positivos
 # ---------------------------------------------------------------------------
 
-def test_r003_positivo_mas_de_4_anos_desde_plazo_voluntario(
-    build_exp, build_doc, build_brief
-):
+
+def test_r003_positivo_mas_de_4_anos_desde_plazo_voluntario(build_exp, build_doc, build_brief):
     """Ejercicio 2020, notificacion 2025-08-01.
 
     Fin plazo voluntario IRPF 2020 = 2021-06-30.
@@ -59,9 +59,7 @@ def test_r003_positivo_mas_de_4_anos_desde_plazo_voluntario(
     assert resultado.datos_disparo["dias_transcurridos"] > 4 * 365
 
 
-def test_r003_positivo_limite_exacto_mas_un_dia(
-    build_exp, build_doc, build_brief
-):
+def test_r003_positivo_limite_exacto_mas_un_dia(build_exp, build_doc, build_brief):
     """Limite exacto: fin plazo 2021-06-30, notificacion 2025-07-01.
 
     4 anos y 1 dia -> dispara (doctrina TS fecha a fecha).
@@ -89,9 +87,8 @@ def test_r003_positivo_limite_exacto_mas_un_dia(
 # Negativos
 # ---------------------------------------------------------------------------
 
-def test_r003_negativo_limite_exacto_no_dispara(
-    build_exp, build_doc, build_brief
-):
+
+def test_r003_negativo_limite_exacto_no_dispara(build_exp, build_doc, build_brief):
     """Fin plazo 2021-06-30, notificacion 2025-06-30.
 
     Exactamente 4 anos -> NO dispara (dentro del plazo, doctrina fecha a fecha).
@@ -114,9 +111,7 @@ def test_r003_negativo_limite_exacto_no_dispara(
     assert resultado is None
 
 
-def test_r003_negativo_dentro_de_plazo(
-    build_exp, build_doc, build_brief
-):
+def test_r003_negativo_dentro_de_plazo(build_exp, build_doc, build_brief):
     """Ejercicio 2023, notificacion 2026-02-01 -> claramente dentro de plazo."""
     doc_aeat = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -136,9 +131,7 @@ def test_r003_negativo_dentro_de_plazo(
     assert resultado is None
 
 
-def test_r003_negativo_interrupcion_previa(
-    build_exp, build_doc, build_brief
-):
+def test_r003_negativo_interrupcion_previa(build_exp, build_doc, build_brief):
     """Hubo un requerimiento interruptivo dentro de los 4 anos.
 
     Ejercicio 2020 (fin plazo 2021-06-30), requerimiento 2024-05-01 (interrumpe,

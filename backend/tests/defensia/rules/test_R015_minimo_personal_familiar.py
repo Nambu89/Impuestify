@@ -40,6 +40,7 @@ Patron de aislamiento: seguimos el mismo patron que R010 — limpiamos el
 REGISTRY y reimportamos el modulo en cada test para garantizar que el
 decorador `@regla` re-registra R015 de forma limpia.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -60,6 +61,7 @@ from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 # Aislamiento especifico de R015
 # ---------------------------------------------------------------------------
 
+
 def _cargar_solo_R015() -> None:
     """Re-importa R015 tras cada reset del REGISTRY.
 
@@ -70,9 +72,7 @@ def _cargar_solo_R015() -> None:
     duplicados y que un test previo contamine el estado de R015.
     """
     reset_registry()
-    module_name = (
-        "app.services.defensia_rules.reglas_irpf.R015_minimo_personal_familiar"
-    )
+    module_name = "app.services.defensia_rules.reglas_irpf.R015_minimo_personal_familiar"
     if module_name in sys.modules:
         importlib.reload(sys.modules[module_name])
     else:
@@ -96,6 +96,7 @@ def _registrar_r015(_aislar_registry):  # noqa: ARG001 — fuerza orden
 # Helper local — la cita NUNCA puede hardcodear articulos canonicos
 # ---------------------------------------------------------------------------
 
+
 def _assert_cita_no_hardcoded(cita: str) -> None:
     """Invariante #2: la cita semantica NO puede contener literales canonicos.
 
@@ -104,15 +105,11 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
     aceptamos descripciones semanticas libres.
     """
     # Las tres prohibidas explicitas del brief
-    assert "Art. 56" not in cita, (
-        f"Cita hardcoded detectada: 'Art. 56' en '{cita}'"
-    )
-    assert "art. 58" not in cita.lower(), (
-        f"Cita hardcoded detectada: 'art. 58' en '{cita}'"
-    )
-    assert "56 a 61 LIRPF" not in cita.upper(), (
-        f"Cita hardcoded detectada: '56 a 61 LIRPF' en '{cita}'"
-    )
+    assert "Art. 56" not in cita, f"Cita hardcoded detectada: 'Art. 56' en '{cita}'"
+    assert "art. 58" not in cita.lower(), f"Cita hardcoded detectada: 'art. 58' en '{cita}'"
+    assert (
+        "56 a 61 LIRPF" not in cita.upper()
+    ), f"Cita hardcoded detectada: '56 a 61 LIRPF' en '{cita}'"
 
     # Defensa adicional — otros literales que podrian colarse
     prohibidas_extra = [
@@ -139,9 +136,8 @@ def _assert_cita_no_hardcoded(cita: str) -> None:
 # Test 1 — Positivo: custodia compartida sin reparto 50/50 del minimo
 # ---------------------------------------------------------------------------
 
-def test_R015_positivo_custodia_compartida_sin_reparto_50_50(
-    build_exp, build_brief, build_doc
-):
+
+def test_R015_positivo_custodia_compartida_sin_reparto_50_50(build_exp, build_brief, build_doc):
     """Tras sentencia de modificacion de medidas con custodia compartida,
     AEAT debe prorratear el minimo por descendientes al 50%/50%. Si la
     liquidacion lo aplica integro a uno solo de los progenitores, dispara.
@@ -179,8 +175,7 @@ def test_R015_positivo_custodia_compartida_sin_reparto_50_50(
 
     r015 = [c for c in candidatos if c.regla_id == "R015"]
     assert len(r015) == 1, (
-        f"R015 deberia disparar con custodia compartida sin reparto 50/50, "
-        f"got {candidatos}"
+        f"R015 deberia disparar con custodia compartida sin reparto 50/50, " f"got {candidatos}"
     )
 
     arg = r015[0]
@@ -189,28 +184,23 @@ def test_R015_positivo_custodia_compartida_sin_reparto_50_50(
     # La cita debe ser semantica — NUNCA hardcoded
     cita = arg.cita_normativa_propuesta
     _assert_cita_no_hardcoded(cita)
-    assert "minimo" in cita.lower(), (
-        f"La cita semantica debe mencionar 'minimo', got: {cita!r}"
-    )
+    assert "minimo" in cita.lower(), f"La cita semantica debe mencionar 'minimo', got: {cita!r}"
     assert (
         "familiar" in cita.lower() or "descendientes" in cita.lower()
-    ), (
-        f"La cita semantica debe mencionar familia/descendientes, got: {cita!r}"
-    )
+    ), f"La cita semantica debe mencionar familia/descendientes, got: {cita!r}"
 
     # datos_disparo debe exponer el motivo para que el writer lo use
-    assert arg.datos_disparo.get("motivo") == "custodia_compartida_sin_prorrateo", (
-        f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("motivo") == "custodia_compartida_sin_prorrateo"
+    ), f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — Positivo: custodia exclusiva con minimo no aplicado al custodio
 # ---------------------------------------------------------------------------
 
-def test_R015_positivo_custodia_exclusiva_minimo_no_aplicado(
-    build_exp, build_brief, build_doc
-):
+
+def test_R015_positivo_custodia_exclusiva_minimo_no_aplicado(build_exp, build_brief, build_doc):
     """Si el contribuyente es progenitor custodio exclusivo pero la
     liquidacion no le aplica el minimo por descendientes (valor 0),
     R015 dispara.
@@ -232,32 +222,29 @@ def test_R015_positivo_custodia_exclusiva_minimo_no_aplicado(
         docs=[liquidacion],
     )
     brief = build_brief(
-        "Soy el progenitor custodio exclusivo pero AEAT no me aplica el "
-        "minimo por descendientes"
+        "Soy el progenitor custodio exclusivo pero AEAT no me aplica el " "minimo por descendientes"
     )
 
     candidatos = evaluar(exp, brief)
 
     r015 = [c for c in candidatos if c.regla_id == "R015"]
     assert len(r015) == 1, (
-        f"R015 deberia disparar con custodia exclusiva y minimo=0 al "
-        f"custodio, got {candidatos}"
+        f"R015 deberia disparar con custodia exclusiva y minimo=0 al " f"custodio, got {candidatos}"
     )
 
     arg = r015[0]
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
-    assert arg.datos_disparo.get("motivo") == "custodia_exclusiva_sin_minimo", (
-        f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
-    )
+    assert (
+        arg.datos_disparo.get("motivo") == "custodia_exclusiva_sin_minimo"
+    ), f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 3 — Positivo: minimo por discapacidad no aplicado
 # ---------------------------------------------------------------------------
 
-def test_R015_positivo_minimo_discapacidad_no_aplicado(
-    build_exp, build_brief, build_doc
-):
+
+def test_R015_positivo_minimo_discapacidad_no_aplicado(build_exp, build_brief, build_doc):
     """Si el contribuyente acredita discapacidad >= 33% pero la liquidacion
     no aplica el minimo por discapacidad (valor 0), R015 dispara.
     """
@@ -276,38 +263,32 @@ def test_R015_positivo_minimo_discapacidad_no_aplicado(
         docs=[liquidacion],
     )
     brief = build_brief(
-        "Tengo reconocida discapacidad del 35% y AEAT no me aplica el "
-        "minimo por discapacidad"
+        "Tengo reconocida discapacidad del 35% y AEAT no me aplica el " "minimo por discapacidad"
     )
 
     candidatos = evaluar(exp, brief)
 
     r015 = [c for c in candidatos if c.regla_id == "R015"]
     assert len(r015) == 1, (
-        f"R015 deberia disparar con discapacidad acreditada y minimo=0, "
-        f"got {candidatos}"
+        f"R015 deberia disparar con discapacidad acreditada y minimo=0, " f"got {candidatos}"
     )
 
     arg = r015[0]
     _assert_cita_no_hardcoded(arg.cita_normativa_propuesta)
     assert "discapacidad" in arg.cita_normativa_propuesta.lower() or (
         "minimo" in arg.cita_normativa_propuesta.lower()
-    ), (
-        f"La cita debe mencionar minimo/discapacidad, got: "
-        f"{arg.cita_normativa_propuesta!r}"
-    )
-    assert arg.datos_disparo.get("motivo") == "discapacidad_sin_minimo", (
-        f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
-    )
+    ), f"La cita debe mencionar minimo/discapacidad, got: " f"{arg.cita_normativa_propuesta!r}"
+    assert (
+        arg.datos_disparo.get("motivo") == "discapacidad_sin_minimo"
+    ), f"datos_disparo.motivo inesperado: {arg.datos_disparo!r}"
 
 
 # ---------------------------------------------------------------------------
 # Test 4 — Negativo: minimos correctamente aplicados
 # ---------------------------------------------------------------------------
 
-def test_R015_negativo_minimos_correctamente_aplicados(
-    build_exp, build_brief, build_doc
-):
+
+def test_R015_negativo_minimos_correctamente_aplicados(build_exp, build_brief, build_doc):
     """Si todos los flags de aplicacion estan en True (o los importes son
     positivos), R015 NO dispara.
     """
@@ -335,8 +316,7 @@ def test_R015_negativo_minimos_correctamente_aplicados(
 
     r015 = [c for c in candidatos if c.regla_id == "R015"]
     assert r015 == [], (
-        f"R015 NO debe disparar cuando los minimos estan correctamente "
-        f"aplicados, got {r015}"
+        f"R015 NO debe disparar cuando los minimos estan correctamente " f"aplicados, got {r015}"
     )
 
 
@@ -344,9 +324,8 @@ def test_R015_negativo_minimos_correctamente_aplicados(
 # Test 5 — Negativo: no hay descendientes/ascendientes/discapacidad
 # ---------------------------------------------------------------------------
 
-def test_R015_negativo_sin_descendientes_ni_discapacidad(
-    build_exp, build_brief, build_doc
-):
+
+def test_R015_negativo_sin_descendientes_ni_discapacidad(build_exp, build_brief, build_doc):
     """Si la liquidacion no contiene ningun dato relacionado con minimos
     familiares (ni descendientes, ni ascendientes, ni discapacidad), R015
     NO dispara — no hay nada que reclamar.
@@ -365,16 +344,13 @@ def test_R015_negativo_sin_descendientes_ni_discapacidad(
         fase=Fase.LIQUIDACION_FIRME_PLAZO_RECURSO,
         docs=[liquidacion],
     )
-    brief = build_brief(
-        "AEAT me regulariza rendimientos del trabajo por dietas"
-    )
+    brief = build_brief("AEAT me regulariza rendimientos del trabajo por dietas")
 
     candidatos = evaluar(exp, brief)
 
     r015 = [c for c in candidatos if c.regla_id == "R015"]
     assert r015 == [], (
-        f"R015 NO debe disparar sin datos de minimos familiares en el "
-        f"expediente, got {r015}"
+        f"R015 NO debe disparar sin datos de minimos familiares en el " f"expediente, got {r015}"
     )
 
 
@@ -382,9 +358,8 @@ def test_R015_negativo_sin_descendientes_ni_discapacidad(
 # Test 6 — Anti-hardcode: la cita pasa el filtro especifico del brief
 # ---------------------------------------------------------------------------
 
-def test_R015_anti_hardcode_cita_normativa(
-    build_exp, build_brief, build_doc
-):
+
+def test_R015_anti_hardcode_cita_normativa(build_exp, build_brief, build_doc):
     """Invariante #2 del diseno DefensIA: la cita emitida por la regla
     debe ser SEMANTICA. Este test la comprueba literal con el filtro del
     brief.
@@ -414,27 +389,23 @@ def test_R015_anti_hardcode_cita_normativa(
         "Art. 56" not in cita
         and "art. 58" not in cita.lower()
         and "56 a 61 LIRPF" not in cita.upper()
-    ), (
-        f"La regla no puede hardcodear articulos canonicos del LIRPF, "
-        f"got cita={cita!r}"
-    )
+    ), f"La regla no puede hardcodear articulos canonicos del LIRPF, " f"got cita={cita!r}"
 
 
 # ---------------------------------------------------------------------------
 # Sanity check: la regla esta registrada tras el import
 # ---------------------------------------------------------------------------
 
+
 def test_R015_registrada_en_registry():
     """Tras importar el modulo, R015 debe estar en el REGISTRY con la
     metadata correcta (tributo IRPF, fases de liquidacion/comprobacion/recurso).
     """
-    assert "R015" in REGISTRY, (
-        f"R015 no encontrada en REGISTRY. Keys actuales: {list(REGISTRY.keys())}"
-    )
+    assert (
+        "R015" in REGISTRY
+    ), f"R015 no encontrada en REGISTRY. Keys actuales: {list(REGISTRY.keys())}"
     info = REGISTRY["R015"]
-    assert "IRPF" in info["tributos"], (
-        f"R015 deberia aplicar a IRPF, tributos={info['tributos']}"
-    )
+    assert "IRPF" in info["tributos"], f"R015 deberia aplicar a IRPF, tributos={info['tributos']}"
     # Debe cubrir las fases principales (liquidacion, comprobacion, recursos)
     fases_esperadas = {
         "LIQUIDACION_FIRME_PLAZO_RECURSO",
@@ -446,6 +417,6 @@ def test_R015_registrada_en_registry():
         "TEAR_AMPLIACION_POSIBLE",
     }
     for fase in fases_esperadas:
-        assert fase in info["fases"], (
-            f"R015 deberia aplicar a la fase {fase}, fases={info['fases']}"
-        )
+        assert (
+            fase in info["fases"]
+        ), f"R015 deberia aplicar a la fase {fase}, fases={info['fases']}"

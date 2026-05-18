@@ -19,6 +19,7 @@ Query examples:
   - "fotografia"           → epigrafe 771
   - "V0773-22"             → epigrafes referencing that DGT query
 """
+
 import json
 import logging
 from pathlib import Path
@@ -28,11 +29,17 @@ logger = logging.getLogger(__name__)
 
 # Try multiple paths: backend/data/ (Railway), then project root data/ (local dev)
 _tool_dir = Path(__file__).resolve().parent  # backend/app/tools/
-_backend_dir = _tool_dir.parents[1]          # backend/
-_project_dir = _tool_dir.parents[2]          # TaxIA/
+_backend_dir = _tool_dir.parents[1]  # backend/
+_project_dir = _tool_dir.parents[2]  # TaxIA/
 _candidates = [
-    _backend_dir / "data" / "reference" / "iae_codigos_creadores.json",  # Railway: backend/data/reference/
-    _project_dir / "data" / "reference" / "iae_codigos_creadores.json",  # Local: TaxIA/data/reference/
+    _backend_dir
+    / "data"
+    / "reference"
+    / "iae_codigos_creadores.json",  # Railway: backend/data/reference/
+    _project_dir
+    / "data"
+    / "reference"
+    / "iae_codigos_creadores.json",  # Local: TaxIA/data/reference/
 ]
 IAE_DATA_PATH = next((p for p in _candidates if p.exists()), _candidates[0])
 
@@ -108,6 +115,7 @@ async def lookup_iae(
 
         # Split multi-word queries: an item matches if ALL tokens appear in its text
         tokens = query_lower.split()
+
         def _matches(item: dict) -> bool:
             haystack = (
                 item["descripcion"].lower()
@@ -138,7 +146,16 @@ async def lookup_iae(
         )
 
         # Territorial notes injected when query mentions Pais Vasco territories
-        pv_keywords = ("pais vasco", "país vasco", "bizkaia", "gipuzkoa", "araba", "alava", "álava", "euskadi")
+        pv_keywords = (
+            "pais vasco",
+            "país vasco",
+            "bizkaia",
+            "gipuzkoa",
+            "araba",
+            "alava",
+            "álava",
+            "euskadi",
+        )
         notas_territoriales = []
         if any(kw in query_lower for kw in pv_keywords):
             notas_territoriales.append(

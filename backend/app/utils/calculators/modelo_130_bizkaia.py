@@ -33,6 +33,7 @@ campañas. Esta calculadora expone una representación funcional consistente
 con el cálculo legal: el wrapper de PDF (`modelo_pdf_generator.py`) puede
 mapearlas a la maquetación oficial mientras los importes coincidan.
 """
+
 from typing import Any, Dict, Optional
 
 
@@ -98,13 +99,9 @@ class Modelo130BizkaiaCalculator:
                 casillas, desglose, plazo.
         """
         if quarter not in (1, 2, 3, 4):
-            raise ValueError(
-                f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4."
-            )
+            raise ValueError(f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4.")
         if anos_actividad < 0:
-            raise ValueError(
-                f"anos_actividad '{anos_actividad}' no puede ser negativo."
-            )
+            raise ValueError(f"anos_actividad '{anos_actividad}' no puede ser negativo.")
 
         # ---- Primeros 2 años ----
         if anos_actividad < 3:
@@ -120,9 +117,7 @@ class Modelo130BizkaiaCalculator:
         # ---- 3.er año en adelante ----
         regimen_norm = (regimen or "").strip().lower()
         if regimen_norm not in {"general", "excepcional"}:
-            raise ValueError(
-                f"regimen '{regimen}' invalid. Valid: 'general', 'excepcional'."
-            )
+            raise ValueError(f"regimen '{regimen}' invalid. Valid: 'general', 'excepcional'.")
 
         if regimen_norm == "excepcional":
             base = max(0.0, volumen_ventas_penultimo)

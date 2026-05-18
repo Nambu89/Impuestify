@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 WINDOW_SECONDS = 60
-MAX_REPEATS = 3   # 4th identical-ish prompt in 60s -> throttle
+MAX_REPEATS = 3  # 4th identical-ish prompt in 60s -> throttle
 
 
 _WS_RE = re.compile(r"\s+")

@@ -15,6 +15,7 @@ que produce cada regla.
 
 Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2B-003
 """
+
 from __future__ import annotations
 
 import importlib
@@ -53,7 +54,8 @@ def _forzar_recarga_reglas() -> None:
     reset_registry()
     prefijo = "app.services.defensia_rules."
     a_eliminar = [
-        nombre for nombre in list(sys.modules)
+        nombre
+        for nombre in list(sys.modules)
         if nombre.startswith(prefijo)
         and any(
             f".{sub}." in nombre
@@ -376,9 +378,7 @@ async def test_caso_david_5_reglas_sobreviven_verificador():
 
     # 7. La cita canonica resuelta debe venir del RAG (no hardcoded en la regla).
     for arg in obligatorias_vivas:
-        assert arg.referencia_normativa_canonica, (
-            f"R{arg.regla_id} no tiene referencia canonica tras verificacion"
-        )
-        assert arg.cita_verificada, (
-            f"R{arg.regla_id} no tiene cita verificada tras RAG"
-        )
+        assert (
+            arg.referencia_normativa_canonica
+        ), f"R{arg.regla_id} no tiene referencia canonica tras verificacion"
+        assert arg.cita_verificada, f"R{arg.regla_id} no tiene cita verificada tras RAG"

@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class RotationResult:
     ok: bool
     user_id: Optional[str] = None
-    reason: Optional[str] = None     # 'reuse_detected', 'unknown', 'revoked', 'expired', 'ok'
+    reason: Optional[str] = None  # 'reuse_detected', 'unknown', 'revoked', 'expired', 'ok'
     revoked_count: int = 0
 
 
@@ -49,6 +49,7 @@ class RefreshTokenStore:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -87,20 +88,30 @@ class RefreshTokenStore:
             # a forged token. Either way, refuse and revoke everything for this
             # user as a precaution.
             revoked = await self.revoke_all_for_user(user_id, reason="unknown_jti")
-            logger.warning(f"Refresh token unknown jti={jti} for user={user_id}, revoked {revoked} sessions")
-            return RotationResult(ok=False, user_id=user_id, reason="unknown", revoked_count=revoked)
+            logger.warning(
+                f"Refresh token unknown jti={jti} for user={user_id}, revoked {revoked} sessions"
+            )
+            return RotationResult(
+                ok=False, user_id=user_id, reason="unknown", revoked_count=revoked
+            )
 
         row = dict(result.rows[0])
 
         if row["user_id"] != user_id:
-            logger.error(f"Refresh token jti={jti} user mismatch (claim={user_id}, db={row['user_id']})")
+            logger.error(
+                f"Refresh token jti={jti} user mismatch (claim={user_id}, db={row['user_id']})"
+            )
             revoked = await self.revoke_all_for_user(user_id, reason="user_mismatch")
-            return RotationResult(ok=False, user_id=user_id, reason="user_mismatch", revoked_count=revoked)
+            return RotationResult(
+                ok=False, user_id=user_id, reason="user_mismatch", revoked_count=revoked
+            )
 
         if _hash(raw_token) != row["refresh_token_hash"]:
             logger.error(f"Refresh token jti={jti} hash mismatch")
             revoked = await self.revoke_all_for_user(user_id, reason="hash_mismatch")
-            return RotationResult(ok=False, user_id=user_id, reason="hash_mismatch", revoked_count=revoked)
+            return RotationResult(
+                ok=False, user_id=user_id, reason="hash_mismatch", revoked_count=revoked
+            )
 
         if row.get("revoked_at"):
             logger.warning(f"Refresh token jti={jti} already revoked at {row['revoked_at']}")
@@ -118,9 +129,7 @@ class RefreshTokenStore:
             # === REUSE DETECTED ===
             # The same refresh token presented twice. Revoke all sessions for
             # this user and notify the user via email.
-            revoked = await self.revoke_all_for_user(
-                user_id, reason="refresh_token_reuse"
-            )
+            revoked = await self.revoke_all_for_user(user_id, reason="refresh_token_reuse")
             logger.error(
                 f"REFRESH TOKEN REUSE DETECTED for user={user_id} jti={jti}. "
                 f"Revoked {revoked} sessions."
@@ -130,7 +139,10 @@ class RefreshTokenStore:
             except Exception as e:
                 logger.warning(f"Could not send reuse-detection email: {e}")
             return RotationResult(
-                ok=False, user_id=user_id, reason="reuse_detected", revoked_count=revoked,
+                ok=False,
+                user_id=user_id,
+                reason="reuse_detected",
+                revoked_count=revoked,
             )
 
         # Mark this token used; the caller will register the new one.
@@ -174,6 +186,7 @@ class RefreshTokenStore:
     async def _notify_reuse(self, user_id: str) -> None:
         """Email the user that we detected token reuse and forced a logout."""
         from app.services.email_service import EmailService
+
         db = await self._get_db()
         u = await db.execute("SELECT email, name FROM users WHERE id = ?", [user_id])
         if not u.rows:

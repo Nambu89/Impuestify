@@ -1,9 +1,16 @@
 """Foral Navarra territory plugin."""
+
 from typing import Any, Dict, List
 
 from app.territories.base import (
-    TerritoryPlugin, ScaleData, SimulationResult, MinimosConfig,
-    ModelObligation, Deadline, DEADLINES_2026, _trimestral_deadlines,
+    TerritoryPlugin,
+    ScaleData,
+    SimulationResult,
+    MinimosConfig,
+    ModelObligation,
+    Deadline,
+    DEADLINES_2026,
+    _trimestral_deadlines,
 )
 
 
@@ -19,6 +26,7 @@ class ForalNavarraTerritory(TerritoryPlugin):
     Retenciones: Modelo 111 (same as AEAT).
     Minimos: Applied as direct quota deduction.
     """
+
     territories = ["Navarra"]
     regime = "foral_navarra"
 
@@ -27,6 +35,7 @@ class ForalNavarraTerritory(TerritoryPlugin):
 
     async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
         from app.utils.irpf_simulator import IRPFSimulator
+
         simulator = IRPFSimulator(db)
         result = await simulator.simulate(**profile)
         return SimulationResult(
@@ -41,6 +50,7 @@ class ForalNavarraTerritory(TerritoryPlugin):
 
     async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
         from app.services.deduction_service import DeductionService
+
         service = DeductionService(db)
         return await service.get_all_deductions(ccaa=ccaa, tax_year=year)
 
@@ -80,7 +90,9 @@ class ForalNavarraTerritory(TerritoryPlugin):
 
             if ob.modelo == "F69":
                 ob.nombre = "Modelo F69 - IVA trimestral (Navarra)"
-                ob.descripcion = "Autoliquidacion trimestral del IVA ante Hacienda Tributaria de Navarra"
+                ob.descripcion = (
+                    "Autoliquidacion trimestral del IVA ante Hacienda Tributaria de Navarra"
+                )
             elif ob.modelo == "F-90":
                 ob.nombre = "Modelo F-90 - IRPF (Navarra)"
                 ob.descripcion = "Declaracion anual del IRPF ante HTN"

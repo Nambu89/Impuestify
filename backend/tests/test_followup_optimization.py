@@ -4,6 +4,7 @@ Tests for follow-up detection and query contextualization.
 These are pure heuristic functions with no external dependencies,
 so no mocks needed.
 """
+
 import pytest
 from app.utils.followup_detector import classify_followup
 from app.utils.query_contextualizer import contextualize_query
@@ -13,16 +14,23 @@ from app.utils.query_contextualizer import contextualize_query
 
 IRPF_HISTORY = [
     {"role": "user", "content": "¿Cuánto IRPF pago si gano 40000 euros en Madrid?"},
-    {"role": "assistant", "content": "Con unos ingresos brutos de 40.000€ en Madrid, el IRPF aproximado sería de 8.500€. Esto incluye el tramo estatal y el autonómico de la Comunidad de Madrid."},
+    {
+        "role": "assistant",
+        "content": "Con unos ingresos brutos de 40.000€ en Madrid, el IRPF aproximado sería de 8.500€. Esto incluye el tramo estatal y el autonómico de la Comunidad de Madrid.",
+    },
 ]
 
 DEDUCTION_HISTORY = [
     {"role": "user", "content": "¿Qué deducciones por alquiler hay en Cataluña?"},
-    {"role": "assistant", "content": "En Cataluña puedes deducirte el 10% de las cantidades pagadas en alquiler de vivienda habitual, con un máximo de 300€."},
+    {
+        "role": "assistant",
+        "content": "En Cataluña puedes deducirte el 10% de las cantidades pagadas en alquiler de vivienda habitual, con un máximo de 300€.",
+    },
 ]
 
 
 # === classify_followup tests ===
+
 
 class TestClassifyFollowup:
     """Test follow-up type classification."""
@@ -75,19 +83,25 @@ class TestClassifyFollowup:
     # --- New topics ---
 
     def test_completely_different_question(self):
-        assert classify_followup(
-            "¿Cuándo tengo que presentar el modelo 303 de IVA trimestral?",
-            IRPF_HISTORY
-        ) == "new_topic"
+        assert (
+            classify_followup(
+                "¿Cuándo tengo que presentar el modelo 303 de IVA trimestral?", IRPF_HISTORY
+            )
+            == "new_topic"
+        )
 
     def test_long_question_with_multiple_keywords(self):
-        assert classify_followup(
-            "¿Puedo deducirme el alquiler de vivienda habitual en la declaración de la renta si vivo en Andalucía y tengo hipoteca?",
-            IRPF_HISTORY
-        ) == "new_topic"
+        assert (
+            classify_followup(
+                "¿Puedo deducirme el alquiler de vivienda habitual en la declaración de la renta si vivo en Andalucía y tengo hipoteca?",
+                IRPF_HISTORY,
+            )
+            == "new_topic"
+        )
 
 
 # === contextualize_query tests ===
+
 
 class TestContextualizeQuery:
     """Test query expansion with conversation context."""
@@ -116,9 +130,7 @@ class TestContextualizeQuery:
 
     def test_uses_last_rag_query(self):
         result = contextualize_query(
-            "y el alquiler?",
-            DEDUCTION_HISTORY,
-            last_rag_query="deducciones alquiler Cataluña"
+            "y el alquiler?", DEDUCTION_HISTORY, last_rag_query="deducciones alquiler Cataluña"
         )
         # Should pick up "cataluña" or "deducciones" from last_rag_query or history
         lower = result.lower()
@@ -127,4 +139,10 @@ class TestContextualizeQuery:
     def test_deduction_context_preserved(self):
         result = contextualize_query("¿y si son 400€ al mes?", DEDUCTION_HISTORY)
         lower = result.lower()
-        assert "alquiler" in lower or "cataluña" in lower or "cataluna" in lower or "deducción" in lower or "deduccion" in lower
+        assert (
+            "alquiler" in lower
+            or "cataluña" in lower
+            or "cataluna" in lower
+            or "deducción" in lower
+            or "deduccion" in lower
+        )

@@ -18,6 +18,7 @@ Umbrales:
 
 Plazo: 1 de enero a 31 de marzo del ejercicio siguiente.
 """
+
 from __future__ import annotations
 
 import logging
@@ -342,15 +343,17 @@ async def check_modelo_720_tool(
             elif obligado_incremento:
                 categorias_por_incremento.append(cat_key)
 
-            detalles.append({
-                "categoria": cat_key,
-                "descripcion": cat_label,
-                "valor_actual": valor,
-                "supera_umbral_50k": obligado_umbral,
-                "incremento_vs_ultimo_720": round(incremento, 2) if saldos_previos else None,
-                "supera_incremento_20k": obligado_incremento,
-                "obligado": obligado_umbral or obligado_incremento,
-            })
+            detalles.append(
+                {
+                    "categoria": cat_key,
+                    "descripcion": cat_label,
+                    "valor_actual": valor,
+                    "supera_umbral_50k": obligado_umbral,
+                    "incremento_vs_ultimo_720": round(incremento, 2) if saldos_previos else None,
+                    "supera_incremento_20k": obligado_incremento,
+                    "obligado": obligado_umbral or obligado_incremento,
+                }
+            )
 
         # Cese de titularidad (Art. 42 bis.5, 42 ter.5, 54 bis.7 RGAT).
         # Solo genera obligacion si existe 720 previo Y (mejor esfuerzo) si la
@@ -362,27 +365,34 @@ async def check_modelo_720_tool(
         # Anadir categorias por cese a la lista de obligadas si no estaban ya.
         for cat in categorias_por_cese:
             if cat not in categorias_obligadas and cat not in categorias_por_incremento:
-                categorias_por_incremento.append(cat)  # cese se reporta como obligacion no por umbral
+                categorias_por_incremento.append(
+                    cat
+                )  # cese se reporta como obligacion no por umbral
 
         # Validar subtipos opcionales contra agregados por categoria.
         subtipos_validados, subtipos_warnings = _validar_subtipos(subtipos, saldos_actuales)
 
-        todas_obligadas = list(dict.fromkeys(
-            categorias_obligadas + categorias_por_incremento
-        ))
+        todas_obligadas = list(dict.fromkeys(categorias_obligadas + categorias_por_incremento))
         obligado = len(todas_obligadas) > 0 or len(ceses_que_obligan) > 0
 
         plazo = f"Del 1 de enero al 31 de marzo de {ejercicio + 1}"
 
         recomendaciones = _generar_recomendaciones_720(
-            obligado, categorias_obligadas, categorias_por_incremento,
-            saldos_actuales, ejercicio,
+            obligado,
+            categorias_obligadas,
+            categorias_por_incremento,
+            saldos_actuales,
+            ejercicio,
             ceses_que_obligan=ceses_que_obligan,
             subtipos_warnings=subtipos_warnings,
         )
 
         formatted = _format_720_response(
-            obligado, detalles, plazo, recomendaciones, ejercicio,
+            obligado,
+            detalles,
+            plazo,
+            recomendaciones,
+            ejercicio,
             ultimo_720_presentado,
             ceses_que_obligan=ceses_que_obligan,
             subtipos_validados=subtipos_validados,
@@ -460,10 +470,7 @@ def _evaluar_ceses_titularidad(
 
         subtipo_raw = raw.get("subtipo")
         subtipo = subtipo_raw.strip().upper() if isinstance(subtipo_raw, str) else None
-        subtipo_valido = (
-            subtipo is not None
-            and subtipo in SUBTIPOS_POR_CATEGORIA[categoria]
-        )
+        subtipo_valido = subtipo is not None and subtipo in SUBTIPOS_POR_CATEGORIA[categoria]
 
         valor_previo = raw.get("valor_ultima_declaracion")
         try:
@@ -495,13 +502,8 @@ def _evaluar_ceses_titularidad(
                 "genera obligacion de declarar (RD 1065/2007)."
             )
         else:
-            previo_categoria = (
-                saldos_previos.get(categoria, 0.0) if saldos_previos else 0.0
-            )
-            if (
-                (valor_previo_float is not None and valor_previo_float > 0)
-                or previo_categoria > 0
-            ):
+            previo_categoria = saldos_previos.get(categoria, 0.0) if saldos_previos else 0.0
+            if (valor_previo_float is not None and valor_previo_float > 0) or previo_categoria > 0:
                 obliga = True
             else:
                 razon_no_obliga = (
@@ -546,9 +548,7 @@ def _validar_subtipos(
             warnings.append(f"Categoria '{categoria_raw}' desconocida en subtipos.")
             continue
         if not isinstance(claves, dict):
-            warnings.append(
-                f"Desglose de subtipos para '{categoria}' debe ser un diccionario."
-            )
+            warnings.append(f"Desglose de subtipos para '{categoria}' debe ser un diccionario.")
             continue
 
         catalogo = SUBTIPOS_POR_CATEGORIA[categoria]
@@ -559,9 +559,7 @@ def _validar_subtipos(
             try:
                 importe = float(importe_raw)
             except (TypeError, ValueError):
-                warnings.append(
-                    f"Importe invalido en subtipo {categoria}/{clave_raw}."
-                )
+                warnings.append(f"Importe invalido en subtipo {categoria}/{clave_raw}.")
                 continue
             if clave not in catalogo:
                 warnings.append(
@@ -620,15 +618,12 @@ def _generar_recomendaciones_720(
             recs.append(f"Aviso subtipos: {w}")
         return recs
 
-    recs.append(
-        f"Estas obligado a presentar el Modelo 720 del ejercicio {ejercicio}."
-    )
+    recs.append(f"Estas obligado a presentar el Modelo 720 del ejercicio {ejercicio}.")
 
     if por_umbral:
         nombres = [CATEGORIAS[c] for c in por_umbral]
         recs.append(
-            f"Superas el umbral de {UMBRAL_OBLIGACION_EUR:,.0f} EUR en: "
-            + ", ".join(nombres) + "."
+            f"Superas el umbral de {UMBRAL_OBLIGACION_EUR:,.0f} EUR en: " + ", ".join(nombres) + "."
         )
 
     if por_incremento:
@@ -651,12 +646,11 @@ def _generar_recomendaciones_720(
             "Debes declarar el cese de titularidad de los siguientes bienes "
             "incluidos en un Modelo 720 anterior (RD 1065/2007 Arts. 42 bis.5, "
             "42 ter.5 y 54 bis.7), aunque su valor a 31/dic sea cero: "
-            + "; ".join(descripciones) + "."
+            + "; ".join(descripciones)
+            + "."
         )
 
-    recs.append(
-        f"Plazo de presentacion: del 1 de enero al 31 de marzo de {ejercicio + 1}."
-    )
+    recs.append(f"Plazo de presentacion: del 1 de enero al 31 de marzo de {ejercicio + 1}.")
     recs.append(
         "Tras la sentencia TJUE C-788/19 (27/01/2022) y la Ley 5/2022, ya NO se "
         "aplican: (a) la sancion fija de 5.000 EUR por dato omitido (minimo "
@@ -714,8 +708,7 @@ def _format_720_response(
         if cat in subtipos_validados and subtipos_validados[cat]:
             for clave, info in sorted(subtipos_validados[cat].items()):
                 lines.append(
-                    f"    Clave {clave} ({info['descripcion']}): "
-                    f"{info['valor']:,.2f} EUR"
+                    f"    Clave {clave} ({info['descripcion']}): " f"{info['valor']:,.2f} EUR"
                 )
 
     if ceses_que_obligan:
@@ -733,9 +726,7 @@ def _format_720_response(
             if c.get("fecha_cese"):
                 extras.append(f"fecha: {c['fecha_cese']}")
             if c.get("valor_ultima_declaracion") is not None:
-                extras.append(
-                    f"valor declarado anterior: {c['valor_ultima_declaracion']:,.2f} EUR"
-                )
+                extras.append(f"valor declarado anterior: {c['valor_ultima_declaracion']:,.2f} EUR")
             sufijo = f" ({'; '.join(extras)})" if extras else ""
             lines.append(f"  - {etiqueta}{sufijo}")
 

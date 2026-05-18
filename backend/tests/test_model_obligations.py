@@ -3,6 +3,7 @@
 Validates that each territory plugin returns the correct fiscal models
 based on taxpayer profile (situacion_laboral, CCAA, empleados, etc.).
 """
+
 import pytest
 from app.territories.startup import register_all_territories
 from app.territories.registry import get_territory, _registry
@@ -42,6 +43,7 @@ def _modelo_ids(obligations: list) -> set:
 
 # ── Particular tests ──────────────────────────────────────────────
 
+
 class TestParticularObligations:
     def test_particular_madrid_only_renta(self):
         obs = _get_modelos("Madrid")
@@ -80,6 +82,7 @@ class TestParticularObligations:
 
 # ── Autonomo tests ────────────────────────────────────────────────
 
+
 class TestAutonomoObligations:
     def test_autonomo_madrid_basic(self):
         obs = _get_modelos("Madrid", {"situacion_laboral": "autonomo"})
@@ -91,45 +94,60 @@ class TestAutonomoObligations:
         assert "349" not in ids, "No 349 without intra-comunitarias"
 
     def test_autonomo_madrid_with_employees(self):
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "autonomo",
-            "tiene_empleados": True,
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "autonomo",
+                "tiene_empleados": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "111" in ids, "Should have retenciones 111 with employees"
         assert "190" in ids, "Should have resumen anual 190"
 
     def test_autonomo_madrid_with_alquileres(self):
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "autonomo",
-            "tiene_alquileres": True,
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "autonomo",
+                "tiene_alquileres": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "115" in ids, "Should have retenciones alquiler 115"
         assert "180" in ids, "Should have resumen anual alquiler 180"
 
     def test_autonomo_madrid_estimacion_objetiva(self):
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "autonomo",
-            "estimacion": "objetiva",
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "autonomo",
+                "estimacion": "objetiva",
+            },
+        )
         ids = _modelo_ids(obs)
         assert "131" in ids, "Estimacion objetiva should use 131"
         assert "130" not in ids, "Should NOT have 130 with estimacion objetiva"
 
     def test_autonomo_madrid_ops_intracomunitarias(self):
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "autonomo",
-            "tiene_ops_intracomunitarias": True,
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "autonomo",
+                "tiene_ops_intracomunitarias": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "349" in ids, "Should have 349 with intra-comunitarias"
 
     def test_autonomo_madrid_ops_terceros(self):
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "autonomo",
-            "tiene_ops_terceros_3005": True,
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "autonomo",
+                "tiene_ops_terceros_3005": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "347" in ids, "Should have 347 with ops >3005"
 
@@ -143,10 +161,13 @@ class TestAutonomoObligations:
         assert "425" in ids, "Canarias should have resumen anual IGIC 425"
 
     def test_autonomo_canarias_no_349(self):
-        obs = _get_modelos("Canarias", {
-            "situacion_laboral": "autonomo",
-            "tiene_ops_intracomunitarias": True,
-        })
+        obs = _get_modelos(
+            "Canarias",
+            {
+                "situacion_laboral": "autonomo",
+                "tiene_ops_intracomunitarias": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "349" not in ids, "Canarias should NOT have 349 even with intra-comunitarias flag"
 
@@ -171,10 +192,13 @@ class TestAutonomoObligations:
         assert "100" not in ids, "Gipuzkoa should NOT use 100"
 
     def test_autonomo_gipuzkoa_modelo_110(self):
-        obs = _get_modelos("Gipuzkoa", {
-            "situacion_laboral": "autonomo",
-            "tiene_empleados": True,
-        })
+        obs = _get_modelos(
+            "Gipuzkoa",
+            {
+                "situacion_laboral": "autonomo",
+                "tiene_empleados": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "110" in ids, "Foral vasco should use 110 for retenciones"
         assert "111" not in ids, "Should NOT use 111"
@@ -224,10 +248,13 @@ class TestAutonomoObligations:
         assert "303" not in ids, "Ceuta should NOT have IVA 303"
 
     def test_autonomo_ceuta_no_349(self):
-        obs = _get_modelos("Ceuta", {
-            "situacion_laboral": "autonomo",
-            "tiene_ops_intracomunitarias": True,
-        })
+        obs = _get_modelos(
+            "Ceuta",
+            {
+                "situacion_laboral": "autonomo",
+                "tiene_ops_intracomunitarias": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "349" not in ids, "Ceuta should NOT have 349"
 
@@ -246,15 +273,19 @@ class TestAutonomoObligations:
         assert "303" not in ids
 
     def test_autonomo_melilla_no_349(self):
-        obs = _get_modelos("Melilla", {
-            "situacion_laboral": "autonomo",
-            "tiene_ops_intracomunitarias": True,
-        })
+        obs = _get_modelos(
+            "Melilla",
+            {
+                "situacion_laboral": "autonomo",
+                "tiene_ops_intracomunitarias": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "349" not in ids, "Melilla should NOT have 349"
 
 
 # ── Sociedad tests ────────────────────────────────────────────────
+
 
 class TestSociedadObligations:
     def test_sociedad_madrid_basic(self):
@@ -267,19 +298,25 @@ class TestSociedadObligations:
         assert "202" in ids, "Sociedad should have pagos fraccionados IS 202"
 
     def test_sociedad_madrid_dividendos(self):
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "sociedad",
-            "paga_dividendos": True,
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "sociedad",
+                "paga_dividendos": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "123" in ids, "Should have 123 with dividendos"
         assert "193" in ids, "Should have 193 with dividendos"
 
     def test_sociedad_madrid_alquileres(self):
-        obs = _get_modelos("Madrid", {
-            "situacion_laboral": "sociedad",
-            "tiene_alquileres": True,
-        })
+        obs = _get_modelos(
+            "Madrid",
+            {
+                "situacion_laboral": "sociedad",
+                "tiene_alquileres": True,
+            },
+        )
         ids = _modelo_ids(obs)
         assert "115" in ids
         assert "180" in ids
@@ -292,6 +329,7 @@ class TestSociedadObligations:
 
 
 # ── Deadline tests ────────────────────────────────────────────────
+
 
 class TestDeadlines:
     def test_trimestral_has_4_deadlines(self):
@@ -317,6 +355,7 @@ class TestDeadlines:
 
 # ── TicketBAI / Batuz note tests ──────────────────────────────────
 
+
 class TestTerritoryNotes:
     def test_foral_vasco_ticketbai_note(self):
         obs = _get_modelos("Gipuzkoa", {"situacion_laboral": "autonomo"})
@@ -339,13 +378,25 @@ class TestTerritoryNotes:
 
 # ── Common regime CCAA coverage ───────────────────────────────────
 
+
 class TestCommonRegimeCoverage:
     """Verify that all 15 common CCAA return the same basic models for autonomo."""
 
     COMMON_CCAA = [
-        "Andalucia", "Aragon", "Asturias", "Baleares", "Cantabria",
-        "Castilla-La Mancha", "Castilla y Leon", "Cataluna", "Extremadura",
-        "Galicia", "La Rioja", "Madrid", "Murcia", "Comunidad Valenciana",
+        "Andalucia",
+        "Aragon",
+        "Asturias",
+        "Baleares",
+        "Cantabria",
+        "Castilla-La Mancha",
+        "Castilla y Leon",
+        "Cataluna",
+        "Extremadura",
+        "Galicia",
+        "La Rioja",
+        "Madrid",
+        "Murcia",
+        "Comunidad Valenciana",
     ]
 
     @pytest.mark.parametrize("ccaa", COMMON_CCAA)

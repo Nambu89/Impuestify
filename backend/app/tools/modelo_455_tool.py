@@ -8,6 +8,7 @@ Modelo 455 = autoliquidacion AIEM de operadores ZEC (Zona Especial
 Canaria) que producen / entregan mercancias en Canarias. Periodicidad
 ANUAL por defecto (1-30 enero ano siguiente).
 """
+
 from __future__ import annotations
 
 import logging
@@ -121,9 +122,7 @@ def _format_for_llm(result: Dict[str, Any]) -> str:
     if result["periodicidad"] == "anual":
         lines.append(f"**AIEM ZEC Canarias — Modelo 455 ANUAL {year}**")
     else:
-        lines.append(
-            f"**AIEM ZEC Canarias — Modelo 455 {result['periodo_label']} {year}**"
-        )
+        lines.append(f"**AIEM ZEC Canarias — Modelo 455 {result['periodo_label']} {year}**")
 
     if epigrafe_zec:
         lines.append(f"Autorizacion ZEC: {epigrafe_zec}")
@@ -158,18 +157,14 @@ def _format_for_llm(result: Dict[str, Any]) -> str:
     lines.append(f"- **Cuota AIEM devengada: {result['total_cuota_devengada']:,.2f} EUR**")
 
     if result.get("rectificacion_cuotas"):
-        lines.append(
-            f"- Rectificacion cuotas: {result['rectificacion_cuotas']:,.2f} EUR"
-        )
+        lines.append(f"- Rectificacion cuotas: {result['rectificacion_cuotas']:,.2f} EUR")
     if result.get("cuotas_compensar_anteriores"):
         lines.append(
             f"- Compensacion ejercicios anteriores: "
             f"-{result['cuotas_compensar_anteriores']:,.2f} EUR"
         )
     if result.get("regularizacion_anual"):
-        lines.append(
-            f"- Regularizacion anual: {result['regularizacion_anual']:,.2f} EUR"
-        )
+        lines.append(f"- Regularizacion anual: {result['regularizacion_anual']:,.2f} EUR")
 
     resultado = result["resultado_liquidacion"]
     if resultado > 0:
@@ -182,9 +177,7 @@ def _format_for_llm(result: Dict[str, Any]) -> str:
     lines.append("")
     lines.append(f"**Resultado: {resultado:,.2f} EUR — {tipo_resultado}**")
     lines.append("")
-    lines.append(
-        f"Plazo de presentacion: {plazo} (Agencia Tributaria Canaria — ATC)."
-    )
+    lines.append(f"Plazo de presentacion: {plazo} (Agencia Tributaria Canaria — ATC).")
 
     warnings = result.get("warnings") or []
     if warnings:
@@ -226,6 +219,7 @@ async def calculate_modelo_455_tool(
     """
     if restricted_mode:
         from app.security.content_restriction import get_autonomo_block_response
+
         logger.warning("calculate_modelo_455 called in restricted_mode — blocking")
         return {
             "success": False,
@@ -250,9 +244,7 @@ async def calculate_modelo_455_tool(
             return {
                 "success": False,
                 "error": "trimestre invalido",
-                "formatted_response": (
-                    "Para periodicidad trimestral, el trimestre debe ser 1-4."
-                ),
+                "formatted_response": ("Para periodicidad trimestral, el trimestre debe ser 1-4."),
             }
 
         if not isinstance(bienes_anuales, list) or not bienes_anuales:
@@ -266,6 +258,7 @@ async def calculate_modelo_455_tool(
             }
 
         from app.utils.calculators.modelo_455 import Modelo455Calculator
+
         calc = Modelo455Calculator(None)
         result = await calc.calculate(
             bienes_anuales=bienes_anuales,
@@ -283,8 +276,10 @@ async def calculate_modelo_455_tool(
 
         logger.info(
             "Modelo 455 calculated: %s %s, devengado=%s, resultado=%s",
-            result["periodo_label"], year,
-            result["total_cuota_devengada"], result["resultado_liquidacion"],
+            result["periodo_label"],
+            year,
+            result["total_cuota_devengada"],
+            result["resultado_liquidacion"],
         )
 
         return {

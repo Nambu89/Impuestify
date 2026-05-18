@@ -9,6 +9,7 @@ Sync puro: funciona en FastAPI (async) y crawler scripts (sync).
 Inspirado por SignalOrbit Trust (Devoteam/ArcadIA) y Microsoft Defender
 Security Research "AI Recommendation Poisoning" (Feb 2026).
 """
+
 import re
 import logging
 import time
@@ -52,23 +53,23 @@ _URL_DECODE_ROUNDS = 5
 
 @dataclass
 class Finding:
-    pattern_id: str       # "PI-001", "MP-003", etc.
-    category: str         # "prompt_injection", "memory_persistence", "data_exfiltration"
-    severity: str         # "critical", "high", "medium"
-    matched_text: str     # The fragment that matched (truncated to 200 chars)
-    position: int         # Offset in the text
-    description: str      # Human description of the finding
+    pattern_id: str  # "PI-001", "MP-003", etc.
+    category: str  # "prompt_injection", "memory_persistence", "data_exfiltration"
+    severity: str  # "critical", "high", "medium"
+    matched_text: str  # The fragment that matched (truncated to 200 chars)
+    position: int  # Offset in the text
+    description: str  # Human description of the finding
 
 
 @dataclass
 class DocumentScanResult:
-    is_safe: bool                  # True if risk_score < THRESHOLD_SAFE
-    risk_score: float              # 0.0 - 1.0 (composite, capped at 1.0)
+    is_safe: bool  # True if risk_score < THRESHOLD_SAFE
+    risk_score: float  # 0.0 - 1.0 (composite, capped at 1.0)
     findings: List[Finding]
     scan_duration_ms: float
     total_patterns_checked: int
     text_length: int
-    source: str                    # "upload", "crawler", "workspace"
+    source: str  # "upload", "crawler", "workspace"
 
 
 def _recursive_url_decode(value: str, rounds: int = _URL_DECODE_ROUNDS) -> str:
@@ -136,18 +137,22 @@ class DocumentIntegrityScanner:
                 if self._is_fiscal_context(text, match.start()):
                     logger.debug(
                         "Allowlist hit for pattern %s at pos %d: %r",
-                        pattern_obj.id, match.start(), matched[:60],
+                        pattern_obj.id,
+                        match.start(),
+                        matched[:60],
                     )
                     continue
 
-                findings.append(Finding(
-                    pattern_id=pattern_obj.id,
-                    category=pattern_obj.category,
-                    severity=pattern_obj.severity,
-                    matched_text=matched[:200],
-                    position=match.start(),
-                    description=pattern_obj.description,
-                ))
+                findings.append(
+                    Finding(
+                        pattern_id=pattern_obj.id,
+                        category=pattern_obj.category,
+                        severity=pattern_obj.severity,
+                        matched_text=matched[:200],
+                        position=match.start(),
+                        description=pattern_obj.description,
+                    )
+                )
 
         # --- 2. Repetition spam detection ---
         spam_findings = self._check_repetition_spam(text)
@@ -173,7 +178,9 @@ class DocumentIntegrityScanner:
         if not result.is_safe:
             logger.warning(
                 "Document integrity scan: source=%s risk_score=%.2f findings=%d",
-                source, result.risk_score, len(findings),
+                source,
+                result.risk_score,
+                len(findings),
             )
 
         return result
@@ -196,14 +203,16 @@ class DocumentIntegrityScanner:
             for pattern_obj in INTEGRITY_PATTERNS:
                 for match in pattern_obj.pattern.finditer(value):
                     matched = match.group(0)
-                    findings.append(Finding(
-                        pattern_id=pattern_obj.id,
-                        category=pattern_obj.category,
-                        severity=pattern_obj.severity,
-                        matched_text=f"[metadata:{field_name}] {matched[:190]}",
-                        position=0,
-                        description=f"{pattern_obj.description} (en campo metadata: {field_name})",
-                    ))
+                    findings.append(
+                        Finding(
+                            pattern_id=pattern_obj.id,
+                            category=pattern_obj.category,
+                            severity=pattern_obj.severity,
+                            matched_text=f"[metadata:{field_name}] {matched[:190]}",
+                            position=0,
+                            description=f"{pattern_obj.description} (en campo metadata: {field_name})",
+                        )
+                    )
         return findings
 
     def sanitize(self, text: str, findings: List[Finding]) -> str:
@@ -223,9 +232,9 @@ class DocumentIntegrityScanner:
 
         # Collect spans to replace (critical + high only)
         replaceable = [
-            f for f in findings
-            if f.severity in ("critical", "high")
-            and not f.matched_text.startswith("[metadata:")
+            f
+            for f in findings
+            if f.severity in ("critical", "high") and not f.matched_text.startswith("[metadata:")
         ]
 
         if not replaceable:
@@ -266,7 +275,9 @@ class DocumentIntegrityScanner:
         for start, end, raw in merged:
             logger.warning(
                 "Sanitizing document content at pos %d-%d: %r",
-                start, end, raw[:80],
+                start,
+                end,
+                raw[:80],
             )
 
         # Reconstruct text
@@ -317,7 +328,7 @@ class DocumentIntegrityScanner:
         # Sliding window — only phrases of REPETITION_MIN_WORDS+ words count
         window_size = REPETITION_MIN_WORDS
         for i in range(len(words) - window_size + 1):
-            phrase = " ".join(words[i:i + window_size]).lower().strip()
+            phrase = " ".join(words[i : i + window_size]).lower().strip()
             # Skip very common fiscal phrases (numbers + dates heavy)
             if re.search(r"\d{4}", phrase):
                 continue
@@ -329,14 +340,16 @@ class DocumentIntegrityScanner:
 
         for phrase, count in phrase_counts.items():
             if count > REPETITION_THRESHOLD:
-                findings.append(Finding(
-                    pattern_id="RS-001",
-                    category="repetition_spam",
-                    severity="medium",
-                    matched_text=phrase[:200],
-                    position=phrase_positions.get(phrase, 0),
-                    description=f"Frase repetida {count} veces (posible refuerzo de instruccion)",
-                ))
+                findings.append(
+                    Finding(
+                        pattern_id="RS-001",
+                        category="repetition_spam",
+                        severity="medium",
+                        matched_text=phrase[:200],
+                        position=phrase_positions.get(phrase, 0),
+                        description=f"Frase repetida {count} veces (posible refuerzo de instruccion)",
+                    )
+                )
 
         return findings
 
@@ -368,17 +381,19 @@ class DocumentIntegrityScanner:
             # Check for memory keywords in decoded parameters
             for keyword in MEMORY_KEYWORDS:
                 if keyword in combined:
-                    findings.append(Finding(
-                        pattern_id="AU-002",
-                        category="ai_assistant_url",
-                        severity="medium",
-                        matched_text=raw_url[:200],
-                        position=match.start(),
-                        description=(
-                            f"URL a asistente IA ({domain}) contiene keyword sospechoso "
-                            f"en parametros: '{keyword}'"
-                        ),
-                    ))
+                    findings.append(
+                        Finding(
+                            pattern_id="AU-002",
+                            category="ai_assistant_url",
+                            severity="medium",
+                            matched_text=raw_url[:200],
+                            position=match.start(),
+                            description=(
+                                f"URL a asistente IA ({domain}) contiene keyword sospechoso "
+                                f"en parametros: '{keyword}'"
+                            ),
+                        )
+                    )
                     break  # One finding per URL is enough
 
         return findings

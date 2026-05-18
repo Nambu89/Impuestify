@@ -4,6 +4,7 @@
 `static_url`). The dispatcher holds a registry of source instances and
 delegates calls. Singleton via `lru_cache` for app-lifetime reuse.
 """
+
 from __future__ import annotations
 
 import logging

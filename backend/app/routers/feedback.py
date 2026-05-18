@@ -9,6 +9,7 @@ Provides:
 Rate limiting for feedback: 10 submissions per user per day (COUNT query, not slowapi).
 Screenshot validation: max 2 MB, must be PNG or JPEG (magic bytes check).
 """
+
 import asyncio
 import base64
 import html as html_lib
@@ -49,6 +50,7 @@ _JPEG_MAGIC = b"\xff\xd8\xff"
 # ---------------------------------------------------------------
 # Pydantic models
 # ---------------------------------------------------------------
+
 
 class FeedbackCreateRequest(BaseModel):
     type: str = Field(..., description="bug | feature | general")
@@ -156,9 +158,7 @@ async def _notify_owner_of_feedback(
         text_lines.append("Descripcion:")
         text_lines.append(description)
         text_lines.append("")
-        text_lines.append(
-            f"Abrir en panel: https://impuestify.com/admin/feedback#{feedback_id}"
-        )
+        text_lines.append(f"Abrir en panel: https://impuestify.com/admin/feedback#{feedback_id}")
         text_body = "\n".join(text_lines)
 
         # HTML body — escape user-controlled fields to prevent injection in the inbox.
@@ -206,9 +206,7 @@ async def _notify_owner_of_feedback(
             html=html_body,
         )
         if not result.get("success"):
-            logger.warning(
-                "Owner feedback notification failed: %s", result.get("error")
-            )
+            logger.warning("Owner feedback notification failed: %s", result.get("error"))
     except Exception as exc:  # pragma: no cover - notification must never break submit
         logger.warning("Owner feedback notification raised: %s", exc, exc_info=True)
 
@@ -229,6 +227,7 @@ async def _check_feedback_rate_limit(user_id: str, db: TursoClient) -> None:
 # ---------------------------------------------------------------
 # POST /api/feedback
 # ---------------------------------------------------------------
+
 
 @router.post("/api/feedback", status_code=status.HTTP_201_CREATED)
 async def create_feedback(
@@ -299,6 +298,7 @@ async def create_feedback(
 # GET /api/feedback/my
 # ---------------------------------------------------------------
 
+
 @router.get("/api/feedback/my", response_model=list[FeedbackItem])
 async def list_my_feedback(
     current_user: TokenData = Depends(get_current_user),
@@ -336,6 +336,7 @@ async def list_my_feedback(
 # ---------------------------------------------------------------
 # POST /api/chat-rating
 # ---------------------------------------------------------------
+
 
 @router.post("/api/chat-rating", status_code=status.HTTP_201_CREATED)
 async def create_chat_rating(

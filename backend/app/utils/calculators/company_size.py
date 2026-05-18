@@ -10,6 +10,7 @@ Outputs: classification, PGC applicable, abbreviated accounts eligibility, audit
 The "2 of 3" rule: a company fits a category if it does NOT exceed at least
 2 of the 3 thresholds during 2 consecutive fiscal years.
 """
+
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
@@ -49,9 +50,11 @@ PYG_ABREVIADA_2026 = {"activo": 14_250_000, "negocios": 28_500_000, "empleados":
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class YearData:
     """Financial data for one fiscal year."""
+
     activo: float
     negocios: float
     empleados: int
@@ -60,6 +63,7 @@ class YearData:
 @dataclass
 class ThresholdDetail:
     """Comparison of a value against a threshold limit."""
+
     valor: float
     limite: float
     supera: bool
@@ -69,6 +73,7 @@ class ThresholdDetail:
 @dataclass
 class CompanySizeResult:
     """Complete result of the company size classification."""
+
     clasificacion: str  # "micro", "pequena", "mediana", "grande"
     clasificacion_label: str  # "Microempresa", "Pequena empresa", etc.
     pgc_aplicable: str
@@ -92,6 +97,7 @@ class CompanySizeResult:
 # ---------------------------------------------------------------------------
 # Core logic
 # ---------------------------------------------------------------------------
+
 
 def _count_exceeded(data: YearData, thresholds: Dict[str, float]) -> int:
     """Count how many of the 3 thresholds are exceeded by a year's data."""
@@ -156,10 +162,7 @@ def _exceeds_both_years(
     thresholds: Dict[str, float],
 ) -> bool:
     """True if the company exceeds 2 of 3 thresholds in BOTH years."""
-    return (
-        _count_exceeded(year_1, thresholds) >= 2
-        and _count_exceeded(year_2, thresholds) >= 2
-    )
+    return _count_exceeded(year_1, thresholds) >= 2 and _count_exceeded(year_2, thresholds) >= 2
 
 
 def classify_company(
@@ -215,9 +218,7 @@ def classify_company(
         )
     else:
         pgc = "PGC Normal (RD 1514/2007)"
-        pgc_detalle = (
-            "Debe aplicar el Plan General de Contabilidad Normal."
-        )
+        pgc_detalle = "Debe aplicar el Plan General de Contabilidad Normal."
 
     # Balance abreviado (Art. 257)
     balance_abreviado = _fits_category(year_1, year_2, balance_th)
@@ -234,35 +235,25 @@ def classify_company(
     # Build notes
     notas: List[str] = []
     if clasificacion == "micro":
-        notas.append(
-            "Como microempresa, puede aplicar los criterios simplificados del PGC PYMES."
-        )
+        notas.append("Como microempresa, puede aplicar los criterios simplificados del PGC PYMES.")
     if clasificacion in ("micro", "pequena"):
         notas.append(
             "Puede formular balance, memoria y estado de cambios en patrimonio neto abreviados."
         )
-        notas.append(
-            "No esta obligada a depositar el informe de gestion en el Registro Mercantil."
-        )
+        notas.append("No esta obligada a depositar el informe de gestion en el Registro Mercantil.")
     if clasificacion == "mediana":
         notas.append(
             "Debe aplicar el PGC Normal pero puede formular balance abreviado si cumple los umbrales del Art. 257."
         )
     if clasificacion == "grande":
-        notas.append(
-            "Debe aplicar el PGC Normal con cuentas anuales completas."
-        )
+        notas.append("Debe aplicar el PGC Normal con cuentas anuales completas.")
         notas.append(
             "Esta obligada a elaborar el informe de gestion y el estado de flujos de efectivo."
         )
     if auditoria:
-        notas.append(
-            "Esta obligada a someter sus cuentas anuales a auditoria (Art. 263 LSC)."
-        )
+        notas.append("Esta obligada a someter sus cuentas anuales a auditoria (Art. 263 LSC).")
     else:
-        notas.append(
-            "No esta obligada a auditar sus cuentas anuales."
-        )
+        notas.append("No esta obligada a auditar sus cuentas anuales.")
 
     if ejercicio >= 2026:
         notas.append(

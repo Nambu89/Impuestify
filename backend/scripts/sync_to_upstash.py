@@ -7,6 +7,7 @@ Upstash Vector for fast semantic search in the RAG pipeline.
 Usage:
     python backend/scripts/sync_to_upstash.py [--batch-size 100] [--namespace rag]
 """
+
 import sys
 import struct
 import asyncio
@@ -20,10 +21,12 @@ sys.path.insert(0, str(backend_dir))
 project_root = backend_dir.parent
 
 from dotenv import load_dotenv
+
 load_dotenv(project_root / ".env")
 
 # Import TursoClient directly (bypass pydantic email_validator issue)
 import importlib.util
+
 _turso_spec = importlib.util.spec_from_file_location(
     "turso_client",
     backend_dir / "app" / "database" / "turso_client.py",
@@ -34,6 +37,7 @@ TursoClient = _turso_mod.TursoClient
 
 try:
     from upstash_vector import Index, Vector
+
     print("✅ upstash_vector imported successfully")
 except ImportError:
     print("❌ upstash_vector not installed. Run: pip install upstash-vector")
@@ -95,7 +99,7 @@ async def sync(batch_size: int = 100, namespace: str = "rag"):
 
     # ── Fetch all chunks with embeddings and document metadata ──
     print(f"📥 Fetching chunks in batches of {batch_size}...")
-    
+
     offset = 0
     synced = 0
     errors = 0
@@ -143,7 +147,9 @@ async def sync(batch_size: int = 100, namespace: str = "rag"):
                         id=row["chunk_id"],
                         vector=embedding_floats,
                         metadata={
-                            "content": row["content"][:3800] if row["content"] else "",  # Upstash metadata limit
+                            "content": row["content"][:3800]
+                            if row["content"]
+                            else "",  # Upstash metadata limit
                             "page": row["page_number"] or 0,
                             "source": row["source"] or "",
                             "title": row["title"] or "",
@@ -164,7 +170,9 @@ async def sync(batch_size: int = 100, namespace: str = "rag"):
                 index.upsert(vectors=vectors)
                 synced += len(vectors)
                 pct = (synced / total_chunks) * 100
-                print(f"   ✅ Synced {synced}/{total_chunks} ({pct:.1f}%) — batch of {len(vectors)}")
+                print(
+                    f"   ✅ Synced {synced}/{total_chunks} ({pct:.1f}%) — batch of {len(vectors)}"
+                )
             except Exception as e:
                 errors += len(vectors)
                 print(f"   ❌ Upsert error: {e}")
@@ -189,6 +197,7 @@ async def sync(batch_size: int = 100, namespace: str = "rag"):
     try:
         # Generate a test query embedding
         from openai import OpenAI
+
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         response = client.embeddings.create(
             model="text-embedding-3-large",
@@ -210,7 +219,7 @@ async def sync(batch_size: int = 100, namespace: str = "rag"):
     except Exception as e:
         print(f"   ⚠️ Test search failed: {e}")
 
-    if hasattr(db, 'close'):
+    if hasattr(db, "close"):
         await db.close()
 
 

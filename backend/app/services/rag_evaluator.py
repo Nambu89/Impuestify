@@ -5,6 +5,7 @@ Lightweight evaluation system that measures RAG pipeline quality
 using keyword overlap, embedding similarity, and response structure checks.
 No dependency on RAGAS or heavy ML libraries.
 """
+
 import json
 import logging
 import os
@@ -26,12 +27,41 @@ GROUND_TRUTH_PATH = Path(__file__).parent.parent / "data" / "rag_ground_truth.js
 def _tokenize(text: str) -> set[str]:
     """Simple word tokenizer for Spanish text — lowercase, strip punctuation."""
     import re
+
     words = re.findall(r"[a-záéíóúüñ0-9]+", text.lower())
     # Filter out very short stopwords
     stopwords = {
-        "de", "la", "el", "en", "y", "a", "los", "las", "del", "un", "una",
-        "que", "es", "por", "con", "se", "al", "lo", "su", "para", "no",
-        "son", "más", "o", "como", "si", "pero", "ya", "ha", "ser", "está",
+        "de",
+        "la",
+        "el",
+        "en",
+        "y",
+        "a",
+        "los",
+        "las",
+        "del",
+        "un",
+        "una",
+        "que",
+        "es",
+        "por",
+        "con",
+        "se",
+        "al",
+        "lo",
+        "su",
+        "para",
+        "no",
+        "son",
+        "más",
+        "o",
+        "como",
+        "si",
+        "pero",
+        "ya",
+        "ha",
+        "ser",
+        "está",
     }
     return {w for w in words if len(w) > 1 and w not in stopwords}
 
@@ -112,17 +142,20 @@ class RAGEvaluator:
                 text = chunk.get("text", chunk.get("chunk_text", ""))
                 source = chunk.get("source", chunk.get("filename", ""))
                 rag_parts.append(f"[{i+1}] {text[:500]}")
-                sources_data.append({
-                    "id": chunk.get("id", f"chunk_{i}"),
-                    "source": source,
-                    "text_preview": text[:200],
-                    "text_full": text[:2000],  # Full text for context relevance scoring
-                })
+                sources_data.append(
+                    {
+                        "id": chunk.get("id", f"chunk_{i}"),
+                        "source": source,
+                        "text_preview": text[:200],
+                        "text_full": text[:2000],  # Full text for context relevance scoring
+                    }
+                )
 
             rag_context = "\n\n".join(rag_parts) if rag_parts else ""
 
             # 2. Run TaxAgent with RAG context
             from app.agents.tax_agent import TaxAgent
+
             tax_agent = TaxAgent()
             result = await tax_agent.run(
                 query=question,
@@ -182,6 +215,7 @@ class RAGEvaluator:
         - No hallucination hedging: 0.25
         """
         import re
+
         score = 0.0
         answer_lower = answer.lower()
 
@@ -194,10 +228,20 @@ class RAGEvaluator:
 
         # 2. Legal references (0.30) — more diverse refs = more grounded
         legal_patterns = [
-            r"art[íi]culo?\s+\d+", r"art\.\s*\d+", r"ley\s+\d+",
-            r"real\s+decreto", r"modelo\s+\d{2,3}", r"rdl\s+\d+",
-            r"lirpf", r"aeat", r"boe", r"norma\s+foral", r"casilla",
-            r"decreto\s+legislativo", r"orden\s+", r"disposici[oó]n",
+            r"art[íi]culo?\s+\d+",
+            r"art\.\s*\d+",
+            r"ley\s+\d+",
+            r"real\s+decreto",
+            r"modelo\s+\d{2,3}",
+            r"rdl\s+\d+",
+            r"lirpf",
+            r"aeat",
+            r"boe",
+            r"norma\s+foral",
+            r"casilla",
+            r"decreto\s+legislativo",
+            r"orden\s+",
+            r"disposici[oó]n",
         ]
         legal_count = sum(1 for p in legal_patterns if re.search(p, answer_lower))
         score += min(0.30, legal_count * 0.06)
@@ -206,13 +250,21 @@ class RAGEvaluator:
         has_amounts = bool(re.search(r"\d+[\.,]?\d*\s*(?:euros?|EUR|eur)", answer, re.IGNORECASE))
         has_percentages = bool(re.search(r"\d+[\.,]?\d*\s*%", answer))
         has_years = bool(re.search(r"20[12]\d", answer))
-        concrete = (0.05 if has_amounts else 0) + (0.05 if has_percentages else 0) + (0.05 if has_years else 0)
+        concrete = (
+            (0.05 if has_amounts else 0)
+            + (0.05 if has_percentages else 0)
+            + (0.05 if has_years else 0)
+        )
         score += concrete
 
         # 4. No hallucination hedging (0.25)
         hedging = [
-            "no estoy seguro", "podría ser", "no tengo información",
-            "no puedo confirmar", "desconozco", "no tengo acceso",
+            "no estoy seguro",
+            "podría ser",
+            "no tengo información",
+            "no puedo confirmar",
+            "desconozco",
+            "no tengo acceso",
         ]
         hedge_count = sum(1 for h in hedging if h in answer_lower)
         score += max(0.0, 0.25 - hedge_count * 0.12)
@@ -234,6 +286,7 @@ class RAGEvaluator:
             return 0.0
 
         import re
+
         score = 0.0
         length = len(answer)
         answer_lower = answer.lower()
@@ -257,16 +310,25 @@ class RAGEvaluator:
         has_bullets = "- " in answer or "* " in answer or re.search(r"^\d+\.", answer, re.MULTILINE)
         has_bold = "**" in answer
         structure_score = 0.0
-        if has_paragraphs: structure_score += 0.08
-        if has_bullets: structure_score += 0.07
-        if has_bold: structure_score += 0.05
+        if has_paragraphs:
+            structure_score += 0.08
+        if has_bullets:
+            structure_score += 0.07
+        if has_bold:
+            structure_score += 0.05
         score += min(0.20, structure_score)
 
         # 4. Legal references (0.15) — articles, laws, casillas
         legal_patterns = [
-            r"art[íi]culo?\s+\d+", r"ley\s+\d+", r"lirpf", r"norma\s+foral",
-            r"casilla\s+\d+", r"real\s+decreto", r"decreto\s+legislativo",
-            r"modelo\s+\d{2,3}", r"art\.\s*\d+",
+            r"art[íi]culo?\s+\d+",
+            r"ley\s+\d+",
+            r"lirpf",
+            r"norma\s+foral",
+            r"casilla\s+\d+",
+            r"real\s+decreto",
+            r"decreto\s+legislativo",
+            r"modelo\s+\d{2,3}",
+            r"art\.\s*\d+",
         ]
         legal_matches = sum(1 for p in legal_patterns if re.search(p, answer_lower))
         score += min(0.15, legal_matches * 0.04)
@@ -326,9 +388,14 @@ class RAGEvaluator:
             # Also check overlap between expected answer and sources (are sources useful?)
             answer_source_overlap = _keyword_overlap(expected, source_texts_full)
             # Embedding similarity between question and source texts
-            embedding_relevance = await self._embedding_similarity(question, source_texts_full[:1000])
+            embedding_relevance = await self._embedding_similarity(
+                question, source_texts_full[:1000]
+            )
             # Weighted: 30% question-source keywords, 30% answer-source keywords, 40% embedding
-            context_relevance = min(1.0, (keyword_relevance * 0.3 + answer_source_overlap * 0.3 + embedding_relevance * 0.4))
+            context_relevance = min(
+                1.0,
+                (keyword_relevance * 0.3 + answer_source_overlap * 0.3 + embedding_relevance * 0.4),
+            )
         else:
             context_relevance = 0.0
 

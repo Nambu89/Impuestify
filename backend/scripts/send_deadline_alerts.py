@@ -12,6 +12,7 @@ Features:
 Usage:
     python -m backend.scripts.send_deadline_alerts [--dry-run]
 """
+
 import sys
 import os
 import asyncio
@@ -23,6 +24,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
 sys.path.insert(0, BACKEND_ROOT)
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from app.database.turso_client import TursoClient
@@ -38,7 +40,9 @@ async def main(dry_run: bool) -> None:
 
     if dry_run:
         logger.info("[DRY-RUN] Would run send_deadline_alerts() — skipping actual sends")
-        logger.info("[DRY-RUN] Configure VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY in .env to enable push")
+        logger.info(
+            "[DRY-RUN] Configure VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY in .env to enable push"
+        )
         logger.info("[DRY-RUN] Would run send_deadline_email_alerts() — skipping email sends")
         logger.info("[DRY-RUN] Configure RESEND_API_KEY in .env to enable email alerts")
         return

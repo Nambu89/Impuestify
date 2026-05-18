@@ -16,6 +16,7 @@ IMPORTANT: This calculator handles the ANNUAL IRPF declaration (Modelo 100).
 The quarterly Modelo 130 feeds data INTO this calculator (cumulative income/expenses).
 The connection is: sum(4 quarters of Modelo 130 data) = annual activity income for Modelo 100.
 """
+
 from typing import Any, Dict
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
@@ -42,32 +43,32 @@ class ActivityIncomeCalculator:
         year: int = 2025,
         # --- Fase 1.1: Gastos granulares actividad (casillas 0181-0217) ---
         # Si sum(granulares) > 0, se usan en vez de gastos_actividad (backward compat)
-        gastos_compras: float = 0,                    # 0181: Compras mercaderias
-        gastos_sueldos: float = 0,                    # 0190: Sueldos y salarios
-        gastos_ss_empresa: float = 0,                 # 0191: SS a cargo empresa
-        gastos_arrendamientos: float = 0,             # 0196: Alquileres locales/oficinas
-        gastos_reparaciones: float = 0,               # 0197: Reparaciones
-        gastos_servicios_profesionales: float = 0,    # 0198: Servicios profesionales
-        gastos_tributos: float = 0,                   # 0201: Tributos (IAE, IBI local)
-        gastos_financieros: float = 0,                # 0203: Gastos financieros
-        gastos_suministros: float = 0,                # 0205: Suministros (luz, agua, internet)
-        gastos_otros: float = 0,                      # 0217: Otros gastos deducibles
-        gastos_publicidad: float = 0,                 # Marketing/anuncios (va en 0217)
-        gastos_formacion: float = 0,                  # Cursos/formacion (va en 0217)
-        gastos_software: float = 0,                   # Licencias software (va en 0217)
+        gastos_compras: float = 0,  # 0181: Compras mercaderias
+        gastos_sueldos: float = 0,  # 0190: Sueldos y salarios
+        gastos_ss_empresa: float = 0,  # 0191: SS a cargo empresa
+        gastos_arrendamientos: float = 0,  # 0196: Alquileres locales/oficinas
+        gastos_reparaciones: float = 0,  # 0197: Reparaciones
+        gastos_servicios_profesionales: float = 0,  # 0198: Servicios profesionales
+        gastos_tributos: float = 0,  # 0201: Tributos (IAE, IBI local)
+        gastos_financieros: float = 0,  # 0203: Gastos financieros
+        gastos_suministros: float = 0,  # 0205: Suministros (luz, agua, internet)
+        gastos_otros: float = 0,  # 0217: Otros gastos deducibles
+        gastos_publicidad: float = 0,  # Marketing/anuncios (va en 0217)
+        gastos_formacion: float = 0,  # Cursos/formacion (va en 0217)
+        gastos_software: float = 0,  # Licencias software (va en 0217)
         # --- Fase 1.3: Ingresos granulares actividad (casillas 0171-0179) ---
         # Si sum(granulares) > 0, se usan en vez de ingresos_actividad (backward compat)
-        ingresos_ventas: float = 0,                   # 0171: Ventas/prestacion servicios
-        ingresos_subvenciones: float = 0,             # 0173: Subvenciones
-        ingresos_financieros_actividad: float = 0,    # 0175: Ingresos financieros actividad
-        ingresos_otros_actividad: float = 0,          # 0179: Otros ingresos
+        ingresos_ventas: float = 0,  # 0171: Ventas/prestacion servicios
+        ingresos_subvenciones: float = 0,  # 0173: Subvenciones
+        ingresos_financieros_actividad: float = 0,  # 0175: Ingresos financieros actividad
+        ingresos_otros_actividad: float = 0,  # 0179: Otros ingresos
         # --- Fase 2: Estimacion Objetiva (modulos) ---
-        modulos_rendimiento_neto: float = 0,          # Rendimiento neto previo (modulos)
-        modulos_indice_corrector: float = 1.0,        # Indice corrector aplicable
-        modulos_reduccion_general: float = 0.05,      # Reduccion general 5% (2024-2025)
+        modulos_rendimiento_neto: float = 0,  # Rendimiento neto previo (modulos)
+        modulos_indice_corrector: float = 1.0,  # Indice corrector aplicable
+        modulos_reduccion_general: float = 0.05,  # Reduccion general 5% (2024-2025)
         # --- Fase 3.1: Royalties / Derechos de autor ---
-        ingresos_derechos_autor: float = 0,           # 0128: Royalties, copyright
-        reduccion_derechos_autor: bool = False,       # Art. 32.1: 30% reduccion si >2 anos
+        ingresos_derechos_autor: float = 0,  # 0128: Royalties, copyright
+        reduccion_derechos_autor: bool = False,  # Art. 32.1: 30% reduccion si >2 anos
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -127,22 +128,29 @@ class ActivityIncomeCalculator:
         ingresos_efectivos = ingresos_granulares if ingresos_granulares > 0 else ingresos_actividad
 
         # --- 0c. Gastos granulares (Fase 1.1) ---
-        gastos_granulares = sum([
-            gastos_compras, gastos_sueldos, gastos_ss_empresa,
-            gastos_arrendamientos, gastos_reparaciones,
-            gastos_servicios_profesionales, gastos_tributos,
-            gastos_financieros, gastos_suministros, gastos_otros,
-            gastos_publicidad, gastos_formacion, gastos_software,
-        ])
+        gastos_granulares = sum(
+            [
+                gastos_compras,
+                gastos_sueldos,
+                gastos_ss_empresa,
+                gastos_arrendamientos,
+                gastos_reparaciones,
+                gastos_servicios_profesionales,
+                gastos_tributos,
+                gastos_financieros,
+                gastos_suministros,
+                gastos_otros,
+                gastos_publicidad,
+                gastos_formacion,
+                gastos_software,
+            ]
+        )
         # Use granulares if provided, else lump sum (backward compat)
         gastos_efectivos = gastos_granulares if gastos_granulares > 0 else gastos_actividad
 
         # --- 1. Total gastos deducibles ---
         total_gastos = (
-            gastos_efectivos
-            + cuota_autonomo_anual
-            + amortizaciones
-            + otros_gastos_deducibles
+            gastos_efectivos + cuota_autonomo_anual + amortizaciones + otros_gastos_deducibles
         )
 
         # Provisiones solo en ED normal
@@ -156,10 +164,7 @@ class ActivityIncomeCalculator:
         # Art. 30 Reglamento IRPF: 5% del rendimiento neto previo, max 2.000 EUR/ano
         gastos_dificil_justificacion = 0.0
         if estimacion == "directa_simplificada" and rendimiento_neto_previo > 0:
-            gastos_dificil_justificacion = min(
-                rendimiento_neto_previo * 0.05,
-                2000.0
-            )
+            gastos_dificil_justificacion = min(rendimiento_neto_previo * 0.05, 2000.0)
 
         # --- 4. Rendimiento neto actividad (sin royalties) ---
         rendimiento_neto = rendimiento_neto_previo - gastos_dificil_justificacion
@@ -248,7 +253,9 @@ class ActivityIncomeCalculator:
             "reducciones_detalle": {
                 "reduccion_inicio_actividad": round(reduccion_inicio_actividad, 2),
                 "reduccion_art32_2": round(reduccion_art32_2, 2),
-                "reduccion_derechos_autor_pct": 30 if reduccion_derechos_autor and ingresos_derechos_autor > 0 else 0,
+                "reduccion_derechos_autor_pct": 30
+                if reduccion_derechos_autor and ingresos_derechos_autor > 0
+                else 0,
             },
         }
 
@@ -293,7 +300,9 @@ class ActivityIncomeCalculator:
             "ingresos_actividad": round(modulos_rendimiento_neto, 2),
             "total_gastos_deducibles": 0.0,  # In modulos, expenses are pre-calculated into rendimiento_neto
             "rendimiento_neto_previo": round(rend_con_corrector, 2),
-            "gastos_dificil_justificacion": round(reduccion_general_modulos, 2),  # Mapped semantically
+            "gastos_dificil_justificacion": round(
+                reduccion_general_modulos, 2
+            ),  # Mapped semantically
             "rendimiento_neto": round(rendimiento_neto, 2),
             "reduccion_aplicada": round(reduccion_aplicada, 2),
             "tipo_reduccion": tipo_reduccion,

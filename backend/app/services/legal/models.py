@@ -8,6 +8,7 @@ These models mirror the YAML schemas in `backend/data/legal/`:
 Validation runs at startup. A malformed YAML aborts the app with a clear
 error, preventing degraded behaviour from silently shipping.
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -27,7 +28,9 @@ class LegalNorm(BaseModel):
     sigla: str = Field(..., min_length=2, description="Sigla oficial: LIVA, LIRPF…")
     full_id: str = Field(..., min_length=3, description='Forma "Tipo Numero/Año"')
     name: str = Field(..., min_length=3, description="Nombre completo")
-    norm_type: str = Field(..., description="ley | rd | rd_legislativo | norma_foral | decreto_foral")
+    norm_type: str = Field(
+        ..., description="ley | rd | rd_legislativo | norma_foral | decreto_foral"
+    )
     vigent_from: date
     vigent_until: Optional[date] = None
     aliases: List[str] = Field(default_factory=list)

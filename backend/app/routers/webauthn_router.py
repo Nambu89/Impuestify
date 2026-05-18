@@ -11,7 +11,12 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr
 
-from app.auth.jwt_handler import get_current_user, TokenData, create_access_token, create_refresh_token
+from app.auth.jwt_handler import (
+    get_current_user,
+    TokenData,
+    create_access_token,
+    create_refresh_token,
+)
 from app.auth.webauthn_handler import WebAuthnService
 from app.security.rate_limiter import limiter
 
@@ -99,7 +104,9 @@ async def webauthn_login_begin(request: Request, body: LoginBeginBody):
 async def webauthn_login_complete(request: Request, body: LoginCompleteBody):
     svc = _get_service(request)
     try:
-        user_id = await svc.complete_login(user_email=body.email, credential_response=body.credential)
+        user_id = await svc.complete_login(
+            user_email=body.email, credential_response=body.credential
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -108,10 +115,10 @@ async def webauthn_login_complete(request: Request, body: LoginCompleteBody):
 
     # Issue tokens — same shape as /auth/login
     from app.database.turso_client import get_db_client
+
     db = await get_db_client()
     user_row = await db.execute(
-        "SELECT id, email, name, is_admin, is_owner, is_active "
-        "FROM users WHERE id = ? LIMIT 1",
+        "SELECT id, email, name, is_admin, is_owner, is_active " "FROM users WHERE id = ? LIMIT 1",
         [user_id],
     )
     if not user_row.rows:

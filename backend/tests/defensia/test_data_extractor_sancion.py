@@ -1,4 +1,5 @@
 """Tests para el extractor de acuerdo de imposición de sanción."""
+
 from unittest.mock import patch
 from app.services.defensia_data_extractor import extract_acuerdo_sancion
 

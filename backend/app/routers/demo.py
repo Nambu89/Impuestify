@@ -9,6 +9,7 @@ Public demo endpoint with:
 - Watermark for demo version
 - FULL SECURITY: SQL injection, guardrails, prompt injection, PII, Llama Guard
 """
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -21,14 +22,15 @@ from datetime import datetime, timedelta
 
 from app.database.turso_client import TursoClient
 from app.config import settings
+
 # Import ALL security modules
 from app.security import (
-    sql_validator, 
+    sql_validator,
     guardrails_system,
     prompt_injection_filter,
     pii_detector,
     audit_logger,
-    AuditEventType
+    AuditEventType,
 )
 from app.security.llama_guard import get_llama_guard
 
@@ -39,14 +41,15 @@ router = APIRouter(prefix="/api/demo", tags=["demo"])
 
 # === Rate Limiting ===
 
+
 class RateLimiter:
     """Simple in-memory rate limiter by IP"""
-    
+
     def __init__(self, max_requests: int = 10, window_seconds: int = 60):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.requests = defaultdict(list)  # IP -> [timestamps]
-    
+
     def is_allowed(self, ip: str) -> tuple[bool, int]:
         """
         Check if request is allowed.
@@ -54,33 +57,27 @@ class RateLimiter:
         """
         now = datetime.now()
         window_start = now - timedelta(seconds=self.window_seconds)
-        
+
         # Clean old requests
-        self.requests[ip] = [
-            ts for ts in self.requests[ip] 
-            if ts > window_start
-        ]
-        
+        self.requests[ip] = [ts for ts in self.requests[ip] if ts > window_start]
+
         if len(self.requests[ip]) >= self.max_requests:
             # Calculate time until oldest request expires
             oldest = min(self.requests[ip])
             reset_in = int((oldest + timedelta(seconds=self.window_seconds) - now).total_seconds())
             return False, max(1, reset_in)
-        
+
         # Allow and record
         self.requests[ip].append(now)
         return True, 0
-    
+
     def get_remaining(self, ip: str) -> int:
         """Get remaining requests in current window"""
         now = datetime.now()
         window_start = now - timedelta(seconds=self.window_seconds)
-        
-        self.requests[ip] = [
-            ts for ts in self.requests[ip] 
-            if ts > window_start
-        ]
-        
+
+        self.requests[ip] = [ts for ts in self.requests[ip] if ts > window_start]
+
         return max(0, self.max_requests - len(self.requests[ip]))
 
 
@@ -89,11 +86,8 @@ demo_rate_limiter = RateLimiter(max_requests=10, window_seconds=60)
 
 # Demo usage counter (thread-safe, simple analytics without PII)
 _stats_lock = threading.Lock()
-demo_stats = {
-    "total_requests": 0,
-    "total_errors": 0,
-    "started_at": datetime.now().isoformat()
-}
+demo_stats = {"total_requests": 0, "total_errors": 0, "started_at": datetime.now().isoformat()}
+
 
 def _increment_stat(key: str):
     with _stats_lock:
@@ -102,24 +96,25 @@ def _increment_stat(key: str):
 
 # === Models ===
 
+
 class DemoChatRequest(BaseModel):
     """Demo chat request - limited input"""
+
     question: str = Field(
-        ..., 
-        min_length=3, 
-        max_length=500,
-        description="Pregunta fiscal (máx 500 caracteres)"
+        ..., min_length=3, max_length=500, description="Pregunta fiscal (máx 500 caracteres)"
     )
 
 
 class DemoSource(BaseModel):
     """Simplified source for demo"""
+
     title: str
     page: int
 
 
 class DemoChatResponse(BaseModel):
     """Demo chat response"""
+
     response: str
     sources: List[DemoSource]
     demo: bool = True
@@ -129,14 +124,12 @@ class DemoChatResponse(BaseModel):
 
 # === Dependencies ===
 
+
 async def get_db(request: Request) -> TursoClient:
     """Get database client from app state"""
-    if hasattr(request.app.state, 'db_client') and request.app.state.db_client:
+    if hasattr(request.app.state, "db_client") and request.app.state.db_client:
         return request.app.state.db_client
-    raise HTTPException(
-        status_code=503,
-        detail="Database not available"
-    )
+    raise HTTPException(status_code=503, detail="Database not available")
 
 
 def get_client_ip(request: Request) -> str:
@@ -145,17 +138,18 @@ def get_client_ip(request: Request) -> str:
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         return forwarded.split(",")[0].strip()
-    
+
     # Check X-Real-IP header
     real_ip = request.headers.get("X-Real-IP")
     if real_ip:
         return real_ip
-    
+
     # Fallback to direct client
     return request.client.host if request.client else "unknown"
 
 
 # === Helper Functions ===
+
 
 async def demo_fts_search(db: TursoClient, query: str, k: int = 3) -> List[dict]:
     """
@@ -163,15 +157,15 @@ async def demo_fts_search(db: TursoClient, query: str, k: int = 3) -> List[dict]
     """
     try:
         # Clean query
-        clean_query = ''.join(c for c in query if c.isalnum() or c.isspace())
+        clean_query = "".join(c for c in query if c.isalnum() or c.isspace())
         keywords = clean_query.split()[:5]  # Max 5 keywords
-        
+
         if not keywords:
             return []
-        
+
         # Simple OR query
-        fts_query = ' OR '.join([f'"{kw}"' for kw in keywords])
-        
+        fts_query = " OR ".join([f'"{kw}"' for kw in keywords])
+
         # Exclude foral regions for simplicity in demo
         sql = """
         SELECT 
@@ -189,36 +183,34 @@ async def demo_fts_search(db: TursoClient, query: str, k: int = 3) -> List[dict]
         ORDER BY fts.rank 
         LIMIT ?
         """
-        
+
         result = await db.execute(sql, [fts_query, k])
-        
+
         chunks = []
         for row in result.rows:
-            chunks.append({
-                "id": row['id'],
-                "text": row['content'][:1500],  # Limit text size
-                "page": row['page_number'],
-                "source": row['filename'],
-                "title": row['title'] or row['filename']
-            })
-        
+            chunks.append(
+                {
+                    "id": row["id"],
+                    "text": row["content"][:1500],  # Limit text size
+                    "page": row["page_number"],
+                    "source": row["filename"],
+                    "title": row["title"] or row["filename"],
+                }
+            )
+
         return chunks
-        
+
     except Exception as e:
         logger.error(f"Demo FTS search error: {e}")
         return []
 
 
-async def generate_demo_response(
-    question: str, 
-    context: str, 
-    timeout: float = 30.0
-) -> str:
+async def generate_demo_response(question: str, context: str, timeout: float = 30.0) -> str:
     """
     Generate response using GPT-4o-mini (cheaper model for demo).
     """
     import httpx
-    
+
     system_prompt = """Eres Impuestify, un asistente fiscal español especializado.
 
 REGLAS PARA DEMO:
@@ -243,26 +235,26 @@ Responde de forma concisa y profesional:"""
                 "https://api.openai.com/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 json={
                     "model": "gpt-5-mini",  # Using gpt-5-mini as configured
                     "messages": [
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
+                        {"role": "user", "content": user_prompt},
                     ],
                     "max_completion_tokens": 400,
-                    "temperature": 1
-                }
+                    "temperature": 1,
+                },
             )
-            
+
             if response.status_code != 200:
                 logger.error(f"OpenAI error: {response.text}")
                 raise HTTPException(status_code=502, detail="Error generating response")
-            
+
             data = response.json()
             return data["choices"][0]["message"]["content"]
-            
+
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="Response timeout - try a simpler question")
     except Exception as e:
@@ -274,21 +266,21 @@ def truncate_response(text: str, max_chars: int = 800) -> str:
     """Truncate response to max characters, ending at sentence boundary."""
     if len(text) <= max_chars:
         return text
-    
+
     # Find last sentence boundary before limit
     truncated = text[:max_chars]
-    
+
     # Try to end at a sentence
-    for end_char in ['. ', '.\n', '? ', '?\n', '! ', '!\n']:
+    for end_char in [". ", ".\n", "? ", "?\n", "! ", "!\n"]:
         last_pos = truncated.rfind(end_char)
         if last_pos > max_chars // 2:
-            return truncated[:last_pos + 1] + "..."
-    
+            return truncated[: last_pos + 1] + "..."
+
     # Fallback: end at word boundary
-    last_space = truncated.rfind(' ')
+    last_space = truncated.rfind(" ")
     if last_space > max_chars // 2:
         return truncated[:last_space] + "..."
-    
+
     return truncated + "..."
 
 
@@ -300,20 +292,18 @@ def add_demo_watermark(text: str) -> str:
 
 # === Routes ===
 
+
 @router.post("/chat", response_model=DemoChatResponse)
-async def demo_chat(
-    request: Request,
-    body: DemoChatRequest
-):
+async def demo_chat(request: Request, body: DemoChatRequest):
     """
     Demo chat endpoint - No authentication required.
-    
+
     **Limitaciones:**
     - 10 requests/minuto por IP
     - Respuestas máximo 800 caracteres
     - Sin memoria de conversación
     - Máximo 3 fuentes
-    
+
     **Uso:**
     ```
     POST /api/demo/chat
@@ -324,11 +314,11 @@ async def demo_chat(
     """
     start_time = time.time()
     _increment_stat("total_requests")
-    
+
     # === Rate Limiting ===
     client_ip = get_client_ip(request)
     allowed, reset_in = demo_rate_limiter.is_allowed(client_ip)
-    
+
     if not allowed:
         logger.warning(f"Demo rate limit exceeded for IP: {client_ip[:10]}...")
         raise HTTPException(
@@ -336,13 +326,13 @@ async def demo_chat(
             detail={
                 "error": "Demo limit alcanzado",
                 "message": f"Espera {reset_in} segundos o contacta para acceso completo",
-                "retry_after": reset_in
+                "retry_after": reset_in,
             },
-            headers={"Retry-After": str(reset_in)}
+            headers={"Retry-After": str(reset_in)},
         )
-    
+
     remaining = demo_rate_limiter.get_remaining(client_ip)
-    
+
     # === SECURITY LAYER 1: SQL Injection Detection ===
     sql_check = sql_validator.validate_user_input(body.question)
     if not sql_check.is_safe:
@@ -351,36 +341,38 @@ async def demo_chat(
         audit_logger.log_security_event(
             event_type=AuditEventType.SECURITY_VIOLATION,
             details={"type": "sql_injection", "ip": client_ip[:10]},
-            user_id="demo"
+            user_id="demo",
         )
         raise HTTPException(status_code=400, detail="Invalid input detected")
-    
+
     # === SECURITY LAYER 2: Prompt Injection Detection ===
     injection_check = prompt_injection_filter.check(body.question)
     if not injection_check.is_safe:
-        logger.warning(f"🚨 Demo prompt injection attempt blocked: {injection_check.detected_patterns}")
+        logger.warning(
+            f"🚨 Demo prompt injection attempt blocked: {injection_check.detected_patterns}"
+        )
         _increment_stat("total_errors")
         audit_logger.log_security_event(
             event_type=AuditEventType.SECURITY_VIOLATION,
             details={"type": "prompt_injection", "ip": client_ip[:10]},
-            user_id="demo"
+            user_id="demo",
         )
         raise HTTPException(status_code=400, detail="Invalid input detected")
-    
+
     # === SECURITY LAYER 3: Guardrails Validation ===
     guardrails_check = guardrails_system.validate_input(body.question)
     if not guardrails_check.is_safe and guardrails_check.risk_level == "critical":
         logger.warning(f"⚠️ Demo guardrails violation: {guardrails_check.violations}")
         _increment_stat("total_errors")
         raise HTTPException(status_code=400, detail="Question violates guidelines")
-    
+
     # === SECURITY LAYER 4: PII Detection (redact but don't block) ===
     pii_result = pii_detector.detect(body.question)
     sanitized_question = body.question
     if pii_result.has_pii:
         logger.info(f"🔒 Demo PII detected and redacted: {pii_result.detected_types}")
         sanitized_question = pii_result.masked_text
-    
+
     # === SECURITY LAYER 5: Llama Guard Content Moderation ===
     try:
         llama_guard = get_llama_guard()
@@ -391,14 +383,18 @@ async def demo_chat(
                 _increment_stat("total_errors")
                 audit_logger.log_security_event(
                     event_type=AuditEventType.SECURITY_VIOLATION,
-                    details={"type": "llama_guard", "categories": moderation.blocked_categories, "ip": client_ip[:10]},
-                    user_id="demo"
+                    details={
+                        "type": "llama_guard",
+                        "categories": moderation.blocked_categories,
+                        "ip": client_ip[:10],
+                    },
+                    user_id="demo",
                 )
                 raise HTTPException(status_code=400, detail="Content violates safety guidelines")
     except Exception as e:
         # Don't block if Llama Guard fails, just log
         logger.warning(f"Llama Guard check failed (non-blocking): {e}")
-    
+
     # === Greeting Detection ===
     if guardrails_system.is_greeting(body.question.strip()):
         greeting = (
@@ -410,15 +406,15 @@ async def demo_chat(
             sources=[],
             demo=True,
             remaining_requests=remaining,
-            processing_time=time.time() - start_time
+            processing_time=time.time() - start_time,
         )
-    
+
     # === Get Database ===
     db = await get_db(request)
-    
+
     # === Search Documents (limited) ===
     chunks = await demo_fts_search(db, body.question, k=3)
-    
+
     if not chunks:
         no_info = (
             "No encontré información específica sobre tu pregunta en la documentación fiscal. "
@@ -430,37 +426,35 @@ async def demo_chat(
             sources=[],
             demo=True,
             remaining_requests=remaining,
-            processing_time=time.time() - start_time
+            processing_time=time.time() - start_time,
         )
-    
+
     # === Prepare Context ===
-    context = "\n\n".join([
-        f"[{chunk['title']} - Página {chunk['page']}]\n{chunk['text']}"
-        for chunk in chunks
-    ])
-    
+    context = "\n\n".join(
+        [f"[{chunk['title']} - Página {chunk['page']}]\n{chunk['text']}" for chunk in chunks]
+    )
+
     # === Generate Response (with timeout) ===
     try:
         raw_response = await asyncio.wait_for(
-            generate_demo_response(body.question, context),
-            timeout=30.0
+            generate_demo_response(body.question, context), timeout=30.0
         )
     except asyncio.TimeoutError:
         _increment_stat("total_errors")
         raise HTTPException(
             status_code=504,
-            detail="Tiempo de respuesta agotado. Intenta con una pregunta más simple."
+            detail="Tiempo de respuesta agotado. Intenta con una pregunta más simple.",
         )
-    
+
     # === Post-process Response ===
     # Truncate to max length
     truncated = truncate_response(raw_response, max_chars=800)
-    
+
     # === SECURITY LAYER 6: Output Validation ===
     output_check = guardrails_system.validate_output(
         llm_response=truncated,
         user_question=sanitized_question,
-        sources=[]  # Simplified for demo
+        sources=[],  # Simplified for demo
     )
     if not output_check.is_safe:
         # Skip "too short" warning for demo — concise responses are expected
@@ -468,28 +462,24 @@ async def demo_chat(
         if real_violations:
             logger.warning(f"⚠️ Demo output guardrail violation: {real_violations}")
             truncated = guardrails_system.apply_safety_wrapper(
-                truncated,
-                risk_level=output_check.risk_level
+                truncated, risk_level=output_check.risk_level
             )
-    
+
     # Add watermark
     final_response = add_demo_watermark(truncated)
-    
+
     # === Format Sources (max 3) ===
-    sources = [
-        DemoSource(title=chunk['title'], page=chunk['page'])
-        for chunk in chunks[:3]
-    ]
-    
+    sources = [DemoSource(title=chunk["title"], page=chunk["page"]) for chunk in chunks[:3]]
+
     processing_time = time.time() - start_time
     logger.info(f"Demo request processed in {processing_time:.2f}s")
-    
+
     return DemoChatResponse(
         response=final_response,
         sources=sources,
         demo=True,
         remaining_requests=remaining,
-        processing_time=processing_time
+        processing_time=processing_time,
     )
 
 
@@ -504,8 +494,8 @@ async def demo_stats_endpoint():
         "uptime_since": demo_stats["started_at"],
         "rate_limit": {
             "max_requests": demo_rate_limiter.max_requests,
-            "window_seconds": demo_rate_limiter.window_seconds
-        }
+            "window_seconds": demo_rate_limiter.window_seconds,
+        },
     }
 
 

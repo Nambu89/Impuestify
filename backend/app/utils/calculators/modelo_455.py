@@ -33,6 +33,7 @@ Estructura del Modelo 455 (anual):
 
 NO existe deduccion de cuotas soportadas: AIEM es monofasico.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -51,7 +52,9 @@ from app.utils.tax_parameter_repository import TaxParameterRepository
 
 # Plazo Modelo 455 anual: 1-30 enero ano siguiente (Orden ATC anual).
 PLAZO_MODELO_455_ANUAL: Dict[str, Any] = {
-    "mes_fin": 1, "dia_fin": 30, "anio_siguiente": True,
+    "mes_fin": 1,
+    "dia_fin": 30,
+    "anio_siguiente": True,
 }
 
 
@@ -117,8 +120,7 @@ class Modelo455Calculator:
         # -------------------------------------------------------------------
         if periodicidad not in ("anual", "trimestral"):
             raise ValueError(
-                f"periodicidad debe ser 'anual' o 'trimestral', recibido: "
-                f"{periodicidad!r}"
+                f"periodicidad debe ser 'anual' o 'trimestral', recibido: " f"{periodicidad!r}"
             )
         if periodicidad == "trimestral":
             if quarter not in (1, 2, 3, 4):
@@ -132,9 +134,7 @@ class Modelo455Calculator:
             raise ValueError(f"year fuera de rango razonable: {year_resolved}")
 
         if cuotas_compensar_anteriores < 0:
-            raise ValueError(
-                "cuotas_compensar_anteriores debe ser >= 0."
-            )
+            raise ValueError("cuotas_compensar_anteriores debe ser >= 0.")
 
         bienes = bienes_anuales or []
 
@@ -155,8 +155,7 @@ class Modelo455Calculator:
             base = float(bien.get("base_imponible", 0.0))
             if base < 0:
                 raise ValueError(
-                    f"bienes_anuales[{idx - 1}].base_imponible no puede ser "
-                    f"negativa: {base}"
+                    f"bienes_anuales[{idx - 1}].base_imponible no puede ser " f"negativa: {base}"
                 )
 
             epigrafe = str(bien.get("epigrafe_iae", "") or "").strip()
@@ -181,16 +180,18 @@ class Modelo455Calculator:
                     "sin tipo_aiem y epigrafe no reconocido. Indica tipo_aiem "
                     "manualmente segun Anexo IV TR Decreto Legislativo 1/2025."
                 )
-                desglose_bienes.append({
-                    "indice": idx,
-                    "epigrafe_iae": epigrafe or None,
-                    "descripcion": descripcion or None,
-                    "base_imponible": round(base, 2),
-                    "tipo_aiem": None,
-                    "cuota_aiem": 0.0,
-                    "origen_tipo": "desconocido",
-                    "warning": True,
-                })
+                desglose_bienes.append(
+                    {
+                        "indice": idx,
+                        "epigrafe_iae": epigrafe or None,
+                        "descripcion": descripcion or None,
+                        "base_imponible": round(base, 2),
+                        "tipo_aiem": None,
+                        "cuota_aiem": 0.0,
+                        "origen_tipo": "desconocido",
+                        "warning": True,
+                    }
+                )
                 continue
 
             tipo_clamped = max(0.0, min(tipo_aplicado, 1.0))
@@ -203,16 +204,18 @@ class Modelo455Calculator:
             total_base += base
             total_cuota += cuota
 
-            desglose_bienes.append({
-                "indice": idx,
-                "epigrafe_iae": epigrafe or None,
-                "descripcion": descripcion or None,
-                "base_imponible": round(base, 2),
-                "tipo_aiem": round(tipo_clamped, 4),
-                "cuota_aiem": cuota,
-                "origen_tipo": origen_tipo,
-                "warning": False,
-            })
+            desglose_bienes.append(
+                {
+                    "indice": idx,
+                    "epigrafe_iae": epigrafe or None,
+                    "descripcion": descripcion or None,
+                    "base_imponible": round(base, 2),
+                    "tipo_aiem": round(tipo_clamped, 4),
+                    "cuota_aiem": cuota,
+                    "origen_tipo": origen_tipo,
+                    "warning": False,
+                }
+            )
 
         total_base = round(total_base, 2)
         total_cuota = round(total_cuota, 2)
@@ -223,13 +226,9 @@ class Modelo455Calculator:
         rectificacion_bases = round(float(rectificacion_bases), 2)
         rectificacion_cuotas = round(float(rectificacion_cuotas), 2)
 
-        cuota_devengada_ajustada = round(
-            total_cuota + rectificacion_cuotas, 2
-        )
+        cuota_devengada_ajustada = round(total_cuota + rectificacion_cuotas, 2)
 
-        cuotas_compensar_aplicadas = max(
-            0.0, round(float(cuotas_compensar_anteriores), 2)
-        )
+        cuotas_compensar_aplicadas = max(0.0, round(float(cuotas_compensar_anteriores), 2))
 
         # En 455 anual la regularizacion anual SIEMPRE aplica (es la
         # liquidacion del ejercicio completo). En 455 trimestral solo en T4.
@@ -241,9 +240,7 @@ class Modelo455Calculator:
             )
 
         resultado_liquidacion = round(
-            cuota_devengada_ajustada
-            - cuotas_compensar_aplicadas
-            + regularizacion_anual_aplicada,
+            cuota_devengada_ajustada - cuotas_compensar_aplicadas + regularizacion_anual_aplicada,
             2,
         )
 
@@ -260,10 +257,22 @@ class Modelo455Calculator:
             periodo_label = "ANUAL"
         else:
             from app.utils.calculators.modelo_450 import PLAZOS_MODELO_450
+
             plazo_meta = PLAZOS_MODELO_450[quarter]  # type: ignore[index]
-            mes_label = ['enero','febrero','marzo','abril','mayo','junio',
-                         'julio','agosto','septiembre','octubre','noviembre',
-                         'diciembre'][plazo_meta['mes_fin'] - 1]
+            mes_label = [
+                "enero",
+                "febrero",
+                "marzo",
+                "abril",
+                "mayo",
+                "junio",
+                "julio",
+                "agosto",
+                "septiembre",
+                "octubre",
+                "noviembre",
+                "diciembre",
+            ][plazo_meta["mes_fin"] - 1]
             plazo_str = f"del 1 al {plazo_meta['dia_fin']} de {mes_label}"
             if plazo_meta["anio_siguiente"]:
                 plazo_str += f" de {year_resolved + 1}"
@@ -289,9 +298,7 @@ class Modelo455Calculator:
             "cuotas_compensar_anteriores": cuotas_compensar_aplicadas,
             "regularizacion_anual": regularizacion_anual_aplicada,
             "resultado_liquidacion": resultado_liquidacion,
-            "resultado_anterior_complementaria": round(
-                float(resultado_anterior_complementaria), 2
-            ),
+            "resultado_anterior_complementaria": round(float(resultado_anterior_complementaria), 2),
             "cuota_diferencial_complementaria": cuota_diferencial_complementaria,
             "warnings": warnings,
             "aiem_rates": {

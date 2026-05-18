@@ -8,6 +8,7 @@ Currently registered:
     - bopv  → BopvApiSource    (País Vasco — Euskadi)
     - url   → StaticUrlSource  (fallback: URL only, no vigencia check)
 """
+
 from app.services.legal.sources.base import (
     LegalSource,
     NormaSourceMetadata,

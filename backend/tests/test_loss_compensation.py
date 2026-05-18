@@ -6,6 +6,7 @@ Covers:
 - compensar_general(): Prior year GP general losses
 - Integration with SavingsIncomeCalculator
 """
+
 import pytest
 from app.utils.calculators.loss_compensation import LossCompensationCalculator
 
@@ -18,6 +19,7 @@ def calc():
 # ==========================================================================
 # Tests for compensar_ahorro()
 # ==========================================================================
+
 
 class TestCompensarAhorro:
     """Tests for savings base prior year loss compensation (Art. 49)."""
@@ -180,6 +182,7 @@ class TestCompensarAhorro:
 # Tests for compensar_general()
 # ==========================================================================
 
+
 class TestCompensarGeneral:
     """Tests for general base prior year loss compensation (Art. 48)."""
 
@@ -266,30 +269,36 @@ class TestCompensarGeneral:
 # Integration test with SavingsIncomeCalculator
 # ==========================================================================
 
+
 class TestSavingsIntegration:
     """Test that SavingsIncomeCalculator passes through loss compensation."""
 
     @pytest.fixture
     def mock_db(self):
         """Minimal mock DB that returns an empty savings scale."""
+
         class MockResult:
             def __init__(self):
                 self.rows = []
+
         class MockDB:
             async def execute(self, query, params=None):
                 return MockResult()
+
         return MockDB()
 
     @pytest.fixture
     def mock_repo(self):
         class MockRepo:
             pass
+
         return MockRepo()
 
     @pytest.mark.asyncio
     async def test_savings_with_prior_losses(self, mock_db, mock_repo):
         """14. savings.calculate() with perdidas_gp_anteriores passes through."""
         from app.utils.calculators.savings_income import SavingsIncomeCalculator
+
         calc = SavingsIncomeCalculator(mock_repo, mock_db)
 
         result = await calc.calculate(
@@ -316,6 +325,7 @@ class TestSavingsIntegration:
     async def test_savings_without_prior_losses(self, mock_db, mock_repo):
         """savings.calculate() without prior losses has loss_compensation=None."""
         from app.utils.calculators.savings_income import SavingsIncomeCalculator
+
         calc = SavingsIncomeCalculator(mock_repo, mock_db)
 
         result = await calc.calculate(

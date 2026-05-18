@@ -14,6 +14,7 @@ Limites por plan (decisi de producto cerrada):
 Los tests usan un fake async DB in-memory (con `asyncio.Lock` para el test de
 concurrencia) para no hitear Turso real.
 """
+
 from __future__ import annotations
 
 import asyncio

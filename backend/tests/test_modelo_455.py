@@ -10,6 +10,7 @@ Norma vigente:
 
 Periodicidad: ANUAL (1-30 enero ano siguiente). Trimestral excepcional.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -37,11 +38,13 @@ class TestModelo455Basic:
     async def test_anual_un_bien_tipo_general(self, calc):
         """Entidad ZEC factura 100.000 EUR de hormigon en el ejercicio."""
         r = await calc.calculate(
-            bienes_anuales=[{
-                "epigrafe_iae": "243",
-                "descripcion": "Hormigon",
-                "base_imponible": 100000,
-            }],
+            bienes_anuales=[
+                {
+                    "epigrafe_iae": "243",
+                    "descripcion": "Hormigon",
+                    "base_imponible": 100000,
+                }
+            ],
             epigrafe_zec="ZEC-243-IND",
             year=2025,
         )
@@ -57,7 +60,7 @@ class TestModelo455Basic:
     async def test_anual_multi_bien(self, calc):
         r = await calc.calculate(
             bienes_anuales=[
-                {"epigrafe_iae": "243", "base_imponible": 50000},   # 15% → 7500
+                {"epigrafe_iae": "243", "base_imponible": 50000},  # 15% → 7500
                 {"epigrafe_iae": "1500", "base_imponible": 20000},  # 25% → 5000
             ],
             year=2025,
@@ -68,10 +71,12 @@ class TestModelo455Basic:
     @pytest.mark.asyncio
     async def test_anual_tipo_manual(self, calc):
         r = await calc.calculate(
-            bienes_anuales=[{
-                "base_imponible": 80000,
-                "tipo_aiem": 0.10,
-            }],
+            bienes_anuales=[
+                {
+                    "base_imponible": 80000,
+                    "tipo_aiem": 0.10,
+                }
+            ],
             year=2025,
         )
         # 80.000 * 0.10 = 8.000
@@ -193,6 +198,7 @@ class TestModelo455Tool:
     @pytest.mark.asyncio
     async def test_tool_anual_basico(self):
         from app.tools.modelo_455_tool import calculate_modelo_455_tool
+
         r = await calculate_modelo_455_tool(
             bienes_anuales=[
                 {"epigrafe_iae": "243", "descripcion": "Hormigon", "base_imponible": 100000},
@@ -209,12 +215,14 @@ class TestModelo455Tool:
     @pytest.mark.asyncio
     async def test_tool_bienes_vacios(self):
         from app.tools.modelo_455_tool import calculate_modelo_455_tool
+
         r = await calculate_modelo_455_tool(bienes_anuales=[])
         assert r["success"] is False
 
     @pytest.mark.asyncio
     async def test_tool_restricted_mode(self):
         from app.tools.modelo_455_tool import calculate_modelo_455_tool
+
         r = await calculate_modelo_455_tool(
             bienes_anuales=[{"epigrafe_iae": "243", "base_imponible": 10000}],
             restricted_mode=True,
@@ -225,6 +233,7 @@ class TestModelo455Tool:
     @pytest.mark.asyncio
     async def test_tool_periodicidad_trimestral(self):
         from app.tools.modelo_455_tool import calculate_modelo_455_tool
+
         r = await calculate_modelo_455_tool(
             bienes_anuales=[{"epigrafe_iae": "243", "base_imponible": 10000}],
             periodicidad="trimestral",
@@ -241,29 +250,37 @@ class TestModelo455Tool:
 class TestModelo455Registration:
     def test_tool_in_all_tools(self):
         from app.tools import ALL_TOOLS
+
         names = [t["function"]["name"] for t in ALL_TOOLS]
         assert "calculate_modelo_455" in names
 
     def test_tool_in_executors(self):
         from app.tools import TOOL_EXECUTORS
+
         assert "calculate_modelo_455" in TOOL_EXECUTORS
 
     def test_plugin_anyade_modelo_455_si_zec(self):
         from app.territories.canarias.plugin import CanariasTerritory
+
         plugin = CanariasTerritory()
-        obs = plugin.get_model_obligations({
-            "situacion_laboral": "sociedad",
-            "regimen_zec": True,
-        })
+        obs = plugin.get_model_obligations(
+            {
+                "situacion_laboral": "sociedad",
+                "regimen_zec": True,
+            }
+        )
         modelos = [o.modelo for o in obs]
         assert "455" in modelos
 
     def test_plugin_no_anyade_455_si_no_zec(self):
         from app.territories.canarias.plugin import CanariasTerritory
+
         plugin = CanariasTerritory()
-        obs = plugin.get_model_obligations({
-            "situacion_laboral": "sociedad",
-            "regimen_zec": False,
-        })
+        obs = plugin.get_model_obligations(
+            {
+                "situacion_laboral": "sociedad",
+                "regimen_zec": False,
+            }
+        )
         modelos = [o.modelo for o in obs]
         assert "455" not in modelos

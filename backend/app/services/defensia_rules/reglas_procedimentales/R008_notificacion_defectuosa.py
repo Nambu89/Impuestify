@@ -25,6 +25,7 @@ generico ("notificacion defectuosa por incumplimiento de requisitos formales
 esenciales"). El verificador RAG la traduce al texto normativo exacto contra
 el corpus indexado.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -90,11 +91,7 @@ def _detecta_defecto(datos: dict[str, Any]) -> Optional[str]:
     if canal == "POSTAL":
         intentos = datos.get("numero_intentos")
         acuse = datos.get("acuse_recibido")
-        if (
-            isinstance(intentos, int)
-            and intentos < 2
-            and acuse is False
-        ):
+        if isinstance(intentos, int) and intentos < 2 and acuse is False:
             return "postal_sin_segundo_intento"
 
     return None
@@ -185,15 +182,13 @@ def evaluar(
         # Anadimos solo los campos relevantes al motivo concreto para dar
         # contexto al escrito posterior sin inflar el payload.
         if motivo == "dehu_sin_puesta_disposicion_efectiva":
-            datos_disparo["puesta_disposicion_efectiva"] = (
-                datos.get("puesta_disposicion_efectiva")
-            )
+            datos_disparo["puesta_disposicion_efectiva"] = datos.get("puesta_disposicion_efectiva")
         elif motivo == "postal_sin_segundo_intento":
             datos_disparo["numero_intentos"] = datos.get("numero_intentos")
             datos_disparo["acuse_recibido"] = datos.get("acuse_recibido")
         elif motivo == "domicilio_no_coincide_con_registro":
-            datos_disparo["domicilio_coincide_con_registro"] = (
-                datos.get("domicilio_coincide_con_registro")
+            datos_disparo["domicilio_coincide_con_registro"] = datos.get(
+                "domicilio_coincide_con_registro"
             )
 
         return ArgumentoCandidato(

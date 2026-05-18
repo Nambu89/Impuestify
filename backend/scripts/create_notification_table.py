@@ -3,6 +3,7 @@ Create notification_analyses table in Turso database.
 
 This script creates the table needed for storing notification analysis results.
 """
+
 import os
 import sys
 from pathlib import Path
@@ -23,13 +24,13 @@ import asyncio
 
 async def create_notification_table():
     """Create notification_analyses table."""
-    
+
     db = TursoClient()
     await db.connect()
-    
+
     try:
         print("Creating notification_analyses table...")
-        
+
         # Create table (Turso doesn't support FOREIGN KEY in CREATE TABLE)
         await db.execute("""
             CREATE TABLE IF NOT EXISTS notification_analyses (
@@ -48,32 +49,32 @@ async def create_notification_table():
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
         print("✅ Table created successfully")
-        
+
         # Create index
         await db.execute("""
             CREATE INDEX IF NOT EXISTS idx_notif_user 
             ON notification_analyses(user_id, created_at DESC)
         """)
-        
+
         print("✅ Index created successfully")
-        
+
         # Verify
         result = await db.execute("""
             SELECT name FROM sqlite_master 
             WHERE type='table' AND name='notification_analyses'
         """)
-        
+
         if result.rows:
             print(f"\n✅ Verification successful: {result.rows[0]['name']}")
         else:
             print("\n❌ Table not found after creation")
-            
+
     except Exception as e:
         print(f"\n❌ Error: {e}")
         raise
-    
+
     finally:
         await db.disconnect()
 

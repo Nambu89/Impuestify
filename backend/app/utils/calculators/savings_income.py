@@ -8,6 +8,7 @@ Calculates:
 - Net savings income after expenses
 - Applies the savings tax scale (tarifa del ahorro, LIRPF art. 66)
 """
+
 from typing import Any, Dict, List, Optional
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
@@ -76,12 +77,13 @@ class SavingsIncomeCalculator:
         # All gains and losses are NETTED TOGETHER across sub-types (not individually).
         # Per Art. 49.1.b: "se compensarán entre sí" within ganancias patrimoniales.
         total_ganancias = (
-            ganancias_acciones + ganancias_reembolso_fondos
-            + ganancias_derivados + cripto_ganancia_neta
+            ganancias_acciones
+            + ganancias_reembolso_fondos
+            + ganancias_derivados
+            + cripto_ganancia_neta
         )
         total_perdidas = (
-            perdidas_acciones + perdidas_reembolso_fondos
-            + perdidas_derivados + cripto_perdida_neta
+            perdidas_acciones + perdidas_reembolso_fondos + perdidas_derivados + cripto_perdida_neta
         )
         ganancias_patrimoniales_netas = total_ganancias - total_perdidas
 
@@ -114,6 +116,7 @@ class SavingsIncomeCalculator:
         loss_result = None
         if perdidas_gp_anteriores or perdidas_rcm_anteriores:
             from app.utils.calculators.loss_compensation import LossCompensationCalculator
+
             loss_calc = LossCompensationCalculator()
             loss_result = loss_calc.compensar_ahorro(
                 rcm_ejercicio=rendimiento_neto_rcm,
@@ -203,25 +206,31 @@ class SavingsIncomeCalculator:
                 base_en_tramo = base - base_desde
                 cuota_en_tramo = base_en_tramo * (tipo_aplicable / 100)
                 cuota_total = cuota_integra + cuota_en_tramo
-                breakdown.append({
-                    "tramo": i + 1,
-                    "base_desde": round(base_desde, 2),
-                    "base_hasta": round(base_hasta, 2) if base_hasta < 999999 else "En adelante",
-                    "base_gravada": round(base_en_tramo, 2),
-                    "tipo": tipo_aplicable,
-                    "cuota": round(cuota_en_tramo, 2),
-                })
+                breakdown.append(
+                    {
+                        "tramo": i + 1,
+                        "base_desde": round(base_desde, 2),
+                        "base_hasta": round(base_hasta, 2)
+                        if base_hasta < 999999
+                        else "En adelante",
+                        "base_gravada": round(base_en_tramo, 2),
+                        "tipo": tipo_aplicable,
+                        "cuota": round(cuota_en_tramo, 2),
+                    }
+                )
                 break
             else:
                 resto_base = tramo["resto_base"]
                 cuota_en_tramo = resto_base * (tipo_aplicable / 100)
-                breakdown.append({
-                    "tramo": i + 1,
-                    "base_desde": round(base_desde, 2),
-                    "base_hasta": round(base_hasta, 2),
-                    "base_gravada": round(resto_base, 2),
-                    "tipo": tipo_aplicable,
-                    "cuota": round(cuota_en_tramo, 2),
-                })
+                breakdown.append(
+                    {
+                        "tramo": i + 1,
+                        "base_desde": round(base_desde, 2),
+                        "base_hasta": round(base_hasta, 2),
+                        "base_gravada": round(resto_base, 2),
+                        "tipo": tipo_aplicable,
+                        "cuota": round(cuota_en_tramo, 2),
+                    }
+                )
 
         return cuota_total, breakdown

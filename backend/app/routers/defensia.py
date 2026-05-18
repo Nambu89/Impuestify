@@ -114,9 +114,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-async def _ensure_owner(
-    db: TursoClient, exp_id: str, user_id: str
-) -> dict[str, Any]:
+async def _ensure_owner(db: TursoClient, exp_id: str, user_id: str) -> dict[str, Any]:
     """Verifica ownership del expediente y devuelve la fila.
 
     Devuelve 404 tanto si no existe como si pertenece a otro usuario (no
@@ -208,9 +206,7 @@ async def _resolver_plan_usuario(db: TursoClient, user_id: str) -> str:
             [user_id],
         )
     except Exception as exc:  # noqa: BLE001 — best-effort, nunca bloquea
-        logger.warning(
-            "DefensIA: error leyendo plan de usuario %s: %s", user_id, exc
-        )
+        logger.warning("DefensIA: error leyendo plan de usuario %s: %s", user_id, exc)
         return "particular"
 
     if not result or not getattr(result, "rows", None):
@@ -375,9 +371,7 @@ async def detalle_expediente(
 # ============================================================================
 
 
-@router.post(
-    "/expedientes/{exp_id}/documentos", status_code=status.HTTP_201_CREATED
-)
+@router.post("/expedientes/{exp_id}/documentos", status_code=status.HTTP_201_CREATED)
 @limiter.limit(get_defensia_rate_limit("upload_documento"))
 async def subir_documento(
     request: Request,
@@ -637,9 +631,7 @@ async def _run_fase1_auto(
     return resultado
 
 
-async def _recompute_fase_expediente(
-    db: TursoClient, exp_id: str
-) -> tuple[str, float]:
+async def _recompute_fase_expediente(db: TursoClient, exp_id: str) -> tuple[str, float]:
     """Relee los documentos del expediente y ejecuta phase_detector.
 
     Devuelve ``(fase_value, confianza)``. Los documentos cuyo
@@ -884,15 +876,11 @@ async def analizar_expediente(
             descartados = int(result.get("argumentos_descartados_count") or 0)
             yield {
                 "event": "reglas",
-                "data": json.dumps(
-                    {"candidatos": len(verificados) + descartados}
-                ),
+                "data": json.dumps({"candidatos": len(verificados) + descartados}),
             }
             yield {
                 "event": "verificados",
-                "data": json.dumps(
-                    {"aceptados": len(verificados), "descartados": descartados}
-                ),
+                "data": json.dumps({"aceptados": len(verificados), "descartados": descartados}),
             }
             escrito_md = result.get("escrito_markdown") or ""
             yield {
@@ -950,9 +938,7 @@ async def analizar_expediente(
             logger.error("DefensIA analyze error: %s", exc, exc_info=True)
             yield {
                 "event": "error",
-                "data": json.dumps(
-                    {"code": "internal", "message": "Error procesando el analisis"}
-                ),
+                "data": json.dumps({"code": "internal", "message": "Error procesando el analisis"}),
             }
             yield {"event": "done", "data": ""}
 
@@ -1037,17 +1023,11 @@ async def exportar_escrito(
     tipo_escrito = row.get("tipo_escrito") or "escrito_defensia"
 
     if format == "docx":
-        payload = exporter.markdown_a_docx(
-            contenido_md, titulo=f"DefensIA - {tipo_escrito}"
-        )
-        media_type = (
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
+        payload = exporter.markdown_a_docx(contenido_md, titulo=f"DefensIA - {tipo_escrito}")
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         filename = f"{tipo_escrito}-{escrito_id}.docx"
     else:
-        payload = exporter.markdown_a_pdf(
-            contenido_md, titulo=f"DefensIA - {tipo_escrito}"
-        )
+        payload = exporter.markdown_a_pdf(contenido_md, titulo=f"DefensIA - {tipo_escrito}")
         media_type = "application/pdf"
         filename = f"{tipo_escrito}-{escrito_id}.pdf"
 
@@ -1079,8 +1059,7 @@ async def editar_escrito(
     await _ensure_owner(db, exp_id, current_user.user_id)
 
     result = await db.execute(
-        "SELECT id, version FROM defensia_escritos "
-        "WHERE id = ? AND expediente_id = ?",
+        "SELECT id, version FROM defensia_escritos " "WHERE id = ? AND expediente_id = ?",
         [escrito_id, exp_id],
     )
     if not result or not getattr(result, "rows", None):
@@ -1109,9 +1088,7 @@ async def editar_escrito(
 # ============================================================================
 
 
-@router.delete(
-    "/expedientes/{exp_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/expedientes/{exp_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit(get_defensia_rate_limit("default"))
 async def borrar_expediente(
     request: Request,
@@ -1152,9 +1129,7 @@ async def chat_defensia(
 
     async def event_stream():
         try:
-            async for chunk in agent.chat_stream(
-                body.message, chat_history=body.chat_history
-            ):
+            async for chunk in agent.chat_stream(body.message, chat_history=body.chat_history):
                 if chunk:
                     yield {"event": "content", "data": chunk}
             yield {"event": "done", "data": ""}

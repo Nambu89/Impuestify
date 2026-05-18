@@ -9,6 +9,7 @@ Limites (decision producto):
 - upload documentos: 20/min
 - resto CRUD: 60/min default
 """
+
 from __future__ import annotations
 
 

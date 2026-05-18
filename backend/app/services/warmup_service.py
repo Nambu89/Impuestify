@@ -4,6 +4,7 @@ Warmup Service for Impuestify.
 Pre-loads RAG context and generates personalized greetings
 when users open the chat, before they type anything.
 """
+
 import logging
 from typing import Any, Dict, Optional
 
@@ -44,6 +45,7 @@ class WarmupService:
         if self._db:
             return self._db
         from app.database.turso_client import get_db_client
+
         self._db = await get_db_client()
         return self._db
 
@@ -87,6 +89,7 @@ class WarmupService:
         datos = profile.get("datos_fiscales")
         if datos:
             import json
+
             if isinstance(datos, str):
                 try:
                     datos = json.loads(datos)

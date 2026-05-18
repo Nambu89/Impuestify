@@ -18,6 +18,7 @@ Setup (Windows Task Scheduler):
 Or via schtasks CLI:
     schtasks /create /tn "TaxIA-DocCrawler" /tr "C:\\...\\venv\\Scripts\\python.exe -m backend.scripts.doc_crawler.scheduled_check" /sc weekly /d SUN /st 10:00 /f
 """
+
 import json
 import logging
 import subprocess
@@ -154,12 +155,16 @@ def run_scheduled_check() -> dict:
         "new": sum(1 for r in results if r.get("status") == "new"),
         "updated": sum(1 for r in results if r.get("status") == "updated"),
         "unchanged": sum(1 for r in results if r.get("status") == "unchanged"),
-        "failed": sum(1 for r in results if r.get("status") in ("failed", "invalid", "rate_limited")),
+        "failed": sum(
+            1 for r in results if r.get("status") in ("failed", "invalid", "rate_limited")
+        ),
     }
 
     logger.info("")
-    logger.info(f"Results: {summary['new']} new, {summary['updated']} updated, "
-                f"{summary['unchanged']} unchanged, {summary['failed']} failed")
+    logger.info(
+        f"Results: {summary['new']} new, {summary['updated']} updated, "
+        f"{summary['unchanged']} unchanged, {summary['failed']} failed"
+    )
 
     # Notify if there are new documents
     new_count = summary["new"] + summary["updated"]

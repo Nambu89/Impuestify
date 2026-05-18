@@ -8,6 +8,7 @@ Cálculos derivados (ej: diff_gastos_adquisicion_no_admitidos) se hacen en
 Python puro sobre los campos devueltos por Gemini — cero LLM en esa parte,
 para trazabilidad.
 """
+
 from __future__ import annotations
 import json
 import logging
@@ -94,9 +95,7 @@ def extract_liquidacion_provisional(pdf_bytes: bytes, nombre: str) -> dict[str, 
     declarados = datos.get("gastos_adquisicion_declarados")
     admitidos = datos.get("gastos_adquisicion_admitidos")
     if declarados is not None and admitidos is not None:
-        datos["diff_gastos_adquisicion_no_admitidos"] = round(
-            declarados - admitidos, 2
-        )
+        datos["diff_gastos_adquisicion_no_admitidos"] = round(declarados - admitidos, 2)
 
     return datos
 
@@ -329,12 +328,14 @@ def extract_libro_registro_xlsx(xlsx_bytes: bytes, nombre: str) -> dict[str, Any
                         total_bases += float(val)
                     elif "iva" in kl:
                         total_iva += float(val)
-        hojas.append({
-            "nombre": ws.title,
-            "columnas": columnas,
-            "num_filas": len(filas),
-            "filas": filas,
-        })
+        hojas.append(
+            {
+                "nombre": ws.title,
+                "columnas": columnas,
+                "num_filas": len(filas),
+                "filas": filas,
+            }
+        )
 
     return {
         "hojas": hojas,

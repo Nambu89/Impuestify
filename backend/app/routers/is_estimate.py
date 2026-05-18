@@ -4,6 +4,7 @@ Impuesto sobre Sociedades (IS) estimation endpoints.
 Lightweight endpoints for Modelo 200 (IS annual) and Modelo 202 (pagos fraccionados).
 Does NOT go through the LLM agent — directly calls ISSimulator for fast estimates.
 """
+
 import logging
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
@@ -18,8 +19,10 @@ router = APIRouter(prefix="/api/irpf", tags=["is"])
 # Request / Response models
 # ---------------------------------------------------------------------------
 
+
 class ISEstimateRequest(BaseModel):
     """Datos de entrada para la liquidacion IS (Modelo 200)."""
+
     resultado_contable: float = 0.0
     territorio: str = "Madrid"
     tipo_entidad: str = "sl"  # sl, slp, sa, nueva_creacion
@@ -59,6 +62,7 @@ class ISEstimateRequest(BaseModel):
 
 class ISEstimateResponse(BaseModel):
     """Resultado completo de la liquidacion IS."""
+
     resultado_contable: float = 0.0
     ajustes_positivos: float = 0.0
     ajustes_negativos: float = 0.0
@@ -94,6 +98,7 @@ class ISEstimateResponse(BaseModel):
 
 class IS202Request(BaseModel):
     """Datos de entrada para el pago fraccionado (Modelo 202)."""
+
     modalidad: str = "art40_2"  # art40_2 | art40_3
     cuota_integra_ultimo: float = 0.0
     deducciones_bonificaciones_ultimo: float = 0.0
@@ -105,21 +110,25 @@ class IS202Request(BaseModel):
 
 class IS202Response(BaseModel):
     """Resultado del pago fraccionado (Modelo 202)."""
+
     pago_trimestral: float = 0.0
     modalidad: str = ""
     base_calculo: float = 0.0
     porcentaje_aplicado: float = 0.0
-    calendario: List[str] = Field(default_factory=lambda: [
-        "Abril: del 1 al 20",
-        "Octubre: del 1 al 20",
-        "Diciembre: del 1 al 20",
-    ])
+    calendario: List[str] = Field(
+        default_factory=lambda: [
+            "Abril: del 1 al 20",
+            "Octubre: del 1 al 20",
+            "Diciembre: del 1 al 20",
+        ]
+    )
     disclaimer: str = "Este cálculo es orientativo y no sustituye asesoramiento profesional."
 
 
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.post("/is-estimate", response_model=ISEstimateResponse)
 async def is_estimate(request: Request, body: ISEstimateRequest):
@@ -162,7 +171,8 @@ async def is_estimate(request: Request, body: ISEstimateRequest):
         r202_art40_2 = ISSimulator.calcular_202(
             modalidad="art40_2",
             cuota_integra_ultimo=result.cuota_integra,
-            deducciones_bonificaciones_ultimo=result.deducciones_total + result.bonificaciones_total,
+            deducciones_bonificaciones_ultimo=result.deducciones_total
+            + result.bonificaciones_total,
             retenciones_ultimo=result.retenciones,
         )
         r202_art40_3 = ISSimulator.calcular_202(

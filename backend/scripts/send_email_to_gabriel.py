@@ -11,6 +11,7 @@ Run:
 Requires RESEND_API_KEY to be present in the environment (loaded from .env).
 If you don't have it locally, copy the value from Railway → Variables.
 """
+
 import argparse
 import os
 import sys
@@ -118,6 +119,7 @@ def main():
         return
 
     import resend
+
     resend.api_key = api_key
 
     result = resend.Emails.send(payload)

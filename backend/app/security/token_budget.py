@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 # the wall fast. Adjust based on production metrics.
 DAILY_LIMITS = {
     "particular": 50_000,
-    "creator":    200_000,
-    "autonomo":   150_000,
+    "creator": 200_000,
+    "autonomo": 150_000,
     # owner has no cap (handled separately)
 }
 
@@ -50,7 +50,7 @@ class BudgetStatus:
     limit: int
     plan_type: str
     is_owner: bool
-    reset_at: str        # ISO date for next daily reset (UTC)
+    reset_at: str  # ISO date for next daily reset (UTC)
     over_limit: bool
     near_limit: bool
 
@@ -67,6 +67,7 @@ def _next_utc_midnight_iso() -> str:
     # if already past midnight, move to tomorrow
     if next_midnight <= now:
         from datetime import timedelta
+
         next_midnight = next_midnight + timedelta(days=1)
     return next_midnight.isoformat()
 
@@ -94,7 +95,9 @@ class TokenBudgetTracker:
 
     # ── Read ────────────────────────────────────────────────────────────────
 
-    async def check(self, user_id: str, plan_type: Optional[str], is_owner: bool = False, request=None) -> BudgetStatus:
+    async def check(
+        self, user_id: str, plan_type: Optional[str], is_owner: bool = False, request=None
+    ) -> BudgetStatus:
         """
         Read current usage and decide whether the user is allowed another call.
         Does NOT increment.
@@ -109,8 +112,14 @@ class TokenBudgetTracker:
 
         if is_owner:
             return BudgetStatus(
-                allowed=True, used=0, limit=10**9, plan_type="owner",
-                is_owner=True, reset_at=reset_at, over_limit=False, near_limit=False,
+                allowed=True,
+                used=0,
+                limit=10**9,
+                plan_type="owner",
+                is_owner=True,
+                reset_at=reset_at,
+                over_limit=False,
+                near_limit=False,
             )
 
         used = 0
@@ -118,8 +127,14 @@ class TokenBudgetTracker:
         if redis is None:
             logger.warning("Token budget check: no Redis client available — failing open (allow)")
             return BudgetStatus(
-                allowed=True, used=0, limit=limit, plan_type=plan,
-                is_owner=False, reset_at=reset_at, over_limit=False, near_limit=False,
+                allowed=True,
+                used=0,
+                limit=limit,
+                plan_type=plan,
+                is_owner=False,
+                reset_at=reset_at,
+                over_limit=False,
+                near_limit=False,
             )
 
         try:
@@ -135,8 +150,14 @@ class TokenBudgetTracker:
         except Exception as e:
             logger.warning(f"Token budget read failed (fail-open): {e}")
             return BudgetStatus(
-                allowed=True, used=0, limit=limit, plan_type=plan,
-                is_owner=False, reset_at=reset_at, over_limit=False, near_limit=False,
+                allowed=True,
+                used=0,
+                limit=limit,
+                plan_type=plan,
+                is_owner=False,
+                reset_at=reset_at,
+                over_limit=False,
+                near_limit=False,
             )
 
         over = used >= limit

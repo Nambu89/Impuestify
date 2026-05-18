@@ -27,6 +27,7 @@ Plazos (verificados en gipuzkoa.eus, 2026-05):
   - Q3: 1 octubre – 10 noviembre
   - Q4: 1 enero – 10 febrero del año siguiente
 """
+
 from typing import Any, Dict, Optional
 
 
@@ -84,15 +85,11 @@ class Modelo130GipuzkoaCalculator:
             casillas, desglose, plazo.
         """
         if quarter not in (1, 2, 3, 4):
-            raise ValueError(
-                f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4."
-            )
+            raise ValueError(f"Quarter '{quarter}' invalid. Valid: 1, 2, 3, 4.")
 
         regimen_norm = (regimen or "").strip().lower()
         if regimen_norm not in {"general", "excepcional"}:
-            raise ValueError(
-                f"regimen '{regimen}' invalid. Valid: 'general', 'excepcional'."
-            )
+            raise ValueError(f"regimen '{regimen}' invalid. Valid: 'general', 'excepcional'.")
 
         if regimen_norm == "general":
             tipo_pct = self._TIPO_GENERAL_PCT

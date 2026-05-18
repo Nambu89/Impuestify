@@ -2,6 +2,7 @@
 
 Norm IDs follow the BOE format `BOE-A-NNNN-NNNN`.
 """
+
 from __future__ import annotations
 
 from typing import Optional

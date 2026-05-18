@@ -12,6 +12,7 @@ Features:
     - Multi-cycle retry: failed URLs are retried in subsequent cycles (up to --max-cycles)
     - URL verification: --verify-urls checks all URLs are reachable before downloading
 """
+
 import argparse
 import logging
 import sys
@@ -206,17 +207,21 @@ def cmd_run(args: argparse.Namespace) -> None:
 
     # After all cycles, add remaining failures to results
     if pending_items:
-        print(f"\n--- {len(pending_items)} URLs fallidas tras {max_cycles} ciclos (fallo definitivo) ---")
+        print(
+            f"\n--- {len(pending_items)} URLs fallidas tras {max_cycles} ciclos (fallo definitivo) ---"
+        )
         for item in pending_items:
-            all_results.append({
-                "dest": item.dest,
-                "url": item.url,
-                "territory": item.territory,
-                "success": False,
-                "status": "failed",
-                "message": f"Failed after {max_cycles} cycles",
-                "cycle": max_cycles,
-            })
+            all_results.append(
+                {
+                    "dest": item.dest,
+                    "url": item.url,
+                    "territory": item.territory,
+                    "success": False,
+                    "status": "failed",
+                    "message": f"Failed after {max_cycles} cycles",
+                    "cycle": max_cycles,
+                }
+            )
             print(f"  [X] {item.dest}")
             print(f"      URL: {item.url}")
 
@@ -238,7 +243,9 @@ def cmd_run(args: argparse.Namespace) -> None:
 
     print()
     print(f"=== RESUMEN FINAL ===")
-    print(f"Nuevos: {new} | Actualizados: {updated} | Sin cambios: {unchanged} | Fallidos: {failed}")
+    print(
+        f"Nuevos: {new} | Actualizados: {updated} | Sin cambios: {unchanged} | Fallidos: {failed}"
+    )
     if quarantined:
         print(f"En cuarentena: {quarantined} documentos en docs/_quarantine/ (revisar manualmente)")
     if new + updated > 0:
@@ -314,11 +321,13 @@ def main() -> None:
         description="TaxIA Document Crawler — Scrapling-based fiscal document monitoring with multi-cycle retry",
     )
     parser.add_argument(
-        "--territory", "-t",
+        "--territory",
+        "-t",
         help="Filter by territory (e.g., AEAT, Navarra, Estatal)",
     )
     parser.add_argument(
-        "--dry-run", "-n",
+        "--dry-run",
+        "-n",
         action="store_true",
         help="Preview without downloading",
     )
@@ -328,7 +337,8 @@ def main() -> None:
         help="Include future/pending documents",
     )
     parser.add_argument(
-        "--max-cycles", "-c",
+        "--max-cycles",
+        "-c",
         type=int,
         default=3,
         help="Max retry cycles for failed URLs (default: 3)",
@@ -339,17 +349,20 @@ def main() -> None:
         help="Only verify URLs are reachable (no downloads)",
     )
     parser.add_argument(
-        "--pending", "-p",
+        "--pending",
+        "-p",
         action="store_true",
         help="List monitored URLs and their status",
     )
     parser.add_argument(
-        "--stats", "-s",
+        "--stats",
+        "-s",
         action="store_true",
         help="Show summary statistics",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Verbose logging",
     )

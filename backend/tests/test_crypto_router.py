@@ -11,6 +11,7 @@ Tests cover:
 All endpoints require authentication (mocked via Depends override).
 Database is mocked to avoid real Turso calls.
 """
+
 from __future__ import annotations
 
 import io

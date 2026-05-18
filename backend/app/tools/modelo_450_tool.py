@@ -8,6 +8,7 @@ backend/CLAUDE.md "Tool LLM = wrapper del calculator").
 Modelo 450 = autoliquidacion AIEM trimestral de productores canarios
 con bienes en la lista AIEM (Anexo IV TR Decreto Legislativo 1/2025).
 """
+
 from __future__ import annotations
 
 import logging
@@ -83,8 +84,7 @@ MODELO_450_TOOL = {
                 "cuotas_compensar_anteriores": {
                     "type": "number",
                     "description": (
-                        "Cuotas a compensar de periodos anteriores (>= 0). "
-                        "Por defecto: 0."
+                        "Cuotas a compensar de periodos anteriores (>= 0). " "Por defecto: 0."
                     ),
                 },
                 "rectificacion_bases": {
@@ -127,18 +127,30 @@ def _format_for_llm(result: Dict[str, Any]) -> str:
 
     if result["periodicidad"] == "trimestral":
         meses_q = {
-            "T1": "enero-marzo", "T2": "abril-junio",
-            "T3": "julio-septiembre", "T4": "octubre-diciembre",
+            "T1": "enero-marzo",
+            "T2": "abril-junio",
+            "T3": "julio-septiembre",
+            "T4": "octubre-diciembre",
         }
         sub = meses_q.get(periodo, "")
         lines.append(f"**AIEM Canarias — Modelo 450 {periodo} {year} ({sub})**")
     else:
-        meses = ['enero','febrero','marzo','abril','mayo','junio','julio',
-                 'agosto','septiembre','octubre','noviembre','diciembre']
+        meses = [
+            "enero",
+            "febrero",
+            "marzo",
+            "abril",
+            "mayo",
+            "junio",
+            "julio",
+            "agosto",
+            "septiembre",
+            "octubre",
+            "noviembre",
+            "diciembre",
+        ]
         mes_idx = result.get("mes") or 1
-        lines.append(
-            f"**AIEM Canarias — Modelo 450 {meses[mes_idx-1]} {year} (mensual)**"
-        )
+        lines.append(f"**AIEM Canarias — Modelo 450 {meses[mes_idx-1]} {year} (mensual)**")
 
     lines.append("")
 
@@ -171,27 +183,21 @@ def _format_for_llm(result: Dict[str, Any]) -> str:
     lines.append(f"- **Cuota AIEM devengada: {result['total_cuota_devengada']:,.2f} EUR**")
 
     if result.get("rectificacion_cuotas"):
-        lines.append(
-            f"- Rectificacion cuotas: {result['rectificacion_cuotas']:,.2f} EUR"
-        )
+        lines.append(f"- Rectificacion cuotas: {result['rectificacion_cuotas']:,.2f} EUR")
     if result.get("cuotas_compensar_anteriores"):
         lines.append(
             f"- Compensacion periodos anteriores: "
             f"-{result['cuotas_compensar_anteriores']:,.2f} EUR"
         )
     if result.get("regularizacion_anual"):
-        lines.append(
-            f"- Regularizacion anual (T4): "
-            f"{result['regularizacion_anual']:,.2f} EUR"
-        )
+        lines.append(f"- Regularizacion anual (T4): " f"{result['regularizacion_anual']:,.2f} EUR")
 
     resultado = result["resultado_liquidacion"]
     if resultado > 0:
         tipo_resultado = "A ingresar"
     elif resultado < 0:
         tipo_resultado = (
-            "A devolver" if periodo == "T4" or result["periodicidad"] == "anual"
-            else "A compensar"
+            "A devolver" if periodo == "T4" or result["periodicidad"] == "anual" else "A compensar"
         )
     else:
         tipo_resultado = "Sin actividad"
@@ -201,18 +207,14 @@ def _format_for_llm(result: Dict[str, Any]) -> str:
 
     lines.append("")
     if resultado > 0:
-        lines.append(
-            f"Plazo de presentacion: {plazo} (Agencia Tributaria Canaria — ATC)."
-        )
+        lines.append(f"Plazo de presentacion: {plazo} (Agencia Tributaria Canaria — ATC).")
     elif resultado < 0 and periodo not in ("T4",) and result["periodicidad"] == "trimestral":
         lines.append(
             f"El resultado negativo de {abs(resultado):,.2f} EUR se compensa "
             "en el siguiente trimestre."
         )
     elif resultado < 0:
-        lines.append(
-            f"Puedes solicitar la devolucion de {abs(resultado):,.2f} EUR a la ATC."
-        )
+        lines.append(f"Puedes solicitar la devolucion de {abs(resultado):,.2f} EUR a la ATC.")
 
     # Warnings
     warnings = result.get("warnings") or []
@@ -254,6 +256,7 @@ async def calculate_modelo_450_tool(
     """
     if restricted_mode:
         from app.security.content_restriction import get_autonomo_block_response
+
         logger.warning("calculate_modelo_450 called in restricted_mode — blocking")
         return {
             "success": False,
@@ -276,9 +279,7 @@ async def calculate_modelo_450_tool(
                 return {
                     "success": False,
                     "error": "mes invalido",
-                    "formatted_response": (
-                        "Para periodicidad mensual indica el mes (1-12)."
-                    ),
+                    "formatted_response": ("Para periodicidad mensual indica el mes (1-12)."),
                 }
 
         if not isinstance(bienes_producidos, list) or not bienes_producidos:
@@ -292,6 +293,7 @@ async def calculate_modelo_450_tool(
             }
 
         from app.utils.calculators.modelo_450 import Modelo450Calculator
+
         calc = Modelo450Calculator(None)
         result = await calc.calculate(
             bienes_producidos=bienes_producidos,
@@ -309,8 +311,10 @@ async def calculate_modelo_450_tool(
 
         logger.info(
             "Modelo 450 calculated: %s %s, devengado=%s, resultado=%s",
-            result["periodo_label"], year,
-            result["total_cuota_devengada"], result["resultado_liquidacion"],
+            result["periodo_label"],
+            year,
+            result["total_cuota_devengada"],
+            result["resultado_liquidacion"],
         )
 
         return {
