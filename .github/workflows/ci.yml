@@ -67,7 +67,12 @@ jobs:
           FRONTEND_URL: http://localhost:5173
           ALLOWED_ORIGINS: 'http://localhost:5173,http://localhost:3000'
           GOOGLE_CLIENT_ID: ci-google-client-stub
-        run: cd backend && pytest tests/ --tb=short --maxfail=10 -q
+        run: |
+          cd backend && pytest tests/ --tb=short --maxfail=10 -q \
+            --ignore=tests/test_aragon_search.py \
+            --ignore=tests/test_doc_crawler.py
+          # test_aragon_search.py: runs asyncio.run() at module level, requires live Turso DB
+          # test_doc_crawler.py: requires scrapling (local-only dev tool, not in requirements.txt)
 
   frontend-lint:
     name: Frontend lint + format
