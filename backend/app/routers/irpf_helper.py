@@ -11,6 +11,7 @@ async def try_irpf_calculation(db, question: str):
     Returns dict with formatted answer and sources if successful, None otherwise.
     """
     import re
+
     from app.utils.irpf_calculator import IRPFCalculator
     from app.utils.region_detector import RegionDetector
 

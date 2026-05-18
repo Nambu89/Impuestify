@@ -11,10 +11,11 @@ NOTE: cases related to RE intra-community acquisitions, ISP or imports were
 moved to test_modelo_309.py — those are Modelo 309, not 308.
 """
 
-import pytest
 from datetime import datetime
 
-from app.tools.modelo_308_tool import calculate_modelo_308_tool, CASOS_VALIDOS
+import pytest
+
+from app.tools.modelo_308_tool import CASOS_VALIDOS, calculate_modelo_308_tool
 
 
 class TestModelo308CasoTransporteOcasional:

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -112,9 +112,9 @@ MODELO_455_TOOL = {
 }
 
 
-def _format_for_llm(result: Dict[str, Any]) -> str:
+def _format_for_llm(result: dict[str, Any]) -> str:
     """Formatea el resultado del calculator para presentacion al usuario."""
-    lines: List[str] = []
+    lines: list[str] = []
     year = result["year"]
     plazo = result["plazo_presentacion"]
     epigrafe_zec = result.get("epigrafe_zec")
@@ -198,18 +198,18 @@ def _format_for_llm(result: Dict[str, Any]) -> str:
 
 
 async def calculate_modelo_455_tool(
-    bienes_anuales: List[Dict[str, Any]],
-    epigrafe_zec: Optional[str] = None,
-    year: Optional[int] = None,
+    bienes_anuales: list[dict[str, Any]],
+    epigrafe_zec: str | None = None,
+    year: int | None = None,
     cuotas_compensar_anteriores: float = 0.0,
     rectificacion_bases: float = 0.0,
     rectificacion_cuotas: float = 0.0,
     regularizacion_anual: float = 0.0,
     periodicidad: str = "anual",
-    trimestre: Optional[int] = None,
+    trimestre: int | None = None,
     restricted_mode: bool = False,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Tool wrapper para Modelo 455 (AIEM ZEC).
 

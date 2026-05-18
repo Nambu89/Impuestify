@@ -9,13 +9,12 @@ Provides:
 
 import json
 import logging
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.auth.jwt_handler import TokenData
 from app.auth.owner_guard import require_owner as _require_owner
-from app.database.turso_client import get_db_client, TursoClient
+from app.database.turso_client import TursoClient, get_db_client
 
 logger = logging.getLogger(__name__)
 

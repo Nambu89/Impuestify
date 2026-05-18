@@ -9,9 +9,9 @@ Usage:
     python scripts/competitor_analysis.py "Compara Impuestify con TaxDown"
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -21,7 +21,6 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 from app.agents.competitor_analysis_agent import CompetitorAnalysisAgent
-
 
 EXAMPLE_QUERIES = [
     "Compara Impuestify con TaxDown en todas las categorías",
@@ -64,7 +63,7 @@ async def interactive_mode(agent: CompetitorAnalysisAgent):
     print("\nEjemplos de consultas:")
     for i, q in enumerate(EXAMPLE_QUERIES, 1):
         print(f"  {i}. {q}")
-    print(f"\nEscribe 'salir' o 'exit' para terminar.")
+    print("\nEscribe 'salir' o 'exit' para terminar.")
     print(f"Escribe un número (1-{len(EXAMPLE_QUERIES)}) para usar un ejemplo.\n")
 
     conversation_history = []

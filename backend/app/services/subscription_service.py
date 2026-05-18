@@ -4,11 +4,10 @@ Subscription Service for TaxIA/Impuestify
 Handles Stripe integration, subscription lifecycle, and access control.
 """
 
-import uuid
 import logging
+import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from app.config import settings
 
@@ -35,11 +34,11 @@ class SubscriptionAccess:
 
     has_access: bool
     is_owner: bool
-    plan_type: Optional[str] = None
-    status: Optional[str] = None
+    plan_type: str | None = None
+    status: str | None = None
     reason: str = "no_subscription"
     # For frontend: where to redirect if no access
-    checkout_url: Optional[str] = None
+    checkout_url: str | None = None
 
 
 class SubscriptionService:
@@ -60,8 +59,8 @@ class SubscriptionService:
     # ------------------------------------------------------------------
 
     async def create_stripe_customer(
-        self, user_id: str, email: str, name: Optional[str] = None
-    ) -> Optional[str]:
+        self, user_id: str, email: str, name: str | None = None
+    ) -> str | None:
         """
         Create a Stripe customer and insert a subscription record (inactive).
 
@@ -121,7 +120,7 @@ class SubscriptionService:
 
     async def create_checkout_session(
         self, user_id: str, success_url: str, cancel_url: str, plan_type: str = "particular"
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Create a Stripe Checkout Session.
 
@@ -180,7 +179,7 @@ class SubscriptionService:
         logger.info("Checkout session created", extra={"user_id": user_id})
         return session.url
 
-    async def create_portal_session(self, user_id: str, return_url: str) -> Optional[str]:
+    async def create_portal_session(self, user_id: str, return_url: str) -> str | None:
         """
         Create a Stripe Customer Portal session for subscription management.
 
@@ -308,7 +307,7 @@ class SubscriptionService:
             extra={"customer_id": customer_id, "plan_type": plan_type},
         )
 
-    def _plan_type_from_price_id(self, price_id: Optional[str]) -> Optional[str]:
+    def _plan_type_from_price_id(self, price_id: str | None) -> str | None:
         """Map a Stripe price id to our plan_type. Returns None if unknown."""
         if not price_id:
             return None
@@ -321,10 +320,10 @@ class SubscriptionService:
         return None
 
     @staticmethod
-    def _ts_to_iso(ts: Optional[int]) -> Optional[str]:
+    def _ts_to_iso(ts: int | None) -> str | None:
         if not ts:
             return None
-        return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
+        return datetime.fromtimestamp(ts, tz=UTC).isoformat()
 
     async def _handle_subscription_upserted(self, subscription: dict):
         """Handle customer.subscription.created or .updated.
@@ -523,7 +522,7 @@ class SubscriptionService:
     # Access Control
     # ------------------------------------------------------------------
 
-    async def check_access(self, user_id: str, email: Optional[str] = None) -> SubscriptionAccess:
+    async def check_access(self, user_id: str, email: str | None = None) -> SubscriptionAccess:
         """
         Check if a user has access to the application.
 
@@ -590,7 +589,7 @@ class SubscriptionService:
         if sub_status == "grace_period" and period_end:
             try:
                 end_date = datetime.fromisoformat(period_end)
-                if end_date >= datetime.now(timezone.utc):
+                if end_date >= datetime.now(UTC):
                     return SubscriptionAccess(
                         has_access=True,
                         is_owner=False,
@@ -610,7 +609,7 @@ class SubscriptionService:
             reason="no_active_subscription",
         )
 
-    async def get_subscription(self, user_id: str) -> Optional[dict]:
+    async def get_subscription(self, user_id: str) -> dict | None:
         """Get subscription record for a user."""
         db = await self._get_db()
         result = await db.execute("SELECT * FROM subscriptions WHERE user_id = ?", [user_id])
@@ -699,10 +698,10 @@ class SubscriptionService:
 
 
 def validate_plan_role_compatibility(
-    plan_type: Optional[str],
+    plan_type: str | None,
     situacion_laboral: str,
     is_owner: bool = False,
-) -> Optional[dict]:
+) -> dict | None:
     """
     Validate if a subscription plan allows a given fiscal role.
 
@@ -745,7 +744,7 @@ def validate_plan_role_compatibility(
 
 
 # Global singleton
-_subscription_service: Optional[SubscriptionService] = None
+_subscription_service: SubscriptionService | None = None
 
 
 async def get_subscription_service() -> SubscriptionService:

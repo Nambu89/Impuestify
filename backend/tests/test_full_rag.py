@@ -3,11 +3,12 @@ Test full RAG pipeline: FTS5 Search + OpenAI Generation
 """
 
 import asyncio
+import logging
 import os
 import sys
-import logging
-import pytest
 from pathlib import Path
+
+import pytest
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -22,8 +23,8 @@ from dotenv import load_dotenv
 project_root = backend_dir.parent
 load_dotenv(project_root / ".env")
 
-from app.database.turso_client import TursoClient
 from app.agents.tax_agent import TaxAgent
+from app.database.turso_client import TursoClient
 from app.routers.chat import fts_search
 
 

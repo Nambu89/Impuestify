@@ -10,6 +10,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import asyncio
+
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
@@ -42,13 +43,13 @@ async def update_admin():
         return
 
     user = result.rows[0]
-    print(f"\n📧 Usuario encontrado:")
+    print("\n📧 Usuario encontrado:")
     print(f"   Email: {user['email']}")
     print(f"   Nombre: {user.get('name', 'N/A')}")
     print(f"   Admin actual: {bool(user['is_admin'])}")
 
     # Actualizar a admin
-    print(f"\n🔧 Actualizando a admin...")
+    print("\n🔧 Actualizando a admin...")
     await client.execute("UPDATE users SET is_admin = ? WHERE email = ?", [1, email])
 
     # Verificar
@@ -58,10 +59,10 @@ async def update_admin():
 
     if is_admin:
         print(f"✅ Usuario {email} ahora es ADMIN")
-        print(f"\n⚠️  IMPORTANTE: Debes cerrar sesión y volver a iniciar sesión")
-        print(f"   para que el cambio surta efecto.")
+        print("\n⚠️  IMPORTANTE: Debes cerrar sesión y volver a iniciar sesión")
+        print("   para que el cambio surta efecto.")
     else:
-        print(f"❌ Error al actualizar")
+        print("❌ Error al actualizar")
 
 
 if __name__ == "__main__":

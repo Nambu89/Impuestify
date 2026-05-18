@@ -50,7 +50,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # Cita semantica libre — el RAG verificador resuelve la referencia canonica.
 # Nunca debe contener "Art. 49", "LIRPF" ni numeros de articulo.
 _CITA_SEMANTICA = (

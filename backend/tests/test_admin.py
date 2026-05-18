@@ -7,14 +7,14 @@ Tests cover:
 - Owner-only access enforcement
 """
 
-import sys
 import os
-import pytest
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
-# Import admin router directly (no sys.modules hacking)
-from app.routers.admin import ChangePlanRequest, VALID_PLAN_TYPES
+import pytest
 
+# Import admin router directly (no sys.modules hacking)
+from app.routers.admin import VALID_PLAN_TYPES, ChangePlanRequest
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -185,17 +185,18 @@ class TestUserListItem:
     """Test the UserListItem response model."""
 
     def test_user_list_item_all_fields(self):
-        from pydantic import BaseModel
         from typing import Optional
+
+        from pydantic import BaseModel
 
         class UserListItem(BaseModel):
             id: str
             email: str
-            name: Optional[str] = None
+            name: str | None = None
             is_owner: bool = False
-            plan_type: Optional[str] = None
-            subscription_status: Optional[str] = None
-            created_at: Optional[str] = None
+            plan_type: str | None = None
+            subscription_status: str | None = None
+            created_at: str | None = None
 
         item = UserListItem(
             id="u-1",
@@ -210,15 +211,16 @@ class TestUserListItem:
         assert not item.is_owner
 
     def test_user_list_item_minimal(self):
-        from pydantic import BaseModel
         from typing import Optional
+
+        from pydantic import BaseModel
 
         class UserListItem(BaseModel):
             id: str
             email: str
-            name: Optional[str] = None
+            name: str | None = None
             is_owner: bool = False
-            plan_type: Optional[str] = None
+            plan_type: str | None = None
 
         item = UserListItem(id="u-2", email="min@test.com")
         assert item.name is None

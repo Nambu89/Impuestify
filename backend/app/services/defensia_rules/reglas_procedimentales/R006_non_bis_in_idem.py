@@ -29,7 +29,8 @@ permite al writer posterior citar fuente sin volver a inspeccionar el expediente
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any
 
 from app.models.defensia import (
     ArgumentoCandidato,
@@ -41,13 +42,12 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # ---------------------------------------------------------------------------
 # Helpers de deteccion
 # ---------------------------------------------------------------------------
 
 
-def _normalizar_tipo(valor: Any) -> Optional[str]:
+def _normalizar_tipo(valor: Any) -> str | None:
     """Extrae la parte numerica principal de un identificador de infraccion.
 
     Admite entradas como: "191", "194", "194.1", "Art. 191 LGT", 191 (int).
@@ -172,7 +172,7 @@ _CITA_SEMANTICA = (
 def evaluar_R006(
     expediente: ExpedienteEstructurado,
     brief: Brief,
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Dispara cuando algun documento sancionador acredita doble tipicidad."""
     del brief  # no se usa — la regla es puramente estructural
 

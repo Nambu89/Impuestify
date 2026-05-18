@@ -1,6 +1,7 @@
 """Tests for Modelo 303 (IVA) calculator."""
 
 import pytest
+
 from app.utils.calculators.modelo_303 import Modelo303Calculator
 
 
@@ -221,7 +222,7 @@ async def test_303_casilla_71_resultado_liquidacion():
 async def test_303_plazo_t4_30_enero_y_domiciliacion_dia_25():
     """BUG-303-02: plazo T4 SIEMPRE 30 enero (no 20 ni alternativo).
     Domiciliacion 5 dias antes (dia 25). Debe mencionar festivos."""
-    from app.tools.modelo_303_tool import calculate_modelo_303_tool, _format_plazo
+    from app.tools.modelo_303_tool import _format_plazo, calculate_modelo_303_tool
 
     # Helper directo
     plazo_t4 = _format_plazo(4, 2025)

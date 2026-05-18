@@ -7,9 +7,9 @@ Covers:
 """
 
 import sys
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Stub heavy deps before importing app modules
@@ -39,11 +39,10 @@ _ensure_mock("stripe")
 # ---------------------------------------------------------------------------
 
 from app.services.subscription_service import (  # noqa: E402
-    validate_plan_role_compatibility,
     SubscriptionAccess,
     SubscriptionService,
+    validate_plan_role_compatibility,
 )
-
 
 # ---------------------------------------------------------------------------
 # Unit tests — validate_plan_role_compatibility()
@@ -183,9 +182,12 @@ def _mock_current_user(user_id="user-123", email="test@impuestify.com"):
 
 
 # We import the router after stubs are in place.
-from app.routers.user_rights import update_fiscal_profile  # noqa: E402
-from app.routers.user_rights import FiscalProfileRequest  # noqa: E402
 from fastapi import HTTPException  # noqa: E402
+
+from app.routers.user_rights import (
+    FiscalProfileRequest,  # noqa: E402
+    update_fiscal_profile,  # noqa: E402
+)
 
 
 async def _call_endpoint(body_data: dict, plan_type: str, is_owner: bool = False):

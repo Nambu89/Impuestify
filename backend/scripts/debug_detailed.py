@@ -2,9 +2,10 @@
 Ultra-simple debug test with detailed output.
 """
 
-import requests
 import json
 import sys
+
+import requests
 
 print("\n" + "=" * 80)
 print("🔍 DEBUGGING IRPF FUNCTION CALLING")
@@ -79,7 +80,7 @@ try:
         print(f"Response: {response.text[:500]}")
 
 except Exception as e:
-    print(f"\n❌ Exception occurred:")
+    print("\n❌ Exception occurred:")
     print(f"Error: {e}")
     import traceback
 

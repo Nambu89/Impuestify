@@ -15,8 +15,9 @@ VIES integration test real: marcado @pytest.mark.integration y skip por defecto.
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.utils.calculators.modelo_349 import (
     CLAVES_VALIDAS,
@@ -27,7 +28,6 @@ from app.utils.calculators.modelo_349 import (
     Modelo349Calculator,
     Operacion349,
 )
-
 
 # --------------------------------------------------------------------------- #
 # Factory helpers

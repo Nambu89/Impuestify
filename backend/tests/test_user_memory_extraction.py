@@ -6,6 +6,7 @@ donaciones, criptomonedas, alquiler, autonomo_gastos, discapacidad, familia_nume
 """
 
 import pytest
+
 from app.services.user_memory_service import UserMemoryService
 
 

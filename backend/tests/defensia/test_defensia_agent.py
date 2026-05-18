@@ -27,7 +27,6 @@ from app.agents.defensia_agent import (
 )
 from app.security.guardrails import GuardrailsResult
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -36,7 +35,7 @@ from app.security.guardrails import GuardrailsResult
 def _make_guardrails_result(
     is_safe: bool = True,
     risk_level: str = "none",
-    violations: Optional[list[str]] = None,
+    violations: list[str] | None = None,
 ) -> GuardrailsResult:
     return GuardrailsResult(
         is_safe=is_safe,
@@ -47,17 +46,17 @@ def _make_guardrails_result(
 
 
 class _FakeChoiceDelta:
-    def __init__(self, content: Optional[str]):
+    def __init__(self, content: str | None):
         self.content = content
 
 
 class _FakeChoice:
-    def __init__(self, content: Optional[str]):
+    def __init__(self, content: str | None):
         self.delta = _FakeChoiceDelta(content)
 
 
 class _FakeChunk:
-    def __init__(self, content: Optional[str]):
+    def __init__(self, content: str | None):
         self.choices = [_FakeChoice(content)]
 
 
@@ -80,8 +79,8 @@ class _FakeStream:
 
 
 def _build_agent_with_mock(
-    stream_chunks: Optional[list[str]] = None,
-    raise_exc: Optional[Exception] = None,
+    stream_chunks: list[str] | None = None,
+    raise_exc: Exception | None = None,
 ) -> tuple[DefensiaAgent, AsyncMock]:
     """Construye un DefensiaAgent con AsyncOpenAI client mockeado."""
     agent = DefensiaAgent(api_key="sk-test")

@@ -8,13 +8,13 @@ Usage:
     python -m backend.scripts.sync_fiscal_calendar [--year 2026] [--dry-run]
 """
 
-import sys
+import argparse
+import asyncio
+import logging
 import os
 import re
+import sys
 import uuid
-import asyncio
-import argparse
-import logging
 from datetime import date, datetime
 from typing import Optional
 
@@ -146,7 +146,7 @@ def _make_id(model: str, territory: str, period: str, tax_year: int) -> str:
     return f"{model_slug}_{territory_slug}_{period_slug}_{tax_year}"
 
 
-def _date_to_str(dt) -> Optional[str]:
+def _date_to_str(dt) -> str | None:
     """Convert icalendar date/datetime to ISO string."""
     if dt is None:
         return None
@@ -234,7 +234,7 @@ def parse_ical_content(ical_bytes: bytes, tax_year: int, dry_run: bool = False) 
     return deadlines
 
 
-async def download_ical(year: int) -> Optional[bytes]:
+async def download_ical(year: int) -> bytes | None:
     """Download iCal file from AEAT, trying known URL patterns."""
     async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
         for url_template in AEAT_ICAL_URLS:

@@ -5,15 +5,14 @@ Orchestrates multiple agents using Microsoft Agent Framework.
 Supports sequential, concurrent, and group chat patterns.
 """
 
-import os
 import logging
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
+from typing import Any
 
 # Microsoft Agent Framework imports
 try:
-    from agent_framework import Runtime, AgentGroup
-    from agent_framework.patterns import Sequential, Concurrent, GroupChat
+    from agent_framework import AgentGroup, Runtime
+    from agent_framework.patterns import Concurrent, GroupChat, Sequential
 
     RUNTIME_AVAILABLE = True
 except ImportError:
@@ -21,7 +20,7 @@ except ImportError:
     Runtime = None
     AgentGroup = None
 
-from app.agents.tax_agent import TaxAgent, AgentResponse, get_tax_agent
+from app.agents.tax_agent import AgentResponse, TaxAgent, get_tax_agent
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class RuntimeResponse:
     """Response from agent runtime"""
 
     final_response: AgentResponse
-    agent_responses: List[AgentResponse]
+    agent_responses: list[AgentResponse]
     pattern: str
     total_agents: int
 
@@ -52,7 +51,7 @@ class AgentRuntime:
     def __init__(self):
         """Initialize the agent runtime."""
         self._runtime = None
-        self._agents: Dict[str, TaxAgent] = {}
+        self._agents: dict[str, TaxAgent] = {}
         self._pattern = "single"
 
         self._initialize()
@@ -95,9 +94,9 @@ class AgentRuntime:
     async def run(
         self,
         query: str,
-        context: Optional[str] = None,
-        sources: Optional[List[Dict[str, Any]]] = None,
-        agent_name: Optional[str] = None,
+        context: str | None = None,
+        sources: list[dict[str, Any]] | None = None,
+        agent_name: str | None = None,
         pattern: str = "single",
     ) -> RuntimeResponse:
         """
@@ -167,9 +166,9 @@ class AgentRuntime:
     def run_sync(
         self,
         query: str,
-        context: Optional[str] = None,
-        sources: Optional[List[Dict[str, Any]]] = None,
-        agent_name: Optional[str] = None,
+        context: str | None = None,
+        sources: list[dict[str, Any]] | None = None,
+        agent_name: str | None = None,
         pattern: str = "single",
     ) -> RuntimeResponse:
         """Synchronous version of run()."""
@@ -184,7 +183,7 @@ class AgentRuntime:
         return loop.run_until_complete(self.run(query, context, sources, agent_name, pattern))
 
     @property
-    def available_agents(self) -> List[str]:
+    def available_agents(self) -> list[str]:
         """Get list of registered agent names."""
         return list(self._agents.keys())
 
@@ -195,7 +194,7 @@ class AgentRuntime:
 
 
 # Global runtime instance
-_agent_runtime: Optional[AgentRuntime] = None
+_agent_runtime: AgentRuntime | None = None
 
 
 def get_agent_runtime() -> AgentRuntime:

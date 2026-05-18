@@ -3,9 +3,9 @@ Declaration Service — CRUD for quarterly tax declarations (Modelos 303, 130, 4
 """
 
 import json
-import uuid
 import logging
-from typing import Any, Dict, List, Optional
+import uuid
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +22,10 @@ class DeclarationService:
         territory: str,
         year: int,
         quarter: int,
-        form_data: Dict[str, Any],
-        calculated_result: Dict[str, Any],
+        form_data: dict[str, Any],
+        calculated_result: dict[str, Any],
         status: str = "calculated",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Save or upsert a quarterly declaration."""
         # Check if exists
         existing = await self._db.execute(
@@ -95,7 +95,7 @@ class DeclarationService:
             "status": status,
         }
 
-    async def get_by_year(self, user_id: str, year: int) -> List[Dict[str, Any]]:
+    async def get_by_year(self, user_id: str, year: int) -> list[dict[str, Any]]:
         """Get all declarations for a user in a given year."""
         result = await self._db.execute(
             """SELECT id, declaration_type, territory, year, quarter,
@@ -108,7 +108,7 @@ class DeclarationService:
         )
         return [dict(row) for row in result.rows]
 
-    async def get_detail(self, user_id: str, declaration_id: str) -> Optional[Dict[str, Any]]:
+    async def get_detail(self, user_id: str, declaration_id: str) -> dict[str, Any] | None:
         """Get full declaration detail including form_data and calculated_result."""
         result = await self._db.execute(
             """SELECT * FROM quarterly_declarations WHERE id = ? AND user_id = ?""",
@@ -123,7 +123,7 @@ class DeclarationService:
         )
         return row
 
-    async def get_quarter(self, user_id: str, year: int, quarter: int) -> List[Dict[str, Any]]:
+    async def get_quarter(self, user_id: str, year: int, quarter: int) -> list[dict[str, Any]]:
         """Get all declarations for a specific quarter."""
         result = await self._db.execute(
             """SELECT * FROM quarterly_declarations
@@ -159,7 +159,7 @@ class DeclarationService:
 
     async def get_accumulated(
         self, user_id: str, declaration_type: str, year: int, up_to_quarter: int
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Get accumulated totals for quarters 1..up_to_quarter-1 (for Modelo 130 pagos_anteriores)."""
         result = await self._db.execute(
             """SELECT COALESCE(SUM(tax_due), 0) as total_paid,
@@ -174,7 +174,7 @@ class DeclarationService:
         return {"total_paid": 0, "total_income": 0, "total_expenses": 0}
 
     async def save_ml_features(
-        self, user_id: str, year: int, quarter: int, features: Dict[str, Any]
+        self, user_id: str, year: int, quarter: int, features: dict[str, Any]
     ) -> None:
         """Upsert ML fiscal features for a quarter."""
         feat_id = str(uuid.uuid4())

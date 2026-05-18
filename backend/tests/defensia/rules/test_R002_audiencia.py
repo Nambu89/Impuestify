@@ -23,7 +23,7 @@ Los tests usan las factories del `conftest.py` y el fixture autouse
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -34,7 +34,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar
-
 
 # ---------------------------------------------------------------------------
 # Helper: carga unicamente la regla R002 para aislar los tests del resto del
@@ -82,14 +81,14 @@ def test_r002_positivo_salto_directo_requerimiento_a_liquidacion(build_exp, buil
         TipoDocumento.REQUERIMIENTO,
         doc_id="doc-req-001",
         nombre_original="requerimiento_aeat.pdf",
-        fecha_acto=datetime(2026, 1, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 10, tzinfo=UTC),
     )
     liq = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={"tramite_audiencia_abierto": False},
         doc_id="doc-liq-001",
         nombre_original="liquidacion_provisional.pdf",
-        fecha_acto=datetime(2026, 2, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 2, 10, tzinfo=UTC),
     )
 
     exp = build_exp(
@@ -131,7 +130,7 @@ def test_r002_positivo_propuesta_modificada_sin_reabrir_plazo(build_exp, build_b
         datos={"tramite_audiencia_abierto": True},
         doc_id="doc-prop-001",
         nombre_original="propuesta_liquidacion.pdf",
-        fecha_acto=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 1, tzinfo=UTC),
     )
     liq = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -141,7 +140,7 @@ def test_r002_positivo_propuesta_modificada_sin_reabrir_plazo(build_exp, build_b
         },
         doc_id="doc-liq-002",
         nombre_original="liquidacion_provisional.pdf",
-        fecha_acto=datetime(2026, 1, 21, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 21, tzinfo=UTC),
     )
 
     exp = build_exp(
@@ -184,7 +183,7 @@ def test_r002_negativo_audiencia_abierta_correctamente(build_exp, build_brief, b
         },
         doc_id="doc-prop-ok",
         nombre_original="propuesta_ok.pdf",
-        fecha_acto=datetime(2026, 1, 5, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 5, tzinfo=UTC),
     )
     liq = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
@@ -194,7 +193,7 @@ def test_r002_negativo_audiencia_abierta_correctamente(build_exp, build_brief, b
         },
         doc_id="doc-liq-ok",
         nombre_original="liquidacion_ok.pdf",
-        fecha_acto=datetime(2026, 2, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 2, 1, tzinfo=UTC),
     )
 
     exp = build_exp(
@@ -224,7 +223,7 @@ def test_r002_negativo_acta_con_acuerdo(build_exp, build_brief, build_doc):
         },
         doc_id="doc-acuerdo",
         nombre_original="liquidacion_acta_acuerdo.pdf",
-        fecha_acto=datetime(2026, 3, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 3, 1, tzinfo=UTC),
     )
 
     exp = build_exp(

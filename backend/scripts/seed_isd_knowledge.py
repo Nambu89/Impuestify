@@ -723,15 +723,15 @@ async def seed_isd_knowledge(dry_run: bool = False) -> None:
 
     await db.disconnect()
 
-    print(f"\nSeed complete:")
+    print("\nSeed complete:")
     print(f"  Chunks inserted : {inserted}")
     print(f"  Chunks skipped  : {skipped} (already existed)")
     print(f"  Total chunks    : {len(ISD_CHUNKS)}")
-    print(f"\nThe ISD knowledge base is now available for RAG queries.")
-    print(f"Topics covered: tarifa estatal, reducciones parentesco, coeficientes,")
-    print(f"  discapacidad, vivienda habitual, empresa familiar, plazos,")
-    print(f"  Madrid, Andalucia, Valencia, Aragon, Cataluna, Pais Vasco,")
-    print(f"  Navarra, Canarias, Ceuta/Melilla, FAQ.")
+    print("\nThe ISD knowledge base is now available for RAG queries.")
+    print("Topics covered: tarifa estatal, reducciones parentesco, coeficientes,")
+    print("  discapacidad, vivienda habitual, empresa familiar, plazos,")
+    print("  Madrid, Andalucia, Valencia, Aragon, Cataluna, Pais Vasco,")
+    print("  Navarra, Canarias, Ceuta/Melilla, FAQ.")
 
 
 def main() -> None:

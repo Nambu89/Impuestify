@@ -3,8 +3,8 @@ Test del CoordinatorAgent con los agentes actuales
 """
 
 import asyncio
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Cargar .env ANTES de importar cualquier cosa

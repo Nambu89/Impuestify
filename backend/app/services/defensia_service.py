@@ -62,8 +62,8 @@ from __future__ import annotations
 import json
 import logging
 import secrets
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from app.models.defensia import (
     ArgumentoCandidato,
@@ -164,7 +164,7 @@ class DefensiaService:
         *,
         user_id: str,
         plan: str,
-        territory_filter: Optional[str] = None,
+        territory_filter: str | None = None,
     ) -> dict:
         """Pipeline completo con reserve-commit-release de cuota.
 
@@ -343,7 +343,7 @@ class DefensiaService:
             ensure_ascii=False,
             default=str,
         )
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
 
         sql = (
             "INSERT INTO defensia_dictamenes "
@@ -391,7 +391,7 @@ class DefensiaService:
         """
         escrito_id = f"esc_{secrets.token_urlsafe(12)}"
         tipo_escrito = _TIPO_ESCRITO_POR_FASE.get(expediente.fase_detectada, "alegaciones_generico")
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
 
         sql = (
             "INSERT INTO defensia_escritos "

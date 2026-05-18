@@ -11,12 +11,9 @@ Formato típico:
   - Multi-página cuando hay bonus/atrasos
 """
 
-import re
-import json
 import hashlib
-from typing import Dict, Optional, List, Tuple
-from pathlib import Path
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +56,7 @@ class PayslipExtractor:
     def __init__(self):
         pass
 
-    async def extract_from_pdf(self, pdf_path: str) -> Dict:
+    async def extract_from_pdf(self, pdf_path: str) -> dict:
         """
         Extrae texto y datos estructurados de un PDF de nómina.
         Uses plain text extraction (not markdown) because payslip PDFs
@@ -121,7 +118,7 @@ class PayslipExtractor:
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def _parse_spanish_number(num_str: str) -> Optional[float]:
+    def _parse_spanish_number(num_str: str) -> float | None:
         """Convierte número español (1.234,56) a float"""
         if not num_str:
             return None
@@ -132,7 +129,7 @@ class PayslipExtractor:
             return None
 
     @staticmethod
-    def _find_all_amounts(pattern: re.Pattern, text: str) -> List[float]:
+    def _find_all_amounts(pattern: re.Pattern, text: str) -> list[float]:
         """Finds ALL matches of a pattern and returns parsed amounts (for multi-page summing)."""
         amounts = []
         for m in pattern.finditer(text):
@@ -145,12 +142,12 @@ class PayslipExtractor:
     # Main parser
     # -------------------------------------------------------------------------
 
-    def _parse_payslip_data(self, text: str) -> Dict:
+    def _parse_payslip_data(self, text: str) -> dict:
         """
         Parsea el texto extraído de una nómina española.
         Soporta formatos multi-página y diversos layouts de nómina.
         """
-        data: Dict = {}
+        data: dict = {}
 
         # --- 1. PERIODO ---
         # Format: "MENS 01 ENE 26 a 31 ENE 26" or "01/2026" or "Enero 2026"
@@ -572,7 +569,7 @@ class PayslipExtractor:
 
         return data
 
-    def _detect_region(self, text: str) -> Optional[str]:
+    def _detect_region(self, text: str) -> str | None:
         """Detecta la CCAA del trabajador por la dirección postal."""
         # Map of cities/provinces to CCAA
         region_keywords = {
@@ -616,13 +613,13 @@ class PayslipExtractor:
 
     def calculate_effective_tax_rate(
         self, irpf_amount: float, gross_salary: float
-    ) -> Optional[float]:
+    ) -> float | None:
         """Calcula el tipo efectivo de IRPF"""
         if gross_salary and gross_salary > 0:
             return round((irpf_amount / gross_salary) * 100, 2)
         return None
 
-    def generate_summary(self, data: Dict) -> str:
+    def generate_summary(self, data: dict) -> str:
         """Genera un resumen legible de la nómina"""
         parts = []
 
@@ -650,7 +647,7 @@ class PayslipExtractor:
 
         return " | ".join(parts) if parts else "Sin datos extraídos"
 
-    def get_extraction_stats(self, data: Dict) -> Dict:
+    def get_extraction_stats(self, data: dict) -> dict:
         """Obtiene estadísticas de la extracción"""
         key_fields = [
             "period_month",
@@ -757,7 +754,7 @@ class PayslipExtractor:
         return result
 
     @staticmethod
-    def anonymize_data(data: Dict) -> Dict:
+    def anonymize_data(data: dict) -> dict:
         """
         Remove PII fields from extracted payslip data before sending to LLM.
         Returns a copy — does NOT modify the original.

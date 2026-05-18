@@ -20,14 +20,15 @@ siempre que el TEAR no haya resuelto).
 """
 
 from __future__ import annotations
-from datetime import datetime, timedelta, timezone
-from app.models.defensia import (
-    ExpedienteEstructurado,
-    TipoDocumento,
-    Fase,
-    DocumentoEstructurado,
-)
 
+from datetime import UTC, datetime, timedelta
+
+from app.models.defensia import (
+    DocumentoEstructurado,
+    ExpedienteEstructurado,
+    Fase,
+    TipoDocumento,
+)
 
 _TEAR_VENTANA_RECIENTE = timedelta(days=30)
 
@@ -69,7 +70,7 @@ def detect_fase(
             Parámetro expuesto para testabilidad determinista.
     """
     if hoy is None:
-        hoy = datetime.now(timezone.utc)
+        hoy = datetime.now(UTC)
 
     if not expediente.documentos:
         return Fase.INDETERMINADA, 0.0
@@ -104,8 +105,8 @@ def _as_aware_utc(dt: datetime) -> datetime:
     llegaban documentos con fecha_acto naive desde Gemini/parseo de PDF.
     """
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+        return dt.replace(tzinfo=UTC)
+    return dt.astimezone(UTC)
 
 
 def _es_tear_reciente(escrito_tear: DocumentoEstructurado, hoy: datetime) -> bool:

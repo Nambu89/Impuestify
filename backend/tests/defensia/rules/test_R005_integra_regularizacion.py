@@ -24,7 +24,6 @@ from app.services.defensia_rules.reglas_procedimentales.R005_integra_regularizac
     evaluar as evaluar_r005,
 )
 
-
 # ---------------------------------------------------------------------------
 # Positivos
 # ---------------------------------------------------------------------------

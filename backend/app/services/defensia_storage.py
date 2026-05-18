@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,7 @@ class DefensiaStorage:
     :class:`DefensiaStorageUnavailable`.
     """
 
-    def __init__(self, key: Optional[bytes] = None):
+    def __init__(self, key: bytes | None = None):
         self._disabled = False
         self._aes = None
         self._compressor = None
@@ -86,7 +85,7 @@ class DefensiaStorage:
         self._decompressor = zstd.ZstdDecompressor()
 
     @staticmethod
-    def _resolve_key(key: Optional[bytes]) -> Optional[bytes]:
+    def _resolve_key(key: bytes | None) -> bytes | None:
         """Resuelve la clave a partir de parametro directo o env var.
 
         Devuelve ``None`` si no hay clave valida (warning en logs). Nunca
@@ -130,7 +129,7 @@ class DefensiaStorage:
                 "DefensIA storage service disabled: " "DEFENSIA_STORAGE_KEY not configured"
             )
 
-    def cifrar(self, plaintext: bytes) -> Tuple[bytes, bytes]:
+    def cifrar(self, plaintext: bytes) -> tuple[bytes, bytes]:
         """Comprime con zstd y cifra con AES-256-GCM.
 
         Parameters

@@ -20,8 +20,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
-from typing import Optional
+from datetime import UTC, date, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +59,8 @@ def _utc_today_str() -> str:
 
 
 def _next_utc_midnight_iso() -> str:
-    now = datetime.now(timezone.utc)
-    next_midnight = datetime(now.year, now.month, now.day, tzinfo=timezone.utc).replace(
+    now = datetime.now(UTC)
+    next_midnight = datetime(now.year, now.month, now.day, tzinfo=UTC).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
     # if already past midnight, move to tomorrow
@@ -72,7 +71,7 @@ def _next_utc_midnight_iso() -> str:
     return next_midnight.isoformat()
 
 
-def _key(user_id: str, when: Optional[str] = None) -> str:
+def _key(user_id: str, when: str | None = None) -> str:
     return f"tokens:daily:{user_id}:{when or _utc_today_str()}"
 
 
@@ -96,7 +95,7 @@ class TokenBudgetTracker:
     # ── Read ────────────────────────────────────────────────────────────────
 
     async def check(
-        self, user_id: str, plan_type: Optional[str], is_owner: bool = False, request=None
+        self, user_id: str, plan_type: str | None, is_owner: bool = False, request=None
     ) -> BudgetStatus:
         """
         Read current usage and decide whether the user is allowed another call.

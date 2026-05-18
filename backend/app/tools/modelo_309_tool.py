@@ -34,9 +34,9 @@ de medios de transporte nuevos, transportistas en simplificado, o RE con
 devoluciones a viajeros tax-free).
 """
 
-from typing import Dict, Any
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +143,7 @@ async def calculate_modelo_309_tool(
     base_isp_4: float = 0,
     aplica_re: bool = True,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate the Modelo 309 (non-periodic IVA self-assessment) for retailers
     in the Recargo de Equivalencia (RE) regime, or for any taxable person

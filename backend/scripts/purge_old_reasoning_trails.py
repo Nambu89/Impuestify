@@ -12,7 +12,7 @@ Run monthly: '0 4 1 * *' (4 AM on the 1st of each month).
 import asyncio
 import logging
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -35,7 +35,7 @@ async def main():
     from app.database.turso_client import get_db_client
 
     db = await get_db_client()
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=RETENTION_MONTHS * 30)).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(days=RETENTION_MONTHS * 30)).isoformat()
 
     count_result = await db.execute(
         "SELECT COUNT(*) AS c FROM reasoning_trails WHERE created_at < ?",

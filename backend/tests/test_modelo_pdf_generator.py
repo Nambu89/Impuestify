@@ -8,10 +8,10 @@ plus unknown modelo validation.
 import pytest
 
 from app.services.modelo_pdf_generator import (
-    ModeloPDFGenerator,
-    VALID_MODELOS,
     FULL_MODELOS,
     PLACEHOLDER_MODELOS,
+    VALID_MODELOS,
+    ModeloPDFGenerator,
 )
 
 

@@ -1,9 +1,10 @@
 """Test IRPF Calculator"""
 
 import asyncio
-import sys
 import os
+import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Setup

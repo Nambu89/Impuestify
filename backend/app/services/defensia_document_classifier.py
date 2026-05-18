@@ -9,9 +9,11 @@ El clasificador devuelve siempre un ClassificationResult con la fuente
 """
 
 from __future__ import annotations
+
 import json
 import logging
 from dataclasses import dataclass
+
 from app.models.defensia import TipoDocumento
 from app.services.defensia_document_taxonomy import clasificar_por_texto
 
@@ -63,6 +65,7 @@ def _gemini_classify(texto: str) -> ClassificationResult:
     backend/app/services/invoice_ocr_service.py).
     """
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)

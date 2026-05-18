@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import importlib
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -223,7 +223,7 @@ def _expediente_caso_david() -> ExpedienteEstructurado:
     requerimiento = _doc(
         "d01-req",
         TipoDocumento.REQUERIMIENTO,
-        fecha_acto=datetime(2025, 11, 3, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 11, 3, tzinfo=UTC),
         datos={
             "plazo_aportar_docs_dias": 10,
             "tipo_procedimiento": "comprobacion_limitada",
@@ -237,7 +237,7 @@ def _expediente_caso_david() -> ExpedienteEstructurado:
     escritura = _doc(
         "d02-esc",
         TipoDocumento.ESCRITURA,
-        fecha_acto=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 1, 10, tzinfo=UTC),
         datos={
             "es_vivienda_habitual": True,
             "fecha_adquisicion": "2024-01-10",
@@ -250,7 +250,7 @@ def _expediente_caso_david() -> ExpedienteEstructurado:
     sentencia = _doc(
         "d03-sent",
         TipoDocumento.SENTENCIA_JUDICIAL,
-        fecha_acto=datetime(2025, 6, 28, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 28, tzinfo=UTC),
         datos={
             "modifica_medidas_familiares": True,
             "causa": "separacion_matrimonial",
@@ -266,7 +266,7 @@ def _expediente_caso_david() -> ExpedienteEstructurado:
     liquidacion = _doc(
         "d04-liq",
         TipoDocumento.LIQUIDACION_PROVISIONAL,
-        fecha_acto=datetime(2026, 1, 30, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 30, tzinfo=UTC),
         datos={
             "cuota": 6183.05,
             "ejercicio": 2024,
@@ -295,7 +295,7 @@ def _expediente_caso_david() -> ExpedienteEstructurado:
     sancion = _doc(
         "d05-sanc",
         TipoDocumento.ACUERDO_IMPOSICION_SANCION,
-        fecha_acto=datetime(2026, 4, 7, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 4, 7, tzinfo=UTC),
         datos={
             "importe_sancion": 3393.52,
             "articulos_tipicos": ["Art. 191 LGT"],

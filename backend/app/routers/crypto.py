@@ -12,17 +12,16 @@ Endpoints:
   DELETE /api/crypto/transactions/{id} — Eliminar transaccion (ownership check)
 """
 
-import io
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.security.rate_limiter import limiter
 
 logger = logging.getLogger(__name__)
@@ -48,8 +47,8 @@ class UploadResponse(BaseModel):
     imported: int = 0
     duplicates_skipped: int = 0
     exchange_detected: str = ""
-    date_range: Dict[str, str] = Field(default_factory=dict)
-    error: Optional[str] = None
+    date_range: dict[str, str] = Field(default_factory=dict)
+    error: str | None = None
 
 
 class TransactionItem(BaseModel):
@@ -59,21 +58,21 @@ class TransactionItem(BaseModel):
     date_utc: str
     asset: str
     amount: float
-    price_eur: Optional[float]
-    total_eur: Optional[float]
-    fee_eur: Optional[float]
-    counterpart_asset: Optional[str]
-    counterpart_amount: Optional[float]
-    notes: Optional[str]
+    price_eur: float | None
+    total_eur: float | None
+    fee_eur: float | None
+    counterpart_asset: str | None
+    counterpart_amount: float | None
+    notes: str | None
 
 
 class TransactionsResponse(BaseModel):
     success: bool = True
-    transactions: List[TransactionItem] = Field(default_factory=list)
+    transactions: list[TransactionItem] = Field(default_factory=list)
     total: int = 0
     page: int = 1
     per_page: int = 50
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class HoldingItem(BaseModel):
@@ -85,9 +84,9 @@ class HoldingItem(BaseModel):
 
 class HoldingsResponse(BaseModel):
     success: bool = True
-    holdings: List[HoldingItem] = Field(default_factory=list)
+    holdings: list[HoldingItem] = Field(default_factory=list)
     total_invested_eur: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class GainItem(BaseModel):
@@ -114,13 +113,13 @@ class GainsSummary(BaseModel):
 class GainsResponse(BaseModel):
     success: bool = True
     tax_year: int
-    gains: List[GainItem] = Field(default_factory=list)
+    gains: list[GainItem] = Field(default_factory=list)
     summary: GainsSummary = Field(
         default_factory=lambda: GainsSummary(
             casilla_1813=0.0, casilla_1814=0.0, net=0.0, total_transactions=0
         )
     )
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class DeleteResponse(BaseModel):
@@ -188,7 +187,7 @@ def _validate_upload(file_bytes: bytes, filename: str) -> str:
 async def upload_crypto_csv(
     request: Request,
     file: UploadFile = File(...),
-    exchange: Optional[str] = Query(
+    exchange: str | None = Query(
         default=None,
         description="Exchange de origen (opcional, auto-detectado). Valores: binance, coinbase, kraken, kucoin, bitget.",
     ),
@@ -335,8 +334,8 @@ async def list_transactions(
     request: Request,
     page: int = Query(default=1, ge=1, description="Numero de pagina"),
     per_page: int = Query(default=50, ge=1, le=200, description="Resultados por pagina (max 200)"),
-    asset: Optional[str] = Query(default=None, description="Filtrar por activo (BTC, ETH...)"),
-    tx_type: Optional[str] = Query(
+    asset: str | None = Query(default=None, description="Filtrar por activo (BTC, ETH...)"),
+    tx_type: str | None = Query(
         default=None,
         description="Filtrar por tipo: buy, sell, swap, staking_reward, airdrop, mining, transfer, fee",
     ),
@@ -580,8 +579,8 @@ async def get_gains(
 
     try:
         from app.database.turso_client import get_db_client
-        from app.utils.calculators.crypto_fifo import calculate_fifo_gains
         from app.services.crypto_parser import CryptoTransaction
+        from app.utils.calculators.crypto_fifo import calculate_fifo_gains
 
         db = await get_db_client()
 

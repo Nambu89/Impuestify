@@ -14,8 +14,8 @@ All tests mock IRPFSimulator so no live Turso/DB connection is required.
 """
 
 import asyncio
-import sys
 import os
+import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -26,7 +26,6 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from app.routers.irpf_estimate import IRPFEstimateRequest, IRPFEstimateResponse
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -103,10 +102,11 @@ async def _call_endpoint(body: IRPFEstimateRequest) -> IRPFEstimateResponse:
     mock_request = MagicMock()  # starlette Request (only needed for rate limiter)
 
     # Build a real Starlette Request so slowapi is satisfied
-    from starlette.testclient import TestClient
-    from starlette.requests import Request as StarletteRequest
-    from starlette.datastructures import Headers
     from io import BytesIO
+
+    from starlette.datastructures import Headers
+    from starlette.requests import Request as StarletteRequest
+    from starlette.testclient import TestClient
 
     scope = {
         "type": "http",

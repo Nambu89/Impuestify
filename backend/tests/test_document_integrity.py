@@ -13,19 +13,19 @@ Grupos:
 """
 
 import time
+
 import pytest
 
 from app.security.document_integrity import (
+    SANITIZE_PLACEHOLDER,
+    THRESHOLD_SAFE,
+    THRESHOLD_SANITIZE,
+    THRESHOLD_WARN,
     DocumentIntegrityScanner,
     DocumentScanResult,
     Finding,
-    SANITIZE_PLACEHOLDER,
-    THRESHOLD_SAFE,
-    THRESHOLD_WARN,
-    THRESHOLD_SANITIZE,
     document_integrity_scanner,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

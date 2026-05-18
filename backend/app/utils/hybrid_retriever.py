@@ -8,10 +8,9 @@ Combines two search strategies with Reciprocal Rank Fusion (RRF):
 Falls back to FTS5-only if Upstash Vector is unavailable.
 """
 
-import struct
-import logging
 import asyncio
-from typing import List, Dict, Any, Optional
+import logging
+from typing import Any
 
 from app.config import settings
 
@@ -46,11 +45,11 @@ class HybridRetriever:
     def __init__(
         self,
         db_client=None,
-        vector_url: Optional[str] = None,
-        vector_token: Optional[str] = None,
+        vector_url: str | None = None,
+        vector_token: str | None = None,
     ):
         self.db = db_client
-        self._vector_index: Optional[Index] = None
+        self._vector_index: Index | None = None
 
         # Initialize Upstash Vector
         url = vector_url or settings.UPSTASH_VECTOR_RAG_URL
@@ -76,10 +75,10 @@ class HybridRetriever:
     async def search(
         self,
         query: str,
-        query_embedding: Optional[List[float]] = None,
+        query_embedding: list[float] | None = None,
         k: int = 5,
-        territory_filter: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        territory_filter: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Hybrid search: FTS5 + Vector → RRF fusion → trust scoring.
 
@@ -160,10 +159,10 @@ class HybridRetriever:
 
     async def _vector_search(
         self,
-        embedding: List[float],
+        embedding: list[float],
         k: int = 30,
-        territory: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        territory: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Query Upstash Vector for semantically similar chunks."""
         if not self._vector_index:
             return []
@@ -246,8 +245,8 @@ class HybridRetriever:
         self,
         query: str,
         k: int = 30,
-        territory: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        territory: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Full-text search using FTS5 (BM25) in Turso."""
         if not self.db:
             return []
@@ -328,15 +327,15 @@ class HybridRetriever:
             return await self._like_fallback(query, k, territory)
 
     async def _like_fallback(
-        self, query: str, k: int = 5, territory: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, query: str, k: int = 5, territory: str | None = None
+    ) -> list[dict[str, Any]]:
         """Fallback to LIKE search if FTS5 fails."""
         if not self.db:
             return []
 
         try:
             words = query.split()[:3]
-            conditions = " AND ".join([f"dc.content LIKE '%' || ? || '%'" for _ in words])
+            conditions = " AND ".join(["dc.content LIKE '%' || ? || '%'" for _ in words])
 
             if territory:
                 # Incluir Estatal y AEAT junto a la CCAA. Mismo motivo que en
@@ -391,10 +390,10 @@ class HybridRetriever:
 
     def _rrf_fusion(
         self,
-        fts_results: List[Dict],
-        vector_results: List[Dict],
+        fts_results: list[dict],
+        vector_results: list[dict],
         k: int = 5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Reciprocal Rank Fusion (RRF) to merge two ranked lists.
 
@@ -402,8 +401,8 @@ class HybridRetriever:
 
         where K=60 (standard) prevents overweighting top results.
         """
-        scores: Dict[str, float] = {}
-        chunks_by_id: Dict[str, Dict] = {}
+        scores: dict[str, float] = {}
+        chunks_by_id: dict[str, dict] = {}
 
         # Score FTS5 results
         for rank, chunk in enumerate(fts_results, start=1):
@@ -470,7 +469,7 @@ class HybridRetriever:
         except Exception:
             return 1.0  # fail open — RAG must keep working
 
-    async def _apply_trust_scoring(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _apply_trust_scoring(self, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Weight each result's similarity score by its document's integrity trust score.
 
@@ -493,9 +492,9 @@ class HybridRetriever:
             except Exception as e:
                 trust_scores.append(e)
 
-        kept: List[Dict[str, Any]] = []
+        kept: list[dict[str, Any]] = []
         blocked = 0
-        for result, trust in zip(results, trust_scores):
+        for result, trust in zip(results, trust_scores, strict=False):
             # Treat any exception as trust=1.0 (fail open)
             if isinstance(trust, Exception):
                 trust = 1.0
@@ -585,14 +584,12 @@ class HybridRetriever:
             "hacia",
             "ante",
             "bajo",
-            "todas",
             "busca",
             "utiliza",
             "estan",
             "esten",
             "relacionadas",
             "fuentes",
-            "todas",
         }
         words = []
         for word in query.split():
@@ -613,7 +610,7 @@ class HybridRetriever:
 # ============================================================
 
 
-async def get_query_embedding(query: str) -> Optional[List[float]]:
+async def get_query_embedding(query: str) -> list[float] | None:
     """
     Generate embedding for a search query using OpenAI.
 

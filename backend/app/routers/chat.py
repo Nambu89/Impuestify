@@ -7,27 +7,28 @@ Handles question-answering using:
 - TaxAgent for orchestration
 """
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Request
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
-import time
 import logging
+import time
+from typing import Any
 
-from app.database.turso_client import TursoClient
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
+
 from app.agents.tax_agent import TaxAgent
-from app.config import settings
-from app.utils.region_detector import RegionDetector
-from app.services.conversation_service import ConversationService
-from app.services.conversation_cache import ConversationCache
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.subscription_guard import require_active_subscription
-from app.security import sql_validator, guardrails_system
-from app.security.rate_limiter import limiter
+from app.config import settings
+from app.database.turso_client import TursoClient
+from app.security import guardrails_system, sql_validator
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
-from app.services.subscription_service import SubscriptionAccess
-from app.services.cost_tracker import CostTracker
+from app.security.rate_limiter import limiter
 from app.services.conversation_analyzer import ConversationAnalyzer
+from app.services.conversation_cache import ConversationCache
+from app.services.conversation_service import ConversationService
+from app.services.cost_tracker import CostTracker
+from app.services.subscription_service import SubscriptionAccess
 from app.services.warmup_service import WarmupService
+from app.utils.region_detector import RegionDetector
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +42,9 @@ class QuestionRequest(BaseModel):
     """Request model for asking a question"""
 
     question: str = Field(..., min_length=3, max_length=1000, description="Tax question")
-    conversation_id: Optional[str] = Field(None, description="Conversation ID for context")
-    workspace_id: Optional[str] = Field(None, description="Active workspace ID for context")
-    k: Optional[int] = Field(default=5, ge=1, le=10, description="Number of documents to retrieve")
+    conversation_id: str | None = Field(None, description="Conversation ID for context")
+    workspace_id: str | None = Field(None, description="Active workspace ID for context")
+    k: int | None = Field(default=5, ge=1, le=10, description="Number of documents to retrieve")
 
 
 class Source(BaseModel):
@@ -54,17 +55,17 @@ class Source(BaseModel):
     page: int
     title: str
     text_preview: str
-    score: Optional[float] = None
+    score: float | None = None
 
 
 class ImpuestifyResponse(BaseModel):
     """Response model from Impuestify"""
 
     answer: str
-    sources: List[Source]
+    sources: list[Source]
     processing_time: float
-    metadata: Dict[str, Any]
-    conversation_id: Optional[str] = None
+    metadata: dict[str, Any]
+    conversation_id: str | None = None
 
 
 # === Dependencies ===
@@ -82,7 +83,7 @@ async def get_db(request: Request) -> TursoClient:
 # === Helper Functions ===
 
 
-async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
+async def fts_search(db: TursoClient, query: str, k: int = 5) -> list[dict]:
     """
     Full-text search using SQLite FTS5.
 
@@ -322,7 +323,7 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> List[Dict]:
             logger.warning(f"FTS5 error, falling back to LIKE search: {fts_error}")
 
             keywords = query.lower().split()[:5]
-            where_conditions = " OR ".join([f"LOWER(c.content) LIKE ?" for _ in keywords])
+            where_conditions = " OR ".join(["LOWER(c.content) LIKE ?" for _ in keywords])
 
             sql = f"""
 			SELECT 
@@ -587,7 +588,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
                         "region": metadata.get("region"),
                         "deadlines": metadata.get("deadlines"),
                     }
-                    logger.info(f"📋 Found notification context in conversation history")
+                    logger.info("📋 Found notification context in conversation history")
                     break
 
         # 4. Search relevant chunks using Hybrid Retriever (FTS5 + Vector + RRF)

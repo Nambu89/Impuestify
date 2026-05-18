@@ -6,7 +6,7 @@ Calculates exact IRPF (Income Tax) using scales from SQL database.
 
 import asyncio
 import logging
-from typing import Dict, List, Optional
+
 from app.database.turso_client import TursoClient
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class IRPFCalculator:
         jurisdiction: str,
         year: int = 2024,
         include_state: bool = True,
-    ) -> Dict:
+    ) -> dict:
         """
         Calculate IRPF for given base liquidable and jurisdiction.
 
@@ -112,11 +112,11 @@ class IRPFCalculator:
     def calculate_with_custom_scale(
         self,
         base_liquidable: float,
-        tramos_autonomicos: List[Dict],
-        tramos_estatales: List[Dict] = None,
+        tramos_autonomicos: list[dict],
+        tramos_estatales: list[dict] = None,
         year: int = 2024,
         jurisdiction: str = "Custom",
-    ) -> Dict:
+    ) -> dict:
         """
         Calculate IRPF using custom scales (e.g., from web extraction).
 
@@ -159,7 +159,7 @@ class IRPFCalculator:
             "source": "web",  # Indicator that data came from web
         }
 
-    async def _get_scale(self, jurisdiction: str, year: int) -> List[Dict]:
+    async def _get_scale(self, jurisdiction: str, year: int) -> list[dict]:
         """
         Get tax scale from database.
         Normalizes jurisdiction name (e.g. "Comunidad de Madrid" → "Madrid")
@@ -200,7 +200,7 @@ class IRPFCalculator:
 
         return [dict(row) for row in result.rows]
 
-    def _apply_scale(self, base_liquidable: float, scale: List[Dict]) -> tuple[float, List[Dict]]:
+    def _apply_scale(self, base_liquidable: float, scale: list[dict]) -> tuple[float, list[dict]]:
         """
         Apply progressive tax scale to base liquidable.
 
@@ -264,7 +264,7 @@ class IRPFCalculator:
 
         return cuota_total, breakdown
 
-    def format_result(self, result: Dict) -> str:
+    def format_result(self, result: dict) -> str:
         """
         Format calculation result as user-friendly text.
 

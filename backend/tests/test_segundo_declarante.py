@@ -32,7 +32,6 @@ from app.routers.irpf_estimate import (
     SegundoDeclarante,
 )
 
-
 # ---------------------------------------------------------------------------
 # SegundoDeclarante model tests
 # ---------------------------------------------------------------------------

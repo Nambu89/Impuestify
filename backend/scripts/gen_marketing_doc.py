@@ -5,8 +5,8 @@ import sys
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from docx import Document
-from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt
 
 doc = Document()
 style = doc.styles["Normal"]

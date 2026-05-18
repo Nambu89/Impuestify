@@ -3,8 +3,8 @@ Script para marcar un usuario como admin en TaxIA
 """
 
 import asyncio
-import sys
 import os
+import sys
 
 # Añadir el directorio raíz al path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -39,7 +39,7 @@ async def mark_user_as_admin(email: str):
     if is_admin:
         print(f"✅ Usuario {email} marcado como ADMIN correctamente")
     else:
-        print(f"❌ Error al actualizar usuario")
+        print("❌ Error al actualizar usuario")
 
 
 if __name__ == "__main__":

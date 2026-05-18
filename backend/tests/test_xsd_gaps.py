@@ -9,12 +9,13 @@ Tests for XSD gaps implementation:
 All tests use mocked DB responses -- no live Turso connection required.
 """
 
-import pytest
 import sys
-from pathlib import Path
-from unittest.mock import AsyncMock
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock
+
+import pytest
 
 # Setup path
 backend_dir = Path(__file__).parent.parent
@@ -23,7 +24,6 @@ sys.path.insert(0, str(backend_dir))
 from app.utils.calculators.mpyf import MPYFCalculator
 from app.utils.irpf_simulator import IRPFSimulator
 
-
 # ─────────────────────────────────────────────────────────────
 # Mock DB helper (same pattern as test_irpf_simulator.py)
 # ─────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ from app.utils.irpf_simulator import IRPFSimulator
 
 @dataclass
 class MockRow:
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
     def __getitem__(self, key):
         return self.data[key]
@@ -57,7 +57,7 @@ class MockRow:
 
 @dataclass
 class MockResult:
-    rows: List[MockRow]
+    rows: list[MockRow]
 
 
 MOCK_MPYF_ESTATAL = {

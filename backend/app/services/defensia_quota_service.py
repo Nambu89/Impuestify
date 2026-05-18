@@ -50,7 +50,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ class DefensiaQuotaService:
 
     def _ano_mes_actual(self) -> str:
         """Formato `YYYY-MM` en UTC (consistente con el resto del backend)."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return f"{now.year:04d}-{now.month:02d}"
 
     async def _get_estado(self, user_id: str) -> dict:

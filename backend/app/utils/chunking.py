@@ -14,8 +14,8 @@ References:
 """
 
 import re
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -25,7 +25,7 @@ class ExtractedChunk:
     content: str
     page_number: int
     chunk_index: int
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class DocumentLayoutChunker:
@@ -78,8 +78,8 @@ class DocumentLayoutChunker:
         self.heading_pattern = re.compile(r"^#{1,4}\s+.+$", re.MULTILINE)
 
     def chunk_document(
-        self, pages: List[Dict[str, Any]], tables: Optional[List[Any]] = None
-    ) -> List[ExtractedChunk]:
+        self, pages: list[dict[str, Any]], tables: list[Any] | None = None
+    ) -> list[ExtractedChunk]:
         """
         Chunk a document page by page.
 
@@ -90,7 +90,7 @@ class DocumentLayoutChunker:
         Returns:
             List of ExtractedChunk objects
         """
-        raw_chunks: List[ExtractedChunk] = []
+        raw_chunks: list[ExtractedChunk] = []
         chunk_index = 0
 
         for page in pages:
@@ -143,7 +143,7 @@ class DocumentLayoutChunker:
 
         return raw_chunks
 
-    def _apply_overlap(self, chunks: List[ExtractedChunk]) -> List[ExtractedChunk]:
+    def _apply_overlap(self, chunks: list[ExtractedChunk]) -> list[ExtractedChunk]:
         """
         Add overlap from the end of chunk N to the start of chunk N+1.
         Only applies between chunks on the same page (never cross-page).
@@ -234,7 +234,7 @@ class DocumentLayoutChunker:
         """Check if text contains a Markdown table."""
         return bool(self.table_pattern.search(text))
 
-    def _split_page_semantically(self, page_content: str, page_number: int) -> List[str]:
+    def _split_page_semantically(self, page_content: str, page_number: int) -> list[str]:
         """
         Split a long page at semantic boundaries.
 
@@ -260,7 +260,7 @@ class DocumentLayoutChunker:
         # Fallback: paragraph-level split with sentence awareness
         return self._split_by_paragraphs_and_sentences(page_content)
 
-    def _split_by_headings(self, text: str) -> List[str]:
+    def _split_by_headings(self, text: str) -> list[str]:
         """
         Split text at Markdown headings, keeping the heading with its content.
         Returns sections like ["## Title\ncontent...", "### Subtitle\ncontent..."]
@@ -287,7 +287,7 @@ class DocumentLayoutChunker:
 
         return sections
 
-    def _fit_sections_to_chunks(self, sections: List[str]) -> List[str]:
+    def _fit_sections_to_chunks(self, sections: list[str]) -> list[str]:
         """
         Merge small heading-sections together; split oversized ones further.
         """
@@ -326,7 +326,7 @@ class DocumentLayoutChunker:
 
         return chunks if chunks else sections  # Fallback: return original
 
-    def _split_by_paragraphs_and_sentences(self, text: str) -> List[str]:
+    def _split_by_paragraphs_and_sentences(self, text: str) -> list[str]:
         """
         Split text first by paragraphs, then by sentence boundaries
         if any paragraph is still too long.
@@ -368,7 +368,7 @@ class DocumentLayoutChunker:
 
         return chunks if chunks else [text]  # Fallback: return entire text
 
-    def _split_long_text_at_sentences(self, text: str) -> List[str]:
+    def _split_long_text_at_sentences(self, text: str) -> list[str]:
         """
         Split a long text block at sentence boundaries.
         Ensures no chunk ends mid-sentence.
@@ -422,7 +422,7 @@ class DocumentLayoutChunker:
 
         return chunks if chunks else [text]
 
-    def _split_at_line_breaks(self, text: str) -> List[str]:
+    def _split_at_line_breaks(self, text: str) -> list[str]:
         """Last-resort: split at line breaks when no sentence boundaries exist."""
         lines = text.split("\n")
         chunks = []
@@ -443,7 +443,7 @@ class DocumentLayoutChunker:
 
         return chunks if chunks else [text]
 
-    def _split_page_with_tables(self, page_content: str) -> List[str]:
+    def _split_page_with_tables(self, page_content: str) -> list[str]:
         """
         Special handling for pages with tables.
 
@@ -520,7 +520,7 @@ class DocumentLayoutChunker:
 
         return chunks if chunks else [page_content]
 
-    def _split_large_table(self, table_text: str) -> List[str]:
+    def _split_large_table(self, table_text: str) -> list[str]:
         """
         Split a very large table into row groups.
         Preserves header row in each chunk for context.

@@ -23,7 +23,6 @@ como regla autonoma segun decision del research doc).
 from __future__ import annotations
 
 from datetime import date, datetime, timezone  # noqa: F401 — datetime exportado para patch en tests
-from typing import Optional
 
 from app.models.defensia import (
     ArgumentoCandidato,
@@ -35,7 +34,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # ---------------------------------------------------------------------------
 # Constantes auxiliares
@@ -103,7 +101,7 @@ def _fin_plazo_voluntario(ejercicio: int, tributo: Tributo) -> date:
 
 def _ejercicio_del_expediente(
     expediente: ExpedienteEstructurado,
-) -> Optional[int]:
+) -> int | None:
     """Busca el ejercicio fiscal en los `datos` de los documentos.
 
     Usa el primer documento AEAT con `datos.ejercicio` no nulo (en orden
@@ -129,7 +127,7 @@ def _ejercicio_del_expediente(
 
 def _primer_acto_aeat(
     expediente: ExpedienteEstructurado,
-) -> Optional[DocumentoEstructurado]:
+) -> DocumentoEstructurado | None:
     """Devuelve el primer acto AEAT con `fecha_acto` no nula, en orden ASC.
 
     Este es el punto de referencia para medir el plazo: la AEAT interrumpe
@@ -182,7 +180,7 @@ def _hay_interrupcion_explicita(expediente: ExpedienteEstructurado) -> bool:
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R003 sobre el expediente.
 
     Devuelve un `ArgumentoCandidato` si dispara, o `None` si no procede. La

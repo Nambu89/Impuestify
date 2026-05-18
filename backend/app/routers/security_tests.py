@@ -8,7 +8,8 @@ Provides test endpoints for:
 """
 
 from fastapi import APIRouter
-from app.security import sql_validator, guardrails_system
+
+from app.security import guardrails_system, sql_validator
 
 router = APIRouter(prefix="/test/security", tags=["testing"])
 

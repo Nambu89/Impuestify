@@ -8,11 +8,11 @@ Usage:
     python backend/scripts/sync_to_upstash.py [--batch-size 100] [--namespace rag]
 """
 
-import sys
-import struct
-import asyncio
 import argparse
+import asyncio
 import logging
+import struct
+import sys
 from pathlib import Path
 
 # ── Path setup ──
@@ -72,7 +72,7 @@ async def sync(batch_size: int = 100, namespace: str = "rag"):
     print("✅ Connected to Turso")
 
     # ── Connect to Upstash Vector ──
-    print(f"🔗 Connecting to Upstash Vector...")
+    print("🔗 Connecting to Upstash Vector...")
     index = Index(url=rag_url, token=rag_token)
 
     # Check current state
@@ -181,7 +181,7 @@ async def sync(batch_size: int = 100, namespace: str = "rag"):
 
     # ── Final report ──
     print(f"\n{'='*50}")
-    print(f"📊 Sync Complete!")
+    print("📊 Sync Complete!")
     print(f"   ✅ Synced: {synced}")
     print(f"   ❌ Errors: {errors}")
     print(f"   📦 Total in DB: {total_chunks}")
@@ -193,7 +193,7 @@ async def sync(batch_size: int = 100, namespace: str = "rag"):
     except Exception as e:
         print(f"   ⚠️ Could not verify: {e}")
 
-    print(f"\n🧪 Testing search...")
+    print("\n🧪 Testing search...")
     try:
         # Generate a test query embedding
         from openai import OpenAI

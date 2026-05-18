@@ -36,7 +36,7 @@ async def cleanup_null_ids():
         return
 
     # Show what will be deleted
-    print(f"\n🗑️  Documentos que serán eliminados:")
+    print("\n🗑️  Documentos que serán eliminados:")
     result = await db.execute(
         "SELECT filename, title, document_type FROM documents WHERE id IS NULL"
     )
@@ -49,7 +49,7 @@ async def cleanup_null_ids():
     print("   Es seguro eliminarlos.")
 
     # Delete NULL documents
-    print(f"\n🔄 Eliminando documentos con ID NULL...")
+    print("\n🔄 Eliminando documentos con ID NULL...")
     await db.execute("DELETE FROM documents WHERE id IS NULL")
     print("✅ Documentos eliminados")
 

@@ -15,9 +15,8 @@ import logging
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Optional
 
-from app.services.crypto_parser import CryptoTransaction, FIAT_CURRENCIES
+from app.services.crypto_parser import FIAT_CURRENCIES, CryptoTransaction
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +78,7 @@ class CryptoGain:
     anti_aplicacion: bool = False
     """True si la perdida no computa por la regla antiaplicacion (Art. 33.5.f LIRPF)."""
 
-    source_tx_id: Optional[str] = None
+    source_tx_id: str | None = None
     """ID de la transaccion origen (para trazabilidad)."""
 
 
@@ -210,7 +209,7 @@ def _apply_anti_aplicacion(
 
 def calculate_fifo_gains(
     transactions: list[CryptoTransaction],
-    tax_year: Optional[int] = None,
+    tax_year: int | None = None,
 ) -> FIFOResult:
     """
     Calcula las ganancias y perdidas patrimoniales por criptomonedas usando FIFO.
@@ -392,7 +391,7 @@ def calculate_fifo_gains(
     return FIFOResult(gains=all_gains, summary=summary)
 
 
-def _build_summary(gains: list[CryptoGain], tax_year: Optional[int]) -> dict:
+def _build_summary(gains: list[CryptoGain], tax_year: int | None) -> dict:
     """
     Construye el resumen fiscal con totales y casillas AEAT.
 

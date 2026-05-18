@@ -10,11 +10,12 @@ Covers:
 """
 
 import json
-import pytest
-import sys
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
+import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent

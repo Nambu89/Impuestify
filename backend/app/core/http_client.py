@@ -10,9 +10,9 @@ Based on httpx best practices:
 - Proper lifecycle management (startup/shutdown)
 """
 
-import os
 import logging
-from typing import Optional
+import os
+
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class HTTPClientManager:
     """
 
     def __init__(self):
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
         self._is_initialized = False
         # Store config for stats
         self._max_connections = 0

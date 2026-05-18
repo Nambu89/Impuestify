@@ -4,14 +4,13 @@ TaxAgent - Specialized Tax Assistant Agent
 Uses OpenAI API with function calling for tax calculations.
 """
 
-import os
-import logging
 import asyncio
-from typing import Optional, List, Dict, Any
+import logging
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
-from openai import OpenAI, AsyncOpenAI
+from openai import AsyncOpenAI, OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +20,8 @@ class AgentResponse:
     """Response from the tax agent"""
 
     content: str
-    sources: List[Dict[str, Any]]
-    metadata: Dict[str, Any]
+    sources: list[dict[str, Any]]
+    metadata: dict[str, Any]
     agent_name: str
 
 
@@ -41,7 +40,7 @@ class TaxAgent:
     """
 
     def __init__(
-        self, name: str = "TaxAgent", model: Optional[str] = None, api_key: Optional[str] = None
+        self, name: str = "TaxAgent", model: str | None = None, api_key: str | None = None
     ):
         """
         Initialize TaxAgent.
@@ -339,7 +338,6 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 
     def _filter_bad_responses(self, content: str, original_query: str) -> str:
         """Filter out LLM responses that ask permission instead of answering."""
-        import re
 
         if not content or len(content.strip()) < 20:
             return content
@@ -370,10 +368,10 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
             logger.warning("Filtered permission-asking response for: %s", original_query[:60])
             # Return a helpful redirect instead of a dead-end
             return (
-                f"No tengo una respuesta exacta para esta consulta en este momento. "
-                f"Te recomiendo verificar directamente con la administración tributaria competente "
-                f"(AEAT para territorio común, o tu Hacienda Foral si estás en País Vasco/Navarra).\n\n"
-                f"Si me das más detalles sobre tu situación, puedo orientarte mejor."
+                "No tengo una respuesta exacta para esta consulta en este momento. "
+                "Te recomiendo verificar directamente con la administración tributaria competente "
+                "(AEAT para territorio común, o tu Hacienda Foral si estás en País Vasco/Navarra).\n\n"
+                "Si me das más detalles sobre tu situación, puedo orientarte mejor."
             )
 
         return content
@@ -382,16 +380,16 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
         self,
         query: str,
         context: str = "",
-        sources: List[dict] = None,
-        conversation_history: List[dict] = None,
+        sources: list[dict] = None,
+        conversation_history: list[dict] = None,
         use_tools: bool = True,
-        system_prompt: Optional[str] = None,
-        model: Optional[str] = None,  # Dynamic model selection
-        user_id: Optional[str] = None,  # User ID for audit logging
-        progress_callback: Optional[Any] = None,  # For SSE streaming
-        db_client: Optional[Any] = None,  # Database client for memory
+        system_prompt: str | None = None,
+        model: str | None = None,  # Dynamic model selection
+        user_id: str | None = None,  # User ID for audit logging
+        progress_callback: Any | None = None,  # For SSE streaming
+        db_client: Any | None = None,  # Database client for memory
         restricted_mode: bool = False,  # Salaried-only: block autonomo tools
-        fiscal_profile: Optional[Dict[str, Any]] = None,  # Autonomo fiscal profile
+        fiscal_profile: dict[str, Any] | None = None,  # Autonomo fiscal profile
     ) -> AgentResponse:
         """
         Returns:
@@ -548,8 +546,8 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 
         # === SECURITY: Content Moderation (Llama Guard) ===
         try:
-            from app.security.llama_guard import get_llama_guard
             from app.security.audit_logger import audit_logger
+            from app.security.llama_guard import get_llama_guard
 
             llama_guard = get_llama_guard()
             moderation_result = await llama_guard.moderate(query)
@@ -719,7 +717,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
                     ),
                     timeout=60.0,  # 60 second timeout
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.error("⏱️ OpenAI call timed out after 60 seconds")
                 return AgentResponse(
                     content="⏱️ Lo siento, el análisis está tardando más de lo esperado. Por favor, intenta reformular tu pregunta de forma más específica o simplíficala.",
@@ -826,7 +824,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
                         content = formatted
                     if not content:
                         content = formatted
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.error("⏱️ Second OpenAI call timed out")
                     content = tool_result.get("formatted_response", "")
                     if not content:
@@ -900,7 +898,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
                 agent_name=self.name,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # This catch is for outer-level timeout (shouldn't reach here normally)
             logger.error("⏱️ TaxAgent execution timeout")
             return AgentResponse(
@@ -920,9 +918,9 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
 
     async def _stream_openai_response(
         self,
-        messages: List[dict],
+        messages: list[dict],
         model: str,
-        progress_callback: Optional[Any] = None,
+        progress_callback: Any | None = None,
         timeout: float = 60.0,
         chunk_timeout: float = 30.0,
     ) -> str:
@@ -965,7 +963,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
                     chunk = await asyncio.wait_for(stream_iter.__anext__(), timeout=chunk_timeout)
                 except StopAsyncIteration:
                     break
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.warning(
                         f"⏱️ No chunk received in {chunk_timeout}s — "
                         f"stream stalled after {len(accumulated)} chunks "
@@ -987,7 +985,7 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
             if buffer and progress_callback:
                 await progress_callback.content_chunk(buffer)
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("⏱️ Streaming OpenAI call creation timed out")
             raise
         except Exception as e:
@@ -1015,9 +1013,9 @@ Si el usuario pide "comparativa", "diferencia entre", "qué me conviene más", "
     def _build_prompt(
         self,
         query: str,
-        context: Optional[str] = None,
-        user_memory_context: Optional[str] = None,
-        fiscal_profile: Optional[Dict[str, Any]] = None,
+        context: str | None = None,
+        user_memory_context: str | None = None,
+        fiscal_profile: dict[str, Any] | None = None,
     ) -> str:
         """Build the user prompt with optional context and user memory."""
 
@@ -1261,7 +1259,7 @@ Pregunta del usuario: {query}
                 return f"{requires_tool_hint}{pharmacy_context}{proactive_profile_hint}\nPregunta: {query}\n\n{critical_instructions}"
             return f"Pregunta: {query}\n\n{critical_instructions}"
 
-    async def ask(self, question: str, context: Optional[str] = None) -> str:
+    async def ask(self, question: str, context: str | None = None) -> str:
         """
         Convenience method for asking questions.
 
@@ -1278,8 +1276,8 @@ Pregunta del usuario: {query}
     def run_sync(
         self,
         query: str,
-        context: Optional[str] = None,
-        sources: Optional[List[Dict[str, Any]]] = None,
+        context: str | None = None,
+        sources: list[dict[str, Any]] | None = None,
     ) -> AgentResponse:
         """
         Synchronous version of run() for non-async contexts.
@@ -1296,7 +1294,7 @@ Pregunta del usuario: {query}
 
 
 # Global agent instance
-_tax_agent: Optional[TaxAgent] = None
+_tax_agent: TaxAgent | None = None
 
 
 def get_tax_agent() -> TaxAgent:
@@ -1314,7 +1312,7 @@ def get_tax_agent() -> TaxAgent:
     return _tax_agent
 
 
-def format_sources_inline(sources: Optional[List[Dict[str, Any]]]) -> str:
+def format_sources_inline(sources: list[dict[str, Any]] | None) -> str:
     """
     Format sources as inline compact text (no bullets).
 

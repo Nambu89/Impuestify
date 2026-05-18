@@ -12,8 +12,7 @@ The "2 of 3" rule: a company fits a category if it does NOT exceed at least
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Thresholds
@@ -82,11 +81,11 @@ class CompanySizeResult:
     memoria_abreviada: bool
     pyg_abreviada: bool
     auditoria_obligatoria: bool
-    notas: List[str] = field(default_factory=list)
-    umbrales_clasificacion: Dict[str, Any] = field(default_factory=dict)
-    umbrales_auditoria: Dict[str, Any] = field(default_factory=dict)
-    umbrales_balance: Dict[str, Any] = field(default_factory=dict)
-    umbrales_pyg: Dict[str, Any] = field(default_factory=dict)
+    notas: list[str] = field(default_factory=list)
+    umbrales_clasificacion: dict[str, Any] = field(default_factory=dict)
+    umbrales_auditoria: dict[str, Any] = field(default_factory=dict)
+    umbrales_balance: dict[str, Any] = field(default_factory=dict)
+    umbrales_pyg: dict[str, Any] = field(default_factory=dict)
     ejercicio_referencia: str = "2025"
     disclaimer: str = (
         "Informacion orientativa basada en LSC Art. 257-258 y "
@@ -99,7 +98,7 @@ class CompanySizeResult:
 # ---------------------------------------------------------------------------
 
 
-def _count_exceeded(data: YearData, thresholds: Dict[str, float]) -> int:
+def _count_exceeded(data: YearData, thresholds: dict[str, float]) -> int:
     """Count how many of the 3 thresholds are exceeded by a year's data."""
     count = 0
     if data.activo > thresholds["activo"]:
@@ -114,7 +113,7 @@ def _count_exceeded(data: YearData, thresholds: Dict[str, float]) -> int:
 def _fits_category(
     year_1: YearData,
     year_2: YearData,
-    thresholds: Dict[str, float],
+    thresholds: dict[str, float],
 ) -> bool:
     """
     A company fits a category if it does NOT exceed 2 of 3 thresholds
@@ -134,14 +133,14 @@ def _fits_category(
 def _make_threshold_detail(
     year_1: YearData,
     year_2: YearData,
-    thresholds: Dict[str, float],
-) -> Dict[str, Any]:
+    thresholds: dict[str, float],
+) -> dict[str, Any]:
     """Build threshold comparison details using the average of 2 years."""
     avg_activo = (year_1.activo + year_2.activo) / 2
     avg_negocios = (year_1.negocios + year_2.negocios) / 2
     avg_empleados = (year_1.empleados + year_2.empleados) / 2
 
-    def detail(valor: float, limite: float) -> Dict[str, Any]:
+    def detail(valor: float, limite: float) -> dict[str, Any]:
         return {
             "valor": round(valor, 2),
             "limite": limite,
@@ -159,7 +158,7 @@ def _make_threshold_detail(
 def _exceeds_both_years(
     year_1: YearData,
     year_2: YearData,
-    thresholds: Dict[str, float],
+    thresholds: dict[str, float],
 ) -> bool:
     """True if the company exceeds 2 of 3 thresholds in BOTH years."""
     return _count_exceeded(year_1, thresholds) >= 2 and _count_exceeded(year_2, thresholds) >= 2
@@ -233,7 +232,7 @@ def classify_company(
     auditoria = _exceeds_both_years(year_1, year_2, audit_th)
 
     # Build notes
-    notas: List[str] = []
+    notas: list[str] = []
     if clasificacion == "micro":
         notas.append("Como microempresa, puede aplicar los criterios simplificados del PGC PYMES.")
     if clasificacion in ("micro", "pequena"):

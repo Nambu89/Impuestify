@@ -23,8 +23,7 @@ import os
 import secrets
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import List, Optional
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -68,7 +67,7 @@ def _challenge_key(scope: str, ident: str) -> str:
 
 
 def _store_challenge(
-    redis, scope: str, ident: str, challenge: bytes, payload: Optional[dict] = None
+    redis, scope: str, ident: str, challenge: bytes, payload: dict | None = None
 ) -> None:
     if redis is None:
         return
@@ -84,7 +83,7 @@ def _store_challenge(
         logger.warning(f"Could not store webauthn challenge: {e}")
 
 
-def _pop_challenge(redis, scope: str, ident: str) -> Optional[dict]:
+def _pop_challenge(redis, scope: str, ident: str) -> dict | None:
     if redis is None:
         return None
     try:
@@ -113,14 +112,14 @@ class RegistrationOptions:
     user_id_b64: str
     user_name: str
     challenge_b64: str
-    exclude_credentials: List[dict]
+    exclude_credentials: list[dict]
 
 
 @dataclass
 class AuthenticationOptions:
     rp_id: str
     challenge_b64: str
-    allow_credentials: List[dict]
+    allow_credentials: list[dict]
 
 
 class WebAuthnService:
@@ -144,8 +143,8 @@ class WebAuthnService:
         from webauthn import generate_registration_options
         from webauthn.helpers.structs import (
             AuthenticatorSelectionCriteria,
-            UserVerificationRequirement,
             ResidentKeyRequirement,
+            UserVerificationRequirement,
         )
 
         rp_id, rp_name, _ = _rp_settings()
@@ -191,7 +190,7 @@ class WebAuthnService:
         )
 
     async def complete_registration(
-        self, user_id: str, credential_response: dict, label: Optional[str] = None
+        self, user_id: str, credential_response: dict, label: str | None = None
     ) -> str:
         from webauthn import verify_registration_response
 
@@ -228,7 +227,7 @@ class WebAuthnService:
                 int(verification.sign_count),
                 json.dumps(credential_response.get("response", {}).get("transports") or []),
                 label or "Passkey",
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
             ],
         )
         return row_id
@@ -323,7 +322,7 @@ class WebAuthnService:
             "UPDATE webauthn_credentials SET sign_count = ?, last_used_at = ? WHERE id = ?",
             [
                 int(verification.new_sign_count),
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
                 cred["id"],
             ],
         )
@@ -331,7 +330,7 @@ class WebAuthnService:
 
     # ── Management ─────────────────────────────────────────────────────────
 
-    async def list_credentials(self, user_id: str) -> List[dict]:
+    async def list_credentials(self, user_id: str) -> list[dict]:
         db = await self._get_db()
         result = await db.execute(
             "SELECT id, label, created_at, last_used_at "

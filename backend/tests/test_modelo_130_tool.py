@@ -19,7 +19,6 @@ import pytest
 
 from app.tools.modelo_130_tool import calculate_modelo_130_tool
 
-
 # ===========================================================================
 # AEAT cases — Casos 1-5 del audit (validación con normativa)
 # ===========================================================================

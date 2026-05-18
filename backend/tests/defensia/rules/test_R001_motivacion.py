@@ -35,7 +35,6 @@ from app.models.defensia import (
 from app.services.defensia_rules.reglas_procedimentales import R001_motivacion
 from app.services.defensia_rules_engine import REGISTRY, evaluar
 
-
 # ---------------------------------------------------------------------------
 # Re-registro de R001 en cada test
 # ---------------------------------------------------------------------------

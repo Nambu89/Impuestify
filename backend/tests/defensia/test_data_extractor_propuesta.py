@@ -1,8 +1,8 @@
 """Tests para el extractor de propuesta de liquidación."""
 
 from unittest.mock import patch
-from app.services.defensia_data_extractor import extract_propuesta_liquidacion
 
+from app.services.defensia_data_extractor import extract_propuesta_liquidacion
 
 MOCK = {
     "referencia": "REF",

@@ -1,7 +1,8 @@
 """Tests del endpoint IS prefill desde workspace."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
 
 
 class MockRow(dict):
@@ -50,11 +51,12 @@ def mock_workspace_service():
 
 @pytest.fixture
 def client(mock_deps, mock_db, mock_workspace_service):
+    from fastapi import Depends, FastAPI
     from fastapi.testclient import TestClient
-    from fastapi import FastAPI, Depends
-    from app.routers.workspaces import router
+
     from app.auth.jwt_handler import TokenData
     from app.database.turso_client import TursoClient
+    from app.routers.workspaces import router
 
     app = FastAPI()
 
@@ -236,8 +238,9 @@ class TestISPrefillEndpoint:
         # This is implicitly tested since the fixture overrides get_current_user.
         # Without the override, the endpoint would return 401.
         # We verify the endpoint signature requires auth in the router definition.
-        from app.routers.workspaces import get_workspace_is_prefill
         import inspect
+
+        from app.routers.workspaces import get_workspace_is_prefill
 
         sig = inspect.signature(get_workspace_is_prefill)
         param_names = list(sig.parameters.keys())

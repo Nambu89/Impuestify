@@ -4,9 +4,8 @@ Email Service for TaxIA using Resend.
 Provides email sending capabilities for sharing reports with advisors.
 """
 
-import base64
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +38,8 @@ class EmailService:
         to: str,
         subject: str,
         html: str,
-        attachments: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        attachments: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """
         Send an email via Resend.
 
@@ -87,7 +86,7 @@ class EmailService:
         user_name: str,
         report_title: str,
         pdf_bytes: bytes,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Send an IRPF report PDF to a tax advisor.
 
@@ -138,7 +137,7 @@ class EmailService:
 
 
 # Singleton
-_email_service: Optional[EmailService] = None
+_email_service: EmailService | None = None
 
 
 def get_email_service() -> EmailService:

@@ -18,7 +18,6 @@ from app.services.legal.sources import (
 )
 from app.services.legal.sources.bopv import parse_bopv_norma
 
-
 # ── Fixtures ─────────────────────────────────────────────────────────────
 
 

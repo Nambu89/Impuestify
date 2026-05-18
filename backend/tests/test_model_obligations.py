@@ -5,8 +5,9 @@ based on taxpayer profile (situacion_laboral, CCAA, empleados, etc.).
 """
 
 import pytest
+
+from app.territories.registry import _registry, get_territory
 from app.territories.startup import register_all_territories
-from app.territories.registry import get_territory, _registry
 
 
 @pytest.fixture(autouse=True)

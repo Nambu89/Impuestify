@@ -6,10 +6,10 @@ response structure with all KPIs, quarterly/monthly breakdowns,
 PGC accounts, suppliers, and recent invoices.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -274,8 +274,9 @@ async def test_dashboard_with_data():
 @pytest.mark.asyncio
 async def test_dashboard_workspace_not_found():
     """Returns 404 when workspace does not exist or belongs to another user."""
-    from app.routers.workspaces import get_workspace_dashboard
     from fastapi import HTTPException
+
+    from app.routers.workspaces import get_workspace_dashboard
 
     mock_service = AsyncMock()
     mock_service.get_workspace.return_value = None

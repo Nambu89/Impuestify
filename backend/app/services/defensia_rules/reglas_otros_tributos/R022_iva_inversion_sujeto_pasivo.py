@@ -49,7 +49,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # ---------------------------------------------------------------------------
 # Constantes — tipos de operacion sujetos a ISP segun el art. 84.Uno.2.o LIVA
 # ---------------------------------------------------------------------------

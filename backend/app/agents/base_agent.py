@@ -3,10 +3,10 @@ Base Agent Wrapper for Microsoft Agent Framework
 Provides a unified interface for all agents
 """
 
-import os
 import logging
-from typing import Optional, Dict, Any, List
+import os
 from dataclasses import dataclass
+from typing import Any
 
 try:
     from agent_framework import ChatAgent
@@ -26,8 +26,8 @@ class AgentResponse:
     """Unified response structure"""
 
     content: str
-    sources: List[Dict[str, Any]]
-    metadata: Dict[str, Any]
+    sources: list[dict[str, Any]]
+    metadata: dict[str, Any]
     agent_name: str
 
 
@@ -46,8 +46,8 @@ class BaseAgent:
         self,
         name: str,
         instructions: str,
-        tools: Optional[List] = None,
-        model: Optional[str] = None,
+        tools: list | None = None,
+        model: str | None = None,
     ):
         """
         Initialize base agent.
@@ -77,8 +77,8 @@ class BaseAgent:
     async def run(
         self,
         query: str,
-        context: Optional[str] = None,
-        sources: Optional[List[Dict[str, Any]]] = None,
+        context: str | None = None,
+        sources: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> AgentResponse:
         """
@@ -123,7 +123,7 @@ class BaseAgent:
                 agent_name=self.name,
             )
 
-    async def run_stream(self, query: str, context: Optional[str] = None):
+    async def run_stream(self, query: str, context: str | None = None):
         """
         Run agent with streaming response.
 

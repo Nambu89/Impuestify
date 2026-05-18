@@ -11,9 +11,10 @@ debe matchear antes que "PROPUESTA DE SANCIÓN" porque ambos contienen
 """
 
 from __future__ import annotations
-import re
-from app.models.defensia import TipoDocumento
 
+import re
+
+from app.models.defensia import TipoDocumento
 
 _PATRONES: list[tuple[TipoDocumento, list[re.Pattern]]] = [
     (

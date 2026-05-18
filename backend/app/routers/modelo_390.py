@@ -8,7 +8,7 @@ POST /api/modelo-390/calculate
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -38,16 +38,16 @@ class Trimestre303Input(BaseModel):
 
 
 class Modelo390Request(BaseModel):
-    year: Optional[int] = Field(None, description="Ejercicio (ej. 2025 -> presentar enero 2026)")
-    ccaa: Optional[str] = Field(None, description="CCAA o territorio")
+    year: int | None = Field(None, description="Ejercicio (ej. 2025 -> presentar enero 2026)")
+    ccaa: str | None = Field(None, description="CCAA o territorio")
     volumen_operaciones_ano_anterior: float = Field(default=0.0, ge=0)
     en_redeme: bool = Field(default=False)
     en_grupo_iva: bool = Field(default=False)
     sii_voluntario: bool = Field(default=False)
-    regimen_especial: Optional[str] = Field(
+    regimen_especial: str | None = Field(
         None, description="simplificado | recargo_equivalencia | general"
     )
-    trimestres_303: Optional[List[Trimestre303Input]] = Field(
+    trimestres_303: list[Trimestre303Input] | None = Field(
         None,
         description="Exactamente 4 trimestres del 303 para calcular resumen anual",
     )
@@ -57,11 +57,11 @@ class Modelo390Response(BaseModel):
     success: bool
     year: int
     obligado: bool
-    modelo: Optional[str]
-    ccaa: Optional[str]
-    motivo_exoneracion: Optional[str]
-    variante_territorial: Optional[str]
-    resumen_anual: Optional[Dict[str, Any]]
+    modelo: str | None
+    ccaa: str | None
+    motivo_exoneracion: str | None
+    variante_territorial: str | None
+    resumen_anual: dict[str, Any] | None
     plazo: str
     formatted_response: str
 

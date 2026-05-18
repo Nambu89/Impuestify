@@ -2,8 +2,9 @@
 Quick test to see if function calling is working.
 """
 
-import requests
 import json
+
+import requests
 
 url = "http://localhost:8000/api/ask"
 

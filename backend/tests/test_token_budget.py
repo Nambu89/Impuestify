@@ -9,9 +9,9 @@ returns via `hasattr(x, '__await__')` and only awaits when needed.
 import pytest
 
 from app.security.token_budget import (
-    TokenBudgetTracker,
     DAILY_LIMITS,
     WARN_FRACTION,
+    TokenBudgetTracker,
 )
 
 

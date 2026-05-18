@@ -9,7 +9,7 @@ modificar ninguna logica interna del simulador.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +131,7 @@ async def compare_joint_individual_executor(
     retenciones_declarante: float = 0,
     retenciones_conyuge: float = 0,
     madre_trabajadora_ss: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Ejecuta la comparativa conjunta vs individual.
 
@@ -143,9 +143,9 @@ async def compare_joint_individual_executor(
 
     Retorna tabla comparativa + recomendacion de la opcion mas favorable.
     """
-    from app.utils.irpf_simulator import IRPFSimulator
-    from app.utils.ccaa_constants import normalize_ccaa
     from app.database.turso_client import get_db_client
+    from app.utils.ccaa_constants import normalize_ccaa
+    from app.utils.irpf_simulator import IRPFSimulator
 
     db = await get_db_client()
     simulator = IRPFSimulator(db)

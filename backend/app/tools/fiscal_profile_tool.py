@@ -7,8 +7,8 @@ extracted from documents (payslips, invoices) or conversation context.
 
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict
+from datetime import UTC, datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ UPDATE_FISCAL_PROFILE_TOOL = {
 }
 
 
-async def update_fiscal_profile_tool(user_id: str, db_client: Any, **kwargs) -> Dict[str, Any]:
+async def update_fiscal_profile_tool(user_id: str, db_client: Any, **kwargs) -> dict[str, Any]:
     """
     Update the user's fiscal profile with the provided fields.
     Merges with existing data, marks source as 'agent'.
@@ -92,7 +92,7 @@ async def update_fiscal_profile_tool(user_id: str, db_client: Any, **kwargs) -> 
     if not kwargs:
         return {"success": False, "error": "No se proporcionaron campos para actualizar"}
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     try:
         # Load existing profile

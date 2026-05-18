@@ -1,7 +1,8 @@
 """Tests del simulador IS (Modelo 200)."""
 
 import pytest
-from app.utils.is_simulator import ISSimulator, ISInput, ISResult
+
+from app.utils.is_simulator import ISInput, ISResult, ISSimulator
 
 
 class TestISSimulatorComun:

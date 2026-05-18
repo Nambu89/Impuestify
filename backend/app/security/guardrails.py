@@ -16,9 +16,10 @@ Uses multi-layer validation:
 """
 
 import logging
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
 import re
+from typing import Any
+
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +41,9 @@ class GuardrailsResult(BaseModel):
 
     is_safe: bool
     risk_level: str = Field(description="none, low, medium, high, critical")
-    violations: List[str] = Field(default_factory=list)
-    suggestions: List[str] = Field(default_factory=list)
-    validated_output: Optional[str] = None
+    violations: list[str] = Field(default_factory=list)
+    suggestions: list[str] = Field(default_factory=list)
+    validated_output: str | None = None
 
 
 class TaxIAGuardrails:
@@ -237,7 +238,7 @@ class TaxIAGuardrails:
         )
 
     def validate_output(
-        self, llm_response: str, user_question: str, sources: Optional[List[Dict]] = None
+        self, llm_response: str, user_question: str, sources: list[dict] | None = None
     ) -> GuardrailsResult:
         """
         Validate LLM output before returning to user.
@@ -447,7 +448,7 @@ class TaxIAGuardrails:
 
         return True
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get guardrails system statistics."""
         return {
             "strict_mode": self.strict_mode,

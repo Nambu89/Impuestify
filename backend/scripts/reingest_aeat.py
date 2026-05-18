@@ -6,10 +6,11 @@ Focuses on:
 """
 
 import asyncio
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
+
 from pypdf import PdfReader  # Assuming pypdf is installed or we use azure-ai-documentintelligence
 
 # Setup path

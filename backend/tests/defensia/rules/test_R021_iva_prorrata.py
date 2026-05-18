@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import importlib
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -45,7 +45,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import evaluar, reset_registry
-
 
 # ---------------------------------------------------------------------------
 # Helper de aislamiento — carga solo R021 tras el reset del conftest
@@ -111,7 +110,7 @@ def test_R021_positivo_especial_obligatoria_no_aplicada(build_exp, build_brief, 
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R021-001",
-        fecha_acto=datetime(2025, 6, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
@@ -162,7 +161,7 @@ def test_R021_positivo_opcion_especial_denegada_sin_analisis(build_exp, build_br
             "ejercicio": 2024,
         },
         doc_id="doc-propuesta-R021-002",
-        fecha_acto=datetime(2025, 5, 5, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 5, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
@@ -208,7 +207,7 @@ def test_R021_negativo_general_correcta_diferencia_bajo_umbral(build_exp, build_
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R021-003",
-        fecha_acto=datetime(2025, 6, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
@@ -247,7 +246,7 @@ def test_R021_negativo_especial_ya_aplicada(build_exp, build_brief, build_doc):
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R021-004",
-        fecha_acto=datetime(2025, 6, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
@@ -285,7 +284,7 @@ def test_R021_negativo_tributo_no_es_iva(build_exp, build_brief, build_doc):
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R021-005",
-        fecha_acto=datetime(2025, 6, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,
@@ -319,7 +318,7 @@ def test_R021_cita_es_semantica_no_hardcoded(build_exp, build_brief, build_doc):
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-R021-006",
-        fecha_acto=datetime(2025, 6, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,

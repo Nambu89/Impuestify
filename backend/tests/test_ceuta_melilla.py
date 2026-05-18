@@ -10,10 +10,11 @@ Tests cover:
 - Agent label_map includes ceuta_melilla
 """
 
-import sys
 import json
-import pytest
+import sys
 from unittest.mock import MagicMock
+
+import pytest
 
 # ---------------------------------------------------------------------------
 # Patch heavy dependencies that may not be installed in the test environment
@@ -47,10 +48,11 @@ _ensure_mock("openai", OpenAI=MagicMock)
 # Direct imports from the real modules
 # ---------------------------------------------------------------------------
 
-from app.routers.user_rights import FiscalProfileRequest, _DATOS_FISCALES_KEYS  # noqa: E402
-from app.security.content_restriction import detect_autonomo_query  # noqa: E402
-from app.tools.web_scraper_tool import normalize_ccaa_name, CCAA_NORMALIZATION  # noqa: E402
+from datetime import UTC
 
+from app.routers.user_rights import _DATOS_FISCALES_KEYS, FiscalProfileRequest  # noqa: E402
+from app.security.content_restriction import detect_autonomo_query  # noqa: E402
+from app.tools.web_scraper_tool import CCAA_NORMALIZATION, normalize_ccaa_name  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Tests: FiscalProfileRequest — ceuta_melilla field
@@ -325,7 +327,7 @@ class TestDatosFiscalesRoundTrip:
             regimen_iva="ipsi",
         )
         request_data = req.model_dump(exclude_none=True)
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         datos_fiscales = {}
         for key in _DATOS_FISCALES_KEYS:

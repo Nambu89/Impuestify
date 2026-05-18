@@ -4,14 +4,13 @@ User Service for TaxIA
 Handles user CRUD operations with Turso database.
 """
 
-import uuid
 import logging
-from typing import Optional
-from datetime import datetime, timezone
+import uuid
+from datetime import UTC, datetime
 
-from app.database.turso_client import get_db_client
-from app.database.models import User, UserCreate, UserInDB
 from app.auth.password import hash_password, verify_password
+from app.database.models import User, UserCreate, UserInDB
+from app.database.turso_client import get_db_client
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class UserService:
 
         user_id = str(uuid.uuid4())
         password_hash = hash_password(user_data.password)
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         await db.execute(
             """
@@ -63,7 +62,7 @@ class UserService:
             updated_at=datetime.fromisoformat(now),
         )
 
-    async def get_user_by_email(self, email: str) -> Optional[UserInDB]:
+    async def get_user_by_email(self, email: str) -> UserInDB | None:
         """
         Get user by email.
 
@@ -92,7 +91,7 @@ class UserService:
 
         return None
 
-    async def get_user_by_id(self, user_id: str) -> Optional[User]:
+    async def get_user_by_id(self, user_id: str) -> User | None:
         """
         Get user by ID.
 
@@ -120,7 +119,7 @@ class UserService:
 
         return None
 
-    async def authenticate_user(self, email: str, password: str) -> Optional[User]:
+    async def authenticate_user(self, email: str, password: str) -> User | None:
         """
         Authenticate user with email and password.
 
@@ -157,7 +156,7 @@ class UserService:
             updated_at=user.updated_at,
         )
 
-    async def update_user(self, user_id: str, **kwargs) -> Optional[User]:
+    async def update_user(self, user_id: str, **kwargs) -> User | None:
         """
         Update user fields.
 
@@ -183,7 +182,7 @@ class UserService:
             return await self.get_user_by_id(user_id)
 
         updates.append("updated_at = ?")
-        values.append(datetime.now(timezone.utc).isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(user_id)
 
         await db.execute(f"UPDATE users SET {', '.join(updates)} WHERE id = ?", values)
@@ -202,7 +201,7 @@ class UserService:
             True on success
         """
         db = await get_db_client()
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         await db.execute(
             "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
             [new_password_hash, now, user_id],

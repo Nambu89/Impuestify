@@ -46,7 +46,7 @@ NOTA SOBRE LA PALMA:
   de activarla (Orden HAC/1425/2025 para 2026).
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class Modelo131Calculator:
@@ -90,7 +90,7 @@ class Modelo131Calculator:
         4: "1 al 30 de enero del año siguiente",
     }
 
-    def __init__(self, repo: Optional[Any] = None) -> None:
+    def __init__(self, repo: Any | None = None) -> None:
         # repo no es necesario para 131 — todos los tipos están fijados por ley.
         # Se mantiene en la firma para coherencia con otros calculadores.
         self._repo = repo
@@ -118,7 +118,7 @@ class Modelo131Calculator:
         ceuta_melilla: bool = False,
         la_palma: bool = False,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate the quarterly Modelo 131 result.
 
@@ -209,7 +209,7 @@ class Modelo131Calculator:
         resultado_anterior_complementaria: float,
         ceuta_melilla: bool,
         la_palma: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Apartado I del Modelo 131 — actividades empresariales con datos-base.
 
@@ -308,7 +308,7 @@ class Modelo131Calculator:
         resultado_anterior_complementaria: float,
         ceuta_melilla: bool,
         la_palma: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Apartado III del Modelo 131 — actividades agrarias.
 
@@ -389,7 +389,7 @@ class Modelo131Calculator:
         resultado_anterior_complementaria: float,
         ceuta_melilla: bool,
         la_palma: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Apartado II del Modelo 131 — actividad empresarial sin datos-base.
 

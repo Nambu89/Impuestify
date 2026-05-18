@@ -5,9 +5,8 @@ Calculates exact dates from relative expressions like "10 días hábiles".
 Considers national and regional holidays.
 """
 
-from datetime import datetime, timedelta
-from typing import List, Optional
 import re
+from datetime import datetime, timedelta
 
 
 class DeadlineCalculator:
@@ -61,7 +60,7 @@ class DeadlineCalculator:
         self.all_holidays = self.NATIONAL_HOLIDAYS_2024 + self.NATIONAL_HOLIDAYS_2025
 
     def calculate_business_days(
-        self, start_date: str, num_days: int, region: Optional[str] = None
+        self, start_date: str, num_days: int, region: str | None = None
     ) -> str:
         """
         Calculate exact date after N business days.
@@ -139,7 +138,7 @@ class DeadlineCalculator:
         target = current + relativedelta(months=num_months)
         return target.strftime("%Y-%m-%d")
 
-    def extract_deadlines_from_text(self, text: str, notification_date: str) -> List[dict]:
+    def extract_deadlines_from_text(self, text: str, notification_date: str) -> list[dict]:
         """
         Extract deadline expressions from notification text.
 

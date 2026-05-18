@@ -47,7 +47,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # ---------------------------------------------------------------------------
 # Constantes — limites y umbrales del art. 96 LIRPF tras RDL 4/2024
 # ---------------------------------------------------------------------------

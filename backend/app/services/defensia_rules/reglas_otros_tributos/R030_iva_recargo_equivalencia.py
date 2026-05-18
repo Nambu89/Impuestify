@@ -23,7 +23,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 _CITA_SEMANTICA = (
     "Regimen especial obligatorio del recargo de equivalencia para "
     "comerciantes minoristas personas fisicas o entidades en regimen de "

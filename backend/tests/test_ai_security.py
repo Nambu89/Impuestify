@@ -1,9 +1,11 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from app.security.complexity_router import ComplexityClassifier, ComplexityLevel, ReasoningEffort
+from app.security.pii_detector import PIIDetector
 from app.security.prompt_injection import PromptInjectionFilter
 from app.security.sql_injection import SQLInjectionValidator
-from app.security.pii_detector import PIIDetector
 
 
 # Mock response helper

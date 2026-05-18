@@ -1,6 +1,7 @@
 """Tests for Modelo 130 (Pago Fraccionado IRPF) calculator — all territories."""
 
 import pytest
+
 from app.utils.calculators.modelo_130 import Modelo130Calculator
 
 

@@ -7,8 +7,6 @@ Art. 49 LIRPF: Base del ahorro (GP ahorro + RCM).
 Plazo: 4 anos. Cross-compensation limit: 25% of the positive balance.
 """
 
-from typing import Dict
-
 
 # Maximum number of prior years for loss carryforward (Art. 48-49 LIRPF)
 MAX_CARRYFORWARD_YEARS = 4
@@ -34,9 +32,9 @@ class LossCompensationCalculator:
 
     def _filter_valid_losses(
         self,
-        perdidas: Dict[int, float],
+        perdidas: dict[int, float],
         year: int,
-    ) -> Dict[int, float]:
+    ) -> dict[int, float]:
         """Filter out losses older than MAX_CARRYFORWARD_YEARS and ensure positive values."""
         min_year = year - MAX_CARRYFORWARD_YEARS
         return {y: abs(v) for y, v in perdidas.items() if y >= min_year and y < year and v != 0}
@@ -46,10 +44,10 @@ class LossCompensationCalculator:
         *,
         rcm_ejercicio: float,
         gp_ahorro_ejercicio: float,
-        perdidas_gp_anteriores: Dict[int, float] = None,
-        perdidas_rcm_anteriores: Dict[int, float] = None,
+        perdidas_gp_anteriores: dict[int, float] = None,
+        perdidas_rcm_anteriores: dict[int, float] = None,
         year: int = 2024,
-    ) -> Dict:
+    ) -> dict:
         """Compensate prior year savings losses against current year balances (Art. 49).
 
         This method receives the ALREADY Phase-1-compensated saldos (after current year
@@ -69,8 +67,8 @@ class LossCompensationCalculator:
         perdidas_gp = self._filter_valid_losses(perdidas_gp_anteriores or {}, year)
         perdidas_rcm = self._filter_valid_losses(perdidas_rcm_anteriores or {}, year)
 
-        gp_consumidas: Dict[int, float] = {}
-        rcm_consumidas: Dict[int, float] = {}
+        gp_consumidas: dict[int, float] = {}
+        rcm_consumidas: dict[int, float] = {}
 
         # Working copies
         gp = gp_ahorro_ejercicio
@@ -153,9 +151,9 @@ class LossCompensationCalculator:
         *,
         rendimientos_netos: float,
         gp_general_ejercicio: float,
-        perdidas_gp_general_anteriores: Dict[int, float] = None,
+        perdidas_gp_general_anteriores: dict[int, float] = None,
         year: int = 2024,
-    ) -> Dict:
+    ) -> dict:
         """Compensate prior year general base losses (Art. 48 LIRPF).
 
         Handles both current year cross-compensation and prior year carryforward
@@ -193,7 +191,7 @@ class LossCompensationCalculator:
             compensacion_cruzada_ejercicio = comp
 
         # --- Phase 2: Prior year GP losses ---
-        gp_consumidas: Dict[int, float] = {}
+        gp_consumidas: dict[int, float] = {}
 
         for y in sorted(perdidas_gp.keys()):
             remaining_loss = perdidas_gp[y]

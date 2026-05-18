@@ -14,8 +14,8 @@ Usage:
     python backend/scripts/crawl_aeat_full.py --only-html         # Solo paginas HTML
 """
 
-import asyncio
 import argparse
+import asyncio
 import hashlib
 import logging
 import os
@@ -359,7 +359,7 @@ def main():
     logger.info(
         f"RESUMEN: Nuevos={stats['new']} | Ya existentes={stats['skipped']} | Fallidos={stats['failed']}"
     )
-    logger.info(f"Pendiente: ingestar nuevos docs con ingest_documents.py + rebuild_fts5.py")
+    logger.info("Pendiente: ingestar nuevos docs con ingest_documents.py + rebuild_fts5.py")
 
 
 if __name__ == "__main__":

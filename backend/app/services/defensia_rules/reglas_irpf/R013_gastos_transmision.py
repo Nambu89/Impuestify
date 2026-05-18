@@ -42,8 +42,6 @@ Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T1B-013
 
 from __future__ import annotations
 
-from typing import Optional
-
 from app.models.defensia import (
     ArgumentoCandidato,
     Brief,
@@ -53,7 +51,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # ---------------------------------------------------------------------------
 # Citas semanticas — describen el concepto juridico, nunca el articulo
@@ -73,7 +70,7 @@ _CITA_SEMANTICA = (
 # ---------------------------------------------------------------------------
 
 
-def _detectar_gastos_adquisicion_omitidos(datos: dict) -> Optional[dict]:
+def _detectar_gastos_adquisicion_omitidos(datos: dict) -> dict | None:
     """Patron 1: gastos de adquisicion declarados pero no computados.
 
     Devuelve `datos_disparo` si el patron aplica, None en caso contrario.
@@ -90,7 +87,7 @@ def _detectar_gastos_adquisicion_omitidos(datos: dict) -> Optional[dict]:
     return None
 
 
-def _detectar_comision_inmobiliaria_no_admitida(datos: dict) -> Optional[dict]:
+def _detectar_comision_inmobiliaria_no_admitida(datos: dict) -> dict | None:
     """Patron 2: comision inmobiliaria de la transmision declarada pero
     admitida solo parcialmente (o nada) por AEAT.
 
@@ -113,7 +110,7 @@ def _detectar_comision_inmobiliaria_no_admitida(datos: dict) -> Optional[dict]:
     }
 
 
-def _detectar_plusvalia_municipal_no_computada(datos: dict) -> Optional[dict]:
+def _detectar_plusvalia_municipal_no_computada(datos: dict) -> dict | None:
     """Patron 3: plusvalia municipal satisfecha pero no incluida en el
     calculo del valor de transmision.
     """
@@ -157,7 +154,7 @@ def _detectar_plusvalia_municipal_no_computada(datos: dict) -> Optional[dict]:
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,  # noqa: ARG001 — brief no usado por R013
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R013 sobre el expediente.
 
     Recorre los documentos en busca del primer acto (liquidacion provisional

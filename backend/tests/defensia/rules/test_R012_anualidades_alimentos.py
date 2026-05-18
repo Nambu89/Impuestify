@@ -49,7 +49,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 
-
 # ---------------------------------------------------------------------------
 # Aislamiento R012 — re-import del modulo tras el reset del conftest
 # ---------------------------------------------------------------------------

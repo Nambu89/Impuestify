@@ -5,8 +5,8 @@ Provides function calling capability for the LLM to calculate
 exact autonomous worker quotas based on income and region.
 """
 
-from typing import Dict, Any, Optional
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ async def calculate_autonomous_quota_tool(
     year: int = 2026,
     restricted_mode: bool = False,
     tarifa_plana: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate the autonomous worker quota based on net monthly income.
 
@@ -141,8 +141,9 @@ async def calculate_autonomous_quota_tool(
         }
 
     try:
-        from app.database.turso_client import TursoClient
         import os
+
+        from app.database.turso_client import TursoClient
 
         # Connect to database
         db = TursoClient(

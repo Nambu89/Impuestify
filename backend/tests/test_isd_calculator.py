@@ -13,15 +13,15 @@ Covers:
 """
 
 import pytest
-from app.tools.isd_calculator_tool import (
-    calculate_isd,
-    _apply_tarifa_estatal,
-    _get_coeficiente,
-    _reduccion_parentesco_estatal,
-    _normalize_ccaa,
-    _bonificaciones_ccaa,
-)
 
+from app.tools.isd_calculator_tool import (
+    _apply_tarifa_estatal,
+    _bonificaciones_ccaa,
+    _get_coeficiente,
+    _normalize_ccaa,
+    _reduccion_parentesco_estatal,
+    calculate_isd,
+)
 
 # ---------------------------------------------------------------------------
 # Unit tests — internal helpers

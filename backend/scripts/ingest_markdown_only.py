@@ -25,7 +25,7 @@ CHUNK_SIZE = 1500
 CHUNK_OVERLAP = 300
 
 
-def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> List[str]:
+def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
     """Split text into overlapping chunks."""
     chunks = []
     start = 0
@@ -58,7 +58,7 @@ async def ingest_markdown(db: TursoClient, md_path: Path) -> int:
     print(f"\n📝 Processing: {md_path.name}")
 
     # Read file
-    with open(md_path, "r", encoding="utf-8") as f:
+    with open(md_path, encoding="utf-8") as f:
         text = f.read()
     print(f"  📖 Read {len(text)} characters")
 

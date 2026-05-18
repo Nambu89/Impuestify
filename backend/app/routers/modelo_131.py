@@ -11,7 +11,7 @@ Wrapper directo de `Modelo131Calculator` — coherente con el tool LLM.
 """
 
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -47,7 +47,7 @@ class Modelo131Request(BaseModel):
     ceuta_melilla: bool = False
     la_palma: bool = False
 
-    year: Optional[int] = None
+    year: int | None = None
 
 
 class Modelo131Response(BaseModel):
@@ -59,8 +59,8 @@ class Modelo131Response(BaseModel):
     actividad_tipo: str
     territory: str
     tipo_aplicado: float
-    casillas: Dict[str, float]
-    desglose: Dict[str, Any]
+    casillas: dict[str, float]
+    desglose: dict[str, Any]
     resultado_final: float
     plazo: str
 

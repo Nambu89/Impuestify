@@ -8,12 +8,10 @@ No dependency on RAGAS or heavy ML libraries.
 
 import json
 import logging
-import os
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-import httpx
 from openai import AsyncOpenAI
 
 from app.config import settings
@@ -92,7 +90,7 @@ class RAGEvaluator:
     """Evaluates RAG quality using lightweight metrics."""
 
     def __init__(self):
-        self._openai: Optional[AsyncOpenAI] = None
+        self._openai: AsyncOpenAI | None = None
         self._ground_truth: list[dict] = []
 
     def _get_openai(self) -> AsyncOpenAI:
@@ -106,7 +104,7 @@ class RAGEvaluator:
             return self._ground_truth
         if not GROUND_TRUTH_PATH.exists():
             raise FileNotFoundError(f"Ground truth not found: {GROUND_TRUTH_PATH}")
-        with open(GROUND_TRUTH_PATH, "r", encoding="utf-8") as f:
+        with open(GROUND_TRUTH_PATH, encoding="utf-8") as f:
             self._ground_truth = json.load(f)
         logger.info("Loaded %d ground truth questions", len(self._ground_truth))
         return self._ground_truth
@@ -122,8 +120,8 @@ class RAGEvaluator:
         start = time.time()
         try:
             # 1. Retrieve relevant documents via RAG
-            from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
             from app.database.turso_client import get_db_client
+            from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
 
             db = await get_db_client()
             retriever = HybridRetriever(db_client=db)
@@ -194,7 +192,7 @@ class RAGEvaluator:
             vec_a = resp.data[0].embedding
             vec_b = resp.data[1].embedding
             # Cosine similarity
-            dot = sum(a * b for a, b in zip(vec_a, vec_b))
+            dot = sum(a * b for a, b in zip(vec_a, vec_b, strict=False))
             norm_a = sum(a * a for a in vec_a) ** 0.5
             norm_b = sum(b * b for b in vec_b) ** 0.5
             if norm_a == 0 or norm_b == 0:

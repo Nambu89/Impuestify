@@ -50,12 +50,11 @@ from app.models.defensia import (
     ArgumentoCandidato,
     Brief,
     ExpedienteEstructurado,
-    Tributo,
     Fase,
     TipoDocumento,
+    Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Cita semantica libre — el RAG verificador resuelve la cita canonica.
 # Se guarda como constante para documentar la intencion y facilitar

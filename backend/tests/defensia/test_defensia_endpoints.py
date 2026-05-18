@@ -21,14 +21,15 @@ Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2B-013..T2B-018
 from __future__ import annotations
 
 import importlib
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app.auth.jwt_handler import TokenData, get_current_user
+from app.main import app
 from app.models.defensia import TipoDocumento
 from app.services.defensia_quota_service import (
     DefensiaQuotaService,
@@ -39,7 +40,6 @@ from app.services.defensia_storage import (
     DefensiaStorage,
     DefensiaStorageUnavailable,
 )
-
 
 # ---------------------------------------------------------------------------
 # Deteccion defensiva del router paralelo
@@ -574,8 +574,8 @@ def test_upload_dispara_fase1_auto_extraccion(
     )
 
     # ---- Mock phase detector ----
-    from app.services import defensia_phase_detector as _pd
     from app.models.defensia import Fase
+    from app.services import defensia_phase_detector as _pd
 
     def _fake_detect_fase(expediente, hoy=None):
         return Fase.LIQUIDACION_FIRME_PLAZO_RECURSO, 0.9

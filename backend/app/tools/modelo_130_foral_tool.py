@@ -16,9 +16,9 @@ NOTE: el Modelo 130 estatal (territorio común + Ceuta/Melilla) sigue
 disponible en `modelo_130_tool.py`. Este wrapper foral NO lo reemplaza.
 """
 
-from datetime import datetime
-from typing import Any, Dict, Optional
 import logging
+from datetime import datetime
+from typing import Any
 
 from app.utils.calculators.modelo_130_araba import Modelo130ArabaCalculator
 from app.utils.calculators.modelo_130_bizkaia import Modelo130BizkaiaCalculator
@@ -269,7 +269,7 @@ def _build_response(
     territorio_label: str,
     trimestre: int,
     year: int,
-    result: Dict[str, Any],
+    result: dict[str, Any],
 ) -> str:
     label = _TRIMESTRE_LABEL[trimestre]
     plazo = result.get("plazo", "")
@@ -317,7 +317,7 @@ def _build_response(
 async def calculate_modelo_130_foral_tool(
     territorio: str,
     trimestre: int,
-    year: Optional[int] = None,
+    year: int | None = None,
     # Bizkaia / Gipuzkoa
     regimen: str = "general",
     anos_actividad: int = 3,
@@ -341,7 +341,7 @@ async def calculate_modelo_130_foral_tool(
     actividad_agraria: bool = False,
     pct_retencion_anio_anterior: float = 0.0,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Wrapper único para los 4 calculadores forales del Modelo 130.
 

@@ -5,9 +5,10 @@ Covers: setup, verify, disable, status, login flow with MFA, backup codes.
 """
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pyotp
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -89,7 +90,7 @@ async def test_setup_mfa_generates_qr():
 @pytest.mark.asyncio
 async def test_verify_mfa_with_valid_code():
     """POST /api/auth/mfa/verify should enable MFA when given a valid TOTP code."""
-    from app.routers.mfa import verify_mfa, MFAVerifyRequest
+    from app.routers.mfa import MFAVerifyRequest, verify_mfa
 
     token_data = _make_token_data()
     secret = pyotp.random_base32()
@@ -126,8 +127,9 @@ async def test_verify_mfa_with_valid_code():
 @pytest.mark.asyncio
 async def test_verify_mfa_with_invalid_code():
     """POST /api/auth/mfa/verify should reject an invalid TOTP code."""
-    from app.routers.mfa import verify_mfa, MFAVerifyRequest
     from fastapi import HTTPException
+
+    from app.routers.mfa import MFAVerifyRequest, verify_mfa
 
     token_data = _make_token_data()
     secret = pyotp.random_base32()
@@ -162,8 +164,9 @@ async def test_verify_mfa_with_invalid_code():
 @pytest.mark.asyncio
 async def test_login_with_mfa_returns_mfa_required():
     """Login should return mfa_required=True when user has MFA enabled."""
-    from app.routers.auth import login, LoginRequest
     from fastapi import Request as FRequest
+
+    from app.routers.auth import LoginRequest, login
 
     user = _make_user()
 
@@ -202,8 +205,8 @@ async def test_login_with_mfa_returns_mfa_required():
 @pytest.mark.asyncio
 async def test_validate_mfa_with_valid_code_returns_jwt():
     """POST /api/auth/mfa/validate should return full JWT on valid TOTP code."""
-    from app.routers.mfa import validate_mfa, MFAValidateRequest
     from app.auth.jwt_handler import create_mfa_token
+    from app.routers.mfa import MFAValidateRequest, validate_mfa
 
     user = _make_user()
     secret = pyotp.random_base32()
@@ -254,8 +257,9 @@ async def test_validate_mfa_with_valid_code_returns_jwt():
 async def test_validate_mfa_with_backup_code():
     """POST /api/auth/mfa/validate should accept a valid backup code."""
     import bcrypt
-    from app.routers.mfa import validate_mfa, MFAValidateRequest
+
     from app.auth.jwt_handler import create_mfa_token
+    from app.routers.mfa import MFAValidateRequest, validate_mfa
 
     user = _make_user()
     secret = pyotp.random_base32()
@@ -310,7 +314,7 @@ async def test_validate_mfa_with_backup_code():
 @pytest.mark.asyncio
 async def test_disable_mfa():
     """POST /api/auth/mfa/disable should remove MFA with a valid TOTP code."""
-    from app.routers.mfa import disable_mfa, MFADisableRequest
+    from app.routers.mfa import MFADisableRequest, disable_mfa
 
     token_data = _make_token_data()
     secret = pyotp.random_base32()

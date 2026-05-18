@@ -6,7 +6,8 @@ Pydantic models for database entities.
 
 import uuid
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -19,7 +20,7 @@ class UserBase(BaseModel):
     """Base user model"""
 
     email: EmailStr
-    name: Optional[str] = None
+    name: str | None = None
 
 
 class UserCreate(UserBase):
@@ -64,7 +65,7 @@ class Session(BaseModel):
 class ConversationBase(BaseModel):
     """Base conversation model"""
 
-    title: Optional[str] = None
+    title: str | None = None
 
 
 class ConversationCreate(ConversationBase):
@@ -77,7 +78,7 @@ class Conversation(ConversationBase):
     """Conversation model with all fields"""
 
     id: str = Field(default_factory=generate_uuid)
-    user_id: Optional[str] = None
+    user_id: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -96,7 +97,7 @@ class MessageCreate(MessageBase):
     """Message creation model"""
 
     conversation_id: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class Message(MessageBase):
@@ -104,7 +105,7 @@ class Message(MessageBase):
 
     id: str = Field(default_factory=generate_uuid)
     conversation_id: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
@@ -115,10 +116,10 @@ class UsageMetric(BaseModel):
     """Usage metrics model"""
 
     id: str = Field(default_factory=generate_uuid)
-    user_id: Optional[str] = None
+    user_id: str | None = None
     endpoint: str
     tokens_used: int = 0
-    processing_time: Optional[float] = None
+    processing_time: float | None = None
     cached: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -132,22 +133,22 @@ class PayslipBase(BaseModel):
     filename: str
     file_path: str
     file_size: int
-    period_month: Optional[int] = None
-    period_year: Optional[int] = None
-    company_name: Optional[str] = None
-    company_cif: Optional[str] = None
-    employee_name: Optional[str] = None
-    employee_nif: Optional[str] = None
-    employee_ss: Optional[str] = None
-    gross_salary: Optional[float] = None
-    net_salary: Optional[float] = None
-    base_salary: Optional[float] = None
-    irpf_withholding: Optional[float] = None
-    irpf_percentage: Optional[float] = None
-    ss_contribution: Optional[float] = None
-    unemployment_contribution: Optional[float] = None
-    extra_payments: Optional[float] = None
-    overtime_pay: Optional[float] = None
+    period_month: int | None = None
+    period_year: int | None = None
+    company_name: str | None = None
+    company_cif: str | None = None
+    employee_name: str | None = None
+    employee_nif: str | None = None
+    employee_ss: str | None = None
+    gross_salary: float | None = None
+    net_salary: float | None = None
+    base_salary: float | None = None
+    irpf_withholding: float | None = None
+    irpf_percentage: float | None = None
+    ss_contribution: float | None = None
+    unemployment_contribution: float | None = None
+    extra_payments: float | None = None
+    overtime_pay: float | None = None
 
 
 class PayslipCreate(PayslipBase):
@@ -155,9 +156,9 @@ class PayslipCreate(PayslipBase):
 
     user_id: str
     extraction_status: str = "pending"
-    extracted_data: Optional[str] = None  # JSON string
-    analysis_summary: Optional[str] = None
-    error_message: Optional[str] = None
+    extracted_data: str | None = None  # JSON string
+    analysis_summary: str | None = None
+    error_message: str | None = None
 
 
 class Payslip(PayslipBase):
@@ -167,9 +168,9 @@ class Payslip(PayslipBase):
     user_id: str
     upload_date: datetime = Field(default_factory=datetime.utcnow)
     extraction_status: str = "pending"
-    extracted_data: Optional[str] = None
-    analysis_summary: Optional[str] = None
-    error_message: Optional[str] = None
+    extracted_data: str | None = None
+    analysis_summary: str | None = None
+    error_message: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -194,11 +195,11 @@ class Subscription(BaseModel):
     id: str = Field(default_factory=generate_uuid)
     user_id: str
     stripe_customer_id: str
-    stripe_subscription_id: Optional[str] = None
+    stripe_subscription_id: str | None = None
     plan_type: str = "particular"
     status: str = "inactive"  # active, inactive, past_due, canceled, grace_period
-    current_period_start: Optional[str] = None
-    current_period_end: Optional[str] = None
+    current_period_start: str | None = None
+    current_period_end: str | None = None
     cancel_at_period_end: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -211,10 +212,10 @@ class ContactRequest(BaseModel):
     """Contact form submission model"""
 
     id: str = Field(default_factory=generate_uuid)
-    user_id: Optional[str] = None
+    user_id: str | None = None
     email: str
-    name: Optional[str] = None
-    message: Optional[str] = None
+    name: str | None = None
+    message: str | None = None
     request_type: str = "autonomo_interest"
     status: str = "pending"
     created_at: datetime = Field(default_factory=datetime.utcnow)

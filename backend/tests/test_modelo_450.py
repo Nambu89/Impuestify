@@ -16,13 +16,13 @@ import pytest
 from app.utils.calculators.modelo_450 import (
     AIEM_TIPOS_POR_EPIGRAFE,
     ALLOWED_AIEM_RATES,
-    Modelo450Calculator,
     PLAZOS_MODELO_450,
     TIPO_AIEM_ESPECIAL,
     TIPO_AIEM_GENERAL,
     TIPO_AIEM_INTERMEDIO,
     TIPO_AIEM_REDUCIDO,
     UMBRAL_MENSUAL_EUR,
+    Modelo450Calculator,
     lookup_tipo_aiem,
 )
 

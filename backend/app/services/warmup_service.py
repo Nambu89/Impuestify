@@ -6,7 +6,7 @@ when users open the chat, before they type anything.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from openai import AsyncOpenAI
 
@@ -54,7 +54,7 @@ class WarmupService:
             self._client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         return self._client
 
-    async def _get_profile(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def _get_profile(self, user_id: str) -> dict[str, Any] | None:
         """Load user's fiscal profile."""
         db = await self._get_db()
         result = await db.execute(
@@ -79,7 +79,7 @@ class WarmupService:
             logger.warning(f"RAG warmup failed: {e}")
             return False
 
-    async def _generate_greeting(self, profile: Dict[str, Any]) -> str:
+    async def _generate_greeting(self, profile: dict[str, Any]) -> str:
         """Generate personalized greeting using gpt-5-mini."""
         ccaa = profile.get("ccaa_residencia", "")
         role = profile.get("situacion_laboral", "")
@@ -129,7 +129,7 @@ class WarmupService:
             logger.warning(f"Greeting generation failed: {e}")
             return STATIC_GREETING
 
-    async def warmup(self, user_id: str) -> Dict[str, Any]:
+    async def warmup(self, user_id: str) -> dict[str, Any]:
         """
         Warm up chat context for a user.
 

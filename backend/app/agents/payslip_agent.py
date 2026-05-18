@@ -4,12 +4,11 @@ PayslipAgent - Specialized Payslip Analysis Agent
 Uses OpenAI API with function calling for payslip analysis.
 """
 
-import os
 import logging
-from pathlib import Path
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 from openai import OpenAI
 
@@ -21,7 +20,7 @@ class AgentResponse:
     """Response from the payslip agent"""
 
     content: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
     agent_name: str
 
 
@@ -115,7 +114,7 @@ Si NO estás seguro:
 Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnicos."""
 
     def __init__(
-        self, name: str = "PayslipAgent", model: Optional[str] = None, api_key: Optional[str] = None
+        self, name: str = "PayslipAgent", model: str | None = None, api_key: str | None = None
     ):
         """
         Initialize PayslipAgent.
@@ -156,7 +155,7 @@ Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnico
         )
 
     async def analyze(
-        self, payslip_data: Dict[str, Any], user_question: Optional[str] = None
+        self, payslip_data: dict[str, Any], user_question: str | None = None
     ) -> AgentResponse:
         """
         Analiza una nómina con el agente.
@@ -256,7 +255,7 @@ Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnico
                 agent_name=self.name,
             )
 
-    async def analyze_payslip(self, pdf_path: str) -> Dict[str, Any]:
+    async def analyze_payslip(self, pdf_path: str) -> dict[str, Any]:
         """
         Analyze payslip PDF and extract key data.
 
@@ -272,8 +271,9 @@ Recuerda: Sé **claro, directo y útil**. Traduce siempre los términos técnico
             logger.info(f"📊 Analyzing payslip PDF: {pdf_path}")
 
             # Extract text from PDF using PyMuPDF
-            import pymupdf
             import hashlib
+
+            import pymupdf
 
             doc = pymupdf.open(pdf_path)
             pdf_text = ""
@@ -449,7 +449,7 @@ Si no encuentras un dato, usa null. Sé preciso con los números. Si hay multi-p
                 "payslip_data": {},
             }
 
-    def _build_context(self, payslip_data: Dict[str, Any]) -> str:
+    def _build_context(self, payslip_data: dict[str, Any]) -> str:
         """Construye el contexto desde los datos de la nómina.
         Incluye TODOS los campos extraidos para que el agente pueda
         hacer follow-ups precisos (ej: 'sin el bonus', 'con 14 pagas')."""
@@ -501,7 +501,7 @@ Si no encuentras un dato, usa null. Sé preciso con los números. Si hay multi-p
 
 
 # Global agent instance
-_payslip_agent: Optional[PayslipAgent] = None
+_payslip_agent: PayslipAgent | None = None
 
 
 def get_payslip_agent() -> PayslipAgent:

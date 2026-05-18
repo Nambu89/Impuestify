@@ -7,13 +7,13 @@ Tests the ModeloIpsiCalculator and calculate_modelo_ipsi_tool.
 import pytest
 
 from app.utils.calculators.modelo_ipsi import (
-    ModeloIpsiCalculator,
-    TIPO_MINIMO,
-    TIPO_REDUCIDO,
     TIPO_BONIFICADO,
+    TIPO_ESPECIAL,
     TIPO_GENERAL,
     TIPO_INCREMENTADO,
-    TIPO_ESPECIAL,
+    TIPO_MINIMO,
+    TIPO_REDUCIDO,
+    ModeloIpsiCalculator,
 )
 
 
@@ -425,8 +425,9 @@ class TestIpsiTool:
 
     @pytest.mark.asyncio
     async def test_tool_default_year(self):
-        from app.tools.modelo_ipsi_tool import calculate_modelo_ipsi_tool
         from datetime import datetime
+
+        from app.tools.modelo_ipsi_tool import calculate_modelo_ipsi_tool
 
         result = await calculate_modelo_ipsi_tool(
             territorio="Melilla",

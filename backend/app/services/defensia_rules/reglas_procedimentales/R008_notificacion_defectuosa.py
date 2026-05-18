@@ -28,7 +28,7 @@ el corpus indexado.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from app.models.defensia import (
     ArgumentoCandidato,
@@ -39,7 +39,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Cita semantica — describe el concepto juridico, nunca el articulo.
 # El RAG verificador la traducira a "Arts. 109-112 LGT + art. 41 Ley 39/2015
@@ -68,7 +67,7 @@ _TIPOS_ACTO_NOTIFICABLE: frozenset[TipoDocumento] = frozenset(
 )
 
 
-def _detecta_defecto(datos: dict[str, Any]) -> Optional[str]:
+def _detecta_defecto(datos: dict[str, Any]) -> str | None:
     """Inspecciona los `datos` de un documento y devuelve el codigo del
     defecto de notificacion detectado, o None si la notificacion es correcta.
 
@@ -156,7 +155,7 @@ def _descripcion_por_motivo(motivo: str) -> str:
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,  # noqa: ARG001 — brief no usado, la regla es puramente documental
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R008 sobre el expediente.
 
     Recorre el timeline buscando actos administrativos notificables con

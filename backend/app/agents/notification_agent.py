@@ -15,16 +15,16 @@ MIGRATION NOTE: Replaced Azure Document Intelligence with PyMuPDF4LLM
 - ✅ Better Markdown output for LLMs
 """
 
-import os
 import hashlib
-from typing import Dict, List, Optional, Any
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any
+
 import pymupdf4llm
 
+from app.agents.tax_agent import get_tax_agent
 from app.utils.deadline_calculator import DeadlineCalculator
 from app.utils.region_detector import RegionDetector
-from app.agents.tax_agent import get_tax_agent
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ Avisa solo al final, en una línea: "Para decisiones importantes (recurrir, aleg
             self.tax_agent = get_tax_agent()
         return self.tax_agent
 
-    async def extract_pdf(self, pdf_path: str) -> Dict[str, Any]:
+    async def extract_pdf(self, pdf_path: str) -> dict[str, Any]:
         """
         Extract content from notification PDF using PyMuPDF4LLM.
 
@@ -120,9 +120,9 @@ Avisa solo al final, en una línea: "Para decisiones importantes (recurrir, aleg
     async def analyze_notification(
         self,
         pdf_path: str,
-        notification_date: Optional[str] = None,
-        user_context: Optional[Dict] = None,
-    ) -> Dict[str, Any]:
+        notification_date: str | None = None,
+        user_context: dict | None = None,
+    ) -> dict[str, Any]:
         """
         Analyze AEAT notification PDF.
 
@@ -273,7 +273,7 @@ Avisa solo al final, en una línea: "Para decisiones importantes (recurrir, aleg
         else:
             return "Notificación general"
 
-    def _calculate_severity(self, text: str, deadlines: List[dict], notif_type: str) -> str:
+    def _calculate_severity(self, text: str, deadlines: list[dict], notif_type: str) -> str:
         """
         Calculate notification severity.
 
@@ -299,7 +299,7 @@ Avisa solo al final, en una línea: "Para decisiones importantes (recurrir, aleg
         # Low severity (informative notifications)
         return "low"
 
-    async def _get_rag_context(self, text: str, region_info: Dict) -> str:
+    async def _get_rag_context(self, text: str, region_info: dict) -> str:
         """
         Get relevant context from RAG knowledge base.
 
@@ -349,8 +349,8 @@ Avisa solo al final, en una línea: "Para decisiones importantes (recurrir, aleg
         self,
         notification_text: str,
         notification_type: str,
-        deadlines: List[dict],
-        region: Dict,
+        deadlines: list[dict],
+        region: dict,
         context: str,
     ) -> str:
         """Build prompt for LLM analysis."""
@@ -389,7 +389,7 @@ Sé breve. Solo detalla lo que NO sea obvio.
 """
         return prompt
 
-    def _extract_references(self, text: str, region_info: Dict) -> List[Dict[str, str]]:
+    def _extract_references(self, text: str, region_info: dict) -> list[dict[str, str]]:
         """
         Extract useful links and references.
 

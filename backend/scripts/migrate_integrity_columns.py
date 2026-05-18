@@ -14,11 +14,11 @@ Usage:
 Safe to run multiple times. Already-existing columns produce a WARNING, not an error.
 """
 
-import sys
-import os
-import asyncio
 import argparse
+import asyncio
 import logging
+import os
+import sys
 
 BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))

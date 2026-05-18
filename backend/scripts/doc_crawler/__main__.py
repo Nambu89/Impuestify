@@ -96,12 +96,12 @@ def cmd_verify(args: argparse.Namespace) -> None:
         else:
             unreachable.append((item, result))
 
-    print(f"\n--- Resultado ---")
+    print("\n--- Resultado ---")
     print(f"Accesibles: {len(reachable)}/{len(items)}")
     print(f"No accesibles: {len(unreachable)}/{len(items)}")
 
     if unreachable:
-        print(f"\nURLs fallidas:")
+        print("\nURLs fallidas:")
         for item, result in unreachable:
             print(f"  [{result['status_code']:>3d}] {item.territory:15s} {item.dest}")
             print(f"        URL: {item.url}")
@@ -199,7 +199,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         print(f"\n  Ciclo {cycle}: {cycle_ok} OK, {len(cycle_failed)} fallidos")
 
         if not cycle_failed:
-            print(f"  Todos los documentos descargados correctamente.")
+            print("  Todos los documentos descargados correctamente.")
             break
 
         # Prepare next cycle with only the failed items
@@ -242,7 +242,7 @@ def cmd_run(args: argparse.Namespace) -> None:
     quarantined = sum(1 for r in all_results if r.get("status") == "quarantined")
 
     print()
-    print(f"=== RESUMEN FINAL ===")
+    print("=== RESUMEN FINAL ===")
     print(
         f"Nuevos: {new} | Actualizados: {updated} | Sin cambios: {unchanged} | Fallidos: {failed}"
     )

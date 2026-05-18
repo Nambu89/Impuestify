@@ -15,12 +15,12 @@ from app.services.legal.sources.base import (
 )
 from app.services.legal.sources.boe import BoeApiSource
 from app.services.legal.sources.bopv import BopvApiSource
-from app.services.legal.sources.static_url import StaticUrlSource
 from app.services.legal.sources.dispatcher import (
     LegalSourceDispatcher,
     get_legal_source_dispatcher,
     reset_legal_source_dispatcher,
 )
+from app.services.legal.sources.static_url import StaticUrlSource
 
 __all__ = [
     "LegalSource",

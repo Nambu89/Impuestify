@@ -5,8 +5,8 @@ Provides function calling capability for the LLM to calculate
 exact IRPF (Spanish income tax) based on income and region.
 """
 
-from typing import Dict, Any, Optional
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ La función calcula el IRPF exacto en España según los ingresos anuales y la c
 
 async def calculate_irpf_tool(
     base_imponible: float, comunidad_autonoma: str, year: int = 2024
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate IRPF based on taxable income and region.
     Implements fallback system: BD local → Web extraction → Previous year
@@ -65,9 +65,8 @@ async def calculate_irpf_tool(
             Dict with IRPF calculation and formatted response
     """
     try:
-        from app.utils.irpf_calculator import IRPFCalculator
         from app.utils.ccaa_constants import normalize_ccaa
-        from app.tools.search_tool import search_tax_regulations_tool
+        from app.utils.irpf_calculator import IRPFCalculator
 
         # Initialize calculator
         calculator = IRPFCalculator()
@@ -89,7 +88,7 @@ async def calculate_irpf_tool(
             await calculator.disconnect()
 
             # Success with local DB
-            logger.info(f"✅ Successfully calculated with local DB")
+            logger.info("✅ Successfully calculated with local DB")
             return _format_irpf_result(
                 result,
                 base_imponible=base_imponible,
@@ -104,7 +103,7 @@ async def calculate_irpf_tool(
             # ATTEMPT 2: Web search DISABLED (RAG-first strategy)
             # Web searches are slow and often fail for future years
             # Instead, fallback directly to previous year
-            logger.info(f"Skipping web search, going directly to previous year fallback")
+            logger.info("Skipping web search, going directly to previous year fallback")
 
             # # ATTEMPT 2: Search web and extract data
             # logger.info(f"Attempt 2: Searching web for {ccaa_normalized} {year}")
@@ -208,7 +207,7 @@ No encontré datos de IRPF para **{ccaa_normalized}** en {year}.
 
 
 def _format_irpf_result(
-    result: Dict,
+    result: dict,
     base_imponible: float,
     comunidad_autonoma: str,
     year: int,
@@ -216,7 +215,7 @@ def _format_irpf_result(
     source_url: str = None,
     source_title: str = None,
     warning: str = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Format IRPF calculation result - CONCISE version"""
     cuota_estatal = result.get("cuota_estatal", 0)
     cuota_autonomica = result.get("cuota_autonomica", 0)

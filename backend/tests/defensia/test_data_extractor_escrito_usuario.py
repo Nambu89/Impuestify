@@ -1,8 +1,8 @@
 """Tests para el extractor de escritos del contribuyente."""
 
 from unittest.mock import patch
-from app.services.defensia_data_extractor import extract_escrito_usuario
 
+from app.services.defensia_data_extractor import extract_escrito_usuario
 
 MOCK = {
     "tipo_escrito": "reclamacion_tear",

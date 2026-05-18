@@ -1,14 +1,14 @@
 """Tests for DeclarationExtractor -- extraction of Modelo 303/130/420 from PDF text."""
 
 import pytest
+
 from app.services.declaration_extractor import (
     DeclarationExtractor,
-    detect_modelo,
-    _parse_spanish_number,
-    _extract_metadata,
     _extract_casillas_generic,
+    _extract_metadata,
+    _parse_spanish_number,
+    detect_modelo,
 )
-
 
 # ===========================================================================
 # Spanish number parsing

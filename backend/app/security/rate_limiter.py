@@ -10,18 +10,17 @@ Multi-layer protection against abuse:
 Uses in-memory storage (upgradeble to Redis for distributed setups).
 """
 
-import os
-import time
 import logging
-from typing import Callable, Dict, Optional
-from datetime import datetime, timedelta
+import os
 from collections import defaultdict
+from collections.abc import Callable
+from datetime import datetime, timedelta
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
@@ -55,10 +54,10 @@ class IPBlocker:
         self.violation_window = timedelta(minutes=violation_window_minutes)
 
         # Track violations: {ip: [(timestamp, endpoint), ...]}
-        self.violations: Dict[str, list] = defaultdict(list)
+        self.violations: dict[str, list] = defaultdict(list)
 
         # Blocked IPs: {ip: block_until_timestamp}
-        self.blocked_ips: Dict[str, datetime] = {}
+        self.blocked_ips: dict[str, datetime] = {}
 
     def record_violation(self, ip: str, endpoint: str):
         """Record a rate limit violation."""
@@ -101,7 +100,7 @@ class IPBlocker:
 
         return True
 
-    def get_block_remaining_seconds(self, ip: str) -> Optional[int]:
+    def get_block_remaining_seconds(self, ip: str) -> int | None:
         """Get remaining seconds of block for IP."""
         if ip not in self.blocked_ips:
             return None
@@ -247,7 +246,6 @@ def _initialize_limiter():
     Returns:
             Limiter instance configured with appropriate storage
     """
-    import os
 
     # Get Upstash credentials
     # For SlowAPI/limits, we need TCP endpoint, NOT REST API
@@ -308,7 +306,7 @@ def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Res
 
     # Log with structured data
     logger.warning(
-        f"⚠️ Rate limit exceeded",
+        "⚠️ Rate limit exceeded",
         extra={"ip": ip, "endpoint": endpoint, "detail": str(exc.detail), "blocked": was_blocked},
     )
 

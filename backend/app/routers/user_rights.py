@@ -12,18 +12,18 @@ Also provides:
 """
 
 import asyncio
+import json
+import logging
+import uuid
+from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone
-import json
-import uuid
-import logging
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.password import hash_password, verify_password
-from app.database.turso_client import get_db_client, TursoClient
+from app.database.turso_client import TursoClient, get_db_client
 from app.services.subscription_service import (
     get_subscription_service,
     validate_plan_role_compatibility,
@@ -42,8 +42,8 @@ router = APIRouter(prefix="/api/users/me", tags=["user-rights"])
 class UserUpdateRequest(BaseModel):
     """Request model for updating user profile"""
 
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
+    name: str | None = None
+    email: EmailStr | None = None
 
 
 class PasswordChangeRequest(BaseModel):
@@ -56,166 +56,166 @@ class PasswordChangeRequest(BaseModel):
 class FiscalProfileRequest(BaseModel):
     """Request model for updating fiscal profile (all fields optional)"""
 
-    ccaa_residencia: Optional[str] = None
-    fecha_nacimiento: Optional[str] = None
-    situacion_laboral: Optional[str] = None
-    estado_civil: Optional[str] = None  # soltero|casado|divorciado|viudo|pareja_de_hecho
-    ingresos_trabajo: Optional[float] = None
-    ss_empleado: Optional[float] = None
-    num_descendientes: Optional[int] = None
-    anios_nacimiento_desc: Optional[List[int]] = None
-    custodia_compartida: Optional[bool] = None
-    num_ascendientes_65: Optional[int] = None
-    num_ascendientes_75: Optional[int] = None
-    discapacidad_contribuyente: Optional[int] = None
-    intereses: Optional[float] = None
-    dividendos: Optional[float] = None
-    ganancias_fondos: Optional[float] = None
-    ingresos_alquiler: Optional[float] = None
-    valor_adquisicion_inmueble: Optional[float] = None
+    ccaa_residencia: str | None = None
+    fecha_nacimiento: str | None = None
+    situacion_laboral: str | None = None
+    estado_civil: str | None = None  # soltero|casado|divorciado|viudo|pareja_de_hecho
+    ingresos_trabajo: float | None = None
+    ss_empleado: float | None = None
+    num_descendientes: int | None = None
+    anios_nacimiento_desc: list[int] | None = None
+    custodia_compartida: bool | None = None
+    num_ascendientes_65: int | None = None
+    num_ascendientes_75: int | None = None
+    discapacidad_contribuyente: int | None = None
+    intereses: float | None = None
+    dividendos: float | None = None
+    ganancias_fondos: float | None = None
+    ingresos_alquiler: float | None = None
+    valor_adquisicion_inmueble: float | None = None
     # --- Autonomo-specific fields ---
-    epigrafe_iae: Optional[str] = None
-    tipo_actividad: Optional[str] = None  # "profesional" | "empresarial" | "artistica"
-    fecha_alta_autonomo: Optional[str] = None  # ISO date "2024-03-15"
-    metodo_estimacion_irpf: Optional[str] = (
+    epigrafe_iae: str | None = None
+    tipo_actividad: str | None = None  # "profesional" | "empresarial" | "artistica"
+    fecha_alta_autonomo: str | None = None  # ISO date "2024-03-15"
+    metodo_estimacion_irpf: str | None = (
         None  # "directa_normal" | "directa_simplificada" | "objetiva"
     )
-    regimen_iva: Optional[str] = (
+    regimen_iva: str | None = (
         None  # "general" | "simplificado" | "recargo_equivalencia" | "exento" | "ipsi"
     )
-    rendimientos_netos_mensuales: Optional[float] = None
-    base_cotizacion_reta: Optional[float] = None
-    territorio_foral: Optional[bool] = None
-    territorio_historico: Optional[str] = None  # "bizkaia" | "gipuzkoa" | "araba" | "navarra"
-    tipo_retencion_facturas: Optional[float] = None  # 15.0 or 7.0
-    tarifa_plana: Optional[bool] = None
-    pluriactividad: Optional[bool] = None
-    ceuta_melilla: Optional[bool] = (
+    rendimientos_netos_mensuales: float | None = None
+    base_cotizacion_reta: float | None = None
+    territorio_foral: bool | None = None
+    territorio_historico: str | None = None  # "bizkaia" | "gipuzkoa" | "araba" | "navarra"
+    tipo_retencion_facturas: float | None = None  # 15.0 or 7.0
+    tarifa_plana: bool | None = None
+    pluriactividad: bool | None = None
+    ceuta_melilla: bool | None = (
         None  # Resident in Ceuta/Melilla (60% IRPF deduction + 50% SS bonus + IPSI)
     )
     # --- Phase 1: IRPF deductions / reductions ---
-    aportaciones_plan_pensiones: Optional[float] = None
-    aportaciones_plan_pensiones_empresa: Optional[float] = None
-    hipoteca_pre2013: Optional[bool] = None
-    capital_amortizado_hipoteca: Optional[float] = None
-    intereses_hipoteca: Optional[float] = None
-    madre_trabajadora_ss: Optional[bool] = None
-    gastos_guarderia_anual: Optional[float] = None
-    familia_numerosa: Optional[bool] = None
-    tipo_familia_numerosa: Optional[str] = None  # "general" | "especial"
-    donativos_ley_49_2002: Optional[float] = None
-    donativo_recurrente: Optional[bool] = None
-    retenciones_trabajo: Optional[float] = None
-    retenciones_alquiler: Optional[float] = None
-    retenciones_ahorro: Optional[float] = None
+    aportaciones_plan_pensiones: float | None = None
+    aportaciones_plan_pensiones_empresa: float | None = None
+    hipoteca_pre2013: bool | None = None
+    capital_amortizado_hipoteca: float | None = None
+    intereses_hipoteca: float | None = None
+    madre_trabajadora_ss: bool | None = None
+    gastos_guarderia_anual: float | None = None
+    familia_numerosa: bool | None = None
+    tipo_familia_numerosa: str | None = None  # "general" | "especial"
+    donativos_ley_49_2002: float | None = None
+    donativo_recurrente: bool | None = None
+    retenciones_trabajo: float | None = None
+    retenciones_alquiler: float | None = None
+    retenciones_ahorro: float | None = None
     # --- Phase 3: Payslip/salary fields ---
-    num_pagas_anuales: Optional[int] = None  # 12 | 14
-    salario_base_mensual: Optional[float] = None
-    complementos_salariales: Optional[float] = None
-    irpf_retenido_porcentaje: Optional[float] = None
+    num_pagas_anuales: int | None = None  # 12 | 14
+    salario_base_mensual: float | None = None
+    complementos_salariales: float | None = None
+    irpf_retenido_porcentaje: float | None = None
     # --- Sprint 1: Vivienda ---
-    alquiler_vivienda_habitual: Optional[bool] = None
-    importe_alquiler_anual: Optional[float] = None
-    vivienda_habitual_propiedad: Optional[bool] = None
-    rehabilitacion_vivienda: Optional[bool] = None
-    vivienda_rural: Optional[bool] = None
-    dacion_pago_alquiler: Optional[bool] = None
-    arrendador_vivienda_social: Optional[bool] = None
+    alquiler_vivienda_habitual: bool | None = None
+    importe_alquiler_anual: float | None = None
+    vivienda_habitual_propiedad: bool | None = None
+    rehabilitacion_vivienda: bool | None = None
+    vivienda_rural: bool | None = None
+    dacion_pago_alquiler: bool | None = None
+    arrendador_vivienda_social: bool | None = None
     # --- Sprint 1: Familia ---
-    nacimiento_adopcion_reciente: Optional[bool] = None
-    adopcion_internacional: Optional[bool] = None
-    acogimiento_familiar: Optional[bool] = None
-    familia_monoparental: Optional[bool] = None
-    hijos_escolarizados: Optional[bool] = None
-    gastos_guarderia: Optional[bool] = None
-    ambos_progenitores_trabajan: Optional[bool] = None
-    hijos_estudios_universitarios: Optional[bool] = None
+    nacimiento_adopcion_reciente: bool | None = None
+    adopcion_internacional: bool | None = None
+    acogimiento_familiar: bool | None = None
+    familia_monoparental: bool | None = None
+    hijos_escolarizados: bool | None = None
+    gastos_guarderia: bool | None = None
+    ambos_progenitores_trabajan: bool | None = None
+    hijos_estudios_universitarios: bool | None = None
     # --- Sprint 1: Discapacidad ---
-    descendiente_discapacidad: Optional[bool] = None
-    ascendiente_discapacidad: Optional[bool] = None
-    ascendiente_a_cargo: Optional[bool] = None
-    familiar_discapacitado_cargo: Optional[bool] = None
-    empleada_hogar_cuidado: Optional[bool] = None
+    descendiente_discapacidad: bool | None = None
+    ascendiente_discapacidad: bool | None = None
+    ascendiente_a_cargo: bool | None = None
+    familiar_discapacitado_cargo: bool | None = None
+    empleada_hogar_cuidado: bool | None = None
     # --- Sprint 1: Donaciones ---
-    donativo_entidad_autonomica: Optional[bool] = None
-    donativo_investigacion: Optional[bool] = None
-    donativo_patrimonio: Optional[bool] = None
-    donativo_fundacion_local: Optional[bool] = None
+    donativo_entidad_autonomica: bool | None = None
+    donativo_investigacion: bool | None = None
+    donativo_patrimonio: bool | None = None
+    donativo_fundacion_local: bool | None = None
     # --- Sprint 1: Sostenibilidad ---
-    vehiculo_electrico_nuevo: Optional[bool] = None
-    obras_mejora_energetica: Optional[bool] = None
-    instalacion_renovable: Optional[bool] = None
+    vehiculo_electrico_nuevo: bool | None = None
+    obras_mejora_energetica: bool | None = None
+    instalacion_renovable: bool | None = None
     # --- Sprint 1: Territorio ---
-    municipio_despoblado: Optional[bool] = None
-    inversion_empresa_nueva: Optional[bool] = None
+    municipio_despoblado: bool | None = None
+    inversion_empresa_nueva: bool | None = None
     # --- Sprint 1: Foral (solo si CCAA foral) ---
-    epsv_aportaciones: Optional[float] = None
-    pension_viudedad: Optional[bool] = None
-    reduccion_jornada_cuidado: Optional[bool] = None
-    cuenta_vivienda_aportaciones: Optional[float] = None
+    epsv_aportaciones: float | None = None
+    pension_viudedad: bool | None = None
+    reduccion_jornada_cuidado: bool | None = None
+    cuenta_vivienda_aportaciones: float | None = None
     # --- Activity income (autonomo IRPF fields used by tax guide) ---
-    ingresos_actividad: Optional[float] = None
-    gastos_actividad: Optional[float] = None
-    cuota_autonomo_anual: Optional[float] = None
-    amortizaciones_actividad: Optional[float] = None
-    provisiones_actividad: Optional[float] = None
-    otros_gastos_actividad: Optional[float] = None
-    estimacion_actividad: Optional[str] = (
+    ingresos_actividad: float | None = None
+    gastos_actividad: float | None = None
+    cuota_autonomo_anual: float | None = None
+    amortizaciones_actividad: float | None = None
+    provisiones_actividad: float | None = None
+    otros_gastos_actividad: float | None = None
+    estimacion_actividad: str | None = (
         None  # "directa_simplificada" | "directa_normal" | "objetiva"
     )
-    inicio_actividad: Optional[bool] = None
-    un_solo_cliente: Optional[bool] = None
-    retenciones_actividad: Optional[float] = None
-    pagos_fraccionados_130: Optional[float] = None
+    inicio_actividad: bool | None = None
+    un_solo_cliente: bool | None = None
+    retenciones_actividad: float | None = None
+    pagos_fraccionados_130: float | None = None
     # --- Phase 2: Tributación conjunta + alquiler pre-2015 + rentas imputadas ---
-    tributacion_conjunta: Optional[bool] = None
-    tipo_unidad_familiar: Optional[str] = None  # "matrimonio" | "monoparental"
-    alquiler_habitual_pre2015: Optional[bool] = None
-    alquiler_pagado_anual: Optional[float] = None
-    valor_catastral_segundas_viviendas: Optional[float] = None
-    valor_catastral_revisado_post1994: Optional[bool] = None
-    gastos_alquiler_total: Optional[float] = None
+    tributacion_conjunta: bool | None = None
+    tipo_unidad_familiar: str | None = None  # "matrimonio" | "monoparental"
+    alquiler_habitual_pre2015: bool | None = None
+    alquiler_pagado_anual: float | None = None
+    valor_catastral_segundas_viviendas: float | None = None
+    valor_catastral_revisado_post1994: bool | None = None
+    gastos_alquiler_total: float | None = None
     # --- Criptomonedas (casillas 1800-1814 Modelo 100) ---
-    tiene_criptomonedas: Optional[bool] = None
-    cripto_denominaciones: Optional[str] = None
-    cripto_clave_contraprestacion: Optional[str] = None  # F | N | O | B
-    cripto_valor_transmision_total: Optional[float] = None
-    cripto_valor_adquisicion_total: Optional[float] = None
-    cripto_ganancia_neta: Optional[float] = None
-    cripto_perdida_neta: Optional[float] = None
-    cripto_en_extranjero_50k: Optional[bool] = None
-    tiene_staking_defi: Optional[bool] = None
-    exchanges_utilizados: Optional[str] = None
+    tiene_criptomonedas: bool | None = None
+    cripto_denominaciones: str | None = None
+    cripto_clave_contraprestacion: str | None = None  # F | N | O | B
+    cripto_valor_transmision_total: float | None = None
+    cripto_valor_adquisicion_total: float | None = None
+    cripto_ganancia_neta: float | None = None
+    cripto_perdida_neta: float | None = None
+    cripto_en_extranjero_50k: bool | None = None
+    tiene_staking_defi: bool | None = None
+    exchanges_utilizados: str | None = None
     # --- Apuestas y juegos — juegos privados (casillas 0281-0290) ---
-    tiene_ganancias_juegos_privados: Optional[bool] = None
-    premios_metalico_privados: Optional[float] = None
-    premios_especie_privados: Optional[float] = None
-    perdidas_juegos_privados: Optional[float] = None
+    tiene_ganancias_juegos_privados: bool | None = None
+    premios_metalico_privados: float | None = None
+    premios_especie_privados: float | None = None
+    perdidas_juegos_privados: float | None = None
     # --- Apuestas y juegos — loterías públicas (casillas 0291-0297) ---
-    tiene_premios_loterias: Optional[bool] = None
-    premios_metalico_publicos: Optional[float] = None
-    premios_especie_publicos: Optional[float] = None
+    tiene_premios_loterias: bool | None = None
+    premios_metalico_publicos: float | None = None
+    premios_especie_publicos: float | None = None
     # --- Ganancias patrimoniales financieras (casillas 0316-0354) ---
-    tiene_fondos_inversion: Optional[bool] = None
-    ganancias_reembolso_fondos: Optional[float] = None
-    perdidas_reembolso_fondos: Optional[float] = None
-    tiene_acciones: Optional[bool] = None
-    ganancias_acciones: Optional[float] = None  # ya existía, se mantiene
-    perdidas_acciones: Optional[float] = None  # ya existía, se mantiene
-    tiene_derivados: Optional[bool] = None
-    ganancias_derivados: Optional[float] = None
-    perdidas_derivados: Optional[float] = None
+    tiene_fondos_inversion: bool | None = None
+    ganancias_reembolso_fondos: float | None = None
+    perdidas_reembolso_fondos: float | None = None
+    tiene_acciones: bool | None = None
+    ganancias_acciones: float | None = None  # ya existía, se mantiene
+    perdidas_acciones: float | None = None  # ya existía, se mantiene
+    tiene_derivados: bool | None = None
+    ganancias_derivados: float | None = None
+    perdidas_derivados: float | None = None
     # --- Multi-pagador (AEAT Datos Fiscales) ---
-    pagadores: Optional[List[dict]] = None  # List of PagadorItem-compatible dicts
-    num_pagadores: Optional[int] = None
+    pagadores: list[dict] | None = None  # List of PagadorItem-compatible dicts
+    num_pagadores: int | None = None
 
 
 class UserDataExport(BaseModel):
     """Complete user data export (GDPR Art. 15)"""
 
     export_date: str
-    user: Dict[str, Any]
-    conversations: List[Dict[str, Any]]
+    user: dict[str, Any]
+    conversations: list[dict[str, Any]]
     total_conversations: int
     total_messages: int
     account_created: str
@@ -227,7 +227,7 @@ class DeleteAccountResponse(BaseModel):
     message: str
     user_id: str
     deleted_at: str
-    data_purged: Dict[str, int]
+    data_purged: dict[str, int]
 
 
 # ============================================
@@ -312,7 +312,7 @@ async def export_user_data(
 
     # 3. Build export
     export = UserDataExport(
-        export_date=datetime.now(timezone.utc).isoformat() + "Z",
+        export_date=datetime.now(UTC).isoformat() + "Z",
         user={
             "id": user_data["id"],
             "email": user_data["email"],
@@ -690,7 +690,7 @@ async def update_fiscal_profile(
     conversation-extracted data.
     """
     user_id = current_user.user_id
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Check if profile exists
     existing = await db.execute(
@@ -927,7 +927,7 @@ async def delete_user_account(
     return DeleteAccountResponse(
         message="Account deleted successfully. All data has been permanently removed.",
         user_id=user_id,
-        deleted_at=datetime.now(timezone.utc).isoformat() + "Z",
+        deleted_at=datetime.now(UTC).isoformat() + "Z",
         data_purged={
             "conversations": conversations_count,
             "messages": messages_count,

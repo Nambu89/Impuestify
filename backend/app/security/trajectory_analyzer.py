@@ -25,7 +25,6 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -59,12 +58,12 @@ class TrajectoryResult:
     is_safe: bool
     drift_turns: int
     window_size: int
-    matched_keywords: List[str]
+    matched_keywords: list[str]
     reason: str
 
 
 def analyze_trajectory(
-    user_turns: List[str],
+    user_turns: list[str],
     window: int = TRAJECTORY_WINDOW,
     drift_threshold: int = DRIFT_TURNS_THRESHOLD,
 ) -> TrajectoryResult:
@@ -83,7 +82,7 @@ def analyze_trajectory(
         return TrajectoryResult(True, 0, len(last), [], "insufficient_window")
 
     drift_count = 0
-    matched: List[str] = []
+    matched: list[str] = []
     for turn in last:
         m = _DRIFT_KEYWORDS.search(turn)
         if m:

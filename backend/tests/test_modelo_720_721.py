@@ -9,8 +9,9 @@ Covers:
 - Respuestas formateadas
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 # ---------------------------------------------------------------------------
 # Modelo 720 tests

@@ -19,7 +19,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, reset_registry
 
-
 _R030_MODULE_NAME = (
     "app.services.defensia_rules.reglas_otros_tributos.R030_iva_recargo_equivalencia"
 )

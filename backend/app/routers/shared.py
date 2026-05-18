@@ -11,13 +11,12 @@ import json
 import logging
 import re
 import uuid
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.auth.jwt_handler import get_current_user, TokenData
-from app.database.turso_client import get_db_client, TursoClient
+from app.auth.jwt_handler import TokenData, get_current_user
+from app.database.turso_client import TursoClient, get_db_client
 
 logger = logging.getLogger(__name__)
 

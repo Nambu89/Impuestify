@@ -12,15 +12,13 @@ This allows the system to remember user information across sessions:
 - Previous questions and preferences
 """
 
-import os
-import logging
-import json
 import hashlib
+import json
+import logging
 import re
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-import asyncio
+from datetime import UTC, datetime
+from typing import Any
 
 from app.config import settings
 
@@ -45,8 +43,8 @@ class UserFact:
     content: str
     confidence: float = 1.0
     source: str = "user_statement"  # 'user_statement', 'inferred', 'workspace'
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    last_accessed: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    last_accessed: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
@@ -54,22 +52,22 @@ class UserProfile:
     """Structured user profile stored in Turso DB."""
 
     user_id: str
-    ccaa_residencia: Optional[str] = None
-    situacion_laboral: Optional[str] = (
+    ccaa_residencia: str | None = None
+    situacion_laboral: str | None = (
         None  # 'asalariado', 'autonomo', 'pensionista', 'desempleado', 'farmaceutico'
     )
-    tiene_vivienda: Optional[bool] = None
-    primera_vivienda: Optional[bool] = None
-    fecha_nacimiento: Optional[str] = None
+    tiene_vivienda: bool | None = None
+    primera_vivienda: bool | None = None
+    fecha_nacimiento: str | None = None
     # NEW: Extended fiscal profile fields
-    edad: Optional[int] = None  # User's age
-    ingresos_brutos: Optional[float] = None  # Annual gross income
-    donation_pending: Optional[float] = None  # Pending donation amount
-    donation_type: Optional[str] = None  # 'money', 'property', 'inheritance'
-    donation_from: Optional[str] = None  # 'mother', 'father', 'other'
-    datos_fiscales: Optional[Dict[str, Any]] = None
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    edad: int | None = None  # User's age
+    ingresos_brutos: float | None = None  # Annual gross income
+    donation_pending: float | None = None  # Pending donation amount
+    donation_type: str | None = None  # 'money', 'property', 'inheritance'
+    donation_from: str | None = None  # 'mother', 'father', 'other'
+    datos_fiscales: dict[str, Any] | None = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 class UserMemoryService:
@@ -204,7 +202,7 @@ class UserMemoryService:
     NAMESPACE = "user_memory"
 
     def __init__(
-        self, db_client=None, vector_url: Optional[str] = None, vector_token: Optional[str] = None
+        self, db_client=None, vector_url: str | None = None, vector_token: str | None = None
     ):
         """
         Initialize User Memory Service.
@@ -236,7 +234,7 @@ class UserMemoryService:
         else:
             logger.info("📝 User Memory Service initialized (DB only mode)")
 
-    def _get_embedding(self, text: str) -> Optional[List[float]]:
+    def _get_embedding(self, text: str) -> list[float] | None:
         """Generate embedding using OpenAI text-embedding-3-large (1536 dims)."""
         if not self._openai_client:
             return None
@@ -255,7 +253,7 @@ class UserMemoryService:
     # NUMERIC VALUE EXTRACTION
     # ========================================
 
-    def _extract_numeric_value(self, message: str, pattern_type: str) -> Optional[float]:
+    def _extract_numeric_value(self, message: str, pattern_type: str) -> float | None:
         """
         Extract numeric values from message using regex patterns.
 
@@ -288,7 +286,7 @@ class UserMemoryService:
 
         return None
 
-    def _extract_donation_type(self, message: str) -> Optional[str]:
+    def _extract_donation_type(self, message: str) -> str | None:
         """Extract donation type from message."""
         message_lower = message.lower()
 
@@ -306,7 +304,7 @@ class UserMemoryService:
 
         return None
 
-    def _extract_donor_relation(self, message: str) -> Optional[str]:
+    def _extract_donor_relation(self, message: str) -> str | None:
         """Extract donor relation from message."""
         message_lower = message.lower()
 
@@ -329,7 +327,7 @@ class UserMemoryService:
     # FACT EXTRACTION
     # ========================================
 
-    def extract_facts_from_message(self, message: str) -> List[UserFact]:
+    def extract_facts_from_message(self, message: str) -> list[UserFact]:
         """
         Extract facts from a user message.
 
@@ -585,7 +583,7 @@ class UserMemoryService:
             logger.warning(f"⚠️ Failed to store fact in vector memory: {e}")
             return False
 
-    async def recall_facts(self, user_id: str, query: str, limit: int = 5) -> List[UserFact]:
+    async def recall_facts(self, user_id: str, query: str, limit: int = 5) -> list[UserFact]:
         """
         Recall relevant facts for a user based on query.
 
@@ -624,7 +622,7 @@ class UserMemoryService:
                     confidence=result.score,
                     source=result.metadata.get("source", "unknown"),
                     created_at=result.metadata.get("created_at", ""),
-                    last_accessed=datetime.now(timezone.utc).isoformat(),
+                    last_accessed=datetime.now(UTC).isoformat(),
                 )
                 facts.append(fact)
 
@@ -635,7 +633,7 @@ class UserMemoryService:
             logger.warning(f"⚠️ Failed to recall facts: {e}")
             return []
 
-    async def get_user_context(self, user_id: str) -> Dict[str, Any]:
+    async def get_user_context(self, user_id: str) -> dict[str, Any]:
         """
         Get all stored context for a user.
 
@@ -761,7 +759,7 @@ class UserMemoryService:
     # DATABASE OPERATIONS
     # ========================================
 
-    async def _get_profile_from_db(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def _get_profile_from_db(self, user_id: str) -> dict[str, Any] | None:
         """Get user profile from Turso database."""
         if not self.db:
             return None
@@ -825,7 +823,7 @@ class UserMemoryService:
                 return False
 
             # Update the field with source metadata
-            now = datetime.now(timezone.utc).isoformat()
+            now = datetime.now(UTC).isoformat()
             datos_fiscales[key] = {
                 "value": value,
                 "_source": source,
@@ -861,7 +859,7 @@ class UserMemoryService:
             return False
 
     async def update_profile(
-        self, user_id: str, ccaa: Optional[str] = None, employment: Optional[str] = None, **kwargs
+        self, user_id: str, ccaa: str | None = None, employment: str | None = None, **kwargs
     ) -> bool:
         """
         Update user profile in database.
@@ -880,7 +878,7 @@ class UserMemoryService:
             return False
 
         try:
-            now = datetime.now(timezone.utc).isoformat()
+            now = datetime.now(UTC).isoformat()
 
             # Check if profile exists
             existing = await self._get_profile_from_db(user_id)
@@ -922,7 +920,7 @@ class UserMemoryService:
             logger.error(f"❌ Failed to update profile: {e}")
             return False
 
-    async def process_message_for_memory(self, user_id: str, message: str) -> Dict[str, Any]:
+    async def process_message_for_memory(self, user_id: str, message: str) -> dict[str, Any]:
         """
         Process a user message to extract and store facts.
 
@@ -1013,7 +1011,7 @@ class UserMemoryService:
 
 
 # Global instance
-_user_memory_service: Optional[UserMemoryService] = None
+_user_memory_service: UserMemoryService | None = None
 
 
 def get_user_memory_service(db_client=None) -> UserMemoryService:

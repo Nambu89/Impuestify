@@ -407,7 +407,7 @@ async def test_130_deduccion_80bis_graduated():
     # Neto = 4000, 20% = 800, resultado = 800 - 62.5 = 737.5
     assert result["resultado_final"] == 737.5
 
-    print(f"  Renta anterior: 9500 EUR")
+    print("  Renta anterior: 9500 EUR")
     print(f"  Deduccion 80 bis: {result['deduccion_80bis']} EUR")
     print(f"  Resultado: {result['resultado_final']} EUR")
 
@@ -450,7 +450,7 @@ async def test_130_no_deduccion_80bis():
     # Neto = 10000, 20% = 2000, sin deduccion → resultado = 2000
     assert result["resultado_final"] == 2000.0
 
-    print(f"  Renta anterior: 25000 EUR → deduccion: 0 EUR")
+    print("  Renta anterior: 25000 EUR → deduccion: 0 EUR")
     print(f"  Resultado: {result['resultado_final']} EUR")
     print("  PASS")
     return True
@@ -476,7 +476,7 @@ async def test_130_negative_net():
     assert result["seccion_i"]["rendimiento_neto"] == 0.0
     assert result["resultado_final"] == 0.0
 
-    print(f"  Ingresos: 3000, Gastos: 5000")
+    print("  Ingresos: 3000, Gastos: 5000")
     print(f"  Rendimiento neto: {result['seccion_i']['rendimiento_neto']} EUR (floor 0)")
     print(f"  Resultado: {result['resultado_final']} EUR")
     print("  PASS")
@@ -533,8 +533,8 @@ async def test_tools_registration():
 
     print(f"  Total tools: {len(ALL_TOOLS)}")
     print(f"  Total executors: {len(TOOL_EXECUTORS)}")
-    print(f"  303 registered: YES")
-    print(f"  130 registered: YES")
+    print("  303 registered: YES")
+    print("  130 registered: YES")
     print("  PASS")
     return True
 

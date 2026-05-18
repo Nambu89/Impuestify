@@ -6,16 +6,15 @@ Mounted at /auth/webauthn/* in main.py.
 
 import logging
 from dataclasses import asdict
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr
 
 from app.auth.jwt_handler import (
-    get_current_user,
     TokenData,
     create_access_token,
     create_refresh_token,
+    get_current_user,
 )
 from app.auth.webauthn_handler import WebAuthnService
 from app.security.rate_limiter import limiter
@@ -35,7 +34,7 @@ def _get_service(request: Request) -> WebAuthnService:
 
 class RegisterCompleteBody(BaseModel):
     credential: dict
-    label: Optional[str] = None
+    label: str | None = None
 
 
 class LoginBeginBody(BaseModel):

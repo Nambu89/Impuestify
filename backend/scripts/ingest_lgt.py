@@ -8,6 +8,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent
@@ -31,7 +32,7 @@ async def ingest_lgt():
 
     if not lgt_dir.exists():
         print(f"❌ Directory not found: {lgt_dir}")
-        print(f"   Please create it and add LGT PDFs there")
+        print("   Please create it and add LGT PDFs there")
         return
 
     # Find all PDFs
@@ -56,7 +57,7 @@ async def ingest_lgt():
                 category="normativa",  # Tag as legal framework
                 source="BOE - Ley General Tributaria",
             )
-            print(f"   ✅ Completed\n")
+            print("   ✅ Completed\n")
         except Exception as e:
             print(f"   ❌ Error: {e}\n")
             continue

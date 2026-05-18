@@ -7,7 +7,6 @@ Integration tests for main API endpoints.
 import pytest
 from fastapi.testclient import TestClient
 
-
 # Note: These tests require the app to be properly configured
 # Run with: pytest tests/test_api.py -v
 

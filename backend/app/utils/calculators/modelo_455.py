@@ -36,11 +36,11 @@ NO existe deduccion de cuotas soportadas: AIEM es monofasico.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.utils.calculators.modelo_450 import (
-    ALLOWED_AIEM_RATES,
     AIEM_TIPOS_POR_EPIGRAFE,  # noqa: F401  (re-exportado para tests)
+    ALLOWED_AIEM_RATES,
     TIPO_AIEM_ESPECIAL,
     TIPO_AIEM_GENERAL,
     TIPO_AIEM_INTERMEDIO,
@@ -49,16 +49,15 @@ from app.utils.calculators.modelo_450 import (
 )
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
-
 # Plazo Modelo 455 anual: 1-30 enero ano siguiente (Orden ATC anual).
-PLAZO_MODELO_455_ANUAL: Dict[str, Any] = {
+PLAZO_MODELO_455_ANUAL: dict[str, Any] = {
     "mes_fin": 1,
     "dia_fin": 30,
     "anio_siguiente": True,
 }
 
 
-def _resolve_year(year: Optional[int]) -> int:
+def _resolve_year(year: int | None) -> int:
     if year is None:
         return 2025
     return int(year)
@@ -73,24 +72,24 @@ class Modelo455Calculator:
     soporta ambas modalidades via el parametro `periodicidad`.
     """
 
-    def __init__(self, repo: Optional[TaxParameterRepository] = None) -> None:
+    def __init__(self, repo: TaxParameterRepository | None = None) -> None:
         self._repo = repo
 
     async def calculate(
         self,
         *,
-        bienes_anuales: Optional[List[Dict[str, Any]]] = None,
-        epigrafe_zec: Optional[str] = None,
+        bienes_anuales: list[dict[str, Any]] | None = None,
+        epigrafe_zec: str | None = None,
         cuotas_compensar_anteriores: float = 0.0,
         rectificacion_bases: float = 0.0,
         rectificacion_cuotas: float = 0.0,
         regularizacion_anual: float = 0.0,
         resultado_anterior_complementaria: float = 0.0,
-        year: Optional[int] = None,
+        year: int | None = None,
         periodicidad: str = "anual",  # 'anual' (default) | 'trimestral'
-        quarter: Optional[int] = None,
+        quarter: int | None = None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula la autoliquidacion AIEM ZEC (Modelo 455).
 
@@ -141,8 +140,8 @@ class Modelo455Calculator:
         # -------------------------------------------------------------------
         # 1. DEVENGADO — iterar sobre cada bien
         # -------------------------------------------------------------------
-        desglose_bienes: List[Dict[str, Any]] = []
-        warnings: List[str] = []
+        desglose_bienes: list[dict[str, Any]] = []
+        warnings: list[str] = []
         total_base = 0.0
         total_cuota = 0.0
 
@@ -162,7 +161,7 @@ class Modelo455Calculator:
             descripcion = str(bien.get("descripcion", "") or "").strip()
             tipo_manual = bien.get("tipo_aiem")
 
-            tipo_aplicado: Optional[float] = None
+            tipo_aplicado: float | None = None
             origen_tipo = "manual"
 
             if tipo_manual is not None:

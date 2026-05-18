@@ -16,12 +16,12 @@ from __future__ import annotations
 import pytest
 
 from app.utils.calculators.modelo_455 import (
-    Modelo455Calculator,
     PLAZO_MODELO_455_ANUAL,
     TIPO_AIEM_ESPECIAL,
     TIPO_AIEM_GENERAL,
     TIPO_AIEM_INTERMEDIO,
     TIPO_AIEM_REDUCIDO,
+    Modelo455Calculator,
 )
 
 

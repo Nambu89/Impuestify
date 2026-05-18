@@ -2,9 +2,11 @@
 Tests for ConversationAnalyzer — LLM post-conversation fiscal fact extraction.
 """
 
-import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from app.services.conversation_analyzer import ConversationAnalyzer
 
 

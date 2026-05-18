@@ -11,8 +11,8 @@ Covers:
 - Seed data integrity: FORAL_MINIMOS constants
 """
 
-import sys
 import asyncio
+import sys
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -46,8 +46,8 @@ _mock("libsql_client")
 # Imports after mocking
 # ---------------------------------------------------------------------------
 
+from app.utils.irpf_simulator import FORAL_MINIMOS, IRPFSimulator  # noqa: E402
 from app.utils.regime_classifier import classify_regime, is_foral  # noqa: E402
-from app.utils.irpf_simulator import IRPFSimulator, FORAL_MINIMOS  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -99,7 +99,7 @@ NAVARRA_TRAMOS = _make_scale_rows(
 )
 
 
-def _make_work_result(rendimiento_neto_reducido: float) -> Dict[str, Any]:
+def _make_work_result(rendimiento_neto_reducido: float) -> dict[str, Any]:
     return {"rendimiento_neto_reducido": rendimiento_neto_reducido}
 
 
@@ -119,7 +119,7 @@ async def _run_simulate(
     donativos_forales: float = 0.0,
     ingresos_actividad: float = 0.0,
     year: int = 2025,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Build a minimal IRPFSimulator with mocked sub-calculators and run simulate().
     """

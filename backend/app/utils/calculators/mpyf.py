@@ -8,7 +8,7 @@ Each CCAA may have different amounts (loaded from tax_parameters with
 jurisdiction fallback to Estatal).
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -26,7 +26,7 @@ class MPYFCalculator:
         year: int = 2024,
         edad_contribuyente: int = 35,
         num_descendientes: int = 0,
-        anios_nacimiento_desc: Optional[List[int]] = None,
+        anios_nacimiento_desc: list[int] | None = None,
         custodia_compartida: bool = False,
         num_ascendientes_65: int = 0,
         num_ascendientes_75: int = 0,
@@ -38,7 +38,7 @@ class MPYFCalculator:
         num_ascendientes_discapacidad_33: int = 0,
         num_ascendientes_discapacidad_65: int = 0,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate MPYF for both state and autonomous level.
 
@@ -99,10 +99,10 @@ class MPYFCalculator:
 
     @staticmethod
     def _compute(
-        params: Dict[str, float],
+        params: dict[str, float],
         edad: int,
         n_desc: int,
-        anios: Optional[List[int]],
+        anios: list[int] | None,
         custodia: bool,
         asc65: int,
         asc75: int,

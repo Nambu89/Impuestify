@@ -10,6 +10,7 @@ para trazabilidad.
 """
 
 from __future__ import annotations
+
 import json
 import logging
 from io import BytesIO
@@ -65,6 +66,7 @@ DOCUMENTO:
 def _gemini_extract_liquidacion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     """Llama a Gemini Vision sobre el PDF. Aislado para mock en tests."""
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -128,6 +130,7 @@ DOCUMENTO:
 def _gemini_extract_sancion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     """Llama a Gemini para extraer datos de sanción. Aislado para mock."""
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -179,6 +182,7 @@ DOCUMENTO:
 
 def _gemini_extract_propuesta(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -220,6 +224,7 @@ DOCUMENTO:
 
 def _gemini_extract_requerimiento(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
@@ -263,6 +268,7 @@ DOCUMENTO:
 
 def _gemini_extract_escrito_usuario(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
     from google import genai
+
     from app.config import settings
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)

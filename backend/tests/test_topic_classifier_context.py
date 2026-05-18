@@ -16,8 +16,8 @@ import pytest
 
 from app.security.topic_classifier import (
     FiscalTopicClassifier,
-    TopicContext,
     TopicCheckResult,
+    TopicContext,
     _build_user_message,
     _context_hash,
     _has_fiscal_signal,

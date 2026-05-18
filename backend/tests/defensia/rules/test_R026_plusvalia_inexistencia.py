@@ -39,7 +39,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
 
-
 # ---------------------------------------------------------------------------
 # Aislamiento del REGISTRY — carga solo R026
 # ---------------------------------------------------------------------------

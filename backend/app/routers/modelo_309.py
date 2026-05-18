@@ -10,7 +10,6 @@ Wrapper directo de `calculate_modelo_309_tool` — coherente con el tool LLM.
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -27,7 +26,7 @@ class Modelo309Request(BaseModel):
     """Parametros del calculo del Modelo 309."""
 
     periodo: str = Field(..., description="Trimestre: '1T', '2T', '3T' o '4T'")
-    year: Optional[int] = Field(None, description="Ejercicio fiscal")
+    year: int | None = Field(None, description="Ejercicio fiscal")
 
     # Adquisiciones intracomunitarias
     base_intracomunitarias_21: float = Field(

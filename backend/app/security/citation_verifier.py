@@ -30,8 +30,8 @@ from __future__ import annotations
 import logging
 import re
 import unicodedata
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 # ── Citation patterns ────────────────────────────────────────────────────────
 
 # Match orders matter: more specific first.
-_CITATION_PATTERNS: List[Tuple[str, str]] = [
+_CITATION_PATTERNS: list[tuple[str, str]] = [
     # Articles of common Spanish tax laws.
     # `(?<![\d/])` lookbehind prevents capturing years used in law
     # references (e.g. "Ley 58/2003 LGT" must NOT yield "2003 LGT" as
@@ -83,7 +83,7 @@ _COMPILED_PATTERNS = [
 # considered verified without requiring RAG chunk evidence. Invented or
 # unknown citations still require chunk support, preserving the safety
 # net against hallucinations.
-def _is_known_legal_reference(citation: "Citation") -> bool:
+def _is_known_legal_reference(citation: Citation) -> bool:
     """True if the citation refers to a vigent norm or canonical article
     in the legal registry (data-driven via YAML)."""
     # Lazy import avoids circular dependency at module load time.
@@ -98,7 +98,7 @@ def _is_known_legal_reference(citation: "Citation") -> bool:
     return False
 
 
-def _check_derogated_norms(citations: Iterable["Citation"]) -> List["Citation"]:
+def _check_derogated_norms(citations: Iterable[Citation]) -> list[Citation]:
     """Check vigencia of cited norms against BOE API. Returns list of
     derogated norms (so callers can add a specific warning).
 
@@ -123,7 +123,7 @@ def _check_derogated_norms(citations: Iterable["Citation"]) -> List["Citation"]:
 
     registry = get_legal_registry()
 
-    derogated: List["Citation"] = []
+    derogated: list[Citation] = []
     for c in citations:
         if c.label not in ("ley", "rd", "real_decreto"):
             continue
@@ -143,10 +143,10 @@ def _check_derogated_norms(citations: Iterable["Citation"]) -> List["Citation"]:
     return derogated
 
 
-async def _check_vigencia_async(boe_id: str) -> Optional[bool]:
+async def _check_vigencia_async(boe_id: str) -> bool | None:
     """Helper: instantiate BoeApiClient and check vigencia. None on error."""
-    from app.services.legal.boe_client import BoeApiClient
     from app.database.turso_client import get_turso_client
+    from app.services.legal.boe_client import BoeApiClient
 
     db = None
     try:
@@ -189,24 +189,24 @@ class Citation:
     label: str  # category: art_law, ley, rd, etc.
     normalized: str  # normalized form for matching
     verified: bool = False
-    matched_chunk_id: Optional[str] = None
+    matched_chunk_id: str | None = None
 
 
 @dataclass
 class VerificationResult:
-    citations: List[Citation] = field(default_factory=list)
-    unverified: List[Citation] = field(default_factory=list)
+    citations: list[Citation] = field(default_factory=list)
+    unverified: list[Citation] = field(default_factory=list)
     has_unverified: bool = False
-    warning_footer: Optional[str] = None
-    annotated_response: Optional[str] = None
+    warning_footer: str | None = None
+    annotated_response: str | None = None
 
 
-def extract_citations(text: str) -> List[Citation]:
+def extract_citations(text: str) -> list[Citation]:
     """Extract all legal citations from `text`. Deduplicates by normalized form."""
     if not text:
         return []
     seen = set()
-    citations: List[Citation] = []
+    citations: list[Citation] = []
     for pattern, label in _COMPILED_PATTERNS:
         for match in pattern.finditer(text):
             raw = match.group(0).strip()
@@ -241,7 +241,7 @@ def verify_citations(
         return VerificationResult(citations=[], unverified=[], has_unverified=False)
 
     # Build a single normalized corpus from the chunks for fast lookup.
-    chunk_index: List[Tuple[str, str]] = []  # (chunk_id, normalized_text)
+    chunk_index: list[tuple[str, str]] = []  # (chunk_id, normalized_text)
     for chunk in rag_chunks or []:
         text = chunk.get("text") or chunk.get("content") or chunk.get("chunk_text") or ""
         chunk_id = chunk.get("id") or chunk.get("chunk_id") or "unknown"
@@ -252,7 +252,7 @@ def verify_citations(
         # No retrieval evidence: every citation is unverified, EXCEPT
         # those known by the legal registry (vigent norms / canonical
         # articles from `backend/data/legal/`).
-        unverified: List[Citation] = []
+        unverified: list[Citation] = []
         for c in citations:
             if _is_known_legal_reference(c):
                 c.verified = True
@@ -261,7 +261,7 @@ def verify_citations(
                 c.verified = False
                 unverified.append(c)
     else:
-        unverified: List[Citation] = []
+        unverified: list[Citation] = []
         for c in citations:
             matched = False
             for chunk_id, norm_text in chunk_index:
@@ -316,7 +316,7 @@ def verify_citations(
     )
 
 
-def _build_derogated_footer(derogated: List["Citation"]) -> str:
+def _build_derogated_footer(derogated: list[Citation]) -> str:
     """Specific warning when BOE API confirms a cited norm is derogated."""
     if not derogated:
         return ""
@@ -332,7 +332,7 @@ def _build_derogated_footer(derogated: List["Citation"]) -> str:
     )
 
 
-def _build_warning_footer(unverified: List[Citation]) -> str:
+def _build_warning_footer(unverified: list[Citation]) -> str:
     if not unverified:
         return ""
     if len(unverified) == 1:
@@ -348,7 +348,7 @@ def _build_warning_footer(unverified: List[Citation]) -> str:
     )
 
 
-def _annotate_response(response_text: str, unverified: List[Citation]) -> str:
+def _annotate_response(response_text: str, unverified: list[Citation]) -> str:
     """
     Append the warning footer to the response. We do NOT modify the body — the
     user sees the original claim plus the warning, never silent stripping.

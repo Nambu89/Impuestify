@@ -1,4 +1,5 @@
 import pytest
+
 from app.territories import get_territory, list_territories
 from app.territories.registry import _registry
 

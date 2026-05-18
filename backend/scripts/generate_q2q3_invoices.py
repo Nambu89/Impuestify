@@ -1,11 +1,13 @@
 """Generate 20 test invoices for Q2-Q3 2025 (Carlos Martinez, Consultor IT)."""
 
-import sys, os
+import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from pathlib import Path
-from scripts.generate_autonomo_invoices import create_invoice_pdf
+
 import scripts.generate_autonomo_invoices as gen
+from scripts.generate_autonomo_invoices import create_invoice_pdf
 
 OUTPUT = Path(os.path.dirname(__file__)).parent.parent / "Facturas prueba 2"
 OUTPUT.mkdir(parents=True, exist_ok=True)

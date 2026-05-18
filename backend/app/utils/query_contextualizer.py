@@ -9,7 +9,6 @@ Heuristic-only, no LLM calls.
 """
 
 import re
-from typing import List, Dict
 
 # Patterns to extract from conversation history
 _NUMBER_PATTERN = re.compile(r"\b(\d[\d.,]*)\s*(€|euros?|EUR)?\b")
@@ -34,7 +33,7 @@ _FISCAL_CONCEPT_PATTERN = re.compile(
 
 def contextualize_query(
     query: str,
-    conversation_history: List[Dict[str, str]],
+    conversation_history: list[dict[str, str]],
     last_rag_query: str = "",
 ) -> str:
     """

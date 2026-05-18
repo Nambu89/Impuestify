@@ -4,7 +4,7 @@ Logging and notifications — crawler log + pending ingest flag.
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from .config import CRAWLER_LOG, MAX_LOG_ENTRIES, PENDING_INGEST
 
@@ -17,12 +17,12 @@ def append_log(results: list[dict]) -> None:
     entries = []
     if CRAWLER_LOG.exists():
         try:
-            with open(CRAWLER_LOG, "r", encoding="utf-8") as f:
+            with open(CRAWLER_LOG, encoding="utf-8") as f:
                 entries = json.load(f)
         except (json.JSONDecodeError, ValueError):
             entries = []
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     new_docs = [r for r in results if r.get("status") == "new"]
     updated = [r for r in results if r.get("status") == "updated"]
     failed = [r for r in results if r.get("status") in ("failed", "invalid", "rate_limited")]
@@ -64,7 +64,7 @@ def write_pending_ingest(results: list[dict]) -> None:
             PENDING_INGEST.unlink()
         return
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     data = {
         "generated_at": now,
         "count": len(actionable),

@@ -5,7 +5,7 @@ Routes user queries to the appropriate specialist agent.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any
 
 try:
     from agent_framework import ChatAgent, Workflow
@@ -17,10 +17,10 @@ except Exception:
     ChatAgent = None
     Workflow = None
     OpenAIChatClient = None
-from app.agents.tax_agent import get_tax_agent
-from app.agents.payslip_agent import get_payslip_agent
-from app.agents.workspace_agent import get_workspace_agent
 from app.agents.competitor_analysis_agent import get_competitor_analysis_agent
+from app.agents.payslip_agent import get_payslip_agent
+from app.agents.tax_agent import get_tax_agent
+from app.agents.workspace_agent import get_workspace_agent
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +137,7 @@ Responde SOLO con: "TaxAgent", "PayslipAgent", "WorkspaceAgent" o "CompetitorAna
             logger.error(f"Routing error: {e}", exc_info=True)
             return "TaxAgent"  # Default
 
-    async def run(self, query: str, context: Dict[str, Any] = None):
+    async def run(self, query: str, context: dict[str, Any] = None):
         """
         Run coordinator: route and execute appropriate agent.
 

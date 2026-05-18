@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -163,12 +163,12 @@ MODELO_721_TOOL: dict = {
 
 async def check_modelo_721_tool(
     crypto_extranjero_valor: float = 0,
-    exchanges_extranjeros: Optional[List[str]] = None,
-    ultimo_721_presentado: Optional[int] = None,
-    valor_ultimo_721: Optional[float] = None,
-    exchanges_via_sucursal_espanola: Optional[List[str]] = None,
+    exchanges_extranjeros: list[str] | None = None,
+    ultimo_721_presentado: int | None = None,
+    valor_ultimo_721: float | None = None,
+    exchanges_via_sucursal_espanola: list[str] | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Evalua la obligacion de presentar el Modelo 721 (criptomonedas en el extranjero).
 
@@ -202,9 +202,9 @@ async def check_modelo_721_tool(
         # 2. Si esta en EXCHANGES_CON_SUCURSAL_ESPANOLA Y el usuario indica que
         #    contrata con la sucursal espanola -> excluido (informa M172/M173)
         # 3. Resto -> afectado por M721
-        exchanges_afectados: List[str] = []
-        exchanges_espanoles: List[str] = []
-        exchanges_sucursal_excluidos: List[str] = []
+        exchanges_afectados: list[str] = []
+        exchanges_espanoles: list[str] = []
+        exchanges_sucursal_excluidos: list[str] = []
         for ex in exchanges:
             ex_clean = ex.strip()
             ex_lower = ex_clean.lower()
@@ -298,13 +298,13 @@ def _generar_recomendaciones_721(
     por_incremento: bool,
     valor: float,
     incremento: float,
-    exchanges_afectados: List[str],
-    exchanges_espanoles: List[str],
-    exchanges_sucursal_excluidos: List[str],
+    exchanges_afectados: list[str],
+    exchanges_espanoles: list[str],
+    exchanges_sucursal_excluidos: list[str],
     ejercicio: int,
-) -> List[str]:
+) -> list[str]:
     """Genera recomendaciones personalizadas para el Modelo 721."""
-    recs: List[str] = []
+    recs: list[str] = []
 
     if not obligado:
         recs.append(
@@ -390,16 +390,16 @@ def _format_721_response(
     por_incremento: bool,
     valor: float,
     incremento: float,
-    exchanges_afectados: List[str],
-    exchanges_espanoles: List[str],
-    exchanges_sucursal_excluidos: List[str],
+    exchanges_afectados: list[str],
+    exchanges_espanoles: list[str],
+    exchanges_sucursal_excluidos: list[str],
     plazo: str,
-    recomendaciones: List[str],
+    recomendaciones: list[str],
     ejercicio: int,
-    ultimo_presentado: Optional[int],
+    ultimo_presentado: int | None,
 ) -> str:
     """Formatea la respuesta del Modelo 721 para el usuario."""
-    lines: List[str] = []
+    lines: list[str] = []
     lines.append(f"Modelo 721 — Monedas Virtuales en el Extranjero (Ejercicio {ejercicio})")
     lines.append("")
 

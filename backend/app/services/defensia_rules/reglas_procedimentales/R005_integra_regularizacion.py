@@ -31,8 +31,6 @@ localizar la cita canonica adecuada al caso concreto (IVA vs IRPF vs otros).
 
 from __future__ import annotations
 
-from typing import Optional
-
 from app.models.defensia import (
     ArgumentoCandidato,
     Brief,
@@ -41,7 +39,6 @@ from app.models.defensia import (
     TipoDocumento,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Cita semantica — NUNCA hardcodear "Art. X LGT", "STS", "TEAC RG" aqui.
 # El RAG verificador resuelve la referencia canonica especifica.
@@ -89,7 +86,7 @@ def _dispara_iva_sin_rectificacion(datos: dict) -> bool:
         "(doctrina TS y TEAC consolidada)"
     ),
 )
-def evaluar(expediente: ExpedienteEstructurado, brief: Brief) -> Optional[ArgumentoCandidato]:
+def evaluar(expediente: ExpedienteEstructurado, brief: Brief) -> ArgumentoCandidato | None:
     """Evalua si el expediente presenta un supuesto de regularizacion
     incompleta que justifique invocar el principio de integra regularizacion.
 

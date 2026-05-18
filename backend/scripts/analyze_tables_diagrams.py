@@ -12,10 +12,10 @@ Output: Report of all structured data that should be extracted to dedicated SQL 
 
 import asyncio
 import os
-import sys
 import re
-from pathlib import Path
+import sys
 from collections import defaultdict
+from pathlib import Path
 
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))

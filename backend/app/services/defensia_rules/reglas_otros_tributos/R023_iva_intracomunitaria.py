@@ -49,7 +49,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # Cita semantica libre — el RAG verificador resuelve la cita canonica.
 _CITA_SEMANTICA = (
     "Exencion de entregas intracomunitarias de bienes cuando se acreditan "

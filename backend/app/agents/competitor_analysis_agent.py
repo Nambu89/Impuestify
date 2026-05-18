@@ -7,19 +7,18 @@ Compares features, identifies gaps, suggests improvements, and analyzes AEAT int
 This agent is designed for internal/product use, not end-user facing.
 """
 
-import os
+import asyncio
 import json
 import logging
-import asyncio
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from openai import OpenAI
 
 from app.tools.competitor_analysis_tool import (
-    COMPETITOR_TOOLS,
     COMPETITOR_TOOL_EXECUTORS,
+    COMPETITOR_TOOLS,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,8 +29,8 @@ class AgentResponse:
     """Response from the competitor analysis agent"""
 
     content: str
-    sources: List[Dict[str, Any]]
-    metadata: Dict[str, Any]
+    sources: list[dict[str, Any]]
+    metadata: dict[str, Any]
     agent_name: str
 
 
@@ -52,8 +51,8 @@ class CompetitorAnalysisAgent:
     def __init__(
         self,
         name: str = "CompetitorAnalysisAgent",
-        model: Optional[str] = None,
-        api_key: Optional[str] = None,
+        model: str | None = None,
+        api_key: str | None = None,
     ):
         from app.config import settings
 
@@ -121,9 +120,9 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
     async def run(
         self,
         query: str,
-        context: Optional[str] = None,
-        sources: Optional[List[Dict[str, Any]]] = None,
-        conversation_history: Optional[List[Dict[str, str]]] = None,
+        context: str | None = None,
+        sources: list[dict[str, Any]] | None = None,
+        conversation_history: list[dict[str, str]] | None = None,
         progress_callback=None,
         **kwargs,
     ) -> AgentResponse:
@@ -266,7 +265,7 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
                 agent_name=self.name,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("CompetitorAnalysisAgent: OpenAI timeout")
             return AgentResponse(
                 content="El análisis competitivo ha tardado demasiado. Intenta con una pregunta más específica.",
@@ -286,7 +285,7 @@ Tienes herramientas para hacer análisis estructurados. Úsalas cuando te hagan 
 
 # ─── Global Instance ──────────────────────────────────────────────────────
 
-_competitor_agent: Optional[CompetitorAnalysisAgent] = None
+_competitor_agent: CompetitorAnalysisAgent | None = None
 
 
 def get_competitor_analysis_agent() -> CompetitorAnalysisAgent:

@@ -12,7 +12,7 @@ import json
 import os
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -306,7 +306,7 @@ async def main():
             continue
 
         invoice_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         fecha = inv["fecha"]
         fecha_dt = datetime.strptime(fecha, "%Y-%m-%d")
         year = fecha_dt.year
@@ -489,7 +489,7 @@ async def main():
         created += 1
 
     print(f"\nDone: {created} invoices reclassified with correct data")
-    print(f"Expected: Ingresos 24,250 EUR | Gastos 1,996 EUR | Resultado +22,254 EUR")
+    print("Expected: Ingresos 24,250 EUR | Gastos 1,996 EUR | Resultado +22,254 EUR")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import os
 import sys
 import uuid
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent
@@ -17,7 +18,7 @@ project_root = backend_dir.parent
 load_dotenv(project_root / ".env")
 
 from app.database.turso_client import TursoClient
-from scripts.extract_structured_tables import TableExtractor, IRPFScaleParser
+from scripts.extract_structured_tables import IRPFScaleParser, TableExtractor
 
 
 async def extract_estatal_scale():
@@ -63,7 +64,7 @@ async def extract_estatal_scale():
 
         # Must have IRPF scale keywords
         if not ("base" in headers and "liquidable" in headers and "cuota" in headers):
-            print(f"   ⏭️  Skipping (not IRPF scale)\n")
+            print("   ⏭️  Skipping (not IRPF scale)\n")
             continue
 
         # Parse table
@@ -71,7 +72,7 @@ async def extract_estatal_scale():
             parsed_rows = parser.parse_scale_table(table)
 
             if not parsed_rows:
-                print(f"   ⚠️  No valid rows parsed\n")
+                print("   ⚠️  No valid rows parsed\n")
                 continue
 
             print(f"   ✅ Parsed {len(parsed_rows)} tramos")

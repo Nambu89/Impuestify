@@ -5,14 +5,15 @@ Provides REST API endpoints for managing chat conversations.
 Supports Claude/ChatGPT-style persistent conversations per user.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request, Query
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
 import logging
+from typing import Any
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel, Field
+
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.database.turso_client import TursoClient
 from app.services.conversation_service import ConversationService
-from app.auth.jwt_handler import get_current_user, TokenData
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 class CreateConversationRequest(BaseModel):
     """Request to create a new conversation"""
 
-    title: Optional[str] = Field(None, max_length=200, description="Conversation title")
+    title: str | None = Field(None, max_length=200, description="Conversation title")
 
 
 class UpdateConversationRequest(BaseModel):
@@ -51,7 +52,7 @@ class MessageResponse(BaseModel):
     conversation_id: str
     role: str
     content: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
     created_at: str
 
 
@@ -59,7 +60,7 @@ class ConversationWithMessagesResponse(BaseModel):
     """Conversation with full message history"""
 
     conversation: ConversationResponse
-    messages: List[MessageResponse]
+    messages: list[MessageResponse]
 
 
 # === Dependencies ===
@@ -101,7 +102,7 @@ async def create_conversation(
         raise HTTPException(status_code=500, detail=f"Failed to create conversation: {str(e)}")
 
 
-@router.get("", response_model=List[ConversationResponse])
+@router.get("", response_model=list[ConversationResponse])
 async def list_conversations(
     limit: int = Query(50, ge=1, le=100, description="Maximum conversations to return"),
     current_user: TokenData = Depends(get_current_user),

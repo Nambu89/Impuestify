@@ -15,10 +15,9 @@ import asyncio
 import base64
 import logging
 import os
-from typing import List, Dict, Any, Optional
-from pathlib import Path
 from dataclasses import dataclass
-import io
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +42,7 @@ class PDFPage:
 
     page_number: int
     text: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -51,11 +50,11 @@ class PDFExtractionResult:
     """Result of PDF text extraction."""
 
     success: bool
-    pages: List[PDFPage]
+    pages: list[PDFPage]
     total_pages: int
     total_chars: int
     markdown_text: str
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class PDFTextExtractor:
@@ -98,8 +97,8 @@ class PDFTextExtractor:
         Returns:
             PDFExtractionResult with extracted text
         """
-        import tempfile
         import os
+        import tempfile
 
         try:
             # PyMuPDF4LLM requires a file path, not BytesIO
@@ -212,7 +211,7 @@ class PDFTextExtractor:
                 error=str(e),
             )
 
-    def get_page_text(self, result: PDFExtractionResult, page_number: int) -> Optional[str]:
+    def get_page_text(self, result: PDFExtractionResult, page_number: int) -> str | None:
         """
         Get text from a specific page.
 
@@ -245,7 +244,7 @@ class PDFTextExtractor:
 
 
 # Global extractor instance
-_pdf_extractor: Optional[PDFTextExtractor] = None
+_pdf_extractor: PDFTextExtractor | None = None
 
 
 def get_pdf_extractor() -> PDFTextExtractor:
@@ -334,7 +333,7 @@ async def extract_pdf_text_plain(
         )
 
 
-def _is_text_empty(pages: List[PDFPage], threshold: int = MIN_CHARS_PER_PAGE) -> bool:
+def _is_text_empty(pages: list[PDFPage], threshold: int = MIN_CHARS_PER_PAGE) -> bool:
     """Check if extracted text is too short (likely a scanned/image PDF)."""
     if not pages:
         return True
@@ -412,7 +411,7 @@ async def extract_with_vision_ocr(
             return PDFPage(page_number=page_idx + 1, text=text, metadata={"source": "vision_ocr"})
 
         # Process pages in batches of 5 for concurrency control
-        pages: List[PDFPage] = []
+        pages: list[PDFPage] = []
         for batch_start in range(0, num_pages, 5):
             batch_end = min(batch_start + 5, num_pages)
             batch = await asyncio.gather(*[_ocr_page(i) for i in range(batch_start, batch_end)])

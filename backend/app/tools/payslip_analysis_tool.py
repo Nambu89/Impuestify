@@ -4,7 +4,7 @@ Analyzes payroll data and provides insights
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ async def analyze_payslip_tool(
     period_month: int,
     period_year: int,
     **kwargs,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Analiza los datos de una nómina española y proporciona información útil.
 
@@ -39,8 +39,8 @@ async def analyze_payslip_tool(
         # Fetch expected SS percentage from DB (data-driven, no hardcoded)
         expected_ss_percentage = 6.35  # fallback default
         try:
-            from app.utils.tax_parameter_repository import TaxParameterRepository
             from app.database.turso_client import get_db_client
+            from app.utils.tax_parameter_repository import TaxParameterRepository
 
             db = await get_db_client()
             repo = TaxParameterRepository(db)

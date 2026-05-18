@@ -65,7 +65,7 @@ async def verify_boe(boe_id: str) -> dict:
     if "<code>200</code>" not in body:
         raise RuntimeError(f"{boe_id} no existe en BOE (status no 200 en body)")
 
-    def _x(tag: str) -> Optional[str]:
+    def _x(tag: str) -> str | None:
         m = re.search(rf"<{tag}>([^<]+)</{tag}>", body)
         return m.group(1).strip() if m else None
 
@@ -118,7 +118,7 @@ async def verify_url(url: str) -> dict:
     return {"url_html": url}
 
 
-def _parse_yyyymmdd(text: Optional[str]) -> Optional[str]:
+def _parse_yyyymmdd(text: str | None) -> str | None:
     if not text:
         return None
     try:
@@ -127,7 +127,7 @@ def _parse_yyyymmdd(text: Optional[str]) -> Optional[str]:
         return None
 
 
-def _iso_to_date(text: Optional[str]) -> Optional[str]:
+def _iso_to_date(text: str | None) -> str | None:
     if not text:
         return None
     try:

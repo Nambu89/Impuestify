@@ -3,11 +3,12 @@ Tests for export system: report generator, email service, and export endpoints.
 """
 
 import json
-import pytest
-import sys
 import os
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+
+import pytest
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent
@@ -249,7 +250,7 @@ class TestEmailService:
 
     def test_service_singleton(self):
         """get_email_service should return singleton."""
-        from app.services.email_service import get_email_service, _email_service
+        from app.services.email_service import _email_service, get_email_service
 
         svc1 = get_email_service()
         svc2 = get_email_service()
@@ -432,6 +433,7 @@ class TestDatabaseSchema:
     def test_deductions_table_in_schema(self):
         """deductions table should be in schema_statements."""
         import inspect
+
         from app.database.turso_client import TursoClient
 
         source = inspect.getsource(TursoClient.init_schema)
@@ -443,6 +445,7 @@ class TestDatabaseSchema:
     def test_reports_table_in_schema(self):
         """reports table should be in schema_statements."""
         import inspect
+
         from app.database.turso_client import TursoClient
 
         source = inspect.getsource(TursoClient.init_schema)

@@ -1,8 +1,9 @@
 """Get full feedback text from Gabriel + look up Stripe customer for any payment."""
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent

@@ -7,16 +7,15 @@ balance de sumas y saldos, PyG) and exporting them as CSV or Excel.
 
 import io
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.subscription_guard import require_active_subscription
 from app.database.turso_client import get_db_client
-from app.services.contabilidad_service import ContabilidadService
 from app.services.contabilidad_export_service import ContabilidadExportService
+from app.services.contabilidad_service import ContabilidadService
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +34,7 @@ MEDIA_EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 async def get_libro_diario(
     request: Request,
     year: int = Query(default=2026, ge=2020, le=2099),
-    trimestre: Optional[int] = Query(default=None, ge=1, le=4),
+    trimestre: int | None = Query(default=None, ge=1, le=4),
     current_user: TokenData = Depends(get_current_user),
     _sub=Depends(require_active_subscription),
 ):
@@ -122,7 +121,7 @@ async def export_libro(
     request: Request,
     libro: str,
     year: int = Query(default=2026, ge=2020, le=2099),
-    trimestre: Optional[int] = Query(default=None, ge=1, le=4),
+    trimestre: int | None = Query(default=None, ge=1, le=4),
     format: str = Query(default="csv", pattern="^(csv|excel)$"),
     current_user: TokenData = Depends(get_current_user),
     _sub=Depends(require_active_subscription),

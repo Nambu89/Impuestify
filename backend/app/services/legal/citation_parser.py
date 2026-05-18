@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 # Recognises forms like:
 #   "art 69 liva"             → article=69, subarticle=None, law=LIVA
@@ -57,7 +56,7 @@ class ParsedArticleCitation:
 
     law: str  # uppercase sigla
     article: str  # numeric part, e.g. "69"
-    subarticle: Optional[str]  # canonical case, e.g. "Dos.d", "Uno.1", "6"
+    subarticle: str | None  # canonical case, e.g. "Dos.d", "Uno.1", "6"
 
 
 @dataclass(frozen=True)
@@ -72,7 +71,7 @@ class ParsedNormCitation:
     year: int
 
 
-def parse_article_citation(normalized: str) -> Optional[ParsedArticleCitation]:
+def parse_article_citation(normalized: str) -> ParsedArticleCitation | None:
     """Parse an art_law citation. Returns None if it doesn't match."""
     m = _ART_LAW_RE.match(normalized.strip())
     if not m:
@@ -89,7 +88,7 @@ def parse_article_citation(normalized: str) -> Optional[ParsedArticleCitation]:
     )
 
 
-def parse_norm_citation(normalized: str) -> Optional[ParsedNormCitation]:
+def parse_norm_citation(normalized: str) -> ParsedNormCitation | None:
     """Parse a ley/RD-style citation. Returns None if it doesn't match."""
     m = _LAW_NUMBER_RE.match(normalized.strip())
     if not m:
@@ -148,7 +147,7 @@ def _canonicalise_subarticle(raw: str) -> str:
     return ".".join(out)
 
 
-def split_compound_article_citation(normalized: str) -> Tuple[Optional[ParsedArticleCitation], ...]:
+def split_compound_article_citation(normalized: str) -> tuple[ParsedArticleCitation | None, ...]:
     """Split compound citations like 'art 69 y 70 liva' into individuals.
 
     Returns a tuple of parsed articles. Empty tuple if no parse succeeds.

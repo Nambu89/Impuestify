@@ -1,7 +1,8 @@
 """Tests de los endpoints IS (Modelo 200 + 202)."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
 
 
 # Mock external dependencies before importing app
@@ -24,9 +25,10 @@ def mock_deps():
 @pytest.fixture
 def client(mock_deps):
     """FastAPI TestClient."""
-    from fastapi.testclient import TestClient
-    from app.routers.is_estimate import router
     from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.routers.is_estimate import router
 
     app = FastAPI()
     app.include_router(router)

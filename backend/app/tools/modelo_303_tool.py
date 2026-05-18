@@ -31,11 +31,11 @@ Auditoria que motiva este refactor:
 docs/audits/modelo_303_validation_2026-05.md (BUG-303-01..09).
 """
 
-from typing import Dict, Any
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any
 
-from app.utils.ccaa_constants import normalize_ccaa, FORAL_VASCO, CEUTA_MELILLA, CANARIAS_SET
+from app.utils.ccaa_constants import CANARIAS_SET, CEUTA_MELILLA, normalize_ccaa
 
 logger = logging.getLogger(__name__)
 
@@ -219,7 +219,7 @@ async def calculate_modelo_303_tool(
     compensacion_periodos_anteriores: float = 0,
     porcentaje_atribucion_estado: float = 100,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Wrapper LLM-friendly sobre `Modelo303Calculator`.
 
     Rutea por CCAA, valida inputs y formatea la respuesta para el chat. El
@@ -555,7 +555,7 @@ async def _calculate_igic_420(
     cuota_importaciones: float,
     rectificacion: float,
     compensacion: float,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Delegate Canarias IGIC calculation to the existing Modelo420Calculator.
 

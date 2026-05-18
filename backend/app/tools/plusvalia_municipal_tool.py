@@ -17,8 +17,8 @@ Exenciones:
 - Aportaciones a sociedad conyugal
 """
 
-from typing import Dict, Any, Optional
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +127,7 @@ async def calculate_plusvalia_municipal_tool(
     tipo_impositivo_municipal: float = 30.0,
     es_vivienda_habitual_dacion: bool = False,
     es_divorcio: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calcula la plusvalia municipal (IIVTNU) por ambos metodos y devuelve
     el mas favorable para el contribuyente.

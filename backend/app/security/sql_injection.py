@@ -12,9 +12,9 @@ Uses multiple layers of defense:
 4. Query structure validation
 """
 
-import re
 import logging
-from typing import Optional, List, Tuple
+import re
+
 from pydantic import BaseModel, Field
 
 from app.config import settings  # ← FIX: Import settings at module level
@@ -27,8 +27,8 @@ class SQLInjectionResult(BaseModel):
 
     is_safe: bool
     risk_level: str = Field(description="none, low, medium, high, critical")
-    violations: List[str] = Field(default_factory=list)
-    sanitized_input: Optional[str] = None
+    violations: list[str] = Field(default_factory=list)
+    sanitized_input: str | None = None
 
 
 class SQLInjectionValidator:
@@ -91,7 +91,6 @@ class SQLInjectionValidator:
         Initialize the SQL injection validator with Groq client.
         """
         from groq import Groq
-        from app.config import settings
 
         self.client = None
         if settings.GROQ_API_KEY:
@@ -240,8 +239,8 @@ class SQLInjectionValidator:
         return sanitized.strip()
 
     def validate_parameterized_query(
-        self, query: str, params: Optional[List] = None
-    ) -> Tuple[bool, List[str]]:
+        self, query: str, params: list | None = None
+    ) -> tuple[bool, list[str]]:
         """
         Validate that a query uses parameterized syntax correctly.
 

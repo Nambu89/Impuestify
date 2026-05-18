@@ -12,10 +12,8 @@ error, preventing degraded behaviour from silently shipping.
 from __future__ import annotations
 
 from datetime import date
-from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 
 # ── Norms ────────────────────────────────────────────────────────────────
 
@@ -32,32 +30,32 @@ class LegalNorm(BaseModel):
         ..., description="ley | rd | rd_legislativo | norma_foral | decreto_foral"
     )
     vigent_from: date
-    vigent_until: Optional[date] = None
-    aliases: List[str] = Field(default_factory=list)
+    vigent_until: date | None = None
+    aliases: list[str] = Field(default_factory=list)
     # BOE identifier (formato oficial BOE-A-NNNN-NNNN). Permite verificar
     # vigencia via API BOE Datos Abiertos y construir link a versión
     # consolidada oficial. Opcional para no romper YAMLs sin migrar.
-    boe_id: Optional[str] = Field(
+    boe_id: str | None = Field(
         default=None,
         pattern=r"^BOE-[A-Z]-\d{4}-\d+$",
         description='Identificador BOE oficial, ej "BOE-A-1992-28740"',
     )
     # URL HTML consolidada cacheada desde la API. Si null, se reconstruye
     # con `https://www.boe.es/buscar/act.php?id={boe_id}` cuando se necesite.
-    url_html_consolidada: Optional[str] = Field(
+    url_html_consolidada: str | None = Field(
         default=None,
         description="URL HTML versión consolidada vigente",
     )
     # Plugin de origen para verificación de vigencia y resolución de URL.
     # Si vacío, default = "boe" (compat con normas estatales existentes).
     # Valores válidos: boe | bopv | static_url | (futuros: bon, boc, …)
-    source_id: Optional[str] = Field(
+    source_id: str | None = Field(
         default=None,
         description="Identificador del plugin LegalSource (boe, bopv, static_url, …)",
     )
     # ID dentro del sistema del source. Para BOE = boe_id; para BOPV =
     # "YYYY/MM/numOrder"; para static_url = la URL completa.
-    source_norm_id: Optional[str] = Field(
+    source_norm_id: str | None = Field(
         default=None,
         description="ID nativo del source. Si null, fallback a boe_id.",
     )
@@ -66,7 +64,7 @@ class LegalNorm(BaseModel):
         """Default = "boe" si no se especifica (compat con YAMLs previos)."""
         return self.source_id or "boe"
 
-    def effective_source_norm_id(self) -> Optional[str]:
+    def effective_source_norm_id(self) -> str | None:
         """Resolve which identifier to pass to the source plugin."""
         if self.source_norm_id:
             return self.source_norm_id
@@ -98,7 +96,7 @@ class NormsCatalog(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     schema_version: int = 1
-    norms: List[LegalNorm]
+    norms: list[LegalNorm]
 
 
 # ── Canonical Articles ───────────────────────────────────────────────────
@@ -115,13 +113,13 @@ class CanonicalArticle(BaseModel):
 
     law: str = Field(..., description="Sigla of the norm (must exist in norms.yaml)")
     article: str = Field(..., description='Number, e.g. "21", "69", "84"')
-    subarticle: Optional[str] = Field(
+    subarticle: str | None = Field(
         default=None,
         description='Apartado/letter, e.g. "Uno.1", "Dos.d", "84.uno.2"; null for whole article',
     )
     topic: str = Field(..., min_length=3, description="Brief topic for human readers")
     vigent_from: date
-    vigent_until: Optional[date] = None
+    vigent_until: date | None = None
 
     def is_vigent_on(self, target: date) -> bool:
         if target < self.vigent_from:
@@ -134,7 +132,7 @@ class CanonicalArticle(BaseModel):
 class ArticlesCatalog(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: int = 1
-    articles: List[CanonicalArticle]
+    articles: list[CanonicalArticle]
 
 
 # ── Invoice Templates ────────────────────────────────────────────────────
@@ -148,12 +146,12 @@ class InvoiceTemplate(BaseModel):
     key: str = Field(..., pattern=r"^[a-z][a-z0-9_]*$", description="Unique identifier")
     scenario: str = Field(..., min_length=5)
     legal_basis: str = Field(..., min_length=3)
-    triggers: List[str] = Field(default_factory=list)
+    triggers: list[str] = Field(default_factory=list)
     text: str = Field(..., min_length=10)
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class InvoiceTemplatesCatalog(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: int = 1
-    templates: List[InvoiceTemplate]
+    templates: list[InvoiceTemplate]

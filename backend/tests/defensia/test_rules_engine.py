@@ -1,13 +1,13 @@
 """Tests para el motor de reglas deterministas."""
 
 from app.models.defensia import (
-    ExpedienteEstructurado,
-    Tributo,
-    Fase,
-    Brief,
     ArgumentoCandidato,
+    Brief,
+    ExpedienteEstructurado,
+    Fase,
+    Tributo,
 )
-from app.services.defensia_rules_engine import regla, evaluar, REGISTRY, reset_registry
+from app.services.defensia_rules_engine import REGISTRY, evaluar, regla, reset_registry
 
 
 def _exp_basico():

@@ -5,31 +5,29 @@ Provides TOTP-based 2FA: setup, verify, disable, status, and login validation.
 Uses pyotp for TOTP generation/verification and qrcode for QR code generation.
 """
 
+import base64
 import io
 import json
-import base64
 import logging
 import secrets
-from typing import List, Optional
 
 import bcrypt
 import pyotp
 import qrcode
-from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from app.auth.jwt_handler import (
-    create_tokens_for_user,
-    create_mfa_token,
-    verify_token,
-    get_current_user_required,
     TokenData,
     TokenResponse,
+    create_tokens_for_user,
+    get_current_user_required,
+    verify_token,
 )
 from app.database.turso_client import get_db_client
 from app.security.rate_limiter import limiter
-from app.services.user_service import user_service
 from app.services.subscription_service import get_subscription_service
+from app.services.user_service import user_service
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +44,7 @@ class MFASetupResponse(BaseModel):
 
     qr_code_base64: str
     secret: str
-    backup_codes: List[str]
+    backup_codes: list[str]
     uri: str
 
 
@@ -60,7 +58,7 @@ class MFAVerifyResponse(BaseModel):
     """Response after MFA verification succeeds."""
 
     success: bool
-    backup_codes: List[str]
+    backup_codes: list[str]
 
 
 class MFADisableRequest(BaseModel):
@@ -94,12 +92,12 @@ class MFALoginResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def _generate_backup_codes(count: int = 10) -> List[str]:
+def _generate_backup_codes(count: int = 10) -> list[str]:
     """Generate a list of random backup codes."""
     return [secrets.token_hex(4) for _ in range(count)]
 
 
-def _hash_backup_codes(codes: List[str]) -> str:
+def _hash_backup_codes(codes: list[str]) -> str:
     """Hash each backup code with bcrypt and return a JSON array."""
     hashed = []
     for code in codes:
@@ -108,7 +106,7 @@ def _hash_backup_codes(codes: List[str]) -> str:
     return json.dumps(hashed)
 
 
-def _verify_backup_code(plain_code: str, hashed_codes_json: Optional[str]) -> Optional[int]:
+def _verify_backup_code(plain_code: str, hashed_codes_json: str | None) -> int | None:
     """Check plain_code against hashed backup codes.
 
     Returns the index of the matching code if found, else None.

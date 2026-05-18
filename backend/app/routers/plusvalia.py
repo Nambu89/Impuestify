@@ -8,9 +8,9 @@ POST /api/calculadoras/plusvalia-municipal
 """
 
 import logging
-from typing import Any, Dict, Optional
-from pydantic import BaseModel, Field
+
 from fastapi import APIRouter, Request
+from pydantic import BaseModel, Field
 
 from app.security.rate_limiter import limiter
 
@@ -67,27 +67,27 @@ class MetodoRealResponse(BaseModel):
     """Desglose del metodo real."""
 
     metodo: str = "real"
-    precio_venta: Optional[float] = None
-    precio_adquisicion: Optional[float] = None
-    plusvalia_total: Optional[float] = None
-    porcentaje_suelo: Optional[float] = None
+    precio_venta: float | None = None
+    precio_adquisicion: float | None = None
+    plusvalia_total: float | None = None
+    porcentaje_suelo: float | None = None
     base_imponible: float
     tipo_impositivo: float
     cuota: float
-    hay_plusvalia: Optional[bool] = None
+    hay_plusvalia: bool | None = None
 
 
 class PlusvaliaMunicipalResponse(BaseModel):
     """Respuesta completa del calculo de plusvalia municipal."""
 
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
     exento: bool = False
-    motivo_exencion: Optional[str] = None
+    motivo_exencion: str | None = None
     cuota_final: float = 0.0
-    metodo_objetivo: Optional[MetodoObjetivoResponse] = None
-    metodo_real: Optional[MetodoRealResponse] = None
-    metodo_elegido: Optional[str] = None
+    metodo_objetivo: MetodoObjetivoResponse | None = None
+    metodo_real: MetodoRealResponse | None = None
+    metodo_elegido: str | None = None
     disclaimer: str = (
         "Este calculo es orientativo. Los coeficientes y tipos impositivos "
         "pueden variar segun la ordenanza fiscal de cada municipio. "

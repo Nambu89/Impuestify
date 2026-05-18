@@ -8,15 +8,15 @@ multiples activos, perdidas, staking/airdrop, casos borde.
 from __future__ import annotations
 
 import pytest
+
 from app.services.crypto_parser import CryptoTransaction
 from app.utils.calculators.crypto_fifo import (
     CryptoGain,
     FIFOResult,
-    calculate_fifo_gains,
-    _determine_clave,
     _build_summary,
+    _determine_clave,
+    calculate_fifo_gains,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

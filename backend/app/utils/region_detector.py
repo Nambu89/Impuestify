@@ -6,7 +6,6 @@ Handles both territorio común and haciendas forales.
 """
 
 import re
-from typing import Dict, Optional
 
 
 class RegionDetector:
@@ -157,7 +156,7 @@ class RegionDetector:
         # Añadir más según necesidad
     }
 
-    def detect_from_text(self, text: str) -> Dict[str, Optional[str]]:
+    def detect_from_text(self, text: str) -> dict[str, str | None]:
         """
         Detect region from notification text.
 

@@ -25,10 +25,9 @@ Usage:
     )
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
-
 
 # ---------------------------------------------------------------------------
 # IPSI rate constants (Ley 8/1991, art. 43 — rango legal vigente)
@@ -94,7 +93,7 @@ class ModeloIpsiCalculator:
         quarter: int = 1,
         year: int = 2025,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate the IPSI quarterly self-assessment.
 
@@ -164,7 +163,7 @@ class ModeloIpsiCalculator:
             2,
         )
 
-        desglose_devengado: Dict[str, Any] = {
+        desglose_devengado: dict[str, Any] = {
             "tipo_minimo_0_5": {
                 "base": round(base_0_5, 2),
                 "tipo": TIPO_MINIMO,
@@ -218,7 +217,7 @@ class ModeloIpsiCalculator:
         if regularizacion_prorrata and quarter != 4:
             raise ValueError(
                 "regularizacion_prorrata solo puede aplicarse en el 4T "
-                "(quarter=4). Recibido quarter={}.".format(quarter)
+                f"(quarter=4). Recibido quarter={quarter}."
             )
 
         total_deducible = round(
@@ -232,7 +231,7 @@ class ModeloIpsiCalculator:
             2,
         )
 
-        desglose_deducible: Dict[str, Any] = {
+        desglose_deducible: dict[str, Any] = {
             "cuota_corrientes_interiores": round(cuota_corrientes_interiores, 2),
             "cuota_inversion_interiores": round(cuota_inversion_interiores, 2),
             "cuota_importaciones_corrientes": round(cuota_importaciones_corrientes, 2),

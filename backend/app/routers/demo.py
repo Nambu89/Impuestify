@@ -10,27 +10,27 @@ Public demo endpoint with:
 - FULL SECURITY: SQL injection, guardrails, prompt injection, PII, Llama Guard
 """
 
-from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, Field
-from typing import List, Optional
-import time
-import logging
 import asyncio
+import logging
 import threading
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from app.database.turso_client import TursoClient
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel, Field
+
 from app.config import settings
+from app.database.turso_client import TursoClient
 
 # Import ALL security modules
 from app.security import (
-    sql_validator,
-    guardrails_system,
-    prompt_injection_filter,
-    pii_detector,
-    audit_logger,
     AuditEventType,
+    audit_logger,
+    guardrails_system,
+    pii_detector,
+    prompt_injection_filter,
+    sql_validator,
 )
 from app.security.llama_guard import get_llama_guard
 
@@ -116,7 +116,7 @@ class DemoChatResponse(BaseModel):
     """Demo chat response"""
 
     response: str
-    sources: List[DemoSource]
+    sources: list[DemoSource]
     demo: bool = True
     remaining_requests: int
     processing_time: float
@@ -151,7 +151,7 @@ def get_client_ip(request: Request) -> str:
 # === Helper Functions ===
 
 
-async def demo_fts_search(db: TursoClient, query: str, k: int = 3) -> List[dict]:
+async def demo_fts_search(db: TursoClient, query: str, k: int = 3) -> list[dict]:
     """
     Simplified FTS search for demo (limited results).
     """
@@ -439,7 +439,7 @@ async def demo_chat(request: Request, body: DemoChatRequest):
         raw_response = await asyncio.wait_for(
             generate_demo_response(body.question, context), timeout=30.0
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         _increment_stat("total_errors")
         raise HTTPException(
             status_code=504,

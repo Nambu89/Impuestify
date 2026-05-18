@@ -37,8 +37,8 @@ Invariante #3 del plan v2 (umbral 0.7, no 0.6).
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from app.models.defensia import ArgumentoCandidato, ArgumentoVerificado
 
@@ -108,10 +108,10 @@ class DefensiaRagVerifier:
         self,
         candidato: ArgumentoCandidato,
         *,
-        expediente_id: Optional[str] = None,
+        expediente_id: str | None = None,
         top_k: int = 5,
-        territory_filter: Optional[str] = None,
-    ) -> Optional[ArgumentoVerificado]:
+        territory_filter: str | None = None,
+    ) -> ArgumentoVerificado | None:
         """Verifica UN candidato contra el corpus RAG.
 
         Args:
@@ -219,9 +219,9 @@ class DefensiaRagVerifier:
         self,
         candidatos: list[ArgumentoCandidato],
         *,
-        expediente_id: Optional[str] = None,
+        expediente_id: str | None = None,
         top_k: int = 5,
-        territory_filter: Optional[str] = None,
+        territory_filter: str | None = None,
     ) -> list[ArgumentoVerificado]:
         """Verifica una lista entera de candidatos.
 
@@ -261,7 +261,7 @@ class DefensiaRagVerifier:
         self,
         candidato: ArgumentoCandidato,
         *,
-        expediente_id: Optional[str],
+        expediente_id: str | None,
         soportado: bool,
         confianza: float,
         razonamiento: str,
@@ -297,7 +297,7 @@ class DefensiaRagVerifier:
             1 if soportado else 0,
             float(confianza),
             razonamiento_full,
-            datetime.now(timezone.utc).isoformat(),
+            datetime.now(UTC).isoformat(),
         ]
 
         try:

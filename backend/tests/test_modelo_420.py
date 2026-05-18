@@ -12,21 +12,21 @@ Fuente normativa: BOC nº 207 (2025-10-20), vigor 2025-10-21.
 import pytest
 
 from app.utils.calculators.modelo_420 import (
-    Modelo420Calculator,
+    DEROGATED_RATES_2024,
+    # Tabla parametrica por ejercicio
+    IGIC_RATES_BY_YEAR,
+    PLAZOS_MODELO_420,
+    REPEP_THRESHOLD_EUR,
     # Tipos vigentes 2025+
     TIPO_CERO,
     TIPO_ENERGETICOS,
-    TIPO_SUPERREDUCIDO,
-    TIPO_REDUCIDO,
+    TIPO_ESPECIAL,
     TIPO_GENERAL,
     TIPO_INCREMENTADO_1,
     TIPO_INCREMENTADO_2,
-    TIPO_ESPECIAL,
-    # Tabla parametrica por ejercicio
-    IGIC_RATES_BY_YEAR,
-    DEROGATED_RATES_2024,
-    PLAZOS_MODELO_420,
-    REPEP_THRESHOLD_EUR,
+    TIPO_REDUCIDO,
+    TIPO_SUPERREDUCIDO,
+    Modelo420Calculator,
 )
 
 

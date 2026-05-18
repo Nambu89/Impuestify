@@ -22,7 +22,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 _CITA_SEMANTICA = (
     "Base imponible en transmisiones patrimoniales onerosas derivadas de "
     "subastas judiciales y adjudicaciones en ejecuciones hipotecarias fijada "

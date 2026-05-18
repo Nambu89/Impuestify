@@ -12,7 +12,6 @@ Limites (decision producto):
 
 from __future__ import annotations
 
-
 DEFENSIA_RATE_LIMITS: dict[str, str] = {
     "analyze": "3/minute",
     "chat": "10/minute",

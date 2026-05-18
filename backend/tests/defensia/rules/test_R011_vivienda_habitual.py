@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import importlib
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -36,7 +36,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar, reset_registry
-
 
 # ---------------------------------------------------------------------------
 # Helper de aislamiento — carga solo R011 tras el reset del conftest
@@ -114,7 +113,7 @@ def _docs_caso_david(build_doc, *, incluir_sentencia: bool = True):
         },
         doc_id="doc-liquidacion-001",
         nombre_original="liquidacion_provisional_irpf_2024.pdf",
-        fecha_acto=datetime(2025, 3, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 3, 15, tzinfo=UTC),
     )
     escritura = build_doc(
         TipoDocumento.ESCRITURA,
@@ -125,7 +124,7 @@ def _docs_caso_david(build_doc, *, incluir_sentencia: bool = True):
         },
         doc_id="doc-escritura-001",
         nombre_original="escritura_vivienda_habitual.pdf",
-        fecha_acto=datetime(2024, 10, 22, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 10, 22, tzinfo=UTC),
     )
     docs = [liquidacion, escritura]
 
@@ -139,7 +138,7 @@ def _docs_caso_david(build_doc, *, incluir_sentencia: bool = True):
             },
             doc_id="doc-sentencia-001",
             nombre_original="sentencia_modificacion_medidas.pdf",
-            fecha_acto=datetime(2024, 6, 28, tzinfo=timezone.utc),
+            fecha_acto=datetime(2024, 6, 28, tzinfo=UTC),
         )
         docs.append(sentencia)
 
@@ -257,7 +256,7 @@ def test_R011_negativo_residencia_cumple_3_anos(build_exp, build_brief, build_do
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-002",
-        fecha_acto=datetime(2025, 3, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 3, 15, tzinfo=UTC),
     )
     # 4 anos de residencia continuada -> cumple el plazo, sin excepcion.
     escritura = build_doc(
@@ -268,7 +267,7 @@ def test_R011_negativo_residencia_cumple_3_anos(build_exp, build_brief, build_do
             "es_vivienda_habitual": True,
         },
         doc_id="doc-escritura-002",
-        fecha_acto=datetime(2024, 2, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 2, 1, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,
@@ -302,7 +301,7 @@ def test_R011_negativo_denegacion_por_otra_razon(build_exp, build_brief, build_d
             "ejercicio": 2024,
         },
         doc_id="doc-liquidacion-003",
-        fecha_acto=datetime(2025, 3, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 3, 15, tzinfo=UTC),
     )
     escritura = build_doc(
         TipoDocumento.ESCRITURA,
@@ -312,7 +311,7 @@ def test_R011_negativo_denegacion_por_otra_razon(build_exp, build_brief, build_d
             "es_vivienda_habitual": True,
         },
         doc_id="doc-escritura-003",
-        fecha_acto=datetime(2024, 10, 22, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 10, 22, tzinfo=UTC),
     )
     sentencia = build_doc(
         TipoDocumento.SENTENCIA_JUDICIAL,
@@ -322,7 +321,7 @@ def test_R011_negativo_denegacion_por_otra_razon(build_exp, build_brief, build_d
             "causa": "separacion_matrimonial",
         },
         doc_id="doc-sentencia-003",
-        fecha_acto=datetime(2024, 6, 28, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 6, 28, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,

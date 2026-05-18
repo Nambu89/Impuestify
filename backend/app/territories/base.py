@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -12,7 +12,7 @@ class ScaleData:
     jurisdiction: str
     year: int
     scale_type: str  # 'general', 'autonomica', 'foral'
-    brackets: List[Dict[str, float]]  # [{base_hasta, cuota_integra, resto_base, tipo_aplicable}]
+    brackets: list[dict[str, float]]  # [{base_hasta, cuota_integra, resto_base, tipo_aplicable}]
 
 
 @dataclass
@@ -25,7 +25,7 @@ class SimulationResult:
     cuota_liquida: float = 0.0
     resultado: float = 0.0  # positive = a pagar, negative = a devolver
     tipo_resultado: str = "a_pagar"
-    desglose: Dict[str, Any] = field(default_factory=dict)
+    desglose: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -33,7 +33,7 @@ class MinimosConfig:
     """Personal and family minimum configuration."""
 
     contribuyente: float = 0.0
-    descendientes: List[float] = field(default_factory=list)
+    descendientes: list[float] = field(default_factory=list)
     ascendiente_65: float = 0.0
     ascendiente_75: float = 0.0
     apply_as: str = "base_reduction"  # 'base_reduction' (comun) or 'quota_deduction' (foral)
@@ -59,8 +59,8 @@ class ModelObligation:
     periodicidad: str  # "trimestral", "anual", "mensual"
     aplica_si: str  # "autonomo", "sociedad", "todos", "retenedor"
     obligatorio: bool  # True if mandatory, False if conditional/optional
-    deadlines: List[Deadline] = field(default_factory=list)
-    notas: Optional[str] = None
+    deadlines: list[Deadline] = field(default_factory=list)
+    notas: str | None = None
     organismo: str = "AEAT"  # "AEAT", "ATC", "DFG", "DFB", "DFA", "HTN", "Ciudad Autonoma"
 
 
@@ -134,7 +134,7 @@ DEADLINES_2026 = {
 }
 
 
-def _trimestral_deadlines(modelo: str) -> List[Deadline]:
+def _trimestral_deadlines(modelo: str) -> list[Deadline]:
     """Return 4 quarterly deadlines for a modelo in 2026."""
     return [
         Deadline(modelo=modelo, description=d.description, date=d.date, period=d.period)
@@ -150,21 +150,21 @@ class TerritoryPlugin(ABC):
     and RAG filtering for a fiscal regime.
     """
 
-    territories: List[str] = []
+    territories: list[str] = []
     regime: str = ""
 
     @abstractmethod
-    async def get_irpf_scales(self, year: int) -> List[ScaleData]:
+    async def get_irpf_scales(self, year: int) -> list[ScaleData]:
         """Return IRPF scale brackets for this territory."""
         ...
 
     @abstractmethod
-    async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
+    async def simulate_irpf(self, profile: dict[str, Any], db) -> SimulationResult:
         """Run full IRPF simulation using territory-specific rules."""
         ...
 
     @abstractmethod
-    async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
+    async def get_deductions(self, ccaa: str, year: int, db) -> list[dict[str, Any]]:
         """Return applicable deductions for a CCAA within this regime."""
         ...
 
@@ -195,11 +195,11 @@ class TerritoryPlugin(ABC):
         """Return personal/family minimum configuration."""
         ...
 
-    def get_rag_filters(self, ccaa: str) -> Dict[str, Any]:
+    def get_rag_filters(self, ccaa: str) -> dict[str, Any]:
         """Return RAG search filters for this territory. Override for specifics."""
         return {"territory": ccaa, "regime": self.regime}
 
-    def get_upcoming_deadlines(self) -> List[Deadline]:
+    def get_upcoming_deadlines(self) -> list[Deadline]:
         """Return upcoming fiscal deadlines. Override per territory."""
         return []
 
@@ -207,7 +207,7 @@ class TerritoryPlugin(ABC):
         """Check if this plugin handles the given CCAA."""
         return ccaa in self.territories
 
-    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+    def get_model_obligations(self, profile: dict[str, Any]) -> list[ModelObligation]:
         """Return list of fiscal model obligations based on taxpayer profile.
 
         Default implementation covers common regime (AEAT).
@@ -231,7 +231,7 @@ class TerritoryPlugin(ABC):
         paga_dividendos = profile.get("paga_dividendos", False)
         ccaa = profile.get("ccaa")
 
-        obligations: List[ModelObligation] = []
+        obligations: list[ModelObligation] = []
 
         # ── IVA model (varies by territory) ──
         iva_modelo = self.get_indirect_tax_model(ccaa)

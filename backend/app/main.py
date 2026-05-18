@@ -1,4 +1,4 @@
-import sys, os
+import os
 
 # Load .env from project root FIRST (before any other imports)
 from dotenv import load_dotenv
@@ -7,36 +7,34 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 env_path = os.path.join(PROJECT_ROOT, ".env")
 load_dotenv(env_path)
 
+
+# Security test endpoints — only in dev/staging, never in production
+import os as _os
 import time
-import logging
 from contextlib import asynccontextmanager
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 import structlog
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, Query, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from slowapi.errors import RateLimitExceeded
-from .config import settings
+
+from app.routers.auth import router as auth_router
+from app.routers.chat import router as chat_router
+from app.routers.conversations import router as conversations_router
+from app.routers.notifications import router as notifications_router
 
 # Security imports
 from app.security.rate_limiter import limiter, rate_limit_exceeded_handler
-from app.security.prompt_injection import prompt_injection_filter
-from app.security.pii_detector import pii_detector
-from app.routers.auth import router as auth_router
-from app.routers.chat import router as chat_router
-from app.routers.notifications import router as notifications_router
-from app.routers.conversations import router as conversations_router
 
-# Security test endpoints — only in dev/staging, never in production
-import os as _os
+from .config import settings
 
 _is_production = (
     _os.getenv("RAILWAY_ENVIRONMENT") == "production" or _os.getenv("ENV") == "production"
 )
 from app.routers.payslips import router as payslips_router
-from app.database.turso_client import get_db_client
 
 # Configurar logging estructurado
 structlog.configure(
@@ -70,13 +68,13 @@ class HealthResponse(BaseModel):
     timestamp: float
     version: str = "1.0.0"
     rag_initialized: bool
-    statistics: Optional[Dict[str, Any]] = None
+    statistics: dict[str, Any] | None = None
 
 
 class RebuildRequest(BaseModel):
     """Modelo para solicitud de reconstrucción de índice"""
 
-    pdf_dir: Optional[str] = Field(default=None, description="Directorio de PDFs (opcional)")
+    pdf_dir: str | None = Field(default=None, description="Directorio de PDFs (opcional)")
     force: bool = Field(default=False, description="Forzar reconstrucción aunque exista índice")
 
 
@@ -284,15 +282,6 @@ app = FastAPI(
 # === Rate Limiting Configuration ===
 
 # Import CORS-aware rate limiters
-from app.security.rate_limiter import (
-    limiter,
-    ip_blocker,
-    rate_limit_exceeded_handler,
-    rate_limit_ask,
-    rate_limit_notification,
-    rate_limit_auth,
-    rate_limit_read,
-)
 
 # Add rate limiter state and exception handler
 app.state.limiter = limiter
@@ -737,7 +726,7 @@ async def test_guardrails():
 
 
 async def log_interaction(
-    question: str, response_length: int, processing_time: float, cached: bool, violations: List[str]
+    question: str, response_length: int, processing_time: float, cached: bool, violations: list[str]
 ):
     """Registra interacción para análisis posterior"""
     logger.info(

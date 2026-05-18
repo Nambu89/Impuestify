@@ -1,7 +1,7 @@
 import pytest
+
 from app.territories.canarias.plugin import CanariasTerritory
 from app.territories.ceuta_melilla.plugin import CeutaMelillaTerritory
-
 
 # --- Canarias ---
 

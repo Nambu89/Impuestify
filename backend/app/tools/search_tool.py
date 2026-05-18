@@ -4,8 +4,9 @@ Searches official sources for updated tax information
 """
 
 import logging
+from typing import Any
+
 import httpx
-from typing import Dict, Any
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 async def search_tax_regulations_tool(
     query: str, year: int = 2025, max_results: int = 3, extract_data: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Busca información fiscal actualizada en fuentes oficiales españolas.
     Opcionalmente extrae datos estructurados usando LLM.
@@ -130,8 +131,8 @@ async def search_tax_regulations_tool(
         # Si extract_data=True y la query es sobre IRPF, intentar extraer datos
         if extract_data and "irpf" in query.lower():
             from app.tools.web_scraper_tool import (
-                extract_irpf_data_from_url,
                 detect_ccaa_from_query,
+                extract_irpf_data_from_url,
                 format_tramos,
             )
 
@@ -184,7 +185,7 @@ Estos datos se usarán para calcular tu IRPF.""",
                         logger.info(f"No data extracted from {result['url']}")
 
                 # Si no se pudo extraer de ninguna URL
-                logger.warning(f"Could not extract structured data from any source")
+                logger.warning("Could not extract structured data from any source")
             else:
                 logger.info("Could not detect CCAA from query, skipping extraction")
 

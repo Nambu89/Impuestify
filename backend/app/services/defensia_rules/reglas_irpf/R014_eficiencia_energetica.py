@@ -28,7 +28,7 @@ Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T1B-014
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from app.models.defensia import (
     ArgumentoCandidato,
@@ -40,7 +40,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # ---------------------------------------------------------------------------
 # Constantes y cita semantica
@@ -79,7 +78,7 @@ _TIPOS_LIQUIDACION: frozenset[TipoDocumento] = frozenset(
 # ---------------------------------------------------------------------------
 
 
-def _to_float(valor: Any) -> Optional[float]:
+def _to_float(valor: Any) -> float | None:
     """Convierte un valor numerico a float de forma defensiva.
 
     Retorna None si el valor no es convertible (string vacio, None, objetos
@@ -94,7 +93,7 @@ def _to_float(valor: Any) -> Optional[float]:
         return None
 
 
-def _clase_energetica_normalizada(valor: Any) -> Optional[str]:
+def _clase_energetica_normalizada(valor: Any) -> str | None:
     """Normaliza la clase energetica a una letra mayuscula (A-G).
 
     Acepta strings como "a", "B ", "Clase A" (extrae la primera letra). Si no
@@ -113,7 +112,7 @@ def _clase_energetica_normalizada(valor: Any) -> Optional[str]:
     return None
 
 
-def _tipo_deduccion_por_datos(datos: dict) -> Optional[tuple[str, dict]]:
+def _tipo_deduccion_por_datos(datos: dict) -> tuple[str, dict] | None:
     """Determina que subtipo de deduccion aplica segun los `datos`.
 
     Retorna una tupla `(tipo, datos_disparo_parciales)`:
@@ -151,7 +150,7 @@ def _tipo_deduccion_por_datos(datos: dict) -> Optional[tuple[str, dict]]:
     return None
 
 
-def _documento_dispara(doc: DocumentoEstructurado) -> Optional[tuple[str, dict]]:
+def _documento_dispara(doc: DocumentoEstructurado) -> tuple[str, dict] | None:
     """Evalua si un documento cumple todos los triggers para R014.
 
     Retorna `(tipo, datos_disparo_parciales)` si dispara, None si no.
@@ -212,7 +211,7 @@ def _documento_dispara(doc: DocumentoEstructurado) -> Optional[tuple[str, dict]]
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,  # noqa: ARG001 — brief no usado
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R014 sobre el expediente.
 
     Recorre los documentos del expediente (timeline ordenado) y devuelve el

@@ -31,9 +31,9 @@ January 1st. Section II requires QUARTERLY figures. The tool documents this
 in the OpenAI schema so the LLM picks the right inputs.
 """
 
-from typing import Any, Dict, Optional
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any
 
 from app.utils.calculators.modelo_130 import Modelo130Calculator
 
@@ -270,7 +270,7 @@ def _build_seccion_i_response(
     *,
     trimestre: int,
     year: int,
-    casillas: Dict[str, float],
+    casillas: dict[str, float],
     deduccion_80bis: float,
     resultado_final: float,
     ceuta_melilla: bool,
@@ -354,7 +354,7 @@ def _build_seccion_ii_response(
     *,
     trimestre: int,
     year: int,
-    seccion_ii: Dict[str, Any],
+    seccion_ii: dict[str, Any],
 ) -> str:
     """Format the Section II (agrícola) result."""
     label = _TRIMESTRE_LABEL[trimestre]
@@ -388,7 +388,7 @@ async def calculate_modelo_130_tool(
     trimestre: int,
     ingresos_computables: float = 0.0,
     gastos_deducibles: float = 0.0,
-    year: Optional[int] = None,
+    year: int | None = None,
     retenciones_ingresos_cuenta: float = 0.0,
     pagos_fraccionados_anteriores: float = 0.0,
     rendimiento_neto_previo_anual: float = 0.0,
@@ -402,7 +402,7 @@ async def calculate_modelo_130_tool(
     pct_retencion_anio_anterior: float = 0.0,
     territorio: str = "Comun",
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Wrapper around :class:`Modelo130Calculator` for OpenAI function calling.
 

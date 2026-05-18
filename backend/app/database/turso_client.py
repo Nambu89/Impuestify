@@ -5,11 +5,11 @@ Uses the new libsql SDK (June 2025) for connecting to Turso.
 Replaces deprecated libsql-client package.
 """
 
+import logging
 import os
 import re
-import logging
-from typing import Optional, List, Any
 from contextlib import asynccontextmanager
+from typing import Any
 
 # Idempotent ALTER TABLE ... ADD COLUMN detection. Using PRAGMA table_info
 # beforehand avoids the noisy driver-level "duplicate column name" log line
@@ -41,7 +41,7 @@ class TursoClient:
     Now uses the official libsql SDK (June 2025+).
     """
 
-    def __init__(self, url: Optional[str] = None, auth_token: Optional[str] = None):
+    def __init__(self, url: str | None = None, auth_token: str | None = None):
         """
         Initialize Turso client.
 
@@ -86,7 +86,7 @@ class TursoClient:
             self._conn = None
             logger.info("Disconnected from Turso database")
 
-    async def execute(self, sql: str, params: Optional[List[Any]] = None) -> Any:
+    async def execute(self, sql: str, params: list[Any] | None = None) -> Any:
         """
         Execute a SQL query.
 
@@ -129,7 +129,7 @@ class TursoClient:
                 logger.error(f"Database query failed: {e}")
                 raise
 
-    async def execute_many(self, sql: str, params_list: List[List[Any]]) -> None:
+    async def execute_many(self, sql: str, params_list: list[list[Any]]) -> None:
         """
         Execute a SQL statement with multiple parameter sets.
 
@@ -1174,7 +1174,7 @@ class QueryResult:
         self._rows = None
 
     @property
-    def rows(self) -> List[dict]:
+    def rows(self) -> list[dict]:
         """Get rows as list of dictionaries."""
         if self._rows is None:
             try:
@@ -1182,7 +1182,7 @@ class QueryResult:
                 rows = self._cursor.fetchall()
                 if rows and hasattr(self._cursor, "description") and self._cursor.description:
                     columns = [desc[0] for desc in self._cursor.description]
-                    self._rows = [dict(zip(columns, row)) for row in rows]
+                    self._rows = [dict(zip(columns, row, strict=False)) for row in rows]
                 else:
                     self._rows = []
             except Exception:
@@ -1199,7 +1199,7 @@ class QueryResult:
 
 
 # Global client instance
-_db_client: Optional[TursoClient] = None
+_db_client: TursoClient | None = None
 
 
 async def get_db_client() -> TursoClient:

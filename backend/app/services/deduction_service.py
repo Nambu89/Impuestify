@@ -6,7 +6,7 @@ Provides CRUD operations and eligibility evaluation for IRPF deductions.
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,8 @@ class DeductionService:
         self,
         territory: str = "Estatal",
         tax_year: int = 2025,
-        category: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        category: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Get all active deductions for a territory and year.
 
@@ -65,8 +65,8 @@ class DeductionService:
         self,
         ccaa: str,
         tax_year: int = 2025,
-        category: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        category: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Get combined Estatal + CCAA deductions.
 
@@ -93,7 +93,7 @@ class DeductionService:
         ccaa_deductions = await self.get_deductions(ccaa, tax_year, category)
         return estatal + ccaa_deductions
 
-    def _parse_rows(self, rows) -> List[Dict[str, Any]]:
+    def _parse_rows(self, rows) -> list[dict[str, Any]]:
         """Parse DB rows into deduction dicts with JSON fields."""
         deductions = []
         for row in rows:
@@ -113,9 +113,9 @@ class DeductionService:
         self,
         territory: str = "Estatal",
         tax_year: int = 2025,
-        answers: Optional[Dict[str, Any]] = None,
-        ccaa: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        answers: dict[str, Any] | None = None,
+        ccaa: str | None = None,
+    ) -> dict[str, Any]:
         """
         Evaluate which deductions a user is eligible for based on their answers.
 
@@ -188,9 +188,9 @@ class DeductionService:
         self,
         territory: str = "Estatal",
         tax_year: int = 2025,
-        answers: Optional[Dict[str, Any]] = None,
-        ccaa: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        answers: dict[str, Any] | None = None,
+        ccaa: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Get questions that still need to be answered to evaluate eligibility.
 
@@ -255,7 +255,7 @@ class DeductionService:
         Returns:
             Dict of answer keys understood by evaluate_eligibility().
         """
-        answers: Dict[str, Any] = {}
+        answers: dict[str, Any] = {}
 
         # --- Derived boolean answers ---
         if (profile.get("num_descendientes", 0) or 0) > 0:
@@ -402,9 +402,9 @@ class DeductionService:
 
     def compute_ccaa_deduction_amounts(
         self,
-        eligible: List[Dict[str, Any]],
-        user_data: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
+        eligible: list[dict[str, Any]],
+        user_data: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """
         Compute exact EUR amounts for eligible CCAA deductions.
 
@@ -581,7 +581,7 @@ class DeductionService:
 
         return results
 
-    def _summarize(self, d: Dict[str, Any]) -> Dict[str, Any]:
+    def _summarize(self, d: dict[str, Any]) -> dict[str, Any]:
         """Create a summary dict for a deduction (without internal fields)."""
         summary = {
             "code": d["code"],
@@ -601,7 +601,7 @@ class DeductionService:
 
 
 # Singleton
-_deduction_service: Optional[DeductionService] = None
+_deduction_service: DeductionService | None = None
 
 
 def get_deduction_service(db_client=None) -> DeductionService:

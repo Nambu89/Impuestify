@@ -8,12 +8,12 @@ deductions, and fiscal profile data.
 import io
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_markdown_to_reportlab(markdown_text: str) -> List[str]:
+def _parse_markdown_to_reportlab(markdown_text: str) -> list[str]:
     """
     Convert basic markdown to ReportLab-compatible paragraphs.
 
@@ -26,8 +26,8 @@ def _parse_markdown_to_reportlab(markdown_text: str) -> List[str]:
     import re
 
     lines = markdown_text.split("\n")
-    paragraphs: List[str] = []
-    current_paragraph: List[str] = []
+    paragraphs: list[str] = []
+    current_paragraph: list[str] = []
 
     for line in lines:
         stripped = line.strip()
@@ -72,11 +72,11 @@ def _parse_markdown_to_reportlab(markdown_text: str) -> List[str]:
 
 def generate_irpf_report(
     user_name: str,
-    simulation_data: Optional[Dict[str, Any]] = None,
-    deductions: Optional[List[Dict[str, Any]]] = None,
-    fiscal_profile: Optional[Dict[str, Any]] = None,
+    simulation_data: dict[str, Any] | None = None,
+    deductions: list[dict[str, Any]] | None = None,
+    fiscal_profile: dict[str, Any] | None = None,
     estimated_savings: float = 0.0,
-    chat_content: Optional[str] = None,
+    chat_content: str | None = None,
 ) -> bytes:
     """
     Generate a PDF report with IRPF simulation and deductions.
@@ -92,19 +92,19 @@ def generate_irpf_report(
     Returns:
         PDF file as bytes
     """
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.units import mm
     from reportlab.lib.colors import HexColor
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
     from reportlab.platypus import (
-        SimpleDocTemplate,
+        HRFlowable,
         Paragraph,
+        SimpleDocTemplate,
         Spacer,
         Table,
         TableStyle,
-        HRFlowable,
     )
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(

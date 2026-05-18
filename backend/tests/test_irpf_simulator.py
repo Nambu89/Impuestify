@@ -13,14 +13,15 @@ Tests the complete data-driven IRPF simulation pipeline:
 All tests use mocked DB responses — no live Turso connection required.
 """
 
-import pytest
 import asyncio
-import sys
 import os
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+import sys
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Setup path
 backend_dir = Path(__file__).parent.parent
@@ -36,7 +37,7 @@ sys.path.insert(0, str(backend_dir))
 class MockRow:
     """Simulates a Turso result row (dict-like access, supports dict() conversion)."""
 
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
     def __getitem__(self, key):
         return self.data[key]
@@ -64,7 +65,7 @@ class MockRow:
 class MockResult:
     """Simulates a Turso execute() result."""
 
-    rows: List[MockRow]
+    rows: list[MockRow]
 
 
 # Tax parameters as they would be in the DB (Estatal, 2024)
@@ -364,8 +365,8 @@ async def test_repo_ccaa_override():
 @pytest.mark.asyncio
 async def test_work_income_basic():
     """WorkIncomeCalculator computes net work income correctly."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.work_income import WorkIncomeCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -390,8 +391,8 @@ async def test_work_income_basic():
 @pytest.mark.asyncio
 async def test_work_income_low_salary_full_reduction():
     """Low salary gets full work income reduction."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.work_income import WorkIncomeCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -412,8 +413,8 @@ async def test_work_income_low_salary_full_reduction():
 @pytest.mark.asyncio
 async def test_work_income_with_explicit_ss():
     """Explicit SS contribution is used instead of auto-estimate."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.work_income import WorkIncomeCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -432,8 +433,8 @@ async def test_work_income_with_explicit_ss():
 @pytest.mark.asyncio
 async def test_mpyf_single_taxpayer():
     """Single taxpayer, 35 years, no dependents → minimum personal."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.mpyf import MPYFCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -448,8 +449,8 @@ async def test_mpyf_single_taxpayer():
 @pytest.mark.asyncio
 async def test_mpyf_over_65():
     """Taxpayer >65 years gets increased minimum."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.mpyf import MPYFCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -462,8 +463,8 @@ async def test_mpyf_over_65():
 @pytest.mark.asyncio
 async def test_mpyf_over_75():
     """Taxpayer >75 years gets maximum personal minimum."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.mpyf import MPYFCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -476,8 +477,8 @@ async def test_mpyf_over_75():
 @pytest.mark.asyncio
 async def test_mpyf_with_children():
     """MPYF with 2 children, one under 3 years."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.mpyf import MPYFCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -499,8 +500,8 @@ async def test_mpyf_with_children():
 @pytest.mark.asyncio
 async def test_mpyf_shared_custody():
     """Shared custody halves children minimums."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.mpyf import MPYFCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -522,8 +523,8 @@ async def test_mpyf_shared_custody():
 @pytest.mark.asyncio
 async def test_mpyf_valencia_override():
     """Valencia has autonomous MPYF overrides."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.mpyf import MPYFCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -538,8 +539,8 @@ async def test_mpyf_valencia_override():
 @pytest.mark.asyncio
 async def test_mpyf_disability():
     """Disability percentage adds to MPYF."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.mpyf import MPYFCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -562,8 +563,8 @@ async def test_mpyf_disability():
 @pytest.mark.asyncio
 async def test_savings_basic():
     """Basic savings income calculation."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.savings_income import SavingsIncomeCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -581,8 +582,8 @@ async def test_savings_basic():
 @pytest.mark.asyncio
 async def test_savings_zero():
     """No savings income → zero tax."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.savings_income import SavingsIncomeCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -601,8 +602,8 @@ async def test_savings_zero():
 @pytest.mark.asyncio
 async def test_rental_basic():
     """Basic rental income with housing reduction."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.rental_income import RentalIncomeCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -627,8 +628,8 @@ async def test_rental_basic():
 @pytest.mark.asyncio
 async def test_rental_expenses_capped():
     """Deductible expenses cannot exceed rental income."""
-    from app.utils.tax_parameter_repository import TaxParameterRepository
     from app.utils.calculators.rental_income import RentalIncomeCalculator
+    from app.utils.tax_parameter_repository import TaxParameterRepository
 
     db = build_mock_db()
     repo = TaxParameterRepository(db)
@@ -1031,8 +1032,8 @@ def test_no_hardcoded_values_in_calculators():
 
 def test_old_calculator_still_importable():
     """IRPFCalculator and calculate_irpf_tool still exist (backward compat)."""
-    from app.utils.irpf_calculator import IRPFCalculator
     from app.tools.irpf_calculator_tool import IRPF_CALCULATOR_TOOL, calculate_irpf_tool
+    from app.utils.irpf_calculator import IRPFCalculator
 
     assert IRPFCalculator is not None
     assert IRPF_CALCULATOR_TOOL["function"]["name"] == "calculate_irpf"

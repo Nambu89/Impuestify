@@ -16,6 +16,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent

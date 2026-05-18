@@ -1,8 +1,9 @@
 """Tests for InvoiceOCRService — Gemini 3 Flash Vision invoice extraction."""
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.services.invoice_ocr_service import (
     EmisorReceptor,
@@ -14,7 +15,6 @@ from app.services.invoice_ocr_service import (
     validate_iva_math,
     validate_nif,
 )
-
 
 # ---------------------------------------------------------------------------
 # validate_nif

@@ -3,9 +3,9 @@
 import pytest
 
 from app.security.trajectory_analyzer import (
-    analyze_trajectory,
     DRIFT_TURNS_THRESHOLD,
     TRAJECTORY_WINDOW,
+    analyze_trajectory,
 )
 
 

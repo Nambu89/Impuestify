@@ -19,7 +19,7 @@ No se hardcodea ninguna regla aqui — este archivo es puro scaffolding.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
 import pytest
@@ -34,7 +34,6 @@ from app.models.defensia import (
 )
 from app.services import defensia_rules
 from app.services.defensia_rules_engine import REGISTRY, reset_registry
-
 
 # ---------------------------------------------------------------------------
 # Aislamiento del REGISTRY
@@ -88,11 +87,11 @@ def build_doc():
 
     def _build(
         tipo: TipoDocumento,
-        datos: Optional[dict[str, Any]] = None,
+        datos: dict[str, Any] | None = None,
         *,
         doc_id: str = "doc-test-001",
         nombre_original: str = "documento_test.pdf",
-        fecha_acto: Optional[datetime] = None,
+        fecha_acto: datetime | None = None,
         clasificacion_confianza: float = 1.0,
     ) -> DocumentoEstructurado:
         return DocumentoEstructurado(
@@ -132,7 +131,7 @@ def build_exp():
     def _build(
         tributo: Tributo = Tributo.IRPF,
         fase: Fase = Fase.INDETERMINADA,
-        docs: Optional[list[DocumentoEstructurado]] = None,
+        docs: list[DocumentoEstructurado] | None = None,
         *,
         ccaa: str = "Madrid",
         user_id: str = "u1",  # noqa: ARG001 — compat con firma del plan
@@ -163,8 +162,8 @@ def build_brief():
     def _build(
         texto: str = "",
         *,
-        chat_history: Optional[list[dict[str, str]]] = None,
-        brief_id: Optional[str] = None,
+        chat_history: list[dict[str, str]] | None = None,
+        brief_id: str | None = None,
         necesidad: str = "alegaciones",  # noqa: ARG001 — compat futuro
     ) -> Brief:
         return Brief(
@@ -210,7 +209,7 @@ def patch_hoy():
                 ``"app.services.defensia_rules.reglas_procedimentales.R003_prescripcion.datetime"``
         """
         if fecha.tzinfo is None:
-            fecha = fecha.replace(tzinfo=timezone.utc)
+            fecha = fecha.replace(tzinfo=UTC)
 
         class _FrozenDatetime(datetime):
             @classmethod

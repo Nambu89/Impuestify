@@ -9,17 +9,18 @@ Validates:
 """
 
 import pytest
+
+from app.territories.registry import _registry, get_territory
 from app.territories.startup import register_all_territories
-from app.territories.registry import get_territory, _registry
-from app.utils.pharmacy_constants import (
-    PHARMACY_CNAE,
-    PHARMACY_IAE,
-    PHARMACY_ACTIVITY,
-    RE_RATES,
-    PHARMACY_DEDUCTIONS,
-    PHARMACY_IVA_TYPES,
-)
 from app.utils.calculators.modelo_303 import Modelo303Calculator
+from app.utils.pharmacy_constants import (
+    PHARMACY_ACTIVITY,
+    PHARMACY_CNAE,
+    PHARMACY_DEDUCTIONS,
+    PHARMACY_IAE,
+    PHARMACY_IVA_TYPES,
+    RE_RATES,
+)
 
 
 @pytest.fixture(autouse=True)

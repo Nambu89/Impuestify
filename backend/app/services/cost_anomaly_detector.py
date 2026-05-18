@@ -18,8 +18,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +32,8 @@ ALERT_DEDUPE_TTL = 24 * 3600  # one alert per user per 24h
 @dataclass
 class AnomalyHit:
     user_id: str
-    email: Optional[str]
-    plan: Optional[str]
+    email: str | None
+    plan: str | None
     today_cost_usd: float
     baseline_avg_usd: float
     multiplier: float
@@ -56,9 +55,9 @@ class CostAnomalyDetector:
         self._db = await get_db_client()
         return self._db
 
-    async def find_anomalies(self, multiplier: float = DEFAULT_MULTIPLIER) -> List[AnomalyHit]:
+    async def find_anomalies(self, multiplier: float = DEFAULT_MULTIPLIER) -> list[AnomalyHit]:
         db = await self._get_db()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
         seven_days_ago = (now - timedelta(days=7)).isoformat()
         yesterday_start = (
@@ -117,7 +116,7 @@ class CostAnomalyDetector:
             for row in meta_result.rows or []
         }
 
-        hits: List[AnomalyHit] = []
+        hits: list[AnomalyHit] = []
         for row in today_rows:
             uid = row["user_id"]
             today_cost = float(row["today_cost"])
@@ -146,13 +145,13 @@ class CostAnomalyDetector:
             )
         return hits
 
-    async def alert_owner(self, hits: List[AnomalyHit], owner_email: str) -> int:
+    async def alert_owner(self, hits: list[AnomalyHit], owner_email: str) -> int:
         """Send a single grouped email if there are unalerted hits. Returns count emailed."""
         if not hits:
             return 0
 
         # Deduplicate via Redis flag (one alert per user per 24h)
-        new_hits: List[AnomalyHit] = []
+        new_hits: list[AnomalyHit] = []
         if self.redis is not None:
             for hit in hits:
                 key = f"cost_alert_sent:{hit.user_id}:{datetime.utcnow().strftime('%Y-%m-%d')}"

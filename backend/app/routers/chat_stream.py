@@ -9,28 +9,28 @@ Best practices from research applied:
 - Graceful error handling
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request
-from sse_starlette.sse import EventSourceResponse
-from pydantic import BaseModel, Field
-from typing import Optional
-import logging
 import asyncio
 import json
+import logging
 
-from app.database.turso_client import TursoClient
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
+from sse_starlette.sse import EventSourceResponse
+
 from app.agents.tax_agent import TaxAgent
-from app.services.conversation_service import ConversationService
-from app.services.conversation_cache import ConversationCache
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.subscription_guard import require_active_subscription
-from app.security import sql_validator, guardrails_system
-from app.security.security_pipeline import security_pipeline
-from app.security.topic_classifier import TopicContext
-from app.security.token_budget import token_budget_tracker
-from app.security.velocity_check import velocity_checker
+from app.database.turso_client import TursoClient
+from app.security import guardrails_system
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
+from app.security.security_pipeline import security_pipeline
+from app.security.token_budget import token_budget_tracker
+from app.security.topic_classifier import TopicContext
+from app.security.velocity_check import velocity_checker
+from app.services.conversation_cache import ConversationCache
+from app.services.conversation_service import ConversationService
 from app.services.subscription_service import SubscriptionAccess
-from app.utils.streaming import ProgressCallback, sse_generator, filter_json_from_content
+from app.utils.streaming import ProgressCallback, filter_json_from_content, sse_generator
 
 
 def _filter_permission_asking(content: str) -> str:
@@ -80,12 +80,12 @@ class StreamQuestionRequest(BaseModel):
     """Request for streaming chat"""
 
     question: str = Field(..., min_length=1, max_length=1000)
-    conversation_id: Optional[str] = None
-    workspace_id: Optional[str] = Field(default=None, description="Active workspace ID for context")
-    session_doc_ids: Optional[list] = Field(
+    conversation_id: str | None = None
+    workspace_id: str | None = Field(default=None, description="Active workspace ID for context")
+    session_doc_ids: list | None = Field(
         default=None, description="Session document IDs for ephemeral context"
     )
-    k: Optional[int] = Field(default=5, ge=1, le=10)
+    k: int | None = Field(default=5, ge=1, le=10)
 
 
 # === Dependencies ===
@@ -101,9 +101,9 @@ async def get_db(request: Request) -> TursoClient:
 async def _build_pipeline_context(
     db: TursoClient,
     user_id: str,
-    workspace_id: Optional[str],
-    conversation_id: Optional[str],
-) -> Optional[TopicContext]:
+    workspace_id: str | None,
+    conversation_id: str | None,
+) -> TopicContext | None:
     """Build a TopicContext for the security pipeline (Bug A fix).
 
     Extracts only the metadata the topic classifier needs:

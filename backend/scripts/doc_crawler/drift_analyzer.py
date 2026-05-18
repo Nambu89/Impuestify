@@ -17,7 +17,7 @@ import json
 import logging
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 # Ensure project root in path
@@ -229,7 +229,7 @@ def generate_drift_report(
     report_path: Path,
 ) -> None:
     """Generate a markdown drift report."""
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     lines = [
         f"# Fiscal Drift Report — {now}",
@@ -278,7 +278,7 @@ def generate_drift_report(
 
         rec = analysis.get("recommendation", "")
         if rec:
-            lines.append(f"### Recommendation")
+            lines.append("### Recommendation")
             lines.append(f"{rec}")
             lines.append("")
 
@@ -431,7 +431,7 @@ def analyze_drift(dry_run: bool = False, skip_llm: bool = False) -> dict:
         logger.info("No _pending_ingest.json found — nothing to analyze")
         return {"status": "no_changes", "analyzed": 0}
 
-    with open(PENDING_INGEST, "r", encoding="utf-8") as f:
+    with open(PENDING_INGEST, encoding="utf-8") as f:
         pending = json.load(f)
 
     files = pending.get("files", [])
@@ -485,7 +485,7 @@ def analyze_drift(dry_run: bool = False, skip_llm: bool = False) -> dict:
         logger.info("No high/medium priority changes — skipping LLM analysis")
 
     # Step 4: Generate report
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     report_path = PLANS_DIR / f"drift-report-{today}.md"
     generate_drift_report(changes, analysis, report_path)
 

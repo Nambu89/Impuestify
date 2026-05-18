@@ -8,7 +8,7 @@ Always includes the most recent messages for immediate context.
 
 import logging
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from openai import AsyncOpenAI
 
@@ -17,11 +17,11 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
-def cosine_similarity(a: List[float], b: List[float]) -> float:
+def cosine_similarity(a: list[float], b: list[float]) -> float:
     """Compute cosine similarity between two vectors."""
     if not a or not b or len(a) != len(b):
         return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:
@@ -41,15 +41,15 @@ class SemanticWindow:
     def __init__(self, max_messages: int = 15, recent_guaranteed: int = 5):
         self.max_messages = max_messages
         self.recent_guaranteed = recent_guaranteed
-        self._client: Optional[AsyncOpenAI] = None
-        self._embedding_cache: Dict[str, List[float]] = {}
+        self._client: AsyncOpenAI | None = None
+        self._embedding_cache: dict[str, list[float]] = {}
 
     def _get_client(self) -> AsyncOpenAI:
         if not self._client:
             self._client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         return self._client
 
-    async def _get_messages(self, conversation_id: str) -> List[Dict[str, Any]]:
+    async def _get_messages(self, conversation_id: str) -> list[dict[str, Any]]:
         """Load all messages for a conversation from the database."""
         from app.database.turso_client import get_db_client
 
@@ -63,7 +63,7 @@ class SemanticWindow:
         )
         return [dict(row) for row in result.rows or []]
 
-    async def _embed(self, text: str) -> List[float]:
+    async def _embed(self, text: str) -> list[float]:
         """Get embedding for a text string using text-embedding-3-large (256 dims)."""
         client = self._get_client()
         response = await client.embeddings.create(
@@ -73,7 +73,7 @@ class SemanticWindow:
         )
         return response.data[0].embedding
 
-    async def _get_or_create_embedding(self, msg_id: str, content: str) -> List[float]:
+    async def _get_or_create_embedding(self, msg_id: str, content: str) -> list[float]:
         """Get cached embedding or create a new one.
 
         Messages are immutable, so embeddings can be cached indefinitely
@@ -85,7 +85,7 @@ class SemanticWindow:
         self._embedding_cache[msg_id] = embedding
         return embedding
 
-    async def select(self, conversation_id: str, current_query: str) -> List[Dict[str, Any]]:
+    async def select(self, conversation_id: str, current_query: str) -> list[dict[str, Any]]:
         """
         Select the most relevant messages for the current query.
 

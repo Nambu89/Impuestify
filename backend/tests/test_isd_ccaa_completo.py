@@ -6,8 +6,8 @@ ensuring all 21 territories (15 CCAA + 4 forales + Ceuta + Melilla) are handled.
 """
 
 import pytest
-from app.tools.isd_calculator_tool import calculate_isd, _normalize_ccaa
 
+from app.tools.isd_calculator_tool import _normalize_ccaa, calculate_isd
 
 # ---------------------------------------------------------------------------
 # 1. Galicia — 99% sucesiones <= 400K, 99% donaciones <= 200K

@@ -22,6 +22,7 @@ import os
 import sys
 import uuid
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent

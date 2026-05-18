@@ -33,7 +33,7 @@ from scrapling import Fetcher
 _FETCHER = Fetcher()
 
 
-def _fetch(url: str, timeout: int = 20) -> Tuple[int, str]:
+def _fetch(url: str, timeout: int = 20) -> tuple[int, str]:
     """Return (status, body_text)."""
     try:
         r = _FETCHER.get(url, timeout=timeout)
@@ -47,13 +47,13 @@ def _fetch(url: str, timeout: int = 20) -> Tuple[int, str]:
 # ── BOC Canarias ────────────────────────────────────────────────────────
 
 
-def search_boc_canarias(year: int, query: str) -> List[dict]:
+def search_boc_canarias(year: int, query: str) -> list[dict]:
     """Itera sumarios BOC año, busca query en cada uno.
 
     Sumario URL: /boc/{year}/{NNN}/index.html
     """
     base = "https://www.gobiernodecanarias.org"
-    found: List[dict] = []
+    found: list[dict] = []
     status, body = _fetch(f"{base}/boc/{year}/")
     if status != 200:
         print(f"[ERR] /boc/{year}/ → HTTP {status}", file=sys.stderr)
@@ -91,9 +91,9 @@ def search_boc_canarias(year: int, query: str) -> List[dict]:
 # ── Bizkaia ──────────────────────────────────────────────────────────────
 
 
-def search_bizkaia(query: str) -> List[dict]:
+def search_bizkaia(query: str) -> list[dict]:
     """Lista normas categorizadas en /es/normativa-tributaria/normativa-vigente."""
-    found: List[dict] = []
+    found: list[dict] = []
     base = "https://www.bizkaia.eus"
     status, body = _fetch(f"{base}/es/normativa-tributaria/normativa-vigente")
     if status != 200:
@@ -120,9 +120,9 @@ def search_bizkaia(query: str) -> List[dict]:
 # ── Gipuzkoa ─────────────────────────────────────────────────────────────
 
 
-def search_gipuzkoa(query: str) -> List[dict]:
+def search_gipuzkoa(query: str) -> list[dict]:
     """Portal Ogasuna Gipuzkoa."""
-    found: List[dict] = []
+    found: list[dict] = []
     base = "https://www.gipuzkoa.eus"
     status, body = _fetch(f"{base}/es/web/ogasuna/normativa/aprobada")
     if status != 200:
@@ -139,9 +139,9 @@ def search_gipuzkoa(query: str) -> List[dict]:
 # ── BOE search (estatal — para Ley 35/2015, Ley 8/1991, etc.) ───────────
 
 
-def search_boe(query: str) -> List[dict]:
+def search_boe(query: str) -> list[dict]:
     """BOE search via buscar UI. Devuelve resultados con BOE-A-IDs."""
-    found: List[dict] = []
+    found: list[dict] = []
     base = "https://www.boe.es"
     # BOE buscar tiene query params
     search_url = f"{base}/buscar/legislacion.php?campo[1]=NOTOID&dato[1]={query}"
@@ -163,9 +163,9 @@ def search_boe(query: str) -> List[dict]:
 # ── BOJA Andalucía ───────────────────────────────────────────────────────
 
 
-def search_boja(year: int, query: str) -> List[dict]:
+def search_boja(year: int, query: str) -> list[dict]:
     """BOJA sumarios año."""
-    found: List[dict] = []
+    found: list[dict] = []
     base = "https://www.juntadeandalucia.es"
     status, body = _fetch(f"{base}/boja/")
     if status != 200:

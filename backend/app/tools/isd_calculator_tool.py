@@ -16,8 +16,8 @@ Covers:
   Asturias, Cantabria, La Rioja, Baleares, Ceuta, Melilla
 """
 
-from typing import Dict, Any, Optional, List
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +131,7 @@ y sucesiones en España, según la Ley 29/1987 y la normativa de cada CCAA.""",
 # (base_hasta, cuota_integra_previa, resto_base_hasta, tipo_pct)
 # ---------------------------------------------------------------------------
 
-TARIFA_ESTATAL: List[tuple] = [
+TARIFA_ESTATAL: list[tuple] = [
     (7_993.46, 0.00, 7_993.46, 7.65),
     (15_980.91, 611.50, 7_987.45, 8.50),
     (23_968.36, 1_290.43, 7_987.45, 9.35),
@@ -152,7 +152,7 @@ TARIFA_ESTATAL: List[tuple] = [
 
 # Coeficientes multiplicadores (Art. 22 Ley 29/1987)
 # (patrimonio_hasta, coef_grupos_i_ii, coef_grupo_iii, coef_grupo_iv)
-COEFICIENTES_MULTIPLICADORES: List[tuple] = [
+COEFICIENTES_MULTIPLICADORES: list[tuple] = [
     (402_678.11, 1.0000, 1.5882, 2.0000),
     (2_007_380.43, 1.0500, 1.6676, 2.1000),
     (4_020_770.98, 1.1000, 1.7471, 2.2000),
@@ -216,8 +216,8 @@ def _get_coeficiente(relationship: str, previous_wealth: float) -> float:
 
 
 def _reduccion_parentesco_estatal(
-    relationship: str, recipient_age: Optional[int]
-) -> Dict[str, Any]:
+    relationship: str, recipient_age: int | None
+) -> dict[str, Any]:
     """
     Compute the kinship reduction (Arts. 20.2 a) Ley 29/1987).
     Returns dict with importe and base_legal.
@@ -258,7 +258,7 @@ def _reduccion_parentesco_estatal(
         }
 
 
-def _reduccion_discapacidad(disability: Optional[int]) -> Optional[Dict[str, Any]]:
+def _reduccion_discapacidad(disability: int | None) -> dict[str, Any] | None:
     """Return disability reduction if applicable (Art. 20.2.a) Ley 29/1987)."""
     if not disability or disability == 0:
         return None
@@ -279,7 +279,7 @@ def _reduccion_discapacidad(disability: Optional[int]) -> Optional[Dict[str, Any
 
 def _reduccion_vivienda_habitual(
     amount: float, operation_type: str, relationship: str
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Reduccion 95% vivienda habitual en sucesiones (Art. 20.2.c) Ley 29/1987).
     Max 122.606,47 EUR per receptor.
@@ -297,7 +297,7 @@ def _reduccion_vivienda_habitual(
     }
 
 
-def _reduccion_empresa_familiar(amount: float, operation_type: str) -> Optional[Dict[str, Any]]:
+def _reduccion_empresa_familiar(amount: float, operation_type: str) -> dict[str, Any] | None:
     """Reduccion 95% empresa familiar (Art. 20.2.c) Ley 29/1987)."""
     reduccion = amount * 0.95
     context = "sucesiones y donaciones" if operation_type == "donacion" else "sucesiones"
@@ -320,12 +320,12 @@ def _bonificaciones_ccaa(
     base_liquidable: float,
     cuota_tributaria: float,
     amount: float,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Return list of autonomous-community bonifications.
     Each entry: {nombre, porcentaje, importe, normativa}.
     """
-    bonificaciones: List[Dict[str, Any]] = []
+    bonificaciones: list[dict[str, Any]] = []
 
     # ---- Madrid -------------------------------------------------------
     if ccaa_norm == "madrid":
@@ -797,12 +797,12 @@ async def calculate_isd(
     operation_type: str,
     relationship: str,
     ccaa: str,
-    donor_age: Optional[int] = None,
-    recipient_age: Optional[int] = None,
-    destination: Optional[str] = None,
-    previous_wealth: Optional[float] = None,
-    disability: Optional[int] = None,
-) -> Dict[str, Any]:
+    donor_age: int | None = None,
+    recipient_age: int | None = None,
+    destination: str | None = None,
+    previous_wealth: float | None = None,
+    disability: int | None = None,
+) -> dict[str, Any]:
     """
     Calculate Spanish ISD (Impuesto sobre Sucesiones y Donaciones).
 
@@ -853,7 +853,7 @@ async def calculate_isd(
         # ----------------------------------------------------------------
         # 1. Reducciones
         # ----------------------------------------------------------------
-        reducciones: List[Dict[str, Any]] = []
+        reducciones: list[dict[str, Any]] = []
 
         # 1a. Reduccion parentesco estatal
         red_parentesco = _reduccion_parentesco_estatal(relationship, recipient_age)
@@ -927,7 +927,7 @@ async def calculate_isd(
         # ----------------------------------------------------------------
         # 6. Notes and warnings
         # ----------------------------------------------------------------
-        notas: List[str] = []
+        notas: list[str] = []
 
         if ccaa_norm in ("araba", "bizkaia", "gipuzkoa", "pais_vasco", "navarra"):
             notas.append(

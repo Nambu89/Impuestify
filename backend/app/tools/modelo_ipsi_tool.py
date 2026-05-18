@@ -8,9 +8,9 @@ Based on Ley 8/1991 (Ceuta) and Ley 13/1996 (Melilla).
 6 rate tiers: 0.5%, 1%, 2%, 4%, 8%, 10%.
 """
 
-from typing import Dict, Any
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ async def calculate_modelo_ipsi_tool(
     compensacion_periodos_anteriores: float = 0,
     restricted_mode: bool = False,
     caso: str = "general",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Calculate the quarterly IPSI self-assessment for Ceuta/Melilla.
 
     Args:

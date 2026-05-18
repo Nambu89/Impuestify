@@ -64,7 +64,7 @@ async def main():
                 env={**os.environ, "PYTHONUTF8": "1"},
             )
         except subprocess.TimeoutExpired:
-            print(f"  TIMEOUT (30 min) — skipping")
+            print("  TIMEOUT (30 min) — skipping")
             continue
         # Show last 5 lines of output
         lines = (result.stdout + result.stderr).strip().splitlines()

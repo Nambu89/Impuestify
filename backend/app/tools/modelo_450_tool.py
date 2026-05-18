@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -118,9 +118,9 @@ MODELO_450_TOOL = {
 }
 
 
-def _format_for_llm(result: Dict[str, Any]) -> str:
+def _format_for_llm(result: dict[str, Any]) -> str:
     """Formatea el resultado del calculator para presentacion al usuario."""
-    lines: List[str] = []
+    lines: list[str] = []
     periodo = result["periodo_label"]
     year = result["year"]
     plazo = result["plazo_presentacion"]
@@ -236,17 +236,17 @@ def _format_for_llm(result: Dict[str, Any]) -> str:
 
 async def calculate_modelo_450_tool(
     trimestre: int,
-    bienes_producidos: List[Dict[str, Any]],
-    year: Optional[int] = None,
+    bienes_producidos: list[dict[str, Any]],
+    year: int | None = None,
     cuotas_compensar_anteriores: float = 0.0,
     rectificacion_bases: float = 0.0,
     rectificacion_cuotas: float = 0.0,
     regularizacion_anual: float = 0.0,
     periodicidad: str = "trimestral",
-    mes: Optional[int] = None,
+    mes: int | None = None,
     restricted_mode: bool = False,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Tool wrapper para Modelo 450 (AIEM productores canarios).
 

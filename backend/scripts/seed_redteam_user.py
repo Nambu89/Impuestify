@@ -71,8 +71,8 @@ async def _ensure_active_subscription(db, user_id: str) -> None:
 
 
 async def main():
-    from app.database.turso_client import get_db_client
     from app.auth.password import hash_password as _hash_password
+    from app.database.turso_client import get_db_client
 
     db = await get_db_client()
 
@@ -120,7 +120,7 @@ async def main():
     if not rotate_only:
         print()
         print("=" * 70)
-        print(f"REDTEAM USER CREATED")
+        print("REDTEAM USER CREATED")
         print(f"  email:    {REDTEAM_EMAIL}")
         print(f"  password: {password}")
         print()

@@ -6,18 +6,19 @@ Workspaces allow users to organize documents (payslips, invoices, tax declaratio
 for analysis by the WorkspaceAgent.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request, UploadFile, File
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone
 import logging
+from datetime import UTC, datetime
+from typing import Any
 
-from app.database.turso_client import TursoClient
-from app.services.workspace_service import WorkspaceService, WorkspaceCreate
-from app.services.file_processing_service import FileProcessingService
-from app.auth.jwt_handler import get_current_user, TokenData
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from pydantic import BaseModel, Field
+
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.subscription_guard import require_active_subscription
+from app.database.turso_client import TursoClient
+from app.services.file_processing_service import FileProcessingService
 from app.services.subscription_service import SubscriptionAccess
+from app.services.workspace_service import WorkspaceCreate, WorkspaceService
 
 logger = logging.getLogger(__name__)
 
@@ -31,16 +32,16 @@ class CreateWorkspaceRequest(BaseModel):
     """Request to create a new workspace"""
 
     name: str = Field(..., min_length=1, max_length=100, description="Workspace name")
-    description: Optional[str] = Field(None, max_length=500, description="Workspace description")
-    icon: Optional[str] = Field(default="📁", max_length=10, description="Workspace icon emoji")
+    description: str | None = Field(None, max_length=500, description="Workspace description")
+    icon: str | None = Field(default="📁", max_length=10, description="Workspace icon emoji")
 
 
 class UpdateWorkspaceRequest(BaseModel):
     """Request to update a workspace"""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
-    icon: Optional[str] = Field(None, max_length=10)
+    name: str | None = Field(None, min_length=1, max_length=100)
+    description: str | None = Field(None, max_length=500)
+    icon: str | None = Field(None, max_length=10)
 
 
 class WorkspaceResponse(BaseModel):
@@ -49,7 +50,7 @@ class WorkspaceResponse(BaseModel):
     id: str
     user_id: str
     name: str
-    description: Optional[str]
+    description: str | None
     icon: str
     is_default: bool
     max_files: int
@@ -62,8 +63,8 @@ class WorkspaceResponse(BaseModel):
 class ConfirmClassificationRequest(BaseModel):
     """Request to confirm or reclassify a workspace invoice"""
 
-    nueva_cuenta_code: Optional[str] = None
-    nueva_cuenta_nombre: Optional[str] = None
+    nueva_cuenta_code: str | None = None
+    nueva_cuenta_nombre: str | None = None
 
 
 class WorkspaceFileResponse(BaseModel):
@@ -73,20 +74,20 @@ class WorkspaceFileResponse(BaseModel):
     workspace_id: str
     filename: str
     file_type: str
-    mime_type: Optional[str]
+    mime_type: str | None
     file_size: int
     processing_status: str
     created_at: str
-    cuenta_pgc: Optional[str] = None
-    cuenta_pgc_nombre: Optional[str] = None
-    clasificacion_confianza: Optional[str] = None
+    cuenta_pgc: str | None = None
+    cuenta_pgc_nombre: str | None = None
+    clasificacion_confianza: str | None = None
 
 
 class WorkspaceDetailResponse(BaseModel):
     """Workspace with all its files"""
 
     workspace: WorkspaceResponse
-    files: List[WorkspaceFileResponse]
+    files: list[WorkspaceFileResponse]
 
 
 class FileUploadResponse(BaseModel):
@@ -97,8 +98,8 @@ class FileUploadResponse(BaseModel):
     file_type: str
     status: str
     size: int
-    integrity_score: Optional[float] = None
-    integrity_findings: Optional[str] = None
+    integrity_score: float | None = None
+    integrity_findings: str | None = None
 
 
 # === Dependencies ===
@@ -158,8 +159,8 @@ async def create_workspace(
             is_default=workspace.is_default,
             max_files=workspace.max_files,
             max_size_mb=workspace.max_size_mb,
-            created_at=(workspace.created_at or datetime.now(timezone.utc)).isoformat(),
-            updated_at=(workspace.updated_at or datetime.now(timezone.utc)).isoformat(),
+            created_at=(workspace.created_at or datetime.now(UTC)).isoformat(),
+            updated_at=(workspace.updated_at or datetime.now(UTC)).isoformat(),
             file_count=workspace.file_count or 0,
         )
     except Exception as e:
@@ -167,7 +168,7 @@ async def create_workspace(
         raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
-@router.get("", response_model=List[WorkspaceResponse])
+@router.get("", response_model=list[WorkspaceResponse])
 async def list_workspaces(
     current_user: TokenData = Depends(get_current_user),
     service: WorkspaceService = Depends(get_workspace_service),
@@ -190,8 +191,8 @@ async def list_workspaces(
                 is_default=w.is_default,
                 max_files=w.max_files,
                 max_size_mb=w.max_size_mb,
-                created_at=(w.created_at or datetime.now(timezone.utc)).isoformat(),
-                updated_at=(w.updated_at or datetime.now(timezone.utc)).isoformat(),
+                created_at=(w.created_at or datetime.now(UTC)).isoformat(),
+                updated_at=(w.updated_at or datetime.now(UTC)).isoformat(),
                 file_count=w.file_count or 0,
             )
             for w in workspaces
@@ -262,8 +263,8 @@ async def get_workspace(
                 is_default=workspace.is_default,
                 max_files=workspace.max_files,
                 max_size_mb=workspace.max_size_mb,
-                created_at=(workspace.created_at or datetime.now(timezone.utc)).isoformat(),
-                updated_at=(workspace.updated_at or datetime.now(timezone.utc)).isoformat(),
+                created_at=(workspace.created_at or datetime.now(UTC)).isoformat(),
+                updated_at=(workspace.updated_at or datetime.now(UTC)).isoformat(),
                 file_count=workspace.file_count or 0,
             ),
             files=files,
@@ -333,8 +334,8 @@ async def update_workspace(
             is_default=updated.is_default,
             max_files=updated.max_files,
             max_size_mb=updated.max_size_mb,
-            created_at=(updated.created_at or datetime.now(timezone.utc)).isoformat(),
-            updated_at=(updated.updated_at or datetime.now(timezone.utc)).isoformat(),
+            created_at=(updated.created_at or datetime.now(UTC)).isoformat(),
+            updated_at=(updated.updated_at or datetime.now(UTC)).isoformat(),
             file_count=updated.file_count or 0,
         )
     except HTTPException:
@@ -427,11 +428,11 @@ async def upload_file(
 
 
 @router.post(
-    "/{workspace_id}/files/batch", response_model=List[FileUploadResponse], status_code=201
+    "/{workspace_id}/files/batch", response_model=list[FileUploadResponse], status_code=201
 )
 async def upload_files_batch(
     workspace_id: str,
-    files: List[UploadFile] = File(...),
+    files: list[UploadFile] = File(...),
     current_user: TokenData = Depends(get_current_user),
     access: SubscriptionAccess = Depends(require_active_subscription),
     service: WorkspaceService = Depends(get_workspace_service),
@@ -477,7 +478,7 @@ async def upload_files_batch(
             detail=f"Workspace has reached maximum file limit ({workspace.max_files})",
         )
 
-    results: List[FileUploadResponse] = []
+    results: list[FileUploadResponse] = []
 
     for index, file in enumerate(files):
         # Stop early if the workspace is now full
@@ -534,7 +535,7 @@ async def upload_files_batch(
     return results
 
 
-@router.get("/{workspace_id}/files", response_model=List[WorkspaceFileResponse])
+@router.get("/{workspace_id}/files", response_model=list[WorkspaceFileResponse])
 async def list_files(
     workspace_id: str,
     current_user: TokenData = Depends(get_current_user),
@@ -633,7 +634,7 @@ async def delete_file(
 async def get_workspace_dashboard(
     request: Request,
     workspace_id: str,
-    year: Optional[int] = None,
+    year: int | None = None,
     current_user: TokenData = Depends(get_current_user),
     service: WorkspaceService = Depends(get_workspace_service),
     db: TursoClient = Depends(get_db),
@@ -721,7 +722,7 @@ async def get_workspace_dashboard(
             base_params,
         )
 
-        trim_map: Dict[int, Dict[str, Any]] = {}
+        trim_map: dict[int, dict[str, Any]] = {}
         for row in trim_result.rows:
             t = int(row.get("trimestre", 0) or 0)
             if 1 <= t <= 4:
@@ -967,7 +968,7 @@ async def confirm_classification(
     request: Request,
     workspace_id: str,
     file_id: str,
-    body: Optional[ConfirmClassificationRequest] = None,
+    body: ConfirmClassificationRequest | None = None,
     current_user: TokenData = Depends(get_current_user),
     workspace_service: WorkspaceService = Depends(get_workspace_service),
     db: TursoClient = Depends(get_db),
@@ -1110,7 +1111,7 @@ class ISPrefillResponse(BaseModel):
     amortizacion: float = 0.0
     num_facturas: int = 0
     periodo_cubierto: str = ""
-    cuentas_desglose: List[ISPrefillCuenta] = Field(default_factory=list)
+    cuentas_desglose: list[ISPrefillCuenta] = Field(default_factory=list)
 
 
 @router.get("/{workspace_id}/is-prefill", response_model=ISPrefillResponse)

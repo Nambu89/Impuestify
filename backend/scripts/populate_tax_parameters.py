@@ -27,7 +27,6 @@ load_dotenv(project_root / ".env")
 
 from app.database.turso_client import TursoClient
 
-
 # =============================================================================
 # MPYF — Mínimo Personal y Familiar (LIRPF arts. 57-61)
 # =============================================================================

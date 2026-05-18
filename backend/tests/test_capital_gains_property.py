@@ -14,16 +14,17 @@ Covers:
 10. Edge case: vivienda habitual but no reinversion flag
 """
 
-import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from app.utils.calculators.capital_gains_property import (
-    PropertyCapitalGainsCalculator,
     COEF_ABATIMIENTO_INMUEBLES,
-    FECHA_LIMITE_ABATIMIENTO,
     FECHA_FIN_PERMANENCIA,
+    FECHA_LIMITE_ABATIMIENTO,
     LIMITE_ACUMULADO_TRANSMISION,
+    PropertyCapitalGainsCalculator,
 )
 
 

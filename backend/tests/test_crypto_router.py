@@ -15,30 +15,30 @@ Database is mocked to avoid real Turso calls.
 from __future__ import annotations
 
 import io
+
+# ---------------------------------------------------------------------------
+# Module-level mocks (must be set up before imports that trigger side-effects)
+# ---------------------------------------------------------------------------
+# Patch heavy imports that are not needed for unit tests
+import sys
+import types
 import uuid
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# ---------------------------------------------------------------------------
-# Module-level mocks (must be set up before imports that trigger side-effects)
-# ---------------------------------------------------------------------------
-
-# Patch heavy imports that are not needed for unit tests
-import sys, types
-
 # Stub openpyxl if missing
 if "openpyxl" not in sys.modules:
     sys.modules["openpyxl"] = types.ModuleType("openpyxl")
 
-from app.routers.crypto import (
-    _validate_upload,
-    _MAX_UPLOAD_BYTES,
-    _XLSX_MAGIC,
-)
 from fastapi import HTTPException
 
+from app.routers.crypto import (
+    _MAX_UPLOAD_BYTES,
+    _XLSX_MAGIC,
+    _validate_upload,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers

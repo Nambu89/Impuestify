@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Tuple
 
 import yaml
 from pydantic import ValidationError
@@ -81,7 +80,7 @@ def load_invoice_templates(path: Path | None = None) -> InvoiceTemplatesCatalog:
 
 def load_all(
     data_dir: Path | None = None,
-) -> Tuple[NormsCatalog, ArticlesCatalog, InvoiceTemplatesCatalog]:
+) -> tuple[NormsCatalog, ArticlesCatalog, InvoiceTemplatesCatalog]:
     """Convenience: load the three catalogs from one directory.
 
     Raises:

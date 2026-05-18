@@ -5,8 +5,9 @@ Test FTS5 search for tarifa plana content.
 import asyncio
 import os
 import sys
-import pytest
 from pathlib import Path
+
+import pytest
 
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
@@ -70,7 +71,7 @@ async def _run_fts_search():
     if not result.rows:
         print("\nDocumento NO encontrado en tabla documents")
     else:
-        print(f"\nDocumento encontrado:")
+        print("\nDocumento encontrado:")
         for row in result.rows:
             doc_id = row["id"]
             print(f"   ID: {doc_id}")

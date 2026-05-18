@@ -7,6 +7,7 @@ This script creates the table needed for storing notification analysis results.
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load .env
@@ -18,8 +19,9 @@ load_dotenv(env_path)
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from app.database.turso_client import TursoClient
 import asyncio
+
+from app.database.turso_client import TursoClient
 
 
 async def create_notification_table():

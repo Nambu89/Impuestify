@@ -11,10 +11,9 @@ Designed for:
 """
 
 import json
-import uuid
 import logging
-from datetime import date, datetime, timedelta
-from typing import Optional
+import uuid
+from datetime import date, timedelta
 
 from app.config import settings
 from app.database.turso_client import TursoClient, get_db_client
@@ -58,7 +57,7 @@ async def send_push(
     body: str,
     url: str = "/calendario",
     tag: str = "fiscal-deadline",
-    db: Optional[TursoClient] = None,
+    db: TursoClient | None = None,
 ) -> dict:
     """
     Send a Web Push notification to all subscriptions for a user.
@@ -82,7 +81,7 @@ async def send_push(
         logger.warning("VAPID keys not configured — push notifications disabled")
         return {"sent": 0, "failed": 0, "expired_cleaned": 0}
 
-    from pywebpush import webpush, WebPushException
+    from pywebpush import WebPushException, webpush
 
     own_db = db is None
     if own_db:
@@ -144,7 +143,7 @@ async def send_push(
     return {"sent": sent, "failed": failed, "expired_cleaned": expired_cleaned}
 
 
-async def send_deadline_alerts(db: Optional[TursoClient] = None) -> dict:
+async def send_deadline_alerts(db: TursoClient | None = None) -> dict:
     """
     Cron job: send deadline alerts for all users.
 
@@ -397,7 +396,7 @@ def _build_deadline_email_html(deadlines: list[dict], frontend_url: str) -> str:
     """
 
 
-async def send_deadline_email_alerts(db: Optional[TursoClient] = None) -> dict:
+async def send_deadline_email_alerts(db: TursoClient | None = None) -> dict:
     """
     Cron job: send email reminders 30 days before fiscal deadlines.
 
@@ -412,8 +411,8 @@ async def send_deadline_email_alerts(db: Optional[TursoClient] = None) -> dict:
     Returns:
         dict with summary stats
     """
-    from app.services.email_service import get_email_service
     from app.config import settings as _settings
+    from app.services.email_service import get_email_service
 
     own_db = db is None
     if own_db:

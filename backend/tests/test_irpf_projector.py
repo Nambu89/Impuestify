@@ -1,12 +1,13 @@
 """Tests for IRPFProjector -- annual IRPF projection from quarterly data."""
 
 import json
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from dataclasses import dataclass
 from typing import Any, Dict, List
-from app.utils.calculators.irpf_projector import IRPFProjector
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from app.utils.calculators.irpf_projector import IRPFProjector
 
 # -----------------------------------------------------------------------
 # Mock infrastructure (shared with test_irpf_simulator.py patterns)
@@ -15,7 +16,7 @@ from app.utils.calculators.irpf_projector import IRPFProjector
 
 @dataclass
 class MockRow:
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
     def __getitem__(self, key):
         return self.data[key]
@@ -41,7 +42,7 @@ class MockRow:
 
 @dataclass
 class MockResult:
-    rows: List[MockRow]
+    rows: list[MockRow]
 
 
 # Minimal IRPF scales for Madrid (enough for simulator to work)

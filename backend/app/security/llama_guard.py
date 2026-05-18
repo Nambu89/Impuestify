@@ -11,12 +11,11 @@ Features:
 - Latency ~200-500ms
 """
 
-import os
 import logging
-import httpx
-from typing import Optional, List
 from dataclasses import dataclass, field
 from datetime import datetime
+
+import httpx
 
 from app.config import settings  # ← FIX: Import settings at module level
 
@@ -28,11 +27,11 @@ class ModerationResult:
     """Result of content moderation check."""
 
     is_safe: bool
-    blocked_categories: List[str] = field(default_factory=list)
+    blocked_categories: list[str] = field(default_factory=list)
     risk_level: str = "none"  # none, low, medium, high, critical
-    raw_response: Optional[str] = None
+    raw_response: str | None = None
     latency_ms: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class LlamaGuard:
@@ -294,7 +293,7 @@ class LlamaGuard:
         "no es apropiado",
     ]
 
-    def _parse_response(self, content: str, original_text: str = "") -> tuple[bool, List[str]]:
+    def _parse_response(self, content: str, original_text: str = "") -> tuple[bool, list[str]]:
         """Parse moderation model response into safety decision.
 
         Supports two response formats:
@@ -360,7 +359,7 @@ class LlamaGuard:
         logger.debug(f"ℹ️ Moderation response (not a refusal): {content[:50]}")
         return True, []
 
-    def _calculate_risk_level(self, categories: List[str]) -> str:
+    def _calculate_risk_level(self, categories: list[str]) -> str:
         """Calculate overall risk level from blocked categories."""
         if not categories:
             return "none"
@@ -376,7 +375,7 @@ class LlamaGuard:
 
         return "medium"
 
-    def get_block_message(self, categories: List[str]) -> str:
+    def get_block_message(self, categories: list[str]) -> str:
         """Get user-friendly block message in Spanish."""
         if not categories:
             return self.DEFAULT_BLOCK_MESSAGE
@@ -387,7 +386,7 @@ class LlamaGuard:
 
 
 # Global instance
-_llama_guard: Optional[LlamaGuard] = None
+_llama_guard: LlamaGuard | None = None
 
 
 def get_llama_guard() -> LlamaGuard:

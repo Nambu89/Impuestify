@@ -17,8 +17,8 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class ReasoningTrailRecorder:
         return self._db
 
     @staticmethod
-    def _summarize_chunks(chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _summarize_chunks(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Compact chunk metadata to keep DB rows small (no full text)."""
         out = []
         for c in chunks or []:
@@ -54,7 +54,7 @@ class ReasoningTrailRecorder:
         return out
 
     @staticmethod
-    def _summarize_tools(tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _summarize_tools(tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
         out = []
         for t in tool_calls or []:
             out.append(
@@ -70,13 +70,13 @@ class ReasoningTrailRecorder:
         self,
         message_id: str,
         user_id: str,
-        conversation_id: Optional[str],
-        rag_chunks: Optional[List[Dict[str, Any]]] = None,
-        tools_called: Optional[List[Dict[str, Any]]] = None,
-        security_layer: Optional[str] = None,
-        fiscal_profile: Optional[Dict[str, Any]] = None,
-        model: Optional[str] = None,
-    ) -> Optional[str]:
+        conversation_id: str | None,
+        rag_chunks: list[dict[str, Any]] | None = None,
+        tools_called: list[dict[str, Any]] | None = None,
+        security_layer: str | None = None,
+        fiscal_profile: dict[str, Any] | None = None,
+        model: str | None = None,
+    ) -> str | None:
         """Insert a reasoning trail row. Returns the row id, or None on failure."""
         try:
             db = await self._get_db()
@@ -126,7 +126,7 @@ class ReasoningTrailRecorder:
                     sec_json,
                     profile_json,
                     model or "gpt-5-mini",
-                    datetime.now(timezone.utc).isoformat(),
+                    datetime.now(UTC).isoformat(),
                 ],
             )
             return trail_id
@@ -134,7 +134,7 @@ class ReasoningTrailRecorder:
             logger.warning(f"reasoning_trail.record failed (non-blocking): {e}")
             return None
 
-    async def get_for_message(self, message_id: str) -> Optional[Dict[str, Any]]:
+    async def get_for_message(self, message_id: str) -> dict[str, Any] | None:
         """Fetch the trail row for a given message (for /api/admin or right-to-explain)."""
         db = await self._get_db()
         result = await db.execute(

@@ -4,10 +4,12 @@ Spec: plans/2026-04-13-defensia-design.md §5.2, §7.4
 """
 
 from __future__ import annotations
-from datetime import datetime
+
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Tributo(str, Enum):
@@ -68,13 +70,13 @@ class DocumentoEstructurado(BaseModel):
     id: str
     nombre_original: str
     tipo_documento: TipoDocumento
-    fecha_acto: Optional[datetime] = None
+    fecha_acto: datetime | None = None
     datos: dict[str, Any] = Field(default_factory=dict)
     clasificacion_confianza: float = 1.0
 
 
 class Brief(BaseModel):
-    id: Optional[str] = None
+    id: str | None = None
     texto: str
     chat_history: list[dict[str, str]] = Field(default_factory=list)
 
@@ -97,14 +99,13 @@ class ExpedienteEstructurado(BaseModel):
         TypeError al mezclar fechas naive/aware (Gemini/parseo PDF puede
         devolver ambos). NO muta los documentos originales.
         """
-        from datetime import timezone as _tz
 
         def _aware_key(d: DocumentoEstructurado):
             f = d.fecha_acto
             if f is None:
-                return datetime.max.replace(tzinfo=_tz.utc)
+                return datetime.max.replace(tzinfo=UTC)
             if f.tzinfo is None:
-                return f.replace(tzinfo=_tz.utc)
+                return f.replace(tzinfo=UTC)
             return f
 
         return sorted(self.documentos, key=_aware_key)
@@ -115,7 +116,7 @@ class ArgumentoCandidato(BaseModel):
     descripcion: str
     cita_normativa_propuesta: str
     datos_disparo: dict[str, Any]
-    impacto_estimado: Optional[str] = None
+    impacto_estimado: str | None = None
 
 
 class ArgumentoVerificado(BaseModel):
@@ -125,4 +126,4 @@ class ArgumentoVerificado(BaseModel):
     referencia_normativa_canonica: str
     confianza: float = Field(ge=0.0, le=1.0)
     datos_disparo: dict[str, Any]
-    impacto_estimado: Optional[str] = None
+    impacto_estimado: str | None = None

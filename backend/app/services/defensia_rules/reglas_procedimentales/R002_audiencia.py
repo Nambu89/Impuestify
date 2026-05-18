@@ -38,8 +38,6 @@ en la fase posterior del pipeline.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from app.models.defensia import (
     ArgumentoCandidato,
     Brief,
@@ -49,7 +47,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Tipos de documento considerados "resolutorios" para esta regla: actos
 # administrativos finales que requieren audiencia previa.
@@ -74,7 +71,7 @@ def _tiene_acta_con_acuerdo(exp: ExpedienteEstructurado) -> bool:
 
 def _detectar_salto_directo(
     timeline: list,
-) -> Optional[tuple[str, str]]:
+) -> tuple[str, str] | None:
     """Detecta el salto directo requerimiento -> liquidacion/sancion.
 
     Recorre el timeline (ya ordenado ASC por fecha_acto) buscando un
@@ -113,7 +110,7 @@ def _detectar_salto_directo(
 
 def _detectar_propuesta_modificada_sin_reabrir(
     timeline: list,
-) -> Optional[tuple[str, str]]:
+) -> tuple[str, str] | None:
     """Detecta modificacion de propuesta sin reabrir plazo de alegaciones.
 
     Busca una PROPUESTA_LIQUIDACION seguida de un documento resolutorio con
@@ -162,7 +159,7 @@ def _detectar_propuesta_modificada_sin_reabrir(
         "sin reabrir plazo de alegaciones"
     ),
 )
-def evaluar(expediente: ExpedienteEstructurado, brief: Brief) -> Optional[ArgumentoCandidato]:
+def evaluar(expediente: ExpedienteEstructurado, brief: Brief) -> ArgumentoCandidato | None:
     """Evalua R002 sobre el expediente y devuelve un candidato si dispara.
 
     Orden de evaluacion:

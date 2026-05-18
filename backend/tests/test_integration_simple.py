@@ -5,9 +5,10 @@ Simplified tests without emojis for Windows compatibility.
 Run with: pytest tests/test_integration_simple.py -v
 """
 
-import pytest
 import asyncio
 import os
+
+import pytest
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -63,7 +64,7 @@ class TestSemanticCacheSimple:
         cache = SemanticCache(url=url, token=token, enabled=True)
 
         assert cache.enabled, "Cache should be enabled with valid credentials"
-        print(f"\n[PASS] Semantic Cache: Initialized successfully")
+        print("\n[PASS] Semantic Cache: Initialized successfully")
 
     def test_personal_query_detection(self):
         """Test that personal queries are detected"""
@@ -94,7 +95,7 @@ class TestComplexityRouterSimple:
 
     def test_complexity_classification(self):
         """Test complexity classification"""
-        from app.security.complexity_router import classify_complexity, ComplexityLevel
+        from app.security.complexity_router import ComplexityLevel, classify_complexity
 
         # Simple query
         simple_result = classify_complexity("Que es el IVA?")
@@ -108,7 +109,7 @@ class TestComplexityRouterSimple:
         assert complex_result.level == ComplexityLevel.COMPLEX
         assert complex_result.reasoning_effort.value == "high"
 
-        print(f"\n[PASS] Complexity Router: Classification works correctly")
+        print("\n[PASS] Complexity Router: Classification works correctly")
 
 
 class TestRedisRateLimiterSimple:
@@ -124,9 +125,9 @@ class TestRedisRateLimiterSimple:
         redis_token = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 
         if redis_url and redis_token:
-            print(f"\n[PASS] Rate Limiter: Using Redis (distributed)")
+            print("\n[PASS] Rate Limiter: Using Redis (distributed)")
         else:
-            print(f"\n[PASS] Rate Limiter: Using in-memory (single instance)")
+            print("\n[PASS] Rate Limiter: Using in-memory (single instance)")
 
 
 class TestAuditLoggerSimple:
@@ -134,7 +135,7 @@ class TestAuditLoggerSimple:
 
     def test_audit_logger_basic(self):
         """Test basic audit logging"""
-        from app.security.audit_logger import AuditLogger, AuditEventType
+        from app.security.audit_logger import AuditEventType, AuditLogger
 
         logger = AuditLogger()
 
@@ -147,7 +148,7 @@ class TestAuditLoggerSimple:
 
         logger.log_moderation_block(user_id="test-user", categories=["S1"], ip_address="127.0.0.1")
 
-        print(f"\n[PASS] Audit Logger: Successfully logged events")
+        print("\n[PASS] Audit Logger: Successfully logged events")
 
 
 def test_environment_check():

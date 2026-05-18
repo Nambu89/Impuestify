@@ -28,8 +28,8 @@ Reglas de disenho (cerradas en el plan v2)
 import json
 import logging
 import secrets
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import (
     APIRouter,
@@ -102,7 +102,7 @@ class EditarEscritoRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
-    chat_history: Optional[list[dict[str, str]]] = None
+    chat_history: list[dict[str, str]] | None = None
 
 
 # ============================================================================
@@ -111,7 +111,7 @@ class ChatRequest(BaseModel):
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 async def _ensure_owner(db: TursoClient, exp_id: str, user_id: str) -> dict[str, Any]:
@@ -131,7 +131,7 @@ async def _ensure_owner(db: TursoClient, exp_id: str, user_id: str) -> dict[str,
     return dict(result.rows[0])
 
 
-def _map_fase(value: Optional[str]) -> Fase:
+def _map_fase(value: str | None) -> Fase:
     """Normaliza un string de fase a ``Fase`` — si es None/invalido, INDETERMINADA."""
     if not value:
         return Fase.INDETERMINADA
@@ -163,7 +163,7 @@ def _row_a_expediente(exp_row: dict[str, Any]) -> ExpedienteEstructurado:
     )
 
 
-async def _load_last_brief(db: TursoClient, exp_id: str) -> Optional[Brief]:
+async def _load_last_brief(db: TursoClient, exp_id: str) -> Brief | None:
     """Devuelve el brief mas reciente del expediente (o None si no hay)."""
     result = await db.execute(
         "SELECT id, texto, chat_history_json FROM defensia_briefs "
@@ -293,7 +293,7 @@ async def crear_expediente(
 @limiter.limit(get_defensia_rate_limit("default"))
 async def listar_expedientes(
     request: Request,
-    estado: Optional[str] = Query(default=None, max_length=50),
+    estado: str | None = Query(default=None, max_length=50),
     limit: int = Query(default=50, ge=1, le=200),
     db: TursoClient = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
@@ -377,7 +377,7 @@ async def subir_documento(
     request: Request,
     exp_id: str,
     file: UploadFile = File(...),
-    tipo_documento: Optional[str] = Form(default=None),
+    tipo_documento: str | None = Form(default=None),
     db: TursoClient = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
     storage: DefensiaStorage = Depends(get_defensia_storage),
@@ -505,7 +505,7 @@ async def _run_fase1_auto(
     doc_id: str,
     pdf_bytes: bytes,
     nombre: str,
-    tipo_manual: Optional[str],
+    tipo_manual: str | None,
 ) -> dict[str, Any]:
     """Ejecuta Fase 1 (tecnica) tras subir un documento.
 
@@ -536,7 +536,7 @@ async def _run_fase1_auto(
     }
 
     # ---- 1. Clasificacion ----
-    tipo_final: Optional[TipoDocumento] = None
+    tipo_final: TipoDocumento | None = None
     if tipo_manual:
         try:
             tipo_final = TipoDocumento(tipo_manual)
@@ -568,7 +568,7 @@ async def _run_fase1_auto(
                 logger.warning("DefensIA fase1: classify fallo: %s", exc)
 
     # ---- 2. Extraccion de datos ----
-    datos_json: Optional[str] = None
+    datos_json: str | None = None
     if tipo_final is not None:
         extractor_name = _EXTRACTOR_POR_TIPO.get(tipo_final)
         if extractor_name:

@@ -54,7 +54,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # Cita semantica libre — el RAG verificador resuelve la cita canonica. Se
 # guarda como constante para documentar la intencion y facilitar ajustes
 # futuros sin tocar la logica de disparo.

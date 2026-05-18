@@ -6,9 +6,9 @@ so no mocks needed.
 """
 
 import pytest
+
 from app.utils.followup_detector import classify_followup
 from app.utils.query_contextualizer import contextualize_query
-
 
 # === Shared fixtures ===
 

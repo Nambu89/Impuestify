@@ -34,7 +34,7 @@ async def create_table():
 
     # Read SQL file
     sql_file = Path(__file__).parent / "autonomous_quotas_table.sql"
-    with open(sql_file, "r", encoding="utf-8") as f:
+    with open(sql_file, encoding="utf-8") as f:
         sql_content = f.read()
 
     # Split by semicolon and execute each statement

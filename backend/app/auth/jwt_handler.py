@@ -4,13 +4,13 @@ JWT Token Handler for Impuestify
 Implements JWT-based authentication with access and refresh tokens.
 """
 
-import os
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any
+import os
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
@@ -27,9 +27,9 @@ class TokenData(BaseModel):
     """Token payload data"""
 
     user_id: str
-    email: Optional[str] = None
-    exp: Optional[datetime] = None
-    jti: Optional[str] = None  # for refresh-token rotation tracking
+    email: str | None = None
+    exp: datetime | None = None
+    jti: str | None = None  # for refresh-token rotation tracking
 
 
 class TokenResponse(BaseModel):
@@ -41,7 +41,7 @@ class TokenResponse(BaseModel):
     expires_in: int
 
 
-def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     """
     Create a new access token.
 
@@ -55,17 +55,17 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     to_encode = data.copy()
 
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "type": "access"})
+    to_encode.update({"exp": expire, "iat": datetime.now(UTC), "type": "access"})
 
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-def create_refresh_token(data: Dict[str, Any], jti: Optional[str] = None) -> str:
+def create_refresh_token(data: dict[str, Any], jti: str | None = None) -> str:
     """
     Create a new refresh token.
 
@@ -84,12 +84,12 @@ def create_refresh_token(data: Dict[str, Any], jti: Optional[str] = None) -> str
     import uuid as _uuid
 
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now(UTC) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
     to_encode.update(
         {
             "exp": expire,
-            "iat": datetime.now(timezone.utc),
+            "iat": datetime.now(UTC),
             "type": "refresh",
             "jti": jti or str(_uuid.uuid4()),
         }
@@ -99,7 +99,7 @@ def create_refresh_token(data: Dict[str, Any], jti: Optional[str] = None) -> str
     return encoded_jwt
 
 
-def verify_token(token: str, token_type: str = "access") -> Optional[TokenData]:
+def verify_token(token: str, token_type: str = "access") -> TokenData | None:
     """
     Verify and decode a JWT token.
 
@@ -192,8 +192,8 @@ def create_mfa_token(user_id: str, email: str) -> str:
             "sub": user_id,
             "email": email,
             "type": "mfa_pending",
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
-            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(UTC) + timedelta(minutes=5),
+            "iat": datetime.now(UTC),
         },
         SECRET_KEY,
         algorithm=ALGORITHM,
@@ -219,8 +219,8 @@ def create_reset_token(user_id: str, email: str) -> str:
             "sub": user_id,
             "email": email,
             "type": "reset",
-            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
-            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(UTC) + timedelta(hours=1),
+            "iat": datetime.now(UTC),
         },
         SECRET_KEY,
         algorithm=ALGORITHM,
@@ -255,6 +255,7 @@ async def issue_tokens_with_rotation(user_id: str, email: str) -> TokenResponse:
     rotation store so future /auth/refresh calls can detect reuse.
     """
     import uuid as _uuid
+
     from app.auth.refresh_token_store import refresh_token_store
 
     token_data = {"sub": user_id, "email": email}

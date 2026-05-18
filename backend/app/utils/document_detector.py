@@ -6,9 +6,9 @@ Uses LLM to analyze document content and classify it.
 """
 
 import logging
-from typing import Dict
-from openai import OpenAI
 import os
+
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class DocumentDetector:
 
         self.model = settings.OPENAI_MODEL  # Use configured model for classification
 
-    async def detect_type(self, pdf_text: str, max_chars: int = 3000) -> Dict:
+    async def detect_type(self, pdf_text: str, max_chars: int = 3000) -> dict:
         """
         Detect document type from PDF text.
 
@@ -116,7 +116,7 @@ class DocumentDetector:
                 "detected_keywords": [],
             }
 
-    def should_ask_user(self, detection_result: Dict) -> bool:
+    def should_ask_user(self, detection_result: dict) -> bool:
         """
         Determine if we should ask user to clarify document type.
 

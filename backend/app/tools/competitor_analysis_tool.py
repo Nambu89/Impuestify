@@ -6,8 +6,7 @@ Tools for comparing features, identifying gaps, and suggesting improvements.
 """
 
 import logging
-from typing import Dict, Any, Optional
-from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -549,7 +548,7 @@ COMPETITOR_TOOLS = [
 # ─── Tool Executor Functions ──────────────────────────────────────────────
 
 
-async def compare_features_tool(competitor: str, category: str = "all") -> Dict[str, Any]:
+async def compare_features_tool(competitor: str, category: str = "all") -> dict[str, Any]:
     """Compare Impuestify features with a specific competitor."""
     comp_key = competitor.lower().replace(" ", "")
     if comp_key not in COMPETITORS:
@@ -683,7 +682,7 @@ async def compare_features_tool(competitor: str, category: str = "all") -> Dict[
     }
 
 
-async def analyze_gaps_tool(focus: str = "all") -> Dict[str, Any]:
+async def analyze_gaps_tool(focus: str = "all") -> dict[str, Any]:
     """Analyze feature gaps and advantages."""
     our_gaps = []
     our_advantages = []
@@ -773,7 +772,7 @@ async def analyze_gaps_tool(focus: str = "all") -> Dict[str, Any]:
     }
 
 
-async def suggest_improvements_tool(area: str = "all", max_suggestions: int = 10) -> Dict[str, Any]:
+async def suggest_improvements_tool(area: str = "all", max_suggestions: int = 10) -> dict[str, Any]:
     """Suggest specific improvements for Impuestify."""
     suggestions = _get_improvement_suggestions()
 
@@ -797,7 +796,7 @@ async def suggest_improvements_tool(area: str = "all", max_suggestions: int = 10
 
     filtered = filtered[:max_suggestions]
 
-    formatted = f"## Sugerencias de Mejora para Impuestify\n\n"
+    formatted = "## Sugerencias de Mejora para Impuestify\n\n"
     formatted += f"*Area: {area}*\n\n"
 
     for i, s in enumerate(filtered, 1):
@@ -818,7 +817,7 @@ async def suggest_improvements_tool(area: str = "all", max_suggestions: int = 10
     }
 
 
-async def analyze_market_position_tool(analysis_type: str = "all") -> Dict[str, Any]:
+async def analyze_market_position_tool(analysis_type: str = "all") -> dict[str, Any]:
     """Analyze Impuestify's market position."""
     result = {}
     formatted = "## Analisis de Posicion de Mercado - Impuestify\n\n"
@@ -1003,7 +1002,7 @@ async def analyze_market_position_tool(analysis_type: str = "all") -> Dict[str, 
     }
 
 
-async def analyze_aeat_integration_tool(aspect: str = "all") -> Dict[str, Any]:
+async def analyze_aeat_integration_tool(aspect: str = "all") -> dict[str, Any]:
     """Analyze AEAT integration options."""
     formatted = "## Analisis de Integracion con AEAT\n\n"
     result = {}

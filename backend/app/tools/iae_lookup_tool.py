@@ -23,7 +23,7 @@ Query examples:
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -75,14 +75,14 @@ IAE_LOOKUP_TOOL = {
 
 def _load_iae_data() -> list[dict]:
     """Load IAE catalogue from JSON file. Raises FileNotFoundError if missing."""
-    with open(IAE_DATA_PATH, "r", encoding="utf-8") as f:
+    with open(IAE_DATA_PATH, encoding="utf-8") as f:
         return json.load(f)
 
 
 async def lookup_iae(
     query: str,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Search IAE epigrafes by keyword.
 

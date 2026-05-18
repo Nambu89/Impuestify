@@ -18,19 +18,19 @@ Foral dispatch:
   - EPSV contributions replace pension plan reductions in foral territories.
 """
 
-from typing import Any, Dict, List, Optional
 import logging
+from typing import Any
 
-from app.utils.tax_parameter_repository import TaxParameterRepository
-from app.utils.irpf_calculator import IRPFCalculator, ESTATAL_SCALE_JURISDICTIONS
-from app.utils.calculators.work_income import WorkIncomeCalculator
-from app.utils.calculators.savings_income import SavingsIncomeCalculator
-from app.utils.calculators.rental_income import RentalIncomeCalculator
-from app.utils.calculators.mpyf import MPYFCalculator
 from app.utils.calculators.activity_income import ActivityIncomeCalculator
-from app.utils.calculators.imputed_income import ImputedIncomeCalculator
 from app.utils.calculators.capital_gains_property import PropertyCapitalGainsCalculator
+from app.utils.calculators.imputed_income import ImputedIncomeCalculator
+from app.utils.calculators.mpyf import MPYFCalculator
+from app.utils.calculators.rental_income import RentalIncomeCalculator
+from app.utils.calculators.savings_income import SavingsIncomeCalculator
+from app.utils.calculators.work_income import WorkIncomeCalculator
+from app.utils.irpf_calculator import ESTATAL_SCALE_JURISDICTIONS, IRPFCalculator
 from app.utils.regime_classifier import classify_regime
+from app.utils.tax_parameter_repository import TaxParameterRepository
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 #     rather than as a base reduction that is then taxed at the marginal rate.
 #   - Descendientes and ascendientes follow the same direct-deduction pattern.
 
-FORAL_MINIMOS: Dict[str, Dict[str, float]] = {
+FORAL_MINIMOS: dict[str, dict[str, float]] = {
     # Pais Vasco (identical for Araba, Bizkaia, Gipuzkoa per JA Normativa)
     "foral_vasco": {
         "contribuyente": 5472.00,
@@ -173,7 +173,7 @@ class IRPFSimulator:
         valor_adquisicion_inmueble: float,
         es_vivienda_habitual: bool,
         num_descendientes: int,
-        anios_nacimiento_desc: Optional[List[int]],
+        anios_nacimiento_desc: list[int] | None,
         custodia_compartida: bool,
         num_ascendientes_65: int,
         num_ascendientes_75: int,
@@ -212,9 +212,9 @@ class IRPFSimulator:
         retribuciones_especie: float = 0,
         ingresos_cuenta: float = 0,
         # --- GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF) ---
-        ventas_inmuebles: Optional[List[Dict]] = None,
+        ventas_inmuebles: list[dict] | None = None,
         **_ignored,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Run a foral IRPF simulation (common logic for vasco + navarra).
 
@@ -495,7 +495,7 @@ class IRPFSimulator:
         # Family situation (for MPYF)
         edad_contribuyente: int = 35,
         num_descendientes: int = 0,
-        anios_nacimiento_desc: Optional[List[int]] = None,
+        anios_nacimiento_desc: list[int] | None = None,
         custodia_compartida: bool = False,
         num_ascendientes_65: int = 0,
         num_ascendientes_75: int = 0,
@@ -539,7 +539,7 @@ class IRPFSimulator:
         # --- Phase 2: Rentas imputadas inmuebles (Art. 85 LIRPF) ---
         valor_catastral_segundas_viviendas: float = 0,
         valor_catastral_revisado_post1994: bool = True,
-        inmuebles_imputacion: Optional[List[Dict]] = None,
+        inmuebles_imputacion: list[dict] | None = None,
         # --- Foral-specific: EPSV and foral donativos ---
         aportaciones_epsv: float = 0,
         donativos_forales: float = 0,
@@ -603,9 +603,9 @@ class IRPFSimulator:
         retribuciones_especie: float = 0,
         ingresos_cuenta: float = 0,
         # --- Phase 2: Prior year losses (Art. 48-49 LIRPF) ---
-        perdidas_gp_ahorro_anteriores: Optional[Dict[int, float]] = None,
-        perdidas_rcm_anteriores: Optional[Dict[int, float]] = None,
-        perdidas_gp_general_anteriores: Optional[Dict[int, float]] = None,
+        perdidas_gp_ahorro_anteriores: dict[int, float] | None = None,
+        perdidas_rcm_anteriores: dict[int, float] | None = None,
+        perdidas_gp_general_anteriores: dict[int, float] | None = None,
         # --- XSD Gap: Pension compensatoria ex-conyuge (Art. 55 LIRPF, casilla 0475) ---
         pension_compensatoria_exconyuge: float = 0,
         # --- XSD Gap: Anualidades por alimentos a hijos (Art. 64 LIRPF, casillas 0476-0478) ---
@@ -619,10 +619,10 @@ class IRPFSimulator:
         num_ascendientes_discapacidad_33: int = 0,
         num_ascendientes_discapacidad_65: int = 0,
         # --- GP Transmision inmuebles (Art. 33-38 + DT 9a LIRPF) ---
-        ventas_inmuebles: Optional[List[Dict]] = None,
+        ventas_inmuebles: list[dict] | None = None,
         # --- Segundo declarante para tributacion conjunta real (Art. 82-84 LIRPF) ---
-        segundo_declarante: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        segundo_declarante: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Run a complete IRPF simulation.
 

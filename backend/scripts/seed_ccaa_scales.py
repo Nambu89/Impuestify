@@ -24,7 +24,6 @@ load_dotenv(backend_dir.parent / ".env")
 
 from app.database.turso_client import TursoClient
 
-
 # Format: (tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable)
 
 SCALES = {
@@ -250,7 +249,7 @@ async def main():
     # Tramo 1: 13072.50 × 9.5% = 1241.89
     # Tramo 2: 8137.50 × 12% = 976.50 → acum 2218.39
     # Tramo 3: 26540-21210 = 5330 × 15% = 799.50 → acum 3017.89
-    print(f"  Expected autonomous cuota: ~3,018 EUR")
+    print("  Expected autonomous cuota: ~3,018 EUR")
 
     await db.disconnect()
     print("\nDone!")

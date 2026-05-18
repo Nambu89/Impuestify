@@ -1,17 +1,14 @@
 """Canarias territory plugin -- IGIC instead of IVA, common IRPF."""
 
-from typing import Any, Dict, List
-
-from typing import Any, Dict, List
+from typing import Any
 
 from app.territories.base import (
-    TerritoryPlugin,
-    ScaleData,
-    SimulationResult,
+    Deadline,
     MinimosConfig,
     ModelObligation,
-    Deadline,
-    DEADLINES_2026,
+    ScaleData,
+    SimulationResult,
+    TerritoryPlugin,
     _trimestral_deadlines,
 )
 
@@ -32,10 +29,10 @@ class CanariasTerritory(TerritoryPlugin):
     territories = ["Canarias"]
     regime = "canarias"
 
-    async def get_irpf_scales(self, year: int) -> List[ScaleData]:
+    async def get_irpf_scales(self, year: int) -> list[ScaleData]:
         return []
 
-    async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
+    async def simulate_irpf(self, profile: dict[str, Any], db) -> SimulationResult:
         from app.utils.irpf_simulator import IRPFSimulator
 
         simulator = IRPFSimulator(db)
@@ -50,7 +47,7 @@ class CanariasTerritory(TerritoryPlugin):
             desglose=result,
         )
 
-    async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
+    async def get_deductions(self, ccaa: str, year: int, db) -> list[dict[str, Any]]:
         from app.services.deduction_service import DeductionService
 
         service = DeductionService(db)
@@ -69,7 +66,7 @@ class CanariasTerritory(TerritoryPlugin):
             apply_as="base_reduction",
         )
 
-    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+    def get_model_obligations(self, profile: dict[str, Any]) -> list[ModelObligation]:
         """Canarias: IGIC 420 instead of IVA 303, resumen 425 instead of 390, NO 349.
         AIEM models (450, 455) if applicable."""
         # Get base obligations from parent
@@ -184,7 +181,7 @@ class CanariasTerritory(TerritoryPlugin):
 
         return obligations
 
-    def get_rag_filters(self, ccaa: str) -> Dict[str, Any]:
+    def get_rag_filters(self, ccaa: str) -> dict[str, Any]:
         return {
             "territory": "Canarias",
             "regime": "canarias",

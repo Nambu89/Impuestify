@@ -34,11 +34,11 @@ Idempotent via INSERT ... ON CONFLICT(id) DO UPDATE.
 Source: https://sede.agenciatributaria.gob.es/Sede/calendario-contribuyente.html
 """
 
-import sys
-import os
-import asyncio
 import argparse
+import asyncio
 import logging
+import os
+import sys
 from datetime import datetime
 
 BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import importlib
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -31,7 +31,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import REGISTRY, reset_registry
-
 
 # ---------------------------------------------------------------------------
 # Patron de aislamiento: cargar solo R028
@@ -84,7 +83,7 @@ def test_r028_positivo_liquidacion_2026_sobre_devengo_2021(
             "fecha_notificacion_liquidacion": "2026-04-01",
             "hubo_interrupcion": False,
         },
-        fecha_acto=datetime(2026, 4, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 4, 1, tzinfo=UTC),
         doc_id="liq-plusvalia-2026",
     )
     exp = build_exp(
@@ -117,7 +116,7 @@ def test_r028_positivo_limite_4_anos_mas_un_dia(r028_module, build_exp, build_do
             "fecha_notificacion_liquidacion": "2024-04-02",
             "hubo_interrupcion": False,
         },
-        fecha_acto=datetime(2024, 4, 2, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 4, 2, tzinfo=UTC),
         doc_id="liq-plusvalia-limite",
     )
     exp = build_exp(
@@ -151,7 +150,7 @@ def test_r028_negativo_dentro_del_plazo(r028_module, build_exp, build_doc, build
             "fecha_notificacion_liquidacion": "2025-06-01",
             "hubo_interrupcion": False,
         },
-        fecha_acto=datetime(2025, 6, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 1, tzinfo=UTC),
         doc_id="liq-plusvalia-dentro",
     )
     exp = build_exp(
@@ -176,7 +175,7 @@ def test_r028_negativo_interrupcion_previa(r028_module, build_exp, build_doc, bu
             "fecha_notificacion_liquidacion": "2026-01-02",
             "hubo_interrupcion": True,
         },
-        fecha_acto=datetime(2026, 1, 2, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 2, tzinfo=UTC),
         doc_id="liq-plusvalia-interrumpida",
     )
     exp = build_exp(
@@ -201,7 +200,7 @@ def test_r028_negativo_tributo_no_plusvalia(r028_module, build_exp, build_doc, b
             "fecha_notificacion_liquidacion": "2026-01-02",
             "hubo_interrupcion": False,
         },
-        fecha_acto=datetime(2026, 1, 2, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 2, tzinfo=UTC),
         doc_id="liq-irpf",
     )
     exp = build_exp(
@@ -236,7 +235,7 @@ def test_r028_cita_no_hardcoded(r028_module, build_exp, build_doc, build_brief):
             "fecha_notificacion_liquidacion": "2026-04-01",
             "hubo_interrupcion": False,
         },
-        fecha_acto=datetime(2026, 4, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 4, 1, tzinfo=UTC),
         doc_id="liq-plusvalia-cita",
     )
     exp = build_exp(

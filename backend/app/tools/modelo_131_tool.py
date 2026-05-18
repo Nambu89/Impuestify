@@ -28,9 +28,9 @@ OUT OF SCOPE en esta versión:
     `ModularIncomeCalculator` o input del usuario.
 """
 
-from datetime import datetime
-from typing import Any, Dict, Optional
 import logging
+from datetime import datetime
+from typing import Any
 
 from app.utils.calculators.modelo_131 import Modelo131Calculator
 
@@ -198,8 +198,8 @@ def _build_response(
     trimestre: int,
     year: int,
     apartado: str,
-    casillas: Dict[str, float],
-    desglose: Dict[str, Any],
+    casillas: dict[str, float],
+    desglose: dict[str, Any],
     plazo: str,
     territory: str,
     resultado: float,
@@ -312,7 +312,7 @@ def _build_response(
 async def calculate_modelo_131_tool(
     trimestre: int,
     actividad_tipo: str = "empresarial",
-    year: Optional[int] = None,
+    year: int | None = None,
     rendimiento_neto_modulos_anual: float = 0.0,
     num_asalariados: int = 0,
     volumen_ingresos_trimestre: float = 0.0,
@@ -323,7 +323,7 @@ async def calculate_modelo_131_tool(
     ceuta_melilla: bool = False,
     la_palma: bool = False,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Wrapper around :class:`Modelo131Calculator` for OpenAI function calling.
 

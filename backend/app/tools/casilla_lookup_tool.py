@@ -9,9 +9,9 @@ Supports two query modes:
   - Text query     (e.g. "cuota integra", "trabajo"):      LIKE search on description
 """
 
-from typing import Dict, Any
 import logging
 import re
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ def _format_results(rows: list[dict], query: str) -> str:
 async def lookup_casilla_tool(
     query: str,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Look up IRPF casilla(s) by number or description text.
 

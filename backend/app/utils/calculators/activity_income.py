@@ -17,7 +17,7 @@ The quarterly Modelo 130 feeds data INTO this calculator (cumulative income/expe
 The connection is: sum(4 quarters of Modelo 130 data) = annual activity income for Modelo 100.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -70,7 +70,7 @@ class ActivityIncomeCalculator:
         ingresos_derechos_autor: float = 0,  # 0128: Royalties, copyright
         reduccion_derechos_autor: bool = False,  # Art. 32.1: 30% reduccion si >2 anos
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate net reduced activity income.
 
@@ -267,7 +267,7 @@ class ActivityIncomeCalculator:
         modulos_reduccion_general: float = 0.05,
         inicio_actividad: bool = False,
         year: int = 2025,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Estimacion objetiva (modulos) calculation.
 

@@ -14,11 +14,11 @@ Usage:
     python -m backend.scripts.seed_foral_deadlines [--year 2026] [--dry-run]
 """
 
-import sys
-import os
-import asyncio
 import argparse
+import asyncio
 import logging
+import os
+import sys
 from datetime import datetime
 
 BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

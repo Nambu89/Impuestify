@@ -8,10 +8,9 @@ balance de sumas y saldos, cuenta de PyG).
 PGC (Plan General Contable) compliant.
 """
 
-import uuid
 import logging
+import uuid
 from dataclasses import dataclass
-from typing import Optional
 
 from app.database.turso_client import get_db_client
 
@@ -188,7 +187,7 @@ class ContabilidadService:
     async def save_asiento(
         self,
         user_id: str,
-        libro_registro_id: Optional[str],
+        libro_registro_id: str | None,
         fecha: str,
         lines: list[AsientoLine],
         year: int,
@@ -258,7 +257,7 @@ class ContabilidadService:
         self,
         user_id: str,
         year: int,
-        trimestre: Optional[int] = None,
+        trimestre: int | None = None,
     ) -> list[dict]:
         """
         Get journal entries (libro diario) for a user.

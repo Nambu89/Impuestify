@@ -8,9 +8,9 @@ Tolerancia: +-1 EUR en cuota_diferencial (o cuota_total si no hay retenciones).
 """
 
 import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -501,8 +501,8 @@ def _default_params() -> dict:
 
 async def _run_simulation(jurisdiction: str, year: int = 2024, **kwargs):
     """Run IRPFSimulator.simulate() with mocked DB + scales."""
-    from app.utils.irpf_simulator import IRPFSimulator
     from app.utils.ccaa_constants import normalize_ccaa
+    from app.utils.irpf_simulator import IRPFSimulator
 
     # Normalize jurisdiction so mock scale rows match what the simulator queries
     # (e.g. "Andalucia" → "Andalucía" with tilde)

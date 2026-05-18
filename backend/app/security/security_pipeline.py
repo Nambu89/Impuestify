@@ -17,16 +17,15 @@ the layer's nature requires it (topic classifier especially).
 """
 
 import logging
-import unicodedata
 import re
+import unicodedata
 from dataclasses import dataclass, field
-from typing import List, Optional
 
-from app.security.prompt_injection import prompt_injection_filter
+from app.security.audit_logger import AuditEventType, audit_logger
 from app.security.pii_detector import pii_detector
+from app.security.prompt_injection import prompt_injection_filter
 from app.security.sql_injection import sql_validator
-from app.security.topic_classifier import check_fiscal_topic, TopicContext
-from app.security.audit_logger import audit_logger, AuditEventType
+from app.security.topic_classifier import TopicContext, check_fiscal_topic
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +42,8 @@ class PipelineResult:
     is_safe: bool
     layer: str  # which layer rejected (or 'all_clear')
     reason: str  # human-readable reason
-    matched_patterns: List[str] = field(default_factory=list)
-    rejection_message: Optional[str] = None
+    matched_patterns: list[str] = field(default_factory=list)
+    rejection_message: str | None = None
     sanitized_text: str = ""
 
 
@@ -71,7 +70,7 @@ def _is_greeting(text: str) -> bool:
     return any(p.match(text.strip()) for p in _GREETING_PATTERNS)
 
 
-def sanitize_text(text: str, max_length: Optional[int] = None) -> str:
+def sanitize_text(text: str, max_length: int | None = None) -> str:
     """
     Strip zero-width and control chars, normalize unicode (NFKC).
 
@@ -119,8 +118,8 @@ class SecurityPipeline:
     def check(
         self,
         question: str,
-        user_id: Optional[str] = None,
-        context: Optional[TopicContext] = None,
+        user_id: str | None = None,
+        context: TopicContext | None = None,
     ) -> PipelineResult:
         """
         Run all enabled layers in order. Short-circuit on first reject.
@@ -227,8 +226,8 @@ class SecurityPipeline:
         layer: str,
         reason: str,
         sanitized: str = "",
-        matched: Optional[List[str]] = None,
-        user_id: Optional[str] = None,
+        matched: list[str] | None = None,
+        user_id: str | None = None,
     ) -> PipelineResult:
         # Audit log — map pipeline layer to existing audit event types
         try:

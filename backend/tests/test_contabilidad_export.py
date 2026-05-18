@@ -7,7 +7,6 @@ import pytest
 
 from app.services.contabilidad_export_service import ContabilidadExportService
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

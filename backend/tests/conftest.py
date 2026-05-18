@@ -4,9 +4,10 @@ TaxIA Test Configuration
 Pytest fixtures and configuration for testing.
 """
 
-import pytest
 import os
 import sys
+
+import pytest
 from dotenv import load_dotenv
 
 # Load .env for tests

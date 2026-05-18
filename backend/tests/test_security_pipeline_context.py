@@ -15,7 +15,7 @@ from unittest.mock import patch
 import pytest
 
 from app.security.security_pipeline import SecurityPipeline
-from app.security.topic_classifier import TopicContext, TopicCheckResult
+from app.security.topic_classifier import TopicCheckResult, TopicContext
 
 
 @pytest.fixture

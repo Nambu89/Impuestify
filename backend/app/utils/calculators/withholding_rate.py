@@ -9,9 +9,8 @@ Normativa: Ley 35/2006 LIRPF + RD 439/2007 RIRPF (Arts. 80-89)
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from enum import Enum
-import math
+from typing import Any
 
 
 class SituacionFamiliar(str, Enum):
@@ -42,7 +41,7 @@ class Discapacidad(str, Enum):
 @dataclass
 class Descendiente:
     ano_nacimiento: int
-    ano_adopcion: Optional[int] = None
+    ano_adopcion: int | None = None
     por_entero: bool = True  # computado por entero (no compartido)
     discapacidad: Discapacidad = Discapacidad.SIN
     movilidad_reducida: bool = False
@@ -69,11 +68,11 @@ class WithholdingInput:
     movilidad_reducida: bool = False
 
     # Familia
-    descendientes: List[Descendiente] = field(default_factory=list)
-    ascendientes: List[Ascendiente] = field(default_factory=list)
+    descendientes: list[Descendiente] = field(default_factory=list)
+    ascendientes: list[Ascendiente] = field(default_factory=list)
 
     # Datos economicos
-    cotizaciones_ss: Optional[float] = None  # Si None, se estima al 6.35%
+    cotizaciones_ss: float | None = None  # Si None, se estima al 6.35%
     reduccion_irregular_18_2: float = 0.0  # Rtos irregulares Art. 18.2
     reduccion_irregular_18_3: float = 0.0  # Rtos irregulares Art. 18.3
 
@@ -117,9 +116,9 @@ class WithholdingResult:
 
     # Flags
     exento: bool
-    motivo_exencion: Optional[str] = None
+    motivo_exencion: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "tipo_retencion": self.tipo_retencion,
             "cuota_anual": round(self.cuota_anual, 2),

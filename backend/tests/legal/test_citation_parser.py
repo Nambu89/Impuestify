@@ -8,7 +8,6 @@ from app.services.legal.citation_parser import (
     split_compound_article_citation,
 )
 
-
 # ── parse_article_citation ───────────────────────────────────────────────
 
 

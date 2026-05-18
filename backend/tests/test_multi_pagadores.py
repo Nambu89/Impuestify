@@ -8,17 +8,17 @@ Covers:
 - Retrocompatibility (empty pagadores → existing behavior)
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from app.routers.irpf_estimate import (
-    PagadorItem,
+    OBLIGACION_LIMITES,
     IRPFEstimateRequest,
     ObligacionDeclarar,
+    PagadorItem,
     _calcular_obligacion_declarar,
-    OBLIGACION_LIMITES,
 )
-
 
 # ============================================================
 # PagadorItem model tests

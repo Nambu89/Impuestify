@@ -12,14 +12,15 @@ Coverage:
 """
 
 import json
-import uuid
-import pytest
-from datetime import date, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+import os
 
 # ---- Ensure test can import backend modules ----
 import sys
-import os
+import uuid
+from datetime import date, timedelta
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+
+import pytest
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if PROJECT_ROOT not in sys.path:
@@ -881,6 +882,7 @@ class TestDBSchemaStatements:
     def test_fiscal_deadlines_table_statement_has_required_columns(self):
         """Check that init_schema includes fiscal_deadlines table definition."""
         import inspect
+
         from app.database import turso_client
 
         source = inspect.getsource(turso_client)
@@ -890,6 +892,7 @@ class TestDBSchemaStatements:
 
     def test_fiscal_deadlines_indexes_present(self):
         import inspect
+
         from app.database import turso_client
 
         source = inspect.getsource(turso_client)
@@ -899,6 +902,7 @@ class TestDBSchemaStatements:
 
     def test_push_subscriptions_unique_constraint(self):
         import inspect
+
         from app.database import turso_client
 
         source = inspect.getsource(turso_client)
@@ -906,6 +910,7 @@ class TestDBSchemaStatements:
 
     def test_notification_log_unique_constraint(self):
         import inspect
+
         from app.database import turso_client
 
         source = inspect.getsource(turso_client)
@@ -913,6 +918,7 @@ class TestDBSchemaStatements:
 
     def test_alert_days_default_present(self):
         import inspect
+
         from app.database import turso_client
 
         source = inspect.getsource(turso_client)

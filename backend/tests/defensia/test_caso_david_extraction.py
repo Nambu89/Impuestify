@@ -8,17 +8,17 @@ Si este test falla, la build falla (spec §20 criterio de aceptación).
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
+
 from app.models.defensia import (
-    ExpedienteEstructurado,
     DocumentoEstructurado,
-    Tributo,
-    TipoDocumento,
+    ExpedienteEstructurado,
     Fase,
+    TipoDocumento,
+    Tributo,
 )
 from app.services.defensia_phase_detector import detect_fase
-
 
 FIXTURE = Path(__file__).parent / "fixtures" / "caso_david" / "expediente_anonimizado.json"
 
@@ -30,7 +30,7 @@ def _cargar_expediente() -> ExpedienteEstructurado:
             id=d["id"],
             nombre_original=d["nombre_original"],
             tipo_documento=TipoDocumento(d["tipo_documento"]),
-            fecha_acto=datetime.fromisoformat(d["fecha_acto"]).replace(tzinfo=timezone.utc),
+            fecha_acto=datetime.fromisoformat(d["fecha_acto"]).replace(tzinfo=UTC),
             datos=d["datos"],
         )
         for d in raw["documentos"]
@@ -50,7 +50,7 @@ def test_caso_david_fase_detectada_tear_interpuesta_reciente():
     la fase activa es TEAR_INTERPUESTA (ampliación urgente).
     """
     exp = _cargar_expediente()
-    hoy = datetime(2026, 4, 13, tzinfo=timezone.utc)  # 4 días después
+    hoy = datetime(2026, 4, 13, tzinfo=UTC)  # 4 días después
     fase, confianza = detect_fase(exp, hoy=hoy)
     assert fase == Fase.TEAR_INTERPUESTA
     assert confianza >= 0.85
@@ -61,7 +61,7 @@ def test_caso_david_fase_detectada_tear_ampliacion_posible_pasados_30d():
     transiciona a TEAR_AMPLIACION_POSIBLE.
     """
     exp = _cargar_expediente()
-    hoy = datetime(2026, 6, 1, tzinfo=timezone.utc)  # 53 días después
+    hoy = datetime(2026, 6, 1, tzinfo=UTC)  # 53 días después
     fase, confianza = detect_fase(exp, hoy=hoy)
     assert fase == Fase.TEAR_AMPLIACION_POSIBLE
     assert confianza >= 0.85

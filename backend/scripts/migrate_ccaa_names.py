@@ -16,8 +16,8 @@ Safe to run multiple times (idempotent).
 """
 
 import asyncio
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -26,7 +26,6 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 from app.utils.ccaa_constants import DB_MIGRATION_MAP
-
 
 TABLES_AND_COLUMNS = [
     ("irpf_scales", "jurisdiction"),
@@ -116,7 +115,7 @@ async def migrate():
     # Verify final state
     print(f"\n{'=' * 60}")
     print(f"Total rows updated: {total_updated}")
-    print(f"\nVerification — distinct values per table:")
+    print("\nVerification — distinct values per table:")
 
     for table, column in TABLES_AND_COLUMNS:
         result = await db.execute(f"SELECT DISTINCT {column} FROM {table} ORDER BY {column}")
@@ -127,7 +126,7 @@ async def migrate():
             if v in DB_MIGRATION_MAP:
                 print(f"    ⚠️  Still has old name: '{v}'")
 
-    print(f"\n✅ Migration complete!")
+    print("\n✅ Migration complete!")
 
 
 if __name__ == "__main__":

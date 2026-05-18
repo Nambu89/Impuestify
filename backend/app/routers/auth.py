@@ -7,30 +7,29 @@ Cloudflare Turnstile verification on login/register.
 
 import logging
 import uuid
-from typing import Optional
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
-from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
 
 from app.auth.jwt_handler import (
-    create_tokens_for_user,
+    TokenData,
+    TokenResponse,
     create_mfa_token,
     create_reset_token,
-    verify_token,
-    TokenResponse,
+    create_tokens_for_user,
     get_current_user_required,
-    TokenData,
+    verify_token,
 )
 from app.auth.password import hash_password
-from app.services.email_service import get_email_service
 from app.config import settings
-from app.services.user_service import user_service
-from app.services.subscription_service import get_subscription_service
-from app.database.models import UserCreate, User
+from app.database.models import UserCreate
 from app.database.turso_client import get_db_client
 from app.security.rate_limiter import limiter
+from app.services.email_service import get_email_service
+from app.services.subscription_service import get_subscription_service
+from app.services.user_service import user_service
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverif
 TURNSTILE_TEST_TOKEN = "1x00000000000000000000AA"
 
 
-async def verify_turnstile(token: str, remote_ip: Optional[str] = None) -> bool:
+async def verify_turnstile(token: str, remote_ip: str | None = None) -> bool:
     """Verify a Cloudflare Turnstile token. Returns True if valid.
 
     In test mode (TURNSTILE_TEST_MODE=True), accepts Cloudflare's official
@@ -84,9 +83,9 @@ class RegisterRequest(BaseModel):
 
     email: EmailStr
     password: str = Field(..., min_length=8, description="Mínimo 8 caracteres")
-    name: Optional[str] = None
-    ccaa_residencia: Optional[str] = None
-    turnstile_token: Optional[str] = None
+    name: str | None = None
+    ccaa_residencia: str | None = None
+    turnstile_token: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -94,7 +93,7 @@ class LoginRequest(BaseModel):
 
     email: EmailStr
     password: str
-    turnstile_token: Optional[str] = None
+    turnstile_token: str | None = None
 
 
 class RefreshRequest(BaseModel):
@@ -120,7 +119,7 @@ class GoogleAuthRequest(BaseModel):
     """Google SSO login/register request"""
 
     id_token: str
-    turnstile_token: Optional[str] = None
+    turnstile_token: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -128,11 +127,11 @@ class UserResponse(BaseModel):
 
     id: str
     email: str
-    name: Optional[str]
+    name: str | None
     is_active: bool
     is_admin: bool = False
     is_owner: bool = False
-    subscription_status: Optional[str] = None
+    subscription_status: str | None = None
 
 
 class AuthResponse(BaseModel):
@@ -393,8 +392,8 @@ async def google_login(request: Request, body: GoogleAuthRequest):
     5. If not exists -> create new user (no password) + login
     6. If MFA enabled -> return mfa_required
     """
-    from google.oauth2 import id_token as google_id_token
     from google.auth.transport import requests as google_requests
+    from google.oauth2 import id_token as google_id_token
 
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(
@@ -446,14 +445,14 @@ async def google_login(request: Request, body: GoogleAuthRequest):
             # Link google_id to existing account
             await db.execute(
                 "UPDATE users SET google_id = ?, updated_at = ? WHERE id = ?",
-                [google_id, datetime.now(timezone.utc).isoformat(), user_row["id"]],
+                [google_id, datetime.now(UTC).isoformat(), user_row["id"]],
             )
             logger.info(f"Linked Google account to existing user: {email}")
 
     # 3. If user still not found, create new account
     if not user_row:
         user_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         await db.execute(
             """
             INSERT INTO users (id, email, password_hash, name, google_id, is_active, is_admin, created_at, updated_at)

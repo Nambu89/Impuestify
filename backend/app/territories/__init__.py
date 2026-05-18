@@ -6,13 +6,13 @@ is encapsulated in a plugin that implements TerritoryPlugin.
 """
 
 from app.territories.base import (
-    TerritoryPlugin,
-    ModelObligation,
-    Deadline,
     DEADLINES_2026,
+    Deadline,
+    ModelObligation,
+    TerritoryPlugin,
     _trimestral_deadlines,
 )
-from app.territories.registry import get_territory, register_territory, list_territories
+from app.territories.registry import get_territory, list_territories, register_territory
 
 __all__ = [
     "TerritoryPlugin",

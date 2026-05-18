@@ -8,11 +8,11 @@ Tests cover: creation, listing, rate limiting, duplicate rating, validation.
 
 import asyncio
 import base64
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from fastapi.testclient import TestClient
-from fastapi import FastAPI, HTTPException
 
+import pytest
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -56,9 +56,9 @@ def _make_app(mock_user_obj, mock_db_obj):
     Create a fresh FastAPI app with the feedback router mounted and
     dependency overrides applied so tests never touch real auth or DB.
     """
-    from app.routers.feedback import router
     from app.auth.jwt_handler import get_current_user
     from app.database.turso_client import get_db_client
+    from app.routers.feedback import router
 
     app = FastAPI()
     app.include_router(router)
@@ -415,9 +415,9 @@ class TestChatRating:
 
 class TestAuthRequired:
     def test_feedback_requires_auth(self):
-        from app.routers.feedback import router
         from app.auth.jwt_handler import get_current_user
         from app.database.turso_client import get_db_client
+        from app.routers.feedback import router
 
         app = FastAPI()
         app.include_router(router)
@@ -439,8 +439,8 @@ class TestAuthRequired:
         assert resp.status_code == 401
 
     def test_list_my_requires_auth(self):
-        from app.routers.feedback import router
         from app.auth.jwt_handler import get_current_user
+        from app.routers.feedback import router
 
         app = FastAPI()
         app.include_router(router)

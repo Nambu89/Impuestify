@@ -8,11 +8,10 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
-from typing import Optional
 
-from app.auth.jwt_handler import get_current_user, TokenData
-from app.services.subscription_service import get_subscription_service
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.config import settings
+from app.services.subscription_service import get_subscription_service
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class CheckoutRequest(BaseModel):
 
 
 class CheckoutResponse(BaseModel):
-    checkout_url: Optional[str] = None
+    checkout_url: str | None = None
 
 
 class PortalRequest(BaseModel):
@@ -39,15 +38,15 @@ class PortalRequest(BaseModel):
 
 
 class PortalResponse(BaseModel):
-    portal_url: Optional[str] = None
+    portal_url: str | None = None
 
 
 class SubscriptionStatusResponse(BaseModel):
     has_access: bool
     is_owner: bool = False
-    plan_type: Optional[str] = None
-    status: Optional[str] = None
-    current_period_end: Optional[str] = None
+    plan_type: str | None = None
+    status: str | None = None
+    current_period_end: str | None = None
     cancel_at_period_end: bool = False
 
 
@@ -84,7 +83,7 @@ async def create_checkout(
         return CheckoutResponse(checkout_url=url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         logger.error("Error creating checkout session", exc_info=True)
         raise HTTPException(status_code=500, detail="Error al crear la sesion de pago.")
 

@@ -36,7 +36,6 @@ from backend.scripts.doc_crawler.watchlist import (
     get_territories,
 )
 
-
 # ── Validate File Tests ─────────────────────────────────────────
 
 
@@ -378,8 +377,8 @@ class TestDriftAnalyzer:
         assert extract_territory("Canarias/IGIC.pdf") == "Canarias"
 
     def test_analyze_no_pending(self, tmp_path):
-        from backend.scripts.doc_crawler.drift_analyzer import analyze_drift
         from backend.scripts.doc_crawler import config
+        from backend.scripts.doc_crawler.drift_analyzer import analyze_drift
 
         original = config.PENDING_INGEST
         config.PENDING_INGEST = tmp_path / "nonexistent.json"

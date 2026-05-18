@@ -21,10 +21,8 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
-import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +30,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RotationResult:
     ok: bool
-    user_id: Optional[str] = None
-    reason: Optional[str] = None  # 'reuse_detected', 'unknown', 'revoked', 'expired', 'ok'
+    user_id: str | None = None
+    reason: str | None = None  # 'reuse_detected', 'unknown', 'revoked', 'expired', 'ok'
     revoked_count: int = 0
 
 
@@ -56,7 +54,7 @@ class RefreshTokenStore:
     async def register(self, jti: str, user_id: str, raw_token: str, ttl_days: int) -> None:
         """Persist a freshly-issued refresh token."""
         db = await self._get_db()
-        expires = (datetime.now(timezone.utc) + timedelta(days=ttl_days)).isoformat()
+        expires = (datetime.now(UTC) + timedelta(days=ttl_days)).isoformat()
         await db.execute(
             """
             INSERT INTO sessions
@@ -120,7 +118,7 @@ class RefreshTokenStore:
         # Expiry check
         try:
             expires_at = datetime.fromisoformat(row["expires_at"].replace("Z", "+00:00"))
-            if expires_at <= datetime.now(timezone.utc):
+            if expires_at <= datetime.now(UTC):
                 return RotationResult(ok=False, user_id=user_id, reason="expired")
         except Exception:
             pass

@@ -1168,7 +1168,7 @@ async def seed_larioja(dry_run: bool = False):
             )
             inserted += 1
             print(f"  {i:2d}. [OK] {code} — {name}")
-        except Exception as e:
+        except Exception:
             try:
                 deduction_id = str(uuid.uuid4())
                 await db.execute(

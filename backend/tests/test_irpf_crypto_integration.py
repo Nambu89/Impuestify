@@ -10,9 +10,9 @@ Verifica:
 6. Backward compatibility: parámetros sin nuevos campos = mismo resultado que antes
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Fixtures

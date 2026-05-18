@@ -31,7 +31,6 @@ load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from app.database.turso_client import TursoClient  # noqa: E402
 
-
 # Ordered replacement pairs (applied sequentially)
 TEXT_REPLACEMENTS = [
     # Year misspellings
@@ -147,9 +146,9 @@ async def migrate(dry_run: bool = False) -> None:
             if new_name != old_name:
                 print(f"         name: {old_name!r} → {new_name!r}")
             if new_desc != old_desc:
-                print(f"         desc changed")
+                print("         desc changed")
             if new_questions != old_questions:
-                print(f"         questions_json changed")
+                print("         questions_json changed")
 
             if not dry_run:
                 await db.execute(

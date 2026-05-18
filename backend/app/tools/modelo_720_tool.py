@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -268,14 +268,14 @@ async def check_modelo_720_tool(
     cuentas_extranjero: float = 0,
     valores_extranjero: float = 0,
     inmuebles_extranjero: float = 0,
-    ultimo_720_presentado: Optional[int] = None,
-    saldos_ultimo_720_cuentas: Optional[float] = None,
-    saldos_ultimo_720_valores: Optional[float] = None,
-    saldos_ultimo_720_inmuebles: Optional[float] = None,
-    ceses_titularidad: Optional[List[Dict[str, Any]]] = None,
-    subtipos: Optional[Dict[str, Dict[str, float]]] = None,
+    ultimo_720_presentado: int | None = None,
+    saldos_ultimo_720_cuentas: float | None = None,
+    saldos_ultimo_720_valores: float | None = None,
+    saldos_ultimo_720_inmuebles: float | None = None,
+    ceses_titularidad: list[dict[str, Any]] | None = None,
+    subtipos: dict[str, dict[str, float]] | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Evalua la obligacion de presentar el Modelo 720.
 
@@ -315,7 +315,7 @@ async def check_modelo_720_tool(
             "inmuebles": float(inmuebles_extranjero or 0),
         }
 
-        saldos_previos: Optional[Dict[str, float]] = None
+        saldos_previos: dict[str, float] | None = None
         if ultimo_720_presentado is not None:
             saldos_previos = {
                 "cuentas": float(saldos_ultimo_720_cuentas or 0),
@@ -323,9 +323,9 @@ async def check_modelo_720_tool(
                 "inmuebles": float(saldos_ultimo_720_inmuebles or 0),
             }
 
-        categorias_obligadas: List[str] = []
-        categorias_por_incremento: List[str] = []
-        detalles: List[Dict[str, Any]] = []
+        categorias_obligadas: list[str] = []
+        categorias_por_incremento: list[str] = []
+        detalles: list[dict[str, Any]] = []
 
         for cat_key, cat_label in CATEGORIAS.items():
             valor = saldos_actuales[cat_key]
@@ -435,9 +435,9 @@ async def check_modelo_720_tool(
 
 
 def _evaluar_ceses_titularidad(
-    ceses: Optional[List[Dict[str, Any]]],
-    ultimo_720_presentado: Optional[int],
-    saldos_previos: Optional[Dict[str, float]],
+    ceses: list[dict[str, Any]] | None,
+    ultimo_720_presentado: int | None,
+    saldos_previos: dict[str, float] | None,
 ) -> tuple:
     """
     Evalua los ceses de titularidad declarados por el usuario.
@@ -453,9 +453,9 @@ def _evaluar_ceses_titularidad(
         - ceses_que_obligan: subconjunto que efectivamente obliga a declarar.
         - categorias_por_cese: lista de categorias afectadas por cese obligatorio.
     """
-    ceses_validados: List[Dict[str, Any]] = []
-    ceses_que_obligan: List[Dict[str, Any]] = []
-    categorias_por_cese: List[str] = []
+    ceses_validados: list[dict[str, Any]] = []
+    ceses_que_obligan: list[dict[str, Any]] = []
+    categorias_por_cese: list[str] = []
 
     if not ceses:
         return ceses_validados, ceses_que_obligan, categorias_por_cese
@@ -478,7 +478,7 @@ def _evaluar_ceses_titularidad(
         except (TypeError, ValueError):
             valor_previo_float = None
 
-        cese_norm: Dict[str, Any] = {
+        cese_norm: dict[str, Any] = {
             "categoria": categoria,
             "categoria_descripcion": CATEGORIAS[categoria],
             "subtipo": subtipo if subtipo_valido else None,
@@ -495,7 +495,7 @@ def _evaluar_ceses_titularidad(
         # Mejor esfuerzo: requiere 720 previo Y (valor_ultima_declaracion>0
         # o saldo_previo>0 en esa categoria).
         obliga = False
-        razon_no_obliga: Optional[str] = None
+        razon_no_obliga: str | None = None
         if ultimo_720_presentado is None:
             razon_no_obliga = (
                 "No se presento Modelo 720 anterior, por lo que el cese no "
@@ -526,8 +526,8 @@ def _evaluar_ceses_titularidad(
 
 
 def _validar_subtipos(
-    subtipos: Optional[Dict[str, Dict[str, float]]],
-    saldos_actuales: Dict[str, float],
+    subtipos: dict[str, dict[str, float]] | None,
+    saldos_actuales: dict[str, float],
 ) -> tuple:
     """
     Valida el desglose por subtipo (clave DR720) frente al agregado de la categoria.
@@ -536,8 +536,8 @@ def _validar_subtipos(
     no coincide con el valor agregado o cuando se usa una clave fuera del
     diseno de registro (DR720) de esa categoria.
     """
-    validados: Dict[str, Dict[str, Dict[str, Any]]] = {}
-    warnings: List[str] = []
+    validados: dict[str, dict[str, dict[str, Any]]] = {}
+    warnings: list[str] = []
 
     if not subtipos or not isinstance(subtipos, dict):
         return validados, warnings
@@ -552,7 +552,7 @@ def _validar_subtipos(
             continue
 
         catalogo = SUBTIPOS_POR_CATEGORIA[categoria]
-        cat_validada: Dict[str, Dict[str, Any]] = {}
+        cat_validada: dict[str, dict[str, Any]] = {}
         suma = 0.0
         for clave_raw, importe_raw in claves.items():
             clave = (clave_raw or "").strip().upper()
@@ -589,15 +589,15 @@ def _validar_subtipos(
 
 def _generar_recomendaciones_720(
     obligado: bool,
-    por_umbral: List[str],
-    por_incremento: List[str],
-    saldos: Dict[str, float],
+    por_umbral: list[str],
+    por_incremento: list[str],
+    saldos: dict[str, float],
     ejercicio: int,
-    ceses_que_obligan: Optional[List[Dict[str, Any]]] = None,
-    subtipos_warnings: Optional[List[str]] = None,
-) -> List[str]:
+    ceses_que_obligan: list[dict[str, Any]] | None = None,
+    subtipos_warnings: list[str] | None = None,
+) -> list[str]:
     """Genera recomendaciones personalizadas."""
-    recs: List[str] = []
+    recs: list[str] = []
     ceses_que_obligan = ceses_que_obligan or []
     subtipos_warnings = subtipos_warnings or []
 
@@ -634,7 +634,7 @@ def _generar_recomendaciones_720(
         )
 
     if ceses_que_obligan:
-        descripciones: List[str] = []
+        descripciones: list[str] = []
         for c in ceses_que_obligan:
             base = c["categoria_descripcion"]
             if c.get("descripcion"):
@@ -673,19 +673,19 @@ def _generar_recomendaciones_720(
 
 def _format_720_response(
     obligado: bool,
-    detalles: List[Dict],
+    detalles: list[dict],
     plazo: str,
-    recomendaciones: List[str],
+    recomendaciones: list[str],
     ejercicio: int,
-    ultimo_presentado: Optional[int],
-    ceses_que_obligan: Optional[List[Dict[str, Any]]] = None,
-    subtipos_validados: Optional[Dict[str, Dict[str, Dict[str, Any]]]] = None,
+    ultimo_presentado: int | None,
+    ceses_que_obligan: list[dict[str, Any]] | None = None,
+    subtipos_validados: dict[str, dict[str, dict[str, Any]]] | None = None,
 ) -> str:
     """Formatea la respuesta del Modelo 720 para el usuario."""
     ceses_que_obligan = ceses_que_obligan or []
     subtipos_validados = subtipos_validados or {}
 
-    lines: List[str] = []
+    lines: list[str] = []
     lines.append(f"Modelo 720 — Bienes y Derechos en el Extranjero (Ejercicio {ejercicio})")
     lines.append("")
 
@@ -700,7 +700,7 @@ def _format_720_response(
         estado = "OBLIGADO" if d["obligado"] else "No obligado"
         lines.append(f"  {d['descripcion']}: {d['valor_actual']:,.2f} EUR — {estado}")
         if d["supera_umbral_50k"]:
-            lines.append(f"    Supera umbral de 50.000 EUR")
+            lines.append("    Supera umbral de 50.000 EUR")
         if d["supera_incremento_20k"]:
             lines.append(f"    Incremento >{UMBRAL_INCREMENTO_EUR:,.0f} EUR vs ultimo 720")
 
@@ -720,7 +720,7 @@ def _format_720_response(
                 etiqueta += f" — clave {c['subtipo']} ({c['subtipo_descripcion']})"
             if c.get("descripcion"):
                 etiqueta += f" — {c['descripcion']}"
-            extras: List[str] = []
+            extras: list[str] = []
             if c.get("motivo"):
                 extras.append(f"motivo: {c['motivo']}")
             if c.get("fecha_cese"):

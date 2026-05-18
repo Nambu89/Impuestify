@@ -8,14 +8,14 @@ No requiere DB, LLM ni servidor levantado.
 """
 
 import math
+
 import pytest
 
 from app.routers.irpf_estimate import (
+    NetSalaryRequest,
     _calcular_irpf_simplificado,
     _compute_net_salary,
-    NetSalaryRequest,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper

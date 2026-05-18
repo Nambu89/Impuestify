@@ -8,30 +8,30 @@ Todos los importes monetarios en EUR (float), redondeados a 2 decimales en salid
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Literal
+
 import logging
+from dataclasses import dataclass, field
 
 from app.utils.is_scales import (
-    get_is_regimen,
-    calcular_cuota_por_tramos,
-    get_is_deduccion_params,
+    COOPERATIVA_ESP_PROTEGIDA_BONIFICACION_PCT,
+    COOPERATIVA_TIPO_PROTEGIDA,
+    ID_PCT_EXCESO_MEDIA,
+    PAGO_FRACC_MINIMO_INCN_THRESHOLD,
+    PAGO_FRACC_MINIMO_PCT_BANCA,
+    PAGO_FRACC_MINIMO_PCT_GENERAL,
+    RESERVA_NIVELACION_MAX_EUR,
+    RESERVA_NIVELACION_PCT,
+    aplica_reserva_nivelacion,
+    aplica_tributacion_minima,
     bin_limite_pct,
+    calcular_cuota_por_tramos,
+    calcular_deduccion_cine,
+    get_is_deduccion_params,
+    get_is_regimen,
     reserva_capitalizacion_pct_2025,
     # MEDIA gaps (auditoria 2026-05) — Wave C2
     tributacion_minima_pct,
-    aplica_tributacion_minima,
-    aplica_reserva_nivelacion,
-    RESERVA_NIVELACION_PCT,
-    RESERVA_NIVELACION_MAX_EUR,
-    COOPERATIVA_TIPO_PROTEGIDA,
-    COOPERATIVA_ESP_PROTEGIDA_BONIFICACION_PCT,
-    ID_PCT_EXCESO_MEDIA,
-    PAGO_FRACC_MINIMO_PCT_GENERAL,
-    PAGO_FRACC_MINIMO_PCT_BANCA,
-    PAGO_FRACC_MINIMO_INCN_THRESHOLD,
     zec_techo_base,
-    calcular_deduccion_cine,
 )
 
 logger = logging.getLogger(__name__)

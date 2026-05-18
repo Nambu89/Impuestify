@@ -21,7 +21,6 @@ import hashlib
 import logging
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ def _hash(text: str) -> str:
 class VelocityResult:
     allowed: bool
     repeat_count: int
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 class VelocityChecker:

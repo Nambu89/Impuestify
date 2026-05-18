@@ -1,7 +1,7 @@
 import pytest
-from app.territories.foral_vasco.plugin import ForalVascoTerritory
-from app.territories.foral_navarra.plugin import ForalNavarraTerritory
 
+from app.territories.foral_navarra.plugin import ForalNavarraTerritory
+from app.territories.foral_vasco.plugin import ForalVascoTerritory
 
 # --- Foral Vasco ---
 

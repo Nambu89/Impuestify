@@ -2,9 +2,10 @@
 Tests for PDF Text Extractor using PyMuPDF4LLM
 """
 
-import pytest
 import asyncio
 from pathlib import Path
+
+import pytest
 
 
 class TestPDFExtractor:
@@ -13,7 +14,7 @@ class TestPDFExtractor:
     @pytest.mark.asyncio
     async def test_pdf_extractor_initialization(self):
         """Test that PDF extractor initializes correctly"""
-        from app.utils.pdf_extractor import PDFTextExtractor, PYMUPDF4LLM_AVAILABLE
+        from app.utils.pdf_extractor import PYMUPDF4LLM_AVAILABLE, PDFTextExtractor
 
         if not PYMUPDF4LLM_AVAILABLE:
             pytest.skip("pymupdf4llm not installed")
@@ -30,7 +31,7 @@ class TestPDFExtractor:
     @pytest.mark.asyncio
     async def test_pdf_extraction_simple(self):
         """Test extraction from a simple PDF"""
-        from app.utils.pdf_extractor import get_pdf_extractor, PYMUPDF4LLM_AVAILABLE
+        from app.utils.pdf_extractor import PYMUPDF4LLM_AVAILABLE, get_pdf_extractor
 
         if not PYMUPDF4LLM_AVAILABLE:
             pytest.skip("pymupdf4llm not installed")
@@ -110,10 +111,10 @@ startxref
     def test_pdf_extractor_summary(self):
         """Test summary generation"""
         from app.utils.pdf_extractor import (
-            PDFTextExtractor,
+            PYMUPDF4LLM_AVAILABLE,
             PDFExtractionResult,
             PDFPage,
-            PYMUPDF4LLM_AVAILABLE,
+            PDFTextExtractor,
         )
 
         if not PYMUPDF4LLM_AVAILABLE:
@@ -138,7 +139,7 @@ startxref
         assert "2 pages" in summary
         assert "30 characters" in summary
 
-        print(f"\n[PASS] PDF Extractor: Summary generation works")
+        print("\n[PASS] PDF Extractor: Summary generation works")
 
 
 if __name__ == "__main__":

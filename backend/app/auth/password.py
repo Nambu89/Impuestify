@@ -5,6 +5,7 @@ Uses bcrypt directly for secure password hashing.
 """
 
 import logging
+
 import bcrypt
 
 logger = logging.getLogger(__name__)

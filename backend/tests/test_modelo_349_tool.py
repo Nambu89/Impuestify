@@ -14,15 +14,15 @@ Cubrimos:
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from app.tools import ALL_TOOLS, TOOL_EXECUTORS
 from app.tools.modelo_349_tool import (
     MODELO_349_TOOL,
     calculate_modelo_349_tool,
 )
-
 
 # --------------------------------------------------------------------------- #
 # Fixtures

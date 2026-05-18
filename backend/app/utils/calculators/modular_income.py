@@ -13,7 +13,7 @@ XSD Modelo 100 casillas: 0218-0280 (estimacion objetiva).
 Quarterly pre-payment: Modelo 131 (not 130 which is for ED).
 """
 
-from typing import Any, Dict
+from typing import Any
 
 
 class ModularIncomeCalculator:
@@ -33,7 +33,7 @@ class ModularIncomeCalculator:
         modulos_indice_corrector: float = 1.0,
         modulos_reduccion_general: float = 0.05,
         inicio_actividad: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula rendimiento neto por estimacion objetiva (modulos).
 

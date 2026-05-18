@@ -1,16 +1,13 @@
 """Foral Navarra territory plugin."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from app.territories.base import (
-    TerritoryPlugin,
-    ScaleData,
-    SimulationResult,
     MinimosConfig,
     ModelObligation,
-    Deadline,
-    DEADLINES_2026,
-    _trimestral_deadlines,
+    ScaleData,
+    SimulationResult,
+    TerritoryPlugin,
 )
 
 
@@ -30,10 +27,10 @@ class ForalNavarraTerritory(TerritoryPlugin):
     territories = ["Navarra"]
     regime = "foral_navarra"
 
-    async def get_irpf_scales(self, year: int) -> List[ScaleData]:
+    async def get_irpf_scales(self, year: int) -> list[ScaleData]:
         return []
 
-    async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
+    async def simulate_irpf(self, profile: dict[str, Any], db) -> SimulationResult:
         from app.utils.irpf_simulator import IRPFSimulator
 
         simulator = IRPFSimulator(db)
@@ -48,7 +45,7 @@ class ForalNavarraTerritory(TerritoryPlugin):
             desglose=result,
         )
 
-    async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
+    async def get_deductions(self, ccaa: str, year: int, db) -> list[dict[str, Any]]:
         from app.services.deduction_service import DeductionService
 
         service = DeductionService(db)
@@ -79,7 +76,7 @@ class ForalNavarraTerritory(TerritoryPlugin):
             apply_as="quota_deduction",
         )
 
-    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+    def get_model_obligations(self, profile: dict[str, Any]) -> list[ModelObligation]:
         """Navarra: F69 instead of 303, F-90 instead of 100, S-90 instead of 200.
         organismo: HTN (Hacienda Tributaria de Navarra)."""
         profile_with_ccaa = {**profile, "ccaa": "Navarra"}

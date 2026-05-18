@@ -6,10 +6,9 @@ Enables semantic search within user workspaces.
 """
 
 import logging
-import hashlib
 import uuid
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
+from typing import Any
 
 from app.config import settings
 
@@ -30,10 +29,10 @@ class EmbeddingResult:
     """Result of embedding generation."""
 
     success: bool
-    embedding: Optional[List[float]] = None
+    embedding: list[float] | None = None
     dimensions: int = 0
     model: str = ""
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -44,7 +43,7 @@ class SearchResult:
     filename: str
     chunk_text: str
     similarity: float
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class WorkspaceEmbeddingService:
@@ -63,7 +62,7 @@ class WorkspaceEmbeddingService:
     CHUNK_SIZE = 1000  # characters per chunk
     CHUNK_OVERLAP = 200  # overlap between chunks
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """
         Initialize embedding service.
 
@@ -71,7 +70,7 @@ class WorkspaceEmbeddingService:
             api_key: OpenAI API key (defaults to settings)
         """
         self.api_key = api_key or settings.OPENAI_API_KEY
-        self._client: Optional[AsyncOpenAI] = None
+        self._client: AsyncOpenAI | None = None
 
         if not OPENAI_AVAILABLE:
             logger.error("OpenAI package not available")
@@ -122,7 +121,7 @@ class WorkspaceEmbeddingService:
             logger.error(f"Embedding generation failed: {e}")
             return EmbeddingResult(success=False, error=str(e))
 
-    def chunk_text(self, text: str) -> List[Dict[str, Any]]:
+    def chunk_text(self, text: str) -> list[dict[str, Any]]:
         """
         Split text into overlapping chunks for embedding.
 
@@ -169,7 +168,7 @@ class WorkspaceEmbeddingService:
 
     async def embed_workspace_file(
         self, db, workspace_id: str, file_id: str, text: str, filename: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate and store embeddings for a workspace file.
 
@@ -246,7 +245,7 @@ class WorkspaceEmbeddingService:
 
     async def search_workspace(
         self, db, workspace_id: str, query: str, top_k: int = 5, similarity_threshold: float = 0.7
-    ) -> List[SearchResult]:
+    ) -> list[SearchResult]:
         """
         Semantic search within a workspace.
 
@@ -320,11 +319,11 @@ class WorkspaceEmbeddingService:
             logger.error(f"Workspace search failed: {e}")
             return []
 
-    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+    def _cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """Calculate cosine similarity between two vectors."""
         import math
 
-        dot_product = sum(a * b for a, b in zip(vec1, vec2))
+        dot_product = sum(a * b for a, b in zip(vec1, vec2, strict=False))
         norm1 = math.sqrt(sum(a * a for a in vec1))
         norm2 = math.sqrt(sum(b * b for b in vec2))
 
@@ -351,7 +350,7 @@ class WorkspaceEmbeddingService:
             logger.error(f"Failed to delete embeddings for file {file_id}: {e}")
             return False
 
-    async def get_workspace_stats(self, db, workspace_id: str) -> Dict[str, Any]:
+    async def get_workspace_stats(self, db, workspace_id: str) -> dict[str, Any]:
         """
         Get embedding statistics for a workspace.
 
@@ -392,7 +391,7 @@ class WorkspaceEmbeddingService:
 
 
 # Global instance
-_embedding_service: Optional[WorkspaceEmbeddingService] = None
+_embedding_service: WorkspaceEmbeddingService | None = None
 
 
 def get_workspace_embedding_service() -> WorkspaceEmbeddingService:

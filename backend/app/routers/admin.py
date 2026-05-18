@@ -18,19 +18,17 @@ Provides:
 """
 
 import logging
-import json
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData
 from app.auth.owner_guard import require_owner as _require_owner
-from app.database.turso_client import get_db_client, TursoClient
-from app.services.subscription_service import get_subscription_service
+from app.database.turso_client import TursoClient, get_db_client
 from app.services.cost_tracker import CostTracker
+from app.services.subscription_service import get_subscription_service
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +47,11 @@ class ChangePlanRequest(BaseModel):
 class UserListItem(BaseModel):
     id: str
     email: str
-    name: Optional[str] = None
+    name: str | None = None
     is_owner: bool = False
-    plan_type: Optional[str] = None
-    subscription_status: Optional[str] = None
-    created_at: Optional[str] = None
+    plan_type: str | None = None
+    subscription_status: str | None = None
+    created_at: str | None = None
 
 
 # ---- Endpoints ----
@@ -115,7 +113,7 @@ async def change_user_plan(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     user_email = user_result.rows[0]["email"]
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Update or create subscription row
     sub_result = await db.execute("SELECT id FROM subscriptions WHERE user_id = ?", [user_id])
@@ -187,7 +185,7 @@ async def grant_beta_access(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     user_email = user_result.rows[0]["email"]
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     beta_end = "2026-12-31T23:59:59"
 
     sub_result = await db.execute("SELECT id FROM subscriptions WHERE user_id = ?", [user_id])
@@ -257,7 +255,7 @@ async def revoke_beta_access(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     user_email = user_result.rows[0]["email"]
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         "UPDATE subscriptions SET status = 'inactive', updated_at = ? WHERE user_id = ?",
@@ -435,9 +433,9 @@ async def get_cost_dashboard(
 
 
 class FeedbackUpdateRequest(BaseModel):
-    status: Optional[str] = None
-    priority: Optional[str] = None
-    admin_notes: Optional[str] = None
+    status: str | None = None
+    priority: str | None = None
+    admin_notes: str | None = None
 
 
 VALID_FEEDBACK_STATUSES = {"new", "reviewed", "planned", "in_progress", "done", "wont_fix"}
@@ -489,9 +487,9 @@ async def get_feedback_stats(
 
 @router.get("/feedback")
 async def list_feedback(
-    type: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
-    priority: Optional[str] = Query(None),
+    type: str | None = Query(None),
+    status: str | None = Query(None),
+    priority: str | None = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     owner: TokenData = Depends(_require_owner),
@@ -634,7 +632,7 @@ async def update_feedback(
     if not update_fields:
         raise HTTPException(status_code=400, detail="No se proporcionaron campos a actualizar")
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     update_fields.append("updated_at = ?")
     params.append(now)
     params.append(feedback_id)
@@ -655,7 +653,7 @@ async def update_feedback(
 
 @router.get("/contact-requests")
 async def list_contact_requests(
-    status: Optional[str] = Query(None),
+    status: str | None = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     owner: TokenData = Depends(_require_owner),
@@ -803,7 +801,7 @@ async def get_chat_ratings_stats(
 
 @router.get("/chat-ratings")
 async def list_chat_ratings(
-    rating: Optional[int] = Query(None, description="-1 or 1"),
+    rating: int | None = Query(None, description="-1 or 1"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     owner: TokenData = Depends(_require_owner),

@@ -11,7 +11,6 @@ Benefits:
 """
 
 import logging
-from typing import Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -61,6 +60,7 @@ class ComplexityClassifier:
         Initialize the complexity classifier with Groq client.
         """
         from groq import Groq
+
         from app.config import settings
 
         self.client = None

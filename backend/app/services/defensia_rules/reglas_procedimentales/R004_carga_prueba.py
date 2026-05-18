@@ -30,8 +30,6 @@ texto canonico exacto contra el corpus indexado.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from app.models.defensia import (
     ArgumentoCandidato,
     Brief,
@@ -41,7 +39,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Cita semantica — describe el concepto juridico, nunca el articulo.
 # El RAG verificador la traducira a "Art. 105.1 LGT + doctrina TS de facilidad
@@ -56,7 +53,7 @@ _CITA_SEMANTICA = (
 
 def _es_liquidacion_que_deniega_beneficio(
     expediente: ExpedienteEstructurado,
-) -> Optional[dict]:
+) -> dict | None:
     """Busca en el timeline una liquidacion provisional que deniegue un
     beneficio fiscal (deduccion, exencion, reduccion, bonificacion).
 
@@ -115,7 +112,7 @@ def _hay_requerimiento_previo(expediente: ExpedienteEstructurado) -> bool:
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,  # noqa: ARG001 — brief no usado
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R004 sobre el expediente.
 
     Dispara cuando:

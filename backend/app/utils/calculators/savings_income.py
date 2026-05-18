@@ -9,7 +9,7 @@ Calculates:
 - Applies the savings tax scale (tarifa del ahorro, LIRPF art. 66)
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -41,10 +41,10 @@ class SavingsIncomeCalculator:
         jurisdiction: str = "Estatal",
         year: int = 2024,
         # Phase 2: Prior year losses (Art. 49)
-        perdidas_gp_anteriores: Optional[Dict[int, float]] = None,
-        perdidas_rcm_anteriores: Optional[Dict[int, float]] = None,
+        perdidas_gp_anteriores: dict[int, float] | None = None,
+        perdidas_rcm_anteriores: dict[int, float] | None = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate savings income and tax.
 
@@ -136,8 +136,8 @@ class SavingsIncomeCalculator:
 
         cuota_est = 0.0
         cuota_aut = 0.0
-        bd_est: List[Dict] = []
-        bd_aut: List[Dict] = []
+        bd_est: list[dict] = []
+        bd_aut: list[dict] = []
 
         if base_ahorro_total > 0:
             state_scale = await self._get_ahorro_scale("Estatal", year)
@@ -174,7 +174,7 @@ class SavingsIncomeCalculator:
             "loss_compensation": loss_result,
         }
 
-    async def _get_ahorro_scale(self, jurisdiction: str, year: int) -> List[Dict]:
+    async def _get_ahorro_scale(self, jurisdiction: str, year: int) -> list[dict]:
         """Get savings tax scale from irpf_scales table."""
         result = await self._db.execute(
             "SELECT tramo_num, base_hasta, cuota_integra, resto_base, tipo_aplicable "
@@ -186,7 +186,7 @@ class SavingsIncomeCalculator:
         return [dict(row) for row in result.rows]
 
     @staticmethod
-    def _apply_scale(base: float, scale: List[Dict]) -> tuple:
+    def _apply_scale(base: float, scale: list[dict]) -> tuple:
         """
         Apply progressive savings tax scale.
 

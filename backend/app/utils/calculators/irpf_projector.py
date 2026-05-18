@@ -15,9 +15,9 @@ Usage:
 """
 
 import json
-import uuid
 import logging
-from typing import Any, Dict, List, Optional
+import uuid
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class IRPFProjector:
         # Optional overrides (from user profile or manual input)
         edad_contribuyente: int = 35,
         num_descendientes: int = 0,
-        anios_nacimiento_desc: Optional[List[int]] = None,
+        anios_nacimiento_desc: list[int] | None = None,
         custodia_compartida: bool = False,
         num_ascendientes_65: int = 0,
         num_ascendientes_75: int = 0,
@@ -79,7 +79,7 @@ class IRPFProjector:
         retenciones_ahorro: float = 0,
         # Control
         save_projection: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Project annual IRPF from quarterly declarations.
 
@@ -230,7 +230,7 @@ class IRPFProjector:
 
     async def _fetch_declarations(
         self, user_id: str, declaration_type: str, year: int
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Fetch all declarations of a type for a user/year."""
         result = await self._db.execute(
             """SELECT quarter, form_data, calculated_result, tax_due,
@@ -252,7 +252,7 @@ class IRPFProjector:
             rows.append(r)
         return rows
 
-    def _aggregate_activity_income(self, modelo_130_data: List[Dict[str, Any]]) -> Dict[str, float]:
+    def _aggregate_activity_income(self, modelo_130_data: list[dict[str, Any]]) -> dict[str, float]:
         """
         Extract activity income/expenses from Modelo 130 declarations.
 
@@ -316,9 +316,9 @@ class IRPFProjector:
 
     def _aggregate_iva(
         self,
-        modelo_303_data: List[Dict[str, Any]],
-        modelo_420_data: List[Dict[str, Any]],
-    ) -> Dict[str, Any]:
+        modelo_303_data: list[dict[str, Any]],
+        modelo_420_data: list[dict[str, Any]],
+    ) -> dict[str, Any]:
         """Aggregate IVA/IGIC data for informational purposes."""
         total_devengado = 0.0
         total_deducible = 0.0
@@ -351,7 +351,7 @@ class IRPFProjector:
             "num_quarters_420": len(modelo_420_data),
         }
 
-    def _annualize(self, activity: Dict[str, float], num_quarters: int) -> Dict[str, Any]:
+    def _annualize(self, activity: dict[str, float], num_quarters: int) -> dict[str, Any]:
         """
         Annualize activity income from partial year data.
 
@@ -388,7 +388,7 @@ class IRPFProjector:
             ),
         }
 
-    async def _save_projection(self, user_id: str, year: int, result: Dict[str, Any]) -> None:
+    async def _save_projection(self, user_id: str, year: int, result: dict[str, Any]) -> None:
         """Persist the annual projection in the annual_projections table."""
         projection = result.get("projection", {})
         annualized = result.get("annualized", {})

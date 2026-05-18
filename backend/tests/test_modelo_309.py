@@ -13,7 +13,6 @@ Cover the cases the tool handles:
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Caso 1 — Farmacia/comercio en RE compra intracomunitaria
 # ---------------------------------------------------------------------------

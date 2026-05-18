@@ -28,7 +28,6 @@ from app.services.defensia_quota_service import (
     QuotaExcedida,
 )
 
-
 # --------------------------------------------------------------------------- #
 # Fake async DB — mantiene estado compartido entre llamadas
 # --------------------------------------------------------------------------- #

@@ -6,7 +6,7 @@ evaluate eligibility based on collected answers, and identify missing informatio
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +73,9 @@ Usar el nombre tal como aparece en el perfil fiscal del usuario (ej: 'Aragon', '
 async def discover_deductions_tool(
     ccaa: str = "Estatal",
     tax_year: int = 2025,
-    answers: Optional[Dict[str, Any]] = None,
-    user_id: Optional[str] = None,
-) -> Dict[str, Any]:
+    answers: dict[str, Any] | None = None,
+    user_id: str | None = None,
+) -> dict[str, Any]:
     """
     Execute deduction discovery.
 
@@ -98,9 +98,9 @@ async def discover_deductions_tool(
     # --- Auto-populate answers from stored fiscal profile ---
     if user_id:
         try:
-            from app.database.turso_client import get_db_client
-            from app.services.deduction_service import get_deduction_service as _get_svc
             import json as _json
+
+            from app.database.turso_client import get_db_client
 
             _db = await get_db_client()
             _prof_result = await _db.execute(
@@ -111,7 +111,7 @@ async def discover_deductions_tool(
             if _prof_result.rows:
                 _row = _prof_result.rows[0]
                 _datos_raw = _row.get("datos_fiscales")
-                _datos: Dict[str, Any] = {}
+                _datos: dict[str, Any] = {}
                 if _datos_raw:
                     try:
                         _parsed = (

@@ -214,9 +214,9 @@ def test_populate_tax_parameters_ahorro_2025_top_bracket_es_15pct():
     con el último tramo al 15% (Ley 7/2024), no heredar literalmente del 14% de 2024.
     """
     from scripts.populate_tax_parameters import (
+        AHORRO_AUTONOMICO_2025,
         AHORRO_ESTATAL_2024,
         AHORRO_ESTATAL_2025,
-        AHORRO_AUTONOMICO_2025,
     )
 
     # 2024 mantiene 14%
@@ -232,7 +232,7 @@ def test_populate_tax_parameters_ahorro_2025_top_bracket_es_15pct():
     ), "Bug 98: escala autonómica complementaria del ahorro 2025 último tramo debe ser 15%"
 
     # Tramos 1-4 no han cambiado
-    for tramo_2024, tramo_2025 in zip(AHORRO_ESTATAL_2024[:-1], AHORRO_ESTATAL_2025[:-1]):
+    for tramo_2024, tramo_2025 in zip(AHORRO_ESTATAL_2024[:-1], AHORRO_ESTATAL_2025[:-1], strict=False):
         assert tramo_2024 == tramo_2025, (
             f"Tramos 1-4 no han cambiado entre 2024 y 2025 (Ley 7/2024 sólo afecta al tramo 5). "
             f"2024={tramo_2024}, 2025={tramo_2025}"

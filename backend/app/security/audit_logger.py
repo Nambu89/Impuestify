@@ -11,12 +11,12 @@ Events logged:
 - Admin actions
 """
 
-import logging
 import json
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+import logging
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from enum import Enum
-from dataclasses import dataclass, asdict
+from typing import Any
 
 logger = logging.getLogger("audit")
 
@@ -61,12 +61,12 @@ class AuditEvent:
 
     event_type: str
     timestamp: str
-    user_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    details: Optional[Dict[str, Any]] = None
+    user_id: str | None = None
+    ip_address: str | None = None
+    details: dict[str, Any] | None = None
     severity: str = "info"  # info, warning, error, critical
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {k: v for k, v in asdict(self).items() if v is not None}
 
@@ -102,9 +102,9 @@ class AuditLogger:
     def log(
         self,
         event_type: AuditEventType,
-        user_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        ip_address: str | None = None,
+        details: dict[str, Any] | None = None,
         severity: str = "info",
     ):
         """
@@ -119,7 +119,7 @@ class AuditLogger:
         """
         event = AuditEvent(
             event_type=event_type.value,
-            timestamp=datetime.now(timezone.utc).isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat() + "Z",
             user_id=user_id,
             ip_address=ip_address,
             details=details,
@@ -149,7 +149,7 @@ class AuditLogger:
             severity="warning",
         )
 
-    def log_ai_query(self, user_id: str, query_preview: str, ip_address: Optional[str] = None):
+    def log_ai_query(self, user_id: str, query_preview: str, ip_address: str | None = None):
         """Log AI query."""
         self.log(
             AuditEventType.AI_QUERY,
@@ -159,7 +159,7 @@ class AuditLogger:
         )
 
     def log_moderation_block(
-        self, user_id: str, categories: list, ip_address: Optional[str] = None
+        self, user_id: str, categories: list, ip_address: str | None = None
     ):
         """Log content moderation block."""
         self.log(
@@ -171,7 +171,7 @@ class AuditLogger:
         )
 
     def log_rate_limit_exceeded(
-        self, ip_address: str, endpoint: str, user_id: Optional[str] = None
+        self, ip_address: str, endpoint: str, user_id: str | None = None
     ):
         """Log rate limit violation."""
         self.log(
@@ -191,7 +191,7 @@ class AuditLogger:
             severity="error",
         )
 
-    def log_injection_attempt(self, ip_address: str, patterns: list, user_id: Optional[str] = None):
+    def log_injection_attempt(self, ip_address: str, patterns: list, user_id: str | None = None):
         """Log injection attempt detection."""
         self.log(
             AuditEventType.SECURITY_INJECTION_ATTEMPT,

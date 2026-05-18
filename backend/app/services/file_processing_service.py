@@ -10,21 +10,20 @@ import csv
 import io
 import json
 import logging
-import os
 import uuid
 from dataclasses import asdict
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import UploadFile
 
 from app.database.turso_client import get_db_client
 from app.security.document_integrity import document_integrity_scanner
 from app.utils.pdf_extractor import (
+    PDFExtractionResult,
+    extract_image_text,
     extract_pdf_text,
     extract_pdf_text_plain,
-    extract_image_text,
-    PDFExtractionResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,9 +50,9 @@ class FileProcessingService:
         self,
         workspace_id: str,
         file: UploadFile,
-        file_type_hint: Optional[str] = None,
-        user_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        file_type_hint: str | None = None,
+        user_id: str | None = None,
+    ) -> dict[str, Any]:
         """
         Process an uploaded file: save metadata, extract content, and generate embeddings.
 
@@ -148,8 +147,8 @@ class FileProcessingService:
             processing_status = "error"
 
         # Document Integrity Scan (Capa 13) — fail open: scanner errors never block processing
-        integrity_score: Optional[float] = None
-        integrity_findings: Optional[str] = None
+        integrity_score: float | None = None
+        integrity_findings: str | None = None
 
         if extracted_text:
             try:
@@ -216,7 +215,7 @@ class FileProcessingService:
 
         # Save to Database
         db = await get_db_client()
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         await db.execute(
             """
@@ -316,7 +315,7 @@ class FileProcessingService:
 
         return "otro"
 
-    async def _extract_invoice_data(self, text: str) -> Dict[str, Any]:
+    async def _extract_invoice_data(self, text: str) -> dict[str, Any]:
         """Extract structured data from invoice text."""
         try:
             from app.services.invoice_extractor import get_invoice_extractor
@@ -334,7 +333,7 @@ class FileProcessingService:
             logger.error(f"Invoice extraction failed: {e}")
             return {"error": str(e)}
 
-    async def _extract_payslip_data(self, text: str) -> Dict[str, Any]:
+    async def _extract_payslip_data(self, text: str) -> dict[str, Any]:
         """Extract structured data from payslip text."""
         try:
             from app.services.payslip_extractor import PayslipExtractor
@@ -436,7 +435,7 @@ class FileProcessingService:
             logger.error(f"CSV extraction failed for {filename}: {e}")
             return ""
 
-    def _extract_declaration_data(self, text: str) -> Dict[str, Any]:
+    def _extract_declaration_data(self, text: str) -> dict[str, Any]:
         """Extract structured data from tax declaration text (303/130/420)."""
         try:
             from app.services.declaration_extractor import DeclarationExtractor
@@ -465,7 +464,7 @@ class FileProcessingService:
         self,
         workspace_file_id: str,
         user_id: str,
-        extracted_data: Dict[str, Any],
+        extracted_data: dict[str, Any],
         db,
     ) -> None:
         """
@@ -473,8 +472,8 @@ class FileProcessingService:
         a libro_registro entry with clasificacion_confianza='pendiente_confirmacion'.
         """
         from app.config import settings
-        from app.services.invoice_classifier_service import InvoiceClassifierService
         from app.services.contabilidad_service import ContabilidadService
+        from app.services.invoice_classifier_service import InvoiceClassifierService
 
         if not settings.GOOGLE_GEMINI_API_KEY:
             logger.warning("Gemini API key not configured — skipping auto-classification")
@@ -511,7 +510,7 @@ class FileProcessingService:
         fecha_factura = (
             extracted_data.get("fecha_factura")
             or extracted_data.get("fecha")
-            or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            or datetime.now(UTC).strftime("%Y-%m-%d")
         )
         emisor_nif = (
             extracted_data.get("emisor_nif")
@@ -605,14 +604,14 @@ class FileProcessingService:
             try:
                 fecha_dt = datetime.strptime(fecha_factura, "%d/%m/%Y")
             except ValueError:
-                fecha_dt = datetime.now(timezone.utc)
+                fecha_dt = datetime.now(UTC)
 
         year = fecha_dt.year
         trimestre = (fecha_dt.month - 1) // 3 + 1
 
         # Insert into libro_registro with pendiente_confirmacion
         invoice_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         raw_extraction_json = json.dumps(extracted_data, default=str)
 
         await db.execute(
@@ -691,7 +690,7 @@ class FileProcessingService:
 
     async def _generate_file_embeddings(
         self, db, workspace_id: str, file_id: str, text: str, filename: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate embeddings for file content."""
         try:
             from app.services.workspace_embedding_service import get_workspace_embedding_service
@@ -708,7 +707,7 @@ class FileProcessingService:
             logger.error(f"Embedding generation failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def reprocess_file(self, file_id: str, user_id: str = None) -> Dict[str, Any]:
+    async def reprocess_file(self, file_id: str, user_id: str = None) -> dict[str, Any]:
         """
         Reprocess an existing file (re-extract and re-embed).
 

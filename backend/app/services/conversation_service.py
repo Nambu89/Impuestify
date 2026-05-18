@@ -5,11 +5,11 @@ Manages chat conversations and message history in Turso database.
 Provides Claude/ChatGPT-style persistent conversations per user.
 """
 
-import uuid
 import json
 import logging
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone
+import uuid
+from datetime import UTC, datetime
+from typing import Any
 
 from app.database.turso_client import TursoClient
 
@@ -23,8 +23,8 @@ class ConversationService:
         self.db = db
 
     async def create_conversation(
-        self, user_id: str, title: Optional[str] = None, workspace_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, user_id: str, title: str | None = None, workspace_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Create a new conversation for a user.
 
@@ -37,10 +37,10 @@ class ConversationService:
             Created conversation dict
         """
         conversation_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         if not title:
-            title = f"Nueva conversación"
+            title = "Nueva conversación"
 
         sql = """
         INSERT INTO conversations (id, user_id, title, workspace_id, created_at, updated_at)
@@ -63,7 +63,7 @@ class ConversationService:
             "updated_at": now,
         }
 
-    async def get_user_conversations(self, user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+    async def get_user_conversations(self, user_id: str, limit: int = 50) -> list[dict[str, Any]]:
         """
         Get all conversations for a user, ordered by most recent.
 
@@ -87,8 +87,8 @@ class ConversationService:
         return [dict(row) for row in result.rows]
 
     async def get_conversation(
-        self, conversation_id: str, user_id: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, conversation_id: str, user_id: str | None = None
+    ) -> dict[str, Any] | None:
         """
         Get a specific conversation.
 
@@ -118,7 +118,7 @@ class ConversationService:
             return dict(result.rows[0])
         return None
 
-    async def get_conversation_workspace(self, conversation_id: str, user_id: str) -> Optional[str]:
+    async def get_conversation_workspace(self, conversation_id: str, user_id: str) -> str | None:
         """Get the workspace_id associated with a conversation."""
         result = await self.db.execute(
             "SELECT workspace_id FROM conversations WHERE id = ? AND user_id = ?",
@@ -131,7 +131,7 @@ class ConversationService:
 
     async def get_conversation_messages(
         self, conversation_id: str, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get messages for a conversation, ordered chronologically.
 
@@ -172,8 +172,8 @@ class ConversationService:
         conversation_id: str,
         role: str,
         content: str,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Add a message to a conversation.
 
@@ -187,7 +187,7 @@ class ConversationService:
             Created message dict
         """
         message_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         # Serialize metadata to JSON
         metadata_json = json.dumps(metadata) if metadata else None
@@ -215,7 +215,7 @@ class ConversationService:
             "created_at": now,
         }
 
-    async def add_message_sources(self, message_id: str, sources: List[Dict[str, Any]]) -> None:
+    async def add_message_sources(self, message_id: str, sources: list[dict[str, Any]]) -> None:
         """
         Link source chunks to a message.
 
@@ -273,7 +273,7 @@ class ConversationService:
             )
 
     async def update_conversation_title(
-        self, conversation_id: str, title: str, user_id: Optional[str] = None
+        self, conversation_id: str, title: str, user_id: str | None = None
     ) -> bool:
         """
         Update conversation title.
@@ -286,7 +286,7 @@ class ConversationService:
         Returns:
             True if updated, False if not found
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         if user_id:
             sql = """
@@ -310,7 +310,7 @@ class ConversationService:
         return success
 
     async def delete_conversation(
-        self, conversation_id: str, user_id: Optional[str] = None
+        self, conversation_id: str, user_id: str | None = None
     ) -> bool:
         """
         Delete a conversation and all its messages (cascade).
@@ -337,7 +337,7 @@ class ConversationService:
 
     async def get_recent_messages(
         self, conversation_id: str, limit: int = 20
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get recent messages formatted for LLM context.
 

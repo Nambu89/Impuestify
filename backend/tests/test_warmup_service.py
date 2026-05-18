@@ -1,7 +1,9 @@
 """Tests for WarmupService — personalized greetings and RAG pre-loading."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from app.services.warmup_service import WarmupService
 
 

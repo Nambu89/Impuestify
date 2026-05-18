@@ -25,8 +25,6 @@ Research: C:/tmp/research.md §R001
 
 from __future__ import annotations
 
-from typing import Optional
-
 from app.models.defensia import (
     ArgumentoCandidato,
     Brief,
@@ -36,7 +34,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Tipos de documento sobre los que la regla busca carencias de motivacion.
 # Solo actos administrativos de la Administracion tributaria — los escritos
@@ -53,7 +50,7 @@ _TIPOS_MOTIVABLES: frozenset[TipoDocumento] = frozenset(
 )
 
 
-def _motivo_de_disparo(datos: dict) -> Optional[str]:
+def _motivo_de_disparo(datos: dict) -> str | None:
     """Analiza los `datos` de un documento y devuelve el motivo de disparo.
 
     Retorna:
@@ -113,7 +110,7 @@ def _motivo_de_disparo(datos: dict) -> Optional[str]:
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R001 sobre el expediente.
 
     Recorre los documentos del expediente en busca del primer acto

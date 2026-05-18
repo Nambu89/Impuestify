@@ -30,9 +30,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, date, datetime, timedelta
 
 import httpx
 
@@ -47,7 +45,7 @@ DEFAULT_TIMEOUT_S = 1.5
 DEFAULT_CACHE_TTL_DAYS = 30
 
 
-def _parse_iso_date(text: Optional[str]) -> Optional[date]:
+def _parse_iso_date(text: str | None) -> date | None:
     """BOPV uses ISO 8601 with timezone: "2008-09-23T22:00:00Z"."""
     if not text:
         return None
@@ -61,7 +59,7 @@ def parse_bopv_norma(payload: dict) -> NormaSourceMetadata:
     """Map BOPV JSON payload to NormaSourceMetadata. Tolerant to missing
     keys — the API may evolve. Returns a record even with partial data."""
     state = (payload.get("state") or "").strip().lower()
-    is_vigent: Optional[bool]
+    is_vigent: bool | None
     if state == "vigente":
         is_vigent = True
     elif state in {"derogada", "anulada"}:
@@ -86,7 +84,7 @@ def parse_bopv_norma(payload: dict) -> NormaSourceMetadata:
     )
 
 
-def _build_url_html(norm_id: str) -> Optional[str]:
+def _build_url_html(norm_id: str) -> str | None:
     """Construct the human-readable URL for a BOPV norm. We point to the
     same api.euskadi.eus endpoint that serves the JSON — it also renders
     a friendly HTML page in browsers and is guaranteed to work."""
@@ -108,14 +106,14 @@ class BopvApiSource(LegalSource):
         db=None,
         timeout_s: float = DEFAULT_TIMEOUT_S,
         cache_ttl_days: int = DEFAULT_CACHE_TTL_DAYS,
-        http_client: Optional[httpx.AsyncClient] = None,
+        http_client: httpx.AsyncClient | None = None,
     ):
         self._db = db
         self._timeout = httpx.Timeout(timeout_s)
         self._cache_ttl = timedelta(days=cache_ttl_days)
         self._http = http_client
 
-    async def fetch_norma(self, norm_id: str) -> Optional[NormaSourceMetadata]:
+    async def fetch_norma(self, norm_id: str) -> NormaSourceMetadata | None:
         if not norm_id:
             return None
 
@@ -128,18 +126,18 @@ class BopvApiSource(LegalSource):
             await self._write_cache(meta)
         return meta
 
-    async def is_vigent(self, norm_id: str) -> Optional[bool]:
+    async def is_vigent(self, norm_id: str) -> bool | None:
         meta = await self.fetch_norma(norm_id)
         if meta is None:
             return None
         return meta.is_vigent
 
-    def get_url_html(self, norm_id: str) -> Optional[str]:
+    def get_url_html(self, norm_id: str) -> str | None:
         return _build_url_html(norm_id)
 
     # ── Internals ──
 
-    async def _fetch_from_api(self, norm_id: str) -> Optional[NormaSourceMetadata]:
+    async def _fetch_from_api(self, norm_id: str) -> NormaSourceMetadata | None:
         url = f"{BOPV_API_BASE}/administrative-acts/{norm_id}"
         try:
             if self._http is not None:
@@ -160,7 +158,7 @@ class BopvApiSource(LegalSource):
             return None
         return parse_bopv_norma(payload)
 
-    async def _read_cache(self, norm_id: str) -> Optional[NormaSourceMetadata]:
+    async def _read_cache(self, norm_id: str) -> NormaSourceMetadata | None:
         if self._db is None:
             return None
         try:
@@ -173,7 +171,7 @@ class BopvApiSource(LegalSource):
                 return None
             row = result.rows[0]
             expires_at = datetime.fromisoformat(row["expires_at"])
-            if expires_at < datetime.now(timezone.utc):
+            if expires_at < datetime.now(UTC):
                 return None
             return _metadata_from_json(row["metadata_json"])
         except Exception as exc:
@@ -184,7 +182,7 @@ class BopvApiSource(LegalSource):
         if self._db is None:
             return
         cache_key = f"bopv:{meta.norm_id}"
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires_at = now + self._cache_ttl
         try:
             await self._db.execute(

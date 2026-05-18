@@ -12,7 +12,7 @@ import base64
 import binascii
 import logging
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -68,9 +68,9 @@ _MAX_BASE64_BYTES = 70_000_000  # ~52 MB en base64 → ~40 MB raw → margen sob
 
 async def parse_crypto_csv_tool(
     file_content_base64: str,
-    exchange: Optional[str] = None,
+    exchange: str | None = None,
     file_format: str = "csv",
-    user_id: Optional[str] = None,
+    user_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Decodifica, parsea y guarda transacciones de criptomonedas desde un CSV/Excel.

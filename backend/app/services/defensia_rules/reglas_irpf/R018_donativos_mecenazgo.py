@@ -40,7 +40,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # Tipos de documento que pueden contener los campos estructurados de
 # donativo declarado / deduccion admitida. Se incluye OTROS para que el
 # extractor pueda adjuntar certificados de donacion aunque el documento

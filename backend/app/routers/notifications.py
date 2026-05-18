@@ -7,22 +7,22 @@ Handles:
 - Analysis retrieval
 """
 
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Form, Request
-from typing import Optional, List, Dict
+import json
+import logging
 import os
 import uuid
 from datetime import datetime
-import json
-import logging
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 
 from app.agents.notification_agent import get_notification_agent
 from app.agents.payslip_agent import get_payslip_agent
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.subscription_guard import require_active_subscription
 from app.database.turso_client import TursoClient
+from app.security import file_validator, rate_limit_notification
 from app.services.conversation_service import ConversationService
 from app.services.subscription_service import SubscriptionAccess
-from app.security import file_validator, rate_limit_notification
 from app.utils.document_detector import DocumentDetector
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ def get_db():
 async def analyze_notification(
     request: Request,  # Required by SlowAPI
     file: UploadFile = File(...),
-    notification_date: Optional[str] = Form(None),
+    notification_date: str | None = Form(None),
     current_user: TokenData = Depends(get_current_user),
     access: SubscriptionAccess = Depends(require_active_subscription),
 ):
@@ -415,7 +415,7 @@ async def delete_notification_analysis(
 
 
 def format_notification_friendly(
-    notification_type: str, summary: str, deadlines: List[Dict], region: Dict, severity: str
+    notification_type: str, summary: str, deadlines: list[dict], region: dict, severity: str
 ) -> str:
     """
     Wrap the LLM summary with structured deadline data.

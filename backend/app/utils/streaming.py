@@ -7,12 +7,12 @@ AI reasoning progress in real-time, ChatGPT/Claude style.
 Uses sse-starlette format: yields dict with 'event' and 'data' keys
 """
 
-import json
-import time
 import asyncio
+import json
 import logging
-from typing import AsyncGenerator, Optional, Dict, Any
-from dataclasses import dataclass
+import time
+from collections.abc import AsyncGenerator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ MAX_STREAM_DURATION = 240  # 4 minutes - well under Railway's 5min limit
 
 
 # Friendly tool name mapping for UI display: (active_label, done_label)
-TOOL_DISPLAY_NAMES: Dict[str, tuple] = {
+TOOL_DISPLAY_NAMES: dict[str, tuple] = {
     "simulate_irpf": ("Simulando tu IRPF", "Simulacion de IRPF completada"),
     "calculate_irpf": ("Calculando tramos IRPF", "Calculo de tramos completado"),
     "calculate_autonomous_quota": ("Calculando cuota de autonomo", "Cuota de autonomo calculada"),
@@ -70,7 +70,7 @@ class ProgressCallback:
         """AI is thinking/reasoning"""
         await self.emit("thinking", message)
 
-    async def tool_call(self, tool_name: str, args: Dict[str, Any]):
+    async def tool_call(self, tool_name: str, args: dict[str, Any]):
         """AI is calling a tool — emits friendly name for UI"""
         names = TOOL_DISPLAY_NAMES.get(tool_name, (tool_name, tool_name))
         await self.emit(
@@ -106,7 +106,7 @@ class ProgressCallback:
         """An error occurred"""
         await self.emit("error", message)
 
-    async def done(self, conversation_id: Optional[str] = None):
+    async def done(self, conversation_id: str | None = None):
         """Processing complete"""
         data = {"conversation_id": conversation_id} if conversation_id else ""
         await self.emit("done", data)
@@ -119,7 +119,7 @@ class ProgressCallback:
 
 async def sse_generator(
     callback: ProgressCallback, timeout: float = MAX_STREAM_DURATION
-) -> AsyncGenerator[Dict[str, str], None]:
+) -> AsyncGenerator[dict[str, str], None]:
     """
     Generate SSE events from a ProgressCallback.
 
@@ -185,7 +185,7 @@ async def sse_generator(
                     logger.info("Stream completed in %.1fs", elapsed)
                     break
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # No event available, continue to check heartbeat
                 continue
 

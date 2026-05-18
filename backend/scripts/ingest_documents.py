@@ -30,8 +30,8 @@ Uso:
     python scripts/ingest_documents.py --dir backend/data/knowledge_updates --type md
 """
 
-import asyncio
 import argparse
+import asyncio
 import hashlib
 import json
 import logging
@@ -41,7 +41,7 @@ import struct
 import sys
 import uuid
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # Setup paths
 backend_dir = Path(__file__).parent.parent
@@ -128,7 +128,7 @@ class AzureDocumentExtractor:
             )
         return self._client
 
-    def extract(self, file_path: str) -> Dict[str, Any]:
+    def extract(self, file_path: str) -> dict[str, Any]:
         """
         Extract content from a PDF file.
 
@@ -140,11 +140,12 @@ class AzureDocumentExtractor:
                 tables_count: int
                 file_hash: str     — SHA256 of the file
         """
+        import base64
+
         from azure.ai.documentintelligence.models import (
             AnalyzeDocumentRequest,
             DocumentContentFormat,
         )
-        import base64
 
         client = self._get_client()
 
@@ -198,7 +199,7 @@ class AzureDocumentExtractor:
             if hasattr(result, "tables") and result.tables:
                 for table in result.tables:
                     full_content += "\n\n"
-                    rows: Dict[int, Dict[int, str]] = {}
+                    rows: dict[int, dict[int, str]] = {}
                     for cell in table.cells:
                         rows.setdefault(cell.row_index, {})[cell.column_index] = cell.content
 
@@ -251,14 +252,14 @@ class OpenAIEmbeddingGenerator:
 
         self._client = OpenAI(api_key=self.api_key)
 
-    def generate(self, texts: List[str]) -> List[List[float]]:
+    def generate(self, texts: list[str]) -> list[list[float]]:
         """
         Generate embeddings for a list of texts.
 
         Returns:
             List of float vectors (each 3072 dimensions).
         """
-        all_embeddings: List[List[float]] = []
+        all_embeddings: list[list[float]] = []
 
         for i in range(0, len(texts), self.BATCH_SIZE):
             batch = texts[i : i + self.BATCH_SIZE]
@@ -279,12 +280,12 @@ class OpenAIEmbeddingGenerator:
         return all_embeddings
 
     @staticmethod
-    def to_blob(embedding: List[float]) -> bytes:
+    def to_blob(embedding: list[float]) -> bytes:
         """Convert embedding vector to bytes for BLOB storage in Turso."""
         return struct.pack(f"{len(embedding)}f", *embedding)
 
     @staticmethod
-    def to_json(embedding: List[float]) -> str:
+    def to_json(embedding: list[float]) -> str:
         """Convert embedding vector to JSON string."""
         return json.dumps(embedding)
 
@@ -374,7 +375,7 @@ def detect_tax_type(filename: str) -> str:
     return "GENERAL"
 
 
-def extract_year(filename: str) -> Optional[int]:
+def extract_year(filename: str) -> int | None:
     """Extract year from filename."""
     match = re.search(r"20\d{2}", filename)
     return int(match.group()) if match else None
@@ -386,10 +387,10 @@ def extract_year(filename: str) -> Optional[int]:
 
 
 async def ingest(
-    directories: List[Path],
-    file_types: List[str],
+    directories: list[Path],
+    file_types: list[str],
     dry_run: bool = False,
-    target_file: Optional[str] = None,
+    target_file: str | None = None,
     reembed: bool = False,
     force: bool = False,
 ):
@@ -515,22 +516,22 @@ async def ingest(
             # Check deduplication (hash OR filename) — skip if --force
             if not dry_run and not force:
                 if file_hash in existing_hashes:
-                    print(f"         ⏭️  Ya indexado (mismo contenido), saltando...\n")
+                    print("         ⏭️  Ya indexado (mismo contenido), saltando...\n")
                     stats["skipped"] += 1
                     continue
                 if filepath.name in existing_filenames:
-                    print(f"         ⏭️  Ya indexado (mismo nombre), saltando...\n")
+                    print("         ⏭️  Ya indexado (mismo nombre), saltando...\n")
                     stats["skipped"] += 1
                     continue
 
             # ── Extract content ──
             if suffix == ".pdf":
                 if extractor is None:
-                    print(f"         ⚠️  Saltando PDF (Azure DI no configurado)\n")
+                    print("         ⚠️  Saltando PDF (Azure DI no configurado)\n")
                     stats["skipped"] += 1
                     continue
 
-                print(f"         📖 Extrayendo con Azure DI...")
+                print("         📖 Extrayendo con Azure DI...")
                 extracted = extractor.extract(str(filepath))
                 content = extracted["content"]
                 pages = extracted["pages"]
@@ -551,12 +552,12 @@ async def ingest(
                 continue
 
             if not content or len(content.strip()) < 50:
-                print(f"         ⚠️  Sin contenido útil\n")
+                print("         ⚠️  Sin contenido útil\n")
                 stats["skipped"] += 1
                 continue
 
             # ── Chunk ──
-            print(f"         ✂️  Chunking...")
+            print("         ✂️  Chunking...")
             chunks = chunker.chunk_document(pages)
             print(f"         ✓ {len(chunks)} chunks")
 
@@ -643,8 +644,8 @@ async def ingest(
             try:
                 embeddings = embedder.generate(chunk_texts)
 
-                print(f"         💾 Guardando embeddings...")
-                for chunk_id, embedding in zip(chunk_ids, embeddings):
+                print("         💾 Guardando embeddings...")
+                for chunk_id, embedding in zip(chunk_ids, embeddings, strict=False):
                     emb_id = str(uuid.uuid4())
                     embedding_blob = OpenAIEmbeddingGenerator.to_blob(embedding)
 
@@ -678,7 +679,7 @@ async def ingest(
 
             stats["processed"] += 1
             stats["chunks"] += len(chunks)
-            print(f"         ✅ Completado\n")
+            print("         ✅ Completado\n")
 
         except Exception as e:
             logger.error(f"         ❌ Error: {e}")
@@ -773,7 +774,7 @@ async def _reembed_existing(dry_run: bool = False):
         print(f"   [{i + 1}-{i + len(batch)}/{len(chunks)}] Generando embeddings...")
         embeddings = embedder.generate(texts)
 
-        for chunk_row, embedding in zip(batch, embeddings):
+        for chunk_row, embedding in zip(batch, embeddings, strict=False):
             embedding_blob = OpenAIEmbeddingGenerator.to_blob(embedding)
 
             if chunk_row.get("emb_id"):
@@ -810,10 +811,10 @@ async def _reembed_existing(dry_run: bool = False):
 
 
 def _discover_files(
-    directories: List[Path],
-    file_types: List[str],
-    target_file: Optional[str] = None,
-) -> List[Path]:
+    directories: list[Path],
+    file_types: list[str],
+    target_file: str | None = None,
+) -> list[Path]:
     """Discover files to process."""
     if target_file:
         target = Path(target_file)

@@ -2,10 +2,12 @@
 Tests for SemanticWindow — intelligent message selection for LLM context.
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from app.services.semantic_window import SemanticWindow, cosine_similarity
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from app.services.semantic_window import SemanticWindow, cosine_similarity
 
 
 def _make_message(idx: int, content: str) -> dict:

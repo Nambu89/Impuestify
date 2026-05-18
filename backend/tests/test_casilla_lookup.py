@@ -9,11 +9,12 @@ Covers:
 """
 
 import asyncio
-import sys
 import os
-import pytest
+import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Make sure 'app' is importable
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -23,21 +24,20 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # Import parse helpers directly (no DB needed)
 # ---------------------------------------------------------------------------
 
-from scripts.seed_casillas import (
-    parse_xsd_file,
-    parse_dlg_file,
-    merge_entries,
-    _parse_casilla_num,
-    _path_to_section,
-)
 from app.tools.casilla_lookup_tool import (
+    CASILLA_LOOKUP_TOOL,
+    _format_results,
     _is_numeric_query,
     _normalize_casilla_num,
-    _format_results,
     lookup_casilla_tool,
-    CASILLA_LOOKUP_TOOL,
 )
-
+from scripts.seed_casillas import (
+    _parse_casilla_num,
+    _path_to_section,
+    merge_entries,
+    parse_dlg_file,
+    parse_xsd_file,
+)
 
 # ===========================================================================
 # Parser unit tests (no I/O required — uses in-memory data)

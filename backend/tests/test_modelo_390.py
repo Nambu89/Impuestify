@@ -17,8 +17,8 @@ Cubre:
 import pytest
 
 from app.utils.calculators.modelo_390 import (
-    Modelo390Calculator,
     UMBRAL_SII_EUR,
+    Modelo390Calculator,
 )
 
 

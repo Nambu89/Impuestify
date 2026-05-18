@@ -4,12 +4,14 @@ Tests for TaxIA Authentication
 Tests JWT token generation, password hashing, and auth endpoints.
 """
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import patch, AsyncMock
-from app.auth.jwt_handler import create_access_token, create_refresh_token, verify_token, TokenData
-from app.auth.password import hash_password, verify_password, needs_rehash
-from app.routers.auth import verify_turnstile, TURNSTILE_TEST_TOKEN
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from app.auth.jwt_handler import TokenData, create_access_token, create_refresh_token, verify_token
+from app.auth.password import hash_password, needs_rehash, verify_password
+from app.routers.auth import TURNSTILE_TEST_TOKEN, verify_turnstile
 
 
 class TestPasswordHashing:

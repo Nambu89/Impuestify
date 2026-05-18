@@ -37,7 +37,7 @@ async def check_null_ids():
 
     # Show NULL documents
     if null_count > 0:
-        print(f"\n📋 Documentos con ID NULL:")
+        print("\n📋 Documentos con ID NULL:")
         result = await db.execute(
             "SELECT filename, title, document_type FROM documents WHERE id IS NULL LIMIT 10"
         )

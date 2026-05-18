@@ -10,13 +10,12 @@ Features:
 - Intelligent vector search with Upstash Vector
 """
 
-import os
-import logging
 import hashlib
-from typing import Optional, Dict, Any, List
+import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime
-import time
+from typing import Any
 
 from app.config import settings
 
@@ -37,9 +36,9 @@ class CacheResult:
     """Result of cache lookup."""
 
     hit: bool
-    response: Optional[str] = None
+    response: str | None = None
     similarity: float = 0.0
-    query_id: Optional[str] = None
+    query_id: str | None = None
     latency_ms: float = 0.0
 
 
@@ -71,8 +70,8 @@ class SemanticCache:
 
     def __init__(
         self,
-        url: Optional[str] = None,
-        token: Optional[str] = None,
+        url: str | None = None,
+        token: str | None = None,
         enabled: bool = True,
         threshold: float = None,
     ):
@@ -85,7 +84,6 @@ class SemanticCache:
             enabled: Whether caching is enabled
             threshold: Similarity threshold (0.0-1.0)
         """
-        from app.config import settings
 
         # Try settings first, then fall back to os.environ directly
         self.url = (
@@ -118,7 +116,7 @@ class SemanticCache:
             and bool(self.token)
         )
 
-        self._index: Optional[Index] = None
+        self._index: Index | None = None
         self._openai_client = None
 
         if self.enabled:
@@ -140,7 +138,7 @@ class SemanticCache:
             elif not settings.ENABLE_SEMANTIC_CACHE:
                 logger.info("⚠️ Semantic Cache disabled (ENABLE_SEMANTIC_CACHE=False)")
 
-    def _get_embedding(self, text: str) -> Optional[List[float]]:
+    def _get_embedding(self, text: str) -> list[float] | None:
         """Generate embedding using OpenAI text-embedding-3-large (1536 dims)."""
         if not self._openai_client:
             return None
@@ -164,7 +162,7 @@ class SemanticCache:
         """Generate unique ID for a query."""
         return hashlib.md5(query.lower().strip().encode()).hexdigest()
 
-    async def get_similar(self, query: str, embedding: Optional[list] = None) -> CacheResult:
+    async def get_similar(self, query: str, embedding: list | None = None) -> CacheResult:
         """
         Find cached response for similar query.
 
@@ -266,7 +264,7 @@ class SemanticCache:
         except Exception as e:
             logger.warning(f"⚠️ Failed to cache response: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         if not self.enabled:
             return {"enabled": False}
@@ -284,7 +282,7 @@ class SemanticCache:
 
 
 # Global instance
-_semantic_cache: Optional[SemanticCache] = None
+_semantic_cache: SemanticCache | None = None
 
 
 def get_semantic_cache() -> SemanticCache:

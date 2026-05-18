@@ -11,8 +11,9 @@ import asyncio
 import json
 import os
 import sys
+from typing import Any, Dict, List
+
 import pytest
-from typing import List, Dict, Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -32,8 +33,8 @@ except (ImportError, ValueError):
     SentenceTransformer = None  # type: ignore
     _SENTENCE_TRANSFORMERS_AVAILABLE = False
 
-from app.database.turso_client import TursoClient
 from app.agents.tax_agent import get_tax_agent
+from app.database.turso_client import TursoClient
 
 
 class RAGSearch:
@@ -52,7 +53,7 @@ class RAGSearch:
         self.client = TursoClient()
         await self.client.connect()
 
-    async def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    async def search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
         """
         Busca chunks similares a la consulta.
 

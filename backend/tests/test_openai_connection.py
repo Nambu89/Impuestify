@@ -5,6 +5,7 @@ Run this to test if your OpenAI API key works correctly.
 """
 
 import os
+
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -56,7 +57,7 @@ def test_openai_connection():
         return True
 
     except Exception as e:
-        print(f"❌ CONNECTION FAILED!\n")
+        print("❌ CONNECTION FAILED!\n")
         print(f"Error: {str(e)}\n")
 
         # Provide helpful error messages

@@ -5,9 +5,10 @@ Requires a running backend server at localhost:8000.
 Skipped automatically when server is unavailable.
 """
 
-import requests
 import json
+
 import pytest
+import requests
 
 API_URL = "http://localhost:8000"
 
@@ -49,7 +50,7 @@ def test_streaming_endpoint():
             return False
 
         token = login_response.json().get("tokens", {}).get("access_token")
-        print(f"✅ Login successful")
+        print("✅ Login successful")
     else:
         print(f"❌ Registration failed: {register_response.status_code}")
         print(f"Response: {register_response.text}")

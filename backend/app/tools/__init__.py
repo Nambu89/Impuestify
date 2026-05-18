@@ -4,40 +4,40 @@ Tools module for Impuestify agents.
 Centralizes all available tools for function calling.
 """
 
+from app.tools.autonomous_quota_tool import AUTONOMOUS_QUOTA_TOOL, calculate_autonomous_quota_tool
+from app.tools.casilla_lookup_tool import CASILLA_LOOKUP_TOOL, lookup_casilla_tool
+from app.tools.crypto_csv_tool import CRYPTO_CSV_TOOL, parse_crypto_csv_tool
+from app.tools.crypto_gains_tool import CRYPTO_GAINS_TOOL, calculate_crypto_gains_tool
+from app.tools.deduction_discovery_tool import DISCOVER_DEDUCTIONS_TOOL, discover_deductions_tool
+from app.tools.fiscal_profile_tool import UPDATE_FISCAL_PROFILE_TOOL, update_fiscal_profile_tool
+from app.tools.iae_lookup_tool import IAE_LOOKUP_TOOL, lookup_iae
 from app.tools.irpf_calculator_tool import IRPF_CALCULATOR_TOOL, calculate_irpf_tool
 from app.tools.irpf_simulator_tool import IRPF_SIMULATOR_TOOL, simulate_irpf_tool
-from app.tools.autonomous_quota_tool import AUTONOMOUS_QUOTA_TOOL, calculate_autonomous_quota_tool
-from app.tools.search_tool import SEARCH_TAX_REGULATIONS_TOOL, search_tax_regulations_tool
-from app.tools.payslip_analysis_tool import PAYSLIP_ANALYSIS_TOOL, analyze_payslip_tool
-from app.tools.modelo_303_tool import MODELO_303_TOOL, calculate_modelo_303_tool
-from app.tools.modelo_130_tool import MODELO_130_TOOL, calculate_modelo_130_tool
+from app.tools.is_simulator_tool import IS_SIMULATOR_TOOL, simulate_is_tool
+from app.tools.isd_calculator_tool import ISD_CALCULATOR_TOOL, calculate_isd
+from app.tools.joint_comparison_tool import JOINT_COMPARISON_TOOL, compare_joint_individual_executor
 from app.tools.modelo_130_foral_tool import (
     MODELO_130_FORAL_TOOL,
     calculate_modelo_130_foral_tool,
 )
+from app.tools.modelo_130_tool import MODELO_130_TOOL, calculate_modelo_130_tool
 from app.tools.modelo_131_tool import MODELO_131_TOOL, calculate_modelo_131_tool
-from app.tools.modelo_390_tool import MODELO_390_TOOL, calculate_modelo_390_tool
+from app.tools.modelo_303_tool import MODELO_303_TOOL, calculate_modelo_303_tool
+from app.tools.modelo_308_tool import MODELO_308_TOOL, calculate_modelo_308_tool
+from app.tools.modelo_309_tool import MODELO_309_TOOL, calculate_modelo_309_tool
 from app.tools.modelo_349_tool import MODELO_349_TOOL, calculate_modelo_349_tool
-from app.tools.deduction_discovery_tool import DISCOVER_DEDUCTIONS_TOOL, discover_deductions_tool
-from app.tools.isd_calculator_tool import ISD_CALCULATOR_TOOL, calculate_isd
-from app.tools.modelo_ipsi_tool import MODELO_IPSI_TOOL, calculate_modelo_ipsi_tool
-from app.tools.casilla_lookup_tool import CASILLA_LOOKUP_TOOL, lookup_casilla_tool
-from app.tools.fiscal_profile_tool import UPDATE_FISCAL_PROFILE_TOOL, update_fiscal_profile_tool
-from app.tools.crypto_gains_tool import CRYPTO_GAINS_TOOL, calculate_crypto_gains_tool
-from app.tools.crypto_csv_tool import CRYPTO_CSV_TOOL, parse_crypto_csv_tool
-from app.tools.iae_lookup_tool import IAE_LOOKUP_TOOL, lookup_iae
-from app.tools.joint_comparison_tool import JOINT_COMPARISON_TOOL, compare_joint_individual_executor
+from app.tools.modelo_390_tool import MODELO_390_TOOL, calculate_modelo_390_tool
+from app.tools.modelo_450_tool import MODELO_450_TOOL, calculate_modelo_450_tool
+from app.tools.modelo_455_tool import MODELO_455_TOOL, calculate_modelo_455_tool
 from app.tools.modelo_720_tool import MODELO_720_TOOL, check_modelo_720_tool
 from app.tools.modelo_721_tool import MODELO_721_TOOL, check_modelo_721_tool
+from app.tools.modelo_ipsi_tool import MODELO_IPSI_TOOL, calculate_modelo_ipsi_tool
+from app.tools.payslip_analysis_tool import PAYSLIP_ANALYSIS_TOOL, analyze_payslip_tool
 from app.tools.plusvalia_municipal_tool import (
     PLUSVALIA_MUNICIPAL_TOOL,
     calculate_plusvalia_municipal_tool,
 )
-from app.tools.modelo_308_tool import MODELO_308_TOOL, calculate_modelo_308_tool
-from app.tools.modelo_309_tool import MODELO_309_TOOL, calculate_modelo_309_tool
-from app.tools.is_simulator_tool import IS_SIMULATOR_TOOL, simulate_is_tool
-from app.tools.modelo_450_tool import MODELO_450_TOOL, calculate_modelo_450_tool
-from app.tools.modelo_455_tool import MODELO_455_TOOL, calculate_modelo_455_tool
+from app.tools.search_tool import SEARCH_TAX_REGULATIONS_TOOL, search_tax_regulations_tool
 
 # Registry of all available tools
 # NOTE: search_tax_regulations is NOT included by default (RAG-first strategy)

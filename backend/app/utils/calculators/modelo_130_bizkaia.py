@@ -34,7 +34,7 @@ con el cálculo legal: el wrapper de PDF (`modelo_pdf_generator.py`) puede
 mapearlas a la maquetación oficial mientras los importes coincidan.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class Modelo130BizkaiaCalculator:
@@ -51,7 +51,7 @@ class Modelo130BizkaiaCalculator:
         4: "1 al 30 de enero del año siguiente",
     }
 
-    def __init__(self, repo: Optional[Any] = None) -> None:
+    def __init__(self, repo: Any | None = None) -> None:
         # repo no es necesario — los tipos están fijados por norma foral.
         # Se mantiene para coherencia con la firma del resto de calculators.
         self._repo = repo
@@ -72,7 +72,7 @@ class Modelo130BizkaiaCalculator:
         retenciones_acumuladas: float = 0.0,
         pagos_anteriores: float = 0.0,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula el resultado del Modelo 130 Bizkaia para el trimestre indicado.
 
@@ -176,7 +176,7 @@ class Modelo130BizkaiaCalculator:
         gastos_acumulados: float,
         retenciones_acumuladas: float,
         pagos_anteriores: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Reglas análogas al Estatal para los primeros 2 años de actividad.
 

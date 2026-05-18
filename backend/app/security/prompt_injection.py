@@ -5,9 +5,8 @@ Detects and blocks direct and indirect prompt injection attacks.
 Based on OWASP LLM Top 10 recommendations.
 """
 
-import re
 import logging
-from typing import Tuple, List
+import re
 from dataclasses import dataclass
 
 from app.config import settings  # ← FIX: Import settings at module level
@@ -21,7 +20,7 @@ class InjectionCheckResult:
 
     is_safe: bool
     risk_score: float  # 0.0 to 1.0
-    matched_patterns: List[str]
+    matched_patterns: list[str]
     sanitized_input: str
 
 
@@ -189,7 +188,6 @@ class PromptInjectionFilter:
         Initialize the filter with Groq client and pre-compile regex patterns.
         """
         from groq import Groq
-        from app.config import settings
 
         self.sensitivity = sensitivity
         self.client = None
@@ -216,7 +214,7 @@ class PromptInjectionFilter:
                 "GROQ_API_KEY not found. Prompt Injection Filter will rely on regex only."
             )
 
-    def _scan_patterns(self, text: str) -> List[str]:
+    def _scan_patterns(self, text: str) -> list[str]:
         """
         Scan text against the compiled regex patterns.
 
@@ -321,7 +319,7 @@ class PromptInjectionFilter:
 
         return sanitized.strip()
 
-    def validate(self, text: str) -> Tuple[bool, str]:
+    def validate(self, text: str) -> tuple[bool, str]:
         """
         Simple validation interface.
 

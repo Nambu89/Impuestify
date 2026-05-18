@@ -10,7 +10,7 @@ Zero latency (no API calls), pure pattern matching.
 """
 
 import re
-from typing import List, Dict, Literal
+from typing import Literal
 
 FollowUpType = Literal["clarification", "modification", "new_topic"]
 
@@ -77,7 +77,7 @@ _MODIFICATION_PATTERNS = re.compile(
 
 def classify_followup(
     query: str,
-    conversation_history: List[Dict[str, str]],
+    conversation_history: list[dict[str, str]],
 ) -> FollowUpType:
     """
     Classify a user query as clarification, modification, or new_topic.

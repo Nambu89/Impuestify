@@ -23,9 +23,8 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from dataclasses import dataclass
+from datetime import UTC, date, datetime, timedelta
 from xml.etree import ElementTree as ET
 
 import httpx
@@ -52,12 +51,12 @@ class NormaBoeMetadata:
 
     boe_id: str  # `<identificador>`
     titulo: str  # `<titulo>`
-    fecha_disposicion: Optional[date]  # `<fecha_disposicion>` YYYYMMDD
-    fecha_vigencia: Optional[date]  # `<fecha_vigencia>` YYYYMMDD
+    fecha_disposicion: date | None  # `<fecha_disposicion>` YYYYMMDD
+    fecha_vigencia: date | None  # `<fecha_vigencia>` YYYYMMDD
     estatus_derogacion: bool  # `<estatus_derogacion>` (S/N) → bool
     vigencia_agotada: bool  # `<vigencia_agotada>` (S/N) → bool
-    url_html_consolidada: Optional[str]  # `<url_html_consolidada>`
-    url_eli: Optional[str]  # `<url_eli>` (European Legislation Id.)
+    url_html_consolidada: str | None  # `<url_html_consolidada>`
+    url_eli: str | None  # `<url_eli>` (European Legislation Id.)
 
     @property
     def is_vigent(self) -> bool:
@@ -69,7 +68,7 @@ class NormaBoeMetadata:
 # ── XML parsing ──────────────────────────────────────────────────────────
 
 
-def _parse_date(text: Optional[str]) -> Optional[date]:
+def _parse_date(text: str | None) -> date | None:
     """BOE dates come as `YYYYMMDD` (no separators). Returns None on bad input."""
     if not text:
         return None
@@ -79,12 +78,12 @@ def _parse_date(text: Optional[str]) -> Optional[date]:
         return None
 
 
-def _parse_bool_sn(text: Optional[str]) -> bool:
+def _parse_bool_sn(text: str | None) -> bool:
     """BOE booleans are encoded as `S` (sí) / `N` (no)."""
     return (text or "").strip().upper() == "S"
 
 
-def parse_norma_xml(xml_text: str) -> Optional[NormaBoeMetadata]:
+def parse_norma_xml(xml_text: str) -> NormaBoeMetadata | None:
     """Parse a `<response><data><metadatos>` payload into NormaBoeMetadata.
 
     Returns None if the response status is not 200 or the structure is
@@ -178,16 +177,16 @@ class BoeApiClient:
         db=None,
         timeout_s: float = DEFAULT_TIMEOUT_S,
         cache_ttl_days: int = DEFAULT_CACHE_TTL_DAYS,
-        http_client: Optional[httpx.AsyncClient] = None,
+        http_client: httpx.AsyncClient | None = None,
     ):
         self._db = db
         self._timeout = httpx.Timeout(timeout_s)
         self._cache_ttl = timedelta(days=cache_ttl_days)
         # Optional injection for tests (mock httpx).
-        self._http: Optional[httpx.AsyncClient] = http_client
+        self._http: httpx.AsyncClient | None = http_client
         self._owns_http = http_client is None
 
-    async def __aenter__(self) -> "BoeApiClient":
+    async def __aenter__(self) -> BoeApiClient:
         if self._http is None:
             self._http = httpx.AsyncClient(timeout=self._timeout, headers=HEADERS)
         return self
@@ -199,7 +198,7 @@ class BoeApiClient:
 
     # ── Public API ──
 
-    async def fetch_norma(self, boe_id: str) -> Optional[NormaBoeMetadata]:
+    async def fetch_norma(self, boe_id: str) -> NormaBoeMetadata | None:
         """Get metadata for a BOE norm. Uses cache first; on miss/expiry
         consults the API; on any error returns None (graceful degradation)."""
         if not boe_id:
@@ -214,7 +213,7 @@ class BoeApiClient:
             await self._write_cache(meta)
         return meta
 
-    async def is_vigent(self, boe_id: str) -> Optional[bool]:
+    async def is_vigent(self, boe_id: str) -> bool | None:
         """True / False / None (unknown). Callers should treat None as
         "assume vigente" to avoid false-positive derogation warnings."""
         meta = await self.fetch_norma(boe_id)
@@ -222,7 +221,7 @@ class BoeApiClient:
             return None
         return meta.is_vigent
 
-    async def get_url_html(self, boe_id: str) -> Optional[str]:
+    async def get_url_html(self, boe_id: str) -> str | None:
         """URL HTML consolidada. Falls back to the well-known pattern if the
         API is unreachable (we know the BOE URL scheme is stable since 2010)."""
         meta = await self.fetch_norma(boe_id)
@@ -235,14 +234,14 @@ class BoeApiClient:
 
     # ── Internals ──
 
-    async def _fetch_from_api(self, boe_id: str) -> Optional[NormaBoeMetadata]:
+    async def _fetch_from_api(self, boe_id: str) -> NormaBoeMetadata | None:
         if self._http is None:
             # Caller used the client without async-context. Open a one-shot.
             async with httpx.AsyncClient(timeout=self._timeout, headers=HEADERS) as http:
                 return await self._do_fetch(http, boe_id)
         return await self._do_fetch(self._http, boe_id)
 
-    async def _do_fetch(self, http: httpx.AsyncClient, boe_id: str) -> Optional[NormaBoeMetadata]:
+    async def _do_fetch(self, http: httpx.AsyncClient, boe_id: str) -> NormaBoeMetadata | None:
         url = f"{BOE_API_BASE}/legislacion-consolidada/id/{boe_id}"
         try:
             resp = await http.get(url)
@@ -254,7 +253,7 @@ class BoeApiClient:
             return None
         return parse_norma_xml(resp.text)
 
-    async def _read_cache(self, boe_id: str) -> Optional[NormaBoeMetadata]:
+    async def _read_cache(self, boe_id: str) -> NormaBoeMetadata | None:
         if self._db is None:
             return None
         try:
@@ -266,7 +265,7 @@ class BoeApiClient:
                 return None
             row = result.rows[0]
             expires_at = datetime.fromisoformat(row["expires_at"])
-            if expires_at < datetime.now(timezone.utc):
+            if expires_at < datetime.now(UTC):
                 return None  # expired
             return _metadata_from_json(row["metadata_json"])
         except Exception as exc:
@@ -276,7 +275,7 @@ class BoeApiClient:
     async def _write_cache(self, meta: NormaBoeMetadata) -> None:
         if self._db is None:
             return
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires_at = now + self._cache_ttl
         try:
             # UPSERT — race-condition safe under multi-worker. Even with

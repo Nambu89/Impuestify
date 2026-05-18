@@ -128,7 +128,7 @@ async def insert_tax_categories(client: TursoClient):
                 """,
                 [cat_id, code, name, description, parent_id],
             )
-        except Exception as e:
+        except Exception:
             # Ignorar si ya existe
             pass
 

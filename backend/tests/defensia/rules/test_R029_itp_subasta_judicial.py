@@ -21,7 +21,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import REGISTRY, reset_registry
 
-
 _R029_MODULE_NAME = "app.services.defensia_rules.reglas_otros_tributos.R029_itp_subasta_judicial"
 
 

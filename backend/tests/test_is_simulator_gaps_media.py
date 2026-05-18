@@ -16,18 +16,17 @@ Auditoria: docs/audits/modelo_200_validation_2026-05.md
 
 import pytest
 
-from app.utils.is_simulator import ISSimulator, ISInput
 from app.utils.is_scales import (
-    calcular_deduccion_cine,
-    zec_techo_base,
+    COOPERATIVA_TIPO_PROTEGIDA,
+    RESERVA_NIVELACION_MAX_EUR,
+    RESERVA_NIVELACION_PCT,
     aplica_reserva_nivelacion,
     aplica_tributacion_minima,
+    calcular_deduccion_cine,
     tributacion_minima_pct,
-    RESERVA_NIVELACION_PCT,
-    RESERVA_NIVELACION_MAX_EUR,
-    COOPERATIVA_TIPO_PROTEGIDA,
+    zec_techo_base,
 )
-
+from app.utils.is_simulator import ISInput, ISSimulator
 
 # =============================================================================
 # M1 — Reserva de nivelacion (Art. 105 LIS)

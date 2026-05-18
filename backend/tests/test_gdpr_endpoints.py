@@ -7,9 +7,10 @@ Tests the implementation of GDPR Articles 15, 16, and 17:
 - Art. 17: Right to Erasure (Account Deletion)
 """
 
-import pytest
-from datetime import datetime
 import json
+from datetime import datetime
+
+import pytest
 
 
 class TestGDPRDataExport:

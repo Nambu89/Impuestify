@@ -1,15 +1,13 @@
+import asyncio
+import hashlib
+import logging
 import os
 import time
-import hashlib
-import asyncio
-from typing import List, Dict, Any, Optional, Union
 from pathlib import Path
-import logging
-
-import requests
-from openai import OpenAI
+from typing import Any
 
 from config import settings
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +33,7 @@ class ModelDownloader:
             logger.error(f"Error descargando modelo {model_name}: {e}")
             return False
 
-    async def verify_all_models(self) -> Dict[str, bool]:
+    async def verify_all_models(self) -> dict[str, bool]:
         """Verifica que todos los modelos necesarios estén disponibles"""
         models_status = {}
 
@@ -72,7 +70,7 @@ class SystemValidator:
             return False
 
     @staticmethod
-    def validate_directories() -> Dict[str, bool]:
+    def validate_directories() -> dict[str, bool]:
         """Valida que todos los directorios necesarios existan"""
         dirs_status = {}
 
@@ -93,7 +91,7 @@ class SystemValidator:
         return dirs_status
 
     @staticmethod
-    def validate_pdf_files() -> Dict[str, Any]:
+    def validate_pdf_files() -> dict[str, Any]:
         """Valida archivos PDF disponibles"""
         pdf_dir = Path(settings.pdf_dir)
 
@@ -141,7 +139,7 @@ class SystemValidator:
         }
 
     @staticmethod
-    async def run_full_validation() -> Dict[str, Any]:
+    async def run_full_validation() -> dict[str, Any]:
         """Ejecuta validación completa del sistema"""
         logger.info("Iniciando validación completa del sistema...")
 
@@ -177,7 +175,7 @@ class DataProcessor:
     """Utilidades para procesamiento de datos"""
 
     @staticmethod
-    def calculate_chunk_stats(text_chunks: List[str]) -> Dict[str, Any]:
+    def calculate_chunk_stats(text_chunks: list[str]) -> dict[str, Any]:
         """Calcula estadísticas de chunks de texto"""
         if not text_chunks:
             return {"error": "No hay chunks para analizar"}
@@ -198,7 +196,7 @@ class DataProcessor:
         }
 
     @staticmethod
-    def extract_model_references(text: str) -> List[str]:
+    def extract_model_references(text: str) -> list[str]:
         """Extrae referencias a modelos fiscales del texto"""
         import re
 
@@ -217,7 +215,7 @@ class DataProcessor:
         return sorted(list(models_found))
 
     @staticmethod
-    def detect_fiscal_topics(text: str) -> List[str]:
+    def detect_fiscal_topics(text: str) -> list[str]:
         """Detecta temas fiscales en el texto"""
         import re
 
@@ -280,7 +278,7 @@ class PerformanceMonitor:
             return 0.0
         return self.metrics["errors"] / self.metrics["requests"]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Obtiene todas las estadísticas"""
         return {
             **self.metrics,
@@ -304,7 +302,7 @@ class ConfigValidator:
     """Validador de configuración"""
 
     @staticmethod
-    def validate_config() -> Dict[str, Any]:
+    def validate_config() -> dict[str, Any]:
         """Valida la configuración actual"""
         issues = []
         warnings = []
@@ -396,7 +394,7 @@ def sanitize_filename(filename: str) -> str:
 async def test_model_loading():
     """Función de prueba para verificar carga de modelos"""
     try:
-        from sentence_transformers import SentenceTransformer, CrossEncoder
+        from sentence_transformers import CrossEncoder, SentenceTransformer
 
         print("🧪 Probando carga de modelos...")
 

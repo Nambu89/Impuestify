@@ -4,11 +4,10 @@ import pytest
 
 from app.security.citation_verifier import (
     Citation,
+    _normalize,
     extract_citations,
     verify_citations,
-    _normalize,
 )
-
 
 # ── Extraction ───────────────────────────────────────────────────────────────
 

@@ -39,7 +39,7 @@ Caso ground truth: memory/project_session32_defensia_part1.md (David Oliva)
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Optional
+from typing import Any
 
 from app.models.defensia import (
     ArgumentoCandidato,
@@ -51,7 +51,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # Umbral en dias del plazo de residencia continuada exigido por el parrafo 1.
 # 3 anos * 365 dias = 1095. Por encima de este umbral el beneficio aplica sin
@@ -91,7 +90,7 @@ _CAUSAS_EXCEPCIONALES: frozenset[str] = frozenset(
 )
 
 
-def _parsear_fecha(valor: Any) -> Optional[date]:
+def _parsear_fecha(valor: Any) -> date | None:
     """Convierte un valor heterogeneo (str ISO, datetime, date) a `date`.
 
     Retorna ``None`` si el valor es ``None``, vacio o no parseable. Nunca
@@ -114,7 +113,7 @@ def _parsear_fecha(valor: Any) -> Optional[date]:
 
 def _buscar_denegacion_en_alcance(
     expediente: ExpedienteEstructurado,
-) -> Optional[DocumentoEstructurado]:
+) -> DocumentoEstructurado | None:
     """Localiza el primer acto AEAT que deniegue la exencion por plazo.
 
     Devuelve el documento si concurren (a) tipo de acto AEAT liquidatorio,
@@ -135,7 +134,7 @@ def _buscar_denegacion_en_alcance(
 
 def _buscar_sentencia_familiar(
     expediente: ExpedienteEstructurado,
-) -> Optional[DocumentoEstructurado]:
+) -> DocumentoEstructurado | None:
     """Localiza una sentencia judicial que modifique medidas familiares.
 
     Importante: aunque el phase detector trata `SENTENCIA_JUDICIAL` como
@@ -157,7 +156,7 @@ def _buscar_sentencia_familiar(
 
 def _buscar_escritura_vivienda_habitual(
     expediente: ExpedienteEstructurado,
-) -> Optional[DocumentoEstructurado]:
+) -> DocumentoEstructurado | None:
     """Localiza la escritura de la vivienda habitual transmitida."""
     for doc in expediente.documentos:
         if doc.tipo_documento != TipoDocumento.ESCRITURA:
@@ -168,7 +167,7 @@ def _buscar_escritura_vivienda_habitual(
     return None
 
 
-def _dias_residencia(escritura: DocumentoEstructurado) -> Optional[int]:
+def _dias_residencia(escritura: DocumentoEstructurado) -> int | None:
     """Calcula la residencia efectiva en dias desde la escritura.
 
     Retorna el numero de dias entre `fecha_adquisicion` y `fecha_transmision`.
@@ -207,7 +206,7 @@ def _dias_residencia(escritura: DocumentoEstructurado) -> Optional[int]:
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R011 sobre el expediente.
 
     Flujo:

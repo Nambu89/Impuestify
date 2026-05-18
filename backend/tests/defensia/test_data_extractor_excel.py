@@ -1,7 +1,9 @@
 """Tests para el extractor de libro registro Excel (sin LLM)."""
 
 from io import BytesIO
+
 from openpyxl import Workbook
+
 from app.services.defensia_data_extractor import extract_libro_registro_xlsx
 
 

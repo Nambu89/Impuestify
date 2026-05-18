@@ -9,11 +9,11 @@ Tests for:
 - Workspace API endpoints
 """
 
-import os
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 import json
+import os
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 
 # ============================================
 # INVOICE EXTRACTOR TESTS
@@ -263,8 +263,8 @@ class TestWorkspaceEmbeddingService:
     @pytest.mark.asyncio
     async def test_generate_embedding_with_valid_key(self):
         """Test embedding generation works with valid API key (if configured)."""
-        from app.services.workspace_embedding_service import get_workspace_embedding_service
         from app.config import settings
+        from app.services.workspace_embedding_service import get_workspace_embedding_service
 
         service = get_workspace_embedding_service()
 
@@ -363,8 +363,9 @@ class TestWorkspaceAgent:
 
     def test_agent_has_run_method(self):
         """Test that agent has async run method."""
-        from app.agents.workspace_agent import get_workspace_agent
         import asyncio
+
+        from app.agents.workspace_agent import get_workspace_agent
 
         agent = get_workspace_agent()
         assert hasattr(agent, "run")

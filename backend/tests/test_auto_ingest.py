@@ -191,10 +191,9 @@ class TestAutoIngestNoPending:
 
     def test_no_pending_file(self, tmp_docs):
         """No _pending_ingest.json at all."""
-        from scripts.auto_ingest import load_pending, PENDING_INGEST
-
         # Temporarily override module-level constant
         import scripts.auto_ingest as mod
+        from scripts.auto_ingest import PENDING_INGEST, load_pending
 
         original = mod.PENDING_INGEST
         mod.PENDING_INGEST = tmp_docs / "_pending_ingest.json"
@@ -262,7 +261,7 @@ class TestAutoIngestProcessFile:
             # Check ingested log was written
             log_file = tmp_docs / "_ingested_log.json"
             assert log_file.exists()
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 log_entries = json.load(f)
             assert len(log_entries) >= 1
             assert log_entries[0]["status"] == "ingested"
@@ -271,7 +270,7 @@ class TestAutoIngestProcessFile:
             # Check pending was cleared (or file removed)
             pending_file = tmp_docs / "_pending_ingest.json"
             if pending_file.exists():
-                with open(pending_file, "r") as f:
+                with open(pending_file) as f:
                     data = json.load(f)
                 assert data.get("count", 0) == 0 or len(data.get("files", [])) == 0
         finally:
@@ -305,7 +304,7 @@ class TestAutoIngestDuplicateHash:
             # Check it was logged as skipped
             log_file = tmp_docs / "_ingested_log.json"
             assert log_file.exists()
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 log_entries = json.load(f)
             assert len(log_entries) >= 1
             assert log_entries[0]["status"] == "skipped_duplicate"
@@ -378,14 +377,14 @@ class TestAutoIngestDryRun:
 
         try:
             # Capture pending content before
-            with open(pending_json, "r") as f:
+            with open(pending_json) as f:
                 before = f.read()
 
             exit_code = asyncio.run(mod.auto_ingest(dry_run=True))
             assert exit_code == 0
 
             # Pending file should be unchanged
-            with open(pending_json, "r") as f:
+            with open(pending_json) as f:
                 after = f.read()
             assert before == after
 
@@ -452,7 +451,7 @@ class TestAutoIngestLimit:
             # Check that only 1 was ingested
             log_file = tmp_docs / "_ingested_log.json"
             assert log_file.exists()
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 log_entries = json.load(f)
             ingested = [e for e in log_entries if e["status"] == "ingested"]
             assert len(ingested) == 1
@@ -460,7 +459,7 @@ class TestAutoIngestLimit:
 
             # Check remaining pending has 1 entry
             if pending_file.exists():
-                with open(pending_file, "r") as f:
+                with open(pending_file) as f:
                     remaining = json.load(f)
                 assert len(remaining.get("files", [])) == 1
                 assert remaining["files"][0]["path"] == "Estatal/doc2.pdf"
@@ -561,7 +560,7 @@ class TestSavePending:
             remaining = [{"path": "test.pdf", "status": "new", "url": "", "size": 0}]
             mod.save_pending(remaining)
             assert pending_file.exists()
-            with open(pending_file, "r") as f:
+            with open(pending_file) as f:
                 data = json.load(f)
             assert data["count"] == 1
             assert len(data["files"]) == 1
@@ -583,7 +582,7 @@ class TestAppendIngestedLog:
         try:
             mod.append_ingested_log({"path": "test.pdf", "status": "ingested"})
             assert log_file.exists()
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 entries = json.load(f)
             assert len(entries) == 1
         finally:
@@ -600,7 +599,7 @@ class TestAppendIngestedLog:
         try:
             mod.append_ingested_log({"path": "a.pdf", "status": "ingested"})
             mod.append_ingested_log({"path": "b.pdf", "status": "ingested"})
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 entries = json.load(f)
             assert len(entries) == 2
         finally:

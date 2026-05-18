@@ -8,6 +8,7 @@ Covers:
 """
 
 import pytest
+
 from app.utils.calculators.loss_compensation import LossCompensationCalculator
 
 

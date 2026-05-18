@@ -5,8 +5,8 @@ Provides function calling capability for the LLM to run a complete
 Impuesto sobre Sociedades simulation (Modelo 200).
 """
 
-from typing import Any, Dict
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -150,11 +150,11 @@ async def simulate_is_tool(
     pagos_fraccionados_realizados: float = 0.0,
     ingresos_explotacion: float | None = None,
     gastos_explotacion: float | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Execute IS simulation and return formatted result for LLM."""
     try:
-        from app.utils.is_simulator import ISSimulator, ISInput
         from app.utils.ccaa_constants import normalize_ccaa
+        from app.utils.is_simulator import ISInput, ISSimulator
 
         ccaa = normalize_ccaa(territorio)
 

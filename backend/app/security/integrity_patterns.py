@@ -3,9 +3,8 @@ Document Integrity Patterns — Corpus bilingue ES/EN
 Patrones para detectar prompt injection, memory poisoning y data exfiltration en documentos.
 """
 
-from dataclasses import dataclass
-from typing import List
 import re
+from dataclasses import dataclass
 
 
 @dataclass
@@ -18,7 +17,7 @@ class IntegrityPattern:
 
 
 # Fiscal allowlist — contextos que son normales en docs AEAT y NO deben generar findings
-FISCAL_ALLOWLIST_PATTERNS: List[re.Pattern] = [
+FISCAL_ALLOWLIST_PATTERNS: list[re.Pattern] = [
     # "IMPORTANTE: El plazo..." "OBLIGATORIO: presentar..." etc.
     re.compile(
         r"\b(IMPORTANTE|OBLIGATORIO|CR[IÍ]TICO)\s*:\s*"
@@ -30,7 +29,7 @@ FISCAL_ALLOWLIST_PATTERNS: List[re.Pattern] = [
 ]
 
 
-INTEGRITY_PATTERNS: List[IntegrityPattern] = [
+INTEGRITY_PATTERNS: list[IntegrityPattern] = [
     # === CRITICAL: Prompt Override ===
     IntegrityPattern(
         "PI-001",

@@ -7,10 +7,11 @@ period_end one month from today and tags `stripe_customer_id` with a
 sentinel so the sync skips him.
 """
 
-import sys
 import asyncio
-from datetime import datetime, timedelta, timezone
+import sys
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent
@@ -24,7 +25,7 @@ GABRIEL_USER_ID = "969e2925-26fd-4465-9036-2b02d1f90212"
 
 
 async def main():
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     period_end = (now + timedelta(days=30)).isoformat()
     period_start = now.isoformat()
 

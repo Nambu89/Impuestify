@@ -2,11 +2,12 @@
 Tests for ContabilidadService — double-entry journal entries and accounting books.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from dataclasses import asdict
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.contabilidad_service import ContabilidadService, AsientoLine
+import pytest
+
+from app.services.contabilidad_service import AsientoLine, ContabilidadService
 
 
 # ---------------------------------------------------------------------------

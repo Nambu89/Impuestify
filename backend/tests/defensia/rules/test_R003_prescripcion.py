@@ -11,7 +11,7 @@ Absorbe el sub-caso "calculo de plazos" (R008 del plan v1 descartada).
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -22,7 +22,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules.reglas_procedimentales import R003_prescripcion
-
 
 # ---------------------------------------------------------------------------
 # Positivos
@@ -38,7 +37,7 @@ def test_r003_positivo_mas_de_4_anos_desde_plazo_voluntario(build_exp, build_doc
     doc_aeat = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={"ejercicio": 2020},
-        fecha_acto=datetime(2025, 8, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 8, 1, tzinfo=UTC),
         doc_id="liq-2020",
     )
     exp = build_exp(
@@ -67,7 +66,7 @@ def test_r003_positivo_limite_exacto_mas_un_dia(build_exp, build_doc, build_brie
     doc_aeat = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={"ejercicio": 2020},
-        fecha_acto=datetime(2025, 7, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 7, 1, tzinfo=UTC),
         doc_id="liq-2020-lim",
     )
     exp = build_exp(
@@ -96,7 +95,7 @@ def test_r003_negativo_limite_exacto_no_dispara(build_exp, build_doc, build_brie
     doc_aeat = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={"ejercicio": 2020},
-        fecha_acto=datetime(2025, 6, 30, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 30, tzinfo=UTC),
         doc_id="liq-2020-justo",
     )
     exp = build_exp(
@@ -116,7 +115,7 @@ def test_r003_negativo_dentro_de_plazo(build_exp, build_doc, build_brief):
     doc_aeat = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={"ejercicio": 2023},
-        fecha_acto=datetime(2026, 2, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 2, 1, tzinfo=UTC),
         doc_id="liq-2023",
     )
     exp = build_exp(
@@ -141,13 +140,13 @@ def test_r003_negativo_interrupcion_previa(build_exp, build_doc, build_brief):
     doc_requerimiento = build_doc(
         TipoDocumento.REQUERIMIENTO,
         datos={"ejercicio": 2020},
-        fecha_acto=datetime(2024, 5, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2024, 5, 1, tzinfo=UTC),
         doc_id="req-2024",
     )
     doc_liquidacion = build_doc(
         TipoDocumento.LIQUIDACION_PROVISIONAL,
         datos={"ejercicio": 2020},
-        fecha_acto=datetime(2026, 1, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 15, tzinfo=UTC),
         doc_id="liq-2026",
     )
     exp = build_exp(

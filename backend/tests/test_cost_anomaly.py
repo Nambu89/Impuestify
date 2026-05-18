@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.services.cost_anomaly_detector import (
-    CostAnomalyDetector,
     DEFAULT_MULTIPLIER,
     LOWER_FLOOR_USD,
+    CostAnomalyDetector,
 )
 
 

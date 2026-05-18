@@ -43,10 +43,9 @@ Calcula:
   Resultado del regimen general, ajustes y resultado final de liquidacion.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
-
 
 # ---------------------------------------------------------------------------
 # Constantes — tipos vigentes 2025+ (TR Decreto Legislativo 1/2025)
@@ -66,7 +65,7 @@ TIPO_ESPECIAL = 0.20
 # ---------------------------------------------------------------------------
 # 2024 mantiene escala antigua (Ley 4/2012 art. 27 — derogada 2025-10-21).
 # 2025+ aplica el TR Decreto Legislativo 1/2025.
-IGIC_RATES_BY_YEAR: Dict[int, Dict[str, float]] = {
+IGIC_RATES_BY_YEAR: dict[int, dict[str, float]] = {
     2024: {
         "cero": 0.00,
         "energeticos": 0.01,  # ya existia parcialmente
@@ -102,7 +101,7 @@ IGIC_RATES_BY_YEAR: Dict[int, Dict[str, float]] = {
 
 
 # Tipos derogados — accesibles solo para auditoria de ejercicios <2025.
-DEROGATED_RATES_2024: Dict[str, float] = {
+DEROGATED_RATES_2024: dict[str, float] = {
     "incrementado_2_old": 0.135,
     "especial_tabaco_rubio_old": 0.35,
 }
@@ -110,7 +109,7 @@ DEROGATED_RATES_2024: Dict[str, float] = {
 
 # Plazos Modelo 420 (Art. 71 RIGC + Orden anual ATC):
 # T1: 1-20 abril; T2: 1-20 julio; T3: 1-20 octubre; T4: 1-30 enero ano siguiente.
-PLAZOS_MODELO_420: Dict[int, Dict[str, Any]] = {
+PLAZOS_MODELO_420: dict[int, dict[str, Any]] = {
     1: {"trimestre": "T1", "mes_fin": 4, "dia_fin": 20, "anio_siguiente": False},
     2: {"trimestre": "T2", "mes_fin": 7, "dia_fin": 20, "anio_siguiente": False},
     3: {"trimestre": "T3", "mes_fin": 10, "dia_fin": 20, "anio_siguiente": False},
@@ -207,7 +206,7 @@ class Modelo420Calculator:
         year: int | None = None,
         tabaco_rubio_legacy: bool = False,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calcula la autoliquidacion trimestral IGIC (Modelo 420)."""
         # -------------------------------------------------------------------
         # 0. Aliases legacy → nombres canonicos (no rompe callers antiguos)
@@ -294,7 +293,7 @@ class Modelo420Calculator:
             2,
         )
 
-        desglose_devengado: Dict[str, Any] = {
+        desglose_devengado: dict[str, Any] = {
             "tipo_cero": {
                 "base": round(base_cero, 2),
                 "tipo": TIPO_CERO,
@@ -366,7 +365,7 @@ class Modelo420Calculator:
             2,
         )
 
-        desglose_deducible: Dict[str, Any] = {
+        desglose_deducible: dict[str, Any] = {
             "cuota_corrientes_interiores": round(cuota_corrientes_interiores, 2),
             "cuota_inversion_interiores": round(cuota_inversion_interiores, 2),
             "cuota_importaciones_corrientes": round(cuota_importaciones_corrientes, 2),
@@ -404,7 +403,7 @@ class Modelo420Calculator:
         # 5. RATES expuestos en output
         # -------------------------------------------------------------------
         # En 2025+ NO exponer claves del esquema derogado (tipo_especial_2 etc).
-        igic_rates: Dict[str, float] = {
+        igic_rates: dict[str, float] = {
             "tipo_cero": TIPO_CERO,
             "tipo_energeticos": TIPO_ENERGETICOS,
             "tipo_superreducido": TIPO_SUPERREDUCIDO,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -26,7 +26,7 @@ except ImportError:
 class EmisorReceptor(BaseModel):
     nif_cif: str
     nombre: str
-    direccion: Optional[str] = None
+    direccion: str | None = None
 
 
 class LineaFactura(BaseModel):
@@ -41,15 +41,15 @@ class FacturaExtraida(BaseModel):
     receptor: EmisorReceptor
     numero_factura: str
     fecha_factura: str
-    fecha_operacion: Optional[str] = None
+    fecha_operacion: str | None = None
     lineas: list[LineaFactura]
     base_imponible_total: float
     tipo_iva_pct: float
     cuota_iva: float
-    tipo_re_pct: Optional[float] = None
-    cuota_re: Optional[float] = None
-    retencion_irpf_pct: Optional[float] = None
-    retencion_irpf: Optional[float] = None
+    tipo_re_pct: float | None = None
+    cuota_re: float | None = None
+    retencion_irpf_pct: float | None = None
+    retencion_irpf: float | None = None
     total: float
     tipo: Literal["emitida", "recibida"]
 

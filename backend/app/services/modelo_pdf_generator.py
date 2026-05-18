@@ -10,13 +10,12 @@ Placeholder stubs (under development): 100, 309, 420, 450, 455.
 
 import io
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
 # Modelo display names
-MODELO_NAMES: Dict[str, str] = {
+MODELO_NAMES: dict[str, str] = {
     "303": "Autoliquidación IVA",
     "130": "IRPF Pago Fraccionado — Estimación Directa",
     "200": "Impuesto sobre Sociedades",
@@ -36,7 +35,7 @@ MODELO_NAMES: Dict[str, str] = {
 }
 
 # Foral variant names
-FORAL_NAMES: Dict[str, str] = {
+FORAL_NAMES: dict[str, str] = {
     "300": "Modelo 300 — Autoliquidación IVA (Gipuzkoa)",
     "F69": "Modelo F69 — Autoliquidación IVA (Navarra)",
     "420": "Modelo 420 — Autoliquidación IGIC (Canarias)",
@@ -103,12 +102,10 @@ class ModeloPDFGenerator:
                 f"Valores válidos: {', '.join(sorted(VALID_MODELOS))}"
             )
 
+        from reportlab.lib.enums import TA_CENTER, TA_RIGHT  # noqa: F401
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.units import mm
-        from reportlab.lib.colors import HexColor
         from reportlab.platypus import SimpleDocTemplate, Spacer
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.enums import TA_CENTER, TA_RIGHT  # noqa: F401
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -183,8 +180,8 @@ class ModeloPDFGenerator:
     def _setup_styles(self):
         """Initialize ReportLab styles (mirrors report_generator.py)."""
         from reportlab.lib.colors import HexColor
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+        from reportlab.lib.enums import TA_CENTER
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 
         self._primary = HexColor("#1a56db")
         self._dark = HexColor("#1f2937")
@@ -269,7 +266,7 @@ class ModeloPDFGenerator:
     ):
         """Render the document header with modelo name and period."""
         from reportlab.lib.units import mm
-        from reportlab.platypus import Paragraph, Spacer, HRFlowable
+        from reportlab.platypus import HRFlowable, Paragraph, Spacer
 
         # Check for foral variant
         variante_foral = (user_info or {}).get("variante_foral") or (
@@ -296,9 +293,10 @@ class ModeloPDFGenerator:
 
     def _render_contribuyente(self, story: list, user_info: dict):
         """Render contributor data section."""
-        from reportlab.lib.units import mm
-        from reportlab.platypus import Paragraph, Table, TableStyle, Spacer
         from xml.sax.saxutils import escape
+
+        from reportlab.lib.units import mm
+        from reportlab.platypus import Paragraph, Spacer, Table
 
         if not user_info:
             return
@@ -324,8 +322,8 @@ class ModeloPDFGenerator:
     def _render_casillas_table(
         self,
         story: list,
-        casillas: List[Tuple[str, str, float]],
-        title: Optional[str] = None,
+        casillas: list[tuple[str, str, float]],
+        title: str | None = None,
     ):
         """
         Render a reusable table of casillas.
@@ -367,8 +365,8 @@ class ModeloPDFGenerator:
 
     def _render_resultado(self, story: list, label: str, amount: float):
         """Render a highlighted result box. Green if refund, red if pay."""
-        from reportlab.lib.units import mm
         from reportlab.lib.colors import HexColor
+        from reportlab.lib.units import mm
         from reportlab.platypus import (
             Paragraph,
             Spacer,
@@ -402,7 +400,7 @@ class ModeloPDFGenerator:
     def _render_disclaimer(self, story: list):
         """Render legal disclaimer at the bottom."""
         from reportlab.lib.units import mm
-        from reportlab.platypus import Paragraph, Spacer, HRFlowable
+        from reportlab.platypus import HRFlowable, Paragraph, Spacer
 
         story.append(HRFlowable(width="100%", thickness=0.5, color=self._gray))
         story.append(Spacer(1, 3 * mm))
@@ -418,7 +416,7 @@ class ModeloPDFGenerator:
             )
         )
         story.append(Spacer(1, 3 * mm))
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         story.append(
             Paragraph(
                 f"Generado el {now.strftime('%d/%m/%Y a las %H:%M')} UTC por Impuestify (impuestify.com)",
@@ -428,7 +426,6 @@ class ModeloPDFGenerator:
 
     def _header_table_style(self):
         """Standard header table style matching report_generator.py."""
-        from reportlab.lib.units import mm
         from reportlab.platypus import TableStyle
 
         return TableStyle(
@@ -449,7 +446,7 @@ class ModeloPDFGenerator:
         self,
         story: list,
         title: str,
-        rows_data: List[Tuple[str, str]],
+        rows_data: list[tuple[str, str]],
     ):
         """Render a simple two-column table (label, value) with a heading."""
         from reportlab.lib.units import mm
@@ -491,7 +488,7 @@ class ModeloPDFGenerator:
         casillas = data.get("casillas", {})
 
         # IVA Devengado
-        devengado_rows: List[Tuple[str, str, float]] = []
+        devengado_rows: list[tuple[str, str, float]] = []
         # Try structured data first, then flat casillas
         base_21 = iva_dev.get("cuota_21") or casillas.get("03", 0)
         base_10 = iva_dev.get("cuota_10") or casillas.get("06", 0)
@@ -512,7 +509,7 @@ class ModeloPDFGenerator:
         self._render_casillas_table(story, devengado_rows, "IVA Devengado (repercutido)")
 
         # IVA Deducible
-        deducible_rows: List[Tuple[str, str, float]] = []
+        deducible_rows: list[tuple[str, str, float]] = []
         bienes_corr = iva_ded.get("bienes_corrientes") or casillas.get("29", 0)
         bienes_inv = iva_ded.get("bienes_inversion") or casillas.get("31", 0)
         importaciones = iva_ded.get("importaciones") or casillas.get("33", 0)
@@ -539,7 +536,7 @@ class ModeloPDFGenerator:
         compensacion = resultado_data.get("compensacion_anterior") or casillas.get("71", 0)
         regimen_gen = resultado_data.get("regimen_general") or casillas.get("46", 0)
 
-        resultado_rows: List[Tuple[str, str, float]] = [
+        resultado_rows: list[tuple[str, str, float]] = [
             ("46", "Resultado régimen general", regimen_gen),
         ]
         if compensacion:
@@ -569,7 +566,7 @@ class ModeloPDFGenerator:
         seccion_i = data.get("seccion_i", {})
 
         # Section I
-        s1_rows: List[Tuple[str, str, float]] = [
+        s1_rows: list[tuple[str, str, float]] = [
             ("01", "Ingresos computables", seccion_i.get("ingresos_computables", 0)),
             ("02", "Gastos deducibles", seccion_i.get("gastos_deducibles", 0)),
             ("03", "Rendimiento neto", seccion_i.get("rendimiento_neto", 0)),
@@ -605,7 +602,7 @@ class ModeloPDFGenerator:
     # Modelo 130 — Variantes Forales (Bizkaia / Gipuzkoa / Araba / Navarra)
     # ------------------------------------------------------------------ #
 
-    _FORAL_130_LABELS: Dict[str, str] = {
+    _FORAL_130_LABELS: dict[str, str] = {
         "130-bizkaia": "Modelo 130 Bizkaia",
         "130-gipuzkoa": "Modelo 130 Gipuzkoa",
         "130-araba": "Modelo 130 Araba/Álava",
@@ -614,7 +611,7 @@ class ModeloPDFGenerator:
 
     # Etiquetas humanas para las casillas devueltas por cada calculator foral.
     # Si una clave no aparece aquí, se muestra tal cual (con underscores).
-    _FORAL_130_CASILLA_LABELS: Dict[str, str] = {
+    _FORAL_130_CASILLA_LABELS: dict[str, str] = {
         # Bizkaia general / excepcional
         "01_base_calculo": "Base de cálculo",
         "02_tipo_aplicable_pct": "Tipo aplicable (%)",
@@ -691,7 +688,7 @@ class ModeloPDFGenerator:
             story.append(Paragraph(disclaimer, self._body_style))
             return
 
-        regimen_modalidad: List[str] = []
+        regimen_modalidad: list[str] = []
         if data.get("regimen"):
             regimen_modalidad.append(f"Régimen: <b>{data['regimen']}</b>")
         if data.get("modalidad"):
@@ -706,7 +703,7 @@ class ModeloPDFGenerator:
 
         # ---- Tabla de casillas ----
         casillas = data.get("casillas", {})
-        rows: List[Tuple[str, str, float]] = []
+        rows: list[tuple[str, str, float]] = []
         for key, value in casillas.items():
             # key formato "NN_descripcion" → numero + label legible
             num, _, _ = key.partition("_")
@@ -758,7 +755,7 @@ class ModeloPDFGenerator:
 
         # Sección I/II/III — cuotas
         if apartado == "I":
-            cuota_rows: List[Tuple[str, str, float]] = [
+            cuota_rows: list[tuple[str, str, float]] = [
                 (
                     "01",
                     "Rendimiento neto previo módulos (anual)",
@@ -822,7 +819,7 @@ class ModeloPDFGenerator:
             )
 
         # Minoraciones (retenciones, pagos previos, complementaria)
-        minoracion_rows: List[Tuple[str, str]] = []
+        minoracion_rows: list[tuple[str, str]] = []
         if casillas.get("09_retenciones_trimestre", 0) > 0:
             minoracion_rows.append(
                 (
@@ -875,7 +872,7 @@ class ModeloPDFGenerator:
         desglose_intra = intra.get("desglose", {})
 
         if intra.get("base_total", 0) > 0:
-            intra_rows: List[Tuple[str, str, float]] = []
+            intra_rows: list[tuple[str, str, float]] = []
             for rate_key, label in [("21", "21%"), ("10", "10%"), ("4", "4%")]:
                 base = desglose_intra.get(f"base_{rate_key}", 0)
                 iva = desglose_intra.get(f"iva_{rate_key}", 0)
@@ -893,7 +890,7 @@ class ModeloPDFGenerator:
         isp = data.get("inversion_sujeto_pasivo", {})
         if isp.get("base_total", 0) > 0:
             isp_desglose = isp.get("desglose", {})
-            isp_rows: List[Tuple[str, str, float]] = []
+            isp_rows: list[tuple[str, str, float]] = []
             for rate_key, label in [("21", "21%"), ("10", "10%"), ("4", "4%")]:
                 base = isp_desglose.get(f"base_{rate_key}", 0)
                 if base > 0:
@@ -907,7 +904,7 @@ class ModeloPDFGenerator:
         # Exportaciones y transportes
         exports = data.get("exportaciones", {})
         if exports.get("base_exportaciones", 0) > 0 or exports.get("base_transporte", 0) > 0:
-            exp_rows: List[Tuple[str, str, float]] = []
+            exp_rows: list[tuple[str, str, float]] = []
             if exports.get("base_exportaciones", 0) > 0:
                 exp_rows.append(("", "Base exportaciones", exports["base_exportaciones"]))
                 exp_rows.append(("", "RE soportado exportaciones", exports.get("re_soportado", 0)))
@@ -935,7 +932,7 @@ class ModeloPDFGenerator:
         ejercicio = data.get("ejercicio", "")
 
         if detalles:
-            rows_data: List[Tuple[str, str]] = []
+            rows_data: list[tuple[str, str]] = []
             for det in detalles:
                 cat_desc = det.get("descripcion", det.get("categoria", ""))
                 valor = det.get("valor_actual", 0)
@@ -973,14 +970,14 @@ class ModeloPDFGenerator:
 
     def _render_721(self, story: list, data: dict):
         """Render Modelo 721 layout: Crypto foreign assets."""
-        from reportlab.platypus import Paragraph, Spacer
         from reportlab.lib.units import mm
+        from reportlab.platypus import Paragraph, Spacer
 
         ejercicio = data.get("ejercicio", "")
         valor = data.get("valor_crypto_extranjero", 0)
         obligado = data.get("obligado_721", False)
 
-        summary_rows: List[Tuple[str, str]] = [
+        summary_rows: list[tuple[str, str]] = [
             ("Valor criptomonedas en el extranjero", _format_eur(valor)),
         ]
 
@@ -1027,7 +1024,7 @@ class ModeloPDFGenerator:
         desglose = data.get("desglose_devengado", {})
 
         # IPSI Devengado
-        devengado_rows: List[Tuple[str, str, float]] = []
+        devengado_rows: list[tuple[str, str, float]] = []
         rate_map = [
             ("tipo_minimo_0_5", "Tipo 0,5%"),
             ("tipo_inferior_1", "Tipo 1%"),
@@ -1051,7 +1048,7 @@ class ModeloPDFGenerator:
 
         # IPSI Deducible
         deducible = data.get("desglose_deducible", {})
-        ded_rows: List[Tuple[str, str, float]] = []
+        ded_rows: list[tuple[str, str, float]] = []
         for key, label in [
             ("cuota_corrientes_interiores", "Bienes y servicios corrientes"),
             ("cuota_inversion_interiores", "Bienes de inversión"),
@@ -1077,7 +1074,7 @@ class ModeloPDFGenerator:
         """Render Modelo 200 layout: IS liquidación completa."""
 
         # Base imponible section
-        bi_rows: List[Tuple[str, str, float]] = [
+        bi_rows: list[tuple[str, str, float]] = [
             ("552", "Base imponible", data.get("base_imponible", 0)),
         ]
 
@@ -1088,7 +1085,7 @@ class ModeloPDFGenerator:
         reserva_cap = data.get("reserva_capitalizacion", 0)
         compensacion_bins = data.get("compensacion_bins", 0)
 
-        detail_rows: List[Tuple[str, str, float]] = []
+        detail_rows: list[tuple[str, str, float]] = []
         if resultado_contable:
             detail_rows.append(("500", "Resultado contable", resultado_contable))
         if ajustes_positivos:
@@ -1112,7 +1109,7 @@ class ModeloPDFGenerator:
         retenciones = data.get("retenciones", 0)
         resultado_liquidacion = data.get("resultado_liquidacion", 0)
 
-        cuota_rows: List[Tuple[str, str, float]] = [
+        cuota_rows: list[tuple[str, str, float]] = [
             ("552", "Base imponible", data.get("base_imponible", 0)),
             ("558", f"Tipo gravamen ({tipo_gravamen})", cuota_integra),
             ("560", "Cuota íntegra", cuota_integra),
@@ -1147,8 +1144,8 @@ class ModeloPDFGenerator:
         tipo_efectivo = data.get("tipo_efectivo", 0)
         regimen = data.get("regimen", "")
         if tipo_efectivo or regimen:
-            from reportlab.platypus import Paragraph, Spacer
             from reportlab.lib.units import mm
+            from reportlab.platypus import Paragraph, Spacer
 
             info_parts = []
             if regimen:
@@ -1170,9 +1167,10 @@ class ModeloPDFGenerator:
         Acepta la salida de `calculate_modelo_390_tool` o de
         `Modelo390Calculator.calculate()`.
         """
+        from xml.sax.saxutils import escape
+
         from reportlab.lib.units import mm
         from reportlab.platypus import Paragraph, Spacer
-        from xml.sax.saxutils import escape
 
         territory_info = data.get("territory_info") or {}
         modelo = data.get("modelo")
@@ -1181,7 +1179,7 @@ class ModeloPDFGenerator:
         hacienda = data.get("hacienda") or territory_info.get("hacienda", "AEAT")
 
         # Cabecera con plazo y hacienda
-        cab_rows: List[Tuple[str, str]] = [
+        cab_rows: list[tuple[str, str]] = [
             ("Modelo aplicable", escape(str(modelo)) if modelo else "No aplica (IPSI)"),
             ("Plazo de presentacion", escape(str(plazo))),
             ("Hacienda", escape(str(hacienda))),
@@ -1230,7 +1228,7 @@ class ModeloPDFGenerator:
             return
 
         # IVA Devengado anual
-        devengado_rows: List[Tuple[str, str, float]] = []
+        devengado_rows: list[tuple[str, str, float]] = []
         if resumen.get("cuota_devengada_4"):
             devengado_rows.append(("", "Cuota IVA 4% anual", resumen["cuota_devengada_4"]))
         if resumen.get("cuota_devengada_10"):
@@ -1249,7 +1247,7 @@ class ModeloPDFGenerator:
         self._render_casillas_table(story, devengado_rows, "IVA Devengado anual (sumatorio 303)")
 
         # IVA Deducible anual
-        deducible_rows: List[Tuple[str, str, float]] = []
+        deducible_rows: list[tuple[str, str, float]] = []
         if resumen.get("cuota_deducible_corrientes"):
             deducible_rows.append(
                 ("", "Bienes y servicios corrientes", resumen["cuota_deducible_corrientes"])
@@ -1287,7 +1285,7 @@ class ModeloPDFGenerator:
         motivo = data.get("periodicidad_motivo", "")
         ccaa = data.get("ccaa") or "Territorio comun"
 
-        meta_rows: List[Tuple[str, str]] = [
+        meta_rows: list[tuple[str, str]] = [
             ("Periodicidad", str(periodicidad).capitalize()),
             ("Periodo declarado", str(periodo)),
             ("Plazo de presentacion", str(plazo)),
@@ -1300,7 +1298,7 @@ class ModeloPDFGenerator:
         # Totales agregados
         totales = data.get("totales", {})
         if totales:
-            tot_rows: List[Tuple[str, str, float]] = [
+            tot_rows: list[tuple[str, str, float]] = [
                 (
                     "E+T+M+H",
                     "Entregas intracomunitarias de bienes",
@@ -1359,7 +1357,7 @@ class ModeloPDFGenerator:
                 "C": "Sustitucion consignacion",
                 "N": "Rectificacion",
             }
-            detalle_rows: List[Tuple[str, str]] = []
+            detalle_rows: list[tuple[str, str]] = []
             for clave, info in por_clave.items():
                 if info.get("n_operaciones", 0) <= 0:
                     continue
@@ -1429,9 +1427,10 @@ class ModeloPDFGenerator:
         Includes header (already rendered upstream), basic user data,
         period info, and a clear "in development" notice with AEAT pointer.
         """
+        from xml.sax.saxutils import escape
+
         from reportlab.lib.units import mm
         from reportlab.platypus import Paragraph, Spacer
-        from xml.sax.saxutils import escape
 
         modelo_label = MODELO_NAMES.get(modelo_type, f"Modelo {modelo_type}")
 
@@ -1450,7 +1449,7 @@ class ModeloPDFGenerator:
         nif = escape((user_info or {}).get("nif", "") or "—")
         nombre = escape((user_info or {}).get("nombre", "") or "—")
 
-        rows_data: List[Tuple[str, str]] = [
+        rows_data: list[tuple[str, str]] = [
             ("Modelo", f"{escape(modelo_type.upper())} — {escape(modelo_label)}"),
             ("Nombre / Razón social", nombre),
             ("NIF / CIF", nif),

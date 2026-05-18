@@ -8,11 +8,11 @@ Tests cover:
 - Fiscal profile formatting for agent prompts
 """
 
-import sys
-import pytest
-from unittest.mock import MagicMock
 import json
+import sys
+from unittest.mock import MagicMock
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Patch heavy dependencies that may not be installed in the test environment
@@ -41,12 +41,13 @@ _ensure_mock("slowapi.errors")
 # Direct imports from the real modules
 # ---------------------------------------------------------------------------
 
+from datetime import UTC
+
 from app.routers.user_rights import (  # noqa: E402
-    FiscalProfileRequest,
     _DATOS_FISCALES_KEYS,
     _PROFILE_COLUMNS,
+    FiscalProfileRequest,
 )
-
 
 # ---------------------------------------------------------------------------
 # Tests: FiscalProfileRequest model
@@ -191,7 +192,7 @@ class TestFiscalProfileSaveLogic:
             tarifa_plana=True,
         )
         request_data = req.model_dump(exclude_none=True)
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         datos_fiscales = {}
         for key in _DATOS_FISCALES_KEYS:

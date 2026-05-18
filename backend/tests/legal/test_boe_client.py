@@ -6,7 +6,7 @@ requests. Real-API fixtures captured from `curl` 2026-05-17.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 import httpx
@@ -18,7 +18,6 @@ from app.services.legal.boe_client import (
     NormaBoeMetadata,
     parse_norma_xml,
 )
-
 
 # ── Fixtures de respuesta XML BOE real (capturadas con curl) ─────────────
 
@@ -243,7 +242,7 @@ async def test_cache_hit_does_not_call_api():
     """If a fresh entry exists in cache, no HTTP request is made."""
     db = _FakeDB()
     # Seed cache with a non-expired entry.
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     db._store["BOE-A-1992-28740"] = {
         "metadata_json": '{"boe_id":"BOE-A-1992-28740","titulo":"Cached","fecha_disposicion":null,'
         '"fecha_vigencia":null,"estatus_derogacion":false,"vigencia_agotada":false,'
@@ -267,7 +266,7 @@ async def test_cache_hit_does_not_call_api():
 @pytest.mark.asyncio
 async def test_cache_expired_triggers_api_call():
     db = _FakeDB()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     db._store["BOE-A-1992-28740"] = {
         "metadata_json": '{"boe_id":"BOE-A-1992-28740","titulo":"Stale","fecha_disposicion":null,'
         '"fecha_vigencia":null,"estatus_derogacion":false,"vigencia_agotada":false,'

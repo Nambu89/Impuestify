@@ -10,10 +10,11 @@ Official Sources (priority order):
 3. Seguridad Social - seg-social.es
 """
 
-import httpx
 import logging
 import os
-from typing import Dict, List, Optional, Any
+from typing import Any
+
+import httpx
 from bs4 import BeautifulSoup
 from openai import OpenAI
 
@@ -29,7 +30,7 @@ OFFICIAL_SOURCES = {
 }
 
 # CCAA normalization — delegates to canonical module
-from app.utils.ccaa_constants import normalize_ccaa, CCAA_ALIASES
+from app.utils.ccaa_constants import CCAA_ALIASES, normalize_ccaa
 
 # Legacy alias kept for backwards compatibility (tests import it)
 CCAA_NORMALIZATION = CCAA_ALIASES
@@ -40,7 +41,7 @@ def normalize_ccaa_name(name: str) -> str:
     return normalize_ccaa(name)
 
 
-def validate_official_source(url: str) -> Optional[str]:
+def validate_official_source(url: str) -> str | None:
     """
     Validate that URL is from an official source.
 
@@ -57,7 +58,7 @@ def validate_official_source(url: str) -> Optional[str]:
     return None
 
 
-def detect_ccaa_from_query(query: str) -> Optional[str]:
+def detect_ccaa_from_query(query: str) -> str | None:
     """
     Detect CCAA name from search query.
 
@@ -83,7 +84,7 @@ def detect_ccaa_from_query(query: str) -> Optional[str]:
     return None
 
 
-def format_tramos(tramos: List[Dict]) -> str:
+def format_tramos(tramos: list[dict]) -> str:
     """
     Format IRPF tramos for display.
 
@@ -106,7 +107,7 @@ def format_tramos(tramos: List[Dict]) -> str:
     return "\n".join(lines)
 
 
-async def extract_irpf_data_from_url(url: str, year: int, ccaa: str) -> Optional[Dict[str, Any]]:
+async def extract_irpf_data_from_url(url: str, year: int, ccaa: str) -> dict[str, Any] | None:
     """
     Extract IRPF tax scale data from a URL using scraping + LLM.
 

@@ -23,10 +23,9 @@ from app.models.defensia import (
 )
 from app.services.defensia_writer_service import (
     DISCLAIMER_CANONICO,
-    DefensiaWriterService,
     UMBRAL_TEAR_ABREVIADA_EUR,
+    DefensiaWriterService,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

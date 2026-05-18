@@ -7,7 +7,8 @@ FastAPI dependencies for subscription-based access control.
 import logging
 
 from fastapi import Depends, HTTPException, status
-from app.auth.jwt_handler import get_current_user, TokenData
+
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.services.subscription_service import (
     SubscriptionAccess,
     get_subscription_service,

@@ -1,9 +1,9 @@
 """Territory plugin registry -- maps CCAA names to their TerritoryPlugin."""
 
-from typing import Dict, List
+
 from app.territories.base import TerritoryPlugin
 
-_registry: Dict[str, TerritoryPlugin] = {}
+_registry: dict[str, TerritoryPlugin] = {}
 
 
 def register_territory(plugin: TerritoryPlugin) -> None:
@@ -25,6 +25,6 @@ def get_territory(ccaa: str) -> TerritoryPlugin:
     raise KeyError(f"No territory plugin registered for '{ccaa}'")
 
 
-def list_territories() -> List[str]:
+def list_territories() -> list[str]:
     """Return all registered territory names."""
     return list(_registry.keys())

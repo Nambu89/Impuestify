@@ -7,7 +7,7 @@ that expose `__await__`.
 
 import pytest
 
-from app.security.velocity_check import VelocityChecker, MAX_REPEATS, _hash, _normalize
+from app.security.velocity_check import MAX_REPEATS, VelocityChecker, _hash, _normalize
 
 
 class _MockRedis:

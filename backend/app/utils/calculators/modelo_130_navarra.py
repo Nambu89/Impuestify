@@ -44,7 +44,7 @@ Plazos (verificados en navarra.es, 2026-05):
   - Q4: 1 al 31 de enero del año siguiente
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class Modelo130NavarraCalculator:
@@ -69,7 +69,7 @@ class Modelo130NavarraCalculator:
         4: "1 al 31 de enero del año siguiente",
     }
 
-    def __init__(self, repo: Optional[Any] = None) -> None:
+    def __init__(self, repo: Any | None = None) -> None:
         self._repo = repo
 
     async def calculate(
@@ -86,7 +86,7 @@ class Modelo130NavarraCalculator:
         retenciones_acumuladas: float = 0.0,
         pagos_anteriores: float = 0.0,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula el resultado del Modelo 130 Navarra.
 
@@ -137,7 +137,7 @@ class Modelo130NavarraCalculator:
         quarter: int,
         rend_neto_penultimo: float,
         retenciones_penultimo: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         pct = self._lookup_pct(rend_neto_penultimo)
         cuota_anual = round(max(0.0, rend_neto_penultimo) * (pct / 100), 2)
         cuota_neta = round(cuota_anual - max(0.0, retenciones_penultimo), 2)
@@ -193,7 +193,7 @@ class Modelo130NavarraCalculator:
         gastos_acumulados: float,
         retenciones_acumuladas: float,
         pagos_anteriores: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         factor = self._ANNUALISE[quarter]
 
         casilla_01 = round(max(0.0, ingresos_acumulados), 2)

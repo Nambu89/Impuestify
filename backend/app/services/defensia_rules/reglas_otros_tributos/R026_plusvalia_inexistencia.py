@@ -22,7 +22,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 _CITA_SEMANTICA = (
     "Supuesto de no sujecion al Impuesto sobre el Incremento del Valor de los "
     "Terrenos de Naturaleza Urbana cuando se acredita la inexistencia de "

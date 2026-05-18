@@ -28,7 +28,7 @@ Plazos (verificados en gipuzkoa.eus, 2026-05):
   - Q4: 1 enero – 10 febrero del año siguiente
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class Modelo130GipuzkoaCalculator:
@@ -48,7 +48,7 @@ class Modelo130GipuzkoaCalculator:
         4: "1 de enero al 10 de febrero del año siguiente",
     }
 
-    def __init__(self, repo: Optional[Any] = None) -> None:
+    def __init__(self, repo: Any | None = None) -> None:
         self._repo = repo
 
     async def calculate(
@@ -63,7 +63,7 @@ class Modelo130GipuzkoaCalculator:
         volumen_operaciones_trimestre: float = 0.0,
         retenciones_trimestre: float = 0.0,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula el resultado del Modelo 130 Gipuzkoa.
 

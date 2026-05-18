@@ -19,9 +19,8 @@ Referencias:
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Optional
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -78,7 +77,7 @@ class DefensiaWriterService:
     los argumentos verificados por el motor de reglas + RAG verifier.
     """
 
-    def __init__(self, templates_dir: Optional[Path] = None):
+    def __init__(self, templates_dir: Path | None = None):
         if templates_dir is None:
             templates_dir = Path(__file__).parent.parent / "templates" / "defensia"
         if not templates_dir.exists():
@@ -145,10 +144,10 @@ class DefensiaWriterService:
         self,
         expediente: ExpedienteEstructurado,
         argumentos: list[ArgumentoVerificado],
-        brief: Optional[Brief] = None,
+        brief: Brief | None = None,
         *,
         cuota_estimada_eur: float = 0.0,
-        fecha_hoy: Optional[date] = None,
+        fecha_hoy: date | None = None,
         disclaimer: str = DISCLAIMER_CANONICO,
     ) -> str:
         """Renderiza el escrito principal del expediente en markdown.
@@ -171,9 +170,9 @@ class DefensiaWriterService:
         self,
         expediente: ExpedienteEstructurado,
         argumentos: list[ArgumentoVerificado],
-        brief: Optional[Brief] = None,
+        brief: Brief | None = None,
         *,
-        fecha_hoy: Optional[date] = None,
+        fecha_hoy: date | None = None,
         disclaimer: str = DISCLAIMER_CANONICO,
     ) -> str:
         """Renderiza el dictamen resumen (output interno para el usuario).
@@ -201,13 +200,13 @@ class DefensiaWriterService:
         plantilla_nombre: str,
         expediente: ExpedienteEstructurado,
         argumentos: list[ArgumentoVerificado],
-        brief: Optional[Brief],
-        fecha_hoy: Optional[date],
+        brief: Brief | None,
+        fecha_hoy: date | None,
         disclaimer: str,
     ) -> str:
         template = self._env.get_template(plantilla_nombre)
         if fecha_hoy is None:
-            fecha_hoy = datetime.now(timezone.utc).date()
+            fecha_hoy = datetime.now(UTC).date()
 
         rendered = template.render(
             expediente=expediente,

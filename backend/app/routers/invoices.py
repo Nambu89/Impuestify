@@ -10,23 +10,22 @@ Endpoints:
 """
 
 import json
-import uuid
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+import uuid
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, File, Form, UploadFile, HTTPException, Depends, Query, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from pydantic import BaseModel
 
-from app.auth.jwt_handler import get_current_user, TokenData
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.subscription_guard import require_active_subscription
-from app.services.subscription_service import SubscriptionAccess
 from app.config import settings
 from app.database.turso_client import get_db_client
 from app.security.rate_limiter import limiter
-from app.services.invoice_ocr_service import InvoiceOCRService
-from app.services.invoice_classifier_service import InvoiceClassifierService
 from app.services.contabilidad_service import ContabilidadService
+from app.services.invoice_classifier_service import InvoiceClassifierService
+from app.services.invoice_ocr_service import InvoiceOCRService
+from app.services.subscription_service import SubscriptionAccess
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +96,7 @@ def _validate_file(file_bytes: bytes, content_type: str | None) -> str:
 # ---------------------------------------------------------------------------
 
 
-async def _resolve_workspace_id(db, user_id: str, requested: Optional[str]) -> Optional[str]:
+async def _resolve_workspace_id(db, user_id: str, requested: str | None) -> str | None:
     """Validate workspace ownership or fallback to user's default workspace. Returns None if user has no workspaces."""
     if requested:
         result = await db.execute(
@@ -129,7 +128,7 @@ async def _process_single_invoice(
     mime_type: str,
     filename: str,
     user_id: str,
-    workspace_id: Optional[str],
+    workspace_id: str | None,
     db,
 ) -> dict:
     """Run OCR + classification + persistence for a single invoice."""
@@ -179,7 +178,7 @@ async def _process_single_invoice(
 
     invoice_id = str(uuid.uuid4())
     raw_extraction_json = json.dumps(factura.model_dump(), default=str)
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -222,7 +221,7 @@ async def _process_single_invoice(
         ],
     )
 
-    workspace_file_id: Optional[str] = None
+    workspace_file_id: str | None = None
     if workspace_id:
         workspace_file_id = str(uuid.uuid4())
         try:
@@ -290,7 +289,7 @@ async def _process_single_invoice(
 async def upload_invoice(
     request: Request,
     file: UploadFile = File(...),
-    workspace_id: Optional[str] = Form(None),
+    workspace_id: str | None = Form(None),
     current_user: TokenData = Depends(get_current_user),
     access: SubscriptionAccess = Depends(require_active_subscription),
 ):
@@ -330,7 +329,7 @@ MAX_BATCH_SIZE = 10
 async def upload_invoices_batch(
     request: Request,
     files: list[UploadFile] = File(...),
-    workspace_id: Optional[str] = Form(None),
+    workspace_id: str | None = Form(None),
     current_user: TokenData = Depends(get_current_user),
     access: SubscriptionAccess = Depends(require_active_subscription),
 ):
@@ -405,8 +404,8 @@ async def upload_invoices_batch(
 async def list_invoices(
     request: Request,
     year: int = Query(default=2026, ge=2000, le=2100),
-    trimestre: Optional[int] = Query(default=None, ge=1, le=4),
-    tipo: Optional[str] = Query(default=None, pattern="^(emitida|recibida)$"),
+    trimestre: int | None = Query(default=None, ge=1, le=4),
+    tipo: str | None = Query(default=None, pattern="^(emitida|recibida)$"),
     current_user: TokenData = Depends(get_current_user),
 ):
     """Lista las facturas del usuario filtradas por año, trimestre y/o tipo."""

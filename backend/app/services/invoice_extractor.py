@@ -3,11 +3,10 @@ Servicio para extraer datos de facturas españolas en PDF
 Usa el módulo centralizado pdf_extractor para extracción de texto
 """
 
-import re
 import hashlib
-from typing import Dict, Optional, List
-from dataclasses import dataclass
 import logging
+import re
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -17,44 +16,44 @@ class InvoiceData:
     """Datos estructurados de una factura española."""
 
     # Identificación
-    invoice_number: Optional[str] = None
-    invoice_date: Optional[str] = None
-    due_date: Optional[str] = None
+    invoice_number: str | None = None
+    invoice_date: str | None = None
+    due_date: str | None = None
 
     # Emisor
-    issuer_name: Optional[str] = None
-    issuer_nif: Optional[str] = None
-    issuer_address: Optional[str] = None
+    issuer_name: str | None = None
+    issuer_nif: str | None = None
+    issuer_address: str | None = None
 
     # Receptor
-    recipient_name: Optional[str] = None
-    recipient_nif: Optional[str] = None
-    recipient_address: Optional[str] = None
+    recipient_name: str | None = None
+    recipient_nif: str | None = None
+    recipient_address: str | None = None
 
     # Importes base
-    base_imponible_21: Optional[float] = None
-    base_imponible_10: Optional[float] = None
-    base_imponible_4: Optional[float] = None
-    base_imponible_0: Optional[float] = None  # Exento
+    base_imponible_21: float | None = None
+    base_imponible_10: float | None = None
+    base_imponible_4: float | None = None
+    base_imponible_0: float | None = None  # Exento
 
     # Cuotas IVA
-    cuota_iva_21: Optional[float] = None
-    cuota_iva_10: Optional[float] = None
-    cuota_iva_4: Optional[float] = None
+    cuota_iva_21: float | None = None
+    cuota_iva_10: float | None = None
+    cuota_iva_4: float | None = None
 
     # Totales
-    total_base_imponible: Optional[float] = None
-    total_iva: Optional[float] = None
-    total_factura: Optional[float] = None
+    total_base_imponible: float | None = None
+    total_iva: float | None = None
+    total_factura: float | None = None
 
     # Retenciones (si aplica)
-    retencion_irpf: Optional[float] = None
-    porcentaje_retencion: Optional[float] = None
+    retencion_irpf: float | None = None
+    porcentaje_retencion: float | None = None
 
     # Metadata
     extraction_status: str = "pending"
-    full_text: Optional[str] = None
-    file_hash: Optional[str] = None
+    full_text: str | None = None
+    file_hash: str | None = None
     confidence_score: float = 0.0
 
 
@@ -64,7 +63,7 @@ class InvoiceExtractor:
     def __init__(self):
         self.patterns = self._init_patterns()
 
-    def _init_patterns(self) -> Dict[str, re.Pattern]:
+    def _init_patterns(self) -> dict[str, re.Pattern]:
         """Patrones regex para extraer campos de facturas españolas."""
         return {
             # Número de factura
@@ -135,7 +134,7 @@ class InvoiceExtractor:
             ),
         }
 
-    async def extract_from_pdf(self, pdf_path: str) -> Dict:
+    async def extract_from_pdf(self, pdf_path: str) -> dict:
         """
         Extrae datos de un PDF de factura.
 
@@ -190,7 +189,7 @@ class InvoiceExtractor:
                 "file_hash": None,
             }
 
-    async def extract_from_text(self, text: str) -> Dict:
+    async def extract_from_text(self, text: str) -> dict:
         """
         Extrae datos de texto ya extraído.
 
@@ -213,7 +212,7 @@ class InvoiceExtractor:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
-    def _parse_invoice_data(self, text: str) -> Dict:
+    def _parse_invoice_data(self, text: str) -> dict:
         """Parsea el texto extraído usando regex patterns."""
         data = {}
 
@@ -296,7 +295,7 @@ class InvoiceExtractor:
 
         return data
 
-    def _parse_spanish_number(self, num_str: str) -> Optional[float]:
+    def _parse_spanish_number(self, num_str: str) -> float | None:
         """Convierte número español (1.234,56) a float."""
         try:
             clean = num_str.replace(".", "").replace(",", ".")
@@ -305,7 +304,7 @@ class InvoiceExtractor:
             logger.warning(f"Error parseando número '{num_str}': {e}")
             return None
 
-    def _calculate_totals(self, data: Dict):
+    def _calculate_totals(self, data: dict):
         """Calcula totales si no fueron extraídos directamente."""
         # Total base imponible
         if "total_base_imponible" not in data:
@@ -336,7 +335,7 @@ class InvoiceExtractor:
             if data.get(base_key) and not data.get(cuota_key):
                 data[cuota_key] = round(data[base_key] * (iva_rate / 100), 2)
 
-    def _calculate_confidence(self, data: Dict) -> float:
+    def _calculate_confidence(self, data: dict) -> float:
         """Calcula un score de confianza basado en campos extraídos."""
         critical_fields = ["total_factura", "total_base_imponible", "invoice_number"]
         important_fields = ["invoice_date", "issuer_nif", "total_iva"]
@@ -361,7 +360,7 @@ class InvoiceExtractor:
 
         return min(score, 1.0)
 
-    def generate_summary(self, data: Dict) -> str:
+    def generate_summary(self, data: dict) -> str:
         """Genera un resumen legible de la factura."""
         parts = []
 
@@ -385,7 +384,7 @@ class InvoiceExtractor:
 
         return " | ".join(parts) if parts else "Sin datos extraídos"
 
-    def get_vat_breakdown(self, data: Dict) -> Dict[str, Dict[str, float]]:
+    def get_vat_breakdown(self, data: dict) -> dict[str, dict[str, float]]:
         """Obtiene desglose de IVA por tipos."""
         breakdown = {}
 
@@ -414,7 +413,7 @@ class InvoiceExtractor:
 
 
 # Global instance
-_invoice_extractor: Optional[InvoiceExtractor] = None
+_invoice_extractor: InvoiceExtractor | None = None
 
 
 def get_invoice_extractor() -> InvoiceExtractor:

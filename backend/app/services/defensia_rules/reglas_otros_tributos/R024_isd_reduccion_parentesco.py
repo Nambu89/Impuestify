@@ -65,7 +65,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # ---------------------------------------------------------------------------
 # Constantes — grupos de parentesco cubiertos por esta primera pasada
 # ---------------------------------------------------------------------------

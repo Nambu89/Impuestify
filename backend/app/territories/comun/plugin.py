@@ -1,16 +1,13 @@
 """Common regime territory plugin -- covers 15 CCAA under standard IRPF system."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from app.territories.base import (
-    TerritoryPlugin,
+    MinimosConfig,
     ScaleData,
     SimulationResult,
-    MinimosConfig,
-    Deadline,
-    ModelObligation,
+    TerritoryPlugin,
 )
-
 
 # All 15 CCAA under common regime (canonical short names from ccaa_constants.py)
 # Note: Canarias uses common IRPF but IGIC instead of IVA.
@@ -47,12 +44,12 @@ class CommonTerritory(TerritoryPlugin):
     territories = COMUN_TERRITORIES
     regime = "comun"
 
-    async def get_irpf_scales(self, year: int) -> List[ScaleData]:
+    async def get_irpf_scales(self, year: int) -> list[ScaleData]:
         """Delegates to IRPFCalculator which loads scales from irpf_scales table."""
         # Scales are loaded from DB by IRPFCalculator -- this method is for the interface
         return []  # Actual calculation delegated to simulate_irpf
 
-    async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
+    async def simulate_irpf(self, profile: dict[str, Any], db) -> SimulationResult:
         """Delegate to existing IRPFSimulator._simulate_common logic."""
         from app.utils.irpf_simulator import IRPFSimulator
 
@@ -68,7 +65,7 @@ class CommonTerritory(TerritoryPlugin):
             desglose=result,
         )
 
-    async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
+    async def get_deductions(self, ccaa: str, year: int, db) -> list[dict[str, Any]]:
         """Delegate to existing DeductionService -- returns estatal + territorial."""
         from app.services.deduction_service import DeductionService
 
@@ -88,5 +85,5 @@ class CommonTerritory(TerritoryPlugin):
             apply_as="base_reduction",
         )
 
-    def get_rag_filters(self, ccaa: str) -> Dict[str, Any]:
+    def get_rag_filters(self, ccaa: str) -> dict[str, Any]:
         return {"territory": ccaa, "regime": "comun"}

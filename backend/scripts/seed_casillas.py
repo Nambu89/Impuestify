@@ -147,7 +147,7 @@ _DLG_SECTION_PATTERN = re.compile(
 )
 
 
-def _parse_casilla_num(raw: str) -> Optional[str]:
+def _parse_casilla_num(raw: str) -> str | None:
     """
     Extract a clean casilla number from raw token like '*0505', '0505', or '*06-09'.
     Returns None for '###' (no casilla number).

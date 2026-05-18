@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.security.pii_detector import PIIDetector, _REGEX_FALLBACK_THRESHOLD
+from app.security.pii_detector import _REGEX_FALLBACK_THRESHOLD, PIIDetector
 
 
 def _mock_completion(content: str = "safe"):

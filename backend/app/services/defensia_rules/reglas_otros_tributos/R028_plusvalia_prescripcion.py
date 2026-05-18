@@ -27,7 +27,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 _CITA_SEMANTICA = (
     "Prescripcion del derecho del Ayuntamiento a liquidar el Impuesto sobre "
     "el Incremento del Valor de los Terrenos de Naturaleza Urbana por "

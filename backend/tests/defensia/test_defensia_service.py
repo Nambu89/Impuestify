@@ -30,9 +30,9 @@ Invariantes
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
+from datetime import UTC, datetime, timezone
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -48,7 +48,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_quota_service import QuotaExcedida
 from app.services.defensia_service import DefensiaService
-
 
 # --------------------------------------------------------------------------- #
 # Fake async DB — solo registra las llamadas para poder auditar el SQL
@@ -85,7 +84,7 @@ def expediente_con_fase() -> ExpedienteEstructurado:
         id="doc_1",
         nombre_original="liquidacion.pdf",
         tipo_documento=TipoDocumento.LIQUIDACION_PROVISIONAL,
-        fecha_acto=datetime(2026, 3, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 3, 1, tzinfo=UTC),
         datos={},
     )
     return ExpedienteEstructurado(
@@ -105,7 +104,7 @@ def expediente_sin_fase() -> ExpedienteEstructurado:
         id="doc_1",
         nombre_original="req.pdf",
         tipo_documento=TipoDocumento.REQUERIMIENTO,
-        fecha_acto=datetime(2026, 3, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 3, 1, tzinfo=UTC),
         datos={},
     )
     return ExpedienteEstructurado(
@@ -666,8 +665,8 @@ async def test_facade_persiste_escrito_con_version_1(
 
 def test_extraer_cuota_maxima_vacio():
     """Expediente sin documentos o sin datos_estructurados -> 0.0 (fallback)."""
-    from app.services.defensia_service import _extraer_cuota_maxima
     from app.models.defensia import ExpedienteEstructurado, Tributo
+    from app.services.defensia_service import _extraer_cuota_maxima
 
     exp = ExpedienteEstructurado(id="e1", tributo=Tributo.IRPF, ccaa="Madrid", documentos=[])
     assert _extraer_cuota_maxima(exp) == 0.0
@@ -675,13 +674,13 @@ def test_extraer_cuota_maxima_vacio():
 
 def test_extraer_cuota_maxima_varios_campos_y_docs():
     """Recorre varios docs y campos canonicos y devuelve el maximo."""
-    from app.services.defensia_service import _extraer_cuota_maxima
     from app.models.defensia import (
         DocumentoEstructurado,
         ExpedienteEstructurado,
-        Tributo,
         TipoDocumento,
+        Tributo,
     )
+    from app.services.defensia_service import _extraer_cuota_maxima
 
     doc1 = DocumentoEstructurado(
         id="d1",
@@ -713,13 +712,13 @@ def test_extraer_cuota_maxima_varios_campos_y_docs():
 
 def test_extraer_cuota_maxima_ignora_tipos_invalidos():
     """Strings o None en campos no deben crashear."""
-    from app.services.defensia_service import _extraer_cuota_maxima
     from app.models.defensia import (
         DocumentoEstructurado,
         ExpedienteEstructurado,
-        Tributo,
         TipoDocumento,
+        Tributo,
     )
+    from app.services.defensia_service import _extraer_cuota_maxima
 
     doc = DocumentoEstructurado(
         id="d1",
@@ -733,13 +732,13 @@ def test_extraer_cuota_maxima_ignora_tipos_invalidos():
 
 def test_extraer_cuota_maxima_umbral_tear_decidible():
     """Comprueba que distinguimos <6000 EUR (abreviada) vs >=6000 EUR (general)."""
-    from app.services.defensia_service import _extraer_cuota_maxima
     from app.models.defensia import (
         DocumentoEstructurado,
         ExpedienteEstructurado,
-        Tributo,
         TipoDocumento,
+        Tributo,
     )
+    from app.services.defensia_service import _extraer_cuota_maxima
 
     def _build(cuota: float) -> ExpedienteEstructurado:
         doc = DocumentoEstructurado(

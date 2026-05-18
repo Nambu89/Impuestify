@@ -1,16 +1,13 @@
 """Ceuta/Melilla territory plugin -- IPSI + 60% deduction."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from app.territories.base import (
-    TerritoryPlugin,
-    ScaleData,
-    SimulationResult,
     MinimosConfig,
     ModelObligation,
-    Deadline,
-    DEADLINES_2026,
-    _trimestral_deadlines,
+    ScaleData,
+    SimulationResult,
+    TerritoryPlugin,
 )
 
 
@@ -34,10 +31,10 @@ class CeutaMelillaTerritory(TerritoryPlugin):
         "Melilla": 0.04,  # 4% general
     }
 
-    async def get_irpf_scales(self, year: int) -> List[ScaleData]:
+    async def get_irpf_scales(self, year: int) -> list[ScaleData]:
         return []
 
-    async def simulate_irpf(self, profile: Dict[str, Any], db) -> SimulationResult:
+    async def simulate_irpf(self, profile: dict[str, Any], db) -> SimulationResult:
         from app.utils.irpf_simulator import IRPFSimulator
 
         simulator = IRPFSimulator(db)
@@ -52,7 +49,7 @@ class CeutaMelillaTerritory(TerritoryPlugin):
             desglose=result,
         )
 
-    async def get_deductions(self, ccaa: str, year: int, db) -> List[Dict[str, Any]]:
+    async def get_deductions(self, ccaa: str, year: int, db) -> list[dict[str, Any]]:
         from app.services.deduction_service import DeductionService
 
         service = DeductionService(db)
@@ -78,7 +75,7 @@ class CeutaMelillaTerritory(TerritoryPlugin):
             apply_as="base_reduction",
         )
 
-    def get_model_obligations(self, profile: Dict[str, Any]) -> List[ModelObligation]:
+    def get_model_obligations(self, profile: dict[str, Any]) -> list[ModelObligation]:
         """Ceuta/Melilla: IPSI instead of IVA, no 349, organismo split."""
         ccaa = profile.get("ccaa", "Ceuta")
         # Force no intra-comunitarias (349 not applicable)
@@ -101,5 +98,5 @@ class CeutaMelillaTerritory(TerritoryPlugin):
 
         return obligations
 
-    def get_rag_filters(self, ccaa: str) -> Dict[str, Any]:
+    def get_rag_filters(self, ccaa: str) -> dict[str, Any]:
         return {"territory": ccaa, "regime": "ceuta_melilla", "deduccion_60": True}

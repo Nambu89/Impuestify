@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +55,8 @@ CRYPTO_GAINS_TOOL: dict = {
 
 
 async def calculate_crypto_gains_tool(
-    tax_year: Optional[int] = None,
-    user_id: Optional[str] = None,
+    tax_year: int | None = None,
+    user_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Calcula ganancias/perdidas FIFO de criptomonedas para el usuario.
@@ -90,8 +90,8 @@ async def calculate_crypto_gains_tool(
 
     try:
         from app.database.turso_client import get_db_client
-        from app.utils.calculators.crypto_fifo import calculate_fifo_gains
         from app.services.crypto_parser import CryptoTransaction
+        from app.utils.calculators.crypto_fifo import calculate_fifo_gains
 
         db = await get_db_client()
 

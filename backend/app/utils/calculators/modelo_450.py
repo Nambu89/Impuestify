@@ -58,10 +58,9 @@ como impuesto monofasico sobre el productor, no es un impuesto en cadena.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
-
 
 # ---------------------------------------------------------------------------
 # Constantes — tipos vigentes 2025+ (TR Decreto Legislativo 1/2025)
@@ -90,7 +89,7 @@ ALLOWED_AIEM_RATES = (
 # y exige `tipo_aiem` manual.
 #
 # Formato: clave = primeros 3-4 digitos del epigrafe IAE; valor = tipo AIEM.
-AIEM_TIPOS_POR_EPIGRAFE: Dict[str, float] = {
+AIEM_TIPOS_POR_EPIGRAFE: dict[str, float] = {
     # Tabaco — tipo especial 25 %
     "1500": TIPO_AIEM_ESPECIAL,  # Industria del tabaco
     "1501": TIPO_AIEM_ESPECIAL,
@@ -137,7 +136,7 @@ AIEM_TIPOS_POR_EPIGRAFE: Dict[str, float] = {
 
 
 # Plazos Modelo 450 — coinciden con Modelo 420 (Orden anual ATC):
-PLAZOS_MODELO_450: Dict[int, Dict[str, Any]] = {
+PLAZOS_MODELO_450: dict[int, dict[str, Any]] = {
     1: {"trimestre": "T1", "mes_fin": 4, "dia_fin": 20, "anio_siguiente": False},
     2: {"trimestre": "T2", "mes_fin": 7, "dia_fin": 20, "anio_siguiente": False},
     3: {"trimestre": "T3", "mes_fin": 10, "dia_fin": 20, "anio_siguiente": False},
@@ -149,14 +148,14 @@ PLAZOS_MODELO_450: Dict[int, Dict[str, Any]] = {
 UMBRAL_MENSUAL_EUR: float = 6_010_121.04
 
 
-def _resolve_year(year: Optional[int]) -> int:
+def _resolve_year(year: int | None) -> int:
     """Devuelve el year a aplicar; default = 2025 (esquema vigente)."""
     if year is None:
         return 2025
     return int(year)
 
 
-def lookup_tipo_aiem(epigrafe_iae: str) -> Optional[float]:
+def lookup_tipo_aiem(epigrafe_iae: str) -> float | None:
     """
     Devuelve el tipo AIEM aplicable a un epigrafe IAE, o None si no esta
     en el lookup. Hace match por prefijo: epigrafe '4151' matchea '415'.
@@ -184,24 +183,24 @@ class Modelo450Calculator:
     devengado, ajustes y compensaciones de periodos anteriores.
     """
 
-    def __init__(self, repo: Optional[TaxParameterRepository] = None) -> None:
+    def __init__(self, repo: TaxParameterRepository | None = None) -> None:
         self._repo = repo  # Reservado para futuras consultas a parametros.
 
     async def calculate(
         self,
         *,
-        bienes_producidos: Optional[List[Dict[str, Any]]] = None,
+        bienes_producidos: list[dict[str, Any]] | None = None,
         cuotas_compensar_anteriores: float = 0.0,
         rectificacion_bases: float = 0.0,
         rectificacion_cuotas: float = 0.0,
         regularizacion_anual: float = 0.0,
         resultado_anterior_complementaria: float = 0.0,
         quarter: int = 1,
-        year: Optional[int] = None,
+        year: int | None = None,
         periodicidad: str = "trimestral",  # 'trimestral' | 'mensual'
-        mes: Optional[int] = None,  # solo si periodicidad = 'mensual'
+        mes: int | None = None,  # solo si periodicidad = 'mensual'
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula la autoliquidacion AIEM (Modelo 450).
 
@@ -259,8 +258,8 @@ class Modelo450Calculator:
         # -------------------------------------------------------------------
         # 1. DEVENGADO — iterar sobre cada bien
         # -------------------------------------------------------------------
-        desglose_bienes: List[Dict[str, Any]] = []
-        warnings: List[str] = []
+        desglose_bienes: list[dict[str, Any]] = []
+        warnings: list[str] = []
         total_base = 0.0
         total_cuota = 0.0
 
@@ -280,7 +279,7 @@ class Modelo450Calculator:
             descripcion = str(bien.get("descripcion", "") or "").strip()
             tipo_manual = bien.get("tipo_aiem")
 
-            tipo_aplicado: Optional[float] = None
+            tipo_aplicado: float | None = None
             origen_tipo = "manual"
 
             if tipo_manual is not None:

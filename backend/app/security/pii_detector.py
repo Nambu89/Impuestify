@@ -5,11 +5,10 @@ Detects and masks sensitive personal information in user inputs
 to protect privacy and comply with data protection regulations.
 """
 
-import re
-import time
 import hashlib
 import logging
-from typing import Dict, List, Tuple
+import re
+import time
 from dataclasses import dataclass
 
 from app.config import settings  # ← FIX: Import settings at module level
@@ -32,10 +31,10 @@ class PIIDetectionResult:
     """Result of PII detection"""
 
     has_pii: bool
-    detected_types: List[str]
+    detected_types: list[str]
     masked_text: str
     original_text: str
-    detections: Dict[str, List[str]]
+    detections: dict[str, list[str]]
 
 
 class PIIDetector:
@@ -120,14 +119,13 @@ class PIIDetector:
         Initialize the PII detector with Groq client.
         """
         from groq import Groq
-        from app.config import settings
 
         self.mask_pii = mask_pii
         self.log_detections = log_detections
         self.client = None
         # Per-instance cache so tests with monkey-patched clients keep their
         # own state (Bug C fix). Hash → result.
-        self._cache: Dict[str, PIIDetectionResult] = {}
+        self._cache: dict[str, PIIDetectionResult] = {}
 
         if settings.GROQ_API_KEY:
             try:
@@ -198,7 +196,6 @@ class PIIDetector:
                 detections={},
             )
 
-        from app.config import settings
 
         try:
             completion = self.client.chat.completions.create(
@@ -282,9 +279,9 @@ class PIIDetector:
         which is what the prompt-injection regex layer also relies on. Not
         as nuanced as the LLM but never fails open silently.
         """
-        detected: Dict[str, List[str]] = {}
+        detected: dict[str, list[str]] = {}
         masked = text
-        detected_types: List[str] = []
+        detected_types: list[str] = []
 
         for pii_type, cfg in self.PII_PATTERNS.items():
             try:
@@ -320,7 +317,7 @@ class PIIDetector:
         result = self.detect(text)
         return result.masked_text
 
-    def validate(self, text: str) -> Tuple[bool, str, List[str]]:
+    def validate(self, text: str) -> tuple[bool, str, list[str]]:
         """
         Validate text for PII presence.
 

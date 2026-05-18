@@ -11,9 +11,9 @@ This is the enhanced version of calculate_irpf that handles:
 - Personal and family minimum (MPYF) by CCAA
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import logging
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -473,7 +473,7 @@ async def simulate_irpf_tool(
     valor_adquisicion_inmueble: float = 0,
     edad_contribuyente: int = 35,
     num_descendientes: int = 0,
-    anios_nacimiento_desc: Optional[List[int]] = None,
+    anios_nacimiento_desc: list[int] | None = None,
     custodia_compartida: bool = False,
     num_ascendientes_65: int = 0,
     num_ascendientes_75: int = 0,
@@ -566,16 +566,16 @@ async def simulate_irpf_tool(
     gastos_seguros_alquiler: float = 0,
     gastos_suministros_alquiler: float = 0,
     # Multi-pagador support
-    pagadores: Optional[List[dict]] = None,
+    pagadores: list[dict] | None = None,
     num_pagadores: int = 1,
     retribuciones_especie: float = 0,
     ingresos_cuenta: float = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Execute IRPF simulation and return formatted result."""
     try:
-        from app.utils.irpf_simulator import IRPFSimulator
-        from app.utils.ccaa_constants import normalize_ccaa
         from app.database.turso_client import get_db_client
+        from app.utils.ccaa_constants import normalize_ccaa
+        from app.utils.irpf_simulator import IRPFSimulator
 
         db = await get_db_client()
         ccaa = normalize_ccaa(comunidad_autonoma)
@@ -807,7 +807,7 @@ async def simulate_irpf_tool(
         }
 
 
-def _format_simulation_result(result: Dict, ccaa: str) -> str:
+def _format_simulation_result(result: dict, ccaa: str) -> str:
     """Format simulation result as user-friendly text for the LLM."""
     year = result["year"]
     trabajo = result.get("trabajo", {})

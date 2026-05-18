@@ -2,20 +2,20 @@
 Payslips router - Endpoints para gestión de nóminas
 """
 
-import os
-import uuid
 import json
 import logging
-from typing import List
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+import os
+import uuid
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
-from app.database.models import Payslip, PayslipCreate
-from app.database.turso_client import get_db_client
-from app.services.payslip_extractor import PayslipExtractor
 from app.agents.payslip_agent import get_payslip_agent
 from app.auth.jwt_handler import get_current_user
 from app.auth.subscription_guard import require_active_subscription
+from app.database.models import Payslip
+from app.database.turso_client import get_db_client
+from app.services.payslip_extractor import PayslipExtractor
 from app.services.subscription_service import SubscriptionAccess
 
 logger = logging.getLogger(__name__)
@@ -161,7 +161,7 @@ async def upload_payslip(
         raise HTTPException(status_code=500, detail=f"Error procesando nómina: {str(e)}")
 
 
-@router.get("/", response_model=List[Payslip])
+@router.get("/", response_model=list[Payslip])
 async def list_payslips(current_user: dict = Depends(get_current_user)):
     """
     Lista todas las nóminas del usuario autenticado.

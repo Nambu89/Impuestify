@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
-from typing import Dict, Optional
 
 from app.services.legal.sources.base import LegalSource, NormaSourceMetadata
 from app.services.legal.sources.boe import BoeApiSource
@@ -22,13 +21,13 @@ logger = logging.getLogger(__name__)
 class LegalSourceDispatcher:
     """Holds a `source_id → LegalSource` map and forwards calls."""
 
-    def __init__(self, sources: Optional[Dict[str, LegalSource]] = None):
+    def __init__(self, sources: dict[str, LegalSource] | None = None):
         if sources is None:
             sources = self._default_sources()
-        self._sources: Dict[str, LegalSource] = sources
+        self._sources: dict[str, LegalSource] = sources
 
     @staticmethod
-    def _default_sources() -> Dict[str, LegalSource]:
+    def _default_sources() -> dict[str, LegalSource]:
         """Build the canonical set of sources for production use."""
         return {
             "boe": BoeApiSource(),
@@ -38,27 +37,27 @@ class LegalSourceDispatcher:
 
     # ── Public API ──
 
-    def get_source(self, source_id: str) -> Optional[LegalSource]:
+    def get_source(self, source_id: str) -> LegalSource | None:
         return self._sources.get(source_id)
 
     def register(self, source: LegalSource) -> None:
         """Add or override a source (used in tests)."""
         self._sources[source.source_id] = source
 
-    async def fetch_norma(self, source_id: str, norm_id: str) -> Optional[NormaSourceMetadata]:
+    async def fetch_norma(self, source_id: str, norm_id: str) -> NormaSourceMetadata | None:
         src = self.get_source(source_id)
         if src is None:
             logger.warning("Unknown legal source_id: %s", source_id)
             return None
         return await src.fetch_norma(norm_id)
 
-    async def is_vigent(self, source_id: str, norm_id: str) -> Optional[bool]:
+    async def is_vigent(self, source_id: str, norm_id: str) -> bool | None:
         src = self.get_source(source_id)
         if src is None:
             return None
         return await src.is_vigent(norm_id)
 
-    def get_url_html(self, source_id: str, norm_id: str) -> Optional[str]:
+    def get_url_html(self, source_id: str, norm_id: str) -> str | None:
         src = self.get_source(source_id)
         if src is None:
             return None

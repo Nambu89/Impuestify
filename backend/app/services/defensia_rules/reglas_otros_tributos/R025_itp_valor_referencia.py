@@ -45,8 +45,6 @@ Spec: plans/2026-04-13-defensia-implementation-plan-part2.md §T2-R025
 
 from __future__ import annotations
 
-from typing import Optional
-
 from app.models.defensia import (
     ArgumentoCandidato,
     Brief,
@@ -56,7 +54,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import regla
-
 
 # ---------------------------------------------------------------------------
 # Citas semanticas — describen el concepto juridico, nunca el articulo
@@ -75,7 +72,7 @@ _CITA_SEMANTICA = (
 # ---------------------------------------------------------------------------
 
 
-def _extraer_valor_referencia(datos: dict) -> Optional[float]:
+def _extraer_valor_referencia(datos: dict) -> float | None:
     """Devuelve el valor de referencia catastral declarado como base imponible
     en el documento, si existe y es estrictamente positivo."""
     valor = datos.get("base_imponible_valor_referencia")
@@ -109,7 +106,7 @@ def _valor_declarado_mayor_o_igual(datos: dict, valor_referencia: float) -> bool
 
 def _detectar_tasacion_pericial_contradictoria(
     datos: dict, valor_referencia: float
-) -> Optional[dict]:
+) -> dict | None:
     """Patron 1: tasacion pericial contradictoria con valor inferior.
 
     Dispara cuando `tasacion_pericial_contradictoria` es True y existe un
@@ -136,7 +133,7 @@ def _detectar_tasacion_pericial_contradictoria(
     }
 
 
-def _detectar_informe_tecnico_discrepante(datos: dict, valor_referencia: float) -> Optional[dict]:
+def _detectar_informe_tecnico_discrepante(datos: dict, valor_referencia: float) -> dict | None:
     """Patron 2: informe tecnico cualificado con valor inferior.
 
     Dispara cuando `informe_tecnico_discrepante` es True y existe un
@@ -187,7 +184,7 @@ def _detectar_informe_tecnico_discrepante(datos: dict, valor_referencia: float) 
 def evaluar(
     expediente: ExpedienteEstructurado,
     brief: Brief,  # noqa: ARG001 — brief no usado por R025
-) -> Optional[ArgumentoCandidato]:
+) -> ArgumentoCandidato | None:
     """Evalua R025 sobre el expediente.
 
     Recorre los documentos en busca del primer acto (liquidacion provisional,

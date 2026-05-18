@@ -27,9 +27,9 @@ modelo correcto cuando un comerciante en RE realiza adquisiciones
 intracomunitarias, importaciones o ISP.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ sujeto pasivo de un comerciante en RE — eso es Modelo 309, no 308.
 }
 
 
-def _calc_plazo_transporte_ocasional(fecha_entrega: Optional[str]) -> str:
+def _calc_plazo_transporte_ocasional(fecha_entrega: str | None) -> str:
     """Plazo: 30 dias naturales desde la fecha de entrega."""
     if not fecha_entrega:
         return "30 dias naturales desde la fecha de entrega del medio de transporte."
@@ -132,7 +132,7 @@ def _calc_plazo_transporte_ocasional(fecha_entrega: Optional[str]) -> str:
         return "30 dias naturales desde la fecha de entrega del medio de transporte."
 
 
-def _calc_plazo_transportista(fecha_adq: Optional[str]) -> str:
+def _calc_plazo_transportista(fecha_adq: str | None) -> str:
     """Plazo: 20 primeros dias naturales del mes siguiente al de la adquisicion."""
     if not fecha_adq:
         return "20 primeros dias naturales del mes siguiente al de la " "adquisicion del vehiculo."
@@ -166,14 +166,14 @@ def _plazo_re_viajeros(periodo: str) -> str:
 async def calculate_modelo_308_tool(
     caso: str,
     iva_soportado_transporte_nuevo: float = 0,
-    fecha_entrega_transporte: Optional[str] = None,
+    fecha_entrega_transporte: str | None = None,
     iva_soportado_vehiculo_simplificado: float = 0,
-    fecha_adquisicion_vehiculo: Optional[str] = None,
+    fecha_adquisicion_vehiculo: str | None = None,
     iva_devuelto_a_viajeros: float = 0,
-    periodo: Optional[str] = None,
+    periodo: str | None = None,
     year: int = None,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate the Modelo 308 refund for one of the three legitimate cases
     of Art. 7 Orden EHA/3786/2008.

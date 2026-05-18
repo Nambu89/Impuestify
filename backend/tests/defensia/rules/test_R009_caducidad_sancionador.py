@@ -26,7 +26,7 @@ posterior del pipeline. Aqui solo devolvemos descripciones semanticas.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -37,7 +37,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import REGISTRY, evaluar
-
 
 # ---------------------------------------------------------------------------
 # Helper: carga unicamente la regla R009 (aislamiento respecto a R001-R030
@@ -111,7 +110,7 @@ def test_R009_positivo_siete_meses_tramitacion(build_exp, build_brief, build_doc
         },
         doc_id="doc-san-001",
         nombre_original="acuerdo_sancion.pdf",
-        fecha_acto=datetime(2025, 8, 20, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 8, 20, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,
@@ -170,7 +169,7 @@ def test_R009_positivo_limite_mas_un_dia(build_exp, build_brief, build_doc):
         },
         doc_id="doc-san-002",
         nombre_original="acuerdo_sancion_limite.pdf",
-        fecha_acto=datetime(2025, 7, 2, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 7, 2, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,
@@ -211,7 +210,7 @@ def test_R009_negativo_dentro_de_plazo(build_exp, build_brief, build_doc):
         },
         doc_id="doc-san-003",
         nombre_original="acuerdo_sancion_ok.pdf",
-        fecha_acto=datetime(2025, 5, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,
@@ -250,7 +249,7 @@ def test_R009_negativo_fase_no_sancionadora(build_exp, build_brief, build_doc):
         },
         doc_id="doc-liq-001",
         nombre_original="liquidacion.pdf",
-        fecha_acto=datetime(2025, 8, 20, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 8, 20, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,

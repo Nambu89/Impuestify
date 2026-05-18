@@ -10,21 +10,23 @@ normativas se hace después en ``defensia_rag_verifier.py`` (Parte 2).
 """
 
 from __future__ import annotations
+
 import logging
+from collections.abc import Callable, Iterable
 from enum import Enum
-from typing import Callable, Iterable, Optional, Union
+from typing import Union
 
 from app.models.defensia import (
-    ExpedienteEstructurado,
-    Brief,
     ArgumentoCandidato,
-    Tributo,
+    Brief,
+    ExpedienteEstructurado,
     Fase,
+    Tributo,
 )
 
 logger = logging.getLogger(__name__)
 
-ReglaFunc = Callable[[ExpedienteEstructurado, Brief], Optional[ArgumentoCandidato]]
+ReglaFunc = Callable[[ExpedienteEstructurado, Brief], ArgumentoCandidato | None]
 
 REGISTRY: dict[str, dict] = {}
 
@@ -33,7 +35,7 @@ TributoLike = Union[Tributo, str]
 FaseLike = Union[Fase, str]
 
 
-def _normalize(values: Iterable[Union[Enum, str]]) -> set[str]:
+def _normalize(values: Iterable[Enum | str]) -> set[str]:
     """Normaliza una lista de enums o strings a un conjunto de strings.
 
     Cualquier elemento con atributo ``.value`` se reemplaza por ``.value``

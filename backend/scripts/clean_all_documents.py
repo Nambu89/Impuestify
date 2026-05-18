@@ -59,7 +59,7 @@ async def clean_all():
         chunk_count = await db.execute("SELECT COUNT(*) as cnt FROM document_chunks")
         emb_count = await db.execute("SELECT COUNT(*) as cnt FROM embeddings")
 
-        print(f"Current database state:")
+        print("Current database state:")
         print(f"  📄 Documents: {doc_count.rows[0]['cnt']}")
         print(f"  📦 Chunks: {chunk_count.rows[0]['cnt']}")
         print(f"  🧠 Embeddings: {emb_count.rows[0]['cnt']}")

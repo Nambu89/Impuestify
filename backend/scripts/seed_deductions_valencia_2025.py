@@ -1875,7 +1875,7 @@ async def seed_valencia(dry_run: bool = False):
             )
             inserted += 1
             print(f"  {i:2d}. [OK] {code} — {name}")
-        except Exception as e:
+        except Exception:
             # Fallback: try old schema (territory, type, fixed_amount, etc.)
             try:
                 deduction_id = str(uuid.uuid4())

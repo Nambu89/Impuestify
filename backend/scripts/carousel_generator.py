@@ -22,7 +22,6 @@ from typing import Any
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-
 # ---------------------------------------------------------------------------
 # Paleta de colores
 # ---------------------------------------------------------------------------

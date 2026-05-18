@@ -12,11 +12,12 @@ of a given CCAA. Sections adapt dynamically:
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
-from app.auth.jwt_handler import get_current_user, TokenData
-from app.database.turso_client import get_db_client, TursoClient
+
+from app.auth.jwt_handler import TokenData, get_current_user
+from app.database.turso_client import TursoClient, get_db_client
 from app.utils.regime_classifier import classify_regime
 
 logger = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ def _fix_text(text: str) -> str:
 # Base sections — always present regardless of CCAA
 # ---------------------------------------------------------------------------
 
-_BASE_SECTIONS: List[Dict[str, Any]] = [
+_BASE_SECTIONS: list[dict[str, Any]] = [
     {
         "id": "datos_personales",
         "title": "Datos personales",
@@ -731,7 +732,7 @@ _BASE_SECTIONS: List[Dict[str, Any]] = [
 # ---------------------------------------------------------------------------
 
 
-def _section_actividad_economica() -> Dict[str, Any]:
+def _section_actividad_economica() -> dict[str, Any]:
     return {
         "id": "actividad_economica",
         "title": "Actividad económica (Autónomo)",
@@ -820,7 +821,7 @@ def _section_actividad_economica() -> Dict[str, Any]:
     }
 
 
-def _section_foral_vasco() -> Dict[str, Any]:
+def _section_foral_vasco() -> dict[str, Any]:
     return {
         "id": "prevision_social_foral",
         "title": "Previsión social foral (País Vasco)",
@@ -854,7 +855,7 @@ def _section_foral_vasco() -> Dict[str, Any]:
     }
 
 
-def _section_foral_navarra() -> Dict[str, Any]:
+def _section_foral_navarra() -> dict[str, Any]:
     return {
         "id": "prevision_social_navarra",
         "title": "Previsión social foral (Navarra)",
@@ -882,7 +883,7 @@ def _section_foral_navarra() -> Dict[str, Any]:
     }
 
 
-def _section_ceuta_melilla() -> Dict[str, Any]:
+def _section_ceuta_melilla() -> dict[str, Any]:
     return {
         "id": "ceuta_melilla",
         "title": "Régimen especial Ceuta / Melilla",
@@ -906,7 +907,7 @@ def _section_ceuta_melilla() -> Dict[str, Any]:
     }
 
 
-def _section_canarias() -> Dict[str, Any]:
+def _section_canarias() -> dict[str, Any]:
     return {
         "id": "canarias",
         "title": "Régimen especial Canarias",
@@ -929,7 +930,7 @@ def _section_canarias() -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-async def _build_deducciones_section(ccaa: str, db: TursoClient) -> Optional[Dict[str, Any]]:
+async def _build_deducciones_section(ccaa: str, db: TursoClient) -> dict[str, Any] | None:
     """
     Build the deducciones_autonomicas section by reading unique requirement keys
     from the deductions table for this CCAA, grouped by category.
@@ -952,7 +953,7 @@ async def _build_deducciones_section(ccaa: str, db: TursoClient) -> Optional[Dic
         return None
 
     # Collect unique question keys (from questions_json) grouped by category
-    category_fields: Dict[str, List[Dict[str, Any]]] = {}
+    category_fields: dict[str, list[dict[str, Any]]] = {}
     seen_keys: set = set()
 
     for row in result.rows:
@@ -989,7 +990,7 @@ async def _build_deducciones_section(ccaa: str, db: TursoClient) -> Optional[Dic
         return None
 
     # Flatten into a single list with category metadata
-    all_fields: List[Dict[str, Any]] = []
+    all_fields: list[dict[str, Any]] = []
     for cat, fields in category_fields.items():
         for f in fields:
             f["_category"] = cat
@@ -1016,7 +1017,7 @@ async def get_fiscal_profile_fields(
     ),
     current_user: TokenData = Depends(get_current_user),
     db: TursoClient = Depends(get_db_client),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Return the structured list of fiscal-profile sections and fields for a given CCAA.
 
@@ -1029,7 +1030,7 @@ async def get_fiscal_profile_fields(
     """
     regime = classify_regime(ccaa) if ccaa else "comun"
 
-    sections: List[Dict[str, Any]] = list(_BASE_SECTIONS)
+    sections: list[dict[str, Any]] = list(_BASE_SECTIONS)
 
     # --- Conditional: actividad_economica (autonomo) ---
     if situacion_laboral == "autonomo" or situacion_laboral == "":

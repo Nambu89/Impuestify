@@ -14,8 +14,8 @@ Cached context fields:
 
 import json
 import logging
-from typing import Optional, Dict, Any
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class ConversationCache:
         """Generate Redis key for conversation context."""
         return f"conversation:{conversation_id}:context"
 
-    async def get_context(self, conversation_id: str) -> Optional[Dict[str, Any]]:
+    async def get_context(self, conversation_id: str) -> dict[str, Any] | None:
         """
         Get conversation context from cache.
 
@@ -68,7 +68,7 @@ class ConversationCache:
             logger.warning("Cache get error for %s: %s", conversation_id, e)
             return None
 
-    async def set_context(self, conversation_id: str, context: Dict[str, Any]) -> bool:
+    async def set_context(self, conversation_id: str, context: dict[str, Any]) -> bool:
         """
         Save conversation context to cache with TTL.
 
@@ -86,7 +86,7 @@ class ConversationCache:
             key = self._get_key(conversation_id)
 
             # Add timestamp
-            context["cached_at"] = datetime.now(timezone.utc).isoformat()
+            context["cached_at"] = datetime.now(UTC).isoformat()
 
             # Serialize to JSON
             context_json = json.dumps(context, ensure_ascii=False)

@@ -6,9 +6,9 @@ Does NOT go through the LLM agent — directly calls ISSimulator for fast estima
 """
 
 import logging
-from typing import Dict, List, Optional
-from pydantic import BaseModel, Field
+
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class ISEstimateRequest(BaseModel):
     gastos_no_deducibles: float = 0.0
     ajustes_negativos: float = 0.0
     amortizacion_contable: float = 0.0
-    amortizacion_fiscal: Optional[float] = None
+    amortizacion_fiscal: float | None = None
 
     # BINs
     bins_pendientes: float = 0.0
@@ -56,8 +56,8 @@ class ISEstimateRequest(BaseModel):
     pagos_fraccionados_realizados: float = 0.0
 
     # Alternativa: ingresos - gastos
-    ingresos_explotacion: Optional[float] = None
-    gastos_explotacion: Optional[float] = None
+    ingresos_explotacion: float | None = None
+    gastos_explotacion: float | None = None
 
 
 class ISEstimateResponse(BaseModel):
@@ -75,7 +75,7 @@ class ISEstimateResponse(BaseModel):
     tipo_gravamen_aplicado: str = ""
     cuota_integra: float = 0.0
 
-    deducciones_detalle: Dict[str, float] = Field(default_factory=dict)
+    deducciones_detalle: dict[str, float] = Field(default_factory=dict)
     deducciones_total: float = 0.0
     bonificaciones_total: float = 0.0
     cuota_liquida: float = 0.0
@@ -115,7 +115,7 @@ class IS202Response(BaseModel):
     modalidad: str = ""
     base_calculo: float = 0.0
     porcentaje_aplicado: float = 0.0
-    calendario: List[str] = Field(
+    calendario: list[str] = Field(
         default_factory=lambda: [
             "Abril: del 1 al 20",
             "Octubre: del 1 al 20",
@@ -137,7 +137,7 @@ async def is_estimate(request: Request, body: ISEstimateRequest):
     Endpoint público (no requiere autenticación).
     """
     try:
-        from app.utils.is_simulator import ISSimulator, ISInput
+        from app.utils.is_simulator import ISInput, ISSimulator
 
         inp = ISInput(
             resultado_contable=body.resultado_contable,

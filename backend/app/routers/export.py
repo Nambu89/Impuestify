@@ -9,11 +9,11 @@ import json
 import logging
 import secrets
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from app.auth.jwt_handler import get_current_user
 from app.security.rate_limiter import limiter
@@ -32,7 +32,7 @@ class IRPFReportRequest(BaseModel):
     ccaa: str = Field(..., description="Comunidad autonoma")
     ingresos_trabajo: float = Field(0, description="Ingresos brutos anuales del trabajo")
     year: int = Field(2025, description="Ano fiscal")
-    answers: Optional[Dict[str, Any]] = Field(
+    answers: dict[str, Any] | None = Field(
         default=None, description="Respuestas para deducciones"
     )
     # Extended fields for complete simulation
@@ -67,7 +67,7 @@ class IRPFReportRequest(BaseModel):
     dividendos: float = Field(0, description="Dividendos")
     ganancias_fondos: float = Field(0, description="Ganancias fondos")
     # Chat content for personalized analysis
-    chat_content: Optional[str] = Field(
+    chat_content: str | None = Field(
         default=None, description="Contenido markdown del análisis del asistente"
     )
 
@@ -79,7 +79,7 @@ class ModeloPDFRequest(BaseModel):
     data: dict = Field(..., description="Datos calculados del modelo (casillas, resultados)")
     trimestre: str = Field("1T", description="Periodo: 1T, 2T, 3T, 4T, anual")
     ejercicio: int = Field(2026, description="Año fiscal")
-    contribuyente: Optional[dict] = Field(
+    contribuyente: dict | None = Field(
         default=None,
         description="Datos del contribuyente: {nombre, nif, variante_foral}",
     )
@@ -90,7 +90,7 @@ class ShareWithAdvisorRequest(BaseModel):
 
     report_id: str = Field(..., description="ID del informe generado")
     advisor_email: EmailStr = Field(..., description="Email del asesor")
-    message: Optional[str] = Field(default=None, description="Mensaje opcional")
+    message: str | None = Field(default=None, description="Mensaje opcional")
 
 
 class ReportResponse(BaseModel):
@@ -347,7 +347,7 @@ async def export_modelo_pdf(
     Supported modelos: 303, 130, 308, 720, 721, ipsi.
     Returns PDF as download.
     """
-    from app.services.modelo_pdf_generator import ModeloPDFGenerator, VALID_MODELOS
+    from app.services.modelo_pdf_generator import VALID_MODELOS, ModeloPDFGenerator
 
     if body.modelo not in VALID_MODELOS:
         raise HTTPException(

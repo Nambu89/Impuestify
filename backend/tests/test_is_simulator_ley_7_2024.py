@@ -6,8 +6,7 @@ Cubre los 6 ALTA cuando el caller pasa explicitamente ejercicio=2025+.
 
 import pytest
 
-from app.utils.is_simulator import ISSimulator, ISInput
-
+from app.utils.is_simulator import ISInput, ISSimulator
 
 # H1 — Microempresa 17/20 (Ley 7/2024 Disp. Final 8a)
 

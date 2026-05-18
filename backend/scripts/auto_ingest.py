@@ -25,7 +25,7 @@ import hashlib
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -39,6 +39,9 @@ from dotenv import load_dotenv
 load_dotenv(project_root / ".env")
 
 # Re-use classes from the existing ingest_documents pipeline
+import struct
+import uuid
+
 from scripts.ingest_documents import (
     AzureDocumentExtractor,
     DocumentLayoutChunker,
@@ -48,8 +51,6 @@ from scripts.ingest_documents import (
     detect_territory,
     extract_year,
 )
-import uuid
-import struct
 
 # ── Config ──────────────────────────────────────────────────────
 DOCS_DIR = project_root / "docs"
@@ -82,7 +83,7 @@ def load_pending() -> list[dict]:
     if not PENDING_INGEST.exists():
         return []
     try:
-        with open(PENDING_INGEST, "r", encoding="utf-8") as f:
+        with open(PENDING_INGEST, encoding="utf-8") as f:
             data = json.load(f)
         return data.get("files", [])
     except (json.JSONDecodeError, ValueError):
@@ -99,7 +100,7 @@ def save_pending(files: list[dict]) -> None:
         return
 
     data = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "count": len(files),
         "files": files,
     }
@@ -112,7 +113,7 @@ def append_ingested_log(entry: dict) -> None:
     entries = []
     if INGESTED_LOG.exists():
         try:
-            with open(INGESTED_LOG, "r", encoding="utf-8") as f:
+            with open(INGESTED_LOG, encoding="utf-8") as f:
                 entries = json.load(f)
         except (json.JSONDecodeError, ValueError):
             entries = []
@@ -132,7 +133,7 @@ def append_ingested_log(entry: dict) -> None:
 
 async def auto_ingest(
     dry_run: bool = False,
-    limit: Optional[int] = None,
+    limit: int | None = None,
 ) -> int:
     """
     Process pending documents from the crawler queue.
@@ -224,7 +225,7 @@ async def auto_ingest(
 
         # 4a. Check file exists
         if not filepath.exists():
-            print(f"  SKIP: archivo no encontrado", flush=True)
+            print("  SKIP: archivo no encontrado", flush=True)
             logger.warning("File not found: %s", filepath)
             stats["skipped_missing"] += 1
             # Don't keep it in pending -- it's a dead entry
@@ -234,14 +235,14 @@ async def auto_ingest(
         file_hash = compute_sha256(filepath)
 
         if file_hash in existing_hashes:
-            print(f"  SKIP: ya indexado (mismo hash SHA-256)", flush=True)
+            print("  SKIP: ya indexado (mismo hash SHA-256)", flush=True)
             stats["skipped_hash"] += 1
             processed_entries.append(
                 {
                     "path": rel_path,
                     "hash": file_hash,
                     "status": "skipped_duplicate",
-                    "ingested_at": datetime.now(timezone.utc).isoformat(),
+                    "ingested_at": datetime.now(UTC).isoformat(),
                 }
             )
             continue
@@ -258,12 +259,12 @@ async def auto_ingest(
         try:
             if suffix == ".pdf":
                 if extractor is None:
-                    print(f"  SKIP: PDF sin Azure DI configurado", flush=True)
+                    print("  SKIP: PDF sin Azure DI configurado", flush=True)
                     stats["skipped_missing"] += 1
                     remaining_pending.append(entry)
                     continue
 
-                print(f"  Extrayendo con Azure DI...", flush=True)
+                print("  Extrayendo con Azure DI...", flush=True)
                 extracted = extractor.extract(str(filepath))
                 content = extracted["content"]
                 pages = extracted["pages"]
@@ -280,7 +281,7 @@ async def auto_ingest(
                 continue
 
             if not content or len(content.strip()) < 50:
-                print(f"  SKIP: contenido insuficiente", flush=True)
+                print("  SKIP: contenido insuficiente", flush=True)
                 stats["skipped_missing"] += 1
                 continue
 
@@ -359,7 +360,7 @@ async def auto_ingest(
             print(f"  Generando embeddings ({len(chunk_texts)} chunks)...", flush=True)
             embeddings = embedder.generate(chunk_texts)
 
-            for chunk_id, embedding in zip(chunk_ids, embeddings):
+            for chunk_id, embedding in zip(chunk_ids, embeddings, strict=False):
                 emb_id = str(uuid.uuid4())
                 embedding_blob = OpenAIEmbeddingGenerator.to_blob(embedding)
 
@@ -396,7 +397,7 @@ async def auto_ingest(
                     "chunks": len(chunks),
                     "territory": territory,
                     "status": "ingested",
-                    "ingested_at": datetime.now(timezone.utc).isoformat(),
+                    "ingested_at": datetime.now(UTC).isoformat(),
                 }
             )
 

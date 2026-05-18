@@ -9,7 +9,7 @@ Calculates:
 - Net reduced income (rendimiento neto reducido del trabajo)
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -37,7 +37,7 @@ class WorkIncomeCalculator:
         # 3.500 EUR si discapacidad >= 33%; 7.750 EUR si >= 65% o movilidad reducida
         incremento_discapacidad_activo: float = 0,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate net reduced work income.
 
@@ -92,7 +92,7 @@ class WorkIncomeCalculator:
         }
 
     @staticmethod
-    def _calculate_reduccion(rend_neto: float, params: Dict[str, float]) -> float:
+    def _calculate_reduccion(rend_neto: float, params: dict[str, float]) -> float:
         """
         Work income reduction (art. 20 LIRPF) — two-segment formula (2024+).
 

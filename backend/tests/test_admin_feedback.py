@@ -6,11 +6,11 @@ Tests cover: permissions, CRUD, stats, pagination, validation, GDPR delete.
 """
 
 import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from fastapi.testclient import TestClient
-from fastapi import FastAPI, HTTPException
 
+import pytest
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -36,9 +36,9 @@ def _make_admin_app(user_obj, db_obj, forbidden: bool = False):
     Create a FastAPI app with admin router and dependency overrides.
     If `forbidden=True`, _require_owner raises 403 (simulates non-owner access).
     """
-    from app.routers.admin import router, _require_owner
     from app.auth.jwt_handler import get_current_user
     from app.database.turso_client import get_db_client
+    from app.routers.admin import _require_owner, router
 
     app = FastAPI()
     app.include_router(router)
@@ -467,8 +467,8 @@ class TestGDPRDelete:
     """
 
     def test_gdpr_deletes_feedback_and_ratings(self):
-        from app.routers.user_rights import delete_user_account
         from app.auth.jwt_handler import TokenData
+        from app.routers.user_rights import delete_user_account
 
         mock_user = TokenData(user_id="user-gdpr-001", email="gdpr@test.com")
         mock_db = AsyncMock()
@@ -488,8 +488,8 @@ class TestGDPRDelete:
         assert "chat_ratings" in combined, "GDPR delete must include chat_ratings table"
 
     def test_gdpr_response_shape(self):
-        from app.routers.user_rights import delete_user_account
         from app.auth.jwt_handler import TokenData
+        from app.routers.user_rights import delete_user_account
 
         mock_user = TokenData(user_id="user-gdpr-002", email="gdpr2@test.com")
         mock_db = AsyncMock()

@@ -19,11 +19,11 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.utils.calculators.modelo_390 import (
-    Modelo390Calculator,
     UMBRAL_SII_EUR,
+    Modelo390Calculator,
 )
 
 logger = logging.getLogger(__name__)
@@ -140,16 +140,16 @@ Detecta automaticamente exoneraciones (Art. 71.7 RIVA):
 
 
 async def calculate_modelo_390_tool(
-    ccaa: Optional[str] = None,
-    year: Optional[int] = None,
+    ccaa: str | None = None,
+    year: int | None = None,
     volumen_operaciones_ano_anterior: float = 0.0,
     en_redeme: bool = False,
     en_grupo_iva: bool = False,
     sii_voluntario: bool = False,
-    regimen_especial: Optional[str] = "general",
-    trimestres_303: Optional[List[Dict[str, Any]]] = None,
+    regimen_especial: str | None = "general",
+    trimestres_303: list[dict[str, Any]] | None = None,
     restricted_mode: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Wrapper LLM sobre Modelo390Calculator.
 
@@ -283,12 +283,12 @@ async def calculate_modelo_390_tool(
 
 def _format_response(
     *,
-    result: Dict[str, Any],
+    result: dict[str, Any],
     volumen_operaciones_ano_anterior: float,
     en_redeme: bool,
     en_grupo_iva: bool,
     regimen_especial: str,
-    trimestres_303: Optional[List[Dict[str, Any]]],
+    trimestres_303: list[dict[str, Any]] | None,
 ) -> str:
     """Construye la respuesta amigable para el usuario."""
     territory_info = result["territory_info"]
@@ -298,7 +298,7 @@ def _format_response(
     plazo = result["plazo"]
     hacienda = result["hacienda"]
 
-    lines: List[str] = []
+    lines: list[str] = []
 
     # Caso 1: Ceuta/Melilla — no aplica
     if modelo is None:

@@ -22,7 +22,7 @@ NOTA: Álava NO distingue régimen general / excepcional como Bizkaia o Gipuzkoa
 años de actividad usan las mismas reglas (cifras trimestrales).
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class Modelo130ArabaCalculator:
@@ -37,7 +37,7 @@ class Modelo130ArabaCalculator:
         4: "1 al 30 de enero del año siguiente",
     }
 
-    def __init__(self, repo: Optional[Any] = None) -> None:
+    def __init__(self, repo: Any | None = None) -> None:
         self._repo = repo
 
     async def calculate(
@@ -49,7 +49,7 @@ class Modelo130ArabaCalculator:
         retenciones_trimestre: float = 0.0,
         pagos_anteriores: float = 0.0,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula el resultado del Modelo 130 Araba.
 

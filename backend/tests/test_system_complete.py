@@ -6,6 +6,7 @@ Tests all major components end-to-end.
 import asyncio
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 backend_dir = Path(__file__).parent.parent
@@ -14,10 +15,10 @@ sys.path.insert(0, str(backend_dir))
 project_root = backend_dir.parent
 load_dotenv(project_root / ".env")
 
-from app.utils.irpf_calculator import IRPFCalculator
-from app.utils.region_detector import RegionDetector
 from app.database.turso_client import TursoClient
 from app.routers.chat import fts_search
+from app.utils.irpf_calculator import IRPFCalculator
+from app.utils.region_detector import RegionDetector
 
 
 async def test_system():
@@ -37,9 +38,9 @@ async def test_system():
     try:
         result = await calc.calculate_irpf(base_liquidable=35000, jurisdiction="Aragón", year=2024)
 
-        print(f"✅ Calculation successful!")
-        print(f"   Base: 35,000€")
-        print(f"   Jurisdiction: Aragón")
+        print("✅ Calculation successful!")
+        print("   Base: 35,000€")
+        print("   Jurisdiction: Aragón")
         print(f"   Total IRPF: {result['cuota_total']:,.2f}€")
         print(f"   Tipo medio: {result['tipo_medio']}%")
         print()
@@ -123,7 +124,7 @@ async def test_system():
 
             if "lgt" in source.lower() or "ley" in source.lower() or "tributaria" in source.lower():
                 lgt_found = True
-                print(f"   ✅ LGT document detected!")
+                print("   ✅ LGT document detected!")
             print()
 
         if lgt_found:
@@ -157,7 +158,7 @@ async def test_system():
 
         if not aragón_found:
             print(f"   ⚠️  No Aragón content in top {len(results)} results")
-            print(f"   (But SQL calculator handles this directly)")
+            print("   (But SQL calculator handles this directly)")
 
     except Exception as e:
         print(f"❌ Search failed: {e}")
@@ -174,9 +175,9 @@ async def test_system():
     print(f"  • {chunk_count:,} chunks extracted")
     print(f"  • {fts_count:,} chunks searchable (FTS5)")
     print(f"  • {scale_count} IRPF scales in SQL")
-    print(f"  • IRPF Calculator: ✅ Working")
-    print(f"  • Region Detection: ✅ Working")
-    print(f"  • RAG Search: ✅ Working")
+    print("  • IRPF Calculator: ✅ Working")
+    print("  • Region Detection: ✅ Working")
+    print("  • RAG Search: ✅ Working")
     print()
     print("🚀 System is ready for production!")
     print()

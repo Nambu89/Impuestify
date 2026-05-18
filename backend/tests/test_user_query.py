@@ -15,9 +15,9 @@ from dotenv import load_dotenv
 project_root = backend_dir.parent
 load_dotenv(project_root / ".env")
 
+from app.agents.tax_agent import get_tax_agent
 from app.database.turso_client import TursoClient
 from app.routers.chat import fts_search
-from app.agents.tax_agent import get_tax_agent
 
 
 async def test_user_query():

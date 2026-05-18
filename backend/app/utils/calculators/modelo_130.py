@@ -16,7 +16,7 @@ NOTE: All rates are fixed by law (no DB look-up needed). TaxParameterRepository
 is accepted in __init__ for protocol consistency with other calculators.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -93,7 +93,7 @@ class Modelo130Calculator:
         retenciones_acumuladas_navarra: float = 0.0,  # alias for clarity in Navarra
         pagos_anteriores_navarra: float = 0.0,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate the quarterly Modelo 130 result.
 
@@ -226,7 +226,7 @@ class Modelo130Calculator:
         rend_neto_anterior: float,
         tiene_vivienda_habitual: bool,
         resultado_anterior_complementaria: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Territorio Comun (AEAT) and Ceuta/Melilla variant.
 
@@ -309,7 +309,7 @@ class Modelo130Calculator:
         gastos_trimestre: float,
         retenciones_trimestre: float,
         pagos_anteriores: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Araba/Alava (Territorio Historico).
 
@@ -358,7 +358,7 @@ class Modelo130Calculator:
         retenciones_penultimo: float,
         volumen_operaciones_trimestre: float,
         retenciones_trimestre: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Gipuzkoa (Territorio Historico).
 
@@ -432,7 +432,7 @@ class Modelo130Calculator:
         gastos_acumulados: float,
         retenciones_acumuladas: float,
         pagos_anteriores: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Bizkaia (Territorio Historico).
 
@@ -535,7 +535,7 @@ class Modelo130Calculator:
         gastos_acumulados: float,
         retenciones_acumuladas: float,
         pagos_anteriores: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Navarra (Comunidad Foral — Hacienda Tributaria de Navarra).
 
@@ -654,7 +654,7 @@ class Modelo130Calculator:
         volumen_ingresos: float,
         retenciones_trimestre: float = 0.0,
         ceuta_melilla: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Sección II del Modelo 130 — actividades agrícolas/ganaderas/forestales/pesqueras.
 

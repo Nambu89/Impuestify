@@ -33,7 +33,7 @@ P1/P2 extensions (audit 2026-05, sesion 40):
   flag `bloqueo_re` que indica que el sujeto NO presenta 303.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.utils.tax_parameter_repository import TaxParameterRepository
 
@@ -75,7 +75,7 @@ _RE_IAE_PREFIXES = (
 )
 
 # Tipos RE actuales (Art. 161 LIVA)
-RE_RATES_FULL: Dict[float, float] = {
+RE_RATES_FULL: dict[float, float] = {
     21.0: 5.2,  # general
     10.0: 1.4,  # reducido
     5.0: 0.62,  # transitorio aceites/pasta (proporcional)
@@ -204,7 +204,7 @@ class Modelo303Calculator:
         return volumen_ano_anterior > _UMBRAL_SII_OBLIGATORIO or redeme or grupo_iva
 
     @staticmethod
-    def _validar_tipos_transitorios(year: int, mes: int = 1) -> Dict[str, bool]:
+    def _validar_tipos_transitorios(year: int, mes: int = 1) -> dict[str, bool]:
         """Validate whether transitional 0%/5%/2%/7.5% rates are still in force.
 
         Cronologia (RDL 20/2022 + RDL 5/2023 + RDL 4/2024 + RDL 9/2024):
@@ -264,10 +264,10 @@ class Modelo303Calculator:
 
     def _calc_transitorios(
         self,
-        bases_transitorias: Optional[Dict[str, float]],
+        bases_transitorias: dict[str, float] | None,
         year: int,
         mes: int = 1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Calculate cuotas at transitional rates 0%/2%/5%/7.5%.
 
         Input ``bases_transitorias`` keys (todas opcionales):
@@ -281,7 +281,7 @@ class Modelo303Calculator:
         """
         bases = bases_transitorias or {}
         vigencia = self._validar_tipos_transitorios(year, mes)
-        warnings: List[str] = []
+        warnings: list[str] = []
 
         base_0 = float(bases.get("base_0", 0.0) or 0.0)
         base_5 = float(bases.get("base_5", 0.0) or 0.0)
@@ -319,8 +319,8 @@ class Modelo303Calculator:
 
     def _calc_isp(
         self,
-        bases_isp: Optional[Dict[str, float]],
-    ) -> Dict[str, Any]:
+        bases_isp: dict[str, float] | None,
+    ) -> dict[str, Any]:
         """Calculate ISP (Inversion Sujeto Pasivo) por supuesto Art. 84.uno.2 LIVA.
 
         Input ``bases_isp`` keys (todas opcionales):
@@ -338,7 +338,7 @@ class Modelo303Calculator:
         a casilla 29 (corrientes) del lado deducible — el caller decide.
         """
         bases = bases_isp or {}
-        desglose: Dict[str, Dict[str, float]] = {}
+        desglose: dict[str, dict[str, float]] = {}
         total_base = 0.0
         total_cuota = 0.0
 
@@ -366,8 +366,8 @@ class Modelo303Calculator:
 
     def _calc_mod_bases(
         self,
-        mods_bases: Optional[Dict[str, float]],
-    ) -> Dict[str, Any]:
+        mods_bases: dict[str, float] | None,
+    ) -> dict[str, Any]:
         """Calculate modificaciones de bases y cuotas anteriores (Art. 80 + 89 LIVA).
 
         Input ``mods_bases`` keys (signed: +/-):
@@ -384,7 +384,7 @@ class Modelo303Calculator:
         mods = mods_bases or {}
         total_base_mod = 0.0
         total_cuota_mod = 0.0
-        desglose: Dict[str, Dict[str, float]] = {}
+        desglose: dict[str, dict[str, float]] = {}
 
         for concepto in (
             "envases",
@@ -420,7 +420,7 @@ class Modelo303Calculator:
         cobros_pendientes_anteriores: float = 0.0,
         pagos_pendientes_anteriores: float = 0.0,
         year: int = 2025,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate RECC adjustments (Art. 163 decies-sexies LIVA).
 
         Sin re-calcular el modelo entero: ajusta el devengado (operaciones cuyo
@@ -528,12 +528,12 @@ class Modelo303Calculator:
         redeme: bool = False,
         grupo_iva: bool = False,
         # ISP por supuesto Art. 84.uno.2 LIVA (genera devengado y deducible simultaneo)
-        bases_isp: Optional[Dict[str, Dict[str, float]]] = None,
+        bases_isp: dict[str, dict[str, float]] | None = None,
         isp_es_deducible: bool = True,
         # Modificaciones bases imponibles (Art. 80 + 89 LIVA)
-        mods_bases: Optional[Dict[str, Dict[str, float]]] = None,
+        mods_bases: dict[str, dict[str, float]] | None = None,
         # Tipos transitorios alimentacion / aceites (RDL 4/2022 + RDL 9/2024)
-        bases_transitorias: Optional[Dict[str, float]] = None,
+        bases_transitorias: dict[str, float] | None = None,
         mes_inicio_periodo: int = 1,  # para validar vigencia tipos transitorios
         # RE — Recargo Equivalencia detector (devuelve bloqueo si aplica)
         re_situacion_laboral: str = "",
@@ -547,7 +547,7 @@ class Modelo303Calculator:
         year: int = 2025,
         territory: str = "comun",  # 'comun' | 'araba' | 'bizkaia' | 'gipuzkoa' | 'navarra'
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compute all Modelo 303 casillas and return the full self-assessment.
 

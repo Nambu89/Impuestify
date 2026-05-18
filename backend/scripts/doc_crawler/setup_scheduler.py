@@ -124,7 +124,7 @@ def create_task(day: str = "MON", time: str = "09:00", run_always: bool = False)
         rc, stdout, stderr = _run_schtasks(cmd)
         if rc == 0:
             print(f"Tarea '{TASK_NAME}' registrada correctamente.")
-            print(f"Verificar: taskschd.msc o --check")
+            print("Verificar: taskschd.msc o --check")
             if stdout.strip():
                 print(stdout.strip())
             return True

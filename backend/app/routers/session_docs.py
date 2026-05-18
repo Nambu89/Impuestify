@@ -5,17 +5,16 @@ Documents are extracted, anonymized, and cached in Redis (2h TTL).
 NOT stored in database. Cleared automatically or on browser session end.
 """
 
-import uuid
 import json
 import logging
-from typing import Optional, List
+import uuid
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
-from app.auth.jwt_handler import get_current_user, TokenData
-from app.services.payslip_extractor import PayslipExtractor
+from app.auth.jwt_handler import TokenData, get_current_user
 from app.security.rate_limiter import limiter
+from app.services.payslip_extractor import PayslipExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +150,7 @@ async def upload_session_doc(
     extracted_data = {}
 
     if file.content_type == "application/pdf":
-        from app.utils.pdf_extractor import extract_pdf_text, extract_pdf_text_plain
+        from app.utils.pdf_extractor import extract_pdf_text_plain
 
         # First pass: extract plain text (works for all PDFs, preserves tabular layout)
         result = await extract_pdf_text_plain(content, file.filename)
@@ -235,7 +234,7 @@ async def delete_session_doc(
     return {"status": "deleted", "doc_id": doc_id}
 
 
-@router.get("/list", response_model=List[SessionDocResponse])
+@router.get("/list", response_model=list[SessionDocResponse])
 async def list_session_docs(
     request: Request,
     current_user: TokenData = Depends(get_current_user),

@@ -31,7 +31,6 @@ from app.services.defensia_rag_verifier import (
     DefensiaRagVerifier,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers: factories para candidatos y resultados del retriever
 # ---------------------------------------------------------------------------

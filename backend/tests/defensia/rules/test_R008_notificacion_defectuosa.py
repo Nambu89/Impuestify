@@ -25,7 +25,7 @@ normativo exacto contra el corpus indexado.
 from __future__ import annotations
 
 import importlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -79,7 +79,7 @@ def test_R008_dispara_cuando_dehu_sin_puesta_disposicion_efectiva(
         },
         doc_id="doc-liq-dehu-001",
         nombre_original="liquidacion_dehu.pdf",
-        fecha_acto=datetime(2026, 1, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 1, 15, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,
@@ -131,7 +131,7 @@ def test_R008_dispara_cuando_postal_sin_segundo_intento(build_exp, build_doc, bu
         },
         doc_id="doc-liq-postal-001",
         nombre_original="liquidacion_postal.pdf",
-        fecha_acto=datetime(2026, 2, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 2, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IVA,
@@ -167,7 +167,7 @@ def test_R008_dispara_cuando_domicilio_incorrecto(build_exp, build_doc, build_br
         },
         doc_id="doc-liq-dom-001",
         nombre_original="liquidacion_domicilio.pdf",
-        fecha_acto=datetime(2026, 3, 5, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 3, 5, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ITP,
@@ -205,7 +205,7 @@ def test_R008_no_dispara_cuando_notificacion_valida(build_exp, build_doc, build_
         },
         doc_id="doc-liq-ok",
         nombre_original="liquidacion_notif_ok.pdf",
-        fecha_acto=datetime(2026, 2, 20, tzinfo=timezone.utc),
+        fecha_acto=datetime(2026, 2, 20, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.IRPF,

@@ -11,10 +11,9 @@ test file should cover topic classifier with mocked responses.
 
 import pytest
 
+from app.security.guardrails import guardrails_system
 from app.security.prompt_injection import prompt_injection_filter
 from app.security.security_pipeline import SecurityPipeline
-from app.security.guardrails import guardrails_system
-
 
 # ============================================================
 # Pattern-level tests (regex deterministic, no network)
@@ -224,7 +223,7 @@ def test_sanitization_strips_control_chars():
 
 
 def test_sanitization_truncates_oversized():
-    from app.security.security_pipeline import _sanitize, MAX_LENGTH
+    from app.security.security_pipeline import MAX_LENGTH, _sanitize
 
     huge = "a" * (MAX_LENGTH + 1000)
     sanitized = _sanitize(huge)

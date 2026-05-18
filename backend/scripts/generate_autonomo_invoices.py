@@ -11,12 +11,13 @@ Output: tests/e2e/fixtures/invoices_prueba/autonomo_test/
 
 import os
 from pathlib import Path
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
+
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 OUTPUT_DIR = (
     Path(__file__).parent.parent.parent
@@ -491,7 +492,7 @@ RECEIVED = [
 
 def main():
     print(f"Generating invoices in: {OUTPUT_DIR}")
-    print(f"\n--- EMITTED (services rendered) ---")
+    print("\n--- EMITTED (services rendered) ---")
 
     total_base_emitida = 0
     total_iva_repercutido = 0
@@ -502,7 +503,7 @@ def main():
         total_iva_repercutido += round(inv["base_imponible"] * inv.get("iva_pct", 21) / 100, 2)
         total_irpf_retenido += round(inv["base_imponible"] * inv.get("irpf_pct", 0) / 100, 2)
 
-    print(f"\n--- RECEIVED (deductible expenses) ---")
+    print("\n--- RECEIVED (deductible expenses) ---")
     total_base_recibida = 0
     total_iva_soportado = 0
     for inv in RECEIVED:
@@ -511,7 +512,7 @@ def main():
         total_iva_soportado += round(inv["base_imponible"] * inv.get("iva_pct", 21) / 100, 2)
 
     print(f"\n{'='*50}")
-    print(f"Q1 2025 Summary (Carlos Martinez, Consultor IT)")
+    print("Q1 2025 Summary (Carlos Martinez, Consultor IT)")
     print(f"{'='*50}")
     print(f"Ingresos (base): {total_base_emitida:,.2f} EUR")
     print(f"IVA repercutido: {total_iva_repercutido:,.2f} EUR")

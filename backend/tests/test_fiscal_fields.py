@@ -9,11 +9,11 @@ Covers:
 """
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.utils.regime_classifier import classify_regime, is_foral
+import pytest
 
+from app.utils.regime_classifier import classify_regime, is_foral
 
 # =============================================================================
 # 1. classify_regime

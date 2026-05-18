@@ -19,8 +19,8 @@ Auditoria: docs/audits/modelo_200_validation_2026-05.md
 """
 
 from __future__ import annotations
-from dataclasses import dataclass
 
+from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
 # Tramos / Regimen
@@ -231,7 +231,8 @@ DEFAULT_EJERCICIO = 2024
 
 def _regimen_key(territorio: str, es_zec: bool) -> str:
     """Devuelve la clave de regimen segun territorio."""
-    from app.utils.ccaa_constants import normalize_ccaa, FORAL_VASCO, CEUTA_MELILLA as CM_SET
+    from app.utils.ccaa_constants import CEUTA_MELILLA as CM_SET
+    from app.utils.ccaa_constants import FORAL_VASCO, normalize_ccaa
 
     canon = normalize_ccaa(territorio)
     if es_zec and canon == "Canarias":

@@ -21,10 +21,10 @@ Usage:
     # result = {"modelo": "303", "casillas": {...}, "metadata": {...}, ...}
 """
 
-import re
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+import re
 from dataclasses import dataclass, field
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _parse_spanish_number(s: str) -> Optional[float]:
+def _parse_spanish_number(s: str) -> float | None:
     """
     Parse a Spanish-formatted number: 1.234,56 -> 1234.56
     Also handles: 1234,56 | 1234.56 | 1,234.56 (English) | plain integers.
@@ -88,7 +88,7 @@ _MODEL_PATTERNS = [
 ]
 
 
-def detect_modelo(text: str) -> Optional[str]:
+def detect_modelo(text: str) -> str | None:
     """Detect which modelo a PDF corresponds to from its text."""
     for pattern, modelo in _MODEL_PATTERNS:
         if pattern.search(text):
@@ -111,9 +111,9 @@ _RE_NOMBRE = re.compile(
 )
 
 
-def _extract_metadata(text: str) -> Dict[str, Any]:
+def _extract_metadata(text: str) -> dict[str, Any]:
     """Extract NIF, year, quarter, and name from declaration text."""
-    meta: Dict[str, Any] = {}
+    meta: dict[str, Any] = {}
 
     m = _RE_NIF.search(text)
     if m:
@@ -160,12 +160,12 @@ _RE_CASILLA_LINE = re.compile(
 )
 
 
-def _extract_casillas_generic(text: str) -> Dict[str, float]:
+def _extract_casillas_generic(text: str) -> dict[str, float]:
     """
     Extract casilla→value pairs from text using multiple pattern strategies.
     Returns dict like {"01": 12345.67, "03": 500.0, ...}
     """
-    casillas: Dict[str, float] = {}
+    casillas: dict[str, float] = {}
 
     # Strategy 1: [01] 1.234,56
     for m in _RE_CASILLA_BRACKET.finditer(text):
@@ -189,7 +189,7 @@ def _extract_casillas_generic(text: str) -> Dict[str, float]:
 # ---------------------------------------------------------------------------
 
 
-def _find_amount_after(text: str, pattern: re.Pattern) -> Optional[float]:
+def _find_amount_after(text: str, pattern: re.Pattern) -> float | None:
     """Find the first number after a regex pattern match."""
     m = pattern.search(text)
     if not m:
@@ -224,9 +224,9 @@ _303_LABEL_PATTERNS = {
 }
 
 
-def _extract_303(text: str, casillas: Dict[str, float]) -> Dict[str, Any]:
+def _extract_303(text: str, casillas: dict[str, float]) -> dict[str, Any]:
     """Extract Modelo 303 specific fields."""
-    result: Dict[str, Any] = {"modelo": "303"}
+    result: dict[str, Any] = {"modelo": "303"}
 
     # Map casillas to field names
     casilla_map = {
@@ -251,7 +251,7 @@ def _extract_303(text: str, casillas: Dict[str, float]) -> Dict[str, Any]:
         "70": "resultado_anterior_complementaria",
     }
 
-    fields: Dict[str, float] = {}
+    fields: dict[str, float] = {}
     for cas_num, field_name in casilla_map.items():
         if cas_num in casillas:
             fields[field_name] = casillas[cas_num]
@@ -292,9 +292,9 @@ _130_LABEL_PATTERNS = {
 }
 
 
-def _extract_130(text: str, casillas: Dict[str, float]) -> Dict[str, Any]:
+def _extract_130(text: str, casillas: dict[str, float]) -> dict[str, Any]:
     """Extract Modelo 130 specific fields."""
-    result: Dict[str, Any] = {"modelo": "130"}
+    result: dict[str, Any] = {"modelo": "130"}
 
     casilla_map = {
         "1": "ingresos_acumulados",
@@ -310,7 +310,7 @@ def _extract_130(text: str, casillas: Dict[str, float]) -> Dict[str, Any]:
         "19": "resultado_final",
     }
 
-    fields: Dict[str, float] = {}
+    fields: dict[str, float] = {}
     for cas_num, field_name in casilla_map.items():
         if cas_num in casillas:
             fields[field_name] = casillas[cas_num]
@@ -357,11 +357,11 @@ _420_LABEL_PATTERNS = {
 }
 
 
-def _extract_420(text: str, casillas: Dict[str, float]) -> Dict[str, Any]:
+def _extract_420(text: str, casillas: dict[str, float]) -> dict[str, Any]:
     """Extract Modelo 420 specific fields."""
-    result: Dict[str, Any] = {"modelo": "420"}
+    result: dict[str, Any] = {"modelo": "420"}
 
-    fields: Dict[str, float] = {}
+    fields: dict[str, float] = {}
 
     # Label-based (420 doesn't use standard casilla numbers like 303)
     for field_name, pattern in _420_LABEL_PATTERNS.items():
@@ -388,17 +388,17 @@ class ExtractionResult:
     """Result of extracting data from a declaration PDF."""
 
     success: bool
-    modelo: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    fields: Dict[str, float] = field(default_factory=dict)
-    casillas_raw: Dict[str, float] = field(default_factory=dict)
+    modelo: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    fields: dict[str, float] = field(default_factory=dict)
+    casillas_raw: dict[str, float] = field(default_factory=dict)
     territory: str = "Comun"
     confidence: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_form_data(self) -> Dict[str, Any]:
+    def to_form_data(self) -> dict[str, Any]:
         """Convert extracted fields to form_data format for DeclarationService.save()."""
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
         data.update(self.fields)
         data.update(self.metadata)
         data["territory"] = self.territory
@@ -414,7 +414,7 @@ class DeclarationExtractor:
     then applies model-specific casilla mapping and label-based extraction.
     """
 
-    def extract(self, text: str, modelo: Optional[str] = None) -> ExtractionResult:
+    def extract(self, text: str, modelo: str | None = None) -> ExtractionResult:
         """
         Extract declaration data from PDF text.
 
@@ -485,7 +485,7 @@ class DeclarationExtractor:
         )
 
     def _calculate_confidence(
-        self, modelo: str, fields: Dict[str, float], casillas: Dict[str, float]
+        self, modelo: str, fields: dict[str, float], casillas: dict[str, float]
     ) -> float:
         """
         Calculate extraction confidence (0.0 - 1.0).

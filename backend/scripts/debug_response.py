@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 url = "http://localhost:8000/api/ask"
 question = "Vivo en Zaragoza y gané 35000 euros en 2024, ¿cuánto pagaré de IRPF?"

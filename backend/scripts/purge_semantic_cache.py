@@ -22,9 +22,9 @@ Usage:
     python backend/scripts/purge_semantic_cache.py --force     # full reset (dangerous)
 """
 
+import argparse
 import os
 import sys
-import argparse
 from pathlib import Path
 
 # Fix Windows encoding for stdout
@@ -91,7 +91,7 @@ def main() -> int:
     try:
         info = index.info()
         vector_count = info.vector_count
-        print(f"Index stats:")
+        print("Index stats:")
         print(f"   Vectors: {vector_count}")
         print(f"   Dimensions: {info.dimension}")
         print(f"   Similarity: {info.similarity_function}")
@@ -106,13 +106,13 @@ def main() -> int:
     if vector_count > MAX_SAFE_CACHE_SIZE and not args.force:
         print()
         print(f"🛑 ABORTING: {vector_count} vectors is > {MAX_SAFE_CACHE_SIZE}.")
-        print(f"   Looks like this index contains RAG embeddings (84K+ typical),")
-        print(f"   not just cache entries. Doing a full reset would destroy RAG.")
+        print("   Looks like this index contains RAG embeddings (84K+ typical),")
+        print("   not just cache entries. Doing a full reset would destroy RAG.")
         print()
-        print(f"   Options:")
-        print(f"   1. (Recommended) Use selective deletion below — no need to")
-        print(f"      reset the whole index.")
-        print(f"   2. Use --force ONLY if you've verified there is no RAG here.")
+        print("   Options:")
+        print("   1. (Recommended) Use selective deletion below — no need to")
+        print("      reset the whole index.")
+        print("   2. Use --force ONLY if you've verified there is no RAG here.")
         print()
         # Fall through to selective deletion
         _selective_delete(index, args.pattern)
@@ -169,7 +169,7 @@ def _selective_delete(index, pattern: str | None) -> None:
                 if pattern_lc not in query_text:
                     continue
             try:
-                index.delete(getattr(v, "id"))
+                index.delete(v.id)
                 deleted += 1
             except Exception as e:
                 print(f"   delete failed for {getattr(v, 'id', '?')}: {e}")

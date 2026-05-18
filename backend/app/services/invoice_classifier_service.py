@@ -6,7 +6,6 @@ de la factura y las cuentas candidatas de la tabla pgc_accounts.
 
 import json
 import logging
-from typing import Optional
 
 from pydantic import BaseModel
 

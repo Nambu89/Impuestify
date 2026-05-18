@@ -174,7 +174,7 @@ async def verify_ingestion():
     if fts_count == s["total_chunks"]:
         print(f"  ✅ FTS5 index complete: {fts_count} entries")
     elif fts_count == 0:
-        print(f"  ❌ FTS5 index EMPTY - Run rebuild_fts5.py")
+        print("  ❌ FTS5 index EMPTY - Run rebuild_fts5.py")
     else:
         print(f"  ⚠️  FTS5 index incomplete: {fts_count}/{s['total_chunks']}")
 

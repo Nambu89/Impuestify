@@ -10,8 +10,8 @@ sections must be discoverable via stable keywords.
 """
 
 import os
-import pytest
 
+import pytest
 
 # Ensure the agent can build a client even without an OpenAI key during tests.
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-not-used")

@@ -16,12 +16,12 @@ from __future__ import annotations
 import logging
 import math
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_date(date_str: Optional[str]) -> Optional[date]:
+def _parse_date(date_str: str | None) -> date | None:
     """Parse YYYY-MM-DD date string. Returns None on failure."""
     if not date_str:
         return None
@@ -60,10 +60,10 @@ class PropertyCapitalGainsCalculator:
     async def calculate(
         self,
         *,
-        ventas: List[Dict[str, Any]],
+        ventas: list[dict[str, Any]],
         valor_transmision_previo_2015: float = 0,
         year: int = 2025,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate capital gains from property sales.
 
         Args:
@@ -90,12 +90,12 @@ class PropertyCapitalGainsCalculator:
         if not ventas:
             return self._empty_result()
 
-        desglose: List[Dict[str, Any]] = []
+        desglose: list[dict[str, Any]] = []
         ganancia_bruta_total = 0.0
         abatimiento_total = 0.0
         exencion_reinversion_total = 0.0
         ganancia_neta_total = 0.0
-        avisos: List[str] = []
+        avisos: list[str] = []
 
         # Track cumulative valor transmision for DT 9a 400K limit
         valor_transmision_acumulado = valor_transmision_previo_2015
@@ -132,11 +132,11 @@ class PropertyCapitalGainsCalculator:
 
     def _process_venta(
         self,
-        venta: Dict[str, Any],
+        venta: dict[str, Any],
         idx: int,
         valor_transmision_acumulado: float,
         year: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process a single property sale."""
         tipo = venta.get("tipo", "otro")
         precio_venta = float(venta.get("precio_venta", 0))
@@ -199,7 +199,7 @@ class PropertyCapitalGainsCalculator:
         # --- 5. Exencion por reinversion en vivienda habitual (Art. 38) ---
         aplica_reinversion = False
         exencion_reinversion = 0.0
-        aviso_reinversion: Optional[str] = None
+        aviso_reinversion: str | None = None
 
         if (
             reinversion
@@ -296,7 +296,7 @@ class PropertyCapitalGainsCalculator:
         return min(coeficiente, 100.0)
 
     @staticmethod
-    def _empty_result() -> Dict[str, Any]:
+    def _empty_result() -> dict[str, Any]:
         """Return empty result when no sales provided."""
         return {
             "ganancia_bruta_total": 0.0,

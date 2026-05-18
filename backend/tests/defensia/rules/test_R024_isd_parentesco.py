@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import importlib
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -44,7 +44,6 @@ from app.models.defensia import (
     Tributo,
 )
 from app.services.defensia_rules_engine import evaluar, reset_registry
-
 
 # ---------------------------------------------------------------------------
 # Helper de aislamiento — carga solo R024 tras el reset del conftest
@@ -118,7 +117,7 @@ def test_R024_positivo_grupo_II_sin_reduccion_estatal(build_exp, build_brief, bu
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-001",
-        fecha_acto=datetime(2025, 6, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 6, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -170,7 +169,7 @@ def test_R024_positivo_grupo_I_sin_reduccion_estatal(build_exp, build_brief, bui
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-002",
-        fecha_acto=datetime(2025, 7, 1, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 7, 1, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -221,7 +220,7 @@ def test_R024_positivo_bonificacion_autonomica_ignorada(build_exp, build_brief, 
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-003",
-        fecha_acto=datetime(2025, 5, 20, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 20, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -272,7 +271,7 @@ def test_R024_negativo_grupo_III_fuera_de_alcance(build_exp, build_brief, build_
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-004",
-        fecha_acto=datetime(2025, 8, 15, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 8, 15, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -315,7 +314,7 @@ def test_R024_negativo_reducciones_correctamente_aplicadas(build_exp, build_brie
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-005",
-        fecha_acto=datetime(2025, 5, 20, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 20, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,
@@ -349,7 +348,7 @@ def test_R024_cita_es_semantica_no_hardcoded(build_exp, build_brief, build_doc):
             "ejercicio": 2025,
         },
         doc_id="doc-liquidacion-R024-006",
-        fecha_acto=datetime(2025, 5, 10, tzinfo=timezone.utc),
+        fecha_acto=datetime(2025, 5, 10, tzinfo=UTC),
     )
     exp = build_exp(
         tributo=Tributo.ISD,

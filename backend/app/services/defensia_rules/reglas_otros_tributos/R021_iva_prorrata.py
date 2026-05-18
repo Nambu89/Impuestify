@@ -47,7 +47,6 @@ from app.models.defensia import (
 )
 from app.services.defensia_rules_engine import regla
 
-
 # ---------------------------------------------------------------------------
 # Constantes — umbrales del regimen de prorrata del IVA (arts. 102-106 LIVA)
 # ---------------------------------------------------------------------------

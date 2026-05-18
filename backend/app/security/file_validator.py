@@ -18,11 +18,10 @@ Implements multi-layer validation:
 - Metadata sanitization
 """
 
-import os
-import io
 import hashlib
+import io
 import logging
-from typing import Optional, Tuple, List
+
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -49,11 +48,11 @@ class FileValidationResult(BaseModel):
     """Result of file validation"""
 
     is_valid: bool
-    file_type: Optional[str] = None
+    file_type: str | None = None
     file_size: int = 0
-    file_hash: Optional[str] = None
-    warnings: List[str] = Field(default_factory=list)
-    errors: List[str] = Field(default_factory=list)
+    file_hash: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
     metadata: dict = Field(default_factory=dict)
 
 
@@ -107,7 +106,7 @@ class FileValidator:
         self.strict_mode = strict_mode
 
     async def validate_pdf(
-        self, file_content: bytes, filename: str, content_type: Optional[str] = None
+        self, file_content: bytes, filename: str, content_type: str | None = None
     ) -> FileValidationResult:
         """
         Comprehensive PDF validation.
@@ -266,7 +265,7 @@ class FileValidator:
 
         return safe_metadata
 
-    def validate_filename(self, filename: str) -> Tuple[bool, List[str]]:
+    def validate_filename(self, filename: str) -> tuple[bool, list[str]]:
         """
         Validate filename for path traversal and other attacks.
 

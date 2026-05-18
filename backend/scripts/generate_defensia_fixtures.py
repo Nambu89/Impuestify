@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -26,7 +27,6 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from reportlab.lib import colors
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 JSON_PATH = REPO_ROOT / "backend/tests/defensia/fixtures/caso_david/expediente_anonimizado.json"

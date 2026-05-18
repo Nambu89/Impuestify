@@ -4,13 +4,14 @@ Workspace Service for TaxIA
 Handles workspace management operations with Turso database.
 """
 
-import uuid
 import logging
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timezone
+import uuid
+from datetime import UTC, datetime
+from typing import Any
+
+from pydantic import BaseModel
 
 from app.database.turso_client import get_db_client
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -19,20 +20,20 @@ class Workspace(BaseModel):
     id: str
     user_id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     icon: str = "📁"
     is_default: bool = False
     max_files: int = 50
     max_size_mb: int = 100
     created_at: datetime
     updated_at: datetime
-    file_count: Optional[int] = 0
+    file_count: int | None = 0
 
 
 class WorkspaceCreate(BaseModel):
     name: str
-    description: Optional[str] = None
-    icon: Optional[str] = "📁"
+    description: str | None = None
+    icon: str | None = "📁"
 
 
 class WorkspaceService:
@@ -52,7 +53,7 @@ class WorkspaceService:
         db = await get_db_client()
 
         workspace_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         # Check if this is the first workspace for the user (to make it default)
         workspaces = await self.get_user_workspaces(user_id)
@@ -93,7 +94,7 @@ class WorkspaceService:
             updated_at=datetime.fromisoformat(now),
         )
 
-    async def get_user_workspaces(self, user_id: str) -> List[Workspace]:
+    async def get_user_workspaces(self, user_id: str) -> list[Workspace]:
         """
         Get all workspaces for a user.
 
@@ -137,7 +138,7 @@ class WorkspaceService:
 
         return workspaces
 
-    async def get_workspace(self, workspace_id: str, user_id: str) -> Optional[Workspace]:
+    async def get_workspace(self, workspace_id: str, user_id: str) -> Workspace | None:
         """
         Get a specific workspace by ID, ensuring ownership.
 
@@ -202,7 +203,7 @@ class WorkspaceService:
         logger.info(f"Deleted workspace {workspace_id} for user {user_id}")
         return True
 
-    async def get_fiscal_summary_from_workspace(self, user_id: str) -> Dict[str, Any]:
+    async def get_fiscal_summary_from_workspace(self, user_id: str) -> dict[str, Any]:
         """
         Extract fiscal totals from processed workspace files for this user.
 

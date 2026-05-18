@@ -6,11 +6,11 @@ Focus: IRPF scales by CCAA from Manual Renta 2024 Parte 1.
 
 import asyncio
 import os
+import re
 import sys
 import uuid
-import re
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
@@ -45,7 +45,7 @@ class TableExtractor:
             )
         return self.client
 
-    def extract_tables_from_pdf(self, pdf_path: str) -> List[Dict]:
+    def extract_tables_from_pdf(self, pdf_path: str) -> list[dict]:
         """
         Extract all tables from PDF.
 
@@ -59,6 +59,7 @@ class TableExtractor:
             }
         """
         import base64
+
         from azure.ai.documentintelligence.models import AnalyzeDocumentRequest
 
         client = self._init_client()
@@ -147,7 +148,7 @@ class IRPFScaleParser:
         "estatal": "Estatal",
     }
 
-    def is_irpf_scale_table(self, table: Dict, nearby_text: str = "") -> Optional[str]:
+    def is_irpf_scale_table(self, table: dict, nearby_text: str = "") -> str | None:
         """
         Check if table is an IRPF scale and return CCAA name.
 
@@ -175,7 +176,7 @@ class IRPFScaleParser:
 
         return None
 
-    def parse_scale_table(self, table: Dict) -> List[Dict]:
+    def parse_scale_table(self, table: dict) -> list[dict]:
         """
         Parse IRPF scale table into structured rows.
 
@@ -309,7 +310,7 @@ async def extract_irpf_scales():
             parsed_rows = parser.parse_scale_table(table)
 
             if not parsed_rows:
-                print(f"   ⚠️  No valid rows parsed\n")
+                print("   ⚠️  No valid rows parsed\n")
                 continue
 
             # Guess CCAA from page (simplified - in production would parse text)
@@ -374,7 +375,7 @@ async def extract_irpf_scales():
     await db.disconnect()
 
     print("=" * 70)
-    print(f"✅ EXTRACTION COMPLETED")
+    print("✅ EXTRACTION COMPLETED")
     print(f"   Tables processed: {len(chapter15_tables)}")
     print(f"   Scales inserted: {scales_inserted}")
     print("=" * 70)

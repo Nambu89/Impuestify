@@ -11,17 +11,17 @@ Covers:
 """
 
 import pytest
+
 from app.utils.calculators.company_size import (
-    classify_company,
+    AUDIT_THRESHOLDS_2025,
+    AUDIT_THRESHOLDS_2026,
+    THRESHOLDS_2025,
+    THRESHOLDS_2026,
     YearData,
     _count_exceeded,
     _fits_category,
-    THRESHOLDS_2025,
-    THRESHOLDS_2026,
-    AUDIT_THRESHOLDS_2025,
-    AUDIT_THRESHOLDS_2026,
+    classify_company,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper

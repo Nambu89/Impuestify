@@ -4,8 +4,9 @@ Tests for TaxIA Agent Framework
 Tests TaxAgent, AgentRuntime, and multi-agent patterns.
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 
 
 class TestTaxAgent:
@@ -172,7 +173,7 @@ class TestAgentIntegration:
 
     def test_agent_module_exports(self):
         """Agent module should export correct classes"""
-        from app.agents import TaxAgent, get_tax_agent, AgentRuntime, get_agent_runtime
+        from app.agents import AgentRuntime, TaxAgent, get_agent_runtime, get_tax_agent
 
         assert TaxAgent is not None
         assert get_tax_agent is not None
