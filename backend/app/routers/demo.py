@@ -168,7 +168,7 @@ async def demo_fts_search(db: TursoClient, query: str, k: int = 3) -> list[dict]
 
         # Exclude foral regions for simplicity in demo
         sql = """
-        SELECT 
+        SELECT
             c.id,
             c.content,
             c.page_number,
@@ -177,10 +177,10 @@ async def demo_fts_search(db: TursoClient, query: str, k: int = 3) -> list[dict]
         FROM document_chunks_fts fts
         JOIN document_chunks c ON c.id = fts.chunk_id
         JOIN documents d ON d.id = c.document_id
-        WHERE document_chunks_fts MATCH ? 
+        WHERE document_chunks_fts MATCH ?
         AND LOWER(d.filename) NOT LIKE '%navarra%'
         AND LOWER(d.filename) NOT LIKE '%bizkaia%'
-        ORDER BY fts.rank 
+        ORDER BY fts.rank
         LIMIT ?
         """
 

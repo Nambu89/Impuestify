@@ -46,12 +46,12 @@ async def create_tax_tables_schema():
         # Create indexes
         print("Creating indexes...")
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_irpf_jurisdiction_year 
+            CREATE INDEX IF NOT EXISTS idx_irpf_jurisdiction_year
             ON irpf_scales(jurisdiction, year, scale_type)
         """)
 
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_irpf_year 
+            CREATE INDEX IF NOT EXISTS idx_irpf_year
             ON irpf_scales(year)
         """)
         print("✅ Indexes created\n")

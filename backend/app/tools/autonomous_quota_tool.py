@@ -17,7 +17,7 @@ AUTONOMOUS_QUOTA_TOOL = {
         "name": "calculate_autonomous_quota",
         "description": """SIEMPRE DEBES USAR ESTA FUNCIÓN cuando el usuario pregunte sobre:
 - Cuota de autónomos
-- Cotización de autónomos  
+- Cotización de autónomos
 - Cuánto paga un autónomo
 - Cuánto tengo que pagar como autónomo
 - Base de cotización
@@ -35,7 +35,7 @@ SIEMPRE calcula la cuota exacta con esta función.
      "¿Esos [cantidad]€ son ingresos brutos (facturación total) o rendimientos netos (después de restar gastos)?"
 
 2. INTERPRETACIÓN AUTOMÁTICA (solo si es claro):
-   - Usuario dice "ingresos brutos", "facturación", "he facturado" 
+   - Usuario dice "ingresos brutos", "facturación", "he facturado"
      → Aplica deducción del 7%: cantidad × 0.93 = ingresos_netos_mensuales
    - Usuario dice "ingresos netos", "rendimientos netos", "después de gastos", "descontando gastos"
      → USA directamente: ingresos_netos_mensuales = cantidad (NO aplicar × 0.93)
@@ -153,7 +153,7 @@ async def calculate_autonomous_quota_tool(
 
         # Query the autonomous_quotas table
         sql = """
-		SELECT 
+		SELECT
 			tramo_number,
 			rendimientos_netos_min,
 			rendimientos_netos_max,

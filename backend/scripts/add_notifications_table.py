@@ -51,12 +51,12 @@ async def add_notifications_table():
 
         # Create indexes
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_notif_user 
+            CREATE INDEX IF NOT EXISTS idx_notif_user
             ON notification_analyses(user_id, created_at DESC)
         """)
 
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_notif_hash 
+            CREATE INDEX IF NOT EXISTS idx_notif_hash
             ON notification_analyses(file_hash)
         """)
 

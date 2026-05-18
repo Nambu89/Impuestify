@@ -104,9 +104,7 @@ def _valor_declarado_mayor_o_igual(datos: dict, valor_referencia: float) -> bool
     return declarado_f >= valor_referencia
 
 
-def _detectar_tasacion_pericial_contradictoria(
-    datos: dict, valor_referencia: float
-) -> dict | None:
+def _detectar_tasacion_pericial_contradictoria(datos: dict, valor_referencia: float) -> dict | None:
     """Patron 1: tasacion pericial contradictoria con valor inferior.
 
     Dispara cuando `tasacion_pericial_contradictoria` es True y existe un

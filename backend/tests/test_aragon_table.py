@@ -26,7 +26,7 @@ async def test_aragon_table():
 
     # Search for Aragón-specific content in pages 1236
     sql = """
-    SELECT 
+    SELECT
         c.page_number,
         c.content,
         d.filename
@@ -69,7 +69,7 @@ async def test_aragon_table():
     print("🔍 Testing FTS5 search for 'Aragón IRPF escala'...\n")
 
     fts_sql = """
-    SELECT 
+    SELECT
         c.page_number,
         c.content,
         d.filename,

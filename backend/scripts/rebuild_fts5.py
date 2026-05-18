@@ -68,7 +68,7 @@ async def rebuild_fts5():
     # Test search with JOIN to verify documents table schema too
     print("\n🧪 Testing full search with JOIN...")
     test_sql = """
-    SELECT 
+    SELECT
         c.id,
         d.filename,
         d.title,

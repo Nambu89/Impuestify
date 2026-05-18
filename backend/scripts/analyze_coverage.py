@@ -23,7 +23,7 @@ async def analyze_coverage():
 
     # Get page coverage for Manual Renta Parte 1
     sql = """
-    SELECT 
+    SELECT
         MIN(c.page_number) as min_page,
         MAX(c.page_number) as max_page,
         COUNT(DISTINCT c.page_number) as unique_pages,

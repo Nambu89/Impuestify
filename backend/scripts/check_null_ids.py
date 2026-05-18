@@ -46,8 +46,8 @@ async def check_null_ids():
 
     # Check orphaned chunks
     result = await db.execute("""
-        SELECT COUNT(*) as count 
-        FROM document_chunks 
+        SELECT COUNT(*) as count
+        FROM document_chunks
         WHERE document_id NOT IN (SELECT id FROM documents WHERE id IS NOT NULL)
     """)
     orphaned = result.rows[0]["count"]

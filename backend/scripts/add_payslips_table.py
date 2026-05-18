@@ -37,7 +37,7 @@ async def add_payslips_table():
                 file_path TEXT NOT NULL,
                 file_size INTEGER NOT NULL,
                 upload_date TEXT DEFAULT (datetime('now')),
-                
+
                 -- Datos extraídos del PDF
                 period_month INTEGER,
                 period_year INTEGER,
@@ -46,7 +46,7 @@ async def add_payslips_table():
                 employee_name TEXT,
                 employee_nif TEXT,
                 employee_ss TEXT,
-                
+
                 -- Cantidades económicas
                 gross_salary REAL,
                 net_salary REAL,
@@ -57,16 +57,16 @@ async def add_payslips_table():
                 unemployment_contribution REAL,
                 extra_payments REAL,
                 overtime_pay REAL,
-                
+
                 -- Metadata
                 extraction_status TEXT CHECK(extraction_status IN ('pending', 'processing', 'completed', 'failed')) DEFAULT 'pending',
                 extracted_data TEXT,  -- JSON con todos los datos extraídos
                 analysis_summary TEXT,
                 error_message TEXT,
-                
+
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now')),
-                
+
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         """)
@@ -75,17 +75,17 @@ async def add_payslips_table():
 
         # Create indexes
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_payslips_user 
+            CREATE INDEX IF NOT EXISTS idx_payslips_user
             ON payslips(user_id, created_at DESC)
         """)
 
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_payslips_period 
+            CREATE INDEX IF NOT EXISTS idx_payslips_period
             ON payslips(period_year, period_month)
         """)
 
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_payslips_status 
+            CREATE INDEX IF NOT EXISTS idx_payslips_status
             ON payslips(extraction_status)
         """)
 

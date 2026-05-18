@@ -210,7 +210,7 @@ async def analyze_notification(
 
         await db.execute(
             """
-			INSERT INTO notification_analyses 
+			INSERT INTO notification_analyses
 			(id, user_id, filename, file_hash, notification_type, region, is_foral,
 			 summary, deadlines, reference_links, severity, notification_date, created_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -305,7 +305,7 @@ async def get_notification_history(
     try:
         result = await db.execute(
             """
-			SELECT 
+			SELECT
 				id, filename, notification_type, severity,
 				notification_date, created_at
 			FROM notification_analyses

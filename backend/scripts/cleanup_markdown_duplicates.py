@@ -42,7 +42,7 @@ async def cleanup_and_reingest():
     # Also delete other markdown duplicates
     print("\n🗑️  Deleting other markdown duplicates...")
     result = await db.execute("""
-        SELECT id, filename FROM documents 
+        SELECT id, filename FROM documents
         WHERE filename IN ('cuota_autonomos_2025_infoautonomos.md', 'ipsi_sage_completo.md')
     """)
 

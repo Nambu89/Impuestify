@@ -215,9 +215,7 @@ def _get_coeficiente(relationship: str, previous_wealth: float) -> float:
     return 2.4000
 
 
-def _reduccion_parentesco_estatal(
-    relationship: str, recipient_age: int | None
-) -> dict[str, Any]:
+def _reduccion_parentesco_estatal(relationship: str, recipient_age: int | None) -> dict[str, Any]:
     """
     Compute the kinship reduction (Arts. 20.2 a) Ley 29/1987).
     Returns dict with importe and base_legal.

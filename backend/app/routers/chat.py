@@ -211,7 +211,7 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> list[dict]:
                 doc_conditions = " OR ".join(["d.filename LIKE ?" for _ in foral_match])
                 doc_params = [f"%{doc}%" for doc in foral_match]
                 ccaa_sql = f"""
-				SELECT 
+				SELECT
 					c.id,
 					c.content,
 					c.page_number,
@@ -221,16 +221,16 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> list[dict]:
 				FROM document_chunks_fts fts
 				JOIN document_chunks c ON c.id = fts.chunk_id
 				JOIN documents d ON d.id = c.document_id
-				WHERE document_chunks_fts MATCH ? 
+				WHERE document_chunks_fts MATCH ?
 				AND ({doc_conditions})
-				ORDER BY rank 
+				ORDER BY rank
 				LIMIT 5
 				"""
                 logger.info(f"🎯 Searching in foral docs: {foral_match}")
             else:
                 # Search in AEAT manual for non-foral CCAA
                 ccaa_sql = f"""
-				SELECT 
+				SELECT
 					c.id,
 					c.content,
 					c.page_number,
@@ -240,11 +240,11 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> list[dict]:
 				FROM document_chunks_fts fts
 				JOIN document_chunks c ON c.id = fts.chunk_id
 				JOIN documents d ON d.id = c.document_id
-				WHERE document_chunks_fts MATCH ? 
+				WHERE document_chunks_fts MATCH ?
 				AND d.filename LIKE '%Renta_2024._Parte_1%'
 				AND c.page_number BETWEEN 1230 AND 1245
 				{metadata_filter}
-				ORDER BY rank 
+				ORDER BY rank
 				LIMIT 3
 				"""
 
@@ -279,7 +279,7 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> list[dict]:
         # === Phase 2: General FTS5 Search ===
         try:
             sql = f"""
-			SELECT 
+			SELECT
 				c.id,
 				c.content,
 				c.page_number,
@@ -289,9 +289,9 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> list[dict]:
 			FROM document_chunks_fts fts
 			JOIN document_chunks c ON c.id = fts.chunk_id
 			JOIN documents d ON d.id = c.document_id
-			WHERE document_chunks_fts MATCH ? 
+			WHERE document_chunks_fts MATCH ?
 			{metadata_filter}
-			ORDER BY rank 
+			ORDER BY rank
 			LIMIT ?
 			"""
 
@@ -326,7 +326,7 @@ async def fts_search(db: TursoClient, query: str, k: int = 5) -> list[dict]:
             where_conditions = " OR ".join(["LOWER(c.content) LIKE ?" for _ in keywords])
 
             sql = f"""
-			SELECT 
+			SELECT
 				c.id,
 				c.content,
 				c.page_number,

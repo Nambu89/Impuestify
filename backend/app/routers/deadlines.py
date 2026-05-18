@@ -151,9 +151,7 @@ async def _get_user_territory(user_id: str, db: TursoClient) -> tuple[str, list[
 
 @router.get("/api/deadlines", response_model=list[FiscalDeadlineOut])
 async def list_deadlines(
-    territory: str | None = Query(
-        None, description="Filter by territory (e.g. Madrid, Gipuzkoa)"
-    ),
+    territory: str | None = Query(None, description="Filter by territory (e.g. Madrid, Gipuzkoa)"),
     month: int | None = Query(None, ge=1, le=12, description="Filter by end_date month"),
     year: int | None = Query(None, ge=2024, le=2030, description="Filter by tax_year"),
     applies_to: str | None = Query(

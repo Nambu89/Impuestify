@@ -42,7 +42,7 @@ async def setup_fts5():
     try:
         # Check if FTS5 table already exists
         check_sql = """
-        SELECT name FROM sqlite_master 
+        SELECT name FROM sqlite_master
         WHERE type='table' AND name='document_chunks_fts'
         """
 
@@ -91,7 +91,7 @@ async def setup_fts5():
         print("\n🧪 Testing FTS5 search...")
         test_sql = """
         SELECT chunk_id, snippet(document_chunks_fts, 1, '<b>', '</b>', '...', 32) as snippet
-        FROM document_chunks_fts 
+        FROM document_chunks_fts
         WHERE document_chunks_fts MATCH 'IRPF OR impuesto'
         ORDER BY rank
         LIMIT 3

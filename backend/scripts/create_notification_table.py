@@ -56,7 +56,7 @@ async def create_notification_table():
 
         # Create index
         await db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_notif_user 
+            CREATE INDEX IF NOT EXISTS idx_notif_user
             ON notification_analyses(user_id, created_at DESC)
         """)
 
@@ -64,7 +64,7 @@ async def create_notification_table():
 
         # Verify
         result = await db.execute("""
-            SELECT name FROM sqlite_master 
+            SELECT name FROM sqlite_master
             WHERE type='table' AND name='notification_analyses'
         """)
 

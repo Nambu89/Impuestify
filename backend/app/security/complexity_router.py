@@ -104,7 +104,7 @@ Rules:
 1. **COMPLEX** -> Use 'gpt-5' or 'gpt-5.1'.
    - Detailed tax analysis, multi-step reasoning, ambiguous scenarios, legal interpretation.
    - Keywords: "Liquidación", "Inspección", "Recurso", "Sanción compleja", "Planificación fiscal".
-   
+
 2. **SIMPLE/MODERATE** -> Use 'gpt-5-mini'.
    - Definitions, simple calculations, lookup facts, greeting, general info.
    - Keywords: "Calendario", "Plazo", "Qué es", "Cuota autónomo simple".

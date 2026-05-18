@@ -48,10 +48,10 @@ class DocumentDetector:
 
 1. **payslip** (nómina): Documento que muestra el salario de un empleado
    - Keywords típicos: "nómina", "salario base", "devengos", "deducciones", "líquido a percibir", "cotización", "IRPF", "seguridad social", "empresa", "trabajador", "periodo de liquidación"
-   
+
 2. **aeat_notification** (notificación de Hacienda): Comunicación oficial de la Agencia Tributaria
    - Keywords típicos: "AEAT", "Agencia Tributaria", "notificación", "requerimiento", "providencia", "apremio", "liquidación", "sanción", "NIF", "expediente", "plazo", "alegaciones"
-   
+
 3. **other** (otro tipo de documento): Cualquier otro documento
 
 **TEXTO DEL DOCUMENTO:**

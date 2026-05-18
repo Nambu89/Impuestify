@@ -107,7 +107,7 @@ async def sync(batch_size: int = 100, namespace: str = "rag"):
     while offset < total_chunks:
         result = await db.execute(
             """
-            SELECT 
+            SELECT
                 dc.id as chunk_id,
                 dc.content,
                 dc.page_number,

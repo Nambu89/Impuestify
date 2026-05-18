@@ -611,9 +611,7 @@ class PayslipExtractor:
                 return ccaa
         return None
 
-    def calculate_effective_tax_rate(
-        self, irpf_amount: float, gross_salary: float
-    ) -> float | None:
+    def calculate_effective_tax_rate(self, irpf_amount: float, gross_salary: float) -> float | None:
         """Calcula el tipo efectivo de IRPF"""
         if gross_salary and gross_salary > 0:
             return round((irpf_amount / gross_salary) * 100, 2)

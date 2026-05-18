@@ -28,7 +28,7 @@ async def test():
     fts_query = '"Aragón" OR "escala" OR "IRPF"'
 
     sql = """
-    SELECT 
+    SELECT
         c.page_number,
         c.content,
         d.filename,

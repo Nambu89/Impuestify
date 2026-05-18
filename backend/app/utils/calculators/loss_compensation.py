@@ -7,7 +7,6 @@ Art. 49 LIRPF: Base del ahorro (GP ahorro + RCM).
 Plazo: 4 anos. Cross-compensation limit: 25% of the positive balance.
 """
 
-
 # Maximum number of prior years for loss carryforward (Art. 48-49 LIRPF)
 MAX_CARRYFORWARD_YEARS = 4
 

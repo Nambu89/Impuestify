@@ -595,7 +595,7 @@ async def root():
 				<h1>🧾 Impuestify</h1>
 				<p>Asistente Fiscal Especializado en Normativa Española</p>
 			</div>
-			
+
 			<div class="features">
 				<div class="feature">
 					<h3>🔍 RAG Avanzado</h3>
@@ -610,7 +610,7 @@ async def root():
 					<p>Formato consistente con veredicto, explicación, citas y avisos legales.</p>
 				</div>
 			</div>
-			
+
 			<div class="endpoints">
 				<h3>🚀 Endpoints Disponibles</h3>
 				<div class="endpoint">
@@ -626,7 +626,7 @@ async def root():
 					<code>GET</code> <strong>/docs</strong> - Documentación interactiva (Swagger)
 				</div>
 			</div>
-			
+
 			<div class="footer">
 				<p>Impuestify v1.0.0 | Powered by FastAPI + Guardrails AI + OpenAI</p>
 			</div>

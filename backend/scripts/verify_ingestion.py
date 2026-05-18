@@ -41,7 +41,7 @@ async def verify_ingestion():
     print("-" * 70)
 
     stats_sql = """
-    SELECT 
+    SELECT
         COUNT(DISTINCT d.id) as total_docs,
         SUM(d.total_pages) as total_pages,
         COUNT(c.id) as total_chunks,
@@ -67,7 +67,7 @@ async def verify_ingestion():
     print("-" * 70)
 
     coverage_sql = """
-    SELECT 
+    SELECT
         d.filename,
         d.total_pages,
         COUNT(DISTINCT c.page_number) as indexed_pages,
@@ -106,7 +106,7 @@ async def verify_ingestion():
     print("-" * 70)
 
     chapter15_sql = """
-    SELECT 
+    SELECT
         c.page_number,
         c.content,
         LENGTH(c.content) as char_count
@@ -144,7 +144,7 @@ async def verify_ingestion():
     print("-" * 70)
 
     table_sql = """
-    SELECT 
+    SELECT
         d.filename,
         COUNT(CASE WHEN c.content LIKE '%|%' THEN 1 END) as chunks_with_tables
     FROM documents d

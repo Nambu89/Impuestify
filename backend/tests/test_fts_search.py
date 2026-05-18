@@ -40,7 +40,7 @@ async def test_search():
     print(f"👉 Formatted FTS5 Query: {fts_query}")
 
     sql = """
-    SELECT 
+    SELECT
         c.id,
         d.filename,
         d.title,
@@ -49,8 +49,8 @@ async def test_search():
     FROM document_chunks_fts fts
     JOIN document_chunks c ON c.id = fts.chunk_id
     JOIN documents d ON d.id = c.document_id
-    WHERE document_chunks_fts MATCH ? 
-    ORDER BY rank 
+    WHERE document_chunks_fts MATCH ?
+    ORDER BY rank
     LIMIT 5
     """
 

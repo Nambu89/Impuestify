@@ -736,9 +736,7 @@ class NetSalaryResponse(BaseModel):
     porcentaje_neto: float
     ahorro_retencion_vs_irpf: float
     # Territorial info
-    regimen_fiscal: str | None = (
-        None  # comun, foral_vasco, foral_navarra, ceuta_melilla, canarias
-    )
+    regimen_fiscal: str | None = None  # comun, foral_vasco, foral_navarra, ceuta_melilla, canarias
     impuesto_indirecto: str | None = None  # IVA, IGIC, IPSI
     tipo_impuesto_indirecto: float | None = None  # 21%, 7%, 4%, etc.
     deduccion_ceuta_melilla: float | None = None  # 60% cuota IRPF

@@ -309,9 +309,7 @@ class ConversationService:
 
         return success
 
-    async def delete_conversation(
-        self, conversation_id: str, user_id: str | None = None
-    ) -> bool:
+    async def delete_conversation(self, conversation_id: str, user_id: str | None = None) -> bool:
         """
         Delete a conversation and all its messages (cascade).
 

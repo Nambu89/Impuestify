@@ -69,7 +69,7 @@ async def populate_quotas():
 
         sql = """
         INSERT INTO autonomous_quotas (
-            year, tramo_number, 
+            year, tramo_number,
             rendimientos_netos_min, rendimientos_netos_max,
             base_cotizacion_min, base_cotizacion_max,
             cuota_min, cuota_max,
@@ -116,7 +116,7 @@ async def populate_quotas():
 
         sql = """
         INSERT INTO autonomous_quotas (
-            year, tramo_number, 
+            year, tramo_number,
             rendimientos_netos_min, rendimientos_netos_max,
             base_cotizacion_min, base_cotizacion_max,
             cuota_min, cuota_max,
@@ -157,7 +157,7 @@ async def populate_quotas():
 
         sql = """
         INSERT INTO autonomous_quotas (
-            year, tramo_number, 
+            year, tramo_number,
             rendimientos_netos_min, rendimientos_netos_max,
             base_cotizacion_min, base_cotizacion_max,
             cuota_min, cuota_max,

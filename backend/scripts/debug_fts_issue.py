@@ -27,8 +27,8 @@ async def debug_fts():
 
     # Get all tarifa plana documents
     result = await db.execute("""
-        SELECT id, filename, title, document_type 
-        FROM documents 
+        SELECT id, filename, title, document_type
+        FROM documents
         WHERE filename LIKE '%tarifa_plana%'
         ORDER BY id
     """)
@@ -42,8 +42,8 @@ async def debug_fts():
         # Check chunks for this document
         chunk_result = await db.execute(
             """
-            SELECT id, content 
-            FROM document_chunks 
+            SELECT id, content
+            FROM document_chunks
             WHERE document_id = ?
             LIMIT 2
         """,
@@ -59,8 +59,8 @@ async def debug_fts():
 
             fts_result = await db.execute(
                 """
-                SELECT chunk_id 
-                FROM document_chunks_fts 
+                SELECT chunk_id
+                FROM document_chunks_fts
                 WHERE chunk_id = ?
             """,
                 [chunk_id],

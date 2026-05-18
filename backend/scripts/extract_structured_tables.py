@@ -343,7 +343,7 @@ async def extract_irpf_scales():
 
                 await db.execute(
                     """
-                    INSERT INTO irpf_scales 
+                    INSERT INTO irpf_scales
                     (id, jurisdiction, year, scale_type, tramo_num,
                      base_hasta, cuota_integra, resto_base, tipo_aplicable)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)

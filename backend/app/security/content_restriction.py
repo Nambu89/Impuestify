@@ -5,7 +5,6 @@ Detects autonomo (self-employed) queries and blocks them for
 users on the Particular (salaried workers) plan.
 """
 
-
 # Keywords that indicate a query is about autonomo/self-employed topics.
 # Ordered roughly by specificity (more specific first).
 AUTONOMO_KEYWORDS: list[str] = [

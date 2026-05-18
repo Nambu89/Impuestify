@@ -23,7 +23,7 @@ async def audit_docs():
 
     # Get all documents with chunk counts
     result = await db.execute("""
-        SELECT 
+        SELECT
             d.id,
             d.filename,
             d.title,

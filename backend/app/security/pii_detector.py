@@ -196,7 +196,6 @@ class PIIDetector:
                 detections={},
             )
 
-
         try:
             completion = self.client.chat.completions.create(
                 model=settings.GROQ_MODEL_SAFETY,

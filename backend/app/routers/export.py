@@ -32,9 +32,7 @@ class IRPFReportRequest(BaseModel):
     ccaa: str = Field(..., description="Comunidad autonoma")
     ingresos_trabajo: float = Field(0, description="Ingresos brutos anuales del trabajo")
     year: int = Field(2025, description="Ano fiscal")
-    answers: dict[str, Any] | None = Field(
-        default=None, description="Respuestas para deducciones"
-    )
+    answers: dict[str, Any] | None = Field(default=None, description="Respuestas para deducciones")
     # Extended fields for complete simulation
     retenciones_trabajo: float = Field(0, description="Retenciones IRPF en nómina")
     ss_empleado: float = Field(0, description="Cotización SS empleado anual")

@@ -17,5 +17,5 @@ CREATE TABLE IF NOT EXISTS notification_analyses (
     created_at TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_notif_user 
+CREATE INDEX IF NOT EXISTS idx_notif_user
 ON notification_analyses(user_id, created_at DESC);

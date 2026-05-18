@@ -1,6 +1,5 @@
 """Territory plugin registry -- maps CCAA names to their TerritoryPlugin."""
 
-
 from app.territories.base import TerritoryPlugin
 
 _registry: dict[str, TerritoryPlugin] = {}

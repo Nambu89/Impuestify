@@ -20,9 +20,9 @@ CREATE TABLE IF NOT EXISTS autonomous_quotas (
 );
 
 -- Index for fast lookups by year and income range
-CREATE INDEX IF NOT EXISTS idx_quota_year_income 
+CREATE INDEX IF NOT EXISTS idx_quota_year_income
 ON autonomous_quotas(year, rendimientos_netos_min, rendimientos_netos_max);
 
 -- Index for region-specific queries
-CREATE INDEX IF NOT EXISTS idx_quota_region 
+CREATE INDEX IF NOT EXISTS idx_quota_region
 ON autonomous_quotas(year, region);

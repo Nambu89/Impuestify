@@ -108,8 +108,8 @@ async def analyze_documents():
 
     # Get all documents
     docs_result = await db.execute("""
-        SELECT id, filename, total_pages 
-        FROM documents 
+        SELECT id, filename, total_pages
+        FROM documents
         ORDER BY filename
     """)
 
@@ -125,8 +125,8 @@ async def analyze_documents():
         # Get chunks for this document
         chunks_result = await db.execute(
             """
-            SELECT content, page_number 
-            FROM document_chunks 
+            SELECT content, page_number
+            FROM document_chunks
             WHERE document_id = ?
         """,
             [doc_id],

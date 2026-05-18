@@ -158,9 +158,7 @@ class AuditLogger:
             details={"query_preview": query_preview[:100]},
         )
 
-    def log_moderation_block(
-        self, user_id: str, categories: list, ip_address: str | None = None
-    ):
+    def log_moderation_block(self, user_id: str, categories: list, ip_address: str | None = None):
         """Log content moderation block."""
         self.log(
             AuditEventType.AI_MODERATION_BLOCK,
@@ -170,9 +168,7 @@ class AuditLogger:
             severity="warning",
         )
 
-    def log_rate_limit_exceeded(
-        self, ip_address: str, endpoint: str, user_id: str | None = None
-    ):
+    def log_rate_limit_exceeded(self, ip_address: str, endpoint: str, user_id: str | None = None):
         """Log rate limit violation."""
         self.log(
             AuditEventType.RATE_LIMIT_EXCEEDED,

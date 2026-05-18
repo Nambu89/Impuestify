@@ -23,7 +23,7 @@ async def verify():
 
     # Check chunk counts
     sql = """
-    SELECT 
+    SELECT
         d.filename,
         COUNT(c.id) as chunk_count
     FROM documents d

@@ -62,7 +62,7 @@ class WorkspaceService:
         await db.execute(
             """
             INSERT INTO workspaces (
-                id, user_id, name, description, icon, is_default, 
+                id, user_id, name, description, icon, is_default,
                 max_files, max_size_mb, created_at, updated_at
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -108,7 +108,7 @@ class WorkspaceService:
 
         # Query to get workspaces with file count
         query = """
-            SELECT w.*, COUNT(wf.id) as file_count 
+            SELECT w.*, COUNT(wf.id) as file_count
             FROM workspaces w
             LEFT JOIN workspace_files wf ON w.id = wf.workspace_id
             WHERE w.user_id = ?
@@ -152,7 +152,7 @@ class WorkspaceService:
         db = await get_db_client()
 
         query = """
-            SELECT w.*, COUNT(wf.id) as file_count 
+            SELECT w.*, COUNT(wf.id) as file_count
             FROM workspaces w
             LEFT JOIN workspace_files wf ON w.id = wf.workspace_id
             WHERE w.id = ? AND w.user_id = ?

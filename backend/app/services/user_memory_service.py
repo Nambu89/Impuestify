@@ -907,7 +907,7 @@ class UserMemoryService:
                 profile_id = str(uuid.uuid4())
 
                 await self.db.execute(
-                    """INSERT INTO user_profiles 
+                    """INSERT INTO user_profiles
                        (id, user_id, ccaa_residencia, situacion_laboral, created_at, updated_at)
                        VALUES (?, ?, ?, ?, ?, ?)""",
                     [profile_id, user_id, ccaa, employment, now, now],
