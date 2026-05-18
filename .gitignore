@@ -170,3 +170,8 @@ docs/ayudat_legal_scrape/
 
 # Vídeos marketing HyperFrames (local, no van a producción)
 videos/
+
+# Quality tooling caches (Phase 1 quality gates)
+.ruff_cache/
+.mypy_cache/
+htmlcov/
