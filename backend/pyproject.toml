@@ -1,0 +1,47 @@
+# Build system intentionally omitted — backend is not a packaged distribution,
+# it's a deployed app. pyproject.toml here exists solely for tool configuration.
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = [
+    "migrations",
+    "scripts/sandbox_*.py",
+    ".venv",
+    "data",
+    "docs",
+]
+
+[tool.ruff.lint]
+# Conservative baseline — enable rules incrementally
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (undefined names, unused imports)
+    "I",   # isort (import order)
+    "UP",  # pyupgrade (modern Python idioms)
+    "B",   # flake8-bugbear (likely bugs)
+]
+ignore = [
+    "E501",  # line-too-long — formatter handles wrapping
+    "B008",  # function call in default arg — FastAPI Depends() pattern
+    "B904",  # raise from — too noisy for existing codebase
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["F401", "F811", "B011"]  # unused imports/fixtures, redefinitions, asserts ok in tests
+"scripts/**" = ["F401", "E402"]         # late imports + unused for one-off scripts
+"app/main.py" = ["E402"]                 # load_dotenv BEFORE imports is intentional
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = false
+
+# --- mypy stub (Phase 2 will populate per-directory) ---
+[tool.mypy]
+python_version = "3.12"
+# Phase 1: presence only, no strict checks yet
+ignore_missing_imports = true
+follow_imports = "silent"
+files = []  # explicitly empty — Phase 2 adds files = ["app/services/legal"]
