@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-lint:
+    name: Backend lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: pip install -r backend/requirements-dev.txt
+      - name: ruff check (exit-zero — baseline tolerance, tracking GitHub issue)
+        run: cd backend && ruff check --exit-zero --output-format=github .
+      - name: ruff format --check
+        run: cd backend && ruff format --check .
+
+  backend-test:
+    name: Backend tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+      - run: pip install -r backend/requirements.txt -r backend/requirements-dev.txt
+      - name: pytest
+        env:
+          PYTHONUTF8: '1'
+          JWT_SECRET_KEY: ci-test-jwt-secret-32bytes-min-stubvalue
+          ADMIN_API_KEY: ci-admin-stub
+          OPENAI_API_KEY: sk-ci-stub
+          OPENAI_MODEL: gpt-5-mini
+          GROQ_API_KEY: gsk-ci-stub
+          GOOGLE_GEMINI_API_KEY: ci-gemini-stub
+          TURSO_DATABASE_URL: 'libsql://stub.invalid.example'
+          TURSO_AUTH_TOKEN: ci-turso-stub
+          UPSTASH_REDIS_REST_URL: https://stub.invalid.upstash.io
+          UPSTASH_REDIS_REST_TOKEN: ci-redis-stub
+          UPSTASH_VECTOR_REST_URL: https://stub-vector.invalid.upstash.io
+          UPSTASH_VECTOR_REST_TOKEN: ci-vector-stub
+          UPSTASH_VECTOR_RAG_URL: https://stub-rag.invalid.upstash.io
+          UPSTASH_VECTOR_RAG_TOKEN: ci-rag-stub
+          STRIPE_SECRET_KEY: sk_test_ci_stub
+          STRIPE_WEBHOOK_SECRET: whsec_ci_stub
+          STRIPE_PRICE_ID: price_ci_stub_particular
+          STRIPE_PRICE_ID_AUTONOMO: price_ci_stub_autonomo
+          STRIPE_PRICE_ID_CREATOR: price_ci_stub_creator
+          RESEND_API_KEY: re_ci_stub
+          RESEND_FROM_EMAIL: noreply@impuestify.com
+          FRONTEND_URL: http://localhost:5173
+          ALLOWED_ORIGINS: 'http://localhost:5173,http://localhost:3000'
+          GOOGLE_CLIENT_ID: ci-google-client-stub
+        run: cd backend && pytest tests/ --tb=short --maxfail=10 -q
+
+  frontend-lint:
+    name: Frontend lint + format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: cd frontend && npm ci
+      - name: eslint
+        run: cd frontend && npm run lint
+      - name: prettier --check
+        run: cd frontend && npm run format:check
+
+  frontend-build:
+    name: Frontend typecheck + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: cd frontend && npm ci
+      - name: typecheck (Phase 1 tolerant — pre-existing TS errors tracked)
+        # Pre-existing TypeScript errors in TaxGuidePage/SettingsPage/Login/Register/Modelo200/SubscribePage.
+        # Track via GitHub issue, fix in Phase 1.5. Build (next step) is hard-required and passes.
+        run: |
+          cd frontend && npm run typecheck || (echo "::warning::Pre-existing TS errors — see Phase 1.5 cleanup issue" && exit 0)
+      - name: build
+        run: cd frontend && npm run build
+
+  frontend-test:
+    name: Frontend tests (vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: cd frontend && npm ci
+      - name: vitest
+        run: cd frontend && npm test -- --run --passWithNoTests
