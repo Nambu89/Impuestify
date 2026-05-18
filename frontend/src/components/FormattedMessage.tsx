@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FormattedMessage - Rich formatting for assistant messages
  *
  * Pre-processes raw assistant content to:
@@ -62,7 +62,7 @@ const CALLOUT_PATTERNS: {
     keywords: string[]
 }[] = [
     { emoji: '\\u2705', variant: 'success', keywords: ['Resumen', 'directo', 'Al grano'] },          // ✅
-    { emoji: '\\u2714\\uFE0F', variant: 'success', keywords: ['recomiendo', 'Recomend'] },            // ✔️
+    { emoji: '\\u2714\\uFE0F', variant: 'success', keywords: ['recomiendo', 'Recomend'] },            // ✔
     { emoji: '\\u{1F4A1}', variant: 'info', keywords: ['explicaci', 'Breve', 'Para que quede'] },     // 💡
     { emoji: '\\u26A0\\uFE0F', variant: 'warning', keywords: ['Fuentes', 'aviso', 'Importante'] },    // ⚠️
     { emoji: '\\u{1F4AC}', variant: 'question', keywords: ['Quieres', 'quieres'] },                   // 💬
@@ -114,13 +114,13 @@ function detectCalloutSection(text: string): { variant: CalloutBlock['variant'];
     if (!firstLine) return null
 
     // Check for emoji markers anywhere in the first line
-    const emojiRegex = /[\u2705\u2714\uFE0F\u26A0\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]/u
+    const emojiRegex = /[\u2705\u2714\u26A0\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]/u
     if (!emojiRegex.test(firstLine)) return null
 
     // Determine variant from emoji
     let variant: CalloutBlock['variant'] = 'info'
     if (/[\u2705]|[\u2714]\uFE0F?/.test(firstLine)) {
-        // ✅ or ✔️ - check keywords to distinguish
+        // ✅ or ✔ - check keywords to distinguish
         if (/recomiendo|Recomend/i.test(firstLine)) variant = 'tip'
         else variant = 'success'
     }
@@ -131,7 +131,7 @@ function detectCalloutSection(text: string): { variant: CalloutBlock['variant'];
 
     // Clean title: remove emojis, asterisks, extra whitespace
     const title = firstLine
-        .replace(/[\u2705\u2714\uFE0F\u26A0\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}\u{1F4B6}]/gu, '')
+        .replace(/[\u2705\u2714\u26A0\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}\u{1F4B6}]/gu, '')
         .replace(/\*+/g, '')
         .replace(/#+\s*/g, '')
         .trim()
@@ -161,7 +161,7 @@ function detectDirectAnswer(text: string): { verdict: string; rest: string } | n
     // Must be short enough to be a verdict (not a full paragraph)
     if (firstPara.length > 350) return null
     // Already handled as a callout (has emoji marker)
-    if (/[✅✔️⚠\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]/u.test(firstPara)) return null
+    if (/[✅✔⚠\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]/u.test(firstPara)) return null
     const m = firstPara.match(DIRECT_ANSWER_REGEX)
     if (!m) return null
     // Strip leading/trailing asterisks
@@ -299,7 +299,7 @@ function splitIntoSections(content: string): string[] {
     const sections: string[] = []
     let current: string[] = []
 
-    const sectionStartRegex = /^(?:#{1,4}\s|[\u2705\u2714\uFE0F\u26A0\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]|\*{1,2}[A-ZÁÉÍÓÚÑ])/u
+    const sectionStartRegex = /^(?:#{1,4}\s|[\u2705\u2714\u26A0\u{1F4A1}\u{1F4AC}\u{1F4C8}\u{1F4CB}]|\*{1,2}[A-ZÁÉÍÓÚÑ])/u
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i]
