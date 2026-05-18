@@ -2722,7 +2722,7 @@ export default function TaxGuidePage() {
         data.discapacidad_contribuyente,
         discoveryAnswers,
         discover,
-    ]) // eslint-disable-line react-hooks/exhaustive-deps
+    ])
 
     const handleAnswerQuestion = useCallback((key: string, value: boolean) => {
         setDiscoveryAnswers((prev) => ({ ...prev, [key]: value }))
@@ -2876,7 +2876,7 @@ export default function TaxGuidePage() {
         discoveryAnswers,
         handleAnswerQuestion,
         isQuick,
-    ]) // eslint-disable-line react-hooks/exhaustive-deps
+    ])
 
     const isFirstStep = step === 0
     const isLastStep = step === stepLabels.length - 1
