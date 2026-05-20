@@ -410,7 +410,12 @@ app.include_router(user_rights_router)
 # Subscription & Payment Endpoints
 from app.routers.subscription import router as subscription_router
 
-app.include_router(subscription_router)
+if settings.SUBSCRIPTIONS_ENABLED:
+    app.include_router(subscription_router)
+else:
+    logger.info(
+        "Subscriptions disabled (SUBSCRIPTIONS_ENABLED=false) — skipping subscription routes"
+    )
 
 # WebAuthn / Passkey 2FA (NIST SP 800-63-4 phishing-resistant)
 from app.routers.webauthn_router import router as webauthn_router

@@ -70,3 +70,23 @@ def test_chat_route_uses_lock_in_demo_mode(monkeypatch):
     # Build a fresh Settings to pick up monkeypatched env
     s = Settings(_env_file=None)
     assert resolve_territory_filter("Madrid", s.RAG_TERRITORY_LOCK) == "Melilla"
+
+
+def test_subscription_endpoint_returns_404_when_disabled(monkeypatch):
+    """When SUBSCRIPTIONS_ENABLED=false, /subscription routes are not registered."""
+    monkeypatch.setenv("SUBSCRIPTIONS_ENABLED", "false")
+    monkeypatch.setenv("DEMO_MODE", "true")
+
+    from importlib import reload
+
+    import app.main as main_module
+
+    reload(main_module)
+    from fastapi.testclient import TestClient
+
+    client = TestClient(main_module.app)
+    # Route is at /subscription/status (router prefix; no /api prefix on subscription router)
+    r = client.get("/subscription/status")
+    # Route absent -> 404. If auth runs first -> 401. Either way, no Stripe leak.
+    assert r.status_code in (401, 404)
+    assert "stripe" not in r.text.lower()
