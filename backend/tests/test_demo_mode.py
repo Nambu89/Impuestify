@@ -40,3 +40,33 @@ def test_demo_settings_can_enable_via_env(monkeypatch):
     assert s.RAG_TERRITORY_LOCK == "Melilla"
     assert s.DEMO_USER_EMAIL == "demo@fiscal-melilla.demo"
     assert s.DEMO_USER_PASSWORD == "Demo2026!"
+
+
+def test_resolve_territory_filter_uses_lock_when_set(monkeypatch):
+    """RAG_TERRITORY_LOCK overrides user-provided territory."""
+    from app.utils.demo_filters import resolve_territory_filter
+
+    # No lock -> use user territory
+    assert resolve_territory_filter("Madrid", lock=None) == "Madrid"
+
+    # Lock set -> override user
+    assert resolve_territory_filter("Madrid", lock="Melilla") == "Melilla"
+
+    # Lock set, user None -> lock wins
+    assert resolve_territory_filter(None, lock="Melilla") == "Melilla"
+
+    # No lock, no user -> None (let retriever search all)
+    assert resolve_territory_filter(None, lock=None) is None
+
+
+def test_chat_route_uses_lock_in_demo_mode(monkeypatch):
+    """When DEMO_MODE+lock set, helper resolves user CCAA to the lock."""
+    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("RAG_TERRITORY_LOCK", "Melilla")
+
+    from app.config import Settings
+    from app.utils.demo_filters import resolve_territory_filter
+
+    # Build a fresh Settings to pick up monkeypatched env
+    s = Settings(_env_file=None)
+    assert resolve_territory_filter("Madrid", s.RAG_TERRITORY_LOCK) == "Melilla"

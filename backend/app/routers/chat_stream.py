@@ -20,6 +20,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.agents.tax_agent import TaxAgent
 from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.subscription_guard import require_active_subscription
+from app.config import settings
 from app.database.turso_client import TursoClient
 from app.security import guardrails_system
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
@@ -30,6 +31,7 @@ from app.security.velocity_check import velocity_checker
 from app.services.conversation_cache import ConversationCache
 from app.services.conversation_service import ConversationService
 from app.services.subscription_service import SubscriptionAccess
+from app.utils.demo_filters import resolve_territory_filter
 from app.utils.streaming import ProgressCallback, filter_json_from_content, sse_generator
 
 
@@ -675,7 +677,9 @@ async def ask_question_stream(
                         query=rag_query_used,
                         query_embedding=query_embedding,
                         k=request.k or 5,
-                        territory_filter=ccaa_for_rag,
+                        territory_filter=resolve_territory_filter(
+                            ccaa_for_rag, settings.RAG_TERRITORY_LOCK
+                        ),
                     )
                     logger.debug("RAG results with filter: %d chunks", len(relevant_chunks))
                 except Exception as rag_err:
@@ -691,7 +695,9 @@ async def ask_question_stream(
                         query=rag_query_used,
                         query_embedding=query_embedding,
                         k=request.k or 5,
-                        territory_filter=None,
+                        territory_filter=resolve_territory_filter(
+                            None, settings.RAG_TERRITORY_LOCK
+                        ),
                     )
                     logger.debug("RAG results without filter: %d chunks", len(relevant_chunks))
 
