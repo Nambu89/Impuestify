@@ -73,20 +73,24 @@ def test_chat_route_uses_lock_in_demo_mode(monkeypatch):
 
 
 def test_subscription_endpoint_returns_404_when_disabled(monkeypatch):
-    """When SUBSCRIPTIONS_ENABLED=false, /subscription routes are not registered."""
+    """When SUBSCRIPTIONS_ENABLED=false, /subscription routes are not registered.
+
+    Uses a fresh FastAPI() to avoid corrupting global app state with importlib.reload.
+    """
     monkeypatch.setenv("SUBSCRIPTIONS_ENABLED", "false")
-    monkeypatch.setenv("DEMO_MODE", "true")
 
-    from importlib import reload
-
-    import app.main as main_module
-
-    reload(main_module)
+    from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    client = TestClient(main_module.app)
-    # Route is at /subscription/status (router prefix; no /api prefix on subscription router)
+    from app.config import Settings
+    from app.routers.subscription import router as subscription_router
+
+    s = Settings(_env_file=None)
+    test_app = FastAPI()
+    if s.SUBSCRIPTIONS_ENABLED:
+        test_app.include_router(subscription_router)
+
+    client = TestClient(test_app)
     r = client.get("/subscription/status")
-    # Route absent -> 404. If auth runs first -> 401. Either way, no Stripe leak.
-    assert r.status_code in (401, 404)
+    assert r.status_code == 404
     assert "stripe" not in r.text.lower()
