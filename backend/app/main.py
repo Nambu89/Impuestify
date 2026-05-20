@@ -142,6 +142,14 @@ async def lifespan(app: FastAPI):
         await db_client.init_schema()
         logger.info("Schema de base de datos verificado/actualizado")
 
+        # Seed demo user (no-op unless DEMO_MODE=true)
+        try:
+            from app.services.demo_seed_service import seed_demo_user
+
+            await seed_demo_user(db_client)
+        except Exception as e:
+            logger.error("Demo user seed failed (non-fatal): %s", e)
+
         # Verificar conexion contando documentos
         result = await db_client.execute("SELECT COUNT(*) as cnt FROM documents")
         doc_count = result.rows[0]["cnt"] if result.rows else 0

@@ -94,3 +94,65 @@ def test_subscription_endpoint_returns_404_when_disabled(monkeypatch):
     r = client.get("/subscription/status")
     assert r.status_code == 404
     assert "stripe" not in r.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_seed_demo_user_idempotent(monkeypatch):
+    """seed_demo_user creates user if absent, no-op if present, hashes password."""
+    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO_USER_EMAIL", "demo@test.local")
+    monkeypatch.setenv("DEMO_USER_PASSWORD", "Demo2026!")
+    monkeypatch.setenv("RAG_TERRITORY_LOCK", "Melilla")
+
+    # Reload settings module to pick up the new env vars
+    import importlib
+    from unittest.mock import AsyncMock, MagicMock
+
+    import app.config as config_module
+
+    importlib.reload(config_module)
+    import app.services.demo_seed_service as seed_module
+
+    importlib.reload(seed_module)
+
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=MagicMock(rows=[]))  # No existing user
+
+    await seed_module.seed_demo_user(db)
+
+    # Should have called INSERT
+    insert_calls = [c for c in db.execute.call_args_list if "INSERT" in str(c).upper()]
+    assert len(insert_calls) >= 1
+    args_str = str(insert_calls[0])
+    # Password is hashed (not plaintext)
+    assert "Demo2026!" not in args_str
+
+    # Second call: user exists -> no INSERT
+    db.execute.reset_mock()
+    db.execute = AsyncMock(return_value=MagicMock(rows=[{"id": "abc"}]))
+    await seed_module.seed_demo_user(db)
+    insert_calls = [c for c in db.execute.call_args_list if "INSERT" in str(c).upper()]
+    assert len(insert_calls) == 0
+
+
+@pytest.mark.asyncio
+async def test_seed_demo_user_noop_when_demo_mode_off(monkeypatch):
+    """No-op when DEMO_MODE=false."""
+    monkeypatch.setenv("DEMO_MODE", "false")
+    monkeypatch.delenv("DEMO_USER_EMAIL", raising=False)
+    monkeypatch.delenv("DEMO_USER_PASSWORD", raising=False)
+
+    import importlib
+    from unittest.mock import AsyncMock, MagicMock
+
+    import app.config as config_module
+
+    importlib.reload(config_module)
+    import app.services.demo_seed_service as seed_module
+
+    importlib.reload(seed_module)
+
+    db = MagicMock()
+    db.execute = AsyncMock()
+    await seed_module.seed_demo_user(db)
+    db.execute.assert_not_called()
