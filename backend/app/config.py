@@ -221,7 +221,39 @@ class Settings(BaseSettings):
     ADMIN_API_KEY: str = Field(default="your-secure-admin-key-here")
 
     # -------------------------------
-    # ⚙️ Configuración de entorno
+    # Demo Mode (white-label deploys)
+    # -------------------------------
+    DEMO_MODE: bool = Field(
+        default=False,
+        description="When True, app runs as anonymous white-label demo (Melilla focus).",
+    )
+    BRAND_NAME: str = Field(
+        default="Impuestify",
+        description="Brand displayed in emails, PDFs, system prompts. Override per deploy.",
+    )
+    BRAND_DOMAIN: str = Field(
+        default="impuestify.com",
+        description="Public domain for emails/links. NEVER hardcode '.es' (Bug 52).",
+    )
+    SUBSCRIPTIONS_ENABLED: bool = Field(
+        default=True,
+        description="Toggle Stripe checkout/portal routes. False = demo free access.",
+    )
+    RAG_TERRITORY_LOCK: str | None = Field(
+        default=None,
+        description="If set (e.g. 'Melilla'), force territory_filter in all RAG queries.",
+    )
+    DEMO_USER_EMAIL: str | None = Field(
+        default=None,
+        description="If DEMO_MODE=True, seed this user at startup.",
+    )
+    DEMO_USER_PASSWORD: str | None = Field(
+        default=None,
+        description="Plaintext password for demo user seed (hashed at insert).",
+    )
+
+    # -------------------------------
+    # Configuracion de entorno
     # -------------------------------
     model_config = SettingsConfigDict(
         env_file="../.env",  # .env is in project root, parent of backend
