@@ -44,7 +44,7 @@ DISCLAIMER_CANONICO = (
 
 # System prompt — los primeros 100 chars del disclaimer van literal al inicio
 # para que el LLM nunca olvide el límite de responsabilidad.
-SYSTEM_PROMPT = f"""Eres el asistente de DefensIA, herramienta defensiva fiscal de Impuestify.
+SYSTEM_PROMPT = f"""Eres el asistente de DefensIA, herramienta defensiva fiscal de {settings.BRAND_NAME}.
 
 IMPORTANTE — DISCLAIMER OBLIGATORIO EN EL PRIMER MENSAJE DE CADA CONVERSACIÓN:
 {DISCLAIMER_CANONICO[:100]}
