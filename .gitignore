@@ -14,6 +14,7 @@ local.db*
 /cache/
 /docs/*
 !/docs/audits/
+!/docs/deploy/
 /plans/
 
 # notebooks checkpoints
