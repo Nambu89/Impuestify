@@ -178,6 +178,18 @@ def test_password_reset_template_uses_brand_name(monkeypatch):
     assert "Impuestify" not in html
 
 
+def test_tax_agent_prompt_has_no_unescaped_python_literals():
+    """Regression: ensure no spurious f-string or quote characters leak into the LLM prompt."""
+    from app.agents.tax_agent import TaxAgent
+
+    agent = TaxAgent()
+    prompt = agent._get_system_prompt()
+
+    # No spurious f-string wrappers or stray quote-pairs inside the prompt body
+    assert 'f"' not in prompt, 'Found literal f" wrapper — outer f-string was corrupted'
+    assert "f'" not in prompt, "Found literal f' wrapper — outer f-string was corrupted"
+
+
 @pytest.mark.asyncio
 async def test_seed_demo_user_noop_when_demo_mode_off(monkeypatch):
     """No-op when DEMO_MODE=false."""
