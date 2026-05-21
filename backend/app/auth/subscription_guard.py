@@ -26,7 +26,19 @@ async def require_active_subscription(
 
     Raises HTTP 403 if the user has no active subscription.
     Returns SubscriptionAccess with access details.
+
+    Bypass: when SUBSCRIPTIONS_ENABLED=False (demo deploys), this guard
+    grants access unconditionally — the entire subscription system is
+    off, so blocking on it would brick every protected endpoint.
     """
+    if not settings.SUBSCRIPTIONS_ENABLED:
+        return SubscriptionAccess(
+            has_access=True,
+            is_owner=False,
+            status="demo",
+            reason="subscriptions_disabled",
+        )
+
     service = await get_subscription_service()
     access = await service.check_access(user_id=current_user.user_id, email=current_user.email)
 
@@ -53,6 +65,16 @@ async def get_subscription_access(
     Use this for endpoints that need to check subscription status
     but handle the response themselves (e.g., chat endpoints that
     return a specific message instead of a 403).
+
+    Bypass: when SUBSCRIPTIONS_ENABLED=False, returns "demo" access.
     """
+    if not settings.SUBSCRIPTIONS_ENABLED:
+        return SubscriptionAccess(
+            has_access=True,
+            is_owner=False,
+            status="demo",
+            reason="subscriptions_disabled",
+        )
+
     service = await get_subscription_service()
     return await service.check_access(user_id=current_user.user_id, email=current_user.email)
