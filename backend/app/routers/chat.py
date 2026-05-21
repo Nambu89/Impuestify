@@ -381,8 +381,8 @@ async def warmup_chat(request: Request, current_user: TokenData = Depends(get_cu
 @router.post("/ask", response_model=ImpuestifyResponse)
 @limiter.limit("60/hour;10/minute")
 async def ask_question(
-    req: Request,
-    request: QuestionRequest,
+    request: Request,
+    body: QuestionRequest,
     background_tasks: BackgroundTasks,
     db: TursoClient = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
@@ -399,7 +399,7 @@ async def ask_question(
 
     try:
         # === SECURITY LAYER 1: SQL Injection Detection ===
-        sql_check = sql_validator.validate_user_input(request.question)
+        sql_check = sql_validator.validate_user_input(body.question)
         if not sql_check.is_safe:
             logger.warning(f"🚨 SQL injection blocked: {sql_check.violations}")
             raise HTTPException(
@@ -412,7 +412,7 @@ async def ask_question(
             )
 
         # === SECURITY LAYER 2: Guardrails Validation ===
-        guardrails_check = guardrails_system.validate_input(request.question)
+        guardrails_check = guardrails_system.validate_input(body.question)
         if not guardrails_check.is_safe:
             logger.warning(f"⚠️ Guardrails violation: {guardrails_check.violations}")
             if guardrails_check.risk_level == "critical":
@@ -427,31 +427,29 @@ async def ask_question(
             logger.info(f"Non-critical guardrail: {guardrails_check.risk_level}")
 
         # === CONTENT RESTRICTION: Autonomo detection ===
-        if not access.is_owner and detect_autonomo_query(request.question):
+        if not access.is_owner and detect_autonomo_query(body.question):
             return ImpuestifyResponse(
                 answer=get_autonomo_block_response(),
                 sources=[],
                 processing_time=time.time() - start_time,
-                conversation_id=request.conversation_id,
+                conversation_id=body.conversation_id,
                 metadata={"type": "content_restriction", "restricted_topic": "autonomo"},
             )
 
         logger.info(
-            f"Nueva consulta: {request.question[:100]}... (conversation_id: {request.conversation_id})"
+            f"Nueva consulta: {body.question[:100]}... (conversation_id: {body.conversation_id})"
         )
 
         # Initialize conversation service
         conv_service = ConversationService(db)
 
         # 1. Get or create conversation
-        conversation_id = request.conversation_id
+        conversation_id = body.conversation_id
         if not conversation_id:
             # Create new conversation
             conversation = await conv_service.create_conversation(
                 user_id=current_user.user_id,
-                title=request.question[:50] + "..."
-                if len(request.question) > 50
-                else request.question,
+                title=body.question[:50] + "..." if len(body.question) > 50 else body.question,
             )
             conversation_id = conversation["id"]
             logger.info(f"✅ Created new conversation: {conversation_id}")
@@ -465,7 +463,7 @@ async def ask_question(
 
         # === GREETING DETECTION ===
         # If user sends a simple greeting, respond cordially without RAG search
-        if guardrails_system.is_greeting(request.question.strip()):
+        if guardrails_system.is_greeting(body.question.strip()):
             logger.info("👋 Greeting detected, sending friendly welcome")
             greeting_response = (
                 "¡Hola! 👋 Soy Impuestify, tu asistente fiscal inteligente.\n\n"
@@ -478,7 +476,7 @@ async def ask_question(
             )
 
             # Save messages to conversation
-            await conv_service.add_message(conversation_id, "user", request.question)
+            await conv_service.add_message(conversation_id, "user", body.question)
             await conv_service.add_message(conversation_id, "assistant", greeting_response)
 
             return ImpuestifyResponse(
@@ -490,7 +488,7 @@ async def ask_question(
             )
 
         # 2. Initialize cache service
-        upstash_client = getattr(req.app.state, "upstash_client", None)
+        upstash_client = getattr(request.app.state, "upstash_client", None)
         cache = ConversationCache(upstash_client)
 
         # 3. Load conversation context (cache-first strategy)
@@ -517,9 +515,7 @@ async def ask_question(
                 from app.services.semantic_window import SemanticWindow
 
                 semantic_window = SemanticWindow(max_messages=15, recent_guaranteed=5)
-                conversation_history = await semantic_window.select(
-                    conversation_id, request.question
-                )
+                conversation_history = await semantic_window.select(conversation_id, body.question)
                 logger.info(
                     f"Semantic window selected {len(conversation_history)} messages from database"
                 )
@@ -533,13 +529,13 @@ async def ask_question(
         # === Load workspace context if workspace_id provided ===
         workspace_context = ""
         workspace_files_info = []
-        if request.workspace_id:
-            logger.info(f"📁 Loading workspace context for: {request.workspace_id}")
+        if body.workspace_id:
+            logger.info(f"📁 Loading workspace context for: {body.workspace_id}")
             try:
                 # Verify workspace ownership
                 ws_result = await db.execute(
                     "SELECT id, name FROM workspaces WHERE id = ? AND user_id = ?",
-                    [request.workspace_id, current_user.user_id],
+                    [body.workspace_id, current_user.user_id],
                 )
                 if ws_result.rows:
                     # Load workspace files with extracted text
@@ -549,7 +545,7 @@ async def ask_question(
 						FROM workspace_files
 						WHERE workspace_id = ? AND processing_status = 'completed'
 						""",
-                        [request.workspace_id],
+                        [body.workspace_id],
                     )
 
                     if files_result.rows:
@@ -597,18 +593,18 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
         from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
 
         retriever = HybridRetriever(db_client=db)
-        query_embedding = await get_query_embedding(request.question)
+        query_embedding = await get_query_embedding(body.question)
         relevant_chunks = await retriever.search(
-            query=request.question,
+            query=body.question,
             query_embedding=query_embedding,
-            k=request.k or 5,
+            k=body.k or 5,
             territory_filter=resolve_territory_filter(None, settings.RAG_TERRITORY_LOCK),
         )
         search_time = time.time() - search_start
 
         if not relevant_chunks:
             # Save user message even if no context found
-            await conv_service.add_message(conversation_id, "user", request.question)
+            await conv_service.add_message(conversation_id, "user", body.question)
 
             no_context_answer = "Lo siento, no encontré información relevante en la base de datos para responder tu pregunta. Por favor, intenta reformular tu consulta o usar palabras clave más específicas."
 
@@ -677,12 +673,12 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
             agent = get_workspace_agent()
             logger.info(f"📁 Calling WorkspaceAgent with {len(workspace_files_info)} documents")
             agent_response = await agent.run(
-                query=request.question,
+                query=body.question,
                 context=workspace_context,
                 sources=sources_data,
                 conversation_history=formatted_history,
                 user_id=current_user.user_id,
-                workspace_id=request.workspace_id,
+                workspace_id=body.workspace_id,
                 restricted_mode=restricted_mode,
             )
         else:
@@ -690,7 +686,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
             tax_agent = TaxAgent()
             logger.info(f"🤖 Calling TaxAgent with {len(formatted_history)} history messages")
             agent_response = await tax_agent.run(
-                query=request.question,
+                query=body.question,
                 context=combined_context,
                 sources=sources_data,
                 conversation_history=formatted_history,
@@ -705,7 +701,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 
         # === SECURITY LAYER 3: Output Validation ===
         output_check = guardrails_system.validate_output(
-            llm_response=answer, user_question=request.question, sources=sources_data
+            llm_response=answer, user_question=body.question, sources=sources_data
         )
 
         if not output_check.is_safe:
@@ -716,7 +712,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
 
         # 6. Save user message
         await conv_service.add_message(
-            conversation_id=conversation_id, role="user", content=request.question
+            conversation_id=conversation_id, role="user", content=body.question
         )
 
         # 7. Save assistant message with sources
@@ -764,7 +760,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
         try:
             cost_tracker = CostTracker(db)
             # Estimate tokens: ~4 chars per token for input, actual for output
-            est_input_tokens = len(request.question) // 4 + len(combined_context) // 4
+            est_input_tokens = len(body.question) // 4 + len(combined_context) // 4
             est_output_tokens = len(answer) // 4
             await cost_tracker.track(
                 user_id=current_user.user_id,
