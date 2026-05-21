@@ -255,7 +255,7 @@ async def ask_question_stream(
     velocity_result = await velocity_checker.check(
         user_id=current_user.user_id,
         question=body.question,
-        request=req,
+        request=request,
     )
     if not velocity_result.allowed:
 
@@ -283,7 +283,7 @@ async def ask_question_stream(
         user_id=current_user.user_id,
         plan_type=access.plan_type,
         is_owner=access.is_owner,
-        request=req,
+        request=request,
     )
     if not budget_status.allowed:
 
@@ -922,7 +922,7 @@ async def ask_question_stream(
                             await token_budget_tracker.record(
                                 user_id=current_user.user_id,
                                 tokens=estimated_tokens,
-                                request=req,
+                                request=request,
                             )
                     except Exception as e:
                         logger.warning(f"Token budget record failed (non-blocking): {e}")
