@@ -28,6 +28,7 @@ from app.services.conversation_service import ConversationService
 from app.services.cost_tracker import CostTracker
 from app.services.subscription_service import SubscriptionAccess
 from app.services.warmup_service import WarmupService
+from app.utils.demo_filters import resolve_territory_filter
 from app.utils.region_detector import RegionDetector
 
 logger = logging.getLogger(__name__)
@@ -601,6 +602,7 @@ INFORMACIÓN ADICIONAL DE LA NOTIFICACIÓN:
             query=request.question,
             query_embedding=query_embedding,
             k=request.k or 5,
+            territory_filter=resolve_territory_filter(None, settings.RAG_TERRITORY_LOCK),
         )
         search_time = time.time() - search_start
 

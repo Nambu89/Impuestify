@@ -9,6 +9,7 @@ import logging
 from fastapi import Depends, HTTPException, status
 
 from app.auth.jwt_handler import TokenData, get_current_user
+from app.config import settings
 from app.services.subscription_service import (
     SubscriptionAccess,
     get_subscription_service,
@@ -34,7 +35,7 @@ async def require_active_subscription(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "error": "subscription_required",
-                "message": "Se requiere una suscripcion activa para usar Impuestify.",
+                "message": f"Se requiere una suscripcion activa para usar {settings.BRAND_NAME}.",
                 "status": access.status,
                 "reason": access.reason,
             },
