@@ -17,6 +17,8 @@ from typing import Any
 
 from openai import AsyncOpenAI, OpenAI
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -223,7 +225,7 @@ class WorkspaceAgent:
         elif regime == "foral_navarra":
             iva_model = "Modelo F-69 (IVA Navarra)"
 
-        return f"""Eres Impuestify en modo Workspace, un asesor fiscal experto que analiza los documentos personales del usuario.
+        return f"""Eres {settings.BRAND_NAME} en modo Workspace, un asesor fiscal experto que analiza los documentos personales del usuario.
 
 📁 **TU ROL**:
 El usuario ha adjuntado documentos (nominas, facturas, declaraciones, etc.) a su espacio de trabajo.

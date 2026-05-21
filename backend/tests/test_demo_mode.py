@@ -135,6 +135,49 @@ async def test_seed_demo_user_idempotent(monkeypatch):
     assert len(insert_calls) == 0
 
 
+def test_tax_agent_prompt_uses_brand_name(monkeypatch):
+    """TaxAgent system prompt uses settings.BRAND_NAME, not hardcoded 'Impuestify'."""
+    monkeypatch.setenv("BRAND_NAME", "Fiscal IA Melilla")
+
+    from importlib import reload
+
+    import app.config as config_module
+
+    reload(config_module)
+    import app.agents.tax_agent as tax_agent_module
+
+    reload(tax_agent_module)
+
+    from app.agents.tax_agent import TaxAgent
+
+    agent = TaxAgent()
+    # _get_system_prompt() builds the LLM system-level prompt that contains brand identity.
+    # The agent uses _get_system_prompt() for the system role and _build_prompt() for the
+    # user message context — the brand name lives in _get_system_prompt().
+    prompt = agent._get_system_prompt()
+    assert "Fiscal IA Melilla" in prompt
+    assert "Impuestify" not in prompt
+
+
+def test_password_reset_template_uses_brand_name(monkeypatch):
+    """HTML password-reset template (auth.py) lee BRAND_NAME via helper function."""
+    monkeypatch.setenv("BRAND_NAME", "Fiscal IA Melilla")
+    monkeypatch.setenv("BRAND_DOMAIN", "fiscal-melilla.demo")
+
+    from importlib import reload
+
+    import app.config as config_module
+
+    reload(config_module)
+    import app.routers.auth as auth_module
+
+    reload(auth_module)
+
+    html = auth_module.render_password_reset_html(reset_link="https://demo/reset/xyz")
+    assert "Fiscal IA Melilla" in html
+    assert "Impuestify" not in html
+
+
 @pytest.mark.asyncio
 async def test_seed_demo_user_noop_when_demo_mode_off(monkeypatch):
     """No-op when DEMO_MODE=false."""

@@ -8,6 +8,8 @@ Tools for comparing features, identifying gaps, and suggesting improvements.
 import logging
 from typing import Any
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 # ─── Competitor Knowledge Base ─────────────────────────────────────────────
@@ -416,7 +418,7 @@ COMPARE_FEATURES_TOOL = {
     "type": "function",
     "function": {
         "name": "compare_features",
-        "description": "Compara las funcionalidades de Impuestify con un competidor especifico del mercado fiscal espanol. Devuelve una tabla detallada de funcionalidades con ventajas y desventajas.",
+        "description": f"Compara las funcionalidades de {settings.BRAND_NAME} con un competidor especifico del mercado fiscal espanol. Devuelve una tabla detallada de funcionalidades con ventajas y desventajas.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -446,7 +448,7 @@ ANALYZE_GAPS_TOOL = {
     "type": "function",
     "function": {
         "name": "analyze_gaps",
-        "description": "Identifica los huecos funcionales de Impuestify respecto al mercado y los huecos que Impuestify llena que los competidores no cubren. Incluye prioridad y dificultad de implementacion.",
+        "description": f"Identifica los huecos funcionales de {settings.BRAND_NAME} respecto al mercado y los huecos que {settings.BRAND_NAME} llena que los competidores no cubren. Incluye prioridad y dificultad de implementacion.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -465,7 +467,7 @@ SUGGEST_IMPROVEMENTS_TOOL = {
     "type": "function",
     "function": {
         "name": "suggest_improvements",
-        "description": "Sugiere mejoras concretas para Impuestify con prioridad, impacto estimado, dificultad tecnica, y si el competidor lo tiene.",
+        "description": f"Sugiere mejoras concretas para {settings.BRAND_NAME} con prioridad, impacto estimado, dificultad tecnica, y si el competidor lo tiene.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -495,7 +497,7 @@ MARKET_POSITION_TOOL = {
     "type": "function",
     "function": {
         "name": "analyze_market_position",
-        "description": "Analiza la posicion de Impuestify en el mercado fiscal espanol. Incluye analisis DAFO, posicionamiento, y estrategia recomendada.",
+        "description": f"Analiza la posicion de {settings.BRAND_NAME} en el mercado fiscal espanol. Incluye analisis DAFO, posicionamiento, y estrategia recomendada.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -610,7 +612,7 @@ async def compare_features_tool(competitor: str, category: str = "all") -> dict[
         label = FEATURE_LABELS.get(feat, feat)
 
         if imp_has and not comp_has:
-            winner = "Impuestify"
+            winner = settings.BRAND_NAME
             impuestify_wins += 1
         elif comp_has and not imp_has:
             winner = comp["name"]
@@ -630,8 +632,8 @@ async def compare_features_tool(competitor: str, category: str = "all") -> dict[
             }
         )
 
-    formatted = f"## Comparativa: Impuestify vs {comp['name']}\n\n"
-    formatted += f"| Funcionalidad | Impuestify | {comp['name']} | Ventaja |\n"
+    formatted = f"## Comparativa: {settings.BRAND_NAME} vs {comp['name']}\n\n"
+    formatted += f"| Funcionalidad | {settings.BRAND_NAME} | {comp['name']} | Ventaja |\n"
     formatted += "|---|---|---|---|\n"
 
     for c in comparison:
@@ -639,7 +641,7 @@ async def compare_features_tool(competitor: str, category: str = "all") -> dict[
         comp_icon = "Si" if c["competitor"] else "No"
         formatted += f"| {c['feature']} | {imp_icon} | {comp_icon} | {c['winner']} |\n"
 
-    formatted += f"\n**Resumen:** Impuestify gana en {impuestify_wins} features, "
+    formatted += f"\n**Resumen:** {settings.BRAND_NAME} gana en {impuestify_wins} features, "
     formatted += f"{comp['name']} gana en {competitor_wins}, empate en {ties}.\n\n"
 
     formatted += f"### Fortalezas de {comp['name']}:\n"
@@ -796,7 +798,7 @@ async def suggest_improvements_tool(area: str = "all", max_suggestions: int = 10
 
     filtered = filtered[:max_suggestions]
 
-    formatted = "## Sugerencias de Mejora para Impuestify\n\n"
+    formatted = f"## Sugerencias de Mejora para {settings.BRAND_NAME}\n\n"
     formatted += f"*Area: {area}*\n\n"
 
     for i, s in enumerate(filtered, 1):
@@ -820,7 +822,7 @@ async def suggest_improvements_tool(area: str = "all", max_suggestions: int = 10
 async def analyze_market_position_tool(analysis_type: str = "all") -> dict[str, Any]:
     """Analyze Impuestify's market position."""
     result = {}
-    formatted = "## Analisis de Posicion de Mercado - Impuestify\n\n"
+    formatted = f"## Analisis de Posicion de Mercado - {settings.BRAND_NAME}\n\n"
 
     if analysis_type in ("swot", "all"):
         swot = {
@@ -907,7 +909,7 @@ async def analyze_market_position_tool(analysis_type: str = "all") -> dict[str, 
         formatted += f"- **Posicion objetivo**: {positioning['target_position']}\n"
         formatted += f"- **Tagline recomendado**: *{positioning['recommended_tagline']}*\n\n"
 
-        formatted += "| Eje | Impuestify | TaxDown | Declarando |\n"
+        formatted += f"| Eje | {settings.BRAND_NAME} | TaxDown | Declarando |\n"
         formatted += "|---|---|---|---|\n"
         for d in positioning["differentiation_axes"]:
             formatted += (
@@ -1055,7 +1057,7 @@ async def analyze_aeat_integration_tool(aspect: str = "all") -> dict[str, Any]:
         formatted += "\n### 4. Roadmap Sugerido de Integracion AEAT\n\n"
         formatted += "```\n"
         formatted += "FASE 1 (Ahora): Export borrador pre-rellenado\n"
-        formatted += "  - Generar PDF/JSON con datos calculados por Impuestify\n"
+        formatted += f"  - Generar PDF/JSON con datos calculados por {settings.BRAND_NAME}\n"
         formatted += "  - El usuario copia datos a Renta WEB manualmente\n"
         formatted += "  - Esfuerzo: 2-4 semanas\n\n"
         formatted += "FASE 2 (Q2 2026): Guia interactiva de presentacion\n"
@@ -1285,7 +1287,7 @@ def _get_improvement_suggestions():
         {
             "id": "partnerships",
             "title": "Partnerships con Neobancos/Fintechs",
-            "description": "Ofrecer Impuestify como beneficio embebido en apps de neobancos (Revolut, N26, Wise) como hace TaxDown con BBVA.",
+            "description": f"Ofrecer {settings.BRAND_NAME} como beneficio embebido en apps de neobancos (Revolut, N26, Wise) como hace TaxDown con BBVA.",
             "impact": "muy alto",
             "difficulty": "alta",
             "priority": "alta",

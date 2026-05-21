@@ -10,6 +10,8 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -175,7 +177,7 @@ def generate_irpf_report(
     elements = []
 
     # === HEADER ===
-    elements.append(Paragraph("Impuestify", title_style))
+    elements.append(Paragraph(settings.BRAND_NAME, title_style))
     elements.append(
         Paragraph(
             f"Informe Fiscal IRPF — {datetime.now().strftime('%d/%m/%Y')}",
@@ -346,11 +348,11 @@ def generate_irpf_report(
     elements.append(Spacer(1, 3 * mm))
     elements.append(
         Paragraph(
-            "AVISO LEGAL: Este informe ha sido generado automáticamente por Impuestify y tiene "
+            f"AVISO LEGAL: Este informe ha sido generado automáticamente por {settings.BRAND_NAME} y tiene "
             "carácter meramente orientativo e informativo. No constituye asesoramiento fiscal "
             "profesional ni sustituye la consulta a un asesor fiscal cualificado. Los cálculos "
             "se basan en la información proporcionada por el usuario y en la normativa fiscal "
-            "vigente en el momento de la generación. Impuestify no se responsabiliza de errores "
+            f"vigente en el momento de la generación. {settings.BRAND_NAME} no se responsabiliza de errores "
             "u omisiones en los datos proporcionados ni de las decisiones tomadas en base a este informe.",
             small_style,
         )
@@ -358,7 +360,7 @@ def generate_irpf_report(
     elements.append(Spacer(1, 3 * mm))
     elements.append(
         Paragraph(
-            f"Generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')} por Impuestify (impuestify.com)",
+            f"Generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')} por {settings.BRAND_NAME} ({settings.BRAND_DOMAIN})",
             ParagraphStyle("Footer", parent=small_style, alignment=TA_CENTER),
         )
     )

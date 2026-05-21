@@ -626,6 +626,32 @@ async def logout(current_user: TokenData = Depends(get_current_user_required)):
     return {"message": "Sesión cerrada correctamente"}
 
 
+def render_password_reset_html(reset_link: str) -> str:
+    """Render password-reset email HTML with the active brand name.
+
+    Reads settings.BRAND_NAME so demo deploys (white-label) get their own brand.
+    """
+    brand = settings.BRAND_NAME
+    return f"""
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #1a56db; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 20px;">{brand}</h1>
+        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Recuperación de contraseña</p>
+    </div>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p>Hola,</p>
+        <p>Pulsa el botón para crear una nueva contraseña en {brand}:</p>
+        <div style="text-align: center; margin: 25px 0;">
+            <a href="{reset_link}" style="background: #1a56db; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600;">Cambiar contraseña</a>
+        </div>
+        <p style="color: #666; font-size: 13px;">El enlace caduca en 1 hora. Si no fuiste tú, puedes ignorar este correo; tu cuenta sigue intacta.</p>
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        <p style="color: #999; font-size: 11px;">{brand} — Fiscalidad española</p>
+    </div>
+</div>
+"""
+
+
 @router.post("/forgot-password")
 @limiter.limit("3/minute")
 async def forgot_password(request: Request, data: ForgotPasswordRequest):
@@ -648,29 +674,12 @@ async def forgot_password(request: Request, data: ForgotPasswordRequest):
         reset_token = create_reset_token(user.id, user.email)
         reset_link = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"
 
-        html = f"""
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
-    <div style="background: #1a56db; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-        <h1 style="margin: 0; font-size: 20px;">Impuestify</h1>
-        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Recuperación de contraseña</p>
-    </div>
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p>Hola,</p>
-        <p>Pulsa el botón para crear una nueva contraseña en Impuestify:</p>
-        <div style="text-align: center; margin: 25px 0;">
-            <a href="{reset_link}" style="background: #1a56db; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600;">Cambiar contraseña</a>
-        </div>
-        <p style="color: #666; font-size: 13px;">El enlace caduca en 1 hora. Si no fuiste tú, puedes ignorar este correo; tu cuenta sigue intacta.</p>
-        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-        <p style="color: #999; font-size: 11px;">Impuestify — Fiscalidad española</p>
-    </div>
-</div>
-"""
+        html = render_password_reset_html(reset_link)
 
         email_service = get_email_service()
         result = await email_service.send_email(
             to=user.email,
-            subject="Cambia tu contraseña en Impuestify",
+            subject=f"Cambia tu contraseña en {settings.BRAND_NAME}",
             html=html,
         )
         if not result.get("success"):

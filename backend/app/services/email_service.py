@@ -7,6 +7,8 @@ Provides email sending capabilities for sharing reports with advisors.
 import logging
 from typing import Any
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -104,12 +106,12 @@ class EmailService:
         html = f"""
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #1a56db; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-                <h1 style="margin: 0; font-size: 20px;">Impuestify</h1>
+                <h1 style="margin: 0; font-size: 20px;">{settings.BRAND_NAME}</h1>
                 <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Informe fiscal compartido</p>
             </div>
             <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px;">
                 <p>Hola,</p>
-                <p><strong>{user_name}</strong> te comparte un informe fiscal generado con Impuestify:</p>
+                <p><strong>{user_name}</strong> te comparte un informe fiscal generado con {settings.BRAND_NAME}:</p>
                 <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin: 15px 0;">
                     <p style="margin: 0; font-weight: 600;">{report_title}</p>
                 </div>

@@ -12,6 +12,8 @@ import io
 import logging
 from datetime import UTC, datetime
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 # Modelo display names
@@ -279,7 +281,7 @@ class ModeloPDFGenerator:
             modelo_name = MODELO_NAMES.get(modelo_type, modelo_type)
             title_text = f"Modelo {modelo_type.upper()} — {modelo_name}"
 
-        story.append(Paragraph("Impuestify", self._title_style))
+        story.append(Paragraph(settings.BRAND_NAME, self._title_style))
         story.append(Paragraph(title_text, self._subtitle_style))
         story.append(
             Paragraph(
@@ -406,11 +408,11 @@ class ModeloPDFGenerator:
         story.append(Spacer(1, 3 * mm))
         story.append(
             Paragraph(
-                "AVISO LEGAL: Este documento ha sido generado automáticamente por Impuestify y tiene "
+                f"AVISO LEGAL: Este documento ha sido generado automáticamente por {settings.BRAND_NAME} y tiene "
                 "carácter meramente orientativo e informativo. No constituye una declaración tributaria "
                 "oficial ni sustituye la presentación del modelo ante la AEAT o hacienda foral correspondiente. "
                 "Los cálculos se basan en la información proporcionada por el usuario y en la normativa fiscal "
-                "vigente. Impuestify no se responsabiliza de errores u omisiones en los datos proporcionados "
+                f"vigente. {settings.BRAND_NAME} no se responsabiliza de errores u omisiones en los datos proporcionados "
                 "ni de las decisiones tomadas en base a este documento.",
                 self._small_style,
             )
@@ -419,7 +421,7 @@ class ModeloPDFGenerator:
         now = datetime.now(UTC)
         story.append(
             Paragraph(
-                f"Generado el {now.strftime('%d/%m/%Y a las %H:%M')} UTC por Impuestify (impuestify.com)",
+                f"Generado el {now.strftime('%d/%m/%Y a las %H:%M')} UTC por {settings.BRAND_NAME} ({settings.BRAND_DOMAIN})",
                 self._footer_style,
             )
         )
@@ -1470,7 +1472,7 @@ class ModeloPDFGenerator:
         story.append(Spacer(1, 6 * mm))
         story.append(
             Paragraph(
-                "Este documento es un borrador placeholder generado por Impuestify mientras "
+                f"Este documento es un borrador placeholder generado por {settings.BRAND_NAME} mientras "
                 "se finaliza la implementación específica de este modelo. La estructura final "
                 "de casillas, casos especiales y validaciones será incorporada en próximas "
                 "versiones.",
