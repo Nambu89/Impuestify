@@ -1,12 +1,20 @@
 # Deploy Fiscal IA Melilla en Contabo + Coolify
 
 Guía paso a paso para desplegar el backend de la demo en un VPS Contabo con
-Coolify ya instalado. Frontend se monta aparte (lo gestiona el cliente).
+Coolify ya instalado.
+
+## Arquitectura
+
+- **Backend**: este repo (`Nambu89/Impuestify`), rama `demo/fiscal-ia-melilla`. FastAPI + Python 3.12.
+- **Frontend**: repo separado **`Nambu89/ia-melilla`** (React/Vite). Se despliega en Coolify como servicio independiente.
+- Ambos servicios viven en el mismo VPS Contabo, gateados por Coolify reverse proxy (Caddy/Traefik). Cada uno con su subdominio o paths distintos.
 
 ## Pre-requisitos
 
 - VPS Contabo con Coolify (>= v4) instalado y operativo
-- Dominio apuntando a la IP del VPS (registros A o AAAA)
+- Dos dominios (o subdominios) apuntando a la IP del VPS:
+  - Backend API (p.ej. `api.fiscal-melilla.demo`)
+  - Frontend (p.ej. `fiscal-melilla.demo`)
 - Cuentas externas con credenciales válidas:
   - OpenAI (gpt-5-mini)
   - Groq (LlamaGuard4)
@@ -52,14 +60,24 @@ turso db shell demo-fiscal-melilla "SELECT COUNT(*) FROM deductions WHERE ccaa I
 # Expected: >16
 ```
 
-### 3. Crear proyecto en Coolify
+### 3. Crear proyecto BACKEND en Coolify
 
 1. Coolify dashboard → **+ New Resource** → **Public Repository** (o **Private**
    si has migrado a un fork).
-2. Repo URL: `https://github.com/<owner>/<repo>`
+2. Repo URL: `https://github.com/Nambu89/Impuestify`
 3. **Branch**: `demo/fiscal-ia-melilla`
 4. **Build Pack**: `Docker Compose`
 5. **Compose file path**: `docker-compose.yml`
+6. **Domain**: el subdominio API (p.ej. `api.fiscal-melilla.demo`)
+
+### 3b. Crear proyecto FRONTEND en Coolify (servicio aparte)
+
+1. Coolify dashboard → **+ New Resource** → **Public Repository**
+2. Repo URL: `https://github.com/Nambu89/ia-melilla`
+3. **Branch**: según el repo (probablemente `main`)
+4. **Build Pack**: el que indique el README del frontend (Dockerfile / Nixpacks / Static)
+5. **Domain**: el subdominio público (p.ej. `fiscal-melilla.demo`)
+6. **Env vars del frontend**: configurar `VITE_API_BASE_URL` (o equivalente) apuntando al backend de paso 3 (`https://api.fiscal-melilla.demo`)
 
 ### 4. Configurar variables de entorno
 
@@ -75,7 +93,8 @@ Pega el contenido de `.env.demo.example` y reemplaza placeholders. Críticos:
   DefensIA devuelven 503).
 - `ADMIN_API_KEY` — `openssl rand -hex 32` (NUNCA dejar el placeholder de
   `config.py` por defecto).
-- `ALLOWED_ORIGINS` — incluir el dominio del frontend del cliente.
+- `ALLOWED_ORIGINS` — incluir el dominio del frontend (paso 3b). Ej: `https://fiscal-melilla.demo,http://localhost:5173`. Sin esto, el navegador bloquea peticiones del frontend al backend por CORS.
+- `FRONTEND_URL` — base URL del frontend (paso 3b). Se usa en emails (reset password, etc.).
 
 ### 5. Configurar healthcheck + TLS
 
