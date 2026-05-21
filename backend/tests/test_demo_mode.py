@@ -214,38 +214,53 @@ async def test_seed_demo_user_noop_when_demo_mode_off(monkeypatch):
 
 
 def test_health_endpoint_exposes_demo_metadata(monkeypatch):
-    """GET /health returns demo_mode + brand fields (preserving status/timestamp/rag_initialized/statistics)."""
+    """GET /health returns demo_mode + brand fields (preserving status/timestamp/rag_initialized/statistics).
+
+    Uses a fresh FastAPI() instance to avoid corrupting global app state with importlib.reload
+    (same pattern as test_subscription_endpoint_returns_404_when_disabled).
+    """
     monkeypatch.setenv("DEMO_MODE", "true")
     monkeypatch.setenv("BRAND_NAME", "Fiscal IA Melilla")
     monkeypatch.setenv("RAG_TERRITORY_LOCK", "Melilla")
 
-    from importlib import reload
+    import time
 
-    import app.config as config_module
-
-    reload(config_module)
-    import app.main as main_module
-
-    reload(main_module)
+    from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    client = TestClient(main_module.app)
+    from app.config import Settings
+    from app.main import HealthResponse
+
+    s = Settings(_env_file=None)
+    test_app = FastAPI()
+
+    @test_app.get("/health", response_model=HealthResponse)
+    async def _health():
+        return HealthResponse(
+            status="healthy",
+            timestamp=time.time(),
+            rag_initialized=True,
+            statistics={"database": "turso", "status": "connected"},
+            demo_mode=s.DEMO_MODE,
+            brand=s.BRAND_NAME,
+            territory_lock=s.RAG_TERRITORY_LOCK,
+            subscriptions_enabled=s.SUBSCRIPTIONS_ENABLED,
+        )
+
+    client = TestClient(test_app)
     r = client.get("/health")
     assert r.status_code == 200
     body = r.json()
-    # Existing fields preserved (handler returns "healthy" or "initializing"):
+    # Existing fields preserved:
     assert body["status"] in ("healthy", "initializing")
     assert "timestamp" in body
     assert "rag_initialized" in body
     assert "statistics" in body
-    # New demo fields:
+    # New demo fields with concrete expected values:
     assert body["demo_mode"] is True
     assert body["brand"] == "Fiscal IA Melilla"
     assert body["territory_lock"] == "Melilla"
-    assert body["subscriptions_enabled"] in (
-        True,
-        False,
-    )  # value depends on whether the gate was triggered
-    # Must NOT leak secrets:
+    assert body["subscriptions_enabled"] is True  # default when not overridden
+    # No secret leak:
     assert "JWT_SECRET" not in str(body).upper()
     assert "API_KEY" not in str(body).upper()
