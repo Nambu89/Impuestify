@@ -69,6 +69,11 @@ class HealthResponse(BaseModel):
     version: str = "1.0.0"
     rag_initialized: bool
     statistics: dict[str, Any] | None = None
+    # Demo-mode fields (defaults preserve backward compatibility):
+    demo_mode: bool = False
+    brand: str = "Impuestify"
+    territory_lock: str | None = None
+    subscriptions_enabled: bool = True
 
 
 class RebuildRequest(BaseModel):
@@ -694,6 +699,10 @@ async def health_check(request: Request):
             timestamp=time.time(),
             rag_initialized=rag_initialized,
             statistics=statistics,
+            demo_mode=settings.DEMO_MODE,
+            brand=settings.BRAND_NAME,
+            territory_lock=settings.RAG_TERRITORY_LOCK,
+            subscriptions_enabled=settings.SUBSCRIPTIONS_ENABLED,
         )
 
     except Exception as e:

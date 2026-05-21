@@ -211,3 +211,41 @@ async def test_seed_demo_user_noop_when_demo_mode_off(monkeypatch):
     db.execute = AsyncMock()
     await seed_module.seed_demo_user(db)
     db.execute.assert_not_called()
+
+
+def test_health_endpoint_exposes_demo_metadata(monkeypatch):
+    """GET /health returns demo_mode + brand fields (preserving status/timestamp/rag_initialized/statistics)."""
+    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("BRAND_NAME", "Fiscal IA Melilla")
+    monkeypatch.setenv("RAG_TERRITORY_LOCK", "Melilla")
+
+    from importlib import reload
+
+    import app.config as config_module
+
+    reload(config_module)
+    import app.main as main_module
+
+    reload(main_module)
+    from fastapi.testclient import TestClient
+
+    client = TestClient(main_module.app)
+    r = client.get("/health")
+    assert r.status_code == 200
+    body = r.json()
+    # Existing fields preserved (handler returns "healthy" or "initializing"):
+    assert body["status"] in ("healthy", "initializing")
+    assert "timestamp" in body
+    assert "rag_initialized" in body
+    assert "statistics" in body
+    # New demo fields:
+    assert body["demo_mode"] is True
+    assert body["brand"] == "Fiscal IA Melilla"
+    assert body["territory_lock"] == "Melilla"
+    assert body["subscriptions_enabled"] in (
+        True,
+        False,
+    )  # value depends on whether the gate was triggered
+    # Must NOT leak secrets:
+    assert "JWT_SECRET" not in str(body).upper()
+    assert "API_KEY" not in str(body).upper()
