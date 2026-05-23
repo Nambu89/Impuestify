@@ -25,6 +25,7 @@ Reglas de disenho (cerradas en el plan v2)
 7. **UTC** siempre (``datetime.now(timezone.utc)``), nunca ``utcnow``.
 """
 
+import asyncio
 import json
 import logging
 import secrets
@@ -1112,6 +1113,15 @@ async def borrar_expediente(
 # ============================================================================
 
 
+_DEFENSIA_THINKING_MESSAGES = (
+    "Analizando tu caso…",
+    "Consultando normativa AEAT y procedimiento aplicable…",
+    "Comprobando plazos administrativos y obligaciones del contribuyente…",
+    "Buscando precedentes y casos similares…",
+    "Redactando una respuesta estructurada con citas oficiales…",
+)
+
+
 @router.post("/chat")
 @limiter.limit(get_defensia_rate_limit("chat"))
 async def chat_defensia(
@@ -1123,23 +1133,73 @@ async def chat_defensia(
     """Stream conversacional del DefensiaAgent.
 
     Eventos:
-        - ``content``: chunk de texto.
+        - ``thinking``: mensaje de progreso emitido mientras el agente piensa
+          (cada ~4s hasta que llega el primer chunk de contenido real).
+        - ``content``: chunk de texto del LLM.
         - ``done``: fin del stream.
+        - ``error``: error inesperado.
+
+    El bloque de eventos ``thinking`` da al usuario sensación de progreso
+    durante los 10-30s que tarda el agente en empezar a devolver tokens.
+    Se emiten en paralelo al ``chat_stream`` del agente y se cortan en
+    cuanto llega el primer chunk real.
     """
 
     async def event_stream():
+        queue: asyncio.Queue[tuple[str, str | None]] = asyncio.Queue()
+        first_chunk = asyncio.Event()
+        stream_done = asyncio.Event()
+
+        async def run_agent() -> None:
+            """Consume el stream del agente y lo enruta a la cola."""
+            try:
+                async for chunk in agent.chat_stream(body.message, chat_history=body.chat_history):
+                    if chunk:
+                        first_chunk.set()
+                        await queue.put(("content", chunk))
+            except Exception as exc:  # noqa: BLE001
+                logger.error("DefensIA chat error: %s", exc, exc_info=True)
+                await queue.put(("error", "Error en el chat DefensIA"))
+            finally:
+                stream_done.set()
+                await queue.put(("done", None))
+
+        async def emit_thinking() -> None:
+            """Emite thinking events rotatorios cada 4s hasta el primer chunk."""
+            idx = 0
+            # Primer thinking inmediato (feedback instantáneo)
+            await queue.put(("thinking", _DEFENSIA_THINKING_MESSAGES[0]))
+            idx = 1
+            while not first_chunk.is_set() and not stream_done.is_set():
+                try:
+                    await asyncio.wait_for(first_chunk.wait(), timeout=4.0)
+                    return  # llegó chunk real, ya no necesitamos thinking
+                except TimeoutError:
+                    msg = _DEFENSIA_THINKING_MESSAGES[idx % len(_DEFENSIA_THINKING_MESSAGES)]
+                    await queue.put(("thinking", msg))
+                    idx += 1
+
+        agent_task = asyncio.create_task(run_agent())
+        thinking_task = asyncio.create_task(emit_thinking())
+
         try:
-            async for chunk in agent.chat_stream(body.message, chat_history=body.chat_history):
-                if chunk:
-                    yield {"event": "content", "data": chunk}
-            yield {"event": "done", "data": ""}
-        except Exception as exc:  # noqa: BLE001
-            logger.error("DefensIA chat error: %s", exc, exc_info=True)
-            yield {
-                "event": "error",
-                "data": json.dumps({"message": "Error en el chat DefensIA"}),
-            }
-            yield {"event": "done", "data": ""}
+            while True:
+                event_type, data = await queue.get()
+                if event_type == "done":
+                    yield {"event": "done", "data": ""}
+                    return
+                if event_type == "error":
+                    yield {
+                        "event": "error",
+                        "data": json.dumps({"message": data or "error"}),
+                    }
+                    continue
+                yield {"event": event_type, "data": data or ""}
+        finally:
+            # Asegurar limpieza de tareas en flight si el cliente desconecta
+            thinking_task.cancel()
+            if not agent_task.done():
+                agent_task.cancel()
 
     return EventSourceResponse(
         event_stream(),

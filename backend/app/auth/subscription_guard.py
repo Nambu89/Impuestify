@@ -32,9 +32,15 @@ async def require_active_subscription(
     off, so blocking on it would brick every protected endpoint.
     """
     if not settings.SUBSCRIPTIONS_ENABLED:
+        # plan_type="autonomo" para que el content_restriction guard
+        # de chat_stream NO bloquee preguntas de autónomos (que es lo
+        # que queremos demostrar en una demo white-label completa).
+        # Sin esto, plan_type=None y `None not in ("autonomo","creator")`
+        # bloquea cualquier consulta sobre autónomos / modelos AEAT.
         return SubscriptionAccess(
             has_access=True,
             is_owner=False,
+            plan_type="autonomo",
             status="demo",
             reason="subscriptions_disabled",
         )
@@ -69,9 +75,15 @@ async def get_subscription_access(
     Bypass: when SUBSCRIPTIONS_ENABLED=False, returns "demo" access.
     """
     if not settings.SUBSCRIPTIONS_ENABLED:
+        # plan_type="autonomo" para que el content_restriction guard
+        # de chat_stream NO bloquee preguntas de autónomos (que es lo
+        # que queremos demostrar en una demo white-label completa).
+        # Sin esto, plan_type=None y `None not in ("autonomo","creator")`
+        # bloquea cualquier consulta sobre autónomos / modelos AEAT.
         return SubscriptionAccess(
             has_access=True,
             is_owner=False,
+            plan_type="autonomo",
             status="demo",
             reason="subscriptions_disabled",
         )
