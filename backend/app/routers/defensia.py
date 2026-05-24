@@ -1146,6 +1146,16 @@ async def chat_defensia(
     lo hace el garbage collector cuando el generador termina o se cancela.
     """
 
+    # Marker forzoso (ERROR-level) para verificar qué versión del código
+    # corre en el container. Si esta línea no aparece en los logs del
+    # container tras un POST /api/defensia/chat, el container está
+    # sirviendo una build anterior cacheada por Docker.
+    logger.error(
+        "DEFENSIA_CHAT_INVOKED build=5a4f0bc-or-newer model=%s msg_len=%d",
+        getattr(agent, "MODEL", "?"),
+        len(body.message or ""),
+    )
+
     async def event_stream():
         # Feedback inmediato (antes incluso de invocar al agente)
         yield {"event": "thinking", "data": _DEFENSIA_THINKING_MESSAGES[0]}
