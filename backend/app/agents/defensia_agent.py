@@ -192,8 +192,12 @@ class DefensiaAgent:
         Yields:
             Chunks de texto (str) de la respuesta del modelo.
         """
+        # Trace markers (ERROR level so they survive any log filter).
+        logger.error("DEFENSIA_AGENT_TRACE step=enter msg_len=%d", len(message or ""))
+
         # 1. Safety check
         is_safe, reason = self._check_input_safety(message)
+        logger.error("DEFENSIA_AGENT_TRACE step=after_safety is_safe=%s", is_safe)
         if not is_safe:
             logger.warning("DefensIA agent rechaza input: %s", reason)
             yield SAFE_FAIL_MESSAGE
@@ -204,6 +208,7 @@ class DefensiaAgent:
         if chat_history:
             messages.extend(chat_history)
         messages.append({"role": "user", "content": message})
+        logger.error("DEFENSIA_AGENT_TRACE step=before_openai model=%s", self.MODEL)
 
         # 3. Stream desde OpenAI
         try:
@@ -214,6 +219,7 @@ class DefensiaAgent:
                 max_completion_tokens=self.MAX_COMPLETION_TOKENS,
                 stream=True,
             )
+            logger.error("DEFENSIA_AGENT_TRACE step=stream_obtained")
             chunks_seen = 0
             content_chunks = 0
             last_finish_reason: str | None = None
@@ -228,9 +234,9 @@ class DefensiaAgent:
                 if delta_content:
                     content_chunks += 1
                     yield delta_content
-            logger.info(
-                "DefensIA stream summary: chunks=%d content_chunks=%d finish_reason=%s "
-                "model=%s max_tokens=%d",
+            logger.error(
+                "DEFENSIA_AGENT_TRACE step=stream_done chunks=%d content_chunks=%d "
+                "finish_reason=%s model=%s max_tokens=%d",
                 chunks_seen,
                 content_chunks,
                 last_finish_reason,
