@@ -118,14 +118,14 @@ class DefensiaAgent:
     a OpenAI.
     """
 
-    MODEL: str = "gpt-5-mini"
-    # gpt-5-mini is a reasoning model and consumes tokens internally before
-    # emitting text. 1024 was exhausted by reasoning, leaving zero output —
-    # SSE stream emitted only thinking + done (no content). Matched to
-    # TaxAgent's budget (10000) so DefensIA — which often produces long
-    # formal documents (alegaciones, recursos) — never runs dry mid-answer.
+    # Switched from gpt-5-mini -> gpt-5. With gpt-5-mini DefensIA's stream
+    # produced zero content chunks (only thinking + done) even at 10000
+    # tokens — the model burned the whole budget on internal reasoning
+    # without ever emitting text. gpt-5 has enough headroom for long
+    # legal/fiscal compositions (alegaciones, recursos) plus reasoning.
+    MODEL: str = "gpt-5"
     MAX_COMPLETION_TOKENS: int = 10000
-    TEMPERATURE: int = 1  # único valor soportado por gpt-5-mini
+    TEMPERATURE: int = 1  # único valor soportado por gpt-5 family
 
     def __init__(self, api_key: str | None = None):
         """Inicializa el agent con un cliente AsyncOpenAI.
@@ -214,12 +214,43 @@ class DefensiaAgent:
                 max_completion_tokens=self.MAX_COMPLETION_TOKENS,
                 stream=True,
             )
+            chunks_seen = 0
+            content_chunks = 0
+            last_finish_reason: str | None = None
             async for chunk in stream:
+                chunks_seen += 1
                 if not chunk.choices:
                     continue
-                delta_content = chunk.choices[0].delta.content
+                choice = chunk.choices[0]
+                if choice.finish_reason:
+                    last_finish_reason = choice.finish_reason
+                delta_content = choice.delta.content
                 if delta_content:
+                    content_chunks += 1
                     yield delta_content
+            logger.info(
+                "DefensIA stream summary: chunks=%d content_chunks=%d finish_reason=%s "
+                "model=%s max_tokens=%d",
+                chunks_seen,
+                content_chunks,
+                last_finish_reason,
+                self.MODEL,
+                self.MAX_COMPLETION_TOKENS,
+            )
+            if content_chunks == 0:
+                logger.warning(
+                    "DefensIA emitted zero content chunks. Likely cause: "
+                    "model burned the entire token budget on reasoning before "
+                    "producing any visible output. Falling back to a generic "
+                    "guidance message so the UI is not left blank."
+                )
+                yield (
+                    "No he podido componer una respuesta esta vez. ¿Puedes "
+                    "reformular tu consulta indicando: tributo afectado, "
+                    "ejercicio fiscal y qué acto de la Administración has "
+                    "recibido (requerimiento, propuesta de liquidación, "
+                    "sanción, etc.)?"
+                )
         except Exception as exc:  # noqa: BLE001 — degradación graceful
             logger.error("DefensIA agent OpenAI error: %s", exc)
             yield TECHNICAL_ERROR_MESSAGE
