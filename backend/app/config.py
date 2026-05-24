@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     # -------------------------------
     GOOGLE_GEMINI_API_KEY: str | None = Field(default=None)
     GEMINI_MODEL: str = Field(
-        default="gemini-3-flash-preview", description="Gemini model for invoice OCR"
+        default="gemini-3.1-flash-lite", description="Gemini model for invoice OCR"
     )
 
     # -------------------------------
