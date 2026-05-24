@@ -8,7 +8,7 @@ fast (~50-100ms) real-time estimates as users fill in the wizard.
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 from app.auth.jwt_handler import TokenData, get_current_user
 from app.security.rate_limiter import limiter
@@ -66,7 +66,14 @@ class PagadorItem(BaseModel):
 
 
 class IRPFEstimateRequest(BaseModel):
-    comunidad_autonoma: str
+    model_config = {"populate_by_name": True}
+
+    # Accept both "comunidad_autonoma" (canonical) and "ccaa" (used by the
+    # ia-melilla frontend wizard). Pydantic AliasChoices unifies them so the
+    # mismatch that broke /api/irpf/estimate in production no longer 422s.
+    comunidad_autonoma: str = Field(
+        ..., validation_alias=AliasChoices("comunidad_autonoma", "ccaa")
+    )
     year: int = 2025
     ingresos_trabajo: float = 0
     ss_empleado: float = 0

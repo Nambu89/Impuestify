@@ -119,7 +119,11 @@ class DefensiaAgent:
     """
 
     MODEL: str = "gpt-5-mini"
-    MAX_COMPLETION_TOKENS: int = 1024
+    # gpt-5-mini is a reasoning model and consumes tokens internally before
+    # emitting text. 1024 was exhausted by reasoning, leaving zero output —
+    # SSE stream emitted only thinking + done (no content). 4096 leaves
+    # enough budget for both reasoning and visible answer.
+    MAX_COMPLETION_TOKENS: int = 4096
     TEMPERATURE: int = 1  # único valor soportado por gpt-5-mini
 
     def __init__(self, api_key: str | None = None):
