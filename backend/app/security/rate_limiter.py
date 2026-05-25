@@ -132,23 +132,54 @@ ip_blocker = IPBlocker(
 # === Rate Limit Key Function ===
 
 
+_DEMO_USER_EMAILS = {"demo@example.com", "cliente.demo@iamelilla.com"}
+
+
 def get_rate_limit_key(request: Request) -> str:
     """
-    Get rate limit key based on user identity.
+    Build the rate-limit key.
 
-    Uses JWT user ID if authenticated, otherwise falls back to IP address.
+    Priority:
+      1. If the JWT belongs to a *demo* user (anonymous web visitor logged
+         in automatically via the demo credentials, or the static cliente
+         demo account), key by the visitor's IP. This stops a single
+         shared demo account from being abused by many concurrent IPs.
+      2. If the JWT belongs to a real authenticated user (real email),
+         key by their stable user_id so the rate-limit is per-person,
+         not per-token.
+      3. If there is no token at all, key by IP.
     """
-    # Try to get user from JWT token
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
-        # If authenticated, could extract user ID from token
-        # For now, use a hash of the token
-        import hashlib
+        token = auth_header[len("Bearer ") :].strip()
+        try:
+            # Decode without verifying expiry — we just need claims for the
+            # rate-limit key. Auth dependencies do the real validation.
+            from jose import jwt as _jwt
 
-        token_hash = hashlib.md5(auth_header.encode()).hexdigest()[:16]
-        return f"user:{token_hash}"
+            from app.config import settings as _settings
 
-    # Fallback to IP address
+            payload = _jwt.decode(
+                token,
+                _settings.JWT_SECRET_KEY,
+                algorithms=[_settings.JWT_ALGORITHM],
+                options={"verify_exp": False},
+            )
+            email = (payload.get("email") or "").lower()
+            user_id = payload.get("sub") or ""
+
+            if email in _DEMO_USER_EMAILS:
+                # Demo accounts: rate limit by IP to prevent cross-visitor abuse
+                return f"demo_ip:{get_remote_address(request)}"
+
+            if user_id:
+                return f"user:{user_id}"
+        except Exception:
+            # Invalid or unparseable token — fall through to IP fallback so we
+            # never raise inside the key function (slowapi would 500).
+            pass
+
+    # No token (or unparseable) — fall back to IP
     return get_remote_address(request)
 
 
