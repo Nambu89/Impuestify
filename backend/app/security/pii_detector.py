@@ -175,6 +175,17 @@ class PIIDetector:
         if cached is not None:
             return cached
 
+        # Always run the deterministic regex first. High-value Spanish PII
+        # (DNI, NIE, IBAN, email, phone, CIF) is a 100% hard reject and the
+        # LLM safety model is too lenient in fiscal contexts ("mi DNI es
+        # 12345..." was being classified as safe). We union the two
+        # detectors: if EITHER flags PII, the request is rejected.
+        regex_result = self._regex_only(text)
+        if regex_result.has_pii:
+            # Cache and return immediately — no need to spend Groq quota.
+            self._cache[text_hash] = regex_result
+            return regex_result
+
         result = self._detect_uncached(text)
 
         if len(self._cache) >= self._CACHE_MAX:
