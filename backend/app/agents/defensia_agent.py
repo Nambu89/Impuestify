@@ -21,6 +21,7 @@ Contrato:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 
@@ -118,14 +119,17 @@ class DefensiaAgent:
     a OpenAI.
     """
 
-    # Switched from gpt-5-mini -> gpt-5. With gpt-5-mini DefensIA's stream
-    # produced zero content chunks (only thinking + done) even at 10000
-    # tokens — the model burned the whole budget on internal reasoning
-    # without ever emitting text. gpt-5 has enough headroom for long
-    # legal/fiscal compositions (alegaciones, recursos) plus reasoning.
-    MODEL: str = "gpt-5"
+    # gpt-5 hung indefinitely on chat.completions.create (likely API tier
+    # / model-access issue on the demo key). Trace logs showed the agent
+    # reaching step=before_openai but never step=stream_obtained.
+    # gpt-5-nano is the fastest gpt-5-family model and is broadly
+    # available without special tier — best fit for a chat assistant
+    # answering tax questions where snappy latency matters more than max
+    # quality.
+    MODEL: str = "gpt-5-nano"
     MAX_COMPLETION_TOKENS: int = 10000
     TEMPERATURE: int = 1  # único valor soportado por gpt-5 family
+    OPENAI_TIMEOUT_S: float = 30.0  # hard cap so we never hang forever
 
     def __init__(self, api_key: str | None = None):
         """Inicializa el agent con un cliente AsyncOpenAI.
@@ -210,14 +214,17 @@ class DefensiaAgent:
         messages.append({"role": "user", "content": message})
         logger.error("DEFENSIA_AGENT_TRACE step=before_openai model=%s", self.MODEL)
 
-        # 3. Stream desde OpenAI
+        # 3. Stream desde OpenAI (hard timeout para no colgar indefinido)
         try:
-            stream = await self._client.chat.completions.create(
-                model=self.MODEL,
-                messages=messages,
-                temperature=self.TEMPERATURE,
-                max_completion_tokens=self.MAX_COMPLETION_TOKENS,
-                stream=True,
+            stream = await asyncio.wait_for(
+                self._client.chat.completions.create(
+                    model=self.MODEL,
+                    messages=messages,
+                    temperature=self.TEMPERATURE,
+                    max_completion_tokens=self.MAX_COMPLETION_TOKENS,
+                    stream=True,
+                ),
+                timeout=self.OPENAI_TIMEOUT_S,
             )
             logger.error("DEFENSIA_AGENT_TRACE step=stream_obtained")
             chunks_seen = 0
@@ -257,6 +264,17 @@ class DefensiaAgent:
                     "recibido (requerimiento, propuesta de liquidación, "
                     "sanción, etc.)?"
                 )
+        except TimeoutError:
+            logger.error(
+                "DEFENSIA_AGENT_TRACE step=openai_timeout after=%ss model=%s",
+                self.OPENAI_TIMEOUT_S,
+                self.MODEL,
+            )
+            yield (
+                "El servicio de IA tardó demasiado en responder. Vuelve a "
+                "intentarlo en unos segundos; si el problema persiste, "
+                "contacta con soporte."
+            )
         except Exception as exc:  # noqa: BLE001 — degradación graceful
-            logger.error("DefensIA agent OpenAI error: %s", exc)
+            logger.error("DefensIA agent OpenAI error: %s", exc, exc_info=True)
             yield TECHNICAL_ERROR_MESSAGE
