@@ -82,7 +82,7 @@ class InvoiceClassifierService:
         self,
         api_key: str,
         db=None,
-        model: str = "gemini-3.1-flash-lite",
+        model: str = "gemini-2.5-flash-lite",
     ):
         if genai is None:
             raise ImportError(

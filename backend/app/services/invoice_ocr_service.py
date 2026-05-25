@@ -182,7 +182,7 @@ EXTRACTION_PROMPT = (
 class InvoiceOCRService:
     """Extract structured data from Spanish invoices using Gemini Vision."""
 
-    def __init__(self, api_key: str, model: str = "gemini-3.1-flash-lite"):
+    def __init__(self, api_key: str, model: str = "gemini-2.5-flash-lite"):
         if not GENAI_AVAILABLE:
             raise RuntimeError(
                 "google-genai no esta instalado. " "Ejecuta: pip install google-genai"
