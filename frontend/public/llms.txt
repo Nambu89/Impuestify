@@ -1,0 +1,32 @@
+# Impuestify
+
+> Asistente fiscal con inteligencia artificial para España. Calcula el IRPF con los tramos
+> de cada comunidad autónoma, descubre deducciones autonómicas y forales, analiza nóminas y
+> notificaciones de la AEAT, y genera los modelos tributarios. Cobertura de las 17 CCAA,
+> los 4 territorios forales (País Vasco y Navarra) y Ceuta y Melilla.
+
+## Herramientas gratuitas (sin registro)
+
+- [Calculadora de retenciones IRPF](https://impuestify.com/calculadora-retenciones): estima la retención de IRPF de tu nómina según el algoritmo de la AEAT.
+- [Calculadora de umbrales](https://impuestify.com/calculadora-umbrales): comprueba si superas los límites que obligan a presentar cada modelo o a declarar.
+- [¿Estoy obligado a declarar?](https://impuestify.com/obligado-declarar): resuelve si tienes obligación de presentar la declaración de la renta (art. 96 LIRPF, multipagadores).
+- [Checklist del borrador](https://impuestify.com/checklist-borrador): pasos para revisar el borrador de la renta antes de confirmarlo.
+- [Modelos tributarios obligatorios](https://impuestify.com/modelos-obligatorios): qué modelos debes presentar según tu perfil (particular, autónomo, creador).
+
+## Guías fiscales por territorio
+
+- [Ceuta y Melilla](https://impuestify.com/ceuta-melilla): IPSI, deducción del 60% en la cuota y particularidades de la fiscalidad de las ciudades autónomas.
+- [Canarias](https://impuestify.com/canarias): IGIC, AIEM y deducciones autonómicas canarias.
+- [Territorios forales](https://impuestify.com/territorios-forales): IRPF e IS en País Vasco (Bizkaia, Gipuzkoa, Araba) y Navarra.
+- [Creadores de contenido](https://impuestify.com/creadores-de-contenido): fiscalidad de YouTubers, streamers e influencers (IVA por plataforma, modelo 349, DAC7).
+- [Farmacias](https://impuestify.com/farmacias): contabilidad y fiscalidad específica de oficinas de farmacia.
+
+## Sobre Impuestify
+
+- [Sobre el proyecto](https://impuestify.com/sobre-mi): quién está detrás de Impuestify y cómo funciona.
+- [Transparencia sobre IA](https://impuestify.com/ai-transparency): cómo se usa la inteligencia artificial y sus límites.
+
+## Notas
+
+- Impuestify es una herramienta de apoyo; no sustituye el asesoramiento de un profesional colegiado.
+- Los cálculos se basan en la normativa vigente publicada en fuentes oficiales (BOE, AEAT y boletines autonómicos/forales).
