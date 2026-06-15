@@ -155,6 +155,16 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error("Demo user seed failed (non-fatal): %s", e)
 
+        # Leadbot schema — captador de leads (demo IA Melilla). SÓLO en DEMO_MODE
+        # para que sus tablas nunca toquen la base de datos de Impuestify principal.
+        if settings.DEMO_MODE:
+            try:
+                from app.leadbot.schema import ensure_leadbot_schema
+
+                await ensure_leadbot_schema(db_client)
+            except Exception as e:
+                logger.error("Leadbot schema ensure failed (non-fatal): %s", e)
+
         # Verificar conexion contando documentos
         result = await db_client.execute("SELECT COUNT(*) as cnt FROM documents")
         doc_count = result.rows[0]["cnt"] if result.rows else 0
@@ -549,6 +559,16 @@ app.include_router(invoices_router)
 from app.routers import defensia
 
 app.include_router(defensia.router)
+
+# Leadbot — captador de leads (demo IA Melilla). SÓLO se monta en DEMO_MODE:
+# defensa en profundidad para que no pueda exponerse en el despliegue de Impuestify.
+if settings.DEMO_MODE:
+    from app.leadbot.router import chat_router as leadbot_chat_router
+    from app.leadbot.router import leads_router as leadbot_leads_router
+
+    app.include_router(leadbot_chat_router)
+    app.include_router(leadbot_leads_router)
+    logger.info("Leadbot routes mounted (DEMO_MODE)")
 
 # === Dependencias ===
 
