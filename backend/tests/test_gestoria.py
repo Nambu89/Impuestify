@@ -115,3 +115,41 @@ class TestGrantGestoria:
         assert any("INSERT INTO subscriptions" in c[0] and "'autonomo'" in c[0] for c in calls)
         # account_type UPDATE must still happen regardless of which branch was taken
         assert any("UPDATE users SET account_type" in c[0] for c in calls)
+
+
+class TestRequireGestoria:
+    @pytest.mark.asyncio
+    async def test_require_gestoria_allows_gestoria(self):
+        from app.auth.gestoria_guard import require_gestoria
+        from app.auth.jwt_handler import TokenData
+
+        db = AsyncMock()
+
+        async def execute(sql, params=None):
+            res = MagicMock()
+            res.rows = [{"account_type": "gestoria"}]
+            return res
+
+        db.execute = execute
+        user = TokenData(user_id="u-1", email="g@x.com")
+        result = await require_gestoria(current_user=user, db=db)
+        assert result.user_id == "u-1"
+
+    @pytest.mark.asyncio
+    async def test_require_gestoria_blocks_individual(self):
+        from fastapi import HTTPException
+
+        from app.auth.gestoria_guard import require_gestoria
+        from app.auth.jwt_handler import TokenData
+
+        db = AsyncMock()
+
+        async def execute(sql, params=None):
+            res = MagicMock()
+            res.rows = [{"account_type": "individual"}]
+            return res
+
+        db.execute = execute
+        with pytest.raises(HTTPException) as exc:
+            await require_gestoria(current_user=TokenData(user_id="u-2", email="p@x.com"), db=db)
+        assert exc.value.status_code == 403

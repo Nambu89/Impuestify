@@ -131,6 +131,7 @@ class UserResponse(BaseModel):
     is_active: bool
     is_admin: bool = False
     is_owner: bool = False
+    account_type: str = "individual"
     subscription_status: str | None = None
 
 
@@ -607,6 +608,7 @@ async def get_current_user_info(current_user: TokenData = Depends(get_current_us
         is_active=user.is_active,
         is_admin=user.is_admin,
         is_owner=access.is_owner,
+        account_type=user.account_type,
         subscription_status=access.status,
     )
 
