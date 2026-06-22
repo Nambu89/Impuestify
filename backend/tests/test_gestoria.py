@@ -365,3 +365,45 @@ class TestGestoriaClientService:
         # Optional fields present when set
         assert profile.get("epigrafe_iae") == "6510"
         assert profile.get("regimen_iva") == "general"
+
+
+class TestGestoriaRouter:
+    def _client(self, svc):
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+
+        from app.auth.gestoria_guard import require_gestoria
+        from app.auth.jwt_handler import TokenData
+        from app.routers import gestoria as gestoria_router
+
+        app = FastAPI()
+        app.include_router(gestoria_router.router)
+        app.dependency_overrides[require_gestoria] = lambda: TokenData(
+            user_id="u-1", email="g@x.com"
+        )
+        gestoria_router.get_service = lambda: svc  # type: ignore[attr-defined]
+        return TestClient(app)
+
+    def test_create_client_returns_409_over_limit(self):
+        from app.services.gestoria_service import ClientLimitError
+
+        svc = AsyncMock()
+        svc.create_client.side_effect = ClientLimitError("max")
+        client = self._client(svc)
+        resp = client.post(
+            "/api/gestoria/clients",
+            json={"nombre_cliente": "C", "tipo": "autonomo"},
+        )
+        assert resp.status_code == 409
+
+    def test_list_clients_ok(self):
+        from app.services.gestoria_service import GestoriaClient
+
+        svc = AsyncMock()
+        svc.list_clients.return_value = [
+            GestoriaClient(id="w1", nombre_cliente="Ana", tipo="particular")
+        ]
+        client = self._client(svc)
+        resp = client.get("/api/gestoria/clients")
+        assert resp.status_code == 200
+        assert resp.json()[0]["nombre_cliente"] == "Ana"

@@ -532,6 +532,11 @@ from app.routers import defensia
 
 app.include_router(defensia.router)
 
+# Modo Gestoría — cartera de clientes
+from app.routers import gestoria as gestoria_router
+
+app.include_router(gestoria_router.router)
+
 # === Dependencias ===
 
 
