@@ -40,12 +40,12 @@ SUBSCRIPTION_END = "2026-12-31T23:59:59"
 
 
 async def seed() -> None:
-    db = await get_db_client()
-    now = datetime.now(UTC).isoformat()
-
     if not GESTORIAS:
         print("GESTORIAS vacío — nada que hacer. Hecho.")
         return
+
+    db = await get_db_client()
+    now = datetime.now(UTC).isoformat()
 
     for email, name, password in GESTORIAS:
         # ── Comprobar si el usuario ya existe ──────────────────────────────
