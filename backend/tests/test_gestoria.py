@@ -84,3 +84,34 @@ class TestGrantGestoria:
             "plan_type" in c[0] and c[1] and "autonomo" in c[1] for c in calls
         )
         assert any("UPDATE users SET account_type" in c[0] for c in calls)
+
+    def test_grant_gestoria_inserts_when_no_subscription(self):
+        """When no subscription row exists the endpoint must INSERT one."""
+        db = AsyncMock()
+        calls: list[tuple] = []
+
+        async def execute(sql, params=None):
+            calls.append((" ".join(sql.split()), params))
+            res = MagicMock()
+            if sql.strip().startswith("SELECT id, email FROM users"):
+                res.rows = [{"id": "u-2", "email": "gestoria2@x.com"}]
+            elif "FROM subscriptions" in sql:
+                # No existing subscription row → triggers INSERT branch
+                res.rows = []
+            else:
+                res.rows = []
+            return res
+
+        db.execute = execute
+        client = self._build_client(db)
+
+        resp = client.put("/api/admin/users/u-2/grant-gestoria", json={})
+        assert resp.status_code == 200
+
+        joined = " || ".join(c[0] for c in calls)
+        # INSERT branch must have been executed
+        assert "INSERT INTO subscriptions" in joined
+        # autonomo plan must appear in the INSERT statement (hardcoded literal in SQL)
+        assert any("INSERT INTO subscriptions" in c[0] and "'autonomo'" in c[0] for c in calls)
+        # account_type UPDATE must still happen regardless of which branch was taken
+        assert any("UPDATE users SET account_type" in c[0] for c in calls)
