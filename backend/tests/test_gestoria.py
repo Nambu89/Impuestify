@@ -256,3 +256,112 @@ class TestGestoriaClientService:
 
         with pytest.raises(ValidationError):
             GestoriaClientCreate(nombre_cliente="C")  # falta tipo
+
+    # ------------------------------------------------------------------
+    # Fix: robustness + CRUD tests (Task-8 contract)
+    # ------------------------------------------------------------------
+
+    def _build_row(self, **overrides):
+        """Return a dict shaped like a `SELECT wp.*` Turso row."""
+        base = {
+            "id": "profile-uuid-1",
+            "workspace_id": "ws-123",
+            "nombre_cliente": "Empresa Test SL",
+            "tipo": "sociedad",
+            "nif": "B12345678",
+            "ccaa": "Madrid",
+            "situacion_laboral": "sociedad",
+            "epigrafe_iae": "6510",
+            "regimen_iva": "general",
+            "fecha_alta": "2025-01-15",
+            "datos_fiscales": '{"actividad": "comercio", "facturacion_anual": 120000}',
+            "created_at": "2025-01-15T10:00:00+00:00",
+            "updated_at": "2025-06-01T08:00:00+00:00",
+        }
+        base.update(overrides)
+        return base
+
+    def _make_db_with_row(self, row: dict):
+        """Return an AsyncMock db whose execute() returns the given row."""
+        db = AsyncMock()
+
+        async def execute(sql, params=None):
+            res = MagicMock()
+            res.rows = [row]
+            return res
+
+        db.execute = execute
+        return db
+
+    @pytest.mark.asyncio
+    async def test_get_client_scopes_by_user(self):
+        """get_client must scope by user_id (ownership) and return a correct GestoriaClient."""
+        from app.services.gestoria_service import GestoriaClient, GestoriaClientService
+
+        row = self._build_row()
+        db = AsyncMock()
+        executed_sqls: list[str] = []
+
+        async def execute(sql, params=None):
+            executed_sqls.append(" ".join(sql.split()))
+            res = MagicMock()
+            res.rows = [row]
+            return res
+
+        db.execute = execute
+
+        svc = GestoriaClientService()
+        svc._get_db = AsyncMock(return_value=db)  # type: ignore[attr-defined]
+
+        client = await svc.get_client("user-abc", "ws-123")
+
+        # Returns a populated GestoriaClient, not None
+        assert client is not None
+        assert isinstance(client, GestoriaClient)
+        assert client.id == "ws-123"
+        assert client.nombre_cliente == "Empresa Test SL"
+        assert client.tipo == "sociedad"
+
+        # The executed SQL must scope by user ownership
+        joined = " ".join(executed_sqls)
+        assert "w.user_id" in joined, "SQL must filter by w.user_id for ownership scoping"
+
+    @pytest.mark.asyncio
+    async def test_get_workspace_fiscal_profile_shape(self):
+        """get_workspace_fiscal_profile must return the Task-8 contract shape."""
+        from app.services.gestoria_service import GestoriaClientService
+
+        row = self._build_row(
+            ccaa="Cataluña",
+            situacion_laboral=None,  # must be derived from tipo="sociedad"
+            epigrafe_iae="6510",
+            regimen_iva="general",
+            datos_fiscales='{"actividad": "comercio", "facturacion_anual": 120000}',
+        )
+        db = self._make_db_with_row(row)
+
+        svc = GestoriaClientService()
+        svc._get_db = AsyncMock(return_value=db)  # type: ignore[attr-defined]
+
+        profile = await svc.get_workspace_fiscal_profile("user-abc", "ws-123")
+
+        assert profile is not None, "profile must not be None for a known client"
+
+        # Required keys for Task-8 contract
+        assert "ccaa_residencia" in profile, "missing ccaa_residencia"
+        assert profile["ccaa_residencia"] == "Cataluña"
+
+        assert "situacion_laboral" in profile, "missing situacion_laboral"
+        # sociedad tipo → derived as "sociedad" when situacion_laboral is None
+        assert profile["situacion_laboral"] == "sociedad"
+
+        assert "tipo_cliente" in profile, "missing tipo_cliente"
+        assert profile["tipo_cliente"] == "sociedad"
+
+        # datos_fiscales must be flattened into the profile
+        assert profile.get("actividad") == "comercio", "datos_fiscales not flattened"
+        assert profile.get("facturacion_anual") == 120000, "datos_fiscales not flattened"
+
+        # Optional fields present when set
+        assert profile.get("epigrafe_iae") == "6510"
+        assert profile.get("regimen_iva") == "general"

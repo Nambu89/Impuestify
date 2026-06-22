@@ -7,7 +7,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.database.turso_client import get_db_client
 from app.services.workspace_service import WorkspaceCreate, WorkspaceService
@@ -31,7 +31,7 @@ class GestoriaClientCreate(BaseModel):
     epigrafe_iae: str | None = None
     regimen_iva: str | None = None
     fecha_alta: str | None = None
-    datos_fiscales: dict[str, Any] = {}
+    datos_fiscales: dict[str, Any] = Field(default_factory=dict)
 
 
 class GestoriaClientUpdate(BaseModel):
@@ -56,7 +56,7 @@ class GestoriaClient(BaseModel):
     epigrafe_iae: str | None = None
     regimen_iva: str | None = None
     fecha_alta: str | None = None
-    datos_fiscales: dict[str, Any] = {}
+    datos_fiscales: dict[str, Any] = Field(default_factory=dict)
     created_at: str | None = None
     updated_at: str | None = None
 
@@ -130,21 +130,21 @@ class GestoriaClientService:
         )
 
     def _row_to_client(self, row) -> GestoriaClient:
-        raw = row["datos_fiscales"] if "datos_fiscales" in row.keys() else "{}"
+        raw = row.get("datos_fiscales") or "{}"
         datos = json.loads(raw) if isinstance(raw, str) and raw else (raw or {})
         return GestoriaClient(
-            id=row["workspace_id"],
-            nombre_cliente=row["nombre_cliente"],
-            tipo=row["tipo"],
-            nif=row["nif"],
-            ccaa=row["ccaa"],
-            situacion_laboral=row["situacion_laboral"],
-            epigrafe_iae=row["epigrafe_iae"],
-            regimen_iva=row["regimen_iva"],
-            fecha_alta=row["fecha_alta"],
+            id=row.get("workspace_id"),
+            nombre_cliente=row.get("nombre_cliente"),
+            tipo=row.get("tipo"),
+            nif=row.get("nif"),
+            ccaa=row.get("ccaa"),
+            situacion_laboral=row.get("situacion_laboral"),
+            epigrafe_iae=row.get("epigrafe_iae"),
+            regimen_iva=row.get("regimen_iva"),
+            fecha_alta=row.get("fecha_alta"),
             datos_fiscales=datos,
-            created_at=row["created_at"],
-            updated_at=row["updated_at"],
+            created_at=row.get("created_at"),
+            updated_at=row.get("updated_at"),
         )
 
     async def list_clients(self, user_id: str) -> list[GestoriaClient]:
