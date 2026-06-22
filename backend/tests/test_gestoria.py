@@ -214,3 +214,45 @@ class TestRequireGestoria:
         with pytest.raises(HTTPException) as exc:
             await require_gestoria(current_user=TokenData(user_id="u-2", email="p@x.com"), db=db)
         assert exc.value.status_code == 403
+
+
+class TestGestoriaClientService:
+    def _service_with_counts(self, profile_count: int):
+        from app.services.gestoria_service import GestoriaClientService
+
+        svc = GestoriaClientService()
+        db = AsyncMock()
+
+        async def execute(sql, params=None):
+            res = MagicMock()
+            s = " ".join(sql.split())
+            if s.startswith("SELECT COUNT(*) AS n FROM workspace_profiles"):
+                res.rows = [{"n": profile_count}]
+            else:
+                res.rows = []
+            return res
+
+        db.execute = execute
+        svc._get_db = AsyncMock(return_value=db)  # type: ignore[attr-defined]
+        return svc, db
+
+    @pytest.mark.asyncio
+    async def test_create_client_blocks_over_limit(self):
+        from app.services.gestoria_service import (
+            ClientLimitError,
+            GestoriaClientCreate,
+        )
+
+        svc, _ = self._service_with_counts(profile_count=3)
+        with pytest.raises(ClientLimitError):
+            await svc.create_client(
+                "u-1", GestoriaClientCreate(nombre_cliente="C", tipo="autonomo")
+            )
+
+    def test_create_model_requires_tipo(self):
+        from pydantic import ValidationError
+
+        from app.services.gestoria_service import GestoriaClientCreate
+
+        with pytest.raises(ValidationError):
+            GestoriaClientCreate(nombre_cliente="C")  # falta tipo
