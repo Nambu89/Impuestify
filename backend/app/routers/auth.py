@@ -205,6 +205,7 @@ async def register(request: Request, data: RegisterRequest):
                 is_active=user.is_active,
                 is_admin=user.is_admin,
                 is_owner=access.is_owner,
+                account_type=user.account_type,
                 subscription_status=access.status,
             ),
             tokens=tokens,
@@ -284,6 +285,7 @@ async def login(request: Request, data: LoginRequest):
             is_active=user.is_active,
             is_admin=user.is_admin,
             is_owner=access.is_owner,
+            account_type=user.account_type,
             subscription_status=access.status,
         ),
         tokens=tokens,
@@ -373,6 +375,7 @@ async def login_bot(request: Request, data: LoginRequest):
             is_active=user.is_active,
             is_admin=user.is_admin,
             is_owner=access.is_owner,
+            account_type=user.account_type,
             subscription_status=access.status,
         ),
         tokens=tokens,
@@ -480,6 +483,7 @@ async def google_login(request: Request, body: GoogleAuthRequest):
     user_name = user_row.get("name")
     is_active = bool(user_row.get("is_active", True))
     is_admin = bool(user_row.get("is_admin", False))
+    account_type = user_row["account_type"] if "account_type" in user_row.keys() else "individual"
 
     if not is_active:
         raise HTTPException(
@@ -512,6 +516,7 @@ async def google_login(request: Request, body: GoogleAuthRequest):
             is_active=is_active,
             is_admin=is_admin,
             is_owner=access.is_owner,
+            account_type=account_type,
             subscription_status=access.status,
         ),
         tokens=tokens,

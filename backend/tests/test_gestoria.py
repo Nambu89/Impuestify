@@ -117,6 +117,67 @@ class TestGrantGestoria:
         assert any("UPDATE users SET account_type" in c[0] for c in calls)
 
 
+class TestAuthAccountType:
+    """Login response must carry account_type from the DB row, not the Pydantic default."""
+
+    def test_login_response_threads_gestoria_account_type(self):
+        """UserResponse built from a gestoría User must emit account_type='gestoria'."""
+        from app.database.models import User
+        from app.routers.auth import UserResponse
+
+        gestoria_user = User(
+            id="u-gestoria",
+            email="gestoria@test.com",
+            name="Gestoría Demo",
+            is_active=True,
+            is_admin=False,
+            account_type="gestoria",
+        )
+
+        response = UserResponse(
+            id=gestoria_user.id,
+            email=gestoria_user.email,
+            name=gestoria_user.name,
+            is_active=gestoria_user.is_active,
+            is_admin=gestoria_user.is_admin,
+            is_owner=False,
+            account_type=gestoria_user.account_type,
+            subscription_status=None,
+        )
+
+        assert response.account_type == "gestoria", (
+            f"Expected 'gestoria' but got '{response.account_type}' — "
+            "login response is emitting the Pydantic default instead of the DB value"
+        )
+
+    def test_login_response_individual_default_unchanged(self):
+        """UserResponse for a normal user must still emit account_type='individual'."""
+        from app.database.models import User
+        from app.routers.auth import UserResponse
+
+        individual_user = User(
+            id="u-individual",
+            email="individual@test.com",
+            name="Normal User",
+            is_active=True,
+            is_admin=False,
+            # account_type defaults to "individual"
+        )
+
+        response = UserResponse(
+            id=individual_user.id,
+            email=individual_user.email,
+            name=individual_user.name,
+            is_active=individual_user.is_active,
+            is_admin=individual_user.is_admin,
+            is_owner=False,
+            account_type=individual_user.account_type,
+            subscription_status=None,
+        )
+
+        assert response.account_type == "individual"
+
+
 class TestRequireGestoria:
     @pytest.mark.asyncio
     async def test_require_gestoria_allows_gestoria(self):

@@ -85,6 +85,7 @@ class UserService:
                 name=row["name"],
                 is_active=bool(row["is_active"]),
                 is_admin=bool(row["is_admin"]),
+                account_type=row["account_type"] if "account_type" in row.keys() else "individual",
                 created_at=datetime.fromisoformat(row["created_at"]),
                 updated_at=datetime.fromisoformat(row["updated_at"]),
             )
@@ -153,6 +154,7 @@ class UserService:
             name=user.name,
             is_active=user.is_active,
             is_admin=user.is_admin,
+            account_type=user.account_type,
             created_at=user.created_at,
             updated_at=user.updated_at,
         )
