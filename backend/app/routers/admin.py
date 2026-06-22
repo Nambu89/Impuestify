@@ -54,6 +54,12 @@ class UserListItem(BaseModel):
     created_at: str | None = None
 
 
+class GrantGestoriaRequest(BaseModel):
+    """Body opcional para grant-gestoria (reservado para futuros campos)."""
+
+    pass
+
+
 # ---- Endpoints ----
 
 
@@ -217,6 +223,59 @@ async def grant_beta_access(
         "message": f"Acceso beta activado para {user_email} hasta 31/12/2026",
         "user_id": user_id,
         "subscription_status": "active",
+    }
+
+
+@router.put("/users/{user_id}/grant-gestoria")
+async def grant_gestoria(
+    user_id: str,
+    body: GrantGestoriaRequest,
+    owner: TokenData = Depends(_require_owner),
+    db: TursoClient = Depends(get_db_client),
+):
+    """Convierte a un usuario en cuenta gestoría con acceso full (owner-only).
+
+    - subscriptions: plan_type='autonomo', status='active', hasta 2026-12-31
+      (desbloquea TODAS las herramientas: 303/130/IS).
+    - users.account_type='gestoria' (habilita el UI de cartera).
+    """
+    user_result = await db.execute("SELECT id, email FROM users WHERE id = ?", [user_id])
+    if not user_result.rows:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    user_email = user_result.rows[0]["email"]
+    now = datetime.now(UTC).isoformat()
+    end = "2026-12-31T23:59:59"
+
+    sub_result = await db.execute("SELECT id FROM subscriptions WHERE user_id = ?", [user_id])
+    if sub_result.rows:
+        await db.execute(
+            """UPDATE subscriptions
+               SET plan_type = 'autonomo', status = 'active',
+                   current_period_start = ?, current_period_end = ?, updated_at = ?
+               WHERE user_id = ?""",
+            [now, end, now, user_id],
+        )
+    else:
+        await db.execute(
+            """INSERT INTO subscriptions
+               (id, user_id, stripe_customer_id, plan_type, status,
+                current_period_start, current_period_end, created_at, updated_at)
+               VALUES (?, ?, ?, 'autonomo', 'active', ?, ?, ?, ?)""",
+            [str(uuid.uuid4()), user_id, f"gestoria_{user_id[:8]}", now, end, now, now],
+        )
+
+    await db.execute(
+        "UPDATE users SET account_type = 'gestoria', updated_at = ? WHERE id = ?",
+        [now, user_id],
+    )
+
+    logger.info("Admin grant gestoria: user=%s email=%s by=%s", user_id, user_email, owner.email)
+    return {
+        "message": f"Cuenta gestoría activada para {user_email} (autónomo, hasta 31/12/2026)",
+        "user_id": user_id,
+        "account_type": "gestoria",
+        "plan_type": "autonomo",
     }
 
 

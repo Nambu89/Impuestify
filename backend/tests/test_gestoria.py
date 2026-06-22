@@ -35,3 +35,52 @@ class TestGestoriaMigrations:
         assert "CREATE TABLE IF NOT EXISTS workspace_profiles" in joined
         assert "ALTER TABLE users ADD COLUMN account_type" in joined
         assert "ALTER TABLE quarterly_declarations ADD COLUMN workspace_id" in joined
+
+
+class TestGrantGestoria:
+    """PUT /api/admin/users/{id}/grant-gestoria"""
+
+    def _build_client(self, db_mock):
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+
+        from app.auth.jwt_handler import TokenData
+        from app.auth.owner_guard import require_owner
+        from app.database.turso_client import get_db_client
+        from app.routers.admin import router
+
+        app = FastAPI()
+        app.include_router(router)
+        app.dependency_overrides[require_owner] = lambda: TokenData(
+            user_id="owner-1", email="owner@x.com"
+        )
+        app.dependency_overrides[get_db_client] = lambda: db_mock
+        return TestClient(app)
+
+    def test_grant_gestoria_sets_plan_and_account_type(self):
+        db = AsyncMock()
+        calls: list[tuple] = []
+
+        async def execute(sql, params=None):
+            calls.append((" ".join(sql.split()), params))
+            res = MagicMock()
+            # user exists; subscription exists
+            if sql.strip().startswith("SELECT id, email FROM users"):
+                res.rows = [{"id": "u-1", "email": "gestoria@x.com"}]
+            elif "FROM subscriptions" in sql:
+                res.rows = [{"id": "s-1"}]
+            else:
+                res.rows = []
+            return res
+
+        db.execute = execute
+        client = self._build_client(db)
+
+        resp = client.put("/api/admin/users/u-1/grant-gestoria", json={})
+        assert resp.status_code == 200
+
+        joined = " || ".join(c[0] for c in calls)
+        assert "UPDATE subscriptions SET plan_type = 'autonomo'" in joined or any(
+            "plan_type" in c[0] and c[1] and "autonomo" in c[1] for c in calls
+        )
+        assert any("UPDATE users SET account_type" in c[0] for c in calls)
