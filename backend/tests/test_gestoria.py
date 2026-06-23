@@ -472,3 +472,39 @@ class TestGestoriaRouter:
         resp = client.delete("/api/gestoria/clients/xyz")
         assert resp.status_code == 200
         assert resp.json() == {"deleted": True}
+
+
+class TestDeclarationWorkspaceScoping:
+    @pytest.mark.asyncio
+    async def test_save_persists_workspace_id(self):
+        from app.services.declaration_service import DeclarationService
+
+        captured: dict = {}
+
+        db = AsyncMock()
+
+        async def execute(sql, params=None):
+            res = MagicMock()
+            s = " ".join(sql.split())
+            if s.startswith("SELECT id FROM quarterly_declarations"):
+                res.rows = []  # no existe → INSERT path
+            else:
+                captured["sql"] = s
+                captured["params"] = params
+                res.rows = []
+            return res
+
+        db.execute = execute
+        svc = DeclarationService(db)
+        await svc.save(
+            user_id="u-1",
+            declaration_type="303",
+            territory="Madrid",
+            year=2025,
+            quarter=2,
+            form_data={},
+            calculated_result={},
+            workspace_id="w-1",
+        )
+        assert "workspace_id" in captured["sql"]
+        assert "w-1" in (captured["params"] or [])

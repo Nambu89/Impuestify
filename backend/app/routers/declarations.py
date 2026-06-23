@@ -156,6 +156,7 @@ class SaveDeclarationRequest(BaseModel):
     quarter: int
     form_data: dict[str, Any]
     calculated_result: dict[str, Any]
+    workspace_id: str | None = None
 
 
 class CalculationResponse(BaseModel):
@@ -312,6 +313,7 @@ async def save_declaration(
             quarter=body.quarter,
             form_data=body.form_data,
             calculated_result=body.calculated_result,
+            workspace_id=body.workspace_id,
         )
         return CalculationResponse(result=result)
     except Exception as e:

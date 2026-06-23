@@ -25,6 +25,7 @@ class DeclarationService:
         form_data: dict[str, Any],
         calculated_result: dict[str, Any],
         status: str = "calculated",
+        workspace_id: str | None = None,
     ) -> dict[str, Any]:
         """Save or upsert a quarterly declaration."""
         # Check if exists
@@ -43,7 +44,7 @@ class DeclarationService:
                 """UPDATE quarterly_declarations
                    SET territory = ?, form_data = ?, calculated_result = ?,
                        total_income = ?, total_expenses = ?, net_income = ?,
-                       tax_due = ?, status = ?, updated_at = datetime('now')
+                       tax_due = ?, status = ?, workspace_id = ?, updated_at = datetime('now')
                    WHERE id = ?""",
                 [
                     territory,
@@ -59,6 +60,7 @@ class DeclarationService:
                     calculated_result.get("casillas", {}).get("03_rendimiento_neto", 0),
                     resultado,
                     status,
+                    workspace_id,
                     decl_id,
                 ],
             )
@@ -68,8 +70,8 @@ class DeclarationService:
                 """INSERT INTO quarterly_declarations
                    (id, user_id, declaration_type, territory, year, quarter,
                     form_data, calculated_result, total_income, total_expenses,
-                    net_income, tax_due, status)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    net_income, tax_due, status, workspace_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 [
                     decl_id,
                     user_id,
@@ -84,6 +86,7 @@ class DeclarationService:
                     calculated_result.get("casillas", {}).get("03_rendimiento_neto", 0),
                     resultado,
                     status,
+                    workspace_id,
                 ],
             )
 
