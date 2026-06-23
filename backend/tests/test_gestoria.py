@@ -407,3 +407,32 @@ class TestGestoriaRouter:
         resp = client.get("/api/gestoria/clients")
         assert resp.status_code == 200
         assert resp.json()[0]["nombre_cliente"] == "Ana"
+
+    def test_get_client_404(self):
+        svc = AsyncMock()
+        svc.get_client.return_value = None
+        client = self._client(svc)
+        resp = client.get("/api/gestoria/clients/xyz")
+        assert resp.status_code == 404
+
+    def test_update_client_404(self):
+        svc = AsyncMock()
+        svc.update_client.return_value = None
+        client = self._client(svc)
+        resp = client.put("/api/gestoria/clients/xyz", json={"nombre_cliente": "X"})
+        assert resp.status_code == 404
+
+    def test_delete_client_404(self):
+        svc = AsyncMock()
+        svc.delete_client.return_value = False
+        client = self._client(svc)
+        resp = client.delete("/api/gestoria/clients/xyz")
+        assert resp.status_code == 404
+
+    def test_delete_client_ok(self):
+        svc = AsyncMock()
+        svc.delete_client.return_value = True
+        client = self._client(svc)
+        resp = client.delete("/api/gestoria/clients/xyz")
+        assert resp.status_code == 200
+        assert resp.json() == {"deleted": True}

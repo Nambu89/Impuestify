@@ -57,7 +57,7 @@ async def update_client(
     return client
 
 
-@router.delete("/clients/{workspace_id}")
+@router.delete("/clients/{workspace_id}", response_model=dict[str, bool], status_code=200)
 async def delete_client(workspace_id: str, current_user: TokenData = Depends(require_gestoria)):
     deleted = await get_service().delete_client(current_user.user_id, workspace_id)
     if not deleted:
