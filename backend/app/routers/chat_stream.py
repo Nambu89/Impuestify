@@ -98,6 +98,30 @@ async def get_db(request: Request) -> TursoClient:
     raise HTTPException(status_code=503, detail="Database not connected")
 
 
+async def resolve_fiscal_profile(
+    *,
+    user_id: str,
+    workspace_id: str | None,
+    global_profile: dict,
+    gestoria_service=None,
+) -> dict:
+    """Devuelve el perfil del cliente activo (workspace) si existe; si no, el global.
+
+    Modo Gestoría: cuando hay un cliente activo (``workspace_id`` con perfil en
+    ``workspace_profiles``), el agente debe usar la identidad fiscal de ESE cliente
+    en vez del perfil global de la cuenta gestoría. Si no hay perfil de cliente,
+    se mantiene el comportamiento de siempre (perfil global).
+    """
+    if workspace_id:
+        from app.services.gestoria_service import GestoriaClientService
+
+        svc = gestoria_service or GestoriaClientService()
+        ws_profile = await svc.get_workspace_fiscal_profile(user_id, workspace_id)
+        if ws_profile:
+            return ws_profile
+    return global_profile
+
+
 async def _build_pipeline_context(
     db: TursoClient,
     user_id: str,
@@ -814,6 +838,16 @@ async def ask_question_stream(
                         fiscal_profile["situacion_laboral"] = row["situacion_laboral"]
             except Exception as e:
                 logger.warning(f"Error loading fiscal profile: {e}")
+
+            # Modo Gestoría: si hay cliente activo (workspace con perfil), usar su
+            # identidad fiscal en vez del perfil global de la cuenta. Resolver UNA
+            # vez aquí cubre todas las rutas de agente (WorkspaceAgent, TaxAgent y
+            # el reasoning_trail) que leen `fiscal_profile` por closure en run_agent.
+            fiscal_profile = await resolve_fiscal_profile(
+                user_id=current_user.user_id,
+                workspace_id=request.workspace_id,
+                global_profile=fiscal_profile,
+            )
 
             logger.debug("Starting agent execution")
 

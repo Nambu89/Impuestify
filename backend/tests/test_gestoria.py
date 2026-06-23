@@ -367,6 +367,42 @@ class TestGestoriaClientService:
         assert profile.get("regimen_iva") == "general"
 
 
+class TestChatProfileSelection:
+    """chat_stream.resolve_fiscal_profile: usa el perfil del cliente activo
+    (workspace) cuando existe; si no, cae al perfil global de la cuenta."""
+
+    @pytest.mark.asyncio
+    async def test_uses_workspace_profile_when_present(self):
+        from app.routers.chat_stream import resolve_fiscal_profile
+
+        svc = AsyncMock()
+        svc.get_workspace_fiscal_profile.return_value = {
+            "ccaa_residencia": "Canarias",
+            "situacion_laboral": "sociedad",
+        }
+        prof = await resolve_fiscal_profile(
+            user_id="u-1",
+            workspace_id="w-1",
+            global_profile={"ccaa_residencia": "Madrid"},
+            gestoria_service=svc,
+        )
+        assert prof["ccaa_residencia"] == "Canarias"
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_global_when_no_workspace_profile(self):
+        from app.routers.chat_stream import resolve_fiscal_profile
+
+        svc = AsyncMock()
+        svc.get_workspace_fiscal_profile.return_value = None
+        prof = await resolve_fiscal_profile(
+            user_id="u-1",
+            workspace_id="w-1",
+            global_profile={"ccaa_residencia": "Madrid"},
+            gestoria_service=svc,
+        )
+        assert prof["ccaa_residencia"] == "Madrid"
+
+
 class TestGestoriaRouter:
     def _client(self, svc):
         from fastapi import FastAPI
