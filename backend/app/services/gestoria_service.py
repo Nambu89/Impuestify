@@ -60,6 +60,7 @@ class GestoriaClient(BaseModel):
     created_at: str | None = None
     updated_at: str | None = None
     file_count: int = 0
+    declaration_count: int = 0
     ingresos_total: float = 0.0
     iva_balance: float = 0.0
 
@@ -166,6 +167,11 @@ class GestoriaClientService:
                 [c.id],
             )
             c.file_count = int(kpi.rows[0]["file_count"]) if kpi.rows else 0
+            decl = await db.execute(
+                "SELECT COUNT(*) AS declaration_count FROM quarterly_declarations WHERE workspace_id = ?",
+                [c.id],
+            )
+            c.declaration_count = int(decl.rows[0]["declaration_count"]) if decl.rows else 0
         return clients
 
     async def get_client(self, user_id: str, workspace_id: str) -> GestoriaClient | None:

@@ -474,6 +474,68 @@ class TestGestoriaRouter:
         assert resp.json() == {"deleted": True}
 
 
+class TestPerClientHistory:
+    @pytest.mark.asyncio
+    async def test_conversations_filtered_by_workspace(self):
+        from app.services.conversation_service import ConversationService
+
+        captured: dict = {}
+        db = AsyncMock()
+
+        async def execute(sql, params=None):
+            captured["sql"] = " ".join(sql.split())
+            captured["params"] = params
+            res = MagicMock()
+            res.rows = []
+            return res
+
+        db.execute = execute
+        svc = ConversationService(db)
+        await svc.get_user_conversations("u-1", limit=50, workspace_id="w-1")
+        assert "workspace_id = ?" in captured["sql"]
+        assert "w-1" in captured["params"]
+
+    @pytest.mark.asyncio
+    async def test_roster_includes_declaration_count(self):
+        from app.services.gestoria_service import GestoriaClientService
+
+        svc = GestoriaClientService()
+        db = AsyncMock()
+
+        async def execute(sql, params=None):
+            res = MagicMock()
+            s = " ".join(sql.split())
+            if s.startswith("SELECT wp.* FROM workspace_profiles"):
+                res.rows = [
+                    {
+                        "workspace_id": "w1",
+                        "nombre_cliente": "Ana",
+                        "tipo": "autonomo",
+                        "nif": None,
+                        "ccaa": "Madrid",
+                        "situacion_laboral": None,
+                        "epigrafe_iae": None,
+                        "regimen_iva": None,
+                        "fecha_alta": None,
+                        "datos_fiscales": "{}",
+                        "created_at": "2026-01-01",
+                        "updated_at": "2026-01-01",
+                    }
+                ]
+            elif "FROM workspace_files" in s:
+                res.rows = [{"file_count": 0}]
+            elif "FROM quarterly_declarations" in s:
+                res.rows = [{"declaration_count": 2}]
+            else:
+                res.rows = []
+            return res
+
+        db.execute = execute
+        svc._get_db = AsyncMock(return_value=db)  # type: ignore[method-assign]
+        clients = await svc.list_clients("u-1")
+        assert clients[0].declaration_count == 2
+
+
 class TestDeclarationWorkspaceScoping:
     @pytest.mark.asyncio
     async def test_save_persists_workspace_id(self):

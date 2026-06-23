@@ -105,6 +105,7 @@ async def create_conversation(
 @router.get("", response_model=list[ConversationResponse])
 async def list_conversations(
     limit: int = Query(50, ge=1, le=100, description="Maximum conversations to return"),
+    workspace_id: str | None = Query(None, description="Filter by workspace (client) ID"),
     current_user: TokenData = Depends(get_current_user),
     service: ConversationService = Depends(get_conversation_service),
 ):
@@ -112,10 +113,11 @@ async def list_conversations(
     Get all conversations for the current user, ordered by most recent.
 
     - **limit**: Maximum number of conversations to return (default: 50, max: 100)
+    - **workspace_id**: When provided, only returns conversations linked to that workspace
     """
     try:
         conversations = await service.get_user_conversations(
-            user_id=current_user.user_id, limit=limit
+            user_id=current_user.user_id, limit=limit, workspace_id=workspace_id
         )
         return [ConversationResponse(**conv) for conv in conversations]
     except Exception as e:
