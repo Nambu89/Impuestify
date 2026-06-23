@@ -508,3 +508,43 @@ class TestDeclarationWorkspaceScoping:
         )
         assert "workspace_id" in captured["sql"]
         assert "w-1" in (captured["params"] or [])
+
+
+class TestRosterKpis:
+    @pytest.mark.asyncio
+    async def test_list_clients_includes_kpis(self):
+        from app.services.gestoria_service import GestoriaClientService
+
+        svc = GestoriaClientService()
+        db = AsyncMock()
+
+        async def execute(sql, params=None):
+            res = MagicMock()
+            s = " ".join(sql.split())
+            if s.startswith("SELECT wp.* FROM workspace_profiles"):
+                res.rows = [
+                    {
+                        "workspace_id": "w1",
+                        "nombre_cliente": "Ana",
+                        "tipo": "autonomo",
+                        "nif": None,
+                        "ccaa": "Madrid",
+                        "situacion_laboral": None,
+                        "epigrafe_iae": None,
+                        "regimen_iva": None,
+                        "fecha_alta": None,
+                        "datos_fiscales": "{}",
+                        "created_at": "2026-01-01",
+                        "updated_at": "2026-01-01",
+                    }
+                ]
+            elif "COUNT(wf.id)" in s:
+                res.rows = [{"file_count": 4}]
+            else:
+                res.rows = []
+            return res
+
+        db.execute = execute
+        svc._get_db = AsyncMock(return_value=db)  # type: ignore[method-assign]
+        clients = await svc.list_clients("u-1")
+        assert clients[0].file_count == 4

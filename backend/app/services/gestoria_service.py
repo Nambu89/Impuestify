@@ -59,6 +59,9 @@ class GestoriaClient(BaseModel):
     datos_fiscales: dict[str, Any] = Field(default_factory=dict)
     created_at: str | None = None
     updated_at: str | None = None
+    file_count: int = 0
+    ingresos_total: float = 0.0
+    iva_balance: float = 0.0
 
 
 def _icon_for_tipo(tipo: str) -> str:
@@ -156,7 +159,14 @@ class GestoriaClientService:
                ORDER BY wp.created_at DESC""",
             [user_id],
         )
-        return [self._row_to_client(r) for r in (res.rows or [])]
+        clients = [self._row_to_client(r) for r in (res.rows or [])]
+        for c in clients:
+            kpi = await db.execute(
+                "SELECT COUNT(wf.id) AS file_count FROM workspace_files wf WHERE wf.workspace_id = ?",
+                [c.id],
+            )
+            c.file_count = int(kpi.rows[0]["file_count"]) if kpi.rows else 0
+        return clients
 
     async def get_client(self, user_id: str, workspace_id: str) -> GestoriaClient | None:
         db = await self._get_db()
