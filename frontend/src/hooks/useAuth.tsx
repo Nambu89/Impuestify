@@ -8,6 +8,7 @@ interface User {
     name?: string
     is_admin?: boolean | number
     is_owner?: boolean
+    account_type?: string
     subscription_status?: string | null
 }
 
