@@ -22,6 +22,8 @@ import {
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
+import { useGestoriaClients } from '../hooks/useGestoriaClients'
+import { useActiveClient } from '../context/ActiveClientContext'
 import './Header.css'
 
 interface HeaderProps {
@@ -31,11 +33,23 @@ interface HeaderProps {
 export default function Header({ onMenuToggle }: HeaderProps) {
     const { user, logout } = useAuth()
     const { isOwner } = useSubscription()
+    const { clients, fetchClients } = useGestoriaClients()
+    const { activeClient, setActiveClient } = useActiveClient()
     const navigate = useNavigate()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [toolsOpen, setToolsOpen] = useState(false)
     const [mobileToolsOpen, setMobileToolsOpen] = useState(false)
     const toolsRef = useRef<HTMLDivElement>(null)
+
+    const isGestoria = user?.account_type === 'gestoria'
+
+    // Load the client roster only for gestoría accounts — normal users would get
+    // a 403 from /api/gestoria/clients.
+    useEffect(() => {
+        if (isGestoria) {
+            fetchClients().catch(() => {})
+        }
+    }, [isGestoria, fetchClients])
 
     const handleLogout = () => {
         logout()
@@ -238,12 +252,31 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                                 </div>
                             </div>
                         )}
-                        {user?.account_type === 'gestoria' && (
+                        {isGestoria && (
                             <Link to="/gestoria/clientes" className="nav-link">
                                 <Users size={16} /> Clientes
                             </Link>
                         )}
                     </nav>
+
+                    {isGestoria && (
+                        <select
+                            className="active-client-selector"
+                            aria-label="Cliente activo"
+                            value={activeClient?.id || ''}
+                            onChange={(e) => {
+                                const c = clients.find((x) => x.id === e.target.value) || null
+                                setActiveClient(c)
+                            }}
+                        >
+                            <option value="">— Sin cliente —</option>
+                            {clients.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.nombre_cliente}
+                                </option>
+                            ))}
+                        </select>
+                    )}
 
                     <div className="user-menu">
                         {user?.name && <span className="user-name">{user.name}</span>}

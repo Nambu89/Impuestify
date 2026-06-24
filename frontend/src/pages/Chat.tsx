@@ -38,6 +38,7 @@ import { FormattedMessage } from '../components/FormattedMessage'
 import OnboardingModal from '../components/OnboardingModal'
 import { useAuth } from '../hooks/useAuth'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
+import { useActiveClient } from '../context/ActiveClientContext'
 import './Chat.css'
 
 interface Message {
@@ -58,6 +59,7 @@ export default function Chat() {
     const { askQuestion } = useApi()
     const { getConversation, warmupChat } = useConversations()
     const { workspaces, activeWorkspace, selectWorkspace, fetchWorkspaces } = useWorkspaces()
+    const { activeClient } = useActiveClient()
     const { streamState, isStreaming, sendStreamingMessage } = useStreamingChat()
     const {
         docs: sessionDocs,
@@ -231,7 +233,9 @@ export default function Chat() {
                             ])
                         },
                     },
-                    activeWorkspace?.id,
+                    // Explicit workspace wins; otherwise fall back to the gestoría
+                    // active client so per-client chat history is preserved.
+                    activeWorkspace?.id ?? activeClient?.id,
                     sessionDocIds.length > 0 ? sessionDocIds : undefined,
                 )
             } catch (error: any) {

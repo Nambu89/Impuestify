@@ -4,6 +4,8 @@ import { useApi } from './useApi'
 export interface IrpfEstimateInput {
     comunidad_autonoma: string
     year?: number
+    // Modo Gestoría: active-client workspace (ownership-validated server-side)
+    workspace_id?: string
     ingresos_trabajo?: number
     ss_empleado?: number
     retenciones_trabajo?: number

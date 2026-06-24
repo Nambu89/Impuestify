@@ -572,6 +572,89 @@ class TestDeclarationWorkspaceScoping:
         assert "w-1" in (captured["params"] or [])
 
 
+class TestIrpfEstimateWorkspace:
+    """POST /api/irpf/estimate must validate workspace ownership when workspace_id
+    is supplied (Modo Gestoría, Task 15). The estimate stays a pure calculator."""
+
+    def _build_client(self, ws_return):
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+
+        import app.routers.irpf_estimate as irpf_module
+        from app.auth.jwt_handler import TokenData, get_current_user
+
+        app = FastAPI()
+        app.include_router(irpf_module.router)
+        app.dependency_overrides[get_current_user] = lambda: TokenData(
+            user_id="gestor-1", email="g@x.com"
+        )
+
+        captured: dict = {}
+
+        class _FakeWorkspaceService:
+            async def get_workspace(self, workspace_id, user_id):
+                captured["workspace_id"] = workspace_id
+                captured["user_id"] = user_id
+                return ws_return
+
+        # Patch the symbol imported lazily inside the endpoint
+        import app.services.workspace_service as ws_module
+
+        original = ws_module.WorkspaceService
+        ws_module.WorkspaceService = _FakeWorkspaceService
+        return TestClient(app), captured, (ws_module, original)
+
+    def test_estimate_404_when_workspace_not_owned(self):
+        client, captured, (ws_module, original) = self._build_client(ws_return=None)
+        try:
+            resp = client.post(
+                "/api/irpf/estimate",
+                json={
+                    "comunidad_autonoma": "Madrid",
+                    "ingresos_trabajo": 30000,
+                    "workspace_id": "ws-not-mine",
+                },
+            )
+            assert resp.status_code == 404
+            assert resp.json()["detail"] == "Cliente no encontrado"
+            # Ownership check scoped by the authenticated user
+            assert captured["workspace_id"] == "ws-not-mine"
+            assert captured["user_id"] == "gestor-1"
+        finally:
+            ws_module.WorkspaceService = original
+
+    def test_estimate_ok_when_workspace_owned(self):
+        client, captured, (ws_module, original) = self._build_client(ws_return=object())
+        try:
+            resp = client.post(
+                "/api/irpf/estimate",
+                json={
+                    "comunidad_autonoma": "Madrid",
+                    "ingresos_trabajo": 30000,
+                    "workspace_id": "ws-mine",
+                },
+            )
+            # Ownership passed → endpoint proceeds (200; success flag may vary by env)
+            assert resp.status_code == 200
+            assert captured["workspace_id"] == "ws-mine"
+            assert captured["user_id"] == "gestor-1"
+        finally:
+            ws_module.WorkspaceService = original
+
+    def test_estimate_skips_check_when_no_workspace_id(self):
+        # ws_return is irrelevant: get_workspace must NOT be called
+        client, captured, (ws_module, original) = self._build_client(ws_return=None)
+        try:
+            resp = client.post(
+                "/api/irpf/estimate",
+                json={"comunidad_autonoma": "Madrid", "ingresos_trabajo": 30000},
+            )
+            assert resp.status_code == 200
+            assert "workspace_id" not in captured  # ownership check skipped
+        finally:
+            ws_module.WorkspaceService = original
+
+
 class TestRosterKpis:
     @pytest.mark.asyncio
     async def test_list_clients_includes_kpis(self):

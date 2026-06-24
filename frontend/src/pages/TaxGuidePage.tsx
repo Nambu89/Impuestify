@@ -31,6 +31,7 @@ import { useIrpfEstimator } from '../hooks/useIrpfEstimator'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
 import { useSubscription } from '../hooks/useSubscription'
 import { useDeductionDiscovery, type MissingQuestion } from '../hooks/useDeductionDiscovery'
+import { useActiveClient } from '../context/ActiveClientContext'
 import { CCAA_IDS, getCcaaLabel, isForal, isCeutaMelilla } from '../constants/ccaa'
 import './TaxGuidePage.css'
 
@@ -2342,6 +2343,7 @@ export default function TaxGuidePage() {
         useTaxGuideProgress(userPlan)
     const { result, loading, estimate } = useIrpfEstimator()
     const { profile, loading: profileLoading, save } = useFiscalProfile()
+    const { activeClient } = useActiveClient()
     const {
         result: discoveryResult,
         loading: discoveryLoading,
@@ -2376,6 +2378,21 @@ export default function TaxGuidePage() {
             activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
         }
     }, [step])
+
+    // Modo Gestoría: when a gestoría has an active client selected, pre-fill the
+    // wizard with that client's identity (CCAA). Runs once per active client.
+    const activeClientAppliedRef = useRef<string | null>(null)
+    useEffect(() => {
+        if (!activeClient?.id) return
+        if (activeClientAppliedRef.current === activeClient.id) return
+        activeClientAppliedRef.current = activeClient.id
+        if (activeClient.ccaa) {
+            updateData({
+                comunidad_autonoma: activeClient.ccaa,
+                ceuta_melilla: isCeutaMelilla(activeClient.ccaa),
+            })
+        }
+    }, [activeClient]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Pre-fill from fiscal profile once the API has loaded
     useEffect(() => {
@@ -2592,6 +2609,8 @@ export default function TaxGuidePage() {
         estimate({
             comunidad_autonoma: data.comunidad_autonoma,
             year: 2025,
+            // Modo Gestoría: scope the estimate to the active client (ownership-validated)
+            workspace_id: activeClient?.id,
             ingresos_trabajo: data.ingresos_trabajo,
             ss_empleado: data.ss_empleado,
             retenciones_trabajo: data.retenciones_trabajo,
@@ -2699,7 +2718,7 @@ export default function TaxGuidePage() {
                 ? { 2024: data.perdidas_rcm_pendientes }
                 : undefined,
         })
-    }, [data, estimate, dynamicFormValues, discoveryAnswers])
+    }, [data, estimate, dynamicFormValues, discoveryAnswers, activeClient])
 
     // Phase B: Trigger deduction discovery when on deducciones/resultado step
     const currentStepContent = isQuick ? 'resultado' : getStepContent(step, userPlan)
