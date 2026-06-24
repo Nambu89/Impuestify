@@ -59,6 +59,7 @@ const M131CalculatorPage = lazy(() => import('./pages/M131CalculatorPage'))
 const M349CalculatorPage = lazy(() => import('./pages/M349CalculatorPage'))
 const M390CalculatorPage = lazy(() => import('./pages/M390CalculatorPage'))
 const M309CalculatorPage = lazy(() => import('./pages/M309CalculatorPage'))
+const GestoriaClientesPage = lazy(() => import('./pages/GestoriaClientesPage'))
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -340,6 +341,14 @@ function App() {
                             element={
                                 <ProtectedRoute requireSubscription={true}>
                                     <DefensiaExpedientePage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/gestoria/clientes"
+                            element={
+                                <ProtectedRoute requireSubscription={true}>
+                                    <GestoriaClientesPage />
                                 </ProtectedRoute>
                             }
                         />

@@ -17,6 +17,7 @@ import {
     BookOpen,
     ChevronDown,
     Scale,
+    Users,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -237,6 +238,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                                 </div>
                             </div>
                         )}
+                        {user?.account_type === 'gestoria' && (
+                            <Link to="/gestoria/clientes" className="nav-link">
+                                <Users size={16} /> Clientes
+                            </Link>
+                        )}
                     </nav>
 
                     <div className="user-menu">
@@ -422,6 +428,15 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                                     <Shield size={20} /> Calidad RAG
                                 </Link>
                             </>
+                        )}
+                        {user?.account_type === 'gestoria' && (
+                            <Link
+                                to="/gestoria/clientes"
+                                className="mobile-nav__link"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <Users size={20} /> Clientes
+                            </Link>
                         )}
                         {onMenuToggle && (
                             <button
