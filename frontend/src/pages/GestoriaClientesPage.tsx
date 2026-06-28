@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Header from '../components/Header'
 import type { GestoriaClient, GestoriaClientInput, ClientTipo } from '../hooks/useGestoriaClients'
 import { useActiveClient } from '../context/ActiveClientContext'
@@ -14,16 +14,12 @@ const TIPOS: { value: ClientTipo; label: string }[] = [
 const EMPTY: GestoriaClientInput = { nombre_cliente: '', tipo: 'particular' }
 
 export default function GestoriaClientesPage() {
-    const { clients, loading, error, fetchClients, createClient, updateClient, deleteClient } =
+    const { clients, loading, error, createClient, updateClient, deleteClient } =
         useActiveClient()
     const [form, setForm] = useState<GestoriaClientInput>(EMPTY)
     const [editingId, setEditingId] = useState<string | null>(null)
     const [formError, setFormError] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
-
-    useEffect(() => {
-        void fetchClients()
-    }, [fetchClients])
 
     const atLimit = clients.length >= MAX_CLIENTS && !editingId
 

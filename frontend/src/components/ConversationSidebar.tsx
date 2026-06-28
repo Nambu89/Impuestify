@@ -21,10 +21,11 @@ export function ConversationSidebar({
 }: ConversationSidebarProps) {
     const { conversations, loading, fetchConversations, deleteConversation } = useConversations()
 
-    // Fetch conversations on mount and when the sidebar opens.
+    // Fetch whenever the sidebar opens. Guard against firing on close.
     // Intentionally NOT re-fetching on every activeConversationId change —
     // switching the selected conversation does not alter the list.
     useEffect(() => {
+        if (!isOpen) return
         logger.debug('ConversationSidebar: Triggering fetch')
         fetchConversations()
         // eslint-disable-next-line react-hooks/exhaustive-deps

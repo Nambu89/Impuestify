@@ -84,7 +84,7 @@ export function ActiveClientProvider({ children }: { children: React.ReactNode }
             setLoading(true)
             setError(null)
             try {
-                const updated = await apiRequest<GestoriaClient>(`/api/gestoria/clients/${id}`, {
+                const updated = await apiRequest<GestoriaClient>(`/gestoria/clients/${id}`, {
                     method: 'PUT',
                     body: JSON.stringify(input),
                 })
