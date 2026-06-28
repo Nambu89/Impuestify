@@ -112,7 +112,7 @@ export function ActiveClientProvider({ children }: { children: React.ReactNode }
             setLoading(true)
             setError(null)
             try {
-                await apiRequest(`/api/gestoria/clients/${id}`, { method: 'DELETE' })
+                await apiRequest(`/gestoria/clients/${id}`, { method: 'DELETE' })
                 setClients((prev) => prev.filter((c) => c.id !== id))
                 setActiveClientState((prev) => {
                     if (prev?.id === id) {
