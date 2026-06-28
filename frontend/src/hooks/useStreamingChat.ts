@@ -372,7 +372,6 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
 
                         case 'done': {
                             logger.debug('Stream DONE event received')
-                            setIsStreaming(false)
                             // Parse conversation_id from done event data
                             let doneConvId = conversationId
                             if (eventData) {
@@ -385,21 +384,27 @@ export const useStreamingChat = (): UseStreamingChatReturn => {
                                     // done event may be empty string, that's fine
                                 }
                             }
-                            // Get the final response and call callback
-                            setStreamState((current) => {
-                                if (callbacks?.onComplete && current.response) {
-                                    callbacks.onComplete(current.response, doneConvId)
-                                }
-                                return {
-                                    ...current,
-                                    isDone: true,
-                                    steps: current.steps.map((s) =>
-                                        s.status === 'active'
-                                            ? { ...s, status: 'done' as const }
-                                            : s,
-                                    ),
-                                }
-                            })
+                            // Read the final response from the accumulator ref — NOT from
+                            // inside the setState updater. React StrictMode (dev) double-invokes
+                            // state updaters to surface impurities; calling onComplete inside the
+                            // updater fired it twice → the assistant message was committed to
+                            // messages[] twice (the "responde 2 veces" bug). The updater must be
+                            // pure; onComplete is a side effect and runs exactly once below.
+                            const finalResponse = responseAccRef.current
+                            setStreamState((current) => ({
+                                ...current,
+                                // Clear response so the streaming bubble disappears in the same
+                                // render that onComplete pushes the message into messages[].
+                                response: '',
+                                isDone: true,
+                                steps: current.steps.map((s) =>
+                                    s.status === 'active' ? { ...s, status: 'done' as const } : s,
+                                ),
+                            }))
+                            setIsStreaming(false)
+                            if (callbacks?.onComplete && finalResponse) {
+                                callbacks.onComplete(finalResponse, doneConvId)
+                            }
                             break
                         }
 
