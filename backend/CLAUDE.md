@@ -171,6 +171,7 @@ CREATE TABLE conversations (
   id TEXT PRIMARY KEY,
   user_id TEXT REFERENCES users(id),
   title TEXT,
+  workspace_id TEXT REFERENCES workspaces(id),  -- nullable; per-client chat history (Modo Gestoría). Migrated in turso_client.py init_schema
   created_at TIMESTAMP, updated_at TIMESTAMP
 );
 

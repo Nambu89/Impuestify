@@ -1087,6 +1087,8 @@ class TursoClient:
                 label="quota",
             )
 
+            await self._migrate_gestoria_schema()
+
             logger.info("Database schema initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize schema: {e}")
@@ -1164,6 +1166,45 @@ class TursoClient:
                 )
                 raise
         logger.info("DefensIA %s migration applied", label)
+
+    async def _migrate_gestoria_schema(self) -> None:
+        """Modo Gestoría: account_type, workspace_profiles, declarations.workspace_id.
+
+        Idempotente: _column_exists antes de cada ALTER; CREATE TABLE IF NOT EXISTS.
+        """
+        # 1. users.account_type
+        if not await self._column_exists("users", "account_type"):
+            await self.execute(
+                "ALTER TABLE users ADD COLUMN account_type TEXT DEFAULT 'individual'"
+            )
+            logger.info("Added account_type column to users table")
+
+        # 2. quarterly_declarations.workspace_id
+        if not await self._column_exists("quarterly_declarations", "workspace_id"):
+            await self.execute("ALTER TABLE quarterly_declarations ADD COLUMN workspace_id TEXT")
+            logger.info("Added workspace_id column to quarterly_declarations table")
+
+        # 3. workspace_profiles (1:1 con workspace = cliente de la gestoría)
+        await self.execute(
+            """
+            CREATE TABLE IF NOT EXISTS workspace_profiles (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT UNIQUE NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+                nombre_cliente TEXT,
+                nif TEXT,
+                tipo TEXT NOT NULL,
+                ccaa TEXT,
+                situacion_laboral TEXT,
+                epigrafe_iae TEXT,
+                regimen_iva TEXT,
+                fecha_alta TEXT,
+                datos_fiscales TEXT DEFAULT '{}',
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            )
+            """
+        )
+        logger.info("Ensured workspace_profiles table")
 
 
 class QueryResult:

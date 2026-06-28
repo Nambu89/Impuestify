@@ -68,6 +68,9 @@ class PagadorItem(BaseModel):
 class IRPFEstimateRequest(BaseModel):
     comunidad_autonoma: str
     year: int = 2025
+    # Modo Gestoría: optional active-client workspace. When set, ownership is
+    # validated; the estimate itself stays a pure function of the request body.
+    workspace_id: str | None = None
     ingresos_trabajo: float = 0
     ss_empleado: float = 0
     retenciones_trabajo: float = 0
@@ -350,6 +353,16 @@ async def estimate_irpf(
     current_user: TokenData = Depends(get_current_user),
 ):
     """Fast IRPF estimate for the interactive tax guide. No LLM involved."""
+    # Modo Gestoría: if an active-client workspace is supplied, verify it belongs
+    # to the current user before computing. Raised outside the broad try/except so
+    # the 404 surfaces as a real HTTP error instead of an estimate "error" field.
+    if body.workspace_id:
+        from app.services.workspace_service import WorkspaceService
+
+        ws = await WorkspaceService().get_workspace(body.workspace_id, current_user.user_id)
+        if not ws:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+
     try:
         from app.database.turso_client import get_db_client
         from app.utils.ccaa_constants import normalize_ccaa
