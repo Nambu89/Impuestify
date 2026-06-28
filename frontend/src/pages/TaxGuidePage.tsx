@@ -2380,19 +2380,21 @@ export default function TaxGuidePage() {
     }, [step])
 
     // Modo Gestoría: when a gestoría has an active client selected, pre-fill the
-    // wizard with that client's identity (CCAA). Runs once per active client.
-    const activeClientAppliedRef = useRef<string | null>(null)
+    // wizard CCAA from that client. Applies whenever the wizard CCAA is still
+    // empty — this also covers the mount race where the wizard's own localStorage
+    // hydration (useTaxGuideProgress) runs after this effect and resets it to ''.
+    // Once a CCAA is set, this never overrides it, so the user can change it
+    // freely afterwards.
+    // activeClient is only ever set for gestoría accounts (the Header "Cliente
+    // activo" selector renders only for them), so gating on activeClient is enough.
     useEffect(() => {
-        if (!activeClient?.id) return
-        if (activeClientAppliedRef.current === activeClient.id) return
-        activeClientAppliedRef.current = activeClient.id
-        if (activeClient.ccaa) {
-            updateData({
-                comunidad_autonoma: activeClient.ccaa,
-                ceuta_melilla: isCeutaMelilla(activeClient.ccaa),
-            })
-        }
-    }, [activeClient]) // eslint-disable-line react-hooks/exhaustive-deps
+        if (!activeClient?.ccaa) return
+        if (data.comunidad_autonoma) return
+        updateData({
+            comunidad_autonoma: activeClient.ccaa,
+            ceuta_melilla: isCeutaMelilla(activeClient.ccaa),
+        })
+    }, [activeClient, data.comunidad_autonoma]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Pre-fill from fiscal profile once the API has loaded
     useEffect(() => {

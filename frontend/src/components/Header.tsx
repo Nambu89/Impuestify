@@ -22,7 +22,6 @@ import {
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
-import { useGestoriaClients } from '../hooks/useGestoriaClients'
 import { useActiveClient } from '../context/ActiveClientContext'
 import './Header.css'
 
@@ -33,8 +32,7 @@ interface HeaderProps {
 export default function Header({ onMenuToggle }: HeaderProps) {
     const { user, logout } = useAuth()
     const { isOwner } = useSubscription()
-    const { clients, fetchClients } = useGestoriaClients()
-    const { activeClient, setActiveClient } = useActiveClient()
+    const { activeClient, setActiveClient, clients } = useActiveClient()
     const navigate = useNavigate()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [toolsOpen, setToolsOpen] = useState(false)
@@ -42,14 +40,6 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     const toolsRef = useRef<HTMLDivElement>(null)
 
     const isGestoria = user?.account_type === 'gestoria'
-
-    // Load the client roster only for gestoría accounts — normal users would get
-    // a 403 from /api/gestoria/clients.
-    useEffect(() => {
-        if (isGestoria) {
-            fetchClients().catch(() => {})
-        }
-    }, [isGestoria, fetchClients])
 
     const handleLogout = () => {
         logout()
@@ -270,6 +260,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                             }}
                         >
                             <option value="">— Sin cliente —</option>
+                            {activeClient && !clients.some((c) => c.id === activeClient.id) && (
+                                <option key={activeClient.id} value={activeClient.id}>
+                                    {activeClient.nombre_cliente}
+                                </option>
+                            )}
                             {clients.map((c) => (
                                 <option key={c.id} value={c.id}>
                                     {c.nombre_cliente}
