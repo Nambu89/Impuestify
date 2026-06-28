@@ -490,7 +490,7 @@ function MdBlockquote({ children, ...rest }: React.HTMLAttributes<HTMLQuoteEleme
             return ['']
         })
         .join('')
-    const isWarning = /⚠|⚠/u.test(childText)
+    const isWarning = /⚠/u.test(childText)
     // Legal/invoice template: long text without warning emoji
     const isLegalText =
         !isWarning &&
