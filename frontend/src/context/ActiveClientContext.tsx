@@ -46,7 +46,7 @@ export function ActiveClientProvider({ children }: { children: React.ReactNode }
         setLoading(true)
         setError(null)
         try {
-            const data = await apiRequest<GestoriaClient[]>('/api/gestoria/clients', {
+            const data = await apiRequest<GestoriaClient[]>('/gestoria/clients', {
                 method: 'GET',
             })
             setClients(data || [])
@@ -63,7 +63,7 @@ export function ActiveClientProvider({ children }: { children: React.ReactNode }
             setLoading(true)
             setError(null)
             try {
-                const created = await apiRequest<GestoriaClient>('/api/gestoria/clients', {
+                const created = await apiRequest<GestoriaClient>('/gestoria/clients', {
                     method: 'POST',
                     body: JSON.stringify(input),
                 })
