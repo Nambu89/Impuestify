@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import Header from '../components/Header'
 import type { GestoriaClient, GestoriaClientInput, ClientTipo } from '../hooks/useGestoriaClients'
 import { useActiveClient } from '../context/ActiveClientContext'
+import { useAuth } from '../hooks/useAuth'
 
 const MAX_CLIENTS = 3
 
@@ -16,6 +18,7 @@ const EMPTY: GestoriaClientInput = { nombre_cliente: '', tipo: 'particular' }
 export default function GestoriaClientesPage() {
     const { clients, loading, error, fetchClients, createClient, updateClient, deleteClient } =
         useActiveClient()
+    const { user } = useAuth()
     const [form, setForm] = useState<GestoriaClientInput>(EMPTY)
     const [editingId, setEditingId] = useState<string | null>(null)
     const [formError, setFormError] = useState<string | null>(null)
@@ -76,6 +79,13 @@ export default function GestoriaClientesPage() {
         } finally {
             setSaving(false)
         }
+    }
+
+    // Route-level gate: only gestoría accounts operate the client roster.
+    // The nav link is already hidden for others; this blocks manual URL entry.
+    // (Backend also enforces 403 on every /api/gestoria endpoint — defence in depth.)
+    if (user && user.account_type !== 'gestoria') {
+        return <Navigate to="/chat" replace />
     }
 
     return (
