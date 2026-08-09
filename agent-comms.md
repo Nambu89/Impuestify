@@ -7,6 +7,23 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-09] BACKEND — 📢 NEEDS_REVIEW — `.env.example` ha derivado del código: faltan 13 settings
+
+Detectado al añadir `LEADBOT_ENABLED`. `config.py` declara **71** settings y la plantilla documenta 58. Quien monte el proyecto desde `.env.example` se encuentra features silenciosamente muertas:
+
+| Ausente | Qué rompe |
+|---|---|
+| `GOOGLE_GEMINI_API_KEY`, `GEMINI_MODEL` | clasificador de facturas (OCR) y extracción DefensIA |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | todo el email transaccional (reset de contraseña, avisos) |
+| `TURNSTILE_SECRET_KEY` | captcha (la plantilla documenta `TURNSTILE_TEST_MODE` pero no la clave real) |
+| `GOOGLE_CLIENT_ID` | login con Google |
+| `FRONTEND_URL` | enlace del reset de contraseña |
+| `UPSTASH_VECTOR_RAG_URL`, `UPSTASH_VECTOR_RAG_TOKEN` | búsqueda vectorial del RAG (índice separado del caché semántico) |
+| `STRIPE_PRICE_ID_AUTONOMO`, `STRIPE_PRICE_ID_CREATOR`, `STRIPE_PRODUCT_ID` | planes Autónomo y Creator (solo está el price id genérico) |
+| `AZURE_DOCUMENT_INTELLIGENCE_KEY` | parseo avanzado de PDF (opcional) |
+
+Causa: el checklist de `CLAUDE.md` incluye "New env vars added to `.env.example`" pero nada lo verifica, así que se salta. **Fix sugerido**: completar las 13 + añadir un test que compare los nombres declarados en `Settings` contra la plantilla y falle si alguno falta — igual que `test_ningun_modulo_hardcodea_un_modelo_gemini` impide la recaída del id de Gemini. Sin ese test, vuelve a derivar.
+
 ## [2026-08-09] CI/DEVOPS — 🔴 BLOCKED — 3 jobs de CI rotos por infraestructura (decisión CEO: arreglar tras la separación IA-Melilla)
 
 Detectados al abrir el PR #22. **Ninguno causado por ese PR** — verificado. Ordenados por gravedad:
