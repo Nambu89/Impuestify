@@ -220,7 +220,6 @@ class DefensiaAgent:
             content_chunks = 0
             last_finish_reason: str | None = None
             async for chunk in stream:
-                chunks_seen += 1
                 if not chunk.choices:
                     continue
                 choice = chunk.choices[0]

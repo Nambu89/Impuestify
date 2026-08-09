@@ -101,6 +101,30 @@ def test_importes_no_se_confunden_con_codigo_postal(texto: str):
     ), f"falso positivo: {texto!r} bloqueado como PII {result.detected_types}"
 
 
+def test_el_regex_no_cortocircuita_la_consulta_al_llm():
+    """El regex NO debe devolver antes de llamar a Groq.
+
+    Regresión del merge de la rama demo (PR #17): quedaron superpuestas dos
+    implementaciones de ``detect()`` — la de la demo, que hacía regex primero y
+    ``return`` inmediato ante cualquier match, y la de union con
+    ``_HIGH_CONFIDENCE_PII``. Como la primera cortaba antes, la guarda de alta
+    confianza se volvió código muerto y "gano 30000 EUR" volvió a bloquearse.
+
+    Afirmar sobre el veredicto no basta: hay que afirmar que **se consultó al
+    LLM**. Es lo único que distingue "el regex no encontró nada" de "el regex
+    cortocircuitó".
+    """
+    detector = PIIDetector()
+    detector.client = _groq_saying_safe()
+
+    detector.detect("cuanto IRPF pago si gano 30000 EUR en Madrid")
+
+    assert detector.client.chat.completions.create.call_count == 1, (
+        "no se consultó al modelo de seguridad: hay un cortocircuito del regex "
+        "antes de la llamada a Groq (ver bug del merge #17)"
+    )
+
+
 def test_postal_code_sigue_contando_como_fallback_sin_llm():
     """Sin cliente Groq y con input largo, el regex actúa solo y sí lo cuenta.
 
