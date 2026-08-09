@@ -63,26 +63,39 @@ class ConversationService:
             "updated_at": now,
         }
 
-    async def get_user_conversations(self, user_id: str, limit: int = 50) -> list[dict[str, Any]]:
+    async def get_user_conversations(
+        self, user_id: str, limit: int = 50, workspace_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Get all conversations for a user, ordered by most recent.
 
         Args:
             user_id: User ID
             limit: Maximum number of conversations to return
+            workspace_id: Optional workspace ID — when given, only conversations
+                for that client workspace are returned.
 
         Returns:
             List of conversation dicts
         """
-        sql = """
-        SELECT id, user_id, title, created_at, updated_at
-        FROM conversations
-        WHERE user_id = ?
-        ORDER BY updated_at DESC
-        LIMIT ?
-        """
-
-        result = await self.db.execute(sql, [user_id, limit])
+        if workspace_id:
+            sql = """
+            SELECT id, user_id, title, created_at, updated_at
+            FROM conversations
+            WHERE user_id = ? AND workspace_id = ?
+            ORDER BY updated_at DESC
+            LIMIT ?
+            """
+            result = await self.db.execute(sql, [user_id, workspace_id, limit])
+        else:
+            sql = """
+            SELECT id, user_id, title, created_at, updated_at
+            FROM conversations
+            WHERE user_id = ?
+            ORDER BY updated_at DESC
+            LIMIT ?
+            """
+            result = await self.db.execute(sql, [user_id, limit])
 
         return [dict(row) for row in result.rows]
 

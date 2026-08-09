@@ -71,7 +71,7 @@ def _gemini_classify(texto: str) -> ClassificationResult:
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
     texto_truncado = texto[:8000]
     response = client.models.generate_content(
-        model="gemini-2.5-flash-lite",
+        model=settings.GEMINI_MODEL,
         contents=_GEMINI_PROMPT + texto_truncado,
     )
     raw = response.text.strip().strip("`")

@@ -11,8 +11,9 @@ dictámenes vinculantes (esos los produce el motor de reglas + RAG verificador
 aguas abajo).
 
 Contrato:
-- Modelo: ``gpt-5-mini`` con ``temperature=1`` y ``max_completion_tokens=1024``
-  (únicos valores soportados por gpt-5-mini en el repo).
+- Modelo: ``gpt-5-mini`` con ``temperature=1`` (único valor soportado),
+  ``max_completion_tokens=10000`` y ``reasoning_effort="minimal"`` — sin este
+  último el modelo agota el presupuesto razonando y no emite contenido.
 - Guardrails: ``is_safe=False`` con ``risk_level`` en ``{"high", "critical"}``
   bloquea la llamada a OpenAI y devuelve un mensaje safe-fail determinista.
 - Error handling: cualquier excepción de OpenAI se atrapa y yields un mensaje
@@ -108,9 +109,13 @@ class DefensiaAgent:
     # a wrong path — TaxAgent uses gpt-5-mini and streams content fine.
     # The DefensIA-specific failure was not the model, it was the
     # restrictive SYSTEM_PROMPT plus the lack of reasoning_effort hint.
-    MODEL: str = "gpt-5-mini"
+    MODEL: str = "gpt-5.6-luna"
+    # 1024 was not enough: gpt-5-mini spent the whole budget on hidden
+    # reasoning and emitted zero visible content, so the chat hung and the UI
+    # stayed blank. Raising the ceiling AND pinning reasoning_effort="minimal"
+    # is what makes the model actually produce output.
     MAX_COMPLETION_TOKENS: int = 10000
-    TEMPERATURE: int = 1  # único valor soportado por gpt-5 family
+    TEMPERATURE: int = 1  # único valor soportado por gpt-5-mini
     OPENAI_TIMEOUT_S: float = 60.0  # match TaxAgent's outer timeout
     REASONING_EFFORT: str = "minimal"  # force visible output, less hidden reasoning
 
@@ -123,7 +128,7 @@ class DefensiaAgent:
         resolved_key = api_key or settings.OPENAI_API_KEY
         if not resolved_key:
             logger.warning(
-                "DefensiaAgent inicializado sin OPENAI_API_KEY — llamadas " "al LLM fallarán."
+                "DefensiaAgent inicializado sin OPENAI_API_KEY — llamadas al LLM fallarán."
             )
         self._client = AsyncOpenAI(api_key=resolved_key)
 
@@ -197,10 +202,9 @@ class DefensiaAgent:
         messages.append({"role": "user", "content": message})
         logger.error("DEFENSIA_AGENT_TRACE step=before_openai model=%s", self.MODEL)
 
-        # 3. Stream desde OpenAI — replicating TaxAgent's pattern exactly:
-        #    outer wait_for 60s on create, per-chunk wait_for 30s. We add
-        #    reasoning_effort="minimal" because the model otherwise burns
-        #    its tokens on hidden reasoning and emits zero content.
+        # 3. Stream desde OpenAI — mismo patrón que TaxAgent: wait_for externo
+        #    sobre create(). reasoning_effort="minimal" es obligatorio: sin él
+        #    el modelo consume el presupuesto razonando y no emite contenido.
         try:
             stream = await asyncio.wait_for(
                 self._client.chat.completions.create(
@@ -213,8 +217,6 @@ class DefensiaAgent:
                 ),
                 timeout=self.OPENAI_TIMEOUT_S,
             )
-            logger.debug("DEFENSIA_AGENT_TRACE step=stream_obtained")
-            chunks_seen = 0
             content_chunks = 0
             last_finish_reason: str | None = None
             async for chunk in stream:
@@ -222,27 +224,22 @@ class DefensiaAgent:
                 if not chunk.choices:
                     continue
                 choice = chunk.choices[0]
-                if choice.finish_reason:
+                # getattr: only used for diagnostics, and not every chunk shape
+                # (nor every test double) carries finish_reason.
+                if getattr(choice, "finish_reason", None):
                     last_finish_reason = choice.finish_reason
                 delta_content = choice.delta.content
                 if delta_content:
                     content_chunks += 1
                     yield delta_content
-            logger.debug(
-                "DEFENSIA_AGENT_TRACE step=stream_done chunks=%d content_chunks=%d "
-                "finish_reason=%s model=%s max_tokens=%d",
-                chunks_seen,
-                content_chunks,
-                last_finish_reason,
-                self.MODEL,
-                self.MAX_COMPLETION_TOKENS,
-            )
             if content_chunks == 0:
                 logger.warning(
-                    "DefensIA emitted zero content chunks. Likely cause: "
-                    "model burned the entire token budget on reasoning before "
-                    "producing any visible output. Falling back to a generic "
-                    "guidance message so the UI is not left blank."
+                    "DefensIA emitted zero content chunks (finish_reason=%s, "
+                    "max_tokens=%d). Likely cause: the model burned its token "
+                    "budget on reasoning before producing visible output. "
+                    "Falling back to a guidance message so the UI is not blank.",
+                    last_finish_reason,
+                    self.MAX_COMPLETION_TOKENS,
                 )
                 yield (
                     "No he podido componer una respuesta esta vez. ¿Puedes "
@@ -253,7 +250,7 @@ class DefensiaAgent:
                 )
         except TimeoutError:
             logger.error(
-                "DEFENSIA_AGENT_TRACE step=openai_timeout after=%ss model=%s",
+                "DefensIA agent OpenAI timeout after %ss (model=%s)",
                 self.OPENAI_TIMEOUT_S,
                 self.MODEL,
             )

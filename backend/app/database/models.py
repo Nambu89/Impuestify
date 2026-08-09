@@ -36,6 +36,7 @@ class User(UserBase):
     is_active: bool = True
     is_admin: bool = False
     is_owner: bool = False
+    account_type: str = "individual"
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

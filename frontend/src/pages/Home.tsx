@@ -131,12 +131,6 @@ export default function Home() {
                     description: 'Para trabajadores por cuenta propia',
                 },
             ],
-            aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: '4.8',
-                reviewCount: '150',
-                bestRating: '5',
-            },
             author: { '@type': 'Organization', name: 'Impuestify', url: 'https://impuestify.com' },
         },
     })

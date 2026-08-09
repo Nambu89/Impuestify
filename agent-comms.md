@@ -7,6 +7,21 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-09] BACKEND/SECURITY — 📢 NEEDS_REVIEW — Backport de fixes varados en `demo/fiscal-ia-melilla`
+
+- **Branch**: `claude/backport-demo-fixes` (desde `main` @ `4118968`)
+- **Origen**: auditoría de la divergencia de la rama demo IA-Melilla (38 commits desde 2026-05-19). Contenía arreglos genéricos que nunca volvieron a `main` → bugs vivos en producción de Impuestify ~3 meses.
+- **5 fixes retropropagados** (detalle en `memory/bugfixes-2026-08.md`):
+  - **Bug 104 (CRÍTICO)** — `routers/defensia.py` no llamaba a `security_pipeline`. Endpoints DefensIA sin prompt injection / PII / SQLi / topic classifier / Llama Guard.
+  - **Bug 105** — `pii_detector` ignoraba el regex si Groq decía "safe". Ahora regex siempre primero.
+  - **Bug 106** — `gemini-3-flash-preview` retirado por Google (404). 9 call sites, 6 hardcodeados. Ahora todos leen `settings.GEMINI_MODEL` → `gemini-2.5-flash-lite`.
+  - **Bug 107** — rate limit keyeado por `md5(token)` = se resetea al volver a hacer login. Ahora por claim `sub`.
+  - **Bug 108** — DefensIA colgaba con la UI en blanco (sin `reasoning_effort`, tope 1024 tokens).
+- **NO retropropagado a propósito**: refactor `BRAND_NAME`, bypass `DEMO_MODE` del topic classifier, bypass de suscripciones, `RAG_TERRITORY_LOCK`, seed de usuario demo, reescritura del `SYSTEM_PROMPT` de DefensIA (decisión de producto de Melilla, no bugfix), marcadores `DEFENSIA_AGENT_TRACE` a nivel ERROR.
+- **Reglas nuevas en `backend/CLAUDE.md`**: (1) todo endpoint que pase texto de usuario a un LLM DEBE llamar a `security_pipeline.check()` y emitir `rejection_message`, nunca `reason`; (2) nunca hardcodear un id de modelo LLM/Vision.
+- **PENDIENTE (deuda de seguridad, no bloqueante)** — `tests/e2e/guia-fiscal-melilla.spec.ts` líneas 14-15 tienen **dos JWT hardcodeados** (`JWT_PARTICULAR` + `JWT_REFRESH`) de un usuario de test. Están caducados (`exp` 1773320993 / 1773923993, ambos pasados) y el `sub` es `test-particular-00000001`, así que el riesgo actual es nulo — pero el patrón es malo: si alguien regenera los tokens y los vuelve a pegar, acaban tokens vivos en el repo. Además el fichero hardcodea una ruta absoluta del disco de Fernando para los screenshots. **Fix**: generar el token en el `beforeAll` con el `JWT_SECRET_KEY` del entorno de test, o leerlo de env var; y usar ruta relativa. Revisar de paso el resto de `tests/e2e/*.spec.ts` por el mismo patrón. NOTA: este fichero NO es material de IA-Melilla — es un E2E del wizard `/guia-fiscal` de Impuestify que valida la deducción 60% de Ceuta/Melilla, funcionalidad real del producto. No borrarlo.
+- **Para el siguiente agente**: quedan los pasos 2-4 del plan de separación IA-Melilla — desacoplar leadbot de `DEMO_MODE` a `LEADBOT_ENABLED` y llevarlo a `main` apagado, rebasar la rama demo sobre `main`, y montar worktree en `../IA-Melilla/backend/`. **NO mergear `chore/separar-ia-melilla`**: está obsoleta y su diff borra el módulo de gestoría.
+
 ## [2026-05-18] DEVOPS/CODER — 🟢 DONE — Sesion 43: Quality Gates Phase 1 completas
 
 - **Branch**: `claude/quality-gates` (21 commits, PR #16 draft)

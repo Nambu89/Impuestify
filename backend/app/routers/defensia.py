@@ -1060,7 +1060,7 @@ async def editar_escrito(
     await _ensure_owner(db, exp_id, current_user.user_id)
 
     result = await db.execute(
-        "SELECT id, version FROM defensia_escritos " "WHERE id = ? AND expediente_id = ?",
+        "SELECT id, version FROM defensia_escritos WHERE id = ? AND expediente_id = ?",
         [escrito_id, exp_id],
     )
     if not result or not getattr(result, "rows", None):
@@ -1142,9 +1142,43 @@ async def chat_defensia(
     Implementación serializada: un único loop con ``asyncio.wait_for`` sobre
     ``__anext__`` del iterador del agente. Si el chunk no llega en 4s,
     emitimos un thinking rotatorio y reintentamos. Cero tasks paralelos,
-    cero cola en memoria, cero race conditions — el cleanup del iterador
-    lo hace el garbage collector cuando el generador termina o se cancela.
+    cero cola en memoria, cero race conditions.
     """
+    # === SECURITY: run the shared security pipeline first ===
+    # DefensIA was bypassing the central security_pipeline entirely (prompt
+    # injection / PII / SQLi / topic classifier / Llama Guard). Run the same
+    # pipeline TaxAgent uses so DefensIA gets identical defenses.
+    from app.security.security_pipeline import security_pipeline
+
+    pipeline_result = security_pipeline.check(
+        question=body.message or "",
+        user_id=str(getattr(current_user, "user_id", "anonymous")),
+    )
+    if not pipeline_result.is_safe:
+        logger.warning(
+            "DefensIA security pipeline rejected input: layer=%s reason=%s",
+            pipeline_result.layer,
+            pipeline_result.reason,
+        )
+
+        async def rejection_stream():
+            # Surface the user-facing rejection_message, never the internal
+            # `reason` (it names the layer and matched patterns).
+            yield {
+                "event": "content",
+                "data": pipeline_result.rejection_message or "Esa pregunta no la podemos procesar.",
+            }
+            yield {"event": "done", "data": ""}
+
+        return EventSourceResponse(
+            rejection_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    # Use the sanitized text from the pipeline (length-capped, control chars
+    # removed) instead of the raw user input.
+    safe_message = pipeline_result.sanitized_text or (body.message or "")
 
     # === SECURITY: run the shared security pipeline first ===
     # DefensIA was previously bypassing the central security_pipeline

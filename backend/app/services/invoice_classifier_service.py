@@ -82,14 +82,16 @@ class InvoiceClassifierService:
         self,
         api_key: str,
         db=None,
-        model: str = "gemini-2.5-flash-lite",
+        model: str | None = None,
     ):
         if genai is None:
             raise ImportError(
                 "google-genai package is required. Install with: pip install google-genai"
             )
+        from app.config import settings
+
         self.client = genai.Client(api_key=api_key)
-        self.model = model
+        self.model = model or settings.GEMINI_MODEL
         self.db = db
 
     async def _get_candidate_accounts(self, tipo: str) -> list[dict]:

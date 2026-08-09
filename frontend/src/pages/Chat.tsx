@@ -38,6 +38,8 @@ import { FormattedMessage } from '../components/FormattedMessage'
 import OnboardingModal from '../components/OnboardingModal'
 import { useAuth } from '../hooks/useAuth'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
+import { useActiveClient } from '../context/ActiveClientContext'
+import MessageErrorBoundary from '../components/MessageErrorBoundary'
 import './Chat.css'
 
 interface Message {
@@ -58,6 +60,7 @@ export default function Chat() {
     const { askQuestion } = useApi()
     const { getConversation, warmupChat } = useConversations()
     const { workspaces, activeWorkspace, selectWorkspace, fetchWorkspaces } = useWorkspaces()
+    const { activeClient } = useActiveClient()
     const { streamState, isStreaming, sendStreamingMessage } = useStreamingChat()
     const {
         docs: sessionDocs,
@@ -112,6 +115,16 @@ export default function Chat() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeConversationId])
+
+    // Gestoría: mirror the Header "Cliente activo" into the chat workspace context
+    // so per-client history and indicators follow the header selector automatically.
+    // Non-gestoría users are unaffected.
+    useEffect(() => {
+        if (user?.account_type !== 'gestoria' || !activeClient) return
+        const matchingWorkspace = workspaces.find((w) => w.id === activeClient.id) ?? null
+        selectWorkspace(matchingWorkspace)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeClient, workspaces, user?.account_type])
 
     // Workspace change handler
     const handleWorkspaceChange = (workspace: Workspace | null) => {
@@ -231,7 +244,10 @@ export default function Chat() {
                             ])
                         },
                     },
-                    activeWorkspace?.id,
+                    // Gestoría: Header "Cliente activo" is source of truth — never let
+                    // auto-selected workspace override it.
+                    // Non-gestoría: use active workspace exactly as today.
+                    user?.account_type === 'gestoria' ? activeClient?.id : activeWorkspace?.id,
                     sessionDocIds.length > 0 ? sessionDocIds : undefined,
                 )
             } catch (error: any) {
@@ -333,8 +349,9 @@ export default function Chat() {
             )}
 
             <main className="chat-main">
-                {/* Workspace selector bar at top of chat area */}
-                {workspaces && workspaces.length > 0 && (
+                {/* Workspace selector bar at top of chat area — hidden for gestoría
+                    (they use the Header "Cliente activo" selector instead) */}
+                {user?.account_type !== 'gestoria' && workspaces && workspaces.length > 0 && (
                     <div className="chat-workspace-bar">
                         <div className="chat-workspace-bar__inner">
                             <select
@@ -383,8 +400,10 @@ export default function Chat() {
                     </div>
                 )}
 
-                {/* Workspace quick-access cards: shown when user has workspaces but none selected */}
-                {workspaces &&
+                {/* Workspace quick-access cards: shown when user has workspaces but none selected.
+                    Hidden for gestoría — their active client is set via the Header. */}
+                {user?.account_type !== 'gestoria' &&
+                    workspaces &&
                     workspaces.length > 0 &&
                     !activeWorkspace &&
                     messages.length <= 1 && (
@@ -508,9 +527,11 @@ export default function Chat() {
                                             <>
                                                 <div className="message-text">
                                                     {message.role === 'assistant' ? (
-                                                        <FormattedMessage
-                                                            content={message.content}
-                                                        />
+                                                        <MessageErrorBoundary>
+                                                            <FormattedMessage
+                                                                content={message.content}
+                                                            />
+                                                        </MessageErrorBoundary>
                                                     ) : (
                                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                             {message.content}
@@ -601,9 +622,11 @@ export default function Chat() {
                                                 </div>
                                                 <div className="message-content">
                                                     <div className="message-text">
-                                                        <FormattedMessage
-                                                            content={streamState.response}
-                                                        />
+                                                        <MessageErrorBoundary>
+                                                            <FormattedMessage
+                                                                content={streamState.response}
+                                                            />
+                                                        </MessageErrorBoundary>
                                                         <span className="streaming-cursor" />
                                                     </div>
                                                 </div>
@@ -635,13 +658,15 @@ export default function Chat() {
                 {docUploadError && <p className="session-doc-error">{docUploadError}</p>}
 
                 <form onSubmit={handleSubmit} className="chat-form">
-                    {/* Workspace Selector */}
-                    <WorkspaceSelector
-                        workspaces={workspaces}
-                        activeWorkspace={activeWorkspace}
-                        onWorkspaceChange={handleWorkspaceChange}
-                        onCreateNew={() => (window.location.href = '/workspaces')}
-                    />
+                    {/* Workspace Selector — hidden for gestoría (Header controls the active client) */}
+                    {user?.account_type !== 'gestoria' && (
+                        <WorkspaceSelector
+                            workspaces={workspaces}
+                            activeWorkspace={activeWorkspace}
+                            onWorkspaceChange={handleWorkspaceChange}
+                            onCreateNew={() => (window.location.href = '/workspaces')}
+                        />
+                    )}
 
                     {/* Session Doc Upload (paperclip) */}
                     <SessionDocUploadButton

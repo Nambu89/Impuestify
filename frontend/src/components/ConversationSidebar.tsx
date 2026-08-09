@@ -21,12 +21,14 @@ export function ConversationSidebar({
 }: ConversationSidebarProps) {
     const { conversations, loading, fetchConversations, deleteConversation } = useConversations()
 
-    // Fetch conversations when sidebar opens or active conversation changes
+    // Fetch conversations on mount and when the sidebar opens.
+    // Intentionally NOT re-fetching on every activeConversationId change —
+    // switching the selected conversation does not alter the list.
     useEffect(() => {
         logger.debug('ConversationSidebar: Triggering fetch')
         fetchConversations()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeConversationId, isOpen])
+    }, [isOpen])
 
     const handleDelete = async (e: React.MouseEvent, conversationId: string) => {
         e.stopPropagation()

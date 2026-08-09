@@ -137,24 +137,21 @@ _DEMO_USER_EMAILS = {"demo@example.com", "cliente.demo@iamelilla.com"}
 
 def get_rate_limit_key(request: Request) -> str:
     """
-    Build the rate-limit key.
+    Get rate limit key based on user identity.
 
-    Priority:
-      1. If the JWT belongs to a *demo* user (anonymous web visitor logged
-         in automatically via the demo credentials, or the static cliente
-         demo account), key by the visitor's IP. This stops a single
-         shared demo account from being abused by many concurrent IPs.
-      2. If the JWT belongs to a real authenticated user (real email),
-         key by their stable user_id so the rate-limit is per-person,
-         not per-token.
-      3. If there is no token at all, key by IP.
+    Keys by the stable ``sub`` claim of the JWT so the limit is per-person.
+    Hashing the raw token instead (the previous behaviour) made the limit
+    per-*token*: re-authenticating minted a new token and therefore a fresh
+    bucket, so any caller could reset their own rate limit at will.
+
+    Falls back to the client IP when there is no token or it cannot be parsed.
     """
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         token = auth_header[len("Bearer ") :].strip()
         try:
-            # Decode without verifying expiry — we just need claims for the
-            # rate-limit key. Auth dependencies do the real validation.
+            # Decode without verifying expiry — we only need the claims to
+            # build the key. The auth dependencies do the real validation.
             from jose import jwt as _jwt
 
             from app.config import settings as _settings
@@ -165,18 +162,12 @@ def get_rate_limit_key(request: Request) -> str:
                 algorithms=[_settings.JWT_ALGORITHM],
                 options={"verify_exp": False},
             )
-            email = (payload.get("email") or "").lower()
             user_id = payload.get("sub") or ""
-
-            if email in _DEMO_USER_EMAILS:
-                # Demo accounts: rate limit by IP to prevent cross-visitor abuse
-                return f"demo_ip:{get_remote_address(request)}"
-
             if user_id:
                 return f"user:{user_id}"
         except Exception:
-            # Invalid or unparseable token — fall through to IP fallback so we
-            # never raise inside the key function (slowapi would 500).
+            # Invalid or unparseable token — fall through to the IP fallback so
+            # we never raise inside the key function (slowapi would 500).
             pass
 
     # No token (or unparseable) — fall back to IP

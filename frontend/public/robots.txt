@@ -1,4 +1,16 @@
 # Impuestify — robots.txt
+#
+# NOTA sobre bots IA: la política de entrenamiento vs citación se gestiona en
+# Cloudflare (no aquí):
+#   - "Managed robots.txt" (ON) antepone a este fichero un bloque con
+#     Content-Signal (search=yes, ai-train=no) y Disallow para los crawlers de
+#     entrenamiento (GPTBot, Google-Extended, ClaudeBot, CCBot, Applebot-Extended,
+#     Bytespider, Amazonbot, meta-externalagent...). Por eso NO se repiten aquí.
+#   - "AI Crawl Control" aplica el bloqueo real en el edge (WAF). Política elegida
+#     "solo citación": Allow a OAI-SearchBot/ChatGPT-User/PerplexityBot/
+#     Perplexity-User/Claude-SearchBot/Bingbot; Block a los de entrenamiento.
+# Este fichero solo controla qué rutas de la app son públicas vs privadas.
+
 User-agent: *
 
 # Public pages (allow)
@@ -7,6 +19,7 @@ Allow: /login
 Allow: /register
 Allow: /subscribe
 Allow: /contact
+Allow: /sobre-mi
 Allow: /privacy-policy
 Allow: /ai-transparency
 Allow: /politica-cookies
@@ -22,6 +35,8 @@ Allow: /calculadora-neto
 Allow: /calculadora-retenciones
 Allow: /calculadora-umbrales
 Allow: /modelos-obligatorios
+Allow: /modelo-200
+Allow: /modelo-202
 Allow: /farmacias
 
 # Protected pages (disallow — require auth, redirect to /login)

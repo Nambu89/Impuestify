@@ -17,10 +17,12 @@ import {
     BookOpen,
     ChevronDown,
     Scale,
+    Users,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
+import { useActiveClient } from '../context/ActiveClientContext'
 import './Header.css'
 
 interface HeaderProps {
@@ -30,11 +32,14 @@ interface HeaderProps {
 export default function Header({ onMenuToggle }: HeaderProps) {
     const { user, logout } = useAuth()
     const { isOwner } = useSubscription()
+    const { activeClient, setActiveClient, clients } = useActiveClient()
     const navigate = useNavigate()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [toolsOpen, setToolsOpen] = useState(false)
     const [mobileToolsOpen, setMobileToolsOpen] = useState(false)
     const toolsRef = useRef<HTMLDivElement>(null)
+
+    const isGestoria = user?.account_type === 'gestoria'
 
     const handleLogout = () => {
         logout()
@@ -237,7 +242,36 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                                 </div>
                             </div>
                         )}
+                        {isGestoria && (
+                            <Link to="/gestoria/clientes" className="nav-link">
+                                <Users size={16} /> Clientes
+                            </Link>
+                        )}
                     </nav>
+
+                    {isGestoria && (
+                        <select
+                            className="active-client-selector"
+                            aria-label="Cliente activo"
+                            value={activeClient?.id || ''}
+                            onChange={(e) => {
+                                const c = clients.find((x) => x.id === e.target.value) || null
+                                setActiveClient(c)
+                            }}
+                        >
+                            <option value="">— Sin cliente —</option>
+                            {activeClient && !clients.some((c) => c.id === activeClient.id) && (
+                                <option key={activeClient.id} value={activeClient.id}>
+                                    {activeClient.nombre_cliente}
+                                </option>
+                            )}
+                            {clients.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.nombre_cliente}
+                                </option>
+                            ))}
+                        </select>
+                    )}
 
                     <div className="user-menu">
                         {user?.name && <span className="user-name">{user.name}</span>}
@@ -422,6 +456,15 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                                     <Shield size={20} /> Calidad RAG
                                 </Link>
                             </>
+                        )}
+                        {user?.account_type === 'gestoria' && (
+                            <Link
+                                to="/gestoria/clientes"
+                                className="mobile-nav__link"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <Users size={20} /> Clientes
+                            </Link>
                         )}
                         {onMenuToggle && (
                             <button
