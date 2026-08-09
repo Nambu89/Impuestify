@@ -82,6 +82,13 @@ qrcode[pil]>=7.0
 # --- Google SSO ---
 google-auth>=2.0.0
 
+# --- Leadbot: reserva de citas en Google Calendar ---
+# Sólo se usan con LEADBOT_ENABLED=true. El leadbot degrada con gracia si
+# faltan (recoge el email y avisa de que el equipo contactará), así que no
+# rompen despliegues que no las instalen.
+google-api-python-client>=2.0.0
+google-auth-oauthlib>=1.2.0
+
 # --- Google Gemini (Invoice OCR — Phase 3) ---
 google-genai>=1.0.0
 # cache-bust 1774479781

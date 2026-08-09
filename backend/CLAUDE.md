@@ -100,6 +100,27 @@ Al emitir el rechazo usar `result.rejection_message` (texto para el usuario),
 match, y filtrarlo es un info leak. Precedente: Bug 104 (DefensIA llevaba
 desde la sesión 32 sin pipeline).
 
+### Leadbot — módulo opcional de marca blanca (`app/leadbot/`)
+
+Captador de leads (chatbot público que cualifica BANT-NATB, reserva cita en
+Google Calendar y avisa por email). **Apagado por defecto**: se enciende con
+`LEADBOT_ENABLED=true`.
+
+- Con la bandera apagada `main.py` **ni importa** `app.leadbot` — 176 rutas.
+  Encendida, 181 (+5 bajo `/api/lead-chat/*` y `/api/leads`).
+- Config propia env-driven en `leadbot/config.py`; del core solo consume
+  `LEADBOT_ENABLED` y `TURNSTILE_SECRET_KEY`.
+- Tablas con prefijo `leadbot_`, creadas fuera de `turso_client.init_schema()`.
+- Usa `SecurityPipeline(enable_pii=False, enable_topic_classifier=False)`: el bot
+  recoge email y teléfono **a propósito**, con consentimiento RGPD. Deja activas
+  sanitización, inyección y SQLi. Es la única excepción legítima a la regla de
+  arriba, y solo porque el propósito del endpoint es recoger ese dato.
+
+**Bandera propia y NO `DEMO_MODE`**: `DEMO_MODE` relaja capas de seguridad
+(salta el clasificador de temas). Una bandera que enciende un módulo de producto
+nunca debe compartirse con una que baja defensas — si se comparten, encender lo
+uno enciende lo otro. `tests/test_leadbot_gating.py` fija esto.
+
 ### REGLA: nunca hardcodear un id de modelo LLM/Vision
 
 Siempre `settings.<PROVIDER>_MODEL`. Cuando el proveedor retira un modelo, la

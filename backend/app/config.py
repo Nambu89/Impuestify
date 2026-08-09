@@ -202,6 +202,21 @@ class Settings(BaseSettings):
     )
 
     # -------------------------------
+    # 🤖 Leadbot (captador de leads, marca blanca)
+    # -------------------------------
+    # Apagado por defecto. Con False, `main.py` ni siquiera importa
+    # `app.leadbot`, así que sus rutas y sus tablas no pueden aparecer por
+    # accidente en un despliegue que no lo quiera.
+    #
+    # Bandera propia y NO `DEMO_MODE` a propósito: DEMO_MODE relaja capas de
+    # seguridad, y una bandera que activa un módulo de producto nunca debe
+    # compartirse con una que baja defensas.
+    LEADBOT_ENABLED: bool = Field(
+        default=False,
+        description="Mount the lead-capture chatbot routes and create its tables",
+    )
+
+    # -------------------------------
     # 🔑 Google OAuth (SSO)
     # -------------------------------
     GOOGLE_CLIENT_ID: str | None = Field(

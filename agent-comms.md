@@ -7,6 +7,16 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-09] CI/DEVOPS — 🔴 BLOCKED — 3 jobs de CI rotos por infraestructura (decisión CEO: arreglar tras la separación IA-Melilla)
+
+Detectados al abrir el PR #22. **Ninguno causado por ese PR** — verificado. Ordenados por gravedad:
+
+1. **`red-team` (Red Team Nightly, Promptfoo) — EL MÁS GRAVE.** `promptfoo requires a supported Node.js runtime. Detected: v20.20.2 / Required: >=22.22.0`. El job muere antes de ejecutar un solo caso. Falla en `main` **5 noches consecutivas** (comprobado con `gh run list --branch main`), así que la suite de red-team lleva más de una semana sin protegerte de nada mientras el badge decía "falla" y nadie miraba. **Fix**: subir `actions/setup-node` a Node 22 en `.github/workflows/` (el workflow del nightly y cualquier otro que invoque promptfoo). Verificar después que la suite ejecuta y **qué resultado da de verdad** — puede haber fallos reales escondidos detrás del error de arranque.
+2. **`Trivy CVE Scan`**. `Unable to resolve action 'aquasecurity/trivy-action@0.28.0', unable to find version '0.28.0'`. La versión pineada desapareció upstream. Escáner de CVEs caído: no hay cobertura de vulnerabilidades en dependencias. **Fix**: repinear a una versión existente (mirar releases del repo de la acción) o a un SHA, que además es lo recomendado para acciones de terceros.
+3. **`Static Analysis (Bandit + Semgrep)`** — falso positivo. `B613` en `backend/app/security/security_pipeline.py:65`: salta sobre `_ZERO_WIDTH_RE`, el regex que existe **precisamente para eliminar** caracteres bidi/zero-width. La defensa dispara la alarma. **Fix**: `# nosec B613` en esa línea con comentario explicando por qué. NO desactivar B613 globalmente (ver lección anti-whitewashing de la sesión 43: tolerancia en el runner o supresión puntual justificada, nunca desactivar la regla). Los otros 39 hallazgos de Bandit son LOW/MEDIUM y no rompen el gate.
+
+Nota: `bandit` local sobre los ficheros del PR #22 dio 1 solo hallazgo LOW (`B110`, el `except: pass` deliberado de `rate_limiter.get_rate_limit_key`; un raise ahí haría que slowapi devolviera 500). Si se quiere dejar limpio, `# nosec B110` con comentario.
+
 ## [2026-08-09] BACKEND/SECURITY — 📢 NEEDS_REVIEW — Backport de fixes varados en `demo/fiscal-ia-melilla`
 
 - **Branch**: `claude/backport-demo-fixes` (desde `main` @ `4118968`)
