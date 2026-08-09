@@ -136,19 +136,38 @@ def get_rate_limit_key(request: Request) -> str:
     """
     Get rate limit key based on user identity.
 
-    Uses JWT user ID if authenticated, otherwise falls back to IP address.
+    Keys by the stable ``sub`` claim of the JWT so the limit is per-person.
+    Hashing the raw token instead (the previous behaviour) made the limit
+    per-*token*: re-authenticating minted a new token and therefore a fresh
+    bucket, so any caller could reset their own rate limit at will.
+
+    Falls back to the client IP when there is no token or it cannot be parsed.
     """
-    # Try to get user from JWT token
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
-        # If authenticated, could extract user ID from token
-        # For now, use a hash of the token
-        import hashlib
+        token = auth_header[len("Bearer ") :].strip()
+        try:
+            # Decode without verifying expiry — we only need the claims to
+            # build the key. The auth dependencies do the real validation.
+            from jose import jwt as _jwt
 
-        token_hash = hashlib.md5(auth_header.encode()).hexdigest()[:16]
-        return f"user:{token_hash}"
+            from app.config import settings as _settings
 
-    # Fallback to IP address
+            payload = _jwt.decode(
+                token,
+                _settings.JWT_SECRET_KEY,
+                algorithms=[_settings.JWT_ALGORITHM],
+                options={"verify_exp": False},
+            )
+            user_id = payload.get("sub") or ""
+            if user_id:
+                return f"user:{user_id}"
+        except Exception:
+            # Invalid or unparseable token — fall through to the IP fallback so
+            # we never raise inside the key function (slowapi would 500).
+            pass
+
+    # No token (or unparseable) — fall back to IP
     return get_remote_address(request)
 
 
