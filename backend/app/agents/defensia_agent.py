@@ -228,7 +228,7 @@ class DefensiaAgent:
                 if delta_content:
                     content_chunks += 1
                     yield delta_content
-            logger.error(
+            logger.debug(
                 "DEFENSIA_AGENT_TRACE step=stream_done chunks=%d content_chunks=%d "
                 "finish_reason=%s model=%s max_tokens=%d",
                 chunks_seen,
