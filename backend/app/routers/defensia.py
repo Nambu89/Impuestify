@@ -25,6 +25,7 @@ Reglas de disenho (cerradas en el plan v2)
 7. **UTC** siempre (``datetime.now(timezone.utc)``), nunca ``utcnow``.
 """
 
+import asyncio
 import json
 import logging
 import secrets
@@ -1059,7 +1060,7 @@ async def editar_escrito(
     await _ensure_owner(db, exp_id, current_user.user_id)
 
     result = await db.execute(
-        "SELECT id, version FROM defensia_escritos " "WHERE id = ? AND expediente_id = ?",
+        "SELECT id, version FROM defensia_escritos WHERE id = ? AND expediente_id = ?",
         [escrito_id, exp_id],
     )
     if not result or not getattr(result, "rows", None):
@@ -1112,6 +1113,15 @@ async def borrar_expediente(
 # ============================================================================
 
 
+_DEFENSIA_THINKING_MESSAGES = (
+    "Analizando tu caso…",
+    "Consultando normativa AEAT y procedimiento aplicable…",
+    "Comprobando plazos administrativos y obligaciones del contribuyente…",
+    "Buscando precedentes y casos similares…",
+    "Redactando una respuesta estructurada con citas oficiales…",
+)
+
+
 @router.post("/chat")
 @limiter.limit(get_defensia_rate_limit("chat"))
 async def chat_defensia(
@@ -1123,18 +1133,98 @@ async def chat_defensia(
     """Stream conversacional del DefensiaAgent.
 
     Eventos:
-        - ``content``: chunk de texto.
+        - ``thinking``: mensaje de progreso mientras el agente piensa
+          (uno inmediato + uno cada 4s hasta el primer chunk de content).
+        - ``content``: chunk de texto del LLM.
         - ``done``: fin del stream.
+        - ``error``: error inesperado.
+
+    Implementación serializada: un único loop con ``asyncio.wait_for`` sobre
+    ``__anext__`` del iterador del agente. Si el chunk no llega en 4s,
+    emitimos un thinking rotatorio y reintentamos. Cero tasks paralelos,
+    cero cola en memoria, cero race conditions.
     """
+    # === SECURITY: run the shared security pipeline first ===
+    # DefensIA was bypassing the central security_pipeline entirely (prompt
+    # injection / PII / SQLi / topic classifier / Llama Guard). Run the same
+    # pipeline TaxAgent uses so DefensIA gets identical defenses.
+    from app.security.security_pipeline import security_pipeline
+
+    pipeline_result = security_pipeline.check(
+        question=body.message or "",
+        user_id=str(getattr(current_user, "user_id", "anonymous")),
+    )
+    if not pipeline_result.is_safe:
+        logger.warning(
+            "DefensIA security pipeline rejected input: layer=%s reason=%s",
+            pipeline_result.layer,
+            pipeline_result.reason,
+        )
+
+        async def rejection_stream():
+            # Surface the user-facing rejection_message, never the internal
+            # `reason` (it names the layer and matched patterns).
+            yield {
+                "event": "content",
+                "data": pipeline_result.rejection_message or "Esa pregunta no la podemos procesar.",
+            }
+            yield {"event": "done", "data": ""}
+
+        return EventSourceResponse(
+            rejection_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    # Use the sanitized text from the pipeline (length-capped, control chars
+    # removed) instead of the raw user input.
+    safe_message = pipeline_result.sanitized_text or (body.message or "")
 
     async def event_stream():
+        # Feedback inmediato (antes incluso de invocar al agente)
+        yield {"event": "thinking", "data": _DEFENSIA_THINKING_MESSAGES[0]}
+
+        stream_iter = agent.chat_stream(safe_message, chat_history=body.chat_history).__aiter__()
+
+        # Fase 1: esperar primer chunk, emitir thinking cada 4s
+        thinking_idx = 1
+        first_chunk: str | None = None
         try:
-            async for chunk in agent.chat_stream(body.message, chat_history=body.chat_history):
+            while True:
+                try:
+                    candidate = await asyncio.wait_for(stream_iter.__anext__(), timeout=4.0)
+                except TimeoutError:
+                    msg = _DEFENSIA_THINKING_MESSAGES[
+                        thinking_idx % len(_DEFENSIA_THINKING_MESSAGES)
+                    ]
+                    yield {"event": "thinking", "data": msg}
+                    thinking_idx += 1
+                    continue
+                except StopAsyncIteration:
+                    yield {"event": "done", "data": ""}
+                    return
+                if candidate:
+                    first_chunk = candidate
+                    break
+                # candidate vacío: seguimos esperando otro chunk con timeout
+        except Exception as exc:  # noqa: BLE001
+            logger.error("DefensIA chat error (first chunk): %s", exc, exc_info=True)
+            yield {
+                "event": "error",
+                "data": json.dumps({"message": "Error en el chat DefensIA"}),
+            }
+            yield {"event": "done", "data": ""}
+            return
+
+        # Fase 2: emitir primer chunk + resto del stream sin timeout
+        try:
+            yield {"event": "content", "data": first_chunk}
+            async for chunk in stream_iter:
                 if chunk:
                     yield {"event": "content", "data": chunk}
             yield {"event": "done", "data": ""}
         except Exception as exc:  # noqa: BLE001
-            logger.error("DefensIA chat error: %s", exc, exc_info=True)
+            logger.error("DefensIA chat error (during stream): %s", exc, exc_info=True)
             yield {
                 "event": "error",
                 "data": json.dumps({"message": "Error en el chat DefensIA"}),

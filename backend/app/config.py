@@ -46,8 +46,12 @@ class Settings(BaseSettings):
     # 🔮 Google Gemini (Invoice OCR)
     # -------------------------------
     GOOGLE_GEMINI_API_KEY: str | None = Field(default=None)
+    # NOTE: "gemini-3-flash-preview" was retired by Google (listed under
+    # "Previous models" / shut down) and now returns 404. Every Gemini call
+    # site MUST read this setting — never hardcode a model id, or a future
+    # retirement becomes an outage that no env var can fix.
     GEMINI_MODEL: str = Field(
-        default="gemini-3-flash-preview", description="Gemini model for invoice OCR"
+        default="gemini-2.5-flash-lite", description="Gemini model for invoice OCR"
     )
 
     # -------------------------------

@@ -237,7 +237,13 @@ async def test_chat_stream_openai_error_devuelve_safe_fail():
 
 @pytest.mark.asyncio
 async def test_chat_stream_usa_max_completion_tokens():
-    """Debe usar max_completion_tokens=1024, NUNCA max_tokens."""
+    """Debe usar max_completion_tokens (NUNCA max_tokens) + reasoning_effort.
+
+    El valor se ancla a ``DefensiaAgent.MAX_COMPLETION_TOKENS`` en lugar de a un
+    literal: fijarlo a 1024 fue justo el bug 108 — gpt-5-mini gastaba todo el
+    presupuesto razonando y emitía cero contenido. ``reasoning_effort`` es
+    obligatorio para que el modelo produzca salida visible.
+    """
     agent, create_mock = _build_agent_with_mock(stream_chunks=["ok"])
 
     with patch(
@@ -248,7 +254,11 @@ async def test_chat_stream_usa_max_completion_tokens():
 
     kwargs = create_mock.call_args.kwargs
     assert "max_completion_tokens" in kwargs
-    assert kwargs["max_completion_tokens"] == 1024
+    assert kwargs["max_completion_tokens"] == DefensiaAgent.MAX_COMPLETION_TOKENS
+    assert (
+        kwargs["max_completion_tokens"] >= 4096
+    ), "un tope bajo hace que el modelo agote los tokens razonando (bug 108)"
+    assert kwargs["reasoning_effort"] == "minimal"
     assert "max_tokens" not in kwargs
 
 

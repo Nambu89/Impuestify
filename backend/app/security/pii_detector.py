@@ -111,6 +111,29 @@ class PIIDetector:
         },
     }
 
+    # Regex types distinctive enough to override a "safe" verdict from the LLM.
+    #
+    # Deliberately EXCLUDES:
+    #   - postal_code: matches ANY 5-digit number in 01000-52999, so ordinary
+    #     amounts ("gano 30000 EUR") would be flagged as PII. In a tax app that
+    #     is a constant false positive.
+    #   - passport: [A-Z]{2,3}\d{6,9} also matches reference/expediente codes.
+    # Both still count when the regex runs as the sole detector (long input or
+    # Groq failure) — they are only untrusted as an override.
+    _HIGH_CONFIDENCE_PII = frozenset(
+        {
+            "dni",
+            "nie",
+            "phone",
+            "email",
+            "iban",
+            "spanish_iban",
+            "credit_card",
+            "social_security",
+            "cif",
+        }
+    )
+
     # Per-instance cache cap. Reached → cache cleared. Simple LRU-ish.
     _CACHE_MAX = 2048
 
@@ -176,6 +199,18 @@ class PIIDetector:
             return cached
 
         result = self._detect_uncached(text)
+
+        # Union the LLM verdict with the deterministic regex. The safety model
+        # is too lenient in fiscal contexts — "mi DNI es 12345678Z" inside a
+        # tax question came back as safe. If Groq cleared the text but the
+        # regex finds high-confidence Spanish PII, the regex wins.
+        #
+        # Groq still runs first so its richer categories (S7 etc.) are
+        # preserved and the 413/429 fallback path is untouched.
+        if not result.has_pii:
+            regex_result = self._regex_only(text)
+            if any(t in self._HIGH_CONFIDENCE_PII for t in regex_result.detections):
+                result = regex_result
 
         if len(self._cache) >= self._CACHE_MAX:
             # Simple LRU-ish: drop the oldest half. Avoids unbounded growth
