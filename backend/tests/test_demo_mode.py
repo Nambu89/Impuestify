@@ -1,10 +1,6 @@
 """Tests for demo mode configuration and behavior."""
 
-import os
-from unittest.mock import patch
-
 import pytest
-
 
 def test_demo_settings_defaults_off():
     """Default settings: demo mode OFF, brand=Impuestify, subscriptions ON."""
