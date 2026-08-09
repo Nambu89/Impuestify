@@ -71,7 +71,7 @@ def _gemini_extract_liquidacion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model=settings.GEMINI_MODEL,
         contents=[
             _PROMPT_LIQUIDACION,
             {"inline_data": {"mime_type": "application/pdf", "data": pdf_bytes}},
@@ -135,7 +135,7 @@ def _gemini_extract_sancion(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model=settings.GEMINI_MODEL,
         contents=[
             _PROMPT_SANCION,
             {"inline_data": {"mime_type": "application/pdf", "data": pdf_bytes}},
@@ -187,7 +187,7 @@ def _gemini_extract_propuesta(pdf_bytes: bytes, nombre: str) -> dict[str, Any]:
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model=settings.GEMINI_MODEL,
         contents=[
             _PROMPT_PROPUESTA,
             {"inline_data": {"mime_type": "application/pdf", "data": pdf_bytes}},
@@ -229,7 +229,7 @@ def _gemini_extract_requerimiento(pdf_bytes: bytes, nombre: str) -> dict[str, An
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model=settings.GEMINI_MODEL,
         contents=[
             _PROMPT_REQUERIMIENTO,
             {"inline_data": {"mime_type": "application/pdf", "data": pdf_bytes}},
@@ -273,7 +273,7 @@ def _gemini_extract_escrito_usuario(pdf_bytes: bytes, nombre: str) -> dict[str, 
 
     client = genai.Client(api_key=settings.GOOGLE_GEMINI_API_KEY)
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model=settings.GEMINI_MODEL,
         contents=[
             _PROMPT_ESCRITO_USUARIO,
             {"inline_data": {"mime_type": "application/pdf", "data": pdf_bytes}},
