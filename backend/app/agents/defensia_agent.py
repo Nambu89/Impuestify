@@ -11,7 +11,7 @@ dictámenes vinculantes (esos los produce el motor de reglas + RAG verificador
 aguas abajo).
 
 Contrato:
-- Modelo: ``gpt-5-mini`` con ``temperature=1`` (único valor soportado),
+- Modelo: ``gpt-5.6-luna`` con ``temperature=1`` (único valor soportado),
   ``max_completion_tokens=10000`` y ``reasoning_effort="minimal"`` — sin este
   último el modelo agota el presupuesto razonando y no emite contenido.
 - Guardrails: ``is_safe=False`` con ``risk_level`` en ``{"high", "critical"}``
@@ -105,17 +105,17 @@ class DefensiaAgent:
     """
 
     # Aligned with TaxAgent (the chat fiscal agent that DOES work end to
-    # end in this same backend). Switching MODEL away from gpt-5-mini was
-    # a wrong path — TaxAgent uses gpt-5-mini and streams content fine.
+    # end in this same backend). Switching MODEL away from gpt-5.6-luna was
+    # a wrong path — TaxAgent uses gpt-5.6-luna and streams content fine.
     # The DefensIA-specific failure was not the model, it was the
     # restrictive SYSTEM_PROMPT plus the lack of reasoning_effort hint.
     MODEL: str = "gpt-5.6-luna"
-    # 1024 was not enough: gpt-5-mini spent the whole budget on hidden
+    # 1024 was not enough: gpt-5.6-luna spent the whole budget on hidden
     # reasoning and emitted zero visible content, so the chat hung and the UI
     # stayed blank. Raising the ceiling AND pinning reasoning_effort="minimal"
     # is what makes the model actually produce output.
     MAX_COMPLETION_TOKENS: int = 10000
-    TEMPERATURE: int = 1  # único valor soportado por gpt-5-mini
+    TEMPERATURE: int = 1  # único valor soportado por gpt-5.6-luna
     OPENAI_TIMEOUT_S: float = 60.0  # match TaxAgent's outer timeout
     REASONING_EFFORT: str = "minimal"  # force visible output, less hidden reasoning
 
