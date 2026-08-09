@@ -192,6 +192,53 @@ id de modelo incrustado.
 
 ---
 
+## Bug 109 — El merge del PR #17 dejó DOS implementaciones de `detect()` superpuestas
+
+**Archivo**: `backend/app/security/pii_detector.py`
+
+**Cuándo**: horas después de mergear el PR #22 (bug 105), al mergear el PR #17
+(`demo/fiscal-ia-melilla` completa) sobre `main`.
+
+**Síntoma en producción**: *"¿Cuánto IRPF pago si gano 30000 EUR en Madrid?"*
+—una pregunta central del producto— se rechazaba como PII (`Código Postal`), y
+Groq ni se llegaba a llamar (0 invocaciones).
+
+**Causa raíz**: git fusionó **sin conflicto** dos versiones distintas de la
+misma función, porque estaban en puntos diferentes de `detect()`:
+
+1. La de la rama demo: `_regex_only()` primero y `return` inmediato ante
+   cualquier match, `postal_code` incluido.
+2. La del bug 105: Groq primero y override solo con `_HIGH_CONFIDENCE_PII`.
+
+La (1) corta antes, así que la (2) quedó como **código muerto**. El guard de
+alta confianza seguía en el fichero, pero no se ejecutaba nunca.
+
+**Fix**: eliminar el bloque de cortocircuito. Queda solo la union.
+
+**Cómo se detectó**: `test_importes_no_se_confunden_con_codigo_postal` (añadido
+en el PR #22) empezó a fallar al rebasar otra rama sobre el `main` nuevo. Sin
+ese test la regresión habría vivido en producción indefinidamente: no lanza
+excepción, no aparece en logs de error, solo rechaza preguntas legítimas.
+
+**Lección 1 — verificar presencia NO es verificar comportamiento.** Tras el
+merge comprobé que `_HIGH_CONFIDENCE_PII` seguía en `main` con `grep -c` y di
+los fixes por supervivientes. Estaba, pero inerte. Un `grep` demuestra que el
+texto existe, no que se ejecute. **Para dar por bueno un fix tras un merge hay
+que ejecutar su test, no buscar su código.**
+
+**Lección 2 — un merge sin conflictos no es un merge correcto.** Dos ramas que
+arreglan el mismo bug de formas distintas se superponen en silencio si tocan
+líneas diferentes. Al mergear una rama larga que ha arreglado cosas en
+paralelo, hay que revisar a mano las funciones que ambas tocaron.
+
+**Lección 3 — afirmar sobre el efecto observable, no solo sobre el veredicto.**
+El test nuevo `test_el_regex_no_cortocircuita_la_consulta_al_llm` comprueba que
+`create.call_count == 1`, o sea que **se consultó al LLM**. Es lo único que
+distingue "el regex no encontró nada" de "el regex cortocircuitó", y por tanto
+lo único que detecta la recaída.
+
+---
+
 ## Lección transversal
 
 Una rama de larga duración para una marca blanca **acumula arreglos genéricos
