@@ -11,8 +11,9 @@ dictámenes vinculantes (esos los produce el motor de reglas + RAG verificador
 aguas abajo).
 
 Contrato:
-- Modelo: ``gpt-5-mini`` con ``temperature=1`` y ``max_completion_tokens=1024``
-  (únicos valores soportados por gpt-5-mini en el repo).
+- Modelo: ``gpt-5-mini`` con ``temperature=1`` (único valor soportado),
+  ``max_completion_tokens=10000`` y ``reasoning_effort="minimal"`` — sin este
+  último el modelo agota el presupuesto razonando y no emite contenido.
 - Guardrails: ``is_safe=False`` con ``risk_level`` en ``{"high", "critical"}``
   bloquea la llamada a OpenAI y devuelve un mensaje safe-fail determinista.
 - Error handling: cualquier excepción de OpenAI se atrapa y yields un mensaje
@@ -21,6 +22,7 @@ Contrato:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 
@@ -119,8 +121,14 @@ class DefensiaAgent:
     """
 
     MODEL: str = "gpt-5-mini"
-    MAX_COMPLETION_TOKENS: int = 1024
+    # 1024 was not enough: gpt-5-mini spent the whole budget on hidden
+    # reasoning and emitted zero visible content, so the chat hung and the UI
+    # stayed blank. Raising the ceiling AND pinning reasoning_effort="minimal"
+    # is what makes the model actually produce output.
+    MAX_COMPLETION_TOKENS: int = 10000
     TEMPERATURE: int = 1  # único valor soportado por gpt-5-mini
+    OPENAI_TIMEOUT_S: float = 60.0  # match TaxAgent's outer timeout
+    REASONING_EFFORT: str = "minimal"  # force visible output, less hidden reasoning
 
     def __init__(self, api_key: str | None = None):
         """Inicializa el agent con un cliente AsyncOpenAI.
@@ -131,7 +139,7 @@ class DefensiaAgent:
         resolved_key = api_key or settings.OPENAI_API_KEY
         if not resolved_key:
             logger.warning(
-                "DefensiaAgent inicializado sin OPENAI_API_KEY — llamadas " "al LLM fallarán."
+                "DefensiaAgent inicializado sin OPENAI_API_KEY — llamadas al LLM fallarán."
             )
         self._client = AsyncOpenAI(api_key=resolved_key)
 
@@ -200,21 +208,62 @@ class DefensiaAgent:
             messages.extend(chat_history)
         messages.append({"role": "user", "content": message})
 
-        # 3. Stream desde OpenAI
+        # 3. Stream desde OpenAI — mismo patrón que TaxAgent: wait_for externo
+        #    sobre create(). reasoning_effort="minimal" es obligatorio: sin él
+        #    el modelo consume el presupuesto razonando y no emite contenido.
         try:
-            stream = await self._client.chat.completions.create(
-                model=self.MODEL,
-                messages=messages,
-                temperature=self.TEMPERATURE,
-                max_completion_tokens=self.MAX_COMPLETION_TOKENS,
-                stream=True,
+            stream = await asyncio.wait_for(
+                self._client.chat.completions.create(
+                    model=self.MODEL,
+                    messages=messages,
+                    temperature=self.TEMPERATURE,
+                    max_completion_tokens=self.MAX_COMPLETION_TOKENS,
+                    stream=True,
+                    reasoning_effort=self.REASONING_EFFORT,
+                ),
+                timeout=self.OPENAI_TIMEOUT_S,
             )
+            content_chunks = 0
+            last_finish_reason: str | None = None
             async for chunk in stream:
                 if not chunk.choices:
                     continue
-                delta_content = chunk.choices[0].delta.content
+                choice = chunk.choices[0]
+                # getattr: only used for diagnostics, and not every chunk shape
+                # (nor every test double) carries finish_reason.
+                if getattr(choice, "finish_reason", None):
+                    last_finish_reason = choice.finish_reason
+                delta_content = choice.delta.content
                 if delta_content:
+                    content_chunks += 1
                     yield delta_content
+            if content_chunks == 0:
+                logger.warning(
+                    "DefensIA emitted zero content chunks (finish_reason=%s, "
+                    "max_tokens=%d). Likely cause: the model burned its token "
+                    "budget on reasoning before producing visible output. "
+                    "Falling back to a guidance message so the UI is not blank.",
+                    last_finish_reason,
+                    self.MAX_COMPLETION_TOKENS,
+                )
+                yield (
+                    "No he podido componer una respuesta esta vez. ¿Puedes "
+                    "reformular tu consulta indicando: tributo afectado, "
+                    "ejercicio fiscal y qué acto de la Administración has "
+                    "recibido (requerimiento, propuesta de liquidación, "
+                    "sanción, etc.)?"
+                )
+        except TimeoutError:
+            logger.error(
+                "DefensIA agent OpenAI timeout after %ss (model=%s)",
+                self.OPENAI_TIMEOUT_S,
+                self.MODEL,
+            )
+            yield (
+                "El servicio de IA tardó demasiado en responder. Vuelve a "
+                "intentarlo en unos segundos; si el problema persiste, "
+                "contacta con soporte."
+            )
         except Exception as exc:  # noqa: BLE001 — degradación graceful
-            logger.error("DefensIA agent OpenAI error: %s", exc)
+            logger.error("DefensIA agent OpenAI error: %s", exc, exc_info=True)
             yield TECHNICAL_ERROR_MESSAGE
