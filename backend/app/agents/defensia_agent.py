@@ -213,7 +213,7 @@ class DefensiaAgent:
                 ),
                 timeout=self.OPENAI_TIMEOUT_S,
             )
-            logger.error("DEFENSIA_AGENT_TRACE step=stream_obtained")
+            logger.debug("DEFENSIA_AGENT_TRACE step=stream_obtained")
             chunks_seen = 0
             content_chunks = 0
             last_finish_reason: str | None = None
