@@ -8,7 +8,7 @@ fast (~50-100ms) real-time estimates as users fill in the wizard.
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 from app.auth.jwt_handler import TokenData, get_current_user
 from app.security.rate_limiter import limiter
@@ -66,7 +66,14 @@ class PagadorItem(BaseModel):
 
 
 class IRPFEstimateRequest(BaseModel):
-    comunidad_autonoma: str
+    model_config = {"populate_by_name": True}
+
+    # Accept both "comunidad_autonoma" (canonical) and "ccaa" (used by the
+    # ia-melilla frontend wizard). Pydantic AliasChoices unifies them so the
+    # mismatch that broke /api/irpf/estimate in production no longer 422s.
+    comunidad_autonoma: str = Field(
+        ..., validation_alias=AliasChoices("comunidad_autonoma", "ccaa")
+    )
     year: int = 2025
     # Modo Gestoría: optional active-client workspace. When set, ownership is
     # validated; the estimate itself stays a pure function of the request body.
@@ -81,15 +88,23 @@ class IRPFEstimateRequest(BaseModel):
     gastos_alquiler_total: float = 0
     valor_adquisicion_inmueble: float = 0
     edad_contribuyente: int = 35
-    num_descendientes: int = 0
+    # Accept canonical name + ia-melilla wizard name ("hijos_menores_25")
+    num_descendientes: int = Field(
+        default=0,
+        validation_alias=AliasChoices("num_descendientes", "hijos_menores_25"),
+    )
     anios_nacimiento_desc: list[int] = Field(default_factory=list)
     custodia_compartida: bool = False
     num_ascendientes_65: int = 0
     num_ascendientes_75: int = 0
     discapacidad_contribuyente: int = 0
     ceuta_melilla: bool = False
-    # Activity income (autonomos)
-    ingresos_actividad: float = 0
+    # Activity income (autonomos). Accept ia-melilla name
+    # ("rendimientos_actividades_economicas") in addition to canonical.
+    ingresos_actividad: float = Field(
+        default=0,
+        validation_alias=AliasChoices("ingresos_actividad", "rendimientos_actividades_economicas"),
+    )
     gastos_actividad: float = 0
     cuota_autonomo_anual: float = 0
     amortizaciones_actividad: float = 0
@@ -187,6 +202,20 @@ class IRPFEstimateRequest(BaseModel):
     ventas_inmuebles: list[VentaInmueble] | None = None
     # Segundo declarante para tributacion conjunta real (Art. 82-84 LIRPF)
     segundo_declarante: SegundoDeclarante | None = None
+
+    @model_validator(mode="after")
+    def auto_derive_ceuta_melilla(self) -> "IRPFEstimateRequest":
+        """Auto-set ceuta_melilla=True when the CCAA is Ceuta or Melilla.
+
+        Frontends like ia-melilla only send the CCAA name and expect the
+        backend to apply the 60% deduction (Art. 68.4 LIRPF) automatically.
+        Without this validator the deduction silently stays at 0 EUR.
+        """
+        if not self.ceuta_melilla and self.comunidad_autonoma:
+            ccaa_lower = self.comunidad_autonoma.strip().lower()
+            if ccaa_lower in ("ceuta", "melilla"):
+                self.ceuta_melilla = True
+        return self
 
 
 class IRPFBreakdown(BaseModel):

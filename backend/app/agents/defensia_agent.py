@@ -11,7 +11,7 @@ dictámenes vinculantes (esos los produce el motor de reglas + RAG verificador
 aguas abajo).
 
 Contrato:
-- Modelo: ``gpt-5-mini`` con ``temperature=1`` (único valor soportado),
+- Modelo: ``gpt-5.6-luna`` con ``temperature=1`` (único valor soportado),
   ``max_completion_tokens=10000`` y ``reasoning_effort="minimal"`` — sin este
   último el modelo agota el presupuesto razonando y no emite contenido.
 - Guardrails: ``is_safe=False`` con ``risk_level`` en ``{"high", "critical"}``
@@ -46,51 +46,35 @@ DISCLAIMER_CANONICO = (
 
 # System prompt — los primeros 100 chars del disclaimer van literal al inicio
 # para que el LLM nunca olvide el límite de responsabilidad.
-SYSTEM_PROMPT = f"""Eres el asistente de DefensIA, herramienta defensiva fiscal de Impuestify.
+SYSTEM_PROMPT = f"""Eres el asistente de defensa fiscal de {settings.BRAND_NAME}.
 
-IMPORTANTE — DISCLAIMER OBLIGATORIO EN EL PRIMER MENSAJE DE CADA CONVERSACIÓN:
-{DISCLAIMER_CANONICO[:100]}
+Ayudas a contribuyentes que han recibido un requerimiento, propuesta de
+liquidación, liquidación firme, propuesta o resolución sancionadora del
+AEAT u otra Administración tributaria.
 
-Tu función: ayudar al usuario a articular su necesidad defensiva (el "brief")
-antes de arrancar el análisis jurídico automático. NO arrancas el analisis
-jurídico hasta que el usuario te escribe claramente qué situación quiere
-defender — ése es el criterio de arranque del producto (Regla #1).
+Respondes en español, con tildes correctas, tono profesional y cercano.
 
-Reglas absolutas (cero excepciones):
+Cuando el usuario te plantee una duda concreta (plazos, vías de recurso,
+documentación a aportar, motivación, fundamentos), respóndela
+directamente y de forma útil. Si la pregunta es vaga, pide los datos
+mínimos que necesitas: tributo (IRPF, IVA, ISD, ITP, Plusvalía
+Municipal), ejercicio fiscal y qué acto concreto ha recibido.
 
-1. NO inventes citas de artículos, leyes, reglamentos ni sentencias. Si el
-   usuario pregunta por el fundamento jurídico de algo, responde que el
-   análisis lo producirá el motor de reglas más el RAG verificador con citas
-   verificadas del corpus normativo oficial. NUNCA cites "Art. 102 LGT",
-   "Art. 26.4 LIRPF" o similar de memoria — esa es la responsabilidad del
-   sistema aguas abajo, no tuya.
+Cuando cites artículos o jurisprudencia, hazlo solo si estás
+razonablemente seguro; en caso de duda, indica que el análisis con
+citas verificadas lo produce el motor de reglas + RAG.
 
-2. Idioma: español con tildes correctas (motivación, regularización,
-   administración, sanción, comprobación, liquidación, etc.). No omitas
-   tildes ni uses abreviaturas raras.
+Si el usuario pide un juicio vinculante ("¿debo recurrir?", "¿voy a
+ganar?"), recuérdale que DefensIA es una herramienta de asistencia y
+que para decisiones firmes debe consultar a un letrado o asesor fiscal
+colegiado.
 
-3. Tono profesional pero cercano. Pregunta lo mínimo necesario para
-   clarificar el caso: tributo afectado (IRPF/IVA/ISD/ITP/Plusvalía
-   Municipal), ejercicio fiscal, qué acto de la Administración recibió el
-   usuario (requerimiento, propuesta de liquidación, liquidación firme,
-   propuesta de sanción, resolución sancionadora) y qué resultado quiere
-   defender.
+Alcance v1: verificación, comprobación limitada, procedimiento
+sancionador, recurso de reposición y reclamación al TEAR (abreviado y
+general). Si el caso parece de inspección, apremio, TEAC, contencioso
+o Impuesto sobre Sociedades, dilo explícitamente.
 
-4. Si el usuario sube documentos pero no te dice qué necesita, NO arranques
-   análisis. Pregunta: "He extraído los datos técnicos de los documentos
-   subidos. Para arrancar el análisis jurídico, dime qué situación fiscal
-   quieres defender con tus propias palabras." Esto es la Regla #1.
-
-5. Si el usuario pide asesoramiento vinculante ("¿debo recurrir?",
-   "¿voy a ganar?"), responde que DefensIA es una herramienta técnica de
-   asistencia y que para decisiones firmes debe consultar con un letrado
-   colegiado o asesor fiscal profesional.
-
-6. Si el usuario describe hechos que sugieren vías fuera de alcance v1
-   (inspección, procedimiento de apremio, TEAC central, recurso contencioso,
-   Impuesto sobre Sociedades), indícalo explícitamente y avisa de que
-   DefensIA v1 cubre únicamente verificación, comprobación limitada,
-   sancionador, reposición y TEAR (abreviado y general).
+Cierra siempre con el disclaimer corto: {DISCLAIMER_CANONICO[:100]}
 """
 
 
@@ -120,13 +104,18 @@ class DefensiaAgent:
     a OpenAI.
     """
 
-    MODEL: str = "gpt-5-mini"
-    # 1024 was not enough: gpt-5-mini spent the whole budget on hidden
+    # Aligned with TaxAgent (the chat fiscal agent that DOES work end to
+    # end in this same backend). Switching MODEL away from gpt-5.6-luna was
+    # a wrong path — TaxAgent uses gpt-5.6-luna and streams content fine.
+    # The DefensIA-specific failure was not the model, it was the
+    # restrictive SYSTEM_PROMPT plus the lack of reasoning_effort hint.
+    MODEL: str = "gpt-5.6-luna"
+    # 1024 was not enough: gpt-5.6-luna spent the whole budget on hidden
     # reasoning and emitted zero visible content, so the chat hung and the UI
     # stayed blank. Raising the ceiling AND pinning reasoning_effort="minimal"
     # is what makes the model actually produce output.
     MAX_COMPLETION_TOKENS: int = 10000
-    TEMPERATURE: int = 1  # único valor soportado por gpt-5-mini
+    TEMPERATURE: int = 1  # único valor soportado por gpt-5.6-luna
     OPENAI_TIMEOUT_S: float = 60.0  # match TaxAgent's outer timeout
     REASONING_EFFORT: str = "minimal"  # force visible output, less hidden reasoning
 
@@ -195,8 +184,12 @@ class DefensiaAgent:
         Yields:
             Chunks de texto (str) de la respuesta del modelo.
         """
+        # Trace markers (ERROR level so they survive any log filter).
+        logger.error("DEFENSIA_AGENT_TRACE step=enter msg_len=%d", len(message or ""))
+
         # 1. Safety check
         is_safe, reason = self._check_input_safety(message)
+        logger.error("DEFENSIA_AGENT_TRACE step=after_safety is_safe=%s", is_safe)
         if not is_safe:
             logger.warning("DefensIA agent rechaza input: %s", reason)
             yield SAFE_FAIL_MESSAGE
@@ -207,6 +200,7 @@ class DefensiaAgent:
         if chat_history:
             messages.extend(chat_history)
         messages.append({"role": "user", "content": message})
+        logger.error("DEFENSIA_AGENT_TRACE step=before_openai model=%s", self.MODEL)
 
         # 3. Stream desde OpenAI — mismo patrón que TaxAgent: wait_for externo
         #    sobre create(). reasoning_effort="minimal" es obligatorio: sin él
@@ -226,6 +220,7 @@ class DefensiaAgent:
             content_chunks = 0
             last_finish_reason: str | None = None
             async for chunk in stream:
+                chunks_seen += 1
                 if not chunk.choices:
                     continue
                 choice = chunk.choices[0]

@@ -1,0 +1,41 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+htmlcov
+.mypy_cache
+.ruff_cache
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.local
+.env.*.local
+tests/
+docs/
+*.md
+.git
+.github
+
+# Virtualenvs (CRITICAL: prevent local .venv being copied into image)
+.venv/
+venv/
+env/
+
+# Nested bytecode caches
+**/__pycache__/
+
+# Tooling / not needed at runtime
+scripts/
+plans/
+memory/
+
+# IDE
+.idea/
+.vscode/
+
+# Logs / OS noise
+*.log
+.DS_Store

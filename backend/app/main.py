@@ -69,6 +69,11 @@ class HealthResponse(BaseModel):
     version: str = "1.0.0"
     rag_initialized: bool
     statistics: dict[str, Any] | None = None
+    # Demo-mode fields (defaults preserve backward compatibility):
+    demo_mode: bool = False
+    brand: str = "Impuestify"
+    territory_lock: str | None = None
+    subscriptions_enabled: bool = True
 
 
 class RebuildRequest(BaseModel):
@@ -141,6 +146,14 @@ async def lifespan(app: FastAPI):
         # Initialize schema (creates tables if they don't exist, including new workspaces tables)
         await db_client.init_schema()
         logger.info("Schema de base de datos verificado/actualizado")
+
+        # Seed demo user (no-op unless DEMO_MODE=true)
+        try:
+            from app.services.demo_seed_service import seed_demo_user
+
+            await seed_demo_user(db_client)
+        except Exception as e:
+            logger.error("Demo user seed failed (non-fatal): %s", e)
 
         # Verificar conexion contando documentos
         result = await db_client.execute("SELECT COUNT(*) as cnt FROM documents")
@@ -306,10 +319,10 @@ async def add_security_headers(request: Request, call_next):
     # Prevents XSS by restricting resource loading
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-        "style-src 'self' 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
         "img-src 'self' data: https:; "
-        "font-src 'self' data:; "
+        "font-src 'self' data: https://fonts.gstatic.com; "
         "connect-src 'self'; "
         "frame-ancestors 'none'"
     )
@@ -410,7 +423,12 @@ app.include_router(user_rights_router)
 # Subscription & Payment Endpoints
 from app.routers.subscription import router as subscription_router
 
-app.include_router(subscription_router)
+if settings.SUBSCRIPTIONS_ENABLED:
+    app.include_router(subscription_router)
+else:
+    logger.info(
+        "Subscriptions disabled (SUBSCRIPTIONS_ENABLED=false) — skipping subscription routes"
+    )
 
 # WebAuthn / Passkey 2FA (NIST SP 800-63-4 phishing-resistant)
 from app.routers.webauthn_router import router as webauthn_router
@@ -686,6 +704,10 @@ async def health_check(request: Request):
             timestamp=time.time(),
             rag_initialized=rag_initialized,
             statistics=statistics,
+            demo_mode=settings.DEMO_MODE,
+            brand=settings.BRAND_NAME,
+            territory_lock=settings.RAG_TERRITORY_LOCK,
+            subscriptions_enabled=settings.SUBSCRIPTIONS_ENABLED,
         )
 
     except Exception as e:

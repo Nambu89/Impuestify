@@ -20,6 +20,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.agents.tax_agent import TaxAgent
 from app.auth.jwt_handler import TokenData, get_current_user
 from app.auth.subscription_guard import require_active_subscription
+from app.config import settings
 from app.database.turso_client import TursoClient
 from app.security import guardrails_system
 from app.security.content_restriction import detect_autonomo_query, get_autonomo_block_response
@@ -30,6 +31,7 @@ from app.security.velocity_check import velocity_checker
 from app.services.conversation_cache import ConversationCache
 from app.services.conversation_service import ConversationService
 from app.services.subscription_service import SubscriptionAccess
+from app.utils.demo_filters import resolve_territory_filter
 from app.utils.streaming import ProgressCallback, filter_json_from_content, sse_generator
 
 
@@ -199,8 +201,8 @@ async def _build_pipeline_context(
 
 @router.post("/ask/stream")
 async def ask_question_stream(
-    req: Request,
-    request: StreamQuestionRequest,
+    request: Request,
+    body: StreamQuestionRequest,
     db: TursoClient = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
     access: SubscriptionAccess = Depends(require_active_subscription),
@@ -223,14 +225,14 @@ async def ask_question_stream(
     # If the user is following up in an existing conversation that already has
     # a workspace attached, we need that metadata for the topic classifier
     # so ambiguous follow-ups ("¿es correcto?") aren't blocked.
-    if request.conversation_id and not request.workspace_id:
+    if body.conversation_id and not body.workspace_id:
         try:
             _conv_service_pre = ConversationService(db)
             stored_ws = await _conv_service_pre.get_conversation_workspace(
-                request.conversation_id, current_user.user_id
+                body.conversation_id, current_user.user_id
             )
             if stored_ws:
-                request.workspace_id = stored_ws
+                body.workspace_id = stored_ws
         except Exception as e:
             logger.debug(f"Pre-pipeline workspace restore skipped: {e}")
 
@@ -239,13 +241,13 @@ async def ask_question_stream(
     pipeline_context = await _build_pipeline_context(
         db=db,
         user_id=current_user.user_id,
-        workspace_id=request.workspace_id,
-        conversation_id=request.conversation_id,
+        workspace_id=body.workspace_id,
+        conversation_id=body.conversation_id,
     )
 
     # === SECURITY PIPELINE: 6 layers (sanitize → injection → SQLi → PII → topic) ===
     pipeline_result = security_pipeline.check(
-        question=request.question,
+        question=body.question,
         user_id=current_user.user_id,
         context=pipeline_context,
     )
@@ -271,13 +273,13 @@ async def ask_question_stream(
         return EventSourceResponse(rejection_stream())
 
     # Replace the original question with the sanitized version for downstream logic
-    request.question = pipeline_result.sanitized_text or request.question
+    body.question = pipeline_result.sanitized_text or body.question
 
     # === VELOCITY CHECK: same-prompt flooding defense ===
     velocity_result = await velocity_checker.check(
         user_id=current_user.user_id,
-        question=request.question,
-        request=req,
+        question=body.question,
+        request=request,
     )
     if not velocity_result.allowed:
 
@@ -305,7 +307,7 @@ async def ask_question_stream(
         user_id=current_user.user_id,
         plan_type=access.plan_type,
         is_owner=access.is_owner,
-        request=req,
+        request=request,
     )
     if not budget_status.allowed:
 
@@ -339,7 +341,7 @@ async def ask_question_stream(
     if (
         not access.is_owner
         and access.plan_type not in ("autonomo", "creator")
-        and detect_autonomo_query(request.question)
+        and detect_autonomo_query(body.question)
     ):
 
         async def autonomo_block_stream():
@@ -350,7 +352,7 @@ async def ask_question_stream(
 
     # === Conversation setup ===
     conv_service = ConversationService(db)
-    conversation_id = request.conversation_id
+    conversation_id = body.conversation_id
 
     # NOTE: workspace_id was already restored from the stored conversation
     # earlier (before the security pipeline) so the topic classifier could
@@ -360,8 +362,8 @@ async def ask_question_stream(
         logger.info("Creating new conversation (no ID provided)")
         conversation = await conv_service.create_conversation(
             user_id=current_user.user_id,
-            workspace_id=request.workspace_id,
-            title=request.question[:50] + "..." if len(request.question) > 50 else request.question,
+            workspace_id=body.workspace_id,
+            title=body.question[:50] + "..." if len(body.question) > 50 else body.question,
         )
         conversation_id = conversation["id"]
     else:
@@ -372,17 +374,15 @@ async def ask_question_stream(
             # Create a new conversation (can't use specific ID)
             conversation = await conv_service.create_conversation(
                 user_id=current_user.user_id,
-                workspace_id=request.workspace_id,
-                title=request.question[:50] + "..."
-                if len(request.question) > 50
-                else request.question,
+                workspace_id=body.workspace_id,
+                title=body.question[:50] + "..." if len(body.question) > 50 else body.question,
             )
             # Update the conversation_id to the newly created one
             conversation_id = conversation["id"]
             logger.info(f"Created new conversation with ID: {conversation_id}")
 
     # === Greeting detection (fast path) ===
-    if guardrails_system.is_greeting(request.question.strip()):
+    if guardrails_system.is_greeting(body.question.strip()):
 
         async def greeting_stream():
             greeting = (
@@ -400,13 +400,13 @@ async def ask_question_stream(
 
         try:
             # Check if client is still connected (Railway best practice)
-            if await req.is_disconnected():
+            if await request.is_disconnected():
                 logger.info("Client disconnected before processing")
                 callback.close()
                 return
 
             # Load conversation history (cache-first)
-            upstash_client = getattr(req.app.state, "upstash_client", None)
+            upstash_client = getattr(request.app.state, "upstash_client", None)
             cache = ConversationCache(upstash_client)
             cached_context = await cache.get_context(conversation_id)
 
@@ -424,7 +424,7 @@ async def ask_question_stream(
 
                     semantic_window = SemanticWindow(max_messages=15, recent_guaranteed=5)
                     conversation_history = await semantic_window.select(
-                        conversation_id, request.question
+                        conversation_id, body.question
                     )
                     logger.info(
                         f"Semantic window selected {len(conversation_history)} messages "
@@ -449,7 +449,7 @@ async def ask_question_stream(
                     for msg in (conversation_history or [])
                     if msg.get("role") == "user"
                 ]
-                user_turns.append(request.question)
+                user_turns.append(body.question)
                 traj = analyze_trajectory(user_turns)
                 if not traj.is_safe:
                     yield {"event": "content", "data": traj.reason}
@@ -471,13 +471,13 @@ async def ask_question_stream(
             # === Load workspace context if workspace_id provided ===
             workspace_context = ""
             workspace_files_info = []
-            if request.workspace_id:
-                logger.info(f"Loading workspace context for: {request.workspace_id}")
+            if body.workspace_id:
+                logger.info(f"Loading workspace context for: {body.workspace_id}")
                 try:
                     # Verify workspace ownership
                     ws_result = await db.execute(
                         "SELECT id, name FROM workspaces WHERE id = ? AND user_id = ?",
-                        [request.workspace_id, current_user.user_id],
+                        [body.workspace_id, current_user.user_id],
                     )
                     if ws_result.rows:
                         # Load workspace files — prefer structured data over raw text
@@ -487,7 +487,7 @@ async def ask_question_stream(
                             FROM workspace_files
                             WHERE workspace_id = ? AND processing_status = 'completed'
                             """,
-                            [request.workspace_id],
+                            [body.workspace_id],
                         )
 
                         if files_result.rows:
@@ -546,9 +546,9 @@ async def ask_question_stream(
 
             # === Load session documents context (ephemeral, Redis-cached) ===
             session_docs_context = ""
-            if request.session_doc_ids:
+            if body.session_doc_ids:
                 try:
-                    for doc_id in request.session_doc_ids[:5]:
+                    for doc_id in body.session_doc_ids[:5]:
                         cache_key = f"session_doc:{current_user.user_id}:{doc_id}"
                         raw = await upstash_client.get(cache_key) if upstash_client else None
                         if raw:
@@ -574,19 +574,17 @@ async def ask_question_stream(
                                 session_docs_context += f"\nTEXTO DEL DOCUMENTO:\n{text}\n"
 
                     if session_docs_context:
-                        logger.info(
-                            f"Loaded {len(request.session_doc_ids)} session docs for context"
-                        )
+                        logger.info(f"Loaded {len(body.session_doc_ids)} session docs for context")
                 except Exception as e:
                     logger.warning(f"Error loading session docs: {e}")
 
             # === Follow-up detection & RAG optimization ===
-            followup_type = classify_followup(request.question, conversation_history)
+            followup_type = classify_followup(body.question, conversation_history)
             cached_rag_chunks = cached_context.get("last_rag_chunks", []) if cached_context else []
             cached_rag_query = cached_context.get("last_rag_query", "") if cached_context else ""
 
             relevant_chunks = []
-            rag_query_used = request.question  # Track which query was sent to RAG
+            rag_query_used = body.question  # Track which query was sent to RAG
 
             if followup_type == "clarification" and cached_rag_chunks:
                 # SKIP RAG — reuse cached chunks from previous turn
@@ -599,11 +597,9 @@ async def ask_question_stream(
                 # Run RAG (normal or with expanded query)
                 if followup_type == "modification":
                     rag_query_used = contextualize_query(
-                        request.question, conversation_history, cached_rag_query
+                        body.question, conversation_history, cached_rag_query
                     )
-                    logger.info(
-                        "RAG CONTEXTUALIZED: '%s' -> '%s'", request.question, rag_query_used
-                    )
+                    logger.info("RAG CONTEXTUALIZED: '%s' -> '%s'", body.question, rag_query_used)
 
                 from app.utils.hybrid_retriever import HybridRetriever, get_query_embedding
 
@@ -698,8 +694,10 @@ async def ask_question_stream(
                     relevant_chunks = await retriever.search(
                         query=rag_query_used,
                         query_embedding=query_embedding,
-                        k=request.k or 5,
-                        territory_filter=ccaa_for_rag,
+                        k=body.k or 5,
+                        territory_filter=resolve_territory_filter(
+                            ccaa_for_rag, settings.RAG_TERRITORY_LOCK
+                        ),
                     )
                     logger.debug("RAG results with filter: %d chunks", len(relevant_chunks))
                 except Exception as rag_err:
@@ -714,21 +712,23 @@ async def ask_question_stream(
                     relevant_chunks = await retriever.search(
                         query=rag_query_used,
                         query_embedding=query_embedding,
-                        k=request.k or 5,
-                        territory_filter=None,
+                        k=body.k or 5,
+                        territory_filter=resolve_territory_filter(
+                            None, settings.RAG_TERRITORY_LOCK
+                        ),
                     )
                     logger.debug("RAG results without filter: %d chunks", len(relevant_chunks))
 
             # === Workspace semantic search (user's own documents) ===
             workspace_rag_context = ""
-            if request.workspace_id and followup_type != "clarification":
+            if body.workspace_id and followup_type != "clarification":
                 try:
                     from app.services.workspace_embedding_service import WorkspaceEmbeddingService
 
                     ws_search = WorkspaceEmbeddingService()
                     ws_results = await ws_search.search_workspace(
                         db=db,
-                        workspace_id=request.workspace_id,
+                        workspace_id=body.workspace_id,
                         query=rag_query_used,
                         top_k=5,
                         similarity_threshold=0.5,
@@ -872,13 +872,13 @@ async def ask_question_stream(
                                 agent_doc_context + "\n\n" + session_docs_context
                             ).strip()
                         response = await agent.run(
-                            query=request.question,
+                            query=body.question,
                             context=agent_doc_context,
                             rag_context=rag_context,
                             sources=sources_data,
                             conversation_history=formatted_history,
                             user_id=current_user.user_id,
-                            workspace_id=request.workspace_id,
+                            workspace_id=body.workspace_id,
                             progress_callback=callback,
                             restricted_mode=restricted_mode,
                             fiscal_profile=fiscal_profile,
@@ -887,7 +887,7 @@ async def ask_question_stream(
                         # Use TaxAgent for general tax queries
                         tax_agent = TaxAgent()
                         response = await tax_agent.run(
-                            query=request.question,
+                            query=body.question,
                             context=combined_context,
                             sources=sources_data,
                             conversation_history=formatted_history,
@@ -948,7 +948,7 @@ async def ask_question_stream(
                     # caps, not billing.
                     try:
                         estimated_tokens = (
-                            len(request.question or "")
+                            len(body.question or "")
                             + len(combined_context or "")
                             + len(clean_content or "")
                         ) // 4
@@ -956,7 +956,7 @@ async def ask_question_stream(
                             await token_budget_tracker.record(
                                 user_id=current_user.user_id,
                                 tokens=estimated_tokens,
-                                request=req,
+                                request=request,
                             )
                     except Exception as e:
                         logger.warning(f"Token budget record failed (non-blocking): {e}")
@@ -965,7 +965,7 @@ async def ask_question_stream(
                     await callback.content(clean_content)
 
                     # Save messages to database
-                    await conv_service.add_message(conversation_id, "user", request.question)
+                    await conv_service.add_message(conversation_id, "user", body.question)
                     assistant_msg = await conv_service.add_message(
                         conversation_id,
                         "assistant",
@@ -1037,7 +1037,7 @@ async def ask_question_stream(
             # Stream events from callback with heartbeats (Railway best practice)
             async for event_dict in sse_generator(callback):
                 # Check if client disconnected (save resources)
-                if await req.is_disconnected():
+                if await request.is_disconnected():
                     logger.info("Client disconnected mid-stream")
                     agent_task.cancel()
                     callback.close()

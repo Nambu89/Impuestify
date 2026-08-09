@@ -132,6 +132,9 @@ ip_blocker = IPBlocker(
 # === Rate Limit Key Function ===
 
 
+_DEMO_USER_EMAILS = {"demo@example.com", "cliente.demo@iamelilla.com"}
+
+
 def get_rate_limit_key(request: Request) -> str:
     """
     Get rate limit key based on user identity.

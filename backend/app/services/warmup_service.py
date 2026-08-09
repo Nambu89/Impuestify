@@ -15,23 +15,27 @@ from app.territories import get_territory
 
 logger = logging.getLogger(__name__)
 
-GREETING_PROMPT = """Eres el asistente fiscal Impuestify. Genera un saludo breve y personalizado
+
+def _greeting_prompt() -> str:
+    return f"""Eres el asistente fiscal {settings.BRAND_NAME}. Genera un saludo breve y personalizado
 para un usuario con este perfil fiscal. Maximo 2 frases. Menciona algo util:
 un plazo proximo, una deduccion que podria aplicarle, o un recordatorio fiscal relevante.
 Tono: cercano, profesional, sin emojis. Si no hay datos suficientes, saluda de forma generica.
 
 Perfil del usuario:
-{profile_summary}
+{{profile_summary}}
 
 Plazos proximos:
-{deadlines}
+{{deadlines}}
 
 Responde SOLO con el saludo, nada mas."""
 
-STATIC_GREETING = (
-    "Hola, bienvenido a Impuestify. Soy tu asistente fiscal. "
-    "Puedes preguntarme sobre IRPF, deducciones, modelos fiscales o cualquier duda tributaria."
-)
+
+def _static_greeting() -> str:
+    return (
+        f"Hola, bienvenido a {settings.BRAND_NAME}. Soy tu asistente fiscal. "
+        "Puedes preguntarme sobre IRPF, deducciones, modelos fiscales o cualquier duda tributaria."
+    )
 
 
 class WarmupService:
@@ -111,7 +115,7 @@ class WarmupService:
         except Exception as e:
             logger.debug("Territory deadlines unavailable for warmup: %s", e)
 
-        prompt = GREETING_PROMPT.format(
+        prompt = _greeting_prompt().format(
             profile_summary=profile_summary,
             deadlines=deadlines,
         )
@@ -127,7 +131,7 @@ class WarmupService:
             return response.choices[0].message.content.strip()
         except Exception as e:
             logger.warning(f"Greeting generation failed: {e}")
-            return STATIC_GREETING
+            return _static_greeting()
 
     async def warmup(self, user_id: str) -> dict[str, Any]:
         """
@@ -138,7 +142,7 @@ class WarmupService:
         profile = await self._get_profile(user_id)
 
         if not profile:
-            return {"greeting": STATIC_GREETING, "rag_preloaded": False}
+            return {"greeting": _static_greeting(), "rag_preloaded": False}
 
         ccaa = profile.get("ccaa_residencia", "")
         role = profile.get("situacion_laboral", "particular")

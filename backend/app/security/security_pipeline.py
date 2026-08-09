@@ -30,11 +30,18 @@ from app.security.topic_classifier import TopicContext, check_fiscal_topic
 logger = logging.getLogger(__name__)
 
 
-REJECTION_MESSAGE = (
-    "Soy Impuestify, tu asistente de fiscalidad española. Solo puedo responder "
-    "preguntas sobre IRPF, IVA, modelos AEAT, deducciones, autónomos y otros "
-    "temas tributarios españoles. Reformula tu pregunta dentro de este ámbito."
-)
+def _rejection_message() -> str:
+    from app.config import settings
+
+    return (
+        f"Soy {settings.BRAND_NAME}, tu asistente de fiscalidad española. Solo puedo "
+        "responder preguntas sobre IRPF, IVA, modelos AEAT, deducciones, autónomos y "
+        "otros temas tributarios españoles. Reformula tu pregunta dentro de este ámbito."
+    )
+
+
+# Backward-compat alias (some tests import REJECTION_MESSAGE)
+REJECTION_MESSAGE = _rejection_message()
 
 
 @dataclass
@@ -202,7 +209,12 @@ class SecurityPipeline:
                 logger.warning(f"PII detector error (non-blocking): {e}")
 
         # ── Layer 6: Topic classifier (HARD whitelist) ──
-        if self.enable_topic_classifier:
+        # In DEMO_MODE we skip this layer: demo deploys often run without a
+        # working Groq key and the classifier fails closed (rejects everything).
+        # Demo content is bounded by RAG_TERRITORY_LOCK + restricted Stripe gate.
+        from app.config import settings as _settings
+
+        if self.enable_topic_classifier and not _settings.DEMO_MODE:
             topic = check_fiscal_topic(sanitized, context=context)
             if not topic.is_fiscal:
                 return self._reject(
@@ -256,7 +268,7 @@ class SecurityPipeline:
             layer=layer,
             reason=reason,
             matched_patterns=matched or [],
-            rejection_message=REJECTION_MESSAGE,
+            rejection_message=_rejection_message(),
             sanitized_text=sanitized,
         )
 
