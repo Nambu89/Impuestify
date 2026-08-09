@@ -186,7 +186,7 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 - **SEO Overhaul** (sesion 27): Hook `useSEO()`, 12 paginas con schema JSON-LD (WebApplication, FAQPage, HowTo, BreadcrumbList), sitemap 21 URLs, OG image, Twitter cards, canonical URLs. Home: 3 pricing cards inline (Particular/Creator/Autonomo verde) + card Farmacias en Tecnologia
 - **Crawler Watchlist** (sesion 27): 59 URLs activas (antes 48). 11 URLs activadas para campana renta: Manual Renta 2025, retenciones, modelos 303/390/190/720/349/036, Plan Tributario 2026
 - **Phase 3: Clasificador Facturas + Contabilidad PGC** (sesion 26): Gemini 3 Flash Vision OCR ($0.0003/factura), clasificacion PGC automatica, asientos partida doble, Libro Diario/Mayor/Balance/PyG, export CSV/Excel para Registro Mercantil. 56 tests, 10 endpoints, 66 cuentas PGC. Frontend responsive mobile-first.
-- **Google Gemini API**: `google-genai` SDK integrado. Env var: `GOOGLE_GEMINI_API_KEY`. Modelo: `gemini-3-flash-preview`
+- **Google Gemini API**: `google-genai` SDK integrado. Env var: `GOOGLE_GEMINI_API_KEY`. Modelo: `gemini-2.5-flash-lite` (`settings.GEMINI_MODEL`). **`gemini-3-flash-preview` fue RETIRADO por Google (404)** — nunca hardcodear el id de modelo, siempre leer `settings.GEMINI_MODEL`
 - **ADR-009**: Gemini 3 Flash para OCR facturas (33x mas barato que Azure DI). ADR-010: Contabilidad completa
 - **Tests**: ~1758 backend PASS + frontend build OK (sesion 28 verified)
 - **Repo**: Migrado a `Nambu89/Impuestify` (antes TaxIA). Railway auto-deploy conectado

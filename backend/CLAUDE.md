@@ -76,6 +76,37 @@ Pipeline (in order):
 
 **CRITICAL**: `get_current_user()` returns `TokenData` model. Use `current_user.user_id`, `current_user.email` — NOT `.get("user_id")`.
 
+### REGLA: todo endpoint que pase texto de usuario a un LLM DEBE llamar a `security_pipeline.check()`
+
+No basta con que el agente tenga su propio `_check_input_safety()` — los
+guardrails del agente son fail-open y no cubren PII, SQLi ni clasificador de
+temas. El pipeline central es el único punto donde están las 12 capas.
+
+```python
+# OK — el router filtra ANTES de invocar al agente
+from app.security.security_pipeline import security_pipeline
+
+result = security_pipeline.check(question=body.message or "", user_id=str(current_user.user_id))
+if not result.is_safe:
+    ...  # devolver rechazo
+safe_message = result.sanitized_text or body.message   # usar el saneado, no el crudo
+
+# NO — pasar el input crudo directamente al agente
+async for chunk in agent.chat_stream(body.message): ...
+```
+
+Al emitir el rechazo usar `result.rejection_message` (texto para el usuario),
+**NUNCA** `result.reason` — ese nombra la capa y los patrones que hicieron
+match, y filtrarlo es un info leak. Precedente: Bug 104 (DefensIA llevaba
+desde la sesión 32 sin pipeline).
+
+### REGLA: nunca hardcodear un id de modelo LLM/Vision
+
+Siempre `settings.<PROVIDER>_MODEL`. Cuando el proveedor retira un modelo, la
+mitigación debe ser cambiar una env var, no desplegar código. Precedente:
+Bug 106 — `gemini-3-flash-preview` retirado por Google con 6 de 9 call sites
+hardcodeados, así que la env var de Railway no servía de nada.
+
 ## Routers (`app/routers/`)
 
 | Router | Prefix | Purpose |
@@ -436,3 +467,7 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | Token budget / velocity check fail-open silencioso | `token_budget.check/record` y `velocity_checker.check` son `async def`. Cliente `AsyncRedis` requiere `await`. Usar `await tracker.check(...)` en TODOS los call sites. Tests: dual sync/async via `if hasattr(x, "__await__"): x = await x`. |
 | PII detector revienta con 413/429 Groq | `pii_detector.detect()` con length guard 3000 chars (>3k → `_regex_only` con `self.PII_PATTERNS`). LRU per-instance dict. Retry sync 1× en 429 con `time.sleep(0.5)`. Mantiene firma sync — NO convertir a async (rompe pipeline). |
 | Migración `duplicate column` ruidosa al startup | Usar `_column_exists(table, col)` con `PRAGMA table_info` ANTES del `ALTER TABLE ... ADD COLUMN`, en lugar de try/except. El driver Hrana loguea el error antes de Python lo capture. Regex `_ALTER_ADD_COL_RE` parsea statements. |
+| PII no detectada aunque el texto lleve DNI/IBAN | El regex determinista debe correr SIEMPRE y PRIMERO en `pii_detector.detect()`. Groq es demasiado permisivo en contexto fiscal ("mi DNI es 12345…" lo daba por seguro). Union de detectores: si cualquiera marca PII, se rechaza. Bug 105. |
+| Gemini devuelve 404 / OCR de facturas roto | El id de modelo estaba hardcodeado en 6 call sites. Usar `settings.GEMINI_MODEL` (default `gemini-2.5-flash-lite`). `gemini-3-flash-preview` fue retirado por Google. Bug 106. |
+| Rate limit se resetea al volver a hacer login | `get_rate_limit_key()` hasheaba el token (`md5(Authorization)`), así que cada token nuevo = contador nuevo. Debe decodificar el JWT y keyear por el claim `sub`. Fallback a IP, con `except` amplio: una excepción en la key function hace que slowapi devuelva 500. Bug 107. |
+| DefensIA cuelga / responde en blanco | gpt-5-mini gasta todo el presupuesto en razonamiento oculto y emite 0 chunks. Requiere `reasoning_effort="minimal"` + `max_completion_tokens=10000` + `asyncio.wait_for` 60s. Añadir fallback si `content_chunks == 0` para no dejar la UI vacía. Bug 108. |

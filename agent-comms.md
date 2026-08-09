@@ -7,6 +7,20 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-09] BACKEND/SECURITY — 📢 NEEDS_REVIEW — Backport de fixes varados en `demo/fiscal-ia-melilla`
+
+- **Branch**: `claude/backport-demo-fixes` (desde `main` @ `4118968`)
+- **Origen**: auditoría de la divergencia de la rama demo IA-Melilla (38 commits desde 2026-05-19). Contenía arreglos genéricos que nunca volvieron a `main` → bugs vivos en producción de Impuestify ~3 meses.
+- **5 fixes retropropagados** (detalle en `memory/bugfixes-2026-08.md`):
+  - **Bug 104 (CRÍTICO)** — `routers/defensia.py` no llamaba a `security_pipeline`. Endpoints DefensIA sin prompt injection / PII / SQLi / topic classifier / Llama Guard.
+  - **Bug 105** — `pii_detector` ignoraba el regex si Groq decía "safe". Ahora regex siempre primero.
+  - **Bug 106** — `gemini-3-flash-preview` retirado por Google (404). 9 call sites, 6 hardcodeados. Ahora todos leen `settings.GEMINI_MODEL` → `gemini-2.5-flash-lite`.
+  - **Bug 107** — rate limit keyeado por `md5(token)` = se resetea al volver a hacer login. Ahora por claim `sub`.
+  - **Bug 108** — DefensIA colgaba con la UI en blanco (sin `reasoning_effort`, tope 1024 tokens).
+- **NO retropropagado a propósito**: refactor `BRAND_NAME`, bypass `DEMO_MODE` del topic classifier, bypass de suscripciones, `RAG_TERRITORY_LOCK`, seed de usuario demo, reescritura del `SYSTEM_PROMPT` de DefensIA (decisión de producto de Melilla, no bugfix), marcadores `DEFENSIA_AGENT_TRACE` a nivel ERROR.
+- **Reglas nuevas en `backend/CLAUDE.md`**: (1) todo endpoint que pase texto de usuario a un LLM DEBE llamar a `security_pipeline.check()` y emitir `rejection_message`, nunca `reason`; (2) nunca hardcodear un id de modelo LLM/Vision.
+- **Para el siguiente agente**: quedan los pasos 2-4 del plan de separación IA-Melilla — desacoplar leadbot de `DEMO_MODE` a `LEADBOT_ENABLED` y llevarlo a `main` apagado, rebasar la rama demo sobre `main`, y montar worktree en `../IA-Melilla/backend/`. **NO mergear `chore/separar-ia-melilla`**: está obsoleta y su diff borra el módulo de gestoría.
+
 ## [2026-05-18] DEVOPS/CODER — 🟢 DONE — Sesion 43: Quality Gates Phase 1 completas
 
 - **Branch**: `claude/quality-gates` (21 commits, PR #16 draft)
