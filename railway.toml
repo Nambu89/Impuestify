@@ -2,16 +2,28 @@
 # Docs: https://docs.railway.com/reference/config-as-code
 # Schema: https://backboard.railway.app/railway.schema.json
 #
-# Build plan (provider, install, start command) lives in `railpack.json` at
-# the repo root. Without `provider: python` there, Railpack auto-detected
-# only Node from the dev `package.json` and `pip` was unavailable at build
-# time. railway.toml only sets healthcheck + restart policy now.
+# OJO con el builder: desde que `backend/Dockerfile` existe, Railway construye
+# con él y NO con Railpack. La doc oficial es explícita: "Railway will always
+# build with a Dockerfile if it finds one" — el ajuste `builder` de aquí no lo
+# evita. `railpack.json` sigue en el repo pero está INACTIVO en Railway.
+#
+# Consecuencia práctica: el comando de arranque real es el CMD del Dockerfile,
+# no el `startCommand` de railpack.json. Si cambias uno, cambia el otro o
+# quedan desincronizados (fue justo lo que rompió el deploy del 2026-08-09:
+# el CMD traía el puerto 8000 fijo de Coolify y Railway enruta a $PORT).
 
+# Sin `dockerfilePath`: Railway ya localiza el Dockerfile solo (el build del
+# 2026-08-09 lo demuestra) y la ruta sería relativa al Root Directory del
+# servicio, no a la raíz del repo. Ponerla mal rompe el build; mejor no tocarla.
 [build]
-builder = "RAILPACK"
+builder = "DOCKERFILE"
 
 [deploy]
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+# 300s = el default de Railway. El anterior (30s) iba muy justo: el arranque
+# importa agent_framework y modelos de embeddings y tarda ~1-2 min, así que
+# cualquier lentitud extra marcaba el deploy como fallido aunque la app
+# estuviera levantando bien.
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3

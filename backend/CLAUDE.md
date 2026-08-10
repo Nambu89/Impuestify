@@ -445,6 +445,9 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | `irpf_casillas` table not found | El seed script crea la tabla automáticamente. También está en `turso_client.py:init_schema()` |
 | Semantic cache disabled | Check `UPSTASH_VECTOR_REST_URL` + `TOKEN` env vars |
 | SSE buffering on Railway | Use `print(flush=True)` in streaming code |
+| Railway: `Healthcheck failed! 1/1 replicas never became healthy` + `service unavailable` | El proceso no escucha en `$PORT`. Railway lo inyecta y enruta ahí. El `CMD` del Dockerfile DEBE usar forma shell con `${PORT:-8000}` — nunca un puerto fijo. Bug 110. |
+| Railway ignora `railpack.json` / `builder = "RAILPACK"` | Si existe un `Dockerfile` gana siempre: *"Railway will always build with a Dockerfile if it finds one"*. El comando de arranque real es el `CMD` del Dockerfile, no el `startCommand` de `railpack.json`. Si tocas uno, sincroniza el otro. Bug 110. |
+| Deploy marcado fallido aunque la app levante bien | `healthcheckTimeout` demasiado bajo. El arranque carga `agent_framework` + embeddings y tarda ~1-2 min. Usar 300 (el default de Railway), no 30. Bug 110. |
 | `import fitz` fails | `pip install PyMuPDF pymupdf4llm` |
 | Tests import errors | Mock jose/bcrypt/slowapi (chain __init__.py imports) |
 | Rate limit 429 on login/register during dev | Increase `RATE_LIMIT_PER_MINUTE` or clear Redis. Login/register are now hard-limited at 5/min, forgot-password at 3/min. |

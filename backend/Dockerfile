@@ -38,9 +38,21 @@ COPY --from=builder /root/.local /root/.local
 WORKDIR /app
 COPY . .
 
+# Puerto por defecto para plataformas que no inyectan PORT (Coolify, compose).
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://localhost:8000/health || exit 1
+# start-period generoso: el arranque carga agent_framework y modelos de
+# embeddings, y tarda ~1-2 min. Con un margen corto el contenedor se marca
+# unhealthy mientras todavía está importando.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=150s --retries=3 \
+    CMD curl -fsS "http://localhost:${PORT:-8000}/health" || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--timeout-keep-alive", "120"]
+# Forma shell (sh -c) para que ${PORT} se expanda en runtime.
+#
+# Railway inyecta PORT y enruta el tráfico a ese puerto: si el proceso escucha
+# en otro, el healthcheck responde "service unavailable" y el deploy falla.
+# Este Dockerfile se escribió para Coolify, donde PORT no existe, así que tenía
+# el 8000 fijo; al llegar a main, Railway lo detectó ("Railway will always build
+# with a Dockerfile if it finds one", por encima de builder=RAILPACK) y rompió
+# el despliegue. Con ${PORT:-8000} sirve para las dos plataformas.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --timeout-keep-alive 120"]
