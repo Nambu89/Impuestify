@@ -239,6 +239,58 @@ lo único que detecta la recaída.
 
 ---
 
+## Bug 110 — El Dockerfile de Coolify tumbó el despliegue de Railway
+
+**Archivos**: `backend/Dockerfile`, `railway.toml`
+
+**Síntoma**: build OK, `Healthcheck failed! 1/1 replicas never became healthy`,
+con `Attempt #1 failed with service unavailable`. Deploy del 2026-08-09 21:47.
+
+**Causa raíz** (cadena de tres pasos):
+
+1. El PR #17 mergeó `demo/fiscal-ia-melilla` completa, y con ella
+   `backend/Dockerfile` — creado en el commit `6814835`
+   *"build(demo): backend Dockerfile + dockerignore **for Coolify deploy**"*.
+   Antes de ese merge **`main` no tenía Dockerfile**.
+2. Railway lo detectó y construyó con él en vez de con Railpack. La doc oficial
+   es explícita: *"Railway will always build with a Dockerfile if it finds
+   one"* — el `builder = "RAILPACK"` de `railway.toml` **no lo evita**. El log
+   del build lo confirma: `load build definition from backend/Dockerfile`.
+3. Ese Dockerfile estaba escrito para Coolify, donde el puerto es fijo, así que
+   hardcodea `--port 8000`. Railway inyecta `PORT` y enruta ahí. La app
+   escuchaba en 8000, Railway preguntaba en `$PORT` → *service unavailable*.
+   La doc de healthchecks lo dice literalmente: no escuchar en `PORT` "can
+   result in your health check returning a `service unavailable` error".
+
+El `railpack.json` (inactivo desde entonces) sí lo hacía bien:
+`--port $PORT`. Al pasar a Dockerfile se perdió esa pieza sin que nadie lo
+notara, porque el comando de arranque vive ahora en otro fichero.
+
+**Fix**: `CMD` en forma shell con `${PORT:-8000}`, de modo que el mismo
+artefacto sirva para las dos plataformas — Railway usa el puerto inyectado y
+Coolify/compose caen al 8000. Igual en el `HEALTHCHECK`.
+
+**Segundo problema, latente**: `healthcheckTimeout = 30`, cuando el default de
+Railway es **300**. El arranque importa `agent_framework` y modelos de
+embeddings y tarda ~1-2 min (medido: la app respondió 200 en `/health` tras
+~90 s en local). Con 30 s, cualquier lentitud extra marca el deploy como
+fallido aunque esté levantando bien. Subido a 300.
+
+**Verificación**: no se pudo construir la imagen (el daemon de Docker no estaba
+arrancado), así que se verificó (a) que la app arranca y `/health` devuelve 200
+respetando el `--port` que se le pasa, y (b) que `${PORT:-8000}` expande a
+`4321` con `PORT=4321` y a `8000` sin la variable, tanto en el `CMD` como en el
+`HEALTHCHECK`.
+
+**Lección**: al mergear una rama de despliegue distinto, los ficheros de
+infraestructura (`Dockerfile`, `docker-compose.yml`, `*.toml`) son tan
+peligrosos como el código. Un Dockerfile pensado para una plataforma **secuestra
+el build de la otra en silencio**, porque su detección tiene prioridad sobre la
+configuración declarada. Antes de mergear una rama de otro despliegue: revisar
+qué ficheros de infra trae y si alguno cambia el builder efectivo.
+
+---
+
 ## Lección transversal
 
 Una rama de larga duración para una marca blanca **acumula arreglos genéricos
