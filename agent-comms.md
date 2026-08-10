@@ -7,6 +7,15 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-11] DEVOPS — 🟢 DONE — Railway: los DOS servicios caídos tras el PR #24
+
+- **Branch**: `claude/railway-config-monorepo` (desde `main` @ `c0868bd`)
+- **Qué pasó**: el PR #24 editó el `railway.toml` de la **raíz** creyendo que era el del backend. Ese fichero lo lee el servicio del **frontend** → `builder = "DOCKERFILE"` + no hay `frontend/Dockerfile` = build caído. Y el backend, que lee `backend/railway.toml`, se quedó con su `healthcheckTimeout = 30` (el fix del 300 nunca le llegó).
+- **Bugs**: 111 (config de monorepo cruzada + `startCommand` en exec form que no expande `$PORT`), 112 (`pymupdf4llm` sin pin saltó a 1.28.2 y metió sesiones ONNX en el import: +112 MB RSS y arranque más largo), 113 (`.railwayignore` excluía `backend/data/`). Corregida además la causa raíz **falsa** del Bug 110. Detalle en `memory/bugfixes-2026-08.md`.
+- **Verificación**: 4 revisores adversariales + doc oficial de Railway citada literal. `npm run build` OK, 171 tests de security pipeline OK, bandit 0 issues, TOML parseado.
+- **⚠️ PENDIENTE DE HUMANO (no se puede hacer desde el repo)**: tras el próximo deploy, comprobar en los **Deploy Logs** (no Build Logs) que (a) no aparece `is not a valid integer` y (b) la ventana del healthcheck ya dice 300 s. Si sigue diciendo 30 s, el valor viene del dashboard → Settings → Deploy → Healthcheck Timeout.
+- **Trabajo pendiente que genera** (ninguno bloqueante): sacar `init_schema` del arranque (≈158 round trips a Turso antes de aceptar tráfico), `/health/live` trivial para la sonda, y mover `import pymupdf4llm` dentro de la función que lo usa.
+
 ## [2026-08-09] BACKEND/SECURITY — 📢 NEEDS_REVIEW — Backport de fixes varados en `demo/fiscal-ia-melilla`
 
 - **Branch**: `claude/backport-demo-fixes` (desde `main` @ `4118968`)

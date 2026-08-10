@@ -1,29 +1,26 @@
-# Railway Config — Impuestify Backend
+# Railway Config — servicio FRONTEND (Root Directory: /frontend)
 # Docs: https://docs.railway.com/reference/config-as-code
-# Schema: https://backboard.railway.app/railway.schema.json
 #
-# OJO con el builder: desde que `backend/Dockerfile` existe, Railway construye
-# con él y NO con Railpack. La doc oficial es explícita: "Railway will always
-# build with a Dockerfile if it finds one" — el ajuste `builder` de aquí no lo
-# evita. `railpack.json` sigue en el repo pero está INACTIVO en Railway.
+# CUIDADO: por vivir en la raíz del repo, este fichero es el que se come el
+# servicio del FRONTEND, no el backend. El backend lee `backend/railway.toml`.
 #
-# Consecuencia práctica: el comando de arranque real es el CMD del Dockerfile,
-# no el `startCommand` de railpack.json. Si cambias uno, cambia el otro o
-# quedan desincronizados (fue justo lo que rompió el deploy del 2026-08-09:
-# el CMD traía el puerto 8000 fijo de Coolify y Railway enruta a $PORT).
+# El 2026-08-10 se cambió aquí `builder` a DOCKERFILE pensando en el backend y
+# quien se lo comió fue el frontend: "couldn't locate a dockerfile at path
+# /frontend/Dockerfile in code archive" y build caído. El backend, mientras
+# tanto, siguió con su healthcheckTimeout de 30 s porque nunca leyó este
+# fichero. Un cambio, dos servicios rotos.
 
-# Sin `dockerfilePath`: Railway ya localiza el Dockerfile solo (el build del
-# 2026-08-09 lo demuestra) y la ruta sería relativa al Root Directory del
-# servicio, no a la raíz del repo. Ponerla mal rompe el build; mejor no tocarla.
 [build]
-builder = "DOCKERFILE"
+# SPA de Vite: lo construye Railpack (npm ci + vite build + servidor estático).
+# NO poner DOCKERFILE — no existe `frontend/Dockerfile` y el build muere en el
+# unpack del archivo, antes de compilar nada.
+builder = "RAILPACK"
 
 [deploy]
-healthcheckPath = "/health"
-# 300s = el default de Railway. El anterior (30s) iba muy justo: el arranque
-# importa agent_framework y modelos de embeddings y tarda ~1-2 min, así que
-# cualquier lentitud extra marcaba el deploy como fallido aunque la app
-# estuviera levantando bien.
+# El servidor estático hace fallback a index.html, así que "/" devuelve 200 en
+# cuanto arranca. (Antes ponía "/health", que también daba 200 por ese mismo
+# fallback, pero sugería que este fichero era el del backend. No lo es.)
+healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
