@@ -1,8 +1,10 @@
 # Railway Ignore File
 # Archivos y carpetas que NO deben desplegarse en Railway
 
-# Datos locales (PDFs, documentos)
-data/
+# Datos locales pesados de la raíz (PDFs del RAG, índices FAISS).
+# Anclado con "/" a proposito: sintaxis .gitignore, asi que un `data/` suelto
+# excluye CUALQUIER carpeta data del repo — tambien `backend/data/`, que si
+# hace falta en runtime (corpus legal `data/legal/norms.yaml`, 80 KB).
 /data/
 
 # Entornos virtuales

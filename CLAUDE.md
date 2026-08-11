@@ -154,6 +154,8 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 
 ## Key Updates (2026-04-20)
 
+- **Deploy Railway — regla de oro (2026-08-11, Bugs 111-113)**: son **2 servicios sobre el mismo repo** y cada uno lee un fichero de config distinto — `railway.toml` de la **raíz** = FRONTEND (Root Directory `/frontend`, builder Railpack); `backend/railway.toml` = BACKEND (Root Directory `/backend`, builder `backend/Dockerfile`). La ruta del config es un ajuste por servicio y *no* sigue al Root Directory. Con builder Dockerfile, el `startCommand` corre en **exec form** y NO expande variables: `$PORT` debe ir envuelto en `/bin/sh -c "exec ..."`. Y las dependencias que se importan en el arranque van **pineadas exactas**. Detalle en `memory/bugfixes-2026-08.md` y en el skill `deployment-railway`
+
 - **Hotfix 2026-04-20 — Bug 84**: DefensIA `/defensia/expedientes` 404 en produccion. Causa: backend monta `/api/defensia`, frontend llamaba `/defensia` sin prefix. Fix: prefix `/api/` anadido en 9 call sites (7 archivos). Tests actualizados. Regla documentada en `frontend/CLAUDE.md` — TODO hook nuevo DEBE usar `/api/<router>/...`. Commit `20bf545` en main.
 - **DefensIA — "Volver a inicio"**: Back-link anadido en `DefensiaListPage`, `DefensiaWizardPage` y `DefensiaExpedientePage` (este ultimo navega a `/defensia`). Estilo `.defensia-back-link` clonado del patron `.cf-back-link`. Commit `8f7932c` en main.
 - **Session 34 — Merge final a main**: DefensIA (71+ commits) + Modelo 200 IS (11 commits) mergeados a main en produccion. Hotfix lazy imports `Modelo200Page` (app crasheaba por imports faltantes). Copilot rounds 8-9 (48 comentarios resueltos en total). RAG ingesta completa: 463 docs, 92,393 chunks, 85,587 embeddings. `copilot-instructions.md` activo.
@@ -167,7 +169,7 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 - **Workspace Fase 2**: Auto-clasificacion PGC al subir factura + confirm-classification + classify-pending retroactivo + auto-detect tipo (emitida/recibida por NIF)
 - **Workspace Fase 3**: Selector dropdown workspace en Chat + indicador visual + workspace_id persistido en conversations + WorkspaceCards acceso rapido
 - **Session 30 RAG fix completo** (sesion 30): 4 bugs encadenados arreglados — territory tildes, OOM (workers 4→1), SSE keepalive, Upstash Vector sync 84K. RAG hibrido (FTS5+Vector) ahora funcional. Vector search con accent fallback + 10s timeout
-- **Railway**: 1 worker obligatorio (~344 MB por worker). `railway.toml` con `--workers 1 --timeout-keep-alive 120`
+- **Railway**: 1 worker obligatorio (~344 MB por worker). El `--workers 1 --timeout-keep-alive 120` vive en `backend/railway.toml` (`startCommand`) y en el `CMD` de `backend/Dockerfile`, NO en el `railway.toml` de la raíz
 - **Upstash Vector**: 84,036 embeddings sincronizados (100%). Sync script: `scripts/sync_to_upstash.py`. Verificar count periodicamente
 - **Territory names**: SIEMPRE canonical de `ccaa_constants.py` (con tildes). `get_territory()` tiene fallback `normalize_ccaa()`
 - **SSE keepalive**: Enviar `thinking` event ANTES de RAG search para evitar connection drop por inactividad

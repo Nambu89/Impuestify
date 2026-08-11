@@ -150,7 +150,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.28.0
+        # Los tags de trivy-action van con prefijo "v": "0.28.0" a secas no
+        # resuelve y el step fallaba con "Unable to resolve action". Verificado
+        # contra la API de GitHub: existe v0.28.0, no 0.28.0. v0.36.0 es la
+        # release vigente (2026-04-22).
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: '.'

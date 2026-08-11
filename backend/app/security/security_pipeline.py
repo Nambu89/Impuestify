@@ -69,7 +69,7 @@ MIN_LENGTH = 2  # chars (we already short-circuit on greetings)
 
 # Pre-compiled regexes for sanitization (zero-width + bidi + control).
 # Using \uXXXX escapes (not raw chars) so the file stays ASCII-safe.
-_ZERO_WIDTH_RE = re.compile("[​-‏ -‮⁠-⁯]")
+_ZERO_WIDTH_RE = re.compile("[\u200b-\u200f\u2028-\u202e\u2060-\u206f]")
 _CONTROL_RE = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 

@@ -289,6 +289,214 @@ el build de la otra en silencio**, porque su detección tiene prioridad sobre la
 configuración declarada. Antes de mergear una rama de otro despliegue: revisar
 qué ficheros de infra trae y si alguno cambia el builder efectivo.
 
+### ⚠️ CORRECCIÓN (2026-08-11): la causa raíz de arriba es FALSA
+
+El fix de este Bug 110 se mergeó (PR #24, `c0868bd`, committer date
+2026-08-10T22:30:37Z; el build arranca 20 s después) y el deploy
+siguiente **volvió a caer**, esta vez los dos servicios. Con el log de ese
+deploy en la mano, dos afirmaciones del apartado anterior no se sostienen:
+
+1. **«La app escuchaba en 8000 y Railway preguntaba en `$PORT`»** — no.
+   `backend/railway.toml` ya definía `startCommand` con `--port $PORT`, y el
+   start command de Railway **pisa el `CMD` de la imagen**. El puerto fijo del
+   `CMD` de Coolify nunca llegó a ejecutarse en Railway. Prueba directa: el
+   deploy del 2026-08-10 llevaba ya el `CMD` con `${PORT:-8000}` y cayó igual.
+2. **«`healthcheckTimeout` 30 → 300»** — se cambió en el `railway.toml` de la
+   **raíz**, que el backend no lee. El log del deploy posterior sigue diciendo
+   `Retry window: 30s`, el valor de `backend/railway.toml`, que el fix no tocó.
+
+3. **«El log del build lo confirma: `load build definition from
+   backend/Dockerfile`»** — esa línea **no aparece** en el export (1001 líneas,
+   empieza a mitad de un `apt-get`). Lo que sí lo confirma son las etapas
+   `[builder 5/5] RUN pip install --user -r requirements.txt` y
+   `[runtime 5/5] COPY . .`, que casan 1:1 con `backend/Dockerfile:20,36,39`.
+4. **«El arranque carga modelos de embeddings»** — no hay modelos locales.
+   `requirements.txt` no trae torch, sentence-transformers, transformers ni
+   fastembed: los embeddings van por API de OpenAI + Upstash Vector. Lo que
+   tarda es el import de `app.main` (~10 s) y el `init_schema` contra Turso.
+5. **«`railpack.json` sí lo hacía bien y al pasar a Dockerfile se perdió esa
+   pieza»** — falso: el `startCommand` con `$PORT` vivía (y vive) en
+   `backend/railway.toml` desde `eb41704`. No cambió *dónde* estaba el comando,
+   sino **cómo lo ejecuta Railway** (shell con Railpack, exec form con Docker).
+
+Lo que sí era correcto: que 30 s se quedaban cortos. Pero se arregló en el
+fichero equivocado, y **el motivo por el que de pronto se quedaron cortos era
+otro** (Bug 112).
+
+**Verificación de aquel fix, releída**: sólo comprobó que `${PORT:-8000}` se
+expande en el `CMD` — y el `CMD` **no se ejecuta en Railway** mientras
+`backend/railway.toml` defina `startCommand`. Es decir: se verificó el arranque
+de Coolify y se dio por verificado el de Railway.
+
+---
+
+## Bug 111 — un commit de deploy, dos servicios caídos
+
+**Archivos**: `railway.toml` (raíz), `backend/railway.toml`
+
+**Síntoma**: tras mergear el PR #24 (`c0868bd`, 2026-08-10 22:30:37Z), Railway lanzó build de
+los dos servicios a las 22:30:57Z y murieron los dos:
+
+- **Frontend**: `couldn't locate a dockerfile at path /frontend/Dockerfile in
+  code archive`. Ni siquiera llegó a compilar.
+- **Backend**: build OK, imagen subida, y `Retry window: 30s` →
+  `Attempt #1/#2 failed with service unavailable` → `1/1 replicas never became
+  healthy!`.
+
+**Causa raíz — cada servicio lee un fichero de config distinto**:
+
+| Servicio | Root Directory | Config que aplica |
+|----------|----------------|-------------------|
+| frontend | `/frontend` | `railway.toml` de la **raíz** del repo |
+| backend  | `/backend`  | `backend/railway.toml` |
+
+Doc oficial de monorepos, literal: *"The Railway Config File does not follow the
+Root Directory path. You have to specify the absolute path for the
+`railway.json` or `railway.toml` file"*. Es un ajuste **por servicio**; el
+frontend se quedó con el valor por defecto (el de la raíz) y el backend apunta
+al suyo.
+
+Ese `railway.toml` de la raíz fue históricamente la config del backend, cuando
+se construía desde `/` con Railpack (`7e892c2`, `1b3a673`, `3befb0e`). Nadie
+actualizó el comentario cuando el backend se mudó a `/backend`, así que el PR
+#24 lo editó creyendo que tocaba el backend. Efectos cruzados:
+
+- `builder = "DOCKERFILE"` → se lo comió el **frontend**, que no tiene
+  Dockerfile. Doc de Dockerfiles: *"Railway will look for and use a `Dockerfile`
+  at the root of the source directory"*; con source dir `/frontend`, la ruta
+  resuelta es exactamente la del error. Verificado: `frontend/Dockerfile` no ha
+  existido **nunca** en ninguna rama (`git log --all --name-only | grep -i
+  dockerfile` → solo `backend/Dockerfile` y un `Dockerfile` de raíz borrado en
+  2025-12).
+- `healthcheckTimeout = 300` → **no llegó al backend**, que siguió con 30.
+
+**Fix**:
+- `railway.toml` (raíz) vuelve a `builder = "RAILPACK"`, `healthcheckPath = "/"`
+  (SPA: el fallback a `index.html` devuelve 200) y queda encabezado con un aviso
+  de que es el fichero del FRONTEND.
+- `backend/railway.toml` se queda con toda la config de backend:
+  `healthcheckTimeout = 300`, `builder = "DOCKERFILE"` (que es lo que Railway
+  hace de verdad) y sin `buildCommand` (lo ignora el builder de Docker).
+- `healthcheckTimeout = 300` en **los dos** ficheros: si mañana cambia qué
+  config aplica a cada servicio, el valor sigue siendo el bueno.
+
+**El sospechoso principal del backend, que nadie había mirado: el
+`startCommand` en exec form.** Citas literales de
+`docs.railway.com/guides/start-command`:
+
+> *"the start command overrides the image's `ENTRYPOINT` in exec form"*
+> *"commands ran in exec form do not support variable expansion"*
+> Patrón recomendado por la propia doc: `/bin/sh -c "exec python main.py --port $PORT"`
+> Y sobre Railpack: *"the start command is ran in a shell process. This supports
+> the use of environment variables without needing to wrap your command in a shell."*
+
+`backend/railway.toml` traía `startCommand = "uvicorn ... --port $PORT ..."`
+desde `86ede74` (2026-04-09) y funcionaba **porque el builder era Railpack**,
+que lo ejecuta en shell. `backend/Dockerfile` entró en main con el PR #17
+(`dc41b8b`, **2026-08-09 21:06**) y cambió el builder a Docker → el mismo start
+command pasa a exec form → uvicorn recibe la cadena literal `"$PORT"` y muere en
+el parseo de argumentos (`Error: Invalid value for '--port': '$PORT' is not a
+valid integer`, reproducido en local), **antes incluso de importar la app**:
+cero stdout, cero traceback y el edge respondiendo `service unavailable`.
+
+Esto explica lo que "la app va lenta" no explica: **por qué rompió justo ese
+día**. El coste del arranque no cambió el 2026-08-09; el builder sí.
+
+Fix: `startCommand = '/bin/sh -c "exec uvicorn ... --port ${PORT:-8000} ..."'`,
+que es literalmente el patrón de la doc. Se mantiene explícito en vez de
+borrarlo porque la config-as-code gana al dashboard, así que además neutraliza
+cualquier start command que quedara puesto a mano ahí.
+
+**Honestidad sobre la evidencia**: no está *probado* que esto fuera lo que pasó.
+El export de logs es 100 % build (`deploymentInstanceId: null`,
+`source: buildkit`); no hay una sola línea de runtime. Lo seguro es que la
+combinación *builder DOCKERFILE + `$PORT` desnudo* **no puede funcionar** según
+la doc del proveedor. Para confirmarlo hacen falta los **Deploy Logs** (no los
+Build Logs) y buscar `is not a valid integer`.
+
+**Lección**: en un monorepo, un fichero de config en la raíz **no es de nadie en
+particular**. Antes de tocarlo, comprobar en el log de qué servicio salieron los
+valores que estás cambiando. La prueba de que el backend no leía la raíz estaba
+en una sola línea del log (`Retry window: 30s` con la raíz ya en 300) y no se
+miró.
+
+---
+
+## Bug 112 — `pymupdf4llm` sin pinear se comió la ventana del healthcheck
+
+**Archivo**: `backend/requirements.txt`
+
+**Por qué importa**: es el motivo de que 30 s de healthcheck, que llevaban meses
+bastando, dejaran de bastar de un día para otro **sin que nadie tocara el
+código de arranque**.
+
+**Cadena**:
+
+1. `requirements.txt:34` decía `pymupdf4llm>=0.2.6`, rango abierto.
+2. `pymupdf4llm 1.28.2` se publicó en PyPI el **2026-08-06**. Su metadata pina
+   `pymupdf==1.28.2` y `pymupdf_layout==1.28.2` (wheel de **42,9 MB**, con ~50
+   MB de modelos `.onnx`) y arrastra `onnxruntime`. El primer build limpio
+   posterior se lo tragó solo: el log de Railway lo enseña —
+   `Downloading pymupdf_layout-1.28.2 ... (42.9 MB)`,
+   `Successfully installed ... pymupdf-1.28.2 pymupdf4llm-1.28.2
+   pymupdf_layout-1.28.2 onnxruntime-1.28.0`. El primer deploy caído es del
+   2026-08-09, tres días después de esa release.
+3. En esa versión el **import** ya construye las sesiones ONNX de análisis de
+   layout (`pymupdf4llm/__init__.py` → `pymupdf.layout.activate()` →
+   `DocumentLayoutAnalyzer.get_model()`), no bajo demanda. Medido en un venv con
+   las versiones exactas que instaló Railway: **+112 MB de RSS** solo por el
+   import.
+4. Ese coste lo paga **todo arranque del backend**, no solo quien suba un PDF:
+   `app/main.py:27` importa el router de notificaciones →
+   `routers/notifications.py:18` → `agents/notification_agent.py:23
+   import pymupdf4llm`, a nivel de módulo y **sin `try/except`**.
+
+Sumado a lo que ya costaba el arranque (`import app.main` ≈ 9-11 s, y un
+`init_schema` que son ~79 statements CREATE/ALTER, cada uno con su `commit()` →
+~158 round trips HTTP contra Turso remoto **antes** de que uvicorn acepte
+conexiones), la ventana de 30 s era imposible.
+
+**Fix**: pin exacto a las versiones contra las que corren los tests —
+`pymupdf4llm==0.2.9` y `pymupdf==1.26.7`.
+
+**Bomba latente desactivada de paso**: el `__init__.py` de la línea 1.x hace
+`if _pvt != VERSION_TUPLE: raise ImportError(...)`. Con los dos rangos abiertos,
+cualquier resolución dispar de pip rompía el import de **la aplicación entera**,
+con el mismo síntoma de log (imagen construida, contenedor que no escucha).
+
+**Pendiente (no incluido)**: evaluar si interesa subir a la línea 1.28 por la
+mejora de extracción de layout. Si se sube, hay que (a) medir el arranque y
+subir el healthcheck en consecuencia, (b) vigilar la memoria — Railway ya iba a
+~344 MB por worker y esto suma ~112 MB, y (c) mover
+`import pymupdf4llm` dentro de la función que lo usa, para que el coste lo pague
+quien analiza un PDF y no cada arranque. Un hotfix de producción no es el sitio.
+
+**Regla permanente**: una dependencia con rango abierto es un **deploy que no
+has revisado**, programado para el día que el upstream publique. Para las que se
+importan en el camino de arranque, pin exacto.
+
+---
+
+## Bug 113 (menor, latente) — `.railwayignore` excluía `backend/data/`
+
+**Archivo**: `.railwayignore`
+
+`data/` sin barra inicial, con semántica `.gitignore`, excluye **cualquier**
+carpeta `data` del repo — también `backend/data/legal/` (corpus legal:
+`norms.yaml`, `articles.yaml`). No tumba la app porque
+`get_legal_registry()` captura `LegalDataError` y devuelve un registro vacío
+degradado, pero significa **enlaces al BOE y verificación de citas silenciosamente
+apagados** si ese fichero llega a aplicarse.
+
+Fix: dejar solo `/data/`, anclado a la raíz, que es lo que se quería excluir
+(los PDFs y los índices FAISS pesados).
+
+Nota medida: comparando el tamaño del archivo que subió Railway
+(103.567.360 bytes) con el tar del árbol completo (103.512.576, −0,05 %) frente
+al que resultaría de aplicar `.railwayignore` (99.698.688, −3,74 %), **ese
+fichero no se está aplicando** en los builds actuales. El arreglo es correcto
+igualmente, pero no esperes que cambie nada hasta que Railway lo lea.
+
 ---
 
 ## Lección transversal

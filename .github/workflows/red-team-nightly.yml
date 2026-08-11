@@ -38,7 +38,10 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # promptfoo@latest exige Node >= 22.22. Con Node 20 el `npm install -g`
+          # de mas abajo fallaba y la suite de red-team llevaba noches sin
+          # ejecutarse de verdad: el job moria antes del eval.
+          node-version: "22"
 
       - name: Validate required secrets
         run: |
