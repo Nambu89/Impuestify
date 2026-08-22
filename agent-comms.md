@@ -7,6 +7,16 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-23] PM — 🟢 DONE — Cierre de sesión: RuFlo fuera, reglas nuevas, FF de la demo
+
+- **RuFlo retirado** (PR #35): aportaba 98 de las 100 alertas de code-scanning. Árbol raíz a `found 0 vulnerabilities`. NO se perdió ningún agente — `impuestify-team.yaml` era solo un mapeo a `.claude/agents/`.
+- **Red team arreglado** (PR #37): el `defaultTest` exigía marcador de rechazo a las preguntas legítimas de control. Promptfoo SUMA aserciones, no las reemplaza → `options.disableDefaultAsserts` + anclas YAML para reaplicar las 4 anti-jailbreak. Los 28 ataques intactos. Delegado en un agente `tester`, revisado y aceptado.
+- **Tres reglas nuevas** (PR #36, en CLAUDE.md): (1) el PM no toca código, delega en el squad; (2) `memory: project` en los 10 agentes + `isolation: worktree` en los 3 que escriben código; (3) DOS ramas, DOS despliegues — FF de la demo SIEMPRE.
+- **FF de la demo hecho**: `f8c8c96 → 5ef9fc3`. Le llegan los 5 arreglos de hoy. ⚠️ Comprobar en el log de Coolify que el `commit sha` sea `5ef9fc3`.
+- **⚠️ `.claude/` está en .gitignore**: las definiciones de los 10 agentes son LOCALES de la máquina de Fernando. No viajan al repo. Decisión pendiente: sacarlas del ignore si se quiere que el squad sea reproducible.
+- **⚠️ Statusline `.claude/helpers/statusline.cjs`** sigue titulándose "RuFlo V3" y lee de `.claude-flow/` y `.swarm/`, ya borrados: mostrará ceros. Pendiente decidir si se recorta o se quita.
+- **Pendientes que quedan**: rotar `DEMO_USER_PASSWORD` (quedó en el log de la sesión y vive en la BD de producción); react-router 6→7 y eslint 9.39.5 (ambos breaking); cuota diaria de Groq (200k, se agotó 2 veces); limpieza del código muerto de `sql_injection.py`; webhook de Coolify sin filtrar por rama.
+
 ## [2026-08-22] SECURITY — 🟢 DONE — El chat enseñaba la excepción interna al usuario (Bug 120)
 
 - **Branch**: `claude/fix-error-leak`
