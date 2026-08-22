@@ -100,6 +100,27 @@ Al emitir el rechazo usar `result.rejection_message` (texto para el usuario),
 match, y filtrarlo es un info leak. Precedente: Bug 104 (DefensIA llevaba
 desde la sesión 32 sin pipeline).
 
+### REGLA: una capa de seguridad basada en LLM necesita suelo determinista
+
+Si Groq no está disponible (sin API key, 429, timeout), la capa **no puede
+devolver "seguro"**: eso la apaga en silencio y sigue figurando en el inventario
+de seguridad como si funcionara.
+
+Antes de dar por bueno un `return ... is_safe=True` en una rama de error,
+**seguir el flujo hasta el llamador**. No todas son fail-open:
+
+| Capa | ¿Fail-open sin Groq? | Por qué |
+|---|---|---|
+| `pii_detector` | **NO** | `detect()` corre el regex por su cuenta y deja mandar a `_HIGH_CONFIDENCE_PII`. Hay red aguas arriba |
+| `prompt_injection` | **NO** | su rama sin cliente ocurre DESPUÉS del regex |
+| `sql_injection` | **SÍ** (Bug 116) | `security_pipeline` llamaba y se fiaba. Arreglado con `_regex_only()` |
+
+Leer la rama aislada lleva a conclusiones falsas en las dos direcciones: se
+"arregló" un fail-open inexistente en `pii_detector` (y el arreglo empeoraba las
+cosas) y se pasó por alto uno real en `sql_injection`.
+
+Y al degradar, `risk_level` debe ser `"high"` o `"critical"`: el pipeline solo
+rechaza con esos dos valores, así que un `"medium"` pasa igual que el fail-open.
 ### REGLA: un regex de PII caza lo inequívoco; lo ambiguo es del LLM
 
 Un patrón de `PII_PATTERNS` decide **solo** cuando el texto pasa de 3000

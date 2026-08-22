@@ -7,6 +7,15 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-22] SECURITY — 🟢 DONE — La capa de SQLi se apagaba sola si Groq fallaba (Bug 116)
+
+- **Branch**: `claude/fix-sqli-fail-open` (desde `main` @ `f8c8c96`)
+- **Qué pasaba**: `validate_user_input()` es 100 % LLM y tenía DOS ramas que devolvían `is_safe=True` sin ejecutar ni un patrón — sin cliente Groq, y ante cualquier error de API. La segunda es la que se dispararía en producción: un 429 es mucho más frecuente que una API key ausente.
+- **Aquí SÍ era fail-open** (a diferencia de PII): `security_pipeline` llama y se fía, no hay red aguas arriba. Verificado siguiendo el flujo hasta el llamador.
+- **Agravante**: `SUSPICIOUS_PATTERNS` (15 regex) estaba definido y **sin usar en todo el repo**. El docstring anunciaba 4 capas de defensa; se ejecutaba 0.
+- **Fix**: `_regex_only()` con `_BLOCKING_PATTERNS` en ambas ramas, `risk_level="critical"` (el pipeline solo rechaza con high/critical). 5 de los 15 patrones quedan FUERA por ruidosos — `--`, `/* */`, `CHAR(`, `HEX(`, `0x…` aparecen en castellano fiscal legítimo. Misma lección que el Bug 114.
+- **Verificación**: 5/5 ataques bloqueados, 7/7 textos legítimos pasan, en ambas rutas. 18 tests nuevos en `tests/test_sql_injection_fallback.py`, **10 fallan** contra el código anterior.
+- **Pendiente que genera**: `DANGEROUS_KEYWORDS`, `_sanitize_input()`, `validate_generated_sql()` y `validate_parameterized_query()` son código muerto verificado en todo el repo. Limpieza aparte para no mezclarla con el arreglo de seguridad.
 ## [2026-08-22] SECURITY — 🟢 DONE — El regex de PII rechazaba importes como Código Postal
 
 - **Branch**: `claude/fix-cp-falso-positivo` (desde `main` @ `f8c8c96`)

@@ -506,6 +506,77 @@ igualmente, pero no esperes que cambie nada hasta que Railway lo lea.
 
 ---
 
+## Bug 116 — la capa de SQLi desaparecía en silencio si Groq fallaba
+
+**Archivo**: `backend/app/security/sql_injection.py`
+
+**Síntoma**: ninguno visible. Ese es el problema.
+
+`validate_user_input()` es 100 % LLM (Groq, categoría S14) y tenía **dos** ramas
+que devolvían `is_safe=True` sin ejecutar ni un patrón:
+
+```python
+if not self.client:                      # sin GROQ_API_KEY
+    return SQLInjectionResult(is_safe=True, ...)
+...
+except Exception as e:                   # 429, timeout, 500, lo que sea
+    return SQLInjectionResult(is_safe=True, ...)
+```
+
+La segunda es la que importa: un 429 de Groq es mucho más frecuente que una API
+key ausente, así que es la que se dispararía en producción.
+
+**Por qué aquí sí era fail-open y en el detector de PII no**: en PII, `detect()`
+ejecuta el regex por su cuenta cuando el LLM devuelve `has_pii=False`, así que
+hay red de seguridad aguas arriba. Aquí no: `security_pipeline` llama a esta
+función y se fía del resultado. Verificado siguiendo el flujo hasta el llamador,
+que es justo lo que no se hizo la primera vez que se creyó ver un fail-open en
+PII (y resultó no serlo).
+
+**El agravante**: `SUSPICIOUS_PATTERNS` —15 regex de SQLi— estaba definido y
+**no se usaba en ningún sitio del repo**. Los patrones existían; nadie los
+conectó. Y el docstring del módulo anunciaba cuatro capas de defensa
+("input sanitization", "SQL keyword detection", "pattern matching", "query
+structure validation") de las que no se ejecutaba ninguna.
+
+**Fix**: `_regex_only()` con `_BLOCKING_PATTERNS`, usado en las dos ramas
+degradadas. Devuelve `risk_level="critical"` porque el pipeline solo rechaza con
+`risk_level in ("high", "critical")` — un "medium" habría pasado igual que
+antes. El `marker` (`GROQ_CLIENT_MISSING` / `API_ERROR: …`) queda en
+`violations` para que la degradación sea visible en logs.
+
+**Qué patrones bloquean, y por qué solo esos**: se midieron los 15 contra texto
+fiscal real y cinco quedaron fuera por ruidosos — cada uno rechazaba una
+consulta legítima:
+
+| Patrón | Falso positivo real |
+|---|---|
+| `(--[^
+]*)` | `El IRPF -- que es progresivo -- sube` |
+| `(/\*.*?\*/)` | `La casilla 0505 /* la de rendimientos */` |
+| `(CHAR\s*\()` | `CHAR( es una funcion de Excel que uso` |
+| `(HEX\s*\()` | misma familia |
+| `(0x[0-9a-fA-F]+)` | `El codigo hex 0x1F aparece en el fichero` |
+
+Misma lección que el Bug 114: un patrón que describe una forma compartida por
+texto legítimo **no puede bloquear**. Esos cinco los sigue evaluando el LLM, que
+ve la frase entera. Hay un test que impide reintroducirlos en la lista
+bloqueante.
+
+**Verificación**: 5/5 ataques bloqueados y 7/7 textos fiscales legítimos pasan,
+en ambas rutas (sin cliente y con 429). 18 tests nuevos, de los que **10 fallan**
+contra el código anterior.
+
+**Contexto que NO exculpa pero sí acota**: la protección real contra SQLi son
+las consultas parametrizadas (`WHERE email = ?`), regla número 1 del proyecto.
+Esta capa es defensa en profundidad sobre el texto del chat. Aun así, una capa
+que se apaga sola sin avisar es peor que no tenerla, porque figura en el
+inventario de seguridad.
+
+**Pendiente**: `DANGEROUS_KEYWORDS`, `_sanitize_input()`,
+`validate_generated_sql()` y `validate_parameterized_query()` son código muerto
+verificado en todo el repo. Dan impresión de profundidad que no existe. Se dejan
+fuera de este arreglo para no mezclarlo con una limpieza.
 ## Bug 114 — el regex de código postal rechazaba importes (y era irreparable)
 
 **Archivo**: `backend/app/security/pii_detector.py`
