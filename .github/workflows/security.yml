@@ -7,7 +7,17 @@ on:
       - 'backend/**'
       - 'frontend/**'
       - 'package.json'
+      # El lockfile de la raiz va explicito: es DONDE viven las versiones
+      # resueltas, y un cambio que solo lo toque a el (un `npm update` del
+      # utillaje, p.ej.) no disparaba este workflow. El SARIF del inventario se
+      # quedaba obsoleto hasta el cron del lunes.
+      - 'package-lock.json'
       - 'requirements.txt'
+      # Sin esto, tocar este mismo fichero en main no lo ejecuta, asi que no
+      # sabes si tu cambio al workflow funciona hasta el siguiente PR o hasta el
+      # lunes. Es como los tres jobs que llevaban semanas rotos sin que nadie lo
+      # viera.
+      - '.github/workflows/security.yml'
   pull_request:
     branches: [main]
   schedule:
@@ -201,6 +211,13 @@ jobs:
           path: trivy-results.sarif
 
       - name: Trivy — gate sobre lo que se despliega
+        # Sin esto hereda el `if: success()` implicito, asi que un fallo en
+        # cualquiera de las dos subidas de arriba SALTARIA el gate. El job
+        # quedaria rojo igual (no hay falso verde), pero la comprobacion de CVEs
+        # de produccion no se habria ejecutado, que es justo la que importa.
+        # `!cancelled()` en vez de `always()`: si alguien cancela el run, no
+        # tiene sentido seguir escaneando.
+        if: ${{ !cancelled() }}
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
