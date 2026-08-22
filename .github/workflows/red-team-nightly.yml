@@ -91,6 +91,73 @@ jobs:
             --no-cache \
             --output tests/red-team/results.json
 
+      # Sin esto habia que descargar el artefacto y abrirlo a mano para saber
+      # QUE habia fallado. Esa friccion es parte de por que la suite llevaba
+      # meses en rojo sin que nadie la mirase: el run decia "failure" y nada mas.
+      # Ahora los casos rojos salen en el log y en el resumen del run.
+      - name: Report failing cases
+        if: failure()
+        run: |
+          results="tests/red-team/results.json"
+
+          if [ ! -f "$results" ]; then
+            echo "No hay $results: el eval murio antes de escribir la salida."
+            echo "Mira los pasos anteriores (login, instalacion o red)."
+            {
+              echo "## Red team: sin resultados"
+              echo ""
+              echo "El eval no llego a escribir \`$results\`. El fallo esta en un paso anterior."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Estructura real de la salida de promptfoo, verificada contra el
+          # artefacto del run 32601663247 (promptfoo 0.122.0):
+          #   .results.results[] -> .success
+          #                      -> .vars.prompt
+          #                      -> .gradingResult.componentResults[] -> .pass, .reason, .assertion.type
+          # Ojo: el array esta anidado dos niveles (.results.results), no en la raiz.
+          total=$(jq '.results.results | length' "$results")
+          failed=$(jq '[.results.results[] | select(.success == false)] | length' "$results")
+
+          echo "Casos en rojo: $failed de $total"
+          echo "-----------------------------------------------------------"
+
+          # Log plano: prompt + solo las aserciones que han fallado.
+          jq -r '
+            .results.results[]
+            | select(.success == false)
+            | "FAIL: " + ((.vars.prompt // "(sin prompt)") | tostring | gsub("\n"; " "))
+              + "\n"
+              + ([ (.gradingResult.componentResults // [])[]
+                   | select(.pass == false)
+                   | "        [" + (.assertion.type // "?") + "] " + ((.reason // "") | tostring | gsub("\n"; " "))
+                 ] | join("\n"))
+          ' "$results"
+
+          # Resumen del run (pestana Summary), en markdown.
+          {
+            echo "## Red team: $failed de $total casos en rojo"
+            echo ""
+            echo "La suite mide el entorno YA DESPLEGADO (\`PROMPTFOO_TARGET_URL\`), no el codigo de esta rama."
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          jq -r '
+            .results.results[]
+            | select(.success == false)
+            | "### " + ((.vars.prompt // "(sin prompt)") | tostring | gsub("\n"; " "))
+              + "\n"
+              + ([ (.gradingResult.componentResults // [])[]
+                   | select(.pass == false)
+                   | "- `" + (.assertion.type // "?") + "` — " + ((.reason // "") | tostring | gsub("\n"; " "))
+                 ] | join("\n"))
+              + "\n"
+          ' "$results" >> "$GITHUB_STEP_SUMMARY"
+
+          # No enmascaramos nada: el job ya esta en rojo por el paso del eval.
+          exit 0
+
       - name: Upload results artifact
         if: always()
         uses: actions/upload-artifact@v4
