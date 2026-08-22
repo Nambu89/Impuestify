@@ -100,6 +100,40 @@ Al emitir el rechazo usar `result.rejection_message` (texto para el usuario),
 match, y filtrarlo es un info leak. Precedente: Bug 104 (DefensIA llevaba
 desde la sesión 32 sin pipeline).
 
+### REGLA: un regex de PII caza lo inequívoco; lo ambiguo es del LLM
+
+Un patrón de `PII_PATTERNS` decide **solo** cuando el texto pasa de 3000
+caracteres, porque ahí `detect()` salta a Groq. Si el patrón describe una forma
+que otra cosa comparte, en ese camino rechaza consultas legítimas.
+
+Antes de añadir un patrón, preguntarse: **¿esta forma significa una única cosa
+en castellano fiscal?**
+
+```python
+# NO — describe la forma, no el significado
+"postal_code": r"\b(?:0[1-9]|[1-4]\d|5[0-2])\d{3}\b"   # tambien es 30000 EUR
+"passport":    r"\b[A-Z]{2,3}\d{6,9}\b"                # tambien es un expediente
+
+# SI — la etiqueta desambigua, y "pasaporte" no tiene otro sentido
+"passport": r"\b(?i:pasaporte|passport)[^\d\n]{0,8}?([A-Z]{2,3}\d{6,9})\b"
+```
+
+La ventana del conector se MIDE, no se estima: 8 es la longitud exacta de
+`" numero "`, el conector legítimo más largo. Con 12 aún colaba
+`Pasaporte: s/d; exp ABC123456`, que son dos datos distintos en la misma frase.
+
+Si ni con etiqueta se desambigua, describe la **forma del dato completo** en vez
+del número: `postal_code` (5 cifras) se sustituyó por `postal_address` (código
+postal **seguido de población**), que un importe no puede imitar porque va
+seguido de su moneda. Y si tampoco eso funciona, **el patrón sobra**: `postal_code` se eliminó
+porque `c.p.` es *corto plazo* en contabilidad y ningún lookbehind aguanta
+`deuda a corto plazo (C.P.): 30000 EUR` sin comerse a la vez `Enviar a C.P.
+28013`. Eso es semántica y le toca al LLM, que lee la frase entera y conoce la
+CCAA del perfil. Precedente: Bug 114.
+
+Práctica estándar (Microsoft Presidio, tutorial 06_context): un regex de pocas
+cifras es de confianza muy baja por sí solo y necesita palabras de contexto.
+
 ### REGLA: nunca hardcodear un id de modelo LLM/Vision
 
 Siempre `settings.<PROVIDER>_MODEL`. Cuando el proveedor retira un modelo, la
@@ -474,6 +508,8 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | PII detector revienta con 413/429 Groq | `pii_detector.detect()` con length guard 3000 chars (>3k → `_regex_only` con `self.PII_PATTERNS`). LRU per-instance dict. Retry sync 1× en 429 con `time.sleep(0.5)`. Mantiene firma sync — NO convertir a async (rompe pipeline). |
 | Migración `duplicate column` ruidosa al startup | Usar `_column_exists(table, col)` con `PRAGMA table_info` ANTES del `ALTER TABLE ... ADD COLUMN`, en lugar de try/except. El driver Hrana loguea el error antes de Python lo capture. Regex `_ALTER_ADD_COL_RE` parsea statements. |
 | PII no detectada aunque el texto lleve DNI/IBAN | El regex determinista debe correr SIEMPRE y PRIMERO en `pii_detector.detect()`. Groq es demasiado permisivo en contexto fiscal ("mi DNI es 12345…" lo daba por seguro). Union de detectores: si cualquiera marca PII, se rechaza. Bug 105. |
+| Una consulta legitima se rechaza como PII | Mirar si el texto pasa de 3000 chars: ahi `detect()` salta el LLM (`_REGEX_FALLBACK_THRESHOLD`, para evitar el 413 de Groq) y el regex decide SOLO. `_HIGH_CONFIDENCE_PII` no protege ese camino — solo limita el override. Un patron ambiguo ahi bloquea de verdad. Bug 114. |
+| `if not self.client` en `_detect_uncached()` parece fail-open | NO lo es, y no lo "arregles" llamando a `_regex_only()`. Devuelve `has_pii=False`, y entonces `detect()` corre el regex por su cuenta dejando mandar a `_HIGH_CONFIDENCE_PII`: sin Groq, DNI/NIE/IBAN/email/telefono/CIF se siguen cazando. Degradar ahi haria contar TODOS los patrones y los ambiguos pasarian a bloquear. Hay test que lo fija. |
 | Gemini devuelve 404 / OCR de facturas roto | El id de modelo estaba hardcodeado en 6 call sites. Usar `settings.GEMINI_MODEL` (default `gemini-2.5-flash-lite`). `gemini-3-flash-preview` fue retirado por Google. Bug 106. |
 | Rate limit se resetea al volver a hacer login | `get_rate_limit_key()` hasheaba el token (`md5(Authorization)`), así que cada token nuevo = contador nuevo. Debe decodificar el JWT y keyear por el claim `sub`. Fallback a IP, con `except` amplio: una excepción en la key function hace que slowapi devuelva 500. Bug 107. |
 | DefensIA cuelga / responde en blanco | gpt-5-mini gasta todo el presupuesto en razonamiento oculto y emite 0 chunks. Requiere `reasoning_effort="minimal"` + `max_completion_tokens=10000` + `asyncio.wait_for` 60s. Añadir fallback si `content_chunks == 0` para no dejar la UI vacía. Bug 108. |
