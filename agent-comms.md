@@ -7,6 +7,16 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-22] BACKEND — 🔴 CRÍTICO RESUELTO — El chat llevaba 8 SEMANAS roto (Bug 119)
+
+- **Branch**: `claude/fix-chat-workspace-id`
+- **Qué pasaba**: `chat_stream.py:848` hacía `request.workspace_id` en vez de `body.workspace_id`. En ese handler `request` es el `starlette.Request` (lo exige slowapi), así que lanzaba `AttributeError` en CADA petición de chat. El usuario veía "Buscando información relevante…" y luego el error interno.
+- **Desde cuándo**: `0278099` (2026-06-28), Modo Gestoría. Ocho semanas.
+- **Por qué nadie lo vio**: no hay test unitario del handler (`test_stream.py` es integración contra servidor vivo), y desde el 16-ago el Bug 117 rechazaba todo antes de llegar ahí. Un bug tapaba al otro.
+- **Cómo apareció**: al arreglar el Bug 117 las preguntas pasaron el clasificador por primera vez y el red team cambió de síntoma. Arreglar una avería destapó la siguiente.
+- **Guarda nueva**: `tests/test_handler_request_vs_body.py` — test estático AST sobre TODOS los routers. Verificado que falla contra `main` y solo en `chat_stream.py`. Ojo: la primera versión miraba el nombre del parámetro y daba 4 falsos positivos (hay routers que llaman `request` al body Pydantic); hay que mirar la anotación.
+- **Pendiente relacionado**: `chat_stream.py:1056` emite `str(e)` al cliente — fuga del error interno, contradice la regla del Bug 104. No se toca aquí.
+
 ## [2026-08-22] SECURITY — 🟢 DONE — Groq retiró el modelo del clasificador: el chat rechazaba TODO (Bug 117)
 
 - **Branch**: `claude/fix-sqli-fail-open`
