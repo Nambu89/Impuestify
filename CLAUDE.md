@@ -170,6 +170,33 @@ nombre igual, con `subagent_type`.
 Cuándo NO delegar: una pregunta conversacional, un cambio de una línea ya
 localizado, o cuando el usuario pide explícitamente que lo haga yo.
 
+### REGLA DURA: toda modificación de código pasa por Codex
+
+Antes de empujar cualquier cambio de código del proyecto (`backend/`,
+`frontend/`, `scripts/`, tests, workflows), pasarlo por Codex para una segunda
+opinión. No hace falta para documentación ni memoria.
+
+```powershell
+codex exec --sandbox read-only -C "<ruta del repo>" $prompt
+```
+
+- `--sandbox read-only` siempre: revisa, no toca.
+- El prompt **sin comillas dobles dentro** y con `-C <ruta>` explícito —
+  PowerShell 5.1 rompe el paso de argumentos a ejecutables nativos si las lleva.
+- Pedirle que responda **solo con fallos concretos**, y que lo diga en una línea
+  si no hay ninguno.
+- Pedirle también qué **falta**, no solo qué sobra: un arreglo de seguridad puede
+  fallar por quedarse corto.
+- Si tras aplicar sus hallazgos el cambio quedó materialmente distinto, **volver
+  a pasarlo**. El 2026-08-23 hicieron falta tres rondas sobre el mismo fichero.
+- Verificar sus hallazgos, no aceptarlos a ciegas: ese día uno era falso ("hace
+  falta vite 8") y se descartó con datos — el rango vulnerable acababa en 6.4.2.
+
+Precedente: Codex entró en 5 revisiones y encontró **12 hallazgos reales**. Dos
+cambiaron la solución de raíz — que `c.p.` es *corto plazo* en contabilidad, y
+que los patrones de SQLi eran cobertura aparente (8 de 9 evasiones triviales los
+esquivaban).
+
 ### Memoria y aislamiento (configurado el 2026-08-23)
 
 **Memoria propia por agente**: los 10 llevan `memory: project`, que les da
