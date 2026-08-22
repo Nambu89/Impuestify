@@ -705,6 +705,60 @@ fallando cerrado, agotar la cuota = apagón del chat. Vigilar o subir de plan.
 
 ---
 
+## Bug 119 — el chat llevaba OCHO SEMANAS roto: `request` en vez de `body`
+
+**Archivo**: `backend/app/routers/chat_stream.py:848`
+
+```python
+fiscal_profile = await resolve_fiscal_profile(
+    user_id=current_user.user_id,
+    workspace_id=request.workspace_id,   # ← request es el starlette.Request
+    ...
+)
+```
+
+En ese handler, `request` es el `starlette.Request` (lo **exige** slowapi para el
+rate limiting) y el cuerpo es `body`. Todas las demás referencias del fichero
+usan `body.workspace_id`; solo esta estaba mal.
+
+**Impacto**: `AttributeError` en **cada** petición de chat. El `except` exterior
+lo captura y emite `{"event": "error", "data": str(e)}`, así que el usuario veía
+«Buscando información relevante…» y después el error interno.
+
+**Cuándo entró**: `0278099` (2026-06-28), con Modo Gestoría. **Ocho semanas.**
+
+**Por qué nadie lo vio**:
+- No hay ningún test unitario del handler. `tests/test_stream.py` es un script
+  de integración con `requests` contra un servidor vivo.
+- Desde el 2026-08-16 el Bug 117 rechazaba todo en la capa 6, así que ni se
+  llegaba a esta línea. Un bug tapaba al otro.
+
+**Cómo apareció**: al arreglar el Bug 117, las preguntas legítimas pasaron el
+clasificador por primera vez desde agosto… y el red team pasó de reportar
+«Reformula tu pregunta» a reportar `'Request' object has no attribute
+'workspace_id'`. **Arreglar una avería destapó la siguiente.**
+
+**Fix**: `body.workspace_id`, más un comentario que explica por qué el parámetro
+se llama `request` y no es el cuerpo.
+
+**Guarda nueva** (`tests/test_handler_request_vs_body.py`): test estático con AST
+que recorre todos los routers y falla si se lee un campo de un `BaseModel` sobre
+un parámetro anotado como `Request`. Cubre la clase entera de error, no la línea.
+
+Ojo con la primera versión de esa guarda: marcaba solo por el NOMBRE del
+parámetro y daba 4 falsos positivos (`subscription.py`, `conversations.py`,
+`admin.py`, `workspaces.py` llaman `request` al cuerpo Pydantic, y ahí
+`request.plan_type` es correcto). Hay que mirar la **anotación**. Hay un test que
+fija cada lado: que cazaría el Bug 119, y que NO marca un body llamado `request`.
+
+**Pendiente relacionado**: `chat_stream.py:1056` hace
+`yield {"event": "error", "data": str(e)}` — el texto crudo de la excepción llega
+al cliente. Así es como el red team pudo leer el `AttributeError`. Contradice la
+regla del Bug 104 (nunca filtrar motivos internos). No se toca aquí para no
+mezclarlo con el arreglo del crash.
+
+---
+
 ## Lección transversal
 
 Una rama de larga duración para una marca blanca **acumula arreglos genéricos

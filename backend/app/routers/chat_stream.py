@@ -845,7 +845,11 @@ async def ask_question_stream(
             # el reasoning_trail) que leen `fiscal_profile` por closure en run_agent.
             fiscal_profile = await resolve_fiscal_profile(
                 user_id=current_user.user_id,
-                workspace_id=request.workspace_id,
+                # `body`, NO `request`. En este handler `request` es el
+                # starlette.Request (lo exige slowapi para el rate limiting) y
+                # el cuerpo de la peticion es `body`. Poner `request` aqui
+                # lanzaba AttributeError en CADA peticion de chat.
+                workspace_id=body.workspace_id,
                 global_profile=fiscal_profile,
             )
 
