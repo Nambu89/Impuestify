@@ -759,6 +759,45 @@ mezclarlo con el arreglo del crash.
 
 ---
 
+## Bug 120 — el chat enseñaba la excepción interna al usuario
+
+**Archivo**: `backend/app/routers/chat_stream.py`
+
+```python
+except Exception as e:
+    logger.error(f"Stream error: {e}", exc_info=True)
+    yield {"event": "error", "data": str(e)}   # ← el texto crudo al cliente
+```
+
+El frontend mete ese `data` tal cual en el estado de error y lo pinta
+(`useStreamingChat.ts`, `case 'error'`). O sea: **cualquier excepción del backend
+se mostraba como respuesta del chat**.
+
+**No es teórico**: durante las ocho semanas del Bug 119, la respuesta a toda
+pregunta fue literalmente `'Request' object has no attribute 'workspace_id'`. Y el
+red-team lo leyó desde fuera, con una cuenta normal — así fue como se diagnosticó.
+
+Es la misma clase de fuga que emitir `pipeline_result.reason` en vez de
+`rejection_message` (regla del Bug 104), solo que por otra puerta: la del manejador
+de errores en vez de la del rechazo de seguridad.
+
+**Fix**: mensaje genérico al cliente, detalle solo en `logger.error(...,
+exc_info=True)`. Es lo que ya hacía `defensia.py` en sus cuatro emisiones —el
+patrón correcto estaba en el repo, solo que no en este fichero.
+
+**Guarda nueva** (`tests/test_no_filtra_excepciones_al_cliente.py`): test estático
+con AST sobre todos los routers; falla si el `data` de un evento `error` deriva de
+la variable de un `except ... as`. Cubre `str(e)`, la f-string `f"{e}"` y la
+variable a pelo. Verificado que caza `chat_stream.py` contra el código anterior, y
+que **no** marca el patrón correcto de DefensIA.
+
+**Nota**: no se añade identificador de correlación. Sería útil para cruzar el
+error del usuario con la línea del log, pero DefensIA tampoco lo tiene y no
+compensa introducir dos patrones distintos en el mismo repo. Si algún día se
+añade, que sea en los dos sitios a la vez.
+
+---
+
 ## Lección transversal
 
 Una rama de larga duración para una marca blanca **acumula arreglos genéricos

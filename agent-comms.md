@@ -7,6 +7,14 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-22] SECURITY — 🟢 DONE — El chat enseñaba la excepción interna al usuario (Bug 120)
+
+- **Branch**: `claude/fix-error-leak`
+- **Qué pasaba**: `chat_stream.py` emitía `{"event": "error", "data": str(e)}` y el frontend lo pinta tal cual. Durante las 8 semanas del Bug 119, la respuesta del chat fue literalmente `'Request' object has no attribute 'workspace_id'`.
+- **Fix**: mensaje genérico al cliente, detalle solo en el log. Es el patrón que `defensia.py` ya usaba en sus 4 emisiones — estaba en el repo, no en este fichero.
+- **Guarda nueva**: `tests/test_no_filtra_excepciones_al_cliente.py`, test estático AST sobre todos los routers. Cubre `str(e)`, f-string y variable a pelo. Verificado que caza el código anterior y que NO marca el patrón correcto de DefensIA.
+- **Verificado**: 78 tests entre las dos guardas nuevas. Los 2 fallos que salen en la suite amplia (`test_chat_stream_usa_gpt_5_mini`, `test_list_chat_ratings`) son PREEXISTENTES — comprobado contra main limpio.
+
 ## [2026-08-22] BACKEND — 🔴 CRÍTICO RESUELTO — El chat llevaba 8 SEMANAS roto (Bug 119)
 
 - **Branch**: `claude/fix-chat-workspace-id`
