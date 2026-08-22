@@ -9,7 +9,7 @@ Layers (in order, short-circuit on first reject):
   3. Llama Prompt Guard 2 (Groq, jailbreak/injection)
   4. PII detector (Llama Guard 4 / gpt-oss-safeguard, S7 privacy)
   5. SQL injection validator (existing)
-  6. Topic classifier (llama-3.1-8b-instant, fiscal whitelist)
+  6. Topic classifier (`settings.GROQ_MODEL_ROUTER`, fiscal whitelist)
 
 ANY layer reject -> short-circuit + audit log + canned rejection message.
 FAIL CLOSED: if any classifier is unreachable, treat as suspicious where

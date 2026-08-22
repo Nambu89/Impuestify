@@ -7,6 +7,25 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-22] SECURITY — 🟢 DONE — Groq retiró el modelo del clasificador: el chat rechazaba TODO (Bug 117)
+
+- **Branch**: `claude/fix-sqli-fail-open`
+- **Qué pasaba**: Groq retiró `llama-3.1-8b-instant` el **2026-08-16**. De él cuelga `GROQ_MODEL_ROUTER` y, con él, el clasificador de temas, que **falla cerrado**. Modelo retirado → 404 → `is_fiscal=False` → toda pregunta rechazada como fuera de tema.
+- **Cómo se detectó**: el workflow `Red Team Nightly` fallaba desde el **17 de agosto** — el día siguiente. Sus resultados (28 «pasan» = ataques bloqueados, 5 «fallan» = preguntas legítimas bloqueadas) significaban tasa de bloqueo del **100 %**.
+- **Fix**: `GROQ_MODEL_ROUTER` → `openai/gpt-oss-20b` (reemplazo oficial; hubo que habilitarlo en la consola: los modelos se listan aunque estén `model_permission_blocked_org`). Además `max_tokens` 120→300 y `reasoning_effort="low"`, porque gpt-oss razona antes del JSON y daba `json_validate_failed`. Subir solo max_tokens NO bastaba.
+- **Verificación**: 10/10 clasificaciones correctas, 0 errores de API, todas `via=groq`. 195 tests verdes.
+- **Decisión de producto**: el clasificador **sigue fallando cerrado** (elegido por Fernando). Implica que cualquier caída de Groq apaga el chat.
+- **Pendiente / riesgo vivo**: la cuota diaria de Groq (200k tokens, tier gratuito) se agotó **dos veces** hoy. Con fail-closed, agotar cuota = apagón. Vigilar o subir de plan.
+
+## [2026-08-22] SECURITY — 🟢 DONE — La capa de SQLi se apagaba sola si Groq fallaba (Bug 116)
+
+- **Branch**: `claude/fix-sqli-fail-open` (desde `main` @ `f8c8c96`)
+- **Qué pasaba**: `validate_user_input()` es 100 % LLM y tenía DOS ramas que devolvían `is_safe=True` sin ejecutar ni un patrón — sin cliente Groq, y ante cualquier error de API. La segunda es la que se dispararía en producción: un 429 es mucho más frecuente que una API key ausente.
+- **Aquí SÍ era fail-open** (a diferencia de PII): `security_pipeline` llama y se fía, no hay red aguas arriba. Verificado siguiendo el flujo hasta el llamador.
+- **Agravante**: `SUSPICIOUS_PATTERNS` (15 regex) estaba definido y **sin usar en todo el repo**. El docstring anunciaba 4 capas de defensa; se ejecutaba 0.
+- **Fix**: `_regex_only()` con `_BLOCKING_PATTERNS` en ambas ramas, `risk_level="critical"` (el pipeline solo rechaza con high/critical). 5 de los 15 patrones quedan FUERA por ruidosos — `--`, `/* */`, `CHAR(`, `HEX(`, `0x…` aparecen en castellano fiscal legítimo. Misma lección que el Bug 114.
+- **Verificación**: 5/5 ataques bloqueados, 7/7 textos legítimos pasan, en ambas rutas. 18 tests nuevos en `tests/test_sql_injection_fallback.py`, **10 fallan** contra el código anterior.
+- **Pendiente que genera**: `DANGEROUS_KEYWORDS`, `_sanitize_input()`, `validate_generated_sql()` y `validate_parameterized_query()` son código muerto verificado en todo el repo. Limpieza aparte para no mezclarla con el arreglo de seguridad.
 ## [2026-08-22] SECURITY — 🟢 DONE — El regex de PII rechazaba importes como Código Postal
 
 - **Branch**: `claude/fix-cp-falso-positivo` (desde `main` @ `f8c8c96`)
@@ -14,7 +33,7 @@
 - **Fix**: `postal_code` ELIMINADO. Dos vueltas exigiendo contexto fracasaron porque `c.p.` es *corto plazo* en contabilidad: `deuda a corto plazo (C.P.): 30000 EUR` burla el lookbehind y `Enviar a C.P. 28013` se lo come. Es semántica, no forma. `passport` sí se salva con etiqueta (ventana 12) y sube a `_HIGH_CONFIDENCE_PII`.
 - **Falsa alarma descartada**: la rama `if not self.client` NO es fail-open. Verificado sin cliente Groq: DNI, email, IBAN y teléfono se siguen detectando vía el override. Hay test y comentario para que nadie la "arregle".
 - **Verificación**: 30 tests, comprobado que los nuevos fallan contra el código anterior. Tres rondas de revisión externa (Codex): 12 hallazgos, todos incorporados. Dos de ellos cambiaron la solución de raíz.
-- **Groq**: revisados los 4 ids de modelo — `llama-3.1-8b-instant`, `meta-llama/llama-prompt-guard-2-86m`, `openai/gpt-oss-safeguard-20b` (x2). Todos activos, centralizados en `config.py`, sin overrides. Nada que cambiar. Ojo: `meta-llama/llama-guard-4-12b` está activo en Groq pero NO lo usa nadie — `llama_guard.py` corre con `gpt-oss-safeguard-20b`.
+- **Groq**: ⚠️ **esta revisión fue INSUFICIENTE**. Se comprobó que los 4 ids de `config.py` coincidían con la lista de modelos activos, pero NO se llamó a ninguno. `llama-3.1-8b-instant` estaba retirado por Groq desde el 2026-08-16 y devolvía 404, tumbando el clasificador de temas (Bug 117). Presencia ≠ comportamiento. Nota que sí era correcta: `meta-llama/llama-guard-4-12b` no lo usa nadie — `llama_guard.py` corre con `gpt-oss-safeguard-20b`.
 - **Pendiente que genera**: `sql_injection.validate_user_input()` devuelve `is_safe=True` sin usar sus `SUSPICIOUS_PATTERNS` cuando no hay cliente. NO se ha comprobado si, como en PII, hay una red de seguridad aguas arriba. Revisar antes de tocarlo.
 
 ## [2026-08-11] DEVOPS — 🟢 DONE — Railway: los DOS servicios caídos tras el PR #24

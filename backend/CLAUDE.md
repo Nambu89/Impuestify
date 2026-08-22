@@ -100,6 +100,49 @@ Al emitir el rechazo usar `result.rejection_message` (texto para el usuario),
 match, y filtrarlo es un info leak. Precedente: Bug 104 (DefensIA llevaba
 desde la sesión 32 sin pipeline).
 
+### REGLA: una capa de seguridad basada en LLM necesita suelo determinista
+
+Si Groq no está disponible (sin API key, 429, timeout), la capa **no puede
+devolver "seguro"**: eso la apaga en silencio y sigue figurando en el inventario
+de seguridad como si funcionara.
+
+Antes de dar por bueno un `return ... is_safe=True` en una rama de error,
+**seguir el flujo hasta el llamador**. El comportamiento sin Groq no es binario:
+
+| Capa | Sin Groq | Detalle |
+|---|---|---|
+| `pii_detector` | **parcial** | `detect()` corre el regex y deja mandar a `_HIGH_CONFIDENCE_PII`, así que DNI/NIE/IBAN/email/teléfono/CIF SÍ se cazan. Lo que queda fuera de ese conjunto (`postal_address`) NO |
+| `prompt_injection` | **cubierto** | su rama sin cliente ocurre DESPUÉS del regex |
+| `sql_injection` | **era fail-open total** | `security_pipeline` llamaba y se fiaba. Arreglado con `_regex_only()`. Bug 116 |
+
+Leer la rama aislada lleva a conclusiones falsas en las dos direcciones: se
+"arregló" un fail-open inexistente en `pii_detector` (y el arreglo empeoraba las
+cosas, porque hacía bloquear a los patrones ambiguos) y se pasó por alto uno real
+en `sql_injection`.
+
+Dos cosas más que hay que tener presentes al razonar sobre estas capas:
+
+- **`risk_level` debe ser `"high"` o `"critical"`** al degradar. El pipeline solo
+  rechaza con esos dos valores, así que un `"medium"` pasa igual que un
+  fail-open.
+- **El pipeline se traga las excepciones de cada capa**
+  (`except Exception: logger.warning("... non-blocking")`). Si una capa lanza, se
+  salta entera y la petición sigue. Es deliberado —que un fallo de Groq no tumbe
+  el chat— pero significa que una excepción no controlada dentro de una capa la
+  desactiva en silencio.
+
+### REGLA: los patrones de ataque se describen por FORMA, no por ejemplos
+
+Enumerar cadenas de manual da cobertura aparente. La primera versión de
+`_BLOCKING_PATTERNS` listaba `UNION SELECT` y `' OR '1'='1`, y **8 de 9**
+evasiones triviales la esquivaban: `' OR 'x'='x`, `UNION ALL SELECT`,
+`UNION/**/SELECT`, `; DELETE FROM`, `OR TRUE`, `pg_sleep(`, y la versión
+url-codificada `%27%20OR%201%3D1`.
+
+Al escribir un patrón de ataque, preguntarse **cómo lo escribiría alguien que
+quiere esquivarlo**: separadores alternativos, comentarios intercalados,
+sinónimos del verbo, codificación. Y analizar también el texto decodificado.
+
 ### REGLA: un regex de PII caza lo inequívoco; lo ambiguo es del LLM
 
 Un patrón de `PII_PATTERNS` decide **solo** cuando el texto pasa de 3000
@@ -140,6 +183,33 @@ Siempre `settings.<PROVIDER>_MODEL`. Cuando el proveedor retira un modelo, la
 mitigación debe ser cambiar una env var, no desplegar código. Precedente:
 Bug 106 — `gemini-3-flash-preview` retirado por Google con 6 de 9 call sites
 hardcodeados, así que la env var de Railway no servía de nada.
+
+**Y comprobar un id de modelo es LLAMARLO, no leerlo.** Que el nombre esté en
+`config.py` y coincida con la lista de la consola del proveedor no prueba nada:
+
+```bash
+cd backend && python -c "
+from groq import Groq; from app.config import settings
+c = Groq(api_key=settings.GROQ_API_KEY)
+for m in (settings.GROQ_MODEL, settings.GROQ_MODEL_ROUTER,
+          settings.GROQ_MODEL_SAFETY, settings.GROQ_MODEL_PROMPT_GUARD):
+    try:
+        c.chat.completions.create(model=m, messages=[{'role':'user','content':'hola'}], max_tokens=1)
+        print('OK  ', m)
+    except Exception as e:
+        print('FALLA', m, str(e)[:90])
+"
+```
+
+Distinguir los códigos: **404** = el modelo ya no existe (retirado). **403 con
+`model_permission_blocked_org`** = existe pero hay que habilitarlo en la consola
+del proveedor — ojo, esos aparecen igual en `models.list()`, así que estar en el
+listado no significa poder usarlo.
+
+Precedente: Bug 117 — `llama-3.1-8b-instant` retirado por Groq el 2026-08-16.
+Se revisó la config, coincidía con la lista de activos, se dio por buena, y el
+modelo llevaba seis días devolviendo 404 y tumbando el clasificador de temas
+(que falla cerrado, o sea: chat rechazando TODO).
 
 ## Routers (`app/routers/`)
 
