@@ -59,4 +59,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=150s --retries=3 \
 #
 # ${PORT:-8000}: Railway inyecta PORT y enruta el tráfico ahí; Coolify no la
 # define y cae al 8000 con el que se escribió este fichero.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --timeout-keep-alive 120"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --timeout-keep-alive 120"]
