@@ -107,20 +107,42 @@ devolver "seguro"**: eso la apaga en silencio y sigue figurando en el inventario
 de seguridad como si funcionara.
 
 Antes de dar por bueno un `return ... is_safe=True` en una rama de error,
-**seguir el flujo hasta el llamador**. No todas son fail-open:
+**seguir el flujo hasta el llamador**. El comportamiento sin Groq no es binario:
 
-| Capa | ¿Fail-open sin Groq? | Por qué |
+| Capa | Sin Groq | Detalle |
 |---|---|---|
-| `pii_detector` | **NO** | `detect()` corre el regex por su cuenta y deja mandar a `_HIGH_CONFIDENCE_PII`. Hay red aguas arriba |
-| `prompt_injection` | **NO** | su rama sin cliente ocurre DESPUÉS del regex |
-| `sql_injection` | **SÍ** (Bug 116) | `security_pipeline` llamaba y se fiaba. Arreglado con `_regex_only()` |
+| `pii_detector` | **parcial** | `detect()` corre el regex y deja mandar a `_HIGH_CONFIDENCE_PII`, así que DNI/NIE/IBAN/email/teléfono/CIF SÍ se cazan. Lo que queda fuera de ese conjunto (`postal_address`) NO |
+| `prompt_injection` | **cubierto** | su rama sin cliente ocurre DESPUÉS del regex |
+| `sql_injection` | **era fail-open total** | `security_pipeline` llamaba y se fiaba. Arreglado con `_regex_only()`. Bug 116 |
 
 Leer la rama aislada lleva a conclusiones falsas en las dos direcciones: se
 "arregló" un fail-open inexistente en `pii_detector` (y el arreglo empeoraba las
-cosas) y se pasó por alto uno real en `sql_injection`.
+cosas, porque hacía bloquear a los patrones ambiguos) y se pasó por alto uno real
+en `sql_injection`.
 
-Y al degradar, `risk_level` debe ser `"high"` o `"critical"`: el pipeline solo
-rechaza con esos dos valores, así que un `"medium"` pasa igual que el fail-open.
+Dos cosas más que hay que tener presentes al razonar sobre estas capas:
+
+- **`risk_level` debe ser `"high"` o `"critical"`** al degradar. El pipeline solo
+  rechaza con esos dos valores, así que un `"medium"` pasa igual que un
+  fail-open.
+- **El pipeline se traga las excepciones de cada capa**
+  (`except Exception: logger.warning("... non-blocking")`). Si una capa lanza, se
+  salta entera y la petición sigue. Es deliberado —que un fallo de Groq no tumbe
+  el chat— pero significa que una excepción no controlada dentro de una capa la
+  desactiva en silencio.
+
+### REGLA: los patrones de ataque se describen por FORMA, no por ejemplos
+
+Enumerar cadenas de manual da cobertura aparente. La primera versión de
+`_BLOCKING_PATTERNS` listaba `UNION SELECT` y `' OR '1'='1`, y **8 de 9**
+evasiones triviales la esquivaban: `' OR 'x'='x`, `UNION ALL SELECT`,
+`UNION/**/SELECT`, `; DELETE FROM`, `OR TRUE`, `pg_sleep(`, y la versión
+url-codificada `%27%20OR%201%3D1`.
+
+Al escribir un patrón de ataque, preguntarse **cómo lo escribiría alguien que
+quiere esquivarlo**: separadores alternativos, comentarios intercalados,
+sinónimos del verbo, codificación. Y analizar también el texto decodificado.
+
 ### REGLA: un regex de PII caza lo inequívoco; lo ambiguo es del LLM
 
 Un patrón de `PII_PATTERNS` decide **solo** cuando el texto pasa de 3000

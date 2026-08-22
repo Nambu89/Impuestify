@@ -26,6 +26,7 @@ limpieza.
 
 import logging
 import re
+from urllib.parse import unquote
 
 from pydantic import BaseModel, Field
 
@@ -94,19 +95,28 @@ class SQLInjectionValidator:
     # Es la misma leccion que el Bug 114 con el codigo postal: un patron que
     # describe una forma compartida por texto legitimo no puede bloquear. Esos
     # cinco los sigue evaluando el LLM, que ve la frase entera.
+    # Los patrones son ESTRUCTURALES, no cadenas literales. Una primera version
+    # enumeraba ejemplos de manual (`UNION SELECT`, `' OR '1'='1`) y 8 de 9
+    # evasiones triviales la esquivaban: `' OR 'x'='x`, `UNION ALL SELECT`,
+    # `UNION/**/SELECT`, `; DELETE FROM`, `OR TRUE`, `pg_sleep(`… Enumerar
+    # ejemplos da cobertura aparente; hay que describir la FORMA del ataque.
     _BLOCKING_PATTERNS = [
         re.compile(p, re.IGNORECASE)
         for p in (
-            r"'\s*OR\s*'1'\s*=\s*'1",  # inyeccion clasica '1'='1'
-            r"'\s*OR\s*1\s*=\s*1",  # variante numerica
+            # Tautologia con comillas: cubre '1'='1, 'x'='x, ' OR 1=1
+            r"'\s*OR\s*['\"]?[\w']+['\"]?\s*=\s*['\"]?[\w']+",
             r"\bOR\b\s+\d+\s*=\s*\d+",  # boolean-based blind
-            r";\s*DROP\s+TABLE\b",  # stacked query
-            r"\bUNION\s+SELECT\b",  # union-based
+            r"\bOR\b\s+(?:TRUE|FALSE)\b",  # variante sin comillas
+            # UNION [ALL] SELECT, admitiendo comentario intercalado como
+            # separador (UNION/**/SELECT es la evasion clasica)
+            r"\bUNION\b(?:\s|/\*.*?\*/)+(?:ALL(?:\s|/\*.*?\*/)+)?SELECT\b",
+            # Stacked queries: no solo DROP
+            r";\s*(?:DROP|DELETE|UPDATE|INSERT|TRUNCATE|ALTER|CREATE)\b",
             r"\bWAITFOR\s+DELAY\b",  # time-based blind
+            r"\b(?:PG_)?SLEEP\s*\(",  # time-based (MySQL y PostgreSQL)
             r"\bBENCHMARK\s*\(",  # time-based MySQL
-            r"\bSLEEP\s*\(",  # time-based
             r"\bLOAD_FILE\s*\(",  # lectura de ficheros
-            r"\bINTO\s+OUTFILE\b",  # escritura de ficheros
+            r"\bINTO\s+(?:OUT|DUMP)FILE\b",  # escritura de ficheros
         )
     ]
 
@@ -205,7 +215,14 @@ class SQLInjectionValidator:
         `marker` deja en `violations` POR QUÉ se degradó, para que la caída del
         LLM sea visible en los logs en vez de silenciosa.
         """
-        matched = [p.pattern for p in self._BLOCKING_PATTERNS if p.search(user_input)]
+        # Se analiza el texto crudo Y su version url-decodificada: `%27%20OR%201%3D1`
+        # esquivaba todos los patrones. Decodificar no introduce falsos positivos
+        # con texto fiscal —"IVA 21%" o "100% deducible" no son escapes validos y
+        # `unquote` los deja tal cual—, pero cierra la evasion por codificacion.
+        candidatos = {user_input, unquote(user_input)}
+        matched = [
+            p.pattern for p in self._BLOCKING_PATTERNS if any(p.search(c) for c in candidatos)
+        ]
 
         if not matched:
             return SQLInjectionResult(
