@@ -4,17 +4,26 @@ name: Red Team Nightly (Promptfoo)
 # every night at 02:00 UTC and on every PR that touches security code.
 # Fails if any assertion regresses.
 
+# SIN disparador `pull_request`, a proposito.
+#
+# Esta suite NO prueba el codigo del PR: promptfoo hace peticiones HTTP a
+# `PROMPTFOO_TARGET_URL`, un entorno YA DESPLEGADO (ver el provider en
+# tests/red-team/promptfooconfig.yaml). El workflow no levanta ningun servidor.
+# Por tanto ningun cambio en una rama puede alterar el resultado: se media
+# produccion y se rojeaba el PR.
+#
+# Eso lo convertia en un check permanentemente en rojo que nadie miraba — y asi
+# paso inadvertido seis dias que el chat rechazaba TODAS las preguntas porque
+# Groq habia retirado el modelo del clasificador (Bug 117). Un check que siempre
+# falla no informa de nada.
+#
+# Queda como monitor de produccion (nocturno) y para verificar a mano DESPUES
+# de desplegar (`workflow_dispatch`). Ese es el orden correcto:
+#   mergear -> desplegar -> lanzar este workflow a mano -> comprobar.
 on:
   schedule:
     - cron: "0 2 * * *"
   workflow_dispatch:
-  pull_request:
-    paths:
-      - "backend/app/security/**"
-      - "backend/app/agents/tax_agent.py"
-      - "backend/app/routers/chat_stream.py"
-      - "tests/red-team/**"
-      - ".github/workflows/red-team-nightly.yml"
 
 jobs:
   red-team:

@@ -699,6 +699,19 @@ coincidían con la lista de modelos activos del usuario y se dio por bueno — s
 llamar a ninguno. El que estaba retirado llevaba seis días tumbando el producto.
 Es el mismo error del Bug 109: presencia ≠ comportamiento.
 
+**Por qué el PR no podía arreglarlo (Bug 118, del mismo hilo)**: el workflow
+estaba disparado también en `pull_request`, pero promptfoo hace peticiones HTTP a
+`PROMPTFOO_TARGET_URL` — un entorno **ya desplegado**. El job no levanta ningún
+servidor. Comprobado: el commit del arreglo se empujó a las 20:54:14 UTC y el run
+arrancó a las 20:54:32 con ese código dentro… y falló idéntico, porque medía
+producción.
+
+O sea: **ningún cambio en una rama podía cambiar el resultado**. El check estaba
+condenado a salir en rojo en todos los PR, y por eso nadie lo miraba. Se retira
+el disparador `pull_request` y se deja como monitor nocturno de producción +
+`workflow_dispatch` para verificar a mano tras desplegar. El orden correcto es:
+mergear → desplegar → lanzar el workflow → comprobar.
+
 **Pendiente**: la cuota diaria de Groq (200.000 tokens/día, tier gratuito) se
 agotó **dos veces** el 2026-08-22 durante esta sesión. Con el clasificador
 fallando cerrado, agotar la cuota = apagón del chat. Vigilar o subir de plan.

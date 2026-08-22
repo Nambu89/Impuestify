@@ -15,6 +15,8 @@
 - **Fix**: `GROQ_MODEL_ROUTER` → `openai/gpt-oss-20b` (reemplazo oficial; hubo que habilitarlo en la consola: los modelos se listan aunque estén `model_permission_blocked_org`). Además `max_tokens` 120→300 y `reasoning_effort="low"`, porque gpt-oss razona antes del JSON y daba `json_validate_failed`. Subir solo max_tokens NO bastaba.
 - **Verificación**: 10/10 clasificaciones correctas, 0 errores de API, todas `via=groq`. 195 tests verdes.
 - **Decisión de producto**: el clasificador **sigue fallando cerrado** (elegido por Fernando). Implica que cualquier caída de Groq apaga el chat.
+- **Bug 118 (mismo hilo)**: el workflow tenía disparador `pull_request`, pero promptfoo mide un entorno DESPLEGADO (`PROMPTFOO_TARGET_URL`), no el código del PR — el job no levanta servidor. Verificado: el commit del arreglo entró en el run y falló igual. Ningún PR podía ponerlo en verde, así que salía rojo siempre y nadie lo miraba. Retirado el trigger; queda cron nocturno + `workflow_dispatch`.
+- **Cómo verificar el arreglo del Bug 117**: mergear #29 → esperar deploy → lanzar `Red Team Nightly` a mano desde Actions. Debe pasar 33/33.
 - **Pendiente / riesgo vivo**: la cuota diaria de Groq (200k tokens, tier gratuito) se agotó **dos veces** hoy. Con fail-closed, agotar cuota = apagón. Vigilar o subir de plan.
 
 ## [2026-08-22] SECURITY — 🟢 DONE — La capa de SQLi se apagaba sola si Groq fallaba (Bug 116)
