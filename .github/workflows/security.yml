@@ -138,8 +138,27 @@ jobs:
             npm-audit-results.json
 
   # --- Layer 3: Container / filesystem CVE scan (Trivy) ---
-  # Aqua Security Trivy scans the filesystem for known CVEs in OS packages,
-  # language deps and IaC misconfigs. Fails on HIGH/CRITICAL.
+  # Dos pasos a proposito, y el orden importa:
+  #
+  #   1. INVENTARIO: escanea TODO el repo y sube el SARIF a Code Scanning.
+  #      No bloquea (exit-code 0). Ningun hallazgo se oculta.
+  #   2. GATE: mismo escaneo pero sin el `package-lock.json` de la RAIZ.
+  #      Este si bloquea con HIGH/CRITICAL.
+  #
+  # Por que: el lockfile de la raiz declara `ruflo` (+ better-sqlite3, sql.js,
+  # @playwright/test), utillaje local de orquestacion de agentes. Su arbol
+  # transitivo (agentic-flow, hono, protobufjs, @grpc/grpc-js, opentelemetry,
+  # adm-zip, sharp...) aportaba 111 de los 113 hallazgos, incluida 1 CRITICAL.
+  # Nada de eso llega a produccion: el backend se construye desde /backend con
+  # backend/Dockerfile y requirements.txt (sin npm), y el frontend desde
+  # /frontend con su propio package.json. Un gate de CVEs de produccion que
+  # falla por herramientas de desarrollo se vuelve ruido, y un job que siempre
+  # esta rojo es un job que nadie mira: exactamente como estos tres llevaban
+  # semanas sin ejecutarse sin que nadie se diera cuenta.
+  #
+  # Los hallazgos de utillaje NO desaparecen: siguen en la pestana Security via
+  # el SARIF del paso 1. Si molestan de verdad, se arreglan actualizando ruflo,
+  # no relajando el gate del producto.
   trivy:
     name: Trivy CVE Scan
     runs-on: ubuntu-latest
@@ -149,7 +168,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Trivy filesystem scan
+      - name: Trivy — inventario completo (informativo, no bloquea)
         # Los tags de trivy-action van con prefijo "v": "0.28.0" a secas no
         # resuelve y el step fallaba con "Unable to resolve action". Verificado
         # contra la API de GitHub: existe v0.28.0, no 0.28.0. v0.36.0 es la
@@ -160,10 +179,13 @@ jobs:
           scan-ref: '.'
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: '0'
           format: sarif
           output: trivy-results.sarif
 
+      # Las dos subidas van ANTES del gate a proposito, para que el SARIF llegue
+      # a Code Scanning aunque el gate tumbe el job. Llevan `if: always()`
+      # ademas, por si algun dia se reordena.
       - name: Upload Trivy SARIF to GitHub Code Scanning
         if: always()
         uses: github/codeql-action/upload-sarif@v3
@@ -177,6 +199,27 @@ jobs:
         with:
           name: trivy-results
           path: trivy-results.sarif
+
+      - name: Trivy — gate sobre lo que se despliega
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: '.'
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          # Lista NEGRA, no blanca, y a proposito: se sigue escaneando todo el
+          # repo menos este fichero, asi que cualquier codigo o manifiesto nuevo
+          # queda cubierto por defecto (fail-closed) sin tener que acordarse de
+          # anadirlo aqui.
+          #
+          # `./package-lock.json` ancla en la raiz del target. La doc de Trivy
+          # (docs/configuration/skipping) es explicita: los patrones siguen la
+          # sintaxis doublestar, `./fichero` casa SOLO en la raiz y
+          # `**/fichero` casaria a cualquier profundidad. Es decir: esto NO
+          # excluye frontend/package-lock.json, que si se despliega.
+          skip-files: './package-lock.json'
+          format: table
 
   # --- Layer 4: DAST (weekly only) ---
   dast:
