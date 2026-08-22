@@ -1056,8 +1056,25 @@ async def ask_question_stream(
             logger.info("Stream cancelled by client")
             callback.close()
         except Exception as e:
+            # El detalle tecnico va SOLO al log. `str(e)` acaba en la UI: el
+            # frontend mete este `data` tal cual en el estado de error y se lo
+            # ensena al usuario (useStreamingChat.ts, case 'error').
+            #
+            # Asi es como un AttributeError interno estuvo ocho semanas
+            # mostrandose a los usuarios como respuesta del chat (Bug 119), y
+            # como el red-team pudo leerlo desde fuera. Filtrar trazas es la
+            # misma clase de fuga que emitir `pipeline_result.reason` en vez de
+            # `rejection_message` (regla del Bug 104).
+            #
+            # Mismo criterio que `defensia.py`, que ya emite mensajes genericos.
             logger.error(f"Stream error: {e}", exc_info=True)
-            yield {"event": "error", "data": str(e)}
+            yield {
+                "event": "error",
+                "data": (
+                    "Ha ocurrido un error procesando tu consulta. "
+                    "Vuelve a intentarlo en unos segundos."
+                ),
+            }
             yield {"event": "done", "data": ""}
         finally:
             callback.close()
