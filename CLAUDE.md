@@ -80,6 +80,42 @@ TaxIA/
 - [ ] New env vars added to `.env.example`
 - [ ] Security considerations addressed
 
+## Squad de agentes (OBLIGATORIO delegar)
+
+Los agentes viven en `.claude/agents/*.md` y **no dependen de ninguna herramienta
+externa** (RuFlo se retiró el 2026-08-23 y no se perdió ninguno).
+
+**Regla dura: no hacer solo lo que tiene dueño.** Antes de arreglar un bug,
+construir una herramienta, escribir tests o tocar GitHub, invocar al agente del
+dominio con la herramienta `Agent`. El agente arranca con contexto limpio, que es
+justo lo que evita los errores de sesión larga.
+
+| Tarea | Agente | Tipo |
+|---|---|---|
+| Bug o feature de backend, FastAPI, Turso | `backend-architect` | proyecto |
+| Python puro: debugging, async, optimización | `python-pro` | proyecto |
+| React, TS, Vite, UX, PWA | `frontend-dev` | proyecto |
+| Probar como usuario real (Playwright) | `qa-tester` | proyecto |
+| Verificar un plan ANTES de ejecutarlo | `plan-checker` | proyecto |
+| Verificar la implementación DESPUÉS | `verifier` | proyecto |
+| Documentación, auditoría de docs | `doc-auditor` | proyecto |
+| Descargar normativa oficial (AEAT/BOE) | `doc-crawler` | proyecto |
+| Roadmap, decisiones, delegación | `pm-coordinator` | proyecto |
+| Análisis de competencia | `competitive-intel` | proyecto |
+| **Tests: escribirlos o ampliarlos** | `tester` / `tdd-london-swarm` | built-in |
+| **PRs: revisión, merge, ciclo de vida** | `pr-manager` | built-in |
+| **Issues de GitHub, triaje** | `issue-tracker` | built-in |
+| **Releases y versionado** | `release-manager` | built-in |
+| **Revisión de código adversarial** | `reviewer` / `code-review-swarm` | built-in |
+| Auditoría de seguridad | `security-auditor` | built-in |
+| Búsqueda amplia en el repo | `Explore` | built-in |
+
+Los marcados **built-in** no tienen fichero en `.claude/agents/` — se invocan por
+nombre igual, con `subagent_type`.
+
+Cuándo NO delegar: una pregunta conversacional, un cambio de una línea ya
+localizado, o cuando el usuario pide explícitamente que lo haga yo.
+
 ## Quality Gates (OBLIGATORIO)
 
 Todo plan de implementacion debe pasar por quality gates automaticos:
@@ -200,7 +236,7 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 - **Multi-Pagadores IRPF**: PagadorItem model, obligacion declarar Art.96 LIRPF
 - **Calculadora Retenciones IRPF** (NEW): `/calculadora-retenciones` publica, algoritmo AEAT 2026, 28 tests, lead magnet SEO
 - **Share Conversations** (NEW): `/shared/:token` enlaces publicos con anonimizacion PII (DNI, IBAN, importes)
-- **RuFlo V3.5**: Workflow multi-agente + Superpowers + GSD patterns (~90% capacidad)
+- **RuFlo RETIRADO (2026-08-23)**: aportaba 98 de las 100 alertas de code-scanning (arbol de utillaje que no se despliega) y no se usaba. Los agentes NO dependian de el: `impuestify-team.yaml` era solo un mapeo que apuntaba a `.claude/agents/*.md`, que siguen intactos. Ver la seccion "Squad de agentes"
 - **Adaptive Tax Guide by Role**: PARTICULAR (7 steps), CREATOR (8 steps + plataformas/IAE/IVA intracomunitario/withholding/M349), AUTONOMO (8 steps + actividad económica). Adaptive result with role-specific obligations
 - **Net Salary Calculator**: `/calculadora-neto` endpoint. 5 fiscal regimes (Madrid common IVA 21%, Andalucía, Canarias IGIC 7%, Melilla IPSI 4% + 60% deduction, País Vasco 7-tranche foral). SS auto-calculated by income (15 brackets RDL 13/2022). IGIC/IPSI auto-detection. 21 tests PASS. Disclaimer on each response
 - **Crawler**: 90 URLs, 23 territories + Creators/Influencers docs

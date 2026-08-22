@@ -35,10 +35,8 @@
 | `memory/project_social_media.md` | Social Media: LinkedIn + Instagram + TikTok, 3 canales, 12 piezas/semana |
 | `memory/project_creators_segment.md` | Creadores/influencers: research, pricing 49 EUR/mes, XSD gaps, crawler docs |
 | `memory/reference_mission_control.md` | Autensa/Mission Control: dashboard orquestacion agentes IA (referencia futura) |
-| `memory/feedback_ruflo_workflow.md` | RuFlo V3.5: workflow estandar, config, limitaciones Windows, capacidad ~95% |
 | `memory/feedback_secrets_prevention.md` | CRITICO: NUNCA commitear secrets/passwords. Verificar antes de cada git add |
 | `memory/feedback_no_claude_references.md` | CRITICO: NUNCA incluir ruvnet, claude-flow, Claude en commits ni push |
-| `memory/feedback_ruflo_always_route.md` | SIEMPRE rutear tareas por RuFlo antes de delegar a subagentes |
 | `memory/project_security_audit_stack.md` | Plan seguridad: Bandit+Semgrep+ZAP+Nuclei+Trivy (4 capas, $0) |
 | `memory/feedback_requirements_sync.md` | SIEMPRE sincronizar pip install con requirements.txt |
 | `memory/project_branding_update.md` | Sesion 18: nuevo logo, favicon escudo IA, header blanco, colores corporativos |
