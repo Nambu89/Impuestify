@@ -51,6 +51,39 @@ TaxIA/
 | Constants | `UPPER_SNAKE` | `MAX_TOKENS` |
 | Classes | `PascalCase` | `CoordinatorAgent` |
 
+## Despliegue: DOS ramas, DOS productos (OBLIGATORIO)
+
+| Rama | Despliegue | Producto |
+|---|---|---|
+| `main` | Railway (frontend + backend) | **Impuestify** |
+| `demo/fiscal-ia-melilla` | Coolify, VPS Contabo | **Demo Fiscal IA Melilla** (`iamelilla.com`) |
+
+**Mergear a `main` NO llega a la demo.** Coolify despliega la rama demo.
+
+### REGLA DURA: si tocamos la demo de Melilla, fast-forward SIEMPRE
+
+No preguntar ni esperar a que lo pidan. Si la sesión toca la demo, la rama se
+pone al día — al empezar, y otra vez cada vez que se mergee algo de backend a
+`main` durante esa sesión.
+
+```bash
+git fetch origin
+# Debe ser ff PURO: la rama demo no debe tener commits propios
+git merge-base --is-ancestor origin/demo/fiscal-ia-melilla origin/main
+git rev-list --count origin/main..origin/demo/fiscal-ia-melilla   # debe dar 0
+git push origin origin/main:refs/heads/demo/fiscal-ia-melilla
+```
+
+Después, **comprobar el commit en el log de Coolify**: `Importing ... (commit
+sha ...)` debe coincidir con el `main` recién mergeado. Si no coincide, falta el
+ff — no es que "Coolify despliegue código viejo".
+
+Si la rama demo tuviera commits propios, **parar y auditar**: es el escenario que
+dejó bugs vivos tres meses (backport de agosto de 2026).
+
+Precedente: el 2026-08-22/23 se arreglaron tres bugs críticos en `main` (117, 119
+y 120) y ninguno llegó a la demo, que siguió desplegando `f8c8c96` toda la tarde.
+
 ## Git Workflow
 
 - Branch convention: `claude/<descriptor>` for AI-assisted work
@@ -85,10 +118,31 @@ TaxIA/
 Los agentes viven en `.claude/agents/*.md` y **no dependen de ninguna herramienta
 externa** (RuFlo se retiró el 2026-08-23 y no se perdió ninguno).
 
-**Regla dura: no hacer solo lo que tiene dueño.** Antes de arreglar un bug,
-construir una herramienta, escribir tests o tocar GitHub, invocar al agente del
-dominio con la herramienta `Agent`. El agente arranca con contexto limpio, que es
-justo lo que evita los errores de sesión larga.
+### REGLA DURA: el asistente principal es PM. NO toca código.
+
+Quien lleva la conversación actúa como **Project Manager**: entiende el
+problema, lo diagnostica, redacta el encargo y verifica el resultado.
+**No edita ficheros de código.** Eso lo hace el agente del dominio.
+
+Lo que SÍ hace el PM:
+- Investigar y diagnosticar (leer código, logs, docs oficiales, reproducir).
+- Decidir qué hay que hacer y por qué.
+- Redactar el encargo con contexto suficiente para que el agente no tenga que
+  redescubrirlo.
+- Revisar lo que devuelve el agente y aceptarlo o devolverlo.
+- Escribir documentación, memoria y `agent-comms.md`.
+
+Lo que NO hace el PM: `Edit`/`Write` sobre `backend/`, `frontend/`, `scripts/`
+ni tests. Si se ve escribiendo código, **parar y delegar**.
+
+Excepción única: que Fernando lo pida explícitamente ("hazlo tú", "cámbiame esta
+línea").
+
+**Por qué**: cada agente arranca con contexto limpio. En la sesión del
+2026-08-22/23 el PM resolvió ~20 tareas sin invocar ni un subagente, y los
+errores que cometió son exactamente los de contexto saturado: dar por buenos los
+modelos de Groq sin llamarlos, "arreglar" un fail-open que no existía, inventarse
+los nombres de los flags en un test. Delegar no es ceremonia: es higiene.
 
 | Tarea | Agente | Tipo |
 |---|---|---|
@@ -115,6 +169,43 @@ nombre igual, con `subagent_type`.
 
 Cuándo NO delegar: una pregunta conversacional, un cambio de una línea ya
 localizado, o cuando el usuario pide explícitamente que lo haga yo.
+
+### Memoria y aislamiento (configurado el 2026-08-23)
+
+**Memoria propia por agente**: los 10 llevan `memory: project`, que les da
+`.claude/agent-memory/<nombre>/` — persiste entre sesiones y es versionable, así
+que el conocimiento que acumula cada uno se comparte con el equipo por git. No
+confundir con la memoria del PM (`memory/` + `MEMORY.md`), que es otra cosa.
+
+**Aislamiento por worktree**: solo en `backend-architect`, `python-pro` y
+`frontend-dev`. Les da una copia aislada del repo, para que dos agentes que
+escriben código a la vez no se pisen; la copia se descarta sola si no hay
+cambios.
+
+Deliberadamente **sin** worktree:
+
+| Agente | Por qué |
+|---|---|
+| `doc-auditor`, `doc-crawler`, `competitive-intel` | sus ficheros deben aterrizar en el checkout real, no en una copia |
+| `qa-tester` | Playwright depende de las rutas y la config del repo real |
+| `plan-checker`, `verifier` | son de solo lectura, no hay nada que aislar |
+| `pm-coordinator` | por la regla de arriba, el PM no escribe código |
+
+El worktree cuesta ~200-500 ms y disco por agente, así que solo compensa donde
+hay riesgo real de conflicto.
+
+### Coordinación entre agentes
+
+Disponible **sin activar nada**: `SendMessage` permite que un agente con nombre
+mensajee a otro, y cada agente recibe al arrancar la lista de sus hermanos.
+
+**Agent teams** (pizarra de tareas compartida, dependencias entre tareas, buzón,
+*file locking* al reclamar trabajo) requiere
+`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. **NO está activado**: es experimental,
+cuesta bastantes más tokens, `/resume` no restaura compañeros, y en Windows
+Terminal solo funciona el modo *in-process* (los paneles divididos necesitan tmux
+o iTerm2). Activarlo para un caso concreto que se beneficie del paralelismo, no
+como modo permanente.
 
 ## Quality Gates (OBLIGATORIO)
 
