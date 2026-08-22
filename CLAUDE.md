@@ -236,7 +236,7 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 - **Multi-Pagadores IRPF**: PagadorItem model, obligacion declarar Art.96 LIRPF
 - **Calculadora Retenciones IRPF** (NEW): `/calculadora-retenciones` publica, algoritmo AEAT 2026, 28 tests, lead magnet SEO
 - **Share Conversations** (NEW): `/shared/:token` enlaces publicos con anonimizacion PII (DNI, IBAN, importes)
-- **RuFlo RETIRADO (2026-08-23)**: aportaba 98 de las 100 alertas de code-scanning (arbol de utillaje que no se despliega) y no se usaba. Los agentes NO dependian de el: `impuestify-team.yaml` era solo un mapeo que apuntaba a `.claude/agents/*.md`, que siguen intactos. Ver la seccion "Squad de agentes"
+- **RuFlo RETIRADO (2026-08-23)**: aportaba 98 de las 100 alertas de code-scanning (árbol de utillaje que no se despliega) y no se usaba. Los agentes NO dependían de él: `impuestify-team.yaml` era solo un mapeo que apuntaba a `.claude/agents/*.md`, que siguen intactos. Ver la sección "Squad de agentes"
 - **Adaptive Tax Guide by Role**: PARTICULAR (7 steps), CREATOR (8 steps + plataformas/IAE/IVA intracomunitario/withholding/M349), AUTONOMO (8 steps + actividad económica). Adaptive result with role-specific obligations
 - **Net Salary Calculator**: `/calculadora-neto` endpoint. 5 fiscal regimes (Madrid common IVA 21%, Andalucía, Canarias IGIC 7%, Melilla IPSI 4% + 60% deduction, País Vasco 7-tranche foral). SS auto-calculated by income (15 brackets RDL 13/2022). IGIC/IPSI auto-detection. 21 tests PASS. Disclaimer on each response
 - **Crawler**: 90 URLs, 23 territories + Creators/Influencers docs
