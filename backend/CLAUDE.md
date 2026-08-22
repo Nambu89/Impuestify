@@ -184,6 +184,33 @@ mitigación debe ser cambiar una env var, no desplegar código. Precedente:
 Bug 106 — `gemini-3-flash-preview` retirado por Google con 6 de 9 call sites
 hardcodeados, así que la env var de Railway no servía de nada.
 
+**Y comprobar un id de modelo es LLAMARLO, no leerlo.** Que el nombre esté en
+`config.py` y coincida con la lista de la consola del proveedor no prueba nada:
+
+```bash
+cd backend && python -c "
+from groq import Groq; from app.config import settings
+c = Groq(api_key=settings.GROQ_API_KEY)
+for m in (settings.GROQ_MODEL, settings.GROQ_MODEL_ROUTER,
+          settings.GROQ_MODEL_SAFETY, settings.GROQ_MODEL_PROMPT_GUARD):
+    try:
+        c.chat.completions.create(model=m, messages=[{'role':'user','content':'hola'}], max_tokens=1)
+        print('OK  ', m)
+    except Exception as e:
+        print('FALLA', m, str(e)[:90])
+"
+```
+
+Distinguir los códigos: **404** = el modelo ya no existe (retirado). **403 con
+`model_permission_blocked_org`** = existe pero hay que habilitarlo en la consola
+del proveedor — ojo, esos aparecen igual en `models.list()`, así que estar en el
+listado no significa poder usarlo.
+
+Precedente: Bug 117 — `llama-3.1-8b-instant` retirado por Groq el 2026-08-16.
+Se revisó la config, coincidía con la lista de activos, se dio por buena, y el
+modelo llevaba seis días devolviendo 404 y tumbando el clasificador de temas
+(que falla cerrado, o sea: chat rechazando TODO).
+
 ## Routers (`app/routers/`)
 
 | Router | Prefix | Purpose |

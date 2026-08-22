@@ -644,6 +644,67 @@ perfeccionarlo.
 
 ---
 
+## Bug 117 — Groq retiró el modelo del clasificador y el chat rechazaba TODO
+
+**Archivos**: `backend/app/config.py`, `backend/app/security/topic_classifier.py`
+
+**Síntoma**: el workflow `Red Team Nightly (Promptfoo)` fallaba **todas las
+noches desde el 2026-08-17**. Nadie lo miró porque llevaba meses en rojo por
+otra causa (Node 20, arreglado el 2026-08-22).
+
+**Causa raíz**: Groq **retiró `llama-3.1-8b-instant` el 2026-08-16** (doc oficial
+de deprecations; el reemplazo que recomiendan es `openai/gpt-oss-20b`). El red
+team empezó a fallar el **17**. Correlación exacta.
+
+De ese modelo cuelga `GROQ_MODEL_ROUTER`, y de ahí el **clasificador de temas**,
+que falla CERRADO por diseño:
+
+```python
+except Exception as e:
+    logger.error(f"Topic classifier API error: {e}")
+    return TopicCheckResult(is_fiscal=False, ..., classifier="fail_closed")
+```
+
+Modelo retirado → 404 → `is_fiscal=False` → **toda pregunta rechazada como fuera
+de tema**. El chat quedaba inutilizable en el entorno desplegado.
+
+**Cómo se leyó el diagnóstico en los resultados**: 28 «pasan» y 5 «fallan». Los
+28 eran ataques que se esperaba bloquear; los 5, preguntas fiscales legítimas de
+control. Es decir, **se bloqueaba el 100 %**. Un red team con tasa de bloqueo
+total no está pasando: está roto.
+
+**Fix**:
+1. `GROQ_MODEL_ROUTER` → `openai/gpt-oss-20b` (reemplazo oficial). Hubo que
+   habilitarlo en la consola de Groq: los modelos se **listan** aunque estén
+   `model_permission_blocked_org`.
+2. `max_tokens` 120 → 300 y `reasoning_effort="low"`. `gpt-oss-20b` razona antes
+   de emitir el JSON y con 120 devolvía `json_validate_failed` en 2 de cada 3
+   llamadas. **Subir solo `max_tokens` a 800 no bastaba** (1 de 3 seguía
+   fallando): el problema es el razonamiento, no el tamaño. Mismo patrón que el
+   Bug 108 con gpt-5-mini.
+
+**Verificación**: 10/10 clasificaciones correctas y **cero errores de API**;
+todas resueltas `via=groq`, ninguna cayó al fail-closed. Las 5 preguntas que el
+red team reportaba como fallo ahora pasan.
+
+**El agravante que lo hizo invisible**: el clasificador falla cerrado, así que
+sus errores se disfrazan de rechazos legítimos. Un texto off-scope rechazado por
+un 404 se ve igual que uno rechazado por estar fuera de tema. Solo las preguntas
+de control lo delatan — y por eso la suite de red team debe tener casos benignos,
+no solo ataques.
+
+**Lección**: verificar que un id de modelo está en la config NO es verificar que
+responda. En la misma sesión se revisó `GROQ_MODEL*`, se comprobó que los cuatro
+coincidían con la lista de modelos activos del usuario y se dio por bueno — sin
+llamar a ninguno. El que estaba retirado llevaba seis días tumbando el producto.
+Es el mismo error del Bug 109: presencia ≠ comportamiento.
+
+**Pendiente**: la cuota diaria de Groq (200.000 tokens/día, tier gratuito) se
+agotó **dos veces** el 2026-08-22 durante esta sesión. Con el clasificador
+fallando cerrado, agotar la cuota = apagón del chat. Vigilar o subir de plan.
+
+---
+
 ## Lección transversal
 
 Una rama de larga duración para una marca blanca **acumula arreglos genéricos
