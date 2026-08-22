@@ -7,6 +7,41 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-23] ⏭️ TO-DO PRIORITARIO PRÓXIMA SESIÓN — Limpiar los hooks huérfanos de RuFlo
+
+**Delegar en `backend-architect`** (es config de infraestructura del repo, no código de producto). **Pasar por Codex** antes de empujar.
+
+### El problema, ya diagnosticado — NO redescubrirlo
+
+`.claude/settings.json` declara **16 hooks** que apuntan a dos scripts de RuFlo, y RuFlo ya no está:
+
+| Script | Qué hace HOY | Comprobado |
+|---|---|---|
+| `helpers/auto-memory-hook.mjs` | `"Memory package not available — skipping sync"` | ejecutado, exit 0, no escribe nada |
+| `helpers/hook-handler.cjs` | imprime `[NOTIFY]` y sale | ejecutado, exit 0 |
+
+Se disparan en `PreToolUse` (Bash + Write/Edit), `PostToolUse`, `UserPromptSubmit`, `SessionStart`, `SessionEnd`, `PreCompact`, `SubagentStart/Stop` y `Notification`. O sea: **un proceso node en cada llamada a herramienta**, ~81 ms medidos, para nada. En una sesión de ~200 llamadas son ~16 s tirados.
+
+Efecto colateral: **recrean `.claude-flow/logs/notifications.jsonl`** aunque se borre el directorio.
+
+Y ojo — `auto-memory-hook` **NO escribe la memoria del proyecto**. `MEMORY.md` lo mantiene el PM a mano. Ese script dependía del paquete de memoria de claude-flow, que ya no existe.
+
+### Plan propuesto, en este orden
+
+1. **Copia de seguridad** de `.claude/settings.json` y `.claude/helpers/` antes de nada.
+2. Vaciar `hooks` de `settings.json` y quitar la clave `claudeFlow` (ya no gobierna nada). **Validar el JSON antes de guardar** — los hooks se aplican en caliente.
+3. Borrar los ~38 scripts huérfanos de `.claude/helpers/` (`swarm-*`, `v3-*`, `learning-*`, `ddd-tracker`, `pattern-consolidator`…).
+4. Borrar `.claude-flow/`, ya sin nadie que lo recree.
+
+### Cuidado con esto
+
+- **NO borrar en bloque**: `helpers/` tiene ficheros que quizá NO sean de RuFlo — `auto-commit.sh`, `github-safe.js`, `pre-commit`, `post-commit`. Revisar uno a uno.
+- **NO tocar** `permissions`, `attribution` ni `env` de `settings.json`.
+- `settings.local.json` tiene hooks propios **sin revisar**. Mirarlos antes.
+- `.claude/` está en `.gitignore`: esto es config local, no viaja al repo.
+
+---
+
 ## [2026-08-23] PM — 🟢 DONE — Cierre de sesión: RuFlo fuera, reglas nuevas, FF de la demo
 
 - **RuFlo retirado** (PR #35): aportaba 98 de las 100 alertas de code-scanning. Árbol raíz a `found 0 vulnerabilities`. NO se perdió ningún agente — `impuestify-team.yaml` era solo un mapeo a `.claude/agents/`.
