@@ -7,6 +7,16 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
+## [2026-08-22] SECURITY — 🟢 DONE — El regex de PII rechazaba importes como Código Postal
+
+- **Branch**: `claude/fix-cp-falso-positivo` (desde `main` @ `f8c8c96`)
+- **Bug 114**: por encima de 3000 caracteres `detect()` salta el LLM y el regex decide SOLO. Ahí `postal_code` (5 cifras entre 01000 y 52999) rechazaba cualquier consulta con un importe. `_HIGH_CONFIDENCE_PII` no cubre ese camino: solo limita el override, no el caso en que el regex es el único detector.
+- **Fix**: `postal_code` ELIMINADO. Dos vueltas exigiendo contexto fracasaron porque `c.p.` es *corto plazo* en contabilidad: `deuda a corto plazo (C.P.): 30000 EUR` burla el lookbehind y `Enviar a C.P. 28013` se lo come. Es semántica, no forma. `passport` sí se salva con etiqueta (ventana 12) y sube a `_HIGH_CONFIDENCE_PII`.
+- **Falsa alarma descartada**: la rama `if not self.client` NO es fail-open. Verificado sin cliente Groq: DNI, email, IBAN y teléfono se siguen detectando vía el override. Hay test y comentario para que nadie la "arregle".
+- **Verificación**: 30 tests, comprobado que los nuevos fallan contra el código anterior. Tres rondas de revisión externa (Codex): 12 hallazgos, todos incorporados. Dos de ellos cambiaron la solución de raíz.
+- **Groq**: revisados los 4 ids de modelo — `llama-3.1-8b-instant`, `meta-llama/llama-prompt-guard-2-86m`, `openai/gpt-oss-safeguard-20b` (x2). Todos activos, centralizados en `config.py`, sin overrides. Nada que cambiar. Ojo: `meta-llama/llama-guard-4-12b` está activo en Groq pero NO lo usa nadie — `llama_guard.py` corre con `gpt-oss-safeguard-20b`.
+- **Pendiente que genera**: `sql_injection.validate_user_input()` devuelve `is_safe=True` sin usar sus `SUSPICIOUS_PATTERNS` cuando no hay cliente. NO se ha comprobado si, como en PII, hay una red de seguridad aguas arriba. Revisar antes de tocarlo.
+
 ## [2026-08-11] DEVOPS — 🟢 DONE — Railway: los DOS servicios caídos tras el PR #24
 
 - **Branch**: `claude/railway-config-monorepo` (desde `main` @ `c0868bd`)

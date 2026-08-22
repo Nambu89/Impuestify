@@ -73,11 +73,18 @@ a Groq. Dos problemas:
    sus categorías S7 y la ruta de fallback 413/429). Cortocircuitar dejaba
    `call_count == 0`.
 
-Versión final: Groq primero (semántica intacta, tests verdes) + override por
-regex solo con tipos de **alta confianza**. `_HIGH_CONFIDENCE_PII` excluye
-`postal_code` (importes) y `passport` (`[A-Z]{2,3}\d{6,9}` matchea códigos de
-expediente). Ambos siguen contando cuando el regex actúa como detector único
-(input largo o fallo de Groq) — solo se les niega el poder de invalidar al LLM.
+Versión de esta sesión: Groq primero (semántica intacta, tests verdes) +
+override por regex solo con tipos de **alta confianza**. `_HIGH_CONFIDENCE_PII`
+excluía `postal_code` (importes) y `passport` (`[A-Z]{2,3}\d{6,9}` matchea
+códigos de expediente). Ambos seguían contando cuando el regex actúa como
+detector único (input largo o fallo de Groq) — solo se les negaba el poder de
+invalidar al LLM.
+
+> **SUPERADO el 2026-08-22 (Bug 114, más abajo).** Justo ese "siguen contando
+> como detector único" era el agujero: por encima de 3000 caracteres el regex
+> no es un override sino el único juez, y ahí `postal_code` rechazaba cualquier
+> importe. `postal_code` acabó **eliminado** y `passport` exige ahora la
+> etiqueta y **sí** está en `_HIGH_CONFIDENCE_PII`.
 
 **Lección**: portar un fix de seguridad de una rama que no ejecuta la misma
 batería de tests puede importar el bug que esa rama no vio. La demo tenía este
@@ -496,6 +503,73 @@ Nota medida: comparando el tamaño del archivo que subió Railway
 al que resultaría de aplicar `.railwayignore` (99.698.688, −3,74 %), **ese
 fichero no se está aplicando** en los builds actuales. El arreglo es correcto
 igualmente, pero no esperes que cambie nada hasta que Railway lo lea.
+
+---
+
+## Bug 114 — el regex de código postal rechazaba importes (y era irreparable)
+
+**Archivo**: `backend/app/security/pii_detector.py`
+
+**Síntoma**: una consulta de más de 3000 caracteres con cualquier importe entre
+1.000 y 52.999 € se rechazaba entera como PII, tipo `Código Postal`.
+
+**Por qué el guard del Bug 105 no bastaba**: `_HIGH_CONFIDENCE_PII` impide que
+`postal_code` *invalide* el veredicto del LLM, pero no cubre el caso en que el
+regex no es un override sino el **único detector**. `detect()` salta Groq en
+cuanto el texto pasa de `_REGEX_FALLBACK_THRESHOLD` (3000 chars, para evitar el
+413), y ahí el regex decide solo.
+
+**Por qué no se arregló el patrón**: se intentaron dos vueltas exigiendo
+contexto (`CP`, `código postal`) y ninguna aguanta el castellano de esta app:
+
+| Texto | Qué pasaba |
+|---|---|
+| `deuda a c.p. 30000 EUR` | `c/p` es **corto plazo** en contabilidad |
+| `deuda a corto plazo (C.P.): 30000 EUR` | el paréntesis burla el lookbehind `(?<!a\s)` |
+| `Enviar a C.P. 28013` | ese lookbehind se come un CP legítimo |
+| `CP no consta; renta 30000 EUR` | el conector tiende un puente hasta el importe |
+
+Cada parche abría un agujero por el otro lado, porque distinguir "c.p. de corto
+plazo" de "C.P. postal" es **semántica, no forma**.
+
+**Fix**: eliminar `postal_code` de `PII_PATTERNS`. Un código postal aislado no
+identifica a una persona —señala un barrio—, y si aparece junto a datos que sí
+identifican (DNI, NIE, IBAN, email, teléfono, CIF), esos patrones lo cazan
+igual. En la ruta normal el LLM lee la frase entera y decide por semántica.
+
+**Sustituto — `postal_address`**: quitar `postal_code` dejaba un hueco real que
+detectó la revisión externa: un domicilio completo *sin* ningún otro
+identificador (`D. Juan García, Calle Mayor 1, 28013 Madrid`) pasaba como seguro
+en la ruta de >3000 caracteres. Se cubre con un patrón que describe la **forma de
+una dirección** —código postal **seguido de población**— en vez de un número
+suelto. Un importe va seguido de su moneda o de una preposición, no de un nombre
+propio; de ahí la exclusión explícita de `euros?|eur|dólares?|pesetas?|miles?`,
+sin la cual `ingresos 30000 Euros anuales` casaba. Medido: 5/5 direcciones, 0
+falsos positivos sobre importes.
+
+`postal_address` **no** entra en `_HIGH_CONFIDENCE_PII`: una notificación AEAT
+lleva la dirección de la propia oficina, y bloquear el análisis por eso sería
+absurdo. Distinguir "mi domicilio" de "la sede de la AEAT" es semántica.
+
+**De paso, `passport`**: `[A-Z]{2,3}\d{6,9}` casaba con expedientes y
+referencias del TEAR. Aquí exigir la etiqueta SÍ funciona —"pasaporte" no
+compite con vocabulario contable— con ventana de conector de 12 caracteres
+(con 20 casaba `pasaporte caducado; ref ABC123456`, que son dos datos
+distintos). Ya inequívoco, entra en `_HIGH_CONFIDENCE_PII`.
+
+**Falsa alarma descartada por el camino**: se creyó ver un fail-open en la rama
+`if not self.client` de `_detect_uncached()`, que devuelve `has_pii=False` sin
+mirar el regex. No lo es: quien llama es `detect()`, que ante ese `has_pii=False`
+ejecuta el regex y deja mandar a `_HIGH_CONFIDENCE_PII`. Verificado sin cliente
+Groq — DNI, email, IBAN y teléfono se siguen detectando. Degradar ahí a
+`_regex_only()` haría contar TODOS los patrones y convertiría los ambiguos en
+bloqueantes. Hay un test y un comentario que fijan ese contrato.
+
+**Lección**: un regex debe cazar lo **inequívoco** y callarse ante lo ambiguo.
+Si hacen falta tres rondas de parches para que un patrón distinga dos
+significados de la misma cadena, el patrón sobra: eso es trabajo del LLM, que ve
+la frase entera. La respuesta correcta acabó siendo **borrar código**, no
+perfeccionarlo.
 
 ---
 
