@@ -120,21 +120,7 @@ export function issueTestTokens(user: { sub: string; email: string } = TEST_USER
   // El refresh NUNCA cae de vuelta al access: llevan `type` distinto y
   // `verify_token(..., token_type=refresh)` lo rechazaria. Si no se puede
   // firmar uno propio, se deja vacio y no se escribe en localStorage.
-  const refresh =
-    process.env.E2E_REFRESH_TOKEN ||
-    (secret
-      ? sign(
-          {
-            sub: user.sub,
-            email: user.email,
-            iat,
-            exp: iat + 7 * 24 * 60 * 60,
-            type: 'refresh',
-            jti: `e2e-${iat}-${Math.random().toString(36).slice(2, 10)}`,
-          },
-          secret
-        )
-      : '')
+  const refresh = process.env.E2E_REFRESH_TOKEN || ''
 
   return { access, refresh }
 }
