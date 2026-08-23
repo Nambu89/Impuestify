@@ -168,8 +168,7 @@ coherencia con la calculadora pública del frontend.""",
                 "retenciones_agrario": {
                     "type": "number",
                     "description": (
-                        "Sección II — Retenciones e ingresos a cuenta del "
-                        "TRIMESTRE (casilla 10)."
+                        "Sección II — Retenciones e ingresos a cuenta del TRIMESTRE (casilla 10)."
                     ),
                 },
                 "es_profesional": {
@@ -232,7 +231,13 @@ _TRIMESTRE_PLAZO = {
 
 
 def _fmt(amount: float) -> str:
-    return f"{amount:,.2f}"
+    """Formatea en estilo espanol: 1.234,56 (no 1,234.56).
+
+    La respuesta va directa al usuario en castellano: el punto es el separador
+    de millares y la coma el decimal. Mismo helper que en `modelo_131_tool`.
+    """
+    formatted = f"{abs(amount):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"-{formatted}" if amount < 0 else formatted
 
 
 def _build_dispensa_response(
@@ -545,7 +550,7 @@ async def calculate_modelo_130_tool(
         )
 
         logger.info(
-            "Modelo 130 sección I: %s %s, ingresos=%s, gastos=%s, " "neto=%s, resultado=%s",
+            "Modelo 130 sección I: %s %s, ingresos=%s, gastos=%s, neto=%s, resultado=%s",
             _TRIMESTRE_LABEL[trimestre],
             year,
             casillas["01_ingresos_acumulados"],

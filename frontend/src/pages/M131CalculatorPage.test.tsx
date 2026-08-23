@@ -273,6 +273,43 @@ describe('M131CalculatorPage — lo que se envia al backend', () => {
     })
 })
 
+describe('M131CalculatorPage — los importes sueltos no bloquean el formulario', () => {
+    beforeEach(() => {
+        calculateMock.mockReset()
+        hookState.result = null
+        hookState.loading = false
+        hookState.error = null
+    })
+
+    // Con `type=number`, un `step` de 100 o de 10 marca invalido cualquier
+    // importe que no sea multiplo y el navegador bloquea el envio del
+    // formulario ENTERO, sin decir por que. Es una calculadora publica: 18.450
+    // EUR es un rendimiento perfectamente normal.
+    it.each([
+        [/Rendimiento neto de módulos anual/i, '18450'],
+        [/Retenciones soportadas del trimestre/i, '1234.56'],
+    ])('acepta %s con un importe que no es multiplo del step', async (etiqueta, importe) => {
+        const user = userEvent.setup()
+        renderPage()
+        const campo = screen.getByLabelText(etiqueta) as HTMLInputElement
+        await user.type(campo, importe)
+        expect(campo.validity.stepMismatch).toBe(false)
+        expect(campo.checkValidity()).toBe(true)
+    })
+
+    it('el numero de asalariados conserva su step: cuenta personas, no euros', async () => {
+        const user = userEvent.setup()
+        renderPage()
+        const campo = screen.getByLabelText(/Número de asalariados/i) as HTMLInputElement
+        expect(campo.getAttribute('step')).toBe('1')
+        // Y ademas se redondea al vuelo, asi que un 1,5 tecleado nunca llega a
+        // invalidar el formulario: el backend lo tipa como `int`.
+        await user.type(campo, '1.5')
+        expect(campo.value).toBe('1')
+        expect(campo.checkValidity()).toBe(true)
+    })
+})
+
 describe('M131CalculatorPage — rendimiento del ejercicio anterior (tres estados)', () => {
     beforeEach(() => {
         calculateMock.mockReset()

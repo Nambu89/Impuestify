@@ -356,12 +356,21 @@ export default function M131CalculatorPage() {
                                             </label>
                                             <div className="m130-input-row">
                                                 <Euro size={16} className="m130-input-icon" />
+                                                {/* `step="any"` en TODOS los campos de
+                                                    dinero de esta pagina. Con `type=number`
+                                                    un step de 100 o de 10 marca invalido
+                                                    cualquier importe que no sea multiplo
+                                                    —18.450 EUR lo es— y el navegador
+                                                    bloquea el envio del formulario ENTERO
+                                                    sin explicar por que. El unico campo que
+                                                    conserva su step es el de asalariados,
+                                                    que cuenta personas y es entero. */}
                                                 <input
                                                     id="rendimiento"
                                                     type="number"
                                                     className="m130-input"
                                                     min={0}
-                                                    step={100}
+                                                    step="any"
                                                     placeholder="0"
                                                     value={rendimientoNeto || ''}
                                                     onChange={(e) =>
@@ -406,13 +415,9 @@ export default function M131CalculatorPage() {
                                             </label>
                                             <div className="m130-input-row">
                                                 <Euro size={16} className="m130-input-icon" />
-                                                {/* `step="any"`: con un step de 100 el
-                                                    navegador marca inválido cualquier
-                                                    importe que no sea múltiplo y bloquea
-                                                    el envío del formulario entero. Sin
-                                                    `min`: un ejercicio anterior en
+                                                {/* Sin `min`: un ejercicio anterior en
                                                     pérdidas es un dato válido y entra en
-                                                    el primer tramo. */}
+                                                    el primer tramo de la minoración. */}
                                                 <input
                                                     id="rend-anterior"
                                                     type="number"
@@ -465,7 +470,7 @@ export default function M131CalculatorPage() {
                                                 type="number"
                                                 className="m130-input"
                                                 min={0}
-                                                step={100}
+                                                step="any"
                                                 placeholder="0"
                                                 value={volumenIngresos || ''}
                                                 onChange={(e) =>
@@ -495,7 +500,7 @@ export default function M131CalculatorPage() {
                                             type="number"
                                             className="m130-input"
                                             min={0}
-                                            step={10}
+                                            step="any"
                                             placeholder="0"
                                             value={retenciones || ''}
                                             onChange={(e) =>
@@ -521,7 +526,7 @@ export default function M131CalculatorPage() {
                                             type="number"
                                             className="m130-input"
                                             min={0}
-                                            step={10}
+                                            step="any"
                                             placeholder="0"
                                             disabled={trimestre === 1}
                                             value={pagosAnteriores || ''}

@@ -466,3 +466,21 @@ async def test_casilla_13_cero_explicito_si_minora():
     assert result["success"] is True
     assert result["deduccion_80bis"] == 100.0
     assert result["resultado_final"] == 1900.0
+
+
+@pytest.mark.asyncio
+async def test_importes_en_formato_espanol():
+    """Los importes se escriben 30.000,00 y no 30,000.00.
+
+    La respuesta va directa al usuario en castellano: el punto es el separador
+    de millares y la coma el decimal. Mismo criterio que el tool del 131.
+    """
+    result = await calculate_modelo_130_tool(
+        trimestre=1,
+        ingresos_computables=30000,
+        gastos_deducibles=0,
+    )
+    assert result["success"] is True
+    txt = result["formatted_response"]
+    assert "30.000,00 EUR" in txt
+    assert "30,000.00" not in txt
