@@ -10,6 +10,7 @@ importes mal calculados para cualquiera que entre desde la web.
 
 import pytest
 from fastapi import FastAPI
+from fastapi.responses import Response
 from fastapi.testclient import TestClient
 from slowapi.errors import RateLimitExceeded
 
@@ -21,7 +22,7 @@ from app.security.rate_limiter import limiter
 def client():
     app = FastAPI()
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, lambda request, exc: None)
+    app.add_exception_handler(RateLimitExceeded, lambda request, exc: Response(status_code=429))
     app.include_router(router)
     return TestClient(app)
 
