@@ -307,19 +307,18 @@ async def test_agraria_ceuta_melilla(calc):
 
 
 @pytest.mark.asyncio
-async def test_agraria_con_retenciones_y_pagos(calc):
-    """Agraria con retenciones 100 y pagos previos 50.
+async def test_agraria_con_retenciones(calc):
+    """Agraria con retenciones de 100.
 
-    Cuota 200, sin reducción → 200 - 100 - 50 = 50.
+    Cuota 200, sin reducción → 200 - 100 = 100.
     """
     r = await calc.calculate(
         quarter=3,
         actividad_tipo="agraria",
         volumen_ingresos_trimestre=10000,
         retenciones_trimestre=100,
-        pagos_anteriores=50,
     )
-    assert r["resultado"] == 50.0
+    assert r["resultado"] == 100.0
 
 
 # ===========================================================================
@@ -472,16 +471,15 @@ async def test_complementaria_resta_resultado_anterior(calc):
 
 @pytest.mark.asyncio
 async def test_resultado_negativo_se_clipa_a_cero(calc):
-    """Si retenciones + pagos > cuota, resultado = 0 (no negativo)."""
+    """Si las retenciones superan la cuota, resultado = 0 (no negativo)."""
     r = await calc.calculate(
         quarter=2,
         actividad_tipo="empresarial",
         rendimiento_neto_modulos_anual=10000,
         num_asalariados=0,
         retenciones_trimestre=500,
-        pagos_anteriores=200,
     )
-    # cuota 200, retenciones 500, pagos 200 → max(0, 200-500-200) = 0
+    # cuota 200, retenciones 500 → max(0, 200-500) = 0
     assert r["resultado"] == 0
 
 
@@ -539,7 +537,10 @@ async def test_estructura_respuesta_completa(calc):
         "07_reducciones",
         "08_resultado_tras_reducciones",
         "09_retenciones_trimestre",
-        "10_pagos_anteriores",
+        # No hay "10_...": los pagos fraccionados de trimestres anteriores no
+        # se deducen en el 131 (ver el bloque de regresión al final). El hueco
+        # es deliberado — renumerar 11 y 12 rompería a los consumidores de la
+        # API sin ganar nada, porque el prefijo ya es arbitrario.
         "11_complementaria",
         "12_resultado_final",
     }
@@ -547,3 +548,143 @@ async def test_estructura_respuesta_completa(calc):
     assert "tipo_pct" in r["desglose"]
     assert "criterio_tipo" in r["desglose"]
     assert "plazo" in r
+
+
+# ===========================================================================
+# REGRESIÓN — el 131 NO deduce los pagos fraccionados de trimestres anteriores
+# ===========================================================================
+#
+# La calculadora aceptó durante un tiempo un parámetro `pagos_anteriores` y lo
+# restaba del resultado. Era un error de bulto: hacía que el contribuyente
+# ingresara MENOS de lo debido, y se agravaba trimestre a trimestre.
+#
+# Fundamento (art. 110 RIRPF, RD 439/2007, texto consolidado del BOE):
+#
+#   - Letra 1.a) — estimación DIRECTA, que es el Modelo 130 y NO este:
+#     "el 20 por ciento del rendimiento neto correspondiente al período de
+#     tiempo transcurrido desde el primer día del año hasta el último día del
+#     trimestre" — base ACUMULADA. Y sólo por eso añade: "De la cantidad
+#     resultante por aplicación de lo dispuesto EN ESTA LETRA se deducirán los
+#     pagos fraccionados que [...] habría correspondido ingresar en los
+#     trimestres anteriores del mismo año". El mandato está literalmente
+#     acotado a la letra a). Es la casilla [05] del DR130 ("A deducir: De los
+#     trim. anteriores, suma de los importes").
+#
+#   - Letra 1.b) — estimación OBJETIVA, apartados I y II de ESTE modelo: el
+#     4/3/2 % se aplica sobre "los rendimientos netos resultantes de la
+#     aplicación de dicho método EN FUNCIÓN DE LOS DATOS-BASE DEL PRIMER DÍA
+#     DEL AÑO". La base es idéntica en los cuatro trimestres: no acumula nada,
+#     luego no hay nada que descontar.
+#
+#   - Letra 1.c) — agrarias, apartado III: "el 2 por ciento del volumen de
+#     ingresos DEL TRIMESTRE". Tampoco acumula.
+#
+#   - Apartado 3 — lista CERRADA de lo deducible: a) y b) retenciones e
+#     ingresos a cuenta, c) minoración por rendimientos ≤ 12.000 €, d)
+#     deducción por vivienda habitual. Ninguna letra menciona los pagos
+#     fraccionados previos.
+#
+# Y el diseño de registro DR131_2026, apartado "IV. Total liquidación", no
+# tiene casilla para ese concepto: [07] suma de los pagos fraccionados previos
+# DEL TRIMESTRE, [08] retenciones, [09] minoración, [10] Diferencia, [11]
+# resultados NEGATIVOS de trimestres anteriores, [12] préstamos vivienda,
+# [13] Total, [14] resultado a ingresar de las anteriores declaraciones
+# (complementaria), [15] resultado.
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("quarter", [1, 2, 3, 4])
+async def test_ningun_trimestre_resta_pagos_de_trimestres_anteriores(calc, quarter):
+    """El resultado del 3T es el mismo que el del 1T: el 131 no acumula.
+
+    Art. 110.1.b) RIRPF — la base son los datos-base del primer día del año,
+    la misma en los cuatro trimestres.
+    """
+    r = await calc.calculate(
+        quarter=quarter,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=20000,
+        num_asalariados=0,
+    )
+    # 20.000 × 2 % = 400 EUR en CADA trimestre, sin descontar los previos.
+    assert r["resultado"] == 400.0
+    assert "10_pagos_anteriores" not in r["casillas"]
+
+
+@pytest.mark.asyncio
+async def test_pagos_anteriores_se_ignora_y_no_altera_el_resultado(calc):
+    """Un caller antiguo que aún mande `pagos_anteriores` no rompe ni desvía.
+
+    Se absorbe en `**kwargs` y el resultado es idéntico al de no mandarlo. Se
+    ignora en silencio a propósito: rechazarlo rompería a los clientes ya
+    desplegados sin ganar nada, porque el resultado correcto es calculable sin
+    ese dato.
+    """
+    comun = dict(
+        quarter=3,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=20000,
+        num_asalariados=0,
+        retenciones_trimestre=50,
+    )
+    sin_parametro = await calc.calculate(**comun)
+    con_parametro = await calc.calculate(**comun, pagos_anteriores=300)
+
+    assert con_parametro["casillas"] == sin_parametro["casillas"]
+    assert con_parametro["resultado"] == sin_parametro["resultado"] == 350.0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("actividad_tipo", "kwargs", "esperado"),
+    [
+        ("empresarial", {"rendimiento_neto_modulos_anual": 20000, "num_asalariados": 0}, 400.0),
+        ("sin_datos_base", {"volumen_ingresos_trimestre": 8000}, 160.0),
+        ("agraria", {"volumen_ingresos_trimestre": 10000}, 200.0),
+    ],
+)
+async def test_los_tres_apartados_ignoran_los_pagos_previos(calc, actividad_tipo, kwargs, esperado):
+    """Ni el I (110.1.b), ni el II (110.1.b in fine), ni el III (110.1.c)."""
+    r = await calc.calculate(
+        quarter=4,
+        actividad_tipo=actividad_tipo,
+        pagos_anteriores=999,
+        **kwargs,
+    )
+    assert r["resultado"] == esperado
+
+
+@pytest.mark.asyncio
+async def test_la_casilla_14_de_la_complementaria_sigue_deduciendose(calc):
+    """[14] NO es lo mismo que los pagos previos: no se retira con ellos.
+
+    "A deducir: resultado a ingresar de las anteriores declaraciones" [14] va
+    emparejada en el DR131 con el indicador "Declaración complementaria" y el
+    número de justificante de la anterior: es lo ingresado en otra
+    autoliquidación DEL MISMO trimestre.
+    """
+    r = await calc.calculate(
+        quarter=2,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=20000,
+        num_asalariados=0,
+        resultado_anterior_complementaria=150,
+    )
+    assert r["casillas"]["11_complementaria"] == 150.0
+    assert r["resultado"] == 250.0
+
+
+def test_pagos_anteriores_no_es_un_parametro_de_la_calculadora():
+    """La firma no debe volver a declararlo, ni siquiera inerte.
+
+    Los tests de arriba comprueban la aritmética, pero pasarían igual si
+    alguien repusiera el parámetro sin usarlo. Y un parámetro formal vuelve a
+    salir en la firma pública, en el schema del tool y en el formulario: es el
+    camino por el que el campo regresaría.
+    """
+    import inspect
+
+    params = inspect.signature(Modelo131Calculator.calculate).parameters
+    assert "pagos_anteriores" not in params
+    # Y sigue habiendo un **kwargs que lo absorba si un caller viejo lo manda.
+    assert any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())

@@ -46,7 +46,6 @@ const resultApartadoI: M131Result = {
         '07_reducciones': 0,
         '08_resultado_tras_reducciones': 360,
         '09_retenciones_trimestre': 50,
-        '10_pagos_anteriores': 0,
         '11_complementaria': 0,
         '12_resultado_final': 210,
     },
@@ -139,7 +138,6 @@ function casillasBase(): Record<string, number> {
         '07_reducciones': 0,
         '08_resultado_tras_reducciones': 0,
         '09_retenciones_trimestre': 0,
-        '10_pagos_anteriores': 0,
         '11_complementaria': 0,
         '12_resultado_final': 0,
     }
@@ -246,30 +244,35 @@ describe('M131CalculatorPage — lo que se envia al backend', () => {
         expect(calculateMock.mock.calls[0][0].volumen_ingresos_trimestre).toBe(9000)
     })
 
-    it('en el 1T no se envian pagos de trimestres anteriores aunque quede el importe', async () => {
+    // REGRESION: el formulario tuvo un campo "Pagos fraccionados anteriores
+    // del año" que se resta del resultado. No debe volver.
+    //
+    // Art. 110.1 RIRPF (RD 439/2007): solo la letra a) — estimacion DIRECTA,
+    // que es el modelo 130 — manda deducir "los pagos fraccionados que [...]
+    // habria correspondido ingresar en los trimestres anteriores del mismo
+    // año", y lo acota a "la cantidad resultante por aplicacion de lo
+    // dispuesto EN ESTA LETRA". La letra b), que es la de este modelo, calcula
+    // sobre "los datos-base del primer dia del año": no acumula, luego no hay
+    // nada que descontar. El diseño de registro DR131_2026 no tiene casilla
+    // para ese concepto.
+    it('no ofrece campo de pagos fraccionados de trimestres anteriores en ningun trimestre', async () => {
         const user = userEvent.setup()
         renderPage()
-        // El campo solo se habilita fuera del 1T: se teclea en el 3T...
-        await user.click(screen.getByRole('button', { name: /3T/ }))
-        await user.type(screen.getByLabelText(/Pagos fraccionados anteriores/i), '400')
-        // ...y se vuelve al 1T, donde el control se deshabilita pero conserva
-        // el valor. En el 1T no hay trimestres anteriores que restar.
-        await user.click(screen.getByRole('button', { name: /1T/ }))
-        await user.click(screen.getByRole('button', { name: /Calcular Modelo 131/i }))
 
-        const payload = calculateMock.mock.calls[0][0]
-        expect(payload.trimestre).toBe(1)
-        expect(payload.pagos_anteriores).toBe(0)
+        for (const t of [/1T/, /2T/, /3T/, /4T/]) {
+            await user.click(screen.getByRole('button', { name: t }))
+            expect(screen.queryByLabelText(/Pagos fraccionados anteriores/i)).toBeNull()
+        }
     })
 
-    it('fuera del 1T los pagos anteriores si viajan', async () => {
+    it('el payload nunca lleva pagos_anteriores', async () => {
         const user = userEvent.setup()
         renderPage()
         await user.click(screen.getByRole('button', { name: /3T/ }))
-        await user.type(screen.getByLabelText(/Pagos fraccionados anteriores/i), '400')
+        await user.type(screen.getByLabelText(/Rendimiento neto de módulos anual/i), '20000')
         await user.click(screen.getByRole('button', { name: /Calcular Modelo 131/i }))
 
-        expect(calculateMock.mock.calls[0][0].pagos_anteriores).toBe(400)
+        expect(calculateMock.mock.calls[0][0]).not.toHaveProperty('pagos_anteriores')
     })
 })
 

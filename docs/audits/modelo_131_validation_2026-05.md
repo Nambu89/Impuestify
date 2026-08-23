@@ -105,7 +105,7 @@ Donde:
 
 - **Retenciones e ingresos a cuenta del trimestre** (casilla 08).
 - **Deducción por inversión en vivienda habitual** (régimen transitorio pre-2013, casilla con límites específicos).
-- **Pagos fraccionados anteriores ya ingresados** (sólo a efectos arrastre 4T → declaración Renta).
+- ~~**Pagos fraccionados anteriores ya ingresados**~~ — **CORREGIDO (2026-08-24)**: esto era un error de esta auditoría. El 131 **no deduce** los pagos fraccionados de trimestres anteriores y **no tiene casilla** para ellos. El art. 110.1 RIRPF sólo lo manda en su letra a) (estimación directa, Modelo 130, casilla `[05]`), y acota el mandato a *"lo dispuesto EN ESTA LETRA"*; la letra b), que es la de este modelo, calcula sobre *"los datos-base del primer día del año"* y no acumula. Implementarlo hacía que el contribuyente ingresara **de menos**. No reponer el campo.
 
 ### 2.9 Resultado final
 
@@ -258,7 +258,7 @@ Donde:
   6. Territorio (para reducciones Ceuta/Melilla/La Palma 60%).
   7. Rendimiento neto año anterior (para minoración rendimientos bajos).
   8. Retenciones soportadas trimestre.
-  9. Pagos fraccionados anteriores (sólo auxiliar).
+  9. ~~Pagos fraccionados anteriores (sólo auxiliar).~~ **CORREGIDO (2026-08-24)**: no pedir este dato. Ver la corrección de la sección 2.8 — el 131 no lo deduce ni tiene casilla para él.
 
   Output: cuota a ingresar + breakdown casillas + plazo + recordatorio.
 

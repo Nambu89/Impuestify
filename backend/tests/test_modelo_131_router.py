@@ -92,3 +92,40 @@ def test_endpoint_tramo_intermedio(client):
     body = resp.json()
     assert body["desglose"]["minoracion_rendimientos_bajos"] == 25.0
     assert body["resultado_final"] == 335.0
+
+
+def test_endpoint_ignora_pagos_anteriores_de_un_cliente_antiguo(client):
+    """Un frontend sin actualizar sigue mandando `pagos_anteriores`: se ignora.
+
+    El 131 no es acumulativo, así que ese concepto no existe en el modelo:
+    art. 110.1.b) RIRPF calcula sobre "los datos-base del primer día del año",
+    y el mandato de descontar lo ingresado en trimestres anteriores está en la
+    letra a) —estimación directa, Modelo 130—, acotado a "lo dispuesto EN ESTA
+    LETRA". El diseño de registro DR131_2026 no tiene casilla para él.
+
+    Se ignora en silencio, no se rechaza: devolver 422 rompería a los clientes
+    ya desplegados sin ganar nada, porque el resultado correcto es calculable
+    sin ese dato. Lo que NO puede pasar es que siga restándose — hacía que el
+    contribuyente ingresara de menos.
+    """
+    resp = client.post(
+        "/api/modelo-131/calculate",
+        json={**_BASE_BODY, "trimestre": 3, "pagos_anteriores": 500},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    # 18.000 × 2 % = 360 EUR, los mismos que en el 1T y sin restar los 500.
+    assert body["resultado_final"] == 360.0
+    assert "10_pagos_anteriores" not in body["casillas"]
+
+
+def test_pagos_anteriores_no_esta_en_el_schema_del_endpoint():
+    """El request model no debe volver a declararlo, ni siquiera inerte.
+
+    Un campo formal reaparece en el OpenAPI del endpoint público, y de ahí al
+    formulario de la calculadora web. Es el camino por el que el campo
+    regresaría aunque la aritmética siguiera siendo correcta.
+    """
+    from app.routers.modelo_131 import Modelo131Request
+
+    assert "pagos_anteriores" not in Modelo131Request.model_fields

@@ -43,7 +43,11 @@ class Modelo131Request(BaseModel):
     # Modelo131Calculator._minoracion_rendimientos_bajos.
     rendimiento_neto_anterior: float | None = None
     retenciones_trimestre: float = 0.0
-    pagos_anteriores: float = 0.0
+    # NO hay `pagos_anteriores`: el 131 no es acumulativo y esa deducción no
+    # existe en el modelo (art. 110.1.b RIRPF; no hay casilla en el DR131).
+    # Un cliente antiguo que aún lo mande no recibe error — Pydantic ignora
+    # los campos extra por defecto — y obtiene el resultado correcto. Ver el
+    # docstring de `app.utils.calculators.modelo_131`.
     resultado_anterior_complementaria: float = 0.0
 
     # Reducciones territoriales
@@ -90,7 +94,6 @@ async def calculate_modelo_131_endpoint(
             volumen_ingresos_trimestre=body.volumen_ingresos_trimestre,
             rendimiento_neto_anterior=body.rendimiento_neto_anterior,
             retenciones_trimestre=body.retenciones_trimestre,
-            pagos_anteriores=body.pagos_anteriores,
             resultado_anterior_complementaria=body.resultado_anterior_complementaria,
             ceuta_melilla=body.ceuta_melilla,
             la_palma=body.la_palma,

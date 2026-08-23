@@ -133,13 +133,6 @@ garantizar coherencia con la calculadora pública del frontend.""",
                     "type": "number",
                     "description": ("CASILLA 08 — Retenciones e ingresos a cuenta del TRIMESTRE."),
                 },
-                "pagos_anteriores": {
-                    "type": "number",
-                    "description": (
-                        "Pagos fraccionados ya ingresados en trimestres "
-                        "previos del MISMO año. Para 1T siempre 0."
-                    ),
-                },
                 "resultado_anterior_complementaria": {
                     "type": "number",
                     "description": (
@@ -286,13 +279,9 @@ def _build_response(
             f"RIRPF [09]: -{_fmt(desglose['minoracion_rendimientos_bajos'])} EUR"
         )
 
-    # `pagos_anteriores` no tiene casilla en el 131 (ver DIVERGENCIAS en el
-    # docstring de `Modelo131Calculator`): el modelo no es acumulativo.
-    if casillas["10_pagos_anteriores"] > 0:
-        lines.append(
-            f"- Pagos fraccionados de trimestres anteriores: "
-            f"-{_fmt(casillas['10_pagos_anteriores'])} EUR"
-        )
+    # Aquí NO va una línea de "pagos fraccionados de trimestres anteriores":
+    # el 131 no es acumulativo y no existe tal deducción (art. 110.1.b RIRPF,
+    # y no hay casilla en el DR131). Ver el docstring de `modelo_131.py`.
     if casillas["11_complementaria"] > 0:
         lines.append(
             f"- A deducir: resultado a ingresar de las anteriores "
@@ -335,17 +324,23 @@ async def calculate_modelo_131_tool(
     # (art. 110.3.c RIRPF). Un 0.0 explícito sí aplica el primer tramo.
     rendimiento_neto_anterior: float | None = None,
     retenciones_trimestre: float = 0.0,
-    pagos_anteriores: float = 0.0,
     resultado_anterior_complementaria: float = 0.0,
     ceuta_melilla: bool = False,
     la_palma: bool = False,
     restricted_mode: bool = False,
+    **_ignored: Any,
 ) -> dict[str, Any]:
     """
     Wrapper around :class:`Modelo131Calculator` for OpenAI function calling.
 
     Returns a dict with `success`, `formatted_response` and (on success) the
     calculator output.
+
+    `**_ignored` absorbe los argumentos que el modelo pueda inventarse o
+    arrastrar de una conversación previa — en particular `pagos_anteriores`,
+    retirado por no existir en el 131 (ver el docstring de `modelo_131.py`).
+    El despachador llama a este ejecutor con `**function_args` sin filtrar, así
+    que un argumento de más provocaría un `TypeError` en vez de una respuesta.
     """
     # 1) Restriction guard (Particular plan blocks autónomo content)
     if restricted_mode:
@@ -391,7 +386,6 @@ async def calculate_modelo_131_tool(
             volumen_ingresos_trimestre=volumen_ingresos_trimestre,
             rendimiento_neto_anterior=rendimiento_neto_anterior,
             retenciones_trimestre=retenciones_trimestre,
-            pagos_anteriores=pagos_anteriores,
             resultado_anterior_complementaria=resultado_anterior_complementaria,
             ceuta_melilla=ceuta_melilla,
             la_palma=la_palma,
