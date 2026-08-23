@@ -109,10 +109,37 @@ Donde:
 
 ### 2.9 Resultado final
 
-`Casilla 15 = Casilla 13 (cuota tras minoraciones) − Casilla 14 (resultado negativo del trimestre anterior si lo hubo)`
+> ~~`Casilla 15 = Casilla 13 (cuota tras minoraciones) − Casilla 14 (resultado negativo del trimestre anterior si lo hubo)`~~
+>
+> **CORREGIDO (2026-08-24)**: la fórmula es correcta, pero **la `[14]` NO es el
+> "resultado negativo del trimestre anterior"**. Según el diseño de registro
+> `DR131_2026`, la `[14]` es *"A deducir: Resultado a ingresar de las anteriores
+> declaraciones"*, que es la de la **autoliquidación complementaria** — va
+> emparejada en el propio diseño de registro con el indicador *"Declaración
+> complementaria"* y el *"Número justificante declaración anterior"*.
+>
+> El arrastre de resultados **negativos** de trimestres anteriores es la
+> casilla **`[11]`** (*"A deducir: Resultados negativos de trimestres
+> anteriores"*), que va **antes** en el orden de liquidación: `[10]` Diferencia
+> → `[11]` negativos previos → `[12]` préstamos vivienda → `[13]` Total →
+> `[14]` complementaria → `[15]` Resultado.
+>
+> Confundirlas no es inocuo: son los dos únicos conceptos del 131 que miran a
+> declaraciones anteriores, tiran del resultado en el mismo sentido y **no se
+> aplican en los mismos casos**. La `[14]` sólo cuando se presenta
+> complementaria del *mismo* trimestre; la `[11]` cuando un trimestre *previo*
+> del mismo ejercicio salió negativo.
+
+`Casilla 15 = Casilla 13 (Total) − Casilla 14 (resultado a ingresar de las anteriores declaraciones — sólo complementaria)`
 
 - Si > 0 → **a ingresar**.
 - Si ≤ 0 → declaración **negativa** (presentación obligatoria igualmente).
+
+**Ojo con el arrastre**: la `[15]` es de tipo `N` (numérico **con signo**) en el
+diseño de registro. Un resultado negativo debe conservarse con su signo para
+poder deducirse después vía `[11]`; toparlo en cero lo destruye. Es el mismo
+defecto que en el Modelo 130 (gap A5 de su auditoría), y en el 131 sigue **sin
+implementar** — ver la divergencia 2 del docstring de `modelo_131.py`.
 
 ### 2.10 Formas de pago (novedad 2025)
 
