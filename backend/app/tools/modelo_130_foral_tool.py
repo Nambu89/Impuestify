@@ -241,7 +241,7 @@ _TRIMESTRE_LABEL = {1: "1T", 2: "2T", 3: "3T", 4: "4T"}
 
 
 def _fmt(amount: float) -> str:
-    """Formatea en estilo espanol: 1.234,56 (no 1,234.56).
+    """Formatea en estilo español: 1.234,56 (no 1,234.56).
 
     La respuesta va directa al usuario en castellano: el punto es el separador
     de millares y la coma el decimal. Mismo helper que en `modelo_131_tool`.
