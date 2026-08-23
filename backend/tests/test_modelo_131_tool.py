@@ -78,6 +78,103 @@ async def test_caso_e_bar_ceuta():
 
 
 # ===========================================================================
+# Casilla [09] — minoración art. 110.3.c RIRPF: dato ausente vs cero explícito
+# ===========================================================================
+
+
+@pytest.mark.asyncio
+async def test_tool_sin_rendimiento_anterior_no_aplica_minoracion():
+    """Si el LLM no facilita el dato, NO se aplica la minoración [09].
+
+    Art. 110.3.c) RIRPF (RD 439/2007): "Cuando la cuantía de los rendimientos
+    netos de actividades económicas del ejercicio anterior sea igual o inferior
+    a 12.000 euros, [se deducirá] el importe que resulte del siguiente cuadro".
+    La deducción exige que CONSTE la cuantía del ejercicio anterior. Si el tool
+    la asumiera a 0 por defecto, todo usuario que no la mencione en el chat se
+    llevaría 100 EUR/trimestre de minoración que no le corresponde.
+    """
+    result = await calculate_modelo_131_tool(
+        trimestre=1,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=18000,
+        num_asalariados=0,
+        # rendimiento_neto_anterior omitido a propósito
+    )
+    assert result["success"] is True
+    assert result["desglose"]["minoracion_rendimientos_bajos"] == 0.0
+    assert result["desglose"]["rendimiento_neto_anterior"] is None
+    assert result["resultado_final"] == 360.0
+    assert "[09]" not in result["formatted_response"]
+
+
+@pytest.mark.asyncio
+async def test_tool_cero_explicito_si_aplica_minoracion():
+    """Un 0 explícito es un dato: aplica los 100 EUR del primer tramo.
+
+    Art. 110.3.c) RIRPF, primer tramo: "Igual o inferior a 9.000 euros ...
+    100". Cero es igual o inferior a 9.000 y la norma no lo excluye, así que
+    el autónomo que declara un ejercicio anterior a cero tiene derecho a la
+    minoración. La versión anterior lo trataba como "sin dato" y le hacía
+    ingresar 100 EUR de más cada trimestre.
+    """
+    result = await calculate_modelo_131_tool(
+        trimestre=1,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=18000,
+        num_asalariados=0,
+        rendimiento_neto_anterior=0.0,
+    )
+    assert result["success"] is True
+    assert result["desglose"]["minoracion_rendimientos_bajos"] == 100.0
+    assert result["desglose"]["rendimiento_neto_anterior"] == 0.0
+    # 18.000 × 2% = 360 − 100 = 260
+    assert result["resultado_final"] == 260.0
+    # La minoración se etiqueta como casilla [09] y cita la norma vigente
+    assert "[09]" in result["formatted_response"]
+    assert "110.3.c" in result["formatted_response"]
+
+
+@pytest.mark.asyncio
+async def test_complementaria_es_la_casilla_14_y_pagos_previos_no_tienen_casilla():
+    """[14] = "A deducir: resultado a ingresar de las anteriores declaraciones".
+
+    En el diseño de registro DR131_2026 la única deducción por declaraciones
+    previas es la [14], que es la de la complementaria. Los pagos fraccionados
+    de trimestres anteriores NO tienen casilla en el 131 (el modelo no es
+    acumulativo, a diferencia del 130), así que no pueden etiquetarse con
+    ninguna: [10] es "Diferencia" y [11] "Resultados negativos de trimestres
+    anteriores".
+
+    Este test fija las ETIQUETAS, no bendice la aritmética: que
+    `pagos_anteriores` se reste sigue en revisión (DIVERGENCIA 1 del docstring
+    de `Modelo131Calculator`).
+    """
+    result = await calculate_modelo_131_tool(
+        trimestre=4,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=18000,
+        num_asalariados=0,
+        pagos_anteriores=80,
+        resultado_anterior_complementaria=40,
+    )
+    assert result["success"] is True
+    txt = result["formatted_response"]
+    assert "anteriores declaraciones [14]" in txt
+    assert "Pagos fraccionados de trimestres anteriores" in txt
+    assert "[10]" not in txt
+    assert "[11]" not in txt
+
+
+def test_schema_rendimiento_anterior_prohibe_rellenar_con_cero():
+    """El schema debe decirle al LLM que OMITA el dato en vez de poner 0."""
+    props = MODELO_131_TOOL["function"]["parameters"]["properties"]
+    desc = props["rendimiento_neto_anterior"]["description"]
+    assert "110.3.c" in desc
+    assert "OMITE" in desc
+    assert "rendimiento_neto_anterior" not in MODELO_131_TOOL["function"]["parameters"]["required"]
+
+
+# ===========================================================================
 # Restricted mode (bloqueo plan Particular)
 # ===========================================================================
 
@@ -198,7 +295,18 @@ def test_schema_ceuta_melilla_y_la_palma_disponibles():
 
 @pytest.mark.asyncio
 async def test_formatted_response_incluye_casillas():
-    """formatted_response debe mencionar las casillas oficiales."""
+    """formatted_response debe mencionar las casillas OFICIALES del modelo.
+
+    Numeración del diseño de registro DR131_2026 de la AEAT
+    (docs/AEAT/modelo-130-2026/DR131_2026.xlsx), apartado I:
+      [01] Suma de rendimientos netos
+      [02] Pago fraccionado previo: suma de resultados
+      [07] Suma de los pagos fraccionados previos del trimestre
+      [15] Resultado de la declaración
+
+    OJO: [12] es "Pago de préstamos para la adquisición de vivienda habitual",
+    NO el resultado; el "Porcentaje aplicable" no tiene casilla numerada.
+    """
     result = await calculate_modelo_131_tool(
         trimestre=2,
         actividad_tipo="empresarial",
@@ -210,15 +318,18 @@ async def test_formatted_response_incluye_casillas():
     # Casillas relevantes deben aparecer en el output
     assert "[01]" in txt
     assert "[02]" in txt
-    assert "[03]" in txt
-    assert "[06]" in txt
-    assert "[12]" in txt
+    assert "[07]" in txt
+    assert "[15]" in txt
+    # El resultado NUNCA debe etiquetarse como [12]
+    assert "[12]" not in txt
     # Plazo
     assert "20 de julio" in txt
 
 
 @pytest.mark.asyncio
 async def test_formatted_response_apartado_iii_menciona_agraria():
+    """Apartado III según DR131_2026: [05] volumen de ingresos del trimestre,
+    [06] pago fraccionado previo del trimestre."""
     result = await calculate_modelo_131_tool(
         trimestre=1,
         actividad_tipo="agraria",
@@ -227,8 +338,8 @@ async def test_formatted_response_apartado_iii_menciona_agraria():
     assert result["success"] is True
     txt = result["formatted_response"].lower()
     assert "agr" in txt  # agrícolas, agrarias, etc.
-    assert "[04]" in result["formatted_response"]
     assert "[05]" in result["formatted_response"]
+    assert "[06]" in result["formatted_response"]
 
 
 @pytest.mark.asyncio

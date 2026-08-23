@@ -7,7 +7,14 @@ export interface M131Input {
     rendimiento_neto_modulos_anual: number
     num_asalariados: number
     volumen_ingresos_trimestre: number
-    rendimiento_neto_anterior: number
+    /**
+     * Rendimiento neto del ejercicio ANTERIOR. Es el dato de partida de la
+     * minoracion de la casilla [09] (art. 110.3.c RIRPF), no la casilla en si.
+     * `null` = el usuario no ha facilitado el dato -> el backend NO aplica la
+     * minoracion. Un 0 explicito SI la aplica (100 EUR/trimestre), asi que no
+     * enviar 0 como relleno.
+     */
+    rendimiento_neto_anterior: number | null
     retenciones_trimestre: number
     pagos_anteriores: number
     ceuta_melilla: boolean

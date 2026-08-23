@@ -265,3 +265,137 @@ class TestModeloPDFPlaceholders:
     def test_full_modelos_still_in_valid_set(self, modelo):
         """Regression: existing modelos must remain valid after expansion."""
         assert modelo in VALID_MODELOS
+
+
+# ===========================================================================
+# Modelo 131 — etiquetas de casilla contra el diseño de registro oficial
+# ===========================================================================
+
+
+def _render_131_texts(generator, data: dict) -> list[str]:
+    """Renderiza `_render_131` y devuelve el texto plano de todas las celdas.
+
+    Se inspecciona el `story` de ReportLab en vez del PDF final porque el texto
+    va comprimido en los streams del PDF y no se puede buscar en los bytes.
+    """
+    generator._setup_styles()
+    story: list = []
+    generator._render_131(story, data)
+
+    texts: list[str] = []
+    for element in story:
+        rows = getattr(element, "_cellvalues", None)
+        if rows:
+            for row in rows:
+                texts.extend(str(cell) for cell in row)
+        else:
+            texts.append(str(getattr(element, "text", element)))
+    return texts
+
+
+class TestModelo131Casillas:
+    """La numeración visible debe ser la de DR131_2026, no la clave del dict.
+
+    Diseño de registro `docs/AEAT/modelo-130-2026/DR131_2026.xlsx`:
+      [01] Suma de rendimientos netos (apartado I)
+      [02] Pago fraccionado previo: suma de resultados (apartado I)
+      [05] Volumen ingresos trimestre (apartado III)
+      [06] Pago fraccionado previo del trimestre (apartado III)
+      [07] Suma de los pagos fraccionados previos del trimestre
+      [08] A deducir: retenciones e ingresos a cuenta
+      [09] Minoración por aplicación de la deducción. Artículo 110.3.c
+      [15] Resultado de la declaración
+
+    OJO: [12] es "Pago de préstamos para la adquisición de vivienda habitual".
+    """
+
+    @pytest.fixture
+    def data_apartado_i(self):
+        return {
+            "apartado": "I",
+            "casillas": {
+                "01_rendimiento_neto_modulos": 18000.0,
+                "02_tipo_aplicable": 2.0,
+                "03_resultado_empresarial": 360.0,
+                "04_volumen_ingresos_agrario": 0.0,
+                "05_cuota_agraria": 0.0,
+                "06_total_cuotas": 360.0,
+                "07_reducciones": 0.0,
+                "08_resultado_tras_reducciones": 360.0,
+                "09_retenciones_trimestre": 50.0,
+                "10_pagos_anteriores": 0.0,
+                "11_complementaria": 0.0,
+                "12_resultado_final": 210.0,
+            },
+            "desglose": {"minoracion_rendimientos_bajos": 100.0},
+            "resultado_final": 210.0,
+        }
+
+    def test_apartado_i_usa_numeracion_oficial(self, generator, data_apartado_i):
+        texts = _render_131_texts(generator, data_apartado_i)
+        joined = " | ".join(texts)
+        assert "01" in texts  # Suma de rendimientos netos
+        assert "02" in texts  # Pago fraccionado previo: suma de resultados
+        assert "07" in texts  # Suma de los pagos fraccionados previos
+        assert "[08]" in joined  # Retenciones e ingresos a cuenta
+        assert "[15]" in joined  # Resultado de la declaración
+
+    def test_resultado_nunca_se_etiqueta_como_casilla_12(self, generator, data_apartado_i):
+        """[12] es la deducción por vivienda habitual, no el resultado."""
+        joined = " | ".join(_render_131_texts(generator, data_apartado_i))
+        assert "[12]" not in joined
+        assert "Resultado de la declaración [15]" in joined
+
+    def test_minoracion_se_etiqueta_como_09_con_la_norma_vigente(self, generator, data_apartado_i):
+        """La minoración es la casilla [09] y cita el art. 110.3.c) RIRPF.
+
+        El art. 80 bis LIRPF está SUPRIMIDO desde el 01/01/2015 (art. 1.55 de
+        la Ley 26/2014), así que no puede aparecer como base legal.
+        """
+        joined = " | ".join(_render_131_texts(generator, data_apartado_i))
+        assert "110.3.c" in joined
+        assert "[09]" in joined
+        assert "80 bis" not in joined
+
+    def test_apartado_iii_usa_numeracion_oficial(self, generator):
+        data = {
+            "apartado": "III",
+            "casillas": {
+                "01_rendimiento_neto_modulos": 0.0,
+                "02_tipo_aplicable": 0.0,
+                "03_resultado_empresarial": 0.0,
+                "04_volumen_ingresos_agrario": 10000.0,
+                "05_cuota_agraria": 200.0,
+                "06_total_cuotas": 200.0,
+                "07_reducciones": 0.0,
+                "08_resultado_tras_reducciones": 200.0,
+                "09_retenciones_trimestre": 0.0,
+                "10_pagos_anteriores": 0.0,
+                "11_complementaria": 0.0,
+                "12_resultado_final": 200.0,
+            },
+            "desglose": {},
+            "resultado_final": 200.0,
+        }
+        texts = _render_131_texts(generator, data)
+        assert "05" in texts  # Volumen ingresos trimestre
+        assert "06" in texts  # Pago fraccionado previo del trimestre
+        assert "07" in texts  # Suma de los pagos fraccionados previos
+
+    def test_complementaria_es_la_casilla_14(self, generator, data_apartado_i):
+        """[14] = "A deducir: resultado a ingresar de las anteriores
+        declaraciones", que es el importe de la complementaria. Los pagos
+        fraccionados de trimestres anteriores NO tienen casilla en el 131."""
+        data = dict(data_apartado_i)
+        data["casillas"] = {
+            **data_apartado_i["casillas"],
+            "10_pagos_anteriores": 80.0,
+            "11_complementaria": 40.0,
+        }
+        joined = " | ".join(_render_131_texts(generator, data))
+        assert "anteriores declaraciones [14]" in joined
+        assert "Pagos fraccionados de trimestres anteriores" in joined
+        # [10] es "Diferencia" y [11] "Resultados negativos de trimestres
+        # anteriores": ninguna de las dos es lo que aquí se está restando.
+        assert "[10]" not in joined
+        assert "[11]" not in joined
