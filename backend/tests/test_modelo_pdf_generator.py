@@ -399,3 +399,278 @@ class TestModelo131Casillas:
         # anteriores": ninguna de las dos es lo que aquí se está restando.
         assert "[10]" not in joined
         assert "[11]" not in joined
+
+
+# ---------------------------------------------------------------------------
+# Contenido del PDF del Modelo 130
+#
+# Los tests de arriba solo comprueban que el fichero empieza por "%PDF-". Eso
+# dejo pasar un fallo de dinero: la pagina de Modelos Trimestrales enviaba a
+# /api/export/modelo-pdf el resultado en crudo de
+# POST /api/declarations/130/calculate, que trae `casillas` / `resultado`,
+# mientras que `_render_130` lee `seccion_i` / `deduccion_80bis` /
+# `resultado_final`. Ninguna clave coincidia, asi que el usuario se descargaba
+# un Modelo 130 con las casillas 01-07 y el resultado a CERO.
+#
+# La traduccion la hace ahora el frontend en
+# `frontend/src/utils/modelo130Pdf.ts`. Estos tests fijan el contrato por el
+# lado del backend y, sobre todo, miran el CONTENIDO del PDF.
+# ---------------------------------------------------------------------------
+
+
+def _extract_pdf_text(pdf_bytes: bytes) -> str:
+    """Texto plano del PDF.
+
+    Los acentos salen mal codificados con las fuentes base de ReportLab, asi
+    que solo se debe assertar sobre cifras, numeros de casilla y etiquetas sin
+    tildes.
+    """
+    import io
+
+    from pypdf import PdfReader
+
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    return "\n".join(page.extract_text() or "" for page in reader.pages)
+
+
+def _eur_amounts(pdf_bytes: bytes) -> list[str]:
+    """Importes del PDF como tokens completos.
+
+    Hace falta porque "0,00 EUR" es SUBCADENA de "30.000,00 EUR": buscar el
+    cero con `in` o contarlo con `.count()` sobre el texto da falsos positivos.
+    """
+    import re
+
+    return re.findall(r"-?\d{1,3}(?:\.\d{3})*,\d{2} EUR", _extract_pdf_text(pdf_bytes))
+
+
+def _casilla_rows(pdf_bytes: bytes) -> dict[str, tuple[str, str]]:
+    """Filas de las tablas de casillas: {concepto: (numero, importe)}.
+
+    Las tablas de ReportLab se extraen como tres lineas consecutivas
+    (numero, concepto, importe), asi que se ancla en el importe y se lee hacia
+    atras. Comprobar solo que un importe aparece EN ALGUN SITIO del PDF no
+    detectaria que las retenciones y los pagos anteriores esten intercambiados.
+    """
+    import re
+
+    lines = [ln.strip() for ln in _extract_pdf_text(pdf_bytes).splitlines() if ln.strip()]
+    amount_re = re.compile(r"^-?\d{1,3}(?:\.\d{3})*,\d{2} EUR$")
+
+    rows: dict[str, tuple[str, str]] = {}
+    for i, line in enumerate(lines):
+        if i < 2 or not amount_re.match(line):
+            continue
+        rows[lines[i - 1]] = (lines[i - 2], line)
+    return rows
+
+
+# Payload tal y como lo construye `buildModelo130PdfData` para Territorio Comun.
+# Caso: ingresos 30.000, gastos 10.000, retenciones 500, pagos anteriores 800,
+# rend. neto del ano anterior 8.000 -> minoracion de 100 EUR (primer tramo del
+# art. 110.3.c RIRPF).
+FRONTEND_130_COMUN = {
+    "seccion_i": {
+        "ingresos_computables": 30000.0,
+        "gastos_deducibles": 10000.0,
+        "rendimiento_neto": 20000.0,
+        "veinte_porciento": 4000.0,
+        "retenciones": 500.0,
+        "pagos_anteriores": 800.0,
+        "resultado_seccion": 2700.0,
+    },
+    "deduccion_80bis": 100.0,
+    "tipo_aplicado": 20,
+    "resultado_final": 2600.0,
+}
+
+# Lo que enviaba la pagina antes del arreglo: el resultado del calculador REST
+# en crudo, sin traducir.
+CALCULATOR_130_RAW = {
+    "territory": "Comun",
+    "quarter": 2,
+    "resultado": 2600.0,
+    "tipo_aplicado": 20.0,
+    "casillas": {
+        "01_ingresos_acumulados": 30000.0,
+        "02_gastos_acumulados": 10000.0,
+        "03_rendimiento_neto": 20000.0,
+        "04_cuota_20pct": 4000.0,
+        "05_retenciones_acumuladas": 500.0,
+        "06_pagos_anteriores": 800.0,
+        "07_resultado_seccion_I": 2700.0,
+        "13_deduccion_art80bis": 100.0,
+        "19_resultado_final": 2600.0,
+    },
+}
+
+
+class TestModelo130PDFContent:
+    """El PDF del Modelo 130 debe llevar los importes, no ceros."""
+
+    def test_130_lleva_los_importes_calculados(self, generator, user_info):
+        importes = _eur_amounts(
+            generator.generate("130", FRONTEND_130_COMUN, user_info, "2T", 2026)
+        )
+
+        for esperado in (
+            "30.000,00 EUR",  # [01] ingresos computables
+            "10.000,00 EUR",  # [02] gastos deducibles
+            "20.000,00 EUR",  # [03] rendimiento neto
+            "4.000,00 EUR",  # [04] cuota
+            "500,00 EUR",  # retenciones e ingresos a cuenta
+            "800,00 EUR",  # pagos fraccionados anteriores
+            "2.700,00 EUR",  # [07] resultado seccion I
+            "100,00 EUR",  # [13] minoracion art. 110.3.c RIRPF
+            "2.600,00 EUR",  # resultado a ingresar
+        ):
+            assert esperado in importes, f"{esperado} no aparece en el PDF: {importes}"
+
+    def test_130_cada_importe_va_en_su_concepto(self, generator, user_info):
+        """
+        Que el importe aparezca en algun sitio no basta: hay que comprobar que
+        cae en SU fila. El riesgo real es cruzar retenciones con pagos
+        anteriores, porque las claves del calculador REST
+        (`05_retenciones_acumuladas`, `06_pagos_anteriores`) van al reves que la
+        numeracion oficial de la AEAT (05 = pagos, 06 = retenciones).
+
+        No se comprueba aqui el NUMERO de casilla de esas dos filas: esa
+        numeracion se corrige en la rama del calculador. Lo que fija este test
+        es la pareja concepto-importe, que es lo que decide el adaptador del
+        frontend.
+        """
+        rows = _casilla_rows(generator.generate("130", FRONTEND_130_COMUN, user_info, "2T", 2026))
+
+        esperado = {
+            "Ingresos computables": ("01", "30.000,00 EUR"),
+            "Gastos deducibles": ("02", "10.000,00 EUR"),
+            "Rendimiento neto": ("03", "20.000,00 EUR"),
+            "20% del rendimiento neto": ("04", "4.000,00 EUR"),
+        }
+        for concepto, par in esperado.items():
+            assert concepto in rows, f"falta la fila {concepto}: {sorted(rows)}"
+            assert rows[concepto] == par, f"{concepto} -> {rows[concepto]}, esperado {par}"
+
+        # Sin numero de casilla: solo la pareja concepto-importe.
+        assert rows["Retenciones e ingresos a cuenta"][1] == "500,00 EUR"
+        assert rows["Pagos fraccionados anteriores"][1] == "800,00 EUR"
+
+    def test_130_no_sale_en_blanco(self, generator, user_info):
+        """Regresion directa del bug: ninguna casilla con datos puede salir a 0."""
+        importes = _eur_amounts(
+            generator.generate("130", FRONTEND_130_COMUN, user_info, "2T", 2026)
+        )
+
+        # Los nueve importes del caso son distintos de cero, asi que el PDF no
+        # puede llevar ni una sola casilla a 0,00.
+        assert importes, "el PDF no lleva ningun importe"
+        assert "0,00 EUR" not in importes, f"el PDF trae casillas a cero: {importes}"
+        assert "2.600,00 EUR" in importes
+
+    def test_130_en_crudo_del_calculador_sale_a_cero(self, generator, user_info):
+        """
+        Contrato: `_render_130` lee `seccion_i`, NO las `casillas` del
+        calculador REST. Enviarle el resultado en crudo produce un PDF vacio,
+        que es exactamente el bug que se arreglo en el frontend
+        (`frontend/src/utils/modelo130Pdf.ts`).
+
+        Si este test empieza a fallar porque el renderizador ha aprendido a leer
+        `casillas`, borralo y simplifica el adaptador del frontend: ya no hara
+        falta traducir.
+        """
+        importes = _eur_amounts(
+            generator.generate("130", CALCULATOR_130_RAW, user_info, "2T", 2026)
+        )
+
+        assert "30.000,00 EUR" not in importes
+        assert "2.600,00 EUR" not in importes
+        assert importes.count("0,00 EUR") >= 5, importes
+
+    def test_130_foral_lleva_los_importes(self, generator, user_info):
+        """
+        Con `variante_foral` el renderizador entra por `_render_130_foral` y
+        pinta las `casillas`. Sin ella pintaba un 130 comun con todas las filas
+        a cero, que es lo que pasaba con Araba, Gipuzkoa, Bizkaia y Navarra.
+        """
+        data = {
+            "variante_foral": "130-araba",
+            "casillas": {
+                "01_ingresos_trimestre": 12000.0,
+                "02_gastos_trimestre": 2000.0,
+                "03_rendimiento_neto_trimestral": 10000.0,
+                "04_cuota_5pct": 500.0,
+                "05_retenciones_trimestre": 150.0,
+                "07_resultado": 350.0,
+            },
+            "tipo_aplicado": 5.0,
+            "resultado_final": 350.0,
+        }
+        rows = _casilla_rows(
+            generator.generate(
+                "130", data, {**user_info, "variante_foral": "130-araba"}, "2T", 2026
+            )
+        )
+
+        assert rows["Ingresos del trimestre"] == ("01", "12.000,00 EUR")
+        assert rows["Gastos del trimestre"] == ("02", "2.000,00 EUR")
+        assert rows["Rendimiento neto trimestral"] == ("03", "10.000,00 EUR")
+        assert rows["Cuota 5%"] == ("04", "500,00 EUR")
+        assert rows["Retenciones del trimestre"] == ("05", "150,00 EUR")
+
+    def test_130_foral_sin_variante_sale_a_cero(self, generator, user_info):
+        """Sin `variante_foral` el pago foral se pinta como un 130 comun vacio."""
+        data = {
+            "casillas": {
+                "01_ingresos_trimestre": 12000.0,
+                "04_cuota_5pct": 500.0,
+                "07_resultado": 350.0,
+            },
+            "resultado_final": 350.0,
+        }
+        importes = _eur_amounts(generator.generate("130", data, user_info, "2T", 2026))
+        assert "12.000,00 EUR" not in importes
+        assert importes.count("0,00 EUR") >= 4, importes
+
+    def test_130_foral_bizkaia_general_pierde_el_numero_de_casilla(self, generator, user_info):
+        """
+        Limitacion conocida, documentada aqui para que sea visible.
+
+        El backend tiene DOS implementaciones forales del 130. La dedicada
+        (`modelo_130_bizkaia.py`, la del chat) numera las casillas; la generica
+        de `/api/declarations/130/calculate`, que alimenta la pagina de Modelos
+        Trimestrales, devuelve claves sin numerar en Bizkaia general/excepcional
+        y en Navarra. `_render_130_foral` saca el numero del prefijo de la
+        clave, asi que la columna Casilla sale como "base" o "pago".
+
+        Lo importante: los IMPORTES, los conceptos y el resultado si son
+        correctos, que es lo que se rompia antes (todo a cero). La solucion de
+        verdad es unificar las dos implementaciones forales del backend; el
+        frontend NO renumera a proposito, porque asignar un numero oficial de
+        casilla por su cuenta seria inventarse una referencia normativa.
+        """
+        data = {
+            "variante_foral": "130-bizkaia",
+            "casillas": {
+                "rend_neto_penultimo": 40000.0,
+                "retenciones_penultimo": 3000.0,
+                "base_calculo": 40000.0,
+                "pago_trimestral": 1250.0,
+            },
+            "tipo_aplicado": 5.0,
+            "regimen": "general",
+            "resultado_final": 1250.0,
+        }
+        pdf = generator.generate(
+            "130", data, {**user_info, "variante_foral": "130-bizkaia"}, "2T", 2026
+        )
+        rows = _casilla_rows(pdf)
+
+        # Los importes llegan y van en su concepto.
+        assert rows["rend neto penultimo"][1] == "40.000,00 EUR"
+        assert rows["retenciones penultimo"][1] == "3.000,00 EUR"
+        assert rows["base calculo"][1] == "40.000,00 EUR"
+        assert rows["pago trimestral"][1] == "1.250,00 EUR"
+        assert "1.250,00 EUR" in _eur_amounts(pdf)
+
+        # Y la limitacion: el numero de casilla no es un numero.
+        assert rows["base calculo"][0] == "base"
