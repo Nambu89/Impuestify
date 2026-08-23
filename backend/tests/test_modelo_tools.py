@@ -277,6 +277,10 @@ async def test_130_basic():
     # Neto = 15000 - 5000 = 10000
     # 20% = 2000
     # Resultado = 2000 (no retenciones ni pagos anteriores)
+    # Sin `rendimiento_neto_previo_anual` NO hay minoracion de casilla 13: el
+    # art. 110.3.c) RIRPF la condiciona a que conste que el rendimiento del
+    # ejercicio anterior fue <= 12.000 EUR, y aqui no consta.
+    assert result["deduccion_80bis"] == 0.0
     assert result["seccion_i"]["rendimiento_neto"] == 10000.0
     assert result["seccion_i"]["veinte_porciento"] == 2000.0
     assert result["resultado_final"] == 2000.0
@@ -392,8 +396,19 @@ async def test_130_deduccion_80bis_graduated():
 
     from app.tools.modelo_130_tool import calculate_modelo_130_tool
 
-    # Test with 9500 EUR previous year income
-    # Bracket: 9000-10000 → 100 - (9500-9000)*0.075 = 100 - 37.5 = 62.5
+    # NO HAY INTERPOLACION. El art. 110.3.c) RIRPF (RD 439/2007, redaccion del
+    # RD 1003/2014) fija la minoracion de la casilla 13 con una tabla de
+    # ESCALONES PLANOS, literal del BOE:
+    #     Igual o inferior a 9.000 ....... 100 EUR
+    #     Entre 9.000,01 y 10.000 ........  75 EUR
+    #     Entre 10.000,01 y 11.000 .......  50 EUR
+    #     Entre 11.000,01 y 12.000 .......  25 EUR
+    # Este test esperaba 62,5 y 6,25, que son la interpolacion lineal que hacia
+    # el tool ANTES del fix A4 de la auditoria de mayo 2026
+    # (docs/audits/modelo_130_validation_2026-05.md, gap A4). Esa formula nunca
+    # estuvo en la norma. NO la restaures.
+
+    # 9.500 EUR cae en el tramo "entre 9.000,01 y 10.000" → 75 EUR planos.
     result = await calculate_modelo_130_tool(
         trimestre=1,
         year=2025,
@@ -403,16 +418,15 @@ async def test_130_deduccion_80bis_graduated():
     )
 
     assert result["success"]
-    assert result["deduccion_80bis"] == 62.5
-    # Neto = 4000, 20% = 800, resultado = 800 - 62.5 = 737.5
-    assert result["resultado_final"] == 737.5
+    assert result["deduccion_80bis"] == 75.0
+    # Neto = 4000, 20% = 800, resultado = 800 - 75 = 725
+    assert result["resultado_final"] == 725.0
 
     print("  Renta anterior: 9500 EUR")
     print(f"  Deduccion 80 bis: {result['deduccion_80bis']} EUR")
     print(f"  Resultado: {result['resultado_final']} EUR")
 
-    # Test with 11500 EUR → bracket 11000-12000
-    # 12.5 - (11500-11000)*0.0125 = 12.5 - 6.25 = 6.25
+    # 11.500 EUR cae en el tramo "entre 11.000,01 y 12.000" → 25 EUR planos.
     result2 = await calculate_modelo_130_tool(
         trimestre=1,
         year=2025,
@@ -422,7 +436,7 @@ async def test_130_deduccion_80bis_graduated():
     )
 
     assert result2["success"]
-    assert result2["deduccion_80bis"] == 6.25
+    assert result2["deduccion_80bis"] == 25.0
 
     print(f"  Renta anterior: 11500 EUR → deduccion: {result2['deduccion_80bis']} EUR")
     print("  PASS")
@@ -457,7 +471,7 @@ async def test_130_no_deduccion_80bis():
 
 
 async def test_130_negative_net():
-    """Test 7: Rendimiento neto negativo → resultado 0"""
+    """Test 7: Rendimiento neto negativo → casilla 03 negativa, resultado 0"""
     print("\n" + "=" * 60)
     print("TEST 130-7: Rendimiento neto negativo")
     print("=" * 60)
@@ -472,12 +486,22 @@ async def test_130_negative_net():
     )
 
     assert result["success"]
-    # Neto = max(3000 - 5000, 0) = 0
-    assert result["seccion_i"]["rendimiento_neto"] == 0.0
+    # La casilla 03 NO se topa en 0: en el diseno de registro oficial de la
+    # AEAT (docs/AEAT/modelo-130-2026/DR130e15v12.xls) el campo "[03]
+    # Rendimiento neto ([01] - [02])" es de tipo "N" = numerico CON SIGNO,
+    # frente al tipo "Num" (sin signo) de las casillas 01, 02 y 04. Lo que se
+    # topa en 0 es la casilla 04 ("20 por 100 del importe de la casilla [03]").
+    # La perdida no se pierde: la seccion I es ACUMULADA desde el 1 de enero
+    # (art. 110.1.a RIRPF), asi que un trimestre en negativo rebaja por
+    # aritmetica el rendimiento neto acumulado del trimestre siguiente.
+    # Este test esperaba 0.0, que borraba la perdida del trimestre.
+    assert result["seccion_i"]["rendimiento_neto"] == -2000.0
+    # Casilla 04 = 20% de max(0, -2000) = 0 → nada que ingresar.
+    assert result["seccion_i"]["veinte_porciento"] == 0.0
     assert result["resultado_final"] == 0.0
 
     print("  Ingresos: 3000, Gastos: 5000")
-    print(f"  Rendimiento neto: {result['seccion_i']['rendimiento_neto']} EUR (floor 0)")
+    print(f"  Rendimiento neto [03]: {result['seccion_i']['rendimiento_neto']} EUR (con signo)")
     print(f"  Resultado: {result['resultado_final']} EUR")
     print("  PASS")
     return True

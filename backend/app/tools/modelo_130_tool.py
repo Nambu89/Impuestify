@@ -118,9 +118,13 @@ coherencia con la calculadora pública del frontend.""",
                 "rendimiento_neto_previo_anual": {
                     "type": "number",
                     "description": (
-                        "Rendimiento neto del AÑO ANTERIOR (Art. 80 bis "
-                        "LIRPF). Si <= 12.000 EUR aplica deducción "
-                        "escalonada (100/75/50/25 EUR/trim)."
+                        "CASILLA 13 — Rendimiento neto de actividades "
+                        "económicas del EJERCICIO ANTERIOR (art. 110.3.c "
+                        "RIRPF). Si <= 12.000 EUR aplica una minoración "
+                        "escalonada (100/75/50/25 EUR/trim, tramos planos). "
+                        "NO lo inventes ni lo pongas a 0: si el usuario no lo "
+                        "ha dicho, OMITE el parámetro y no se aplicará "
+                        "minoración alguna."
                     ),
                 },
                 "tiene_vivienda_habitual": {
@@ -317,7 +321,11 @@ def _build_seccion_i_response(
     # Sección III
     lines.append("**Sección III — Liquidación**")
     if deduccion_80bis > 0:
-        lines.append(f"- Deducción art. 80 bis (rentas bajas) [13]: -{_fmt(deduccion_80bis)} EUR")
+        # Art. 110.3.c) RIRPF — el art. 80 bis LIRPF está suprimido desde 2015.
+        lines.append(
+            f"- Minoración por rendimientos bajos, art. 110.3.c) RIRPF [13]: "
+            f"-{_fmt(deduccion_80bis)} EUR"
+        )
     if casillas.get("16_deduccion_vivienda", 0) > 0:
         lines.append(
             f"- Deducción vivienda habitual [16]: -{_fmt(casillas['16_deduccion_vivienda'])} EUR"
@@ -391,7 +399,7 @@ async def calculate_modelo_130_tool(
     year: int | None = None,
     retenciones_ingresos_cuenta: float = 0.0,
     pagos_fraccionados_anteriores: float = 0.0,
-    rendimiento_neto_previo_anual: float = 0.0,
+    rendimiento_neto_previo_anual: float | None = None,
     tiene_vivienda_habitual: bool = False,
     ceuta_melilla: bool = False,
     resultado_anterior_complementaria: float = 0.0,
