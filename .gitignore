@@ -177,3 +177,7 @@ videos/
 .ruff_cache/
 .mypy_cache/
 htmlcov/
+
+# OpenCode (utillaje local, no se despliega)
+.opencode/
+opencode.json
