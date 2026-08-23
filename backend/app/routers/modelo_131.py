@@ -38,7 +38,10 @@ class Modelo131Request(BaseModel):
     volumen_ingresos_trimestre: float = 0.0
 
     # Comunes
-    rendimiento_neto_anterior: float = 0.0
+    # None = dato no facilitado → SIN minoración casilla [09] (art. 110.3.c
+    # RIRPF). Un 0 explícito sí aplica el primer tramo (100 EUR/trim). Ver
+    # Modelo131Calculator._minoracion_rendimientos_bajos.
+    rendimiento_neto_anterior: float | None = None
     retenciones_trimestre: float = 0.0
     pagos_anteriores: float = 0.0
     resultado_anterior_complementaria: float = 0.0

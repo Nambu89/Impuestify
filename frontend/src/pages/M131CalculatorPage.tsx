@@ -67,7 +67,10 @@ export default function M131CalculatorPage() {
             rendimiento_neto_modulos_anual: rendimientoNeto,
             num_asalariados: numAsalariados,
             volumen_ingresos_trimestre: volumenIngresos,
-            rendimiento_neto_anterior: 0,
+            // Esta pantalla aun no pide el rendimiento del ejercicio anterior:
+            // se envia null (dato no facilitado). Enviar 0 activaria la
+            // minoracion del art. 110.3.c RIRPF para todo el mundo.
+            rendimiento_neto_anterior: null,
             retenciones_trimestre: retenciones,
             pagos_anteriores: pagosAnteriores,
             ceuta_melilla: esCeutaMelilla,

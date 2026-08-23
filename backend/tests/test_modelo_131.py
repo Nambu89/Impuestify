@@ -222,12 +222,69 @@ async def test_caso_g_sin_datos_base(calc):
         (12000.0, 25.0),  # límite tramo 25
         (12001.0, 0.0),  # > 12.000 → 0
         (50000.0, 0.0),  # > 12.000 → 0
-        (0.0, 0.0),  # 0 → no aplica (no hay dato)
+        # 0 EXPLÍCITO = "el ejercicio anterior gané 0 EUR". El art. 110.3.c)
+        # RIRPF dice "igual o inferior a 9.000 euros" y no excluye el cero, así
+        # que sí da derecho al primer tramo.
+        (0.0, 100.0),
+        # None = dato NO facilitado → sin minoración.
+        (None, 0.0),
     ],
 )
 def test_minoracion_rendimientos_bajos(calc, rend_anterior, esperada):
     """La tabla es escalonada PLANA, no interpolación lineal."""
     assert calc._minoracion_rendimientos_bajos(rend_anterior) == esperada
+
+
+# ---------------------------------------------------------------------------
+# Regresión: dato ausente vs cero explícito (casilla [09], art. 110.3.c RIRPF)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_minoracion_no_se_aplica_si_falta_el_dato(calc):
+    """Sin `rendimiento_neto_anterior` NO hay minoración de la casilla [09].
+
+    Art. 110.3.c) RIRPF (RD 439/2007): "Cuando la cuantía de los rendimientos
+    netos de actividades económicas del ejercicio anterior sea igual o inferior
+    a 12.000 euros, [se deducirá] el importe que resulte del siguiente cuadro".
+    La deducción está condicionada a que CONSTE esa cuantía; si el llamante no
+    la facilita no se puede afirmar que se cumpla el supuesto, y aplicarla por
+    defecto rebajaría el pago fraccionado de cualquiera que no rellene el dato.
+    """
+    r = await calc.calculate(
+        quarter=1,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=18000,
+        num_asalariados=0,
+        # rendimiento_neto_anterior omitido a propósito
+    )
+    assert r["desglose"]["minoracion_rendimientos_bajos"] == 0.0
+    assert r["desglose"]["rendimiento_neto_anterior"] is None
+    # 18.000 × 2% = 360, sin minoración
+    assert r["resultado"] == 360.0
+
+
+@pytest.mark.asyncio
+async def test_minoracion_se_aplica_con_cero_explicito(calc):
+    """Un 0 EXPLÍCITO sí es un dato y sí aplica los 100 EUR del primer tramo.
+
+    Art. 110.3.c) RIRPF: primer tramo "Igual o inferior a 9.000 euros ... 100".
+    Cero es igual o inferior a 9.000 y la norma no lo excluye, así que el
+    contribuyente que declara haber tenido un ejercicio anterior a cero tiene
+    derecho a la minoración. Tratar el 0 como "sin dato" —que es lo que hacía
+    esta calculadora— le hacía ingresar 100 EUR de más cada trimestre.
+    """
+    r = await calc.calculate(
+        quarter=1,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=18000,
+        num_asalariados=0,
+        rendimiento_neto_anterior=0.0,
+    )
+    assert r["desglose"]["minoracion_rendimientos_bajos"] == 100.0
+    assert r["desglose"]["rendimiento_neto_anterior"] == 0.0
+    # 360 − 100 = 260
+    assert r["resultado"] == 260.0
 
 
 # ===========================================================================
