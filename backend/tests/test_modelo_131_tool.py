@@ -165,6 +165,60 @@ async def test_complementaria_es_la_casilla_14_y_pagos_previos_no_tienen_casilla
     assert "[11]" not in txt
 
 
+@pytest.mark.asyncio
+async def test_importes_en_formato_espanol():
+    """Los importes se escriben 18.000,00 y no 18,000.00.
+
+    La respuesta va directa al usuario en castellano: el punto es el separador
+    de millares y la coma el decimal.
+    """
+    result = await calculate_modelo_131_tool(
+        trimestre=1,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=18000,
+        num_asalariados=0,
+    )
+    assert result["success"] is True
+    txt = result["formatted_response"]
+    assert "18.000,00 EUR" in txt
+    assert "18,000.00" not in txt
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("num_asalariados", "esperado"),
+    [(0, "2%"), (1, "3%"), (2, "4%")],
+)
+async def test_porcentaje_sin_decimales_ni_euros(num_asalariados, esperado):
+    """El tipo es un porcentaje entero, no un importe ni un 2,0%.
+
+    La misma cifra viaja a tres superficies (chat, PDF y la calculadora
+    publica) y las tres deben decir lo mismo: `2%`, `3%` o `4%`.
+    """
+    result = await calculate_modelo_131_tool(
+        trimestre=1,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=18000,
+        num_asalariados=num_asalariados,
+    )
+    assert result["success"] is True
+    txt = result["formatted_response"]
+    assert f"Porcentaje aplicable: {esperado}" in txt
+    assert "Porcentaje aplicable: 2,00 EUR" not in txt
+    assert f"{esperado[0]}.0%" not in txt
+
+
+@pytest.mark.asyncio
+async def test_apartado_ii_tambien_muestra_el_porcentaje_entero():
+    result = await calculate_modelo_131_tool(
+        trimestre=2,
+        actividad_tipo="sin_datos_base",
+        volumen_ingresos_trimestre=9000,
+    )
+    assert result["success"] is True
+    assert "Porcentaje aplicable: 2%" in result["formatted_response"]
+
+
 def test_schema_rendimiento_anterior_prohibe_rellenar_con_cero():
     """El schema debe decirle al LLM que OMITA el dato en vez de poner 0."""
     props = MODELO_131_TOOL["function"]["parameters"]["properties"]

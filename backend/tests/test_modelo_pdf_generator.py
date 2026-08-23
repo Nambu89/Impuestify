@@ -357,6 +357,18 @@ class TestModelo131Casillas:
         assert "[09]" in joined
         assert "80 bis" not in joined
 
+    def test_porcentaje_no_se_imprime_como_euros(self, generator, data_apartado_i):
+        """El tipo aplicable es un porcentaje, no un importe.
+
+        Iba por `_format_eur` y salia como "2,00 EUR" en un PDF que el usuario
+        presenta. Ademas no es una casilla numerada: en el modelo es el
+        "Porcentaje aplicable" de cada actividad.
+        """
+        texts = _render_131_texts(generator, data_apartado_i)
+        assert "2%" in texts
+        assert "2,00 EUR" not in texts
+        assert "Porcentaje aplicable" in texts
+
     def test_apartado_iii_usa_numeracion_oficial(self, generator):
         data = {
             "apartado": "III",
@@ -381,6 +393,70 @@ class TestModelo131Casillas:
         assert "05" in texts  # Volumen ingresos trimestre
         assert "06" in texts  # Pago fraccionado previo del trimestre
         assert "07" in texts  # Suma de los pagos fraccionados previos
+
+    def test_apartado_ii_usa_numeracion_oficial_y_porcentaje_en_pct(self, generator):
+        """Apartado II: [03] volumen, [04] pago fraccionado previo.
+
+        El porcentaje comparte fila con importes en euros, asi que se comprueba
+        aqui tambien que no salga como "2,00 EUR".
+        """
+        data = {
+            "apartado": "II",
+            "casillas": {
+                "01_rendimiento_neto_modulos": 12000.0,
+                "02_tipo_aplicable": 2.0,
+                "03_resultado_empresarial": 240.0,
+                "04_volumen_ingresos_agrario": 0.0,
+                "05_cuota_agraria": 0.0,
+                "06_total_cuotas": 240.0,
+                "07_reducciones": 0.0,
+                "08_resultado_tras_reducciones": 240.0,
+                "09_retenciones_trimestre": 0.0,
+                "10_pagos_anteriores": 0.0,
+                "11_complementaria": 0.0,
+                "12_resultado_final": 240.0,
+            },
+            "desglose": {},
+            "resultado_final": 240.0,
+        }
+        texts = _render_131_texts(generator, data)
+        joined = " | ".join(texts)
+        assert "03" in texts  # Volumen de ventas o ingresos
+        assert "04" in texts  # Pago fraccionado previo
+        assert "07" in texts  # Suma de los pagos fraccionados previos
+        assert "[15]" in joined
+        assert "[12]" not in joined
+        assert "2%" in texts
+        assert "2,00 EUR" not in texts
+
+    def test_apartado_iii_no_inventa_un_porcentaje(self, generator):
+        """El apartado III no tiene fila de porcentaje: el 2% va en la etiqueta.
+
+        Si se colara `02_tipo_aplicable` (que ahi vale 0,0) saldria un "0%" que
+        contradice el propio concepto de la fila [06].
+        """
+        data = {
+            "apartado": "III",
+            "casillas": {
+                "01_rendimiento_neto_modulos": 0.0,
+                "02_tipo_aplicable": 0.0,
+                "03_resultado_empresarial": 0.0,
+                "04_volumen_ingresos_agrario": 10000.0,
+                "05_cuota_agraria": 200.0,
+                "06_total_cuotas": 200.0,
+                "07_reducciones": 0.0,
+                "08_resultado_tras_reducciones": 200.0,
+                "09_retenciones_trimestre": 0.0,
+                "10_pagos_anteriores": 0.0,
+                "11_complementaria": 0.0,
+                "12_resultado_final": 200.0,
+            },
+            "desglose": {},
+            "resultado_final": 200.0,
+        }
+        texts = _render_131_texts(generator, data)
+        assert "0%" not in texts
+        assert "Pago fraccionado previo del trimestre (2%)" in texts
 
     def test_complementaria_es_la_casilla_14(self, generator, data_apartado_i):
         """[14] = "A deducir: resultado a ingresar de las anteriores

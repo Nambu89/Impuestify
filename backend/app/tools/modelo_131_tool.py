@@ -185,7 +185,9 @@ _TRIMESTRE_MESES = {
 
 
 def _fmt(amount: float) -> str:
-    return f"{amount:,.2f}"
+    """Formatea en estilo espanol: 1.234,56 (no 1,234.56)."""
+    formatted = f"{abs(amount):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"-{formatted}" if amount < 0 else formatted
 
 
 def _territorio_label(territory: str) -> str:
@@ -227,7 +229,7 @@ def _build_response(
                 "**Apartado I — Actividades empresariales en módulos**",
                 f"- Suma de rendimientos netos [01]: "
                 f"{_fmt(casillas['01_rendimiento_neto_modulos'])} EUR",
-                f"- Porcentaje aplicable: {casillas['02_tipo_aplicable']:.1f}% ({criterio})",
+                f"- Porcentaje aplicable: {casillas['02_tipo_aplicable']:.0f}% ({criterio})",
                 f"- Pago fraccionado previo: suma de resultados [02]: "
                 f"{_fmt(casillas['03_resultado_empresarial'])} EUR",
             ]
@@ -248,7 +250,7 @@ def _build_response(
                 "**Apartado II — Actividad empresarial sin datos-base**",
                 f"- Volumen de ventas o ingresos [03]: "
                 f"{_fmt(casillas['01_rendimiento_neto_modulos'])} EUR",
-                f"- Porcentaje aplicable: {casillas['02_tipo_aplicable']:.1f}%",
+                f"- Porcentaje aplicable: {casillas['02_tipo_aplicable']:.0f}%",
                 f"- Pago fraccionado previo [04]: {_fmt(casillas['03_resultado_empresarial'])} EUR",
             ]
         )
