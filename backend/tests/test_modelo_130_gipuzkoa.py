@@ -341,3 +341,20 @@ async def test_wrapper_restricted_mode_blockea():
     )
     assert r["success"] is False
     assert r["error"] == "restricted"
+
+
+@pytest.mark.asyncio
+async def test_tool_foral_escribe_los_importes_en_formato_espanol():
+    """El tool foral compartia el `_fmt` ingles: sacaba 30,000.00 EUR."""
+    from app.tools.modelo_130_foral_tool import calculate_modelo_130_foral_tool
+
+    result = await calculate_modelo_130_foral_tool(
+        territorio="gipuzkoa",
+        trimestre=1,
+        regimen="general",
+        rend_neto_penultimo=30000,
+    )
+    assert result["success"] is True
+    txt = result["formatted_response"]
+    assert "1.500,00 EUR" in txt
+    assert "1,500.00" not in txt

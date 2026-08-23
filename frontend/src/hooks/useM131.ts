@@ -10,11 +10,14 @@ export interface M131Input {
     /**
      * Rendimiento neto del ejercicio ANTERIOR. Es el dato de partida de la
      * minoracion de la casilla [09] (art. 110.3.c RIRPF), no la casilla en si.
-     * `null` = el usuario no ha facilitado el dato -> el backend NO aplica la
-     * minoracion. Un 0 explicito SI la aplica (100 EUR/trimestre), asi que no
-     * enviar 0 como relleno.
+     *
+     * Campo OPCIONAL de tres estados. La clave se OMITE cuando el usuario no
+     * facilita el dato: asi el backend aplica su defecto (`None`) y no calcula
+     * minoracion alguna. Un 0 explicito SI la aplica (100 EUR/trimestre), asi
+     * que nunca se envia 0 como relleno. Construyelo con `withOptionalField`
+     * de `utils/numberField` para no colapsar los tres estados.
      */
-    rendimiento_neto_anterior: number | null
+    rendimiento_neto_anterior?: number
     retenciones_trimestre: number
     pagos_anteriores: number
     ceuta_melilla: boolean

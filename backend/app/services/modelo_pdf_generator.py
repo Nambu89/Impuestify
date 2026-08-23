@@ -324,14 +324,17 @@ class ModeloPDFGenerator:
     def _render_casillas_table(
         self,
         story: list,
-        casillas: list[tuple[str, str, float]],
+        casillas: list[tuple[str, str, float | str]],
         title: str | None = None,
     ):
         """
         Render a reusable table of casillas.
 
         Args:
-            casillas: List of (casilla_num, description, amount) tuples
+            casillas: List of (casilla_num, description, amount) tuples.
+                Los importes se formatean como EUR; si se pasa una cadena se
+                imprime tal cual (para magnitudes que NO son euros, como un
+                porcentaje).
             title: Optional section heading
         """
         from reportlab.lib.units import mm
@@ -342,7 +345,8 @@ class ModeloPDFGenerator:
 
         rows = [["Casilla", "Concepto", "Importe"]]
         for casilla_num, desc, amount in casillas:
-            rows.append([casilla_num, desc, _format_eur(amount)])
+            value = amount if isinstance(amount, str) else _format_eur(amount)
+            rows.append([casilla_num, desc, value])
 
         t = Table(rows, colWidths=[20 * mm, 100 * mm, 40 * mm])
         t.setStyle(
@@ -772,13 +776,17 @@ class ModeloPDFGenerator:
 
         # Sección I/II/III — cuotas
         if apartado == "I":
-            cuota_rows: list[tuple[str, str, float]] = [
+            cuota_rows: list[tuple[str, str, float | str]] = [
                 (
                     "01",
                     "Suma de rendimientos netos",
                     casillas.get("01_rendimiento_neto_modulos", 0),
                 ),
-                ("", "Porcentaje aplicable (%)", casillas.get("02_tipo_aplicable", 0)),
+                (
+                    "",
+                    "Porcentaje aplicable",
+                    f"{casillas.get('02_tipo_aplicable', 0):.0f}%",
+                ),
                 (
                     "02",
                     "Pago fraccionado previo: suma de resultados",
@@ -790,7 +798,7 @@ class ModeloPDFGenerator:
             cuota_rows = [
                 (
                     "05",
-                    "Volumen ingresos del trimestre",
+                    "Volumen de ingresos del trimestre",
                     casillas.get("04_volumen_ingresos_agrario", 0),
                 ),
                 (
@@ -809,7 +817,11 @@ class ModeloPDFGenerator:
                     "Volumen de ventas o ingresos",
                     casillas.get("01_rendimiento_neto_modulos", 0),
                 ),
-                ("", "Porcentaje aplicable (%)", casillas.get("02_tipo_aplicable", 0)),
+                (
+                    "",
+                    "Porcentaje aplicable",
+                    f"{casillas.get('02_tipo_aplicable', 0):.0f}%",
+                ),
                 (
                     "04",
                     "Pago fraccionado previo",

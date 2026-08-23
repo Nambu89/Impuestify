@@ -10,21 +10,22 @@ import {
     Loader2,
 } from 'lucide-react'
 import Header from '../components/Header'
-import { useM131, type M131Input } from '../hooks/useM131'
+import { useM131, type M131Input, type M131Result } from '../hooks/useM131'
 import { useModeloPDF } from '../hooks/useModeloPDF'
+import { formatOptionalNumber, parseOptionalNumber, withOptionalField } from '../utils/numberField'
 import './M130CalculatorPage.css'
 
 const TERRITORIOS = [
-    { value: 'comun', label: 'Regimen Comun' },
+    { value: 'comun', label: 'Régimen común' },
     { value: 'ceuta_melilla', label: 'Ceuta / Melilla' },
-    { value: 'araba', label: 'Araba (foral)' },
+    { value: 'araba', label: 'Araba/Álava (foral)' },
     { value: 'bizkaia', label: 'Bizkaia (foral)' },
     { value: 'gipuzkoa', label: 'Gipuzkoa (foral)' },
     { value: 'navarra', label: 'Navarra (foral)' },
 ]
 
 const APARTADOS = [
-    { value: 'empresarial', label: 'Apartado I — Actividad empresarial (modulos)' },
+    { value: 'empresarial', label: 'Apartado I — Actividad empresarial (módulos)' },
     { value: 'sin_datos_base', label: 'Apartado II — Sin datos para calcular la base' },
     { value: 'agraria', label: 'Apartado III — Actividad agraria' },
 ]
@@ -42,6 +43,161 @@ function formatEur(v: number) {
 
 const currentYear = new Date().getFullYear()
 
+/**
+ * Fila del desglose, ya traducida a la numeracion OFICIAL del modelo.
+ *
+ * Las claves del dict que devuelve el backend (`09_retenciones_trimestre`,
+ * `12_resultado_final`...) llevan un prefijo propio que NO es el numero de
+ * casilla del Modelo 131. La equivalencia esta en el docstring de
+ * `Modelo131Calculator` y sale del diseno de registro DR131_2026 de la AEAT.
+ * `num` vacio = ese importe no tiene casilla numerada en el modelo.
+ */
+interface CasillaRow {
+    num: string
+    label: string
+    value: number
+    unit: 'EUR' | '%'
+}
+
+function buildCasillaRows(result: M131Result): CasillaRow[] {
+    const c = result.casillas
+    const d = result.desglose ?? {}
+    const rows: CasillaRow[] = []
+
+    if (result.apartado === 'I') {
+        rows.push(
+            {
+                num: '01',
+                label: 'Suma de rendimientos netos',
+                value: c['01_rendimiento_neto_modulos'] ?? 0,
+                unit: 'EUR',
+            },
+            {
+                num: '',
+                label: 'Porcentaje aplicable',
+                value: c['02_tipo_aplicable'] ?? 0,
+                unit: '%',
+            },
+            {
+                num: '02',
+                label: 'Pago fraccionado previo: suma de resultados',
+                value: c['03_resultado_empresarial'] ?? 0,
+                unit: 'EUR',
+            },
+        )
+    } else if (result.apartado === 'III') {
+        rows.push(
+            {
+                num: '05',
+                label: 'Volumen de ingresos del trimestre',
+                value: c['04_volumen_ingresos_agrario'] ?? 0,
+                unit: 'EUR',
+            },
+            {
+                num: '06',
+                label: 'Pago fraccionado previo del trimestre (2%)',
+                value: c['05_cuota_agraria'] ?? 0,
+                unit: 'EUR',
+            },
+        )
+    } else {
+        rows.push(
+            {
+                num: '03',
+                label: 'Volumen de ventas o ingresos',
+                value: c['01_rendimiento_neto_modulos'] ?? 0,
+                unit: 'EUR',
+            },
+            {
+                num: '',
+                label: 'Porcentaje aplicable',
+                value: c['02_tipo_aplicable'] ?? 0,
+                unit: '%',
+            },
+            {
+                num: '04',
+                label: 'Pago fraccionado previo',
+                value: c['03_resultado_empresarial'] ?? 0,
+                unit: 'EUR',
+            },
+        )
+    }
+
+    rows.push({
+        num: '07',
+        label: 'Suma de los pagos fraccionados previos del trimestre',
+        value: c['06_total_cuotas'] ?? 0,
+        unit: 'EUR',
+    })
+
+    // Las reducciones territoriales no tienen casilla propia: la AEAT las
+    // incorpora al porcentaje aplicable de cada actividad.
+    if ((c['07_reducciones'] ?? 0) > 0) {
+        rows.push(
+            {
+                num: '',
+                label: `Reducciones ${d.reduccion_concepto ?? 'territoriales'}`,
+                value: c['07_reducciones'],
+                unit: 'EUR',
+            },
+            {
+                num: '',
+                label: 'Resultado tras reducciones',
+                value: c['08_resultado_tras_reducciones'] ?? 0,
+                unit: 'EUR',
+            },
+        )
+    }
+
+    if ((c['09_retenciones_trimestre'] ?? 0) > 0) {
+        rows.push({
+            num: '08',
+            label: 'A deducir: retenciones e ingresos a cuenta',
+            value: c['09_retenciones_trimestre'],
+            unit: 'EUR',
+        })
+    }
+
+    const minoracion = Number(d.minoracion_rendimientos_bajos ?? 0)
+    if (result.apartado === 'I' && minoracion > 0) {
+        rows.push({
+            num: '09',
+            label: 'Minoración por aplicación de la deducción del art. 110.3.c) RIRPF',
+            value: minoracion,
+            unit: 'EUR',
+        })
+    }
+
+    // `pagos_anteriores` no tiene casilla en el 131: el modelo no es
+    // acumulativo, a diferencia del 130.
+    if ((c['10_pagos_anteriores'] ?? 0) > 0) {
+        rows.push({
+            num: '',
+            label: 'Pagos fraccionados de trimestres anteriores',
+            value: c['10_pagos_anteriores'],
+            unit: 'EUR',
+        })
+    }
+
+    if ((c['11_complementaria'] ?? 0) > 0) {
+        rows.push({
+            num: '14',
+            label: 'A deducir: resultado a ingresar de las anteriores declaraciones',
+            value: c['11_complementaria'],
+            unit: 'EUR',
+        })
+    }
+
+    rows.push({
+        num: '15',
+        label: 'Resultado de la declaración',
+        value: c['12_resultado_final'] ?? result.resultado_final,
+        unit: 'EUR',
+    })
+
+    return rows
+}
+
 export default function M131CalculatorPage() {
     const [trimestre, setTrimestre] = useState(1)
     const [territorio, setTerritorio] = useState('comun')
@@ -51,6 +207,12 @@ export default function M131CalculatorPage() {
     const [volumenIngresos, setVolumenIngresos] = useState(0)
     const [retenciones, setRetenciones] = useState(0)
     const [pagosAnteriores, setPagosAnteriores] = useState(0)
+    // `undefined` NO es lo mismo que 0: son dos de los tres estados que el
+    // backend distingue. Vacío = "no facilito el dato" (la clave se omite del
+    // payload y no hay minoración); 0 = "gané 0 EUR" (sí da derecho a los
+    // 100 EUR del primer tramo del art. 110.3.c RIRPF). El parseo va por
+    // `parseOptionalNumber` justamente para no colapsarlos.
+    const [rendAnterior, setRendAnterior] = useState<number | undefined>(undefined)
 
     const { result, loading, error, calculate } = useM131()
     const { downloadPDF, isLoading: pdfLoading, error: pdfError } = useModeloPDF()
@@ -60,23 +222,32 @@ export default function M131CalculatorPage() {
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        await calculate({
+        const payload: M131Input = {
             trimestre,
             actividad_tipo: apartado,
             territorio,
             rendimiento_neto_modulos_anual: rendimientoNeto,
             num_asalariados: numAsalariados,
             volumen_ingresos_trimestre: volumenIngresos,
-            // Esta pantalla aun no pide el rendimiento del ejercicio anterior:
-            // se envia null (dato no facilitado). Enviar 0 activaria la
-            // minoracion del art. 110.3.c RIRPF para todo el mundo.
-            rendimiento_neto_anterior: null,
             retenciones_trimestre: retenciones,
-            pagos_anteriores: pagosAnteriores,
+            // En el 1T no hay trimestres anteriores. El control se deshabilita,
+            // pero deshabilitar no vacia: sin este 0 un importe tecleado en el
+            // 3T seguia restandose al volver al 1T.
+            pagos_anteriores: trimestre === 1 ? 0 : pagosAnteriores,
             ceuta_melilla: esCeutaMelilla,
             la_palma: false,
             year: currentYear,
-        })
+        }
+        // Solo el apartado I aplica hoy la minoración de la casilla [09]. Si el
+        // campo va vacío, `withOptionalField` BORRA la clave: no viaja como
+        // `null` ni como 0.
+        await calculate(
+            withOptionalField(
+                payload,
+                'rendimiento_neto_anterior',
+                apartado === 'empresarial' ? rendAnterior : undefined,
+            ),
+        )
     }
 
     return (
@@ -86,14 +257,14 @@ export default function M131CalculatorPage() {
                 <div className="m130-hero">
                     <div className="m130-hero-badge">
                         <Calculator size={14} />
-                        <span>Estimacion objetiva — Modulos</span>
+                        <span>Estimación objetiva — Módulos</span>
                     </div>
                     <h1 className="m130-title">
                         Calculadora <span className="m130-title-highlight">Modelo 131</span>
                     </h1>
                     <p className="m130-subtitle">
-                        Pago fraccionado de IRPF para autonomos en estimacion objetiva (modulos).
-                        Applicable a los 4 trimestres del ejercicio.
+                        Pago fraccionado de IRPF para autónomos en estimación objetiva (módulos).
+                        Aplicable a los 4 trimestres del ejercicio.
                     </p>
                 </div>
 
@@ -123,7 +294,7 @@ export default function M131CalculatorPage() {
                                 </div>
                                 <p className="m130-trim-deadline">
                                     <Calendar size={12} />
-                                    Fecha limite: <strong>{trimestreInfo.fechaLimite}</strong>
+                                    Fecha límite: <strong>{trimestreInfo.fechaLimite}</strong>
                                 </p>
                             </div>
 
@@ -175,22 +346,31 @@ export default function M131CalculatorPage() {
 
                             {/* Datos principales */}
                             <div className="m130-fields-card">
-                                <h2 className="m130-fields-title">Datos del calculo</h2>
+                                <h2 className="m130-fields-title">Datos del cálculo</h2>
 
                                 {apartado === 'empresarial' && (
                                     <>
                                         <div className="m130-field">
                                             <label className="m130-label" htmlFor="rendimiento">
-                                                Rendimiento neto de modulos anual (EUR)
+                                                Rendimiento neto de módulos anual (EUR)
                                             </label>
                                             <div className="m130-input-row">
                                                 <Euro size={16} className="m130-input-icon" />
+                                                {/* `step="any"` en TODOS los campos de
+                                                    dinero de esta pagina. Con `type=number`
+                                                    un step de 100 o de 10 marca invalido
+                                                    cualquier importe que no sea multiplo
+                                                    —18.450 EUR lo es— y el navegador
+                                                    bloquea el envio del formulario ENTERO
+                                                    sin explicar por que. El unico campo que
+                                                    conserva su step es el de asalariados,
+                                                    que cuenta personas y es entero. */}
                                                 <input
                                                     id="rendimiento"
                                                     type="number"
                                                     className="m130-input"
                                                     min={0}
-                                                    step={100}
+                                                    step="any"
                                                     placeholder="0"
                                                     value={rendimientoNeto || ''}
                                                     onChange={(e) =>
@@ -202,14 +382,14 @@ export default function M131CalculatorPage() {
                                                 <span className="m130-input-suffix">EUR</span>
                                             </div>
                                             <p className="m130-field-hint">
-                                                Rendimiento neto calculado por modulos para el
-                                                conjunto del ano.
+                                                Rendimiento neto calculado por módulos para el
+                                                conjunto del año.
                                             </p>
                                         </div>
 
                                         <div className="m130-field">
                                             <label className="m130-label" htmlFor="asalariados">
-                                                Numero de asalariados
+                                                Número de asalariados
                                             </label>
                                             <input
                                                 id="asalariados"
@@ -227,13 +407,61 @@ export default function M131CalculatorPage() {
                                                 Afecta al porcentaje a ingresar (2%, 3% o 4%).
                                             </p>
                                         </div>
+
+                                        <div className="m130-field">
+                                            <label className="m130-label" htmlFor="rend-anterior">
+                                                Rendimiento neto del ejercicio anterior (EUR) —
+                                                opcional
+                                            </label>
+                                            <div className="m130-input-row">
+                                                <Euro size={16} className="m130-input-icon" />
+                                                {/* Sin `min`: un ejercicio anterior en
+                                                    pérdidas es un dato válido y entra en
+                                                    el primer tramo de la minoración. */}
+                                                <input
+                                                    id="rend-anterior"
+                                                    type="number"
+                                                    className="m130-input"
+                                                    step="any"
+                                                    placeholder="Déjalo vacío si no lo facilitas"
+                                                    value={formatOptionalNumber(rendAnterior)}
+                                                    onChange={(e) =>
+                                                        setRendAnterior(
+                                                            parseOptionalNumber(e.target.value),
+                                                        )
+                                                    }
+                                                />
+                                                <span className="m130-input-suffix">EUR</span>
+                                            </div>
+                                            <p className="m130-field-hint">
+                                                Es el dato de partida de la casilla [09], no la
+                                                casilla en sí. Si el ejercicio anterior fue igual o
+                                                inferior a 12.000 EUR, se resta una minoración de
+                                                100, 75, 50 o 25 EUR por trimestre (art. 110.3.c)
+                                                del Reglamento del IRPF).{' '}
+                                                <strong>
+                                                    Déjalo vacío si no facilitas el dato: sin él no
+                                                    se aplica minoración alguna.
+                                                </strong>{' '}
+                                                Si de verdad ganaste 0 EUR, escribe un 0 — sí da
+                                                derecho a los 100 EUR.
+                                            </p>
+                                            {rendAnterior === 0 && (
+                                                <p className="m130-field-hint">
+                                                    Has escrito un 0: se aplicará la minoración
+                                                    máxima de 100 EUR en el trimestre.
+                                                </p>
+                                            )}
+                                        </div>
                                     </>
                                 )}
 
-                                {apartado === 'agraria' && (
+                                {apartado !== 'empresarial' && (
                                     <div className="m130-field">
                                         <label className="m130-label" htmlFor="volumen">
-                                            Volumen de ingresos del trimestre (EUR)
+                                            {apartado === 'agraria'
+                                                ? 'Volumen de ingresos del trimestre (EUR)'
+                                                : 'Volumen de ventas o ingresos del trimestre (EUR)'}
                                         </label>
                                         <div className="m130-input-row">
                                             <Euro size={16} className="m130-input-icon" />
@@ -242,7 +470,7 @@ export default function M131CalculatorPage() {
                                                 type="number"
                                                 className="m130-input"
                                                 min={0}
-                                                step={100}
+                                                step="any"
                                                 placeholder="0"
                                                 value={volumenIngresos || ''}
                                                 onChange={(e) =>
@@ -254,7 +482,9 @@ export default function M131CalculatorPage() {
                                             <span className="m130-input-suffix">EUR</span>
                                         </div>
                                         <p className="m130-field-hint">
-                                            Ingresos brutos de la actividad agraria del trimestre.
+                                            {apartado === 'agraria'
+                                                ? 'Ingresos brutos de la actividad agraria del trimestre, sin contar las subvenciones de capital. Casilla [05].'
+                                                : 'Ingresos brutos de la actividad del trimestre. Es la base del apartado II, casilla [03]: sin este dato el resultado sale a cero.'}
                                         </p>
                                     </div>
                                 )}
@@ -270,7 +500,7 @@ export default function M131CalculatorPage() {
                                             type="number"
                                             className="m130-input"
                                             min={0}
-                                            step={10}
+                                            step="any"
                                             placeholder="0"
                                             value={retenciones || ''}
                                             onChange={(e) =>
@@ -287,7 +517,7 @@ export default function M131CalculatorPage() {
 
                                 <div className="m130-field">
                                     <label className="m130-label" htmlFor="pagos">
-                                        Pagos fraccionados anteriores del ano (EUR)
+                                        Pagos fraccionados anteriores del año (EUR)
                                     </label>
                                     <div className="m130-input-row">
                                         <Euro size={16} className="m130-input-icon" />
@@ -296,7 +526,7 @@ export default function M131CalculatorPage() {
                                             type="number"
                                             className="m130-input"
                                             min={0}
-                                            step={10}
+                                            step="any"
                                             placeholder="0"
                                             disabled={trimestre === 1}
                                             value={pagosAnteriores || ''}
@@ -307,7 +537,7 @@ export default function M131CalculatorPage() {
                                         <span className="m130-input-suffix">EUR</span>
                                     </div>
                                     <p className="m130-field-hint">
-                                        Suma de M131 presentados anteriormente este ano.
+                                        Suma de modelos 131 presentados anteriormente este año.
                                     </p>
                                 </div>
                             </div>
@@ -336,20 +566,20 @@ export default function M131CalculatorPage() {
                                 ) : (
                                     <Calculator size={16} />
                                 )}
-                                {loading ? 'Calculando...' : 'Calcular Modelo 131'}
+                                {loading ? 'Calculando…' : 'Calcular Modelo 131'}
                             </button>
 
                             <div className="m130-disclaimer">
                                 <Info size={14} />
                                 <span>
-                                    Esta calculadora es informativa. Presentacion oficial en{' '}
+                                    Esta calculadora es informativa. Presentación oficial en{' '}
                                     <a
                                         className="m130-link"
                                         href="https://sede.agenciatributaria.gob.es"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                     >
-                                        Sede Electronica AEAT
+                                        Sede Electrónica de la AEAT
                                     </a>
                                     .
                                 </span>
@@ -378,8 +608,11 @@ export default function M131CalculatorPage() {
                                     <span className="m130-result-currency">EUR</span>
                                 </div>
                                 <div className="m130-result-sub">
+                                    {/* `tipo_aplicado` YA viene en porcentaje desde el
+                                        backend (2.0 / 3.0 / 4.0): multiplicarlo por 100
+                                        mostraba 200%, 300% y 400%. */}
                                     Apartado: {result.apartado} — Tipo:{' '}
-                                    {(result.tipo_aplicado * 100).toFixed(0)}%
+                                    {result.tipo_aplicado.toFixed(0)}%
                                 </div>
                                 <div className="m130-result-deadline">
                                     <Calendar size={13} />
@@ -399,12 +632,21 @@ export default function M131CalculatorPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {Object.entries(result.casillas).map(([cas, val]) => (
-                                                <tr key={cas} className="m130-casilla-row">
-                                                    <td className="m130-casilla-num">{cas}</td>
-                                                    <td className="m130-casilla-label">{cas}</td>
+                                            {buildCasillaRows(result).map((row, i) => (
+                                                <tr
+                                                    key={`${row.num}-${i}`}
+                                                    className="m130-casilla-row"
+                                                >
+                                                    <td className="m130-casilla-num">
+                                                        {row.num || '—'}
+                                                    </td>
+                                                    <td className="m130-casilla-label">
+                                                        {row.label}
+                                                    </td>
                                                     <td className="m130-casilla-value">
-                                                        {formatEur(val as number)} EUR
+                                                        {row.unit === '%'
+                                                            ? `${row.value.toFixed(0)}%`
+                                                            : `${formatEur(row.value)} EUR`}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -426,7 +668,12 @@ export default function M131CalculatorPage() {
                                         downloadPDF(
                                             '131',
                                             { ...result },
-                                            String(trimestre) + 'T',
+                                            // El trimestre del CALCULO, no el que
+                                            // este marcado ahora: cambiarlo sin
+                                            // recalcular sacaba un PDF con las
+                                            // casillas de un trimestre y la
+                                            // cabecera de otro.
+                                            String(result.trimestre) + 'T',
                                             currentYear,
                                         )
                                     }
@@ -437,7 +684,7 @@ export default function M131CalculatorPage() {
                                     ) : (
                                         <Download size={16} />
                                     )}
-                                    {pdfLoading ? 'Generando...' : 'Descargar PDF'}
+                                    {pdfLoading ? 'Generando…' : 'Descargar PDF'}
                                 </button>
                                 {pdfError && (
                                     <p className="m130-advanced-calc m130-advanced-calc--warn">
