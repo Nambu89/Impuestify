@@ -70,7 +70,10 @@ class Calculate130Request(BaseModel):
     gastos_acumulados: float = 0
     retenciones_acumuladas: float = 0
     pagos_anteriores: float = 0
-    rend_neto_anterior: float = 0
+    # None = dato no facilitado → SIN minoración casilla 13 (art. 110.3.c RIRPF).
+    # Un 0 explícito sí aplica el primer tramo (100 EUR/trim). Ver
+    # Modelo130Calculator._art_80bis_deduction.
+    rend_neto_anterior: float | None = None
     tiene_vivienda_habitual: bool = False
     resultado_anterior_complementaria: float = 0
     # Araba

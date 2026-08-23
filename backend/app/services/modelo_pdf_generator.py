@@ -575,25 +575,35 @@ class ModeloPDFGenerator:
             ("04", "20% del rendimiento neto", seccion_i.get("veinte_porciento", 0)),
         ]
 
-        retenciones = seccion_i.get("retenciones", 0)
-        if retenciones:
-            s1_rows.append(("05", "Retenciones e ingresos a cuenta", retenciones))
-
+        # Numeracion AEAT (diseno de registro DR130e15v12.xls):
+        #   [05] A deducir: de los trimestres anteriores, suma de los importes
+        #   [06] A deducir: retenciones e ingresos a cuenta soportados
+        # Estaban al reves, lo que rompia la traslacion del PDF al modelo real.
         pagos_ant = seccion_i.get("pagos_anteriores", 0)
         if pagos_ant:
-            s1_rows.append(("06", "Pagos fraccionados anteriores", pagos_ant))
+            s1_rows.append(("05", "Pagos fraccionados anteriores", pagos_ant))
+
+        retenciones = seccion_i.get("retenciones", 0)
+        if retenciones:
+            s1_rows.append(("06", "Retenciones e ingresos a cuenta", retenciones))
 
         s1_rows.append(("07", "Resultado sección I", seccion_i.get("resultado_seccion", 0)))
 
         self._render_casillas_table(story, s1_rows, "Sección I: Actividades en estimación directa")
 
-        # Section IV — deduccion 80 bis
+        # Casilla 13 — minoracion por rendimientos bajos.
+        # La base legal es el art. 110.3.c) RIRPF, que es lo que cita la propia
+        # AEAT en el diseno de registro. El art. 80 bis LIRPF esta SUPRIMIDO
+        # desde el 01/01/2015 (art. 1.55 Ley 26/2014), asi que el PDF que se
+        # descargaba el usuario invocaba una norma derogada. Ademas, la casilla
+        # 13 pertenece a la Seccion III ("Total liquidacion"), no a una
+        # inexistente Seccion IV.
         deduccion = data.get("deduccion_80bis", 0)
         if deduccion > 0:
             self._simple_section_table(
                 story,
-                "Sección IV: Deducción art. 80 bis LIRPF",
-                [("Deducción trimestral", _format_eur(deduccion))],
+                "Sección III: Total liquidación",
+                [("[13] Minoración art. 110.3.c) RIRPF", _format_eur(deduccion))],
             )
 
         # Resultado
