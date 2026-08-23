@@ -573,10 +573,14 @@ Esta capa es defensa en profundidad sobre el texto del chat. Aun así, una capa
 que se apaga sola sin avisar es peor que no tenerla, porque figura en el
 inventario de seguridad.
 
-**Pendiente**: `DANGEROUS_KEYWORDS`, `_sanitize_input()`,
-`validate_generated_sql()` y `validate_parameterized_query()` son código muerto
-verificado en todo el repo. Dan impresión de profundidad que no existe. Se dejan
-fuera de este arreglo para no mezclarlo con una limpieza.
+**Limpieza posterior — hecha el 2026-08-23** (rama `claude/limpieza-sqli-muerto`):
+`DANGEROUS_KEYWORDS`, `_sanitize_input()`, `validate_generated_sql()` y
+`validate_parameterized_query()` eran código muerto —daban impresión de
+profundidad que no existe— y se han **borrado** tras re-verificar uno a uno que
+nadie los llama en todo el repo. Ojo al grep: `DANGEROUS_KEYWORDS` existe también
+en `file_validator.py`, ahí sí está vivo y NO se toca. `_regex_only()` y
+`_BLOCKING_PATTERNS` se quedan: son el arreglo del 116. (`SUSPICIOUS_PATTERNS` ya
+no existe: el propio arreglo del 116 lo sustituyó por `_BLOCKING_PATTERNS`.)
 ## Bug 114 — el regex de código postal rechazaba importes (y era irreparable)
 
 **Archivo**: `backend/app/security/pii_detector.py`

@@ -6,22 +6,15 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
-import path from 'path';
 
-const FRONTEND_URL = 'http://localhost:3001';
-const BACKEND_URL = 'http://localhost:8000';
+import { injectTokens, issueTestTokens, screenshotPath } from './helpers/auth';
 
-const JWT_PARTICULAR = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXBhcnRpY3VsYXItMDAwMDAwMDEiLCJlbWFpbCI6InRlc3QucGFydGljdWxhckBpbXB1ZXN0aWZ5LmVzIiwiZXhwIjoxNzczMzIwOTkzLCJpYXQiOjE3NzMzMTkxOTMsInR5cGUiOiJhY2Nlc3MifQ.9ReZKI_zmYaCJxHnUnv_hFElpCpHyx0e__TrYOv_REs';
-const JWT_REFRESH = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXBhcnRpY3VsYXItMDAwMDAwMDEiLCJlbWFpbCI6InRlc3QucGFydGljdWxhckBpbXB1ZXN0aWZ5LmVzIiwiZXhwIjoxNzczOTIzOTkzLCJpYXQiOjE3NzMzMTkxOTMsInR5cGUiOiJyZWZyZXNoIn0.t_Kp1SMxBQfTMGSyiLK7X78QsN3leIRlt33BwL5ZJFI';
-
-const SCREENSHOTS_DIR = path.join(
-  'C:\\Users\\Fernando Prada\\OneDrive - SVAN TRADING SL\\Escritorio\\Personal\\Proyectos\\TaxIA',
-  'tests', 'e2e', 'screenshots'
-);
+const FRONTEND_URL = process.env.E2E_FRONTEND_URL || 'http://localhost:3001';
+const BACKEND_URL = process.env.E2E_BACKEND_URL || 'http://localhost:8000';
 
 async function screenshot(page: Page, name: string) {
   await page.screenshot({
-    path: path.join(SCREENSHOTS_DIR, `${name}.png`),
+    path: screenshotPath(name),
     fullPage: false,
   });
   console.log(`[SCREENSHOT] ${name}.png`);
@@ -29,10 +22,7 @@ async function screenshot(page: Page, name: string) {
 
 async function injectJWT(page: Page) {
   await page.goto(FRONTEND_URL, { waitUntil: 'domcontentloaded' });
-  await page.evaluate(({ token, refresh }) => {
-    localStorage.setItem('access_token', token);
-    localStorage.setItem('refresh_token', refresh);
-  }, { token: JWT_PARTICULAR, refresh: JWT_REFRESH });
+  await injectTokens(page, issueTestTokens());
 }
 
 test.describe('Guia Fiscal Wizard — Melilla (deduccion 60%)', () => {
@@ -234,7 +224,7 @@ test.describe('Guia Fiscal Wizard — Melilla (deduccion 60%)', () => {
 
     // Screenshot del resultado completo (fullPage)
     await page.screenshot({
-      path: path.join(SCREENSHOTS_DIR, 'TGM-10-resultado-fullpage.png'),
+      path: screenshotPath('TGM-10-resultado-fullpage'),
       fullPage: true,
     });
     console.log('[SCREENSHOT] TGM-10-resultado-fullpage.png (fullPage)');
@@ -267,9 +257,10 @@ test.describe('Guia Fiscal Wizard — Melilla (deduccion 60%)', () => {
 
   test('TGM-02: API directa — verificar calculo Melilla', async ({ request }) => {
     // Test de la API directamente (sin UI)
+    const { access } = issueTestTokens();
     const response = await request.post(`${BACKEND_URL}/api/irpf/estimate`, {
       headers: {
-        'Authorization': `Bearer ${JWT_PARTICULAR}`,
+        'Authorization': `Bearer ${access}`,
         'Content-Type': 'application/json',
       },
       data: {
