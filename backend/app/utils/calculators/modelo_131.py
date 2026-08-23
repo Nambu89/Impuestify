@@ -22,10 +22,10 @@ CASILLAS OFICIALES vs CLAVES DEL DICT:
   numérico propio que NO coincide con la numeración oficial del modelo. Se
   conservan por compatibilidad de la API (frontend, tool de chat, generador de
   PDF), pero las etiquetas que ve el usuario deben usar el número OFICIAL del
-  diseño de registro DR131_2026 de la AEAT. El fichero está en el checkout
-  local en docs/AEAT/modelo-130-2026/DR131_2026.xlsx, pero OJO: `docs/` está
-  en .gitignore, así que no viaja con el repositorio — si no lo tienes, se
-  descarga de la sede electrónica de la AEAT (diseños de registro del 131).
+  diseño de registro DR131_2026 de la AEAT. El XLSX de referencia
+  (docs/AEAT/modelo-130-2026/DR131_2026.xlsx) no se versiona en este repositorio;
+  si no lo tienes en tu entorno local, descárgalo de la sede electrónica de la AEAT
+  (diseños de registro del Modelo 131).
 
 
     clave del dict                    → casilla oficial DR131_2026
