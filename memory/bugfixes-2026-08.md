@@ -815,3 +815,121 @@ bugfix genérico. Ver el plan de separación en
 Regla operativa: **antes de dar por cerrada cualquier sesión sobre la rama
 demo, diffear los ficheros de `app/security/`, `app/agents/` y `app/services/`
 contra `main` y decidir explícitamente qué vuelve.**
+
+---
+
+## Bug 121 — el Modelo 130 REGALABA 100 EUR/trimestre a quien no rellenaba un campo
+
+**Fecha**: 2026-08-23. **Severidad**: CRÍTICA — la aplicación decía a los
+autónomos que ingresaran de menos a Hacienda.
+
+**Síntoma**: ninguno visible. El número salía, era plausible, y el usuario lo
+presentaba.
+
+**Causa raíz**: `rend_neto_anterior: float = 0.0` por defecto en las tres capas
+(calculador `modelo_130.py:75`, tool, y `Calculate130Request` de
+`routers/declarations.py:73`). El calculador no leía ese cero como *"no me lo
+has dicho"* sino como el hecho *"el año pasado gané 0 EUR"*. Cero cae en el
+primer tramo de `_ART_80BIS_TABLE`, primera entrada `(9_000.0, 100.0)`, o sea la
+minoración del art. 110.3.c) RIRPF para rendimientos ≤ 9.000 EUR.
+
+Resultado: **100 EUR/trimestre de minoración a cualquiera que no facilitara el
+dato**, hasta 400 EUR/año menos ingresados. Un autónomo de 40.000 EUR recibía la
+minoración pensada para uno de 9.000.
+
+**Por qué no saltó en años**: TODOS los tests existentes pasan el parámetro
+explícitamente. El único camino que ejercitaba el defecto eran 3 tests de
+`test_modelo_tools.py`... que llevaban meses en rojo, entre otros 17. Ruido rojo
+permanente tapando una avería real, por tercera vez en dos días (ver Bug 118).
+
+**Fix**: `float | None`. `None` = no facilitado → sin minoración. Un `0.0`
+**explícito** sí la aplica: la norma no distingue, 0 ≤ 9.000. PR #40.
+
+**Y el frontend anulaba el arreglo**: `DeclarationsPage.tsx` tenía
+`value={data.rend_neto_anterior || 0}`, así que vaciar el campo enviaba `0` y los
+100 EUR volvían. Mergear solo el backend dejó la fuga abierta por esa ruta
+durante unas horas. PR #42 la cierra, con `frontend/src/utils/numberField.ts`.
+
+**El mismo idiom colapsaba otros dos campos, en dirección contraria**:
+`pct_atribucion_estado` (defecto backend `100.0`) atribuía **0 %** al Estado al
+vaciarlo, y `anos_actividad` de Bizkaia (defecto `3`) activaba el régimen de los
+dos primeros años.
+
+**Dos tests estaban mal, y se corrigieron con la cita normativa DENTRO del test**
+para que nadie los revierta:
+- `test_130_deduccion_80bis_graduated` esperaba 62,5 — interpolación lineal. El
+  art. 110.3.c) va por **tramos planos**: 9.000,01-10.000 → 75 EUR.
+- `test_130_negative_net` esperaba que la casilla 03 se topara en 0. El diseño de
+  registro de la AEAT (`docs/AEAT/modelo-130-2026/DR130e15v12.xls`) la tipa como
+  **`N`, con signo**. Lo que se topa es el resultado, y el negativo rebaja el
+  acumulado del trimestre siguiente (la sección I es acumulada, art. 110.1.a).
+
+**Además, en el PDF**: `_render_130` tenía las casillas 05 y 06 intercambiadas
+respecto al diseño de registro, y citaba el **art. 80 bis LIRPF, SUPRIMIDO** desde
+el 01/01/2015 (art. 1.55 Ley 26/2014; en el BOE aparece literalmente como
+"(Suprimido)"). La AEAT cita esa casilla como art. 110.3 del Reglamento. **Las
+claves del dict NO se renombraron** (`deduccion_80bis`): rompería la API.
+
+**Y el botón "Descargar PDF" generaba un 130 en blanco**: el frontend mandaba
+`casillas`/`resultado` y `_render_130` lee `seccion_i`/`resultado_final`/
+`deduccion_80bis`. Nadie lo vio porque **el test de PDF solo comprobaba que el
+fichero empezara por `%PDF`**, no su contenido. De paso se descubrió que sin
+`variante_foral` los cuatro territorios forales se pintaban como un 130 común con
+todas las filas a cero.
+
+**Pendiente (decisión de producto)**: las casillas 07, 11, 14, 17 y 19 se topan
+con `max(0, ...)` y las cinco son de tipo `N` en el diseño de registro. Arreglarlo
+exige el circuito completo de negativos entre trimestres. Gap A5 de
+`docs/audits/modelo_130_validation_2026-05.md`.
+
+## Bug 122 — el Modelo 131 hacía lo simétrico: NEGABA la minoración
+
+**Fecha**: 2026-08-23. **Severidad**: alta — hacía ingresar de más al usuario.
+
+**Causa raíz**: mismo default `0.0`, pero su helper trataba **`<= 0` como "sin
+dato"**. Así que a quien de verdad tuvo un ejercicio anterior de 0 EUR se le
+**negaban** los 100 EUR a los que tiene derecho.
+
+**Norma**: la minoración de la casilla `[09]` del 131 **no es "análoga" a nada**
+ni sale de la Orden anual de módulos: es el **mismo art. 110.3.c) RIRPF** que
+aplica el 130. Las letras a) y b) del art. 110.3 sí se acotan a un método de
+estimación; la letra c) **no**. Lo confirma el diseño de registro
+`DR131_2026.xlsx`: *"[09] Minoración por aplicación de la deducción. Artículo
+110.3.c"*.
+
+**Fix**: mismo criterio que el 130, en las tres capas. PR #41.
+
+**Había una cuarta capa**: `M131CalculatorPage.tsx` mandaba
+`rendimiento_neto_anterior: 0` a pelo, así que el arreglo habría regalado los
+100 EUR a todo el que usara la calculadora pública.
+
+**La numeración de casillas del PDF del 131 estaba INVENTADA**, y era peor que la
+del 130: `[09]` se imprimía como "Retenciones del trimestre" (las retenciones son
+`[08]`; `[09]` es justamente la minoración), y `[12]` como "Resultado a ingresar"
+cuando en el modelo `[12]` es *"Pago de préstamos para la adquisición de vivienda
+habitual"* — el importe a pagar llamado por el nombre de una deducción, en un
+papel que se presenta a Hacienda. El resultado es `[15]`.
+
+**Pendientes documentados en el docstring de `Modelo131Calculator`** bajo
+`DIVERGENCIAS CONOCIDAS`, todos con impacto en importes: `pagos_anteriores`
+probablemente sobra (el 131 no es acumulativo), la minoración `[09]` se aplica
+solo al apartado I cuando el modelo la sitúa tras `[07]`, `[15]` se topa con
+`max(0,...)` siendo de tipo `N`, y falta entera la deducción por vivienda `[12]`.
+
+## Bug 123 — ABIERTO: el Modelo 303 responde siempre desde un cero que nadie dio
+
+`modelo_303.py:523`, `volumen_ano_anterior: float = 0.0`. De ese default salen
+`es_elegible_recc()` = True y `requiere_sii()` = False.
+
+Y **ningún tool, router ni frontend le pasa ese parámetro**: siempre corre con el
+default. No es un caso raro, es el único caso. La aplicación dice *siempre* que
+el usuario es elegible para el criterio de caja y que no está obligado al SII.
+
+Descartados con datos: 308/309 (sus `0` son importes donde cero significa
+legítimamente "nada de eso") y 720/721 (ya usan `| None` justo en los datos de
+declaraciones anteriores).
+
+**LA REGLA QUE SALE DE LOS TRES**: un default numérico no puede significar a la
+vez "sin dato" y un hecho del mundo. Donde el cero sea un valor legítimo, el "no
+facilitado" es `None`, nunca `0`. Y hay que revisar los `|| 0` del frontend, que
+colapsan los dos estados otra vez.

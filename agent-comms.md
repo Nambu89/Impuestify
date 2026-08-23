@@ -1954,6 +1954,23 @@ Ver detalles completos en el reporte.
 
 ## Tareas activas
 
+[2026-08-23] [BACKEND+FRONTEND] 🟢 DONE — **Bug 121: el Modelo 130 regalaba 100 EUR/trimestre.** `rend_neto_anterior` con default `0.0` que el calculador leía como el hecho "gané 0 EUR" → primer tramo del art. 110.3.c) RIRPF a todo el que no rellenara el campo. Hasta 400 EUR/año menos ingresados a Hacienda, con el usuario presentando ese número. PR #40 (backend) + **PR #42 (frontend, imprescindible: sin él `DeclarationsPage.tsx` seguía mandando `0`)**. Salió de 3 tests que llevaban meses en rojo entre otros 17. Detalle en `memory/bugfixes-2026-08.md`.
+
+[2026-08-23] [BACKEND] 🟢 DONE — **Bug 122: el Modelo 131 negaba esa misma minoración** a quien de verdad tuvo un ejercicio anterior de 0 EUR (su helper trataba `<= 0` como "sin dato"). Y la numeración de casillas de su PDF estaba inventada: `[12]` se imprimía como "Resultado a ingresar" cuando en el modelo es "Pago de préstamos para adquisición de vivienda habitual". PR #41.
+
+[2026-08-23] [BACKEND] 🔴 PENDING — **Bug 123: el Modelo 303.** `modelo_303.py:523`, `volumen_ano_anterior: float = 0.0`. De ahí salen `es_elegible_recc()`=True y `requiere_sii()`=False, y como **nadie le pasa el parámetro**, esa es siempre la respuesta. Sin asignar.
+
+[2026-08-23] [BACKEND] 🔴 PENDING — `_render_130` no pinta las casillas 15, 16, 17 ni 18: con vivienda habitual marcada, al usuario no le cuadra la resta. Y el backend tiene **dos** implementaciones forales del 130 — la genérica de `/api/declarations/130/calculate` no numera casillas en Bizkaia general/excepcional ni Navarra.
+
+[2026-08-23] [PM] 🔴 PENDING — **Decisión de Fernando: qué modelo LLM es el bueno.** `CLAUDE.md` dice "SIEMPRE gpt-5-mini", el `.env` de producción dice `gpt-5.6-luna`, y `test_chat_stream_usa_gpt_5_mini` espera `gpt-5-mini` (por eso está en rojo). Tres fuentes, tres respuestas. **No tocar hasta que decida**: el arreglo es opuesto según la respuesta. Deuda real aparte: `defensia_agent.py:112` hardcodea el id fuera de `settings`, así que si OpenAI lo retira, cambiar la env var arregla TaxAgent y no DefensIA (forma del Bug 106).
+
+[2026-08-23] [BACKEND] 🔴 PENDING — Deducción foral por descendientes de Álava: `seed_deductions_territorial.py:38` dice `668.0`, el test espera `734.80`. El `668.0` se repite 3 veces (Álava, Bizkaia, Gipuzkoa), pero los tres territorios legislan por separado. Fuente para dirimirlo: **BOTHA**, no BOE/AEAT.
+
+[2026-08-23] [QA] 🔴 PENDING — Consolidar `test_modelo_tools.py` (pre-pytest, fosilizado) contra `test_modelo_130_tool.py` y `test_modelo_303.py`. Solo `test_tools_registration` es exclusivo. Exigir que se demuestre test por test que la cobertura existe en otro sitio antes de borrar nada.
+
+[2026-08-23] [TESTS] ℹ️ La suite tiene **3.378 tests**, no los ~2.080 del CLAUDE.md. De los 20 fallos "preexistentes", 12 son tests caducados o mocks mal montados, 2 son fuga del `.env` real (comprueban ausencia de clave y el entorno tiene una), y **6 eran de dinero**. Además `tax-guide-cataluna-2026-03-12.spec.ts:91` declara `const loginTime` dos veces y su SyntaxError tumba `npx playwright test --list` del repo ENTERO.
+
+
 [2026-05-10] [BACKEND] 🟢 DONE — Modelo 131 (Pago Fraccionado IRPF Estimación Objetiva — Módulos) implementado from scratch. Bug 89 + audit `docs/audits/modelo_131_validation_2026-05.md` resueltos. Calculator `backend/app/utils/calculators/modelo_131.py` (3 apartados: I empresarial 4/3/2%, II sin datos-base 2%, III agraria 2%) + tool wrapper `backend/app/tools/modelo_131_tool.py` + endpoint `POST /api/modelo-131/calculate` + render PDF `_render_131` (promovido a FULL_MODELOS) + corregido plazo 4T a 1-30 enero en `seed_estatal_deadlines.py`. **60 tests PASS** (37 calculator + 23 tool). Casos AEAT A/B/C/D/E/G del audit verificados ground truth. Reducciones territoriales soportadas: Ceuta/Melilla 60% + La Palma 60% (caller debe verificar vigencia anual). Tool registrado en `app/tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS + __all__).
 
 [2026-05-10] [FRONTEND] 🔴 PENDING — Crear `frontend/src/pages/M131CalculatorPage.tsx` (clonar M130CalculatorPage). Backend listo: `POST /api/modelo-131/calculate` operativo. Wizard sugerido en audit (sección 6, 9 pasos). Ruta `/calculadora-131` en `App.tsx`. Hook `useModelo131()` análogo a `useModeloPDF`. Schema JSON-LD `WebApplication` + `HowTo` para SEO (sesión 27 pattern). Botón "Generar borrador 131 PDF" en `DeclarationsPage`.

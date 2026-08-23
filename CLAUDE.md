@@ -283,7 +283,7 @@ pre-commit install
 
 **CI runs all checks on every PR** (`.github/workflows/ci.yml`, 5 parallel jobs). Bypass pre-commit ONLY for emergency commits: `git commit --no-verify` — but CI will still report. Baseline tolerances (Phase 1):
 - Backend ruff: `--exit-zero` for 179 pre-existing violations (cleanup: issue #15)
-- Frontend eslint: `--max-warnings 256` for 234 warnings (cleanup: issue #14)
+- Frontend eslint: `--max-warnings 256` for **243** warnings (medido 2026-08-23; el 234 anterior estaba desactualizado). Cleanup: issue #14
 - Frontend typecheck: soft-fail for ~30 pre-existing TS errors (cleanup: issue #15)
 
 ## Post-Bugfix Protocol (OBLIGATORIO)

@@ -513,6 +513,65 @@ Aplicable a: `modelo_303_tool.py`, `modelo_130_tool.py`, `modelo_308_tool.py`,
 `modelo_309_tool.py`, `modelo_720_tool.py`, `modelo_721_tool.py`,
 `modelo_ipsi_tool.py`, `is_simulator_tool.py` y futuros wrappers de modelos AEAT.
 
+### REGLA: un default numérico NO puede significar "sin dato" y un hecho a la vez
+
+Donde el cero sea un valor legítimo del dominio, el "no facilitado" es `None`,
+**nunca** `0`.
+
+```python
+# NO — el calculador no puede distinguir "no me lo has dicho" de "gané 0 EUR"
+rend_neto_anterior: float = 0.0
+
+# SI — None = ausente; un 0.0 explícito es un dato y se trata como tal
+rend_neto_anterior: float | None = None
+```
+
+Precedente, Bug 121: con el default a `0.0`, el Modelo 130 aplicaba el primer
+tramo del art. 110.3.c) RIRPF (≤ 9.000 → 100 EUR) a **todo el que no rellenara el
+campo**. La aplicación regalaba hasta 400 EUR/año de minoración y el usuario
+presentaba ese número a Hacienda. El Modelo 131 tenía el error **simétrico**
+(trataba `<= 0` como "sin dato" y negaba la minoración a quien de verdad ganó 0),
+y el Modelo 303 sigue con él: de su `volumen_ano_anterior: float = 0.0` salen
+`es_elegible_recc()`=True y `requiere_sii()`=False, y como nadie le pasa el
+parámetro, esa es **siempre** la respuesta.
+
+Tres cosas que hay que revisar además del default:
+
+1. **Las tres capas**: calculador, tool y modelo Pydantic del router. Cambiar solo
+   una deja la ambigüedad viva por las otras.
+2. **El frontend, que es la cuarta capa.** Un `value={data.campo || 0}` o un
+   `parseFloat("")` convierten el campo vacío en cero explícito y devuelven el
+   bug. Hay helper: `frontend/src/utils/numberField.ts`.
+3. **Si el default no es 0 sino otro valor** (`pct_atribucion_estado` = 100,
+   `anos_actividad` = 3), el `|| 0` del frontend es aún peor: manda un cero que
+   el backend nunca habría puesto.
+
+### REGLA: un test de PDF que solo mira `%PDF` no prueba nada
+
+Comprobar que el fichero generado empieza por `%PDF` verifica que ReportLab
+funciona, no que el documento diga la verdad.
+
+Un test de PDF tributario tiene que **extraer el texto y emparejar concepto con
+importe**. Buscar el importe suelto no detecta que dos casillas estén cruzadas, y
+es el error más caro: el número existe, es plausible, y va en la casilla
+equivocada del modelo que se presenta.
+
+Precedente, Bug 121: el botón "Descargar PDF" del 130 llevaba tiempo generando el
+modelo **con todas las casillas a cero** —el frontend mandaba unas claves y
+`_render_130` leía otras— y el test pasaba. Y Bug 122: la numeración de casillas
+del PDF del 131 estaba inventada de arriba abajo.
+
+Cuidado con dos trampas al escribir esos tests:
+- `"0,00 EUR"` es subcadena de `"30.000,00 EUR"`. Hace falta un extractor por
+  tokens, no un `in`.
+- ReportLab destroza las tildes al extraer el texto: no aserciones sobre cadenas
+  acentuadas.
+
+Y el mapeo de casillas es **semántico, no por número**: las claves del calculador
+REST (`05_retenciones_acumuladas`, `06_pagos_anteriores`) van al revés que la
+numeración oficial de la AEAT. Copiar por número intercambia retenciones con
+pagos anteriores.
+
 ## Common Backend Tasks
 
 **New endpoint**: Create `app/routers/my_feature.py` → `router = APIRouter(prefix="/api/my-feature")` → register in `main.py` with `app.include_router()`.
@@ -583,3 +642,9 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | Gemini devuelve 404 / OCR de facturas roto | El id de modelo estaba hardcodeado en 6 call sites. Usar `settings.GEMINI_MODEL` (default `gemini-2.5-flash-lite`). `gemini-3-flash-preview` fue retirado por Google. Bug 106. |
 | Rate limit se resetea al volver a hacer login | `get_rate_limit_key()` hasheaba el token (`md5(Authorization)`), así que cada token nuevo = contador nuevo. Debe decodificar el JWT y keyear por el claim `sub`. Fallback a IP, con `except` amplio: una excepción en la key function hace que slowapi devuelva 500. Bug 107. |
 | DefensIA cuelga / responde en blanco | gpt-5-mini gasta todo el presupuesto en razonamiento oculto y emite 0 chunks. Requiere `reasoning_effort="minimal"` + `max_completion_tokens=10000` + `asyncio.wait_for` 60s. Añadir fallback si `content_chunks == 0` para no dejar la UI vacía. Bug 108. |
+| El Modelo 130 aplica 100 EUR de minoracion a quien no deberia | `rend_neto_anterior` con default `0.0` en vez de `None`: el calculador lee el cero como el hecho "gané 0 EUR" y aplica el primer tramo del art. 110.3.c) RIRPF. Revisar las TRES capas (calculador, tool, modelo del router) **y el frontend**, que con `|| 0` devuelve el bug. Bug 121 |
+| El Modelo 131 NIEGA la minoracion a quien gano 0 EUR | El error simétrico: su helper trataba `<= 0` como "sin dato". Es el mismo art. 110.3.c) que el 130 — la letra c) no se acota a un método de estimación, aunque las letras a) y b) sí. Bug 122 |
+| Un PDF de modelo AEAT sale con todas las casillas a cero | Desajuste de claves entre lo que manda el llamador y lo que lee el `_render_*`. El test no lo caza si solo comprueba `%PDF`: hay que extraer el texto y emparejar concepto con importe. Bug 121 |
+| Un PDF foral sale como el modelo comun y con la cabecera mal | Falta `variante_foral` en el payload. **Solo el frontend sabe el territorio del selector**, así que el adaptador tiene que añadirlo. Bug 121 |
+| Cifras verosimiles pero de otro territorio en el PDF | El selector de territorio no llamaba a `reset()`: dentro de la ventana del debounce se descargaba un cálculo común etiquetado como foral. Peor que un PDF vacío, porque se presenta. Bug 121 |
+| Un test de calculo lleva meses en rojo y "ya se sabe" | Mirarlo. De 20 fallos "preexistentes" del 2026-08-23, tres tenían razón y destapaban el Bug 121. Un indicador permanentemente rojo deja de informar |
