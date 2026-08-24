@@ -168,17 +168,10 @@ function buildCasillaRows(result: M131Result): CasillaRow[] {
         })
     }
 
-    // `pagos_anteriores` no tiene casilla en el 131: el modelo no es
-    // acumulativo, a diferencia del 130.
-    if ((c['10_pagos_anteriores'] ?? 0) > 0) {
-        rows.push({
-            num: '',
-            label: 'Pagos fraccionados de trimestres anteriores',
-            value: c['10_pagos_anteriores'],
-            unit: 'EUR',
-        })
-    }
-
+    // Aqui NO va una fila de "pagos fraccionados de trimestres anteriores": el
+    // 131 no es acumulativo y esa deduccion no existe (art. 110.1.b RIRPF; sin
+    // casilla en el DR131). La [14] de abajo es la de la complementaria, que es
+    // otra cosa.
     if ((c['11_complementaria'] ?? 0) > 0) {
         rows.push({
             num: '14',
@@ -206,7 +199,6 @@ export default function M131CalculatorPage() {
     const [numAsalariados, setNumAsalariados] = useState(0)
     const [volumenIngresos, setVolumenIngresos] = useState(0)
     const [retenciones, setRetenciones] = useState(0)
-    const [pagosAnteriores, setPagosAnteriores] = useState(0)
     // `undefined` NO es lo mismo que 0: son dos de los tres estados que el
     // backend distingue. Vacío = "no facilito el dato" (la clave se omite del
     // payload y no hay minoración); 0 = "gané 0 EUR" (sí da derecho a los
@@ -230,10 +222,6 @@ export default function M131CalculatorPage() {
             num_asalariados: numAsalariados,
             volumen_ingresos_trimestre: volumenIngresos,
             retenciones_trimestre: retenciones,
-            // En el 1T no hay trimestres anteriores. El control se deshabilita,
-            // pero deshabilitar no vacia: sin este 0 un importe tecleado en el
-            // 3T seguia restandose al volver al 1T.
-            pagos_anteriores: trimestre === 1 ? 0 : pagosAnteriores,
             ceuta_melilla: esCeutaMelilla,
             la_palma: false,
             year: currentYear,
@@ -515,31 +503,18 @@ export default function M131CalculatorPage() {
                                     </p>
                                 </div>
 
-                                <div className="m130-field">
-                                    <label className="m130-label" htmlFor="pagos">
-                                        Pagos fraccionados anteriores del año (EUR)
-                                    </label>
-                                    <div className="m130-input-row">
-                                        <Euro size={16} className="m130-input-icon" />
-                                        <input
-                                            id="pagos"
-                                            type="number"
-                                            className="m130-input"
-                                            min={0}
-                                            step="any"
-                                            placeholder="0"
-                                            disabled={trimestre === 1}
-                                            value={pagosAnteriores || ''}
-                                            onChange={(e) =>
-                                                setPagosAnteriores(parseFloat(e.target.value) || 0)
-                                            }
-                                        />
-                                        <span className="m130-input-suffix">EUR</span>
-                                    </div>
-                                    <p className="m130-field-hint">
-                                        Suma de modelos 131 presentados anteriormente este año.
-                                    </p>
-                                </div>
+                                {/*
+                                    Aqui habia un campo "Pagos fraccionados
+                                    anteriores del año". Se retiro: el 131 no es
+                                    acumulativo (art. 110.1.b RIRPF, el calculo
+                                    parte de los datos-base del primer dia del
+                                    año) y el DR131 no tiene casilla para ello,
+                                    asi que rellenarlo hacia que la calculadora
+                                    dijera que se ingresa MENOS de lo debido. No
+                                    reponerlo: si hace falta un campo de este
+                                    estilo sera el arrastre de resultados
+                                    NEGATIVOS, casilla [11], que es otra cosa.
+                                */}
                             </div>
 
                             {error && (

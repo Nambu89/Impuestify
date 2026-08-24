@@ -856,7 +856,10 @@ class ModeloPDFGenerator:
                 ],
             )
 
-        # Minoraciones (retenciones, minoración art. 110.3.c, pagos previos)
+        # Minoraciones (retenciones, minoración art. 110.3.c, complementaria).
+        # NO hay fila de "pagos fraccionados de trimestres anteriores": el 131
+        # no es acumulativo y esa deducción no existe (art. 110.1.b RIRPF; sin
+        # casilla en el DR131). Ver el docstring de `modelo_131.py`.
         minoracion_rows: list[tuple[str, str]] = []
         if casillas.get("09_retenciones_trimestre", 0) > 0:
             minoracion_rows.append(
@@ -874,15 +877,6 @@ class ModeloPDFGenerator:
                         _format_eur(minoracion_brl),
                     )
                 )
-        # `pagos_anteriores` no tiene casilla en el 131 (ver DIVERGENCIAS en el
-        # docstring de `Modelo131Calculator`): el modelo no es acumulativo.
-        if casillas.get("10_pagos_anteriores", 0) > 0:
-            minoracion_rows.append(
-                (
-                    "Pagos fraccionados de trimestres anteriores",
-                    _format_eur(casillas["10_pagos_anteriores"]),
-                )
-            )
         if casillas.get("11_complementaria", 0) > 0:
             minoracion_rows.append(
                 (

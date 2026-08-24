@@ -135,34 +135,61 @@ async def test_tool_cero_explicito_si_aplica_minoracion():
 
 
 @pytest.mark.asyncio
-async def test_complementaria_es_la_casilla_14_y_pagos_previos_no_tienen_casilla():
+async def test_complementaria_es_la_casilla_14_y_pagos_previos_no_se_mencionan():
     """[14] = "A deducir: resultado a ingresar de las anteriores declaraciones".
 
     En el diseño de registro DR131_2026 la única deducción por declaraciones
-    previas es la [14], que es la de la complementaria. Los pagos fraccionados
-    de trimestres anteriores NO tienen casilla en el 131 (el modelo no es
-    acumulativo, a diferencia del 130), así que no pueden etiquetarse con
-    ninguna: [10] es "Diferencia" y [11] "Resultados negativos de trimestres
-    anteriores".
+    previas es la [14], la de la complementaria. Los pagos fraccionados de
+    trimestres anteriores NO se deducen en el 131 ni tienen casilla: el modelo
+    no es acumulativo (art. 110.1.b RIRPF — la base son "los datos-base del
+    primer día del año"; el mandato de descontar lo ingresado en trimestres
+    previos vive en la letra a), acotado a "lo dispuesto EN ESTA LETRA", que es
+    la estimación directa del Modelo 130).
 
-    Este test fija las ETIQUETAS, no bendice la aritmética: que
-    `pagos_anteriores` se reste sigue en revisión (DIVERGENCIA 1 del docstring
-    de `Modelo131Calculator`).
+    La respuesta al usuario no debe ni nombrarlos: hacerlo invitaba a rellenar
+    un dato que le hacía ingresar de menos. Y no pueden etiquetarse con ninguna
+    casilla: [10] es "Diferencia" y [11] "Resultados negativos de trimestres
+    anteriores", que es otra cosa.
     """
     result = await calculate_modelo_131_tool(
         trimestre=4,
         actividad_tipo="empresarial",
         rendimiento_neto_modulos_anual=18000,
         num_asalariados=0,
-        pagos_anteriores=80,
         resultado_anterior_complementaria=40,
     )
     assert result["success"] is True
     txt = result["formatted_response"]
     assert "anteriores declaraciones [14]" in txt
-    assert "Pagos fraccionados de trimestres anteriores" in txt
+    assert "Pagos fraccionados de trimestres anteriores" not in txt
     assert "[10]" not in txt
     assert "[11]" not in txt
+
+
+@pytest.mark.asyncio
+async def test_el_tool_ignora_pagos_anteriores_y_no_lo_ofrece_en_el_schema():
+    """Un `pagos_anteriores` arrastrado de una conversación vieja no rompe.
+
+    El despachador invoca el ejecutor con `**function_args` sin filtrar, así
+    que un argumento retirado del schema provocaría un `TypeError` en vez de
+    una respuesta. Se absorbe y se ignora: el resultado es el mismo que sin él.
+    """
+    from app.tools.modelo_131_tool import MODELO_131_TOOL
+
+    props = MODELO_131_TOOL["function"]["parameters"]["properties"]
+    assert "pagos_anteriores" not in props
+
+    comun = dict(
+        trimestre=3,
+        actividad_tipo="empresarial",
+        rendimiento_neto_modulos_anual=18000,
+        num_asalariados=0,
+    )
+    limpio = await calculate_modelo_131_tool(**comun)
+    heredado = await calculate_modelo_131_tool(**comun, pagos_anteriores=250)
+
+    assert heredado["success"] is True
+    assert heredado["formatted_response"] == limpio["formatted_response"]
 
 
 @pytest.mark.asyncio
@@ -492,3 +519,14 @@ async def test_tipo_segun_asalariados(num_asalariados, tipo_esperado):
     )
     assert result["success"] is True
     assert result["tipo_aplicado"] == tipo_esperado
+
+
+def test_pagos_anteriores_no_es_un_parametro_del_tool():
+    """Ni en la firma ni en el schema: el LLM no debe poder ofrecerlo."""
+    import inspect
+
+    params = inspect.signature(calculate_modelo_131_tool).parameters
+    assert "pagos_anteriores" not in params
+    # El **_ignored tiene que seguir ahí: el despachador pasa `**function_args`
+    # sin filtrar y un argumento arrastrado no puede reventar la herramienta.
+    assert any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())

@@ -323,7 +323,6 @@ class TestModelo131Casillas:
                 "07_reducciones": 0.0,
                 "08_resultado_tras_reducciones": 360.0,
                 "09_retenciones_trimestre": 50.0,
-                "10_pagos_anteriores": 0.0,
                 "11_complementaria": 0.0,
                 "12_resultado_final": 210.0,
             },
@@ -382,7 +381,6 @@ class TestModelo131Casillas:
                 "07_reducciones": 0.0,
                 "08_resultado_tras_reducciones": 200.0,
                 "09_retenciones_trimestre": 0.0,
-                "10_pagos_anteriores": 0.0,
                 "11_complementaria": 0.0,
                 "12_resultado_final": 200.0,
             },
@@ -412,7 +410,6 @@ class TestModelo131Casillas:
                 "07_reducciones": 0.0,
                 "08_resultado_tras_reducciones": 240.0,
                 "09_retenciones_trimestre": 0.0,
-                "10_pagos_anteriores": 0.0,
                 "11_complementaria": 0.0,
                 "12_resultado_final": 240.0,
             },
@@ -447,7 +444,6 @@ class TestModelo131Casillas:
                 "07_reducciones": 0.0,
                 "08_resultado_tras_reducciones": 200.0,
                 "09_retenciones_trimestre": 0.0,
-                "10_pagos_anteriores": 0.0,
                 "11_complementaria": 0.0,
                 "12_resultado_final": 200.0,
             },
@@ -460,21 +456,39 @@ class TestModelo131Casillas:
 
     def test_complementaria_es_la_casilla_14(self, generator, data_apartado_i):
         """[14] = "A deducir: resultado a ingresar de las anteriores
-        declaraciones", que es el importe de la complementaria. Los pagos
-        fraccionados de trimestres anteriores NO tienen casilla en el 131."""
+        declaraciones", que es el importe de la complementaria."""
         data = dict(data_apartado_i)
         data["casillas"] = {
             **data_apartado_i["casillas"],
-            "10_pagos_anteriores": 80.0,
             "11_complementaria": 40.0,
         }
         joined = " | ".join(_render_131_texts(generator, data))
         assert "anteriores declaraciones [14]" in joined
-        assert "Pagos fraccionados de trimestres anteriores" in joined
         # [10] es "Diferencia" y [11] "Resultados negativos de trimestres
         # anteriores": ninguna de las dos es lo que aquí se está restando.
         assert "[10]" not in joined
         assert "[11]" not in joined
+
+    def test_no_imprime_pagos_de_trimestres_anteriores(self, generator, data_apartado_i):
+        """El PDF no debe llevar una fila de pagos fraccionados previos.
+
+        El 131 no es acumulativo: art. 110.1.b) RIRPF calcula sobre "los
+        datos-base del primer día del año", y el mandato de descontar lo
+        ingresado en trimestres anteriores está en la letra a) —estimación
+        directa, Modelo 130—, acotado a "lo dispuesto EN ESTA LETRA". El
+        DR131_2026 no tiene casilla para ese concepto.
+
+        Se le pasa la clave retirada a propósito: aunque un cliente viejo
+        mande el dato, el PDF no puede imprimirlo como si fuera deducible.
+        """
+        data = dict(data_apartado_i)
+        data["casillas"] = {
+            **data_apartado_i["casillas"],
+            "10_pagos_anteriores": 80.0,
+        }
+        joined = " | ".join(_render_131_texts(generator, data))
+        assert "Pagos fraccionados de trimestres anteriores" not in joined
+        assert "80,00" not in joined
 
 
 # ---------------------------------------------------------------------------
