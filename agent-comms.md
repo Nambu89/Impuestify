@@ -1954,6 +1954,34 @@ Ver detalles completos en el reporte.
 
 ## Tareas activas
 
+> **2026-08-24 — Impuestify APARCADO por decisión de Fernando.** Se pasa a la demo de IA Melilla.
+> Todo lo de abajo queda en cola. Las ramas están empujadas o con trabajo en worktrees de `C:/tmp/`.
+
+[2026-08-24] [PRODUCTO] 🔴 TODO — **Los cuatro forales NO tienen Modelo 131: hay que quitarlos del selector.** Investigado y citado en `plans/2026-08-24-forales-131-research.md`. Ninguno de los cuatro territorios tiene estimación objetiva en el IRPF: Bizkaia, Gipuzkoa y Araba la derogaron con efectos 1-1-2014 (NF 13/2013, NF 3/2014, NF 33/2013) y Navarra la sustituyó por *estimación directa especial* el 1-1-2021 (LF 21/2020). Ofrecer esos cuatro en `/calculadora-131` es ofrecer un régimen que allí no existe desde hace doce años. **El arreglo es quitarlos con un aviso que remita a la calculadora foral del 130**, que sí les sirve y **ya está construida** (`modelo_130_araba.py`, `_bizkaia`, `_gipuzkoa`, `_navarra` + `modelo_130_foral_tool.py`). Caso raro: en **Araba** el pago fraccionado lo gira de oficio la Diputación y solo hay autoliquidación el año de inicio. ⚠️ El informe es BORRADOR: quedan "pendiente de confirmar" en los modelos y órdenes forales de Gipuzkoa y Araba.
+
+[2026-08-24] [BACKEND] 🔴 TODO — **Auditar los cuatro calculadores forales del 130.** No los ha auditado nadie, y en dos días han salido 3 bugs de dinero y 2 auditorías con erratas. Son cuatro calculadores de euros sin verificar contra norma foral.
+
+[2026-08-24] [BACKEND] 🟡 EN RAMA — `claude/130-umbral-vivienda`: falta el umbral de **33.007,20 €** del art. 110.3.d).1º. `modelo_130.py` deduce vivienda a cualquiera → **el usuario paga de menos**. ⚠️ Trampa: el dato nuevo NO puede tener default `0`, porque `0 < 33.007,20` y la deducción se concedería siempre.
+
+[2026-08-24] [BACKEND] 🟡 EN RAMA — `claude/131-la-palma-caducada`: la reducción del **60 % de La Palma caducó el 31-12-2025** (DA 57.ª LIRPF, último modificador RDL 13/2025; sin prórroga para 2026 — la Orden HAC/1425/2025 tiene 0 apariciones). Hoy **se está regalando**. No borrar el flag: acotarlo por ejercicio, para seguir calculando complementarias de años pasados. Investigación en `plans/2026-08-24-la-palma-vigencia.md`.
+
+[2026-08-24] [BACKEND] 🟡 EN RAMA — `claude/modelo-llm-oficial`: oficializar **`gpt-5.6-luna`** (decisión de Fernando) en `config.py`, `CLAUDE.md` y los tests, y quitar los ids hardcodeados de 16 ficheros.
+
+[2026-08-24] [BACKEND] 🔴 TODO — **Gap A5 del 130, mal diagnosticado en su auditoría.** El arrastre de negativos NO se modela con la casilla 18 (esa es la complementaria) sino con la cadena `[14]`→`[17]`→`[19]`→`[15]` del trimestre siguiente, **sin signo** y topada por su `[14]` positiva. ⚠️ La `[12]` SÍ se topa en cero oficialmente: no tocarla. ⚠️ El diseño de registro rotula la `[15]` como "ejercicios anteriores" pero las instrucciones AEAT dicen "trimestres anteriores **del mismo ejercicio**": implementar desde el `.xls` produce arrastre entre años, que está mal. Detalle en la memoria del PM.
+
+[2026-08-24] [DOCS] 🔴 TODO — **Corregir las 8 erratas de `docs/audits/modelo_130_validation_2026-05.md`**, entre ellas el `art. 80 bis` derogado en 2015 citado 9 veces —y metido en el CÓDIGO: `_art_80bis_deduction`, clave `13_deduccion_art80bis`, tests `test_comun_art_80bis_*`— y un tope anual de vivienda de "2.640,56 €" que no existe. Causa: 4 de sus 12 fuentes no son oficiales (Iberley, SuperContable) y **no cita las instrucciones por casilla de la AEAT**.
+
+[2026-08-24] [DOCS] 🔴 TODO — **Barrer los snapshots de `docs/AEAT/*.md` por caducidad.** Al menos uno estaba obsoleto: nuestra copia era del 27-03-2026 y la AEAT reescribió la página el 30-04-2026. Ninguna versión era falsa; la nuestra había caducado. De esas copias salen cifras que ve el contribuyente.
+
+[2026-08-24] [QA] 🔴 TODO — Consolidar `test_modelo_tools.py` (pre-pytest, fosilizado) contra `test_modelo_130_tool.py` y `test_modelo_303.py`. Solo `test_tools_registration` es exclusivo.
+
+[2026-08-24] [BACKEND] 🔴 TODO — **Bug 123, Modelo 303**: `modelo_303.py:523`, `volumen_ano_anterior: float = 0.0`. De ahí salen `es_elegible_recc()`=True y `requiere_sii()`=False, y **nadie le pasa el parámetro**: esa es siempre la respuesta.
+
+[2026-08-24] [BACKEND] 🔴 TODO — `_render_130` no pinta las casillas 15-18. Y el backend tiene **dos** implementaciones forales del 130: la genérica de `/api/declarations/130/calculate` no numera casillas en Bizkaia general/excepcional ni Navarra.
+
+[2026-08-24] [DEVOPS] 🔴 TODO — El hook de prettier reescribe ~250 ficheros del frontend a LF en Windows. Causa: `pass_filenames: false` con `--write "src/**/*"` y `endOfLine: lf` contra `core.autocrlf=true`.
+
+
 [2026-08-23] [BACKEND+FRONTEND] 🟢 DONE — **Bug 121: el Modelo 130 regalaba 100 EUR/trimestre.** `rend_neto_anterior` con default `0.0` que el calculador leía como el hecho "gané 0 EUR" → primer tramo del art. 110.3.c) RIRPF a todo el que no rellenara el campo. Hasta 400 EUR/año menos ingresados a Hacienda, con el usuario presentando ese número. PR #40 (backend) + **PR #42 (frontend, imprescindible: sin él `DeclarationsPage.tsx` seguía mandando `0`)**. Salió de 3 tests que llevaban meses en rojo entre otros 17. Detalle en `memory/bugfixes-2026-08.md`.
 
 [2026-08-23] [BACKEND] 🟢 DONE — **Bug 122: el Modelo 131 negaba esa misma minoración** a quien de verdad tuvo un ejercicio anterior de 0 EUR (su helper trataba `<= 0` como "sin dato"). Y la numeración de casillas de su PDF estaba inventada: `[12]` se imprimía como "Resultado a ingresar" cuando en el modelo es "Pago de préstamos para adquisición de vivienda habitual". PR #41.
@@ -1994,6 +2022,10 @@ Ver detalles completos en el reporte.
 [2026-03-05] [BACKEND] 🟢 DONE — Fix: FOREIGN KEY constraint en message_sources. `conversation_service.py` ahora valida chunk_ids antes de insertar. Degrada gracefully si chunks no existen en BD.
 
 [2026-03-05] [FRONTEND] 🟢 DONE — Fix: Renderizado markdown en chat. Instalado `remark-gfm` para soporte GFM (tablas, tachado, task lists). Eliminado `white-space: pre-wrap` que causaba doble salto de línea. Añadidos estilos para tablas, bloques de código, blockquotes, hr, listas anidadas.
+
+[2026-08-24] [DOC-CRAWLER] 🟢 DONE — Vigencia de la reducción del 60 % de La Palma en pagos fraccionados IRPF. **NO está vigente en 2026**: la LIRPF DA 57.ª cubre 2022-2025 y su última prórroga (RDL 13/2025) solo alcanzó al 4T 2025. Ni la Orden de módulos 2026 (HAC/1425/2025) ni ninguna disposición general del BOE de 2026 la prorrogan. Informe con citas literales en `plans/2026-08-24-la-palma-vigencia.md`; normativa oficial en `docs/AEAT/La-Palma/` (8 PDFs, carpeta en .gitignore). Snapshot AEAT cap 3.7 refrescado (el de marzo estaba obsoleto).
+
+[2026-08-24] [DOC-CRAWLER] 📢 NEEDS_REVIEW → **BACKEND** — El flag `la_palma` de `backend/app/utils/calculators/modelo_131.py` aplica un 60 % de reducción sin comprobar el ejercicio: para cualquier trimestre de 2026 el pago fraccionado sale un 60 % por debajo. Mismo problema previsible en el 130 (art. 110.1.a RIRPF: la reducción también le aplicaba). Decisión de producto pendiente de Fernando: retirar el flag o darle año de caducidad. Además hay dos afirmaciones falsas que retirar: `docs/audits/modelo_131_validation_2026-05.md:92` ("Orden HAC/1347/2024" — esa Orden no menciona La Palma) y el comentario de `modelo_131.py:88-93` (atribuye el 60 % a la Orden HFP/1359/2023, que en realidad regula otra cosa: un 20 % sobre el rendimiento neto de módulos, también caducado).
 
 ---
 
