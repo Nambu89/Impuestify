@@ -1,20 +1,29 @@
 name: Red Team Nightly (Promptfoo)
 
-# Runs the Spanish jailbreak/inject suite against the staging endpoint
-# every night at 02:00 UTC and on every PR that touches security code.
-# Fails if any assertion regresses.
-
+# Lanza la suite espanola de jailbreak/inyeccion contra el endpoint desplegado,
+# cada noche a las 02:00 UTC. Falla si alguna asercion regresa.
+#
+# SIN disparador `pull_request`, a proposito.
+#
+# Esta suite NO prueba el codigo del PR: promptfoo hace peticiones HTTP a
+# `PROMPTFOO_TARGET_URL`, un entorno YA DESPLEGADO (ver el provider en
+# tests/red-team/promptfooconfig.yaml). El job no levanta ningun servidor.
+#
+# Comprobado con relojes: el commit que arreglaba el modelo del clasificador se
+# empujo a las 20:54:14 UTC y el run arranco a las 20:54:32 con ese codigo en el
+# checkout... y fallo identico, porque medía produccion. Ningun cambio en una
+# rama podia ponerlo en verde.
+#
+# Eso lo convertia en un check permanentemente en rojo que nadie miraba — y asi
+# pasaron inadvertidos seis dias en que el chat rechazaba TODAS las preguntas
+# (Bug 117) y ocho semanas de un AttributeError en cada peticion (Bug 119).
+#
+# Queda como monitor nocturno + verificacion a mano DESPUES de desplegar:
+#   mergear -> desplegar -> lanzar este workflow -> comprobar
 on:
   schedule:
     - cron: "0 2 * * *"
   workflow_dispatch:
-  pull_request:
-    paths:
-      - "backend/app/security/**"
-      - "backend/app/agents/tax_agent.py"
-      - "backend/app/routers/chat_stream.py"
-      - "tests/red-team/**"
-      - ".github/workflows/red-team-nightly.yml"
 
 jobs:
   red-team:
@@ -38,7 +47,10 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # promptfoo@latest exige Node >= 22.22. Con Node 20 el `npm install -g`
+          # de mas abajo fallaba y la suite de red-team llevaba noches sin
+          # ejecutarse de verdad: el job moria antes del eval.
+          node-version: "22"
 
       - name: Validate required secrets
         run: |
@@ -78,6 +90,73 @@ jobs:
             -c tests/red-team/promptfooconfig.yaml \
             --no-cache \
             --output tests/red-team/results.json
+
+      # Sin esto habia que descargar el artefacto y abrirlo a mano para saber
+      # QUE habia fallado. Esa friccion es parte de por que la suite llevaba
+      # meses en rojo sin que nadie la mirase: el run decia "failure" y nada mas.
+      # Ahora los casos rojos salen en el log y en el resumen del run.
+      - name: Report failing cases
+        if: failure()
+        run: |
+          results="tests/red-team/results.json"
+
+          if [ ! -f "$results" ]; then
+            echo "No hay $results: el eval murio antes de escribir la salida."
+            echo "Mira los pasos anteriores (login, instalacion o red)."
+            {
+              echo "## Red team: sin resultados"
+              echo ""
+              echo "El eval no llego a escribir \`$results\`. El fallo esta en un paso anterior."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Estructura real de la salida de promptfoo, verificada contra el
+          # artefacto del run 32601663247 (promptfoo 0.122.0):
+          #   .results.results[] -> .success
+          #                      -> .vars.prompt
+          #                      -> .gradingResult.componentResults[] -> .pass, .reason, .assertion.type
+          # Ojo: el array esta anidado dos niveles (.results.results), no en la raiz.
+          total=$(jq '.results.results | length' "$results")
+          failed=$(jq '[.results.results[] | select(.success == false)] | length' "$results")
+
+          echo "Casos en rojo: $failed de $total"
+          echo "-----------------------------------------------------------"
+
+          # Log plano: prompt + solo las aserciones que han fallado.
+          jq -r '
+            .results.results[]
+            | select(.success == false)
+            | "FAIL: " + ((.vars.prompt // "(sin prompt)") | tostring | gsub("\n"; " "))
+              + "\n"
+              + ([ (.gradingResult.componentResults // [])[]
+                   | select(.pass == false)
+                   | "        [" + (.assertion.type // "?") + "] " + ((.reason // "") | tostring | gsub("\n"; " "))
+                 ] | join("\n"))
+          ' "$results"
+
+          # Resumen del run (pestana Summary), en markdown.
+          {
+            echo "## Red team: $failed de $total casos en rojo"
+            echo ""
+            echo "La suite mide el entorno YA DESPLEGADO (\`PROMPTFOO_TARGET_URL\`), no el codigo de esta rama."
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          jq -r '
+            .results.results[]
+            | select(.success == false)
+            | "### " + ((.vars.prompt // "(sin prompt)") | tostring | gsub("\n"; " "))
+              + "\n"
+              + ([ (.gradingResult.componentResults // [])[]
+                   | select(.pass == false)
+                   | "- `" + (.assertion.type // "?") + "` — " + ((.reason // "") | tostring | gsub("\n"; " "))
+                 ] | join("\n"))
+              + "\n"
+          ' "$results" >> "$GITHUB_STEP_SUMMARY"
+
+          # No enmascaramos nada: el job ya esta en rojo por el paso del eval.
+          exit 0
 
       - name: Upload results artifact
         if: always()

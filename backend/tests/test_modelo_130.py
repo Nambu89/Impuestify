@@ -106,6 +106,40 @@ async def test_comun_art_80bis_above_12000(calc):
 
 
 @pytest.mark.asyncio
+async def test_comun_art_80bis_dato_ausente_no_minora(calc):
+    """Sin `rend_neto_anterior` (None) → casilla 13 = 0.
+
+    Regresión: el defecto era 0.0 y se leía como "el ejercicio anterior fue de
+    0 EUR", primer tramo del art. 110.3.c) RIRPF → 100 EUR/trimestre regalados
+    a quien no facilitara el dato. El art. 110.3.c) condiciona la minoración a
+    que la cuantía del ejercicio anterior *conste* y sea <= 12.000 EUR.
+    """
+    r = await calc.calculate(
+        territory="Comun",
+        quarter=1,
+        ingresos_acumulados=20000,
+        gastos_acumulados=10000,
+    )
+    assert r["casillas"]["13_deduccion_art80bis"] == 0
+    assert r["resultado"] == 2000
+    assert r["desglose"]["rend_neto_anterior_para_art80bis"] is None
+
+
+@pytest.mark.asyncio
+async def test_comun_art_80bis_cero_explicito_si_minora(calc):
+    """Un 0 EXPLÍCITO sí aplica el primer tramo (100 EUR)."""
+    r = await calc.calculate(
+        territory="Comun",
+        quarter=1,
+        ingresos_acumulados=20000,
+        gastos_acumulados=10000,
+        rend_neto_anterior=0.0,
+    )
+    assert r["casillas"]["13_deduccion_art80bis"] == 100
+    assert r["resultado"] == 1900
+
+
+@pytest.mark.asyncio
 async def test_comun_vivienda_habitual(calc):
     """Deduccion vivienda habitual: 2% rendimiento neto, max 660.14."""
     r = await calc.calculate(

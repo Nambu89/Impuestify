@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import Header from '../components/Header'
 import { useModeloPDF } from '../hooks/useModeloPDF'
+import { buildModelo130PdfDataFromLocal } from '../utils/modelo130Pdf'
 import './M130CalculatorPage.css'
 
 // -------------------------------------------------------
@@ -673,9 +674,13 @@ export default function M130CalculatorPage() {
                                     onClick={() => {
                                         const trimestreLabel = trimestre.replace('Q', '') + 'T'
                                         const ejercicio = new Date().getFullYear()
+                                        // `_render_130` lee `seccion_i` /
+                                        // `deduccion_80bis` / `resultado_final`.
+                                        // Mandarle `casilla01..19` en crudo
+                                        // producia un PDF con todo a cero.
                                         downloadPDF(
                                             '130',
-                                            { ...input, ...result },
+                                            buildModelo130PdfDataFromLocal(result),
                                             trimestreLabel,
                                             ejercicio,
                                         )

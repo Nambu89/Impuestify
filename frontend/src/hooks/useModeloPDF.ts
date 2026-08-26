@@ -1,13 +1,26 @@
 import { useState, useCallback } from 'react'
 import { useApi } from './useApi'
 
+/**
+ * Datos del contribuyente que acompañan al PDF.
+ *
+ * `variante_foral` la lee `_render_header` para titular el documento como
+ * "Modelo 130 Bizkaia" y equivalentes; el cuerpo del modelo la lee de `data`,
+ * así que en las variantes forales hay que mandarla en los dos sitios.
+ */
+export interface Contribuyente {
+    nombre?: string
+    nif?: string
+    variante_foral?: string
+}
+
 interface UseModeloPDFReturn {
     downloadPDF: (
         modelo: string,
         data: Record<string, any>,
         trimestre: string,
         ejercicio: number,
-        contribuyente?: { nombre?: string; nif?: string },
+        contribuyente?: Contribuyente,
     ) => Promise<void>
     isLoading: boolean
     error: string | null
@@ -26,7 +39,7 @@ export function useModeloPDF(): UseModeloPDFReturn {
             data: Record<string, any>,
             trimestre: string,
             ejercicio: number,
-            contribuyente?: { nombre?: string; nif?: string },
+            contribuyente?: Contribuyente,
         ) => {
             setIsLoading(true)
             setError(null)

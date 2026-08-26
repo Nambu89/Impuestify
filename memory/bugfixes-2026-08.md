@@ -73,11 +73,18 @@ a Groq. Dos problemas:
    sus categorías S7 y la ruta de fallback 413/429). Cortocircuitar dejaba
    `call_count == 0`.
 
-Versión final: Groq primero (semántica intacta, tests verdes) + override por
-regex solo con tipos de **alta confianza**. `_HIGH_CONFIDENCE_PII` excluye
-`postal_code` (importes) y `passport` (`[A-Z]{2,3}\d{6,9}` matchea códigos de
-expediente). Ambos siguen contando cuando el regex actúa como detector único
-(input largo o fallo de Groq) — solo se les niega el poder de invalidar al LLM.
+Versión de esta sesión: Groq primero (semántica intacta, tests verdes) +
+override por regex solo con tipos de **alta confianza**. `_HIGH_CONFIDENCE_PII`
+excluía `postal_code` (importes) y `passport` (`[A-Z]{2,3}\d{6,9}` matchea
+códigos de expediente). Ambos seguían contando cuando el regex actúa como
+detector único (input largo o fallo de Groq) — solo se les negaba el poder de
+invalidar al LLM.
+
+> **SUPERADO el 2026-08-22 (Bug 114, más abajo).** Justo ese "siguen contando
+> como detector único" era el agujero: por encima de 3000 caracteres el regex
+> no es un override sino el único juez, y ahí `postal_code` rechazaba cualquier
+> importe. `postal_code` acabó **eliminado** y `passport` exige ahora la
+> etiqueta y **sí** está en `_HIGH_CONFIDENCE_PII`.
 
 **Lección**: portar un fix de seguridad de una rama que no ejecuta la misma
 batería de tests puede importar el bug que esa rama no vio. La demo tenía este
@@ -192,6 +199,609 @@ id de modelo incrustado.
 
 ---
 
+## Bug 109 — El merge del PR #17 dejó DOS implementaciones de `detect()` superpuestas
+
+**Archivo**: `backend/app/security/pii_detector.py`
+
+**Cuándo**: horas después de mergear el PR #22 (bug 105), al mergear el PR #17
+(`demo/fiscal-ia-melilla` completa) sobre `main`.
+
+**Síntoma en producción**: *"¿Cuánto IRPF pago si gano 30000 EUR en Madrid?"*
+—una pregunta central del producto— se rechazaba como PII (`Código Postal`), y
+Groq ni se llegaba a llamar (0 invocaciones).
+
+**Causa raíz**: git fusionó **sin conflicto** dos versiones distintas de la
+misma función, porque estaban en puntos diferentes de `detect()`:
+
+1. La de la rama demo: `_regex_only()` primero y `return` inmediato ante
+   cualquier match, `postal_code` incluido.
+2. La del bug 105: Groq primero y override solo con `_HIGH_CONFIDENCE_PII`.
+
+La (1) corta antes, así que la (2) quedó como **código muerto**. El guard de
+alta confianza seguía en el fichero, pero no se ejecutaba nunca.
+
+**Fix**: eliminar el bloque de cortocircuito. Queda solo la union.
+
+**Cómo se detectó**: `test_importes_no_se_confunden_con_codigo_postal` (añadido
+en el PR #22) empezó a fallar al rebasar otra rama sobre el `main` nuevo. Sin
+ese test la regresión habría vivido en producción indefinidamente: no lanza
+excepción, no aparece en logs de error, solo rechaza preguntas legítimas.
+
+**Lección 1 — verificar presencia NO es verificar comportamiento.** Tras el
+merge comprobé que `_HIGH_CONFIDENCE_PII` seguía en `main` con `grep -c` y di
+los fixes por supervivientes. Estaba, pero inerte. Un `grep` demuestra que el
+texto existe, no que se ejecute. **Para dar por bueno un fix tras un merge hay
+que ejecutar su test, no buscar su código.**
+
+**Lección 2 — un merge sin conflictos no es un merge correcto.** Dos ramas que
+arreglan el mismo bug de formas distintas se superponen en silencio si tocan
+líneas diferentes. Al mergear una rama larga que ha arreglado cosas en
+paralelo, hay que revisar a mano las funciones que ambas tocaron.
+
+**Lección 3 — afirmar sobre el efecto observable, no solo sobre el veredicto.**
+El test nuevo `test_el_regex_no_cortocircuita_la_consulta_al_llm` comprueba que
+`create.call_count == 1`, o sea que **se consultó al LLM**. Es lo único que
+distingue "el regex no encontró nada" de "el regex cortocircuitó", y por tanto
+lo único que detecta la recaída.
+
+---
+
+## Bug 110 — El Dockerfile de Coolify tumbó el despliegue de Railway
+
+**Archivos**: `backend/Dockerfile`, `railway.toml`
+
+**Síntoma**: build OK, `Healthcheck failed! 1/1 replicas never became healthy`,
+con `Attempt #1 failed with service unavailable`. Deploy del 2026-08-09 21:47.
+
+**Causa raíz** (cadena de tres pasos):
+
+1. El PR #17 mergeó `demo/fiscal-ia-melilla` completa, y con ella
+   `backend/Dockerfile` — creado en el commit `6814835`
+   *"build(demo): backend Dockerfile + dockerignore **for Coolify deploy**"*.
+   Antes de ese merge **`main` no tenía Dockerfile**.
+2. Railway lo detectó y construyó con él en vez de con Railpack. La doc oficial
+   es explícita: *"Railway will always build with a Dockerfile if it finds
+   one"* — el `builder = "RAILPACK"` de `railway.toml` **no lo evita**. El log
+   del build lo confirma: `load build definition from backend/Dockerfile`.
+3. Ese Dockerfile estaba escrito para Coolify, donde el puerto es fijo, así que
+   hardcodea `--port 8000`. Railway inyecta `PORT` y enruta ahí. La app
+   escuchaba en 8000, Railway preguntaba en `$PORT` → *service unavailable*.
+   La doc de healthchecks lo dice literalmente: no escuchar en `PORT` "can
+   result in your health check returning a `service unavailable` error".
+
+El `railpack.json` (inactivo desde entonces) sí lo hacía bien:
+`--port $PORT`. Al pasar a Dockerfile se perdió esa pieza sin que nadie lo
+notara, porque el comando de arranque vive ahora en otro fichero.
+
+**Fix**: `CMD` en forma shell con `${PORT:-8000}`, de modo que el mismo
+artefacto sirva para las dos plataformas — Railway usa el puerto inyectado y
+Coolify/compose caen al 8000. Igual en el `HEALTHCHECK`.
+
+**Segundo problema, latente**: `healthcheckTimeout = 30`, cuando el default de
+Railway es **300**. El arranque importa `agent_framework` y modelos de
+embeddings y tarda ~1-2 min (medido: la app respondió 200 en `/health` tras
+~90 s en local). Con 30 s, cualquier lentitud extra marca el deploy como
+fallido aunque esté levantando bien. Subido a 300.
+
+**Verificación**: no se pudo construir la imagen (el daemon de Docker no estaba
+arrancado), así que se verificó (a) que la app arranca y `/health` devuelve 200
+respetando el `--port` que se le pasa, y (b) que `${PORT:-8000}` expande a
+`4321` con `PORT=4321` y a `8000` sin la variable, tanto en el `CMD` como en el
+`HEALTHCHECK`.
+
+**Lección**: al mergear una rama de despliegue distinto, los ficheros de
+infraestructura (`Dockerfile`, `docker-compose.yml`, `*.toml`) son tan
+peligrosos como el código. Un Dockerfile pensado para una plataforma **secuestra
+el build de la otra en silencio**, porque su detección tiene prioridad sobre la
+configuración declarada. Antes de mergear una rama de otro despliegue: revisar
+qué ficheros de infra trae y si alguno cambia el builder efectivo.
+
+### ⚠️ CORRECCIÓN (2026-08-11): la causa raíz de arriba es FALSA
+
+El fix de este Bug 110 se mergeó (PR #24, `c0868bd`, committer date
+2026-08-10T22:30:37Z; el build arranca 20 s después) y el deploy
+siguiente **volvió a caer**, esta vez los dos servicios. Con el log de ese
+deploy en la mano, dos afirmaciones del apartado anterior no se sostienen:
+
+1. **«La app escuchaba en 8000 y Railway preguntaba en `$PORT`»** — no.
+   `backend/railway.toml` ya definía `startCommand` con `--port $PORT`, y el
+   start command de Railway **pisa el `CMD` de la imagen**. El puerto fijo del
+   `CMD` de Coolify nunca llegó a ejecutarse en Railway. Prueba directa: el
+   deploy del 2026-08-10 llevaba ya el `CMD` con `${PORT:-8000}` y cayó igual.
+2. **«`healthcheckTimeout` 30 → 300»** — se cambió en el `railway.toml` de la
+   **raíz**, que el backend no lee. El log del deploy posterior sigue diciendo
+   `Retry window: 30s`, el valor de `backend/railway.toml`, que el fix no tocó.
+
+3. **«El log del build lo confirma: `load build definition from
+   backend/Dockerfile`»** — esa línea **no aparece** en el export (1001 líneas,
+   empieza a mitad de un `apt-get`). Lo que sí lo confirma son las etapas
+   `[builder 5/5] RUN pip install --user -r requirements.txt` y
+   `[runtime 5/5] COPY . .`, que casan 1:1 con `backend/Dockerfile:20,36,39`.
+4. **«El arranque carga modelos de embeddings»** — no hay modelos locales.
+   `requirements.txt` no trae torch, sentence-transformers, transformers ni
+   fastembed: los embeddings van por API de OpenAI + Upstash Vector. Lo que
+   tarda es el import de `app.main` (~10 s) y el `init_schema` contra Turso.
+5. **«`railpack.json` sí lo hacía bien y al pasar a Dockerfile se perdió esa
+   pieza»** — falso: el `startCommand` con `$PORT` vivía (y vive) en
+   `backend/railway.toml` desde `eb41704`. No cambió *dónde* estaba el comando,
+   sino **cómo lo ejecuta Railway** (shell con Railpack, exec form con Docker).
+
+Lo que sí era correcto: que 30 s se quedaban cortos. Pero se arregló en el
+fichero equivocado, y **el motivo por el que de pronto se quedaron cortos era
+otro** (Bug 112).
+
+**Verificación de aquel fix, releída**: sólo comprobó que `${PORT:-8000}` se
+expande en el `CMD` — y el `CMD` **no se ejecuta en Railway** mientras
+`backend/railway.toml` defina `startCommand`. Es decir: se verificó el arranque
+de Coolify y se dio por verificado el de Railway.
+
+---
+
+## Bug 111 — un commit de deploy, dos servicios caídos
+
+**Archivos**: `railway.toml` (raíz), `backend/railway.toml`
+
+**Síntoma**: tras mergear el PR #24 (`c0868bd`, 2026-08-10 22:30:37Z), Railway lanzó build de
+los dos servicios a las 22:30:57Z y murieron los dos:
+
+- **Frontend**: `couldn't locate a dockerfile at path /frontend/Dockerfile in
+  code archive`. Ni siquiera llegó a compilar.
+- **Backend**: build OK, imagen subida, y `Retry window: 30s` →
+  `Attempt #1/#2 failed with service unavailable` → `1/1 replicas never became
+  healthy!`.
+
+**Causa raíz — cada servicio lee un fichero de config distinto**:
+
+| Servicio | Root Directory | Config que aplica |
+|----------|----------------|-------------------|
+| frontend | `/frontend` | `railway.toml` de la **raíz** del repo |
+| backend  | `/backend`  | `backend/railway.toml` |
+
+Doc oficial de monorepos, literal: *"The Railway Config File does not follow the
+Root Directory path. You have to specify the absolute path for the
+`railway.json` or `railway.toml` file"*. Es un ajuste **por servicio**; el
+frontend se quedó con el valor por defecto (el de la raíz) y el backend apunta
+al suyo.
+
+Ese `railway.toml` de la raíz fue históricamente la config del backend, cuando
+se construía desde `/` con Railpack (`7e892c2`, `1b3a673`, `3befb0e`). Nadie
+actualizó el comentario cuando el backend se mudó a `/backend`, así que el PR
+#24 lo editó creyendo que tocaba el backend. Efectos cruzados:
+
+- `builder = "DOCKERFILE"` → se lo comió el **frontend**, que no tiene
+  Dockerfile. Doc de Dockerfiles: *"Railway will look for and use a `Dockerfile`
+  at the root of the source directory"*; con source dir `/frontend`, la ruta
+  resuelta es exactamente la del error. Verificado: `frontend/Dockerfile` no ha
+  existido **nunca** en ninguna rama (`git log --all --name-only | grep -i
+  dockerfile` → solo `backend/Dockerfile` y un `Dockerfile` de raíz borrado en
+  2025-12).
+- `healthcheckTimeout = 300` → **no llegó al backend**, que siguió con 30.
+
+**Fix**:
+- `railway.toml` (raíz) vuelve a `builder = "RAILPACK"`, `healthcheckPath = "/"`
+  (SPA: el fallback a `index.html` devuelve 200) y queda encabezado con un aviso
+  de que es el fichero del FRONTEND.
+- `backend/railway.toml` se queda con toda la config de backend:
+  `healthcheckTimeout = 300`, `builder = "DOCKERFILE"` (que es lo que Railway
+  hace de verdad) y sin `buildCommand` (lo ignora el builder de Docker).
+- `healthcheckTimeout = 300` en **los dos** ficheros: si mañana cambia qué
+  config aplica a cada servicio, el valor sigue siendo el bueno.
+
+**El sospechoso principal del backend, que nadie había mirado: el
+`startCommand` en exec form.** Citas literales de
+`docs.railway.com/guides/start-command`:
+
+> *"the start command overrides the image's `ENTRYPOINT` in exec form"*
+> *"commands ran in exec form do not support variable expansion"*
+> Patrón recomendado por la propia doc: `/bin/sh -c "exec python main.py --port $PORT"`
+> Y sobre Railpack: *"the start command is ran in a shell process. This supports
+> the use of environment variables without needing to wrap your command in a shell."*
+
+`backend/railway.toml` traía `startCommand = "uvicorn ... --port $PORT ..."`
+desde `86ede74` (2026-04-09) y funcionaba **porque el builder era Railpack**,
+que lo ejecuta en shell. `backend/Dockerfile` entró en main con el PR #17
+(`dc41b8b`, **2026-08-09 21:06**) y cambió el builder a Docker → el mismo start
+command pasa a exec form → uvicorn recibe la cadena literal `"$PORT"` y muere en
+el parseo de argumentos (`Error: Invalid value for '--port': '$PORT' is not a
+valid integer`, reproducido en local), **antes incluso de importar la app**:
+cero stdout, cero traceback y el edge respondiendo `service unavailable`.
+
+Esto explica lo que "la app va lenta" no explica: **por qué rompió justo ese
+día**. El coste del arranque no cambió el 2026-08-09; el builder sí.
+
+Fix: `startCommand = '/bin/sh -c "exec uvicorn ... --port ${PORT:-8000} ..."'`,
+que es literalmente el patrón de la doc. Se mantiene explícito en vez de
+borrarlo porque la config-as-code gana al dashboard, así que además neutraliza
+cualquier start command que quedara puesto a mano ahí.
+
+**Honestidad sobre la evidencia**: no está *probado* que esto fuera lo que pasó.
+El export de logs es 100 % build (`deploymentInstanceId: null`,
+`source: buildkit`); no hay una sola línea de runtime. Lo seguro es que la
+combinación *builder DOCKERFILE + `$PORT` desnudo* **no puede funcionar** según
+la doc del proveedor. Para confirmarlo hacen falta los **Deploy Logs** (no los
+Build Logs) y buscar `is not a valid integer`.
+
+**Lección**: en un monorepo, un fichero de config en la raíz **no es de nadie en
+particular**. Antes de tocarlo, comprobar en el log de qué servicio salieron los
+valores que estás cambiando. La prueba de que el backend no leía la raíz estaba
+en una sola línea del log (`Retry window: 30s` con la raíz ya en 300) y no se
+miró.
+
+---
+
+## Bug 112 — `pymupdf4llm` sin pinear se comió la ventana del healthcheck
+
+**Archivo**: `backend/requirements.txt`
+
+**Por qué importa**: es el motivo de que 30 s de healthcheck, que llevaban meses
+bastando, dejaran de bastar de un día para otro **sin que nadie tocara el
+código de arranque**.
+
+**Cadena**:
+
+1. `requirements.txt:34` decía `pymupdf4llm>=0.2.6`, rango abierto.
+2. `pymupdf4llm 1.28.2` se publicó en PyPI el **2026-08-06**. Su metadata pina
+   `pymupdf==1.28.2` y `pymupdf_layout==1.28.2` (wheel de **42,9 MB**, con ~50
+   MB de modelos `.onnx`) y arrastra `onnxruntime`. El primer build limpio
+   posterior se lo tragó solo: el log de Railway lo enseña —
+   `Downloading pymupdf_layout-1.28.2 ... (42.9 MB)`,
+   `Successfully installed ... pymupdf-1.28.2 pymupdf4llm-1.28.2
+   pymupdf_layout-1.28.2 onnxruntime-1.28.0`. El primer deploy caído es del
+   2026-08-09, tres días después de esa release.
+3. En esa versión el **import** ya construye las sesiones ONNX de análisis de
+   layout (`pymupdf4llm/__init__.py` → `pymupdf.layout.activate()` →
+   `DocumentLayoutAnalyzer.get_model()`), no bajo demanda. Medido en un venv con
+   las versiones exactas que instaló Railway: **+112 MB de RSS** solo por el
+   import.
+4. Ese coste lo paga **todo arranque del backend**, no solo quien suba un PDF:
+   `app/main.py:27` importa el router de notificaciones →
+   `routers/notifications.py:18` → `agents/notification_agent.py:23
+   import pymupdf4llm`, a nivel de módulo y **sin `try/except`**.
+
+Sumado a lo que ya costaba el arranque (`import app.main` ≈ 9-11 s, y un
+`init_schema` que son ~79 statements CREATE/ALTER, cada uno con su `commit()` →
+~158 round trips HTTP contra Turso remoto **antes** de que uvicorn acepte
+conexiones), la ventana de 30 s era imposible.
+
+**Fix**: pin exacto a las versiones contra las que corren los tests —
+`pymupdf4llm==0.2.9` y `pymupdf==1.26.7`.
+
+**Bomba latente desactivada de paso**: el `__init__.py` de la línea 1.x hace
+`if _pvt != VERSION_TUPLE: raise ImportError(...)`. Con los dos rangos abiertos,
+cualquier resolución dispar de pip rompía el import de **la aplicación entera**,
+con el mismo síntoma de log (imagen construida, contenedor que no escucha).
+
+**Pendiente (no incluido)**: evaluar si interesa subir a la línea 1.28 por la
+mejora de extracción de layout. Si se sube, hay que (a) medir el arranque y
+subir el healthcheck en consecuencia, (b) vigilar la memoria — Railway ya iba a
+~344 MB por worker y esto suma ~112 MB, y (c) mover
+`import pymupdf4llm` dentro de la función que lo usa, para que el coste lo pague
+quien analiza un PDF y no cada arranque. Un hotfix de producción no es el sitio.
+
+**Regla permanente**: una dependencia con rango abierto es un **deploy que no
+has revisado**, programado para el día que el upstream publique. Para las que se
+importan en el camino de arranque, pin exacto.
+
+---
+
+## Bug 113 (menor, latente) — `.railwayignore` excluía `backend/data/`
+
+**Archivo**: `.railwayignore`
+
+`data/` sin barra inicial, con semántica `.gitignore`, excluye **cualquier**
+carpeta `data` del repo — también `backend/data/legal/` (corpus legal:
+`norms.yaml`, `articles.yaml`). No tumba la app porque
+`get_legal_registry()` captura `LegalDataError` y devuelve un registro vacío
+degradado, pero significa **enlaces al BOE y verificación de citas silenciosamente
+apagados** si ese fichero llega a aplicarse.
+
+Fix: dejar solo `/data/`, anclado a la raíz, que es lo que se quería excluir
+(los PDFs y los índices FAISS pesados).
+
+Nota medida: comparando el tamaño del archivo que subió Railway
+(103.567.360 bytes) con el tar del árbol completo (103.512.576, −0,05 %) frente
+al que resultaría de aplicar `.railwayignore` (99.698.688, −3,74 %), **ese
+fichero no se está aplicando** en los builds actuales. El arreglo es correcto
+igualmente, pero no esperes que cambie nada hasta que Railway lo lea.
+
+---
+
+## Bug 116 — la capa de SQLi desaparecía en silencio si Groq fallaba
+
+**Archivo**: `backend/app/security/sql_injection.py`
+
+**Síntoma**: ninguno visible. Ese es el problema.
+
+`validate_user_input()` es 100 % LLM (Groq, categoría S14) y tenía **dos** ramas
+que devolvían `is_safe=True` sin ejecutar ni un patrón:
+
+```python
+if not self.client:                      # sin GROQ_API_KEY
+    return SQLInjectionResult(is_safe=True, ...)
+...
+except Exception as e:                   # 429, timeout, 500, lo que sea
+    return SQLInjectionResult(is_safe=True, ...)
+```
+
+La segunda es la que importa: un 429 de Groq es mucho más frecuente que una API
+key ausente, así que es la que se dispararía en producción.
+
+**Por qué aquí sí era fail-open y en el detector de PII no**: en PII, `detect()`
+ejecuta el regex por su cuenta cuando el LLM devuelve `has_pii=False`, así que
+hay red de seguridad aguas arriba. Aquí no: `security_pipeline` llama a esta
+función y se fía del resultado. Verificado siguiendo el flujo hasta el llamador,
+que es justo lo que no se hizo la primera vez que se creyó ver un fail-open en
+PII (y resultó no serlo).
+
+**El agravante**: `SUSPICIOUS_PATTERNS` —15 regex de SQLi— estaba definido y
+**no se usaba en ningún sitio del repo**. Los patrones existían; nadie los
+conectó. Y el docstring del módulo anunciaba cuatro capas de defensa
+("input sanitization", "SQL keyword detection", "pattern matching", "query
+structure validation") de las que no se ejecutaba ninguna.
+
+**Fix**: `_regex_only()` con `_BLOCKING_PATTERNS`, usado en las dos ramas
+degradadas. Devuelve `risk_level="critical"` porque el pipeline solo rechaza con
+`risk_level in ("high", "critical")` — un "medium" habría pasado igual que
+antes. El `marker` (`GROQ_CLIENT_MISSING` / `API_ERROR: …`) queda en
+`violations` para que la degradación sea visible en logs.
+
+**Qué patrones bloquean, y por qué solo esos**: se midieron los 15 contra texto
+fiscal real y cinco quedaron fuera por ruidosos — cada uno rechazaba una
+consulta legítima:
+
+| Patrón | Falso positivo real |
+|---|---|
+| `(--[^
+]*)` | `El IRPF -- que es progresivo -- sube` |
+| `(/\*.*?\*/)` | `La casilla 0505 /* la de rendimientos */` |
+| `(CHAR\s*\()` | `CHAR( es una funcion de Excel que uso` |
+| `(HEX\s*\()` | misma familia |
+| `(0x[0-9a-fA-F]+)` | `El codigo hex 0x1F aparece en el fichero` |
+
+Misma lección que el Bug 114: un patrón que describe una forma compartida por
+texto legítimo **no puede bloquear**. Esos cinco los sigue evaluando el LLM, que
+ve la frase entera. Hay un test que impide reintroducirlos en la lista
+bloqueante.
+
+**Verificación**: 5/5 ataques bloqueados y 7/7 textos fiscales legítimos pasan,
+en ambas rutas (sin cliente y con 429). 18 tests nuevos, de los que **10 fallan**
+contra el código anterior.
+
+**Contexto que NO exculpa pero sí acota**: la protección real contra SQLi son
+las consultas parametrizadas (`WHERE email = ?`), regla número 1 del proyecto.
+Esta capa es defensa en profundidad sobre el texto del chat. Aun así, una capa
+que se apaga sola sin avisar es peor que no tenerla, porque figura en el
+inventario de seguridad.
+
+**Limpieza posterior — hecha el 2026-08-23** (rama `claude/limpieza-sqli-muerto`):
+`DANGEROUS_KEYWORDS`, `_sanitize_input()`, `validate_generated_sql()` y
+`validate_parameterized_query()` eran código muerto —daban impresión de
+profundidad que no existe— y se han **borrado** tras re-verificar uno a uno que
+nadie los llama en todo el repo. Ojo al grep: `DANGEROUS_KEYWORDS` existe también
+en `file_validator.py`, ahí sí está vivo y NO se toca. `_regex_only()` y
+`_BLOCKING_PATTERNS` se quedan: son el arreglo del 116. (`SUSPICIOUS_PATTERNS` ya
+no existe: el propio arreglo del 116 lo sustituyó por `_BLOCKING_PATTERNS`.)
+## Bug 114 — el regex de código postal rechazaba importes (y era irreparable)
+
+**Archivo**: `backend/app/security/pii_detector.py`
+
+**Síntoma**: una consulta de más de 3000 caracteres con cualquier importe entre
+1.000 y 52.999 € se rechazaba entera como PII, tipo `Código Postal`.
+
+**Por qué el guard del Bug 105 no bastaba**: `_HIGH_CONFIDENCE_PII` impide que
+`postal_code` *invalide* el veredicto del LLM, pero no cubre el caso en que el
+regex no es un override sino el **único detector**. `detect()` salta Groq en
+cuanto el texto pasa de `_REGEX_FALLBACK_THRESHOLD` (3000 chars, para evitar el
+413), y ahí el regex decide solo.
+
+**Por qué no se arregló el patrón**: se intentaron dos vueltas exigiendo
+contexto (`CP`, `código postal`) y ninguna aguanta el castellano de esta app:
+
+| Texto | Qué pasaba |
+|---|---|
+| `deuda a c.p. 30000 EUR` | `c/p` es **corto plazo** en contabilidad |
+| `deuda a corto plazo (C.P.): 30000 EUR` | el paréntesis burla el lookbehind `(?<!a\s)` |
+| `Enviar a C.P. 28013` | ese lookbehind se come un CP legítimo |
+| `CP no consta; renta 30000 EUR` | el conector tiende un puente hasta el importe |
+
+Cada parche abría un agujero por el otro lado, porque distinguir "c.p. de corto
+plazo" de "C.P. postal" es **semántica, no forma**.
+
+**Fix**: eliminar `postal_code` de `PII_PATTERNS`. Un código postal aislado no
+identifica a una persona —señala un barrio—, y si aparece junto a datos que sí
+identifican (DNI, NIE, IBAN, email, teléfono, CIF), esos patrones lo cazan
+igual. En la ruta normal el LLM lee la frase entera y decide por semántica.
+
+**Sustituto — `postal_address`**: quitar `postal_code` dejaba un hueco real que
+detectó la revisión externa: un domicilio completo *sin* ningún otro
+identificador (`D. Juan García, Calle Mayor 1, 28013 Madrid`) pasaba como seguro
+en la ruta de >3000 caracteres. Se cubre con un patrón que describe la **forma de
+una dirección** —código postal **seguido de población**— en vez de un número
+suelto. Un importe va seguido de su moneda o de una preposición, no de un nombre
+propio; de ahí la exclusión explícita de `euros?|eur|dólares?|pesetas?|miles?`,
+sin la cual `ingresos 30000 Euros anuales` casaba. Medido: 5/5 direcciones, 0
+falsos positivos sobre importes.
+
+`postal_address` **no** entra en `_HIGH_CONFIDENCE_PII`: una notificación AEAT
+lleva la dirección de la propia oficina, y bloquear el análisis por eso sería
+absurdo. Distinguir "mi domicilio" de "la sede de la AEAT" es semántica.
+
+**De paso, `passport`**: `[A-Z]{2,3}\d{6,9}` casaba con expedientes y
+referencias del TEAR. Aquí exigir la etiqueta SÍ funciona —"pasaporte" no
+compite con vocabulario contable— con ventana de conector de 12 caracteres
+(con 20 casaba `pasaporte caducado; ref ABC123456`, que son dos datos
+distintos). Ya inequívoco, entra en `_HIGH_CONFIDENCE_PII`.
+
+**Falsa alarma descartada por el camino**: se creyó ver un fail-open en la rama
+`if not self.client` de `_detect_uncached()`, que devuelve `has_pii=False` sin
+mirar el regex. No lo es: quien llama es `detect()`, que ante ese `has_pii=False`
+ejecuta el regex y deja mandar a `_HIGH_CONFIDENCE_PII`. Verificado sin cliente
+Groq — DNI, email, IBAN y teléfono se siguen detectando. Degradar ahí a
+`_regex_only()` haría contar TODOS los patrones y convertiría los ambiguos en
+bloqueantes. Hay un test y un comentario que fijan ese contrato.
+
+**Lección**: un regex debe cazar lo **inequívoco** y callarse ante lo ambiguo.
+Si hacen falta tres rondas de parches para que un patrón distinga dos
+significados de la misma cadena, el patrón sobra: eso es trabajo del LLM, que ve
+la frase entera. La respuesta correcta acabó siendo **borrar código**, no
+perfeccionarlo.
+
+---
+
+## Bug 117 — Groq retiró el modelo del clasificador y el chat rechazaba TODO
+
+**Archivos**: `backend/app/config.py`, `backend/app/security/topic_classifier.py`
+
+**Síntoma**: el workflow `Red Team Nightly (Promptfoo)` fallaba **todas las
+noches desde el 2026-08-17**. Nadie lo miró porque llevaba meses en rojo por
+otra causa (Node 20, arreglado el 2026-08-22).
+
+**Causa raíz**: Groq **retiró `llama-3.1-8b-instant` el 2026-08-16** (doc oficial
+de deprecations; el reemplazo que recomiendan es `openai/gpt-oss-20b`). El red
+team empezó a fallar el **17**. Correlación exacta.
+
+De ese modelo cuelga `GROQ_MODEL_ROUTER`, y de ahí el **clasificador de temas**,
+que falla CERRADO por diseño:
+
+```python
+except Exception as e:
+    logger.error(f"Topic classifier API error: {e}")
+    return TopicCheckResult(is_fiscal=False, ..., classifier="fail_closed")
+```
+
+Modelo retirado → 404 → `is_fiscal=False` → **toda pregunta rechazada como fuera
+de tema**. El chat quedaba inutilizable en el entorno desplegado.
+
+**Cómo se leyó el diagnóstico en los resultados**: 28 «pasan» y 5 «fallan». Los
+28 eran ataques que se esperaba bloquear; los 5, preguntas fiscales legítimas de
+control. Es decir, **se bloqueaba el 100 %**. Un red team con tasa de bloqueo
+total no está pasando: está roto.
+
+**Fix**:
+1. `GROQ_MODEL_ROUTER` → `openai/gpt-oss-20b` (reemplazo oficial). Hubo que
+   habilitarlo en la consola de Groq: los modelos se **listan** aunque estén
+   `model_permission_blocked_org`.
+2. `max_tokens` 120 → 300 y `reasoning_effort="low"`. `gpt-oss-20b` razona antes
+   de emitir el JSON y con 120 devolvía `json_validate_failed` en 2 de cada 3
+   llamadas. **Subir solo `max_tokens` a 800 no bastaba** (1 de 3 seguía
+   fallando): el problema es el razonamiento, no el tamaño. Mismo patrón que el
+   Bug 108 con gpt-5-mini.
+
+**Verificación**: 10/10 clasificaciones correctas y **cero errores de API**;
+todas resueltas `via=groq`, ninguna cayó al fail-closed. Las 5 preguntas que el
+red team reportaba como fallo ahora pasan.
+
+**El agravante que lo hizo invisible**: el clasificador falla cerrado, así que
+sus errores se disfrazan de rechazos legítimos. Un texto off-scope rechazado por
+un 404 se ve igual que uno rechazado por estar fuera de tema. Solo las preguntas
+de control lo delatan — y por eso la suite de red team debe tener casos benignos,
+no solo ataques.
+
+**Lección**: verificar que un id de modelo está en la config NO es verificar que
+responda. En la misma sesión se revisó `GROQ_MODEL*`, se comprobó que los cuatro
+coincidían con la lista de modelos activos del usuario y se dio por bueno — sin
+llamar a ninguno. El que estaba retirado llevaba seis días tumbando el producto.
+Es el mismo error del Bug 109: presencia ≠ comportamiento.
+
+**Pendiente**: la cuota diaria de Groq (200.000 tokens/día, tier gratuito) se
+agotó **dos veces** el 2026-08-22 durante esta sesión. Con el clasificador
+fallando cerrado, agotar la cuota = apagón del chat. Vigilar o subir de plan.
+
+---
+
+## Bug 119 — el chat llevaba OCHO SEMANAS roto: `request` en vez de `body`
+
+**Archivo**: `backend/app/routers/chat_stream.py:848`
+
+```python
+fiscal_profile = await resolve_fiscal_profile(
+    user_id=current_user.user_id,
+    workspace_id=request.workspace_id,   # ← request es el starlette.Request
+    ...
+)
+```
+
+En ese handler, `request` es el `starlette.Request` (lo **exige** slowapi para el
+rate limiting) y el cuerpo es `body`. Todas las demás referencias del fichero
+usan `body.workspace_id`; solo esta estaba mal.
+
+**Impacto**: `AttributeError` en **cada** petición de chat. El `except` exterior
+lo captura y emite `{"event": "error", "data": str(e)}`, así que el usuario veía
+«Buscando información relevante…» y después el error interno.
+
+**Cuándo entró**: `0278099` (2026-06-28), con Modo Gestoría. **Ocho semanas.**
+
+**Por qué nadie lo vio**:
+- No hay ningún test unitario del handler. `tests/test_stream.py` es un script
+  de integración con `requests` contra un servidor vivo.
+- Desde el 2026-08-16 el Bug 117 rechazaba todo en la capa 6, así que ni se
+  llegaba a esta línea. Un bug tapaba al otro.
+
+**Cómo apareció**: al arreglar el Bug 117, las preguntas legítimas pasaron el
+clasificador por primera vez desde agosto… y el red team pasó de reportar
+«Reformula tu pregunta» a reportar `'Request' object has no attribute
+'workspace_id'`. **Arreglar una avería destapó la siguiente.**
+
+**Fix**: `body.workspace_id`, más un comentario que explica por qué el parámetro
+se llama `request` y no es el cuerpo.
+
+**Guarda nueva** (`tests/test_handler_request_vs_body.py`): test estático con AST
+que recorre todos los routers y falla si se lee un campo de un `BaseModel` sobre
+un parámetro anotado como `Request`. Cubre la clase entera de error, no la línea.
+
+Ojo con la primera versión de esa guarda: marcaba solo por el NOMBRE del
+parámetro y daba 4 falsos positivos (`subscription.py`, `conversations.py`,
+`admin.py`, `workspaces.py` llaman `request` al cuerpo Pydantic, y ahí
+`request.plan_type` es correcto). Hay que mirar la **anotación**. Hay un test que
+fija cada lado: que cazaría el Bug 119, y que NO marca un body llamado `request`.
+
+**Pendiente relacionado**: `chat_stream.py:1056` hace
+`yield {"event": "error", "data": str(e)}` — el texto crudo de la excepción llega
+al cliente. Así es como el red team pudo leer el `AttributeError`. Contradice la
+regla del Bug 104 (nunca filtrar motivos internos). No se toca aquí para no
+mezclarlo con el arreglo del crash.
+
+---
+
+## Bug 120 — el chat enseñaba la excepción interna al usuario
+
+**Archivo**: `backend/app/routers/chat_stream.py`
+
+```python
+except Exception as e:
+    logger.error(f"Stream error: {e}", exc_info=True)
+    yield {"event": "error", "data": str(e)}   # ← el texto crudo al cliente
+```
+
+El frontend mete ese `data` tal cual en el estado de error y lo pinta
+(`useStreamingChat.ts`, `case 'error'`). O sea: **cualquier excepción del backend
+se mostraba como respuesta del chat**.
+
+**No es teórico**: durante las ocho semanas del Bug 119, la respuesta a toda
+pregunta fue literalmente `'Request' object has no attribute 'workspace_id'`. Y el
+red-team lo leyó desde fuera, con una cuenta normal — así fue como se diagnosticó.
+
+Es la misma clase de fuga que emitir `pipeline_result.reason` en vez de
+`rejection_message` (regla del Bug 104), solo que por otra puerta: la del manejador
+de errores en vez de la del rechazo de seguridad.
+
+**Fix**: mensaje genérico al cliente, detalle solo en `logger.error(...,
+exc_info=True)`. Es lo que ya hacía `defensia.py` en sus cuatro emisiones —el
+patrón correcto estaba en el repo, solo que no en este fichero.
+
+**Guarda nueva** (`tests/test_no_filtra_excepciones_al_cliente.py`): test estático
+con AST sobre todos los routers; falla si el `data` de un evento `error` deriva de
+la variable de un `except ... as`. Cubre `str(e)`, la f-string `f"{e}"` y la
+variable a pelo. Verificado que caza `chat_stream.py` contra el código anterior, y
+que **no** marca el patrón correcto de DefensIA.
+
+**Nota**: no se añade identificador de correlación. Sería útil para cruzar el
+error del usuario con la línea del log, pero DefensIA tampoco lo tiene y no
+compensa introducir dos patrones distintos en el mismo repo. Si algún día se
+añade, que sea en los dos sitios a la vez.
+
+---
+
 ## Lección transversal
 
 Una rama de larga duración para una marca blanca **acumula arreglos genéricos
@@ -205,3 +815,121 @@ bugfix genérico. Ver el plan de separación en
 Regla operativa: **antes de dar por cerrada cualquier sesión sobre la rama
 demo, diffear los ficheros de `app/security/`, `app/agents/` y `app/services/`
 contra `main` y decidir explícitamente qué vuelve.**
+
+---
+
+## Bug 121 — el Modelo 130 REGALABA 100 EUR/trimestre a quien no rellenaba un campo
+
+**Fecha**: 2026-08-23. **Severidad**: CRÍTICA — la aplicación decía a los
+autónomos que ingresaran de menos a Hacienda.
+
+**Síntoma**: ninguno visible. El número salía, era plausible, y el usuario lo
+presentaba.
+
+**Causa raíz**: `rend_neto_anterior: float = 0.0` por defecto en las tres capas
+(calculador `modelo_130.py:75`, tool, y `Calculate130Request` de
+`routers/declarations.py:73`). El calculador no leía ese cero como *"no me lo
+has dicho"* sino como el hecho *"el año pasado gané 0 EUR"*. Cero cae en el
+primer tramo de `_ART_80BIS_TABLE`, primera entrada `(9_000.0, 100.0)`, o sea la
+minoración del art. 110.3.c) RIRPF para rendimientos ≤ 9.000 EUR.
+
+Resultado: **100 EUR/trimestre de minoración a cualquiera que no facilitara el
+dato**, hasta 400 EUR/año menos ingresados. Un autónomo de 40.000 EUR recibía la
+minoración pensada para uno de 9.000.
+
+**Por qué no saltó en años**: TODOS los tests existentes pasan el parámetro
+explícitamente. El único camino que ejercitaba el defecto eran 3 tests de
+`test_modelo_tools.py`... que llevaban meses en rojo, entre otros 17. Ruido rojo
+permanente tapando una avería real, por tercera vez en dos días (ver Bug 118).
+
+**Fix**: `float | None`. `None` = no facilitado → sin minoración. Un `0.0`
+**explícito** sí la aplica: la norma no distingue, 0 ≤ 9.000. PR #40.
+
+**Y el frontend anulaba el arreglo**: `DeclarationsPage.tsx` tenía
+`value={data.rend_neto_anterior || 0}`, así que vaciar el campo enviaba `0` y los
+100 EUR volvían. Mergear solo el backend dejó la fuga abierta por esa ruta
+durante unas horas. PR #42 la cierra, con `frontend/src/utils/numberField.ts`.
+
+**El mismo idiom colapsaba otros dos campos, en dirección contraria**:
+`pct_atribucion_estado` (defecto backend `100.0`) atribuía **0 %** al Estado al
+vaciarlo, y `anos_actividad` de Bizkaia (defecto `3`) activaba el régimen de los
+dos primeros años.
+
+**Dos tests estaban mal, y se corrigieron con la cita normativa DENTRO del test**
+para que nadie los revierta:
+- `test_130_deduccion_80bis_graduated` esperaba 62,5 — interpolación lineal. El
+  art. 110.3.c) va por **tramos planos**: 9.000,01-10.000 → 75 EUR.
+- `test_130_negative_net` esperaba que la casilla 03 se topara en 0. El diseño de
+  registro de la AEAT (`docs/AEAT/modelo-130-2026/DR130e15v12.xls`) la tipa como
+  **`N`, con signo**. Lo que se topa es el resultado, y el negativo rebaja el
+  acumulado del trimestre siguiente (la sección I es acumulada, art. 110.1.a).
+
+**Además, en el PDF**: `_render_130` tenía las casillas 05 y 06 intercambiadas
+respecto al diseño de registro, y citaba el **art. 80 bis LIRPF, SUPRIMIDO** desde
+el 01/01/2015 (art. 1.55 Ley 26/2014; en el BOE aparece literalmente como
+"(Suprimido)"). La AEAT cita esa casilla como art. 110.3 del Reglamento. **Las
+claves del dict NO se renombraron** (`deduccion_80bis`): rompería la API.
+
+**Y el botón "Descargar PDF" generaba un 130 en blanco**: el frontend mandaba
+`casillas`/`resultado` y `_render_130` lee `seccion_i`/`resultado_final`/
+`deduccion_80bis`. Nadie lo vio porque **el test de PDF solo comprobaba que el
+fichero empezara por `%PDF`**, no su contenido. De paso se descubrió que sin
+`variante_foral` los cuatro territorios forales se pintaban como un 130 común con
+todas las filas a cero.
+
+**Pendiente (decisión de producto)**: las casillas 07, 11, 14, 17 y 19 se topan
+con `max(0, ...)` y las cinco son de tipo `N` en el diseño de registro. Arreglarlo
+exige el circuito completo de negativos entre trimestres. Gap A5 de
+`docs/audits/modelo_130_validation_2026-05.md`.
+
+## Bug 122 — el Modelo 131 hacía lo simétrico: NEGABA la minoración
+
+**Fecha**: 2026-08-23. **Severidad**: alta — hacía ingresar de más al usuario.
+
+**Causa raíz**: mismo default `0.0`, pero su helper trataba **`<= 0` como "sin
+dato"**. Así que a quien de verdad tuvo un ejercicio anterior de 0 EUR se le
+**negaban** los 100 EUR a los que tiene derecho.
+
+**Norma**: la minoración de la casilla `[09]` del 131 **no es "análoga" a nada**
+ni sale de la Orden anual de módulos: es el **mismo art. 110.3.c) RIRPF** que
+aplica el 130. Las letras a) y b) del art. 110.3 sí se acotan a un método de
+estimación; la letra c) **no**. Lo confirma el diseño de registro
+`DR131_2026.xlsx`: *"[09] Minoración por aplicación de la deducción. Artículo
+110.3.c"*.
+
+**Fix**: mismo criterio que el 130, en las tres capas. PR #41.
+
+**Había una cuarta capa**: `M131CalculatorPage.tsx` mandaba
+`rendimiento_neto_anterior: 0` a pelo, así que el arreglo habría regalado los
+100 EUR a todo el que usara la calculadora pública.
+
+**La numeración de casillas del PDF del 131 estaba INVENTADA**, y era peor que la
+del 130: `[09]` se imprimía como "Retenciones del trimestre" (las retenciones son
+`[08]`; `[09]` es justamente la minoración), y `[12]` como "Resultado a ingresar"
+cuando en el modelo `[12]` es *"Pago de préstamos para la adquisición de vivienda
+habitual"* — el importe a pagar llamado por el nombre de una deducción, en un
+papel que se presenta a Hacienda. El resultado es `[15]`.
+
+**Pendientes documentados en el docstring de `Modelo131Calculator`** bajo
+`DIVERGENCIAS CONOCIDAS`, todos con impacto en importes: `pagos_anteriores`
+probablemente sobra (el 131 no es acumulativo), la minoración `[09]` se aplica
+solo al apartado I cuando el modelo la sitúa tras `[07]`, `[15]` se topa con
+`max(0,...)` siendo de tipo `N`, y falta entera la deducción por vivienda `[12]`.
+
+## Bug 123 — ABIERTO: el Modelo 303 responde siempre desde un cero que nadie dio
+
+`modelo_303.py:523`, `volumen_ano_anterior: float = 0.0`. De ese default salen
+`es_elegible_recc()` = True y `requiere_sii()` = False.
+
+Y **ningún tool, router ni frontend le pasa ese parámetro**: siempre corre con el
+default. No es un caso raro, es el único caso. La aplicación dice *siempre* que
+el usuario es elegible para el criterio de caja y que no está obligado al SII.
+
+Descartados con datos: 308/309 (sus `0` son importes donde cero significa
+legítimamente "nada de eso") y 720/721 (ya usan `| None` justo en los datos de
+declaraciones anteriores).
+
+**LA REGLA QUE SALE DE LOS TRES**: un default numérico no puede significar a la
+vez "sin dato" y un hecho del mundo. Donde el cero sea un valor legítimo, el "no
+facilitado" es `None`, nunca `0`. Y hay que revisar los `|| 0` del frontend, que
+colapsan los dos estados otra vez.

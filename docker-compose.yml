@@ -7,6 +7,16 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      # `environment` gana sobre `env_file` por definicion de Compose, no por
+      # el orden en que aparezcan las claves aqui.
+      #
+      # Desde que el CMD del Dockerfile es `--port ${PORT:-8000}`, el puerto de
+      # escucha lo decide la variable: si el .env del VPS o Coolify definieran
+      # PORT, uvicorn escucharia en otro sitio y ni el `expose` ni el
+      # healthcheck de aqui abajo -- que apuntan al 8000 a pelo -- casarian.
+      # El contenedor se marcaria unhealthy con la app perfectamente viva.
+      PORT: "8000"
     expose:
       - "8000"
     healthcheck:
@@ -14,5 +24,14 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 40s
+      # 150s, el mismo valor que el HEALTHCHECK de backend/Dockerfile. Ojo: este
+      # bloque NO se combina con el del Dockerfile, lo SUSTITUYE entero, asi que
+      # el 150s de alli no se aplica si aqui se pone otra cosa. Con los 40s
+      # anteriores el contenedor podia marcarse unhealthy hacia los ~115 s
+      # (start_period + 3 fallos x interval 30s) mientras la app todavia estaba
+      # levantando: importar app.main son ~10 s y despues el lifespan ejecuta
+      # init_schema, decenas de round trips contra Turso remoto. `restart:
+      # unless-stopped` NO rescata eso: las politicas de reinicio reaccionan a
+      # que el contenedor pare, no a que cambie su estado de salud.
+      start_period: 150s
     # Coolify auto-injects Caddy/Traefik labels for TLS

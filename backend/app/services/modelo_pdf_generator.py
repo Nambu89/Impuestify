@@ -324,14 +324,17 @@ class ModeloPDFGenerator:
     def _render_casillas_table(
         self,
         story: list,
-        casillas: list[tuple[str, str, float]],
+        casillas: list[tuple[str, str, float | str]],
         title: str | None = None,
     ):
         """
         Render a reusable table of casillas.
 
         Args:
-            casillas: List of (casilla_num, description, amount) tuples
+            casillas: List of (casilla_num, description, amount) tuples.
+                Los importes se formatean como EUR; si se pasa una cadena se
+                imprime tal cual (para magnitudes que NO son euros, como un
+                porcentaje).
             title: Optional section heading
         """
         from reportlab.lib.units import mm
@@ -342,7 +345,8 @@ class ModeloPDFGenerator:
 
         rows = [["Casilla", "Concepto", "Importe"]]
         for casilla_num, desc, amount in casillas:
-            rows.append([casilla_num, desc, _format_eur(amount)])
+            value = amount if isinstance(amount, str) else _format_eur(amount)
+            rows.append([casilla_num, desc, value])
 
         t = Table(rows, colWidths=[20 * mm, 100 * mm, 40 * mm])
         t.setStyle(
@@ -575,25 +579,35 @@ class ModeloPDFGenerator:
             ("04", "20% del rendimiento neto", seccion_i.get("veinte_porciento", 0)),
         ]
 
-        retenciones = seccion_i.get("retenciones", 0)
-        if retenciones:
-            s1_rows.append(("05", "Retenciones e ingresos a cuenta", retenciones))
-
+        # Numeracion AEAT (diseno de registro DR130e15v12.xls):
+        #   [05] A deducir: de los trimestres anteriores, suma de los importes
+        #   [06] A deducir: retenciones e ingresos a cuenta soportados
+        # Estaban al reves, lo que rompia la traslacion del PDF al modelo real.
         pagos_ant = seccion_i.get("pagos_anteriores", 0)
         if pagos_ant:
-            s1_rows.append(("06", "Pagos fraccionados anteriores", pagos_ant))
+            s1_rows.append(("05", "Pagos fraccionados anteriores", pagos_ant))
+
+        retenciones = seccion_i.get("retenciones", 0)
+        if retenciones:
+            s1_rows.append(("06", "Retenciones e ingresos a cuenta", retenciones))
 
         s1_rows.append(("07", "Resultado sección I", seccion_i.get("resultado_seccion", 0)))
 
         self._render_casillas_table(story, s1_rows, "Sección I: Actividades en estimación directa")
 
-        # Section IV — deduccion 80 bis
+        # Casilla 13 — minoracion por rendimientos bajos.
+        # La base legal es el art. 110.3.c) RIRPF, que es lo que cita la propia
+        # AEAT en el diseno de registro. El art. 80 bis LIRPF esta SUPRIMIDO
+        # desde el 01/01/2015 (art. 1.55 Ley 26/2014), asi que el PDF que se
+        # descargaba el usuario invocaba una norma derogada. Ademas, la casilla
+        # 13 pertenece a la Seccion III ("Total liquidacion"), no a una
+        # inexistente Seccion IV.
         deduccion = data.get("deduccion_80bis", 0)
         if deduccion > 0:
             self._simple_section_table(
                 story,
-                "Sección IV: Deducción art. 80 bis LIRPF",
-                [("Deducción trimestral", _format_eur(deduccion))],
+                "Sección III: Total liquidación",
+                [("[13] Minoración art. 110.3.c) RIRPF", _format_eur(deduccion))],
             )
 
         # Resultado
@@ -748,8 +762,13 @@ class ModeloPDFGenerator:
         datos-base) y III (agraria).
 
         El `data` debe seguir la estructura devuelta por `Modelo131Calculator`
-        (vía `calculate_modelo_131_tool`): contiene `casillas` (01-12),
-        `desglose`, `apartado`, `tipo_aplicado`.
+        (vía `calculate_modelo_131_tool`): contiene `casillas`, `desglose`,
+        `apartado`, `tipo_aplicado`.
+
+        Los números de casilla que se imprimen son los del diseño de registro
+        oficial DR131_2026 de la AEAT, que NO coinciden con el prefijo de la
+        clave del dict (ver la tabla de equivalencias en el docstring de
+        `Modelo131Calculator`).
         """
         casillas = data.get("casillas", {})
         desglose = data.get("desglose", {})
@@ -757,16 +776,20 @@ class ModeloPDFGenerator:
 
         # Sección I/II/III — cuotas
         if apartado == "I":
-            cuota_rows: list[tuple[str, str, float]] = [
+            cuota_rows: list[tuple[str, str, float | str]] = [
                 (
                     "01",
-                    "Rendimiento neto previo módulos (anual)",
+                    "Suma de rendimientos netos",
                     casillas.get("01_rendimiento_neto_modulos", 0),
                 ),
-                ("02", "Tipo aplicable (%)", casillas.get("02_tipo_aplicable", 0)),
                 (
-                    "03",
-                    "Resultado actividades empresariales",
+                    "",
+                    "Porcentaje aplicable",
+                    f"{casillas.get('02_tipo_aplicable', 0):.0f}%",
+                ),
+                (
+                    "02",
+                    "Pago fraccionado previo: suma de resultados",
                     casillas.get("03_resultado_empresarial", 0),
                 ),
             ]
@@ -774,11 +797,15 @@ class ModeloPDFGenerator:
         elif apartado == "III":
             cuota_rows = [
                 (
-                    "04",
-                    "Volumen ingresos agrario (trimestre)",
+                    "05",
+                    "Volumen de ingresos del trimestre",
                     casillas.get("04_volumen_ingresos_agrario", 0),
                 ),
-                ("05", "Cuota agraria 2%", casillas.get("05_cuota_agraria", 0)),
+                (
+                    "06",
+                    "Pago fraccionado previo del trimestre (2%)",
+                    casillas.get("05_cuota_agraria", 0),
+                ),
             ]
             seccion_label = (
                 "Apartado III — Actividades agrícolas / ganaderas / forestales / pesqueras"
@@ -786,25 +813,34 @@ class ModeloPDFGenerator:
         else:  # II
             cuota_rows = [
                 (
-                    "01",
-                    "Volumen ingresos del trimestre",
+                    "03",
+                    "Volumen de ventas o ingresos",
                     casillas.get("01_rendimiento_neto_modulos", 0),
                 ),
-                ("02", "Tipo aplicable (%)", casillas.get("02_tipo_aplicable", 0)),
-                ("03", "Resultado", casillas.get("03_resultado_empresarial", 0)),
+                (
+                    "",
+                    "Porcentaje aplicable",
+                    f"{casillas.get('02_tipo_aplicable', 0):.0f}%",
+                ),
+                (
+                    "04",
+                    "Pago fraccionado previo",
+                    casillas.get("03_resultado_empresarial", 0),
+                ),
             ]
             seccion_label = "Apartado II — Actividad empresarial sin datos-base"
 
         cuota_rows.append(
             (
-                "06",
-                "Total cuotas",
+                "07",
+                "Suma de los pagos fraccionados previos del trimestre",
                 casillas.get("06_total_cuotas", 0),
             )
         )
         self._render_casillas_table(story, cuota_rows, seccion_label)
 
-        # Reducciones territoriales (Ceuta/Melilla, La Palma)
+        # Reducciones territoriales (Ceuta/Melilla, La Palma). No tienen
+        # casilla propia: la AEAT las incorpora al porcentaje aplicable.
         reducciones = casillas.get("07_reducciones", 0)
         if reducciones > 0:
             concepto = desglose.get("reduccion_concepto", "Reducción territorial")
@@ -820,27 +856,16 @@ class ModeloPDFGenerator:
                 ],
             )
 
-        # Minoraciones (retenciones, pagos previos, complementaria)
+        # Minoraciones (retenciones, minoración art. 110.3.c, complementaria).
+        # NO hay fila de "pagos fraccionados de trimestres anteriores": el 131
+        # no es acumulativo y esa deducción no existe (art. 110.1.b RIRPF; sin
+        # casilla en el DR131). Ver el docstring de `modelo_131.py`.
         minoracion_rows: list[tuple[str, str]] = []
         if casillas.get("09_retenciones_trimestre", 0) > 0:
             minoracion_rows.append(
                 (
-                    "Retenciones del trimestre [09]",
+                    "A deducir: retenciones e ingresos a cuenta [08]",
                     _format_eur(casillas["09_retenciones_trimestre"]),
-                )
-            )
-        if casillas.get("10_pagos_anteriores", 0) > 0:
-            minoracion_rows.append(
-                (
-                    "Pagos fraccionados anteriores [10]",
-                    _format_eur(casillas["10_pagos_anteriores"]),
-                )
-            )
-        if casillas.get("11_complementaria", 0) > 0:
-            minoracion_rows.append(
-                (
-                    "Resultado autoliquidación anterior [11]",
-                    _format_eur(casillas["11_complementaria"]),
                 )
             )
         if apartado == "I":
@@ -848,10 +873,17 @@ class ModeloPDFGenerator:
             if minoracion_brl > 0:
                 minoracion_rows.append(
                     (
-                        "Minoración rendimientos bajos",
+                        "Minoración por aplicación de la deducción del art. 110.3.c) RIRPF [09]",
                         _format_eur(minoracion_brl),
                     )
                 )
+        if casillas.get("11_complementaria", 0) > 0:
+            minoracion_rows.append(
+                (
+                    "A deducir: resultado a ingresar de las anteriores declaraciones [14]",
+                    _format_eur(casillas["11_complementaria"]),
+                )
+            )
         if minoracion_rows:
             self._simple_section_table(
                 story,
@@ -859,9 +891,10 @@ class ModeloPDFGenerator:
                 minoracion_rows,
             )
 
-        # Resultado final
+        # Resultado final — casilla [15] del diseño de registro. OJO: [12] es
+        # "Pago de préstamos para la adquisición de vivienda habitual".
         resultado_final = casillas.get("12_resultado_final", data.get("resultado_final", 0))
-        self._render_resultado(story, "Resultado a ingresar [12]", resultado_final)
+        self._render_resultado(story, "Resultado de la declaración [15]", resultado_final)
 
     # ------------------------------------------------------------------ #
     # Modelo 308 — RE (Recargo de Equivalencia)

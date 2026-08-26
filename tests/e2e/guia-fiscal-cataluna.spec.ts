@@ -9,18 +9,16 @@
  */
 
 import { test, expect, Page } from '@playwright/test'
-import * as fs from 'fs'
-import * as path from 'path'
 
-const BASE_URL = 'http://localhost:3001'
-const SCREENSHOTS = path.join(__dirname, 'screenshots')
+import * as fs from 'node:fs'
 
-const ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXBhcnRpY3VsYXItMDAwMDAwMDEiLCJlbWFpbCI6InRlc3QucGFydGljdWxhckBpbXB1ZXN0aWZ5LmVzIiwiZXhwIjoxNzczMzIwOTkzLCJpYXQiOjE3NzMzMTkxOTMsInR5cGUiOiJhY2Nlc3MifQ.9ReZKI_zmYaCJxHnUnv_hFElpCpHyx0e__TrYOv_REs'
-const REFRESH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXBhcnRpY3VsYXItMDAwMDAwMDEiLCJlbWFpbCI6InRlc3QucGFydGljdWxhckBpbXB1ZXN0aWZ5LmVzIiwiZXhwIjoxNzczOTIzOTkzLCJpYXQiOjE3NzMzMTkxOTMsInR5cGUiOiJyZWZyZXNoIn0.t_Kp1SMxBQfTMGSyiLK7X78QsN3leIRlt33BwL5ZJFI'
+import { artifactPath, injectTokens, issueTestTokens, screenshotPath } from './helpers/auth'
+
+const BASE_URL = process.env.E2E_FRONTEND_URL || 'http://localhost:3001'
 
 async function screenshot(page: Page, name: string): Promise<void> {
   await page.screenshot({
-    path: path.join(SCREENSHOTS, `s16-GF-${name}.png`),
+    path: screenshotPath(`s16-GF-${name}`),
     fullPage: true
   })
   console.log(`Screenshot: s16-GF-${name}.png`)
@@ -29,10 +27,7 @@ async function screenshot(page: Page, name: string): Promise<void> {
 /** Inject JWT tokens and navigate to /guia-fiscal */
 async function setupAuth(page: Page): Promise<void> {
   await page.goto(BASE_URL)
-  await page.evaluate(({ access, refresh }) => {
-    localStorage.setItem('access_token', access)
-    localStorage.setItem('refresh_token', refresh)
-  }, { access: ACCESS_TOKEN, refresh: REFRESH_TOKEN })
+  await injectTokens(page, issueTestTokens())
 }
 
 /** Clear a number input and type a value */
@@ -420,10 +415,7 @@ test.describe('Guía Fiscal — Cataluña escenario alto ingresos', () => {
       body_text_sample: bodyText.slice(0, 2000),
     }
 
-    fs.writeFileSync(
-      path.join(SCREENSHOTS, 's16-GF-results.json'),
-      JSON.stringify(results, null, 2)
-    )
+    fs.writeFileSync(artifactPath('s16-GF-results.json'), JSON.stringify(results, null, 2))
     console.log('\nResultados guardados en s16-GF-results.json')
 
     // ============================================================

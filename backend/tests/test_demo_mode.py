@@ -2,6 +2,7 @@
 
 import pytest
 
+
 def test_demo_settings_defaults_off():
     """Default settings: demo mode OFF, brand=Impuestify, subscriptions ON."""
     from app.config import Settings

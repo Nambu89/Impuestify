@@ -845,7 +845,11 @@ async def ask_question_stream(
             # el reasoning_trail) que leen `fiscal_profile` por closure en run_agent.
             fiscal_profile = await resolve_fiscal_profile(
                 user_id=current_user.user_id,
-                workspace_id=request.workspace_id,
+                # `body`, NO `request`. En este handler `request` es el
+                # starlette.Request (lo exige slowapi para el rate limiting) y
+                # el cuerpo de la peticion es `body`. Poner `request` aqui
+                # lanzaba AttributeError en CADA peticion de chat.
+                workspace_id=body.workspace_id,
                 global_profile=fiscal_profile,
             )
 
@@ -1052,8 +1056,25 @@ async def ask_question_stream(
             logger.info("Stream cancelled by client")
             callback.close()
         except Exception as e:
+            # El detalle tecnico va SOLO al log. `str(e)` acaba en la UI: el
+            # frontend mete este `data` tal cual en el estado de error y se lo
+            # ensena al usuario (useStreamingChat.ts, case 'error').
+            #
+            # Asi es como un AttributeError interno estuvo ocho semanas
+            # mostrandose a los usuarios como respuesta del chat (Bug 119), y
+            # como el red-team pudo leerlo desde fuera. Filtrar trazas es la
+            # misma clase de fuga que emitir `pipeline_result.reason` en vez de
+            # `rejection_message` (regla del Bug 104).
+            #
+            # Mismo criterio que `defensia.py`, que ya emite mensajes genericos.
             logger.error(f"Stream error: {e}", exc_info=True)
-            yield {"event": "error", "data": str(e)}
+            yield {
+                "event": "error",
+                "data": (
+                    "Ha ocurrido un error procesando tu consulta. "
+                    "Vuelve a intentarlo en unos segundos."
+                ),
+            }
             yield {"event": "done", "data": ""}
         finally:
             callback.close()

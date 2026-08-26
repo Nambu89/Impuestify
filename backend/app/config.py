@@ -129,7 +129,13 @@ class Settings(BaseSettings):
     GROQ_MODEL: str = Field(default="openai/gpt-oss-safeguard-20b")
 
     # Specialized Groq Models (v2.8 Security Upgrade)
-    GROQ_MODEL_ROUTER: str = Field(default="llama-3.1-8b-instant")
+    # `llama-3.1-8b-instant` lo RETIRO Groq el 2026-08-16 (doc oficial de
+    # deprecations) y desde el dia siguiente devolvia 404. De el cuelgan el
+    # clasificador de temas y el router de complejidad; el primero falla CERRADO,
+    # asi que un 404 aqui rechaza TODAS las preguntas como fuera de tema. El
+    # red-team nocturno llevaba fallando desde el 2026-08-17 por esto.
+    # Reemplazo recomendado por la propia doc de Groq. Bug 117.
+    GROQ_MODEL_ROUTER: str = Field(default="openai/gpt-oss-20b")
     GROQ_MODEL_PROMPT_GUARD: str = Field(default="meta-llama/llama-prompt-guard-2-86m")
     GROQ_MODEL_SAFETY: str = Field(
         default="openai/gpt-oss-safeguard-20b"

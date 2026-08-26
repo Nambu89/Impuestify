@@ -31,9 +31,22 @@ redis>=5.0.0  # For Upstash Redis TCP endpoint (SlowAPI compatible)
 # guardrails-ai>=0.5.0
 
 # --- PDF Processing ---
-pymupdf4llm>=0.2.6
+# PIN EXACTO A PROPOSITO. No relajar sin evaluar antes (Bug 112).
+# pymupdf4llm 1.28.2 (publicado en PyPI el 2026-08-06) arrastra pymupdf_layout
+# (wheel de 42,9 MB, ~50 MB de modelos .onnx) + onnxruntime, y en el propio
+# `import` construye las sesiones ONNX de analisis de layout: +112 MB de RSS y
+# varios segundos extra. Ese coste lo paga TODO arranque del backend, porque
+# app/main.py importa el router de notificaciones y notification_agent.py hace
+# `import pymupdf4llm` a nivel de modulo y sin guard. Con el rango abierto
+# ">=0.2.6", el primer build limpio posterior a esa release se lo trago solo y
+# el arranque dejo de caber en la ventana del healthcheck de Railway.
+# Ademas la linea 1.x pina `pymupdf==<su misma version>` y su __init__ lanza
+# ImportError si no coinciden: con los dos rangos abiertos, cualquier
+# resolucion dispar rompia el import de la app entera.
+# Estas dos versiones son las que corren los tests en local.
+pymupdf4llm==0.2.9
 azure-ai-documentintelligence>=1.0.2  # OCR para ingesta RAG (scripts/ingest_documents.py)
-pymupdf>=1.23.0
+pymupdf==1.26.7
 
 # --- Utils ---
 tqdm

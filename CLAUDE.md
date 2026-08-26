@@ -51,6 +51,39 @@ TaxIA/
 | Constants | `UPPER_SNAKE` | `MAX_TOKENS` |
 | Classes | `PascalCase` | `CoordinatorAgent` |
 
+## Despliegue: DOS ramas, DOS productos (OBLIGATORIO)
+
+| Rama | Despliegue | Producto |
+|---|---|---|
+| `main` | Railway (frontend + backend) | **Impuestify** |
+| `demo/fiscal-ia-melilla` | Coolify, VPS Contabo | **Demo Fiscal IA Melilla** (`iamelilla.com`) |
+
+**Mergear a `main` NO llega a la demo.** Coolify despliega la rama demo.
+
+### REGLA DURA: si tocamos la demo de Melilla, fast-forward SIEMPRE
+
+No preguntar ni esperar a que lo pidan. Si la sesión toca la demo, la rama se
+pone al día — al empezar, y otra vez cada vez que se mergee algo de backend a
+`main` durante esa sesión.
+
+```bash
+git fetch origin
+# Debe ser ff PURO: la rama demo no debe tener commits propios
+git merge-base --is-ancestor origin/demo/fiscal-ia-melilla origin/main
+git rev-list --count origin/main..origin/demo/fiscal-ia-melilla   # debe dar 0
+git push origin origin/main:refs/heads/demo/fiscal-ia-melilla
+```
+
+Después, **comprobar el commit en el log de Coolify**: `Importing ... (commit
+sha ...)` debe coincidir con el `main` recién mergeado. Si no coincide, falta el
+ff — no es que "Coolify despliegue código viejo".
+
+Si la rama demo tuviera commits propios, **parar y auditar**: es el escenario que
+dejó bugs vivos tres meses (backport de agosto de 2026).
+
+Precedente: el 2026-08-22/23 se arreglaron tres bugs críticos en `main` (117, 119
+y 120) y ninguno llegó a la demo, que siguió desplegando `f8c8c96` toda la tarde.
+
 ## Git Workflow
 
 - Branch convention: `claude/<descriptor>` for AI-assisted work
@@ -79,6 +112,127 @@ TaxIA/
 - [ ] Type hints (Python) / interfaces (TypeScript)
 - [ ] New env vars added to `.env.example`
 - [ ] Security considerations addressed
+
+## Squad de agentes (OBLIGATORIO delegar)
+
+Los agentes viven en `.claude/agents/*.md` y **no dependen de ninguna herramienta
+externa** (RuFlo se retiró el 2026-08-23 y no se perdió ninguno).
+
+### REGLA DURA: el asistente principal es PM. NO toca código.
+
+Quien lleva la conversación actúa como **Project Manager**: entiende el
+problema, lo diagnostica, redacta el encargo y verifica el resultado.
+**No edita ficheros de código.** Eso lo hace el agente del dominio.
+
+Lo que SÍ hace el PM:
+- Investigar y diagnosticar (leer código, logs, docs oficiales, reproducir).
+- Decidir qué hay que hacer y por qué.
+- Redactar el encargo con contexto suficiente para que el agente no tenga que
+  redescubrirlo.
+- Revisar lo que devuelve el agente y aceptarlo o devolverlo.
+- Escribir documentación, memoria y `agent-comms.md`.
+
+Lo que NO hace el PM: `Edit`/`Write` sobre `backend/`, `frontend/`, `scripts/`
+ni tests. Si se ve escribiendo código, **parar y delegar**.
+
+Excepción única: que Fernando lo pida explícitamente ("hazlo tú", "cámbiame esta
+línea").
+
+**Por qué**: cada agente arranca con contexto limpio. En la sesión del
+2026-08-22/23 el PM resolvió ~20 tareas sin invocar ni un subagente, y los
+errores que cometió son exactamente los de contexto saturado: dar por buenos los
+modelos de Groq sin llamarlos, "arreglar" un fail-open que no existía, inventarse
+los nombres de los flags en un test. Delegar no es ceremonia: es higiene.
+
+| Tarea | Agente | Tipo |
+|---|---|---|
+| Bug o feature de backend, FastAPI, Turso | `backend-architect` | proyecto |
+| Python puro: debugging, async, optimización | `python-pro` | proyecto |
+| React, TS, Vite, UX, PWA | `frontend-dev` | proyecto |
+| Probar como usuario real (Playwright) | `qa-tester` | proyecto |
+| Verificar un plan ANTES de ejecutarlo | `plan-checker` | proyecto |
+| Verificar la implementación DESPUÉS | `verifier` | proyecto |
+| Documentación, auditoría de docs | `doc-auditor` | proyecto |
+| Descargar normativa oficial (AEAT/BOE) | `doc-crawler` | proyecto |
+| Roadmap, decisiones, delegación | `pm-coordinator` | proyecto |
+| Análisis de competencia | `competitive-intel` | proyecto |
+| **Tests: escribirlos o ampliarlos** | `tester` / `tdd-london-swarm` | built-in |
+| **PRs: revisión, merge, ciclo de vida** | `pr-manager` | built-in |
+| **Issues de GitHub, triaje** | `issue-tracker` | built-in |
+| **Releases y versionado** | `release-manager` | built-in |
+| **Revisión de código adversarial** | `reviewer` / `code-review-swarm` | built-in |
+| Auditoría de seguridad | `security-auditor` | built-in |
+| Búsqueda amplia en el repo | `Explore` | built-in |
+
+Los marcados **built-in** no tienen fichero en `.claude/agents/` — se invocan por
+nombre igual, con `subagent_type`.
+
+Cuándo NO delegar: una pregunta conversacional, un cambio de una línea ya
+localizado, o cuando el usuario pide explícitamente que lo haga yo.
+
+### REGLA DURA: toda modificación de código pasa por Codex
+
+Antes de empujar cualquier cambio de código del proyecto (`backend/`,
+`frontend/`, `scripts/`, tests, workflows), pasarlo por Codex para una segunda
+opinión. No hace falta para documentación ni memoria.
+
+```powershell
+codex exec --sandbox read-only -C "<ruta del repo>" $prompt
+```
+
+- `--sandbox read-only` siempre: revisa, no toca.
+- El prompt **sin comillas dobles dentro** y con `-C <ruta>` explícito —
+  PowerShell 5.1 rompe el paso de argumentos a ejecutables nativos si las lleva.
+- Pedirle que responda **solo con fallos concretos**, y que lo diga en una línea
+  si no hay ninguno.
+- Pedirle también qué **falta**, no solo qué sobra: un arreglo de seguridad puede
+  fallar por quedarse corto.
+- Si tras aplicar sus hallazgos el cambio quedó materialmente distinto, **volver
+  a pasarlo**. El 2026-08-23 hicieron falta tres rondas sobre el mismo fichero.
+- Verificar sus hallazgos, no aceptarlos a ciegas: ese día uno era falso ("hace
+  falta vite 8") y se descartó con datos — el rango vulnerable acababa en 6.4.2.
+
+Precedente: Codex entró en 5 revisiones y encontró **12 hallazgos reales**. Dos
+cambiaron la solución de raíz — que `c.p.` es *corto plazo* en contabilidad, y
+que los patrones de SQLi eran cobertura aparente (8 de 9 evasiones triviales los
+esquivaban).
+
+### Memoria y aislamiento (configurado el 2026-08-23)
+
+**Memoria propia por agente**: los 10 llevan `memory: project`, que les da
+`.claude/agent-memory/<nombre>/` — persiste entre sesiones y es versionable, así
+que el conocimiento que acumula cada uno se comparte con el equipo por git. No
+confundir con la memoria del PM (`memory/` + `MEMORY.md`), que es otra cosa.
+
+**Aislamiento por worktree**: solo en `backend-architect`, `python-pro` y
+`frontend-dev`. Les da una copia aislada del repo, para que dos agentes que
+escriben código a la vez no se pisen; la copia se descarta sola si no hay
+cambios.
+
+Deliberadamente **sin** worktree:
+
+| Agente | Por qué |
+|---|---|
+| `doc-auditor`, `doc-crawler`, `competitive-intel` | sus ficheros deben aterrizar en el checkout real, no en una copia |
+| `qa-tester` | Playwright depende de las rutas y la config del repo real |
+| `plan-checker`, `verifier` | son de solo lectura, no hay nada que aislar |
+| `pm-coordinator` | por la regla de arriba, el PM no escribe código |
+
+El worktree cuesta ~200-500 ms y disco por agente, así que solo compensa donde
+hay riesgo real de conflicto.
+
+### Coordinación entre agentes
+
+Disponible **sin activar nada**: `SendMessage` permite que un agente con nombre
+mensajee a otro, y cada agente recibe al arrancar la lista de sus hermanos.
+
+**Agent teams** (pizarra de tareas compartida, dependencias entre tareas, buzón,
+*file locking* al reclamar trabajo) requiere
+`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. **NO está activado**: es experimental,
+cuesta bastantes más tokens, `/resume` no restaura compañeros, y en Windows
+Terminal solo funciona el modo *in-process* (los paneles divididos necesitan tmux
+o iTerm2). Activarlo para un caso concreto que se beneficie del paralelismo, no
+como modo permanente.
 
 ## Quality Gates (OBLIGATORIO)
 
@@ -129,7 +283,7 @@ pre-commit install
 
 **CI runs all checks on every PR** (`.github/workflows/ci.yml`, 5 parallel jobs). Bypass pre-commit ONLY for emergency commits: `git commit --no-verify` — but CI will still report. Baseline tolerances (Phase 1):
 - Backend ruff: `--exit-zero` for 179 pre-existing violations (cleanup: issue #15)
-- Frontend eslint: `--max-warnings 256` for 234 warnings (cleanup: issue #14)
+- Frontend eslint: `--max-warnings 256` for **243** warnings (medido 2026-08-23; el 234 anterior estaba desactualizado). Cleanup: issue #14
 - Frontend typecheck: soft-fail for ~30 pre-existing TS errors (cleanup: issue #15)
 
 ## Post-Bugfix Protocol (OBLIGATORIO)
@@ -154,6 +308,8 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 
 ## Key Updates (2026-04-20)
 
+- **Deploy Railway — regla de oro (2026-08-11, Bugs 111-113)**: son **2 servicios sobre el mismo repo** y cada uno lee un fichero de config distinto — `railway.toml` de la **raíz** = FRONTEND (Root Directory `/frontend`, builder Railpack); `backend/railway.toml` = BACKEND (Root Directory `/backend`, builder `backend/Dockerfile`). La ruta del config es un ajuste por servicio y *no* sigue al Root Directory. Con builder Dockerfile, el `startCommand` corre en **exec form** y NO expande variables: `$PORT` debe ir envuelto en `/bin/sh -c "exec ..."`. Y las dependencias que se importan en el arranque van **pineadas exactas**. Detalle en `memory/bugfixes-2026-08.md` y en el skill `deployment-railway`
+
 - **Hotfix 2026-04-20 — Bug 84**: DefensIA `/defensia/expedientes` 404 en produccion. Causa: backend monta `/api/defensia`, frontend llamaba `/defensia` sin prefix. Fix: prefix `/api/` anadido en 9 call sites (7 archivos). Tests actualizados. Regla documentada en `frontend/CLAUDE.md` — TODO hook nuevo DEBE usar `/api/<router>/...`. Commit `20bf545` en main.
 - **DefensIA — "Volver a inicio"**: Back-link anadido en `DefensiaListPage`, `DefensiaWizardPage` y `DefensiaExpedientePage` (este ultimo navega a `/defensia`). Estilo `.defensia-back-link` clonado del patron `.cf-back-link`. Commit `8f7932c` en main.
 - **Session 34 — Merge final a main**: DefensIA (71+ commits) + Modelo 200 IS (11 commits) mergeados a main en produccion. Hotfix lazy imports `Modelo200Page` (app crasheaba por imports faltantes). Copilot rounds 8-9 (48 comentarios resueltos en total). RAG ingesta completa: 463 docs, 92,393 chunks, 85,587 embeddings. `copilot-instructions.md` activo.
@@ -167,7 +323,7 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 - **Workspace Fase 2**: Auto-clasificacion PGC al subir factura + confirm-classification + classify-pending retroactivo + auto-detect tipo (emitida/recibida por NIF)
 - **Workspace Fase 3**: Selector dropdown workspace en Chat + indicador visual + workspace_id persistido en conversations + WorkspaceCards acceso rapido
 - **Session 30 RAG fix completo** (sesion 30): 4 bugs encadenados arreglados — territory tildes, OOM (workers 4→1), SSE keepalive, Upstash Vector sync 84K. RAG hibrido (FTS5+Vector) ahora funcional. Vector search con accent fallback + 10s timeout
-- **Railway**: 1 worker obligatorio (~344 MB por worker). `railway.toml` con `--workers 1 --timeout-keep-alive 120`
+- **Railway**: 1 worker obligatorio (~344 MB por worker). El `--workers 1 --timeout-keep-alive 120` vive en `backend/railway.toml` (`startCommand`) y en el `CMD` de `backend/Dockerfile`, NO en el `railway.toml` de la raíz
 - **Upstash Vector**: 84,036 embeddings sincronizados (100%). Sync script: `scripts/sync_to_upstash.py`. Verificar count periodicamente
 - **Territory names**: SIEMPRE canonical de `ccaa_constants.py` (con tildes). `get_territory()` tiene fallback `normalize_ccaa()`
 - **SSE keepalive**: Enviar `thinking` event ANTES de RAG search para evitar connection drop por inactividad
@@ -198,7 +354,7 @@ El objetivo es que ningún agente futuro repita el mismo error. Si el bug revela
 - **Multi-Pagadores IRPF**: PagadorItem model, obligacion declarar Art.96 LIRPF
 - **Calculadora Retenciones IRPF** (NEW): `/calculadora-retenciones` publica, algoritmo AEAT 2026, 28 tests, lead magnet SEO
 - **Share Conversations** (NEW): `/shared/:token` enlaces publicos con anonimizacion PII (DNI, IBAN, importes)
-- **RuFlo V3.5**: Workflow multi-agente + Superpowers + GSD patterns (~90% capacidad)
+- **RuFlo RETIRADO (2026-08-23)**: aportaba 98 de las 100 alertas de code-scanning (árbol de utillaje que no se despliega) y no se usaba. Los agentes NO dependían de él: `impuestify-team.yaml` era solo un mapeo que apuntaba a `.claude/agents/*.md`, que siguen intactos. Ver la sección "Squad de agentes"
 - **Adaptive Tax Guide by Role**: PARTICULAR (7 steps), CREATOR (8 steps + plataformas/IAE/IVA intracomunitario/withholding/M349), AUTONOMO (8 steps + actividad económica). Adaptive result with role-specific obligations
 - **Net Salary Calculator**: `/calculadora-neto` endpoint. 5 fiscal regimes (Madrid common IVA 21%, Andalucía, Canarias IGIC 7%, Melilla IPSI 4% + 60% deduction, País Vasco 7-tranche foral). SS auto-calculated by income (15 brackets RDL 13/2022). IGIC/IPSI auto-detection. 21 tests PASS. Disclaimer on each response
 - **Crawler**: 90 URLs, 23 territories + Creators/Influencers docs

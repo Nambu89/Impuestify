@@ -68,9 +68,9 @@ REGLAS DE INPUT:
 - Si el usuario tributa en estimación directa, NO uses esta función — usa
   calculate_modelo_130 en su lugar.
 
-La función devuelve casillas 01-12 según las instrucciones AEAT y delega en
-`Modelo131Calculator` para garantizar coherencia con la calculadora pública
-del frontend.""",
+La función devuelve las casillas del modelo según el diseño de registro
+oficial DR131_2026 de la AEAT y delega en `Modelo131Calculator` para
+garantizar coherencia con la calculadora pública del frontend.""",
         "parameters": {
             "type": "object",
             "properties": {
@@ -113,37 +113,33 @@ del frontend.""",
                     "description": (
                         "Apartados II y III — Volumen de ingresos del "
                         "TRIMESTRE, excluyendo subvenciones de capital. "
-                        "Casilla 04 (apartado III) o casilla 01 (apartado II)."
+                        "Casilla 05 (apartado III) o casilla 03 (apartado II)."
                     ),
                 },
                 "rendimiento_neto_anterior": {
                     "type": "number",
                     "description": (
-                        "Rendimiento neto del AÑO ANTERIOR para minoración "
-                        "por rendimientos bajos (sólo apartado I). "
-                        "Tabla escalonada: ≤9k=100, 9-10k=75, 10-11k=50, "
-                        "11-12k=25, >12k=0 EUR/trim."
+                        "Dato de partida de la CASILLA 09 (la [09] es la "
+                        "minoración ya calculada) — Rendimiento neto de actividades "
+                        "económicas del EJERCICIO ANTERIOR (art. 110.3.c "
+                        "RIRPF, sólo apartado I). Si ≤ 12.000 EUR aplica una "
+                        "minoración escalonada plana (≤9k=100, 9-10k=75, "
+                        "10-11k=50, 11-12k=25 EUR/trim). NO lo inventes ni lo "
+                        "pongas a 0: si el usuario no lo ha dicho, OMITE el "
+                        "parámetro y no se aplicará minoración alguna."
                     ),
                 },
                 "retenciones_trimestre": {
                     "type": "number",
-                    "description": (
-                        "CASILLA 09 — Retenciones e ingresos a cuenta del " "TRIMESTRE."
-                    ),
-                },
-                "pagos_anteriores": {
-                    "type": "number",
-                    "description": (
-                        "CASILLA 10 — Pagos fraccionados ya ingresados en "
-                        "trimestres previos del MISMO año. Para 1T siempre 0."
-                    ),
+                    "description": ("CASILLA 08 — Retenciones e ingresos a cuenta del TRIMESTRE."),
                 },
                 "resultado_anterior_complementaria": {
                     "type": "number",
                     "description": (
-                        "CASILLA 11 — Resultado ya ingresado en una "
-                        "autoliquidación anterior del mismo trimestre "
-                        "(complementaria). Por defecto 0."
+                        "CASILLA 14 — Resultado a ingresar de las anteriores "
+                        "declaraciones: lo ya ingresado en una autoliquidación "
+                        "anterior del mismo trimestre (complementaria). "
+                        "Por defecto 0."
                     ),
                 },
                 "ceuta_melilla": {
@@ -182,7 +178,9 @@ _TRIMESTRE_MESES = {
 
 
 def _fmt(amount: float) -> str:
-    return f"{amount:,.2f}"
+    """Formatea en estilo espanol: 1.234,56 (no 1,234.56)."""
+    formatted = f"{abs(amount):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"-{formatted}" if amount < 0 else formatted
 
 
 def _territorio_label(territory: str) -> str:
@@ -214,15 +212,18 @@ def _build_response(
         "",
     ]
 
+    # Los números entre corchetes son los del diseño de registro oficial
+    # DR131_2026 de la AEAT, NO el prefijo de la clave del dict (ver la tabla
+    # de equivalencias en el docstring de `Modelo131Calculator`).
     if apartado == "I":
         criterio = desglose.get("criterio_tipo", "")
         lines.extend(
             [
                 "**Apartado I — Actividades empresariales en módulos**",
-                f"- Rendimiento neto previo módulos anual [01]: "
+                f"- Suma de rendimientos netos [01]: "
                 f"{_fmt(casillas['01_rendimiento_neto_modulos'])} EUR",
-                f"- Tipo aplicable [02]: {casillas['02_tipo_aplicable']:.1f}% " f"({criterio})",
-                f"- Resultado actividades empresariales [03]: "
+                f"- Porcentaje aplicable: {casillas['02_tipo_aplicable']:.0f}% ({criterio})",
+                f"- Pago fraccionado previo: suma de resultados [02]: "
                 f"{_fmt(casillas['03_resultado_empresarial'])} EUR",
             ]
         )
@@ -230,71 +231,74 @@ def _build_response(
         lines.extend(
             [
                 "**Apartado III — Actividades agrícolas / ganaderas / forestales / pesqueras**",
-                f"- Volumen de ingresos del trimestre [04]: "
+                f"- Volumen de ingresos del trimestre [05]: "
                 f"{_fmt(casillas['04_volumen_ingresos_agrario'])} EUR",
-                f"- Cuota 2% [05]: {_fmt(casillas['05_cuota_agraria'])} EUR",
+                f"- Pago fraccionado previo del trimestre, 2% [06]: "
+                f"{_fmt(casillas['05_cuota_agraria'])} EUR",
             ]
         )
     else:  # apartado II
         lines.extend(
             [
                 "**Apartado II — Actividad empresarial sin datos-base**",
-                f"- Volumen de ingresos del trimestre [01]: "
+                f"- Volumen de ventas o ingresos [03]: "
                 f"{_fmt(casillas['01_rendimiento_neto_modulos'])} EUR",
-                f"- Tipo aplicable [02]: {casillas['02_tipo_aplicable']:.1f}%",
-                f"- Resultado [03]: {_fmt(casillas['03_resultado_empresarial'])} EUR",
+                f"- Porcentaje aplicable: {casillas['02_tipo_aplicable']:.0f}%",
+                f"- Pago fraccionado previo [04]: {_fmt(casillas['03_resultado_empresarial'])} EUR",
             ]
         )
 
     lines.append("")
-    lines.append(f"**Total cuotas [06]: {_fmt(casillas['06_total_cuotas'])} EUR**")
+    lines.append(
+        f"**Suma de los pagos fraccionados previos del trimestre [07]: "
+        f"{_fmt(casillas['06_total_cuotas'])} EUR**"
+    )
 
-    # Reducciones
+    # Reducciones territoriales — no tienen casilla propia en el modelo: la
+    # AEAT las incorpora al porcentaje aplicable de cada actividad.
     if casillas["07_reducciones"] > 0:
         lines.append(
-            f"- Reducciones {desglose['reduccion_concepto']} [07]: "
+            f"- Reducciones {desglose['reduccion_concepto']}: "
             f"-{_fmt(casillas['07_reducciones'])} EUR"
         )
         lines.append(
-            f"- Resultado tras reducciones [08]: "
-            f"{_fmt(casillas['08_resultado_tras_reducciones'])} EUR"
+            f"- Resultado tras reducciones: {_fmt(casillas['08_resultado_tras_reducciones'])} EUR"
         )
 
     # Minoraciones
     if casillas["09_retenciones_trimestre"] > 0:
         lines.append(
-            f"- Retenciones del trimestre [09]: "
+            f"- A deducir: retenciones e ingresos a cuenta [08]: "
             f"-{_fmt(casillas['09_retenciones_trimestre'])} EUR"
         )
-    if casillas["10_pagos_anteriores"] > 0:
-        lines.append(
-            f"- Pagos fraccionados anteriores [10]: "
-            f"-{_fmt(casillas['10_pagos_anteriores'])} EUR"
-        )
-    if casillas["11_complementaria"] > 0:
-        lines.append(
-            f"- Resultado autoliquidación anterior [11]: "
-            f"-{_fmt(casillas['11_complementaria'])} EUR"
-        )
 
-    # Minoración rendimientos bajos (sólo apartado I)
+    # Minoración rendimientos bajos (sólo apartado I) — casilla [09]
     if apartado == "I" and desglose.get("minoracion_rendimientos_bajos", 0) > 0:
         lines.append(
-            f"- Minoración rendimientos bajos: "
-            f"-{_fmt(desglose['minoracion_rendimientos_bajos'])} EUR"
+            f"- Minoración por aplicación de la deducción del art. 110.3.c) "
+            f"RIRPF [09]: -{_fmt(desglose['minoracion_rendimientos_bajos'])} EUR"
+        )
+
+    # Aquí NO va una línea de "pagos fraccionados de trimestres anteriores":
+    # el 131 no es acumulativo y no existe tal deducción (art. 110.1.b RIRPF,
+    # y no hay casilla en el DR131). Ver el docstring de `modelo_131.py`.
+    if casillas["11_complementaria"] > 0:
+        lines.append(
+            f"- A deducir: resultado a ingresar de las anteriores "
+            f"declaraciones [14]: -{_fmt(casillas['11_complementaria'])} EUR"
         )
 
     lines.append("")
     lines.append("**Resultado**")
     if resultado > 0:
-        lines.append(f"- A ingresar [12]: **{_fmt(resultado)} EUR**")
+        lines.append(f"- A ingresar [15]: **{_fmt(resultado)} EUR**")
         lines.append("")
         lines.append(
             f"Plazo: presenta antes del **{plazo}**. "
             "Domiciliación bancaria hasta 5 días antes del vencimiento."
         )
     else:
-        lines.append(f"- Resultado [12]: **{_fmt(resultado)} EUR (sin ingreso)**")
+        lines.append(f"- Resultado [15]: **{_fmt(resultado)} EUR (sin ingreso)**")
         lines.append("")
         lines.append(
             f"Aunque el resultado sea 0, debes presentar el modelo igualmente "
@@ -316,19 +320,27 @@ async def calculate_modelo_131_tool(
     rendimiento_neto_modulos_anual: float = 0.0,
     num_asalariados: int = 0,
     volumen_ingresos_trimestre: float = 0.0,
-    rendimiento_neto_anterior: float = 0.0,
+    # None = el usuario NO ha facilitado el dato → sin minoración casilla [09]
+    # (art. 110.3.c RIRPF). Un 0.0 explícito sí aplica el primer tramo.
+    rendimiento_neto_anterior: float | None = None,
     retenciones_trimestre: float = 0.0,
-    pagos_anteriores: float = 0.0,
     resultado_anterior_complementaria: float = 0.0,
     ceuta_melilla: bool = False,
     la_palma: bool = False,
     restricted_mode: bool = False,
+    **_ignored: Any,
 ) -> dict[str, Any]:
     """
     Wrapper around :class:`Modelo131Calculator` for OpenAI function calling.
 
     Returns a dict with `success`, `formatted_response` and (on success) the
     calculator output.
+
+    `**_ignored` absorbe los argumentos que el modelo pueda inventarse o
+    arrastrar de una conversación previa — en particular `pagos_anteriores`,
+    retirado por no existir en el 131 (ver el docstring de `modelo_131.py`).
+    El despachador llama a este ejecutor con `**function_args` sin filtrar, así
+    que un argumento de más provocaría un `TypeError` en vez de una respuesta.
     """
     # 1) Restriction guard (Particular plan blocks autónomo content)
     if restricted_mode:
@@ -360,7 +372,7 @@ async def calculate_modelo_131_tool(
                     "Valores: 'empresarial', 'sin_datos_base', 'agraria'."
                 ),
                 "formatted_response": (
-                    "El tipo de actividad debe ser 'empresarial', " "'sin_datos_base' o 'agraria'."
+                    "El tipo de actividad debe ser 'empresarial', 'sin_datos_base' o 'agraria'."
                 ),
             }
 
@@ -374,7 +386,6 @@ async def calculate_modelo_131_tool(
             volumen_ingresos_trimestre=volumen_ingresos_trimestre,
             rendimiento_neto_anterior=rendimiento_neto_anterior,
             retenciones_trimestre=retenciones_trimestre,
-            pagos_anteriores=pagos_anteriores,
             resultado_anterior_complementaria=resultado_anterior_complementaria,
             ceuta_melilla=ceuta_melilla,
             la_palma=la_palma,

@@ -1,14 +1,56 @@
-# Railway Config — Impuestify Backend
+# Railway Config — servicio BACKEND (Root Directory: /backend)
 # Docs: https://docs.railway.com/reference/config-as-code
-# Root Directory: /backend (set in Railway dashboard)
+#
+# ESTE es el fichero que aplica al backend. El `railway.toml` de la raíz del
+# repo NO lo lee: la doc de monorepos es explícita — "The Railway Config File
+# does not follow the Root Directory path. You have to specify the absolute
+# path for the railway.json or railway.toml file".
+#
+# Prueba: el deploy del 2026-08-10 22:31 imprimió "Retry window: 30s" aunque el
+# railway.toml de la raíz ya traía healthcheckTimeout = 300 (commit 93c5d13, ya
+# mergeado). El valor que se aplicó fue el de AQUÍ. Si tocas config de backend,
+# tócala en este fichero.
 
 [build]
-builder = "RAILPACK"
-buildCommand = "pip install -r requirements.txt"
+# Doc oficial, literal: "When building a service, Railway will look for and use
+# a Dockerfile at the root of the source directory". Con Root Directory
+# /backend eso es `backend/Dockerfile`, y por eso el build sale por ahí aunque
+# este fichero dijera RAILPACK (lo confirman las etapas del log del deploy:
+# "[builder 5/5] RUN pip install --user -r requirements.txt",
+# "[runtime 5/5] COPY . ."). Se declara DOCKERFILE para que el fichero diga la
+# verdad.
+builder = "DOCKERFILE"
 
 [deploy]
-startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 120"
+# NUNCA pongas aquí `--port $PORT` a pelo. Citas literales de la doc de Railway
+# (guides/start-command): "the start command overrides the image's ENTRYPOINT in
+# exec form" y "commands ran in exec form do not support variable expansion".
+# O sea: con builder DOCKERFILE, un `$PORT` desnudo le llega a uvicorn como la
+# cadena literal "$PORT" y el proceso muere en el parseo de argumentos
+# ("Error: Invalid value for '--port': '$PORT' is not a valid integer"), antes
+# incluso de importar la app — desde fuera se ve EXACTAMENTE igual que una app
+# lenta: healthcheck con "service unavailable" y cero stdout.
+#
+# Con Railpack no pasaba ("the start command is ran in a shell process"), y por
+# eso esta misma línea funcionó de 2026-04 hasta el 2026-08-09, el día que
+# `backend/Dockerfile` llegó a main con el PR #17 y cambió el builder.
+#
+# La solución es la que recomienda la propia doc: envolverlo en shell
+# (`/bin/sh -c "exec python main.py --port $PORT"`). Alternativa igual de válida:
+# borrar esta línea y dejar que mande el CMD del Dockerfile, que ya es forma
+# shell. Se mantiene explícita a propósito porque la config-as-code gana al
+# dashboard, así que además neutraliza cualquier start command que quedara
+# puesto a mano ahí. Mismo comando que el CMD: Coolify no lee este fichero.
+startCommand = '/bin/sh -c "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --timeout-keep-alive 120"'
+
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+# 300 s = el default de Railway. Con 30 s el deploy se declaraba fallido antes
+# de que la app llegara a escuchar: importar `app.main` ya son ~11 s en local
+# (agent_framework + routers) y después el lifespan conecta con Turso y ejecuta
+# `init_schema`, que son decenas de round trips HTTP contra la base remota.
+# En Railway eso pasa de 30 s con holgura. El log del 2026-08-10 lo enseña:
+# ventana de 30 s, dos intentos con "service unavailable" y deploy tumbado.
+healthcheckTimeout = 300
+
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3

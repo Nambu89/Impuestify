@@ -398,3 +398,89 @@ async def test_rendimiento_neto_negativo_floor_zero():
     )
     assert result["success"] is True
     assert result["resultado_final"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_casilla_03_negativa_conserva_signo():
+    """Casilla 03 en pérdidas conserva el signo; la 04 se topa en 0.
+
+    El diseño de registro oficial de la AEAT
+    (docs/AEAT/modelo-130-2026/DR130e15v12.xls) declara "[03] Rendimiento neto
+    ([01] - [02])" como campo de tipo "N" (numérico CON signo), mientras que
+    "[04] 20 por 100 del importe de la casilla [03]" es de tipo "Num" (sin
+    signo). Topar la casilla 03 en 0 borraría la pérdida del trimestre: como la
+    sección I es acumulada desde el 1 de enero (art. 110.1.a RIRPF), ese
+    negativo es justo lo que rebaja el rendimiento neto del trimestre
+    siguiente.
+    """
+    result = await calculate_modelo_130_tool(
+        trimestre=1,
+        ingresos_computables=3000,
+        gastos_deducibles=5000,
+    )
+    assert result["success"] is True
+    assert result["seccion_i"]["rendimiento_neto"] == -2000.0
+    assert result["seccion_i"]["veinte_porciento"] == 0.0
+    assert result["casillas"]["03_rendimiento_neto"] == -2000.0
+
+
+# ===========================================================================
+# Casilla 13 — la minoración NO se regala cuando no consta el ejercicio
+# anterior (art. 110.3.c RIRPF)
+# ===========================================================================
+
+
+@pytest.mark.asyncio
+async def test_casilla_13_sin_dato_ejercicio_anterior_no_minora():
+    """Si NO se facilita el rendimiento del ejercicio anterior → minoración 0.
+
+    Regresión. Antes, `rendimiento_neto_previo_anual` tenía por defecto 0.0 y
+    el calculador lo leía como el hecho "el año pasado gané 0 EUR", que cae en
+    el primer tramo del art. 110.3.c) RIRPF y regalaba los 100 EUR/trimestre a
+    CUALQUIER usuario que no rellenara el dato — hasta 400 EUR/año de menos
+    ingresados, en los tres frentes (chat, API y PDF).
+    """
+    result = await calculate_modelo_130_tool(
+        trimestre=1,
+        ingresos_computables=15000,
+        gastos_deducibles=5000,
+    )
+    assert result["success"] is True
+    assert result["deduccion_80bis"] == 0.0
+    # 20% de 10.000 = 2.000, sin minoración.
+    assert result["resultado_final"] == 2000.0
+
+
+@pytest.mark.asyncio
+async def test_casilla_13_cero_explicito_si_minora():
+    """Un 0 EXPLÍCITO sí es un dato: 0 <= 9.000 → 100 EUR de minoración.
+
+    Art. 110.3.c) RIRPF, primer tramo ("Igual o inferior a 9.000 → 100").
+    """
+    result = await calculate_modelo_130_tool(
+        trimestre=1,
+        ingresos_computables=15000,
+        gastos_deducibles=5000,
+        rendimiento_neto_previo_anual=0.0,
+    )
+    assert result["success"] is True
+    assert result["deduccion_80bis"] == 100.0
+    assert result["resultado_final"] == 1900.0
+
+
+@pytest.mark.asyncio
+async def test_importes_en_formato_espanol():
+    """Los importes se escriben 30.000,00 y no 30,000.00.
+
+    La respuesta va directa al usuario en castellano: el punto es el separador
+    de millares y la coma el decimal. Mismo criterio que el tool del 131.
+    """
+    result = await calculate_modelo_130_tool(
+        trimestre=1,
+        ingresos_computables=30000,
+        gastos_deducibles=0,
+    )
+    assert result["success"] is True
+    txt = result["formatted_response"]
+    assert "30.000,00 EUR" in txt
+    assert "30,000.00" not in txt

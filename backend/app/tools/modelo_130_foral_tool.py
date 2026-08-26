@@ -108,13 +108,13 @@ MODELO_130_FORAL_TOOL = {
                 "volumen_operaciones_trimestre": {
                     "type": "number",
                     "description": (
-                        "Gipuzkoa régimen excepcional: volumen de operaciones " "del trimestre."
+                        "Gipuzkoa régimen excepcional: volumen de operaciones del trimestre."
                     ),
                 },
                 "retenciones_trimestre": {
                     "type": "number",
                     "description": (
-                        "Retenciones del TRIMESTRE. Necesario en Gipuzkoa " "excepcional y Araba."
+                        "Retenciones del TRIMESTRE. Necesario en Gipuzkoa excepcional y Araba."
                     ),
                 },
                 # Araba (datos trimestrales)
@@ -176,7 +176,7 @@ MODELO_130_FORAL_TOOL = {
                 "actividad_agraria": {
                     "type": "boolean",
                     "description": (
-                        "Gipuzkoa: True si actividad agrícola/ganadera. " "Dispensa ≥ 70 %."
+                        "Gipuzkoa: True si actividad agrícola/ganadera. Dispensa ≥ 70 %."
                     ),
                 },
                 "pct_retencion_anio_anterior": {
@@ -241,7 +241,13 @@ _TRIMESTRE_LABEL = {1: "1T", 2: "2T", 3: "3T", 4: "4T"}
 
 
 def _fmt(amount: float) -> str:
-    return f"{amount:,.2f}"
+    """Formatea en estilo español: 1.234,56 (no 1,234.56).
+
+    La respuesta va directa al usuario en castellano: el punto es el separador
+    de millares y la coma el decimal. Mismo helper que en `modelo_131_tool`.
+    """
+    formatted = f"{abs(amount):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"-{formatted}" if amount < 0 else formatted
 
 
 def _build_dispensa_response(

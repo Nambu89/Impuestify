@@ -100,26 +100,82 @@ Al emitir el rechazo usar `result.rejection_message` (texto para el usuario),
 match, y filtrarlo es un info leak. Precedente: Bug 104 (DefensIA llevaba
 desde la sesión 32 sin pipeline).
 
-### Leadbot — módulo opcional de marca blanca (`app/leadbot/`)
+### REGLA: una capa de seguridad basada en LLM necesita suelo determinista
 
-Captador de leads (chatbot público que cualifica BANT-NATB, reserva cita en
-Google Calendar y avisa por email). **Apagado por defecto**: se enciende con
-`LEADBOT_ENABLED=true`.
+Si Groq no está disponible (sin API key, 429, timeout), la capa **no puede
+devolver "seguro"**: eso la apaga en silencio y sigue figurando en el inventario
+de seguridad como si funcionara.
 
-- Con la bandera apagada `main.py` **ni importa** `app.leadbot` — 176 rutas.
-  Encendida, 181 (+5 bajo `/api/lead-chat/*` y `/api/leads`).
-- Config propia env-driven en `leadbot/config.py`; del core solo consume
-  `LEADBOT_ENABLED` y `TURNSTILE_SECRET_KEY`.
-- Tablas con prefijo `leadbot_`, creadas fuera de `turso_client.init_schema()`.
-- Usa `SecurityPipeline(enable_pii=False, enable_topic_classifier=False)`: el bot
-  recoge email y teléfono **a propósito**, con consentimiento RGPD. Deja activas
-  sanitización, inyección y SQLi. Es la única excepción legítima a la regla de
-  arriba, y solo porque el propósito del endpoint es recoger ese dato.
+Antes de dar por bueno un `return ... is_safe=True` en una rama de error,
+**seguir el flujo hasta el llamador**. El comportamiento sin Groq no es binario:
 
-**Bandera propia y NO `DEMO_MODE`**: `DEMO_MODE` relaja capas de seguridad
-(salta el clasificador de temas). Una bandera que enciende un módulo de producto
-nunca debe compartirse con una que baja defensas — si se comparten, encender lo
-uno enciende lo otro. `tests/test_leadbot_gating.py` fija esto.
+| Capa | Sin Groq | Detalle |
+|---|---|---|
+| `pii_detector` | **parcial** | `detect()` corre el regex y deja mandar a `_HIGH_CONFIDENCE_PII`, así que DNI/NIE/IBAN/email/teléfono/CIF SÍ se cazan. Lo que queda fuera de ese conjunto (`postal_address`) NO |
+| `prompt_injection` | **cubierto** | su rama sin cliente ocurre DESPUÉS del regex |
+| `sql_injection` | **era fail-open total** | `security_pipeline` llamaba y se fiaba. Arreglado con `_regex_only()`. Bug 116 |
+
+Leer la rama aislada lleva a conclusiones falsas en las dos direcciones: se
+"arregló" un fail-open inexistente en `pii_detector` (y el arreglo empeoraba las
+cosas, porque hacía bloquear a los patrones ambiguos) y se pasó por alto uno real
+en `sql_injection`.
+
+Dos cosas más que hay que tener presentes al razonar sobre estas capas:
+
+- **`risk_level` debe ser `"high"` o `"critical"`** al degradar. El pipeline solo
+  rechaza con esos dos valores, así que un `"medium"` pasa igual que un
+  fail-open.
+- **El pipeline se traga las excepciones de cada capa**
+  (`except Exception: logger.warning("... non-blocking")`). Si una capa lanza, se
+  salta entera y la petición sigue. Es deliberado —que un fallo de Groq no tumbe
+  el chat— pero significa que una excepción no controlada dentro de una capa la
+  desactiva en silencio.
+
+### REGLA: los patrones de ataque se describen por FORMA, no por ejemplos
+
+Enumerar cadenas de manual da cobertura aparente. La primera versión de
+`_BLOCKING_PATTERNS` listaba `UNION SELECT` y `' OR '1'='1`, y **8 de 9**
+evasiones triviales la esquivaban: `' OR 'x'='x`, `UNION ALL SELECT`,
+`UNION/**/SELECT`, `; DELETE FROM`, `OR TRUE`, `pg_sleep(`, y la versión
+url-codificada `%27%20OR%201%3D1`.
+
+Al escribir un patrón de ataque, preguntarse **cómo lo escribiría alguien que
+quiere esquivarlo**: separadores alternativos, comentarios intercalados,
+sinónimos del verbo, codificación. Y analizar también el texto decodificado.
+
+### REGLA: un regex de PII caza lo inequívoco; lo ambiguo es del LLM
+
+Un patrón de `PII_PATTERNS` decide **solo** cuando el texto pasa de 3000
+caracteres, porque ahí `detect()` salta a Groq. Si el patrón describe una forma
+que otra cosa comparte, en ese camino rechaza consultas legítimas.
+
+Antes de añadir un patrón, preguntarse: **¿esta forma significa una única cosa
+en castellano fiscal?**
+
+```python
+# NO — describe la forma, no el significado
+"postal_code": r"\b(?:0[1-9]|[1-4]\d|5[0-2])\d{3}\b"   # tambien es 30000 EUR
+"passport":    r"\b[A-Z]{2,3}\d{6,9}\b"                # tambien es un expediente
+
+# SI — la etiqueta desambigua, y "pasaporte" no tiene otro sentido
+"passport": r"\b(?i:pasaporte|passport)[^\d\n]{0,8}?([A-Z]{2,3}\d{6,9})\b"
+```
+
+La ventana del conector se MIDE, no se estima: 8 es la longitud exacta de
+`" numero "`, el conector legítimo más largo. Con 12 aún colaba
+`Pasaporte: s/d; exp ABC123456`, que son dos datos distintos en la misma frase.
+
+Si ni con etiqueta se desambigua, describe la **forma del dato completo** en vez
+del número: `postal_code` (5 cifras) se sustituyó por `postal_address` (código
+postal **seguido de población**), que un importe no puede imitar porque va
+seguido de su moneda. Y si tampoco eso funciona, **el patrón sobra**: `postal_code` se eliminó
+porque `c.p.` es *corto plazo* en contabilidad y ningún lookbehind aguanta
+`deuda a corto plazo (C.P.): 30000 EUR` sin comerse a la vez `Enviar a C.P.
+28013`. Eso es semántica y le toca al LLM, que lee la frase entera y conoce la
+CCAA del perfil. Precedente: Bug 114.
+
+Práctica estándar (Microsoft Presidio, tutorial 06_context): un regex de pocas
+cifras es de confianza muy baja por sí solo y necesita palabras de contexto.
 
 ### REGLA: nunca hardcodear un id de modelo LLM/Vision
 
@@ -127,6 +183,33 @@ Siempre `settings.<PROVIDER>_MODEL`. Cuando el proveedor retira un modelo, la
 mitigación debe ser cambiar una env var, no desplegar código. Precedente:
 Bug 106 — `gemini-3-flash-preview` retirado por Google con 6 de 9 call sites
 hardcodeados, así que la env var de Railway no servía de nada.
+
+**Y comprobar un id de modelo es LLAMARLO, no leerlo.** Que el nombre esté en
+`config.py` y coincida con la lista de la consola del proveedor no prueba nada:
+
+```bash
+cd backend && python -c "
+from groq import Groq; from app.config import settings
+c = Groq(api_key=settings.GROQ_API_KEY)
+for m in (settings.GROQ_MODEL, settings.GROQ_MODEL_ROUTER,
+          settings.GROQ_MODEL_SAFETY, settings.GROQ_MODEL_PROMPT_GUARD):
+    try:
+        c.chat.completions.create(model=m, messages=[{'role':'user','content':'hola'}], max_tokens=1)
+        print('OK  ', m)
+    except Exception as e:
+        print('FALLA', m, str(e)[:90])
+"
+```
+
+Distinguir los códigos: **404** = el modelo ya no existe (retirado). **403 con
+`model_permission_blocked_org`** = existe pero hay que habilitarlo en la consola
+del proveedor — ojo, esos aparecen igual en `models.list()`, así que estar en el
+listado no significa poder usarlo.
+
+Precedente: Bug 117 — `llama-3.1-8b-instant` retirado por Groq el 2026-08-16.
+Se revisó la config, coincidía con la lista de activos, se dio por buena, y el
+modelo llevaba seis días devolviendo 404 y tumbando el clasificador de temas
+(que falla cerrado, o sea: chat rechazando TODO).
 
 ## Routers (`app/routers/`)
 
@@ -430,6 +513,65 @@ Aplicable a: `modelo_303_tool.py`, `modelo_130_tool.py`, `modelo_308_tool.py`,
 `modelo_309_tool.py`, `modelo_720_tool.py`, `modelo_721_tool.py`,
 `modelo_ipsi_tool.py`, `is_simulator_tool.py` y futuros wrappers de modelos AEAT.
 
+### REGLA: un default numérico NO puede significar "sin dato" y un hecho a la vez
+
+Donde el cero sea un valor legítimo del dominio, el "no facilitado" es `None`,
+**nunca** `0`.
+
+```python
+# NO — el calculador no puede distinguir "no me lo has dicho" de "gané 0 EUR"
+rend_neto_anterior: float = 0.0
+
+# SI — None = ausente; un 0.0 explícito es un dato y se trata como tal
+rend_neto_anterior: float | None = None
+```
+
+Precedente, Bug 121: con el default a `0.0`, el Modelo 130 aplicaba el primer
+tramo del art. 110.3.c) RIRPF (≤ 9.000 → 100 EUR) a **todo el que no rellenara el
+campo**. La aplicación regalaba hasta 400 EUR/año de minoración y el usuario
+presentaba ese número a Hacienda. El Modelo 131 tenía el error **simétrico**
+(trataba `<= 0` como "sin dato" y negaba la minoración a quien de verdad ganó 0),
+y el Modelo 303 sigue con él: de su `volumen_ano_anterior: float = 0.0` salen
+`es_elegible_recc()`=True y `requiere_sii()`=False, y como nadie le pasa el
+parámetro, esa es **siempre** la respuesta.
+
+Tres cosas que hay que revisar además del default:
+
+1. **Las tres capas**: calculador, tool y modelo Pydantic del router. Cambiar solo
+   una deja la ambigüedad viva por las otras.
+2. **El frontend, que es la cuarta capa.** Un `value={data.campo || 0}` o un
+   `parseFloat("")` convierten el campo vacío en cero explícito y devuelven el
+   bug. Hay helper: `frontend/src/utils/numberField.ts`.
+3. **Si el default no es 0 sino otro valor** (`pct_atribucion_estado` = 100,
+   `anos_actividad` = 3), el `|| 0` del frontend es aún peor: manda un cero que
+   el backend nunca habría puesto.
+
+### REGLA: un test de PDF que solo mira `%PDF` no prueba nada
+
+Comprobar que el fichero generado empieza por `%PDF` verifica que ReportLab
+funciona, no que el documento diga la verdad.
+
+Un test de PDF tributario tiene que **extraer el texto y emparejar concepto con
+importe**. Buscar el importe suelto no detecta que dos casillas estén cruzadas, y
+es el error más caro: el número existe, es plausible, y va en la casilla
+equivocada del modelo que se presenta.
+
+Precedente, Bug 121: el botón "Descargar PDF" del 130 llevaba tiempo generando el
+modelo **con todas las casillas a cero** —el frontend mandaba unas claves y
+`_render_130` leía otras— y el test pasaba. Y Bug 122: la numeración de casillas
+del PDF del 131 estaba inventada de arriba abajo.
+
+Cuidado con dos trampas al escribir esos tests:
+- `"0,00 EUR"` es subcadena de `"30.000,00 EUR"`. Hace falta un extractor por
+  tokens, no un `in`.
+- ReportLab destroza las tildes al extraer el texto: no aserciones sobre cadenas
+  acentuadas.
+
+Y el mapeo de casillas es **semántico, no por número**: las claves del calculador
+REST (`05_retenciones_acumuladas`, `06_pagos_anteriores`) van al revés que la
+numeración oficial de la AEAT. Copiar por número intercambia retenciones con
+pagos anteriores.
+
 ## Common Backend Tasks
 
 **New endpoint**: Create `app/routers/my_feature.py` → `router = APIRouter(prefix="/api/my-feature")` → register in `main.py` with `app.include_router()`.
@@ -466,6 +608,12 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | `irpf_casillas` table not found | El seed script crea la tabla automáticamente. También está en `turso_client.py:init_schema()` |
 | Semantic cache disabled | Check `UPSTASH_VECTOR_REST_URL` + `TOKEN` env vars |
 | SSE buffering on Railway | Use `print(flush=True)` in streaming code |
+| Railway: `Healthcheck failed! 1/1 replicas never became healthy` + `service unavailable` | Comprobar EN ESTE ORDEN: (1) qué fichero de config aplica a ese servicio (ver fila siguiente); (2) el `startCommand` efectivo — con builder DOCKERFILE va en exec form y NO expande `$PORT`; (3) `healthcheckTimeout` frente al arranque real. Y pedir los **Deploy Logs**, no los Build Logs: el build puede salir verde y el contenedor morir igual. Bugs 110-112. |
+| ¿Qué `railway.toml` lee cada servicio? | Monorepo: la ruta del config es un ajuste **por servicio** y no sigue al Root Directory — doc oficial: *"The Railway Config File does not follow the Root Directory path"*. Aquí: `railway.toml` de la RAÍZ → servicio **frontend**; `backend/railway.toml` → servicio **backend**. Editar el de la raíz creyendo que es del backend tumbó los dos servicios el 2026-08-10. Bug 111. |
+| `startCommand` con `$PORT` mata el proceso al arrancar | Doc oficial: *"the start command overrides the image's ENTRYPOINT in exec form"* y *"commands ran in exec form do not support variable expansion"*. Con builder DOCKERFILE, `--port $PORT` llega literal → `Invalid value for '--port'` y el proceso muere antes de importar la app. Envolverlo: `/bin/sh -c "exec uvicorn ... --port ${PORT:-8000} ..."`, o borrar el `startCommand` y dejar el `CMD` (que ya es forma shell). Con Railpack no pasaba: ahí el start command corre en shell. Bug 111. |
+| ¿Manda el `CMD` del Dockerfile o el `startCommand`? | El **build** lo gana el Dockerfile; el **arranque** lo gana el `startCommand` de `backend/railway.toml` si existe. Hoy hay comando de arranque en 2 sitios (`backend/railway.toml` y el `CMD`), idénticos a propósito porque Coolify solo lee el `CMD`. Si tocas uno, sincroniza el otro. |
+| Deploy marcado fallido aunque la app levante bien | `healthcheckTimeout` demasiado bajo. Arranque real: ~10 s de imports (`agent_framework` + routers) + `init_schema` contra Turso remoto (~79 statements CREATE/ALTER, cada uno con su `commit()`). Usar 300 (el default de Railway), no 30. NO hay modelos de embeddings locales: van por API. Bug 110. |
+| El arranque se vuelve lento "sin tocar nada" | Dependencia con rango abierto que se actualizó sola. Precedente: `pymupdf4llm>=0.2.6` saltó a 1.28.2 (release del 2026-08-06), que arrastra `pymupdf_layout` + `onnxruntime` y **construye sesiones ONNX en el import** (+112 MB RSS). Lo paga cada arranque porque `notification_agent.py` hace `import pymupdf4llm` a nivel de módulo. Pin exacto para todo lo que se importe en el camino de arranque. Bug 112. |
 | `import fitz` fails | `pip install PyMuPDF pymupdf4llm` |
 | Tests import errors | Mock jose/bcrypt/slowapi (chain __init__.py imports) |
 | Rate limit 429 on login/register during dev | Increase `RATE_LIMIT_PER_MINUTE` or clear Redis. Login/register are now hard-limited at 5/min, forgot-password at 3/min. |
@@ -489,6 +637,14 @@ Fixtures in `conftest.py`: `mock_db`, `auth_token`, `mock_openai_response`, `tes
 | PII detector revienta con 413/429 Groq | `pii_detector.detect()` con length guard 3000 chars (>3k → `_regex_only` con `self.PII_PATTERNS`). LRU per-instance dict. Retry sync 1× en 429 con `time.sleep(0.5)`. Mantiene firma sync — NO convertir a async (rompe pipeline). |
 | Migración `duplicate column` ruidosa al startup | Usar `_column_exists(table, col)` con `PRAGMA table_info` ANTES del `ALTER TABLE ... ADD COLUMN`, en lugar de try/except. El driver Hrana loguea el error antes de Python lo capture. Regex `_ALTER_ADD_COL_RE` parsea statements. |
 | PII no detectada aunque el texto lleve DNI/IBAN | El regex determinista debe correr SIEMPRE y PRIMERO en `pii_detector.detect()`. Groq es demasiado permisivo en contexto fiscal ("mi DNI es 12345…" lo daba por seguro). Union de detectores: si cualquiera marca PII, se rechaza. Bug 105. |
+| Una consulta legitima se rechaza como PII | Mirar si el texto pasa de 3000 chars: ahi `detect()` salta el LLM (`_REGEX_FALLBACK_THRESHOLD`, para evitar el 413 de Groq) y el regex decide SOLO. `_HIGH_CONFIDENCE_PII` no protege ese camino — solo limita el override. Un patron ambiguo ahi bloquea de verdad. Bug 114. |
+| `if not self.client` en `_detect_uncached()` parece fail-open | NO lo es, y no lo "arregles" llamando a `_regex_only()`. Devuelve `has_pii=False`, y entonces `detect()` corre el regex por su cuenta dejando mandar a `_HIGH_CONFIDENCE_PII`: sin Groq, DNI/NIE/IBAN/email/telefono/CIF se siguen cazando. Degradar ahi haria contar TODOS los patrones y los ambiguos pasarian a bloquear. Hay test que lo fija. |
 | Gemini devuelve 404 / OCR de facturas roto | El id de modelo estaba hardcodeado en 6 call sites. Usar `settings.GEMINI_MODEL` (default `gemini-2.5-flash-lite`). `gemini-3-flash-preview` fue retirado por Google. Bug 106. |
 | Rate limit se resetea al volver a hacer login | `get_rate_limit_key()` hasheaba el token (`md5(Authorization)`), así que cada token nuevo = contador nuevo. Debe decodificar el JWT y keyear por el claim `sub`. Fallback a IP, con `except` amplio: una excepción en la key function hace que slowapi devuelva 500. Bug 107. |
 | DefensIA cuelga / responde en blanco | gpt-5-mini gasta todo el presupuesto en razonamiento oculto y emite 0 chunks. Requiere `reasoning_effort="minimal"` + `max_completion_tokens=10000` + `asyncio.wait_for` 60s. Añadir fallback si `content_chunks == 0` para no dejar la UI vacía. Bug 108. |
+| El Modelo 130 aplica 100 EUR de minoracion a quien no deberia | `rend_neto_anterior` con default `0.0` en vez de `None`: el calculador lee el cero como el hecho "gané 0 EUR" y aplica el primer tramo del art. 110.3.c) RIRPF. Revisar las TRES capas (calculador, tool, modelo del router) **y el frontend**, que con `|| 0` devuelve el bug. Bug 121 |
+| El Modelo 131 NIEGA la minoracion a quien gano 0 EUR | El error simétrico: su helper trataba `<= 0` como "sin dato". Es el mismo art. 110.3.c) que el 130 — la letra c) no se acota a un método de estimación, aunque las letras a) y b) sí. Bug 122 |
+| Un PDF de modelo AEAT sale con todas las casillas a cero | Desajuste de claves entre lo que manda el llamador y lo que lee el `_render_*`. El test no lo caza si solo comprueba `%PDF`: hay que extraer el texto y emparejar concepto con importe. Bug 121 |
+| Un PDF foral sale como el modelo comun y con la cabecera mal | Falta `variante_foral` en el payload. **Solo el frontend sabe el territorio del selector**, así que el adaptador tiene que añadirlo. Bug 121 |
+| Cifras verosimiles pero de otro territorio en el PDF | El selector de territorio no llamaba a `reset()`: dentro de la ventana del debounce se descargaba un cálculo común etiquetado como foral. Peor que un PDF vacío, porque se presenta. Bug 121 |
+| Un test de calculo lleva meses en rojo y "ya se sabe" | Mirarlo. De 20 fallos "preexistentes" del 2026-08-23, tres tenían razón y destapaban el Bug 121. Un indicador permanentemente rojo deja de informar |

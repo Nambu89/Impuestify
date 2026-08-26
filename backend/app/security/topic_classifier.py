@@ -1,7 +1,7 @@
 """
 Fiscal Topic Classifier — Strict whitelist for Spanish fiscal questions.
 
-Uses Groq llama-3.1-8b-instant to classify whether a user query is on-scope
+Uses Groq (`settings.GROQ_MODEL_ROUTER`) to classify whether a user query is on-scope
 (Spanish tax/fiscal) or off-scope (anything else).
 
 Anything OFF-SCOPE must be rejected BEFORE reaching the main LLM.
@@ -130,7 +130,9 @@ Si tienes dudas y NO hay contexto → fiscal_es=false (regla por defecto).
 
         self.sensitivity = sensitivity
         self.client = None
-        self.model = settings.GROQ_MODEL_ROUTER  # llama-3.1-8b-instant
+        # NO anotar aqui el id del modelo: se queda obsoleto y miente.
+        # El valor vive en config.py, que es donde se documenta por que.
+        self.model = settings.GROQ_MODEL_ROUTER
 
         if settings.GROQ_API_KEY:
             try:
@@ -182,7 +184,19 @@ Si tienes dudas y NO hay contexto → fiscal_es=false (regla por defecto).
                     {"role": "user", "content": user_message},
                 ],
                 temperature=0.0,
-                max_tokens=120,
+                # `gpt-oss-20b` es un modelo de razonamiento: gasta presupuesto
+                # pensando ANTES de emitir el JSON. Con los 120 tokens de antes
+                # devolvia `json_validate_failed` ("max completion tokens
+                # reached before generating a valid document") en 2 de cada 3
+                # llamadas — y como este clasificador falla CERRADO, cada error
+                # se veia como un rechazo legitimo.
+                #
+                # Medido: con effort="low" y 300 tokens, 5/5 respuestas validas.
+                # Subir max_tokens a 800 sin tocar el effort NO bastaba (1 de 3
+                # seguia fallando): el problema es el razonamiento, no el
+                # tamano de la respuesta. Mismo patron que el Bug 108.
+                max_tokens=300,
+                reasoning_effort="low",
                 response_format={"type": "json_object"},
             )
 

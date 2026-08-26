@@ -2,10 +2,18 @@
 Modelo 131 Calculator — Pago Fraccionado IRPF Estimación Objetiva (Módulos).
 
 Legal basis:
-  - Art. 110.1.c RIRPF (RD 439/2007) — pago fraccionado en estimación objetiva.
-  - Art. 110.1.b RIRPF — actividades agrícolas, ganaderas, forestales, pesqueras
-    (apartado III, 2% sobre volumen de ingresos).
-  - Art. 110.2 RIRPF + Disp. Adic. 28ª LIRPF — reducción 60% Ceuta/Melilla.
+  - Art. 110.1.b RIRPF (RD 439/2007) — pago fraccionado en estimación objetiva:
+    4/3/2 % de los rendimientos netos según los datos-base del primer día del
+    año (apartado I) y, si no puede determinarse ningún dato-base, 2 % del
+    volumen de ventas o ingresos del trimestre (apartado II).
+  - Art. 110.1.c RIRPF — actividades agrícolas, ganaderas, forestales, pesqueras
+    (apartado III, 2% sobre volumen de ingresos del trimestre).
+  - Art. 110.2 RIRPF — reducción del 60% de los porcentajes anteriores "para
+    las actividades económicas que tengan derecho a la deducción en la cuota
+    prevista en el artículo 68.4 de la Ley del Impuesto", que es la de rentas
+    obtenidas en Ceuta o Melilla. El DR131 la rotula igual ("deducción art.
+    68.4 Ley IRPF"). NO es la Disp. Adic. 28ª LIRPF, que regula los porcentajes
+    de reparto de la escala del ahorro y no viene al caso.
   - Orden EHA/672/2007 — aprueba el Modelo 131 vigente.
   - Orden HAC/1425/2025 — módulos IRPF ejercicio 2026.
 
@@ -17,19 +25,121 @@ Apartados oficiales del Modelo 131:
   Apartado III — Actividades agrícolas/ganaderas/forestales/pesqueras.
                 Tipo: 2% sobre volumen de ingresos del trimestre.
 
-Casillas oficiales (apartado I — empresarial):
-  01  Rendimiento neto previo módulos (anualizado).
-  02  Tipo aplicable (4% / 3% / 2%).
-  03  Resultado actividades empresariales (01 × 02).
-  04  Volumen ingresos agrario.
-  05  Cantidad 2% × 04 (cuota agraria).
-  06  Total cuotas (03 + 05).
-  07  Reducciones (Ceuta/Melilla 60%, La Palma cuando aplique).
-  08  Resultado tras reducciones.
-  09  Retenciones del trimestre.
-  10  Pagos fraccionados anteriores del ejercicio.
-  11  Resultado autoliquidación complementaria (4T).
-  12  Resultado a ingresar/devolver.
+CASILLAS OFICIALES vs CLAVES DEL DICT:
+  Las claves de `casillas` que devuelve esta calculadora llevan un prefijo
+  numérico propio que NO coincide con la numeración oficial del modelo. Se
+  conservan por compatibilidad de la API (frontend, tool de chat, generador de
+  PDF), pero las etiquetas que ve el usuario deben usar el número OFICIAL del
+  diseño de registro DR131_2026 de la AEAT. El XLSX de referencia
+  (docs/AEAT/modelo-130-2026/DR131_2026.xlsx) no se versiona en este repositorio;
+  si no lo tienes en tu entorno local, descárgalo de la sede electrónica de la AEAT
+  (diseños de registro del Modelo 131).
+
+
+    clave del dict                    → casilla oficial DR131_2026
+    01_rendimiento_neto_modulos (I)   → [01] Suma de rendimientos netos
+    01_rendimiento_neto_modulos (II)  → [03] Volumen de ventas o ingresos
+    02_tipo_aplicable                 → sin casilla (es el "Porcentaje
+                                        aplicable" de cada actividad)
+    03_resultado_empresarial (I)      → [02] Pago fraccionado previo: suma de
+                                        resultados
+    03_resultado_empresarial (II)     → [04] Pago fraccionado previo
+    04_volumen_ingresos_agrario       → [05] Volumen ingresos trimestre
+    05_cuota_agraria                  → [06] Pago fraccionado previo del
+                                        trimestre
+    06_total_cuotas                   → [07] Suma de los pagos fraccionados
+                                        previos del trimestre
+    07_reducciones                    → sin casilla (la reducción de Ceuta/
+                                        Melilla va incorporada al porcentaje)
+    08_resultado_tras_reducciones     → sin casilla (paso intermedio)
+    09_retenciones_trimestre          → [08] A deducir: retenciones e ingresos
+                                        a cuenta
+    (desglose.minoracion_...)         → [09] Minoración por aplicación de la
+                                        deducción. Artículo 110.3.c
+    11_complementaria                 → [14] A deducir: resultado a ingresar de
+                                        las anteriores declaraciones
+    12_resultado_final                → [15] Resultado de la declaración
+
+  El hueco en el 10 no es un descuido: ahí vivía `10_pagos_anteriores`, que se
+  eliminó por no existir en el modelo (ver el apartado siguiente). Las claves
+  11 y 12 NO se renumeran porque el prefijo ya es arbitrario y renumerarlas
+  rompería a los consumidores de la API sin ganar nada.
+
+  OJO: [12] en el modelo oficial es "Pago de préstamos para la adquisición de
+  vivienda habitual", NO el resultado. Nunca etiquetar el resultado como [12].
+
+POR QUÉ EL 131 NO DEDUCE LOS PAGOS FRACCIONADOS DE TRIMESTRES ANTERIORES:
+  El parámetro `pagos_anteriores` existió en esta calculadora y se eliminó: no
+  es que el modelo lo omita, es que el concepto NO EXISTE en el 131. El 131 no
+  es acumulativo.
+
+  Lo que dice la norma (art. 110 RIRPF, RD 439/2007, redacción vigente):
+    - Art. 110.1.a) — estimación directa (Modelo 130): la base es "el
+      rendimiento neto correspondiente al período de tiempo transcurrido desde
+      el primer día del año hasta el último día del trimestre", o sea
+      ACUMULADA; y por eso añade que "de la cantidad resultante por aplicación
+      de lo dispuesto EN ESTA LETRA se deducirán los pagos fraccionados que
+      [...] habría correspondido ingresar en los trimestres anteriores del
+      mismo año". Es la casilla [05] del DR130 ("A deducir: de los trimestres
+      anteriores, suma de los importes"). El mandato está acotado a la letra a).
+    - Art. 110.1.b) — estimación objetiva (este modelo, apartados I y II): el
+      4/3/2 % se aplica sobre "los rendimientos netos resultantes de la
+      aplicación de dicho método EN FUNCIÓN DE LOS DATOS-BASE DEL PRIMER DÍA
+      DEL AÑO". La base es la misma en los cuatro trimestres: no acumula nada,
+      luego no hay nada que descontar.
+    - Art. 110.1.c) — agrarias (apartado III): 2 % "del volumen de ingresos DEL
+      TRIMESTRE". Tampoco acumula.
+    - Art. 110.3: "De la cantidad resultante por aplicación de lo dispuesto en
+      los apartados anteriores, se podrán deducir, en su caso:" — y enumera de
+      forma cerrada a) y b) retenciones e ingresos a cuenta, c) la minoración
+      por rendimientos ≤ 12.000 €, d) la deducción por vivienda habitual.
+      Ninguna letra contempla los pagos fraccionados previos.
+
+  Lo que dice el diseño de registro DR131_2026 (apartado "IV. Total
+  liquidación"): [07] suma de pagos fraccionados previos DEL TRIMESTRE, [08]
+  retenciones, [09] minoración art. 110.3.c, [10] Diferencia, [11] resultados
+  negativos de trimestres anteriores, [12] préstamos vivienda habitual, [13]
+  Total, [14] resultado a ingresar de las anteriores declaraciones y [15]
+  resultado. No hay casilla para lo ingresado en trimestres previos del
+  ejercicio.
+
+  Cuidado con dos casillas que se le parecen y NO lo son:
+    - [14] "A deducir: resultado a ingresar de las anteriores declaraciones" es
+      la de la COMPLEMENTARIA — va emparejada en el propio diseño de registro
+      con el indicador "Declaración complementaria" y el número de justificante
+      de la anterior. Se mantiene aquí como `11_complementaria`.
+    - [11] "A deducir: resultados negativos de trimestres anteriores" arrastra
+      resultados NEGATIVOS, no pagos hechos. Es el único cauce por el que un
+      trimestre previo influye en el actual, y sigue sin implementarse (ver
+      divergencia 2).
+
+  Consecuencia del bug que esto corrige: cada trimestre del 131 se liquida
+  entero y por separado, así que lo pagado en trimestres previos no está
+  incluido en la cuota del actual. Restarlo quitaba un importe que nunca se
+  había sumado, y le decía al contribuyente que ingresara MENOS de lo debido —
+  cada vez menos, porque el error se agrava trimestre a trimestre.
+
+  Compatibilidad: un cliente antiguo que siga enviando `pagos_anteriores` no
+  recibe error — el parámetro se ignora en silencio (`**kwargs` aquí, `extra`
+  ignorado por Pydantic en el router) y el cálculo sale correcto. Rechazarlo
+  rompería la calculadora web mientras el frontend aún lo envíe, sin ganar
+  nada: el resultado correcto es calculable sin ese dato.
+
+DIVERGENCIAS CONOCIDAS con el modelo oficial (no corregidas aquí — cambian
+importes y necesitan validación de producto):
+  1. La minoración de la casilla [09] sólo se aplica al apartado I. En el
+     modelo está en "IV. Total liquidación", después de [07] (suma de los tres
+     apartados), y el art. 110.3.c) deduce "de la cantidad resultante por
+     aplicación de lo dispuesto en los apartados anteriores" — o sea, también
+     debería alcanzar a los apartados II y III.
+  2. La casilla [15] es de tipo "N" (numérico CON signo) en el diseño de
+     registro, y el modelo prevé "A deducir: Resultados negativos de trimestres
+     anteriores [11]". Aquí se topa en 0 con `max(0.0, ...)`, lo que borra el
+     resultado negativo en vez de dejarlo para trimestres posteriores. Tampoco
+     hay entrada para esos resultados negativos arrastrados.
+  3. No se implementa la deducción por pago de préstamos para la adquisición
+     o rehabilitación de vivienda habitual, casilla [12]: quien tiene derecho
+     a ella ingresa de más. El Modelo 130 sí la tiene (su casilla [16]).
 
 NOTA SOBRE FORALES:
   Los territorios forales (Araba, Bizkaia, Gipuzkoa, Navarra) tienen sus propios
@@ -72,14 +182,27 @@ class Modelo131Calculator:
     _REDUCCION_CEUTA_MELILLA = 0.60  # 60%
     _REDUCCION_LA_PALMA = 0.60  # 60% — verificar vigencia con Orden anual
 
-    # Tabla de minoración por rendimientos bajos (escalonada plana, NO lineal).
-    # Ámbito: análoga al art. 80 bis LIRPF aplicada al 131. Tramos discretos
-    # publicados en el Anexo de la Orden anual de módulos.
+    # Minoración por rendimientos bajos — casilla [09] del Modelo 131.
+    # NO es "análoga" a nada ni sale de la Orden anual de módulos: es el MISMO
+    # art. 110.3.c) RIRPF (RD 439/2007) que aplica el Modelo 130. El apartado 3
+    # del art. 110 deduce "de la cantidad resultante por aplicación de lo
+    # dispuesto en los apartados anteriores", y sus letras a) y b) sí se acotan
+    # a un método de estimación, pero la letra c) NO: dice sólo "Cuando la
+    # cuantía de los rendimientos netos de actividades económicas del ejercicio
+    # anterior sea igual o inferior a 12.000 euros". Vale por tanto para
+    # estimación directa (130) y objetiva (131).
+    # Lo confirma la propia AEAT en el diseño de registro del 131
+    # (docs/AEAT/modelo-130-2026/DR131_2026.xlsx): "IV. Total liquidación -
+    # Deducción del art. 110.3.c) del Reglamento del Impuesto" y "[09]
+    # Minoración por aplicación de la deducción. Artículo 110.3.c".
+    # (El art. 80 bis LIRPF que citaba este comentario está SUPRIMIDO desde el
+    # 01/01/2015 por el art. 1.55 de la Ley 26/2014.)
+    # Escalones planos, sin interpolación.
     _MINORACION_TABLA = [
-        (9_000.0, 100.0),  # ≤ 9.000
-        (10_000.0, 75.0),  # 9.001-10.000
-        (11_000.0, 50.0),  # 10.001-11.000
-        (12_000.0, 25.0),  # 11.001-12.000
+        (9_000.0, 100.0),  # igual o inferior a 9.000
+        (10_000.0, 75.0),  # entre 9.000,01 y 10.000
+        (11_000.0, 50.0),  # entre 10.000,01 y 11.000
+        (12_000.0, 25.0),  # entre 11.000,01 y 12.000
     ]
 
     # Plazos AEAT
@@ -110,13 +233,16 @@ class Modelo131Calculator:
         # Apartados II / III (sin datos-base / agraria)
         volumen_ingresos_trimestre: float = 0.0,
         # Comunes — minoración + retenciones + pagos previos
-        rendimiento_neto_anterior: float = 0.0,
+        rendimiento_neto_anterior: float | None = None,
         retenciones_trimestre: float = 0.0,
-        pagos_anteriores: float = 0.0,
         resultado_anterior_complementaria: float = 0.0,
         # Reducciones territoriales
         ceuta_melilla: bool = False,
         la_palma: bool = False,
+        # `**kwargs` absorbe en silencio los parámetros que ya no existen —
+        # entre ellos `pagos_anteriores`, retirado por no tener base legal ni
+        # casilla (ver el docstring del módulo). Un caller antiguo no rompe y
+        # obtiene el resultado correcto.
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -131,11 +257,12 @@ class Modelo131Calculator:
                 0 → 2%; 1 → 3%; ≥2 → 4%.
             volumen_ingresos_trimestre: Volumen de ingresos del trimestre,
                 excluyendo subvenciones de capital (apartados II/III).
-            rendimiento_neto_anterior: Rendimiento neto del año anterior, para
-                aplicar la minoración por rendimientos bajos (sólo apartado I).
+            rendimiento_neto_anterior: Rendimiento neto de actividades
+                económicas del ejercicio ANTERIOR, para la minoración de la
+                casilla [09] (art. 110.3.c RIRPF, sólo apartado I). ``None``
+                (por defecto) = dato NO facilitado → no se aplica minoración.
+                Un 0.0 explícito sí es un dato ("gané 0 EUR") y sí la aplica.
             retenciones_trimestre: Retenciones e ingresos a cuenta del trimestre.
-            pagos_anteriores: Pagos fraccionados ya ingresados en trimestres
-                anteriores del mismo ejercicio.
             resultado_anterior_complementaria: Resultado de una autoliquidación
                 anterior del mismo trimestre (sólo complementarias).
             ceuta_melilla: Aplica reducción 60% Ceuta/Melilla.
@@ -143,7 +270,7 @@ class Modelo131Calculator:
 
         Returns:
             Dict con territory, quarter, apartado, resultado, tipo_aplicado,
-            casillas (01-12), desglose, plazo.
+            casillas (01-09, 11, 12 — no hay 10), desglose, plazo.
 
         Raises:
             ValueError: Si quarter o actividad_tipo no son válidos.
@@ -165,7 +292,6 @@ class Modelo131Calculator:
                 num_asalariados=num_asalariados,
                 rendimiento_neto_anterior=rendimiento_neto_anterior,
                 retenciones_trimestre=retenciones_trimestre,
-                pagos_anteriores=pagos_anteriores,
                 resultado_anterior_complementaria=resultado_anterior_complementaria,
                 ceuta_melilla=ceuta_melilla,
                 la_palma=la_palma,
@@ -176,7 +302,6 @@ class Modelo131Calculator:
                 quarter=quarter,
                 volumen_ingresos_trimestre=volumen_ingresos_trimestre,
                 retenciones_trimestre=retenciones_trimestre,
-                pagos_anteriores=pagos_anteriores,
                 resultado_anterior_complementaria=resultado_anterior_complementaria,
                 ceuta_melilla=ceuta_melilla,
                 la_palma=la_palma,
@@ -187,7 +312,6 @@ class Modelo131Calculator:
             quarter=quarter,
             volumen_ingresos_trimestre=volumen_ingresos_trimestre,
             retenciones_trimestre=retenciones_trimestre,
-            pagos_anteriores=pagos_anteriores,
             resultado_anterior_complementaria=resultado_anterior_complementaria,
             ceuta_melilla=ceuta_melilla,
             la_palma=la_palma,
@@ -203,9 +327,8 @@ class Modelo131Calculator:
         quarter: int,
         rendimiento_neto_modulos_anual: float,
         num_asalariados: int,
-        rendimiento_neto_anterior: float,
+        rendimiento_neto_anterior: float | None,
         retenciones_trimestre: float,
-        pagos_anteriores: float,
         resultado_anterior_complementaria: float,
         ceuta_melilla: bool,
         la_palma: bool,
@@ -221,9 +344,12 @@ class Modelo131Calculator:
             casilla 07 = reducción territorial (60% Ceuta/Melilla, 60% La Palma)
             casilla 08 = casilla 06 − casilla 07
             casilla 09 = retenciones_trimestre
-            casilla 10 = pagos_anteriores
-            casilla 11 = resultado_anterior_complementaria (4T)
-            casilla 12 = max(0, 08 − 09 − 10 − 11) − minoración rendimientos bajos
+            casilla 11 = resultado_anterior_complementaria (complementaria)
+            casilla 12 = max(0, 08 − 09 − 11) − minoración rendimientos bajos
+
+        No hay casilla 10: los pagos fraccionados de trimestres anteriores NO
+        se deducen en el 131 (art. 110.1.b RIRPF — la base son los datos-base
+        del primer día del año, no acumula). Ver el docstring del módulo.
         """
         tipo_pct = self._tipo_segun_asalariados(num_asalariados)
 
@@ -251,11 +377,10 @@ class Modelo131Calculator:
         minoracion = self._minoracion_rendimientos_bajos(rendimiento_neto_anterior)
 
         casilla_09 = round(max(0.0, retenciones_trimestre), 2)
-        casilla_10 = round(max(0.0, pagos_anteriores), 2)
         casilla_11 = round(max(0.0, resultado_anterior_complementaria), 2)
 
-        # Resultado intermedio: cuota tras reducción − retenciones − pagos − complementaria
-        intermedio = casilla_08 - casilla_09 - casilla_10 - casilla_11
+        # Resultado intermedio: cuota tras reducción − retenciones − complementaria
+        intermedio = casilla_08 - casilla_09 - casilla_11
         # Aplicar minoración (max 0)
         casilla_12 = round(max(0.0, intermedio - minoracion), 2)
 
@@ -277,7 +402,6 @@ class Modelo131Calculator:
                 "07_reducciones": casilla_07,
                 "08_resultado_tras_reducciones": casilla_08,
                 "09_retenciones_trimestre": casilla_09,
-                "10_pagos_anteriores": casilla_10,
                 "11_complementaria": casilla_11,
                 "12_resultado_final": casilla_12,
             },
@@ -287,7 +411,11 @@ class Modelo131Calculator:
                 "reduccion_pct": reduccion_pct * 100,
                 "reduccion_concepto": reduccion_label,
                 "minoracion_rendimientos_bajos": minoracion,
-                "rendimiento_neto_anterior": round(rendimiento_neto_anterior, 2),
+                "rendimiento_neto_anterior": (
+                    None
+                    if rendimiento_neto_anterior is None
+                    else round(rendimiento_neto_anterior, 2)
+                ),
                 "ceuta_melilla": ceuta_melilla,
                 "la_palma": la_palma,
             },
@@ -304,7 +432,6 @@ class Modelo131Calculator:
         quarter: int,
         volumen_ingresos_trimestre: float,
         retenciones_trimestre: float,
-        pagos_anteriores: float,
         resultado_anterior_complementaria: float,
         ceuta_melilla: bool,
         la_palma: bool,
@@ -332,11 +459,10 @@ class Modelo131Calculator:
         casilla_08 = round(max(0.0, casilla_06 - casilla_07), 2)
 
         casilla_09 = round(max(0.0, retenciones_trimestre), 2)
-        casilla_10 = round(max(0.0, pagos_anteriores), 2)
         casilla_11 = round(max(0.0, resultado_anterior_complementaria), 2)
 
         casilla_12 = round(
-            max(0.0, casilla_08 - casilla_09 - casilla_10 - casilla_11),
+            max(0.0, casilla_08 - casilla_09 - casilla_11),
             2,
         )
 
@@ -357,7 +483,6 @@ class Modelo131Calculator:
                 "07_reducciones": casilla_07,
                 "08_resultado_tras_reducciones": casilla_08,
                 "09_retenciones_trimestre": casilla_09,
-                "10_pagos_anteriores": casilla_10,
                 "11_complementaria": casilla_11,
                 "12_resultado_final": casilla_12,
             },
@@ -385,7 +510,6 @@ class Modelo131Calculator:
         quarter: int,
         volumen_ingresos_trimestre: float,
         retenciones_trimestre: float,
-        pagos_anteriores: float,
         resultado_anterior_complementaria: float,
         ceuta_melilla: bool,
         la_palma: bool,
@@ -415,11 +539,10 @@ class Modelo131Calculator:
         casilla_08 = round(max(0.0, casilla_06 - casilla_07), 2)
 
         casilla_09 = round(max(0.0, retenciones_trimestre), 2)
-        casilla_10 = round(max(0.0, pagos_anteriores), 2)
         casilla_11 = round(max(0.0, resultado_anterior_complementaria), 2)
 
         casilla_12 = round(
-            max(0.0, casilla_08 - casilla_09 - casilla_10 - casilla_11),
+            max(0.0, casilla_08 - casilla_09 - casilla_11),
             2,
         )
 
@@ -440,7 +563,6 @@ class Modelo131Calculator:
                 "07_reducciones": casilla_07,
                 "08_resultado_tras_reducciones": casilla_08,
                 "09_retenciones_trimestre": casilla_09,
-                "10_pagos_anteriores": casilla_10,
                 "11_complementaria": casilla_11,
                 "12_resultado_final": casilla_12,
             },
@@ -451,7 +573,7 @@ class Modelo131Calculator:
                 "ceuta_melilla": ceuta_melilla,
                 "la_palma": la_palma,
                 "nota": (
-                    "Apartado II — sin datos-base: 2% sobre volumen de " "ingresos del trimestre."
+                    "Apartado II — sin datos-base: 2% sobre volumen de ingresos del trimestre."
                 ),
             },
             "plazo": self._PLAZOS[quarter],
@@ -509,19 +631,29 @@ class Modelo131Calculator:
             return "La Palma"
         return "Comun"
 
-    def _minoracion_rendimientos_bajos(self, rendimiento_anterior: float) -> float:
+    def _minoracion_rendimientos_bajos(self, rendimiento_anterior: float | None) -> float:
         """
-        Devuelve la minoración trimestral por rendimientos bajos del año previo.
+        Minoración trimestral de la casilla [09] — art. 110.3.c) RIRPF.
 
         Tabla escalonada plana (NO interpolación lineal):
-            ≤ 9.000          → 100 EUR/trim
-            9.001 - 10.000   →  75 EUR/trim
-            10.001 - 11.000  →  50 EUR/trim
-            11.001 - 12.000  →  25 EUR/trim
-            > 12.000         →   0 EUR/trim
+            ≤ 9.000            → 100 EUR/trim
+            9.000,01 - 10.000  →  75 EUR/trim
+            10.000,01 - 11.000 →  50 EUR/trim
+            11.000,01 - 12.000 →  25 EUR/trim
+            > 12.000           →   0 EUR/trim
+
+        ``None`` significa "el llamante NO ha facilitado el rendimiento del
+        ejercicio anterior": no se aplica minoración, porque el art. 110.3.c)
+        condiciona la casilla [09] a que *conste* que la cuantía del ejercicio
+        anterior no excedió de 12.000 EUR.
+
+        Un 0,0 EXPLÍCITO sí es un dato ("el año pasado gané 0 EUR") y da
+        derecho a los 100 EUR del primer tramo: la norma dice "igual o
+        inferior a 9.000 euros" y no excluye el cero. Tratarlo como "sin dato"
+        —que es lo que hacía este helper— le negaba la minoración a quien de
+        verdad tuvo un ejercicio anterior a cero y le hacía ingresar de más.
         """
-        if rendimiento_anterior <= 0:
-            # Sin dato → no aplica (caller debe pasar el dato real)
+        if rendimiento_anterior is None:
             return 0.0
         for threshold, minoracion in self._MINORACION_TABLA:
             if rendimiento_anterior <= threshold:

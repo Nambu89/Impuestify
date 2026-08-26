@@ -7,32 +7,61 @@
 # [TIMESTAMP] [AGENT] [STATUS] - Mensaje
 # STATUS: 🟢 DONE | 🟡 IN_PROGRESS | 🔴 BLOCKED | 📢 NEEDS_REVIEW
 
-## [2026-08-09] BACKEND — 📢 NEEDS_REVIEW — `.env.example` ha derivado del código: faltan 13 settings
+## [2026-08-22] SECURITY — 🟢 DONE — El chat enseñaba la excepción interna al usuario (Bug 120)
 
-Detectado al añadir `LEADBOT_ENABLED`. `config.py` declara **71** settings y la plantilla documenta 58. Quien monte el proyecto desde `.env.example` se encuentra features silenciosamente muertas:
+- **Branch**: `claude/fix-error-leak`
+- **Qué pasaba**: `chat_stream.py` emitía `{"event": "error", "data": str(e)}` y el frontend lo pinta tal cual. Durante las 8 semanas del Bug 119, la respuesta del chat fue literalmente `'Request' object has no attribute 'workspace_id'`.
+- **Fix**: mensaje genérico al cliente, detalle solo en el log. Es el patrón que `defensia.py` ya usaba en sus 4 emisiones — estaba en el repo, no en este fichero.
+- **Guarda nueva**: `tests/test_no_filtra_excepciones_al_cliente.py`, test estático AST sobre todos los routers. Cubre `str(e)`, f-string y variable a pelo. Verificado que caza el código anterior y que NO marca el patrón correcto de DefensIA.
+- **Verificado**: 78 tests entre las dos guardas nuevas. Los 2 fallos que salen en la suite amplia (`test_chat_stream_usa_gpt_5_mini`, `test_list_chat_ratings`) son PREEXISTENTES — comprobado contra main limpio.
 
-| Ausente | Qué rompe |
-|---|---|
-| `GOOGLE_GEMINI_API_KEY`, `GEMINI_MODEL` | clasificador de facturas (OCR) y extracción DefensIA |
-| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | todo el email transaccional (reset de contraseña, avisos) |
-| `TURNSTILE_SECRET_KEY` | captcha (la plantilla documenta `TURNSTILE_TEST_MODE` pero no la clave real) |
-| `GOOGLE_CLIENT_ID` | login con Google |
-| `FRONTEND_URL` | enlace del reset de contraseña |
-| `UPSTASH_VECTOR_RAG_URL`, `UPSTASH_VECTOR_RAG_TOKEN` | búsqueda vectorial del RAG (índice separado del caché semántico) |
-| `STRIPE_PRICE_ID_AUTONOMO`, `STRIPE_PRICE_ID_CREATOR`, `STRIPE_PRODUCT_ID` | planes Autónomo y Creator (solo está el price id genérico) |
-| `AZURE_DOCUMENT_INTELLIGENCE_KEY` | parseo avanzado de PDF (opcional) |
+## [2026-08-22] BACKEND — 🔴 CRÍTICO RESUELTO — El chat llevaba 8 SEMANAS roto (Bug 119)
 
-Causa: el checklist de `CLAUDE.md` incluye "New env vars added to `.env.example`" pero nada lo verifica, así que se salta. **Fix sugerido**: completar las 13 + añadir un test que compare los nombres declarados en `Settings` contra la plantilla y falle si alguno falta — igual que `test_ningun_modulo_hardcodea_un_modelo_gemini` impide la recaída del id de Gemini. Sin ese test, vuelve a derivar.
+- **Branch**: `claude/fix-chat-workspace-id`
+- **Qué pasaba**: `chat_stream.py:848` hacía `request.workspace_id` en vez de `body.workspace_id`. En ese handler `request` es el `starlette.Request` (lo exige slowapi), así que lanzaba `AttributeError` en CADA petición de chat. El usuario veía "Buscando información relevante…" y luego el error interno.
+- **Desde cuándo**: `0278099` (2026-06-28), Modo Gestoría. Ocho semanas.
+- **Por qué nadie lo vio**: no hay test unitario del handler (`test_stream.py` es integración contra servidor vivo), y desde el 16-ago el Bug 117 rechazaba todo antes de llegar ahí. Un bug tapaba al otro.
+- **Cómo apareció**: al arreglar el Bug 117 las preguntas pasaron el clasificador por primera vez y el red team cambió de síntoma. Arreglar una avería destapó la siguiente.
+- **Guarda nueva**: `tests/test_handler_request_vs_body.py` — test estático AST sobre TODOS los routers. Verificado que falla contra `main` y solo en `chat_stream.py`. Ojo: la primera versión miraba el nombre del parámetro y daba 4 falsos positivos (hay routers que llaman `request` al body Pydantic); hay que mirar la anotación.
+- **Pendiente relacionado**: `chat_stream.py:1056` emite `str(e)` al cliente — fuga del error interno, contradice la regla del Bug 104. No se toca aquí.
 
-## [2026-08-09] CI/DEVOPS — 🔴 BLOCKED — 3 jobs de CI rotos por infraestructura (decisión CEO: arreglar tras la separación IA-Melilla)
+## [2026-08-22] SECURITY — 🟢 DONE — Groq retiró el modelo del clasificador: el chat rechazaba TODO (Bug 117)
 
-Detectados al abrir el PR #22. **Ninguno causado por ese PR** — verificado. Ordenados por gravedad:
+- **Branch**: `claude/fix-sqli-fail-open`
+- **Qué pasaba**: Groq retiró `llama-3.1-8b-instant` el **2026-08-16**. De él cuelga `GROQ_MODEL_ROUTER` y, con él, el clasificador de temas, que **falla cerrado**. Modelo retirado → 404 → `is_fiscal=False` → toda pregunta rechazada como fuera de tema.
+- **Cómo se detectó**: el workflow `Red Team Nightly` fallaba desde el **17 de agosto** — el día siguiente. Sus resultados (28 «pasan» = ataques bloqueados, 5 «fallan» = preguntas legítimas bloqueadas) significaban tasa de bloqueo del **100 %**.
+- **Fix**: `GROQ_MODEL_ROUTER` → `openai/gpt-oss-20b` (reemplazo oficial; hubo que habilitarlo en la consola: los modelos se listan aunque estén `model_permission_blocked_org`). Además `max_tokens` 120→300 y `reasoning_effort="low"`, porque gpt-oss razona antes del JSON y daba `json_validate_failed`. Subir solo max_tokens NO bastaba.
+- **Verificación**: 10/10 clasificaciones correctas, 0 errores de API, todas `via=groq`. 195 tests verdes.
+- **Decisión de producto**: el clasificador **sigue fallando cerrado** (elegido por Fernando). Implica que cualquier caída de Groq apaga el chat.
+- **Pendiente / riesgo vivo**: la cuota diaria de Groq (200k tokens, tier gratuito) se agotó **dos veces** hoy. Con fail-closed, agotar cuota = apagón. Vigilar o subir de plan.
 
-1. **`red-team` (Red Team Nightly, Promptfoo) — EL MÁS GRAVE.** `promptfoo requires a supported Node.js runtime. Detected: v20.20.2 / Required: >=22.22.0`. El job muere antes de ejecutar un solo caso. Falla en `main` **5 noches consecutivas** (comprobado con `gh run list --branch main`), así que la suite de red-team lleva más de una semana sin protegerte de nada mientras el badge decía "falla" y nadie miraba. **Fix**: subir `actions/setup-node` a Node 22 en `.github/workflows/` (el workflow del nightly y cualquier otro que invoque promptfoo). Verificar después que la suite ejecuta y **qué resultado da de verdad** — puede haber fallos reales escondidos detrás del error de arranque.
-2. **`Trivy CVE Scan`**. `Unable to resolve action 'aquasecurity/trivy-action@0.28.0', unable to find version '0.28.0'`. La versión pineada desapareció upstream. Escáner de CVEs caído: no hay cobertura de vulnerabilidades en dependencias. **Fix**: repinear a una versión existente (mirar releases del repo de la acción) o a un SHA, que además es lo recomendado para acciones de terceros.
-3. **`Static Analysis (Bandit + Semgrep)`** — falso positivo. `B613` en `backend/app/security/security_pipeline.py:65`: salta sobre `_ZERO_WIDTH_RE`, el regex que existe **precisamente para eliminar** caracteres bidi/zero-width. La defensa dispara la alarma. **Fix**: `# nosec B613` en esa línea con comentario explicando por qué. NO desactivar B613 globalmente (ver lección anti-whitewashing de la sesión 43: tolerancia en el runner o supresión puntual justificada, nunca desactivar la regla). Los otros 39 hallazgos de Bandit son LOW/MEDIUM y no rompen el gate.
+## [2026-08-22] SECURITY — 🟢 DONE — La capa de SQLi se apagaba sola si Groq fallaba (Bug 116)
 
-Nota: `bandit` local sobre los ficheros del PR #22 dio 1 solo hallazgo LOW (`B110`, el `except: pass` deliberado de `rate_limiter.get_rate_limit_key`; un raise ahí haría que slowapi devolviera 500). Si se quiere dejar limpio, `# nosec B110` con comentario.
+- **Branch**: `claude/fix-sqli-fail-open` (desde `main` @ `f8c8c96`)
+- **Qué pasaba**: `validate_user_input()` es 100 % LLM y tenía DOS ramas que devolvían `is_safe=True` sin ejecutar ni un patrón — sin cliente Groq, y ante cualquier error de API. La segunda es la que se dispararía en producción: un 429 es mucho más frecuente que una API key ausente.
+- **Aquí SÍ era fail-open** (a diferencia de PII): `security_pipeline` llama y se fía, no hay red aguas arriba. Verificado siguiendo el flujo hasta el llamador.
+- **Agravante**: `SUSPICIOUS_PATTERNS` (15 regex) estaba definido y **sin usar en todo el repo**. El docstring anunciaba 4 capas de defensa; se ejecutaba 0.
+- **Fix**: `_regex_only()` con `_BLOCKING_PATTERNS` en ambas ramas, `risk_level="critical"` (el pipeline solo rechaza con high/critical). 5 de los 15 patrones quedan FUERA por ruidosos — `--`, `/* */`, `CHAR(`, `HEX(`, `0x…` aparecen en castellano fiscal legítimo. Misma lección que el Bug 114.
+- **Verificación**: 5/5 ataques bloqueados, 7/7 textos legítimos pasan, en ambas rutas. 18 tests nuevos en `tests/test_sql_injection_fallback.py`, **10 fallan** contra el código anterior.
+- **Pendiente que generó — 🟢 CERRADO el 2026-08-23** (rama `claude/limpieza-sqli-muerto`): `DANGEROUS_KEYWORDS`, `_sanitize_input()`, `validate_generated_sql()` y `validate_parameterized_query()` eran código muerto. Re-verificados uno a uno en todo el repo (incluidos tests, scripts, workflows y el notebook) y **borrados**. `DANGEROUS_KEYWORDS` sobrevive en `file_validator.py`, que es otra clase y sí lo usa.
+## [2026-08-22] SECURITY — 🟢 DONE — El regex de PII rechazaba importes como Código Postal
+
+- **Branch**: `claude/fix-cp-falso-positivo` (desde `main` @ `f8c8c96`)
+- **Bug 114**: por encima de 3000 caracteres `detect()` salta el LLM y el regex decide SOLO. Ahí `postal_code` (5 cifras entre 01000 y 52999) rechazaba cualquier consulta con un importe. `_HIGH_CONFIDENCE_PII` no cubre ese camino: solo limita el override, no el caso en que el regex es el único detector.
+- **Fix**: `postal_code` ELIMINADO. Dos vueltas exigiendo contexto fracasaron porque `c.p.` es *corto plazo* en contabilidad: `deuda a corto plazo (C.P.): 30000 EUR` burla el lookbehind y `Enviar a C.P. 28013` se lo come. Es semántica, no forma. `passport` sí se salva con etiqueta (ventana 12) y sube a `_HIGH_CONFIDENCE_PII`.
+- **Falsa alarma descartada**: la rama `if not self.client` NO es fail-open. Verificado sin cliente Groq: DNI, email, IBAN y teléfono se siguen detectando vía el override. Hay test y comentario para que nadie la "arregle".
+- **Verificación**: 30 tests, comprobado que los nuevos fallan contra el código anterior. Tres rondas de revisión externa (Codex): 12 hallazgos, todos incorporados. Dos de ellos cambiaron la solución de raíz.
+- **Groq**: ⚠️ **esta revisión fue INSUFICIENTE**. Se comprobó que los 4 ids de `config.py` coincidían con la lista de modelos activos, pero NO se llamó a ninguno. `llama-3.1-8b-instant` estaba retirado por Groq desde el 2026-08-16 y devolvía 404, tumbando el clasificador de temas (Bug 117). Presencia ≠ comportamiento. Nota que sí era correcta: `meta-llama/llama-guard-4-12b` no lo usa nadie — `llama_guard.py` corre con `gpt-oss-safeguard-20b`.
+- **Pendiente que genera**: `sql_injection.validate_user_input()` devuelve `is_safe=True` sin usar sus `SUSPICIOUS_PATTERNS` cuando no hay cliente. NO se ha comprobado si, como en PII, hay una red de seguridad aguas arriba. Revisar antes de tocarlo.
+
+## [2026-08-11] DEVOPS — 🟢 DONE — Railway: los DOS servicios caídos tras el PR #24
+
+- **Branch**: `claude/railway-config-monorepo` (desde `main` @ `c0868bd`)
+- **Qué pasó**: el PR #24 editó el `railway.toml` de la **raíz** creyendo que era el del backend. Ese fichero lo lee el servicio del **frontend** → `builder = "DOCKERFILE"` + no hay `frontend/Dockerfile` = build caído. Y el backend, que lee `backend/railway.toml`, se quedó con su `healthcheckTimeout = 30` (el fix del 300 nunca le llegó).
+- **Bugs**: 111 (config de monorepo cruzada + `startCommand` en exec form que no expande `$PORT`), 112 (`pymupdf4llm` sin pin saltó a 1.28.2 y metió sesiones ONNX en el import: +112 MB RSS y arranque más largo), 113 (`.railwayignore` excluía `backend/data/`). Corregida además la causa raíz **falsa** del Bug 110. Detalle en `memory/bugfixes-2026-08.md`.
+- **Verificación**: 4 revisores adversariales + doc oficial de Railway citada literal. `npm run build` OK, 171 tests de security pipeline OK, bandit 0 issues, TOML parseado.
+- **⚠️ PENDIENTE DE HUMANO (no se puede hacer desde el repo)**: tras el próximo deploy, comprobar en los **Deploy Logs** (no Build Logs) que (a) no aparece `is not a valid integer` y (b) la ventana del healthcheck ya dice 300 s. Si sigue diciendo 30 s, el valor viene del dashboard → Settings → Deploy → Healthcheck Timeout.
+- **Trabajo pendiente que genera** (ninguno bloqueante): sacar `init_schema` del arranque (≈158 round trips a Turso antes de aceptar tráfico), `/health/live` trivial para la sonda, y mover `import pymupdf4llm` dentro de la función que lo usa.
 
 ## [2026-08-09] BACKEND/SECURITY — 📢 NEEDS_REVIEW — Backport de fixes varados en `demo/fiscal-ia-melilla`
 
@@ -1925,6 +1954,51 @@ Ver detalles completos en el reporte.
 
 ## Tareas activas
 
+> **2026-08-24 — Impuestify APARCADO por decisión de Fernando.** Se pasa a la demo de IA Melilla.
+> Todo lo de abajo queda en cola. Las ramas están empujadas o con trabajo en worktrees de `C:/tmp/`.
+
+[2026-08-24] [PRODUCTO] 🔴 TODO — **Los cuatro forales NO tienen Modelo 131: hay que quitarlos del selector.** Investigado y citado en `plans/2026-08-24-forales-131-research.md`. Ninguno de los cuatro territorios tiene estimación objetiva en el IRPF: Bizkaia, Gipuzkoa y Araba la derogaron con efectos 1-1-2014 (NF 13/2013, NF 3/2014, NF 33/2013) y Navarra la sustituyó por *estimación directa especial* el 1-1-2021 (LF 21/2020). Ofrecer esos cuatro en `/calculadora-131` es ofrecer un régimen que allí no existe desde hace doce años. **El arreglo es quitarlos con un aviso que remita a la calculadora foral del 130**, que sí les sirve y **ya está construida** (`modelo_130_araba.py`, `_bizkaia`, `_gipuzkoa`, `_navarra` + `modelo_130_foral_tool.py`). Caso raro: en **Araba** el pago fraccionado lo gira de oficio la Diputación y solo hay autoliquidación el año de inicio. ⚠️ El informe es BORRADOR: quedan "pendiente de confirmar" en los modelos y órdenes forales de Gipuzkoa y Araba.
+
+[2026-08-24] [BACKEND] 🔴 TODO — **Auditar los cuatro calculadores forales del 130.** No los ha auditado nadie, y en dos días han salido 3 bugs de dinero y 2 auditorías con erratas. Son cuatro calculadores de euros sin verificar contra norma foral.
+
+[2026-08-24] [BACKEND] 🟡 EN RAMA — `claude/130-umbral-vivienda`: falta el umbral de **33.007,20 €** del art. 110.3.d).1º. `modelo_130.py` deduce vivienda a cualquiera → **el usuario paga de menos**. ⚠️ Trampa: el dato nuevo NO puede tener default `0`, porque `0 < 33.007,20` y la deducción se concedería siempre.
+
+[2026-08-24] [BACKEND] 🟡 EN RAMA — `claude/131-la-palma-caducada`: la reducción del **60 % de La Palma caducó el 31-12-2025** (DA 57.ª LIRPF, último modificador RDL 13/2025; sin prórroga para 2026 — la Orden HAC/1425/2025 tiene 0 apariciones). Hoy **se está regalando**. No borrar el flag: acotarlo por ejercicio, para seguir calculando complementarias de años pasados. Investigación en `plans/2026-08-24-la-palma-vigencia.md`.
+
+[2026-08-24] [BACKEND] 🟡 EN RAMA — `claude/modelo-llm-oficial`: oficializar **`gpt-5.6-luna`** (decisión de Fernando) en `config.py`, `CLAUDE.md` y los tests, y quitar los ids hardcodeados de 16 ficheros.
+
+[2026-08-24] [BACKEND] 🔴 TODO — **Gap A5 del 130, mal diagnosticado en su auditoría.** El arrastre de negativos NO se modela con la casilla 18 (esa es la complementaria) sino con la cadena `[14]`→`[17]`→`[19]`→`[15]` del trimestre siguiente, **sin signo** y topada por su `[14]` positiva. ⚠️ La `[12]` SÍ se topa en cero oficialmente: no tocarla. ⚠️ El diseño de registro rotula la `[15]` como "ejercicios anteriores" pero las instrucciones AEAT dicen "trimestres anteriores **del mismo ejercicio**": implementar desde el `.xls` produce arrastre entre años, que está mal. Detalle en la memoria del PM.
+
+[2026-08-24] [DOCS] 🔴 TODO — **Corregir las 8 erratas de `docs/audits/modelo_130_validation_2026-05.md`**, entre ellas el `art. 80 bis` derogado en 2015 citado 9 veces —y metido en el CÓDIGO: `_art_80bis_deduction`, clave `13_deduccion_art80bis`, tests `test_comun_art_80bis_*`— y un tope anual de vivienda de "2.640,56 €" que no existe. Causa: 4 de sus 12 fuentes no son oficiales (Iberley, SuperContable) y **no cita las instrucciones por casilla de la AEAT**.
+
+[2026-08-24] [DOCS] 🔴 TODO — **Barrer los snapshots de `docs/AEAT/*.md` por caducidad.** Al menos uno estaba obsoleto: nuestra copia era del 27-03-2026 y la AEAT reescribió la página el 30-04-2026. Ninguna versión era falsa; la nuestra había caducado. De esas copias salen cifras que ve el contribuyente.
+
+[2026-08-24] [QA] 🔴 TODO — Consolidar `test_modelo_tools.py` (pre-pytest, fosilizado) contra `test_modelo_130_tool.py` y `test_modelo_303.py`. Solo `test_tools_registration` es exclusivo.
+
+[2026-08-24] [BACKEND] 🔴 TODO — **Bug 123, Modelo 303**: `modelo_303.py:523`, `volumen_ano_anterior: float = 0.0`. De ahí salen `es_elegible_recc()`=True y `requiere_sii()`=False, y **nadie le pasa el parámetro**: esa es siempre la respuesta.
+
+[2026-08-24] [BACKEND] 🔴 TODO — `_render_130` no pinta las casillas 15-18. Y el backend tiene **dos** implementaciones forales del 130: la genérica de `/api/declarations/130/calculate` no numera casillas en Bizkaia general/excepcional ni Navarra.
+
+[2026-08-24] [DEVOPS] 🔴 TODO — El hook de prettier reescribe ~250 ficheros del frontend a LF en Windows. Causa: `pass_filenames: false` con `--write "src/**/*"` y `endOfLine: lf` contra `core.autocrlf=true`.
+
+
+[2026-08-23] [BACKEND+FRONTEND] 🟢 DONE — **Bug 121: el Modelo 130 regalaba 100 EUR/trimestre.** `rend_neto_anterior` con default `0.0` que el calculador leía como el hecho "gané 0 EUR" → primer tramo del art. 110.3.c) RIRPF a todo el que no rellenara el campo. Hasta 400 EUR/año menos ingresados a Hacienda, con el usuario presentando ese número. PR #40 (backend) + **PR #42 (frontend, imprescindible: sin él `DeclarationsPage.tsx` seguía mandando `0`)**. Salió de 3 tests que llevaban meses en rojo entre otros 17. Detalle en `memory/bugfixes-2026-08.md`.
+
+[2026-08-23] [BACKEND] 🟢 DONE — **Bug 122: el Modelo 131 negaba esa misma minoración** a quien de verdad tuvo un ejercicio anterior de 0 EUR (su helper trataba `<= 0` como "sin dato"). Y la numeración de casillas de su PDF estaba inventada: `[12]` se imprimía como "Resultado a ingresar" cuando en el modelo es "Pago de préstamos para adquisición de vivienda habitual". PR #41.
+
+[2026-08-23] [BACKEND] 🔴 PENDING — **Bug 123: el Modelo 303.** `modelo_303.py:523`, `volumen_ano_anterior: float = 0.0`. De ahí salen `es_elegible_recc()`=True y `requiere_sii()`=False, y como **nadie le pasa el parámetro**, esa es siempre la respuesta. Sin asignar.
+
+[2026-08-23] [BACKEND] 🔴 PENDING — `_render_130` no pinta las casillas 15, 16, 17 ni 18: con vivienda habitual marcada, al usuario no le cuadra la resta. Y el backend tiene **dos** implementaciones forales del 130 — la genérica de `/api/declarations/130/calculate` no numera casillas en Bizkaia general/excepcional ni Navarra.
+
+[2026-08-23] [PM] 🔴 PENDING — **Decisión de Fernando: qué modelo LLM es el bueno.** `CLAUDE.md` dice "SIEMPRE gpt-5-mini", el `.env` de producción dice `gpt-5.6-luna`, y `test_chat_stream_usa_gpt_5_mini` espera `gpt-5-mini` (por eso está en rojo). Tres fuentes, tres respuestas. **No tocar hasta que decida**: el arreglo es opuesto según la respuesta. Deuda real aparte: `defensia_agent.py:112` hardcodea el id fuera de `settings`, así que si OpenAI lo retira, cambiar la env var arregla TaxAgent y no DefensIA (forma del Bug 106).
+
+[2026-08-23] [BACKEND] 🔴 PENDING — Deducción foral por descendientes de Álava: `seed_deductions_territorial.py:38` dice `668.0`, el test espera `734.80`. El `668.0` se repite 3 veces (Álava, Bizkaia, Gipuzkoa), pero los tres territorios legislan por separado. Fuente para dirimirlo: **BOTHA**, no BOE/AEAT.
+
+[2026-08-23] [QA] 🔴 PENDING — Consolidar `test_modelo_tools.py` (pre-pytest, fosilizado) contra `test_modelo_130_tool.py` y `test_modelo_303.py`. Solo `test_tools_registration` es exclusivo. Exigir que se demuestre test por test que la cobertura existe en otro sitio antes de borrar nada.
+
+[2026-08-23] [TESTS] ℹ️ La suite tiene **3.378 tests**, no los ~2.080 del CLAUDE.md. De los 20 fallos "preexistentes", 12 son tests caducados o mocks mal montados, 2 son fuga del `.env` real (comprueban ausencia de clave y el entorno tiene una), y **6 eran de dinero**. Además `tax-guide-cataluna-2026-03-12.spec.ts:91` declara `const loginTime` dos veces y su SyntaxError tumba `npx playwright test --list` del repo ENTERO.
+
+
 [2026-05-10] [BACKEND] 🟢 DONE — Modelo 131 (Pago Fraccionado IRPF Estimación Objetiva — Módulos) implementado from scratch. Bug 89 + audit `docs/audits/modelo_131_validation_2026-05.md` resueltos. Calculator `backend/app/utils/calculators/modelo_131.py` (3 apartados: I empresarial 4/3/2%, II sin datos-base 2%, III agraria 2%) + tool wrapper `backend/app/tools/modelo_131_tool.py` + endpoint `POST /api/modelo-131/calculate` + render PDF `_render_131` (promovido a FULL_MODELOS) + corregido plazo 4T a 1-30 enero en `seed_estatal_deadlines.py`. **60 tests PASS** (37 calculator + 23 tool). Casos AEAT A/B/C/D/E/G del audit verificados ground truth. Reducciones territoriales soportadas: Ceuta/Melilla 60% + La Palma 60% (caller debe verificar vigencia anual). Tool registrado en `app/tools/__init__.py` (ALL_TOOLS + TOOL_EXECUTORS + __all__).
 
 [2026-05-10] [FRONTEND] 🔴 PENDING — Crear `frontend/src/pages/M131CalculatorPage.tsx` (clonar M130CalculatorPage). Backend listo: `POST /api/modelo-131/calculate` operativo. Wizard sugerido en audit (sección 6, 9 pasos). Ruta `/calculadora-131` en `App.tsx`. Hook `useModelo131()` análogo a `useModeloPDF`. Schema JSON-LD `WebApplication` + `HowTo` para SEO (sesión 27 pattern). Botón "Generar borrador 131 PDF" en `DeclarationsPage`.
@@ -1948,6 +2022,10 @@ Ver detalles completos en el reporte.
 [2026-03-05] [BACKEND] 🟢 DONE — Fix: FOREIGN KEY constraint en message_sources. `conversation_service.py` ahora valida chunk_ids antes de insertar. Degrada gracefully si chunks no existen en BD.
 
 [2026-03-05] [FRONTEND] 🟢 DONE — Fix: Renderizado markdown en chat. Instalado `remark-gfm` para soporte GFM (tablas, tachado, task lists). Eliminado `white-space: pre-wrap` que causaba doble salto de línea. Añadidos estilos para tablas, bloques de código, blockquotes, hr, listas anidadas.
+
+[2026-08-24] [DOC-CRAWLER] 🟢 DONE — Vigencia de la reducción del 60 % de La Palma en pagos fraccionados IRPF. **NO está vigente en 2026**: la LIRPF DA 57.ª cubre 2022-2025 y su última prórroga (RDL 13/2025) solo alcanzó al 4T 2025. Ni la Orden de módulos 2026 (HAC/1425/2025) ni ninguna disposición general del BOE de 2026 la prorrogan. Informe con citas literales en `plans/2026-08-24-la-palma-vigencia.md`; normativa oficial en `docs/AEAT/La-Palma/` (8 PDFs, carpeta en .gitignore). Snapshot AEAT cap 3.7 refrescado (el de marzo estaba obsoleto).
+
+[2026-08-24] [DOC-CRAWLER] 📢 NEEDS_REVIEW → **BACKEND** — El flag `la_palma` de `backend/app/utils/calculators/modelo_131.py` aplica un 60 % de reducción sin comprobar el ejercicio: para cualquier trimestre de 2026 el pago fraccionado sale un 60 % por debajo. Mismo problema previsible en el 130 (art. 110.1.a RIRPF: la reducción también le aplicaba). Decisión de producto pendiente de Fernando: retirar el flag o darle año de caducidad. Además hay dos afirmaciones falsas que retirar: `docs/audits/modelo_131_validation_2026-05.md:92` ("Orden HAC/1347/2024" — esa Orden no menciona La Palma) y el comentario de `modelo_131.py:88-93` (atribuye el 60 % a la Orden HFP/1359/2023, que en realidad regula otra cosa: un 20 % sobre el rendimiento neto de módulos, también caducado).
 
 ---
 

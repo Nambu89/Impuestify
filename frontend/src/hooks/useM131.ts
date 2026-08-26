@@ -7,9 +7,26 @@ export interface M131Input {
     rendimiento_neto_modulos_anual: number
     num_asalariados: number
     volumen_ingresos_trimestre: number
-    rendimiento_neto_anterior: number
+    /**
+     * Rendimiento neto del ejercicio ANTERIOR. Es el dato de partida de la
+     * minoracion de la casilla [09] (art. 110.3.c RIRPF), no la casilla en si.
+     *
+     * Campo OPCIONAL de tres estados. La clave se OMITE cuando el usuario no
+     * facilita el dato: asi el backend aplica su defecto (`None`) y no calcula
+     * minoracion alguna. Un 0 explicito SI la aplica (100 EUR/trimestre), asi
+     * que nunca se envia 0 como relleno. Construyelo con `withOptionalField`
+     * de `utils/numberField` para no colapsar los tres estados.
+     */
+    rendimiento_neto_anterior?: number
     retenciones_trimestre: number
-    pagos_anteriores: number
+    /*
+     * NO hay `pagos_anteriores`. El 131 no es acumulativo: cada trimestre se
+     * calcula sobre los datos-base del primer dia del año (art. 110.1.b
+     * RIRPF), no sobre lo acumulado, asi que no hay nada que descontar y el
+     * diseño de registro DR131 no tiene casilla para ello. Restarlo hacia
+     * ingresar de MENOS. Es el 130 (estimacion directa, art. 110.1.a) el que
+     * si lo deduce, en su casilla [05].
+     */
     ceuta_melilla: boolean
     la_palma: boolean
     year: number

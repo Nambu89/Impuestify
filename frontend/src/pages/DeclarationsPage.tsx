@@ -23,6 +23,8 @@ import {
 import { useModeloPDF } from '../hooks/useModeloPDF'
 import { useFiscalProfile } from '../hooks/useFiscalProfile'
 import CountUp from '../components/reactbits/CountUp'
+import { formatOptionalNumber, parseOptionalNumber, withOptionalField } from '../utils/numberField'
+import { buildModelo130PdfData, foralVariantFor130 } from '../utils/modelo130Pdf'
 import './DeclarationsPage.css'
 
 // ---------------------------------------------------------------------------
@@ -64,6 +66,53 @@ function NumberInput({
                     onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
                     step={step}
                     min={0}
+                />
+                {suffix && <span className="decl-field__suffix">{suffix}</span>}
+            </div>
+            {help && <span className="decl-field__help">{help}</span>}
+        </div>
+    )
+}
+
+/**
+ * Input numérico de TRES estados para los campos donde el backend distingue
+ * "no facilitado" de "cero": vacío → la clave se omite del payload y manda el
+ * valor por defecto del backend; un 0 escrito por el usuario sí viaja como 0.
+ *
+ * No usar `NumberInput` para estos campos: su `parseFloat(...) || 0` convierte
+ * el hueco en un cero y su `value || ''` esconde los ceros explícitos.
+ */
+function OptionalNumberInput({
+    label,
+    value,
+    onChange,
+    suffix = '',
+    help = '',
+    step = 0.01,
+    placeholder = '',
+    min = 0,
+}: {
+    label: string
+    value: number | null | undefined
+    onChange: (v: number | undefined) => void
+    suffix?: string
+    help?: string
+    step?: number
+    placeholder?: string
+    min?: number
+}) {
+    return (
+        <div className="decl-field">
+            <label className="decl-field__label">{label}</label>
+            <div className="decl-field__input-wrap">
+                <input
+                    type="number"
+                    className="decl-field__input"
+                    value={formatOptionalNumber(value)}
+                    placeholder={placeholder}
+                    onChange={(e) => onChange(parseOptionalNumber(e.target.value))}
+                    step={step}
+                    min={min}
                 />
                 {suffix && <span className="decl-field__suffix">{suffix}</span>}
             </div>
@@ -218,12 +267,22 @@ function Form303({
                         suffix="EUR"
                     />
                 )}
-                <NumberInput
+                {/*
+                    Tres estados: el defecto del backend es 100 %, no 0. Con
+                    `|| 0`, vaciar la casilla atribuía el 0 % al Estado y dejaba
+                    el resultado en cero.
+                */}
+                <OptionalNumberInput
                     label="% Atribucion Estado"
-                    value={data.pct_atribucion_estado ?? 100}
-                    onChange={(v) => u('pct_atribucion_estado', v)}
+                    value={data.pct_atribucion_estado}
+                    onChange={(v) =>
+                        onChange(
+                            withOptionalField({ ...data, quarter }, 'pct_atribucion_estado', v),
+                        )
+                    }
                     suffix="%"
                     step={1}
+                    placeholder="100"
                     help="100% salvo operaciones forales"
                 />
             </div>
@@ -287,12 +346,23 @@ function Form130({
                     </div>
                     <h3 className="decl-form__section">Deducciones</h3>
                     <div className="decl-form__grid">
-                        <NumberInput
+                        {/*
+                            Campo de TRES estados. Vacío = dato no facilitado:
+                            se omite del payload y el backend NO aplica la
+                            minoración de la casilla 13. Un 0 escrito a mano sí
+                            la aplica (100 EUR/trimestre, primer tramo del
+                            art. 110.3.c RIRPF), porque la norma no distingue
+                            entre "gané 0" y "no gané nada".
+                        */}
+                        <OptionalNumberInput
                             label="Rend. neto año anterior"
-                            value={data.rend_neto_anterior || 0}
-                            onChange={(v) => u('rend_neto_anterior', v)}
+                            value={data.rend_neto_anterior}
+                            onChange={(v) =>
+                                onChange(withOptionalField(data, 'rend_neto_anterior', v))
+                            }
                             suffix="EUR"
-                            help="Para Art. 80 bis"
+                            placeholder="Sin dato"
+                            help="Minoración casilla 13 (art. 110.3.c RIRPF). Déjalo vacío si no lo sabes: en blanco no se aplica minoración."
                         />
                         <CheckboxInput
                             label="Vivienda habitual (hipoteca)"
@@ -392,11 +462,26 @@ function Form130({
                     </div>
                     {territory === 'Bizkaia' && (
                         <div className="decl-form__grid">
-                            <NumberInput
+                            {/*
+                                Tres estados: el defecto del backend es 3 años.
+                                Con `|| 3` en pantalla pero `|| 0` al escribir,
+                                vaciar la casilla mandaba 0 años y activaba el
+                                régimen de los primeros 2 años sin quererlo.
+                            */}
+                            <OptionalNumberInput
                                 label="Años de actividad"
-                                value={data.anos_actividad || 3}
-                                onChange={(v) => u('anos_actividad', v)}
+                                value={data.anos_actividad}
+                                onChange={(v) =>
+                                    onChange(
+                                        withOptionalField(
+                                            data,
+                                            'anos_actividad',
+                                            v === undefined ? undefined : Math.trunc(v),
+                                        ),
+                                    )
+                                }
                                 step={1}
+                                placeholder="3"
                                 help="Primeros 2 años: régimen especial"
                             />
                         </div>
@@ -889,6 +974,33 @@ export default function DeclarationsPage() {
         }
     }
 
+    const handleDownloadPDF = () => {
+        const result = calcResult?.result
+        if (!result) return
+        const trimestreLabel = `${quarter}T`
+
+        if (modelo === '130') {
+            // El renderizador del backend (`_render_130`) lee `seccion_i` /
+            // `deduccion_80bis` / `resultado_final`, no las `casillas` que
+            // devuelve `/api/declarations/130/calculate`. Mandarle el resultado
+            // en crudo generaba un PDF con todas las casillas a cero.
+            const variante = foralVariantFor130(territory130)
+            downloadPDF(
+                '130',
+                buildModelo130PdfData(result, territory130),
+                trimestreLabel,
+                year,
+                // La cabecera del PDF lee `variante_foral` de `contribuyente`;
+                // el cuerpo, de `data`. Hay que mandarlo en los dos sitios.
+                variante ? { variante_foral: variante } : undefined,
+            )
+            return
+        }
+
+        const formData = modelo === '303' ? form303 : modelo === '420' ? form420 : formIpsi
+        downloadPDF(modelo, { ...formData, ...result }, trimestreLabel, year)
+    }
+
     const handleReset = () => {
         if (modelo === '303') setForm303({})
         else if (modelo === '130') setForm130({})
@@ -1005,8 +1117,18 @@ export default function DeclarationsPage() {
                                 {modelo === '130' && (
                                     <select
                                         className="decl-select"
+                                        aria-label="Territorio del Modelo 130"
                                         value={territory130}
-                                        onChange={(e) => setTerritory130(e.target.value)}
+                                        onChange={(e) => {
+                                            // Descartar el resultado anterior, como hacen las
+                                            // pestañas de modelo: el territorio decide la FORMA
+                                            // del payload del PDF (común vs foral). Sin esto, en
+                                            // la ventana del debounce se podía descargar un
+                                            // resultado común etiquetado como foral, es decir un
+                                            // PDF con cifras verosímiles pero equivocadas.
+                                            reset()
+                                            setTerritory130(e.target.value)
+                                        }}
                                     >
                                         {TERRITORIES_130.map((t) => (
                                             <option key={t} value={t}>
@@ -1134,23 +1256,7 @@ export default function DeclarationsPage() {
                             </button>
                             <button
                                 className="decl-btn decl-btn--secondary"
-                                onClick={() => {
-                                    const formData =
-                                        modelo === '303'
-                                            ? form303
-                                            : modelo === '130'
-                                              ? form130
-                                              : modelo === '420'
-                                                ? form420
-                                                : formIpsi
-                                    const trimestreLabel = `${quarter}T`
-                                    downloadPDF(
-                                        modelo,
-                                        { ...formData, ...(calcResult?.result || {}) },
-                                        trimestreLabel,
-                                        year,
-                                    )
-                                }}
+                                onClick={handleDownloadPDF}
                                 disabled={!calcResult?.success || pdfLoading}
                             >
                                 {pdfLoading ? (

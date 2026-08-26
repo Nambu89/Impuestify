@@ -29,7 +29,21 @@ class Modelo130Calculator:
     is intentionally omitted as it requires a separate treatment.
     """
 
-    # Art. 80 bis deduction table (Territorio Comun) — annual rend_neto -> quarterly deduction
+    # Minoración casilla 13 — art. 110.3.c) RIRPF (RD 439/2007), tabla literal:
+    #   "Cuando la cuantía de los rendimientos netos de actividades económicas
+    #    del ejercicio anterior sea igual o inferior a 12.000 euros, el importe
+    #    que resulte del siguiente cuadro:
+    #      Igual o inferior a 9.000 .......... 100
+    #      Entre 9.000,01 y 10.000 ...........  75
+    #      Entre 10.000,01 y 11.000 ..........  50
+    #      Entre 11.000,01 y 12.000 ..........  25"
+    # Son ESCALONES PLANOS: no hay interpolación entre tramos.
+    # NOTA: el art. 80 bis LIRPF está SUPRIMIDO (art. 1.55 Ley 26/2014, efectos
+    # 01/01/2015). La base legal vigente es el art. 110.3.c) RIRPF, que es
+    # además lo que cita la propia AEAT en el diseño de registro del modelo
+    # ("[13] Minorac. por aplic. de la deducc. art. 110,3 del Reglam. del
+    # Impto." — DR130e15v12.xls). Los nombres `_ART_80BIS_TABLE` /
+    # `13_deduccion_art80bis` se conservan por compatibilidad de la API.
     _ART_80BIS_TABLE = [
         (9_000.0, 100.0),
         (10_000.0, 75.0),
@@ -72,7 +86,7 @@ class Modelo130Calculator:
         gastos_acumulados: float = 0.0,
         retenciones_acumuladas: float = 0.0,
         pagos_anteriores: float = 0.0,
-        rend_neto_anterior: float = 0.0,
+        rend_neto_anterior: float | None = None,
         tiene_vivienda_habitual: bool = False,
         resultado_anterior_complementaria: float = 0.0,
         # --- Araba ---
@@ -107,7 +121,9 @@ class Modelo130Calculator:
             gastos_acumulados: Cumulative deductible expenses (casilla 02).
             retenciones_acumuladas: Cumulative withholdings and payments on account (casilla 05).
             pagos_anteriores: Modelo 130 payments made in previous quarters this year (casilla 06).
-            rend_neto_anterior: Prior-year net income for art. 80 bis table (casilla 13 look-up).
+            rend_neto_anterior: Prior-year net income for the casilla 13 look-up
+                (art. 110.3.c RIRPF). ``None`` (default) = dato no facilitado →
+                NO se aplica minoración. Un 0.0 explícito sí la aplica.
             tiene_vivienda_habitual: Entitlement to casilla 16 housing deduction.
             resultado_anterior_complementaria: Prior complementary declaration result (casilla 18).
 
@@ -223,7 +239,7 @@ class Modelo130Calculator:
         gastos_acumulados: float,
         retenciones_acumuladas: float,
         pagos_anteriores: float,
-        rend_neto_anterior: float,
+        rend_neto_anterior: float | None,
         tiene_vivienda_habitual: bool,
         resultado_anterior_complementaria: float,
     ) -> dict[str, Any]:
@@ -296,7 +312,9 @@ class Modelo130Calculator:
                 "minoraciones": round(casilla_05 + casilla_06, 2),
                 "deduccion_art80bis_aplicada": casilla_13,
                 "deduccion_vivienda_aplicada": casilla_16,
-                "rend_neto_anterior_para_art80bis": round(rend_neto_anterior, 2),
+                "rend_neto_anterior_para_art80bis": (
+                    None if rend_neto_anterior is None else round(rend_neto_anterior, 2)
+                ),
                 "tiene_vivienda_habitual": tiene_vivienda_habitual,
             },
         }
@@ -631,17 +649,27 @@ class Modelo130Calculator:
     # Helper methods
     # ------------------------------------------------------------------
 
-    def _art_80bis_deduction(self, rend_neto_anterior: float) -> float:
+    def _art_80bis_deduction(self, rend_neto_anterior: float | None) -> float:
         """
-        Art. 80 bis quarterly deduction (Territorio Comun) based on prior-year net income.
+        Minoración trimestral de la casilla 13 — art. 110.3.c) RIRPF.
 
-        Table:
+        Table (escalones planos, sin interpolación):
             rend_neto_anterior <= 9.000  → 100 EUR/quarter
-            9.001 - 10.000               →  75 EUR/quarter
-            10.001 - 11.000              →  50 EUR/quarter
-            11.001 - 12.000              →  25 EUR/quarter
+            9.000,01 - 10.000            →  75 EUR/quarter
+            10.000,01 - 11.000           →  50 EUR/quarter
+            11.000,01 - 12.000           →  25 EUR/quarter
             > 12.000                     →   0 EUR/quarter
+
+        ``None`` means "el llamante NO ha facilitado el rendimiento del
+        ejercicio anterior". En ese caso NO se aplica minoración alguna: el
+        art. 110.3.c) condiciona la casilla 13 a que *conste* que la cuantía
+        del ejercicio anterior fue ≤ 12.000 EUR, y asumirlo por defecto
+        rebajaría el pago fraccionado de cualquier contribuyente que se limite
+        a no rellenar el dato. Un 0,0 EXPLÍCITO sí es un dato ("gané 0 EUR") y
+        da derecho a los 100 EUR del primer tramo.
         """
+        if rend_neto_anterior is None:
+            return 0.0
         for threshold, deduction in self._ART_80BIS_TABLE:
             if rend_neto_anterior <= threshold:
                 return deduction

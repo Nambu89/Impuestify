@@ -48,7 +48,7 @@ class ComplexityClassifier:
     """
     Classify question complexity for reasoning effort adjustment.
 
-    Uses Groq (llama-3.1-8b-instant) to analyze intent.
+    Uses Groq (`settings.GROQ_MODEL_ROUTER`) to analyze intent.
 
     Mapping:
     - SIMPLE -> gpt-5-mini (fast, cost-effective)

@@ -1,17 +1,26 @@
-# Railway Config — Impuestify Backend
+# Railway Config — servicio FRONTEND (Root Directory: /frontend)
 # Docs: https://docs.railway.com/reference/config-as-code
-# Schema: https://backboard.railway.app/railway.schema.json
 #
-# Build plan (provider, install, start command) lives in `railpack.json` at
-# the repo root. Without `provider: python` there, Railpack auto-detected
-# only Node from the dev `package.json` and `pip` was unavailable at build
-# time. railway.toml only sets healthcheck + restart policy now.
+# CUIDADO: por vivir en la raíz del repo, este fichero es el que se come el
+# servicio del FRONTEND, no el backend. El backend lee `backend/railway.toml`.
+#
+# El 2026-08-10 se cambió aquí `builder` a DOCKERFILE pensando en el backend y
+# quien se lo comió fue el frontend: "couldn't locate a dockerfile at path
+# /frontend/Dockerfile in code archive" y build caído. El backend, mientras
+# tanto, siguió con su healthcheckTimeout de 30 s porque nunca leyó este
+# fichero. Un cambio, dos servicios rotos.
 
 [build]
+# SPA de Vite: lo construye Railpack (npm ci + vite build + servidor estático).
+# NO poner DOCKERFILE — no existe `frontend/Dockerfile` y el build muere en el
+# unpack del archivo, antes de compilar nada.
 builder = "RAILPACK"
 
 [deploy]
-healthcheckPath = "/health"
-healthcheckTimeout = 30
+# El servidor estático hace fallback a index.html, así que "/" devuelve 200 en
+# cuanto arranca. (Antes ponía "/health", que también daba 200 por ese mismo
+# fallback, pero sugería que este fichero era el del backend. No lo es.)
+healthcheckPath = "/"
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
