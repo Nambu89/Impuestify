@@ -60,7 +60,7 @@ def _parse_windows(raw: str, default: list[tuple[str, str]]) -> list[tuple[str, 
 class LeadbotConfig:
     # --- OpenAI (el agente) ---
     openai_api_key: str = ""
-    model: str = "gpt-5-nano"
+    model: str = "gpt-5-mini"
     reasoning_effort: str = "minimal"
     max_completion_tokens: int = 1200
     # --- Marca (reutiliza BRAND_* del deploy, con fallback Melilla) ---
