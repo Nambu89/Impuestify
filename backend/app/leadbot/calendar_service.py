@@ -79,7 +79,13 @@ def generate_candidate_slots(cfg: LeadbotConfig, now: datetime, limit: int = 60)
         if day.weekday() not in cfg.work_days:
             continue
         for win_start, win_end in cfg.work_windows:
-            start_t, end_t = _parse_hhmm(win_start), _parse_hhmm(win_end)
+            try:
+                start_t, end_t = _parse_hhmm(win_start), _parse_hhmm(win_end)
+            except Exception:  # noqa: BLE001
+                logger.warning(
+                    "Ventana horaria inválida (LEADBOT_WORK_HOURS): %r-%r", win_start, win_end
+                )
+                continue
             cursor = datetime.combine(day, start_t, tzinfo=tz)
             window_end = datetime.combine(day, end_t, tzinfo=tz)
             while cursor + timedelta(minutes=cfg.slot_minutes) <= window_end:
