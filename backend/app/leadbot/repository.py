@@ -37,8 +37,14 @@ def _now_iso() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def hash_ip(ip: str | None, salt: str = "leadbot") -> str:
-    """SHA256(ip+salt) — guardamos el hash, nunca la IP en claro (RGPD)."""
+def hash_ip(ip: str | None, salt: str | None = None) -> str:
+    """SHA256(ip+salt) — guardamos el hash, nunca la IP en claro (RGPD).
+
+    Usa un salt configurable (LEADBOT_IP_HASH_SALT) para evitar hashes triviales.
+    """
+    import os
+
+    salt = salt if salt is not None else (os.environ.get("LEADBOT_IP_HASH_SALT") or "leadbot")
     raw = f"{salt}:{ip or 'unknown'}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
