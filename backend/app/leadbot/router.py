@@ -263,11 +263,14 @@ async def confirm_booking(token: str, request: Request, db: TursoClient = Depend
         lead = await repo.get_lead(lead_id)
         if lead:
             await emailer.send_lead_alert_to_owner(lead)
-        meet = (
-            f'<p>Enlace de la videollamada: <a href="{event.get("meet_link")}">{event.get("meet_link")}</a></p>'
-            if event.get("meet_link")
-            else ""
-        )
+        meet_link = (event.get("meet_link") or "").strip()
+        if meet_link.startswith(("https://", "http://")):
+            import html as _html
+
+            url = _html.escape(meet_link, quote=True)
+            meet = f'<p>Enlace de la videollamada: <a href="{url}">{url}</a></p>'
+        else:
+            meet = ""
         return HTMLResponse(
             _page(
                 "✅ Cita confirmada",
