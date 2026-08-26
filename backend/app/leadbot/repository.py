@@ -1,8 +1,8 @@
 """Acceso a datos del leadbot — queries parametrizadas sobre Turso.
 
 Todas las tablas viven en la misma DB demo (``demo-fiscal-melilla``) pero con
-prefijo ``leadbot_`` para no colisionar con el esquema de Impuestify. NUNCA
-f-strings en SQL: siempre placeholders ``?``.
+prefijo ``leadbot_`` para no colisionar con el esquema de Impuestify. Nunca
+interpolar datos de usuario en SQL: los valores siempre con placeholders ``?``.
 """
 
 from __future__ import annotations
