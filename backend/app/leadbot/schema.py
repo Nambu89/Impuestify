@@ -30,7 +30,7 @@ _STATEMENTS: list[str] = [
         need TEXT,
         decision_maker INTEGER,              -- 0|1|NULL
         timeline TEXT,                       -- now|1-3m|3-6m|6m+
-        budget_range TEXT,                   -- <1k|1-5k|5-15k|15k+
+        budget_range TEXT,                   -- <500|500-1500|1500-3000|3000+
         source TEXT NOT NULL DEFAULT 'chat_widget',
         calendar_event_id TEXT,
         booking_slot TEXT,                   -- ISO8601 del hueco reservado
