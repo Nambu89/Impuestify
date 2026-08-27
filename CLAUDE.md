@@ -170,15 +170,32 @@ nombre igual, con `subagent_type`.
 Cuándo NO delegar: una pregunta conversacional, un cambio de una línea ya
 localizado, o cuando el usuario pide explícitamente que lo haga yo.
 
-### REGLA DURA: toda modificación de código pasa por Codex
+### REGLA DURA: todo pasa por Codex — código Y diseños
 
 Antes de empujar cualquier cambio de código del proyecto (`backend/`,
 `frontend/`, `scripts/`, tests, workflows), pasarlo por Codex para una segunda
-opinión. No hace falta para documentación ni memoria.
+opinión.
+
+**Y también los diseños, specs, planes de implementación y decisiones de
+arquitectura, ANTES de escribir la primera línea de código.** Un fallo detectado
+en el documento cuesta una hora; el mismo fallo detectado con el código escrito
+cuesta una reescritura.
+
+Precedente (2026-08-27, diseño de `opositor-ia`): Codex encontró que **tres
+afirmaciones del propio documento eran falsas**, entre ellas que cambiar de
+proveedor de LLM "es escribir una clase" — cambiar el de *embeddings* obliga a
+reindexar el corpus entero. También que la separación prometida era de runtime
+pero no de datos, y que faltaba entero el estado de sesión que el motor
+adaptativo necesita para funcionar.
+
+No hace falta para documentación de andar por casa ni para la memoria.
 
 ```powershell
-codex exec --sandbox read-only -C "<ruta del repo>" $prompt
+codex exec --sandbox read-only -C "<ruta del repo>" $prompt < /dev/null
 ```
+
+- **`< /dev/null` OBLIGATORIO**: sin eso `codex exec` se queda leyendo la entrada
+  estándar y agota el timeout entero sin hacer nada.
 
 - `--sandbox read-only` siempre: revisa, no toca.
 - El prompt **sin comillas dobles dentro** y con `-C <ruta>` explícito —
